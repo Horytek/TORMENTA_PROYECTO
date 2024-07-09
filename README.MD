@@ -13,3 +13,7 @@ python manage.py createsuperuser
 
 *Dependencias*
 pip install mysqlclient
+
+*Iniciar React*
+cd client
+npm run dev
