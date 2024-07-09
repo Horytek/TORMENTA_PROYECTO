@@ -7,8 +7,8 @@ db.sqlite3
 media
 
 # Environments 
-.env 
-.venv 
+.env
+.venv
 env/ 
 venv/ 
 ENV/ 
