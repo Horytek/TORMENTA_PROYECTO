@@ -79,9 +79,9 @@ WSGI_APPLICATION = 'sistema_tormenta.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tormenta_proyecto',
+        'NAME': 'db_tormenta',
         'USER': 'root',
-        'PASSWORD': '123456789',
+        'PASSWORD': '1234',
         'HOST': 'localhost',
         'PORT': '3306'
     }
