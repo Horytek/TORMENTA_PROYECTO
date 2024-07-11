@@ -7,6 +7,7 @@
 - **Iniciar Aplicación React**
 ```sh
         cd client
+        npm install
         npm run dev
 ```
 
