@@ -3,70 +3,16 @@ import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
 import Pagination from '@/components/Pagination/Pagination';
-import TablaVentas from '../ComponentsVentas/VentasTable';
-import FiltrosVentas from '../ComponentsVentas/FiltrosVentas';
-import OptionsModal from '../ComponentsVentas/Modals/OptionsModal';
-import ConfirmationModal from '../ComponentsVentas/Modals/ConfirmationModal';
+import TablaVentas from './ComponentsVentas/VentasTable';
+import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
+import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
+import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import { Link } from 'react-router-dom';
+import useVentasData from '../Data/Venta_Data';
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
-  const [ventas, setVentas] = useState([
-    {
-      id: 1,
-      serieNum: '001',
-      num: '4000045',
-      tipoComprobante: 'Factura',
-      cliente: 'Empresa VALDOS I.R.L',
-      ruc: '10524578961',
-      fechaEmision: '2024-01-03',
-      igv: 'S/ 26.64',
-      total: 'S/ 174.64',
-      cajero: 'Julio Jeanpierre Castañeda',
-      cajeroId: '78541236',
-      estado: 'Activo',
-      detalles: [
-        { codigo: '001', nombre: 'Pantalon Jean Resgasdo  Talla 32 - Azul', cantidad: 2, precio: 'S/ 50', descuento: 'S/ 5', igv: 'S/ 10', subtotal: 'S/ 95' },
-        { codigo: '002', nombre: 'Vestido jean  Talla 28 - Celeste', cantidad: 1, precio: 'S/ 100', descuento: 'S/ 10', igv: 'S/ 18', subtotal: 'S/ 108' },
-        { codigo: '003', nombre: 'Vestido jean  Talla 28 - Rojo', cantidad: 3, precio: 'S/ 20', descuento: 'S/ 2', igv: 'S/ 4', subtotal: 'S/ 56' }
-      ]
-    },
-    {
-      id: 2,
-      serieNum: '001',
-      num: '1200367',
-      tipoComprobante: 'Boleta',
-      cliente: 'Denis Cordova Moran',
-      ruc: '14151289',
-      fechaEmision: '2024-01-03',
-      igv: 'S/ 0.90',
-      total: 'S/ 5.90',
-      cajero: 'Julio Jeanpierre Castañeda',
-      cajeroId: '78541236',
-      estado: 'Activo',
-      detalles: [
-        { codigo: '004', nombre: 'Producto D', cantidad: 1, precio: 'S/ 5', descuento: 'S/ 0', igv: 'S/ 0.9', subtotal: 'S/ 5.9' }
-      ]
-    },
-    {
-      id: 3,
-      serieNum: '001',
-      num: '1000074',
-      tipoComprobante: 'Nota',
-      cliente: 'N/A',
-      ruc: '',
-      fechaEmision: '2024-01-03',
-      igv: 'S/ 0.00',
-      total: 'S/ 26.00',
-      cajero: 'Julio Jeanpierre Castañeda',
-      cajeroId: '78541236',
-      estado: 'Activo',
-      detalles: [
-        { codigo: '005', nombre: 'Producto E', cantidad: 1, precio: 'S/ 25', descuento: 'S/ 0', igv: 'S/ 4.5', subtotal: 'S/ 29.5' }
-      ]
-    }
-  ]);
-  
+  const { ventas, removeVenta  } = useVentasData();
 
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
@@ -95,8 +41,7 @@ const Ventas = () => {
 
   // Función para eliminar una venta
   const handleDeleteVenta = () => {
-    const updatedVentas = ventas.filter((venta) => venta.id !== selectedRowId);
-    setVentas(updatedVentas);
+    removeVenta(selectedRowId);
     closeModal();
     setConfirmDeleteModalOpen(false);
   };

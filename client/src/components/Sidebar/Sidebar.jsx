@@ -23,10 +23,12 @@ function Sidebar() {
     <div className={`sidebar bg-blue-700 text-white flex flex-col relative ${collapsed ? 'w-16' : 'w-60'} transition-all duration-300`}>
       <div className="flex justify-between items-center p-4">
         {!collapsed ? (
-          <h2 className="text-2xl font-bold flex items-center">
+          <h2 className="font-bold flex items-center text-base md:text-md lg:text-md xl:text-2xl">
             <img src={img} alt="Logo" className="h-8 w-8 mr-2" />
             TORMENTA
           </h2>
+
+
         ) : (
           <img src={img} alt="Logo" className="h-8 w-8 m-auto" />
         )}
@@ -49,17 +51,17 @@ function Sidebar() {
             { to: '/configuracion', icon: <FaCog className="text-xl" />, text: 'Configuración' },
           ].map(({ to, icon, text, subLinks }) => (
             <div key={to}>
-<li className={`flex items-center ${collapsed ? 'justify-center' : 'pl-4'} py-2 px-2 w-full`}>
-  <Link to={to} className={`flex items-center ${collapsed ? 'justify-center' : 'w-full'}`}>
-    {icon}
-    {!collapsed && <span className="ml-4">{text}</span>}
-  </Link>
-  {!collapsed && subLinks && (
-    <button onClick={() => toggleLink(to)} className="ml-auto">
-      {expandedLinks[to] ? <FaChevronUp /> : <FaChevronDown />}
-    </button>
-  )}
-</li>
+              <li className={`flex items-center ${collapsed ? 'justify-center' : 'pl-4'} py-2 px-2 w-full`}>
+                <Link to={to} className={`flex items-center ${collapsed ? 'justify-center' : 'w-full'}`}>
+                  {icon}
+                  {!collapsed && <span className="ml-4">{text}</span>}
+                </Link>
+                {!collapsed && subLinks && (
+                  <button onClick={() => toggleLink(to)} className="ml-auto">
+                    {expandedLinks[to] ? <FaChevronUp /> : <FaChevronDown />}
+                  </button>
+                )}
+              </li>
 
 
               {!collapsed && expandedLinks[to] && subLinks && (
