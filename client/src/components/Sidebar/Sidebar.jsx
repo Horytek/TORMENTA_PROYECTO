@@ -50,7 +50,12 @@ function Sidebar() {
                 { to: '/ventas/registro_venta', text: 'Nueva Venta' }
               ]
             },
-            { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén' },
+            { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén', subLinks: [
+              { to: '/almacen/nota_ingreso', text: 'Nota de ingreso' },
+              { to: '/almacen/guia_remision', text: 'Guia de remisión' }
+            ]
+              
+            },
             { to: '/configuracion', icon: <FaCog className="text-xl" />, text: 'Configuración' },
           ].map(({ to, icon, text, subLinks }) => (
             <div key={to}>

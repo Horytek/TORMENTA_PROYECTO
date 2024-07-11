@@ -9,8 +9,10 @@ import Empleados from '@/pages/Empleados/Empleados';
 import Productos from '@/pages/Productos/Productos';
 import Marcas from '@/pages/Productos/Marcas/Marcas';
 import Almacen from '@/pages/Almacen/Almacén';
+import Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Nota_ingreso';
 import Configuracion from '@/pages/Configuración';
 import Registro_venta from '@/pages/Ventas/Registro_Venta/Registro_venta';
+import Guia_Remision from '@/pages/Almacen/Guia_Remision/Guia_Remision';
 
 function Dashboard() {
   return (
@@ -38,6 +40,10 @@ function Dashboard() {
             <Route path="/productos/marcas" element={<Marcas />} />
             {/* Ruta para la página de almacén */}
             <Route path="/almacen" element={<Almacen />} />
+            {/* Ruta para la página de nota de ingreso */}
+            <Route path="/almacen/nota_ingreso" element={<Nota_Ingreso />} />
+            {/* Ruta para la página de guia de remision */}
+            <Route path="/almacen/guia_remision" element={<Guia_Remision />} />
             {/* Ruta para la página de configuración */}
             <Route path="/configuracion" element={<Configuracion />} />
           </Routes>
