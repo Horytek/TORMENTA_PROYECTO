@@ -5,23 +5,23 @@
 ### React (Frontend)
 
 - **Iniciar Aplicación React**
-cd client
-npm run dev
+        cd client
+        npm run dev
 
 ### Django (Backend)
 
 - **Inicializar Aplicación Django**
-python manage.py runserver
+        python manage.py runserver
 
 - **Crear diferentes apps del proyecto**
-python manage.py startapp myapp
+        python manage.py startapp myapp
 
 - **Migrations**
-python manage.py makemigrations
-python manage.py migrate
+        python manage.py makemigrations
+        python manage.py migrate
 
 - **SuperUser**
-python manage.py createsuperuser
+        python manage.py createsuperuser
 
 - **Dependencias**
-pip install mysqlclient
+        pip install mysqlclient
