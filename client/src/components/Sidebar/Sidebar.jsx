@@ -48,7 +48,8 @@ function Sidebar() {
               ]
             },
             { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén', subLinks: [
-              { to: '/almacen/nota_ingreso', text: 'Nota de ingreso' }
+              { to: '/almacen/nota_ingreso', text: 'Nota de ingreso' },
+              { to: '/almacen/guia_remision', text: 'Guia de remisión' }
             ]
               
             },
