@@ -8,6 +8,7 @@ import Ventas from '@/pages/Ventas/Venta/Ventas';
 import Empleados from '@/pages/Empleados/Empleados';
 import Productos from '@/pages/Productos/Productos';
 import Almacen from '@/pages/Almacen/Almacén';
+import Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Nota_ingreso';
 import Configuracion from '@/pages/Configuración';
 import Registro_venta from '@/pages/Ventas/Registro_Venta/Registro_venta';
 
@@ -35,6 +36,8 @@ function Dashboard() {
             <Route path="/productos" element={<Productos />} />
             {/* Ruta para la página de almacén */}
             <Route path="/almacen" element={<Almacen />} />
+            {/* Ruta para la página de nota de ingreso */}
+            <Route path="/almacen/nota_ingreso" element={<Nota_Ingreso />} />
             {/* Ruta para la página de configuración */}
             <Route path="/configuracion" element={<Configuracion />} />
           </Routes>
