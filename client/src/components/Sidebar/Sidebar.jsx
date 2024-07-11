@@ -40,7 +40,10 @@ function Sidebar() {
         <ul className="space-y-2">
           {[
             { to: '/inicio', icon: <FaHome className="text-xl" />, text: 'Inicio' },
-            { to: '/productos', icon: <FaBox className="text-xl" />, text: 'Productos' },
+            { to: '/productos', icon: <FaChartLine className="text-xl" />, text: 'Productos' , subLinks: [
+              { to: '/productos/marcas', text: 'Marcas' }
+            ]},
+            
             { to: '/empleados', icon: <FaUsers className="text-xl" />, text: 'Empleados' },
             {
               to: '/ventas', icon: <FaChartLine className="text-xl" />, text: 'Ventas', subLinks: [

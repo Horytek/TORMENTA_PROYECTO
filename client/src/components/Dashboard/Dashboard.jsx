@@ -7,6 +7,7 @@ import Inicio from '@/pages/Inicio/Inicio';
 import Ventas from '@/pages/Ventas/Venta/Ventas';
 import Empleados from '@/pages/Empleados/Empleados';
 import Productos from '@/pages/Productos/Productos';
+import Marcas from '@/pages/Productos/Marcas/Marcas';
 import Almacen from '@/pages/Almacen/Almacén';
 import Configuracion from '@/pages/Configuración';
 import Registro_venta from '@/pages/Ventas/Registro_Venta/Registro_venta';
@@ -33,6 +34,8 @@ function Dashboard() {
             <Route path="/empleados" element={<Empleados />} />
             {/* Ruta para la página de productos */}
             <Route path="/productos" element={<Productos />} />
+            {/* Ruta para la página de marcas */}	
+            <Route path="/productos/marcas" element={<Marcas />} />
             {/* Ruta para la página de almacén */}
             <Route path="/almacen" element={<Almacen />} />
             {/* Ruta para la página de configuración */}
