@@ -23,6 +23,7 @@
   background: none;
   cursor: pointer;
   transition: color 0.3s, border-width 0.3s; /* Transición suave para color y ancho del borde */
+  color: black;
 }
 
 .button-tipo-prendas button:hover {
