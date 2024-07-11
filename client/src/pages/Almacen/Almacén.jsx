@@ -1,4 +1,4 @@
-import Breadcrumb from '../components/Breadcrumb/Breadcrumb';
+import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
 
 function Almacén() {
 

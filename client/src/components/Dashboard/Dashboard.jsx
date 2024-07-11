@@ -5,9 +5,9 @@ import Sidebar from '../Sidebar/Sidebar';
 import Navbar from '../Navbar/Navbar';
 import Inicio from '@/pages/Inicio/Inicio';
 import Ventas from '@/pages/Ventas/Venta/Ventas';
-import Empleados from '@/pages/Empleados';
-import Productos from '@/pages/Productos';
-import Almacen from '@/pages/Almacén';
+import Empleados from '@/pages/Empleados/Empleados';
+import Productos from '@/pages/Productos/Productos';
+import Almacen from '@/pages/Almacen/Almacén';
 import Configuracion from '@/pages/Configuración';
 import Registro_venta from '@/pages/Ventas/Registro_Venta/Registro_venta';
 

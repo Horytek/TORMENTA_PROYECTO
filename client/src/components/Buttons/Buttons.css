@@ -1,0 +1,15 @@
+.btn {
+  color: white;
+  font-weight: 500;
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-save {
+  background-color: #389AE6;
+}
+
+.btn-close {
+  background-color: #8F95A0;
+}
