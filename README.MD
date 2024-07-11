@@ -5,8 +5,10 @@
 ### React (Frontend)
 
 - **Iniciar Aplicación React**
-        cd client
-        npm run dev
+```sh
+cd client
+npm run dev
+```
 
 ### Django (Backend)
 
