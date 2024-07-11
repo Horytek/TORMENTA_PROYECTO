@@ -1,19 +1,27 @@
-*Inicializar Aplicación*
+# PROYECTO TORMENTA:
+
+## Comandos principales:
+
+### React (Frontend)
+
+- **Iniciar Aplicación React**
+cd client
+npm run dev
+
+### Django (Backend)
+
+- **Inicializar Aplicación Django**
 python manage.py runserver
 
-*Crear diferentes apps del proyecto*
+- **Crear diferentes apps del proyecto**
 python manage.py startapp myapp
 
-*Migrations*
+- **Migrations**
 python manage.py makemigrations
 python manage.py migrate
 
-*SuperUser*
+- **SuperUser**
 python manage.py createsuperuser
 
-*Dependencias*
+- **Dependencias**
 pip install mysqlclient
-
-*Iniciar React*
-cd client
-npm run dev
