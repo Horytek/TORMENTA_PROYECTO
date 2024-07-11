@@ -1,0 +1,19 @@
+.title-Inicio {
+    font-size: 50px; /* Puede omitir esta propiedad si usa Tailwind CSS */
+    font-weight: bold; /* Puede omitir esta propiedad si usa Tailwind CSS */
+    color: rgba(0, 0, 0, 0.8);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    letter-spacing: 2px;
+    background: rgb(2,0,36);
+    background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(7,6,89,1) 30%, rgba(9,9,121,1) 59%, rgba(0,212,255,1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: all 0.3s ease;
+  }
+  
+  .title-Inicio:hover {
+    color: rgba(0, 0, 0, 1);
+    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
+    transform: scale(1);
+  }
+  
