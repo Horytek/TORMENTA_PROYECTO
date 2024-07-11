@@ -9,7 +9,7 @@ const FiltrosVentas = () => {
                     <label htmlFor="campo" className="label">
                         Campo
                     </label>
-                    <select id="campo" className="input" style={{width: "180px"}}>
+                    <select id="campo" className="input" style={{width: "170px"}}>
                         <option value="">Seleccione</option>
                         <option value="cam1">Cam1</option>
                         <option value="cam2">Cam2</option>
@@ -20,7 +20,7 @@ const FiltrosVentas = () => {
                     <label htmlFor="tipo" className="label">
                         Tipo
                     </label>
-                    <select id="tipo" className="input" style={{width: "180px"}}>
+                    <select id="tipo" className="input" style={{width: "170px"}}>
                         <option value="">Seleccione</option>
                         <option value="tipo1">Tipo1</option>
                         <option value="tipo2">Tipo2</option>
@@ -37,7 +37,7 @@ const FiltrosVentas = () => {
 
             {/* Segundo div para botones de acción */}
             <div className="flex space-x-2 items-center xl:justify-end xl:w-4/12 mt-3 md:mt-3 lg:mt-3 xl:mt-0">
-                <button className="btn btn-filtrar">Filtrar</button>
+                <button className="btn btn-filtrar mr-0">Filtrar</button>
                 <button className="btn btn-resetear">Resetear</button>
                 <button className="btn btn-exportar flex items-center">
                     <GrDocumentWindows className="inline-block mr-2" style={{ fontSize: '20px' }} />

@@ -3,10 +3,11 @@ import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
 import Pagination from '@/components/Pagination/Pagination';
-import TablaVentas from './ComponentsVentas/VentasTable';
-import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
-import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
-import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
+import TablaVentas from '../ComponentsVentas/VentasTable';
+import FiltrosVentas from '../ComponentsVentas/FiltrosVentas';
+import OptionsModal from '../ComponentsVentas/Modals/OptionsModal';
+import ConfirmationModal from '../ComponentsVentas/Modals/ConfirmationModal';
+import { Link } from 'react-router-dom';
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
@@ -116,10 +117,10 @@ const Ventas = () => {
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
           Ventas  S/. 5842.05
         </h1>
-        <button className="btn btn-nueva-venta mr-0">
+        <Link to="/ventas/registro_venta" className="btn btn-nueva-venta mr-0">
           <MdAddCircleOutline className="inline-block mr-2" style={{ fontSize: '25px' }} />
           Nueva venta
-        </button>
+        </Link>
       </div>
 
       {/* Componente de filtros */}
