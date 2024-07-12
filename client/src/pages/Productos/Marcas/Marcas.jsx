@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./Marcas.css";
+import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { MdAddCircleOutline } from "react-icons/md";
@@ -8,6 +9,7 @@ import TablaMarcas from "./ComponentsMarcas/MarcasTable";
 import OptionsModal from "./ComponentsMarcas/Modals/OptionsModal";
 import BajaModal from "./ComponentsMarcas/Modals/BajaModal";
 import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
+import RegistroModal from "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal";
 
 const Marcas = () => {
   // Estado para manejar la lista de ventas
@@ -56,7 +58,9 @@ const Marcas = () => {
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [darBajaOptionSelected, setDarBajaOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const totalPages = 5; // Número total de páginas
   const filteredMarcas = marcas.filter((marca) =>
     marca.nombre.toLowerCase().includes(searchTerm.toLowerCase())
@@ -75,6 +79,13 @@ const Marcas = () => {
     setSelectedRowId(null);
     setModalOpen(false);
     setDeleteOptionSelected(false);
+  };
+  const openRegistroModal = (title) => {
+    setModalTitle(title);
+    setIsModalOpen(true);
+  };
+  const closeRegistroModal = () => {
+    setIsModalOpen(false);
   };
 
   const closeBajaModal = () => {
@@ -121,7 +132,7 @@ const Marcas = () => {
       <Breadcrumb
         paths={[
           { name: "Inicio", href: "/inicio" },
-          { name: "Marcas", href: "/marcas" },
+          { name: "Marcas", href: "/productos/marcas" },
         ]}
       />
 
@@ -150,7 +161,10 @@ const Marcas = () => {
               />
             </div>
             {/* Botón para agregar nueva marca */}
-            <button className="flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-md px-4 py-2">
+            <button
+              onClick={() => openRegistroModal("Agregar Marca")}
+              className="flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-md px-4 py-2"
+            >
               <MdAddCircleOutline
                 className="mr-2"
                 style={{ fontSize: "20px" }}
@@ -175,10 +189,14 @@ const Marcas = () => {
         modalOpen={modalBajaOpen}
         toggleDeactivateMarca={toggleDeactivateMarca}
         closeBajaModal={closeBajaModal}
-        handleDarBajaMarca = {handleDarBajaMarca}
+        handleDarBajaMarca={handleDarBajaMarca}
         darBajaOptionSelected={darBajaOptionSelected}
       />
+      {/* Modal para registro de marca */}
 
+      {isModalOpen && (
+        <RegistroModal modalTitle={modalTitle} onClose={closeRegistroModal} />
+      )}
       {/* Modal para opciones */}
       <OptionsModal
         modalOpen={modalOpen}

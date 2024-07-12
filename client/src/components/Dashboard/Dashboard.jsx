@@ -10,6 +10,7 @@ import Productos from '@/pages/Productos/Productos';
 import Marcas from '@/pages/Productos/Marcas/Marcas';
 import Almacen from '@/pages/Almacen/Almacén';
 import Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Nota_ingreso';
+import Nueva_Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Registro_Ingreso/Registro_ingreso';
 import Nota_Salida from '@/pages/Almacen/Nota_Salida/Nota_salida';
 import Nueva_Nota_Salida from '@/pages/Almacen/Nota_Salida/Nueva_Nota_Salida/Nueva_Nota_salida';
 import Configuracion from '@/pages/Configuración';
@@ -45,6 +46,8 @@ function Dashboard() {
             <Route path="/almacen" element={<Almacen />} />
             {/* Ruta para la página de nota de ingreso */}
             <Route path="/almacen/nota_ingreso" element={<Nota_Ingreso />} />
+            {/* Ruta para la página de nueva nota de ingreso */}
+            <Route path="/almacen/nota_ingreso/registro_ingreso" element={<Nueva_Nota_Ingreso />} />
             {/* Ruta para la página de nota de salida */}
             <Route path="/almacen/nota_salida" element={<Nota_Salida />} />
             {/* Ruta para la página de nueva nota de salida */}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FaCaretDown } from "react-icons/fa";
+import { FaAngleDown } from "react-icons/fa6";
 
 
 const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal }) => {
@@ -8,6 +8,10 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
 
   const toggleRow = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
+  };
+
+  const handleSelectClick = (event) => {
+    event.stopPropagation(); // Evita la propagación del clic al tr de la tabla
   };
 
   const renderIngresoRow = (ingreso) => (
@@ -20,12 +24,12 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
         <td className="text-center">{ingreso.oCompra}</td>
         <td className="text-center">{ingreso.factura}</td>
         <td>
-          <select className='b custom-select' name="select">
-            <option value=""><FaCaretDown /></option>
+          <select className='b custom-select' name="select" onClick={handleSelectClick}>
+            <option value=""><FaAngleDown /></option>
             <option value="value1">Imprimir</option>
             <option className={`ml-2 cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(ingreso.id)}  value="value2" selected>Anular</option>
             <option value="value3">Clonar</option>
-            </select>
+          </select>
         </td>
       </tr>
       {expandedRow === ingreso.id && renderVentaDetails(ingreso.detalles)}
@@ -71,8 +75,6 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
     </tr>
   );
 
-
-
   return (
     <div className="container-table-ingreso px-4 bg-white rounded-lg">
       <table className="table w-full">
@@ -100,7 +102,6 @@ TablaIngresos.propTypes = {
   modalOpen: PropTypes.bool.isRequired,
   deleteOptionSelected: PropTypes.bool.isRequired,
   openModal: PropTypes.func.isRequired,
-  currentPage: PropTypes.number.isRequired,
 };
 
 export default TablaIngresos;
