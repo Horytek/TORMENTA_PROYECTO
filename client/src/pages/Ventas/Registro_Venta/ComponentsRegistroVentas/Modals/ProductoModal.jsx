@@ -62,7 +62,7 @@ const ModalProducto = ({
           <thead>
             <tr>
               {['NOMBRE', 'PRECIO', 'STOCK'].map((heading, index) => (
-                <th key={heading} style={{fontSize: "14px"}} className={`w-${index === 0 ? '1/3' : '1/12'} text-start text-xs font-semibold text-gray-500 uppercase tracking-wider`}>
+                <th key={heading} className={`w-${index === 0 ? '1/3' : '1/12'} text-start text-xs font-semibold text-gray-500 uppercase tracking-wider`}>
                   {heading}
                 </th>
               ))}

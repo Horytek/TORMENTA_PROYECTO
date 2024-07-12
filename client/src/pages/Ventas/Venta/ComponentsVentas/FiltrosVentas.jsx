@@ -36,9 +36,10 @@ const FiltrosVentas = () => {
             </div>
 
             {/* Segundo div para botones de acción */}
-            <div className="flex space-x-2 items-center xl:justify-end xl:w-4/12 mt-3 md:mt-3 lg:mt-0 xl:mt-0">
-            
-                <button className="btn btn-exportar flex items-center mr-0">
+            <div className="flex space-x-2 items-center xl:justify-end xl:w-4/12 mt-3 md:mt-3 lg:mt-3 xl:mt-0">
+                <button className="btn btn-filtrar mr-0">Filtrar</button>
+                <button className="btn btn-resetear">Resetear</button>
+                <button className="btn btn-exportar flex items-center">
                     <GrDocumentWindows className="inline-block mr-2" style={{ fontSize: '20px' }} />
                     Exportar
                 </button>

@@ -1,11 +1,11 @@
 .container-registro-detalle-venta {
-  box-shadow: 0 0 10px #171a1f33;
+  box-shadow: 0 0 10px hsla(218, 15%, 11%, 0.2);
   background-color: #171a1f09 !important;
   border-radius: 10px;
 }
 
 .modal-prod {
-  box-shadow: 0 0 10px #171a1f33;
+  box-shadow: 0 0 10px hsla(218, 15%, 11%, 0.2);
   background-color: #ededed;
 }
 
@@ -82,34 +82,3 @@
 .spinner span {
   margin: 0 12px;
 }
-
-.inputs-montos {
-  background-color: rgb(255, 255, 255);
-  padding: 6px 16px;
-  border: solid 2px #a2a2a2;
-  border-radius: 5px;
-  width: 8.5rem;
-}
-
-.span-title {
-  width: 7rem;
-}
-
-.btn-cobrar {
-  background-color: #379AE6FF;
-  color: white;
-  font-weight: 500;
-  align-items: center;
-}
-
-.btn-cobrar:hover {
-  background-color: #1f7db9ff;
-}
-
-.btn-cerrar {
-  background-color: #e05858ff;
-  color: white;
-  font-weight: 500;
-  align-items: center;
-}
-

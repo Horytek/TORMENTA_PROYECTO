@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FaTrashAlt } from 'react-icons/fa';
+import { MdDeleteForever } from 'react-icons/md';
+import { IoIosCloudDone } from 'react-icons/io';
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -32,13 +33,16 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           <div>{venta.cajero}</div>
           <div className="text-gray-500">{venta.cajeroId}</div>
         </td>
-        <td className="text-center " style={{ color: venta.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400"}} >
-            <span className='p-2 rounded-full' style={{background: venta.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }} >{venta.estado}</span>
+        <td className="text-center" style={{ color: venta.estado === 'Activo' ? '#1DD75BFF' : 'red' }}>
+          <div className="flex items-center justify-around">
+            <IoIosCloudDone className="inline-block" style={{ fontSize: '20px' }} />
+            <span>{venta.estado}</span>
+          </div>
         </td>
         <td>
-          <FaTrashAlt
-            className={`ml-2 cursor-pointer text-red-500 ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
-            style={{ fontSize: '20px'}}
+          <MdDeleteForever
+            className={`ml-2 cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
+            style={{ fontSize: '25px', color: 'red' }}
             onClick={() => openModal(venta.id)}
           />
         </td>

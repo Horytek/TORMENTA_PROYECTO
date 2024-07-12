@@ -15,7 +15,7 @@ const useVentasData = () => {
       total: 'S/ 174.64',
       cajero: 'Julio Jeanpierre Castañeda',
       cajeroId: '78541236',
-      estado: 'Inactivo',
+      estado: 'Activo',
       detalles: [
         { codigo: '001', nombre: 'Pantalon Jean Resgasdo Talla 32 - Azul', cantidad: 2, precio: 'S/ 50', descuento: 'S/ 5', igv: 'S/ 10', subtotal: 'S/ 95' },
         { codigo: '002', nombre: 'Vestido jean Talla 28 - Celeste', cantidad: 1, precio: 'S/ 100', descuento: 'S/ 10', igv: 'S/ 18', subtotal: 'S/ 108' },
@@ -68,14 +68,6 @@ const useVentasData = () => {
     setDetalles([...detalles, nuevoDetalle]);
   };
 
-  const updateDetalle = (updatedDetalle) => {
-    setDetalles(prevDetalles =>
-      prevDetalles.map(detalle =>
-        detalle.codigo === updatedDetalle.codigo ? updatedDetalle : detalle
-      )
-    );
-  };
-
   const removeVenta = (id) => {
     const updatedVentas = ventas.filter((venta) => venta.id !== id);
     setVentas(updatedVentas);
@@ -87,7 +79,7 @@ const useVentasData = () => {
     );
   };
 
-  return { ventas, detalles, addVenta, addDetalle, removeVenta, removeDetalle, updateDetalle };
+  return { ventas, detalles, addVenta, addDetalle, removeVenta, removeDetalle };
 };
 
 export default useVentasData;
