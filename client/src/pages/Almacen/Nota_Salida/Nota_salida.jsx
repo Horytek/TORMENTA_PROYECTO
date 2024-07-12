@@ -15,64 +15,63 @@ function NotaSalida() {
           Nota de salida
         </h1>
       </div>
-      <form className="flex border rounded" style={{ backgroundColor: 'lightgray', padding: 10 }}>
-        <div className="flex flex-col w-1/2">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
-                Destinatario:
-              </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="destinatario" type="text" />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
-                RUC:
-              </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="ruc" type="text" />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
-                Número:
-              </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="numero" type="text" />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
-                Fecha Docu:
-              </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="fechaDocu" type="date" />
-            </div>
-          </div>
-          <div className="flex justify-between mt-4 space-x-2">
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              Nuevo proveedor
-            </button>
-            <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              Buscar producto
-            </button>
-            <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              Cancelar
-            </button>
-            <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              Guardar
-            </button>
-          </div>
+      <form className="flex border rounded" style={{ backgroundColor: '#F2F3F4', padding: 10 }}>
+  <div className="flex flex-col w-1/2">
+    <div className="grid grid-cols-2 gap-4">
+      <div className="mb-4">
+        <div className='w-full relative group mb-5 text-start'>
+          <label htmlFor="proveedor" className='text-sm font-bold text-black'>Proveedor:</label>
+          <input type="text" name='proveedor' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
         </div>
-        <div className="ml-4 flex flex-col w-1/2">
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
-              Glosa:
-            </label>
-            <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="glosa" type="text" />
-          </div>
-          <div className="flex-1">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="observacion">
-              Observación:
-            </label>
-            <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-full" id="observacion"></textarea>
-          </div>
+      </div>
+      <div className="mb-4">
+        <div className='w-full relative group mb-5 text-start'>
+          <label htmlFor="ruc" className='text-sm font-bold text-black'>RUC:</label>
+          <input type="text" name='ruc' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
         </div>
-      </form>
+      </div>
+      <div className="mb-4">
+        <div className='w-full relative group mb-5 text-start'>
+          <label htmlFor="numero" className='text-sm font-bold text-black'>Número:</label>
+          <input type="text" name='numero' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
+        </div>
+      </div>
+      <div className="mb-4">
+        <div className='w-full relative group mb-5 text-start'>
+          <label htmlFor="fechaDocu" className='text-sm font-bold text-black'>Fecha Docu:</label>
+          <input type="date" name='fechaDocu' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
+        </div>
+      </div>
+    </div>
+    <div className="flex justify-between mt-4 space-x-2">
+      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+        Nuevo proveedor
+      </button>
+      <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+        Buscar producto
+      </button>
+      <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+        Cancelar
+      </button>
+      <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+        Guardar
+      </button>
+    </div>
+  </div>
+  <div className="ml-4 flex flex-col w-1/2">
+    <div className="mb-4">
+      <div className='w-full relative group mb-5 text-start'>
+        <label htmlFor="glosa" className='text-sm font-bold text-black'>Glosa:</label>
+        <input type="text" name='glosa' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
+      </div>
+    </div>
+    <div className="flex-1">
+      <label htmlFor="glosa" className='text-sm font-bold text-black'>Observación:</label>
+      <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-full" id="observacion"></textarea>
+    </div>
+  </div>
+</form>
+
     </div>
   );
 }
