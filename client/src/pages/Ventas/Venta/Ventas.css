@@ -9,14 +9,14 @@
   border-radius: 0.25rem;
 }
 
-.btn-nueva-venta{
+.btn-nueva-venta {
   background-color: #00bdd6ff;
   color: white;
   font-weight: 500;
   align-items: center;
 }
 
-.btn-nueva-venta:hover{
+.btn-nueva-venta:hover {
   background-color: rgb(3, 158, 179);
 }
 
@@ -27,7 +27,7 @@
   align-items: center;
 }
 
-.btn-exportar:hover{
+.btn-exportar:hover {
   background-color: rgba(0, 0, 0, 0.612);
 }
 
@@ -73,6 +73,7 @@ th {
 .tr-tabla-venta {
   cursor: pointer !important;
 }
+
 /**Modal**/
 
 /* Ventas.css */
@@ -170,7 +171,6 @@ input:checked::after {
   background-color: #171a1f09 !important;
   border-radius: 10px;
 }
-
 
 .table-details td {
   border-top: solid 3px #1f1a170e;

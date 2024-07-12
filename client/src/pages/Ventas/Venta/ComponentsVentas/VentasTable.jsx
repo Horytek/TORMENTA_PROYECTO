@@ -105,11 +105,11 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           <tr>
             <th className="w-1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TIPO.COMP</th>
-            <th className="w-1/6 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
+            <th className="w-1/6 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">F. EMISIÓN</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">IGV</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
-            <th className="w-1/6 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CAJERO</th>
+            <th className="w-1/6 text-start  text-sm font-semibold text-gray-500 uppercase tracking-wider">CAJERO</th>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider"></th>
           </tr>

@@ -64,13 +64,7 @@ h6 {
   color: #323842ff;
 }
 
-td:nth-child(1) {
-  text-align: start !important;
-}
 
-th, td {
-  text-align: center !important;
-}
 
 .estado-activo {
   margin: 15px;
