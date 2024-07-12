@@ -2,21 +2,17 @@ import React from "react";
 import PropTypes from "prop-types";
 import { MdDeleteForever, MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { IoIosCloudDone } from "react-icons/io";
-import { useState } from "react";
 
 const TablaMarcas = ({
   marcas,
   modalOpen,
   deleteOptionSelected,
   openModal,
-  editMarca,
-  deactivateMarca,
+  openEditModal,
+  darBajaModal,
 }) => {
  
 
-  const toggleRow = (id) => {
-    setExpandedRow(expandedRow === id ? null : id);
-  };
 
   return (
     <div className="container-table-marca px-4 bg-white rounded-lg">
@@ -34,11 +30,11 @@ const TablaMarcas = ({
             <tr
               key={marca.id}
               onClick={() => toggleRow(marca.id)}
-              className="tr-tabla-marca"
+              className="tr-tabla-marca justify-center hover:bg-gray-100"
             >
               <td style={{ textAlign: "center" }} className="font-bold">
                 <div>{marca.serieNum}</div>
-                <div className="text-gray-500">{marca.num}</div>
+                <div className="text-gray-500 ">{marca.num}</div>
               </td>
               <td style={{ textAlign: "center" }} className="font-bold">
                 {marca.nombre}
@@ -61,7 +57,7 @@ const TablaMarcas = ({
                   <MdEdit
                     className="cursor-pointer hover:text-blue-500"
                     style={{ fontSize: "20px", color: "blue" }}
-                    onClick={() => editMarca(marca.id)}
+                    onClick={() => openEditModal(marca.id)}
                   />
                   <MdDeleteForever
                     className={`cursor-pointer ${
@@ -75,7 +71,7 @@ const TablaMarcas = ({
                   <MdDoNotDisturbAlt
                     className="cursor-pointer hover:text-orange-500"
                     style={{ fontSize: "20px", color: "orange" }}
-                    onClick={() => deactivateMarca(marca.id)}
+                    onClick={() => darBajaModal(marca.id)}
                   />
                 </div>
               </td>
@@ -94,7 +90,7 @@ TablaMarcas.propTypes = {
   deleteOptionSelected: PropTypes.bool.isRequired,
   openModal: PropTypes.func.isRequired,
   editMarca: PropTypes.func.isRequired,
-  deactivateMarca: PropTypes.func.isRequired,
+  darBajaModal: PropTypes.func.isRequired,
 };
 
 export default TablaMarcas;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
-import "./EditModal.css";
+import "./RegistroModal.css";
 
 // Componentes UI de Registro_Venta adaptados para el modal
 const Label = ({ children, htmlFor, className = "" }) => (
@@ -22,14 +22,15 @@ const Input = ({ id, value, onChange, placeholder, className = "" }) => (
 );
 
 // RegistroVentaModal como un formulario dentro de un modal
-const RegistroVentaModal = ({ onClose }) => {
+const RegistroVentaModal = ({ modalTitle, onClose }) => {
   const [brandName, setBrandName] = useState("");
 
   return (
     <div className="modal-overlay">
       <div className="modal">
         <div className="modal-header">
-          <h3 className="modal-title">Editar Marca</h3>
+          <h3 className="modal-title">{modalTitle}</h3>
+
         </div>
         <div className="modal-body">
           <div className="space-y-4">
@@ -56,6 +57,7 @@ const RegistroVentaModal = ({ onClose }) => {
 };
 
 RegistroVentaModal.propTypes = {
+  modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
 };
 

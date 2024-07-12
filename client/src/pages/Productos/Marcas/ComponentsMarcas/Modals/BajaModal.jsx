@@ -1,11 +1,11 @@
 import PropTypes from "prop-types";
 import { IoMdOptions } from "react-icons/io";
-const OptionsModal = ({
+
+const BajaModal = ({
   modalOpen,
-  toggleDeleteDetalleOption,
-  closeModal,
-  setConfirmDeleteModalOpen,
-  deleteOptionSelected,
+  toggleDeactivateMarca,
+  handleDarBajaMarca,
+  closeBajaModal,
 }) => {
   if (!modalOpen) return null;
 
@@ -22,23 +22,18 @@ const OptionsModal = ({
         <div className="flex mt-4" style={{ alignItems: "center" }}>
           <input
             type="checkbox"
-            id="eliminar"
+            id="deactivate"
             className="custom-checkbox mr-2 relative"
-            onChange={toggleDeleteDetalleOption}
-          />{" "}
-          <p>Eliminar la Marca</p>
+            onChange={toggleDeactivateMarca}
+          />
+          <label htmlFor="deactivate">Dar de baja a la marca</label>
         </div>
       </div>
-      {/* Otros checkboxes y acciones */}
       <div className="modal-actions flex justify-end" style={{ gap: "20px" }}>
-        <button className="btn btn-cancel" onClick={closeModal}>
+        <button className="btn btn-cancel" onClick={closeBajaModal}>
           Cancelar
         </button>
-        <button
-          className="btn btn-aceptar"
-          onClick={() => setConfirmDeleteModalOpen(true)}
-          disabled={!deleteOptionSelected}
-        >
+        <button className="btn btn-aceptar" onClick={handleDarBajaMarca}>
           Aceptar
         </button>
       </div>
@@ -46,12 +41,10 @@ const OptionsModal = ({
   );
 };
 
-OptionsModal.propTypes = {
+BajaModal.propTypes = {
   modalOpen: PropTypes.bool.isRequired,
-  toggleDeleteDetalleOption: PropTypes.func.isRequired,
+  toggleDeactivateMarca: PropTypes.func.isRequired,
   closeModal: PropTypes.func.isRequired,
-  setConfirmDeleteModalOpen: PropTypes.func.isRequired,
-  deleteOptionSelected: PropTypes.bool.isRequired,
 };
 
-export default OptionsModal;
+export default BajaModal;
