@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import './Guia_Remision.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import { MdAddCircleOutline } from 'react-icons/md';
+import { MdAddCircleOutline, MdEdit } from 'react-icons/md';
+
 import Pagination from '@/components/Pagination/Pagination';
 import TablaGuias from './ComponentsGuias/GuiasTable';
 import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
@@ -11,6 +12,16 @@ import { Link } from 'react-router-dom';
 import useGuiasData from '../data/guiasdata';
 
 const Guias = () => {
+  /* const renderActions = (row) => (
+    <div className="flex justify-center items-center">
+      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => openModal('Editar Producto')}>
+        <MdEdit />
+      </button>
+      <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(row)}>
+        <FaTrash />
+      </button>
+    </div>
+  ); */
   // Estado para manejar la lista de guias
   const { guias, removeGuia  } = useGuiasData();
 

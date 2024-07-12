@@ -4,6 +4,7 @@ import { IoMdPin, IoMdCar } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
+import TablaRegGuia from "./ComponentsRegGuias/RegGuiaTable";
 function RegistroGuia() {
 
   return (
@@ -19,37 +20,37 @@ function RegistroGuia() {
         </h1>
       </div>
       <div className="rounded" style={{ backgroundColor: '#F2F3F4' }}>
-        <form className="flex rounded" style={{ backgroundColor: '#F2F3F4', padding: 10 }}>
+        <div className="flex rounded" style={{ backgroundColor: '#F2F3F4', padding: 10 }}>
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
-              <div className='w-full relative group mb-5 text-start'>
+              <div className='w-full relative group  text-start'>
                 <label htmlFor="documento" className='text-sm font-bold text-black'>Documento:</label>
-                <select id='documento' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'>
+                <select id='documento' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                   <option>Guia de Remision</option>
                   <option>Seleccione...</option>
                 </select>
               </div>
-              <div className="mb-4">
+              <div className="">
                 <label htmlFor="glosa" className='text-sm font-bold text-black'>Glosa.Sal:</label>
-                <select id='glosa' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'>
+                <select id='glosa' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                   <option>Seleccione...</option>
                 </select>
               </div>
-              <div className="mb-4">
-                <div className='w-full relative group mb-5 text-start'>
+              <div className="">
+                <div className='w-full relative group text-start'>
                   <label htmlFor="cliente" className='text-sm font-bold text-black'>Cliente:</label>
-                  <input type="cliente" name='cliente' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                  <input type="cliente" name='cliente' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
                 </div>
               </div>
-              <div className="mb-4">
-                <div className='w-full relative group mb-5 text-start'>
+              <div className="">
+                <div className='w-full relative group text-start'>
                   <label htmlFor="dirpart" className='text-sm font-bold text-black'>Dir. Partida:</label>
-                  <input type="dirpart" name='cliente' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                  <input type="dirpart" name='dirpart' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
                 </div>
               </div>
-              <div className="mb-4">
+              <div className='w-full relative group  text-start'>
                 <label htmlFor="vendedor" className='text-sm font-bold text-black'>Vendedor:</label>
-                <select id='vendedor' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'>
+                <select id='vendedor' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                   <option>Seleccione...</option>
                   <option>CENTRAL 22</option>
                   <option>CENTRAL 52 - 53</option>
@@ -58,32 +59,32 @@ function RegistroGuia() {
                   <option>TIENDA BALTA</option>
                 </select>
               </div>
-              <div className="mb-4">
-                <div className='w-full relative group mb-5 text-start'>
+              <div className="">
+                <div className='w-full relative group text-start'>
                   <label htmlFor="dirdest" className='text-sm font-bold text-black'>Dir. Destino:</label>
-                  <input type="dirdest" name='cliente' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                  <input type="dirdest" name='dirdest' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
                 </div>
               </div>
-              <div className="mb-4">
+              <div className="">
                 <label className="block text-gray-700 text-sm font-bold mt-5" htmlFor="direcdest">
                 </label>
                 <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline" type="button">
                   <IoMdPin className="inline-block mr-2" /> Ub. de Partida/Ub. de Destino
                 </button>
               </div>
-              <div className="mb-4">
-                <div className='w-full relative group mb-5 text-start'>
+              <div className="">
+                <div className='w-full relative group text-start'>
                   <label htmlFor="dirdest" className='text-sm font-bold text-black'>Fecha:</label>
-                  <input type="date" name='cliente' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                  <input type="date" name='date' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
               </div>
-              <div className="mb-4">
-                <div className='w-full relative group mb-5 text-start'>
+              <div className="">
+                <div className='w-full relative group text-start'>
                   <label htmlFor="ubipart" className='text-sm font-bold text-black'>Ubi. Part:</label>
-                  <input type="ubipart" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' disabled />
+                  <input type="ubipart" name='ubipart' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
                 </div>
               </div>
-              <div className="mb-4">
+              <div className='w-full relative group  text-start'>
                 <label htmlFor="referencia" className='text-sm font-bold text-black'>Referencia:</label>
                 <select id='referencia' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                   <option>Seleccione...</option>
@@ -94,52 +95,52 @@ function RegistroGuia() {
                   <option>NOTA PEDIDO</option>
                 </select>
               </div>
-              <div className="mb-4">
+              <div className="">
                 <div className='w-full relative group mb-5 text-start'>
                   <label htmlFor="ubidest" className='text-sm font-bold text-black'>Ubi. Dest:</label>
-                  <input type="ubidest" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' disabled />
+                  <input type="ubidest" name='ubidest' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
                 </div>
               </div>
-              <div className="mb-4 flex">
+              <div className="flex">
                 <div className="flex-1 mr-2">
-                  <label for="cantidad" className="block text-gray-700 text-sm font-bold mb-2">Cant. Paq:</label>
-                  <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="cantidad" type="text" />
+                  <label for="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
+                  <input type="cant" name='cant' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
                 <div className="flex-1 ml-2">
-                  <label label for="peso" className="block text-gray-700 text-sm font-bold mb-2">Peso Kg:</label>
-                  <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="peso" type="text" />
+                  <label label for="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>
+                  <input type="peso" name='peso' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
               </div>
-              <div className="mb-4">
-                <div className='w-full relative group mb-5 text-start'>
+              <div className="">
+                <div className='w-full relative group text-start'>
                   <label htmlFor="numdoc" className='text-sm font-bold text-black'>Num. Doc:</label>
-                  <input type="numdoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' disabled />
+                  <input type="numdoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
                 </div>
               </div>
-              <div className="mb-4 flex">
+              <div className="flex">
                 <div className="flex-1 mr-2">
-                  <label for="cantidad" className="block text-gray-700 text-sm font-bold mt-6"></label>
+                  <label for="cantidad" className="block text-gray-700 text-sm font-bold  "></label>
                   <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" type="button">
                     <IoMdCar className="inline-block mr-2 text-lg" /> Datos de Transporte
                   </button>
                 </div>
                 <div className="flex-1 ml-2">
-                  <label label for="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
+                  <label label for="peso" className="block text-gray-700 text-sm font-bold"></label>
                   <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" type="button">
                     <MdPersonAdd className="inline-block mr-2 text-lg" />Nuevo Cliente
                   </button>
                 </div>
               </div>
-              <div className="mb-4">
-                <div className='w-full relative group mb-5 text-start'>
+              <div className="">
+                <div className='w-full relative group text-start'>
                   <label htmlFor="tipodoc" className='text-sm font-bold text-black'>RUC/DNI:</label>
-                  <input type="tipodoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' disabled />
+                  <input type="tipodoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
                 </div>
               </div>
-              <div className="mb-4">
-                <div className='w-full relative group mb-5 text-start'>
+              <div className="">
+                <div className='w-full relative group text-start'>
                   <label label for="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
-                  <button className="bg-yellow-500 hover:bg-yellow-700 text-black w-full font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+                  <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
                     <FaBarcode className="inline-block mr-2" /> Buscar producto
                   </button>
                 </div>
@@ -152,19 +153,19 @@ function RegistroGuia() {
                 Observación:
               </label>
               <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="observacion" style={{ height: "90%" }}></textarea>           
+                    id="observacion" style={{ height: "94%" }}></textarea>           
             </div>
-            <div className="mb-8 flex justify-end">
-              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+            <div className="mt-10 flex justify-end">
+              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
                 <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
             </div>
           </div>
-        </form>
-        <div>
-          <br />
-          Aqui va la tabla
         </div>
+        
+          <br />
+          <TablaRegGuia />
+        
       </div>
     </div>
   );

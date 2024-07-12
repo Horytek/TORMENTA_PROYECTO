@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { MdDeleteForever } from 'react-icons/md';
+import { MdEdit, MdDeleteForever } from 'react-icons/md';
 import { IoIosCloudDone } from 'react-icons/io';
+import { FaTrash } from 'react-icons/fa';
 
 const TablaGuias = ({ guias, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -9,6 +10,22 @@ const TablaGuias = ({ guias, modalOpen, deleteOptionSelected, openModal }) => {
   const toggleRow = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
+
+  const handleOpenConfirmationModal = (row) => {
+    // Lógica para manejar la apertura del modal de confirmación
+    openModal(row.id); // Por ejemplo
+  };
+
+  const renderActions = (row) => (
+    <div className="flex justify-center items-center">
+      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => openModal('Editar Producto')}>
+        <MdEdit />
+      </button>
+      <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(row)}>
+        <FaTrash />
+      </button>
+    </div>
+  );
 
   const renderGuiaRow = (guia) => (
     <React.Fragment key={guia.id}>
@@ -21,18 +38,13 @@ const TablaGuias = ({ guias, modalOpen, deleteOptionSelected, openModal }) => {
         <td className="text-center">{guia.moneda}</td>
         <td className="text-center">{guia.total}</td>
         <td className="text-center">{guia.concepto}</td>
-        <td className="text-center" style={{ color: guia.estadosun === 'Activo' ? '#1DD75BFF' : 'red' }}>
-          <div className="items-center justify-around">
-            <IoIosCloudDone className="inline-block" style={{ fontSize: '20px' }} />
-            <span>{guia.estadosun}</span>
-          </div>
-        </td>
+        <td className={`text-center ${guia.estadosun === 'Activo' ? 'est-activo' : 'est-inactivo'}`}>
+   {guia.estadosun}
+</td> 
+
+
         <td className="text-center">
-          <MdDeleteForever
-            className={`ml-2 cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
-            style={{ fontSize: '25px', color: 'red' }}
-            onClick={() => openModal(guia.id)}
-          />
+          {renderActions(guia)}
         </td>
       </tr>
       {expandedRow === guia.id && renderGuiaDetails(guia.detalles)}
@@ -41,19 +53,19 @@ const TablaGuias = ({ guias, modalOpen, deleteOptionSelected, openModal }) => {
 
   const renderGuiaDetails = (detalles) => (
     <tr className="bg-gray-100">
-      <td colSpan="9">
+      <td colSpan="10">
         <div className="container-table-details px-4">
           <table className="table-details w-full">
             <thead>
               <tr>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CODIGO</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CÓDIGO</th>
                 <th className="w-1/12 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">MARCA</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCION</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACEN</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACÉN</th>
               </tr>
             </thead>
             <tbody>
@@ -66,7 +78,7 @@ const TablaGuias = ({ guias, modalOpen, deleteOptionSelected, openModal }) => {
                   <td className="text-center">{detalle.um}</td>
                   <td className="text-center">{detalle.precio}</td>
                   <td className="text-center">{detalle.total}</td>
-                  <td className="text-center"> {detalle.almacen}</td>
+                  <td className="text-center">{detalle.almacen}</td>
                 </tr>
               ))}
             </tbody>
