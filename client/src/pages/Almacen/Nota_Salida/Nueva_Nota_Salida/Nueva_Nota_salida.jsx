@@ -1,7 +1,36 @@
 import React from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-
+import productosData from './data/productosData';
+import Table from '@/components/Table/Table'; 
 function NotaSalida() {
+  const columns = [
+    { header: 'Código', key: 'codigo' },
+    { header: 'Descripción', key: 'descripcion' },
+    { header: 'Marca', key: 'marca' },
+    { header: 'Stock Actual', key: 'stockActual' },
+    { header: 'Cantidad', key: 'cantidad' },
+    { header: 'Acción', key: 'accion' }
+  ];
+    // Función para renderizar las acciones de la tabla
+    const renderActions = (row) => (
+      <div className="flex space-x-2">
+        <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => handleEdit(row)}>
+          <MdEdit />
+        </button>
+        <button className="px-2 py-1 text-red-500" onClick={() => handleDelete(row)}>
+          <FaTrash />
+        </button>
+      </div>
+    );
+    // Función para manejar la acción de editar
+    const handleEdit = (row) => {
+      console.log('Edit', row);
+    };
+  
+    // Función para manejar la acción de eliminar
+    const handleDelete = (row) => {
+      console.log('Delete', row);
+    };
   return (
     <div>
       <Breadcrumb paths={[
@@ -15,7 +44,8 @@ function NotaSalida() {
           Nota de salida
         </h1>
       </div>
-      <form className="flex border rounded" style={{ backgroundColor: 'lightgray', padding: 10 }}>
+      <div className="rounded" style={{ backgroundColor: 'lightgray' }}>
+      <form className="flex rounded" style={{ backgroundColor: 'lightgray', padding: 10 }}>
         <div className="flex flex-col w-1/2">
           <div className="grid grid-cols-2 gap-4">
             <div className="mb-4">
@@ -73,6 +103,11 @@ function NotaSalida() {
           </div>
         </div>
       </form>
+      <div>
+        <br />
+        Aqui va la tabla
+      </div>
+      </div>
     </div>
   );
 }
