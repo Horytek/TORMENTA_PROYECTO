@@ -4,17 +4,19 @@ import productosData from './data/productosData';
 import Table from '@/components/Table/Table';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import Pagination from '@/components/Pagination/Pagination';
-import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
+import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import { IoIosSearch } from "react-icons/io";
+import ConfirmationModal from '@/components/Modals/ConfirmationModal';
+import ProductosForm from './ProductosForm';
 
 function Productos() {
   // Definir las columnas de la tabla con el header y key correspondientes
   const columns = [
-    { header: 'Descripcion', key: 'descripcion' },
-    { header: 'Linea', key: 'linea' },
-    { header: 'Sub-Linea', key: 'subLinea' },
+    { header: 'Descripción', key: 'descripcion' },
+    { header: 'Línea', key: 'linea' },
+    { header: 'Sub-Línea', key: 'subLinea' },
     { header: 'Und. Med.', key: 'unidadMedida' },
     { header: 'Precio', key: 'precio' },
     { header: 'Cód. Barras', key: 'codBarras' },
@@ -24,42 +26,70 @@ function Productos() {
   // Función para renderizar las acciones de la tabla
   const renderActions = (row) => (
     <div className="flex space-x-2">
-      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => handleEdit(row)}>
+      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => openModal()}>
         <MdEdit />
       </button>
-      <button className="px-2 py-1 text-red-500" onClick={() => handleDelete(row)}>
+      <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(row)}>
         <FaTrash />
       </button>
     </div>
   );
 
   // Función para manejar la acción de editar
-  const handleEdit = (row) => {
-    console.log('Edit', row);
+  // const handleEdit = (row) => {
+  //   console.log('Edit', row);
+  // };
+
+  // Estado para controlar el modal de confirmación
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Función para manejar la acción de abrir el modal de confirmación
+  const handleOpenConfirmationModal = (row) => {
+    setSelectedRow(row);
+    setIsConfirmationModalOpen(true);
   };
 
-  // Función para manejar la acción de eliminar
-  const handleDelete = (row) => {
-    console.log('Delete', row);
+  // Función para manejar la acción de cerrar el modal de confirmación
+  const handleCloseConfirmationModal = () => {
+    setIsConfirmationModalOpen(false);
+    setSelectedRow(null);
+  };
+
+  // Función para manejar la acción de confirmar eliminar
+  const handleConfirmDelete = () => {
+    console.log('Delete', selectedRow);
+    // Aquí iría la lógica para eliminar el producto
+    handleCloseConfirmationModal();
+  };
+
+  // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  // Funcion para manejar la accion de cerrar el modal de agregar/editar producto
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
   // Logica de Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 5;
 
   const onPageChange = (page) => {
     setCurrentPage(page);
   };
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5;
 
   return (
     <div>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Productos', href: '/productos' }]} />
       <hr className="mb-4" />
       <h1 className='font-extrabold text-4xl'>Productos</h1>
-      <div className="flex justify-between mt-5 mb-4 items-center" >
+      <div className="flex justify-between mt-5 mb-4 items-center">
         <h6 className='font-bold'>Lista de Productos</h6>
-        <div className='relative w-2/4' >
+        <div className='relative w-2/4'>
           <div className='absolute inset-y-0 start-0 top-0 flex items-center ps-3.5 pointer-events-none'>
             <IoIosSearch className='w-4 h-4 text-gray-500' />
           </div>
@@ -69,7 +99,7 @@ function Productos() {
           <ButtonNormal color={'#01BDD6'}>
             Filtrar
           </ButtonNormal>
-          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
+          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }}/>} onClick={openModal}>
             Agregar producto
           </ButtonIcon>
         </div>
@@ -83,8 +113,21 @@ function Productos() {
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
       </div>
-      <ButtonSave />
-      <ButtonClose />
+
+      {/* Modal de Confirmación */}
+      {isConfirmationModalOpen && (
+        <ConfirmationModal
+          message={`¿Estás seguro que deseas eliminar "${selectedRow.descripcion}"?`}
+          onClose={handleCloseConfirmationModal}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
+
+      {/* Modal de Agregar Producto */}
+      {isModalOpen && (
+        <ProductosForm modalTitle="Agregar Producto" onClose={closeModal} />
+      )}
+
     </div>
   );
 }
