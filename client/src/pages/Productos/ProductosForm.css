@@ -20,7 +20,7 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   max-width: 600px;
   width: 85%;
-  height: 90% !important;
+  height: auto !important;
   text-align: center;
   position: relative !important;
   animation: fadeIn 0.3s ease-in-out;
