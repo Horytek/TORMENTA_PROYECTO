@@ -30,11 +30,11 @@ const TablaMarcas = ({
             <tr
               key={marca.id}
               onClick={() => toggleRow(marca.id)}
-              className="tr-tabla-marca"
+              className="tr-tabla-marca justify-center hover:bg-gray-100"
             >
               <td style={{ textAlign: "center" }} className="font-bold">
                 <div>{marca.serieNum}</div>
-                <div className="text-gray-500">{marca.num}</div>
+                <div className="text-gray-500 ">{marca.num}</div>
               </td>
               <td style={{ textAlign: "center" }} className="font-bold">
                 {marca.nombre}

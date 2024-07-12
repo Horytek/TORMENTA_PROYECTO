@@ -11,6 +11,7 @@ import BajaModal from "./ComponentsMarcas/Modals/BajaModal";
 import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
 import RegistroModal from "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal";
 
+
 const Marcas = () => {
   // Estado para manejar la lista de ventas
   const [marcas, setMarcas] = useState([
@@ -80,6 +81,7 @@ const Marcas = () => {
     setModalOpen(false);
     setDeleteOptionSelected(false);
   };
+  
   const openRegistroModal = (title) => {
     setModalTitle(title);
     setIsModalOpen(true);
@@ -142,7 +144,7 @@ const Marcas = () => {
         <h1 className="text-xl font-bold" style={{ fontSize: "36px" }}>
           Marcas
           <div className="flex justify-between mt-5 mb-4">
-            <h2 className="font" style={{ fontSize: "20px " }}>
+            <h2 className="font" style={{ fontSize: "16px " }}>
               Listado de Marcas
             </h2>
           </div>
@@ -156,7 +158,7 @@ const Marcas = () => {
               <input
                 type="text"
                 placeholder="Buscar por nombre"
-                className="border rounded pl-10 pr-3 py-2"
+                className="border rounded pl-10 pr-20 py-2"
                 onChange={(e) => setSearchTerm(e.target.value)} // Actualiza el estado con el valor del input
               />
             </div>
@@ -185,34 +187,47 @@ const Marcas = () => {
         darBajaModal={darBajaModal}
         currentPage={currentPage}
       />
-      <BajaModal
-        modalOpen={modalBajaOpen}
-        toggleDeactivateMarca={toggleDeactivateMarca}
-        closeBajaModal={closeBajaModal}
-        handleDarBajaMarca={handleDarBajaMarca}
-        darBajaOptionSelected={darBajaOptionSelected}
-      />
+
+      {modalBajaOpen && (
+        <div className="modal-overlay">
+          <BajaModal
+            modalOpen={modalBajaOpen}
+            toggleDeactivateMarca={toggleDeactivateMarca}
+            closeBajaModal={closeBajaModal}
+            handleDarBajaMarca={handleDarBajaMarca}
+            darBajaOptionSelected={darBajaOptionSelected}
+            
+         />
+         </div>
+      )}   
       {/* Modal para registro de marca */}
 
       {isModalOpen && (
         <RegistroModal modalTitle={modalTitle} onClose={closeRegistroModal} />
       )}
-      {/* Modal para opciones */}
-      <OptionsModal
-        modalOpen={modalOpen}
-        toggleDeleteDetalleOption={toggleDeleteDetalleOption}
-        closeModal={closeModal}
-        setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
-        deleteOptionSelected={deleteOptionSelected}
-      />
+      {modalOpen && (
+        <div className="modal-overlay">
+        <OptionsModal 
+          modalOpen={modalOpen}
+          toggleDeleteDetalleOption={toggleDeleteDetalleOption}
+          closeModal={closeModal}
+          setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
+          deleteOptionSelected={deleteOptionSelected}
+        />
+        </div>
+      )}
 
-      {/* Modal de confirmación de eliminación */}
-      <ConfirmationModal
-        confirmDeleteModalOpen={confirmDeleteModalOpen}
-        handleDeleteVenta={handleDeleteVenta}
-        closeModal={closeModal}
-        setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
-      />
+      
+      {confirmDeleteModalOpen && (
+        <div className="modal-overlay">
+          <ConfirmationModal
+            confirmDeleteModalOpen={confirmDeleteModalOpen}
+            handleDeleteVenta={handleDeleteVenta}
+            closeModal={closeModal}
+            setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
+          />
+        </div>
+      )}
 
       {/* Contenedor para paginación */}
       <div className="flex justify-between mt-4">
