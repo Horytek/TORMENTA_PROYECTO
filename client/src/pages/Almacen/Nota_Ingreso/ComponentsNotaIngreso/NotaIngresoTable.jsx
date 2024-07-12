@@ -20,7 +20,7 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
         <td className="text-center">{ingreso.oCompra}</td>
         <td className="text-center">{ingreso.factura}</td>
         <td>
-          <select  name="select">
+          <select className='b custom-select' name="select">
             <option value=""><FaCaretDown /></option>
             <option value="value1">Imprimir</option>
             <option className={`ml-2 cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(ingreso.id)}  value="value2" selected>Anular</option>

@@ -6,7 +6,6 @@ import TablaIngresos from './ComponentsNotaIngreso/NotaIngresoTable';
 import { Link } from 'react-router-dom';
 import useIngresosData from './data/Nota_Ingreso_Data';
 import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
-import Pagination from '@/components/Pagination/Pagination';
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import './Nota_ingreso.css';
@@ -117,18 +116,6 @@ const Ingresos = () => {
 
 
 
-
-      {/* Contenedor para paginación */}
-      <div className="flex justify-between mt-4">
-        <div className="flex">
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
-        </div>
-        <select className="input cant-pag">
-          <option>5</option>
-          <option>10</option>
-          <option>20</option>
-        </select>
-      </div>
     </div>
   );
 };

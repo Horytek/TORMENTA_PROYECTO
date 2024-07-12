@@ -1,3 +1,19 @@
-.icon-white {
-    color: white;
-  };
+.custom-select {
+  background-color: #389AE6;
+  color: white; /* Para que el texto sea visible sobre el fondo azul */
+  border: 1px solid #389AE6; /* Opcional: para darle un borde azul */
+  padding: 5px; /* Ajusta el padding según tus necesidades */
+  border-radius: 4px; /* Opcional: para darle bordes redondeados */
+}
+
+.custom-select option {
+  color: white; /* Ajusta el color de las opciones según tus preferencias */
+}
+
+
+
+.option-hover:hover {
+  background-color: #f0f0f0; /* Color de fondo al hacer hover */
+  color: #333; /* Color del texto al hacer hover */
+  cursor: pointer; /* Cambia el cursor al pasar sobre la opción */
+}
