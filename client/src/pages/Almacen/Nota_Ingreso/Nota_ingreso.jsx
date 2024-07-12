@@ -98,10 +98,12 @@ const Ingresos = () => {
           <Dropdown.Item href="#/action-1">Imprimir</Dropdown.Item>
           <Dropdown.Item href="#/action-2">Excel</Dropdown.Item>
         </DropdownButton> */}
-
+        <Link to="/almacen/nota_ingreso/registro_ingreso">
         <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
           Nota de ingreso
         </ButtonIcon>
+        </Link>
+
       </div>
     </div>
 
