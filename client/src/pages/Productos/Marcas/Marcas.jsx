@@ -6,6 +6,7 @@ import { MdAddCircleOutline } from "react-icons/md";
 import Pagination from "@/components/Pagination/Pagination";
 import TablaMarcas from "./ComponentsMarcas/MarcasTable";
 import OptionsModal from "./ComponentsMarcas/Modals/OptionsModal";
+import BajaModal from "./ComponentsMarcas/Modals/BajaModal";
 import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
 
 const Marcas = () => {
@@ -51,7 +52,9 @@ const Marcas = () => {
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalBajaOpen, setModalBajaOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
+  const [darBajaOptionSelected, setDarBajaOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 5; // Número total de páginas
@@ -63,6 +66,10 @@ const Marcas = () => {
     setSelectedRowId(id);
     setModalOpen(true);
   };
+  const darBajaModal = (id) => {
+    setSelectedRowId(id);
+    setModalBajaOpen(true);
+  };
 
   const closeModal = () => {
     setSelectedRowId(null);
@@ -70,9 +77,18 @@ const Marcas = () => {
     setDeleteOptionSelected(false);
   };
 
+  const closeBajaModal = () => {
+    setSelectedRowId(null);
+    setModalBajaOpen(false);
+    setDarBajaOptionSelected(false);
+  };
+
   // Función para alternar la opción de eliminar venta
   const toggleDeleteDetalleOption = () => {
     setDeleteOptionSelected(!deleteOptionSelected);
+  };
+  const toggleDeactivateMarca = () => {
+    setDarBajaOptionSelected(!darBajaOptionSelected);
   };
 
   // Función para eliminar una venta
@@ -81,6 +97,17 @@ const Marcas = () => {
     setMarcas(updatedVentas);
     closeModal();
     setConfirmDeleteModalOpen(false);
+  };
+
+  const handleDarBajaMarca = () => {
+    const updatedMarcas = marcas.map((marca) => {
+      if (marca.id === selectedRowId) {
+        return { ...marca, estado: "Inactivo" };
+      }
+      return marca;
+    });
+    setMarcas(updatedMarcas);
+    closeBajaModal();
   };
 
   // Función para cambiar de página en la paginación
@@ -102,8 +129,14 @@ const Marcas = () => {
       {/* Encabezado principal */}
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: "36px" }}>
-          Listado de marcas
+          Marcas
+          <div className="flex justify-between mt-5 mb-4">
+            <h2 className="font" style={{ fontSize: "20px " }}>
+              Listado de Marcas
+            </h2>
+          </div>
         </h1>
+
         <div className="bg-white p-4 pb-2 flex justify-between items-center relative">
           <div className="flex items-center space-x-4">
             {/* Barra de búsqueda */}
@@ -112,7 +145,7 @@ const Marcas = () => {
               <input
                 type="text"
                 placeholder="Buscar por nombre"
-                className="border rounded pl-10 pr-2 py-1"
+                className="border rounded pl-10 pr-3 py-2"
                 onChange={(e) => setSearchTerm(e.target.value)} // Actualiza el estado con el valor del input
               />
             </div>
@@ -133,8 +166,17 @@ const Marcas = () => {
         marcas={filteredMarcas}
         modalOpen={modalOpen}
         deleteOptionSelected={deleteOptionSelected}
+        darBajaOptionSelected={darBajaOptionSelected}
         openModal={openModal}
+        darBajaModal={darBajaModal}
         currentPage={currentPage}
+      />
+      <BajaModal
+        modalOpen={modalBajaOpen}
+        toggleDeactivateMarca={toggleDeactivateMarca}
+        closeBajaModal={closeBajaModal}
+        handleDarBajaMarca = {handleDarBajaMarca}
+        darBajaOptionSelected={darBajaOptionSelected}
       />
 
       {/* Modal para opciones */}
