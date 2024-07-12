@@ -26,7 +26,7 @@ function Productos() {
   // Función para renderizar las acciones de la tabla
   const renderActions = (row) => (
     <div className="flex space-x-2">
-      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => openModal()}>
+      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => openModal('Editar Producto')}>
         <MdEdit />
       </button>
       <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(row)}>
@@ -35,15 +35,11 @@ function Productos() {
     </div>
   );
 
-  // Función para manejar la acción de editar
-  // const handleEdit = (row) => {
-  //   console.log('Edit', row);
-  // };
-
   // Estado para controlar el modal de confirmación
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
 
   // Función para manejar la acción de abrir el modal de confirmación
   const handleOpenConfirmationModal = (row) => {
@@ -65,7 +61,8 @@ function Productos() {
   };
 
   // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
-  const openModal = () => {
+  const openModal = (title) => {
+    setModalTitle(title);
     setIsModalOpen(true);
   };
 
@@ -99,7 +96,7 @@ function Productos() {
           <ButtonNormal color={'#01BDD6'}>
             Filtrar
           </ButtonNormal>
-          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }}/>} onClick={openModal}>
+          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }}/>} onClick={() => openModal('Agregar Producto')}>
             Agregar producto
           </ButtonIcon>
         </div>
@@ -125,7 +122,7 @@ function Productos() {
 
       {/* Modal de Agregar Producto */}
       {isModalOpen && (
-        <ProductosForm modalTitle="Agregar Producto" onClose={closeModal} />
+        <ProductosForm modalTitle={modalTitle} onClose={closeModal} />
       )}
 
     </div>
