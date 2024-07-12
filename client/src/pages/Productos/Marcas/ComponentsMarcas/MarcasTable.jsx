@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import { MdDeleteForever, MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { IoIosCloudDone } from "react-icons/io";
-import { useState } from "react";
 
 const TablaMarcas = ({
   marcas,
@@ -10,13 +9,10 @@ const TablaMarcas = ({
   deleteOptionSelected,
   openModal,
   editMarca,
-  deactivateMarca,
+  darBajaModal,
 }) => {
  
 
-  const toggleRow = (id) => {
-    setExpandedRow(expandedRow === id ? null : id);
-  };
 
   return (
     <div className="container-table-marca px-4 bg-white rounded-lg">
@@ -75,7 +71,7 @@ const TablaMarcas = ({
                   <MdDoNotDisturbAlt
                     className="cursor-pointer hover:text-orange-500"
                     style={{ fontSize: "20px", color: "orange" }}
-                    onClick={() => deactivateMarca(marca.id)}
+                    onClick={() => darBajaModal(marca.id)}
                   />
                 </div>
               </td>
@@ -94,7 +90,7 @@ TablaMarcas.propTypes = {
   deleteOptionSelected: PropTypes.bool.isRequired,
   openModal: PropTypes.func.isRequired,
   editMarca: PropTypes.func.isRequired,
-  deactivateMarca: PropTypes.func.isRequired,
+  darBajaModal: PropTypes.func.isRequired,
 };
 
 export default TablaMarcas;
