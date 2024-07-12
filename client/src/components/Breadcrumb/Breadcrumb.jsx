@@ -8,7 +8,7 @@ function Breadcrumb({ paths }) {
       <ol className="inline-flex items-center space-x-1 md:space-x-3">
         {paths.map((path, index) => (
           // Cada elemento del breadcrumb
-          <li key={path.href} className="inline-flex items-center">
+          <li key={path.href} className="inline-flex items-center" style={{margin: '0px'}}>
             {/* Renderiza el separador (icono) solo si no es el primer elemento */}
             {index > 0 && (
               <svg
