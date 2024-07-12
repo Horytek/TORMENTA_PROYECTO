@@ -1,6 +1,6 @@
 import React from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import { IoPersonAdd , IoMdPin } from 'react-icons/io';
+import {IoMdPin } from 'react-icons/io';
 function RegistroGuia() {
 
   return (
@@ -98,7 +98,6 @@ function RegistroGuia() {
               </div>
             </div>
             <div className="mb-4 flex">
-     
                     <div className="flex-1 mr-2">
                 <label for="cantidad" className="block text-gray-700 text-sm font-bold mb-2">Cant. Paq:</label>
                  <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="cantidad" type="text" />
@@ -113,9 +112,6 @@ function RegistroGuia() {
                 <label htmlFor="numdoc" className='text-sm font-bold text-black'>Num. Doc:</label>
                 <input type="numdoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' disabled/>
               </div>
-            </div>
-            <div className="mb-4 flex">
-            
             </div>
           </div>
           <div className="flex justify-between mt-4 space-x-2">
