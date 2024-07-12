@@ -58,8 +58,9 @@ const Marcas = () => {
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [darBajaOptionSelected, setDarBajaOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
-  const [registroModalOpen, setIsModalRegistroOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const totalPages = 5; // Número total de páginas
   const filteredMarcas = marcas.filter((marca) =>
     marca.nombre.toLowerCase().includes(searchTerm.toLowerCase())
@@ -79,13 +80,12 @@ const Marcas = () => {
     setModalOpen(false);
     setDeleteOptionSelected(false);
   };
-
-  const openRegistroModal = () => {
-    setIsModalRegistroOpen(true);
+  const openRegistroModal = (title) => {
+    setModalTitle(title);
+    setIsModalOpen(true);
   };
-
   const closeRegistroModal = () => {
-    setIsModalRegistroOpen(false);
+    setIsModalOpen(false);
   };
 
   const closeBajaModal = () => {
@@ -162,7 +162,7 @@ const Marcas = () => {
             </div>
             {/* Botón para agregar nueva marca */}
             <button
-              onClick={openRegistroModal}
+              onClick={() => openRegistroModal("Agregar Marca")}
               className="flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-md px-4 py-2"
             >
               <MdAddCircleOutline
@@ -193,11 +193,10 @@ const Marcas = () => {
         darBajaOptionSelected={darBajaOptionSelected}
       />
       {/* Modal para registro de marca */}
-      <RegistroModal
-        modalOpen={registroModalOpen}
-        closeModal={closeRegistroModal}
-      />
 
+      {isModalOpen && (
+        <RegistroModal modalTitle={modalTitle} onClose={closeRegistroModal} />
+      )}
       {/* Modal para opciones */}
       <OptionsModal
         modalOpen={modalOpen}
