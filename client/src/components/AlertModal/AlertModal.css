@@ -1,5 +1,3 @@
-/* src/components/AlertModal/AlertModal.css */
-
 /* Overlay que cubre toda la pantalla cuando el modal está activo */
 .alert-modal-overlay {
   position: fixed;
@@ -11,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000; 
+  z-index: 1000;
 }
 
 /* Contenedor del modal */

@@ -28,27 +28,29 @@ const RegistroVentaModal = ({ modalTitle, onClose }) => {
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <div className="modal-header">
-          <h3 className="modal-title">{modalTitle}</h3>
-
-        </div>
-        <div className="modal-body">
-          <div className="space-y-4">
-            <div className="flex flex-col space-y-2 align-left">
-              <Label htmlFor="brand-name">
-                Nombre de la Marca <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="brand-name"
-                placeholder="Ingresa el nombre"
-                value={brandName}
-                onChange={(e) => setBrandName(e.target.value)}
-              />
-            </div>
+        <div className="content-modal">
+          <div className="modal-header">
+            <h3 className="modal-title">{modalTitle}</h3>
+  
           </div>
-          <div className="modal-buttons mt-4 flex justify-end space-x-2">
-            <ButtonClose onClick={onClose} />
-            <ButtonSave />
+          <div className="modal-body">
+            <div className="space-y-4">
+              <div className="flex flex-col space-y-2 align-left">
+                <Label htmlFor="brand-name">
+                  Nombre de la Marca <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="brand-name"
+                  placeholder="Ingresa el nombre"
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="modal-buttons mt-4 flex justify-end space-x-2">
+              <ButtonClose onClick={onClose} />
+              <ButtonSave />
+            </div>
           </div>
         </div>
       </div>

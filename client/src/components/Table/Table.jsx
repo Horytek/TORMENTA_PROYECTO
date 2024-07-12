@@ -4,9 +4,9 @@ const Table = ({ columns, data, renderActions }) => {
   const getEstadoClassName = (estado) => {
     switch (estado.toLowerCase()) {
       case 'activo':
-        return 'estado-activo';
+        return 'estado-activo text-center';
       case 'inactivo':
-        return 'estado-inactivo';
+        return 'estado-inactivo text-center';
       default:
         return '';
     }
@@ -20,14 +20,14 @@ const Table = ({ columns, data, renderActions }) => {
             {columns.map((column, index) => (
               <th
                 key={index}
-                className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider"
               >
                 {column.header}
               </th>
             ))}
             {renderActions && (
               <th
-                className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider"
+                className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider"
               >
                 Acciones
               </th>

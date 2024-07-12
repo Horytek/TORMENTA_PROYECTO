@@ -74,9 +74,11 @@ td {
 th {
   padding: 10px 0px;
 }
+
 .tr-tabla-venta {
   cursor: pointer !important;
 }
+
 /**Modal**/
 
 /* Ventas.css */
@@ -92,6 +94,7 @@ th {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  flex-direction: column;
 }
 
 .modal-content {
