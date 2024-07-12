@@ -49,7 +49,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
               </div>
               <div className='w-full relative group mb-5 text-start'>
                 <label htmlFor="precio" className='text-sm font-bold text-black'>Precio:</label>
-                <input type="precio" min={0} name='subLinea' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                <input type="number" min={0} name='subLinea' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
               </div>
             </div>
 

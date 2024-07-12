@@ -25,7 +25,7 @@ function Productos() {
 
   // Función para renderizar las acciones de la tabla
   const renderActions = (row) => (
-    <div className="flex space-x-2">
+    <div className="flex justify-center items-center">
       <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => openModal('Editar Producto')}>
         <MdEdit />
       </button>

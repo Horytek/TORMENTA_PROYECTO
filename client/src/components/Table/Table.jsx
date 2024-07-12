@@ -1,6 +1,17 @@
 import PropTypes from 'prop-types';
 
 const Table = ({ columns, data, renderActions }) => {
+  const getEstadoClassName = (estado) => {
+    switch (estado.toLowerCase()) {
+      case 'activo':
+        return 'estado-activo';
+      case 'inactivo':
+        return 'estado-inactivo';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 rounded-lg">
@@ -27,12 +38,17 @@ const Table = ({ columns, data, renderActions }) => {
           {data.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {columns.map((column, colIndex) => (
-                <td key={colIndex} className="px-6 py-4 whitespace-nowrap">
+                <td
+                  key={colIndex}
+                  className={`px-6 py-4 ${
+                    column.key === 'estado' ? getEstadoClassName(row[column.key]) : ''
+                  }`}
+                >
                   {row[column.key]}
                 </td>
               ))}
               {renderActions && (
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4">
                   {renderActions(row)}
                 </td>
               )}
