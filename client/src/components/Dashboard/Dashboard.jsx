@@ -51,7 +51,7 @@ function Dashboard() {
             {/* Ruta para la página de nota de salida */}
             <Route path="/almacen/nota_salida" element={<Nota_Salida />} />
             {/* Ruta para la página de nueva nota de salida */}
-            <Route path="/almacen/nueva_nota_salida" element={<Nueva_Nota_Salida />} />
+            <Route path="/almacen/nota_salida/nueva_nota_salida" element={<Nueva_Nota_Salida />} />
             {/* Ruta para la página de guia de remision */}
             <Route path="/almacen/guia_remision" element={<Guia_Remision />} />
             {/* Ruta para la página de guia de remision */}

@@ -1,6 +1,6 @@
 import React from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import productosData from './data/productosData';
+// import productosData from './data/productosData';
 import Table from '@/components/Table/Table'; 
 function NotaSalida() {
   const columns = [
@@ -37,6 +37,7 @@ function NotaSalida() {
         { name: 'Inicio', href: '/inicio' },
         { name: 'Almacén', href: '/almacen' },
         { name: 'Nota de salida', href: '/almacen/nota_salida' }
+        ,{ name: 'Nueva Nota de salida', href: '/almacen/nota_salida/nueva_nota_salida' }
       ]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
@@ -44,33 +45,33 @@ function NotaSalida() {
           Nota de salida
         </h1>
       </div>
-      <div className="rounded" style={{ backgroundColor: 'lightgray' }}>
-      <form className="flex rounded" style={{ backgroundColor: 'lightgray', padding: 10 }}>
+      <div className="container-registro-detalle-venta" style={{ backgroundColor: 'lightgray', padding: 20 }}>
+      <form className="flex rounded-lg" >
         <div className="flex flex-col w-1/2">
           <div className="grid grid-cols-2 gap-4">
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
                 Destinatario:
               </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="destinatario" type="text" />
+              <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="destinatario" type="text" />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
                 RUC:
               </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="ruc" type="text" />
+              <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="ruc" type="text" />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
                 Número:
               </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="numero" type="text" />
+              <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="numero" type="text" />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
                 Fecha Docu:
               </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="fechaDocu" type="date" />
+              <input type="date" className="border border-gray-300 rounded-lg p-2.5" id="fechaDocu" />
             </div>
           </div>
           <div className="flex justify-between mt-4 space-x-2">

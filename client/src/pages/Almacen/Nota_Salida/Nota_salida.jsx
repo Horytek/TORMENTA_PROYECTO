@@ -1,79 +1,108 @@
-import React from 'react';
+import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
+import { IoIosSearch } from "react-icons/io";
+import { LuFilter } from "react-icons/lu";
+import TablaSalida from './ComponentsNotaIngreso/NotaSalidaTable';
+import { Link } from 'react-router-dom';
+import useNotaSalidaData from './data/Nota_Salida_Data';
+import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
+import { FaPlus, FaTrash } from "react-icons/fa";
+import { MdEdit } from "react-icons/md";
+import './Nota_salida.css';
 
-function NotaSalida() {
+
+
+const Salidas = () => {
+  // Estado para manejar la lista de ingresos
+  const { salidas, removeSalida  } = useNotaSalidaData();
+
+  // Estado para el manejo del modal y opciones de eliminación
+  const [selectedRowId, setSelectedRowId] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 5; // Número total de páginas
+
+  // Funciones para abrir y cerrar el modal de opciones
+  const openModal = (id) => {
+    setSelectedRowId(id);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setSelectedRowId(null);
+    setModalOpen(false);
+    setDeleteOptionSelected(false);
+  };
+
   return (
     <div>
-      <Breadcrumb paths={[
-        { name: 'Inicio', href: '/inicio' },
-        { name: 'Almacén', href: '/almacen' },
-        { name: 'Nota de salida', href: '/almacen/nota_salida' }
-      ]} />
+      {/* Componente de migas de pan */}
+      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacén', href: '/almacen' }, { name: 'Nota de salida', href: '/almacen/nota_salida' }]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
           Nota de salida
+
         </h1>
       </div>
-      <form className="flex border rounded" style={{ backgroundColor: '#F2F3F4', padding: 10 }}>
-  <div className="flex flex-col w-1/2">
-    <div className="grid grid-cols-2 gap-4">
-      <div className="mb-4">
-        <div className='w-full relative group mb-5 text-start'>
-          <label htmlFor="proveedor" className='text-sm font-bold text-black'>Proveedor:</label>
-          <input type="text" name='proveedor' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
+      <div className="flex items-center gap-2">
+        <h6 className='font-bold'>Almacén:</h6>
+        <label className='border border-gray-300 p-2' htmlFor="">ALM CENTRAL ESCALERA</label>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <h6 className='font-bold'>Nombre o razón social:</h6>
+        <div className='relative'>
+          <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+            <IoIosSearch className='w-4 h-4 text-gray-500' />
+          </div>
+          <input
+            type="text"
+            placeholder=''
+            className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5'
+          />
         </div>
       </div>
-      <div className="mb-4">
-        <div className='w-full relative group mb-5 text-start'>
-          <label htmlFor="ruc" className='text-sm font-bold text-black'>RUC:</label>
-          <input type="text" name='ruc' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
-        </div>
+
+      <div className="flex items-center gap-2">
+        <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
+        <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
       </div>
-      <div className="mb-4">
-        <div className='w-full relative group mb-5 text-start'>
-          <label htmlFor="numero" className='text-sm font-bold text-black'>Número:</label>
-          <input type="text" name='numero' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
-        </div>
-      </div>
-      <div className="mb-4">
-        <div className='w-full relative group mb-5 text-start'>
-          <label htmlFor="fechaDocu" className='text-sm font-bold text-black'>Fecha Docu:</label>
-          <input type="date" name='fechaDocu' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
-        </div>
-      </div>
-    </div>
-    <div className="flex justify-between mt-4 space-x-2">
-      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-        Nuevo proveedor
-      </button>
-      <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-        Buscar producto
-      </button>
-      <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-        Cancelar
-      </button>
-      <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-        Guardar
-      </button>
-    </div>
-  </div>
-  <div className="ml-4 flex flex-col w-1/2">
-    <div className="mb-4">
-      <div className='w-full relative group mb-5 text-start'>
-        <label htmlFor="glosa" className='text-sm font-bold text-black'>Glosa:</label>
-        <input type="text" name='glosa' className='w-full bg-white-300 border-gray-300 text-gray-900 rounded-lg border p-1.5 ' />
+
+      <div className="flex items-center gap-2">
+        <ButtonNormal color={'#01BDD6'}>
+        <LuFilter className='icon-white w-4 h-4 text-gray-500' />
+        </ButtonNormal>
+
+        {/* <DropdownButton id="dropdown-basic-button" title="Opciones">
+          <Dropdown.Item href="#/action-1">Imprimir</Dropdown.Item>
+          <Dropdown.Item href="#/action-2">Excel</Dropdown.Item>
+        </DropdownButton> */}
+        <Link to="/almacen/nota_salida/nueva_nota_salida">
+        <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
+          Nota de salida
+        </ButtonIcon>
+        </Link>
+
       </div>
     </div>
-    <div className="flex-1">
-      <label htmlFor="glosa" className='text-sm font-bold text-black'>Observación:</label>
-      <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-full" id="observacion"></textarea>
-    </div>
-  </div>
-</form>
+
+        {/* Componente de tabla de ingresos */}
+        <TablaSalida
+        salidas={salidas}
+        modalOpen={modalOpen}
+        deleteOptionSelected={deleteOptionSelected}
+        openModal={openModal}
+        /* currentPage={currentPage} */
+      />
+
+
 
     </div>
   );
-}
+};
 
-export default NotaSalida;
+export default Salidas;
