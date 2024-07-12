@@ -8,7 +8,7 @@ const TablaMarcas = ({
   modalOpen,
   deleteOptionSelected,
   openModal,
-  editMarca,
+  openEditModal,
   darBajaModal,
 }) => {
  
@@ -57,7 +57,7 @@ const TablaMarcas = ({
                   <MdEdit
                     className="cursor-pointer hover:text-blue-500"
                     style={{ fontSize: "20px", color: "blue" }}
-                    onClick={() => editMarca(marca.id)}
+                    onClick={() => openEditModal(marca.id)}
                   />
                   <MdDeleteForever
                     className={`cursor-pointer ${

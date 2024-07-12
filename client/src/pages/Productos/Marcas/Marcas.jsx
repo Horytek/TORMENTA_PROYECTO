@@ -8,6 +8,7 @@ import Pagination from "@/components/Pagination/Pagination";
 import TablaMarcas from "./ComponentsMarcas/MarcasTable";
 import OptionsModal from "./ComponentsMarcas/Modals/OptionsModal";
 import BajaModal from "./ComponentsMarcas/Modals/BajaModal";
+import EditModal from "./ComponentsMarcas/Modals/EditModal";
 import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
 import RegistroModal from "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal";
 
@@ -62,6 +63,7 @@ const Marcas = () => {
   const [modalTitle, setModalTitle] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const totalPages = 5; // Número total de páginas
   const filteredMarcas = marcas.filter((marca) =>
     marca.nombre.toLowerCase().includes(searchTerm.toLowerCase())
@@ -94,6 +96,16 @@ const Marcas = () => {
     setSelectedRowId(null);
     setModalBajaOpen(false);
     setDarBajaOptionSelected(false);
+  };
+
+  const openEditModal = (id) => {
+    setSelectedRowId(id);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setSelectedRowId(null);
+    setIsEditModalOpen(false);
   };
 
   // Función para alternar la opción de eliminar venta
@@ -184,6 +196,7 @@ const Marcas = () => {
         deleteOptionSelected={deleteOptionSelected}
         darBajaOptionSelected={darBajaOptionSelected}
         openModal={openModal}
+        openEditModal={openEditModal}
         darBajaModal={darBajaModal}
         currentPage={currentPage}
       />
@@ -225,6 +238,16 @@ const Marcas = () => {
             handleDeleteVenta={handleDeleteVenta}
             closeModal={closeModal}
             setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
+          />
+        </div>
+      )}
+
+      {isEditModalOpen && (
+        <div className="modal-overlay">
+          <EditModal
+            modalOpen={isEditModalOpen}
+            onClose={closeEditModal}
+            selectedRowId={selectedRowId}
           />
         </div>
       )}
