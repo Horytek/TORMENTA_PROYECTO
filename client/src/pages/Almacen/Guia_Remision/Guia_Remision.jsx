@@ -62,7 +62,7 @@ const Guias = () => {
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
           Guias de Remision
         </h1>             
-        <Link to="/ventas/registro_venta" className="btn btn-nueva-guia mr-0">
+        <Link to="/almacen/guia_remision/registro_guia" className="btn btn-nueva-guia mr-0">
           <MdAddCircleOutline className="inline-block mr-2" style={{ fontSize: '25px' }} />
           Nueva guia
         </Link>
