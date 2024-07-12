@@ -21,17 +21,22 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
             {venta.tipoComprobante}
           </span>
         </td>
-        <td className="font-bold">
-          <div>{venta.cliente}</div>
-          <div className="text-gray-500">{venta.ruc}</div>
+        <td className="font-bold whitespace-normal">
+          <div className='whitespace-normal'>{venta.cliente}</div>
+          <div className="text-gray-500 whitespace-normal">{venta.ruc}</div>
         </td>
         <td className="text-center">{venta.fechaEmision}</td>
         <td className="text-center">{venta.igv}</td>
         <td className="text-center">{venta.total}</td>
         <td className="font-bold">
-          <div>{venta.cajero}</div>
-          <div className="text-gray-500">{venta.cajeroId}</div>
-        </td>
+  <div className="whitespace-normal"> 
+    {venta.cajero}
+  </div>
+  <div className="text-gray-500 whitespace-normal"> 
+    {venta.cajeroId}
+  </div>
+</td>
+
         <td className="text-center " style={{ color: venta.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400"}} >
             <span className='p-2 rounded-full' style={{background: venta.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }} >{venta.estado}</span>
         </td>
@@ -98,7 +103,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       <table className="table w-full">
         <thead>
           <tr>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
+            <th className="w-1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TIPO.COMP</th>
             <th className="w-1/6 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">F. EMISIÓN</th>
