@@ -45,10 +45,9 @@ const Marcas = () => {
       num: "0005",
       nombre: "Ñofi",
       estado: "Activo",
-    }
-
+    },
   ]);
-
+  const [searchTerm, setSearchTerm] = useState("");
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -56,13 +55,15 @@ const Marcas = () => {
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 5; // Número total de páginas
-
+  const filteredMarcas = marcas.filter((marca) =>
+    marca.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id) => {
     setSelectedRowId(id);
     setModalOpen(true);
   };
-  
+
   const closeModal = () => {
     setSelectedRowId(null);
     setModalOpen(false);
@@ -112,6 +113,7 @@ const Marcas = () => {
                 type="text"
                 placeholder="Buscar por nombre"
                 className="border rounded pl-10 pr-2 py-1"
+                onChange={(e) => setSearchTerm(e.target.value)} // Actualiza el estado con el valor del input
               />
             </div>
             {/* Botón para agregar nueva marca */}
@@ -128,11 +130,11 @@ const Marcas = () => {
 
       {/* Componente de tabla de ventas */}
       <TablaMarcas
-        marcas={marcas}
+        marcas={filteredMarcas}
         modalOpen={modalOpen}
         deleteOptionSelected={deleteOptionSelected}
         openModal={openModal}
-        /* currentPage={currentPage} */
+        currentPage={currentPage}
       />
 
       {/* Modal para opciones */}
@@ -151,7 +153,7 @@ const Marcas = () => {
         closeModal={closeModal}
         setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
       />
- 
+
       {/* Contenedor para paginación */}
       <div className="flex justify-between mt-4">
         <div className="flex">

@@ -9,11 +9,11 @@ const TablaMarcas = ({
   modalOpen,
   deleteOptionSelected,
   openModal,
-  editMarca, 
+  editMarca,
   deactivateMarca,
 }) => {
-  const [expandedRow, setExpandedRow] = useState(null);
-  
+ 
+
   const toggleRow = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
@@ -25,10 +25,9 @@ const TablaMarcas = ({
           <tr>
             <th className="w-1/12">CODIGO</th>
             <th className="w-3/12">NOMBRE</th>
-            <th className="w-2/12">ESTADO</th> 
+            <th className="w-2/12">ESTADO</th>
             <th className="w-1/6">ACCIONES</th>
           </tr>
-         
         </thead>
         <tbody>
           {marcas.map((marca) => (
@@ -91,6 +90,7 @@ const TablaMarcas = ({
 TablaMarcas.propTypes = {
   marcas: PropTypes.array.isRequired,
   modalOpen: PropTypes.bool.isRequired,
+  searchTerm: PropTypes.string.isRequired,
   deleteOptionSelected: PropTypes.bool.isRequired,
   openModal: PropTypes.func.isRequired,
   editMarca: PropTypes.func.isRequired,
