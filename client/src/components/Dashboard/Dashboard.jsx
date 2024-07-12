@@ -15,6 +15,7 @@ import Nueva_Nota_Salida from '@/pages/Almacen/Nota_Salida/Nueva_Nota_Salida/Nue
 import Configuracion from '@/pages/Configuración';
 import Registro_venta from '@/pages/Ventas/Registro_Venta/Registro_venta';
 import Guia_Remision from '@/pages/Almacen/Guia_Remision/Guia_Remision';
+import RegistroGuia from '@/pages/Almacen/Guia_Remision/Registro_Guia/Registro_Guia';
 
 function Dashboard() {
   return (
@@ -50,6 +51,8 @@ function Dashboard() {
             <Route path="/almacen/nueva_nota_salida" element={<Nueva_Nota_Salida />} />
             {/* Ruta para la página de guia de remision */}
             <Route path="/almacen/guia_remision" element={<Guia_Remision />} />
+            {/* Ruta para la página de guia de remision */}
+            <Route path="/almacen/guia_remision/registro_guia" element={<RegistroGuia />} />
             {/* Ruta para la página de configuración */}
             <Route path="/configuracion" element={<Configuracion />} />
           </Routes>
