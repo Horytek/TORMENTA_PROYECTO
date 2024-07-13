@@ -8,16 +8,18 @@
 ```sh
         cd client
         npm install
-        npm install axios
         npm run dev
 ```
 
-### Django (Backend)
+### Express (Backend)
 
 - **Inicializar Servidor Express**
 ```sh
+        cd express
+        npm install
         node server.js
 ```
+### Django (Backend)
 
 - **Crear diferentes apps del proyecto**
 ```sh
