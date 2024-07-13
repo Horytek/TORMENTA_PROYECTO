@@ -81,7 +81,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'db_tormenta',
         'USER': 'root',
-        'PASSWORD': '1234',
+        'PASSWORD': '123456789',
         'HOST': 'localhost',
         'PORT': '3306'
     }
