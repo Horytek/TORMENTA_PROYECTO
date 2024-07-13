@@ -20,7 +20,7 @@ const VentaExitosaModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="modal">
+        <div className="modal-container">
             <div className="modal-content">
                 <div className="modal-header">
                     <h2 className="text-lg font-bold flex items-center">

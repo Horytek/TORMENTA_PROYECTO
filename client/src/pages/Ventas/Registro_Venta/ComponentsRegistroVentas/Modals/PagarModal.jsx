@@ -51,7 +51,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     };
 
     return (
-        <div className="modal" style={{ overflowY: 'auto' }} >
+        <div className="modal-container" style={{ overflowY: 'auto' }} >
 
             <div className="modal-pagar px-6 py-7 rounded-xl shadow-lg relative" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                 <div className="flex justify-between items-center mb-4">

@@ -25,7 +25,7 @@ const ModalProducto = ({
   if (!isModalOpen) return null;
 
   return (
-    <div className="modal" style={{ zIndex: '1000' }}>
+    <div className="modal-container" style={{ zIndex: '1000' }}>
       <div className="modal-prod p-6 rounded-xl relative" style={{ width: '850px' }}>
         <button className="close-modal-prod absolute top-0 right-0 text-black-500 p-2" onClick={() => setIsModalOpen(false)}>
           <IoCloseSharp />
