@@ -20,6 +20,7 @@ const Salidas = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
+  const [isConfirmationModalOpenImprimir, setIsConfirmationModalOpen] = useState(false);
   const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 5; // Número total de páginas
@@ -114,8 +115,10 @@ const Salidas = () => {
         openModal={openModal}
       /* currentPage={currentPage} */
       />
-
-      <ConfirmationModal message='¿Desea imprimir la nota de salida?' onClose={closeModalImprimir} onConfirm={isModalOpenImprimir}  />
+      {isConfirmationModalOpenImprimir && (
+        <ConfirmationModal message='¿Desea imprimir la nota de salida?' onClose={closeModalImprimir} onConfirm={isModalOpenImprimir}  />
+      )}
+      
 
 
     </div>
