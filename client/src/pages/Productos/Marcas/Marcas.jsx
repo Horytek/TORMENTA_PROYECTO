@@ -261,7 +261,7 @@ const Marcas = () => {
             onPageChange={onPageChange}
           />
         </div>
-        <select className="input cant-pag">
+        <select className="input-rv cant-pag-rv ">
           <option>5</option>
           <option>10</option>
           <option>20</option>

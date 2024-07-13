@@ -15,6 +15,15 @@ h6 {
   background-color: #EEFDF3;
 }
 
+.input-rv {
+  border: 2px solid #e2e8f0;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+}
+.cant-pag-rv {
+  padding: 0.25rem 1rem;
+  background-color: #eaeaeae3;
+}
 .estado-inactivo {
   margin: 15px;
   display: flex;
