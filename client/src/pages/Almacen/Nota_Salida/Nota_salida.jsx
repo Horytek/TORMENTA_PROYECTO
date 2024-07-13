@@ -74,7 +74,7 @@ const Salidas = () => {
       
       <div className="flex items-center gap-2">
         <ButtonNormal color={'#01BDD6'}>
-        <LuFilter className='icon-white w-4 h-4 text-gray-500' />
+        <LuFilter className='icon-white w-4 h-4 ' />
         </ButtonNormal>
         <div className='flec items-center gap-2'>
             <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select">
