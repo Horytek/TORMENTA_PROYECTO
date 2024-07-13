@@ -177,3 +177,7 @@ input:checked::after {
   padding: 10px 0px;
   align-items: center !important;
 }
+
+.esta-ac-input {
+  width: 100px ;
+}

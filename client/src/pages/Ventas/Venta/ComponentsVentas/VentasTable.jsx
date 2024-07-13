@@ -29,21 +29,23 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
         <td className="text-center">{venta.igv}</td>
         <td className="text-center">{venta.total}</td>
         <td className="font-bold">
-  <div className="whitespace-normal"> 
-    {venta.cajero}
-  </div>
-  <div className="text-gray-500 whitespace-normal"> 
-    {venta.cajeroId}
-  </div>
-</td>
+          <div className="whitespace-normal">
+            {venta.cajero}
+          </div>
+          <div className="text-gray-500 whitespace-normal">
+            {venta.cajeroId}
+          </div>
+        </td>
 
-        <td className="text-center " style={{ color: venta.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400"}} >
-            <span className='p-2 rounded-full' style={{background: venta.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }} >{venta.estado}</span>
+        <td className="text-center " style={{ color: venta.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400" }} >
+          <div className='ml-2 px-2.5 py-1.5 rounded-full ' style={{ background: venta.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }}>
+            <span>{venta.estado}</span>
+          </div>
         </td>
         <td>
           <FaTrashAlt
             className={`ml-2 cursor-pointer text-red-500 ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
-            style={{ fontSize: '20px'}}
+            style={{ fontSize: '20px' }}
             onClick={() => openModal(venta.id)}
           />
         </td>

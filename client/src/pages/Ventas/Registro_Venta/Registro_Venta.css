@@ -13,11 +13,19 @@
   border: solid 0.1rem #bdbdbd !important;
 }
 
-.close-modal-prod {
+.close-modal-prod, .close-modal-pagar  {
   background-color: #e05858ff;
   font-size: 20px;
 }
 
+.btn-nuevo-cliente {
+  background-color: #4069e5ff;
+  color: white;
+  font-weight: bold;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.25rem;
+}
 .button-tipo-prendas button {
   border: none;
   background: none;
@@ -113,3 +121,6 @@
   align-items: center;
 }
 
+.btn-cerrar:hover {
+  background-color: #d22929ff;
+}

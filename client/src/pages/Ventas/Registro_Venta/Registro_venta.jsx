@@ -4,13 +4,16 @@ import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
 import useVentasData from '../Data/Venta_Data';
 import { BsCashCoin } from "react-icons/bs";
+import { MdCleaningServices } from "react-icons/md";
 import AlertModal from '../../../components/AlertModal/AlertModal';
+import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';  // Importa el nuevo componente
 
 import './Registro_Venta.css';
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCobrarModalOpen, setIsCobrarModalOpen] = useState(false); // Nuevo estado para el modal de cobrar
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTerm2, setSearchTerm2] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -70,11 +73,11 @@ const Registro_Venta = () => {
   };
 
   const handleQuantityChange = (index, newCantidad) => {
-    if (newCantidad >= 0) {
+    if (newCantidad > 0) { // Asegurarse de que newCantidad sea mayor que 0
       const updatedDetalles = [...detalles];
       const detalleToUpdate = { ...updatedDetalles[index] };
       const oldCantidad = detalleToUpdate.cantidad;
-  
+
       // Verificar si hay suficiente stock disponible
       const productoCodigo = detalleToUpdate.codigo;
       const productoIndex = productos.findIndex(p => p.codigo === productoCodigo);
@@ -83,28 +86,27 @@ const Registro_Venta = () => {
         if (newCantidad <= producto.stock + oldCantidad) {
           // Actualizar detalle con nueva cantidad
           detalleToUpdate.cantidad = newCantidad;
-  
+
           // Calcular y actualizar IG(V) y subtotal
           const igvValue = (parseFloat(producto.precio) * 0.18 * newCantidad).toFixed(2);
           const subtotal = (parseFloat(producto.precio) * newCantidad + parseFloat(igvValue) - parseFloat(detalleToUpdate.descuento)).toFixed(2);
           detalleToUpdate.igv = `S/ ${igvValue}`;
           detalleToUpdate.subtotal = `S/ ${subtotal}`;
-  
+
           // Actualizar detalle de venta
           updateDetalle(detalleToUpdate);
-  
+
           // Actualizar stock del producto
           const updatedProductos = [...productos];
           updatedProductos[productoIndex].stock += oldCantidad - newCantidad;
           setProductos(updatedProductos);
         } else {
           setShowAlert(true);
-
         }
       }
     }
   };
-  
+
   return (
     <>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/ventas' }, { name: 'Registrar', href: '/ventas/registro_venta' }]} />
@@ -149,21 +151,23 @@ const Registro_Venta = () => {
             </div>
           </div>
           <div className="flex justify-end mt-4">
-            <button className="btn btn-cerrar  ">Cerrar</button>
+            <button className="btn btn-cerrar  flex items-center">
+              <MdCleaningServices style={{ fontSize: '22px' }} />
+              Limpiar</button>
             <div className='items-center flex ml-2'>
-              <button className="btn btn-cobrar mr-0">
-                <BsCashCoin className="" style={{ fontSize: '22px' }} />
+              <button className="btn btn-cobrar mr-0 flex items-center" onClick={() => setIsCobrarModalOpen(true)}>
+                <BsCashCoin  style={{ fontSize: '22px' }} />
                 Cobrar
               </button>
             </div>
           </div>
         </div>
         {showAlert && (
-        <AlertModal
-          message="Stock insuficiente"
-          onClose={() => setShowAlert(false)}
-        />
-      )}
+          <AlertModal
+            message="Stock insuficiente"
+            onClose={() => setShowAlert(false)}
+          />
+        )}
       </div>
       <ModalProducto
         isModalOpen={isModalOpen}
@@ -175,8 +179,10 @@ const Registro_Venta = () => {
         handleProductSelect={handleProductSelect}
         filteredProductos={filteredProductos}
       />
+      <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} /> {/* Añade el nuevo modal */}
+
     </>
-    
+
   );
 };
 
