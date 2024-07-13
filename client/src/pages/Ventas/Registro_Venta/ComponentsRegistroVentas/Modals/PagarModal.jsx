@@ -68,7 +68,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                             <div>
                                 <label className="block text-gray-800 mb-2 font-semibold">Seleccione el cliente</label>
                                 <div className='flex items-center justify-between'>
-                                    <select className="input w-40 mr-3" style={{ border: "solid 0.1rem #171a1f28" }}>
+                                    <select className="input-c w-40 mr-3" style={{ border: "solid 0.1rem #171a1f28" }}>
                                         <option>Cliente 1</option>
                                         <option>Cliente 2</option>
                                     </select>
@@ -84,7 +84,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     value={metodo_pago}
                                     onChange={(e) => setmetodo_pago(e.target.value)}
                                     containerStyle={{ marginLeft: '10px' }}
-                                    className={"input w-full h-10 border border-gray-300"}
+                                    className={"input-c w-full h-10 border border-gray-300"}
                                     classNamediv={"w-60 flex items-center mt-2 "}
 
                                 />
@@ -93,7 +93,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                         <div className="mb-4">
                             <label className="block text-gray-800 mb-2 font-semibold">Vendedor</label>
                             <div className='flex items-center justify-between'>
-                                <select className="input w-full" style={{ border: "solid 0.1rem #171a1f28" }}>
+                                <select className="input-c w-full" style={{ border: "solid 0.1rem #171a1f28" }}>
                                     <option>Vendedor 1</option>
                                     <option>Vendedor 2 </option>
                                 </select>
@@ -107,7 +107,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 value={totalImporte}
                                 readOnly
                                 style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                className={"input w-40 ml-2"}
+                                className={"input-c w-40 ml-2"}
                             />
                             <SelectField
                                 label="Método de pago"
@@ -115,7 +115,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 value={metodo_pago}
                                 onChange={(e) => setmetodo_pago(e.target.value)}
                                 containerStyle={{ marginLeft: '10px' }}
-                                className={"input w-full h-10 border border-gray-300"}
+                                className={"input-c w-full h-10 border border-gray-300"}
                                 classNamediv={"w-60 flex items-center mt-2 "}
 
                             />
@@ -129,7 +129,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 pattern="[0-9]*[.]?[0-9]{0,2}"
                                 onKeyDown={validateDecimalInput}
                                 style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                className={"input w-40 ml-2"}
+                                className={"input-c w-40 ml-2"}
                             />
                             <div className='ml-10 mb-4'>
                                 <label className="text-gray-800 font-semibold">Aplicar descuento</label>
@@ -141,7 +141,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         onChange={(e) => setDescuentoActivado(e.target.checked)}
                                     />
                                     <InputField
-                                        className={"input w-full ml-2"}
+                                        className={"input-c w-full ml-2"}
                                         label=""
                                         symbol=""
                                         value={montoDescuento}
@@ -167,7 +167,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     symbol="S/."
                                     value={cambio >= 0 ? cambio.toFixed(2) : ''}
                                     readOnly
-                                    className={"input w-40 ml-2"}
+                                    className={"input-c w-40 ml-2"}
                                     style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                 />
                             </div>
@@ -178,7 +178,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     value={faltante >= 0 ? faltante.toFixed(2) : ''}
                                     readOnly
                                     style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                    className={"input w-full ml-2"}
+                                    className={"input-c w-full ml-2"}
                                 />
                             </div>
                         </div>
@@ -194,7 +194,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         pattern="[0-9]*[.]?[0-9]{0,2}"
                                         onKeyDown={validateDecimalInput}
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        className={"input w-40 ml-2"}
+                                        className={"input-c w-40 ml-2"}
                                     />
                                     <SelectField
                                         label="Método de pago"
@@ -202,7 +202,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         value={metodo_pago2}
                                         onChange={(e) => setmetodo_pago2(e.target.value)}
                                         containerStyle={{ marginLeft: '10px' }}
-                                        className={"input w-full h-10 border border-gray-300"}
+                                        className={"input-c w-full h-10 border border-gray-300"}
                                         classNamediv={"w-60 flex items-center mt-2 "}
                                     />
                                 </div>
@@ -213,7 +213,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         value={cambio2 >= 0 ? cambio2.toFixed(2) : ''}
                                         readOnly
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        className={"input w-40 ml-2"}
+                                        className={"input-c w-40 ml-2"}
                                     />
                                     <div className='ml-12 w-60'>
                                         <InputField
@@ -222,7 +222,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                             value={faltante2 >= 0 ? faltante2.toFixed(2) : ''}
                                             readOnly
                                             style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                            className={"input w-full ml-2"}
+                                            className={"input-c w-full ml-2"}
                                         />
                                     </div>
                                 </div>
@@ -241,7 +241,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         pattern="[0-9]*[.]?[0-9]{0,2}"
                                         onKeyDown={validateDecimalInput}
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        className={"input w-40 ml-2"}
+                                        className={"input-c w-40 ml-2"}
 
                                     />
                                     <SelectField
@@ -250,7 +250,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         value={metodo_pago3}
                                         onChange={(e) => setmetodo_pago3(e.target.value)}
                                         containerStyle={{ marginLeft: '10px' }}
-                                        className={"input w-full h-10 border border-gray-300"}
+                                        className={"input-c w-full h-10 border border-gray-300"}
                                         classNamediv={"w-60 flex items-center mt-2 "}
                                     />
                                 </div>
@@ -261,7 +261,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         value={cambio3 >= 0 ? cambio3.toFixed(2) : ''}
                                         readOnly
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        className={"input w-40 ml-2"}
+                                        className={"input-c w-40 ml-2"}
                                     />
                                     <div className='ml-12 w-60'>
                                         <InputField
@@ -270,7 +270,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                             value={faltante3 >= 0 ? faltante3.toFixed(2) : ''}
                                             readOnly
                                             style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                            className={"input w-full ml-2"}
+                                            className={"input-c w-full ml-2"}
                                         />
                                     </div>
                                 </div>
@@ -301,7 +301,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         options={['Natural', 'Jurídico']}
                                         value={tipo_cliente}
                                         onChange={(e) => settipo_cliente(e.target.value)}
-                                        className="input w-full h-10 border border-gray-300 mt-2"
+                                        className="input-c w-full h-10 border border-gray-300 mt-2"
                                     />
                                 </div>
                                 <div className="w-1/2 pl-2">
@@ -309,7 +309,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         type="number"
                                         placeholder="EJEM: 987654321"
                                         label="Telefono"
-                                        className="input w-full"
+                                        className="input-c w-full"
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                     />
                                 </div>
@@ -320,7 +320,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     <InputField
                                         placeholder="EJEM: 78541236"
                                         label="DNI/RUC: *"
-                                        className="input w-full"
+                                        className="input-c w-full"
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                     />
                                 </div>
@@ -342,7 +342,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     <InputField
                                         placeholder="EJEM: Juan Perez"
                                         label="Nombre del cliente / Razón social * "
-                                        className="input w-full"
+                                        className="input-c w-full"
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                     />
                                 </div>
@@ -353,7 +353,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         type="email"
                                         placeholder="EJEM: poala@gmail.com"
                                         label="Email"
-                                        className="input w-full"
+                                        className="input-c w-full"
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                     />
                                 </div>
@@ -364,7 +364,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         type="address"
                                         placeholder="EJEM: Balta y Leguia"
                                         label="Dirección"
-                                        className="input w-full"
+                                        className="input-c w-full"
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                     />
                                 </div>

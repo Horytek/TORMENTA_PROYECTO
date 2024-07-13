@@ -1,4 +1,4 @@
-.input {
+.input-c {
   border: 2px solid #e2e8f0;
   border-radius: 0.25rem;
   padding: 0.5rem;
@@ -49,7 +49,7 @@
   border-radius: 5px;
 }
 
-.cant-pag {
+.cant-pag-c {
   padding: 0.25rem 1rem;
   background-color: #eaeaeae3;
 }
@@ -92,7 +92,7 @@ th {
 
 }
 
-.modal-content {
+.modal-content-c {
   background-color: #f7f6f6;
   padding: 20px;
   border-radius: 5px;
@@ -103,12 +103,12 @@ th {
   animation: fadeIn 0.3s ease-in-out; 
 }
 
-.modal-content h2 {
+.modal-content-c h2 {
   margin-bottom: 15px;
   font-size: 1.5rem;
 }
 
-.modal-content label {
+.modal-content-c label {
   display: block;
   margin-bottom: 10px;
 }

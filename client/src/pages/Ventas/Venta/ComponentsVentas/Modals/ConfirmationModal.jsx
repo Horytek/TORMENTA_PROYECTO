@@ -6,7 +6,7 @@ const ConfirmationModal = ({ confirmDeleteModalOpen, handleDeleteVenta, setConfi
 
   return (
     <div className="modal-container">
-      <div className="modal-content">
+      <div className="modal-content-c">
         <h2 style={{ textAlign: "start" }}>
           <IoMdOptions className="inline-block mr-2" style={{ fontSize: '20px' }} />
           Opciones

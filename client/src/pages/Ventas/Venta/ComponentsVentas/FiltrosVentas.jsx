@@ -9,7 +9,7 @@ const FiltrosVentas = () => {
                     <label htmlFor="campo" className="label">
                         Campo
                     </label>
-                    <select id="campo" className="input" style={{width: "170px"}}>
+                    <select id="campo" className="input-c" style={{width: "170px"}}>
                         <option value="">Seleccione</option>
                         <option value="cam1">Cam1</option>
                         <option value="cam2">Cam2</option>
@@ -20,18 +20,18 @@ const FiltrosVentas = () => {
                     <label htmlFor="tipo" className="label">
                         Tipo
                     </label>
-                    <select id="tipo" className="input" style={{width: "170px"}}>
+                    <select id="tipo" className="input-c" style={{width: "170px"}}>
                         <option value="">Seleccione</option>
                         <option value="tipo1">Tipo1</option>
                         <option value="tipo2">Tipo2</option>
                         <option value="tipo3">Tipo3</option>
                     </select>
                 </div>
-                <div className="input-wrapper">
+                <div className="input-wrapper flex">
                     <label htmlFor="valor" className="label">
                         Valor
                     </label>
-                    <input type="text" id="valor" className="input" placeholder="Buscar" />
+                    <input type="text" id="valor" className="input-c" placeholder="Buscar" />
                 </div>
             </div>
 

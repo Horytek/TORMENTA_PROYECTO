@@ -102,7 +102,7 @@ const Ventas = () => {
         <div className="flex">
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
-        <select className="input cant-pag">
+        <select className="input-c cant-pag-c ">
           <option>5</option>
           <option>10</option>
           <option>20</option>

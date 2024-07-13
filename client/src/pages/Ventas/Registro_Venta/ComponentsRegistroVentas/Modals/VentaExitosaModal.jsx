@@ -15,7 +15,7 @@ const VentaExitosaModal = ({ isOpen, onClose }) => {
 
     return isOpen ? (
         <div className="modal-container">
-            <div className="modal-content">
+            <div className="modal-content-c">
                 <div className="modal-header">
                     <h2 className="text-lg font-bold flex items-center">
                         <BsCheckCircle className="mr-2 text-green-500 animate-pulse" style={{ fontSize: '25px' }} />
