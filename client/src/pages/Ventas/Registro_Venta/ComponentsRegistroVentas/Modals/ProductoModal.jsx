@@ -12,16 +12,7 @@ const categoryButtons = [
   { category: 'bufanda', icon: FaTshirt }
 ];
 
-const ModalProducto = ({
-  isModalOpen,
-  setIsModalOpen,
-  searchTerm,
-  setSearchTerm,
-  selectedCategory,
-  setSelectedCategory,
-  handleProductSelect,
-  filteredProductos
-}) => {
+const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, handleProductSelect, filteredProductos }) => {
   if (!isModalOpen) return null;
 
   return (
@@ -36,11 +27,7 @@ const ModalProducto = ({
         </h2>
         <div className="flex justify-around mb-5 button-tipo-prendas text-2xl">
           {categoryButtons.map(({ category, icon: Icon }) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`btn ${selectedCategory === category ? 'btn-primary' : 'btn-secondary'}`}
-            >
+            <button key={category} onClick={() => setSelectedCategory(category)} className={`btn ${selectedCategory === category ? 'btn-primary' : 'btn-secondary'}`} >
               <Icon />
             </button>
           ))}
@@ -50,24 +37,22 @@ const ModalProducto = ({
           <span className="px-3">
             <FaSearch className="text-gray-400" />
           </span>
-          <input
-            type="text"
-            className="form-input py-2 px-4 w-full text-gray-700 placeholder-gray-400 focus:outline-none"
-            placeholder="Realice la búsqueda del producto por el nombre"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+          <input type="text" className="form-input py-2 px-4 w-full text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="Realice la búsqueda del producto por el nombre" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <table className="min-w-full">
           <thead>
             <tr>
               {['NOMBRE', 'PRECIO', 'STOCK'].map((heading, index) => (
-                <th key={heading} style={{fontSize: "14px"}} className={`w-${index === 0 ? '1/3' : '1/12'} text-start text-xs font-semibold text-gray-500 uppercase tracking-wider`}>
+                <th
+                  key={heading}
+                  style={{ fontSize: '14px' }}
+                  className={`w-${index === 0 ? '1/3' : '1/12'} text-start text-xs font-semibold text-gray-500 uppercase tracking-wider`}
+                >
                   {heading}
                 </th>
               ))}
             </tr>
-
           </thead>
           <tbody>
             {filteredProductos.map((producto) => (

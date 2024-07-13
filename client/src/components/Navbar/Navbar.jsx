@@ -3,6 +3,7 @@ import { FaRegBell, FaSearch, FaBars, FaTimes } from 'react-icons/fa';
 import { HiOutlineShoppingCart } from "react-icons/hi";
 import { LuUserCircle } from "react-icons/lu";
 import './Navbar.css';
+import { Link } from 'react-router-dom';
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -20,10 +21,21 @@ function Navbar() {
         </button>
         {/* Menú desplegable */}
         <div className={`menu-desplegable w-full md:flex md:items-center ${menuOpen ? 'block shadow-md' : 'hidden'} md:block absolute md:static`}>
-          <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Venta</a>
-          <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Almacén</a>
-          <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Empleados</a>
-          <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Productos</a>
+          <Link to="/ventas" >
+            <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Venta</a>
+          </Link>
+          <Link to="/almacen" >
+            <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Almacén</a>
+
+          </Link>
+          <Link to="/empleados" >
+            <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Empleados</a>
+
+          </Link>
+          <Link to="/productos" >
+            <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Productos</a>
+
+          </Link>
         </div>
       </div>
 

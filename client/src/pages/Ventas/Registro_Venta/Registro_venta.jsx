@@ -6,14 +6,13 @@ import useVentasData from '../Data/Venta_Data';
 import { BsCashCoin } from "react-icons/bs";
 import { MdCleaningServices } from "react-icons/md";
 import AlertModal from '../../../components/AlertModal/AlertModal';
-import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';  // Importa el nuevo componente
-
+import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';
 import './Registro_Venta.css';
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCobrarModalOpen, setIsCobrarModalOpen] = useState(false); // Nuevo estado para el modal de cobrar
+  const [isCobrarModalOpen, setIsCobrarModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTerm2, setSearchTerm2] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -30,7 +29,6 @@ const Registro_Venta = () => {
   const handleProductSelect = (producto) => {
     const existingDetalle = detalles.find(detalle => detalle.codigo === producto.codigo);
 
-    // Verificar si hay suficiente stock disponible
     const productoIndex = productos.findIndex(p => p.codigo === producto.codigo);
     if (productoIndex !== -1 && productos[productoIndex].stock > 0) {
       if (existingDetalle) {
@@ -47,9 +45,7 @@ const Registro_Venta = () => {
 
       setProductos(prevProductos => prevProductos.map(p => p.codigo === producto.codigo ? { ...p, stock: p.stock - 1 } : p));
     } else {
-      // No hay suficiente stock disponible
       setShowAlert(true);
-      // Puedes mostrar un mensaje de error o manejarlo según tu flujo de la aplicación
     }
 
     setIsModalOpen(false);
@@ -69,34 +65,29 @@ const Registro_Venta = () => {
 
   const toggleDetalleMode = () => {
     setDetalleMode(prevMode => !prevMode);
-    setSearchTerm(''); // Resetear término de búsqueda al cambiar modo
+    setSearchTerm('');
   };
 
   const handleQuantityChange = (index, newCantidad) => {
-    if (newCantidad > 0) { // Asegurarse de que newCantidad sea mayor que 0
+    if (newCantidad > 0) {
       const updatedDetalles = [...detalles];
       const detalleToUpdate = { ...updatedDetalles[index] };
       const oldCantidad = detalleToUpdate.cantidad;
 
-      // Verificar si hay suficiente stock disponible
       const productoCodigo = detalleToUpdate.codigo;
       const productoIndex = productos.findIndex(p => p.codigo === productoCodigo);
       if (productoIndex !== -1) {
         const producto = productos[productoIndex];
         if (newCantidad <= producto.stock + oldCantidad) {
-          // Actualizar detalle con nueva cantidad
           detalleToUpdate.cantidad = newCantidad;
 
-          // Calcular y actualizar IG(V) y subtotal
           const igvValue = (parseFloat(producto.precio) * 0.18 * newCantidad).toFixed(2);
           const subtotal = (parseFloat(producto.precio) * newCantidad + parseFloat(igvValue) - parseFloat(detalleToUpdate.descuento)).toFixed(2);
           detalleToUpdate.igv = `S/ ${igvValue}`;
           detalleToUpdate.subtotal = `S/ ${subtotal}`;
 
-          // Actualizar detalle de venta
           updateDetalle(detalleToUpdate);
 
-          // Actualizar stock del producto
           const updatedProductos = [...productos];
           updatedProductos[productoIndex].stock += oldCantidad - newCantidad;
           setProductos(updatedProductos);
@@ -180,10 +171,7 @@ const Registro_Venta = () => {
         filteredProductos={filteredProductos}
       />
       <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} totalImporte={` ${totalImporte}`} />
-
-
     </>
-
   );
 };
 

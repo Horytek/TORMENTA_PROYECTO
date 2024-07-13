@@ -4,22 +4,16 @@ import { BsCheckCircle } from 'react-icons/bs';
 
 const VentaExitosaModal = ({ isOpen, onClose }) => {
     useEffect(() => {
-        let timeout;
         if (isOpen) {
-            timeout = setTimeout(() => {
-                onClose(); // Cierra el modal después de 1500 milisegundos (1.5 segundos)
-                window.location.reload(); // Refresca la página después de cerrar el modal
+            const timeout = setTimeout(() => {
+                onClose();
+                window.location.reload();
             }, 1500);
+            return () => clearTimeout(timeout);
         }
-
-        return () => {
-            clearTimeout(timeout);
-        };
     }, [isOpen, onClose]);
 
-    if (!isOpen) return null;
-
-    return (
+    return isOpen ? (
         <div className="modal-container">
             <div className="modal-content">
                 <div className="modal-header">
@@ -33,7 +27,7 @@ const VentaExitosaModal = ({ isOpen, onClose }) => {
                 </div>
             </div>
         </div>
-    );
+    ) : null;
 };
 
 VentaExitosaModal.propTypes = {

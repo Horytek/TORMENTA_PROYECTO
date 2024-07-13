@@ -1,12 +1,13 @@
 import PropTypes from 'prop-types';
 
-const InputField = ({ label, symbol, value, onChange, readOnly = false, pattern, onKeyDown, disabled = false, style, containerStyle, className }) => (
+const InputField = ({ label, symbol, value, onChange, readOnly = false, pattern, onKeyDown, disabled = false, style, containerStyle, className,placeholder }) => (
     <div className="flex flex-col" style={containerStyle}>
         <label className="text-gray-800 font-semibold">{label}</label>
         <div className='flex items-center mt-2'>
             {symbol && <span>{symbol}</span>}
             <input
                 type="text"
+                placeholder= {placeholder}
                 className={className}
                 style={style}
                 value={value}
@@ -32,6 +33,7 @@ InputField.propTypes = {
     style: PropTypes.object,
     containerStyle: PropTypes.object,
     className: PropTypes.string,
+    placeholder: PropTypes.string
 };
 
 export default InputField;

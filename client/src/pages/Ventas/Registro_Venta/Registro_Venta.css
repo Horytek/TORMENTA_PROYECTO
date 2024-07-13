@@ -7,18 +7,22 @@
 .modal-prod {
   box-shadow: 0 0 10px #171a1f33;
   background-color: #ededed;
+  animation: fadeIn 0.3s ease-in-out; 
+
 }
 
 .modal-pagar {
   box-shadow: 0 0 10px #171a1f33;
   background-color: #efefef;
+  animation: fadeIn 0.3s ease-in-out; 
+
 }
 
 .modal-prod hr, .modal-pagar hr {
   border: solid 0.1rem #bdbdbd !important;
 }
 
-.close-modal-prod, .close-modal-pagar  {
+.close-modal-prod, .close-modal-pagar {
   background-color: #e05858ff;
   font-size: 20px;
 }
@@ -108,14 +112,14 @@
   width: 7rem;
 }
 
-.btn-cobrar {
+.btn-cobrar, .btn-aceptar-cliente {
   background-color: #379AE6FF;
   color: white;
   font-weight: 500;
   align-items: center;
 }
 
-.btn-cobrar:hover {
+.btn-cobrar:hover, .btn-aceptar-cliente:hover {
   background-color: #1f7db9ff;
 }
 
@@ -126,8 +130,20 @@
   align-items: center;
 }
 
+
 .btn-cerrar:hover {
   background-color: #d22929ff;
 }
 
 
+/* Animación de entrada del modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
