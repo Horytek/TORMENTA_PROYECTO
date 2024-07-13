@@ -13,7 +13,16 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
   const handleSelectClick = (event) => {
     event.stopPropagation(); // Evita la propagación del clic al tr de la tabla
   };
-
+  const getEstadoClassName = (estado) => {
+    switch (estado.toLowerCase()) {
+      case 'activo':
+        return 'estado-activo';
+      case 'inactivo':
+        return 'estado-inactivo';
+      default:
+        return '';
+    }
+  };
   const renderIngresoRow = (ingreso) => (
     <React.Fragment key={ingreso.id}>
       <tr onClick={() => toggleRow(ingreso.id)} className='tr-tabla-ingreso'>
@@ -23,6 +32,11 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
         <td className="text-center">{ingreso.concepto}</td>
         <td className="text-center">{ingreso.oCompra}</td>
         <td className="text-center">{ingreso.factura}</td>
+        <td className="text-center">
+        <p className={getEstadoClassName(ingreso.estado)}> 
+          {ingreso.estado}
+        </p>
+      </td>
         <td>
           <select className='b custom-select' name="select" onClick={handleSelectClick}>
             <option value=""><FaAngleDown /></option>
@@ -43,29 +57,29 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
           <table className="table-details w-full">
             <thead>
               <tr>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CODIGO</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">LINEA</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACÉN</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">BAR</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Código</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Línea</th>
+                <th className="w-3/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Descripción</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Cantidad</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Precio</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Almacén</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Bar</th>
               </tr>
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
                 <tr key={index}>
-                  <td>{detalle.codigo}</td>
-                  <td>{detalle.linea}</td>
-                  <td>{detalle.descripcion}</td>
-                  <td>{detalle.cantidad}</td>
-                  <td>{detalle.um}</td>
-                  <td>{detalle.precio}</td>
-                  <td>{detalle.total}</td>
-                  <td>{detalle.almacen}</td>
-                  <td>{detalle.bar}</td>
+                  <td className="text-center py-2 px-4">{detalle.codigo}</td>
+                  <td className="text-center py-2 px-4">{detalle.linea}</td>
+                  <td className="text-center py-2 px-4">{detalle.descripcion}</td>
+                  <td className="text-center py-2 px-4">{detalle.cantidad}</td>
+                  <td className="text-center py-2 px-4">{detalle.um}</td>
+                  <td className="text-center py-2 px-4">{detalle.precio}</td>
+                  <td className="text-center py-2 px-4">{detalle.total}</td>
+                  <td className="text-center py-2 px-4">{detalle.almacen}</td>
+                  <td className="text-center py-2 px-4">{detalle.bar}</td>
                 </tr>
               ))}
             </tbody>
@@ -74,18 +88,19 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
       </td>
     </tr>
   );
-
+  
   return (
-    <div className="container-table-ingreso px-4 bg-white rounded-lg">
+    <div className="container-table-reg px-4 bg-white rounded-lg">
       <table className="table w-full">
         <thead>
           <tr>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOCUMENTO</th>
-            <th className="w-1/6 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ORDEN COMPRA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FACTURA</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
           </tr>
         </thead>

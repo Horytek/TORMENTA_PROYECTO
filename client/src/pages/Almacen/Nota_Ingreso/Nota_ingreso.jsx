@@ -91,7 +91,7 @@ const Ingresos = () => {
 
       <div className="flex items-center gap-2">
         <ButtonNormal color={'#01BDD6'}>
-        <LuFilter className='icon-white w-4 h-4 text-gray-500' />
+        <LuFilter className='icon-white w-4 h-4 ' />
         </ButtonNormal>
 
         {/* <DropdownButton id="dropdown-basic-button" title="Opciones">
