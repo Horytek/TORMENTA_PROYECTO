@@ -36,7 +36,7 @@ const Salidas = () => {
     setDeleteOptionSelected(false);
   };
   const openModalImprimir = () => {
-    setIsModalOpenImprimir(false);
+    setIsModalOpenImprimir(true);
 
   };
 
@@ -115,7 +115,7 @@ const Salidas = () => {
       /* currentPage={currentPage} */
       />
 
-      <ConfirmationModal message='¿Desea imprimir la nota de salida?' isOpen={isModalOpenImprimir} onClose={closeModalImprimir} />
+      <ConfirmationModal message='¿Desea imprimir la nota de salida?' onClose={closeModalImprimir} onConfirm={isModalOpenImprimir}  />
 
 
     </div>
