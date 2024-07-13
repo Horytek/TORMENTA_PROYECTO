@@ -9,7 +9,19 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
   const toggleRow = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
-
+  const handleSelectClick = (event) => {
+    event.stopPropagation(); // Evita la propagación del clic al tr de la tabla
+  };
+  const getEstadoClassName = (estado) => {
+    switch (estado.toLowerCase()) {
+      case 'activo':
+        return 'estado-activo';
+      case 'inactivo':
+        return 'estado-inactivo';
+      default:
+        return '';
+    }
+  };
   const renderSalidaRow = (salida) => (
     <React.Fragment key={salida.id}>
       <tr onClick={() => toggleRow(salida.id)} className='tr-tabla-salida'>
@@ -20,7 +32,7 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
         <td className="text-center">{salida.concepto}</td>
         <td className="text-center"><p className='estado-activo'> {salida.estado}</p></td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg text-gray-900 text-sm rounded-lg' name="select">
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select">
             <option value="" selected>Seleccione...</option>
             <option value="value1">Imprimir</option>
             <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="value2">Anular</option>
@@ -42,24 +54,24 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CODIGO</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">LINEA</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACÉN</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACÉN</th>
               </tr>
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
                 <tr key={index}>
-                  <td>{detalle.codigo}</td>
-                  <td>{detalle.linea}</td>
-                  <td>{detalle.descripcion}</td>
-                  <td>{detalle.cantidad}</td>
-                  <td>{detalle.um}</td>
-                  <td>{detalle.precio}</td>
-                  <td>{detalle.total}</td>
-                  <td>{detalle.almacen}</td>
+                  <td className="text-center py-2 px-4">{detalle.codigo}</td>
+                  <td className="text-center py-2 px-4">{detalle.linea}</td>
+                  <td className="text-center py-2 px-4">{detalle.descripcion}</td>
+                  <td className="text-center py-2 px-4">{detalle.cantidad}</td>
+                  <td className="text-center py-2 px-4">{detalle.um}</td>
+                  <td className="text-center py-2 px-4">{detalle.precio}</td>
+                  <td className="text-center py-2 px-4">{detalle.total}</td>
+                  <td className="text-center py-2 px-4">{detalle.almacen}</td>
                 </tr>
               ))}
             </tbody>
@@ -78,7 +90,7 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
           <tr>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOCUMENTO</th>
-            <th className="w-1/6 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>

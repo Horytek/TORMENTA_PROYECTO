@@ -1,7 +1,10 @@
 import React from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-// import productosData from './data/productosData';
 import Table from '@/components/Table/Table'; 
+import { IoMdPin, IoMdCar } from 'react-icons/io';
+import { MdPersonAdd } from "react-icons/md";
+import { FiSave } from "react-icons/fi";
+import { FaBarcode } from "react-icons/fa6";
 function NotaSalida() {
   const columns = [
     { header: 'Código', key: 'codigo' },
@@ -76,16 +79,16 @@ function NotaSalida() {
           </div>
           <div className="flex justify-between mt-4 space-x-2">
             <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              Nuevo proveedor
+            <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
             </button>
             <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              Buscar producto
+            <FaBarcode className="inline-block mr-2" /> Buscar producto
             </button>
             <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
               Cancelar
             </button>
             <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              Guardar
+            <FiSave className="inline-block mr-2 text-lg" /> Guardar
             </button>
           </div>
         </div>
