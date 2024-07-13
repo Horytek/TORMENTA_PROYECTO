@@ -30,9 +30,13 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
         <td className="text-center">{salida.proveedor}</td>
         <td className="text-center">{salida.total}</td>
         <td className="text-center">{salida.concepto}</td>
-        <td className="text-center"><p className='estado-activo'> {salida.estado}</p></td>
+        <td className="text-center">
+        <p className={getEstadoClassName(salida.estado)}> 
+          {salida.estado}
+        </p>
+        </td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select">
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}  >
             <option value="" selected>Seleccione...</option>
             <option value="value1">Imprimir</option>
             <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="value2">Anular</option>
@@ -84,7 +88,7 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
 
 
   return (
-    <div className="container-table-salida px-4 bg-white rounded-lg">
+    <div className="container-table-reg px-4 bg-white rounded-lg">
       <table className="table w-full">
         <thead>
           <tr>

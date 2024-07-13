@@ -3,6 +3,8 @@ import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import Table from '@/components/Table/Table'; 
 import { IoMdPin, IoMdCar } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
+import { Link } from 'react-router-dom';
+import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 function NotaSalida() {
@@ -84,9 +86,14 @@ function NotaSalida() {
             <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
             <FaBarcode className="inline-block mr-2" /> Buscar producto
             </button>
+           
+            <Link to="/almacen/nota_salida">
             <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              Cancelar
+            Cancelar
             </button>
+            </Link>
+            
+            
             <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
             <FiSave className="inline-block mr-2 text-lg" /> Guardar
             </button>
