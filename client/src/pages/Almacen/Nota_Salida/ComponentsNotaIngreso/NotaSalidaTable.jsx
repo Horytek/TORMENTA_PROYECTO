@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FaCaretDown } from "react-icons/fa";
+import { IoIosArrowDropdown } from "react-icons/io";
 
 
 const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) => {
@@ -9,16 +9,7 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
   const toggleRow = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
-  const getEstadoClassName = (estado) => {
-    switch (estado.toLowerCase()) {
-      case 'activo':
-        return 'estado-activo';
-      case 'inactivo':
-        return 'estado-inactivo';
-      default:
-        return '';
-    }
-  };
+
   const renderSalidaRow = (salida) => (
     <React.Fragment key={salida.id}>
       <tr onClick={() => toggleRow(salida.id)} className='tr-tabla-salida'>
@@ -28,11 +19,11 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
         <td className="text-center">{salida.total}</td>
         <td className="text-center">{salida.concepto}</td>
         <td className="text-center"><p className='estado-activo'> {salida.estado}</p></td>
-        <td>
-          <select className='b custom-select' name="select">
-            <option value=""><FaCaretDown /></option>
+        <td className='text-center'>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg text-gray-900 text-sm rounded-lg' name="select">
+            <option value="" selected>Seleccione...</option>
             <option value="value1">Imprimir</option>
-            <option className={`ml-2 cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="value2" selected>Anular</option>
+            <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="value2">Anular</option>
             <option value="value3">Clonar</option>
             </select>
         </td>
