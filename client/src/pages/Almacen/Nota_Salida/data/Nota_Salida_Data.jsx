@@ -23,7 +23,7 @@ const useNotaSalidaData = () => {
       proveedor: 'SALIDA - CENTRAL 52-53',
       total: 50,
       concepto: 'COMPRA EN EL PAIS',
-      estado: 'Inactivo',
+      estado: 'Activo',
       detalles: [
         { codigo: '0101010016', linea: 'TORMENTA JEANS',descripcion: '3 BOTONES PLOMO - TORMENTA' ,cantidad: 1,  um:'UND', precio: 50 , total: 50, almacen:'04', bar: 'NOT'  }
       ]
