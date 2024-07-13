@@ -1,0 +1,232 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    
+  }
+  
+  .content-modal {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 700px;
+    width:90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    max-height: auto !important;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    border-bottom: 4px solid #f0f0f0;
+  }
+  
+  .modal-title {
+    font-size: 25px;
+    font-weight: bold;
+    color: black;
+  }
+  
+  .modal-close {
+    cursor: pointer;
+    color: #000000 !important;
+    padding: 0 !important;
+  }
+  
+  .modal-body {
+    padding-top: 15px;
+    width: 100% !important;
+    
+  }
+  
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  
+  .modal-content {
+    margin-bottom: 20px;
+    width: 100%; /* Making it wider */
+    max-width: 600px; /* Set a maximum width */
+    margin: 0 auto; /* Centering the modal content */
+    margin-bottom: 15px;
+    
+}
+  
+.input-field {
+    width: 100%;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 8px 15px 8px 10px; /* Ajusta el padding para dejar espacio al icono */
+    border-radius: 4px;
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(50%);
+    pointer-events: none;
+    color: #999;
+}
+
+.datos-transporte {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .datos-transporte .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .datos-transporte .header .toggle {
+    display: flex;
+    align-items: center;
+  }
+  
+  .datos-transporte .header .toggle input {
+    margin-right: 5px;
+  }
+  
+  .datos-transporte .header .nuevo-transporte,.datos-transporte .header .nuevo-transportista {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .datos-transporte .header .nuevo-transporte svg,.datos-transporte .header .nuevo-transportista svg {
+    margin-right: 5px;
+  }
+
+  
+  .datos-transporte .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .datos-transporte .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .datos-transporte .form-group label {
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: black;
+    margin-bottom: 5px;
+  }
+  
+  .datos-transporte .form-group input[type="text"] {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+  }
+  .datos-transporte .form-group input[type="text"]:disabled {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    color: #6c757d;
+  }
+  
+  .datos-transporte .form-group input[type="checkbox"] {
+    margin-right: 5px;
+  }
+
+  
+  .modal1 {
+    width: 80%; /* Cambia este valor según lo ancho que quieras el modal */
+    max-width: 1000px; /* Ajusta el ancho máximo según tus necesidades */
+    margin: auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal1-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .content-modal1 {
+    padding: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+    max-height: auto !important;
+  }
+
+  h4 {
+    text-align: center;
+  }
+  
+  .tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+  }
+  
+  .tabs button {
+    padding: 10px 20px;
+    border: 1px solid transparent;
+    background: lightgray;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .tabs button.active {
+    background: gray;
+    color: white;
+    border: 1px solid blue;
+  }
+  
+  .tabs button:not(.active) {
+    color: black;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  

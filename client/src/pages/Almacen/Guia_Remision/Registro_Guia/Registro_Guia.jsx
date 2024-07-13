@@ -1,11 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { IoMdPin, IoMdCar } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 import TablaRegGuia from "./ComponentsRegGuias/RegGuiaTable";
+import UbigeoForm from './UbigeoForm';
+import TransporteForm from './UndTrans';
+import ClienteForm from './ClienteForm';
+
 function RegistroGuia() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalType, setModalType] = useState('');
+
+  const openModal = (title, type) => {
+    setIsModalOpen(true);
+    setModalTitle(title);
+    setModalType(type);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
 
   return (
     <div>
@@ -68,7 +85,8 @@ function RegistroGuia() {
               <div className="">
                 <label className="block text-gray-700 text-sm font-bold mt-5" htmlFor="direcdest">
                 </label>
-                <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline" type="button">
+                <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline" 
+                type="button" onClick={() => openModal('Ubicación de Partida / Ubicación de Destino', 'ubicacion')}>
                   <IoMdPin className="inline-block mr-2" /> Ub. de Partida/Ub. de Destino
                 </button>
               </div>
@@ -103,11 +121,11 @@ function RegistroGuia() {
               </div>
               <div className="flex">
                 <div className="flex-1 mr-2">
-                  <label for="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
+                  <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
                   <input type="cant" name='cant' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
                 <div className="flex-1 ml-2">
-                  <label label for="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>
+                  <label htmlFor="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>
                   <input type="peso" name='peso' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
               </div>
@@ -119,14 +137,16 @@ function RegistroGuia() {
               </div>
               <div className="flex">
                 <div className="flex-1 mr-2">
-                  <label for="cantidad" className="block text-gray-700 text-sm font-bold  "></label>
-                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" type="button">
+                  <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold  "></label>
+                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" 
+                  type="button" onClick={() => openModal('Datos del Transporte', 'transporte')}>
                     <IoMdCar className="inline-block mr-2 text-lg" /> Datos de Transporte
                   </button>
                 </div>
                 <div className="flex-1 ml-2">
-                  <label label for="peso" className="block text-gray-700 text-sm font-bold"></label>
-                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" type="button">
+                  <label htmlFor="peso" className="block text-gray-700 text-sm font-bold"></label>
+                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" 
+                  type="button" onClick={() => openModal('Nuevo Cliente', 'cliente')}>
                     <MdPersonAdd className="inline-block mr-2 text-lg" />Nuevo Cliente
                   </button>
                 </div>
@@ -139,7 +159,7 @@ function RegistroGuia() {
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
-                  <label label for="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
+                  <label htmlFor="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
                   <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
                     <FaBarcode className="inline-block mr-2" /> Buscar producto
                   </button>
@@ -163,10 +183,17 @@ function RegistroGuia() {
           </div>
         </div>
         
-          <br />
-          <TablaRegGuia />
-        
+        <br />
+        <TablaRegGuia />
       </div>
+      {/* Modals */}
+      {isModalOpen && (
+        <>
+          {modalType === 'ubicacion' && <UbigeoForm modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'transporte' && <TransporteForm modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'cliente' && <ClienteForm modalTitle={modalTitle} onClose={closeModal} />}
+        </>
+      )}
     </div>
   );
 }

@@ -41,15 +41,14 @@ const TablaRegGuia = () => {
         .table-custom {
           width: 100%;
           border-collapse: collapse;
-          background-color: #f9f9f9;
+          background-color: #f0f0f0;
         }
         .table-custom th, .table-custom td {
-          border: 1px solid #ddd;
           padding: 8px;
           text-align: center;
         }
         .table-custom th {
-          background-color: #f2f2f2;
+          background-color: #f0f0f0;
           font-weight: bold;
         }
       `}</style>
