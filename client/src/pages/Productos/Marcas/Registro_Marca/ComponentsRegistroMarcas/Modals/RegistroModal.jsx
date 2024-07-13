@@ -5,7 +5,7 @@ import "./RegistroModal.css";
 
 // Componentes UI de Registro_Venta adaptados para el modal
 const Label = ({ children, htmlFor, className = "" }) => (
-  <label htmlFor={htmlFor} className={`block text-sm font-bold ${className}`}>
+  <label htmlFor={htmlFor} className={`rvm-block rvm-text-sm rvm-font-bold ${className}`}>
     {children}
   </label>
 );
@@ -17,7 +17,7 @@ const Input = ({ id, value, onChange, placeholder, className = "" }) => (
     value={value}
     onChange={onChange}
     placeholder={placeholder}
-    className={`w-full p-2 text-sm bg-gray-50 text-gray-900 rounded-lg border ${className}`}
+    className={`rvm-w-full rvm-p-2 rvm-text-sm rvm-bg-gray-50 rvm-text-gray-900 rvm-rounded-lg rvm-border ${className}`}
   />
 );
 
@@ -26,28 +26,29 @@ const RegistroVentaModal = ({ modalTitle, onClose }) => {
   const [brandName, setBrandName] = useState("");
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="content-modal">
-          <div className="modal-header">
-            <h3 className="modal-title">{modalTitle}</h3>
-  
+    <div className="rvm-modal-overlay">
+      <div className="rvm-modal">
+        <div className="rvm-content-modal">
+          <div className="rvm-modal-header">
+            <h3 className="rvm-modal-title">{modalTitle}</h3>
           </div>
-          <div className="modal-body">
-            <div className="space-y-4">
-              <div className="flex flex-col space-y-2 align-left">
+          <div className="rvm-modal-body">
+            <div className="rvm-space-y-4">
+              <div className="rvm-flex rvm-flex-col rvm-space-y-2 rvm-align-left">
                 <Label htmlFor="brand-name">
-                  Nombre de la Marca <span className="text-red-500">*</span>
+                  Nombre de la Marca <span className="rvm-text-red-500">*</span>
                 </Label>
                 <Input
                   id="brand-name"
                   placeholder="Ingresa el nombre"
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
+                  className="rv-modal-input"
+
                 />
               </div>
             </div>
-            <div className="modal-buttons mt-4 flex justify-end space-x-2">
+            <div className="rvm-modal-buttons rvm-mt-4 rvm-flex rvm-justify-end rvm-space-x-2">
               <ButtonClose onClick={onClose} />
               <ButtonSave />
             </div>

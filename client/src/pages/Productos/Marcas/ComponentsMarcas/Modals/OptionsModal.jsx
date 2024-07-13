@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import { IoMdOptions } from "react-icons/io";
+
 const OptionsModal = ({
   modalOpen,
   toggleDeleteDetalleOption,
@@ -10,32 +11,37 @@ const OptionsModal = ({
   if (!modalOpen) return null;
 
   return (
-    <div className="modal-content">
+    <div className="om-modal-content-c">
       <h2 style={{ textAlign: "start" }}>
         <IoMdOptions
-          className="inline-block mr-2"
+          className="om-inline-block om-mr-2"
           style={{ fontSize: "20px" }}
         />
         Opciones
       </h2>
       <div style={{ textAlign: "start" }}>
-        <div className="flex mt-4" style={{ alignItems: "center" }}>
+        <div className="om-flex om-mt-4" style={{ alignItems: "center" }}>
           <input
             type="checkbox"
             id="eliminar"
-            className="custom-checkbox mr-2 relative"
+            className="om-custom-checkbox om-mr-2 om-relative"
             onChange={toggleDeleteDetalleOption}
-          />{" "}
-          <p>Eliminar la Marca</p>
+          />
+          <label htmlFor="eliminar" className="om-label">
+            Eliminar la Marca
+          </label>
         </div>
       </div>
       {/* Otros checkboxes y acciones */}
-      <div className="modal-actions flex justify-end" style={{ gap: "20px" }}>
-        <button className="btn btn-cancel" onClick={closeModal}>
+      <div
+        className="om-modal-actions om-flex om-justify-end"
+        style={{ gap: "20px" }}
+      >
+        <button className="om-btn om-btn-cancel" onClick={closeModal}>
           Cancelar
         </button>
         <button
-          className="btn btn-aceptar"
+          className="om-btn om-btn-aceptar"
           onClick={() => setConfirmDeleteModalOpen(true)}
           disabled={!deleteOptionSelected}
         >

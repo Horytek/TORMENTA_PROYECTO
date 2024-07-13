@@ -10,30 +10,30 @@ const BajaModal = ({
   if (!modalOpen) return null;
 
   return (
-    <div className="modal-content">
+    <div className="bm-modal-content">
       <h2 style={{ textAlign: "start" }}>
         <IoMdOptions
-          className="inline-block mr-2"
+          className="bm-inline-block bm-mr-2"
           style={{ fontSize: "20px" }}
         />
         Opciones
       </h2>
       <div style={{ textAlign: "start" }}>
-        <div className="flex mt-4" style={{ alignItems: "center" }}>
+        <div className="bm-flex bm-mt-4" style={{ alignItems: "center" }}>
           <input
             type="checkbox"
             id="deactivate"
-            className="custom-checkbox mr-2 relative"
+            className="bm-custom-checkbox bm-mr-2 bm-relative"
             onChange={toggleDeactivateMarca}
           />
           <label htmlFor="deactivate">Dar de baja a la marca</label>
         </div>
       </div>
-      <div className="modal-actions flex justify-end" style={{ gap: "20px" }}>
-        <button className="btn btn-cancel" onClick={closeBajaModal}>
+      <div className="bm-modal-actions bm-flex bm-justify-end" style={{ gap: "20px" }}>
+        <button className="bm-btn bm-btn-cancel" onClick={closeBajaModal}>
           Cancelar
         </button>
-        <button className="btn btn-aceptar" onClick={handleDarBajaMarca}>
+        <button className="bm-btn bm-btn-aceptar" onClick={handleDarBajaMarca}>
           Aceptar
         </button>
       </div>
