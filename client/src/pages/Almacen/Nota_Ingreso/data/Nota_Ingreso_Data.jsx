@@ -11,6 +11,7 @@ const useNotaIngresoData = () => {
       concepto: 'COMPRA EN EL PAIS',
       oCompra: '/',
       factura: '/',
+      estado: 'Activo',
       detalles: [
         { codigo: '0101060003', linea: 'TORMENTA JEANS',descripcion: 'DASHIR 1 BOTONES NEGRO' ,cantidad: 10,  um:'UND', precio: 50 , total: 500, almacen:'04', bar: 'NOT'  },
         { codigo: '0101010041', linea: 'TORMENTA JEANS',descripcion: 'PANTALÓN RIZOZ TORMENTA' ,cantidad: 12,  um:'UND', precio: 20 , total: 240, almacen:'04', bar: 'NOT' } 
@@ -24,6 +25,7 @@ const useNotaIngresoData = () => {
       concepto: 'COMPRA EN EL PAIS',
       oCompra: '/',
       factura: '/',
+      estado: 'Inactivo',
       detalles: [
         { codigo: '0101010016', linea: 'TORMENTA JEANS',descripcion: '3 BOTONES PLOMO - TORMENTA' ,cantidad: 1,  um:'UND', precio: 50 , total: 50, almacen:'04', bar: 'NOT'  }
       ]

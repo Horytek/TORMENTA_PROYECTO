@@ -1,24 +1,30 @@
-// src/components/Login/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import axios from 'axios';
 import loginImage from '../../assets/img-login.png';
 import AlertModal from '../AlertModal/AlertModal.jsx';
 
 import './Login.css';
 
 function Login() {
-  const [usuario, setEmail] = useState('');
+  const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   // Maneja el evento de inicio de sesión
-  const handleLogin = () => {
-    if (usuario === 'usuario' && password === '123') {
-      navigate('/Inicio');
-    } else {
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post('http://localhost:3001/login', { usuario, password });
+      if (response.data.success) {
+        navigate('/Inicio');
+      } else {
+        setShowAlert(true);
+      }
+    } catch (error) {
+      console.error('Error logging in:', error);
       setShowAlert(true);
     }
   };
@@ -54,12 +60,12 @@ function Login() {
       <div className="bg-circle-top-right absolute top-0 right-0 w-40 h-40 rounded-full z-0"></div>
 
       {/* Contenedor principal del formulario */}
-      <div className="login-container  rounded-lg z-10 grid grid-cols-1 lg:grid-cols-2 w-[70vw] h-[70vh]">
+      <div className="login-container rounded-lg z-10 grid grid-cols-1 lg:grid-cols-2 w-[70vw] h-[70vh]">
         {/* Panel izquierdo (formulario de inicio de sesión) */}
         <div className="login-form bg-white flex flex-col justify-center p-20">
           <h1 className="text-3xl font-bold text-center pb-14">Iniciar Sesión</h1>
 
-          {renderInputField("email", usuario, setEmail, "userexample", "Usuario")}
+          {renderInputField("email", usuario, setUsuario, "userexample", "Usuario")}
           {renderInputField(showPassword ? "text" : "password", password, setPassword, "*******", "Contraseña", true)}
 
           <div className="checkbox-container flex items-center mb-11">

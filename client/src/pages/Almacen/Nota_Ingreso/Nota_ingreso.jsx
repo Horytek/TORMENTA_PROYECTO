@@ -5,9 +5,8 @@ import { LuFilter } from "react-icons/lu";
 import TablaIngresos from './ComponentsNotaIngreso/NotaIngresoTable';
 import { Link } from 'react-router-dom';
 import useIngresosData from './data/Nota_Ingreso_Data';
-import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
-import { FaPlus, FaTrash } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
+import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
+import { FaPlus } from "react-icons/fa";
 import './Nota_ingreso.css';
 
 
@@ -20,9 +19,8 @@ const Ingresos = () => {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
-  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5; // Número total de páginas
+
+
 
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id) => {
@@ -30,28 +28,9 @@ const Ingresos = () => {
     setModalOpen(true);
   };
 
-  const closeModal = () => {
-    setSelectedRowId(null);
-    setModalOpen(false);
-    setDeleteOptionSelected(false);
-  };
 
-  // Función para alternar la opción de eliminar guia
-  const toggleDeleteDetalleOption = () => {
-    setDeleteOptionSelected(!deleteOptionSelected);
-  };
 
-  // Función para eliminar una guia
-  const handleDeleteGuia = () => {
-    removeIngreso(selectedRowId);
-    closeModal();
-    setConfirmDeleteModalOpen(false);
-  };
 
-  // Función para cambiar de página en la paginación
-  const onPageChange = (page) => {
-    setCurrentPage(page);
-  };
 
   return (
     <div>
@@ -64,7 +43,7 @@ const Ingresos = () => {
 
         </h1>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
+     <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
       <div className="flex items-center gap-2">
         <h6 className='font-bold'>Almacén:</h6>
         <label className='border border-gray-300 p-2' htmlFor="">ALM CENTRAL ESCALERA</label>
@@ -88,12 +67,21 @@ const Ingresos = () => {
         <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
         <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
       </div>
-
+      
       <div className="flex items-center gap-2">
         <ButtonNormal color={'#01BDD6'}>
-        <LuFilter className='icon-white w-4 h-4 text-gray-500' />
+        <LuFilter className='icon-white w-4 h-4 ' />
         </ButtonNormal>
-
+        <div className='flec items-center gap-2'>
+            <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select">
+            <option value="" selected>Seleccione...</option>
+            <option value="value1">Imprimir</option>
+            <option value="value2" >Excel</option>
+            <option value="value3">Excel Detalle</option>
+            </select>
+        </div>
+        <br />
+        <br />
         {/* <DropdownButton id="dropdown-basic-button" title="Opciones">
           <Dropdown.Item href="#/action-1">Imprimir</Dropdown.Item>
           <Dropdown.Item href="#/action-2">Excel</Dropdown.Item>

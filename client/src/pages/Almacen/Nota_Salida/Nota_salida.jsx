@@ -2,15 +2,13 @@ import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { IoIosSearch } from "react-icons/io";
 import { LuFilter } from "react-icons/lu";
-import TablaSalida from './ComponentsNotaIngreso/NotaSalidaTable';
+import TablaSalida from './ComponentsNotaSalida/NotaSalidaTable';
 import { Link } from 'react-router-dom';
 import useNotaSalidaData from './data/Nota_Salida_Data';
 import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import './Nota_salida.css';
-
-
 
 const Salidas = () => {
   // Estado para manejar la lista de ingresos
@@ -71,12 +69,21 @@ const Salidas = () => {
         <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
         <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
       </div>
-
+      
       <div className="flex items-center gap-2">
         <ButtonNormal color={'#01BDD6'}>
-        <LuFilter className='icon-white w-4 h-4 text-gray-500' />
+        <LuFilter className='icon-white w-4 h-4 ' />
         </ButtonNormal>
-
+        <div className='flec items-center gap-2'>
+            <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select">
+            <option value="" selected>Seleccione...</option>
+            <option value="value1">Imprimir</option>
+            <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="value2" >Excel</option>
+            <option value="value3">Excel Detalle</option>
+            </select>
+        </div>
+        <br />
+        <br />
         {/* <DropdownButton id="dropdown-basic-button" title="Opciones">
           <Dropdown.Item href="#/action-1">Imprimir</Dropdown.Item>
           <Dropdown.Item href="#/action-2">Excel</Dropdown.Item>

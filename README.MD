@@ -11,12 +11,15 @@
         npm run dev
 ```
 
-### Django (Backend)
+### Express (Backend)
 
-- **Inicializar Aplicación Django**
+- **Inicializar Servidor Express**
 ```sh
-        python manage.py runserver
+        cd express
+        npm install
+        node server.js
 ```
+### Django (Backend)
 
 - **Crear diferentes apps del proyecto**
 ```sh

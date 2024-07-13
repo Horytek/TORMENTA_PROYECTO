@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import "./EditModal.css";
 
-// Componentes UI de Registro_Venta adaptados para el modal
 const Label = ({ children, htmlFor, className = "" }) => (
   <label htmlFor={htmlFor} className={`block text-sm font-bold ${className}`}>
     {children}
@@ -21,9 +20,24 @@ const Input = ({ id, value, onChange, placeholder, className = "" }) => (
   />
 );
 
-// RegistroVentaModal como un formulario dentro de un modal
+const Select = ({ id, value, onChange, options, className = "" }) => (
+  <select
+    id={id}
+    value={value}
+    onChange={onChange}
+    className={`w-full p-2 text-sm bg-gray-50 text-gray-900 rounded-lg border ${className}`}
+  >
+    {options.map((option) => (
+      <option key={option.value} value={option.value} style={{ backgroundColor: '#f3f4f6', color: '#374151' }}>
+        {option.label}
+      </option>
+    ))}
+  </select>
+);
+
 const RegistroVentaModal = ({ onClose }) => {
   const [brandName, setBrandName] = useState("");
+  const [brandStatus, setBrandStatus] = useState("Activo");
 
   return (
     <div className="modal-overlay">
@@ -34,15 +48,25 @@ const RegistroVentaModal = ({ onClose }) => {
           </div>
           <div className="modal-body">
             <div className="space-y-4">
-              <div className="flex flex-col space-y-2 align-left">
-                <Label htmlFor="brand-name">
-                  Nombre de la Marca <span className="text-red-500">*</span>
-                </Label>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="brand-name">Nombre de la Marca <span className="text-red-500">*</span></Label>
                 <Input
                   id="brand-name"
                   placeholder="Ingresa el nombre"
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="brand-status">Estado de la Marca</Label>
+                <Select
+                  id="brand-status"
+                  value={brandStatus}
+                  onChange={(e) => setBrandStatus(e.target.value)}
+                  options={[
+                    { value: 'Activo', label: 'Activo' },
+                    { value: 'Inactivo', label: 'Inactivo' }
+                  ]}
                 />
               </div>
             </div>

@@ -1,0 +1,20 @@
+.select-custom {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    appearance: none; 
+    background-color: white;
+    cursor: pointer;
+  }
+  
+  .select-custom::-ms-expand {
+    display: none; 
+  }
+  
+  .option-custom {
+    color: black; 
+    background-color: #f3f4f6; 
+  }
+  
