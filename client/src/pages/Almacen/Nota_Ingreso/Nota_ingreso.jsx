@@ -5,9 +5,8 @@ import { LuFilter } from "react-icons/lu";
 import TablaIngresos from './ComponentsNotaIngreso/NotaIngresoTable';
 import { Link } from 'react-router-dom';
 import useIngresosData from './data/Nota_Ingreso_Data';
-import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
-import { FaPlus, FaTrash } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
+import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
+import { FaPlus } from "react-icons/fa";
 import './Nota_ingreso.css';
 
 
@@ -20,9 +19,8 @@ const Ingresos = () => {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
-  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5; // Número total de páginas
+
+
 
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id) => {
@@ -30,28 +28,9 @@ const Ingresos = () => {
     setModalOpen(true);
   };
 
-  const closeModal = () => {
-    setSelectedRowId(null);
-    setModalOpen(false);
-    setDeleteOptionSelected(false);
-  };
 
-  // Función para alternar la opción de eliminar guia
-  const toggleDeleteDetalleOption = () => {
-    setDeleteOptionSelected(!deleteOptionSelected);
-  };
 
-  // Función para eliminar una guia
-  const handleDeleteGuia = () => {
-    removeIngreso(selectedRowId);
-    closeModal();
-    setConfirmDeleteModalOpen(false);
-  };
 
-  // Función para cambiar de página en la paginación
-  const onPageChange = (page) => {
-    setCurrentPage(page);
-  };
 
   return (
     <div>

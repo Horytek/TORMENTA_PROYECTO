@@ -37,13 +37,13 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
           {ingreso.estado}
         </p>
       </td>
-        <td>
-          <select className='b custom-select' name="select" onClick={handleSelectClick}>
-            <option value=""><FaAngleDown /></option>
+      <td className='text-center'>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}  >
+            <option value="" selected>Seleccione...</option>
             <option value="value1">Imprimir</option>
-            <option className={`ml-2 cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(ingreso.id)}  value="value2" selected>Anular</option>
+            <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="value2">Anular</option>
             <option value="value3">Clonar</option>
-          </select>
+            </select>
         </td>
       </tr>
       {expandedRow === ingreso.id && renderVentaDetails(ingreso.detalles)}

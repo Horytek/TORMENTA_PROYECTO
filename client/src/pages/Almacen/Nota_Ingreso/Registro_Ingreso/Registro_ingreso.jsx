@@ -3,13 +3,23 @@ import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';  // Asegúrate de que la ruta del componente Modal sea correcta
 import { IoMdAdd } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
-
+import ProductosModal from '@/pages/Productos/ProductosForm';
 function Registro_Ingresos() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const openModalBuscarProducto = () => setIsModalOpen(true);
+  const closeModalBuscarProducto = () => setIsModalOpen(false);
 
+  // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
+  const openModalProducto = (title) => {
+    setModalTitle(title);
+    setIsModalOpen(true);
+  };
+
+  // Funcion para manejar la accion de cerrar el modal de agregar/editar producto
+  const closeModalProducto = () => {
+    setIsModalOpen(false);
+  };
   return (
     <div>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacén', href: '/almacen' }, { name: 'Nota de ingreso', href: '/almacen/nota_ingreso' }, { name: 'Nueva nota de ingreso', href: '/almacen/nota_ingreso/registro_ingreso' }]} />
@@ -55,7 +65,7 @@ function Registro_Ingresos() {
               <button 
                 className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" 
                 type="button" 
-                onClick={openModal}  // Abre el modal al hacer clic
+                onClick={openModalBuscarProducto}  // Abre el modal al hacer clic
               >
                 Buscar producto
               </button>
@@ -87,7 +97,7 @@ function Registro_Ingresos() {
           Aqui va la tabla
         </div>
       </div>
-      <ModalBuscarProducto isOpen={isModalOpen} onClose={closeModal}>
+      <ModalBuscarProducto isOpen={isModalOpen} onClose={closeModalBuscarProducto}>
         <div className="flex mb-4">
           <input 
             type="text" 
@@ -98,7 +108,7 @@ function Registro_Ingresos() {
             <IoIosSearch className='w-4 h-4 mr-1' />
             Buscar
           </button>
-          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center">
+          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" onClick={() => openModalProducto('Agregar Producto')}>
             <IoMdAdd className='w-4 h-4 mr-1' />
             Nuevo
           </button>
@@ -130,6 +140,7 @@ function Registro_Ingresos() {
           </tbody>
         </table>
       </ModalBuscarProducto>
+      
     </div>
   );
 }
