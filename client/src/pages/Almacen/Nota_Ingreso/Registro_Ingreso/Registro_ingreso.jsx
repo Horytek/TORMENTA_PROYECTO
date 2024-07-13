@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 import { MdPersonAdd } from "react-icons/md";
+import { MdCancelPresentation } from "react-icons/md";
 import useRegistroNotaIngresoData from './data/Registro_ingreso_data';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
 
@@ -87,7 +88,7 @@ function Registro_Ingresos() {
               </button>
               <Link to="/almacen/nota_ingreso">
                 <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                  Cancelar
+                <MdCancelPresentation className="inline-block mr-2"  /> Cancelar
                 </button>
               </Link>
               <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
