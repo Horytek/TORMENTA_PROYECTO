@@ -1,21 +1,24 @@
 import React from 'react';
 import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
+import ModalBuscarProducto from '@/pages/Almacen/Nota_Ingreso/ComponentsNotaIngreso/Modals/BuscarProductoForm';  // Asegúrate de que la ruta del componente Modal sea correcta
 import { MdPersonAdd } from "react-icons/md";
 import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
+import { IoMdAdd } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
-import { LuFilter } from "react-icons/lu";
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { MdCancelPresentation } from "react-icons/md";
+import ProductosModal from '@/pages/Productos/ProductosForm';
 import useNuevaNotaSalidaData from './data/Nueva_Nota_Salida_Data';
+import AgregarProovedor from '../ComponentsNotaSalida/Modals/AgregarProovedor';
 import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import NuevaTablaSalida from './ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
 import './Nueva_Nota_salida.css';
 
 const NuevaSalidas = () => {
   // Estado para manejar la lista de ingresos
-  const { salidas, removeSalida  } = useNuevaNotaSalidaData();
+  const { salidas, removeSalida } = useNuevaNotaSalidaData();
 
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
@@ -36,7 +39,33 @@ const NuevaSalidas = () => {
     setModalOpen(false);
     setDeleteOptionSelected(false);
   };
+  const openModalBuscarProducto = () => setIsModalOpen(true);
+  const closeModalBuscarProducto = () => setIsModalOpen(false);
 
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+
+
+  // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
+  const openModalProducto = (title) => {
+    setModalTitle(title);
+    setIsModalOpenProducto(true);
+  };
+
+  // Funcion para manejar la accion de cerrar el modal de agregar/editar producto
+  const closeModalProducto = () => {
+    setIsModalOpenProducto(false);
+  };
+
+  const openModalProovedor = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModalProovedor = () => {
+    setIsModalOpen(false);
+  };
   return (
     <div>
       <Breadcrumb paths={[
@@ -84,13 +113,14 @@ const NuevaSalidas = () => {
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
                 <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
               </button>
-              <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+              <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalBuscarProducto} >
                 <FaBarcode className="inline-block mr-2" /> Buscar producto
               </button>
 
               <Link to="/almacen/nota_salida">
                 <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                  Cancelar
+                <MdCancelPresentation className="inline-block mr-2"  />
+                Cancelar
                 </button>
               </Link>
 
@@ -117,7 +147,7 @@ const NuevaSalidas = () => {
         </form>
         <div>
           <br />
-        <br />
+          <br />
           {/* Componente de tabla de ingresos */}
           <NuevaTablaSalida
             salidas={salidas}
@@ -128,6 +158,54 @@ const NuevaSalidas = () => {
           />
         </div>
       </div>
+      <ModalBuscarProducto isOpen={isModalOpen} onClose={closeModalBuscarProducto}>
+        <div className="flex mb-4">
+          <input 
+            type="text" 
+            placeholder="Buscar producto" 
+            className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow" 
+          />
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center">
+            <IoIosSearch className='w-4 h-4 mr-1' />
+            Buscar
+          </button>
+          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" onClick={() => openModalProducto('Agregar Producto')}>
+            <IoMdAdd className='w-4 h-4 mr-1' />
+            Nuevo
+          </button>
+        </div>
+        <table className="min-w-full bg-white">
+          <thead>
+            <tr>
+              <th className="py-2 px-4 border-b">Código</th>
+              <th className="py-2 px-4 border-b">Descripción</th>
+              <th className="py-2 px-4 border-b">Marca</th>
+              <th className="py-2 px-4 border-b">Cantidad</th>
+              <th className="py-2 px-4 border-b">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Aquí puedes mapear tus datos de productos */}
+            <tr>
+              <td className="py-2 px-4 border-b text-center">001</td>
+              <td className="py-2 px-4 border-b text-center">Producto A</td>
+              <td className="py-2 px-4 border-b text-center">Marca A</td>
+              <td className="py-2 px-4 border-b text-center">10</td>
+              <td className="py-2 px-4 border-b text-center">
+                <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                <IoMdAdd />
+                </button>
+              </td>
+            </tr>
+            {/* Repite las filas según tus datos */}
+          </tbody>
+        </table>
+        
+      </ModalBuscarProducto>
+      {/* Modal de Agregar Producto */}
+      {isModalOpenProducto && (
+        <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
+      )}
     </div>
   );
 };
