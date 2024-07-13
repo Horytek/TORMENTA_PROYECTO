@@ -155,8 +155,8 @@ const Registro_Venta = () => {
               <MdCleaningServices style={{ fontSize: '22px' }} />
               Limpiar</button>
             <div className='items-center flex ml-2'>
-              <button className="btn btn-cobrar mr-0 flex items-center" onClick={() => setIsCobrarModalOpen(true)}>
-                <BsCashCoin  style={{ fontSize: '22px' }} />
+              <button className="btn btn-cobrar mr-0 flex items-center" onClick={() => setIsCobrarModalOpen(true)} disabled={detalles.length === 0}>
+                <BsCashCoin style={{ fontSize: '22px' }} />
                 Cobrar
               </button>
             </div>
@@ -179,7 +179,8 @@ const Registro_Venta = () => {
         handleProductSelect={handleProductSelect}
         filteredProductos={filteredProductos}
       />
-      <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} /> {/* Añade el nuevo modal */}
+      <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} totalImporte={` ${totalImporte}`} />
+
 
     </>
 

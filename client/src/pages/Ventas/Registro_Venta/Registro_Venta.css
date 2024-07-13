@@ -9,7 +9,12 @@
   background-color: #ededed;
 }
 
-.modal-prod hr {
+.modal-pagar {
+  box-shadow: 0 0 10px #171a1f33;
+  background-color: #efefef;
+}
+
+.modal-prod hr, .modal-pagar hr {
   border: solid 0.1rem #bdbdbd !important;
 }
 
@@ -124,3 +129,5 @@
 .btn-cerrar:hover {
   background-color: #d22929ff;
 }
+
+
