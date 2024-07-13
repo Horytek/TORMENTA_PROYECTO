@@ -23,6 +23,7 @@ const NuevaSalidas = () => {
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpenProovedor, setModalOpenProovedor] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,12 +43,10 @@ const NuevaSalidas = () => {
   const openModalBuscarProducto = () => setIsModalOpen(true);
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
+  const [isModalOpenProovedor, setIsModalOpenProovedor] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
-
-
   // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
   const openModalProducto = (title) => {
     setModalTitle(title);
@@ -60,11 +59,12 @@ const NuevaSalidas = () => {
   };
 
   const openModalProovedor = () => {
-    setIsModalOpen(true);
+    setIsModalOpenProovedor(true);
+    
   };
 
   const closeModalProovedor = () => {
-    setIsModalOpen(false);
+    setIsModalOpenProovedor(false);
   };
   return (
     <div>
@@ -110,7 +110,7 @@ const NuevaSalidas = () => {
               </div>
             </div>
             <div className="flex justify-start mt-4 space-x-2">
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor} >
                 <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
               </button>
               <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalBuscarProducto} >
@@ -206,6 +206,9 @@ const NuevaSalidas = () => {
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
+      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
+
+
     </div>
   );
 };
