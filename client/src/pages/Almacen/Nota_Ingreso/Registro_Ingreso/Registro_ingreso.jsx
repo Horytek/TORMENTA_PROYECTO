@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';  // Asegúrate de que la ruta del componente Modal sea correcta
+import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';
 import { IoMdAdd } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import ProductosModal from '@/pages/Productos/ProductosForm';
@@ -8,30 +8,36 @@ import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 import { MdPersonAdd } from "react-icons/md";
+import useRegistroNotaIngresoData from './data/Registro_ingreso_data';
+import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
+
 function Registro_Ingresos() {
-  
-  const openModalBuscarProducto = () => setIsModalOpen(true);
-  const closeModalBuscarProducto = () => setIsModalOpen(false);
-  
+  const { ingresos, addIngreso, removeIngreso } = useRegistroNotaIngresoData();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
 
+  const openModalBuscarProducto = () => setIsModalOpen(true);
+  const closeModalBuscarProducto = () => setIsModalOpen(false);
 
-  // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
   const openModalProducto = (title) => {
     setModalTitle(title);
     setIsModalOpenProducto(true);
   };
 
-  // Funcion para manejar la accion de cerrar el modal de agregar/editar producto
   const closeModalProducto = () => {
     setIsModalOpenProducto(false);
   };
+
   return (
     <div>
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacén', href: '/almacen' }, { name: 'Nota de ingreso', href: '/almacen/nota_ingreso' }, { name: 'Nueva nota de ingreso', href: '/almacen/nota_ingreso/registro_ingreso' }]} />
+      <Breadcrumb paths={[
+        { name: 'Inicio', href: '/inicio' },
+        { name: 'Almacén', href: '/almacen' },
+        { name: 'Nota de ingreso', href: '/almacen/nota_ingreso' },
+        { name: 'Nueva nota de ingreso', href: '/almacen/nota_ingreso/registro_ingreso' }
+      ]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
@@ -69,23 +75,21 @@ function Registro_Ingresos() {
             </div>
             <div className="flex justify-between mt-4 space-x-2">
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-              <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
+                <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
               </button>
 
               <button 
                 className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" 
                 type="button" 
-                onClick={openModalBuscarProducto}  // Abre el modal al hacer clic
+                onClick={openModalBuscarProducto}
               >
-              <FaBarcode className="inline-block mr-2" />   Buscar producto
+                <FaBarcode className="inline-block mr-2" /> Buscar producto
               </button>
               <Link to="/almacen/nota_ingreso">
-              <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                Cancelar
-              </button>
+                <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+                  Cancelar
+                </button>
               </Link>
-
-              
               <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
                 <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
@@ -108,7 +112,9 @@ function Registro_Ingresos() {
         </form>
         <div>
           <br />
-          Aqui va la tabla
+          <br />
+          {/* Componente de tabla de ingresos */}
+          <RegistroTablaIngreso ingresos={ingresos} />
         </div>
       </div>
       <ModalBuscarProducto isOpen={isModalOpen} onClose={closeModalBuscarProducto}>
@@ -146,14 +152,13 @@ function Registro_Ingresos() {
               <td className="py-2 px-4 border-b text-center">10</td>
               <td className="py-2 px-4 border-b text-center">
                 <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                <IoMdAdd />
+                  <IoMdAdd />
                 </button>
               </td>
             </tr>
             {/* Repite las filas según tus datos */}
           </tbody>
         </table>
-        
       </ModalBuscarProducto>
       {/* Modal de Agregar Producto */}
       {isModalOpenProducto && (
