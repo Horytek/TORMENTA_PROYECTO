@@ -1,6 +1,7 @@
 import React from 'react';
 import './BuscarProductoForm.css';
 import { RiCloseLargeLine } from "react-icons/ri";
+import { IoMdClose } from "react-icons/io";
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
 
@@ -11,7 +12,9 @@ const Modal = ({ isOpen, onClose, children }) => {
       <div className="content-modal">
         <div className="modal-header">
           <h2 className="modal-title">Buscar producto</h2>
-          <span className="modal-close" onClick={onClose}>&times;</span>
+          <button className="modal-close" onClick={onClose}>
+              <IoMdClose className='text-3xl'/>
+            </button>
         </div>
         <div className="modal-body">
           {children}
