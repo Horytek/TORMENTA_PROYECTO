@@ -41,8 +41,3 @@
 ```sh
         pip install mysqlclient
 ```
-```sh
-        cd express
-        npm init -y
-        npm install express mysql2 body-parser cors
-```
