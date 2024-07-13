@@ -14,6 +14,7 @@ import useNuevaNotaSalidaData from './data/Nueva_Nota_Salida_Data';
 import AgregarProovedor from '../ComponentsNotaSalida/Modals/AgregarProovedor';
 import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import NuevaTablaSalida from './ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
+import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import './Nueva_Nota_salida.css';
 
 const NuevaSalidas = () => {
@@ -46,6 +47,7 @@ const NuevaSalidas = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
   const [isModalOpenProovedor, setIsModalOpenProovedor] = useState(false);
+  const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
   const openModalProducto = (title) => {
@@ -66,6 +68,8 @@ const NuevaSalidas = () => {
   const closeModalProovedor = () => {
     setIsModalOpenProovedor(false);
   };
+
+
   return (
     <div>
       <Breadcrumb paths={[
