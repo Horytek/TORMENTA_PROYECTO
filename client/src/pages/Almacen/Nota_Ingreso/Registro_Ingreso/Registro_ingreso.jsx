@@ -4,21 +4,30 @@ import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoF
 import { IoMdAdd } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import ProductosModal from '@/pages/Productos/ProductosForm';
+import { Link } from 'react-router-dom';
+import { FiSave } from "react-icons/fi";
+import { FaBarcode } from "react-icons/fa6";
+import { MdPersonAdd } from "react-icons/md";
 function Registro_Ingresos() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
+  
   const openModalBuscarProducto = () => setIsModalOpen(true);
   const closeModalBuscarProducto = () => setIsModalOpen(false);
+  
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+
 
   // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
   const openModalProducto = (title) => {
     setModalTitle(title);
-    setIsModalOpen(true);
+    setIsModalOpenProducto(true);
   };
 
   // Funcion para manejar la accion de cerrar el modal de agregar/editar producto
   const closeModalProducto = () => {
-    setIsModalOpen(false);
+    setIsModalOpenProducto(false);
   };
   return (
     <div>
@@ -60,20 +69,25 @@ function Registro_Ingresos() {
             </div>
             <div className="flex justify-between mt-4 space-x-2">
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                Nuevo proveedor
+              <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
               </button>
+
               <button 
                 className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" 
                 type="button" 
                 onClick={openModalBuscarProducto}  // Abre el modal al hacer clic
               >
-                Buscar producto
+              <FaBarcode className="inline-block mr-2" />   Buscar producto
               </button>
+              <Link to="/almacen/nota_ingreso">
               <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
                 Cancelar
               </button>
+              </Link>
+
+              
               <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                Guardar
+                <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
             </div>
           </div>
@@ -139,8 +153,12 @@ function Registro_Ingresos() {
             {/* Repite las filas según tus datos */}
           </tbody>
         </table>
+        
       </ModalBuscarProducto>
-      
+      {/* Modal de Agregar Producto */}
+      {isModalOpenProducto && (
+        <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
+      )}
     </div>
   );
 }

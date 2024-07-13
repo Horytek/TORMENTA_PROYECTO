@@ -1,20 +1,26 @@
 import React from 'react';
 import { ButtonClose } from '@/components/Buttons/Buttons';
-
+import './BuscarProductoForm.css';
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
 
 
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-3/4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Buscar producto</h2>
+    <div className="modal-overlay">
+      <div className="content-modal">
+        <div className="modal-header">
+          <h2 className="modal-title">Buscar producto</h2>
+          <span className="modal-close" onClick={onClose}>&times;</span>
         </div>
-        {children}
-        <div className="flex justify-end mt-4">
-          <ButtonClose onClick={onClose} />
+        <div className="modal-body">
+          {children}
+        </div>
+        <div className="modal-buttons">
+            
+          <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onClick={onClose}>
+            Cerrar
+          </button>
         </div>
       </div>
     </div>

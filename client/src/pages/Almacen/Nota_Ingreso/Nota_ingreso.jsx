@@ -43,7 +43,7 @@ const Ingresos = () => {
 
         </h1>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
+     <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
       <div className="flex items-center gap-2">
         <h6 className='font-bold'>Almacén:</h6>
         <label className='border border-gray-300 p-2' htmlFor="">ALM CENTRAL ESCALERA</label>
@@ -67,12 +67,21 @@ const Ingresos = () => {
         <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
         <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
       </div>
-
+      
       <div className="flex items-center gap-2">
         <ButtonNormal color={'#01BDD6'}>
         <LuFilter className='icon-white w-4 h-4 ' />
         </ButtonNormal>
-
+        <div className='flec items-center gap-2'>
+            <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select">
+            <option value="" selected>Seleccione...</option>
+            <option value="value1">Imprimir</option>
+            <option value="value2" >Excel</option>
+            <option value="value3">Excel Detalle</option>
+            </select>
+        </div>
+        <br />
+        <br />
         {/* <DropdownButton id="dropdown-basic-button" title="Opciones">
           <Dropdown.Item href="#/action-1">Imprimir</Dropdown.Item>
           <Dropdown.Item href="#/action-2">Excel</Dropdown.Item>
