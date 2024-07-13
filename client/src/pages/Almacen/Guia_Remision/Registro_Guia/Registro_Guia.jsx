@@ -1,17 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import { IoMdPin, IoMdCar } from 'react-icons/io';
+import { IoMdPin, IoMdCar, IoMdAdd, IoIosSearch } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
+import ModalBuscarProducto from '../../Nota_Ingreso/ComponentsNotaIngreso/Modals/BuscarProductoForm';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 import TablaRegGuia from "./ComponentsRegGuias/RegGuiaTable";
+import UbigeoForm from './UbigeoForm';
+import TransporteForm from './UndTrans';
+import ClienteForm from './ClienteForm';
+import ProductosModal from '@/pages/Productos/ProductosForm';
+
 function RegistroGuia() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalType, setModalType] = useState('');
+
+  const openModal = (title, type) => {
+    setModalTitle(title);
+    setModalType(type);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalTitle('');
+    setModalType('');
+  };
 
   return (
     <div>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' },
       { name: 'Almacén', href: '/almacen' },
-      { name: 'Guias de Remision', href: '/guiasremision' },
+      { name: 'Guias de Remision', href: '/almacen/guia_remision' },
       { name: 'Registrar Guía de Remisión', href: '/almacen/guia_remision/registro_guia' }]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
@@ -68,7 +89,8 @@ function RegistroGuia() {
               <div className="">
                 <label className="block text-gray-700 text-sm font-bold mt-5" htmlFor="direcdest">
                 </label>
-                <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline" type="button">
+                <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline" 
+                type="button" onClick={() => openModal('Ubicación de Partida / Ubicación de Destino', 'ubicacion')}>
                   <IoMdPin className="inline-block mr-2" /> Ub. de Partida/Ub. de Destino
                 </button>
               </div>
@@ -103,11 +125,11 @@ function RegistroGuia() {
               </div>
               <div className="flex">
                 <div className="flex-1 mr-2">
-                  <label for="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
+                  <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
                   <input type="cant" name='cant' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
                 <div className="flex-1 ml-2">
-                  <label label for="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>
+                  <label htmlFor="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>
                   <input type="peso" name='peso' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
               </div>
@@ -119,14 +141,16 @@ function RegistroGuia() {
               </div>
               <div className="flex">
                 <div className="flex-1 mr-2">
-                  <label for="cantidad" className="block text-gray-700 text-sm font-bold  "></label>
-                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" type="button">
+                  <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold  "></label>
+                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" 
+                  type="button" onClick={() => openModal('Datos del Transporte', 'transporte')}>
                     <IoMdCar className="inline-block mr-2 text-lg" /> Datos de Transporte
                   </button>
                 </div>
                 <div className="flex-1 ml-2">
-                  <label label for="peso" className="block text-gray-700 text-sm font-bold"></label>
-                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" type="button">
+                  <label htmlFor="peso" className="block text-gray-700 text-sm font-bold"></label>
+                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" 
+                  type="button" onClick={() => openModal('Nuevo Cliente', 'cliente')}>
                     <MdPersonAdd className="inline-block mr-2 text-lg" />Nuevo Cliente
                   </button>
                 </div>
@@ -139,8 +163,9 @@ function RegistroGuia() {
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
-                  <label label for="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
-                  <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+                  <label htmlFor="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
+                  <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded focus:outline-none focus:shadow-outline" 
+                  type="button" onClick={() => openModal('Buscar Producto', 'buscarProducto')}>
                     <FaBarcode className="inline-block mr-2" /> Buscar producto
                   </button>
                 </div>
@@ -163,10 +188,63 @@ function RegistroGuia() {
           </div>
         </div>
         
-          <br />
-          <TablaRegGuia />
-        
+        <br />
+        <TablaRegGuia />
       </div>
+      {modalType === 'buscarProducto' && (
+        <ModalBuscarProducto isOpen={isModalOpen} onClose={closeModal}>
+          <div className="flex mb-4">
+            <input 
+              type="text" 
+              placeholder="Buscar producto" 
+              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow" 
+            />
+            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center">
+              <IoIosSearch className='w-4 h-4 mr-1' />
+              Buscar
+            </button>
+            <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" onClick={() => openModal('Agregar Producto', 'producto')}>
+              <IoMdAdd className='w-4 h-4 mr-1' />
+              Nuevo
+            </button>
+          </div>
+          <table className="min-w-full bg-white">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b">Código</th>
+                <th className="py-2 px-4 border-b">Descripción</th>
+                <th className="py-2 px-4 border-b">Marca</th>
+                <th className="py-2 px-4 border-b">Cantidad</th>
+                <th className="py-2 px-4 border-b">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Aquí puedes mapear tus datos de productos */}
+              <tr>
+                <td className="py-2 px-4 border-b text-center">001</td>
+                <td className="py-2 px-4 border-b text-center">Producto A</td>
+                <td className="py-2 px-4 border-b text-center">Marca A</td>
+                <td className="py-2 px-4 border-b text-center">10</td>
+                <td className="py-2 px-4 border-b text-center">
+                  <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    <IoMdAdd />
+                  </button>
+                </td>
+              </tr>
+              {/* Repite las filas según tus datos */}
+            </tbody>
+          </table>
+        </ModalBuscarProducto>
+      )}
+      {/* Modals */}
+      {isModalOpen && modalType !== 'buscarProducto' && (
+        <>
+          {modalType === 'ubicacion' && <UbigeoForm modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'transporte' && <TransporteForm modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'cliente' && <ClienteForm modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'producto' && <ProductosModal modalTitle={modalTitle} onClose={closeModal} />}
+        </>
+      )}
     </div>
   );
 }

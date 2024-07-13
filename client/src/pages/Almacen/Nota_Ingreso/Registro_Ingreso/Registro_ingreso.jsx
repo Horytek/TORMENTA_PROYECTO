@@ -8,14 +8,16 @@ import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 import { MdPersonAdd } from "react-icons/md";
+import { MdCancelPresentation } from "react-icons/md";
 import useRegistroNotaIngresoData from './data/Registro_ingreso_data';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
-
+import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
 function Registro_Ingresos() {
   const { ingresos, addIngreso, removeIngreso } = useRegistroNotaIngresoData();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
+  const [isModalOpenProovedor, setIsModalOpenProovedor] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
 
   const openModalBuscarProducto = () => setIsModalOpen(true);
@@ -29,7 +31,14 @@ function Registro_Ingresos() {
   const closeModalProducto = () => {
     setIsModalOpenProducto(false);
   };
+  const openModalProovedor = () => {
+    setIsModalOpenProovedor(true);
+    
+  };
 
+  const closeModalProovedor = () => {
+    setIsModalOpenProovedor(false);
+  };
   return (
     <div>
       <Breadcrumb paths={[
@@ -74,7 +83,7 @@ function Registro_Ingresos() {
               </div>
             </div>
             <div className="flex justify-between mt-4 space-x-2">
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor} >
                 <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
               </button>
 
@@ -87,7 +96,7 @@ function Registro_Ingresos() {
               </button>
               <Link to="/almacen/nota_ingreso">
                 <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                  Cancelar
+                <MdCancelPresentation className="inline-block mr-2"  /> Cancelar
                 </button>
               </Link>
               <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
@@ -100,13 +109,13 @@ function Registro_Ingresos() {
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
                 Glosa:
               </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="glosa" type="text" />
+              <input className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5 w-full" id="glosa" type="text" />
             </div>
             <div className="flex-1">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="observacion">
                 Observación:
               </label>
-              <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-full" id="observacion"></textarea>
+              <textarea className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5 w-full h-full" id="observacion"></textarea>
             </div>
           </div>
         </form>
@@ -164,6 +173,7 @@ function Registro_Ingresos() {
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
+      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
     </div>
   );
 }

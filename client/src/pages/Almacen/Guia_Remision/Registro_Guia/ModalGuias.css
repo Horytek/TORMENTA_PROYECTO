@@ -1,0 +1,432 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    
+  }
+  
+  .content-modal {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 700px;
+    width:90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    max-height: auto !important;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    border-bottom: 4px solid #f0f0f0;
+  }
+  
+  .modal-title {
+    font-size: 25px;
+    font-weight: bold;
+    color: black;
+  }
+  
+  .modal-close {
+    cursor: pointer;
+    color: #000000 !important;
+    padding: 0 !important;
+  }
+  
+  .modal-body {
+    padding-top: 15px;
+    width: 100% !important;
+    
+  }
+  
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  
+  .modal-content {
+    margin-bottom: 20px;
+    width: 100%; /* Making it wider */
+    max-width: 600px; /* Set a maximum width */
+    margin: 0 auto; /* Centering the modal content */
+    margin-bottom: 15px;
+    
+}
+  
+.input-field {
+    width: 100%;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 8px 15px 8px 10px; /* Ajusta el padding para dejar espacio al icono */
+    border-radius: 4px;
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(50%);
+    pointer-events: none;
+    color: #999;
+}
+
+.datos-transporte {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .datos-transporte .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .datos-transporte .header .toggle {
+    display: flex;
+    align-items: center;
+  }
+  
+  .datos-transporte .header .toggle input {
+    margin-right: 5px;
+  }
+  
+  .datos-transporte .header .nuevo-transporte,.datos-transporte .header .nuevo-transportista {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .datos-transporte .header .nuevo-transporte svg,.datos-transporte .header .nuevo-transportista svg {
+    margin-right: 5px;
+  }
+
+  
+  .datos-transporte .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .datos-transporte .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .datos-transporte .form-group label {
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: black;
+    margin-bottom: 5px;
+  }
+  
+  .datos-transporte .form-group input[type="text"] {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+  }
+  .datos-transporte .form-group input[type="text"]:disabled {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    color: #6c757d;
+  }
+  
+  .datos-transporte .form-group input[type="checkbox"] {
+    margin-right: 5px;
+  }
+
+  
+  .modal1 {
+    width: 80%; /* Cambia este valor según lo ancho que quieras el modal */
+    max-width: 1000px; /* Ajusta el ancho máximo según tus necesidades */
+    margin: auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal1-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .content-modal1 {
+    padding: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+    max-height: auto !important;
+  }
+
+  h4 {
+    text-align: center;
+  }
+  
+  .tabs {
+    display: flex;
+    
+    margin-bottom: 10px;
+  }
+  
+  /* ModalGuias.css */
+
+/* Estilos del modal */
+.modal2 {
+    width: 100%; /* Aumentar el ancho del modal */
+    max-width: 600px; /* Ancho máximo del modal */
+    margin: auto; /* Centrar el modal horizontalmente */
+    background: #F2F3F4; /* Plomo claro para el fondo del modal */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra del modal */
+  }
+  
+  /* Estilos del cuerpo del modal */
+  .modal2-content {
+    background: #ffffff; /* Plomo más oscuro, igual que el botón activo */
+    top: 0;
+    margin-bottom: 0;   
+    padding: 15px;
+    border-top: none; /* Borde superior */
+    border-left: 2px solid #e0e1e2; /* Borde izquierdo */
+    border-right: none; /* Borde derecho */
+    border-bottom: 2px solid #e0e1e2; /* Sin borde inferior */
+    
+  }
+  
+  /* Estilos de los campos del formulario */
+  .form2-group {
+    margin-bottom: 1.5rem; /* Espacio entre grupos de campos */
+  }
+  
+  .wider2-input {
+    width: calc(100% - 120px); /* Ajustar el ancho del input para dejar espacio para el botón */
+    padding: 0.75rem; /* Aumentar el padding */
+    margin-top: 0.5rem; /* Espacio superior */
+  }
+  
+  .modal2-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem; /* Espacio superior */
+  }
+  
+  /* Botón SUNAT */
+  .sunat-button {
+    background-color: #ff0037; /* Azul para el botón */
+    color: #FFF; /* Color del texto */
+    padding: 0.75rem 1rem; /* Padding */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .sunat-button:hover {
+    background-color: #b3001b; /* Azul más oscuro en hover */
+  }
+  
+  /* Estilos para los campos de formulario */
+  .input {
+    width: 100%;
+    background: #F9FAFB; /* Fondo gris claro */
+    border: 1px solid #D1D5DB; /* Borde gris claro */
+    color: #333;
+    padding: 0.75rem;
+    border-radius: 5px;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  select,
+  textarea {
+    width: 100%; /* Hacer que los campos ocupen el 100% del contenedor */
+  }
+  
+  /* Texto del formulario */
+  .text-sm {
+    font-size: 0.875rem; /* Tamaño de fuente más pequeño */
+  }
+  
+  .font-bold {
+    font-weight: bold; /* Texto en negrita */
+  }
+  
+  .text-black {
+    color: #333; /* Color de texto negro */
+  }
+  
+  /* Alinear en fila para el input y el botón */
+  .form2-group {
+    display: flex; /* Flexbox para alinear en fila */
+    align-items: center; /* Alineación vertical */
+  }
+  
+  .form2-group > div:first-child {
+    min-width: 150px; /* Ancho fijo para las etiquetas */
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: #333;
+    margin-right: 10px; /* Espacio entre la etiqueta y el campo */
+  }
+  
+  .form2-group button {
+    margin-left: 10px; /* Espacio entre el input y el botón */
+  }
+  
+  /* Estilo adicional para textarea */
+  textarea {
+    height: 100px; /* Altura para el área de texto */
+  }
+  
+  
+/* Estilos del overlay del modal */
+/* Estilos del overlay del modal */
+.modal3-overlay {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+  }
+  
+  /* Estilos del contenedor del modal */
+  .modal3 {
+    max-width: 600px; /* Ajusta el valor para hacer el modal más ancho */
+    width: 90%;
+    height: auto !important;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  /* Estilos del contenido del modal */
+  .content-modal3 {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 700px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    max-height: auto !important;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  /* Estilos del header del modal */
+  .modal3-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  /* Título del modal */
+  .modal3-title {
+    font-size: 2.3rem;
+    font-weight: bold;
+    color: black;
+  }
+  
+  /* Botón de cierre */
+  .close-button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #6d6d6d;
+  }
+  
+  /* Estilos para las pestañas */
+  .tabs {
+    display: flex;
+    margin-bottom: 0;
+    border-radius: 12px 12px 0 0; /* Esquinas redondeadas en la parte superior */
+    overflow: hidden; /* Oculta el contenido que se sale del borde */
+  }
+  
+  /* Estilo de las pestañas */
+  .tabs button {
+    padding: 10px 20px;
+    background: #E0E0E0; /* Plomo claro para las pestañas */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none; /* Eliminar borde */
+    border-radius: 12px 12px 0 0; /* Esquinas redondeadas en la parte superior */
+  }
+  
+  /* Pestaña activa */
+  .tabs button.active {
+    background: #ffffff; /* Plomo más oscuro para la pestaña activa */
+    color: black; /* Letra negra para la pestaña activa */
+    border-top: 2px solid #e0e1e2; /* Borde superior */
+    border-left: 2px solid #e0e1e2; /* Borde izquierdo */
+    border-right: 2px solid #e0e1e2; /* Borde derecho */
+    border-bottom: none; /* Sin borde inferior */
+    border-radius: 12px 12px 0 0; /* Esquinas redondeadas en la parte superior */
+  }
+  
+  /* Pestañas inactivas */
+  .tabs button:not(.active) {
+    color: #007BFF; /* Color del texto de las pestañas inactivas */
+    background: #ffffff; /* Fondo plomo claro */
+  }
+  
+  /* Hover para pestañas no seleccionadas */
+  .tabs button:not(.active):hover {
+    background: #B0B0B0; /* Plomo más oscuro al pasar el ratón */
+    color: #ffffff; /* Letra blanca al pasar el ratón */
+  }
+
+  
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  

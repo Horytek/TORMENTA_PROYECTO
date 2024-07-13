@@ -14,6 +14,7 @@ import useNuevaNotaSalidaData from './data/Nueva_Nota_Salida_Data';
 import AgregarProovedor from '../ComponentsNotaSalida/Modals/AgregarProovedor';
 import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import NuevaTablaSalida from './ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
+import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import './Nueva_Nota_salida.css';
 
 const NuevaSalidas = () => {
@@ -23,6 +24,7 @@ const NuevaSalidas = () => {
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpenProovedor, setModalOpenProovedor] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,12 +44,11 @@ const NuevaSalidas = () => {
   const openModalBuscarProducto = () => setIsModalOpen(true);
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
+  const [isModalOpenProovedor, setIsModalOpenProovedor] = useState(false);
+  const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
-
-
   // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
   const openModalProducto = (title) => {
     setModalTitle(title);
@@ -60,12 +61,15 @@ const NuevaSalidas = () => {
   };
 
   const openModalProovedor = () => {
-    setIsModalOpen(true);
+    setIsModalOpenProovedor(true);
+    
   };
 
   const closeModalProovedor = () => {
-    setIsModalOpen(false);
+    setIsModalOpenProovedor(false);
   };
+
+
   return (
     <div>
       <Breadcrumb paths={[
@@ -110,7 +114,7 @@ const NuevaSalidas = () => {
               </div>
             </div>
             <div className="flex justify-start mt-4 space-x-2">
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor} >
                 <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
               </button>
               <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalBuscarProducto} >
@@ -135,13 +139,13 @@ const NuevaSalidas = () => {
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
                 Glosa:
               </label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="glosa" type="text" />
+              <input className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5 w-full" id="glosa" type="text" />
             </div>
             <div className="flex-1">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="observacion">
                 Observación:
               </label>
-              <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-full" id="observacion"></textarea>
+              <textarea className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5 w-full h-full" id="observacion"></textarea>
             </div>
           </div>
         </form>
@@ -206,6 +210,9 @@ const NuevaSalidas = () => {
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
+      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
+
+
     </div>
   );
 };
