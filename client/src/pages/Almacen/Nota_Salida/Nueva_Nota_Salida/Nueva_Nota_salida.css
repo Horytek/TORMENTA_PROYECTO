@@ -60,112 +60,39 @@
 
 /**TABLA**/
 
-.container-table-marca {
-  box-shadow: 0 0 10px #171a1f0e;
-  background-color: #171a1f0e !important;
+h6 {
+  color: #323842ff;
 }
 
-td {
-  border-top: solid 3px #1f1a170e;
-  padding: 10px 0px;
-  align-items: center !important;
+
+
+.estado-activo {
+  margin: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.6em 0.85em !important;
+  font-size: 80%;
+  font-weight: 600;
+  border-radius: 9999px;
+  color: #117B34;
+  background-color: #EEFDF3;
 }
 
-th {
-  padding: 10px 0px;
-}
-.tr-tabla-venta {
-  cursor: pointer !important;
+.estado-inactivo {
+  margin: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.6em 0.85em !important;
+  font-size: 80%;
+  font-weight: 700;
+  border-radius: 9999px;
+  color: #E05858;
+  background-color: #FDF2F2;
 }
 /**Modal**/
 
-/* Ventas.css */
-
-.modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: fixed;
-  z-index: 1000;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-  background-color: #f7f6f6;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  max-width: 400px;
-  width: 100%;
-  text-align: center;
-}
-
-.modal-content h2 {
-  margin-bottom: 15px;
-  font-size: 1.5rem;
-}
-
-.modal-content label {
-  display: block;
-  margin-bottom: 10px;
-}
-
-.modal-actions {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-}
-
-.btn {
-  padding: 10px 20px;
-  margin-right: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.btn-cancel {
-  background-color: #0000005e;
-  color: rgb(255, 255, 255);
-}
-.btn-aceptar {
-  background-color: #00bdd6;
-  color: white;
-}
-.btn-danger {
-  background-color: #aa1d22ff;
-  color: white;
-}
-
-input[type="checkbox"] {
-  appearance: none;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.3rem;
-  background-color: #ffffff;
-  transition: background-color 0.3s, border-color 0.3s;
-}
-
-input:checked {
-  background-color: #00bdd6;
-  border-color: #00bdd6;
-}
-
-input:checked::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 6px;
-  height: 10px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
 
 /** Tabla detalle **/
 
@@ -184,87 +111,4 @@ input:checked::after {
 .input-buscar {
   margin-left: 5px;
 }
-.container-registro-detalle-venta {
-  box-shadow: 0 0 10px hsla(218, 15%, 11%, 0.2);
-  background-color: #171a1f09 !important;
-  border-radius: 10px;
-}
 
-.modal-prod {
-  box-shadow: 0 0 10px hsla(218, 15%, 11%, 0.2);
-  background-color: #ededed;
-}
-
-.modal-prod hr {
-  border: solid 0.1rem #bdbdbd !important;
-}
-
-.close-modal-prod {
-  background-color: #e05858ff;
-  font-size: 20px;
-}
-
-.button-tipo-prendas button {
-  border: none;
-  background: none;
-  cursor: pointer;
-  transition: color 0.3s, border-width 0.3s; /* Transición suave para color y ancho del borde */
-  color: black;
-}
-
-.button-tipo-prendas button:hover {
-  color: #00bdd6;
-  box-shadow: 0px 3px 0px 0px #00bdd6; /* Crea una sombra en la parte inferior */
-  border-radius: 0px;
-}
-
-.btn-producto {
-  background-color: #4069e5ff;
-  color: white;
-  font-weight: 500;
-  align-items: center;
-}
-
-.btn-producto:hover {
-  background-color: #2655e1ff;
-}
-
-.spinner {
-  display: flex;
-  align-items: center;
-}
-
-.spinner button {
-  padding: 0;
-  width: 24px; /* Adjust the size as needed */
-  height: 24px; /* Adjust the size as needed */
-  border: none;
-  background-color: #f0f0f0; /* Base color */
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.spinner button.decrement {
-  background-color: #e0585842;
-  border: solid 3px #e05858;
-  color: #d22929;
-  font-weight: bold;
-}
-
-.spinner button.increment {
-  background-color: #58c9e042;
-  border: solid 3px #58c9e0;
-  color: #33bcce;
-  font-weight: bold;
-}
-
-.spinner button:active {
-  transform: scale(0.95);
-}
-
-.spinner span {
-  margin: 0 12px;
-}

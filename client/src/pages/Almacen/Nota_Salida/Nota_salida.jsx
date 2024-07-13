@@ -2,15 +2,13 @@ import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { IoIosSearch } from "react-icons/io";
 import { LuFilter } from "react-icons/lu";
-import TablaSalida from './ComponentsNotaIngreso/NotaSalidaTable';
+import TablaSalida from './ComponentsNotaSalida/NotaSalidaTable';
 import { Link } from 'react-router-dom';
 import useNotaSalidaData from './data/Nota_Salida_Data';
 import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import './Nota_salida.css';
-
-
 
 const Salidas = () => {
   // Estado para manejar la lista de ingresos
