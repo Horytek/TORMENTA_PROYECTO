@@ -8,14 +8,15 @@
 ```sh
         cd client
         npm install
+        npm install axios
         npm run dev
 ```
 
 ### Django (Backend)
 
-- **Inicializar Aplicación Django**
+- **Inicializar Servidor Express**
 ```sh
-        python manage.py runserver
+        node server.js
 ```
 
 - **Crear diferentes apps del proyecto**
@@ -37,4 +38,9 @@
 - **Dependencias**
 ```sh
         pip install mysqlclient
+```
+```sh
+        cd express
+        npm init -y
+        npm install express mysql2 body-parser cors
 ```
