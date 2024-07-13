@@ -56,19 +56,19 @@ function NotaSalida() {
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
                 Destinatario:
               </label>
-              <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="destinatario" type="text" />
+              <input className='border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5' id="destinatario" type="text" />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
                 RUC:
               </label>
-              <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="ruc" type="text" />
+              <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5' id="ruc" type="text" />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
                 Número:
               </label>
-              <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="numero" type="text" />
+              <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5' id="numero" type="text" />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
@@ -77,7 +77,7 @@ function NotaSalida() {
               <input type="date" className="border border-gray-300 rounded-lg p-2.5" id="fechaDocu" />
             </div>
           </div>
-          <div className="flex justify-between mt-4 space-x-2">
+          <div className="flex justify-start mt-4 space-x-2">
             <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
             <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
             </button>
