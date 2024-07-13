@@ -31,7 +31,10 @@
     padding: 0;
     border-bottom: 1px solid #ccc;
 }
-
+.pocaal{
+    height: 10px;
+    font-size: 10px;
+}
 .modal-headerwa {
     display: flex;
     justify-content: space-between;
@@ -43,7 +46,7 @@
 }
 
 .modal-titlewa {
-    font-size: 2.3rem;
+    font-size: 18px;
     font-weight: bold;
     color: black;
 }

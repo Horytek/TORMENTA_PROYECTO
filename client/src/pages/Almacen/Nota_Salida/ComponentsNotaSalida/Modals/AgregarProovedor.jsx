@@ -18,67 +18,67 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                         <div className="form-row">
                             <div className="form-group">
                                 <label className='text-sm font-bold text-black' htmlFor="ruc-dni">RUC/DNI:</label>
-                                <input className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" id="ruc-dni" value="12345678" />
+                                <input className='w-full pocaal bg-gray-50 border-gray-300 text-gray-900 rounded-lg border' type="text" id="ruc-dni" placeholder="12345678" />
                             </div>
                             <div className="items-center justify-center pt-1">
-                                <button className="sunat-button rounded-lg border p-2.5'">SUNAT</button>
+                                <button className="sunat-button rounded-lg border" >SUNAT</button>
                             </div>
                         </div>
                         <div className="form-group">
                             <label className='text-sm font-bold text-black' htmlFor="provider">Proveedor:</label>
-                            <input className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" id="provider" value="Jorge Saldarriaga Vignolo" />
+                            <input className='pocaal w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border' type="text" id="provider" placeholder="Jorge Saldarriaga Vignolo" />
                         </div>
                         <div className="form-group">
                             <label className='text-sm font-bold text-black' htmlFor="address">Dirección:</label>
-                            <input className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" id="address" value="Los amautas" />
+                            <input className='pocaal w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border' type="text" id="address" placeholder="Los amautas" />
                         </div>
                         <div className="form-row">
                             <div className="form-group">
                                 <label className='text-sm font-bold text-black' htmlFor="phone">Teléfono:</label>
-                                <input className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" id="phone" value="123 456 789" />
+                                <input className='pocaal w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border' type="text" id="phone" placeholder="123 456 789" />
                             </div>
                             <div className="form-group">
                                 <label className='text-sm font-bold text-black' htmlFor="email">Email:</label>
-                                <input className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="email" id="email" value="elsensualcandunga@gmail.com" />
+                                <input className='pocaal w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border' type="email" id="email" placeholder="elsensualcandunga@gmail.com" />
                             </div>
                         </div>
 
                         <div className="form-group">
                             <label className='text-sm font-bold text-black' htmlFor="web">Web:</label>
-                            <input className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" id="web" value="123 456 789" />
+                            <input className='pocaal w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border' type="text" id="web" placeholder="123 456 789" />
                         </div>
                         <div className="form-row">
                             <div className="form-group">
                                 <label className='text-sm font-bold text-black' htmlFor="status">Estado:</label>
-                                <select id="status" className="input" style={{ width: "220px" }}>
+                                <select id="status" className="input pocaal" style={{ width: "220px" }}>
                                     <option value="activo">Activo (Default)</option>
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label className='text-sm font-bold text-black' htmlFor="cat-sunat">Cat. Sunat:</label>
-                                <select id="cat-sunat" className="input" style={{ width: "220px" }}>
+                                <select id="cat-sunat" className="input pocaal" style={{ width: "220px" }}>
                                     <option value="">Seleccione</option>
                                 </select>
                             </div> 
                         </div>
                         <div className="form-group">
-                            <label className='text-sm font-bold text-black' htmlFor="observation">Observación:</label>
-                            <textarea className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' id="observation" placeholder="Observación"></textarea>
+                            <label className=' text-sm font-bold text-black' htmlFor="observation">Observación:</label>
+                            <textarea className='w-full pocaal bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' id="observation" placeholder="Observación" style={{height: 28 }}></textarea>
                         </div>
                         <div className="form-group">
-                            <label className='text-sm font-bold text-black' htmlFor="status-sunat">Status Sunat:</label>
+                            <label className='pocaal text-sm font-bold text-black' htmlFor="status-sunat">Status Sunat:</label>
                             <div id="status-sunat" className="status-sunat"></div>
 
                         </div>
                         <div className="form-row">
                             <div>
-                                <input className='bg-gray-100 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" placeholder="" />
+                                <input className='pocaal bg-gray-100 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" placeholder="" />
                             </div>
                             <div>
-                                <input className='bg-gray-100 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" placeholder="" />
+                                <input className='pocaal bg-gray-100 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" placeholder="" />
                             </div>
                         </div>
-                        <div className='modal-buttons'>
+                        <div className='modal-buttons' style={{fontSize: 16 }}>
                             <ButtonClose onClick={onClose} />
                             <ButtonSave />
                         </div>
