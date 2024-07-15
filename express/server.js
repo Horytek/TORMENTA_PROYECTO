@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '12345678',
+    password: '1234',
     database: 'db_tormenta',
     port:3306
 });

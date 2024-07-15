@@ -17,27 +17,16 @@
 ```sh
         cd express
         npm install
-        node server.js
-```
-### Django (Backend)
-
-- **Crear diferentes apps del proyecto**
-```sh
-        python manage.py startapp myapp
+        npm run dev
 ```
 
-- **Migrations**
-```sh
-        python manage.py makemigrations
-        python manage.py migrate
-```
+### Express (Backend)
 
-- **SuperUser**
+- **Configurar Acceso a BD**
+  - **Crea un archivo .env dentro de la carpeta backend con el siguiente contenido:**
 ```sh
-        python manage.py createsuperuser
-```
-
-- **Dependencias**
-```sh
-        pip install mysqlclient
+        HOST=localhost
+        DATABASE=db_tormenta
+        USER=root
+        PASSWORD=tupassword
 ```
