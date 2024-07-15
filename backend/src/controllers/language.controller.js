@@ -54,6 +54,7 @@ const updateLanguage = async (req, res) => {
         const connection = await getConnection();
         const result = await connection.query("UPDATE language SET ? WHERE id = ?", [language, id]);
         res.json(result);
+        console.log(res)
     } catch (error) {
         res.status(500);
         res.send(error.message);
