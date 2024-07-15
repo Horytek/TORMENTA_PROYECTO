@@ -12,22 +12,22 @@ const FiltrosGuias = () => {
             <label htmlFor="valor" className="label">
                 Numero de guia:
             </label>
-            <input type="text" id="numguia" className="input" placeholder="Buscar" />
+            <input type="text" id="numguia" className="input-d" placeholder="Buscar" />
         </div>
         <div className="input-wrapper mb-2 md:mb-0">
             <label htmlFor="dni" className="label">
                 DNI:
             </label>
-            <input type="text" id="dni" className="input" placeholder="Buscar" style={{ width: '170px' }} />
+            <input type="text" id="dni" className="input-d" placeholder="Buscar" style={{ width: '170px' }} />
         </div>
         <div className="input-wrapper">
-            <input type="date" id="fec1" className="input" placeholder="Buscar" />
+            <input type="date" id="fec1" className="input-d" placeholder="Buscar" />
         </div>
         <div className="input-wrapper">
-            <input type="date" id="fec2" className="input" placeholder="Buscar" />
+            <input type="date" id="fec2" className="input-d" placeholder="Buscar" />
         </div>
         <div className="input-wrapper mb-2 md:mb-0">
-            <select id="vend" className="input" style={{ width: "170px" }}>
+            <select id="vend" className="input-d" style={{ width: "170px" }}>
                 <option value="">Seleccione</option>
                 <option value="cam1">CENTRAL 22</option>
                 <option value="cam2">CENTRAL 52 -53</option>
