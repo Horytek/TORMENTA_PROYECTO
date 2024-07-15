@@ -9,28 +9,17 @@ import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import './Nota_ingreso.css';
 
-
-
 const Ingresos = () => {
   // Estado para manejar la lista de ingresos
-  const { ingresos, removeIngreso  } = useIngresosData();
+  const { ingresos, removeIngreso } = useIngresosData();
 
-  // Estado para el manejo del modal y opciones de eliminación
+  // Estado para el manejo del modal
   const [selectedRowId, setSelectedRowId] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
-
-
 
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id) => {
     setSelectedRowId(id);
-    setModalOpen(true);
   };
-
-
-
-
 
   return (
     <div>
@@ -40,72 +29,55 @@ const Ingresos = () => {
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
           Nota de ingreso
-
         </h1>
       </div>
-     <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
-      <div className="flex items-center gap-2">
-        <h6 className='font-bold'>Almacén:</h6>
-        <label className='border border-gray-300 p-2' htmlFor="">ALM CENTRAL ESCALERA</label>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <h6 className='font-bold'>Nombre o razón social:</h6>
-        <div className='relative'>
-          <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-            <IoIosSearch className='w-4 h-4 text-gray-500' />
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
+        <div className="flex items-center gap-2">
+          <h6 className='font-bold'>Almacén:</h6>
+          <label className='border border-gray-300 p-2' htmlFor="">ALM CENTRAL ESCALERA</label>
+        </div>
+        <div className="flex items-center gap-2">
+          <h6 className='font-bold'>Nombre o razón social:</h6>
+          <div className='relative'>
+            <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+              <IoIosSearch className='w-4 h-4 text-gray-500' />
+            </div>
+            <input
+              type="text"
+              placeholder=''
+              className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5'
+            />
           </div>
-          <input
-            type="text"
-            placeholder=''
-            className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5'
-          />
         </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
-        <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
-      </div>
-      
-      <div className="flex items-center gap-2">
-        <ButtonNormal color={'#01BDD6'}>
-        <LuFilter className='icon-white w-4 h-4 ' />
-        </ButtonNormal>
-        <div className='flec items-center gap-2'>
+        <div className="flex items-center gap-2">
+          <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
+          <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
+        </div>
+        <div className="flex items-center gap-2">
+          <ButtonNormal color={'#01BDD6'}>
+            <LuFilter className='icon-white w-4 h-4 ' />
+          </ButtonNormal>
+          <div className='flex items-center gap-2'>
             <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select">
-            <option value="" selected>Seleccione...</option>
-            <option value="value1">Imprimir</option>
-            <option value="value2" >Excel</option>
-            <option value="value3">Excel Detalle</option>
+              <option value="" selected>Seleccione...</option>
+              <option value="value1">Imprimir</option>
+              <option value="value2">Excel</option>
+              <option value="value3">Excel Detalle</option>
             </select>
+          </div>
+          <br />
+          <br />
+          <Link to="/almacen/nota_ingreso/registro_ingreso">
+            <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
+              Nota de ingreso
+            </ButtonIcon>
+          </Link>
         </div>
-        <br />
-        <br />
-        {/* <DropdownButton id="dropdown-basic-button" title="Opciones">
-          <Dropdown.Item href="#/action-1">Imprimir</Dropdown.Item>
-          <Dropdown.Item href="#/action-2">Excel</Dropdown.Item>
-        </DropdownButton> */}
-        <Link to="/almacen/nota_ingreso/registro_ingreso">
-        <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
-          Nota de ingreso
-        </ButtonIcon>
-        </Link>
-
       </div>
-    </div>
-
-        {/* Componente de tabla de ingresos */}
-        <TablaIngresos
+      {/* Componente de tabla de ingresos */}
+      <TablaIngresos
         ingresos={ingresos}
-        modalOpen={modalOpen}
-        deleteOptionSelected={deleteOptionSelected}
-        openModal={openModal}
-        /* currentPage={currentPage} */
       />
-
-
-
     </div>
   );
 };
