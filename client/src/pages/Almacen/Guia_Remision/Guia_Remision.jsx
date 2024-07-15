@@ -67,7 +67,7 @@ const Guias = () => {
         <div className="flex">
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
-        <select className="input cant-pag">
+        <select className="input-d cant-pag-d">
           <option>5</option>
           <option>10</option>
           <option>20</option>
