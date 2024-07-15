@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FaAngleDown } from "react-icons/fa6";
 
-
-const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal }) => {
+const TablaIngresos = ({ ingresos }) => {
   const [expandedRow, setExpandedRow] = useState(null);
 
   const toggleRow = (id) => {
@@ -13,6 +11,7 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
   const handleSelectClick = (event) => {
     event.stopPropagation(); // Evita la propagación del clic al tr de la tabla
   };
+
   const getEstadoClassName = (estado) => {
     switch (estado.toLowerCase()) {
       case 'activo':
@@ -23,6 +22,7 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
         return '';
     }
   };
+
   const renderIngresoRow = (ingreso) => (
     <React.Fragment key={ingreso.id}>
       <tr onClick={() => toggleRow(ingreso.id)} className='tr-tabla-ingreso'>
@@ -33,17 +33,17 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
         <td className="text-center">{ingreso.oCompra}</td>
         <td className="text-center">{ingreso.factura}</td>
         <td className="text-center">
-        <p className={getEstadoClassName(ingreso.estado)}> 
-          {ingreso.estado}
-        </p>
-      </td>
-      <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}  >
+          <p className={getEstadoClassName(ingreso.estado)}>
+            {ingreso.estado}
+          </p>
+        </td>
+        <td className='text-center'>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}>
             <option value="" selected>Seleccione...</option>
             <option value="value1">Imprimir</option>
-            <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="value2">Anular</option>
+            <option value="value2">Anular</option>
             <option value="value3">Clonar</option>
-            </select>
+          </select>
         </td>
       </tr>
       {expandedRow === ingreso.id && renderVentaDetails(ingreso.detalles)}
@@ -88,7 +88,7 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
       </td>
     </tr>
   );
-  
+
   return (
     <div className="container-table-reg px-4 bg-white rounded-lg">
       <table className="table w-full">
@@ -114,9 +114,6 @@ const TablaIngresos = ({ ingresos, modalOpen, deleteOptionSelected, openModal })
 
 TablaIngresos.propTypes = {
   ingresos: PropTypes.array.isRequired,
-  modalOpen: PropTypes.bool.isRequired,
-  deleteOptionSelected: PropTypes.bool.isRequired,
-  openModal: PropTypes.func.isRequired,
 };
 
 export default TablaIngresos;
