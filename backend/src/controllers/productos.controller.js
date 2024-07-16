@@ -4,12 +4,12 @@ const getProductos = async (req, res) => {
     try {
         const connection = await getConnection();
         const [result] = await connection.query(`
-                SELECT PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras, PR.estado_producto
+                SELECT PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras, PR.estado_producto as estado
                 FROM producto PR
                 INNER JOIN marca MA ON MA.id_marca = PR.id_marca
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
             `);
-        res.json({data: result, message: "Productos listados"});
+        res.json({code:1, data: result, message: "Productos listados"});
     } catch (error) {
         res.status(500);
         res.send(error.message);
