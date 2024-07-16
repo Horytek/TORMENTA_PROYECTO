@@ -4,7 +4,7 @@ const getProductos = async (req, res) => {
     try {
         const connection = await getConnection();
         const [result] = await connection.query(`
-                SELECT PR.id_producto, CA.nom_subcat, MA.nom_marca, PR.descripcion, PR.undm, PR.estado_producto
+                SELECT PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras, PR.estado_producto
                 FROM producto PR
                 INNER JOIN marca MA ON MA.id_marca = PR.id_marca
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
@@ -21,7 +21,7 @@ const getProducto = async (req, res) => {
         const { id } = req.params;
         const connection = await getConnection();
         const [result] = await connection.query(`
-                SELECT PR.id_producto, CA.nom_subcat, MA.nom_marca, PR.descripcion, PR.undm, PR.estado_producto
+                SELECT PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto
                 FROM producto PR
                 INNER JOIN marca MA ON MA.id_marca = PR.id_marca
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
@@ -40,13 +40,13 @@ const getProducto = async (req, res) => {
 
 const addProducto = async (req, res) => {
     try {
-        const { id_marca, id_subcategoria, descripcion, undm, estado_producto } = req.body;
+        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto } = req.body;
 
-        if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined) {
+        if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined || precio === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const producto = { id_marca, id_subcategoria, descripcion, undm, estado_producto };
+        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
         const connection = await getConnection();
         await connection.query("INSERT INTO producto SET ? ", producto);
 
@@ -60,13 +60,13 @@ const addProducto = async (req, res) => {
 const updateProducto = async (req, res) => {
     try {
         const { id } = req.params;
-        const { id_marca, id_subcategoria, descripcion, undm, estado_producto } = req.body;
+        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto } = req.body;
 
-        if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined) {
+        if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined || precio === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const producto = { id_marca, id_subcategoria, descripcion, undm, estado_producto };
+        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
         const connection = await getConnection();
         const [result] = await connection.query("UPDATE producto SET ? WHERE id_producto = ?", [producto, id]);
 
