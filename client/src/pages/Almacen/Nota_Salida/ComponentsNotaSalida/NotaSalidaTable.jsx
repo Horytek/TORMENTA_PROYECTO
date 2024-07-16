@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { IoIosArrowDropdown } from "react-icons/io";
-
+import ConfirmationModal from './Modals/ConfirmationModal';
 
 const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
+  const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
+  const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
+  const [isModalOpenClonar, setIsModalOpenClonar] = useState(false);
 
   const toggleRow = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
@@ -22,6 +25,35 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
         return '';
     }
   };
+  const handleSelectChange2 = (event, id) => {
+    const value = event.target.value;
+    switch (value) {
+      case 'imprimir2':
+        setIsModalOpenImprimir2(true);
+        break;
+      case 'anular':
+        setIsModalOpenAnular(true);
+        break;
+      case 'clonar':
+        setIsModalOpenClonar(true);
+        break;
+      default:
+        break;
+    }
+    event.target.value = ''; 
+  };
+
+  const closeModalImprimir2 = () => {
+    setIsModalOpenImprimir2(false);
+  };
+
+  const closeModalAnular = () => {
+    setIsModalOpenAnular(false);
+  };
+
+  const closeModalClonar = () => {
+    setIsModalOpenClonar(false);
+  };
   const renderSalidaRow = (salida) => (
     <React.Fragment key={salida.id}>
       <tr onClick={() => toggleRow(salida.id)} className='tr-tabla-salida'>
@@ -36,11 +68,11 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
         </p>
         </td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}  >
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}  onChange={handleSelectChange2}>
             <option value="" selected>Seleccione...</option>
-            <option value="value1">Imprimir</option>
-            <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="value2">Anular</option>
-            <option value="value3">Clonar</option>
+            <option value="imprimir2">Imprimir</option>
+            <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="anular">Anular</option>
+            <option value="clonar">Clonar</option>
             </select>
         </td>
       </tr>
@@ -105,6 +137,17 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
           {salidas.map(renderSalidaRow)}
         </tbody>
       </table>
+      {isModalOpenImprimir2 && (
+        <ConfirmationModal message="¿Desea imprimir esta nota de salida?" onClose={closeModalImprimir2} isOpen={isModalOpenImprimir2} />
+      )}
+
+      {isModalOpenAnular && (
+        <ConfirmationModal message="¿Desea anular esta nota de salida?" onClose={closeModalAnular} isOpen={isModalOpenAnular} />
+      )}
+
+      {isModalOpenClonar && (
+        <ConfirmationModal message="¿Desea clonar esta nota de salida?" onClose={closeModalClonar} isOpen={isModalOpenClonar} />
+      )}
     </div>
   );
 };

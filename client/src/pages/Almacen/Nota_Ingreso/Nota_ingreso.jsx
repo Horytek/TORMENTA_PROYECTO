@@ -7,11 +7,63 @@ import { Link } from 'react-router-dom';
 import useIngresosData from './data/Nota_Ingreso_Data';
 import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
+import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import './Nota_ingreso.css';
 
 const Ingresos = () => {
   const { ingresos } = useIngresosData();
+  const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
+  const [isModalOpenExcel, setIsModalOpenExcel] = useState(false);
+  const [isModalOpenExcelDetalle, setIsModalOpenExcelDetalle] = useState(false);
+  const openModalImprimir = () => {
+    setIsModalOpenImprimir(true);
+  };
 
+  const closeModalImprimir = () => {
+    setIsModalOpenImprimir(false);
+  };
+
+  const openModalExcel = () => {
+    setIsModalOpenExcel(true);
+  };
+
+  const closeModalExcel = () => {
+    setIsModalOpenExcel(false);
+  };
+
+  const openModalExcelDetalle = () => {
+    setIsModalOpenExcelDetalle(true);
+  };
+
+  const closeModalExcelDetalle = () => {
+    setIsModalOpenExcelDetalle(false);
+  };
+
+  const handleConfirmImprimir = () => {
+    console.log('Nota de salida impresa.');
+    setIsModalOpenImprimir(false);
+  };
+
+  const handleConfirmExcel = () => {
+    console.log('Exportar a Excel.');
+    setIsModalOpenExcel(false);
+  };
+
+  const handleConfirmExcelDetalle = () => {
+    console.log('Exportar a Excel Detalle.');
+    setIsModalOpenExcelDetalle(false);
+  };
+
+  const handleSelectChange = (event) => {
+    const value = event.target.value;
+    if (value === "imprimir") {
+      openModalImprimir();
+    } else if (value === "excel") {
+      openModalExcel();
+    } else if (value === "excel-detalle") {
+      openModalExcelDetalle();
+    }
+  };
 
 
 
@@ -53,11 +105,11 @@ const Ingresos = () => {
             <LuFilter className='icon-white w-4 h-4 ' />
           </ButtonNormal>
           <div className='flex items-center gap-2'>
-            <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select">
-              <option value="" selected>Seleccione...</option>
-              <option value="value1">Imprimir</option>
-              <option value="value2">Excel</option>
-              <option value="value3">Excel Detalle</option>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" onChange={handleSelectChange}>
+              <option value="">Seleccione...</option>
+              <option value="imprimir">Imprimir</option>
+              <option value="excel">Excel</option>
+              <option value="excel-detalle">Excel Detalle</option>
             </select>
           </div>
           <br />
@@ -73,6 +125,30 @@ const Ingresos = () => {
       <TablaIngresos
         ingresos={ingresos}
       />
+            {isModalOpenImprimir && (
+        <ConfirmationModal 
+          message='¿Desea imprimir la nota de ingreso?' 
+          onClose={closeModalImprimir} 
+          isOpen={isModalOpenImprimir}
+          onConfirm={handleConfirmImprimir}
+        />
+      )}
+      {isModalOpenExcel && (
+        <ConfirmationModal 
+          message='¿Desea exportar a Excel?' 
+          onClose={closeModalExcel} 
+          isOpen={isModalOpenExcel}
+          onConfirm={handleConfirmExcel}
+        />
+      )}
+      {isModalOpenExcelDetalle && (
+        <ConfirmationModal 
+          message='¿Desea exportar a Excel Detalle?' 
+          onClose={closeModalExcelDetalle} 
+          isOpen={isModalOpenExcelDetalle}
+          onConfirm={handleConfirmExcelDetalle}
+        />
+      )}
     </div>
   );
 };

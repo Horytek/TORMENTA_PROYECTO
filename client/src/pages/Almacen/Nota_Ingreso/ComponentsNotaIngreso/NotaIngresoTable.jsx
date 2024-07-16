@@ -1,9 +1,40 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import './NotaIngresoTable.css';
 const TablaIngresos = ({ ingresos }) => {
   const [expandedRow, setExpandedRow] = useState(null);
+  const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
+  const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
+  const [isModalOpenClonar, setIsModalOpenClonar] = useState(false);
+  const handleSelectChange2 = (event, id) => {
+    const value = event.target.value;
+    switch (value) {
+      case 'imprimir2':
+        setIsModalOpenImprimir2(true);
+        break;
+      case 'anular':
+        setIsModalOpenAnular(true);
+        break;
+      case 'clonar':
+        setIsModalOpenClonar(true);
+        break;
+      default:
+        break;
+    }
+  };
 
+  const closeModalImprimir2 = () => {
+    setIsModalOpenImprimir2(false);
+  };
+
+  const closeModalAnular = () => {
+    setIsModalOpenAnular(false);
+  };
+
+  const closeModalClonar = () => {
+    setIsModalOpenClonar(false);
+  };
 
 
   const handleSelectClick = (event) => {
@@ -44,11 +75,11 @@ const TablaIngresos = ({ ingresos }) => {
           </p>
         </td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick} onChange={handleSelectChange2}>
             <option value="" selected>Seleccione...</option>
-            <option value="value1">Imprimir</option>
-            <option value="value2">Anular</option>
-            <option value="value3">Clonar</option>
+            <option value="imprimir2">Imprimir</option>
+            <option value="anular">Anular</option>
+            <option value="clonar">Clonar</option>
           </select>
         </td>
       </tr>
@@ -114,12 +145,27 @@ const TablaIngresos = ({ ingresos }) => {
           {ingresos.map(renderIngresoRow)}
         </tbody>
       </table>
+      {isModalOpenImprimir2 && (
+        <ConfirmationModal message="¿Desea imprimir esta nota de ingreso?" onClose={closeModalImprimir2} isOpen={isModalOpenImprimir2} />
+      )}
+
+      {isModalOpenAnular && (
+        <ConfirmationModal message="¿Desea anular esta nota de ingreso?" onClose={closeModalAnular} isOpen={isModalOpenAnular} />
+      )}
+
+      {isModalOpenClonar && (
+        <ConfirmationModal message="¿Desea clonar esta nota de ingreso?" onClose={closeModalClonar} isOpen={isModalOpenClonar} />
+      )}
     </div>
   );
 };
 
 TablaIngresos.propTypes = {
   ingresos: PropTypes.array.isRequired,
+  modalOpen: PropTypes.bool.isRequired,
+  deleteOptionSelected: PropTypes.bool.isRequired,
+  openModal: PropTypes.func.isRequired,
+  currentPage: PropTypes.number.isRequired,
 };
 
 export default TablaIngresos;
