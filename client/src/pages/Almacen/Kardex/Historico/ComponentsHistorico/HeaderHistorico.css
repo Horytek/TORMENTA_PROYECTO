@@ -1,3 +1,8 @@
+
+.headerHistorico h2, .headerHistorico p {
+  text-align: left;
+}
+
 .headerHistorico {
   display: flex;
   flex-direction: row; /* Arrange elements in a row */
@@ -7,21 +12,32 @@
   background-color: #f1f1f1;
 }
 
-.headerHistorico h2, .headerHistorico p {
-  text-align: left;
+.headerHistorico .info {
+  flex: 1;
 }
 
+.headerHistorico .filters {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
 
-
-.actions {
+.headerHistorico .actions {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 10px;
 }
 
-.actions select {
+.headerHistorico .date-input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.headerHistorico select {
   padding: 10px;
   border-radius: 5px;
   border: 1px solid #ccc;
 }
+

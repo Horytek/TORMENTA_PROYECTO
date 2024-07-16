@@ -10,7 +10,6 @@ import { FaPlus } from "react-icons/fa";
 import './Nota_ingreso.css';
 
 const Ingresos = () => {
-  // Estado para manejar la lista de ingresos
   const { ingresos } = useIngresosData();
 
 
