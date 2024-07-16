@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-
+import './NotaIngresoTable.css';
 const TablaIngresos = ({ ingresos }) => {
   const [expandedRow, setExpandedRow] = useState(null);
 
@@ -76,7 +76,7 @@ const TablaIngresos = ({ ingresos }) => {
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
-                <tr key={index} onClick={() => handleDetailClick(id)}>
+                <tr key={index} onClick={() => handleDetailClick(id)} className='tr-tabla-detalle-ingreso'>
                   <td className="text-center py-2 px-4">{detalle.codigo}</td>
                   <td className="text-center py-2 px-4">{detalle.linea}</td>
                   <td className="text-center py-2 px-4">{detalle.descripcion}</td>

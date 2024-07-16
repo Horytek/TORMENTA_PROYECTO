@@ -12,6 +12,7 @@ function Historico() {
   return (
     <div className="Historico">
       <HeaderHistorico />
+
       <br />
       <HistoricoTable ingresoId={id} />
     </div>
