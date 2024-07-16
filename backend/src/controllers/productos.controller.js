@@ -27,7 +27,7 @@ const getProducto = async (req, res) => {
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
                 WHERE PR.id_producto = ?`, id);
         
-        if (result.affectedRows === 0) {
+        if (result.length === 0) {
             return res.status(404).json({data: result, message: "Producto no encontrado"});
         }
 
