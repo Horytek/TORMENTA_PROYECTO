@@ -11,15 +11,11 @@ import './Nota_ingreso.css';
 
 const Ingresos = () => {
   // Estado para manejar la lista de ingresos
-  const { ingresos, removeIngreso } = useIngresosData();
+  const { ingresos } = useIngresosData();
 
-  // Estado para el manejo del modal
-  const [selectedRowId, setSelectedRowId] = useState(null);
 
-  // Funciones para abrir y cerrar el modal de opciones
-  const openModal = (id) => {
-    setSelectedRowId(id);
-  };
+
+
 
   return (
     <div>

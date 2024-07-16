@@ -4,9 +4,7 @@ import PropTypes from 'prop-types';
 const TablaIngresos = ({ ingresos }) => {
   const [expandedRow, setExpandedRow] = useState(null);
 
-  const toggleRow = (id) => {
-    setExpandedRow(expandedRow === id ? null : id);
-  };
+
 
   const handleSelectClick = (event) => {
     event.stopPropagation(); // Evita la propagación del clic al tr de la tabla
@@ -23,9 +21,17 @@ const TablaIngresos = ({ ingresos }) => {
     }
   };
 
+  const handleRowClick = (id) => {
+    setExpandedRow(expandedRow === id ? null : id);
+  };
+
+  const handleDetailClick = (id) => {
+    window.open(`/almacen/kardex/historico/${id}`, '_blank');
+  };
+
   const renderIngresoRow = (ingreso) => (
     <React.Fragment key={ingreso.id}>
-      <tr onClick={() => toggleRow(ingreso.id)} className='tr-tabla-ingreso'>
+      <tr onClick={() => handleRowClick(ingreso.id)} className='tr-tabla-ingreso'>
         <td className="text-center">{ingreso.fecha}</td>
         <td className="text-center">{ingreso.documento}</td>
         <td className="text-center">{ingreso.proveedor}</td>
@@ -46,11 +52,11 @@ const TablaIngresos = ({ ingresos }) => {
           </select>
         </td>
       </tr>
-      {expandedRow === ingreso.id && renderVentaDetails(ingreso.detalles)}
+      {expandedRow === ingreso.id && renderVentaDetails(ingreso.id, ingreso.detalles)}
     </React.Fragment>
   );
 
-  const renderVentaDetails = (detalles) => (
+  const renderVentaDetails = (id, detalles) => (
     <tr className="bg-gray-100">
       <td colSpan="9">
         <div className="container-table-details px-4">
@@ -70,7 +76,7 @@ const TablaIngresos = ({ ingresos }) => {
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
-                <tr key={index}>
+                <tr key={index} onClick={() => handleDetailClick(id)}>
                   <td className="text-center py-2 px-4">{detalle.codigo}</td>
                   <td className="text-center py-2 px-4">{detalle.linea}</td>
                   <td className="text-center py-2 px-4">{detalle.descripcion}</td>
