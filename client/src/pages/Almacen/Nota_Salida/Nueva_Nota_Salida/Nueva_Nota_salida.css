@@ -59,7 +59,13 @@
 }
 
 /**TABLA**/
+.tr-tabla-salida {
+  cursor: pointer !important;
+}
 
+.tr-tabla-detalle-salida{
+  cursor: pointer !important;
+}
 h6 {
   color: #323842ff;
 }

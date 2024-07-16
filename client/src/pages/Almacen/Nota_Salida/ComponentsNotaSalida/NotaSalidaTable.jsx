@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { IoIosArrowDropdown } from "react-icons/io";
 import ConfirmationModal from './Modals/ConfirmationModal';
 
 const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) => {
@@ -52,6 +51,20 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
   };
 
   const closeModalClonar = () => {
+    setIsModalOpenClonar(false);
+  };
+  const handleConfirmImprimir2 = () => {
+    console.log('Nota de salida impresa.');
+    setIsModalOpenImprimir2(false);
+  };
+
+  const handleConfirmAnular = () => {
+    console.log('Exportar a Excel.');
+    setIsModalOpenAnular(false);
+  };
+
+  const handleConfirmClonar = () => {
+    console.log('Exportar a Excel Detalle.');
     setIsModalOpenClonar(false);
   };
   const renderSalidaRow = (salida) => (
@@ -138,15 +151,15 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
         </tbody>
       </table>
       {isModalOpenImprimir2 && (
-        <ConfirmationModal message="¿Desea imprimir esta nota de salida?" onClose={closeModalImprimir2} isOpen={isModalOpenImprimir2} />
+        <ConfirmationModal message="¿Desea imprimir esta nota de salida?" onClose={closeModalImprimir2} isOpen={isModalOpenImprimir2} onConfirm={handleConfirmImprimir2} />
       )}
 
       {isModalOpenAnular && (
-        <ConfirmationModal message="¿Desea anular esta nota de salida?" onClose={closeModalAnular} isOpen={isModalOpenAnular} />
+        <ConfirmationModal message="¿Desea anular esta nota de salida?" onClose={closeModalAnular} isOpen={isModalOpenAnular} onConfirm={handleConfirmAnular} />
       )}
 
       {isModalOpenClonar && (
-        <ConfirmationModal message="¿Desea clonar esta nota de salida?" onClose={closeModalClonar} isOpen={isModalOpenClonar} />
+        <ConfirmationModal message="¿Desea clonar esta nota de salida?" onClose={closeModalClonar} isOpen={isModalOpenClonar} onConfirm={handleConfirmClonar} />
       )}
     </div>
   );

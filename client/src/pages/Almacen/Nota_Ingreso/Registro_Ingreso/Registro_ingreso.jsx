@@ -82,7 +82,7 @@ function Registro_Ingresos() {
                 <input type="date" className="border border-gray-300 rounded-lg p-2.5" id="fechaDocu" />
               </div>
             </div>
-            <div className="flex justify-between mt-4 space-x-2">
+            <div className="flex justify-start mt-4 space-x-2">
             <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor} >
                 <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
               </button>

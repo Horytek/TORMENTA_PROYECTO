@@ -5,9 +5,8 @@ import { LuFilter } from "react-icons/lu";
 import TablaSalida from './ComponentsNotaSalida/NotaSalidaTable';
 import { Link } from 'react-router-dom';
 import useNotaSalidaData from './data/Nota_Salida_Data';
-import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
-import { FaPlus, FaTrash } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
+import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
+import { FaPlus } from "react-icons/fa";
 import ConfirmationModal from './ComponentsNotaSalida/Modals/ConfirmationModal';
 import './Nota_salida.css';
 

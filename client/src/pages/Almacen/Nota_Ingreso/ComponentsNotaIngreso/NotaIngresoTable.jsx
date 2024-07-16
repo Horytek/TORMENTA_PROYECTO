@@ -35,7 +35,17 @@ const TablaIngresos = ({ ingresos }) => {
   const closeModalClonar = () => {
     setIsModalOpenClonar(false);
   };
+  const handleConfirmImprimir2 = () => {
+    setIsModalOpenImprimir2(false);
+  };
 
+  const handleConfirmAnular = () => {
+    setIsModalOpenAnular(false);
+  };
+
+  const handleConfirmClonar = () => {
+    setIsModalOpenClonar(false);
+  };
 
   const handleSelectClick = (event) => {
     event.stopPropagation(); // Evita la propagación del clic al tr de la tabla
@@ -146,15 +156,15 @@ const TablaIngresos = ({ ingresos }) => {
         </tbody>
       </table>
       {isModalOpenImprimir2 && (
-        <ConfirmationModal message="¿Desea imprimir esta nota de ingreso?" onClose={closeModalImprimir2} isOpen={isModalOpenImprimir2} />
+        <ConfirmationModal message="¿Desea imprimir esta nota de ingreso?" onClose={closeModalImprimir2} isOpen={isModalOpenImprimir2} onConfirm={handleConfirmImprimir2} />
       )}
 
       {isModalOpenAnular && (
-        <ConfirmationModal message="¿Desea anular esta nota de ingreso?" onClose={closeModalAnular} isOpen={isModalOpenAnular} />
+        <ConfirmationModal message="¿Desea anular esta nota de ingreso?" onClose={closeModalAnular} isOpen={isModalOpenAnular} onConfirm={handleConfirmAnular} />
       )}
 
       {isModalOpenClonar && (
-        <ConfirmationModal message="¿Desea clonar esta nota de ingreso?" onClose={closeModalClonar} isOpen={isModalOpenClonar} />
+        <ConfirmationModal message="¿Desea clonar esta nota de ingreso?" onClose={closeModalClonar} isOpen={isModalOpenClonar} onConfirm={handleConfirmClonar}  />
       )}
     </div>
   );
