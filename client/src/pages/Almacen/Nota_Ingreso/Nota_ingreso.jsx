@@ -81,7 +81,9 @@ const Ingresos = () => {
       <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
         <div className="flex items-center gap-2">
           <h6 className='font-bold'>Almacén:</h6>
-          <label className='border border-gray-300 p-2' htmlFor="">ALM CENTRAL ESCALERA</label>
+          <select className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' htmlFor="">
+            <option>ALM CENTRAL ESCALERA</option>
+          </select>
         </div>
         <div className="flex items-center gap-2">
           <h6 className='font-bold'>Nombre o razón social:</h6>
@@ -105,7 +107,7 @@ const Ingresos = () => {
             <LuFilter className='icon-white w-4 h-4 ' />
           </ButtonNormal>
           <div className='flex items-center gap-2'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" onChange={handleSelectChange}>
+            <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" onChange={handleSelectChange}>
               <option value="">Seleccione...</option>
               <option value="imprimir">Imprimir</option>
               <option value="excel">Excel</option>
@@ -125,30 +127,33 @@ const Ingresos = () => {
       <TablaIngresos
         ingresos={ingresos}
       />
-            {isModalOpenImprimir && (
-        <ConfirmationModal 
-          message='¿Desea imprimir la nota de ingreso?' 
-          onClose={closeModalImprimir} 
+      {isModalOpenImprimir && (
+        <ConfirmationModal
+          message='¿Desea imprimir la nota de ingreso?'
+          onClose={closeModalImprimir}
           isOpen={isModalOpenImprimir}
           onConfirm={handleConfirmImprimir}
         />
       )}
       {isModalOpenExcel && (
-        <ConfirmationModal 
-          message='¿Desea exportar a Excel?' 
-          onClose={closeModalExcel} 
+        <ConfirmationModal
+          message='¿Desea exportar a Excel?'
+          onClose={closeModalExcel}
           isOpen={isModalOpenExcel}
           onConfirm={handleConfirmExcel}
         />
       )}
       {isModalOpenExcelDetalle && (
-        <ConfirmationModal 
-          message='¿Desea exportar a Excel Detalle?' 
-          onClose={closeModalExcelDetalle} 
+        <ConfirmationModal
+          message='¿Desea exportar a Excel Detalle?'
+          onClose={closeModalExcelDetalle}
           isOpen={isModalOpenExcelDetalle}
           onConfirm={handleConfirmExcelDetalle}
         />
       )}
+      <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
+        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }} >SUCURSAL: TIENDA ARICA 3 / CAJA ARICA3</h1>
+      </div>
     </div>
   );
 };
