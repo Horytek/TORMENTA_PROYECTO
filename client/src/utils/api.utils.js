@@ -1,4 +1,4 @@
-export const handleApiResponse = async (apiFunction) => {
+export async function handleApiResponse (apiFunction) {
   try {
     const response = await apiFunction();
     return response.data;
@@ -6,4 +6,4 @@ export const handleApiResponse = async (apiFunction) => {
     console.error("API Error:", error);
     throw error;
   }
-};
+}
