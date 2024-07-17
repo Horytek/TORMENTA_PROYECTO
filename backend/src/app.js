@@ -1,7 +1,6 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
-import languageRoutes from "./routes/language.routes";
 import usuariosRoutes from "./routes/usuarios.routes";
 import productosRoutes from "./routes/productos.routes";
 import ventasRoutes from "./routes/ventas.routes";
@@ -17,7 +16,6 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/api/languages",languageRoutes);
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/productos", productosRoutes);
 app.use("/api/ventas", ventasRoutes);
