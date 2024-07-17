@@ -13,7 +13,7 @@ const ProductoProvider = ({ children }) => {
   const [productos, setProductos] = useState([]);
 
   async function listarProductos() {
-    await getProductos();
+    const productos = await getProductos();
     setProductos(productos);
   }
 
