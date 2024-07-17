@@ -4,6 +4,13 @@
 
 ### React (Frontend)
 
+- **Iniciar Aplicación/Servidor**
+```
+cd backend
+npm i
+npm start
+```
+
 - **Iniciar Aplicación React**
 ```
 cd client
