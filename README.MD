@@ -2,14 +2,14 @@
 
 ## Comandos principales:
 
-### React (Frontend)
-
 - **Iniciar Aplicación/Servidor**
 ```
 cd backend
 npm i
 npm start
 ```
+
+### React (Frontend)
 
 - **Iniciar Aplicación React**
 ```
