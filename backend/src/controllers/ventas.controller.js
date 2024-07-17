@@ -8,7 +8,7 @@ const getVentas = async (req, res) => {
         const [ventas] = await connection.query(`
             SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante,2,3) AS serieNum, SUBSTRING(com.num_comprobante,6,8) AS  num,
 tp.nom_tipocomp AS tipoComprobante, CONCAT(cl.nombres,' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
-cl.dni AS dni, cl.ruc AS ruc, v.f_venta AS fecha, v.igv AS igv, SUM(dv.total) AS total, CONCAT(ve.nombres,' ', ve.apellidos) AS cajero,
+cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total, CONCAT(ve.nombres,' ', ve.apellidos) AS cajero,
 ve.dni AS  cajeroId, v.estado_venta AS estado
 FROM venta v INNER JOIN comprobante com ON com.id_comprobante=v.id_comprobante
 INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante=com.id_tipocomprobante
