@@ -24,6 +24,9 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
         return '';
     }
   };
+  const handleDetailClick = (id) => {
+    window.open(`/almacen/kardex/historico/${id}`, '_blank');
+  };
   const handleSelectChange2 = (event, id) => {
     const value = event.target.value;
     switch (value) {
@@ -89,11 +92,11 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
             </select>
         </td>
       </tr>
-      {expandedRow === salida.id && renderVentaDetails(salida.detalles)}
+      {expandedRow === salida.id && renderVentaDetails(salida.id, salida.detalles)}
     </React.Fragment>
   );
 
-  const renderVentaDetails = (detalles) => (
+  const renderVentaDetails = (id, detalles) => (
     <tr className="bg-gray-100">
       <td colSpan="9">
         <div className="container-table-details px-4">
@@ -112,7 +115,7 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
-                <tr key={index}>
+                <tr key={index} onClick={() => handleDetailClick(id)} className='tr-tabla-detalle-ingreso'>
                   <td className="text-center py-2 px-4">{detalle.codigo}</td>
                   <td className="text-center py-2 px-4">{detalle.linea}</td>
                   <td className="text-center py-2 px-4">{detalle.descripcion}</td>
