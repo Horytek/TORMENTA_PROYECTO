@@ -1,6 +1,7 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import "./Marcas.css";
-import { Link } from "react-router-dom";
+import "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal.css";
 import { FaSearch } from "react-icons/fa";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { MdAddCircleOutline } from "react-icons/md";
@@ -12,146 +13,93 @@ import EditModal from "./ComponentsMarcas/Modals/EditModal";
 import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
 import RegistroModal from "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal";
 
-
 const Marcas = () => {
-  // Estado para manejar la lista de ventas
-  const [marcas, setMarcas] = useState([
-    {
-      id: 1,
-      serieNum: "C001",
-      num: "0001",
-      nombre: "Nombre de la marca 1",
-      estado: "Activo",
-    },
-    {
-      id: 2,
-      serieNum: "C002",
-      num: "0002",
-      nombre: "Marca de ropa prueba 2",
-      estado: "Inactivo",
-    },
-    {
-      id: 3,
-      serieNum: "C003",
-      num: "0003",
-      nombre: "Angie Chavez aprobo calidad",
-      estado: "Activo",
-    },
-    {
-      id: 4,
-      serieNum: "C004",
-      num: "0004",
-      nombre: "Dior",
-      estado: "Inactivo",
-    },
-    {
-      id: 5,
-      serieNum: "C005",
-      num: "0005",
-      nombre: "Ñofi",
-      estado: "Activo",
-    },
-  ]);
   const [searchTerm, setSearchTerm] = useState("");
-  // Estado para el manejo del modal y opciones de eliminación
+  const [marcas, setMarcas] = useState([]);
+
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalBajaOpen, setModalBajaOpen] = useState(false);
-  const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
-  const [darBajaOptionSelected, setDarBajaOptionSelected] = useState(false);
-  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const totalPages = 5; // Número total de páginas
-  const filteredMarcas = marcas.filter((marca) =>
-    marca.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  // Funciones para abrir y cerrar el modal de opciones
-  const openModal = (id) => {
-    setSelectedRowId(id);
-    setModalOpen(true);
-  };
-  const darBajaModal = (id) => {
-    setSelectedRowId(id);
-    setModalBajaOpen(true);
-  };
+  const [isRegistroModalOpen, setIsRegistroModalOpen] = useState(false);
+  const [isBajaModalOpen, setIsBajaModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages] = useState(5);
 
-  const closeModal = () => {
-    setSelectedRowId(null);
-    setModalOpen(false);
-    setDeleteOptionSelected(false);
-  };
+  useEffect(() => {
+    fetchMarcas();
+  }, []);
+
+  function fetchMarcas() {
+    axios
+      .get("http://localhost:4000/api/marcas")
+      .then((response) => {
+        setMarcas(response.data.data); // Asegúrate de que estás accediendo correctamente según la estructura de la API.
+      })
+      .catch((error) => {
+        console.error("Error fetching data: ", error);
+      });
+  }
+
+  function handleAddMarca(data) {
+    axios
+      .post("http://localhost:4000/api/marcas", data)
+      .then((response) => {
+        fetchMarcas();
+        setIsRegistroModalOpen(false);
+      })
+      .catch((error) => {
+        console.error("Error adding marca: ", error);
+      });
+  }
+
+  function handleUpdateMarca(data) {
+    axios
+      .put(`http://localhost:4000/api/marcas/${selectedRowId}`, data)
+      .then((response) => {
+        fetchMarcas();
+        setIsEditModalOpen(false);
+      })
+      .catch((error) => {
+        console.error("Error updating marca: ", error);
+      });
+  }
+
+  function handleDeleteMarca() {
+    axios
+      .delete(`http://localhost:4000/api/marcas/${selectedRowId}`)
+      .then((response) => {
+        fetchMarcas();
+        setModalOpen(false);
+      })
+      .catch((error) => {
+        console.error("Error deleting marca: ", error);
+      });
+  }
+
+  function handleDarBajaMarca() {
+    axios
+      .put(`http://localhost:4000/api/marcas/${selectedRowId}`, {
+        estado_marca: 0,
+      })
+      .then((response) => {
+        fetchMarcas();
+        setIsBajaModalOpen(false);
+      })
+      .catch((error) => {
+        console.error("Error updating marca: ", error);
+      });
+  }
   
-  const openRegistroModal = (title) => {
-    setModalTitle(title);
-    setIsModalOpen(true);
-  };
-  const closeRegistroModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const closeBajaModal = () => {
-    setSelectedRowId(null);
-    setModalBajaOpen(false);
-    setDarBajaOptionSelected(false);
-  };
-
-  const openEditModal = (id) => {
-    setSelectedRowId(id);
-    setIsEditModalOpen(true);
-  };
-
-  const closeEditModal = () => {
-    setSelectedRowId(null);
-    setIsEditModalOpen(false);
-  };
-
-  // Función para alternar la opción de eliminar venta
-  const toggleDeleteDetalleOption = () => {
-    setDeleteOptionSelected(!deleteOptionSelected);
-  };
-  const toggleDeactivateMarca = () => {
-    setDarBajaOptionSelected(!darBajaOptionSelected);
-  };
-
-  // Función para eliminar una venta
-  const handleDeleteVenta = () => {
-    const updatedVentas = marcas.filter((venta) => venta.id !== selectedRowId);
-    setMarcas(updatedVentas);
-    closeModal();
-    setConfirmDeleteModalOpen(false);
-  };
-
-  const handleDarBajaMarca = () => {
-    const updatedMarcas = marcas.map((marca) => {
-      if (marca.id === selectedRowId) {
-        return { ...marca, estado: "Inactivo" };
-      }
-      return marca;
-    });
-    setMarcas(updatedMarcas);
-    closeBajaModal();
-  };
-
-  // Función para cambiar de página en la paginación
-  const onPageChange = (page) => {
-    setCurrentPage(page);
-  };
 
   return (
     <div>
-      {/* Componente de migas de pan */}
       <Breadcrumb
         paths={[
           { name: "Inicio", href: "/inicio" },
+          { name: "Productos", href: "/productos" },
           { name: "Marcas", href: "/productos/marcas" },
         ]}
       />
-
-      <hr className="mb-4" />
-      {/* Encabezado principal */}
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: "36px" }}>
           Marcas
@@ -176,7 +124,7 @@ const Marcas = () => {
             </div>
             {/* Botón para agregar nueva marca */}
             <button
-              onClick={() => openRegistroModal("Agregar Marca")}
+              onClick={() => setIsRegistroModalOpen(true)}
               className="flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-md px-4 py-2"
             >
               <MdAddCircleOutline
@@ -189,84 +137,52 @@ const Marcas = () => {
         </div>
       </div>
 
-      {/* Componente de tabla de ventas */}
       <TablaMarcas
-        marcas={filteredMarcas}
-        modalOpen={modalOpen}
-        deleteOptionSelected={deleteOptionSelected}
-        darBajaOptionSelected={darBajaOptionSelected}
-        openModal={openModal}
-        openEditModal={openEditModal}
-        darBajaModal={darBajaModal}
-        currentPage={currentPage}
+        marcas={marcas}
+        openModal={(id) => {
+          setSelectedRowId(id);
+          setModalOpen(true);
+        }}
+        openEditModal={(id) => {
+          setSelectedRowId(id);
+          setIsEditModalOpen(true);
+        }}
+        darBajaModal={(id) => {
+          setSelectedRowId(id);
+          setIsBajaModalOpen(true);
+        }}
       />
 
-      {modalBajaOpen && (
-        <div className="modal-overlay">
-          <BajaModal
-            modalOpen={modalBajaOpen}
-            toggleDeactivateMarca={toggleDeactivateMarca}
-            closeBajaModal={closeBajaModal}
-            handleDarBajaMarca={handleDarBajaMarca}
-            darBajaOptionSelected={darBajaOptionSelected}
-            
-         />
-         </div>
-      )}   
-      {/* Modal para registro de marca */}
-
-      {isModalOpen && (
-        <RegistroModal modalTitle={modalTitle} onClose={closeRegistroModal} />
+      {isRegistroModalOpen && (
+        <RegistroModal
+          onClose={() => setIsRegistroModalOpen(false)}
+          onSubmit={handleAddMarca}
+        />
+      )}
+      {isEditModalOpen && (
+        <EditModal
+          onClose={() => setIsEditModalOpen(false)}
+          onSubmit={handleUpdateMarca}
+          marca={marcas.find((m) => m.id === selectedRowId)}
+        />
+      )}
+      {isBajaModalOpen && (
+        <BajaModal
+          onClose={() => setIsBajaModalOpen(false)}
+          onConfirm={handleDarBajaMarca}
+        />
       )}
       {modalOpen && (
-        <div className="modal-overlay">
-        <OptionsModal 
-          modalOpen={modalOpen}
-          toggleDeleteDetalleOption={toggleDeleteDetalleOption}
-          closeModal={closeModal}
-          setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
-          deleteOptionSelected={deleteOptionSelected}
+        <OptionsModal
+          onClose={() => setModalOpen(false)}
+          onDelete={handleDeleteMarca}
         />
-        </div>
       )}
-
-      
-      {confirmDeleteModalOpen && (
-        <div className="modal-overlay">
-          <ConfirmationModal
-            confirmDeleteModalOpen={confirmDeleteModalOpen}
-            handleDeleteVenta={handleDeleteVenta}
-            closeModal={closeModal}
-            setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
-          />
-        </div>
-      )}
-
-      {isEditModalOpen && (
-        <div className="modal-overlay">
-          <EditModal
-            modalOpen={isEditModalOpen}
-            onClose={closeEditModal}
-            selectedRowId={selectedRowId}
-          />
-        </div>
-      )}
-
-      {/* Contenedor para paginación */}
-      <div className="flex justify-between mt-4">
-        <div className="flex">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
-        </div>
-        <select className="input-rv cant-pag-rv ">
-          <option>5</option>
-          <option>10</option>
-          <option>20</option>
-        </select>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };
