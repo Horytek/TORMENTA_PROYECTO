@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { BsCheckCircle } from 'react-icons/bs';
+import './VentaExitosaModal.css';
 
 const VentaExitosaModal = ({ isOpen, onClose }) => {
     useEffect(() => {
@@ -8,23 +8,21 @@ const VentaExitosaModal = ({ isOpen, onClose }) => {
             const timeout = setTimeout(() => {
                 onClose();
                 window.location.reload();
-            }, 1500);
+            }, 2400);
             return () => clearTimeout(timeout);
         }
     }, [isOpen, onClose]);
 
     return isOpen ? (
-        <div className="modal-container">
-            <div className="modal-content-c">
-                <div className="modal-header">
-                    <h2 className="text-lg font-bold flex items-center">
-                        <BsCheckCircle className="mr-2 text-green-500 animate-pulse" style={{ fontSize: '25px' }} />
-                        ¡Venta Exitosa!
-                    </h2>
+        <div className="fixed inset-0 flex items-center justify-center z-50 modal-container">
+            <div className="bg-white rounded-lg shadow-lg p-6 text-center modal-content-c">
+                <div className="checkmark-container">
+                    <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                        <circle className="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+                        <path className="checkmark-check" fill="none" d="M14 26l10 10 14-14" />
+                    </svg>
                 </div>
-                <div className="modal-body">
-                    <p>Tu venta ha sido procesada exitosamente.</p>
-                </div>
+                <p className="text-xl font-semibold">Tu venta ha sido procesada exitosamente.</p>
             </div>
         </div>
     ) : null;
