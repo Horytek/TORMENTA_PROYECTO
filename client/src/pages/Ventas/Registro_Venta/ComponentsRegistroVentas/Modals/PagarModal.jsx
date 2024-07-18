@@ -106,8 +106,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 symbol="S/."
                                 value={totalImporte}
                                 readOnly
-                                style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                className={"input-c w-40 ml-2"}
+                                style={{ height: "40px", border: "solid 0.2rem #171a1f28", backgroundColor: "#f5f5f5" }}
+                                className={"input-c w-40 ml-2 focus:outline-none"}
                             />
                             <SelectField
                                 label="Método de pago"
@@ -185,10 +185,22 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                         <hr className="mb-5" />
                         {faltante > 0 && (
                             <div>
+                                <div className="flex justify-center text-center mb-4">
+                                    <InputField
+                                        label="Total a pagar"
+                                        symbol="S/."
+                                        value={faltante.toFixed(2)}
+                                        readOnly
+                                        style={{ height: "40px", border: "solid 0.2rem #171a1f28", backgroundColor: "#f5f5f5" }}
+                                        className={"input-c w-40 ml-2 focus:outline-none"}
+                                    />
+                                 
+                                </div>
                                 <div className="flex justify-between mb-4">
                                     <InputField
                                         label="Monto recibido adicional"
                                         symbol="S/."
+                                        placeholder={faltante.toFixed(2)}
                                         value={montoRecibido2}
                                         onChange={(e) => setMontoRecibido2(e.target.value)}
                                         pattern="[0-9]*[.]?[0-9]{0,2}"
@@ -232,8 +244,21 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                         )}
                         {faltante2 > 0 && (
                             <div>
+                                 <div className="flex justify-center text-center mb-4">
+                                    <InputField
+                                        label="Total a pagar"
+                                        symbol="S/."
+                                        value={faltante2.toFixed(2)}
+                                        readOnly
+                                        style={{ height: "40px", border: "solid 0.2rem #171a1f28", backgroundColor: "#f5f5f5" }}
+                                        className={"input-c w-40 ml-2 focus:outline-none"}
+                                    />
+                                 
+                                </div>
                                 <div className="flex justify-between mb-4">
                                     <InputField
+                                                                            placeholder={faltante2.toFixed(2)}
+
                                         label="Monto recibido adicional"
                                         symbol="S/."
                                         value={montoRecibido3}
