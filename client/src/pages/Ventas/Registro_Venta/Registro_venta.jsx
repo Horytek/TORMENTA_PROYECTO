@@ -2,7 +2,8 @@ import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
-import useVentasData from '../Data/Venta_Data';
+import useVentasData from '../Data/data_venta';
+import useProductosData from '../Data/data_producto_venta';
 import { BsCashCoin } from "react-icons/bs";
 import { GrDocumentPerformance } from "react-icons/gr";
 import { MdCleaningServices } from "react-icons/md";
@@ -17,13 +18,7 @@ const Registro_Venta = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTerm2, setSearchTerm2] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [productos, setProductos] = useState([
-    { codigo: '001', nombre: 'Vestido Jean Talla 28', precio: '55.08', stock: 25, categoria: 'vestido' },
-    { codigo: '002', nombre: 'Vestido Jean Talla 25', precio: '55.08', stock: 20, categoria: 'vestido' },
-    { codigo: '003', nombre: 'Vestido Jean Talla 30', precio: '55.08', stock: 30, categoria: 'vestido' },
-    { codigo: '004', nombre: 'Short Jean Talla M', precio: '40.00', stock: 50, categoria: 'short' },
-    { codigo: '005', nombre: 'Bolso Cuero Negro', precio: '75.00', stock: 15, categoria: 'bolso' },
-  ]);
+  const [productos, setProductos] = useProductosData();
   const [detalleMode, setDetalleMode] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 

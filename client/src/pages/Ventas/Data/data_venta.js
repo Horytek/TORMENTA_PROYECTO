@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const getVentasRequest = () => {
+const useVentasData = () => {
   const [ventas, setVentas] = useState([]);
+  const [totalVentas, setTotalVentas] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ventasPerPage, setVentasPerPage] = useState(10);
 
   useEffect(() => {
     const fetchVentas = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/ventas');
+        const response = await axios.get('http://localhost:4000/api/ventas', {
+          params: {
+            page: currentPage - 1,
+            limit: ventasPerPage
+          }
+        });
         if (response.data.code === 1) {
           const ventas = response.data.data.map(venta => ({
             id: venta.id,
@@ -33,6 +41,7 @@ const getVentasRequest = () => {
             }))
           }));
           setVentas(ventas);
+          setTotalVentas(response.data.totalVentas);
         } else {
           console.error('Error en la solicitud: ', response.data.message);
         }
@@ -42,13 +51,38 @@ const getVentasRequest = () => {
     };
 
     fetchVentas();
-  }, []);
+  }, [currentPage, ventasPerPage]);
 
   const removeVenta = (id) => {
     setVentas(ventas.filter(venta => venta.id !== id));
   };
 
-  return { ventas, removeVenta };
+  const totalPages = Math.ceil(totalVentas / ventasPerPage);
+  
+  const [detalles, setDetalles] = useState([]);
+
+  const addVenta = (nuevaVenta) => {
+    setVentas([...ventas, nuevaVenta]);
+  };
+
+  const addDetalle = (nuevoDetalle) => {
+    setDetalles([...detalles, nuevoDetalle]);
+  };
+
+  const updateDetalle = (updatedDetalle) => {
+    setDetalles(prevDetalles =>
+      prevDetalles.map(detalle =>
+        detalle.codigo === updatedDetalle.codigo ? updatedDetalle : detalle
+      )
+    );
+  };
+  const removeDetalle = (codigo) => {
+    setDetalles(prevDetalles =>
+      prevDetalles.filter(detalle => detalle.codigo !== codigo)
+    );
+  };
+
+  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle };
 };
 
-export default getVentasRequest;
+export default useVentasData;
