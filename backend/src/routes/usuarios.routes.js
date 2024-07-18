@@ -4,5 +4,6 @@ import { methods as usuariosController } from "./../controllers/usuarios.control
 const router = Router();
 
 router.get("/", usuariosController.getUsuarios);
+router.post("/login", usuariosController.verifyUsuario);
 
 export default router;

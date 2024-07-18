@@ -5,7 +5,7 @@ import { RiCloseLargeLine } from "react-icons/ri";
 
 export function ButtonSave({ ...props }) {
   return (
-    <button className="btn btn-save" {...props}>
+    <button className="btn btn-save m-0" {...props}>
       <FiSave style={{ fontSize: '25px' }} />
       Guardar
     </button>
@@ -14,7 +14,7 @@ export function ButtonSave({ ...props }) {
 
 export function ButtonClose({ ...props }) {
   return (
-    <button className="btn btn-close" {...props}>
+    <button className="btn btn-close m-0" {...props}>
       <RiCloseLargeLine style={{ fontSize: '25px' }} />
       Cerrar
     </button>
@@ -23,7 +23,7 @@ export function ButtonClose({ ...props }) {
 
 export function ButtonNormal({ children, color, ...props }) {
   return (
-    <button className="btn" style={{ backgroundColor: color }} {...props}>
+    <button className="btn m-0" style={{ backgroundColor: color }} {...props}>
       {children}
     </button>
   );
@@ -31,7 +31,7 @@ export function ButtonNormal({ children, color, ...props }) {
 
 export function ButtonIcon({ children, icon, color, ...props }) {
   return (
-    <button className="btn" style={{ backgroundColor: color }} {...props}>
+    <button className="btn m-0" style={{ backgroundColor: color }} {...props}>
       {icon}
       {children}
     </button>

@@ -1,20 +1,33 @@
 import React from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { MdDelete } from "react-icons/md";
-
+import { FaTrash } from 'react-icons/fa';
+import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 const RegistroTablaIngreso = ({ ingresos }) => {
+  const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
+  
+  const openModalEliminar = () => {
+    setIsModalOpenEliminar(true);
+  };
+
+  const closeModalEliminar = () => {
+    setIsModalOpenEliminar(false);
+  };
+  const handleConfirmEliminar = () => {
+    setIsModalOpenEliminar(false);
+  };
 
   const renderEntradaRow = (ingreso) => (
-    <tr key={ingreso.id} className='tr-tabla-ingreso'>
+    <tr key={ingreso.id} className='tr-tabla-nuevoingreso'>
       <td className="text-center">{ingreso.codigo}</td>
       <td className="text-center">{ingreso.descripcion}</td>
       <td className="text-center">{ingreso.marca}</td>
       <td className="text-center">{ingreso.stockActual}</td>
       <td className="text-center">{ingreso.cantidad}</td>
-      <td className="text-center">
-        <div className="flex justify-center items-center">
-          <MdDelete className="w-4 h-4 text-red-500" />
-        </div>
+      <td className="flex text-center justify-center items-center align-center">
+        <button className="flex justify-center items-center" onClick={openModalEliminar}>
+          <FaTrash className="w-4 h-4 text-red-500" />
+        </button>
       </td>
     </tr>
   );
@@ -36,6 +49,14 @@ const RegistroTablaIngreso = ({ ingresos }) => {
           {ingresos.map(renderEntradaRow)}
         </tbody>
       </table>
+      {isModalOpenEliminar && (
+        <ConfirmationModal 
+          message='¿Desea eliminar este producto?' 
+          onClose={closeModalEliminar} 
+          isOpen={isModalOpenEliminar}
+          onConfirm={handleConfirmEliminar}
+        />
+      )}
     </div>
   );
 };

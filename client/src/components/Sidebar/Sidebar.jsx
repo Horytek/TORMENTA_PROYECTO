@@ -51,6 +51,7 @@ function Sidebar() {
               ]
             },
             { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén', subLinks: [
+              { to: '/almacen/kardex', text: 'Kardex Movimientos' },
               { to: '/almacen/nota_ingreso', text: 'Nota de ingreso' },
               { to: '/almacen/guia_remision', text: 'Guia de remisión' },
               { to: '/almacen/nota_salida', text: 'Nota de salida' }

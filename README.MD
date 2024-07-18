@@ -2,31 +2,37 @@
 
 ## Comandos principales:
 
+- **Iniciar Aplicación/Servidor**
+```
+cd backend
+npm i
+npm start
+```
+
 ### React (Frontend)
 
 - **Iniciar Aplicación React**
-```sh
-        cd client
-        npm install
-        npm run dev
+```
+cd client
+npm install
+npm run dev
 ```
 
 ### Express (Backend)
 
-- **Inicializar Servidor Express**
-```sh
-        cd express
-        npm install
-        npm run dev
+- **Iniciar Servidor Express**
 ```
-
-### Express (Backend)
+cd backend
+npm install
+npm run dev
+```
 
 - **Configurar Acceso a BD**
-  - **Crea un archivo .env dentro de la carpeta backend con el siguiente contenido:**
-```sh
-        HOST=localhost
-        DATABASE=db_tormenta
-        USER=root
-        PASSWORD=tupassword
+> Crea un archivo .env dentro de la carpeta backend con el siguiente contenido:
+
+```
+HOST=localhost
+DATABASE=db_tormenta
+USER=root
+PASSWORD=tupassword
 ```

@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import './Productos.css';
-import productosData from './data/productosData';
+import { useEffect, useState } from 'react';
 import Table from '@/components/Table/Table';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import Pagination from '@/components/Pagination/Pagination';
@@ -10,17 +8,20 @@ import { MdEdit } from "react-icons/md";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import ProductosForm from './ProductosForm';
+import getProductosRequest from './data/productosData';
 
 function Productos() {
+  const [productos, setProductos] = useState([]); // Estado para almacenar los productos obtenidos de la API
+
   // Definir las columnas de la tabla con el header y key correspondientes
   const columns = [
     { header: 'Descripción', key: 'descripcion' },
-    { header: 'Línea', key: 'linea' },
-    { header: 'Sub-Línea', key: 'subLinea' },
-    { header: 'Und. Med.', key: 'unidadMedida' },
+    { header: 'Línea', key: 'nom_subcat' },
+    { header: 'Sub-Línea', key: 'nom_marca' },
+    { header: 'Und. Med.', key: 'undm' },
     { header: 'Precio', key: 'precio' },
-    { header: 'Cód. Barras', key: 'codBarras' },
-    { header: 'Estado', key: 'estado' }
+    { header: 'Cód. Barras', key: 'cod_barras' },
+    { header: 'Estado', key: 'estado_producto' }
   ];
 
   // Función para renderizar las acciones de la tabla
@@ -35,7 +36,7 @@ function Productos() {
     </div>
   );
 
-  // Estado para controlar el modal de confirmación
+  // Estado para controlar el modal de confirmación y modal de producto
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,6 +80,19 @@ function Productos() {
     setCurrentPage(page);
   };
 
+  useEffect(() => {
+    const fetchProductos = async () => {
+      try {
+        const data = await getProductosRequest();
+        setProductos(data); // Actualiza el estado con los datos recibidos
+      } catch (error) {
+        console.error('Error al obtener productos: ', error.message);
+      }
+    };
+
+    fetchProductos();
+  }, []); // Llama a useEffect solo una vez al montar el componente
+
   return (
     <div>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Productos', href: '/productos' }]} />
@@ -103,7 +117,7 @@ function Productos() {
       </div>
       <div>
         {/* Contenido Tabla */}
-        <Table columns={columns} data={productosData} renderActions={renderActions} />
+        <Table columns={columns} data={productos} renderActions={renderActions} />
       </div>
       <div className="flex justify-end mt-4">
         <div className="flex">

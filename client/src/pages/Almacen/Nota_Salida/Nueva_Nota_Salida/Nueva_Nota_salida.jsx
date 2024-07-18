@@ -12,9 +12,7 @@ import { MdCancelPresentation } from "react-icons/md";
 import ProductosModal from '@/pages/Productos/ProductosForm';
 import useNuevaNotaSalidaData from './data/Nueva_Nota_Salida_Data';
 import AgregarProovedor from '../ComponentsNotaSalida/Modals/AgregarProovedor';
-import { ButtonSave, ButtonClose, ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import NuevaTablaSalida from './ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
-import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import './Nueva_Nota_salida.css';
 
 const NuevaSalidas = () => {
@@ -76,7 +74,7 @@ const NuevaSalidas = () => {
         { name: 'Inicio', href: '/inicio' },
         { name: 'Almacén', href: '/almacen' },
         { name: 'Nota de salida', href: '/almacen/nota_salida' }
-        , { name: 'Nueva Nota de salida', href: '/almacen/nota_salida/nueva_nota_salida' }
+        , { name: 'Nueva nota de salida', href: '/almacen/nota_salida/nueva_nota_salida' }
       ]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
@@ -92,19 +90,19 @@ const NuevaSalidas = () => {
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
                   Destinatario:
                 </label>
-                <input className='border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5' id="destinatario" type="text" />
+                <input className='border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="destinatario" type="text" />
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
                   RUC:
                 </label>
-                <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5' id="ruc" type="text" />
+                <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="ruc" type="text" />
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
                   Número:
                 </label>
-                <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5' id="numero" type="text" />
+                <input className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="numero" type="text" />
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
@@ -122,9 +120,8 @@ const NuevaSalidas = () => {
               </button>
 
               <Link to="/almacen/nota_salida">
-                <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                <MdCancelPresentation className="inline-block mr-2"  />
-                Cancelar
+              <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+                <MdCancelPresentation className="inline-block mr-2"  /> Cancelar
                 </button>
               </Link>
 
@@ -211,7 +208,9 @@ const NuevaSalidas = () => {
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
-
+      <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
+        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }} >SUCURSAL: TIENDA ARICA 3 / CAJA ARICA3</h1>
+      </div>
 
     </div>
   );

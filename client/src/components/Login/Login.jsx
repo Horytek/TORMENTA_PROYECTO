@@ -17,7 +17,7 @@ function Login() {
   // Maneja el evento de inicio de sesión
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://localhost:3001/login', { usuario, password });
+      const response = await axios.post('http://localhost:4000/api/usuarios/login', { usuario, password });
       if (response.data.success) {
         navigate('/Inicio');
       } else {
@@ -65,7 +65,7 @@ function Login() {
         <div className="login-form bg-white flex flex-col justify-center p-20">
           <h1 className="text-3xl font-bold text-center pb-14">Iniciar Sesión</h1>
 
-          {renderInputField("email", usuario, setUsuario, "userexample", "Usuario")}
+          {renderInputField("email", usuario, setUsuario, "usuario", "Usuario")}
           {renderInputField(showPassword ? "text" : "password", password, setPassword, "*******", "Contraseña", true)}
 
           <div className="checkbox-container flex items-center mb-11">

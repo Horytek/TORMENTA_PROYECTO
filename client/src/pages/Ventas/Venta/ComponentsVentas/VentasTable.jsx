@@ -66,7 +66,6 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
                 <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
                 <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCUENTO</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">IGV</th>
                 <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">SUBTOTAL</th>
               </tr>
             </thead>
@@ -78,7 +77,6 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
                   <td className="text-center">{detalle.cantidad}</td>
                   <td>{detalle.precio}</td>
                   <td>{detalle.descuento}</td>
-                  <td>{detalle.igv}</td>
                   <td>{detalle.subtotal}</td>
                 </tr>
               ))}

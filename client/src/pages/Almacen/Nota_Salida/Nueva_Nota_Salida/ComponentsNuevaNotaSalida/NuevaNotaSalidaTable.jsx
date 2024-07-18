@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { IoIosArrowDropdown } from "react-icons/io";
-import { MdDelete } from "react-icons/md";
-
+import { FaTrash } from 'react-icons/fa6';
+import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 const NuevaTablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
-
-  const toggleRow = (id) => {
-    setExpandedRow(expandedRow === id ? null : id);
-  };
-  const handleSelectClick = (event) => {
-    event.stopPropagation(); // Evita la propagación del clic al tr de la tabla
+  const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
+  
+  const openModalEliminar = () => {
+    setIsModalOpenEliminar(true);
   };
 
+  const closeModalEliminar = () => {
+    setIsModalOpenEliminar(false);
+  };
+  const handleConfirmEliminar = () => {
+    setIsModalOpenEliminar(false);
+  };
   const renderSalidaRow = (salida) => (
     <React.Fragment key={salida.id}>
       <tr className='tr-tabla-salida'>
@@ -21,20 +24,16 @@ const NuevaTablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal 
         <td className="text-center">{salida.marca}</td>
         <td className="text-center">{salida.stockActual}</td>
         <td className="text-center">{salida.cantidad}</td>
-        <td className="text-center">
-          <div className="flex justify-center items-center">
-            <MdDelete className="w-4 h-4 text-red-500" />
-          </div>
-        </td>
+        <td className="flex text-center justify-center items-center align-center">
+        <button className="flex justify-center items-center" onClick={openModalEliminar}>
+          <FaTrash className="w-4 h-4 text-red-500" />
+        </button>
+      </td>
 
       </tr>
       {expandedRow === salida.id && renderVentaDetails(salida.detalles)}
     </React.Fragment>
   );
-
-
-
-
 
   return (
     <div className="container-table-reg px-4 bg-white rounded-lg">
@@ -53,6 +52,14 @@ const NuevaTablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal 
           {salidas.map(renderSalidaRow)}
         </tbody>
       </table>
+      {isModalOpenEliminar && (
+        <ConfirmationModal 
+          message='¿Desea eliminar este producto?' 
+          onClose={closeModalEliminar} 
+          isOpen={isModalOpenEliminar}
+          onConfirm={handleConfirmEliminar}
+        />
+      )}
     </div>
   );
 };

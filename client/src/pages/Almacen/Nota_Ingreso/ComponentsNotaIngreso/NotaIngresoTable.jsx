@@ -1,11 +1,50 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-
+import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+import './NotaIngresoTable.css';
 const TablaIngresos = ({ ingresos }) => {
   const [expandedRow, setExpandedRow] = useState(null);
+  const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
+  const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
+  const [isModalOpenClonar, setIsModalOpenClonar] = useState(false);
+  const handleSelectChange2 = (event, id) => {
+    const value = event.target.value;
+    switch (value) {
+      case 'imprimir2':
+        setIsModalOpenImprimir2(true);
+        break;
+      case 'anular':
+        setIsModalOpenAnular(true);
+        break;
+      case 'clonar':
+        setIsModalOpenClonar(true);
+        break;
+      default:
+        break;
+    }
+  };
 
-  const toggleRow = (id) => {
-    setExpandedRow(expandedRow === id ? null : id);
+  const closeModalImprimir2 = () => {
+    setIsModalOpenImprimir2(false);
+  };
+
+  const closeModalAnular = () => {
+    setIsModalOpenAnular(false);
+  };
+
+  const closeModalClonar = () => {
+    setIsModalOpenClonar(false);
+  };
+  const handleConfirmImprimir2 = () => {
+    setIsModalOpenImprimir2(false);
+  };
+
+  const handleConfirmAnular = () => {
+    setIsModalOpenAnular(false);
+  };
+
+  const handleConfirmClonar = () => {
+    setIsModalOpenClonar(false);
   };
 
   const handleSelectClick = (event) => {
@@ -23,9 +62,17 @@ const TablaIngresos = ({ ingresos }) => {
     }
   };
 
+  const handleRowClick = (id) => {
+    setExpandedRow(expandedRow === id ? null : id);
+  };
+
+  const handleDetailClick = (id) => {
+    window.open(`/almacen/kardex/historico/${id}`, '_blank');
+  };
+
   const renderIngresoRow = (ingreso) => (
     <React.Fragment key={ingreso.id}>
-      <tr onClick={() => toggleRow(ingreso.id)} className='tr-tabla-ingreso'>
+      <tr onClick={() => handleRowClick(ingreso.id)} className='tr-tabla-ingreso'>
         <td className="text-center">{ingreso.fecha}</td>
         <td className="text-center">{ingreso.documento}</td>
         <td className="text-center">{ingreso.proveedor}</td>
@@ -38,19 +85,19 @@ const TablaIngresos = ({ ingresos }) => {
           </p>
         </td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick} onChange={handleSelectChange2}>
             <option value="" selected>Seleccione...</option>
-            <option value="value1">Imprimir</option>
-            <option value="value2">Anular</option>
-            <option value="value3">Clonar</option>
+            <option value="imprimir2">Imprimir</option>
+            <option value="anular">Anular</option>
+            <option value="clonar">Clonar</option>
           </select>
         </td>
       </tr>
-      {expandedRow === ingreso.id && renderVentaDetails(ingreso.detalles)}
+      {expandedRow === ingreso.id && renderVentaDetails(ingreso.id, ingreso.detalles)}
     </React.Fragment>
   );
 
-  const renderVentaDetails = (detalles) => (
+  const renderVentaDetails = (id, detalles) => (
     <tr className="bg-gray-100">
       <td colSpan="9">
         <div className="container-table-details px-4">
@@ -70,7 +117,7 @@ const TablaIngresos = ({ ingresos }) => {
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
-                <tr key={index}>
+                <tr key={index} onClick={() => handleDetailClick(id)} className='tr-tabla-detalle-ingreso'>
                   <td className="text-center py-2 px-4">{detalle.codigo}</td>
                   <td className="text-center py-2 px-4">{detalle.linea}</td>
                   <td className="text-center py-2 px-4">{detalle.descripcion}</td>
@@ -108,12 +155,27 @@ const TablaIngresos = ({ ingresos }) => {
           {ingresos.map(renderIngresoRow)}
         </tbody>
       </table>
+      {isModalOpenImprimir2 && (
+        <ConfirmationModal message="¿Desea imprimir esta nota de ingreso?" onClose={closeModalImprimir2} isOpen={isModalOpenImprimir2} onConfirm={handleConfirmImprimir2} />
+      )}
+
+      {isModalOpenAnular && (
+        <ConfirmationModal message="¿Desea anular esta nota de ingreso?" onClose={closeModalAnular} isOpen={isModalOpenAnular} onConfirm={handleConfirmAnular} />
+      )}
+
+      {isModalOpenClonar && (
+        <ConfirmationModal message="¿Desea clonar esta nota de ingreso?" onClose={closeModalClonar} isOpen={isModalOpenClonar} onConfirm={handleConfirmClonar}  />
+      )}
     </div>
   );
 };
 
 TablaIngresos.propTypes = {
   ingresos: PropTypes.array.isRequired,
+  modalOpen: PropTypes.bool.isRequired,
+  deleteOptionSelected: PropTypes.bool.isRequired,
+  openModal: PropTypes.func.isRequired,
+  currentPage: PropTypes.number.isRequired,
 };
 
 export default TablaIngresos;

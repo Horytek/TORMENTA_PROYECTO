@@ -8,11 +8,12 @@ import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import { Link } from 'react-router-dom';
-import useVentasData from '../Data/Venta_Data';
+import getVentasRequest from '../Data/data_venta';
+/*import getVentasRequest from './data/data_venta';*/
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
-  const { ventas, removeVenta  } = useVentasData();
+  const { ventas, removeVenta  } = getVentasRequest();
 
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
