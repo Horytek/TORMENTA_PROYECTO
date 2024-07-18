@@ -7,7 +7,7 @@ import useProductosData from '../Data/data_producto_venta';
 import { BsCashCoin } from "react-icons/bs";
 import { GrDocumentPerformance } from "react-icons/gr";
 import { MdCleaningServices } from "react-icons/md";
-import AlertModal from '../../../components/AlertModal/AlertModal';
+import AlertModal from '../../../components/Modals/AlertModal';
 import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';
 import './Registro_Venta.css';
 

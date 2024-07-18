@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import "./Marcas.css";
-import "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal.css";
 import { FaSearch } from "react-icons/fa";
-import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { MdAddCircleOutline } from "react-icons/md";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import Pagination from "@/components/Pagination/Pagination";
 import TablaMarcas from "./ComponentsMarcas/MarcasTable";
 import OptionsModal from "./ComponentsMarcas/Modals/OptionsModal";
 import BajaModal from "./ComponentsMarcas/Modals/BajaModal";
 import EditModal from "./ComponentsMarcas/Modals/EditModal";
-import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
 import RegistroModal from "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal";
+//import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
+import "./Marcas.css";
+import "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal.css";
 
 const Marcas = () => {
   const [searchTerm, setSearchTerm] = useState("");

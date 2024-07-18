@@ -1,4 +1,3 @@
-import React from "react";
 import PropTypes from "prop-types";
 import { MdDeleteForever, MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { IoIosCloudDone } from "react-icons/io";

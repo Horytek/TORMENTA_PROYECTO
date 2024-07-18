@@ -7,7 +7,7 @@ import Inicio from '@/pages/Inicio/Inicio';
 import Ventas from '@/pages/Ventas/Venta/Ventas';
 import Empleados from '@/pages/Empleados/Empleados';
 import Productos from '@/pages/Productos/Productos';
-import Marcas from '@/pages/Productos/Marcas/Marcas';
+import Marcas from '@/pages/Marcas/Marcas';
 import Almacen from '@/pages/Almacen/Almacén';
 import Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Nota_ingreso';
 import Nueva_Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Registro_Ingreso/Registro_ingreso';
