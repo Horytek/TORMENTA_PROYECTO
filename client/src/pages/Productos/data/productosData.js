@@ -12,7 +12,7 @@ const getProductosRequest = async () => {
         undm: item.undm,
         precio: parseFloat(item.precio), // Convertir el precio a número flotante
         cod_barras: item.cod_barras || '-', // Manejar el caso donde cod_barras pueda ser null
-        estado: parseInt(item.estado) === 0 ? 'Inactivo' : 'Activo' // Convertir estado a texto según convención de productosData
+        estado: item.estado === 1 ? 'Inactivo' : 'Activo' // Convertir estado a texto según convención de productosData
       }));
       
       return productos; // Devuelve el array de productos transformados

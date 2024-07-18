@@ -8,20 +8,18 @@ import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import { Link } from 'react-router-dom';
-import getVentasRequest from '../Data/data_venta';
+import useVentasData from '../Data/data_venta';
 /*import getVentasRequest from './data/data_venta';*/
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
-  const { ventas, removeVenta  } = getVentasRequest();
+  const { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage } = useVentasData();
 
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5; // Número total de páginas
 
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id) => {
@@ -100,13 +98,13 @@ const Ventas = () => {
 
       {/* Contenedor para paginación */}
       <div className="flex justify-between mt-4">
-        <div className="flex">
+      <div className="flex">
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
-        <select className="input-c cant-pag-c ">
-          <option>5</option>
-          <option>10</option>
-          <option>20</option>
+        <select className="input-c cant-pag-c" value={ventasPerPage} onChange={(e) => setVentasPerPage(Number(e.target.value))}>
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
         </select>
       </div>
     </div>
