@@ -17,7 +17,7 @@ const verifyUsuario = async (req, res) => {
         
         const params = [ usuario, password ];
         const connection = await getConnection();
-        const result = await connection.query("SELECT * FROM usuario WHERE usua = ? AND contra = ?", params);
+        const [result] = await connection.query("SELECT * FROM usuario WHERE usua = ? AND contra = ?", params);
         
         if (result.length > 0) {
             res.json({ success: true, message: 'Login successful' });

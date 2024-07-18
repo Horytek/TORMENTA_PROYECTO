@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import axios from 'axios';
 import loginImage from '../../assets/img-login.png';
-import AlertModal from '../AlertModal/AlertModal.jsx';
+import AlertModal from '../../components/AlertModal/AlertModal.jsx';
 
 import './Login.css';
 

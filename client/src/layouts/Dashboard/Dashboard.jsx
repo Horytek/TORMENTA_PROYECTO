@@ -1,8 +1,8 @@
 // src/components/Dashboard/Dashboard.jsx
 
 import { Routes, Route } from 'react-router-dom';
-import Sidebar from '../Sidebar/Sidebar';
-import Navbar from '../Navbar/Navbar';
+import Sidebar from '../../components/Sidebar/Sidebar';
+import Navbar from '../../components/Navbar/Navbar';
 import Inicio from '@/pages/Inicio/Inicio';
 import Ventas from '@/pages/Ventas/Venta/Ventas';
 import Empleados from '@/pages/Empleados/Empleados';
