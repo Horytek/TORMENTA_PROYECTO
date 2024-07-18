@@ -82,7 +82,7 @@ const Salidas = () => {
     } else if (value === "excel-detalle") {
       openModalExcelDetalle();
     }
-    event.target.value = ''; 
+    event.target.value = '';
   };
 
   return (
@@ -97,14 +97,16 @@ const Salidas = () => {
       <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
         <div className="flex items-center gap-2">
           <h6 className='font-bold'>Almacén:</h6>
-          <label className='border border-gray-300 p-2' htmlFor="">ALM CENTRAL ESCALERA</label>
+          <select className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' htmlFor="">
+            <option>ALM CENTRAL ESCALERA</option>
+          </select>
         </div>
 
         <div className="flex items-center gap-2">
           <h6 className='font-bold'>Nombre o razón social:</h6>
           <div className='relative'>
             <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-              <IoIosSearch className='w-4 h-4 text-gray-500' /> 
+              <IoIosSearch className='w-4 h-4 text-gray-500' />
             </div>
             <input
               type="text"
@@ -146,30 +148,34 @@ const Salidas = () => {
         openModal={openModal}
       />
       {isModalOpenImprimir && (
-        <ConfirmationModal 
-          message='¿Desea imprimir la nota de salida?' 
-          onClose={closeModalImprimir} 
+        <ConfirmationModal
+          message='¿Desea imprimir la nota de salida?'
+          onClose={closeModalImprimir}
           isOpen={isModalOpenImprimir}
           onConfirm={handleConfirmImprimir}
         />
       )}
       {isModalOpenExcel && (
-        <ConfirmationModal 
-          message='¿Desea exportar a Excel?' 
-          onClose={closeModalExcel} 
+        <ConfirmationModal
+          message='¿Desea exportar a Excel?'
+          onClose={closeModalExcel}
           isOpen={isModalOpenExcel}
           onConfirm={handleConfirmExcel}
         />
       )}
       {isModalOpenExcelDetalle && (
-        <ConfirmationModal 
-          message='¿Desea exportar a Excel Detalle?' 
-          onClose={closeModalExcelDetalle} 
+        <ConfirmationModal
+          message='¿Desea exportar a Excel Detalle?'
+          onClose={closeModalExcelDetalle}
           isOpen={isModalOpenExcelDetalle}
           onConfirm={handleConfirmExcelDetalle}
         />
       )}
+      <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
+        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }} >SUCURSAL: TIENDA ARICA 3 / CAJA ARICA3</h1>
+      </div>
     </div>
+
   );
 };
 

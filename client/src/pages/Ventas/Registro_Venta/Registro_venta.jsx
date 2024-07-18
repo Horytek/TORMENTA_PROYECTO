@@ -4,6 +4,7 @@ import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
 import useVentasData from '../Data/Venta_Data';
 import { BsCashCoin } from "react-icons/bs";
+import { GrDocumentPerformance } from "react-icons/gr";
 import { MdCleaningServices } from "react-icons/md";
 import AlertModal from '../../../components/AlertModal/AlertModal';
 import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';
@@ -69,20 +70,23 @@ const Registro_Venta = () => {
   };
 
   const handleQuantityChange = (index, newCantidad) => {
-    if (newCantidad > 0) {
+    if (newCantidad >= 0) {
       const updatedDetalles = [...detalles];
       const detalleToUpdate = { ...updatedDetalles[index] };
       const oldCantidad = detalleToUpdate.cantidad;
 
       const productoCodigo = detalleToUpdate.codigo;
       const productoIndex = productos.findIndex(p => p.codigo === productoCodigo);
+
       if (productoIndex !== -1) {
         const producto = productos[productoIndex];
+
         if (newCantidad <= producto.stock + oldCantidad) {
           detalleToUpdate.cantidad = newCantidad;
 
-          const igvValue = (parseFloat(producto.precio) * 0.18 * newCantidad).toFixed(2);
-          const subtotal = (parseFloat(producto.precio) * newCantidad + parseFloat(igvValue) - parseFloat(detalleToUpdate.descuento)).toFixed(2);
+          const igvValue = (parseFloat(detalleToUpdate.precio) * 0.18 * newCantidad).toFixed(2);
+          const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad + parseFloat(igvValue) - parseFloat(detalleToUpdate.descuento)).toFixed(2);
+
           detalleToUpdate.igv = `S/ ${igvValue}`;
           detalleToUpdate.subtotal = `S/ ${subtotal}`;
 
@@ -97,6 +101,18 @@ const Registro_Venta = () => {
       }
     }
   };
+
+  const handleDiscountChange = (index, detalle) => {
+    const updatedDetalles = [...detalles];
+    updatedDetalles[index] = detalle;
+    updateDetalle(updatedDetalles);
+  };
+
+  const handlePrecieChange = (index, detalle) => {
+    const updatedDetalles = [...detalles];
+    updatedDetalles[index] = detalle;
+    updateDetalle(updatedDetalles);
+  }
 
   return (
     <>
@@ -124,7 +140,8 @@ const Registro_Venta = () => {
               placeholder="Buscar producto en el detalle" style={{ boxShadow: '0 0 10px #171a1f33' }} value={searchTerm2} onChange={(e) => setSearchTerm2(e.target.value)} disabled={!detalleMode} />
             <button className="btn ml-2 btn-producto px-6 py-2 " onClick={() => setIsModalOpen(true)}>Producto</button>
           </div>
-          <TablaDetallesVenta detalles={detalles} handleProductRemove={handleProductRemove} handleQuantityChange={handleQuantityChange} />
+          <TablaDetallesVenta detalles={detalles} handleProductRemove={handleProductRemove} handleQuantityChange={handleQuantityChange} handleDiscountChange={handleDiscountChange} handlePrecieChange={handlePrecieChange} />
+
           <div className="flex justify-end mt-4">
             <div className="flex flex-col w-100">
               <div className="flex justify-between my-1 items-center">
@@ -145,6 +162,12 @@ const Registro_Venta = () => {
             <button className="btn btn-cerrar  flex items-center">
               <MdCleaningServices style={{ fontSize: '22px' }} />
               Limpiar</button>
+              <div className='items-center flex ml-2'>
+              <button className="btn btn-cotizar  flex items-center">
+              <GrDocumentPerformance style={{ fontSize: '22px' }} />
+              Cotizar</button>
+            </div>
+            
             <div className='items-center flex ml-2'>
               <button className="btn btn-cobrar mr-0 flex items-center" onClick={() => setIsCobrarModalOpen(true)} disabled={detalles.length === 0}>
                 <BsCashCoin style={{ fontSize: '22px' }} />
