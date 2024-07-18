@@ -18,7 +18,7 @@ const Registro_Venta = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTerm2, setSearchTerm2] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [productos, setProductos] = useProductosData();
+  const {productos, setProductos} = useProductosData();
   const [detalleMode, setDetalleMode] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
