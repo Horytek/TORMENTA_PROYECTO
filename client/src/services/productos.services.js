@@ -16,8 +16,9 @@ export async function getProductos() {
     descripcion: producto.descripcion.toUpperCase(), // Convertir descripción a mayúsculas
     nom_subcat: producto.nom_subcat.toUpperCase(), // Convertir nombre de subcategoría a mayúsculas
     nom_marca: producto.nom_marca.toUpperCase(), // Convertir nombre de marca a mayúsculas
-    cod_barras: producto.cod_barras,
-    undm: producto.undm.toUpperCase(), // Convertir unidad de medida a mayúsculas
+    cod_barras: producto.cod_barras || '-',
+    undm: producto.undm.toUpperCase(),
+    estado: parseInt(producto.estado) === 0 ? 'Inactivo' : 'Activo'
   }));
 
   return productosTransformados;
