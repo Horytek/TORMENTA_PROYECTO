@@ -1,14 +1,22 @@
-import { useState } from "react";
-import ProductoContext from "./ProductoContext";
+import { useState, useContext } from "react";
+import { ProductoContext } from "./ProductoContext";
 import {
   getProductos,
   getProducto,
   addProducto,
   updateProducto,
   deleteProducto,
-} from "../services/productosService";
+} from '../../services/productos.services';
 
-const ProductoProvider = ({ children }) => {
+export const useProductoContext = () => {
+  const context = useContext(ProductoContext);
+  if (!context) {
+    throw new Error("useProductoContext must be used within a ProductoProvider");
+  }
+  return context;
+};
+
+export const ProductoContextProvider = ({ children }) => {
 
   const [productos, setProductos] = useState([]);
 
@@ -71,5 +79,3 @@ const ProductoProvider = ({ children }) => {
   );
 
 };
-
-export default ProductoProvider;
