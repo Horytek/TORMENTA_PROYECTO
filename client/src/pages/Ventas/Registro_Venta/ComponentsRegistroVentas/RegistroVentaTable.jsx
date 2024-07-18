@@ -1,17 +1,17 @@
 import PropTypes from 'prop-types';
 import { FaTrashAlt } from 'react-icons/fa';
 
-const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChange, handleDiscountChange, handlePrecieChange}) => {
+const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChange, handleDiscountChange, handlePrecieChange }) => {
 
   const handleDescuentoChange = (index, newDescuento) => {
     const updatedDetalles = [...detalles];
-    updatedDetalles[index].descuento = newDescuento ;
+    updatedDetalles[index].descuento = newDescuento;
 
     const detalleToUpdate = updatedDetalles[index];
     const precio = parseFloat(detalleToUpdate.precio);
     const cantidad = detalleToUpdate.cantidad;
     const igv = parseFloat(detalleToUpdate.igv.replace('S/ ', ''));
-    const descuento = parseFloat(newDescuento) || 0
+    const descuento = (((parseFloat(newDescuento) / 100) * precio)*cantidad) || 0
     const subtotal = (precio * cantidad + igv - descuento).toFixed(2);
 
     detalleToUpdate.subtotal = `S/ ${subtotal}`;
@@ -26,16 +26,16 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
     const detalleToUpdate = updatedDetalles[index];
     const precio = parseFloat(newPrecio) || 1;
     const cantidad = detalleToUpdate.cantidad || 1;
-    const igv = (precio * 0.18 * cantidad).toFixed(2); 
-    const descuento = parseFloat(detalleToUpdate.descuento) || 1;
+    const igv = (precio * 0.18 * cantidad).toFixed(2);
+    const descuento = (((parseFloat(detalleToUpdate.descuento) / 100) * precio)*cantidad) || 1;
     const subtotal = (precio * cantidad + parseFloat(igv) - descuento).toFixed(2);
 
-    detalleToUpdate.igv = `S/ ${igv}`; 
+    detalleToUpdate.igv = `S/ ${igv}`;
     detalleToUpdate.subtotal = `S/ ${subtotal}`;
 
     handlePrecieChange(index, detalleToUpdate);
   };
-  
+
   const handleDescuentoBlur = (index) => {
     const updatedDetalles = [...detalles];
     const detalleToUpdate = updatedDetalles[index];
@@ -134,21 +134,30 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
             </td>
             <td className="py-2 text-start">
               <span className='mr-2'>
-                S/
+                %
               </span>
               <input
                 type="text"
                 className="w-12 text-start rounded-md focus:outline-none"
                 style={{ background: "transparent" }}
                 value={detalle.descuento}
+                inputMode="numeric"
                 onChange={(e) => {
-                  const newDescuento = e.target.value.trim(); // Elimina espacios en blanco al inicio y al final
-                  handleDescuentoChange(index, newDescuento);
+                  const newValue = e.target.value.trim();
+                  // Si el valor es una cadena vacía, actualizar el valor a una cadena vacía
+                  if (newValue === "") {
+                    handleDescuentoChange(index, newValue);
+                  } else {
+                    const newDescuento = parseInt(newValue, 10);
+                    if (!isNaN(newDescuento)) {
+                      handleDescuentoChange(index, newDescuento);
+                    }
+                  }
                 }}
                 onBlur={() => handleDescuentoBlur(index)}
-                onKeyDown={validateDecimalInput}
-
               />
+
+
             </td>
             <td className="py-2 text-start">{detalle.igv}</td>
             <td className="py-2 text-start">{detalle.subtotal}</td>

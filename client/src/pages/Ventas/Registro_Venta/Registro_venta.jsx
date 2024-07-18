@@ -29,8 +29,8 @@ const Registro_Venta = () => {
     if (productoIndex !== -1 && productos[productoIndex].stock > 0) {
       if (existingDetalle) {
         const updatedCantidad = existingDetalle.cantidad + 1;
-        const updatedIgv = (parseFloat(producto.precio) * 0.18 * updatedCantidad).toFixed(2);
-        const updatedSubtotal = (parseFloat(producto.precio) * updatedCantidad + parseFloat(updatedIgv) - parseFloat(existingDetalle.descuento)).toFixed(2);
+        const updatedIgv = (parseFloat(existingDetalle.precio) * 0.18 * updatedCantidad).toFixed(2);
+        const updatedSubtotal = (parseFloat(existingDetalle.precio) * updatedCantidad + parseFloat(updatedIgv) - ((parseFloat(existingDetalle.descuento)/100)*existingDetalle.precio)*updatedCantidad).toFixed(2);
         updateDetalle({ ...existingDetalle, cantidad: updatedCantidad, igv: `S/ ${updatedIgv}`, subtotal: `S/ ${updatedSubtotal}` });
       } else {
         const igvValue = (parseFloat(producto.precio) * 0.18).toFixed(2);
@@ -80,7 +80,7 @@ const Registro_Venta = () => {
           detalleToUpdate.cantidad = newCantidad;
 
           const igvValue = (parseFloat(detalleToUpdate.precio) * 0.18 * newCantidad).toFixed(2);
-          const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad + parseFloat(igvValue) - parseFloat(detalleToUpdate.descuento)).toFixed(2);
+          const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad + parseFloat(igvValue) - ((parseFloat(detalleToUpdate.descuento)/100) * detalleToUpdate.precio)*newCantidad).toFixed(2);
 
           detalleToUpdate.igv = `S/ ${igvValue}`;
           detalleToUpdate.subtotal = `S/ ${subtotal}`;
