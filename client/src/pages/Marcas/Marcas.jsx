@@ -1,25 +1,25 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import "./Marcas.css";
+import "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal.css";
 import { FaSearch } from "react-icons/fa";
-import { MdAddCircleOutline } from "react-icons/md";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
+import { MdAddCircleOutline } from "react-icons/md";
 import Pagination from "@/components/Pagination/Pagination";
 import TablaMarcas from "./ComponentsMarcas/MarcasTable";
 import OptionsModal from "./ComponentsMarcas/Modals/OptionsModal";
 import BajaModal from "./ComponentsMarcas/Modals/BajaModal";
 import EditModal from "./ComponentsMarcas/Modals/EditModal";
+import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
 import RegistroModal from "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal";
-//import ConfirmationModal from "./ComponentsMarcas/Modals/ConfirmationModal";
-import "./Marcas.css";
-import "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal.css";
 
 const Marcas = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [marcas, setMarcas] = useState([]);
-
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [isRegistroModalOpen, setIsRegistroModalOpen] = useState(false);
   const [isBajaModalOpen, setIsBajaModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,67 +29,57 @@ const Marcas = () => {
     fetchMarcas();
   }, []);
 
-  function fetchMarcas() {
-    axios
-      .get("http://localhost:4000/api/marcas")
-      .then((response) => {
-        setMarcas(response.data.data); // Asegúrate de que estás accediendo correctamente según la estructura de la API.
-      })
-      .catch((error) => {
-        console.error("Error fetching data: ", error);
-      });
-  }
+  const fetchMarcas = async () => {
+    try {
+      const response = await axios.get("http://localhost:4000/api/marcas");
+      setMarcas(response.data.data);
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  };
 
-  function handleAddMarca(data) {
-    axios
-      .post("http://localhost:4000/api/marcas", data)
-      .then((response) => {
-        fetchMarcas();
-        setIsRegistroModalOpen(false);
-      })
-      .catch((error) => {
-        console.error("Error adding marca: ", error);
-      });
-  }
+  const handleAddMarca = async () => {
+    const data = { nombre: marcas }; 
+    try {
+      await axios.post("http://localhost:4000/api/marcas", data);
+      fetchMarcas();
+      setIsRegistroModalOpen(false); 
+    } catch (error) {
+      console.error("Error añadiendo la marca: ", error);
+    }
+  };
 
-  function handleUpdateMarca(data) {
-    axios
-      .put(`http://localhost:4000/api/marcas/${selectedRowId}`, data)
-      .then((response) => {
-        fetchMarcas();
-        setIsEditModalOpen(false);
-      })
-      .catch((error) => {
-        console.error("Error updating marca: ", error);
-      });
-  }
+  const handleUpdateMarca = async (data) => {
+    try {
+      await axios.put(`http://localhost:4000/api/marcas/${selectedRowId}`, data);
+      fetchMarcas();
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Error updating marca: ", error);
+    }
+  };
 
-  function handleDeleteMarca() {
-    axios
-      .delete(`http://localhost:4000/api/marcas/${selectedRowId}`)
-      .then((response) => {
-        fetchMarcas();
-        setModalOpen(false);
-      })
-      .catch((error) => {
-        console.error("Error deleting marca: ", error);
-      });
-  }
+  const handleDeleteMarca = async () => {
+    try {
+      await axios.delete(`http://localhost:4000/api/marcas/${selectedRowId}`);
+      fetchMarcas();
+      setModalOpen(false);
+    } catch (error) {
+      console.error("Error deleting marca: ", error);
+    }
+  };
 
-  function handleDarBajaMarca() {
-    axios
-      .put(`http://localhost:4000/api/marcas/${selectedRowId}`, {
+  const handleDarBajaMarca = async () => {
+    try {
+      await axios.put(`http://localhost:4000/api/marcas/${selectedRowId}`, {
         estado_marca: 0,
-      })
-      .then((response) => {
-        fetchMarcas();
-        setIsBajaModalOpen(false);
-      })
-      .catch((error) => {
-        console.error("Error updating marca: ", error);
       });
-  }
-  
+      fetchMarcas();
+      setIsBajaModalOpen(false);
+    } catch (error) {
+      console.error("Error updating marca: ", error);
+    }
+  };
 
   return (
     <div>
@@ -119,7 +109,7 @@ const Marcas = () => {
                 type="text"
                 placeholder="Buscar por nombre"
                 className="border rounded pl-10 pr-20 py-2"
-                onChange={(e) => setSearchTerm(e.target.value)} // Actualiza el estado con el valor del input
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             {/* Botón para agregar nueva marca */}
@@ -183,6 +173,12 @@ const Marcas = () => {
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
+      {isConfirmationModalOpen && (
+        <ConfirmationModal
+          onClose={() => setIsConfirmationModalOpen(false)}
+          onConfirm={handleDeleteMarca}
+        />
+      )}
     </div>
   );
 };
