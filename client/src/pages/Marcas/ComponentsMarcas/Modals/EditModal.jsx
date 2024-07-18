@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import "./EditModal.css";
@@ -42,9 +42,14 @@ const Select = ({ id, value, onChange, options, className = "" }) => (
   </select>
 );
 
-const RegistroVentaModal = ({ onClose }) => {
-  const [brandName, setBrandName] = useState("");
-  const [brandStatus, setBrandStatus] = useState("Activo");
+const EditModal = ({ onClose, onSubmit, initialName, initialStatus }) => {
+  const [nombreMarca, setNombreMarca] = useState(initialName || "");
+  const [estadoMarca, setEstadoMarca] = useState(initialStatus || "Activo");
+
+  useEffect(() => {
+    setNombreMarca(initialName);
+    setEstadoMarca(initialStatus);
+  }, [initialName, initialStatus]);
 
   return (
     <div className="rv-modal-overlay">
@@ -57,14 +62,13 @@ const RegistroVentaModal = ({ onClose }) => {
             <div className="rv-modal-space-y-4">
               <div className="rv-modal-flex rv-modal-flex-col rv-modal-space-y-2">
                 <Label htmlFor="brand-name" className="rv-modal-label">
-                  Nombre de la Marca{" "}
-                  <span className="rv-modal-text-red-500">*</span>
+                  Nombre de la Marca <span className="rv-modal-text-red-500">*</span>
                 </Label>
                 <Input
                   id="brand-name"
                   placeholder="Ingresa el nombre"
-                  value={brandName}
-                  onChange={(e) => setBrandName(e.target.value)}
+                  value={nombreMarca}
+                  onChange={(e) => setNombreMarca(e.target.value)}
                   className="rv-modal-input"
                 />
               </div>
@@ -74,8 +78,8 @@ const RegistroVentaModal = ({ onClose }) => {
                 </Label>
                 <Select
                   id="brand-status"
-                  value={brandStatus}
-                  onChange={(e) => setBrandStatus(e.target.value)}
+                  value={estadoMarca}
+                  onChange={(e) => setEstadoMarca(e.target.value)}
                   options={[
                     { value: "Activo", label: "Activo" },
                     { value: "Inactivo", label: "Inactivo" },
@@ -87,7 +91,7 @@ const RegistroVentaModal = ({ onClose }) => {
 
             <div className="modal-buttons mt-4 flex justify-end space-x-2">
               <ButtonClose onClick={onClose} />
-              <ButtonSave />
+              <ButtonSave onClick={() => onSubmit(nombreMarca, estadoMarca)}/>
             </div>
           </div>
         </div>
@@ -96,8 +100,11 @@ const RegistroVentaModal = ({ onClose }) => {
   );
 };
 
-RegistroVentaModal.propTypes = {
+EditModal.propTypes = {
   onClose: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  initialName: PropTypes.string,
+  initialStatus: PropTypes.string,
 };
 
-export default RegistroVentaModal;
+export default EditModal;

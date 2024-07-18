@@ -57,31 +57,47 @@ const addMarca = async (req, res) => {
     }
 };
 
-
 const updateMarca = async (req, res) => {
     try {
         const { id } = req.params;
         const { nom_marca, estado_marca } = req.body;
-
-        if (nom_marca === undefined || estado_marca === undefined) {
-            return res.status(400).json({ message: "Bad Request. Please fill all fields." });
-        }
-
-        const marca = { nom_marca, estado_marca };
         const connection = await getConnection();
-        const [result] = await connection.query("UPDATE marca SET ? WHERE id_marca = ?", [marca, id]);
+        const [result] = await connection.query(`
+            UPDATE marca 
+            SET nom_marca = ?, estado_marca = ?
+            WHERE id_marca = ?`, [nom_marca, estado_marca, id]);
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ code: 0, message: "Marca no encontrada" });
+            return res.status(404).json({ message: "Marca no encontrada" });
         }
 
-        res.json({ code: 1, message: "Marca actualizada" });
+        res.json({ message: "Marca actualizada con éxito" });
     } catch (error) {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
     }
 };
+
+
+const deactivateMarca = async (req, res) => {
+    const { id } = req.params;
+    const connection = await getConnection();
+    try {
+        const [result] = await connection.query("UPDATE marca SET estado_marca = 0 WHERE id_marca = ?", [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Marca no encontrada" });
+        }
+
+        res.json({ message: "Marca dada de baja con éxito" });
+    } catch (error) {
+        if (!res.headersSent) {
+            res.status(500).send(error.message);
+        }
+    }
+};
+
 
 const deleteMarca = async (req, res) => {
     try {
@@ -106,5 +122,6 @@ export const methods = {
     getMarca,
     addMarca,
     updateMarca,
+    deactivateMarca,
     deleteMarca
 };

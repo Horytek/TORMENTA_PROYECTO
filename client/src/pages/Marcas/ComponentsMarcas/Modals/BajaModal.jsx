@@ -2,13 +2,13 @@ import PropTypes from "prop-types";
 import { IoMdOptions } from "react-icons/io";
 
 const BajaModal = ({
-  modalOpen,
+  isBajaModalOpen,
   toggleDeactivateMarca,
-  handleDarBajaMarca,
+  onConfirm,
   closeBajaModal,
 }) => {
-  if (!modalOpen) return null;
-
+  if (!isBajaModalOpen) return null;
+  
   return (
     <div className="bm-modal-content">
       <h2 style={{ textAlign: "start" }}>
@@ -33,7 +33,7 @@ const BajaModal = ({
         <button className="bm-btn bm-btn-cancel" onClick={closeBajaModal}>
           Cancelar
         </button>
-        <button className="bm-btn bm-btn-aceptar" onClick={handleDarBajaMarca}>
+        <button className="bm-btn bm-btn-aceptar" onClick={onConfirm}>
           Aceptar
         </button>
       </div>
@@ -42,9 +42,10 @@ const BajaModal = ({
 };
 
 BajaModal.propTypes = {
-  modalOpen: PropTypes.bool.isRequired,
+  isBajaModalOpen: PropTypes.bool.isRequired,
   toggleDeactivateMarca: PropTypes.func.isRequired,
-  closeModal: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  closeBajaModal: PropTypes.func.isRequired
 };
 
 export default BajaModal;

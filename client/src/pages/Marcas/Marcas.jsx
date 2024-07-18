@@ -17,13 +17,26 @@ const Marcas = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [marcas, setMarcas] = useState([]);
   const [selectedRowId, setSelectedRowId] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [isRegistroModalOpen, setIsRegistroModalOpen] = useState(false);
-  const [isBajaModalOpen, setIsBajaModalOpen] = useState(false);
+  const [selectedMarca, setSelectedMarca] = useState(null);
+  const [modals, setModals] = useState({
+    modalOpen: false,
+    isEditModalOpen: false,
+    isConfirmationModalOpen: false,
+    isRegistroModalOpen: false,
+    isBajaModalOpen: false,
+  });
+  const [darBajaOptionSelected, setDarBajaOptionSelected] = useState(false);
+  const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages] = useState(5);
+
+  const toggleDeleteDetalleOption = () => {
+    setDeleteOptionSelected(!deleteOptionSelected);
+  };
+
+  const toggleDeactivateMarca = () => {
+    setDarBajaOptionSelected(!darBajaOptionSelected);
+  };
 
   useEffect(() => {
     fetchMarcas();
@@ -38,22 +51,24 @@ const Marcas = () => {
     }
   };
 
-  const handleAddMarca = async () => {
-    const data = { nombre: marcas }; 
+  const handleAddMarca = async (marca) => {
     try {
-      await axios.post("http://localhost:4000/api/marcas", data);
+      await axios.post("http://localhost:4000/api/marcas", { nombre: marca });
       fetchMarcas();
-      setIsRegistroModalOpen(false); 
+      setModals((prev) => ({ ...prev, isRegistroModalOpen: false }));
     } catch (error) {
       console.error("Error añadiendo la marca: ", error);
     }
   };
 
-  const handleUpdateMarca = async (data) => {
+  const handleUpdateMarca = async (nombre, estado) => {
     try {
-      await axios.put(`http://localhost:4000/api/marcas/${selectedRowId}`, data);
+      await axios.put(
+        `http://localhost:4000/api/marcas/${selectedRowId}`,
+        { nombre, estado }
+      );
       fetchMarcas();
-      setIsEditModalOpen(false);
+      setModals((prev) => ({ ...prev, isEditModalOpen: false }));
     } catch (error) {
       console.error("Error updating marca: ", error);
     }
@@ -63,7 +78,7 @@ const Marcas = () => {
     try {
       await axios.delete(`http://localhost:4000/api/marcas/${selectedRowId}`);
       fetchMarcas();
-      setModalOpen(false);
+      setModals((prev) => ({ ...prev, modalOpen: false }));
     } catch (error) {
       console.error("Error deleting marca: ", error);
     }
@@ -75,7 +90,7 @@ const Marcas = () => {
         estado_marca: 0,
       });
       fetchMarcas();
-      setIsBajaModalOpen(false);
+      setModals((prev) => ({ ...prev, isBajaModalOpen: false }));
     } catch (error) {
       console.error("Error updating marca: ", error);
     }
@@ -114,7 +129,9 @@ const Marcas = () => {
             </div>
             {/* Botón para agregar nueva marca */}
             <button
-              onClick={() => setIsRegistroModalOpen(true)}
+              onClick={() =>
+                setModals((prev) => ({ ...prev, isRegistroModalOpen: true }))
+              }
               className="flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-md px-4 py-2"
             >
               <MdAddCircleOutline
@@ -131,51 +148,83 @@ const Marcas = () => {
         marcas={marcas}
         openModal={(id) => {
           setSelectedRowId(id);
-          setModalOpen(true);
+          setModals((prev) => ({ ...prev, modalOpen: true }));
         }}
         openEditModal={(id) => {
+          const selected = marcas.find((marca) => marca.id === id);
           setSelectedRowId(id);
-          setIsEditModalOpen(true);
+          setSelectedMarca(selected);
+          setModals((prev) => ({ ...prev, isEditModalOpen: true }));
         }}
         darBajaModal={(id) => {
           setSelectedRowId(id);
-          setIsBajaModalOpen(true);
+          setModals((prev) => ({ ...prev, isBajaModalOpen: true }));
         }}
+        openConfirmationModal={() =>
+          setModals((prev) => ({ ...prev, isConfirmationModalOpen: true }))
+        }
       />
 
-      {isRegistroModalOpen && (
+      {modals.isRegistroModalOpen && (
         <RegistroModal
-          onClose={() => setIsRegistroModalOpen(false)}
+          onClose={() =>
+            setModals((prev) => ({ ...prev, isRegistroModalOpen: false }))
+          }
           onSubmit={handleAddMarca}
         />
       )}
-      {isEditModalOpen && (
+      {modals.isEditModalOpen && selectedMarca && (
         <EditModal
-          onClose={() => setIsEditModalOpen(false)}
+          initialName={selectedMarca ? selectedMarca.nombre : ""}
+          initialStatus={selectedMarca ? selectedMarca.estado : "Activo"}
+          onClose={() =>
+            setModals((prev) => ({ ...prev, isEditModalOpen: false }))
+          }
           onSubmit={handleUpdateMarca}
-          marca={marcas.find((m) => m.id === selectedRowId)}
         />
       )}
-      {isBajaModalOpen && (
-        <BajaModal
-          onClose={() => setIsBajaModalOpen(false)}
-          onConfirm={handleDarBajaMarca}
-        />
+
+      {modals.isBajaModalOpen && (
+        <div className="modal-overlay">
+          <BajaModal
+            isBajaModalOpen={modals.isBajaModalOpen}
+            toggleDeactivateMarca={toggleDeactivateMarca}
+            onConfirm={handleDarBajaMarca}
+            closeBajaModal={() =>
+              setModals((prev) => ({ ...prev, isBajaModalOpen: false }))
+            }
+          />
+        </div>
       )}
-      {modalOpen && (
-        <OptionsModal
-          onClose={() => setModalOpen(false)}
-          onDelete={handleDeleteMarca}
-        />
+      {modals.modalOpen && (
+        <div className="modal-overlay">
+          <OptionsModal
+            modalOpen={modals.modalOpen}
+            toggleDeleteDetalleOption={toggleDeleteDetalleOption}
+            closeModal={() =>
+              setModals((prev) => ({ ...prev, modalOpen: false }))
+            }
+            setConfirmDeleteModalOpen={() =>
+              setModals((prev) => ({
+                ...prev,
+                isConfirmationModalOpen: true,
+              }))
+            }
+            deleteOptionSelected={deleteOptionSelected}
+          />
+        </div>
       )}
+
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
-      {isConfirmationModalOpen && (
+      {modals.isConfirmationModalOpen && (
         <ConfirmationModal
-          onClose={() => setIsConfirmationModalOpen(false)}
+          onClose={() =>
+            setModals((prev) => ({ ...prev, isConfirmationModalOpen: false }))
+          }
           onConfirm={handleDeleteMarca}
         />
       )}
