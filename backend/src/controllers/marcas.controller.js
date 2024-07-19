@@ -40,7 +40,6 @@ const addMarca = async (req, res) => {
     try {
         const { nom_marca, estado_marca } = req.body;
 
-        // Validación de los campos requeridos
         if (typeof nom_marca !== 'string' || nom_marca.trim() === '' || typeof estado_marca !== 'number') {
             return res.status(400).json({ message: "Bad Request. Please fill all fields correctly." });
         }
@@ -61,6 +60,7 @@ const updateMarca = async (req, res) => {
     try {
         const { id } = req.params;
         const { nom_marca, estado_marca } = req.body;
+
         const connection = await getConnection();
         const [result] = await connection.query(`
             UPDATE marca 
@@ -78,6 +78,9 @@ const updateMarca = async (req, res) => {
         }
     }
 };
+
+
+
 
 
 const deactivateMarca = async (req, res) => {

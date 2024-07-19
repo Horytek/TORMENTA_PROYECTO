@@ -66,10 +66,21 @@ const Marcas = () => {
 
   const handleUpdateMarca = async (nombre, estado) => {
     try {
-      await axios.put(`http://localhost:4000/api/marcas/${selectedRowId}`, {
-        nom_marca: nombre,
-        estado_marca: estado === "Activo" ? 1 : 0,
+      const estadoMarca = estado === "Activo" ? 1 : 0;
+      console.log("Sending to API:", {
+        nombre,
+        estado,
+        estadoMarca,
+        selectedRowId,
       });
+      const response = await axios.put(
+        `http://localhost:4000/api/marcas/${selectedRowId}`,
+        {
+          nom_marca: nombre,
+          estado_marca: estadoMarca,
+        }
+      );
+      console.log("API response:", response.data);
       fetchMarcas();
       setModals((prev) => ({ ...prev, isEditModalOpen: false }));
     } catch (error) {
@@ -98,8 +109,6 @@ const Marcas = () => {
       console.error("Error updating marca: ", error);
     }
   };
-
-  
 
   return (
     <div>

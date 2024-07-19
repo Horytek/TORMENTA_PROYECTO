@@ -47,8 +47,9 @@ const EditModal = ({ onClose, onSubmit, initialName, initialStatus }) => {
   const [estadoMarca, setEstadoMarca] = useState(initialStatus || "Activo");
 
   useEffect(() => {
-    setNombreMarca(initialName);
-    setEstadoMarca(initialStatus);
+    console.log("EditModal props:", { initialName, initialStatus });
+    setNombreMarca(initialName || "");
+    setEstadoMarca(initialStatus || "Activo");
   }, [initialName, initialStatus]);
 
   return (
@@ -62,7 +63,8 @@ const EditModal = ({ onClose, onSubmit, initialName, initialStatus }) => {
             <div className="rv-modal-space-y-4">
               <div className="rv-modal-flex rv-modal-flex-col rv-modal-space-y-2">
                 <Label htmlFor="brand-name" className="rv-modal-label">
-                  Nombre de la Marca <span className="rv-modal-text-red-500">*</span>
+                  Nombre de la Marca{" "}
+                  <span className="rv-modal-text-red-500">*</span>
                 </Label>
                 <Input
                   id="brand-name"
@@ -91,7 +93,12 @@ const EditModal = ({ onClose, onSubmit, initialName, initialStatus }) => {
 
             <div className="modal-buttons mt-4 flex justify-end space-x-2">
               <ButtonClose onClick={onClose} />
-              <ButtonSave onClick={() => onSubmit(nombreMarca, estadoMarca)}/>
+              <ButtonSave
+                onClick={() => {
+                  console.log("Submitting:", { nombreMarca, estadoMarca });
+                  onSubmit(nombreMarca, estadoMarca);
+                }}
+              />
             </div>
           </div>
         </div>
