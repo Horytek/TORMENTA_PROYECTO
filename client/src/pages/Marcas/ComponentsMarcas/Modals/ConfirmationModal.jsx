@@ -3,7 +3,7 @@ import { IoMdOptions } from "react-icons/io";
 
 const ConfirmationModal = ({
   confirmDeleteModalOpen,
-  handleDeleteVenta,
+  handleDeleteMarca,
   setConfirmDeleteModalOpen,
 }) => {
   if (!confirmDeleteModalOpen) return null;
@@ -18,14 +18,27 @@ const ConfirmationModal = ({
         Opciones
       </h2>
       <p style={{ textAlign: "start" }}>¿Desea eliminar esta marca?</p>
-      <div className="cm-modal-actions cm-flex cm-justify-end" style={{ gap: "20px" }}>
+      <div
+        className="cm-modal-actions cm-flex cm-justify-end"
+        style={{ gap: "20px" }}
+      >
         <button
           className="cm-btn cm-btn-cancel"
           onClick={() => setConfirmDeleteModalOpen(false)}
         >
           Cancelar
         </button>
-        <button className="cm-btn cm-btn-danger" onClick={handleDeleteVenta}>
+        <button
+          className="cm-btn cm-btn-danger"
+          onClick={() => {
+            if (typeof handleDeleteMarca === "function") {
+              handleDeleteMarca();
+              setConfirmDeleteModalOpen(false);
+            } else {
+              console.error("Ocurrio un error al eliminar la marca");
+            }
+          }}
+        >
           Eliminar
         </button>
       </div>
@@ -35,7 +48,7 @@ const ConfirmationModal = ({
 
 ConfirmationModal.propTypes = {
   confirmDeleteModalOpen: PropTypes.bool.isRequired,
-  handleDeleteVenta: PropTypes.func.isRequired,
+  handleDeleteMarca: PropTypes.func.isRequired,
   setConfirmDeleteModalOpen: PropTypes.func.isRequired,
 };
 

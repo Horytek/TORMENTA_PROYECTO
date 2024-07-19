@@ -53,7 +53,10 @@ const Marcas = () => {
 
   const handleAddMarca = async (marca) => {
     try {
-      await axios.post("http://localhost:4000/api/marcas", { nombre: marca });
+      await axios.post("http://localhost:4000/api/marcas", {
+        nom_marca: marca,
+        estado_marca: 1,
+      });
       fetchMarcas();
       setModals((prev) => ({ ...prev, isRegistroModalOpen: false }));
     } catch (error) {
@@ -63,10 +66,10 @@ const Marcas = () => {
 
   const handleUpdateMarca = async (nombre, estado) => {
     try {
-      await axios.put(
-        `http://localhost:4000/api/marcas/${selectedRowId}`,
-        { nombre, estado }
-      );
+      await axios.put(`http://localhost:4000/api/marcas/${selectedRowId}`, {
+        nom_marca: nombre,
+        estado_marca: estado === "Activo" ? 1 : 0,
+      });
       fetchMarcas();
       setModals((prev) => ({ ...prev, isEditModalOpen: false }));
     } catch (error) {
@@ -95,6 +98,8 @@ const Marcas = () => {
       console.error("Error updating marca: ", error);
     }
   };
+
+  
 
   return (
     <div>
@@ -151,7 +156,7 @@ const Marcas = () => {
           setModals((prev) => ({ ...prev, modalOpen: true }));
         }}
         openEditModal={(id) => {
-          const selected = marcas.find((marca) => marca.id === id);
+          const selected = marcas.find((marca) => marca.id_marca === id);
           setSelectedRowId(id);
           setSelectedMarca(selected);
           setModals((prev) => ({ ...prev, isEditModalOpen: true }));
@@ -175,8 +180,14 @@ const Marcas = () => {
       )}
       {modals.isEditModalOpen && selectedMarca && (
         <EditModal
-          initialName={selectedMarca ? selectedMarca.nombre : ""}
-          initialStatus={selectedMarca ? selectedMarca.estado : "Activo"}
+          initialName={selectedMarca ? selectedMarca.nom_marca : ""}
+          initialStatus={
+            selectedMarca
+              ? selectedMarca.estado_marca === 1
+                ? "Activo"
+                : "Inactivo"
+              : "Activo"
+          }
           onClose={() =>
             setModals((prev) => ({ ...prev, isEditModalOpen: false }))
           }
@@ -221,12 +232,15 @@ const Marcas = () => {
         onPageChange={setCurrentPage}
       />
       {modals.isConfirmationModalOpen && (
-        <ConfirmationModal
-          onClose={() =>
-            setModals((prev) => ({ ...prev, isConfirmationModalOpen: false }))
-          }
-          onConfirm={handleDeleteMarca}
-        />
+        <div className="modal-overlay">
+          <ConfirmationModal
+            confirmDeleteModalOpen={modals.isConfirmationModalOpen}
+            handleDeleteMarca={handleDeleteMarca}
+            setConfirmDeleteModalOpen={(value) =>
+              setModals((prev) => ({ ...prev, isConfirmationModalOpen: value }))
+            }
+          />
+        </div>
       )}
     </div>
   );

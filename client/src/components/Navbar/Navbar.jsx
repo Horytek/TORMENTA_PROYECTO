@@ -21,20 +21,17 @@ function Navbar() {
         </button>
         {/* Menú desplegable */}
         <div className={`menu-desplegable w-full md:flex md:items-center ${menuOpen ? 'block shadow-md' : 'hidden'} md:block absolute md:static`}>
-          <Link to="/ventas" >
-            <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Venta</a>
+          <Link to="/ventas" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">
+            Venta
           </Link>
-          <Link to="/almacen" >
-            <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Almacén</a>
-
+          <Link to="/almacen" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">
+            Almacén
           </Link>
-          <Link to="/empleados" >
-            <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Empleados</a>
-
+          <Link to="/empleados" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">
+            Empleados
           </Link>
-          <Link to="/productos" >
-            <a href="#" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">Productos</a>
-
+          <Link to="/productos" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">
+            Productos
           </Link>
         </div>
       </div>
