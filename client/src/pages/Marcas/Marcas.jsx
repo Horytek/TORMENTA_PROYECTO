@@ -44,10 +44,13 @@ const Marcas = () => {
   }, []);
 
   useEffect(() => {
+    const filteredMarcas = marcas.filter((marca) =>
+      marca.nom_marca.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     const indexOfLastMarca = currentPage * marcasPerPage;
     const indexOfFirstMarca = indexOfLastMarca - marcasPerPage;
-    setCurrentPageMarcas(marcas.slice(indexOfFirstMarca, indexOfLastMarca));
-  }, [currentPage, marcas, marcasPerPage]);
+    setCurrentPageMarcas(filteredMarcas.slice(indexOfFirstMarca, indexOfLastMarca));
+  }, [currentPage, marcas, marcasPerPage, searchTerm]);
 
   const fetchMarcas = async () => {
     try {
@@ -74,20 +77,13 @@ const Marcas = () => {
   const handleUpdateMarca = async (nombre, estado) => {
     try {
       const estadoMarca = estado === "Activo" ? 1 : 0;
-      console.log("Sending to API:", {
-        nombre,
-        estado,
-        estadoMarca,
-        selectedRowId,
-      });
       const response = await axios.put(
-        `http://localhost:4000/api/marcas/${selectedRowId}`,
+        `http://localhost:4000/api/marcas/update/${selectedRowId}`,
         {
           nom_marca: nombre,
           estado_marca: estadoMarca,
         }
       );
-      console.log("API response:", response.data);
       fetchMarcas();
       setModals((prev) => ({ ...prev, isEditModalOpen: false }));
     } catch (error) {
@@ -107,7 +103,7 @@ const Marcas = () => {
 
   const handleDarBajaMarca = async () => {
     try {
-      await axios.put(`http://localhost:4000/api/marcas/${selectedRowId}`, {
+      await axios.put(`http://localhost:4000/api/marcas/deactivate/${selectedRowId}`, {
         estado_marca: 0,
       });
       fetchMarcas();
