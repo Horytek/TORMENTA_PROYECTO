@@ -29,7 +29,7 @@ const Marcas = () => {
   const [darBajaOptionSelected, setDarBajaOptionSelected] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [ventasPerPage, setVentasPerPage] = useState(5);
+  const [marcasPerPage, setMarcasPerPage] = useState(5);
 
   const toggleDeleteDetalleOption = () => {
     setDeleteOptionSelected(!deleteOptionSelected);
@@ -44,10 +44,10 @@ const Marcas = () => {
   }, []);
 
   useEffect(() => {
-    const indexOfLastMarca = currentPage * ventasPerPage;
-    const indexOfFirstMarca = indexOfLastMarca - ventasPerPage;
+    const indexOfLastMarca = currentPage * marcasPerPage;
+    const indexOfFirstMarca = indexOfLastMarca - marcasPerPage;
     setCurrentPageMarcas(marcas.slice(indexOfFirstMarca, indexOfLastMarca));
-  }, [currentPage, marcas, ventasPerPage]);
+  }, [currentPage, marcas, marcasPerPage]);
 
   const fetchMarcas = async () => {
     try {
@@ -245,10 +245,10 @@ const Marcas = () => {
       <div className="flex justify-between items-center">
         <Pagination
           currentPage={currentPage}
-          totalPages={Math.ceil(marcas.length / ventasPerPage)}
+          totalPages={Math.ceil(marcas.length / marcasPerPage)}
           onPageChange={setCurrentPage}
         />
-        <select className="input-c cant-pag-c" value={ventasPerPage} onChange={(e) => setVentasPerPage(Number(e.target.value))}>
+        <select className="input-c cant-pag-c" value={marcasPerPage} onChange={(e) => setMarcasPerPage(Number(e.target.value))}>
           <option value={5}>5</option>
           <option value={10}>10</option>
           <option value={20}>20</option>
