@@ -16,6 +16,7 @@ import RegistroModal from "./Registro_Marca/ComponentsRegistroMarcas/Modals/Regi
 const Marcas = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [marcas, setMarcas] = useState([]);
+  const [currentPageMarcas, setCurrentPageMarcas] = useState([]);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [selectedMarca, setSelectedMarca] = useState(null);
   const [modals, setModals] = useState({
@@ -28,7 +29,7 @@ const Marcas = () => {
   const [darBajaOptionSelected, setDarBajaOptionSelected] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages] = useState(5);
+  const [ventasPerPage, setVentasPerPage] = useState(5);
 
   const toggleDeleteDetalleOption = () => {
     setDeleteOptionSelected(!deleteOptionSelected);
@@ -41,6 +42,12 @@ const Marcas = () => {
   useEffect(() => {
     fetchMarcas();
   }, []);
+
+  useEffect(() => {
+    const indexOfLastMarca = currentPage * ventasPerPage;
+    const indexOfFirstMarca = indexOfLastMarca - ventasPerPage;
+    setCurrentPageMarcas(marcas.slice(indexOfFirstMarca, indexOfLastMarca));
+  }, [currentPage, marcas, ventasPerPage]);
 
   const fetchMarcas = async () => {
     try {
@@ -159,7 +166,7 @@ const Marcas = () => {
       </div>
 
       <TablaMarcas
-        marcas={marcas}
+        marcas={currentPageMarcas}
         openModal={(id) => {
           setSelectedRowId(id);
           setModals((prev) => ({ ...prev, modalOpen: true }));
@@ -235,11 +242,19 @@ const Marcas = () => {
         </div>
       )}
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      <div className="flex justify-between items-center">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(marcas.length / ventasPerPage)}
+          onPageChange={setCurrentPage}
+        />
+        <select className="input-c cant-pag-c" value={ventasPerPage} onChange={(e) => setVentasPerPage(Number(e.target.value))}>
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+        </select>
+      </div>
+
       {modals.isConfirmationModalOpen && (
         <div className="modal-overlay">
           <ConfirmationModal

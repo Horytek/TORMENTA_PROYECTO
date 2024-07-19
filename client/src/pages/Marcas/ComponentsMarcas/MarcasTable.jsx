@@ -4,7 +4,7 @@ import { IoIosCloudDone } from "react-icons/io";
 
 const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {
   return (
-    <div className="container-table-marca px-4 bg-white rounded-lg">
+    <div className="container-tabla-marca-rv px-4 bg-white rounded-lg">
       <table className="table w-full">
         <thead>
           <tr>
@@ -18,7 +18,7 @@ const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {
           {marcas.map((marca) => (
             <tr
               key={marca.id_marca}
-              className="tr-tabla-marca justify-center hover:bg-gray-100"
+              className="tr-tabla-marca-rv justify-center hover:bg-gray-100"
             >
               <td style={{ textAlign: "center" }} className="font-bold">
                 {marca.id_marca}
@@ -67,11 +67,13 @@ const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {
                     }}
                   />
                 </div>
+                
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      
     </div>
   );
 };
