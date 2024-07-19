@@ -10,9 +10,8 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
     const detalleToUpdate = updatedDetalles[index];
     const precio = parseFloat(detalleToUpdate.precio);
     const cantidad = detalleToUpdate.cantidad;
-    const igv = parseFloat(detalleToUpdate.igv.replace('S/ ', ''));
     const descuento = (((parseFloat(newDescuento) / 100) * precio)*cantidad) || 0
-    const subtotal = (precio * cantidad + igv - descuento).toFixed(2);
+    const subtotal = (precio * cantidad - descuento).toFixed(2);
 
     detalleToUpdate.subtotal = `S/ ${subtotal}`;
 
@@ -26,11 +25,9 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
     const detalleToUpdate = updatedDetalles[index];
     const precio = parseFloat(newPrecio) || 1;
     const cantidad = detalleToUpdate.cantidad || 1;
-    const igv = (precio * 0.18 * cantidad).toFixed(2);
     const descuento = (((parseFloat(detalleToUpdate.descuento) / 100) * precio)*cantidad) || 1;
-    const subtotal = (precio * cantidad + parseFloat(igv) - descuento).toFixed(2);
+    const subtotal = (precio * cantidad - descuento).toFixed(2);
 
-    detalleToUpdate.igv = `S/ ${igv}`;
     detalleToUpdate.subtotal = `S/ ${subtotal}`;
 
     handlePrecieChange(index, detalleToUpdate);
@@ -84,7 +81,6 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
           <th className="w-1/8 py-2 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
           <th className="w-1/8 py-2 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
           <th className="w-1/8 py-2 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCUENTO</th>
-          <th className="w-1/8 py-2 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">IGV</th>
           <th className="w-1/8 py-2 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">SUBTOTAL</th>
           <th className="w-1/8 py-2 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider"></th>
         </tr>
@@ -159,7 +155,6 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
 
 
             </td>
-            <td className="py-2 text-start">{detalle.igv}</td>
             <td className="py-2 text-start">{detalle.subtotal}</td>
             <td className="py-3 text-center">
               <button className="text-red-600 hover:text-red-900" onClick={() => handleProductRemove(detalle.codigo, detalle.cantidad)}>

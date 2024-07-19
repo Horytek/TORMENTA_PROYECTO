@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState} from 'react';
 import PropTypes from 'prop-types';
 import { BsCashCoin, BsCash } from "react-icons/bs";
 import { IoCloseSharp, IoPersonAddSharp } from 'react-icons/io5';
@@ -6,6 +6,8 @@ import { GrFormAdd } from "react-icons/gr";
 import InputField from '../PagarInputs';
 import SelectField from '../PagarSelectField';
 import VentaExitosaModal from './VentaExitosaModal';
+import useClientesData from '../../../Data/data_cliente_venta';
+import { validateDecimalInput, handleCobrar } from '../../../Data/add_venta';
 import { GrValidate } from "react-icons/gr";
 
 const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
@@ -13,6 +15,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [descuentoActivado, setDescuentoActivado] = useState(false);
     const [montoDescuento, setMontoDescuento] = useState(0);
     const [montoRecibido2, setMontoRecibido2] = useState('');
+    const [comprobante_pago, setcomprobante_pago] = useState('Boleta');
     const [metodo_pago, setmetodo_pago] = useState('EFECTIVO');
     const [metodo_pago2, setmetodo_pago2] = useState('EFECTIVO');
     const [montoRecibido3, setMontoRecibido3] = useState('');
@@ -20,10 +23,18 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [showConfirmacion, setShowConfirmacion] = useState(false);
     const [showNuevoCliente, setShowNuevoCliente] = useState(false);
     const [tipo_cliente, settipo_cliente] = useState('Natural');
+    const { clientes } = useClientesData(); // Llama al hook personalizado para obtener los clientes
+    const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+    const loadDetallesFromLocalStorage = () => {
+        const savedDetalles = localStorage.getItem('detalles');
+        return savedDetalles ? JSON.parse(savedDetalles) : [];
+    };
+    const detalles = loadDetallesFromLocalStorage();
 
     if (!isOpen) return null;
 
     const totalAPagarConDescuento = descuentoActivado ? totalImporte - montoDescuento : totalImporte;
+    const igv_total = parseFloat(totalImporte * 0.18).toFixed(2);
     const cambio = parseFloat(montoRecibido) - totalAPagarConDescuento;
     const faltante = Math.max(totalAPagarConDescuento - parseFloat(montoRecibido), 0);
     const cambio2 = parseFloat(montoRecibido2) - faltante;
@@ -31,23 +42,25 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const cambio3 = parseFloat(montoRecibido3) - faltante2;
     const faltante3 = Math.max(faltante2 - parseFloat(montoRecibido3), 0);
 
-    const validateDecimalInput = (e) => {
-        const { value } = e.target;
-        const allowedKeys = ['Backspace', 'ArrowLeft', 'ArrowRight', 'Delete', '.', ...Array.from(Array(10).keys()).map(String)];
-        if (!allowedKeys.includes(e.key)) {
-            e.preventDefault();
-        }
-        if (value.includes('.')) {
-            const parts = value.split('.');
-            if (parts[1].length >= 2 && e.key !== 'Backspace') {
-                e.preventDefault();
-            }
-        }
+    const datosVenta = {
+        usuario: localStorage.getItem('usuario'),
+        id_comprobante: comprobante_pago,
+        id_cliente: clienteSeleccionado,
+        estado_venta: 0,
+        f_venta: new Date().toISOString().slice(0, 10),
+        igv: igv_total,
+        detalles: detalles.map(detalle => ({
+            id_producto: detalle.codigo,
+            cantidad: detalle.cantidad,
+            precio: parseFloat(detalle.precio),
+            descuento: parseFloat(detalle.descuento),
+            total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
+        })),
     };
 
-    const handleCobrar = (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        setShowConfirmacion(true);
+        handleCobrar(datosVenta, setShowConfirmacion);
     };
 
     return (
@@ -68,10 +81,17 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                             <div>
                                 <label className="block text-gray-800 mb-2 font-semibold">Seleccione el cliente</label>
                                 <div className='flex items-center justify-between'>
-                                    <select className="input-c w-40 mr-3" style={{ border: "solid 0.1rem #171a1f28" }}>
-                                        <option>Cliente 1</option>
-                                        <option>Cliente 2</option>
-                                    </select>
+                                <select
+                className="input-c w-40 mr-3"
+                style={{ border: "solid 0.1rem #171a1f28" }}
+                value={clienteSeleccionado}
+                onChange={(e) => setClienteSeleccionado(e.target.value)}
+            >
+                <option value="">Seleccionar cliente</option>
+                {clientes.map((cliente, index) => (
+                    <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
+                ))}
+            </select>
                                     <button type="button" className="btn-nuevo-cliente" onClick={() => setShowNuevoCliente(true)}>
                                         <GrFormAdd style={{ fontSize: '24px' }} />
                                     </button>
@@ -81,22 +101,13 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 <SelectField
                                     label="Comprobante de pago"
                                     options={['Boleta', 'Factura', 'Nota de venta']}
-                                    value={metodo_pago}
-                                    onChange={(e) => setmetodo_pago(e.target.value)}
+                                    value={comprobante_pago}
+                                    onChange={(e) => setcomprobante_pago(e.target.value)}
                                     containerStyle={{ marginLeft: '10px' }}
                                     className={"input-c w-full h-10 border border-gray-300"}
                                     classNamediv={"w-60 flex items-center mt-2 "}
 
                                 />
-                            </div>
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-gray-800 mb-2 font-semibold">Vendedor</label>
-                            <div className='flex items-center justify-between'>
-                                <select className="input-c w-full" style={{ border: "solid 0.1rem #171a1f28" }}>
-                                    <option>Vendedor 1</option>
-                                    <option>Vendedor 2 </option>
-                                </select>
                             </div>
                         </div>
                         <hr className="mb-5" />
@@ -304,7 +315,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                             </div>
                         )}
                         <div className="flex justify-end mt-4">
-                            <button type="submit" className="btn btn-cobrar mr-0" onClick={handleCobrar}>
+                            <button type="submit" className="btn btn-cobrar mr-0" onClick={handleSubmit}>
                                 <BsCashCoin className="mr-2" />
                                 Cobrar e Imprimir
                             </button>

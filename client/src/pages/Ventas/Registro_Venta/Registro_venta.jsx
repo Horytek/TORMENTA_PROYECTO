@@ -21,6 +21,7 @@ const Registro_Venta = () => {
   const {productos, setProductos} = useProductosData();
   const [detalleMode, setDetalleMode] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  
 
   const handleProductSelect = (producto) => {
     const existingDetalle = detalles.find(detalle => detalle.codigo === producto.codigo);
@@ -29,13 +30,11 @@ const Registro_Venta = () => {
     if (productoIndex !== -1 && productos[productoIndex].stock > 0) {
       if (existingDetalle) {
         const updatedCantidad = existingDetalle.cantidad + 1;
-        const updatedIgv = (parseFloat(existingDetalle.precio) * 0.18 * updatedCantidad).toFixed(2);
-        const updatedSubtotal = (parseFloat(existingDetalle.precio) * updatedCantidad + parseFloat(updatedIgv) - ((parseFloat(existingDetalle.descuento)/100)*existingDetalle.precio)*updatedCantidad).toFixed(2);
-        updateDetalle({ ...existingDetalle, cantidad: updatedCantidad, igv: `S/ ${updatedIgv}`, subtotal: `S/ ${updatedSubtotal}` });
+        const updatedSubtotal = (parseFloat(existingDetalle.precio) * updatedCantidad - ((parseFloat(existingDetalle.descuento)/100)*existingDetalle.precio)*updatedCantidad).toFixed(2);
+        updateDetalle({ ...existingDetalle, cantidad: updatedCantidad, subtotal: `S/ ${updatedSubtotal}` });
       } else {
-        const igvValue = (parseFloat(producto.precio) * 0.18).toFixed(2);
-        const subtotal = (parseFloat(producto.precio) + parseFloat(igvValue) - parseFloat(0)).toFixed(2);
-        const newDetalle = { ...producto, cantidad: 1, descuento: '0', igv: `S/ ${igvValue}`, subtotal: `S/ ${subtotal}` };
+        const subtotal = (parseFloat(producto.precio) - parseFloat(0)).toFixed(2);
+        const newDetalle = { ...producto, cantidad: 1, descuento: '0', subtotal: `S/ ${subtotal}` };
         addDetalle(newDetalle);
       }
 
@@ -53,6 +52,8 @@ const Registro_Venta = () => {
   };
 
   const totalImporte = detalles.reduce((acc, item) => acc + parseFloat(item.subtotal.slice(2)), 0).toFixed(2);
+  const igv_t= (totalImporte * 0.18).toFixed(2);
+  const total_t= (parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2);
 
   const filteredProductos = productos.filter(producto =>
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -79,10 +80,8 @@ const Registro_Venta = () => {
         if (newCantidad <= producto.stock + oldCantidad) {
           detalleToUpdate.cantidad = newCantidad;
 
-          const igvValue = (parseFloat(detalleToUpdate.precio) * 0.18 * newCantidad).toFixed(2);
-          const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad + parseFloat(igvValue) - ((parseFloat(detalleToUpdate.descuento)/100) * detalleToUpdate.precio)*newCantidad).toFixed(2);
+          const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad - ((parseFloat(detalleToUpdate.descuento)/100) * detalleToUpdate.precio)*newCantidad).toFixed(2);
 
-          detalleToUpdate.igv = `S/ ${igvValue}`;
           detalleToUpdate.subtotal = `S/ ${subtotal}`;
 
           updateDetalle(detalleToUpdate);
@@ -108,6 +107,12 @@ const Registro_Venta = () => {
     updatedDetalles[index] = detalle;
     updateDetalle(updatedDetalles);
   }
+
+  const saveDetallesToLocalStorage = () => {
+    localStorage.setItem('detalles', JSON.stringify(detalles));
+  };
+  
+  saveDetallesToLocalStorage();
 
   return (
     <>
@@ -145,11 +150,11 @@ const Registro_Venta = () => {
               </div>
               <div className="flex justify-between my-1 items-center">
                 <span className='font-bold flex justify-end span-title'>IGV:</span>
-                <span className='inputs-montos'>S/ 0.00</span>
+                <span className='inputs-montos'>S/ {igv_t}</span>
               </div>
               <div className="flex justify-between my-1 items-center">
                 <span className='font-bold flex justify-end span-title'>TOTAL:</span>
-                <span className='inputs-montos'>S/ {totalImporte}</span>
+                <span className='inputs-montos'>S/ {total_t}</span>
               </div>
             </div>
           </div>
@@ -188,7 +193,7 @@ const Registro_Venta = () => {
         handleProductSelect={handleProductSelect}
         filteredProductos={filteredProductos}
       />
-      <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} totalImporte={` ${totalImporte}`} />
+      <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} totalImporte={` ${total_t}`} />
     </>
   );
 };

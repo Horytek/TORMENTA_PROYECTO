@@ -82,6 +82,7 @@ const useVentasData = () => {
     );
   };
 
+
   return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle };
 };
 

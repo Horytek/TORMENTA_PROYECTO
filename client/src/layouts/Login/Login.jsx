@@ -18,6 +18,9 @@ function Login() {
     try {
       const response = await axios.post('http://localhost:4000/api/usuarios/login', { usuario, password });
       if (response.data.success) {
+              // Guardar el usuario y la contraseña en el localStorage
+      localStorage.setItem('usuario', usuario);
+      localStorage.setItem('password', password);
         navigate('/Inicio');
       } else {
         setShowAlert(true);
