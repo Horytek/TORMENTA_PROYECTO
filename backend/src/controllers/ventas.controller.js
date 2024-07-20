@@ -253,11 +253,63 @@ const addVenta = async (req, res) => {
   }
 };
 
+const addCliente = async (req, res) => {
+  const connection = await getConnection();
+
+  try {
+    const { dniOrRuc, tipo_cliente, nombreCompleto, direccion } = req.body;
+
+    console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
+
+    if (!dniOrRuc || !tipo_cliente || !nombreCompleto || (tipo_cliente === 'Jurídico' && !direccion)) {
+      return res.status(400).json({ message: "Bad Request. Please fill all fields correctly." });
+    }
+
+    let nombres = '';
+    let apellidos = '';
+    let razon_social = '';
+
+    if (tipo_cliente === 'Natural') {
+      // Separar nombre completo en nombres y apellidos
+      const partesNombre = nombreCompleto.split(' ');
+      if (partesNombre.length > 1) {
+        // Considerar que el primer nombre puede tener múltiples partes
+        nombres = partesNombre.slice(0, -2).join(' ');
+        apellidos = partesNombre.slice(-2).join(' ');
+      } else {
+        nombres = nombreCompleto; // Asumir que es un nombre único si no se puede dividir
+      }
+
+      // Insertar cliente natural
+      await connection.query(
+        "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES (?, '', ?, ?, '', '', 0)",
+        [dniOrRuc, nombres, apellidos]
+      );
+    } else {
+      razon_social = nombreCompleto;
+      // Insertar cliente jurídico
+      await connection.query(
+        "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES ('', ?, '', '', ?, ?, 0)",
+        [dniOrRuc, razon_social, direccion]
+      );
+    }
+
+    res.json({ message: "Cliente añadido correctamente" });
+  } catch (error) {
+    console.error('Error en el backend:', error.message); // Log para verificar errores
+    res.status(500).send(error.message);
+  } finally {
+    await connection.release();
+  }
+};
+
+
 
 
 export const methods = {
     getVentas,
     getProductosVentas,
     addVenta,
-    getClienteVentas
+    getClienteVentas,
+    addCliente,
 };

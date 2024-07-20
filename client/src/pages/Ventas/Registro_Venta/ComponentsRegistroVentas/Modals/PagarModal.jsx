@@ -8,6 +8,7 @@ import SelectField from '../PagarSelectField';
 import VentaExitosaModal from './VentaExitosaModal';
 import useClientesData from '../../../Data/data_cliente_venta';
 import { validateDecimalInput, handleCobrar } from '../../../Data/add_venta';
+import { handleGuardarCliente } from '../../../Data/add_cliente';
 import { GrValidate } from "react-icons/gr";
 
 const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
@@ -30,6 +31,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         return savedDetalles ? JSON.parse(savedDetalles) : [];
     };
     const detalles = loadDetallesFromLocalStorage();
+    const [dniOrRuc, setDni] = useState('');
+    const [nombreCliente, setNombreCliente] = useState('');
+    const [direccionCliente, setDireccionCliente] = useState('');
 
     if (!isOpen) return null;
 
@@ -58,10 +62,54 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         })),
     };
 
+    const datosCliente = {
+        dniOrRuc: dniOrRuc,
+        tipo_cliente: tipo_cliente,
+        nombreCompleto: nombreCliente,
+        direccion: direccionCliente,
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         handleCobrar(datosVenta, setShowConfirmacion);
     };
+
+    const handleGuardarClientes = (e) => {
+        e.preventDefault();
+        handleGuardarCliente(datosCliente, setShowNuevoCliente);
+    };
+
+    const handleValidate = async () => {
+        if (dniOrRuc != '') {
+            const url =
+            tipo_cliente === 'Natural'
+              ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`
+              : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`;
+        
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+  
+            if (tipo_cliente === 'Natural') {
+              setNombreCliente(`${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`);
+              setDireccionCliente('');
+            } else {
+              if (data.razonSocial) {
+                setNombreCliente(data.razonSocial);// Asumiendo que la API devuelve un array de telefonos
+                setDireccionCliente(data.direccion || ''); // Asumiendo que la API devuelve "direccion"
+              } else {
+                alert('No se encontraron datos para el RUC proporcionado');
+              }
+            }
+          } catch (error) {
+            console.error('Error al validar el DNI/RUC:', error);
+            alert('Hubo un error al validar el DNI/RUC');
+          }
+        } else if (dniOrRuc === '') {
+            setNombreCliente('');// Asumiendo que la API devuelve un array de telefonos
+            setDireccionCliente(''); // Asumiendo que la API devuelve "direccion"
+        }
+      };
 
     return (
         <div className="modal-container" style={{ overflowY: 'auto' }} >
@@ -340,15 +388,6 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         className="input-c w-full h-10 border border-gray-300 mt-2"
                                     />
                                 </div>
-                                <div className="w-1/2 pl-2">
-                                    <InputField
-                                        type="number"
-                                        placeholder="EJEM: 987654321"
-                                        label="Telefono"
-                                        className="input-c w-full"
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                    />
-                                </div>
                             </div>
 
                             <div className="flex justify-between mb-4 ml-2">
@@ -358,6 +397,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         label="DNI/RUC: *"
                                         className="input-c w-full"
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
+                                        value={dniOrRuc}
+                                        onChange={(e) => setDni(e.target.value)}
                                     />
                                 </div>
                                 <div className="flex flex-col justify-end ml-4">
@@ -366,7 +407,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
 
                                         type="button"
                                         className="btn-validar text-white px-5 flex py-2 rounded"
-                                        style={{ height: "40px", marginTop: "10px" }}>
+                                        style={{ height: "40px", marginTop: "10px" }} onClick={handleValidate}>
                                         <GrValidate className="mr-2" style={{ fontSize: '20px' }} />
                                         Validar
                                     </button>
@@ -380,17 +421,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         label="Nombre del cliente / Razón social * "
                                         className="input-c w-full"
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex justify-between mb-4 ml-2 ">
-                                <div className="w-full">
-                                    <InputField
-                                        type="email"
-                                        placeholder="EJEM: poala@gmail.com"
-                                        label="Email"
-                                        className="input-c w-full"
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
+                                        value={nombreCliente}
+                                        readOnly
                                     />
                                 </div>
                             </div>
@@ -402,6 +434,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         label="Dirección"
                                         className="input-c w-full"
                                         style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
+                                        value={direccionCliente}
+                                        readOnly
                                     />
                                 </div>
                             </div>
@@ -411,7 +445,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 <button
                                     type="button"
                                     className="btn-aceptar-cliente text-white px-4 py-2 rounded"
-                                    onClick={() => setShowNuevoCliente(false)}
+                                    onClick={handleGuardarClientes}
                                 >
                                     Guardar
                                 </button>
