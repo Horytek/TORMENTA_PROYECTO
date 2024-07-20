@@ -73,7 +73,7 @@ const getClienteVentas = async (req, res) => {
   try {
       const connection = await getConnection();
       const [result] = await connection.query(`
-              SELECT 
+              SELECT id_cliente as id,
     COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS cliente_t
     FROM 
     cliente
@@ -248,8 +248,6 @@ const addVenta = async (req, res) => {
     console.error('Error en el backend:', error.message); // Log para verificar errores
     await connection.rollback();
     res.status(500).send(error.message);
-  } finally {
-    await connection.release();
   }
 };
 
@@ -298,8 +296,6 @@ const addCliente = async (req, res) => {
   } catch (error) {
     console.error('Error en el backend:', error.message); // Log para verificar errores
     res.status(500).send(error.message);
-  } finally {
-    await connection.release();
   }
 };
 
