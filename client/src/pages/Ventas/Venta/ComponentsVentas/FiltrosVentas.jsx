@@ -1,4 +1,5 @@
 import { GrDocumentWindows } from 'react-icons/gr';
+import {DateRangePicker} from "@nextui-org/date-picker";
 
 const FiltrosVentas = () => {
     return (
@@ -27,8 +28,10 @@ const FiltrosVentas = () => {
                     </select>
                 </div>
                 <div className="input-wrapper flex gap-2">
-                    <input type="date" id="valor" className="input-c"/>
-                    <input type="date" id="valor" className="input-c"/>
+                    <DateRangePicker 
+                        className="w-xs"
+                        classNames={{ inputWrapper: "bg-white" }}
+                    />
                 </div>
             </div>
 
