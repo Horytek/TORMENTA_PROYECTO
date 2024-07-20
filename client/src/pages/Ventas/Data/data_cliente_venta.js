@@ -26,6 +26,11 @@ const useClientesData = () => {
     fetchClientes();
   }, []);
 
+
+  const addCliente = (nuevoDetalle) => {
+    setClientes([...clientes, nuevoDetalle]);
+  };
+
   const updateCliente = (updatedCliente) => {
     setClientes(prevClientes =>
       prevClientes.map(cliente =>
@@ -39,7 +44,7 @@ const useClientesData = () => {
   };
 
 
-  return {clientes, setClientes,updateCliente,removeCliente};
+  return {clientes, setClientes,updateCliente,removeCliente,addCliente};
 };
 
 export default useClientesData;

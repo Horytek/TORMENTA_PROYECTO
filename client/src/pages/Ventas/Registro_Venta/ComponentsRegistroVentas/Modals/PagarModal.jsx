@@ -24,7 +24,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [showConfirmacion, setShowConfirmacion] = useState(false);
     const [showNuevoCliente, setShowNuevoCliente] = useState(false);
     const [tipo_cliente, settipo_cliente] = useState('Natural');
-    const { clientes, updateCliente} = useClientesData(); // Llama al hook personalizado para obtener los clientes
+    const { clientes, addCliente} = useClientesData(); // Llama al hook personalizado para obtener los clientes
     const [clienteSeleccionado, setClienteSeleccionado] = useState('');
     const loadDetallesFromLocalStorage = () => {
         const savedDetalles = localStorage.getItem('detalles');
@@ -70,6 +70,11 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         direccion: direccionCliente,
     };
 
+    const datosCliente_P = {
+        id: '',
+        nombre: nombreCliente,
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         handleCobrar(datosVenta, setShowConfirmacion);
@@ -79,7 +84,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const handleGuardarClientes = (e) => {
         e.preventDefault();
         handleGuardarCliente(datosCliente, setShowNuevoCliente);
-        updateCliente(clientes);
+        addCliente(datosCliente_P);
     };
 
     const handleValidate = async () => {
