@@ -16,6 +16,7 @@ import RegistroModal from "./Registro_Marca/ComponentsRegistroMarcas/Modals/Regi
 const Marcas = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [marcas, setMarcas] = useState([]);
+  const [currentPageMarcas, setCurrentPageMarcas] = useState([]);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [selectedMarca, setSelectedMarca] = useState(null);
   const [modals, setModals] = useState({
@@ -28,7 +29,7 @@ const Marcas = () => {
   const [darBajaOptionSelected, setDarBajaOptionSelected] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages] = useState(5);
+  const [marcasPerPage, setMarcasPerPage] = useState(5);
 
   const toggleDeleteDetalleOption = () => {
     setDeleteOptionSelected(!deleteOptionSelected);
@@ -41,6 +42,15 @@ const Marcas = () => {
   useEffect(() => {
     fetchMarcas();
   }, []);
+
+  useEffect(() => {
+    const filteredMarcas = marcas.filter((marca) =>
+      marca.nom_marca.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const indexOfLastMarca = currentPage * marcasPerPage;
+    const indexOfFirstMarca = indexOfLastMarca - marcasPerPage;
+    setCurrentPageMarcas(filteredMarcas.slice(indexOfFirstMarca, indexOfLastMarca));
+  }, [currentPage, marcas, marcasPerPage, searchTerm]);
 
   const fetchMarcas = async () => {
     try {
@@ -67,20 +77,13 @@ const Marcas = () => {
   const handleUpdateMarca = async (nombre, estado) => {
     try {
       const estadoMarca = estado === "Activo" ? 1 : 0;
-      console.log("Sending to API:", {
-        nombre,
-        estado,
-        estadoMarca,
-        selectedRowId,
-      });
       const response = await axios.put(
-        `http://localhost:4000/api/marcas/${selectedRowId}`,
+        `http://localhost:4000/api/marcas/update/${selectedRowId}`,
         {
           nom_marca: nombre,
           estado_marca: estadoMarca,
         }
       );
-      console.log("API response:", response.data);
       fetchMarcas();
       setModals((prev) => ({ ...prev, isEditModalOpen: false }));
     } catch (error) {
@@ -100,7 +103,7 @@ const Marcas = () => {
 
   const handleDarBajaMarca = async () => {
     try {
-      await axios.put(`http://localhost:4000/api/marcas/${selectedRowId}`, {
+      await axios.put(`http://localhost:4000/api/marcas/deactivate/${selectedRowId}`, {
         estado_marca: 0,
       });
       fetchMarcas();
@@ -159,7 +162,7 @@ const Marcas = () => {
       </div>
 
       <TablaMarcas
-        marcas={marcas}
+        marcas={currentPageMarcas}
         openModal={(id) => {
           setSelectedRowId(id);
           setModals((prev) => ({ ...prev, modalOpen: true }));
@@ -235,11 +238,19 @@ const Marcas = () => {
         </div>
       )}
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      <div className="flex justify-between items-center">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(marcas.length / marcasPerPage)}
+          onPageChange={setCurrentPage}
+        />
+        <select className="input-c cant-pag-c" value={marcasPerPage} onChange={(e) => setMarcasPerPage(Number(e.target.value))}>
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+        </select>
+      </div>
+
       {modals.isConfirmationModalOpen && (
         <div className="modal-overlay">
           <ConfirmationModal

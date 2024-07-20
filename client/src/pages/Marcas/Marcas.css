@@ -36,3 +36,50 @@ h6 {
   color: #E05858;
   background-color: #FDF2F2;
 }
+
+/* tabla*/
+.container-tabla-marca-rv {
+  margin: 20px auto;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #dddddd;
+}
+
+.table th {
+  background-color: #f8f8f8;
+  color: #333;
+  font-weight: bold;
+}
+
+.table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.table td {
+  font-size: 16px;
+}
+
+.tr-tabla-marca-rv {
+  transition: background-color 0.3s ease;
+}
+
+/* Icons styles */
+.table .cursor-pointer {
+  transition: color 0.3s;
+}
+
+.table .cursor-pointer:hover {
+  transform: scale(1.1);
+}
+
