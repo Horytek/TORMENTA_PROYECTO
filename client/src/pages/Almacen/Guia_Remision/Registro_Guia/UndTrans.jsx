@@ -55,7 +55,7 @@ const TransporteForm = ({ modalTitle, onClose }) => {
                   />
                   <label>Transporte Público</label>
                 </div>
-                <button className='nuevo-transporte' onClick={openModalTransporte} >
+                <button className='nuevo-transporte' onClick={openModalTransportista} >
                   <FaPlus />N. Transporte
                 </button>
               </div>
@@ -65,8 +65,8 @@ const TransporteForm = ({ modalTitle, onClose }) => {
                   <input type="text" id="ruc" disabled={!transportePublico} />
                 </div>
                 <div className='form-group'>
-                  <input type="checkbox" id="m1l" disabled={!transportePublico} />
-                  <label htmlFor="m1l">Traslado en vehículos de categoría M1 o L</label>
+                  
+                  <label htmlFor="m1l"><input type="checkbox" id="m1l" disabled={!transportePublico} />Traslado en vehículos de categoría M1 o L</label>
                 </div>
                 <div className='form-group'>
                   <label htmlFor="empresa">Empresa:</label>
@@ -90,7 +90,7 @@ const TransporteForm = ({ modalTitle, onClose }) => {
                   />
                   <label>Transporte Privado</label>
                 </div>
-                <button className='nuevo-transportista'  onClick={openModalTransportista}>
+                <button className='nuevo-transportista'  onClick={openModalTransporte}>
                   <FaPlus/>N. Transporte
                 </button>
               </div>
@@ -128,14 +128,14 @@ const TransporteForm = ({ modalTitle, onClose }) => {
           </div>
         </div>
       </div>
-      {/* Modal de Nuevo Transporte */}
-      {isModalOpenTransporte && (
-        <ModalTransporte modalTitle={'Registrar Unidad de Transporte'} closeModel={closeModalTransporte} />
-      )}
-
       {/* Modal de Nuevo Transportista */}
       {isModalOpenTransportista && (
         <ModalTransportista modalTitle={'Registrar Transportista'} closeModel={closeModalTransportista} />
+      )}
+
+      {/* Modal de Nuevo Transporte */}
+      {isModalOpenTransporte && (
+        <ModalTransporte modalTitle={'Registrar Unidad de Transporte'} closeModel={closeModalTransporte} />
       )}
     </div>
   );

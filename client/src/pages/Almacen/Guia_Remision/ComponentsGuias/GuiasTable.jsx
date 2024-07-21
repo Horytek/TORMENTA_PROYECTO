@@ -35,12 +35,13 @@ const TablaGuias = ({ guias, modalOpen, deleteOptionSelected, openModal }) => {
         <td className="text-center">{guia.cliente}</td>
         <td className="text-center">{guia.vendedor}</td>
         <td className="text-center">{guia.docventa}</td>
-        <td className="text-center">{guia.moneda}</td>
         <td className="text-center">{guia.total}</td>
         <td className="text-center">{guia.concepto}</td>
-        <td className={`text-center ${guia.estadosun === 'Activo' ? 'est-activo' : 'est-inactivo'}`}>
-   {guia.estadosun}
-</td> 
+        <td className="text-center " style={{ color: guia.estadosun === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400" }} >
+          <div className='ml-2 px-2.5 py-1.5 rounded-full ' style={{ background: guia.estadosun === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }}>
+            <span>{guia.estadosun}</span>
+          </div>
+        </td>
 
 
         <td className="text-center">
@@ -95,10 +96,9 @@ const TablaGuias = ({ guias, modalOpen, deleteOptionSelected, openModal }) => {
           <tr>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NUM GUIA</th>
-            <th className="w-1/7 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
-            <th className="w-1/7 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOC VENTA</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">MONEDA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>

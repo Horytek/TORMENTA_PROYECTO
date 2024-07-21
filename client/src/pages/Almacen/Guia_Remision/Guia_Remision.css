@@ -152,29 +152,7 @@
     
   }
 
-  .est-activo {
-    margin: 15px;
-    justify-content: center;
-    align-items: center;
-    padding: 0.6em 0.85em !important;
-    font-size: 80%;
-    font-weight: 600;
-    border-radius: 9999px;
-    color: #117B34;
-    background-color: #EEFDF3;
-}
 
-.est-inactivo {
-    margin: 15px;
-    justify-content: center;
-    align-items: center;
-    padding: 0.6em 0.85em !important;
-    font-size: 80%;
-    font-weight: 700;
-    border-radius: 9999px;
-    color: #E05858;
-    background-color: #FDF2F2;
-}
 
 /**TABLA**/
 
