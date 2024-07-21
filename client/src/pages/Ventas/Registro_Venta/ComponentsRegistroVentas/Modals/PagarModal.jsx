@@ -24,7 +24,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [showConfirmacion, setShowConfirmacion] = useState(false);
     const [showNuevoCliente, setShowNuevoCliente] = useState(false);
     const [tipo_cliente, settipo_cliente] = useState('Natural');
-    const { clientes } = useClientesData(); // Llama al hook personalizado para obtener los clientes
+    const { clientes, addCliente} = useClientesData(); // Llama al hook personalizado para obtener los clientes
     const [clienteSeleccionado, setClienteSeleccionado] = useState('');
     const loadDetallesFromLocalStorage = () => {
         const savedDetalles = localStorage.getItem('detalles');
@@ -36,6 +36,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [direccionCliente, setDireccionCliente] = useState('');
 
     if (!isOpen) return null;
+
 
     const totalAPagarConDescuento = descuentoActivado ? totalImporte - montoDescuento : totalImporte;
     const igv_total = parseFloat(totalImporte * 0.18).toFixed(2);
@@ -69,14 +70,21 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         direccion: direccionCliente,
     };
 
+    const datosCliente_P = {
+        id: '',
+        nombre: nombreCliente,
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         handleCobrar(datosVenta, setShowConfirmacion);
     };
 
+
     const handleGuardarClientes = (e) => {
         e.preventDefault();
         handleGuardarCliente(datosCliente, setShowNuevoCliente);
+        addCliente(datosCliente_P);
     };
 
     const handleValidate = async () => {
@@ -130,16 +138,16 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 <label className="block text-gray-800 mb-2 font-semibold">Seleccione el cliente</label>
                                 <div className='flex items-center justify-between'>
                                 <select
-                className="input-c w-40 mr-3"
-                style={{ border: "solid 0.1rem #171a1f28" }}
-                value={clienteSeleccionado}
-                onChange={(e) => setClienteSeleccionado(e.target.value)}
-            >
-                <option value="">Seleccionar cliente</option>
-                {clientes.map((cliente, index) => (
-                    <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
-                ))}
-            </select>
+                                className="input-c w-40 mr-3"
+                                style={{ border: "solid 0.1rem #171a1f28" }}
+                                value={clienteSeleccionado}
+                                onChange={(e) => setClienteSeleccionado(e.target.value)}
+                                                                    >
+                                    <option value="">Seleccionar cliente</option>
+                                    {clientes.map((cliente, index) => (
+                                        <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
+                                    ))}
+                                     </select>
                                     <button type="button" className="btn-nuevo-cliente" onClick={() => setShowNuevoCliente(true)}>
                                         <GrFormAdd style={{ fontSize: '24px' }} />
                                     </button>

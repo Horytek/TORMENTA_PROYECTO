@@ -11,6 +11,7 @@ const useClientesData = () => {
         
         if (response.data.code === 1) {
           const clientes = response.data.data.map(item => ({
+            id:item.id,
             nombre: item.cliente_t,
           }));
           setClientes(clientes);
@@ -25,7 +26,25 @@ const useClientesData = () => {
     fetchClientes();
   }, []);
 
-  return {clientes, setClientes};
+
+  const addCliente = (nuevoDetalle) => {
+    setClientes([...clientes, nuevoDetalle]);
+  };
+
+  const updateCliente = (updatedCliente) => {
+    setClientes(prevClientes =>
+      prevClientes.map(cliente =>
+        cliente.id === updatedCliente.id ? updatedCliente : cliente
+      )
+    );
+  };
+
+  const removeCliente = (id) => {
+    setClientes(clientes.filter(cliente => cliente.id !== id));
+  };
+
+
+  return {clientes, setClientes,updateCliente,removeCliente,addCliente};
 };
 
 export default useClientesData;
