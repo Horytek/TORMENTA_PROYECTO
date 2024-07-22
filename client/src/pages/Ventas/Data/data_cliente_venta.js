@@ -13,6 +13,8 @@ const useClientesData = () => {
           const clientes = response.data.data.map(item => ({
             id:item.id,
             nombre: item.cliente_t,
+            documento: item.documento_t,
+            direccion: item.direccion_t,
           }));
           setClientes(clientes);
         } else {

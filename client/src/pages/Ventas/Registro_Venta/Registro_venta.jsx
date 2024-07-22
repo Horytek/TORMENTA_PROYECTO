@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useRef } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
@@ -10,6 +10,10 @@ import { MdCleaningServices } from "react-icons/md";
 import AlertModal from '../../../components/Modals/AlertModal';
 import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';
 import './Registro_Venta.css';
+import useClientesData from '../Data/data_cliente_venta';
+import { useReactToPrint } from 'react-to-print';
+import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/ComprobantePDF/ComprobantePDF';  // Asegúrate de ajustar la ruta según sea necesario
+import PropTypes from 'prop-types';
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
@@ -18,10 +22,14 @@ const Registro_Venta = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTerm2, setSearchTerm2] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const {productos, setProductos} = useProductosData();
+  const { productos, setProductos } = useProductosData();
   const [detalleMode, setDetalleMode] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  
+  const componentRef = useRef();
+
+  const handlePrint = useReactToPrint({
+      content: () => componentRef.current,
+  });
 
   const handleProductSelect = (producto) => {
     const existingDetalle = detalles.find(detalle => detalle.codigo === producto.codigo);
@@ -30,7 +38,7 @@ const Registro_Venta = () => {
     if (productoIndex !== -1 && productos[productoIndex].stock > 0) {
       if (existingDetalle) {
         const updatedCantidad = existingDetalle.cantidad + 1;
-        const updatedSubtotal = (parseFloat(existingDetalle.precio) * updatedCantidad - ((parseFloat(existingDetalle.descuento)/100)*existingDetalle.precio)*updatedCantidad).toFixed(2);
+        const updatedSubtotal = (parseFloat(existingDetalle.precio) * updatedCantidad - ((parseFloat(existingDetalle.descuento) / 100) * existingDetalle.precio) * updatedCantidad).toFixed(2);
         updateDetalle({ ...existingDetalle, cantidad: updatedCantidad, subtotal: `S/ ${updatedSubtotal}` });
       } else {
         const subtotal = (parseFloat(producto.precio) - parseFloat(0)).toFixed(2);
@@ -52,8 +60,8 @@ const Registro_Venta = () => {
   };
 
   const totalImporte = detalles.reduce((acc, item) => acc + parseFloat(item.subtotal.slice(2)), 0).toFixed(2);
-  const igv_t= (totalImporte * 0.18).toFixed(2);
-  const total_t= (parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2);
+  const igv_t = (totalImporte * 0.18).toFixed(2);
+  const total_t = (parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2);
 
   const filteredProductos = productos.filter(producto =>
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -80,7 +88,7 @@ const Registro_Venta = () => {
         if (newCantidad <= producto.stock + oldCantidad) {
           detalleToUpdate.cantidad = newCantidad;
 
-          const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad - ((parseFloat(detalleToUpdate.descuento)/100) * detalleToUpdate.precio)*newCantidad).toFixed(2);
+          const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad - ((parseFloat(detalleToUpdate.descuento) / 100) * detalleToUpdate.precio) * newCantidad).toFixed(2);
 
           detalleToUpdate.subtotal = `S/ ${subtotal}`;
 
@@ -111,8 +119,36 @@ const Registro_Venta = () => {
   const saveDetallesToLocalStorage = () => {
     localStorage.setItem('detalles', JSON.stringify(detalles));
   };
-  
+
   saveDetallesToLocalStorage();
+  
+  const { clientes } = useClientesData(); 
+  const cliente = clientes.find(cliente => cliente.id === 1); 
+
+  const datosVentaComprobante = {
+
+    fecha: new Date().toISOString().slice(0, 10),
+    nombre_cliente: cliente ? cliente.nombre : '',
+    documento_cliente: cliente ? cliente.documento : '',
+    direccion_cliente: cliente ? cliente.direccion : '',
+    igv: igv_t,
+    total_t: total_t,
+    totalImporte_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2),
+    descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
+    detalles: detalles.map(detalle => {
+      const producto = productos.find(producto => producto.codigo === detalle.codigo);
+      return {
+        id_producto: detalle.codigo,
+        nombre: detalle.nombre,
+        undm: producto ? producto.undm : '',
+        nom_marca: producto ? producto.nom_marca : '',
+        cantidad: detalle.cantidad,
+        precio: parseFloat(detalle.precio),
+        descuento: parseFloat(detalle.descuento),
+        sub_total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
+      };
+    }).filter(detalle => detalle !== null),
+  };
 
   return (
     <>
@@ -162,12 +198,14 @@ const Registro_Venta = () => {
             <button className="btn btn-cerrar  flex items-center">
               <MdCleaningServices style={{ fontSize: '22px' }} />
               Limpiar</button>
-              <div className='items-center flex ml-2'>
-              <button className="btn btn-cotizar  flex items-center">
-              <GrDocumentPerformance style={{ fontSize: '22px' }} />
-              Cotizar</button>
+            <div className='items-center flex ml-2'>
+              <button className="btn btn-cotizar  flex items-center" onClick={handlePrint}>
+                <GrDocumentPerformance style={{ fontSize: '22px' }} />
+                Cotizar</button>
             </div>
-            
+            <div style={{ display: 'none' }}>
+              <Comprobante ref={componentRef} datosVentaComprobante={datosVentaComprobante} />
+            </div>
             <div className='items-center flex ml-2'>
               <button className="btn btn-cobrar mr-0 flex items-center" onClick={() => setIsCobrarModalOpen(true)} disabled={detalles.length === 0}>
                 <BsCashCoin style={{ fontSize: '22px' }} />
@@ -197,5 +235,10 @@ const Registro_Venta = () => {
     </>
   );
 };
+
+Registro_Venta.propTypes = {
+  clienteSeleccionado: PropTypes.string.isRequired,
+};
+
 
 export default Registro_Venta;

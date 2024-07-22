@@ -15,6 +15,8 @@ const useProductosData = () => {
             nombre: item.nombre,
             precio: parseFloat(item.precio),
             stock: parseInt(item.stock),
+            undm: item.undm,
+            nom_marca: item.nom_marca,
             categoria: item.categoria_p,
           }));
           setProductos(productos);
