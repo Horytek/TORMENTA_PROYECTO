@@ -1,41 +1,35 @@
-import { 
-  getProductosRequest,
-  getProductoRequest,
-  addProductosRequest,
-  updateProductoRequest,
-  deleteProductosRequest } from "../api/api.productos";
-import { handleApiResponse } from "../utils/api.utils";
+import { getProductosRequest,
+  /* getProductoRequest,
+   addProductosRequest,
+   updateProductoRequest,
+   */} from "../routes/api.productos";
+import { useState, useEffect } from 'react'
 
-export async function getProductos() {
-  const productos = await handleApiResponse(getProductosRequest);
-
-  // Transformar los datos
-  const productosTransformados = productos.map(producto => ({
-    ...producto,
-    precio: parseFloat(producto.precio), // Convertir precio a número
-    descripcion: producto.descripcion.toUpperCase(), // Convertir descripción a mayúsculas
-    nom_subcat: producto.nom_subcat.toUpperCase(), // Convertir nombre de subcategoría a mayúsculas
-    nom_marca: producto.nom_marca.toUpperCase(), // Convertir nombre de marca a mayúsculas
-    cod_barras: producto.cod_barras || '-',
-    undm: producto.undm.toUpperCase(),
-    estado: parseInt(producto.estado) === 0 ? 'Inactivo' : 'Activo'
+export function transformData(productos) {
+  const productosTransformados = productos.map((producto) => ({
+      precio: parseFloat(producto.precio),
+      descripcion: producto.descripcion.toUpperCase(),
+      nom_subcat: producto.nom_subcat.toUpperCase(),
+      nom_marca: producto.nom_marca.toUpperCase(),
+      cod_barras: producto.cod_barras || "-",
+      undm: producto.undm.toUpperCase(),
+      estado: parseInt(producto.estado) === 0 ? "Inactivo" : "Activo",
   }));
 
   return productosTransformados;
 }
 
-export async function getProducto(id) {
-  return handleApiResponse(getProductoRequest(id));
-}
+export function ShowProductos() {
 
-export async function addProducto(producto) {
-  return handleApiResponse(addProductosRequest(producto));
-}
+  const [productos, setProductos] = useState([]);
+  useEffect(() => {
+    getProductos()
+  }, []);
 
-export async function updateProducto(id, newFields) {
-  return handleApiResponse(updateProductoRequest(id, newFields));
-}
-
-export async function deleteProducto(id) {
-  return handleApiResponse(deleteProductosRequest(id));
+  // Obtener todos los productos
+  const getProductos = async () => {
+    const res = await getProductosRequest();
+    const dataTransformada = transformData(res.data.data)
+    setProductos(dataTransformada);
+  };
 }
