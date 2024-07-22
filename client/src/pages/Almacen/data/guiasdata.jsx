@@ -11,7 +11,7 @@ const useGuiasData = () => {
         vendedor: "OFICINA",
         docventa: "20601944368",
         moneda:"SOLES",
-        total:500,
+        total:'S/ 500',
         concepto:"concepto1",
         estadosun:"Activo",
         detalles: [
@@ -28,7 +28,7 @@ const useGuiasData = () => {
         vendedor: "OFICINA",
         docventa: "20601944366",
         moneda:"SOLES",
-        total:1200,
+        total:'S/ 1200',
         concepto:"concepto2",
         estadosun:"Activo",
         detalles: [
@@ -43,7 +43,7 @@ const useGuiasData = () => {
         vendedor: "OFICINA",
         docventa: "20601674368",
         moneda:"SOLES",
-        total:2500,
+        total:'S/ 2500',
         concepto:"concepto3",
         estadosun:"Activo",
       detalles: [
@@ -58,7 +58,7 @@ const useGuiasData = () => {
         vendedor: "OFICINA",
         docventa: "20541944368",
         moneda:"SOLES",
-        total:5000,
+        total:'S/ 5000',
         concepto:"concepto4",
         estadosun:"Activo",
       detalles: [
@@ -73,7 +73,7 @@ const useGuiasData = () => {
         vendedor: "OFICINA",
         docventa: "27561944368",
         moneda:"SOLES",
-        total:5400,
+        total:'S/ 5400',
         concepto:"concepto5",
         estadosun:"Activo",
       detalles: [
