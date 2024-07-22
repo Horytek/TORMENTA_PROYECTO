@@ -2,7 +2,7 @@ import { getProductosRequest,
   /* getProductoRequest,
    addProductosRequest,
    updateProductoRequest,
-   */} from "../api/api.productos";
+   */} from "../routes/api.productos";
 import { useState, useEffect } from 'react'
 
 export function transformData(productos) {
