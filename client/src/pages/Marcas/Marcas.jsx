@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Toaster, toast } from "react-hot-toast";
 import "./Marcas.css";
 import "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal.css";
 import { FaSearch } from "react-icons/fa";
@@ -77,7 +78,7 @@ const Marcas = () => {
   const handleUpdateMarca = async (nombre, estado) => {
     try {
       const estadoMarca = estado === "Activo" ? 1 : 0;
-      const response = await axios.put(
+      await axios.put(
         `http://localhost:4000/api/marcas/update/${selectedRowId}`,
         {
           nom_marca: nombre,
@@ -86,8 +87,10 @@ const Marcas = () => {
       );
       fetchMarcas();
       setModals((prev) => ({ ...prev, isEditModalOpen: false }));
+      toast.success("Marca actualizada con éxito");
     } catch (error) {
-      console.error("Error updating marca: ", error);
+      console.error("Error actualizando la marca: ", error);
+      toast.error("Error al actualizar la marca");
     }
   };
 
@@ -96,8 +99,10 @@ const Marcas = () => {
       await axios.delete(`http://localhost:4000/api/marcas/${selectedRowId}`);
       fetchMarcas();
       setModals((prev) => ({ ...prev, modalOpen: false }));
+      toast.success("Marca eliminada con éxito");
     } catch (error) {
-      console.error("Error deleting marca: ", error);
+      console.error("Error eliminando la marca: ", error);
+      toast.error("Error al eliminar la marca");
     }
   };
 
@@ -108,13 +113,16 @@ const Marcas = () => {
       });
       fetchMarcas();
       setModals((prev) => ({ ...prev, isBajaModalOpen: false }));
+      toast.success("Marca dada de baja con éxito");
     } catch (error) {
-      console.error("Error updating marca: ", error);
+      console.error("Error dando de baja la marca: ", error);
+      toast.error("Error al dar de baja la marca");
     }
   };
 
   return (
     <div>
+      <Toaster />
       <Breadcrumb
         paths={[
           { name: "Inicio", href: "/inicio" },
@@ -149,7 +157,7 @@ const Marcas = () => {
               onClick={() =>
                 setModals((prev) => ({ ...prev, isRegistroModalOpen: true }))
               }
-              className="flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-md px-4 py-2"
+              className="flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-md px-5 py-2"
             >
               <MdAddCircleOutline
                 className="mr-2"

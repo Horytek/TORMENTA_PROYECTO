@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FaHome, FaBox, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import {BiSolidReport} from 'react-icons/bi';
 import { Link } from 'react-router-dom';
 import './sidebar.css';
 import img from '@/assets/icono.ico';
@@ -47,7 +48,8 @@ function Sidebar() {
             { to: '/empleados', icon: <FaUsers className="text-xl" />, text: 'Empleados' },
             {
               to: '/ventas', icon: <FaChartLine className="text-xl" />, text: 'Ventas', subLinks: [
-                { to: '/ventas/registro_venta', text: 'Nueva Venta' }
+                { to: '/ventas/registro_venta', text: 'Nueva Venta' },
+                { to: '/ventas/reporte_venta', icon: <BiSolidReport className="text-xl" />, text: 'Reporte de Ventas' },
               ]
             },
             { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén', subLinks: [

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
+import toast, { Toaster } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import "./RegistroModal.css";
 
@@ -38,9 +39,12 @@ const RegistroModal = ({ onClose, onSubmit }) => {
       .post("http://localhost:4000/api/marcas", marcaData)
       .then((response) => {
         console.log("Marca agregada con éxito:", response.data);
-        onSubmit(); 
-        onClose(); 
-        window.location.reload();
+        onSubmit();
+        onClose();
+        toast.success("Marca agregada con éxito");
+        setTimeout(() => {
+          window.location.reload();
+        }, 600);
       })
       .catch((error) => {
         console.error("Error al agregar la marca:", error);

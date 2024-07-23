@@ -19,6 +19,7 @@ import Guia_Remision from '@/pages/Almacen/Guia_Remision/Guia_Remision';
 import RegistroGuia from '@/pages/Almacen/Guia_Remision/Registro_Guia/Registro_Guia';
 import Historico from '@/pages/Almacen/Kardex/Historico/Historico';
 import Kardex from '@/pages/Almacen/Kardex/Kardex';
+import ReporteVentas from '@/pages/ReporteVentas/ReporteVentas';
 function Dashboard() {
   return (
     <div className="flex min-h-screen">
@@ -37,6 +38,7 @@ function Dashboard() {
             <Route path="/ventas" element={<Ventas />} />
             {/* Ruta para la página de configuración */}
             <Route path="/ventas/registro_venta" element={<Registro_venta />} />
+            <Route path="/ventas/reporte_venta" element={<ReporteVentas />} />
             {/* Ruta para la página de empleados */}
             <Route path="/empleados" element={<Empleados />} />
             {/* Ruta para la página de productos */}
