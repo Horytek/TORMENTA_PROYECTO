@@ -69,6 +69,17 @@ const useVentasData = () => {
     setDetalles([...detalles, nuevoDetalle]);
   };
 
+  const getTotalRecaudado = () => {
+    return ventas.reduce((total, venta) => {
+      const subtotalVenta = venta.detalles.reduce((subtotal, detalle) => {
+        return subtotal + parseFloat(detalle.subtotal.replace('S/ ', ''));
+      }, 0);
+      return total + subtotalVenta;
+    }, 0).toFixed(2);
+  };
+  
+  const totalRecaudado = getTotalRecaudado();
+
   const updateDetalle = (updatedDetalle) => {
     setDetalles(prevDetalles =>
       prevDetalles.map(detalle =>
@@ -83,7 +94,7 @@ const useVentasData = () => {
   };
 
 
-  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle };
+  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle, totalRecaudado };
 };
 
 export default useVentasData;
