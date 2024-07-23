@@ -37,8 +37,8 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           </div>
         </td>
 
-        <td className="text-center " style={{ color: venta.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400" }} >
-          <div className='ml-2 px-2.5 py-1.5 rounded-full ' style={{ background: venta.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }}>
+        <td className="text-center " style={{ color: venta.estado === 'Activo' ? '#117B34FF' : venta.estado === 'En proceso' ? '#F5B047' : '#E05858FF', fontWeight: "400" }} >
+          <div className='ml-2 px-2.5 py-1.5 rounded-full ' style={{ background: venta.estado === 'Activo' ? 'rgb(191, 237, 206)' : venta.estado === 'En proceso' ? '#FDEDD4' : '#F5CBCBFF' }}>
             <span>{venta.estado}</span>
           </div>
         </td>
