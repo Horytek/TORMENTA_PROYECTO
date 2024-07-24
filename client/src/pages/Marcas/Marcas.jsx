@@ -40,6 +40,17 @@ const Marcas = () => {
     setDarBajaOptionSelected(!darBajaOptionSelected);
   };
 
+  const closeModal = () => {
+    setDeleteOptionSelected(false);
+    setModals((prev) => ({ ...prev, modalOpen: false }));
+  };
+
+  const openOptionsModal = (id) => {
+    setSelectedRowId(id);
+    setDeleteOptionSelected(false); // Resetea el estado al abrir el modal
+    setModals((prev) => ({ ...prev, modalOpen: true }));
+  };
+
   useEffect(() => {
     fetchMarcas();
   }, []);
@@ -50,7 +61,9 @@ const Marcas = () => {
     );
     const indexOfLastMarca = currentPage * marcasPerPage;
     const indexOfFirstMarca = indexOfLastMarca - marcasPerPage;
-    setCurrentPageMarcas(filteredMarcas.slice(indexOfFirstMarca, indexOfLastMarca));
+    setCurrentPageMarcas(
+      filteredMarcas.slice(indexOfFirstMarca, indexOfLastMarca)
+    );
   }, [currentPage, marcas, marcasPerPage, searchTerm]);
 
   const fetchMarcas = async () => {
@@ -108,15 +121,17 @@ const Marcas = () => {
 
   const handleDarBajaMarca = async () => {
     try {
-      await axios.put(`http://localhost:4000/api/marcas/deactivate/${selectedRowId}`, {
-        estado_marca: 0,
-      });
+      await axios.put(
+        `http://localhost:4000/api/marcas/deactivate/${selectedRowId}`,
+        {
+          estado_marca: 0,
+        }
+      );
       fetchMarcas();
       setModals((prev) => ({ ...prev, isBajaModalOpen: false }));
       toast.success("Marca dada de baja con éxito");
     } catch (error) {
       console.error("Error dando de baja la marca: ", error);
-      toast.error("Error al dar de baja la marca");
     }
   };
 
@@ -130,6 +145,8 @@ const Marcas = () => {
           { name: "Marcas", href: "/productos/marcas" },
         ]}
       />
+      <hr className="mb-4" />
+
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: "36px" }}>
           Marcas
@@ -171,10 +188,7 @@ const Marcas = () => {
 
       <TablaMarcas
         marcas={currentPageMarcas}
-        openModal={(id) => {
-          setSelectedRowId(id);
-          setModals((prev) => ({ ...prev, modalOpen: true }));
-        }}
+        openModal={openOptionsModal}
         openEditModal={(id) => {
           const selected = marcas.find((marca) => marca.id_marca === id);
           setSelectedRowId(id);
@@ -232,9 +246,7 @@ const Marcas = () => {
           <OptionsModal
             modalOpen={modals.modalOpen}
             toggleDeleteDetalleOption={toggleDeleteDetalleOption}
-            closeModal={() =>
-              setModals((prev) => ({ ...prev, modalOpen: false }))
-            }
+            closeModal={closeModal}
             setConfirmDeleteModalOpen={() =>
               setModals((prev) => ({
                 ...prev,
@@ -252,7 +264,11 @@ const Marcas = () => {
           totalPages={Math.ceil(marcas.length / marcasPerPage)}
           onPageChange={setCurrentPage}
         />
-        <select className="input-c cant-pag-c" value={marcasPerPage} onChange={(e) => setMarcasPerPage(Number(e.target.value))}>
+        <select
+          className="input-c cant-pag-c"
+          value={marcasPerPage}
+          onChange={(e) => setMarcasPerPage(Number(e.target.value))}
+        >
           <option value={5}>5</option>
           <option value={10}>10</option>
           <option value={20}>20</option>

@@ -13,7 +13,7 @@ import useVentasData from '../Data/data_venta';
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
-  const { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage } = useVentasData();
+  const { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado } = useVentasData();
 
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
@@ -59,7 +59,7 @@ const Ventas = () => {
       {/* Encabezado principal */}
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-          Ventas  S/. 5842.05
+          Ventas  S/. {totalRecaudado}
         </h1>
         <Link to="/ventas/registro_venta" className="btn btn-nueva-venta mr-0">
           <MdAddCircleOutline className="inline-block mr-2" style={{ fontSize: '25px' }} />

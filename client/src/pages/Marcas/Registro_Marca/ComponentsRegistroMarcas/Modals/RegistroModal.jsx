@@ -48,6 +48,9 @@ const RegistroModal = ({ onClose, onSubmit }) => {
       })
       .catch((error) => {
         console.error("Error al agregar la marca:", error);
+        toast.error("Error al agregar la marca, intente de nuevo", {
+          style: { textAlign: "center" },
+        });
       });
   };
 
@@ -75,7 +78,10 @@ const RegistroModal = ({ onClose, onSubmit }) => {
                 />
               </div>
             </div>
-            <div className="rvm-modal-buttons rvm-mt-4 rvm-flex rvm-justify-end rvm-space-x-2">
+            <div
+              className="rvm-modal-buttons rvm-mt-4 rvm-flex rvm-justify-end rvm-space-x-2"
+              style={{ gap: "30px" }}
+            >
               <ButtonClose onClick={onClose} />
               <ButtonSave onClick={handleLocalSubmit} />
             </div>
