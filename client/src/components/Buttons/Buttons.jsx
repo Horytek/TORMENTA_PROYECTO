@@ -1,12 +1,14 @@
-import PropTypes from 'prop-types';
-import './Buttons.css';
+import PropTypes from "prop-types";
+import "./Buttons.css";
 import { FiSave } from "react-icons/fi";
+import { FiDownload } from "react-icons/fi";
+import { CiSearch, CiFilter} from "react-icons/ci";
 import { RiCloseLargeLine } from "react-icons/ri";
 
 export function ButtonSave({ ...props }) {
   return (
     <button className="btn btn-save m-0" {...props}>
-      <FiSave style={{ fontSize: '25px' }} />
+      <FiSave style={{ fontSize: "25px" }} />
       Guardar
     </button>
   );
@@ -15,7 +17,7 @@ export function ButtonSave({ ...props }) {
 export function ButtonClose({ ...props }) {
   return (
     <button className="btn btn-close m-0" {...props}>
-      <RiCloseLargeLine style={{ fontSize: '25px' }} />
+      <RiCloseLargeLine style={{ fontSize: "25px" }} />
       Cerrar
     </button>
   );
@@ -38,11 +40,43 @@ export function ButtonIcon({ children, icon, color, ...props }) {
   );
 }
 
+export function ButtonSearch({ ...props }) {
+  return (
+    <button className="btn btn-rvsecondary flex items-center" {...props}>
+      <CiSearch className="h-5 w-5" style={{ color: "#f8f9fa" }} />
+    </button>
+  );
+}
+
+export function ButtonFilter({ ...props }) {
+  return (
+    <button className="btn btn-rvsecondary flex items-center" {...props}>
+      <CiFilter className="h-5 w-5" style={{ color: "#f8f9fa" }} />
+    </button>
+  );
+}
+
+export function ButtonDownload({ ...props }) {
+  return (
+    <button className="btn btn-rvsecondary flex items-center" {...props}>
+      <FiDownload className="h-5 w-5" style={{ color: "#f8f9fa" }} />
+    </button>
+  );
+}
+
 ButtonSave.propTypes = {
   onClick: PropTypes.func,
 };
 
 ButtonClose.propTypes = {
+  onClick: PropTypes.func,
+};
+
+ButtonSearch.propTypes = {
+  onClick: PropTypes.func,
+};
+
+ButtonDownload.propTypes = {
   onClick: PropTypes.func,
 };
 

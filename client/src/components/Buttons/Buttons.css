@@ -13,3 +13,8 @@
 .btn-close {
   background-color: #8F95A0;
 }
+
+.btn-rvsecondary {
+  background-color: #6c757d;
+  color: white;
+}
