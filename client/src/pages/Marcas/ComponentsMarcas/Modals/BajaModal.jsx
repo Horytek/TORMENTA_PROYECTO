@@ -29,7 +29,7 @@ const BajaModal = ({
           <label htmlFor="deactivate">Dar de baja a la marca</label>
         </div>
       </div>
-      <div className="bm-modal-actions bm-flex bm-justify-end" style={{ gap: "20px" }}>
+      <div className="bm-modal-actions bm-flex bm-justify-end" style={{ gap: "20px" , marginTop: "20px"}}>
         <button className="bm-btn bm-btn-cancel" onClick={closeBajaModal}>
           Cancelar
         </button>

@@ -91,7 +91,7 @@ const EditModal = ({ onClose, onSubmit, initialName, initialStatus }) => {
               </div>
             </div>
 
-            <div className="modal-buttons mt-4 flex justify-end space-x-2">
+            <div className="modal-buttons mt-4 flex justify-end space-x-2" style={{gap: "25px", marginTop:"60px"}}>
               <ButtonClose onClick={onClose} />
               <ButtonSave
                 onClick={() => {

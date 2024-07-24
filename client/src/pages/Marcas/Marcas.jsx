@@ -40,6 +40,17 @@ const Marcas = () => {
     setDarBajaOptionSelected(!darBajaOptionSelected);
   };
 
+  const closeModal = () => {
+    setDeleteOptionSelected(false);
+    setModals((prev) => ({ ...prev, modalOpen: false }));
+  };
+
+  const openOptionsModal = (id) => {
+    setSelectedRowId(id);
+    setDeleteOptionSelected(false); // Resetea el estado al abrir el modal
+    setModals((prev) => ({ ...prev, modalOpen: true }));
+  };
+
   useEffect(() => {
     fetchMarcas();
   }, []);
@@ -114,9 +125,9 @@ const Marcas = () => {
       fetchMarcas();
       setModals((prev) => ({ ...prev, isBajaModalOpen: false }));
       toast.success("Marca dada de baja con éxito");
+      
     } catch (error) {
       console.error("Error dando de baja la marca: ", error);
-      toast.error("Error al dar de baja la marca");
     }
   };
 
@@ -171,10 +182,7 @@ const Marcas = () => {
 
       <TablaMarcas
         marcas={currentPageMarcas}
-        openModal={(id) => {
-          setSelectedRowId(id);
-          setModals((prev) => ({ ...prev, modalOpen: true }));
-        }}
+        openModal={openOptionsModal}
         openEditModal={(id) => {
           const selected = marcas.find((marca) => marca.id_marca === id);
           setSelectedRowId(id);
@@ -232,9 +240,7 @@ const Marcas = () => {
           <OptionsModal
             modalOpen={modals.modalOpen}
             toggleDeleteDetalleOption={toggleDeleteDetalleOption}
-            closeModal={() =>
-              setModals((prev) => ({ ...prev, modalOpen: false }))
-            }
+            closeModal={closeModal}
             setConfirmDeleteModalOpen={() =>
               setModals((prev) => ({
                 ...prev,

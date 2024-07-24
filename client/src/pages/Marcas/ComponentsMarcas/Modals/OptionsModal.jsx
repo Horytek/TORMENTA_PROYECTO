@@ -11,10 +11,10 @@ const OptionsModal = ({
   if (!modalOpen) return null;
 
   return (
-    <div className="om-modal-content-c">
+    <div className="bm-modal-content">
       <h2 style={{ textAlign: "start" }}>
         <IoMdOptions
-          className="om-inline-block om-mr-2"
+          className="bm-inline-block bm-mr-2"
           style={{ fontSize: "20px" }}
         />
         Opciones
@@ -25,6 +25,7 @@ const OptionsModal = ({
             type="checkbox"
             id="eliminar"
             className="om-custom-checkbox om-mr-2 om-relative"
+            checked={deleteOptionSelected}
             onChange={toggleDeleteDetalleOption}
           />
           <label htmlFor="eliminar" className="om-label">
