@@ -4,8 +4,6 @@ import { DateRangePicker } from "@nextui-org/date-picker";
 import "./ReporteVentas.css";
 import { ButtonSearch, ButtonDownload } from "@/components/Buttons/Buttons";
 import { ButtonFilter } from "../../components/Buttons/Buttons";
-import ReportesTable from "./ComponentsReporte/ReportesTable";
-
 const ReporteVentas = () => {
   return (
     <div>
@@ -37,15 +35,12 @@ const ReporteVentas = () => {
         <div className="flex gap-4 mt-2 justify-end items-center">
           <ButtonFilter />
         </div>
-        <div className="flex-grow"></div>{" "}
-        {/* This will take up remaining space */}
+        <div className="flex-grow"></div>
         <div className="flex gap-4 mt-2 justify-end items-center">
           <ButtonSearch />
           <ButtonDownload />
         </div>
-      </div>
-      <ReportesTable />
-        
+      </div>        
     </div>
   );
 };
