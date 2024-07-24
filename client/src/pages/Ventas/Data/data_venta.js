@@ -29,7 +29,10 @@ const useVentasData = () => {
             total: `S/ ${parseFloat(venta.total).toFixed(2)}`,
             cajero: venta.cajero,
             cajeroId: venta.cajeroId,
-            estado: venta.estado === 1 ? 'Inactivo' : 'Activo',
+            estado: venta.estado === 0 ? 'Inactivo' :
+            venta.estado === 1 ? 'Activo' :
+            venta.estado === 2 ? 'En proceso' :
+            'Desconocido', // Valor por defecto para estados no especificados
             detalles: venta.detalles.map(detalle => ({
               codigo: detalle.codigo.toString().padStart(3, '0'),
               nombre: detalle.nombre,
