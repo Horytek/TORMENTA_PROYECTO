@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FaTrashAlt } from 'react-icons/fa';
+import { IoMdOptions } from "react-icons/io";
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -43,8 +43,8 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           </div>
         </td>
         <td>
-          <FaTrashAlt
-            className={`ml-2 cursor-pointer text-red-500 ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
+          <IoMdOptions
+            className={`ml-2 cursor-pointer text-gray-500 ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
             style={{ fontSize: '20px' }}
             onClick={() => openModal(venta.id)}
           />
