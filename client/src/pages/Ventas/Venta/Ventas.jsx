@@ -1,4 +1,4 @@
-import { useState} from 'react';
+import { useState,useCallback} from 'react';
 import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
@@ -20,6 +20,7 @@ const Ventas = () => {
     fecha_e: '',
     razon: ''
   });
+
 
   const { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado } = useVentasData(filters);
 
@@ -58,11 +59,10 @@ const Ventas = () => {
     setCurrentPage(page);
   };
 
-  // Función para actualizar filtros
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setCurrentPage(1); // Resetear la página actual al cambiar filtros
-  };
+  }, [setCurrentPage]);
 
   return (
     <div>
