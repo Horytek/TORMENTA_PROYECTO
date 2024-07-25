@@ -1,7 +1,7 @@
 import { getConnection } from "./../database/database";
 
 const getVentas = async (req, res) => {
-  const { page = 0, limit = 10 } = req.query;
+  const { page = 0, limit = 10, nom_tipocomp = '', razon_social = '', nombre_sucursal = '', fecha_i = '2022-01-01', fecha_e = '2027-12-27' } = req.query;
   const offset = page * limit;
 
   try {
@@ -19,7 +19,7 @@ const getVentas = async (req, res) => {
         SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, SUBSTRING(com.num_comprobante, 6, 8) AS num,
         tp.nom_tipocomp AS tipoComprobante, CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
         cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total, CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero,
-        ve.dni AS cajeroId, v.estado_venta AS estado
+        ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal
         FROM venta v
         INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
         INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
@@ -27,10 +27,11 @@ const getVentas = async (req, res) => {
         INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
         INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
         INNER JOIN vendedor ve ON ve.dni = s.dni
+      	WHERE tp.nom_tipocomp LIKE ? AND cl.razon_social LIKE ? AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=?
         GROUP BY id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, fecha, igv, cajero, cajeroId, estado
         LIMIT ? OFFSET ?
       `,
-      [parseInt(limit), parseInt(offset)]
+      [nom_tipocomp+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,parseInt(limit), parseInt(offset)]
     );
 
     // Obtener los detalles de venta correspondientes
@@ -72,6 +73,32 @@ const getProductosVentas = async (req, res) => {
 				INNER JOIN almacen al ON al.id_almacen=inv.id_almacen
             `);
     res.json({ code: 1, data: result, message: "Productos listados" });
+  } catch (error) {
+    res.status(500);
+    res.send(error.message);
+  }
+};
+
+const getComprobante = async (req, res) => {
+  try {
+    const connection = await getConnection();
+    const [result] = await connection.query(`
+      	SELECT id_tipocomprobante AS id, case when nom_tipocomp='Nota de venta' then 'Nota' else nom_tipocomp end as nombre 
+			FROM tipo_comprobante WHERE nom_tipocomp NOT LIKE'Guia de remision' AND nom_tipocomp NOT LIKE'Nota de credito' 
+			AND nom_tipocomp NOT LIKE'Nota de ingreso'
+            `);
+    res.json({ code: 1, data: result, message: "Comprobante listados" });
+  } catch (error) {
+    res.status(500);
+    res.send(error.message);
+  }
+};
+
+const getSucursal = async (req, res) => {
+  try {
+    const connection = await getConnection();
+    const [result] = await connection.query(`SELECT id_sucursal AS id, nombre_sucursal AS nombre FROM sucursal`);
+    res.json({ code: 1, data: result, message: "Sucursal listados" });
   } catch (error) {
     res.status(500);
     res.send(error.message);
@@ -359,4 +386,6 @@ export const methods = {
   addVenta,
   getClienteVentas,
   addCliente,
+  getComprobante,
+  getSucursal,
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState} from 'react';
 import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
@@ -9,11 +9,19 @@ import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import { Link } from 'react-router-dom';
 import useVentasData from '../Data/data_venta';
-/*import getVentasRequest from './data/data_venta';*/
+
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
-  const { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado } = useVentasData();
+  const [filters, setFilters] = useState({
+    comprobanteSeleccionado: '',
+    sucursalSeleccionado: '',
+    fecha_i: '',
+    fecha_e: '',
+    razon: ''
+  });
+
+  const { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado } = useVentasData(filters);
 
   // Estado para el manejo del modal y opciones de eliminación
   const [selectedRowId, setSelectedRowId] = useState(null);
@@ -50,6 +58,12 @@ const Ventas = () => {
     setCurrentPage(page);
   };
 
+  // Función para actualizar filtros
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Resetear la página actual al cambiar filtros
+  };
+
   return (
     <div>
       {/* Componente de migas de pan */}
@@ -68,7 +82,7 @@ const Ventas = () => {
       </div>
 
       {/* Componente de filtros */}
-      <FiltrosVentas />
+      <FiltrosVentas onFiltersChange={handleFilterChange} />
 
       {/* Componente de tabla de ventas */}
       <TablaVentas

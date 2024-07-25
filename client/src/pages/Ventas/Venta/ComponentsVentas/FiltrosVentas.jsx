@@ -1,36 +1,82 @@
+import React from "react";
+import { useState,useEffect} from 'react';
 import { GrDocumentWindows } from 'react-icons/gr';
 import {DateRangePicker} from "@nextui-org/date-picker";
+import useComprobanteData from '../../Data/data_comprobante_venta';
+import useSucursalData from '../../Data/data_sucursal_venta';
+import {parseDate} from "@internationalized/date";
 
-const FiltrosVentas = () => {
+const FiltrosVentas = ({onFiltersChange}) => {
+    const {comprobantes} = useComprobanteData();
+    const {sucursales} = useSucursalData();
+    const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState('');
+    const [sucursalSeleccionado, setSucursalSeleccionado] = useState('');
+    const [value, setValue] = React.useState({
+        start: parseDate("2024-04-01"),
+        end: parseDate("2028-04-08"),
+      });
+      
+      const [razon, setRazon] = useState('');
+      const handleChange = (event) => {
+        setRazon(event.target.value);
+      };
+    
+      useEffect(() => {
+        const date_i = new Date(value.start.year, value.start.month - 1, value.start.day);
+        const fecha_i = `${date_i.getFullYear()}-${String(date_i.getMonth() + 1).padStart(2, '0')}-${String(date_i.getDate()).padStart(2, '0')}`;
+
+        const date_e = new Date(value.end.year, value.end.month - 1, value.end.day);
+        const fecha_e = `${date_e.getFullYear()}-${String(date_e.getMonth() + 1).padStart(2, '0')}-${String(date_e.getDate()).padStart(2, '0')}`;
+
+        const filtros = {
+            comprobanteSeleccionado,
+            sucursalSeleccionado,
+            fecha_i,
+            fecha_e,
+            razon,
+        };
+
+        onFiltersChange(filtros);
+        localStorage.setItem('filtros', JSON.stringify(filtros));
+    }, [comprobanteSeleccionado, sucursalSeleccionado, value, razon, onFiltersChange]);
+
     return (
+        <>
         <div className="flex flex-wrap mb-4 justify-between">
             {/* Contenedor principal con filtros */}
             <div className="block ms:block md:flex lg:w-12/12 xl:8/12 items-center md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap justify-between">
                 <div className="input-wrapper flex">
-                    <input type="text" id="valor" className="input-c" placeholder="Nombre o Razón Social" />
+                    <input type="text" id="valor" className="input-c" placeholder="Nombre o Razón Social"
+                    value={razon} // El valor del input se controla con useState
+                    onChange={handleChange} />
                 </div>
                 <div className="input-wrapper mb-2 md:mb-0">
-                    <select id="tipo" className="input-c" style={{width: "190px"}}>
-                        <option value="" disabled selected>Tipo Comprobante</option>
-                        <option value="boleta">Boleta</option>
-                        <option value="factura">Factura</option>
-                        <option value="nota">Nota</option>
+                    <select id="tipo" className="input-c" style={{width: "190px"}} value={comprobanteSeleccionado}
+                                onChange={(e) => setComprobanteSeleccionado(e.target.value)}
+                                                                    >
+                        <option value="" selected>Tipo Comprobante</option>
+                        {comprobantes.map((comprobante, index) => (
+                                        <option key={index} value={comprobante.nombre}>{comprobante.nombre}</option>
+                                    ))}
                     </select>
                 </div>
                 <div className="input-wrapper mb-2 md:mb-0">
                     {/* <label htmlFor="campo" className="label">
                         Campo
                     </label> */}
-                    <select id="campo" className="input-c" style={{width: "170px"}}>
-                        <option value="" disabled selected>Sucursal</option>
-                        <option value="sucursal_1">Tienda Arica 3</option>
-                        <option value="sucursal_1">Tienda Balta 7-8</option>
+                    <select id="campo" className="input-c" style={{width: "170px"}} value={sucursalSeleccionado}
+                                onChange={(e) => setSucursalSeleccionado(e.target.value)}>
+                        <option value="" selected>Sucursal</option>
+                        {sucursales.map((sucursal, index) => (
+                                        <option key={index} value={sucursal.nombre}>{sucursal.nombre}</option>
+                                    ))}
                     </select>
                 </div>
                 <div className="input-wrapper flex gap-2">
                     <DateRangePicker 
                         className="w-xs"
                         classNames={{ inputWrapper: "bg-white" }}
+                        value={value} onChange={setValue}
                     />
                 </div>
             </div>
@@ -43,6 +89,7 @@ const FiltrosVentas = () => {
                 </button>
             </div>
         </div>
+    </>
     );
 };
 
