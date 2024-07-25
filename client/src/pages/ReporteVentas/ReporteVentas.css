@@ -1,0 +1,17 @@
+.container-rv {  display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 0.3fr 0.3fr 0.3fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    grid-template-areas:
+      "rv-header rv-header rv-header"
+      ". . ."
+      ". . .";
+  }
+  
+  .rv-header { grid-area: rv-header; }
+  
+  .select-width {
+    width: 200px;  /* Ajusta el valor según tus necesidades */
+  }
+  

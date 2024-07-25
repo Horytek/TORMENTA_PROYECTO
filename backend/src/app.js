@@ -5,7 +5,7 @@ import usuariosRoutes from "./routes/usuarios.routes";
 import productosRoutes from "./routes/productos.routes";
 import ventasRoutes from "./routes/ventas.routes";
 import marcasRoutes from "./routes/marcas.routes";
-
+import ingresosRoutes from "./routes/notaingreso.routes";
 const app = express();
 
 // Settings
@@ -21,5 +21,5 @@ app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/productos", productosRoutes);
 app.use("/api/ventas", ventasRoutes);
 app.use("/api/marcas", marcasRoutes);
-
+app.use("/api/nota_ingreso", ingresosRoutes);
 export default app;
