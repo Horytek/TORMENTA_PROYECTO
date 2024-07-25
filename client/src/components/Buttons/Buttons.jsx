@@ -4,6 +4,7 @@ import { FiSave } from "react-icons/fi";
 import { FiDownload } from "react-icons/fi";
 import { CiSearch, CiFilter} from "react-icons/ci";
 import { RiCloseLargeLine } from "react-icons/ri";
+import { IoIosArrowDropdownCircle } from "react-icons/io";
 
 export function ButtonSave({ ...props }) {
   return (
@@ -64,7 +65,19 @@ export function ButtonDownload({ ...props }) {
   );
 }
 
+export function ButtonDesplegable({ ...props }) {
+  return (
+    <button className="btn btn-rvsecondary flex items-center" {...props}>
+      <IoIosArrowDropdownCircle className="h-5 w-5" style={{ color: "#f8f9fa" }} />
+    </button>
+  );
+}
+
 ButtonSave.propTypes = {
+  onClick: PropTypes.func,
+};
+
+ButtonDesplegable.propTypes = {
   onClick: PropTypes.func,
 };
 
