@@ -99,6 +99,11 @@ const useVentasData = (filters) => {
     );
   };
 
+  const updateVenta = (id, updatedData) => {
+    setVentas(ventas.map(venta => 
+      venta.id === id ? { ...venta, ...updatedData } : venta
+    ));
+  };
 
   const removeDetalle = (codigo) => {
     setDetalles(prevDetalles =>
@@ -106,8 +111,12 @@ const useVentasData = (filters) => {
     );
   };
 
+  const refetchVentas = () => {
+    fetchVentas();
+  };
 
-  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle, totalRecaudado };
+
+  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle, totalRecaudado,updateVenta,refetchVentas  };
 };
 
 
