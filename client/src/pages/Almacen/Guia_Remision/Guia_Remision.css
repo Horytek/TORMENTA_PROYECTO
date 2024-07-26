@@ -69,7 +69,6 @@
   }
   
   td, th {
-    border-top: solid 3px #1f1a170e;
     padding: 10px 0px;
     align-items: center !important;
     white-space: nowrap; /* Evita que el texto se desborde */
