@@ -1,7 +1,9 @@
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
 
+
 const ConfirmationModal = ({ confirmDeleteModalOpen, handleDeleteVenta, setConfirmDeleteModalOpen }) => {
+
   if (!confirmDeleteModalOpen) return null;
 
   return (

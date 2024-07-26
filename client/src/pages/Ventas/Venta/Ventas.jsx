@@ -9,7 +9,8 @@ import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import { Link } from 'react-router-dom';
 import useVentasData from '../Data/data_venta';
-
+import { Toaster} from "react-hot-toast";
+import { handleDelete } from '../Data/delete_venta';
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
@@ -22,14 +23,20 @@ const Ventas = () => {
   });
 
 
-  const { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado } = useVentasData(filters);
+  const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado } = useVentasData(filters);
 
   // Estado para el manejo del modal y opciones de eliminación
-  const [selectedRowId, setSelectedRowId] = useState(null);
+  const [setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
 
+  const loadDetallesFromLocalStorage = () => {
+    const savedDetalles = localStorage.getItem('ventas');
+    return savedDetalles ? JSON.parse(savedDetalles) : [];
+  };
+
+  const d_ventas = loadDetallesFromLocalStorage();
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id) => {
     setSelectedRowId(id);
@@ -49,7 +56,7 @@ const Ventas = () => {
 
   // Función para eliminar una venta
   const handleDeleteVenta = () => {
-    removeVenta(selectedRowId);
+    handleDelete(d_ventas);
     closeModal();
     setConfirmDeleteModalOpen(false);
   };
@@ -66,6 +73,7 @@ const Ventas = () => {
 
   return (
     <div>
+      <Toaster />
       {/* Componente de migas de pan */}
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/ventas' }]} />
 

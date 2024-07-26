@@ -17,7 +17,7 @@ const getVentas = async (req, res) => {
     const [ventasResult] = await connection.query(
       `
         SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, SUBSTRING(com.num_comprobante, 6, 8) AS num,
-        tp.nom_tipocomp AS tipoComprobante, CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
+        case when tp.nom_tipocomp='Nota de venta' then 'Nota' else tp.nom_tipocomp end as tipoComprobante, CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
         cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total, CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero,
         ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal
         FROM venta v
@@ -380,6 +380,104 @@ const addCliente = async (req, res) => {
   }
 };
 
+const updateVenta = async (req, res) => {
+  const connection = await getConnection();
+
+  try {
+    const { id_venta } = req.body;
+
+    if (!id_venta ) {
+      return res
+        .status(400)
+        .json({ message: "Bad Request. Please provide id_venta and nuevo_estado." });
+    }
+
+    await connection.beginTransaction();
+
+    // Obtener los detalles de la venta
+    const [detallesResult] = await connection.query(
+      `
+      SELECT id_producto, cantidad
+      FROM detalle_venta
+      WHERE id_venta = ?
+      `,
+      [id_venta]
+    );
+
+    if (detallesResult.length === 0) {
+      throw new Error("No details found for the given sale.");
+    }
+
+    // Restaurar el stock de los productos
+    for (const detalle of detallesResult) {
+      const { id_producto, cantidad } = detalle;
+
+      // Obtener el stock actual del producto
+      const [inventarioResult] = await connection.query(
+        `
+        SELECT stock
+        FROM inventario
+        WHERE id_producto = ? AND id_almacen = (
+          SELECT id_almacen
+          FROM sucursal_almacen
+          WHERE id_sucursal = (
+            SELECT id_sucursal
+            FROM venta
+            WHERE id_venta = ?
+          )
+          LIMIT 1
+        )
+        `,
+        [id_producto, id_venta]
+      );
+
+      if (inventarioResult.length === 0) {
+        throw new Error(`No stock found for product ID ${id_producto}.`);
+      }
+
+      const stockActual = inventarioResult[0].stock;
+
+      // Actualizar el stock en la tabla inventario
+      await connection.query(
+        `
+        UPDATE inventario
+        SET stock = ?
+        WHERE id_producto = ? AND id_almacen = (
+          SELECT id_almacen
+          FROM sucursal_almacen
+          WHERE id_sucursal = (
+            SELECT id_sucursal
+            FROM venta
+            WHERE id_venta = ?
+          )
+          LIMIT 1
+        )
+        `,
+        [stockActual + cantidad, id_producto, id_venta]
+      );
+    }
+
+    // Cambiar el estado de la venta
+    await connection.query(
+      `
+      UPDATE venta
+      SET estado_venta = ?
+      WHERE id_venta = ?
+      `,
+      [0, id_venta]
+    );
+
+    await connection.commit();
+
+    res.json({ message: "Venta estado actualizado y stock restaurado." });
+  } catch (error) {
+    console.error("Error en el backend:", error.message); // Log para verificar errores
+    await connection.rollback();
+    res.status(500).send(error.message);
+  }
+};
+
+
 export const methods = {
   getVentas,
   getProductosVentas,
@@ -388,4 +486,5 @@ export const methods = {
   addCliente,
   getComprobante,
   getSucursal,
+  updateVenta,
 };

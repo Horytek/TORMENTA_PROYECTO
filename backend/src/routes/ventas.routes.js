@@ -10,5 +10,6 @@ router.get("/cliente_venta", ventasController.getClienteVentas);
 router.post("/cliente", ventasController.addCliente);
 router.get("/comprobante", ventasController.getComprobante);
 router.get("/sucursal", ventasController.getSucursal);
+router.post("/eliminar_venta", ventasController.updateVenta);
 
 export default router;

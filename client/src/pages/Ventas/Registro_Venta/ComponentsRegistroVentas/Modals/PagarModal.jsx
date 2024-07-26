@@ -51,7 +51,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         usuario: localStorage.getItem('usuario'),
         id_comprobante: comprobante_pago,
         id_cliente: clienteSeleccionado,
-        estado_venta: 0,
+        estado_venta: 2,
         f_venta: new Date().toISOString().slice(0, 10),
         igv: igv_total,
         detalles: detalles.map(detalle => ({

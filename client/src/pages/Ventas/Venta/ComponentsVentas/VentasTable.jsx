@@ -5,13 +5,33 @@ import { IoMdOptions } from "react-icons/io";
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
 
-  const toggleRow = (id) => {
+  const toggleRow = (id,estado) => {
     setExpandedRow(expandedRow === id ? null : id);
+
+    if (estado=='En proceso') {
+      estado= 2;
+    } else if (estado=='Inactivo') {
+      estado= 1;
+    } else if (estado=='Activo') {
+      estado= 0;
+    }
+
+    const datos_venta= {
+      id:id,
+      estado:estado,
+    }
+    localStorage.setItem('ventas', JSON.stringify(datos_venta));
   };
+/*
+  const saveDetallesToLocalStorage = () => {
+    localStorage.setItem('ventas', JSON.stringify(ventas));
+  };
+
+  saveDetallesToLocalStorage();*/
 
   const renderVentaRow = (venta) => (
     <React.Fragment key={venta.id}>
-      <tr onClick={() => toggleRow(venta.id)} className='tr-tabla-venta'>
+      <tr onClick={() => toggleRow(venta.id,venta.estado)} className='tr-tabla-venta'>
         <td className="font-bold text-center">
           <div>{venta.serieNum}</div>
           <div className="text-gray-500">{venta.num}</div>
