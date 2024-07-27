@@ -39,9 +39,21 @@ const Ventas = () => {
 
   const d_ventas = loadDetallesFromLocalStorage();
   // Funciones para abrir y cerrar el modal de opciones
-  const openModal = (id) => {
+  const openModal = (id,estado) => {
     setSelectedRowId(id);
     setModalOpen(true);
+
+    if (estado=='En proceso') {
+      estado= 2;
+    } else if (estado=='Inactivo') {
+      estado= 1;
+    } else if (estado=='Activo') {
+      estado= 0;
+    }
+
+    if(estado==1){
+      setModalOpen(false);
+    }
   };
 
   const closeModal = () => {

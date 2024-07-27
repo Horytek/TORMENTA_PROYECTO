@@ -66,7 +66,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           <IoMdOptions
             className={`ml-2 cursor-pointer text-gray-500 ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
             style={{ fontSize: '20px' }}
-            onClick={() => openModal(venta.id)}
+            onClick={() => openModal(venta.id,venta.estado)}
           />
         </td>
       </tr>
