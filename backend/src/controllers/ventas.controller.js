@@ -29,6 +29,7 @@ const getVentas = async (req, res) => {
         INNER JOIN vendedor ve ON ve.dni = s.dni
       	WHERE tp.nom_tipocomp LIKE ? AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=?
         GROUP BY id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, fecha, igv, cajero, cajeroId, estado
+        ORDER BY v.f_venta
         LIMIT ? OFFSET ?
       `,
       [nom_tipocomp+'%',razon_social+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,parseInt(limit), parseInt(offset)]
@@ -109,15 +110,23 @@ const getClienteVentas = async (req, res) => {
   try {
     const connection = await getConnection();
     const [result] = await connection.query(`
-              SELECT id_cliente as id,
+              			SELECT 
+    id_cliente AS id,
     COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS cliente_t,
-    COALESCE(NULLIF(dni, ''), ruc) AS documento_t, direccion AS direccion_t
-    FROM 
+    COALESCE(NULLIF(dni, ''), ruc) AS documento_t, 
+    direccion AS direccion_t
+FROM 
     cliente
-    WHERE 
+WHERE 
     (nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
     OR
     (razon_social IS NOT NULL AND razon_social <> '')
+ORDER BY 
+    (CASE 
+        WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 
+        ELSE 1 
+     END),
+    cliente_t;
           `);
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
@@ -182,9 +191,9 @@ const addVenta = async (req, res) => {
 
     const id_sucursal = sucursalResult[0].id_sucursal;
 
-    // Obtener id_tipocomprobante basado en el nombre del comprobante
+    // Obtener id_tipocomprobante y nom_tipocomp basado en el nombre del comprobante
     const [comprobanteResult] = await connection.query(
-      "SELECT id_tipocomprobante FROM tipo_comprobante WHERE nom_tipocomp=?",
+      "SELECT id_tipocomprobante, nom_tipocomp FROM tipo_comprobante WHERE nom_tipocomp=?",
       [id_comprobante]
     );
 
@@ -194,7 +203,8 @@ const addVenta = async (req, res) => {
       throw new Error("Comprobante type not found.");
     }
 
-    const id_tipocomprobante = comprobanteResult[0].id_tipocomprobante;
+    const { id_tipocomprobante, nom_tipocomp } = comprobanteResult[0];
+    const prefijoBase = nom_tipocomp.charAt(0); // Usa nom_tipocomp como prefijo
 
     // Obtener el último número de comprobante y generar el siguiente
     const [ultimoComprobanteResult] = await connection.query(
@@ -208,23 +218,20 @@ const addVenta = async (req, res) => {
     if (ultimoComprobanteResult.length > 0) {
       const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
       const partes = ultimoNumComprobante.split("-");
+      const serie = partes[0].substring(1); // Obtener la serie numérica actual
       const numero = parseInt(partes[1], 10) + 1;
-
+    
       // Verificar si el número actual supera el límite
       if (numero > 99999999) {
         // Cambiar de serie si el límite es alcanzado
-        const nuevoPrefijo = `B${
-          parseInt(partes[0].substring(1)) + 1
-        }`.padStart(3, "0");
-        nuevoNumComprobante = `${nuevoPrefijo}-00000001`;
+        const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
+        nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
       } else {
-        nuevoNumComprobante = `${partes[0]}-${numero
-          .toString()
-          .padStart(8, "0")}`;
+        nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
       }
     } else {
       // Si no hay comprobantes, comenzar con la primera serie
-      nuevoNumComprobante = "B001-00000001";
+      nuevoNumComprobante = `${prefijoBase}001-00000001`;
     }
 
     console.log("Nuevo número de comprobante:", nuevoNumComprobante); // Log para verificar el nuevo número de comprobante
@@ -241,7 +248,7 @@ const addVenta = async (req, res) => {
 
     // Obtener id_cliente basado en el nombre completo o razón social
     const [clienteResult] = await connection.query(
-      "SELECT id_cliente FROM cliente WHERE CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?",
+      "SELECT id_cliente, COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS cliente_t FROM cliente WHERE CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ? ORDER BY (CASE WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 ELSE 1 END), cliente_t;",
       [id_cliente, id_cliente]
     );
 
@@ -324,6 +331,10 @@ const addVenta = async (req, res) => {
     res.status(500).send(error.message);
   }
 };
+
+
+
+
 
 const addCliente = async (req, res) => {
   const connection = await getConnection();

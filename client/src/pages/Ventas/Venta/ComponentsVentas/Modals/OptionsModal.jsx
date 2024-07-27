@@ -6,27 +6,16 @@ import toast from 'react-hot-toast';
 const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setConfirmDeleteModalOpen, deleteOptionSelected }) => {
   const [sendToSunat, setSendToSunat] = useState(false);
 
-  // Maneja el cambio del checkbox "Enviar datos a la Sunat"
-  const handleSendToSunatChange = () => {
-    if (sendToSunat) {
-      setSendToSunat(false);
-    } else if (!sendToSunat) {
+  const handleCheckboxChange = (option) => {
+    if (option === 'sendToSunat') {
       setSendToSunat(true);
-      //toggleDeleteDetalleOption(false); // Deselecciona el checkbox de "Eliminar la Venta"
-    } 
-  };
-
-  // Maneja el cambio del checkbox "Eliminar la Venta"
-  const handleDeleteOptionChange = () => {
-    if (deleteOptionSelected) {
       toggleDeleteDetalleOption(false);
-    } else if (!deleteOptionSelected) {
+    } else if (option === 'deleteOption') {
+      setSendToSunat(false);
       toggleDeleteDetalleOption(true);
-      //setSendToSunat(false); // Deselecciona el checkbox de "Enviar datos a la Sunat"
     }
   };
 
-  // Maneja el clic en el botón "Aceptar"
   const handleAccept = () => {
     if (sendToSunat) {
       closeModal();
@@ -36,10 +25,15 @@ const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setCon
         toast.success('Los datos se han enviado con éxito!');
       }, 3000);
     } else if (deleteOptionSelected) {
+      handleDeleteVenta();
       setConfirmDeleteModalOpen(true);
     }
   };
 
+  const handleDeleteVenta = () => {
+    // Agrega aquí la lógica para eliminar la venta
+    console.log('Eliminando la venta...');
+  };
 
   if (!modalOpen) return null;
 
@@ -56,7 +50,7 @@ const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setCon
               type="checkbox"
               id="sendToSunat"
               className="custom-checkbox mr-2 relative"
-              onChange={handleSendToSunatChange}
+              onChange={() => handleCheckboxChange('sendToSunat')}
               checked={sendToSunat}
             />{' '}
             <p>Enviar los datos a la Sunat</p>
@@ -66,7 +60,7 @@ const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setCon
               type="checkbox"
               id="eliminar"
               className="custom-checkbox mr-2 relative"
-              onChange={handleDeleteOptionChange}
+              onChange={() => handleCheckboxChange('deleteOption')}
               checked={deleteOptionSelected}
             />{' '}
             <p>Eliminar la Venta</p>
