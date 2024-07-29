@@ -1,55 +1,24 @@
 import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaIngresos from './ComponentsNotaIngreso/NotaIngresoTable';
-import useIngresosData from './data/Nota_Ingreso_Data';
-import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+import useIngresosData from './data/data_ingreso';
 import './Nota_ingreso.css';
 import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
 
 const Ingresos = () => {
-  const { ingresos } = useIngresosData();
-  const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
-  const [isModalOpenExcel, setIsModalOpenExcel] = useState(false);
-  const [isModalOpenExcelDetalle, setIsModalOpenExcelDetalle] = useState(false);
+  const [filters, setFilters] = useState({
+    fecha_i: '',
+    fecha_e: '',
+    razon: '',
+    almacen: '%',
+  });
+  const [ingresos, setIngresos] = useState([]);
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(null);
 
-  const openModalImprimir = () => {
-    setIsModalOpenImprimir(true);
-  };
-
-  const closeModalImprimir = () => {
-    setIsModalOpenImprimir(false);
-  };
-
-  const openModalExcel = () => {
-    setIsModalOpenExcel(true);
-  };
-
-  const closeModalExcel = () => {
-    setIsModalOpenExcel(false);
-  };
-
-  const openModalExcelDetalle = () => {
-    setIsModalOpenExcelDetalle(true);
-  };
-
-  const closeModalExcelDetalle = () => {
-    setIsModalOpenExcelDetalle(false);
-  };
-
-  const handleConfirmImprimir = () => {
-    console.log('Nota de salida impresa.');
-    setIsModalOpenImprimir(false);
-  };
-
-  const handleConfirmExcel = () => {
-    console.log('Exportar a Excel.');
-    setIsModalOpenExcel(false);
-  };
-
-  const handleConfirmExcelDetalle = () => {
-    console.log('Exportar a Excel Detalle.');
-    setIsModalOpenExcelDetalle(false);
+  const handleFiltersChange = async (newFilters) => {
+    setFilters(newFilters);
+    const data = await useIngresosData(newFilters); // Llama la función para obtener los datos
+    setIngresos(data.ingresos); // Establece los ingresos obtenidos en el estado
   };
 
   const handleAlmacenChange = (almacen) => {
@@ -67,33 +36,10 @@ const Ingresos = () => {
         </h1>
       </div>
       {/* Componente de filtro de ingresos */}
-      <FiltrosIngresos onAlmacenChange={handleAlmacenChange} />
+      <FiltrosIngresos onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange} />
       {/* Componente de tabla de ingresos */}
       <TablaIngresos ingresos={ingresos} />
-      {isModalOpenImprimir && (
-        <ConfirmationModal
-          message='¿Desea imprimir la nota de ingreso?'
-          onClose={closeModalImprimir}
-          isOpen={isModalOpenImprimir}
-          onConfirm={handleConfirmImprimir}
-        />
-      )}
-      {isModalOpenExcel && (
-        <ConfirmationModal
-          message='¿Desea exportar a Excel?'
-          onClose={closeModalExcel}
-          isOpen={isModalOpenExcel}
-          onConfirm={handleConfirmExcel}
-        />
-      )}
-      {isModalOpenExcelDetalle && (
-        <ConfirmationModal
-          message='¿Desea exportar a Excel Detalle?'
-          onClose={closeModalExcelDetalle}
-          isOpen={isModalOpenExcelDetalle}
-          onConfirm={handleConfirmExcelDetalle}
-        />
-      )}
+
       <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
         <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>
           {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'Seleccione un almacén'}

@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import './NotaIngresoTable.css';
+
 const TablaIngresos = ({ ingresos }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
   const [isModalOpenClonar, setIsModalOpenClonar] = useState(false);
+
   const handleSelectChange2 = (event, id) => {
     const value = event.target.value;
     switch (value) {
@@ -35,6 +37,7 @@ const TablaIngresos = ({ ingresos }) => {
   const closeModalClonar = () => {
     setIsModalOpenClonar(false);
   };
+
   const handleConfirmImprimir2 = () => {
     setIsModalOpenImprimir2(false);
   };
@@ -48,15 +51,15 @@ const TablaIngresos = ({ ingresos }) => {
   };
 
   const handleSelectClick = (event) => {
-    event.stopPropagation(); // Evita la propagación del clic al tr de la tabla
+    event.stopPropagation();
   };
 
   const getEstadoClassName = (estado) => {
-    switch (estado.toLowerCase()) {
-      case 'activo':
-        return 'estado-activo';
-      case 'inactivo':
+    switch (estado) {
+      case 1:
         return 'estado-inactivo';
+      case 0:
+        return 'estado-activo';
       default:
         return '';
     }
@@ -77,27 +80,27 @@ const TablaIngresos = ({ ingresos }) => {
         <td className="text-center">{ingreso.documento}</td>
         <td className="text-center">{ingreso.proveedor}</td>
         <td className="text-center">{ingreso.concepto}</td>
-        <td className="text-center">{ingreso.oCompra}</td>
-        <td className="text-center">{ingreso.factura}</td>
+        <td className="text-center">{ingreso.almacen_O}</td>
+        <td className="text-center">{ingreso.almacen_D}</td>
         <td className="text-center">
           <p className={getEstadoClassName(ingreso.estado)}>
-            {ingreso.estado}
+            {ingreso.estado === 1 ? 'Inactivo' : 'Activo'}
           </p>
         </td>
         <td className='text-center'>
           <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick} onChange={handleSelectChange2}>
-            <option value="" selected>Seleccione...</option>
+            <option value="">Seleccione...</option>
             <option value="imprimir2">Imprimir</option>
             <option value="anular">Anular</option>
             <option value="clonar">Clonar</option>
           </select>
         </td>
       </tr>
-      {expandedRow === ingreso.id && renderVentaDetails(ingreso.id, ingreso.detalles)}
+      {expandedRow === ingreso.id && renderIngresoDetails(ingreso.id, ingreso.detalles)}
     </React.Fragment>
   );
 
-  const renderVentaDetails = (id, detalles) => (
+  const renderIngresoDetails = (id, detalles) => (
     <tr className="bg-gray-100">
       <td colSpan="9">
         <div className="container-table-details px-4">
@@ -105,28 +108,24 @@ const TablaIngresos = ({ ingresos }) => {
             <thead>
               <tr>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Código</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Línea</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
                 <th className="w-3/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Descripción</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Cantidad</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Unidad</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Precio</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Almacén</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Bar</th>
               </tr>
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
                 <tr key={index} onClick={() => handleDetailClick(id)} className='tr-tabla-detalle-ingreso'>
                   <td className="text-center py-2 px-4">{detalle.codigo}</td>
-                  <td className="text-center py-2 px-4">{detalle.linea}</td>
+                  <td className="text-center py-2 px-4">{detalle.marca}</td>
                   <td className="text-center py-2 px-4">{detalle.descripcion}</td>
                   <td className="text-center py-2 px-4">{detalle.cantidad}</td>
-                  <td className="text-center py-2 px-4">{detalle.um}</td>
+                  <td className="text-center py-2 px-4">{detalle.unidad}</td>
                   <td className="text-center py-2 px-4">{detalle.precio}</td>
                   <td className="text-center py-2 px-4">{detalle.total}</td>
-                  <td className="text-center py-2 px-4">{detalle.almacen}</td>
-                  <td className="text-center py-2 px-4">{detalle.bar}</td>
                 </tr>
               ))}
             </tbody>
@@ -145,8 +144,8 @@ const TablaIngresos = ({ ingresos }) => {
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOCUMENTO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ORDEN COMPRA</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FACTURA</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACÉN ORIGEN</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACÉN DESTINO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
           </tr>
@@ -172,10 +171,6 @@ const TablaIngresos = ({ ingresos }) => {
 
 TablaIngresos.propTypes = {
   ingresos: PropTypes.array.isRequired,
-  modalOpen: PropTypes.bool.isRequired,
-  deleteOptionSelected: PropTypes.bool.isRequired,
-  openModal: PropTypes.func.isRequired,
-  currentPage: PropTypes.number.isRequired,
 };
 
 export default TablaIngresos;
