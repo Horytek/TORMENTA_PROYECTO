@@ -1,77 +1,20 @@
 // Comprobante.jsx
 import React, { useState, useEffect } from 'react';
 import img from '@/assets/icono.ico';
-import './ComprobantePDF.css';
+import './CotizacionPDF.css';
 import QRCode from 'qrcode.react';
 import PropTypes from 'prop-types';
+import NumeroALetras from '../../../../ConvertidorDeNumALetras/ConvertidorDeNumALetras';
 
-const numeroALetras = (num) => {
-    const unidades = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
-    const decenas = ['diez', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
-    const centenas = ['ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
-    const especiales = {
-        11: 'once', 12: 'doce', 13: 'trece', 14: 'catorce', 15: 'quince',
-        16: 'dieciséis', 17: 'diecisiete', 18: 'dieciocho', 19: 'diecinueve'
-    };
-
-    const getUnidades = (num) => unidades[num];
-    const getDecenas = (num) => {
-        if (num < 10) return getUnidades(num);
-        if (num < 20) return especiales[num];
-        if (num < 100) return decenas[Math.floor(num / 10) - 1] + (num % 10 ? ' y ' + getUnidades(num % 10) : '');
-        return '';
-    };
-
-    const getCentenas = (num) => {
-        if (num < 100) return getDecenas(num);
-        if (num === 100) return 'cien';
-        if (num < 1000) return centenas[Math.floor(num / 100) - 1] + (num % 100 ? ' ' + getDecenas(num % 100) : '');
-        return '';
-    };
-
-    const getMiles = (num) => {
-        if (num < 1000) return getCentenas(num);
-        return (Math.floor(num / 1000) === 1 ? 'mil' : getCentenas(Math.floor(num / 1000)) + ' mil') + (num % 1000 ? ' ' + getCentenas(num % 1000) : '');
-    };
-
-    const getMillones = (num) => {
-        if (num < 1000000) return getMiles(num);
-        return (Math.floor(num / 1000000) === 1 ? 'un millón' : getCentenas(Math.floor(num / 1000000)) + ' millones') + (num % 1000000 ? ' ' + getMiles(num % 1000000) : '');
-    };
-
-    const convertirDecimales = (num) => {
-        const unidadesDecimales = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
-        const decenasDecimales = ['diez', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
-        const especialesDecimales = {
-            11: 'once', 12: 'doce', 13: 'trece', 14: 'catorce', 15: 'quince',
-            16: 'dieciséis', 17: 'diecisiete', 18: 'dieciocho', 19: 'diecinueve'
-        };
-
-        if (num < 10) return unidadesDecimales[num];
-        if (num < 20) return especialesDecimales[num];
-        if (num < 100) return decenasDecimales[Math.floor(num / 10) - 1] + (num % 10 ? ' y ' + unidadesDecimales[num % 10] : '');
-        return '';
-    };
-
-    const parteEntera = Math.floor(num);
-    const parteDecimal = Math.round((num - parteEntera) * 100);
-
-    const enteroLetras = getMillones(parteEntera);
-    const decimalLetras = parteDecimal > 0 ? ` con ${convertirDecimales(parteDecimal)} ${parteDecimal === 1 ? 'centimo' : 'centimos'}` : '';
-
-    return `${enteroLetras}${decimalLetras}`.replace(/\s+/g, ' ').trim();
-};
+// Uso en el componente React
 
 const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
 
-    const { detalles, fecha, total_t, igv, totalImporte_venta, descuento_venta ,nombre_cliente, documento_cliente, direccion_cliente} = datosVentaComprobante;
+    const { detalles, fecha, total_t, igv, totalImporte_venta, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
     const [currentDate, setCurrentDate] = useState('');
-    const totalEnLetras = numeroALetras(total_t).toUpperCase();
-
     const [pdfUrl, setPdfUrl] = useState(null);
 
     const generatePDF = async () => {
-
         const publicPdfUrl = "https://www.tormentajeans.com";
         setPdfUrl(publicPdfUrl);
     };
@@ -83,7 +26,6 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
         const seconds = String(now.getSeconds()).padStart(2, '0');
         return `${hours}:${minutes}:${seconds}`;
     };
-
 
     useEffect(() => {
         const today = new Date();
@@ -193,7 +135,12 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
             <div className="bg-white rounded-lg shadow-lg">
                 <div className="px-4 py-2 border-b border-gray-700 rounded-lg bg-gray-100">
                     <p className="text-md font-semibold text-gray-800 mb-1">OBSERVACION:</p>
-                    <p className="text-md font-semibold text-gray-800">SON: {totalEnLetras} Y 00/100 SOLES</p>
+                    <div>
+                        <p className="text-md font-semibold text-gray-800 items-center">
+                            SON: <NumeroALetras num={total_t} />
+                        </p>
+                    </div>
+
                 </div>
 
                 <div className="flex flex-wrap justify-between mb-6">

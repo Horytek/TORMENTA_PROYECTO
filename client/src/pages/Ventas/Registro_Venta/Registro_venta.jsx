@@ -12,7 +12,7 @@ import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';
 import './Registro_Venta.css';
 import useClientesData from '../Data/data_cliente_venta';
 import { useReactToPrint } from 'react-to-print';
-import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/ComprobantePDF/ComprobantePDF';  // Asegúrate de ajustar la ruta según sea necesario
+import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes/CotizacionPDF/CotizacionPDF';  // Asegúrate de ajustar la ruta según sea necesario
 import PropTypes from 'prop-types';
 
 const Registro_Venta = () => {
@@ -199,7 +199,7 @@ const Registro_Venta = () => {
               <MdCleaningServices style={{ fontSize: '22px' }} />
               Limpiar</button>
             <div className='items-center flex ml-2'>
-              <button className="btn btn-cotizar  flex items-center" onClick={handlePrint}>
+              <button className="btn btn-cotizar  flex items-center" onClick={()=> handlePrint(true)} disabled={detalles.length === 0}>
                 <GrDocumentPerformance style={{ fontSize: '22px' }} />
                 Cotizar</button>
             </div>

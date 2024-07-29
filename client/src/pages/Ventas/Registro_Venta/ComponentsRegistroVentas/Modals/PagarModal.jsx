@@ -1,17 +1,20 @@
-import { useState} from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { BsCashCoin, BsCash } from "react-icons/bs";
 import { IoCloseSharp, IoPersonAddSharp } from 'react-icons/io5';
 import { GrFormAdd } from "react-icons/gr";
-import InputField from '../PagarInputs';
-import SelectField from '../PagarSelectField';
+import InputField from '../Inputs/PagarInputs';
+import SelectField from '../Inputs/PagarSelectField';
 import VentaExitosaModal from './VentaExitosaModal';
 import useClientesData from '../../../Data/data_cliente_venta';
 import { validateDecimalInput, handleCobrar } from '../../../Data/add_venta';
 import { handleGuardarCliente } from '../../../Data/add_cliente';
 import { GrValidate } from "react-icons/gr";
+import useProductosData from '../../../Data/data_producto_venta';
+import { generateReceiptContent } from '../Comprobantes/Voucher/Voucher';
 
 const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
+    const { productos } = useProductosData();
     const [montoRecibido, setMontoRecibido] = useState('');
     const [descuentoActivado, setDescuentoActivado] = useState(false);
     const [montoDescuento, setMontoDescuento] = useState(0);
@@ -24,7 +27,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [showConfirmacion, setShowConfirmacion] = useState(false);
     const [showNuevoCliente, setShowNuevoCliente] = useState(false);
     const [tipo_cliente, settipo_cliente] = useState('Natural');
-    const { clientes, addCliente} = useClientesData(); // Llama al hook personalizado para obtener los clientes
+    const { clientes, addCliente } = useClientesData(); // Llama al hook personalizado para obtener los clientes
     const [clienteSeleccionado, setClienteSeleccionado] = useState('');
     const loadDetallesFromLocalStorage = () => {
         const savedDetalles = localStorage.getItem('detalles');
@@ -78,8 +81,62 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         handleCobrar(datosVenta, setShowConfirmacion);
+        handlePrint();  // Esto llamará a la función de impresión
+    };
+    const cliente = clientes.find(cliente => cliente.nombre === clienteSeleccionado);
+
+    const datosVentaComprobante = {
+
+        fecha: new Date().toISOString().slice(0, 10),
+        nombre_cliente: cliente ? cliente.nombre : '',
+        documento_cliente: cliente ? cliente.documento : '',
+        direccion_cliente: cliente ? cliente.direccion : '',
+        igv: (detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2)) * 0.18,
+        total_t: totalAPagarConDescuento,
+        totalImporte_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2),
+        descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
+        vuelto: cambio >= 0 ? cambio.toFixed(2) : '0.00'+ cambio2 >= 0 ? cambio2.toFixed(2) : '0.00'+ cambio3 >= 0 ? cambio3.toFixed(2) : '0.00',
+        recibido: (montoRecibido + montoRecibido2 + montoRecibido3),
+        formadepago: metodo_pago? metodo_pago : ''+", "+metodo_pago2? metodo_pago2 : ''+ ", "+metodo_pago3? metodo_pago3 : '',
+        detalles: detalles.map(detalle => {
+            const producto = productos.find(producto => producto.codigo === detalle.codigo);
+            return {
+                id_producto: detalle.codigo,
+                nombre: detalle.nombre,
+                undm: producto ? producto.undm : '',
+                nom_marca: producto ? producto.nom_marca : '',
+                cantidad: detalle.cantidad,
+                precio: parseFloat(detalle.precio),
+                descuento: parseFloat(detalle.descuento),
+                sub_total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
+            };
+        }).filter(detalle => detalle !== null),
     };
 
+    const handlePrint = async () => {
+        let nombreImpresora = "EPSON L395 Series";
+        let api_key = "123456";
+
+        // eslint-disable-next-line no-undef
+        const conector = new connetor_plugin();
+        const content = generateReceiptContent(datosVentaComprobante, datosVenta);
+
+        conector.textaling("center");
+        // conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")
+        content.split('\n').forEach(line => {
+            conector.text(line);
+        });
+        conector.qr("https://abrazasoft.com")
+        conector.feed(2);
+        conector.cut("0");
+
+        const resp = await conector.imprimir(nombreImpresora, api_key);
+        if (resp === true) {
+            console.log("Impresión exitosa");
+        } else {
+            console.log("Problema al imprimir: " + resp);
+        }
+    };
 
     const handleGuardarClientes = (e) => {
         e.preventDefault();
@@ -90,34 +147,34 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const handleValidate = async () => {
         if (dniOrRuc != '') {
             const url =
-            tipo_cliente === 'Natural'
-              ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`
-              : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`;
-        
-          try {
-            const response = await fetch(url);
-            const data = await response.json();
-  
-            if (tipo_cliente === 'Natural') {
-              setNombreCliente(`${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`);
-              setDireccionCliente('');
-            } else {
-              if (data.razonSocial) {
-                setNombreCliente(data.razonSocial);// Asumiendo que la API devuelve un array de telefonos
-                setDireccionCliente(data.direccion || ''); // Asumiendo que la API devuelve "direccion"
-              } else {
-                alert('No se encontraron datos para el RUC proporcionado');
-              }
+                tipo_cliente === 'Natural'
+                    ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`
+                    : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (tipo_cliente === 'Natural') {
+                    setNombreCliente(`${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`);
+                    setDireccionCliente('');
+                } else {
+                    if (data.razonSocial) {
+                        setNombreCliente(data.razonSocial);// Asumiendo que la API devuelve un array de telefonos
+                        setDireccionCliente(data.direccion || ''); // Asumiendo que la API devuelve "direccion"
+                    } else {
+                        alert('No se encontraron datos para el RUC proporcionado');
+                    }
+                }
+            } catch (error) {
+                console.error('Error al validar el DNI/RUC:', error);
+                alert('Hubo un error al validar el DNI/RUC');
             }
-          } catch (error) {
-            console.error('Error al validar el DNI/RUC:', error);
-            alert('Hubo un error al validar el DNI/RUC');
-          }
         } else if (dniOrRuc === '') {
             setNombreCliente('');// Asumiendo que la API devuelve un array de telefonos
             setDireccionCliente(''); // Asumiendo que la API devuelve "direccion"
         }
-      };
+    };
 
     return (
         <div className="modal-container" style={{ overflowY: 'auto' }} >
@@ -137,17 +194,17 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                             <div>
                                 <label className="block text-gray-800 mb-2 font-semibold">Seleccione el cliente</label>
                                 <div className='flex items-center justify-between'>
-                                <select
-                                className="input-c w-40 mr-3"
-                                style={{ border: "solid 0.1rem #171a1f28" }}
-                                value={clienteSeleccionado}
-                                onChange={(e) => setClienteSeleccionado(e.target.value)}
-                                                                    >
-                                    <option value="">Seleccionar cliente</option>
-                                    {clientes.map((cliente, index) => (
-                                        <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
-                                    ))}
-                                     </select>
+                                    <select
+                                        className="input-c w-40 mr-3"
+                                        style={{ border: "solid 0.1rem #171a1f28" }}
+                                        value={clienteSeleccionado}
+                                        onChange={(e) => setClienteSeleccionado(e.target.value)}
+                                    >
+                                        <option value="">Seleccionar cliente</option>
+                                        {clientes.map((cliente, index) => (
+                                            <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
+                                        ))}
+                                    </select>
                                     <button type="button" className="btn-nuevo-cliente" onClick={() => setShowNuevoCliente(true)}>
                                         <GrFormAdd style={{ fontSize: '24px' }} />
                                     </button>
@@ -261,7 +318,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         style={{ height: "40px", border: "solid 0.2rem #171a1f28", backgroundColor: "#f5f5f5" }}
                                         className={"input-c w-40 ml-2 focus:outline-none"}
                                     />
-                                 
+
                                 </div>
                                 <div className="flex justify-between mb-4">
                                     <InputField
@@ -311,7 +368,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                         )}
                         {faltante2 > 0 && (
                             <div>
-                                 <div className="flex justify-center text-center mb-4">
+                                <div className="flex justify-center text-center mb-4">
                                     <InputField
                                         label="Total a pagar"
                                         symbol="S/."
@@ -320,11 +377,11 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         style={{ height: "40px", border: "solid 0.2rem #171a1f28", backgroundColor: "#f5f5f5" }}
                                         className={"input-c w-40 ml-2 focus:outline-none"}
                                     />
-                                 
+
                                 </div>
                                 <div className="flex justify-between mb-4">
                                     <InputField
-                                                                            placeholder={faltante2.toFixed(2)}
+                                        placeholder={faltante2.toFixed(2)}
 
                                         label="Monto recibido adicional"
                                         symbol="S/."
@@ -370,6 +427,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
 
                             </div>
                         )}
+
                         <div className="flex justify-end mt-4">
                             <button type="submit" className="btn btn-cobrar mr-0" onClick={handleSubmit}>
                                 <BsCashCoin className="mr-2" />
