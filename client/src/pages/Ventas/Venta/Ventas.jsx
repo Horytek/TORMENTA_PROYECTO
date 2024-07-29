@@ -38,6 +38,13 @@ const Ventas = () => {
   };
 
   const d_ventas = loadDetallesFromLocalStorage();
+
+
+  const saveDetallesToLocalStorage = () => {
+    localStorage.setItem('total_ventas', JSON.stringify(ventas));
+  };
+
+  saveDetallesToLocalStorage();
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id,estado) => {
     setSelectedRowId(id);

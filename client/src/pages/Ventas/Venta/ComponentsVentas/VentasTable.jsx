@@ -5,7 +5,7 @@ import { IoMdOptions } from "react-icons/io";
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
 
-  const toggleRow = (id,estado) => {
+  const toggleRow = (id,estado,venta) => {
     setExpandedRow(expandedRow === id ? null : id);
 
     if (estado=='En proceso') {
@@ -18,9 +18,34 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
 
     const datos_venta= {
       id:id,
+      serieNum:venta.serieNum,
+      num:venta.num,
+      tipoComprobante:venta.tipoComprobante,
       estado:estado,
+      igv:venta.igv,
+      nombre: venta.cliente,
+      documento: venta.ruc,
+      fechaEmision:venta.fecha_iso,
     }
+
     localStorage.setItem('ventas', JSON.stringify(datos_venta));
+
+    const saveDetallesToLocalStorage = () => {
+      localStorage.setItem('new_detalle', JSON.stringify(venta.detalles));
+    };
+  
+    saveDetallesToLocalStorage();
+
+
+    const datosClientes = {
+      nombre: venta.cliente,
+      documento: venta.ruc,
+  };
+
+  const saveDetallesToLocalStorage1 = () => {
+      localStorage.setItem('datosClientes', JSON.stringify({datosClientes}));
+    };
+    saveDetallesToLocalStorage1();
   };
 /*
   const saveDetallesToLocalStorage = () => {
@@ -31,7 +56,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
 
   const renderVentaRow = (venta) => (
     <React.Fragment key={venta.id}>
-      <tr onClick={() => toggleRow(venta.id,venta.estado)} className='tr-tabla-venta'>
+      <tr onClick={() => toggleRow(venta.id,venta.estado,venta)} className='tr-tabla-venta'>
         <td className="font-bold text-center">
           <div>{venta.serieNum}</div>
           <div className="text-gray-500">{venta.num}</div>
