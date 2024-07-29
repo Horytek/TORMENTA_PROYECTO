@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import { IoIosSearch } from "react-icons/io";
-import { LuFilter } from "react-icons/lu";
 import TablaIngresos from './ComponentsNotaIngreso/NotaIngresoTable';
-import { Link } from 'react-router-dom';
 import useIngresosData from './data/Nota_Ingreso_Data';
-import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
-import { FaPlus } from "react-icons/fa";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import './Nota_ingreso.css';
+import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
 
 const Ingresos = () => {
   const { ingresos } = useIngresosData();
   const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
   const [isModalOpenExcel, setIsModalOpenExcel] = useState(false);
   const [isModalOpenExcelDetalle, setIsModalOpenExcelDetalle] = useState(false);
+  const [almacenSeleccionado, setAlmacenSeleccionado] = useState(null);
+
   const openModalImprimir = () => {
     setIsModalOpenImprimir(true);
   };
@@ -54,19 +52,9 @@ const Ingresos = () => {
     setIsModalOpenExcelDetalle(false);
   };
 
-  const handleSelectChange = (event) => {
-    const value = event.target.value;
-    if (value === "imprimir") {
-      openModalImprimir();
-    } else if (value === "excel") {
-      openModalExcel();
-    } else if (value === "excel-detalle") {
-      openModalExcelDetalle();
-    }
+  const handleAlmacenChange = (almacen) => {
+    setAlmacenSeleccionado(almacen);
   };
-
-
-
 
   return (
     <div>
@@ -78,55 +66,10 @@ const Ingresos = () => {
           Nota de ingreso
         </h1>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
-        <div className="flex items-center gap-2">
-          <h6 className='font-bold'>Almacén:</h6>
-          <select className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' htmlFor="">
-            <option>ALM CENTRAL ESCALERA</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <h6 className='font-bold'>Nombre o razón social:</h6>
-          <div className='relative'>
-            <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-              <IoIosSearch className='w-4 h-4 text-gray-500' />
-            </div>
-            <input
-              type="text"
-              placeholder=''
-              className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5'
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
-          <input type="date" className="border border-gray-300 rounded-lg p-2.5" />
-        </div>
-        <div className="flex items-center gap-2">
-          <ButtonNormal color={'#01BDD6'}>
-            <LuFilter className='icon-white w-4 h-4 ' />
-          </ButtonNormal>
-          <div className='flex items-center gap-2'>
-            <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" onChange={handleSelectChange}>
-              <option value="">Seleccione...</option>
-              <option value="imprimir">Imprimir</option>
-              <option value="excel">Excel</option>
-              <option value="excel-detalle">Excel Detalle</option>
-            </select>
-          </div>
-          <br />
-          <br />
-          <Link to="/almacen/nota_ingreso/registro_ingreso">
-            <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
-              Nota de ingreso
-            </ButtonIcon>
-          </Link>
-        </div>
-      </div>
+      {/* Componente de filtro de ingresos */}
+      <FiltrosIngresos onAlmacenChange={handleAlmacenChange} />
       {/* Componente de tabla de ingresos */}
-      <TablaIngresos
-        ingresos={ingresos}
-      />
+      <TablaIngresos ingresos={ingresos} />
       {isModalOpenImprimir && (
         <ConfirmationModal
           message='¿Desea imprimir la nota de ingreso?'
@@ -152,7 +95,9 @@ const Ingresos = () => {
         />
       )}
       <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
-        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }} >SUCURSAL: TIENDA ARICA 3 / CAJA ARICA3</h1>
+        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>
+          {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'Seleccione un almacén'}
+        </h1>
       </div>
     </div>
   );
