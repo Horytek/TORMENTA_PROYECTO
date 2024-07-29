@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { MdEdit } from 'react-icons/md';
 import { FaTrash } from 'react-icons/fa';
 
-const TablaGuias = ({ guias, handleOpenConfirmationModal }) => {
+const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
   const [expandedRow, setExpandedRow] = useState(null);
 
   const toggleRow = (id) => {
@@ -12,7 +12,7 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal }) => {
 
   const renderActions = (row) => (
     <div className="flex justify-center items-center">
-      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => console.log('Editar Producto')}>
+      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => handleEditGuia(row)}>
         <MdEdit />
       </button>
       <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(row)}>
@@ -21,34 +21,36 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal }) => {
     </div>
   );
 
-  const renderGuiaRow = (guia) => (
-    <React.Fragment key={guia.id}>
-      <tr onClick={() => toggleRow(guia.id)} className='tr-tabla-guia'>
-        <td className="text-center">{guia.fecha}</td>
-        <td className="text-center">{guia.numGuia}</td>
-        <td className="font-bold text-center">
-          <div className='whitespace-normal'>{guia.cliente}</div>
-          <div className="text-gray-500 whitespace-normal">{guia.documento}</div>
-        </td>
-        <td className="text-center">{guia.vendedor}</td>
-        <td className="font-bold text-center">
-          <div>{guia.serieNum}</div>
-          <div className="text-gray-500">{guia.num}</div>
-        </td>
-        <td className="text-center">{guia.total}</td>
-        <td className="text-center">{guia.concepto}</td>
-        <td className="text-center" style={{ color: guia.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400" }}>
-          <div className='ml-2 px-2.5 py-1.5 rounded-full' style={{ background: guia.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }}>
-            <span>{guia.estado}</span>
-          </div>
-        </td>
-        <td className="text-center">
-          {renderActions(guia)}
-        </td>
-      </tr>
-      {expandedRow === guia.id && renderGuiaDetails(guia.detalles)}
-    </React.Fragment>
-  );
+  const renderGuiaRow = (guia) => {
+    console.log('Rendering Guia:', guia); // Log for debugging
+
+    return (
+      <React.Fragment key={guia.id}>
+        <tr onClick={() => toggleRow(guia.id)} className="tr-tabla-guia">
+          <td className="text-center">{guia.fecha}</td>
+          <td className="text-center">{guia.numGuia}</td>
+          <td className="font-bold text-center">
+            <div className="whitespace-normal">{guia.cliente}</div>
+            <div className="text-gray-500 whitespace-normal">{guia.documento}</div>
+          </td>
+          <td className="text-center">{guia.vendedor}</td>
+          <td className="font-bold text-center">
+            <div>{guia.serieNum}</div>
+            <div className="text-gray-500">{guia.num}</div>
+          </td>
+          <td className="text-center">{guia.total}</td>
+          <td className="text-center">{guia.concepto}</td>
+          <td className="text-center" style={{ color: guia.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400" }}>
+            <div className="ml-2 px-2.5 py-1.5 rounded-full" style={{ background: guia.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }}>
+              <span>{guia.estado}</span>
+            </div>
+          </td>
+          <td className="text-center">{renderActions(guia)}</td>
+        </tr>
+        {expandedRow === guia.id && renderGuiaDetails(guia.detalles)}
+      </React.Fragment>
+    );
+  };
 
   const renderGuiaDetails = (detalles) => (
     <tr className="bg-gray-100">
@@ -74,7 +76,7 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal }) => {
                   <td className="font-bold">{detalle.marca}</td>
                   <td className="text-center">{detalle.descripcion}</td>
                   <td className="text-center">{detalle.cantidad}</td>
-                  <td className="text-center">{detalle.undm}</td>
+                  <td className="text-center">{detalle.um}</td>
                   <td className="text-center">{detalle.precio}</td>
                   <td className="text-center">{detalle.total}</td>
                   <td className="text-center">{detalle.almacen}</td>

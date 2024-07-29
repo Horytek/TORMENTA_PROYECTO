@@ -10,7 +10,7 @@ const useGuiasData = (filters) => {
 
   const fetchGuias = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/guias', {
+      const response = await axios.get('http://localhost:4000/api/guia_remision', {
         params: {
           page: currentPage - 1,
           limit: guiasPerPage,
@@ -21,6 +21,7 @@ const useGuiasData = (filters) => {
           fecha_e: filters.fecha_e,
         }
       });
+      console.log('API Response:', response.data);
       if (response.data.code === 1) {
         const guias = response.data.data.map(guia => ({
           id: guia.id,
@@ -42,12 +43,13 @@ const useGuiasData = (filters) => {
             marca: detalle.marca,
             descripcion: detalle.descripcion,
             cantidad: detalle.cantidad,
-            undm: detalle.um,
+            um: detalle.um,
             precio: `S/ ${parseFloat(detalle.precio).toFixed(2)}`,
             total: `S/ ${parseFloat(detalle.total).toFixed(2)}`,
             almacen: detalle.almacen
           }))
         }));
+        console.log('Transformed Guias:', guias);   // Agrega este log para verificar los datos
         setGuias(guias);
         setTotalGuias(response.data.totalGuias);
       } else {

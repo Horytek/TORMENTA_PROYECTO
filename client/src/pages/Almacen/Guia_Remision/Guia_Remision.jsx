@@ -6,7 +6,7 @@ import Pagination from '@/components/Pagination/Pagination';
 import TablaGuias from './ComponentsGuias/GuiasTable';
 import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
 import { Link } from 'react-router-dom';
-import useGuiasData from '../data/guiasdata';
+import useGuiasData from '../data/data_guia';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 
 const Guias = () => {

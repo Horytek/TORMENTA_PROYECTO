@@ -23,5 +23,5 @@ app.use("/api/productos", productosRoutes);
 app.use("/api/ventas", ventasRoutes);
 app.use("/api/marcas", marcasRoutes);
 app.use("/api/nota_ingreso", ingresosRoutes);
-app.use("/api/guias", guiasRoutes);
+app.use("/api/guia_remision", guiasRoutes);
 export default app;
