@@ -1,4 +1,4 @@
-import { useState,useCallback} from 'react';
+import { useState,useEffect,useCallback} from 'react';
 import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
@@ -23,13 +23,14 @@ const Ventas = () => {
   });
 
 
-  const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado } = useVentasData(filters);
+  const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado, refetchVentas } = useVentasData(filters);
 
   // Estado para el manejo del modal y opciones de eliminación
-  const [setSelectedRowId] = useState(null);
+  const [SelectedRowId,setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   const loadDetallesFromLocalStorage = () => {
     const savedDetalles = localStorage.getItem('ventas');
@@ -37,10 +38,29 @@ const Ventas = () => {
   };
 
   const d_ventas = loadDetallesFromLocalStorage();
+
+
+  const saveDetallesToLocalStorage = () => {
+    localStorage.setItem('total_ventas', JSON.stringify(ventas));
+  };
+
+  saveDetallesToLocalStorage();
   // Funciones para abrir y cerrar el modal de opciones
-  const openModal = (id) => {
+  const openModal = (id,estado) => {
     setSelectedRowId(id);
     setModalOpen(true);
+
+    if (estado=='En proceso') {
+      estado= 2;
+    } else if (estado=='Inactivo') {
+      estado= 1;
+    } else if (estado=='Activo') {
+      estado= 0;
+    }
+
+    if(estado==1){
+      setModalOpen(false);
+    }
   };
 
   const closeModal = () => {
@@ -56,10 +76,19 @@ const Ventas = () => {
 
   // Función para eliminar una venta
   const handleDeleteVenta = () => {
+    SelectedRowId;
     handleDelete(d_ventas);
     closeModal();
     setConfirmDeleteModalOpen(false);
+    setIsDeleted(true); // Activa el efecto para actualizar las ventas
   };
+
+  useEffect(() => {
+    if (isDeleted) {
+      refetchVentas();
+      setIsDeleted(false);
+    }
+  }, [isDeleted, refetchVentas]);
 
   // Función para cambiar de página en la paginación
   const onPageChange = (page) => {

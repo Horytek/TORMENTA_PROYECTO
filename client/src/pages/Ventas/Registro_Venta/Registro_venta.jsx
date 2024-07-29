@@ -63,6 +63,17 @@ const Registro_Venta = () => {
   const igv_t = (totalImporte * 0.18).toFixed(2);
   const total_t = (parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2);
 
+  const datos_precio = {
+    igv_t:igv_t,
+    total_t:total_t,
+  }
+
+  const saveDetallesToLocalStorage_1 = () => {
+    localStorage.setItem('datos_precio', JSON.stringify(datos_precio));
+  };
+
+  saveDetallesToLocalStorage_1();
+
   const filteredProductos = productos.filter(producto =>
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (selectedCategory ? producto.categoria === selectedCategory : true)

@@ -13,6 +13,7 @@ import { GrValidate } from "react-icons/gr";
 import useProductosData from '../../../Data/data_producto_venta';
 import { generateReceiptContent } from '../Comprobantes/Voucher/Voucher';
 
+
 const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const { productos } = useProductosData();
     const [montoRecibido, setMontoRecibido] = useState('');
@@ -34,6 +35,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         return savedDetalles ? JSON.parse(savedDetalles) : [];
     };
     const detalles = loadDetallesFromLocalStorage();
+
     const [dniOrRuc, setDni] = useState('');
     const [nombreCliente, setNombreCliente] = useState('');
     const [direccionCliente, setDireccionCliente] = useState('');
@@ -64,6 +66,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
             descuento: parseFloat(detalle.descuento),
             total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
         })),
+        fecha_iso: new Date(),
     };
 
     const datosCliente = {
@@ -77,6 +80,12 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         id: '',
         nombre: nombreCliente,
     };
+
+    const saveDetallesToLocalStorage = () => {
+        localStorage.setItem('comprobante', JSON.stringify({comprobante_pago}));
+      };
+    
+      saveDetallesToLocalStorage();
 
     const handleSubmit = (e) => {
         e.preventDefault();

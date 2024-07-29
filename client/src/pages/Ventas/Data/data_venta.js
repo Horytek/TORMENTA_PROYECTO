@@ -29,7 +29,8 @@ const useVentasData = (filters) => {
           tipoComprobante: venta.tipoComprobante,
           cliente: venta.cliente_r ? venta.cliente_r : `${venta.cliente_n}`,
           ruc: venta.ruc ? venta.ruc : `${venta.dni}`,
-          fechaEmision: venta.fecha,
+          fechaEmision: venta.fecha ? venta.fecha : '',
+          fecha_iso: venta.fecha_iso,
           igv: `S/ ${parseFloat(venta.igv).toFixed(2)}`,
           total: `S/ ${parseFloat(venta.total).toFixed(2)}`,
           cajero: venta.cajero,
@@ -42,6 +43,8 @@ const useVentasData = (filters) => {
             codigo: detalle.codigo.toString().padStart(3, '0'),
             nombre: detalle.nombre,
             cantidad: detalle.cantidad,
+            undm: detalle.undm,
+            nom_marca: detalle.marca,
             precio: `S/ ${parseFloat(detalle.precio).toFixed(2)}`,
             descuento: `S/ ${(detalle.descuento || 0).toFixed(2)}`,
             igv: `S/ ${((detalle.precio * 0.18).toFixed(2))}`,
@@ -99,6 +102,11 @@ const useVentasData = (filters) => {
     );
   };
 
+  const updateVenta = (id, updatedData) => {
+    setVentas(ventas.map(venta => 
+      venta.id === id ? { ...venta, ...updatedData } : venta
+    ));
+  };
 
   const removeDetalle = (codigo) => {
     setDetalles(prevDetalles =>
@@ -106,8 +114,12 @@ const useVentasData = (filters) => {
     );
   };
 
+  const refetchVentas = () => {
+    fetchVentas();
+  };
 
-  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle, totalRecaudado };
+
+  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle, totalRecaudado,updateVenta,refetchVentas  };
 };
 
 
