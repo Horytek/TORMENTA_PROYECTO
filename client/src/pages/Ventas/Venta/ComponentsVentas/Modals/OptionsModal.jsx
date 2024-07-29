@@ -1,10 +1,28 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
-import toast from 'react-hot-toast';
+//import toast from 'react-hot-toast';
+import {  handleSunat } from '../../../Data/add_sunat';
 
 const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setConfirmDeleteModalOpen, deleteOptionSelected }) => {
   const [sendToSunat, setSendToSunat] = useState(false);
+  const loadDetallesFromLocalStorage = () => {
+    const savedDetalles = localStorage.getItem('new_detalle');
+    return savedDetalles ? JSON.parse(savedDetalles) : [];
+};
+const detalles = loadDetallesFromLocalStorage();
+
+const loadDetallesFromLocalStorage1 = () => {
+  const savedDetalles = localStorage.getItem('ventas');
+  return savedDetalles ? JSON.parse(savedDetalles) : [];
+};
+const datos_precio = loadDetallesFromLocalStorage1();
+
+/*const loadDetallesFromLocalStorage2 = () => {
+  const savedDetalles = localStorage.getItem('datosClientes');
+  return savedDetalles ? JSON.parse(savedDetalles) : [];
+};
+const datosClientes = loadDetallesFromLocalStorage2();*/
 
   const handleCheckboxChange = (option) => {
     if (option === 'sendToSunat') {
@@ -19,11 +37,12 @@ const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setCon
   const handleAccept = () => {
     if (sendToSunat) {
       closeModal();
-      const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
-      setTimeout(() => {
-        toast.dismiss(loadingToastId);
-        toast.success('Los datos se han enviado con éxito!');
-      }, 3000);
+      //const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
+      handleSunat(datos_precio,detalles,detalles);
+   /*   setTimeout(() => {
+        //toast.dismiss(loadingToastId);
+        //toast.success('Los datos se han enviado con éxito!');
+      }, 3000);*/
     } else if (deleteOptionSelected) {
       handleDeleteVenta();
       setConfirmDeleteModalOpen(true);

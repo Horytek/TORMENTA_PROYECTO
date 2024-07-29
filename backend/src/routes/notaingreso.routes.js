@@ -4,6 +4,6 @@ import { methods as notaingresoController } from "./../controllers/notaingreso.c
 const router = Router();
 
 router.get("/", notaingresoController.getIngresos);
-
+router.get("/almacen", notaingresoController.getAlmacen);
 
 export default router;
