@@ -8,7 +8,7 @@ const VentaExitosaModal = ({ isOpen, onClose }) => {
             const timeout = setTimeout(() => {
                 onClose();
                 window.location.reload();
-            }, 20400);
+            }, 2400);
             return () => clearTimeout(timeout);
         }
     }, [isOpen, onClose]);
