@@ -93,6 +93,18 @@ const getGuias = async (req, res) => {
     }
 };
 
+const getSucursal = async (req, res) => {
+    try {
+      const connection = await getConnection();
+      const [result] = await connection.query(`SELECT id_sucursal AS id, nombre_sucursal AS nombre FROM sucursal`);
+      res.json({ code: 1, data: result, message: "Sucursal listados" });
+    } catch (error) {
+      res.status(500);
+      res.send(error.message);
+    }
+  };
+
 export const methods = {
-    getGuias
+    getGuias,
+    getSucursal,
 };

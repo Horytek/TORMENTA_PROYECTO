@@ -65,8 +65,8 @@ function RegistroGuia() {
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
-                  <label htmlFor="dirpart" className='text-sm font-bold text-black'>Dir. Partida:</label>
-                  <input type="dirpart" name='dirpart' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
+                  <label htmlFor="dirdest" className='text-sm font-bold text-black'>Fecha:</label>
+                  <input type="date" name='date' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
               </div>
               <div className='w-full relative group  text-start'>
@@ -80,10 +80,14 @@ function RegistroGuia() {
                   <option>TIENDA BALTA</option>
                 </select>
               </div>
-              <div className="">
-                <div className='w-full relative group text-start'>
-                  <label htmlFor="dirdest" className='text-sm font-bold text-black'>Dir. Destino:</label>
-                  <input type="dirdest" name='dirdest' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
+              <div className="flex">
+                <div className="flex-1 mr-2">
+                  <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
+                  <input type="cant" name='cant' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                </div>
+                <div className="flex-1 ml-2">
+                  <label htmlFor="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>
+                  <input type="peso" name='peso' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
               </div>
               <div className="">
@@ -93,18 +97,6 @@ function RegistroGuia() {
                 type="button" onClick={() => openModal('Ubicación de Partida / Ubicación de Destino', 'ubicacion')}>
                   <IoMdPin className="inline-block mr-2" /> Ub. de Partida/Ub. de Destino
                 </button>
-              </div>
-              <div className="">
-                <div className='w-full relative group text-start'>
-                  <label htmlFor="dirdest" className='text-sm font-bold text-black'>Fecha:</label>
-                  <input type="date" name='date' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
-                </div>
-              </div>
-              <div className="">
-                <div className='w-full relative group text-start'>
-                  <label htmlFor="ubipart" className='text-sm font-bold text-black'>Ubi. Part:</label>
-                  <input type="ubipart" name='ubipart' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
-                </div>
               </div>
               <div className='w-full relative group  text-start'>
                 <label htmlFor="referencia" className='text-sm font-bold text-black'>Referencia:</label>
@@ -117,22 +109,33 @@ function RegistroGuia() {
                   <option>NOTA PEDIDO</option>
                 </select>
               </div>
+              
+              <div className="">
+                <div className='w-full relative group text-start'>
+                  <label htmlFor="ubipart" className='text-sm font-bold text-black'>Ubi. Part:</label>
+                  <input type="ubipart" name='ubipart' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
+                </div>
+              </div>
+              <div className="">
+                <div className='w-full relative group text-start'>
+                  <label htmlFor="dirpart" className='text-sm font-bold text-black'>Dir. Partida:</label>
+                  <input type="dirpart" name='dirpart' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
+                </div>
+              </div>
+              
               <div className="">
                 <div className='w-full relative group mb-5 text-start'>
                   <label htmlFor="ubidest" className='text-sm font-bold text-black'>Ubi. Dest:</label>
                   <input type="ubidest" name='ubidest' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
                 </div>
               </div>
-              <div className="flex">
-                <div className="flex-1 mr-2">
-                  <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
-                  <input type="cant" name='cant' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
-                </div>
-                <div className="flex-1 ml-2">
-                  <label htmlFor="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>
-                  <input type="peso" name='peso' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+              <div className="">
+                <div className='w-full relative group text-start'>
+                  <label htmlFor="dirdest" className='text-sm font-bold text-black'>Dir. Destino:</label>
+                  <input type="dirdest" name='dirdest' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
                 </div>
               </div>
+              
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="numdoc" className='text-sm font-bold text-black'>Num. Doc:</label>
