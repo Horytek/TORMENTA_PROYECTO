@@ -3,7 +3,7 @@ import { getConnection } from "./../database/database";
 const getGuias = async (req, res) => {
     const { page = 0, limit = 10,
         num_guia = ' ',
-        dni = '',
+        documento = '',
         nombre_sucursal = '',
         fecha_i = '2022-01-01',
         fecha_e = '2027-12-27' } = req.query;
@@ -20,11 +20,15 @@ const getGuias = async (req, res) => {
         // Obtener las guías de remisión con paginación
         const [guiasResult] = await connection.query(
             `
-        SELECT 
+        SELECT
+    gr.id_guiaremision AS id,
 	DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') AS fecha,
     c.num_comprobante AS num_guia,
-    CONCAT(d.nombres, ' ', d.apellidos) AS cliente,
-    d.dni AS dni_cliente,
+    CASE 
+     WHEN d.dni IS NOT NULL THEN CONCAT(d.nombres, ' ', d.apellidos)
+     ELSE d.razon_social
+    END AS cliente,
+    COALESCE(d.dni, d.ruc) AS documento,
     CONCAT(v.nombres, ' ', v.apellidos) AS vendedor,
     SUBSTRING(c.num_comprobante, 2, 3) AS serieNum, 
     SUBSTRING(c.num_comprobante, 6, 8) AS num,
@@ -38,14 +42,14 @@ const getGuias = async (req, res) => {
     INNER JOIN vendedor v ON s.dni = v.dni
     INNER JOIN comprobante c ON gr.id_comprobante = c.id_comprobante
     WHERE
-        gr.id_guiaremision LIKE ?
-        AND d.dni LIKE ?
+        c.num_comprobante LIKE ?
+        AND (d.dni LIKE ? OR d.ruc LIKE ?)
         AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d')>=? AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d')<=?
         AND s.nombre_sucursal LIKE ?
     ORDER BY gr.f_generacion DESC
     LIMIT ? OFFSET ?;
         `,
-            [num_guia + '%', dni + '%', fecha_i, fecha_e, parseInt(limit), parseInt(offset), nombre_sucursal + '%']
+            [num_guia + '%', documento + '%', documento + '%', fecha_i, fecha_e,  nombre_sucursal + '%', parseInt(limit), parseInt(offset)]
         );
 
         const guias = await Promise.all(
@@ -94,5 +98,5 @@ const getGuias = async (req, res) => {
 //
 
 export const methods = {
-    getGuias,
+    getGuias
   };
