@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { BsCashCoin, BsCash } from "react-icons/bs";
 import { IoCloseSharp, IoPersonAddSharp } from 'react-icons/io5';
@@ -11,8 +11,11 @@ import { validateDecimalInput, handleCobrar } from '../../../Data/add_venta';
 import { handleGuardarCliente } from '../../../Data/add_cliente';
 import { GrValidate } from "react-icons/gr";
 import useProductosData from '../../../Data/data_producto_venta';
+{/* Import para el voucher sin preview */ }
 import { generateReceiptContent } from '../Comprobantes/Voucher/Voucher';
-
+{/* Import para el voucher con preview */ }
+// import Voucher from '../Comprobantes/Voucher/VoucherPreview';
+// import { useReactToPrint } from 'react-to-print';
 
 const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const { productos } = useProductosData();
@@ -39,9 +42,16 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [dniOrRuc, setDni] = useState('');
     const [nombreCliente, setNombreCliente] = useState('');
     const [direccionCliente, setDireccionCliente] = useState('');
+    {/* Este handlePrint es para el voucher con preview */ }
+    // const VoucherRef = useRef();
+
+    // const handlePrint = useReactToPrint({
+    //     content: () => VoucherRef.current,
+    // });
+
+    {/* Fin del handlePrint del voucher con preview */ }
 
     if (!isOpen) return null;
-
 
     const totalAPagarConDescuento = descuentoActivado ? totalImporte - montoDescuento : totalImporte;
     const igv_total = parseFloat(totalImporte * 0.18).toFixed(2);
@@ -82,10 +92,10 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     };
 
     const saveDetallesToLocalStorage = () => {
-        localStorage.setItem('comprobante', JSON.stringify({comprobante_pago}));
-      };
-    
-      saveDetallesToLocalStorage();
+        localStorage.setItem('comprobante', JSON.stringify({ comprobante_pago }));
+    };
+
+    saveDetallesToLocalStorage();
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -94,6 +104,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     };
     const cliente = clientes.find(cliente => cliente.nombre === clienteSeleccionado);
 
+
+    {/* Esto son los datos que pasan al voucher */ }
     const datosVentaComprobante = {
 
         fecha: new Date().toISOString().slice(0, 10),
@@ -104,9 +116,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         total_t: totalAPagarConDescuento,
         totalImporte_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2),
         descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
-        vuelto: cambio >= 0 ? cambio.toFixed(2) : '0.00'+ cambio2 >= 0 ? cambio2.toFixed(2) : '0.00'+ cambio3 >= 0 ? cambio3.toFixed(2) : '0.00',
+        vuelto: cambio >= 0 ? cambio.toFixed(2) : '0.00' + cambio2 >= 0 ? cambio2.toFixed(2) : '0.00' + cambio3 >= 0 ? cambio3.toFixed(2) : '0.00',
         recibido: (montoRecibido + montoRecibido2 + montoRecibido3),
-        formadepago: metodo_pago? metodo_pago : ''+", "+metodo_pago2? metodo_pago2 : ''+ ", "+metodo_pago3? metodo_pago3 : '',
+        formadepago: metodo_pago ? metodo_pago : '' + ", " + metodo_pago2 ? metodo_pago2 : '' + ", " + metodo_pago3 ? metodo_pago3 : '',
         detalles: detalles.map(detalle => {
             const producto = productos.find(producto => producto.codigo === detalle.codigo);
             return {
@@ -121,6 +133,10 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
             };
         }).filter(detalle => detalle !== null),
     };
+    console.log(datosVentaComprobante);
+    {/* Fin de los datos que pasan al voucher */ }
+
+    {/* Este handlePrint es para el voucher automatico */ }
 
     const handlePrint = async () => {
         let nombreImpresora = "EPSON L395 Series";
@@ -135,7 +151,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         content.split('\n').forEach(line => {
             conector.text(line);
         });
-        conector.qr("https://abrazasoft.com")
+        // conector.qr("https://abrazasoft.com")
         conector.feed(2);
         conector.cut("0");
 
@@ -146,6 +162,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
             console.log("Problema al imprimir: " + resp);
         }
     };
+    {/* Fin del handlePrint del voucher automatico */ }
+
 
     const handleGuardarClientes = (e) => {
         e.preventDefault();
@@ -436,6 +454,12 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
 
                             </div>
                         )}
+
+                        {/* Este div es solo para el voucher con preview */}
+                        {/* <div style={{ display: 'none' }}>
+                            <Voucher ref={VoucherRef} />
+                        </div> */}
+                        {/* Fin del div para el voucher con preview */}
 
                         <div className="flex justify-end mt-4">
                             <button type="submit" className="btn btn-cobrar mr-0" onClick={handleSubmit}>
