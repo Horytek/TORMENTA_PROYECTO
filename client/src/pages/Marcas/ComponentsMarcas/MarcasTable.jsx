@@ -28,16 +28,27 @@ const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {
               </td>
               <td style={{ textAlign: "center" }}>
                 <div className="flex justify-center items-center">
-                  <IoIosCloudDone
+                  <div
+                    className="text-center"
                     style={{
                       color: marca.estado_marca === 1 ? "green" : "red",
-                      fontSize: "20px", 
-                      marginRight: "5px", 
+                      fontWeight: "400",
                     }}
-                  />
-                  <span>
-                    {marca.estado_marca === 1 ? "Activo" : "Inactivo"}
-                  </span>
+                  >
+                    <div
+                      className="ml-2 px-2.5 py-1.5 rounded-full"
+                      style={{
+                        background:
+                          marca.estado_marca === 1
+                            ? "rgb(191, 237, 206)"
+                            : "#F5CBCBFF",
+                      }}
+                    >
+                      <span>
+                        {marca.estado_marca === 1 ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </td>
               <td style={{ textAlign: "center" }}>
@@ -67,13 +78,11 @@ const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {
                     }}
                   />
                 </div>
-                
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      
     </div>
   );
 };
