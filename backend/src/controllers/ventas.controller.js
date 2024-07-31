@@ -62,6 +62,66 @@ const getVentas = async (req, res) => {
   }
 };
 
+const generarComprobante = async (req, res) => {
+  try {
+    const { id_comprobante } = req.query; // Cambiar a req.query
+
+    const connection = await getConnection();
+
+    // Obtener id_tipocomprobante y nom_tipocomp basado en el nombre del comprobante
+    const [comprobanteResult] = await connection.query(
+      "SELECT id_tipocomprobante, nom_tipocomp FROM tipo_comprobante WHERE nom_tipocomp=?",
+      [id_comprobante]
+    );
+
+    console.log("Resultado de comprobante:", comprobanteResult); // Log para verificar el resultado de la consulta de comprobante
+
+    if (comprobanteResult.length === 0) {
+      return res.status(404).json({ message: "Comprobante type not found." });
+    }
+
+    const { id_tipocomprobante, nom_tipocomp } = comprobanteResult[0];
+    const prefijoBase = nom_tipocomp.charAt(0); // Usa nom_tipocomp como prefijo
+
+    // Obtener el último número de comprobante y generar el siguiente
+    const [ultimoComprobanteResult] = await connection.query(
+      "SELECT num_comprobante FROM comprobante WHERE id_tipocomprobante = ? ORDER BY num_comprobante DESC LIMIT 1",
+      [id_tipocomprobante]
+    );
+
+    console.log("Resultado del último comprobante:", ultimoComprobanteResult); // Log para verificar el resultado del último comprobante
+
+    let nuevoNumComprobante;
+    if (ultimoComprobanteResult.length > 0) {
+      const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
+      const partes = ultimoNumComprobante.split("-");
+      const serie = partes[0].substring(1); // Obtener la serie numérica actual
+      const numero = parseInt(partes[1], 10) + 1;
+
+      // Verificar si el número actual supera el límite
+      if (numero > 99999999) {
+        // Cambiar de serie si el límite es alcanzado
+        const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
+        nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
+      } else {
+        nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
+      }
+    } else {
+      // Si no hay comprobantes, comenzar con la primera serie
+      nuevoNumComprobante = `${prefijoBase}001-00000001`;
+    }
+
+    console.log("Nuevo número de comprobante:", nuevoNumComprobante); // Log para verificar el nuevo número de comprobante
+
+    res.json({ nuevoNumComprobante });
+  } catch (error) {
+    console.error('Error en la función generarComprobante:', error.message); // Log para depuración
+    res.status(500).send(error.message);
+  }
+};
+
+
+
 const getProductosVentas = async (req, res) => {
   try {
     const connection = await getConnection();
@@ -501,4 +561,5 @@ export const methods = {
   getComprobante,
   getSucursal,
   updateVenta,
+  generarComprobante,
 };

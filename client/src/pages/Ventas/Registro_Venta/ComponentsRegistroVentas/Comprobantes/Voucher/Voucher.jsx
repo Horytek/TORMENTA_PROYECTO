@@ -1,4 +1,4 @@
-function centerText(text, lineWidth = 34) {
+function centerText(text, lineWidth) {
     const wrapText = (text, maxWidth) => {
         let lines = [];
         while (text.length > maxWidth) {
@@ -21,8 +21,7 @@ function centerText(text, lineWidth = 34) {
     return lines.map(line => centerLine(line, lineWidth)).join('\n');
 }
 
-
-function leftAlignText(text, lineWidth = 34) {
+function leftAlignText(text, lineWidth) {
     // Función auxiliar para dividir el texto en líneas de ancho fijo
     function wrapText(text, maxWidth) {
         let lines = [];
@@ -77,7 +76,7 @@ function formatDetail(nombre, cantidad, precio, subTotal) {
         } else {
             // Líneas adicionales: Solo el nombre, alineado con la columna
             const formattedNombre = line.padEnd(nombreWidth, ' ').substring(0, nombreWidth);
-            formattedDetail += `${formattedNombre}`;
+            formattedDetail += `${formattedNombre}\n`;
         }
     });
 
@@ -148,23 +147,27 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
 
     const totalEnLetras = numeroALetras(totalT);
 
+    const loadDetallesFromLocalStorage = () => {
+        const savedDetalles = localStorage.getItem('comprobante1');
+        return savedDetalles ? JSON.parse(savedDetalles) : [];
+    };
+    const detail = loadDetallesFromLocalStorage();
+
     appendContent(centerText("TEXTILES CREANDO MODA S.A.C."));
     appendContent(centerText("Cal San Martin 1573 Urb"));
     appendContent(centerText("Urrunaga SC Tres"));
     appendContent(centerText("Chiclayo - Chiclayo - Lambayeque"));
     appendContent(centerText("RUC: 20610508901"));
     appendContent(centerText("Tel: 918378590"));
-    appendContent(centerText("Factura Venta: F200-000000028"));
+    appendContent(centerText( datosVentaComprobante.comprobante_pago +": " + detail.nuevoNumComprobante));
     appendContent("==================================");
-    appendContent("\n");
     appendContent("Fecha de Emisión: " + datosVentaComprobante.fecha);
     appendContent("Tienda: AV. BALTA Y LEGUIA");
     appendContent(leftAlignText("Vendedor: " + datosVenta.usuario));
-    appendContent("\n");
+    appendContent("==================================");
     appendContent(leftAlignText("CLIENTE: " + datosVentaComprobante.nombre_cliente));
     appendContent("RUC/DNI: " + datosVentaComprobante.documento_cliente);
     appendContent(leftAlignText(datosVentaComprobante.direccion_cliente));
-    appendContent("\n");
     appendContent("==================================");
     appendContent("Descrip      Cant   P.Unit   TOTAL");
     appendContent("==================================");

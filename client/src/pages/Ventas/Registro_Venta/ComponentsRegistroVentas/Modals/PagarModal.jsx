@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState,useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { BsCashCoin, BsCash } from "react-icons/bs";
 import { IoCloseSharp, IoPersonAddSharp } from 'react-icons/io5';
@@ -13,9 +13,12 @@ import { GrValidate } from "react-icons/gr";
 import useProductosData from '../../../Data/data_producto_venta';
 {/* Import para el voucher sin preview */ }
 import { generateReceiptContent } from '../Comprobantes/Voucher/Voucher';
+//import tormentaImg from '../../../../../assets/tormenta.png';
 {/* Import para el voucher con preview */ }
 // import Voucher from '../Comprobantes/Voucher/VoucherPreview';
 // import { useReactToPrint } from 'react-to-print';
+import generateComprobanteNumber  from '../../../Data/generate_comprobante';
+
 
 const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const { productos } = useProductosData();
@@ -31,13 +34,45 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [showConfirmacion, setShowConfirmacion] = useState(false);
     const [showNuevoCliente, setShowNuevoCliente] = useState(false);
     const [tipo_cliente, settipo_cliente] = useState('Natural');
-    const { clientes, addCliente } = useClientesData(); // Llama al hook personalizado para obtener los clientes
+    const { clientes, addCliente } = useClientesData();
+// Llama al hook personalizado para obtener los clientes
     const [clienteSeleccionado, setClienteSeleccionado] = useState('');
     const loadDetallesFromLocalStorage = () => {
         const savedDetalles = localStorage.getItem('detalles');
         return savedDetalles ? JSON.parse(savedDetalles) : [];
     };
     const detalles = loadDetallesFromLocalStorage();
+    
+    const comprobante_pago1 = JSON.parse(localStorage.getItem('comprobante')) || {};
+    const comp = comprobante_pago1.comprobante_pago;
+    useEffect(() => {
+        const fetchComprobanteNumber = async () => {
+          try {
+            const comprobante_pago = JSON.parse(localStorage.getItem('comprobante')) || {};
+            const comp = comprobante_pago.comprobante_pago;
+    
+            // Asegúrate de que comp es válido y está definido
+            if (!comp) {
+              console.warn('El valor de comp no es válido:', comp);
+              return;
+            }
+    
+            const nuevoNumComprobante = await generateComprobanteNumber(comp);
+    
+            console.log('Nuevo número de comprobante:', nuevoNumComprobante);
+    
+            // Almacena el número de comprobante en el localStorage
+            localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante }));
+    
+            // Verifica si el almacenamiento local se actualizó correctamente
+            console.log('Contenido actualizado de localStorage:', localStorage.getItem('comprobante1'));
+          } catch (error) {
+            console.error('Error al obtener el número de comprobante:', error);
+          }
+        };
+    
+        fetchComprobanteNumber();
+      }, [comp]); 
 
     const [dniOrRuc, setDni] = useState('');
     const [nombreCliente, setNombreCliente] = useState('');
@@ -97,6 +132,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
 
     saveDetallesToLocalStorage();
 
+
+
     const handleSubmit = (e) => {
         e.preventDefault();
         handleCobrar(datosVenta, setShowConfirmacion);
@@ -114,6 +151,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         direccion_cliente: cliente ? cliente.direccion : '',
         igv: (detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2)) * 0.18,
         total_t: totalAPagarConDescuento,
+        comprobante_pago: comprobante_pago === 'Boleta' ? 'Boleta de venta electronica' :
+        comprobante_pago === 'Factura' ? 'Factura de venta electronica' :
+        'Nota de venta',
         totalImporte_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2),
         descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
         vuelto: cambio >= 0 ? cambio.toFixed(2) : '0.00' + cambio2 >= 0 ? cambio2.toFixed(2) : '0.00' + cambio3 >= 0 ? cambio3.toFixed(2) : '0.00',
@@ -139,20 +179,20 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     {/* Este handlePrint es para el voucher automatico */ }
 
     const handlePrint = async () => {
-        let nombreImpresora = "EPSON L395 Series";
-        let api_key = "123456";
+        let nombreImpresora = "BASIC 230 STYLE";
+        let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
 
         // eslint-disable-next-line no-undef
         const conector = new connetor_plugin();
         const content = generateReceiptContent(datosVentaComprobante, datosVenta);
 
         conector.textaling("center");
-        // conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")
+        conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", { width: 100, height: 100 });
         content.split('\n').forEach(line => {
             conector.text(line);
         });
-        // conector.qr("https://abrazasoft.com")
-        conector.feed(2);
+         conector.qr("https://www.facebook.com/profile.php?id=100055385846115", { width: 700, height: 700 });
+        conector.feed(5);
         conector.cut("0");
 
         const resp = await conector.imprimir(nombreImpresora, api_key);
