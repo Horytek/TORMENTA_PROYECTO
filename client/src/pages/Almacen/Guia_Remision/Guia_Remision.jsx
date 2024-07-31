@@ -18,6 +18,9 @@ const Guias = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 5; // Número total de páginas
 
+  // Estado para los filtros
+  const [filters, setFilters] = useState({});
+
   // Función para manejar la acción de abrir el modal de confirmación
   const handleOpenConfirmationModal = (rowId) => {
     setSelectedRowId(rowId);
@@ -41,6 +44,12 @@ const Guias = () => {
     setCurrentPage(page);
   };
 
+  // Función para manejar el cambio de filtros
+  const handleFiltersChange = (newFilters) => {
+    setFilters(newFilters);
+    // Aquí puedes agregar lógica para filtrar las guías según los filtros
+  };
+
   return (
     <div>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacen', href: '/almacen' }, { name: 'Guias de Remision', href: '/almacen/guia_remision' }]} />
@@ -56,7 +65,7 @@ const Guias = () => {
         </Link>
       </div>
 
-      <FiltrosGuias />
+      <FiltrosGuias onFiltersChange={handleFiltersChange} />
 
       <TablaGuias
         guias={guias}

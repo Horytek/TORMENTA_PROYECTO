@@ -19,7 +19,7 @@ const FiltrosVentas = ({onFiltersChange}) => {
       const [razon, setRazon] = useState('');
       const handleChange = (event) => {
         setRazon(event.target.value);
-      };
+      };    
     
       useEffect(() => {
         const date_i = new Date(value.start.year, value.start.month - 1, value.start.day);

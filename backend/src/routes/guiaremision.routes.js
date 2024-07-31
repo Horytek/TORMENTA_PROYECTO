@@ -4,5 +4,6 @@ import { methods as guiasController } from "./../controllers/guiaremision.contro
 const router = Router();
 
 router.get("/", guiasController.getGuias);
+router.get("/sucursal",guiasController.getSucursal);
 
 export default router;

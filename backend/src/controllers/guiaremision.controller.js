@@ -34,7 +34,7 @@ const getGuias = async (req, res) => {
                 CONCAT(v.nombres, ' ', v.apellidos) AS vendedor,
                 SUBSTRING(c.num_comprobante, 2, 3) AS serieNum, 
                 SUBSTRING(c.num_comprobante, 6, 8) AS num,
-                gr.total,
+                gr.total as total,
                 gr.glosa AS concepto,
                 gr.estado_guia AS estado,
                 s.nombre_sucursal
