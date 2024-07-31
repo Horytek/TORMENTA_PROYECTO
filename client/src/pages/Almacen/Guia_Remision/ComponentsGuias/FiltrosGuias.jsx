@@ -14,16 +14,28 @@ const FiltrosGuias = ({ onFiltersChange }) => {
     const [numGuia, setNumGuia] = useState('');
     const [dni, setDni] = useState('');
 
+    // Filtros locales
+    const [localFilters, setLocalFilters] = useState({
+        sucursalSeleccionado: '',
+        fecha_i: `${value.start.year}-${String(value.start.month).padStart(2, '0')}-${String(value.start.day).padStart(2, '0')}`,
+        fecha_e: `${value.end.year}-${String(value.end.month).padStart(2, '0')}-${String(value.end.day).padStart(2, '0')}`,
+        numGuia: '',
+        dni: ''
+    });
+
     const handleNumGuiaChange = (event) => {
         setNumGuia(event.target.value);
+        setLocalFilters(prev => ({ ...prev, numGuia: event.target.value }));
     };
 
     const handleDniChange = (event) => {
         setDni(event.target.value);
+        setLocalFilters(prev => ({ ...prev, dni: event.target.value }));
     };
 
     const handleSucursalChange = (event) => {
         setSucursalSeleccionado(event.target.value);
+        setLocalFilters(prev => ({ ...prev, sucursalSeleccionado: event.target.value }));
     };
 
     useEffect(() => {
@@ -33,17 +45,23 @@ const FiltrosGuias = ({ onFiltersChange }) => {
         const date_e = new Date(value.end.year, value.end.month - 1, value.end.day);
         const fecha_e = `${date_e.getFullYear()}-${String(date_e.getMonth() + 1).padStart(2, '0')}-${String(date_e.getDate()).padStart(2, '0')}`;
 
-        const filtrosG = {
-            sucursalSeleccionado,
-            fecha_i,
-            fecha_e,
-            numGuia,
-            dni,
-        };
+        setLocalFilters(prev => ({ ...prev, fecha_i, fecha_e }));
 
-        onFiltersChange(filtrosG);
-        localStorage.setItem('filtrosGuia', JSON.stringify(filtrosG));
-    }, [sucursalSeleccionado, value, numGuia, dni, onFiltersChange]);
+        const debounce = setTimeout(() => {
+            const filtrosG = {
+                sucursalSeleccionado: localFilters.sucursalSeleccionado,
+                fecha_i,
+                fecha_e,
+                numGuia: localFilters.numGuia,
+                dni: localFilters.dni,
+            };
+
+            onFiltersChange(filtrosG);
+            localStorage.setItem('filtrosGuia', JSON.stringify(filtrosG));
+        }, 500); // Ajusta el tiempo de debounce según sea necesario
+
+        return () => clearTimeout(debounce);
+    }, [value, localFilters, onFiltersChange]);
 
     return (
         <div className="flex flex-wrap mb-4 justify-between">
@@ -74,7 +92,6 @@ const FiltrosGuias = ({ onFiltersChange }) => {
                         ))}
                     </select>
                 </div>
-                
             </div>
         </div>
     );

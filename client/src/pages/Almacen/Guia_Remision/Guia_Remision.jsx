@@ -10,50 +10,38 @@ import useGuiasData from '../data/data_guia';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 
 const Guias = () => {
-  const { guias, removeGuia } = useGuiasData();
+  const [filters, setFilters] = useState({});
+  const { guias, removeGuia, currentPage, setCurrentPage, totalPages, guiasPerPage, setGuiasPerPage } = useGuiasData(filters);
 
-  // Estado para el manejo del modal de confirmación
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5; // Número total de páginas
 
-  // Estado para los filtros
-  const [filters, setFilters] = useState({});
-
-  // Función para manejar la acción de abrir el modal de confirmación
   const handleOpenConfirmationModal = (rowId) => {
     setSelectedRowId(rowId);
     setIsConfirmationModalOpen(true);
   };
 
-  // Función para manejar la acción de cerrar el modal de confirmación
   const handleCloseConfirmationModal = () => {
     setIsConfirmationModalOpen(false);
     setSelectedRowId(null);
   };
 
-  // Función para manejar la acción de confirmar eliminar
   const handleConfirmDelete = () => {
     removeGuia(selectedRowId);
     handleCloseConfirmationModal();
   };
 
-  // Función para cambiar de página en la paginación
   const onPageChange = (page) => {
     setCurrentPage(page);
   };
 
-  // Función para manejar el cambio de filtros
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
-    // Aquí puedes agregar lógica para filtrar las guías según los filtros
   };
 
   return (
     <div>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacen', href: '/almacen' }, { name: 'Guias de Remision', href: '/almacen/guia_remision' }]} />
-
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
@@ -70,16 +58,15 @@ const Guias = () => {
       <TablaGuias
         guias={guias}
         handleOpenConfirmationModal={handleOpenConfirmationModal}
+        handleEditGuia={() => {}}
       />
 
       <div className="flex justify-between mt-4">
-        <div className="flex">
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
-        </div>
-        <select className="input-d cant-pag-d">
-          <option>5</option>
-          <option>10</option>
-          <option>20</option>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
+        <select className="input-d cant-pag-d" value={guiasPerPage} onChange={(e) => setGuiasPerPage(parseInt(e.target.value))}>
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
         </select>
       </div>
 
