@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FaSearch, FaTshirt } from 'react-icons/fa';
 import { IoCloseSharp, IoSearchOutline, IoHome } from 'react-icons/io5';
@@ -13,6 +14,33 @@ const categoryButtons = [
 ];
 
 const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, handleProductSelect, filteredProductos }) => {
+  const [barcode, setBarcode] = useState('');
+
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.key === 'Enter') {
+        // Al presionar Enter, se supone que el escáner ha terminado de enviar el código
+        console.log('Scanned barcode:', barcode);
+        const productoEscaneado = filteredProductos.find(p => p.codigo_barras === barcode);
+        if (productoEscaneado) {
+          handleProductSelect(productoEscaneado);
+        } else {
+          console.warn('Producto no encontrado');
+        }
+        setBarcode(''); // Limpia el código de barras después de procesar
+      } else {
+        // Concatenar caracteres ingresados
+        setBarcode(prev => prev + event.key);
+      }
+    };
+
+    window.addEventListener('keypress', handleKeyPress);
+
+    return () => {
+      window.removeEventListener('keypress', handleKeyPress);
+    };
+  }, [barcode, filteredProductos, handleProductSelect]);
+
   if (!isModalOpen) return null;
 
   return (

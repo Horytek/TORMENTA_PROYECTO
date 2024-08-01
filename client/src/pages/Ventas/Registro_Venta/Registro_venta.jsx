@@ -1,4 +1,4 @@
-import { useState,useRef } from 'react';// Importa QuaggaJS
+import { useState,useRef, /*useEffect */} from 'react';// Importa QuaggaJS
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
@@ -26,6 +26,7 @@ const Registro_Venta = () => {
   const [detalleMode, setDetalleMode] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const componentRef = useRef();
+  //const [barcode, setBarcode] = useState('');
 
   const handlePrint = useReactToPrint({
       content: () => componentRef.current,
@@ -161,7 +162,8 @@ const Registro_Venta = () => {
     }).filter(detalle => detalle !== null),
   };
 
-
+  
+  
 
   return (
     <>

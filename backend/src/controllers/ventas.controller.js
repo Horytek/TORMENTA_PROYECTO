@@ -127,7 +127,7 @@ const getProductosVentas = async (req, res) => {
     const connection = await getConnection();
     const [result] = await connection.query(`
                 SELECT PR.id_producto AS codigo, PR.descripcion AS nombre, 
-                CAST(PR.precio AS DECIMAL(10, 2)) AS precio, inv.stock as stock,PR.undm, MA.nom_marca, CA.nom_subcat AS categoria_p
+                CAST(PR.precio AS DECIMAL(10, 2)) AS precio, inv.stock as stock,PR.undm, MA.nom_marca, CA.nom_subcat AS categoria_p, PR.cod_barras as codigo_barras
                 FROM producto PR
                 INNER JOIN marca MA ON MA.id_marca = PR.id_marca
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria

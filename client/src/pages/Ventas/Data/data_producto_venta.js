@@ -18,6 +18,7 @@ const useProductosData = () => {
             undm: item.undm,
             nom_marca: item.nom_marca,
             categoria: item.categoria_p,
+            codigo_barras: item.codigo_barras,
           }));
           setProductos(productos);
         } else {
