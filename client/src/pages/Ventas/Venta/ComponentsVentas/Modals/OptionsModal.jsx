@@ -5,8 +5,9 @@ import { IoMdOptions } from 'react-icons/io';
 import {  handleSunat } from '../../../Data/add_sunat';
 import {  handleUpdate } from '../../../Data/update_venta';
 
-const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setConfirmDeleteModalOpen, deleteOptionSelected, refetchVentas }) => {
+const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetchVentas }) => {
   const [sendToSunat, setSendToSunat] = useState(false);
+  const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const loadDetallesFromLocalStorage2 = () => {
     const savedDetalles = localStorage.getItem('ventas');
@@ -36,10 +37,10 @@ const datosClientes = loadDetallesFromLocalStorage2();*/
   const handleCheckboxChange = (option) => {
     if (option === 'sendToSunat') {
       setSendToSunat(true);
-      toggleDeleteDetalleOption(false);
+      setDeleteOptionSelected(false);
     } else if (option === 'deleteOption') {
       setSendToSunat(false);
-      toggleDeleteDetalleOption(true);
+      setDeleteOptionSelected(true);
     }
   };
 

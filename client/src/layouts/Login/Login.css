@@ -20,8 +20,8 @@
 }
 
 .custom-checkbox:checked {
-  background-color: #00bdd6;
-  border-color: #00bdd6;
+  background-color: #00bdd6 !important;
+  border-color: #00bdd6 ! important;
 }
 
 .custom-checkbox:checked::after {

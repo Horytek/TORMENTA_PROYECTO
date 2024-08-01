@@ -69,10 +69,7 @@ const Ventas = () => {
     setDeleteOptionSelected(false);
   };
 
-  // Función para alternar la opción de eliminar venta
-  const toggleDeleteDetalleOption = () => {
-    setDeleteOptionSelected(!deleteOptionSelected);
-  };
+
 
   // Función para eliminar una venta
   const handleDeleteVenta = () => {
@@ -133,7 +130,6 @@ const Ventas = () => {
       {/* Modal para opciones */}
       <OptionsModal
         modalOpen={modalOpen}
-        toggleDeleteDetalleOption={toggleDeleteDetalleOption}
         closeModal={closeModal}
         setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
         deleteOptionSelected={deleteOptionSelected}
