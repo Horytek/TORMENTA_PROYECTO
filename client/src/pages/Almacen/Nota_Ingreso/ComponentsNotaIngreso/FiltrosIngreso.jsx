@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
-import useAlmacenData from '../data/data_almacen_ingreso';
 import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import { Link } from 'react-router-dom';
 import { LuFilter } from "react-icons/lu";
@@ -9,14 +8,26 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
-const FiltrosIngresos = ({ onAlmacenChange, onFiltersChange }) => {
-    const { almacenes } = useAlmacenData();
-    const [almacenSeleccionado, setAlmacenSeleccionado] = useState({ id: '%', sucursal: '' });
+const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => {
+    const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
+        const almacenIdGuardado = localStorage.getItem('almacen');
+        return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
+    });
+
+    useEffect(() => {
+        const almacenIdGuardado = localStorage.getItem('almacen');
+        if (almacenIdGuardado && almacenes.length > 0) {
+            const almacen = almacenes.find(a => a.id === parseInt(almacenIdGuardado));
+            if (almacen) {
+                setAlmacenSeleccionado(almacen);
+            }
+        }
+    }, [almacenes]);
+
     const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
     const [isModalOpenExcel, setIsModalOpenExcel] = useState(false);
     const [isModalOpenExcelDetalle, setIsModalOpenExcelDetalle] = useState(false);
-    
-    // Obtener la fecha actual
+
     const today = new Date();
     const todayDate = parseDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
 
@@ -44,6 +55,7 @@ const FiltrosIngresos = ({ onAlmacenChange, onFiltersChange }) => {
     const handleAlmacenChange = (event) => {
         const almacen = event.target.value === '%' ? { id: '%', sucursal: '' } : almacenes.find(a => a.id === parseInt(event.target.value));
         setAlmacenSeleccionado(almacen);
+        localStorage.setItem('almacen', almacen.id);
         onAlmacenChange(almacen);
     };
 
@@ -102,7 +114,7 @@ const FiltrosIngresos = ({ onAlmacenChange, onFiltersChange }) => {
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
             <div className="flex items-center gap-2">
                 <h6 className='font-bold'>Almacén:</h6>
-                <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' onChange={handleAlmacenChange}>
+                <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' onChange={handleAlmacenChange} value={almacenSeleccionado.id}>
                     <option value="%">Seleccione un almacén...</option>
                     {almacenes.map((almacen, index) => (
                         <option key={index} value={almacen.id}>{almacen.almacen}</option>

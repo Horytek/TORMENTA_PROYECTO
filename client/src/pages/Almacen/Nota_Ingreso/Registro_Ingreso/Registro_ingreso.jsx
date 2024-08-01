@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';
-import { IoMdAdd } from "react-icons/io";
-import { IoIosSearch } from "react-icons/io";
+
 import ProductosModal from '@/pages/Productos/ProductosForm';
 import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
@@ -12,13 +11,16 @@ import { MdCancelPresentation } from "react-icons/md";
 import useRegistroNotaIngresoData from './data/Registro_ingreso_data';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
+import useProductosData from './data/data_buscar_producto';
+
 function Registro_Ingresos() {
   const { ingresos, addIngreso, removeIngreso } = useRegistroNotaIngresoData();
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
   const [isModalOpenProovedor, setIsModalOpenProovedor] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
+  const [productos, setProductos] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
 
   const openModalBuscarProducto = () => setIsModalOpen(true);
   const closeModalBuscarProducto = () => setIsModalOpen(false);
@@ -31,14 +33,26 @@ function Registro_Ingresos() {
   const closeModalProducto = () => {
     setIsModalOpenProducto(false);
   };
+
   const openModalProovedor = () => {
     setIsModalOpenProovedor(true);
-    
   };
 
   const closeModalProovedor = () => {
     setIsModalOpenProovedor(false);
   };
+
+  const handleBuscarProducto = async () => {
+    const almacenId = localStorage.getItem('almacen');
+    const filters = {
+      descripcion: searchInput,
+      almacen: almacenId || 1,
+    };
+
+    const result = await useProductosData(filters);
+    setProductos(result.productos);
+  };
+
   return (
     <div>
       <Breadcrumb paths={[
@@ -83,7 +97,7 @@ function Registro_Ingresos() {
               </div>
             </div>
             <div className="flex justify-start mt-4 space-x-2">
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor} >
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor}>
                 <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
               </button>
 
@@ -122,60 +136,22 @@ function Registro_Ingresos() {
         <div>
           <br />
           <br />
-          {/* Componente de tabla de ingresos */}
           <RegistroTablaIngreso ingresos={ingresos} />
         </div>
       </div>
-      <ModalBuscarProducto isOpen={isModalOpen} onClose={closeModalBuscarProducto}>
-        <div className="flex mb-4">
-          <input 
-            type="text" 
-            placeholder="Buscar producto" 
-            className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow" 
-          />
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center">
-            <IoIosSearch className='w-4 h-4 mr-1' />
-            Buscar
-          </button>
-          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" onClick={() => openModalProducto('Agregar Producto')}>
-            <IoMdAdd className='w-4 h-4 mr-1' />
-            Nuevo
-          </button>
-        </div>
-        <table className="min-w-full bg-white">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b">Código</th>
-              <th className="py-2 px-4 border-b">Descripción</th>
-              <th className="py-2 px-4 border-b">Marca</th>
-              <th className="py-2 px-4 border-b">Cantidad</th>
-              <th className="py-2 px-4 border-b">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Aquí puedes mapear tus datos de productos */}
-            <tr>
-              <td className="py-2 px-4 border-b text-center">001</td>
-              <td className="py-2 px-4 border-b text-center">Producto A</td>
-              <td className="py-2 px-4 border-b text-center">Marca A</td>
-              <td className="py-2 px-4 border-b text-center">10</td>
-              <td className="py-2 px-4 border-b text-center">
-                <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                  <IoMdAdd />
-                </button>
-              </td>
-            </tr>
-            {/* Repite las filas según tus datos */}
-          </tbody>
-        </table>
-      </ModalBuscarProducto>
-      {/* Modal de Agregar Producto */}
+      <ModalBuscarProducto 
+        isOpen={isModalOpen} 
+        onClose={closeModalBuscarProducto} 
+        onBuscar={handleBuscarProducto} 
+        setSearchInput={setSearchInput}
+        productos={productos}
+      />
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
       <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
-        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }} >SUCURSAL: TIENDA ARICA 3 / CAJA ARICA3</h1>
+        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>SUCURSAL: TIENDA ARICA 3 / CAJA ARICA3</h1>
       </div>
     </div>
   );

@@ -1,35 +1,41 @@
-import { getProductosRequest,
-  /* getProductoRequest,
-   addProductosRequest,
-   updateProductoRequest,
-   */} from "../routes/api.productos";
-import { useState, useEffect } from 'react'
+import { getProductosRequest, deleteProductosRequest } from '@/api/api.productos';
+import { transformData } from '@/utils/producto';
+import { toast } from "react-hot-toast";
 
-export function transformData(productos) {
-  const productosTransformados = productos.map((producto) => ({
-      precio: parseFloat(producto.precio),
-      descripcion: producto.descripcion.toUpperCase(),
-      nom_subcat: producto.nom_subcat.toUpperCase(),
-      nom_marca: producto.nom_marca.toUpperCase(),
-      cod_barras: producto.cod_barras || "-",
-      undm: producto.undm.toUpperCase(),
-      estado: parseInt(producto.estado) === 0 ? "Inactivo" : "Activo",
-  }));
+const getProductos = async () => {
+  try {
+    const response = await getProductosRequest();
+    
+    if (response.data.code === 1) {
+      return transformData(response.data.data); // Devuelve el array de productos transformados en el formato deseado
+    } else {
+      console.error('Error en la solicitud: ', response.data.message);
+    }
+  } catch (error) {
+    console.error('Error en la solicitud: ', error.message);
+  }
+};
 
-  return productosTransformados;
-}
+const deleteProducto = async (id) => {
+  try {
+    const response = await deleteProductosRequest(id);
 
-export function ShowProductos() {
+    // Producto dado de baja (estado a 0)
+    if (response.data.code === 2) {
+      toast.success("Producto dado de baja con éxito");
+    }
+    // Producto eliminado
+    if (response.data.code === 1) {
+      toast.success("Producto eliminado con éxito");
+    }
+    // Error 404
+    if (response.status === 404) {
+      toast.error("Ocurrió un error al eliminar el producto");
+    }
 
-  const [productos, setProductos] = useState([]);
-  useEffect(() => {
-    getProductos()
-  }, []);
+  } catch (error) {
+    toast.error("Error en el servidor interno");
+  }
+};
 
-  // Obtener todos los productos
-  const getProductos = async () => {
-    const res = await getProductosRequest();
-    const dataTransformada = transformData(res.data.data)
-    setProductos(dataTransformada);
-  };
-}
+export { getProductos, deleteProducto };

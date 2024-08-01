@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { MdDeleteForever, MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { IoIosCloudDone } from "react-icons/io";
+import { FaTrash } from "react-icons/fa";
 
 const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {
   return (
@@ -55,15 +56,15 @@ const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {
                 <div className="flex justify-center items-center space-x-4">
                   <MdEdit
                     className="cursor-pointer hover:text-blue-500"
-                    style={{ fontSize: "20px", color: "blue" }}
+                    style={{ fontSize: "20px", color: "#FBBF24" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditModal(marca.id_marca);
                     }}
                   />
-                  <MdDeleteForever
+                  <FaTrash
                     className="cursor-pointer hover:text-red-600"
-                    style={{ fontSize: "25px", color: "red" }}
+                    style={{ fontSize: "15px", color: "#EF4444" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openModal(marca.id_marca);
@@ -71,7 +72,7 @@ const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {
                   />
                   <MdDoNotDisturbAlt
                     className="cursor-pointer hover:text-orange-500"
-                    style={{ fontSize: "20px", color: "orange" }}
+                    style={{ fontSize: "20px", color: "#EF4444" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       darBajaModal(marca.id_marca);

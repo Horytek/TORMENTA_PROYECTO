@@ -7,46 +7,25 @@ import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { ModalMarca } from './Modal Form/ModalMarca';
 import { ModalLinea } from './Modal Form/ModalLinea';
 import { ModalSublinea } from './Modal Form/ModalSubLinea';
-import { ModalUndMed } from './Modal Form/ModalUndMed';
-
 
 const ProductosForm = ({ modalTitle, onClose }) => {
 
     const [isModalOpenMarca, setIsModalOpenMarca] = useState(false);
     const [isModalOpenLinea, setIsModalOpenLinea] = useState(false);
     const [isModalOpenSubLinea, setIsModalOpenSubLinea] = useState(false);
-    const [isModalOpenUndMed, setIsModalOpenUndMed] = useState(false);
 
     // Logica Modal Marca
-    const openModalMarca = () => {
-      setIsModalOpenMarca(true);
-    };
-    const closeModalMarca = () => {
-      setIsModalOpenMarca(false);
+    const handleModalMarca = () => {
+      setIsModalOpenMarca(!isModalOpenMarca);
     };
 
-    // Logica Modal Linea
-    const openModalLinea = () => {
-      setIsModalOpenLinea(true);
-    };
-    const closeModalLinea = () => {
-      setIsModalOpenLinea(false);
+    const handleModalLinea = () => {
+      setIsModalOpenLinea(!isModalOpenLinea);
     };
 
     // Logica Modal Sublinea
-    const openModalSubLinea = () => {
-      setIsModalOpenSubLinea(true);
-    };
-    const closeModalSubLinea = () => {
-      setIsModalOpenSubLinea(false);
-    };
-
-    // Logica Modal UnidaMedida
-    const openModalUndMed = () => {
-      setIsModalOpenUndMed(true);
-    };
-    const closeModalUndMed = () => {
-      setIsModalOpenUndMed(false);
+    const handleModalSubLinea = () => {
+      setIsModalOpenSubLinea(!isModalOpenSubLinea);
     };
 
   return (
@@ -76,7 +55,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
                     <select id='linea' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                       <option>Seleccione...</option>
                     </select>
-                    <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={openModalLinea} />
+                    <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalLinea} />
                   </div>
                   
                 </div>
@@ -86,7 +65,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
                     <select id='sublinea' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                       <option>Seleccione...</option>
                     </select>
-                    <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={openModalSubLinea} />
+                    <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalSubLinea} />
                   </div>
                 </div>
               </div>
@@ -121,7 +100,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
                     <select id='marca' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                       <option>Seleccione...</option>
                     </select>
-                    <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={openModalMarca} />
+                    <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalMarca} />
                   </div>
                 </div>
               </div>
@@ -131,12 +110,11 @@ const ProductosForm = ({ modalTitle, onClose }) => {
               <div className='grid grid-cols-2 gap-6'>
                 <div className='w-full relative group mb-5 text-start'>
                   <label htmlFor="unidadMedida" className='text-sm font-bold text-black'>Und. Medida::</label>
-                  <div className='flex justify-center items-center gap-2'>
-                    <select id='unidadMedida' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                  <select id='unidadMedida' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                       <option>Seleccione...</option>
-                    </select>
-                    <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={openModalUndMed} />
-                  </div>
+                      <option>KGM</option>
+                      <option>NIU</option>
+                  </select>
                 </div>
                 <div className='w-full relative group mb-5 text-start'>
                   <label htmlFor="estado" className='text-sm font-bold text-black'>Estado:</label>
@@ -158,22 +136,17 @@ const ProductosForm = ({ modalTitle, onClose }) => {
 
       {/* Modal de Nueva Marca */}
       {isModalOpenMarca && (
-        <ModalMarca modalTitle={'Marca'} closeModel={closeModalMarca} />
+        <ModalMarca modalTitle={'Marca'} closeModel={handleModalMarca} />
       )}
 
       {/* Modal de Nueva Linea */}
       {isModalOpenLinea && (
-        <ModalLinea modalTitle={'Linea'} closeModel={closeModalLinea} />
+        <ModalLinea modalTitle={'Linea'} closeModel={handleModalLinea} />
       )}
 
       {/* Modal de Nueva SubLinea */}
       {isModalOpenSubLinea && (
-        <ModalSublinea modalTitle={'Sub-Línea'} closeModel={closeModalSubLinea} />
-      )}
-
-      {/* Modal de Nueva Unidad Medida */}
-      {isModalOpenUndMed && (
-        <ModalUndMed modalTitle={'Unidad de Medida'} closeModel={closeModalUndMed} />
+        <ModalSublinea modalTitle={'Sub-Línea'} closeModel={handleModalSubLinea} />
       )}
 
     </div>

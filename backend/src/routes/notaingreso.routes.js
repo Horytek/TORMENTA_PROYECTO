@@ -5,5 +5,5 @@ const router = Router();
 
 router.get("/", notaingresoController.getIngresos);
 router.get("/almacen", notaingresoController.getAlmacen);
-
+router.get("/productos", notaingresoController.getProductos);
 export default router;
