@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import Pagination from '@/components/Pagination/Pagination';
 import ProductosForm from './ProductosForm';
 import { Toaster } from "react-hot-toast";
 import {ShowProductos} from './ShowProductos';
@@ -9,27 +8,11 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
  
 function Productos() {
-  
-  // Logica de Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5;
-
-  const onPageChange = (page) => {
-    setCurrentPage(page);
-  };
-
   // Modal de Agregar Producto
-  const [isModalOpen, setModalOpen] = useState(false);
-  
-  // Funcion para manejar la accion de iniciar el modal de agregar producto
-  const openModal = () => {
-    setModalOpen(true);
+  const [activeAdd, setModalOpen] = useState(false);
+  const handleModalAdd = () => {
+    setModalOpen(!activeAdd);
   };
-
-  // Funcion para manejar la accion de cerrar el modal de agregar producto
-  const closeModal = () => {
-    setModalOpen(false);
-  }; 
 
   return (
     <div>
@@ -46,7 +29,7 @@ function Productos() {
           <input type="text" placeholder='Ingrese un producto' className='search-product border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full ps-10 p-2.5' />
         </div>
         <div className="flex gap-5">
-          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }}/>} onClick={() => openModal()}>
+          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }}/>} onClick={handleModalAdd}>
             Agregar producto
           </ButtonIcon>
         </div>
@@ -55,15 +38,10 @@ function Productos() {
         {/* Contenido Tabla */}
         <ShowProductos />
       </div>
-      <div className="flex justify-end mt-4">
-        <div className="flex">
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
-        </div>
-      </div>
 
       {/* Modal de Editar Producto */}
-      {isModalOpen && (
-          <ProductosForm modalTitle={'Nuevo Producto'} onClose={closeModal} />
+      {activeAdd && (
+          <ProductosForm modalTitle={'Nuevo Producto'} onClose={handleModalAdd} />
       )}
 
     </div>

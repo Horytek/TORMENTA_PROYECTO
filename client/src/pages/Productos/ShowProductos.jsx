@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
+import Pagination from '@/components/Pagination/Pagination';
 import { getProductos, deleteProducto } from '@/services/productos.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import ProductosForm from './ProductosForm';
@@ -10,7 +11,10 @@ export function ShowProductos() {
 
     // Estados de listado de productos
     const [productos, setProductos] = useState([]);
-    useEffect( () => {
+    const [currentPage, setCurrentPage] = useState(1); // Página inicial
+    const productosPerPage = 15;
+
+    useEffect(() => {
         getProducts();
     }, []);
 
@@ -20,6 +24,11 @@ export function ShowProductos() {
         setProductos(data);
     }
 
+    // Productos a mostrar en la página actual
+    const indexOfLastProducto = currentPage * productosPerPage;
+    const indexOfFirstProducto = indexOfLastProducto - productosPerPage;
+    const currentProductos = productos.slice(indexOfFirstProducto, indexOfLastProducto);
+
     // Eliminar producto
     const deleteProduct = async (id) => {
         await deleteProducto(id);
@@ -27,12 +36,9 @@ export function ShowProductos() {
     }
 
     // Estado de Modal de Edición de Producto
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const openModal = () => {
-        setIsModalOpen(true);
-    };
-    const closeModal = () => {
-        setIsModalOpen(false);
+    const [activeEdit, setIsModalOpen] = useState(false);
+    const handleModalEdit = () => {
+        setIsModalOpen(!activeEdit);
     };
 
     // Estados de modales de eliminación de producto
@@ -49,11 +55,10 @@ export function ShowProductos() {
         setIsConfirmationModalOpen(false);
         setSelectedRow(null);
     };
-    // Función para manejar la acción de confirmar eliminar
+    // Función para manejar la acción de confirmación de eliminación de producto
     const handleConfirmDelete = () => {
         // Eliminación de producto mediante api
         deleteProduct(selectedId);
-        // Cerrar modal de confirmación
         handleCloseConfirmationModal();
     };
 
@@ -73,36 +78,35 @@ export function ShowProductos() {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-gray-200">
-                    { productos.map ( (producto) => (
-                        <tr className='hover:bg-gray-100' key = { producto.id_producto } data-product = { producto.id_producto } >
-                            <td className='py-2 px-2 max-w-xs whitespace-nowrap'>{ producto.descripcion }</td>
-                            <td className='py-2 text-center'>{ producto.nom_marca }</td>
-                            <td className='py-2 text-center'>{ producto.nom_subcat }</td>
-                            <td className='py-2 text-center'>{ producto.undm }</td>
-                            <td className='py-2 text-center'>{ producto.precio }</td>
+                    { currentProductos.map((producto) => (
+                        <tr className='hover:bg-gray-100' key={producto.id_producto} data-product={producto.id_producto}>
+                            <td className='py-2 px-2 max-w-xs whitespace-nowrap'>{producto.descripcion}</td>
+                            <td className='py-2 text-center'>{producto.nom_marca}</td>
+                            <td className='py-2 text-center'>{producto.nom_subcat}</td>
+                            <td className='py-2 text-center'>{producto.undm}</td>
+                            <td className='py-2 text-center'>{producto.precio}</td>
                             <td className='py-2 text-center'>
-                            { producto.cod_barras == '-' ? '-' : 
-                              <div className="flex justify-center items-center">
-                                <Barcode
-                                  className="bg-transparent"
-                                  value={producto.cod_barras}
-                                />
-                              </div>
-                            } 
+                                {producto.cod_barras === '-' ? '-' : 
+                                  <div className="flex justify-center items-center">
+                                    <Barcode
+                                      className="bg-transparent"
+                                      value={producto.cod_barras}
+                                    />
+                                  </div>
+                                } 
                             </td>
                             <td className='py-2 text-center'>
-                            <span 
-                            className=
-                            {producto.estado_producto == 'Inactivo' 
-                                ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600" 
-                                : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-                            }>
-                            {producto.estado_producto}
-                            </span>
+                                <span className={
+                                    producto.estado_producto === 'Inactivo'
+                                        ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600" 
+                                        : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
+                                }>
+                                    {producto.estado_producto}
+                                </span>
                             </td>
                             <td className='py-4 text-center'>
                                 <div className="flex justify-center items-center">
-                                    <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => openModal()}>
+                                    <button className="px-2 py-1 text-yellow-400 text-xl" onClick={handleModalEdit}>
                                         <MdEdit />
                                     </button>
                                     <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(producto.descripcion, producto.id_producto)}>
@@ -111,24 +115,34 @@ export function ShowProductos() {
                                 </div>
                             </td>
                         </tr>
-                    )) } 
+                    ))}
                 </tbody>
             </table>
 
+            {/* Paginación */}
+            <div className="flex justify-end mt-4">
+                <div className="flex">
+                    <Pagination 
+                        currentPage={currentPage} 
+                        totalPages={Math.ceil(productos.length / productosPerPage)}
+                        onPageChange={setCurrentPage} 
+                    />
+                </div>
+            </div>
+
             {/* Modal de Eliminar Producto */}
             {isConfirmationModalOpen && (
-            <ConfirmationModal
-            message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
-            onClose={handleCloseConfirmationModal}
-            onConfirm={handleConfirmDelete}
-            />
+                <ConfirmationModal
+                    message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
+                    onClose={handleCloseConfirmationModal}
+                    onConfirm={handleConfirmDelete}
+                />
             )}
 
             {/* Modal de Editar Producto */}
-            {isModalOpen && (
-                <ProductosForm modalTitle={'Editar Producto'} onClose={closeModal} />
+            {activeEdit && (
+                <ProductosForm modalTitle={'Editar Producto'} onClose={handleModalEdit} />
             )}
-            
         </div>
     )
 }
