@@ -141,6 +141,28 @@ const getProductosVentas = async (req, res) => {
   }
 };
 
+const getEstado = async (req, res) => {
+  const connection = await getConnection();
+  try {
+    const {
+      id_venta,
+    } = req.body;
+
+    console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
+    await connection.beginTransaction();
+
+    // Obtener id_sucursal basado en el usuario
+    await connection.query(
+      "UPDATE venta set estado_venta=1 where id_venta=?",
+      [id_venta]
+    );
+    res.json({ message: "Ventas actualizada correctamente" });
+  } catch (error) {
+    res.status(500);
+    res.send(error.message);
+  }
+};
+
 const getComprobante = async (req, res) => {
   try {
     const connection = await getConnection();
@@ -562,4 +584,5 @@ export const methods = {
   getSucursal,
   updateVenta,
   generarComprobante,
+  getEstado,
 };
