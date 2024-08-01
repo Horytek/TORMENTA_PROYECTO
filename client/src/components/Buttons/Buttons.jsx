@@ -67,7 +67,7 @@ export function ButtonDownload({ ...props }) {
 
 export function ButtonDesplegable({ ...props }) {
   return (
-    <button className="btn btn-rvsecondary flex items-center" {...props}>
+    <button className="btn btn-masecondary flex items-center" {...props}>
       <IoIosArrowDropdownCircle className="h-5 w-5" style={{ color: "#f8f9fa" }} />
     </button>
   );
