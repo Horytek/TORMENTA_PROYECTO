@@ -53,12 +53,12 @@ const Ventas = () => {
     if (estado=='En proceso') {
       estado= 2;
     } else if (estado=='Inactivo') {
-      estado= 1;
-    } else if (estado=='Activo') {
       estado= 0;
+    } else if (estado=='Activo') {
+      estado= 1;
     }
 
-    if(estado==1){
+    if(estado==1 || estado==0) {
       setModalOpen(false);
     }
   };
@@ -137,6 +137,7 @@ const Ventas = () => {
         closeModal={closeModal}
         setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
         deleteOptionSelected={deleteOptionSelected}
+        refetchVentas={refetchVentas}
       />
 
       {/* Modal de confirmación de eliminación */}

@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
 //import toast from 'react-hot-toast';
 import {  handleSunat } from '../../../Data/add_sunat';
+import {  handleUpdate } from '../../../Data/update_venta';
 
-const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setConfirmDeleteModalOpen, deleteOptionSelected }) => {
+const OptionsModal = ({ modalOpen, toggleDeleteDetalleOption, closeModal, setConfirmDeleteModalOpen, deleteOptionSelected, refetchVentas }) => {
   const [sendToSunat, setSendToSunat] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const loadDetallesFromLocalStorage2 = () => {
+    const savedDetalles = localStorage.getItem('ventas');
+    return savedDetalles ? JSON.parse(savedDetalles) : [];
+  };
+
+  const d_venta = loadDetallesFromLocalStorage2();
+
   const loadDetallesFromLocalStorage = () => {
     const savedDetalles = localStorage.getItem('new_detalle');
     return savedDetalles ? JSON.parse(savedDetalles) : [];
@@ -39,15 +48,23 @@ const datosClientes = loadDetallesFromLocalStorage2();*/
       closeModal();
       //const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
       handleSunat(datos_precio,detalles,detalles);
-   /*   setTimeout(() => {
+      handleUpdate(d_venta);   setTimeout(() => {
+        setIsDeleted(true);
         //toast.dismiss(loadingToastId);
         //toast.success('Los datos se han enviado con éxito!');
-      }, 3000);*/
+      }, 3000);
     } else if (deleteOptionSelected) {
       handleDeleteVenta();
       setConfirmDeleteModalOpen(true);
     }
   };
+
+  useEffect(() => {
+    if (isDeleted) {
+      refetchVentas();
+      setIsDeleted(false);
+    }
+  }, [isDeleted, refetchVentas]);
 
   const handleDeleteVenta = () => {
     // Agrega aquí la lógica para eliminar la venta
@@ -104,6 +121,7 @@ OptionsModal.propTypes = {
   closeModal: PropTypes.func.isRequired,
   setConfirmDeleteModalOpen: PropTypes.func.isRequired,
   deleteOptionSelected: PropTypes.bool.isRequired,
+  refetchVentas: PropTypes.func.isRequired,
 };
 
 export default OptionsModal;
