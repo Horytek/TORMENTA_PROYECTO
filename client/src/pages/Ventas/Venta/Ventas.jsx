@@ -153,7 +153,7 @@ const Ventas = () => {
       <div className="flex">
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
-        <select className="input-c cant-pag-c" value={ventasPerPage} onChange={(e) => setVentasPerPage(Number(e.target.value))}>
+        <select className="input-c cant-pag-c w-20 rounded-lg border" value={ventasPerPage} onChange={(e) => setVentasPerPage(Number(e.target.value))}>
           <option value={5}>5</option>
           <option value={10}>10</option>
           <option value={20}>20</option>
