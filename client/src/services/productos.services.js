@@ -1,35 +1,43 @@
-import { getProductosRequest,
-  /* getProductoRequest,
-   addProductosRequest,
-   updateProductoRequest,
-   */} from "../routes/api.productos";
-import { useState, useEffect } from 'react'
+import { getProductosRequest, deleteProductosRequest } from '@/api/api.productos';
+import { transformData } from '@/utils/producto';
 
-export function transformData(productos) {
-  const productosTransformados = productos.map((producto) => ({
-      precio: parseFloat(producto.precio),
-      descripcion: producto.descripcion.toUpperCase(),
-      nom_subcat: producto.nom_subcat.toUpperCase(),
-      nom_marca: producto.nom_marca.toUpperCase(),
-      cod_barras: producto.cod_barras || "-",
-      undm: producto.undm.toUpperCase(),
-      estado: parseInt(producto.estado) === 0 ? "Inactivo" : "Activo",
-  }));
+const getProductos = async () => {
+  try {
+    const response = await getProductosRequest();
+    
+    if (response.data.code === 1) {
+      return transformData(response.data.data); // Devuelve el array de productos transformados en el formato deseado
+    } else {
+      console.error('Error en la solicitud: ', response.data.message);
+    }
+  } catch (error) {
+    console.error('Error en la solicitud: ', error.message);
+  }
+};
 
-  return productosTransformados;
-}
+const deleteProducto = async (id) => {
+  try {
+    const response = await deleteProductosRequest(id);
 
-export function ShowProductos() {
+    if (response.data.code === 2) {
+      console.log(`Producto con ID ${id} dado de baja exitosamente.`);
+      return true; // Indicar éxito
+    }
 
-  const [productos, setProductos] = useState([]);
-  useEffect(() => {
-    getProductos()
-  }, []);
+    if (response.data.code === 1) {
+      console.log(`Producto con ID ${id} eliminado exitosamente.`);
+      return true; // Indicar éxito
+    }
 
-  // Obtener todos los productos
-  const getProductos = async () => {
-    const res = await getProductosRequest();
-    const dataTransformada = transformData(res.data.data)
-    setProductos(dataTransformada);
-  };
-}
+    if (response.status === 404) {
+      console.log(`Ocurrio un error al eliminar el producto con ID ${id}.`);
+      return false; // Indicar éxito
+    }
+
+  } catch (error) {
+    console.error('Error en la solicitud: ', error.message);
+    return false; // Indicar fallo
+  }
+};
+
+export { getProductos, deleteProducto };
