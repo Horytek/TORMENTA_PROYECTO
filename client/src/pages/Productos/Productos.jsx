@@ -1,77 +1,14 @@
-import { useEffect, useState } from 'react';
-import Table from '@/components/Table/Table';
+import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import Pagination from '@/components/Pagination/Pagination';
-import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
-import { FaPlus, FaTrash } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
-import { IoIosSearch } from "react-icons/io";
-import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import ProductosForm from './ProductosForm';
-import getProductosRequest from './data/productosData';
-
+import {ShowProductos} from './ShowProductos';
+import { ButtonIcon } from '@/components/Buttons/Buttons';
+import { FaPlus } from "react-icons/fa";
+import { IoIosSearch } from "react-icons/io";
+ 
 function Productos() {
-  const [productos, setProductos] = useState([]); // Estado para almacenar los productos obtenidos de la API
-
-  // Definir las columnas de la tabla con el header y key correspondientes
-  const columns = [
-    { header: 'Descripción', key: 'descripcion' },
-    { header: 'Línea', key: 'nom_subcat' },
-    { header: 'Sub-Línea', key: 'nom_marca' },
-    { header: 'Und. Med.', key: 'undm' },
-    { header: 'Precio', key: 'precio' },
-    { header: 'Cód. Barras', key: 'cod_barras' },
-    { header: 'Estado', key: 'estado_producto' }
-  ];
-
-  // Función para renderizar las acciones de la tabla
-  const renderActions = (row) => (
-    <div className="flex justify-center items-center">
-      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => openModal('Editar Producto')}>
-        <MdEdit />
-      </button>
-      <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(row)}>
-        <FaTrash />
-      </button>
-    </div>
-  );
-
-  // Estado para controlar el modal de confirmación y modal de producto
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState('');
-
-  // Función para manejar la acción de abrir el modal de confirmación
-  const handleOpenConfirmationModal = (row) => {
-    setSelectedRow(row);
-    setIsConfirmationModalOpen(true);
-  };
-
-  // Función para manejar la acción de cerrar el modal de confirmación
-  const handleCloseConfirmationModal = () => {
-    setIsConfirmationModalOpen(false);
-    setSelectedRow(null);
-  };
-
-  // Función para manejar la acción de confirmar eliminar
-  const handleConfirmDelete = () => {
-    console.log('Delete', selectedRow);
-    // Aquí iría la lógica para eliminar el producto
-    handleCloseConfirmationModal();
-  };
-
-  // Funcion para manejar la accion de iniciar el modal de agregar/editar producto
-  const openModal = (title) => {
-    setModalTitle(title);
-    setIsModalOpen(true);
-  };
-
-  // Funcion para manejar la accion de cerrar el modal de agregar/editar producto
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
+  
   // Logica de Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 5;
@@ -80,18 +17,18 @@ function Productos() {
     setCurrentPage(page);
   };
 
-  useEffect(() => {
-    const fetchProductos = async () => {
-      try {
-        const data = await getProductosRequest();
-        setProductos(data); // Actualiza el estado con los datos recibidos
-      } catch (error) {
-        console.error('Error al obtener productos: ', error.message);
-      }
-    };
+  // Modal de Agregar Producto
+  const [isModalOpen, setModalOpen] = useState(false);
+  
+  // Funcion para manejar la accion de iniciar el modal de agregar producto
+  const openModal = () => {
+    setModalOpen(true);
+  };
 
-    fetchProductos();
-  }, []); // Llama a useEffect solo una vez al montar el componente
+  // Funcion para manejar la accion de cerrar el modal de agregar producto
+  const closeModal = () => {
+    setModalOpen(false);
+  }; 
 
   return (
     <div>
@@ -107,17 +44,14 @@ function Productos() {
           <input type="text" placeholder='Ingrese un producto' className='search-product border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full ps-10 p-2.5' />
         </div>
         <div className="flex gap-5">
-          <ButtonNormal color={'#01BDD6'}>
-            Filtrar
-          </ButtonNormal>
-          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }}/>} onClick={() => openModal('Agregar Producto')}>
+          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }}/>} onClick={() => openModal()}>
             Agregar producto
           </ButtonIcon>
         </div>
       </div>
       <div>
         {/* Contenido Tabla */}
-        <Table columns={columns} data={productos} renderActions={renderActions} />
+        <ShowProductos />
       </div>
       <div className="flex justify-end mt-4">
         <div className="flex">
@@ -125,18 +59,9 @@ function Productos() {
         </div>
       </div>
 
-      {/* Modal de Confirmación */}
-      {isConfirmationModalOpen && (
-        <ConfirmationModal
-          message={`¿Estás seguro que deseas eliminar "${selectedRow.descripcion}"?`}
-          onClose={handleCloseConfirmationModal}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
-
-      {/* Modal de Agregar Producto */}
+      {/* Modal de Editar Producto */}
       {isModalOpen && (
-        <ProductosForm modalTitle={modalTitle} onClose={closeModal} />
+          <ProductosForm modalTitle={'Nuevo Producto'} onClose={closeModal} />
       )}
 
     </div>

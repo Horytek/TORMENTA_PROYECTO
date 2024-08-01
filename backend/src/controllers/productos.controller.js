@@ -88,14 +88,15 @@ const deleteProducto = async (req, res) => {
         const connection = await getConnection();
         
         // Verificar si el producto existe dentro de una Nota de Ingreso
-        const [verify] = await connection.query("SELECT 1 FROM detalle_nota WHERE id_producto = ?", id);
+        const [verify1] = await connection.query("SELECT 1 FROM detalle_venta WHERE id_producto = ?", id);
+        const [verify2] = await connection.query("SELECT 1 FROM detalle_envio WHERE id_producto = ?", id);
+        const [verify3] = await connection.query("SELECT 1 FROM detalle_nota WHERE id_producto = ?", id);
+        const isProductInUse = verify1.length > 0 || verify2.length > 0 || verify3.length > 0;
 
-        if (verify.affectedRows === 0) {
-            const producto = { estado_producto };
-            const connection = await getConnection();
-            const [result] = await connection.query("UPDATE producto SET ? WHERE id_producto = ?", [producto, id]);
+        if (isProductInUse) {
+            const [Updateresult] = await connection.query("UPDATE producto SET estado_producto = 0 WHERE id_producto = ?", id);
 
-            if (result.affectedRows === 0) {
+            if (Updateresult.affectedRows === 0) {
                 return res.status(404).json({code: 0, message: "Producto no encontrado"});
             }
 

@@ -1,3 +1,5 @@
+
+
 .container-rv {  display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 0.3fr 0.3fr 0.3fr;
@@ -14,4 +16,90 @@
   .select-width {
     width: 200px;  /* Ajusta el valor según tus necesidades */
   }
+
   
+  .container-rv {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.flex {
+  display: flex;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.w-18 {
+  width: 18rem;
+}
+
+.w-xs {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.max-w-xs {
+  max-width: 20rem;
+}
+
+.relative {
+  position: relative;
+}
+
+.space-y-2 {
+  margin-bottom: 0.5rem;
+}
+
+.space-x-2 {
+  margin-right: 0.5rem;
+}
+
+
+.container-tormenta {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: auto;
+  gap: 0px 0px;
+  grid-template-areas:
+    "title-tormenta title-tormenta title-tormenta elements-right"
+    ". . . ."
+    ". . . .";
+}
+
+.title-tormenta {
+  grid-area: title-tormenta;
+}
+
+.elements-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 80px;
+  margin-right: 20px;
+}
+
+.icon-tormenta {
+  cursor: pointer;
+}
+
+.elements-right div {
+  display: flex;
+  align-items: center;
+}
+
+.elements-right span {
+  font-size: 16px; /* Ajusta el tamaño del texto si es necesario */
+  margin-left: 5px; /* Espacio entre el ícono y el texto */
+}
+

@@ -15,6 +15,11 @@
 }
 
 .btn-rvsecondary {
-  background-color: #6c757d;
+  background-color: #3a90db;
+  color: white;
+}
+
+.btn-masecondary {
+  background-color: #1bc6cc;
   color: white;
 }
