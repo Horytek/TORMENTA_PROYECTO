@@ -26,7 +26,7 @@ const getIngresos = async (req, res) => {
           LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
           LEFT JOIN almacen ad ON n.id_almacenD= ad.id_almacen
           WHERE 
-              n.id_nota = 1
+              n.id_tiponota = 1
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
               AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
@@ -82,10 +82,43 @@ const getAlmacen = async (req, res) => {
         res.send(error.message);
     }
 };
+const getProductos = async (req, res) => {
+    const { descripcion = '', almacen = 1 } = req.query;
+  
+    console.log('Filtros recibidos:', { descripcion, almacen });
+  
+    try {
+      const connection = await getConnection();
+  
+      const [productosResult] = await connection.query(
+        `
+        SELECT p.id_producto AS codigo, p.descripcion AS descripcion, m.nom_marca AS marca, i.stock AS stock 
+        FROM producto p 
+        INNER JOIN marca m ON p.id_marca= m.id_marca 
+        INNER JOIN inventario i ON p.id_producto = i.id_producto
+        INNER JOIN detalle_nota dn ON p.id_producto = dn.id_producto
+        INNER JOIN nota n ON dn.id_nota = n.id_nota 
+        WHERE n.id_tiponota = 1
+        AND p.descripcion LIKE ?
+        AND i.id_almacen = ?
+        GROUP BY codigo, descripcion, marca, stock;
+        `,
+        [`${descripcion}%`, almacen]
+      );
+  
+      console.log('Productos encontrados:', productosResult);
+  
+      res.json({ code: 1, data: productosResult });
+    } catch (error) {
+      res.status(500).send(error.message);
+    }
+  };
+  
 
 export const methods = {
     getIngresos,
-    getAlmacen
+    getAlmacen,
+    getProductos
 
 };
 
