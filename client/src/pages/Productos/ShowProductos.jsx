@@ -4,8 +4,10 @@ import { FaTrash } from "react-icons/fa";
 import { getProductos, deleteProducto } from '@/services/productos.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import ProductosForm from './ProductosForm';
+import Barcode from '../../components/Barcode/Barcode';
 
 export function ShowProductos() {
+
     // Estados de listado de productos
     const [productos, setProductos] = useState([]);
     useEffect( () => {
@@ -39,7 +41,6 @@ export function ShowProductos() {
     const [selectedId, setSelectedId] = useState(null);
 
     const handleOpenConfirmationModal = (row, id_producto) => {
-        console.log(id_producto)
         setSelectedRow(row);
         setSelectedId(id_producto);
         setIsConfirmationModalOpen(true);
@@ -50,41 +51,46 @@ export function ShowProductos() {
     };
     // Función para manejar la acción de confirmar eliminar
     const handleConfirmDelete = () => {
-        console.log('Delete', selectedRow);
-        console.log('Delete', selectedId);
         // Eliminación de producto mediante api
         deleteProduct(selectedId);
-        // Abrir Toast de confirmación
-
         // Cerrar modal de confirmación
         handleCloseConfirmationModal();
     };
 
     return (
-        <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 rounded-lg">
+        <div className="overflow-x-auto shadow-md sm:rounded-lg">
+            <table className="w-full text-sm table-auto divide-gray-200 rounded-lg">
                 <thead className="bg-gray-50">
                     <tr>
-                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider">DESCRIPCIÓN</th>
-                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider">LÍNEA</th>
-                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider">SUB-LÍNEA</th>
-                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider">UND. MED.</th>
-                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider">PRECIO (S/.)</th>
-                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider">COD. BARRAS</th>
-                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider">ESTADO</th>
-                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center tracking-wider">ACCIONES</th>
+                        <th className="px-6 py-3 w-1/3 text-xs font-bold text-gray-500 uppercase text-center">DESCRIPCIÓN</th>
+                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">LÍNEA</th>
+                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">SUB-LÍNEA</th>
+                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">UND. MED.</th>
+                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">PRECIO (S/.)</th>
+                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">COD. BARRAS</th>
+                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">ESTADO</th>
+                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">ACCIONES</th>
                     </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-gray-200">
                     { productos.map ( (producto) => (
-                        <tr key = { producto.id_producto } data-product = { producto.id_producto } >
-                            <td className='py-4'>{ producto.descripcion }</td>
-                            <td className='py-4 text-center'>{ producto.nom_marca }</td>
-                            <td className='py-4 text-center'>{ producto.nom_subcat }</td>
-                            <td className='py-4 text-center'>{ producto.undm }</td>
-                            <td className='py-4 text-center'>{ producto.precio }</td>
-                            <td className='py-4 text-center'>{ producto.cod_barras }</td>
-                            <td className='py-4 text-center'>
+                        <tr className='hover:bg-gray-100' key = { producto.id_producto } data-product = { producto.id_producto } >
+                            <td className='py-2 px-2 max-w-xs whitespace-nowrap'>{ producto.descripcion }</td>
+                            <td className='py-2 text-center'>{ producto.nom_marca }</td>
+                            <td className='py-2 text-center'>{ producto.nom_subcat }</td>
+                            <td className='py-2 text-center'>{ producto.undm }</td>
+                            <td className='py-2 text-center'>{ producto.precio }</td>
+                            <td className='py-2 text-center'>
+                            { producto.cod_barras == '-' ? '-' : 
+                              <div className="flex justify-center items-center">
+                                <Barcode
+                                  className="bg-transparent"
+                                  value={producto.cod_barras}
+                                />
+                              </div>
+                            } 
+                            </td>
+                            <td className='py-2 text-center'>
                             <span 
                             className=
                             {producto.estado_producto == 'Inactivo' 
@@ -114,7 +120,7 @@ export function ShowProductos() {
             <ConfirmationModal
             message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
             onClose={handleCloseConfirmationModal}
-            onConfirm={handleConfirmDelete()}
+            onConfirm={handleConfirmDelete}
             />
             )}
 

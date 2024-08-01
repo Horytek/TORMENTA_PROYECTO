@@ -1,5 +1,6 @@
 import { getProductosRequest, deleteProductosRequest } from '@/api/api.productos';
 import { transformData } from '@/utils/producto';
+import { toast } from "react-hot-toast";
 
 const getProductos = async () => {
   try {
@@ -19,24 +20,21 @@ const deleteProducto = async (id) => {
   try {
     const response = await deleteProductosRequest(id);
 
+    // Producto dado de baja (estado a 0)
     if (response.data.code === 2) {
-      console.log(`Producto con ID ${id} dado de baja exitosamente.`);
-      return true; // Indicar éxito
+      toast.success("Producto dado de baja con éxito");
     }
-
+    // Producto eliminado
     if (response.data.code === 1) {
-      console.log(`Producto con ID ${id} eliminado exitosamente.`);
-      return true; // Indicar éxito
+      toast.success("Producto eliminado con éxito");
     }
-
+    // Error 404
     if (response.status === 404) {
-      console.log(`Ocurrio un error al eliminar el producto con ID ${id}.`);
-      return false; // Indicar éxito
+      toast.error("Ocurrió un error al eliminar el producto");
     }
 
   } catch (error) {
-    console.error('Error en la solicitud: ', error.message);
-    return false; // Indicar fallo
+    toast.error("Error en el servidor interno");
   }
 };
 

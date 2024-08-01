@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import Pagination from '@/components/Pagination/Pagination';
 import ProductosForm from './ProductosForm';
+import { Toaster } from "react-hot-toast";
 import {ShowProductos} from './ShowProductos';
 import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
@@ -32,6 +33,7 @@ function Productos() {
 
   return (
     <div>
+      <Toaster/>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Productos', href: '/productos' }]} />
       <hr className="mb-4" />
       <h1 className='font-extrabold text-4xl'>Productos</h1>

@@ -1,3 +1,4 @@
+
 export function transformData(productos) {
     const productosTransformados = productos.map((producto) => ({
         id_producto: producto.id_producto,
