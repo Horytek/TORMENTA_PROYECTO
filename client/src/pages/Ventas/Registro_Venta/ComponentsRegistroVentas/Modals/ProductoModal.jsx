@@ -37,7 +37,7 @@ const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm,
           <span className="px-3">
             <FaSearch className="text-gray-400" />
           </span>
-          <input type="text" className="form-input py-2 px-4 w-full text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="Realice la búsqueda del producto por el nombre" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+          <input type="text" className="form-input py-2 px-4 w-full text-gray-700 border-none placeholder-gray-400 focus:outline-none" placeholder="Realice la búsqueda del producto por el nombre" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <table className="min-w-full">

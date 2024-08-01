@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { BsCashCoin, BsCash } from "react-icons/bs";
 import { IoCloseSharp, IoPersonAddSharp } from 'react-icons/io5';
@@ -17,7 +17,7 @@ import { generateReceiptContent } from '../Comprobantes/Voucher/Voucher';
 {/* Import para el voucher con preview */ }
 // import Voucher from '../Comprobantes/Voucher/VoucherPreview';
 // import { useReactToPrint } from 'react-to-print';
-import generateComprobanteNumber  from '../../../Data/generate_comprobante';
+import generateComprobanteNumber from '../../../Data/generate_comprobante';
 
 
 const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
@@ -35,44 +35,44 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const [showNuevoCliente, setShowNuevoCliente] = useState(false);
     const [tipo_cliente, settipo_cliente] = useState('Natural');
     const { clientes, addCliente } = useClientesData();
-// Llama al hook personalizado para obtener los clientes
+    // Llama al hook personalizado para obtener los clientes
     const [clienteSeleccionado, setClienteSeleccionado] = useState('');
     const loadDetallesFromLocalStorage = () => {
         const savedDetalles = localStorage.getItem('detalles');
         return savedDetalles ? JSON.parse(savedDetalles) : [];
     };
     const detalles = loadDetallesFromLocalStorage();
-    
+
     const comprobante_pago1 = JSON.parse(localStorage.getItem('comprobante')) || {};
     const comp = comprobante_pago1.comprobante_pago;
     useEffect(() => {
         const fetchComprobanteNumber = async () => {
-          try {
-            const comprobante_pago = JSON.parse(localStorage.getItem('comprobante')) || {};
-            const comp = comprobante_pago.comprobante_pago;
-    
-            // Asegúrate de que comp es válido y está definido
-            if (!comp) {
-              console.warn('El valor de comp no es válido:', comp);
-              return;
+            try {
+                const comprobante_pago = JSON.parse(localStorage.getItem('comprobante')) || {};
+                const comp = comprobante_pago.comprobante_pago;
+
+                // Asegúrate de que comp es válido y está definido
+                if (!comp) {
+                    console.warn('El valor de comp no es válido:', comp);
+                    return;
+                }
+
+                const nuevoNumComprobante = await generateComprobanteNumber(comp);
+
+                console.log('Nuevo número de comprobante:', nuevoNumComprobante);
+
+                // Almacena el número de comprobante en el localStorage
+                localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante }));
+
+                // Verifica si el almacenamiento local se actualizó correctamente
+                console.log('Contenido actualizado de localStorage:', localStorage.getItem('comprobante1'));
+            } catch (error) {
+                console.error('Error al obtener el número de comprobante:', error);
             }
-    
-            const nuevoNumComprobante = await generateComprobanteNumber(comp);
-    
-            console.log('Nuevo número de comprobante:', nuevoNumComprobante);
-    
-            // Almacena el número de comprobante en el localStorage
-            localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante }));
-    
-            // Verifica si el almacenamiento local se actualizó correctamente
-            console.log('Contenido actualizado de localStorage:', localStorage.getItem('comprobante1'));
-          } catch (error) {
-            console.error('Error al obtener el número de comprobante:', error);
-          }
         };
-    
+
         fetchComprobanteNumber();
-      }, [comp]); 
+    }, [comp]);
 
     const [dniOrRuc, setDni] = useState('');
     const [nombreCliente, setNombreCliente] = useState('');
@@ -152,8 +152,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         igv: (detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2)) * 0.18,
         total_t: totalAPagarConDescuento,
         comprobante_pago: comprobante_pago === 'Boleta' ? 'Boleta de venta electronica' :
-        comprobante_pago === 'Factura' ? 'Factura de venta electronica' :
-        'Nota de venta',
+            comprobante_pago === 'Factura' ? 'Factura de venta electronica' :
+                'Nota de venta',
         totalImporte_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2),
         descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
         vuelto: cambio >= 0 ? cambio.toFixed(2) : '0.00' + cambio2 >= 0 ? cambio2.toFixed(2) : '0.00' + cambio3 >= 0 ? cambio3.toFixed(2) : '0.00',
@@ -191,7 +191,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         content.split('\n').forEach(line => {
             conector.text(line);
         });
-         conector.qr("https://www.facebook.com/profile.php?id=100055385846115", { width: 700, height: 700 });
+        conector.qr("https://www.facebook.com/profile.php?id=100055385846115", { width: 700, height: 700 });
         conector.feed(5);
         conector.cut("0");
 
@@ -246,8 +246,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     return (
         <div className="modal-container" style={{ overflowY: 'auto' }} >
             <div className={` modal-pagar px-6 py-7 rounded-xl shadow-lg relative ${showNuevoCliente ? 'expanded' : ''}`} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-                <div className='flex'>
-                    <form>
+                <div className='flex '>
+                    <form className='div-pagar-1'>
                         <div className="flex justify-between items-center mb-4">
                             <button onClick={onClose} className="close-modal-pagar absolute top-0 right-0 text-black-500 p-2">
                                 <IoCloseSharp />
@@ -257,13 +257,13 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 Pago
                             </h2>
                         </div>
-                        <div className="mb-4 flex justify-between">
+                        <div className="mb-4 flex">
                             <div>
                                 <label className="block text-gray-800 mb-2 font-semibold">Seleccione el cliente</label>
                                 <div className='flex items-center justify-between'>
                                     <select
-                                        className="input-c w-40 mr-3"
-                                        style={{ border: "solid 0.1rem #171a1f28" }}
+                                        className="input-c mr-1 pr-8"
+                                        style={{ border: "solid 0.1rem #171a1f28", width: '11rem' }}
                                         value={clienteSeleccionado}
                                         onChange={(e) => setClienteSeleccionado(e.target.value)}
                                     >
@@ -272,26 +272,26 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                             <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
                                         ))}
                                     </select>
-                                    <button type="button" className="btn-nuevo-cliente" onClick={() => setShowNuevoCliente(true)}>
+                                    <button type="button" className="btn-nuevo-cliente px-1 py-2" onClick={() => setShowNuevoCliente(true)}>
                                         <GrFormAdd style={{ fontSize: '24px' }} />
                                     </button>
                                 </div>
                             </div>
-                            <div>
+                            <div style={{ marginLeft: "10px" }}>
                                 <SelectField
                                     label="Comprobante de pago"
                                     options={['Boleta', 'Factura', 'Nota de venta']}
                                     value={comprobante_pago}
                                     onChange={(e) => setcomprobante_pago(e.target.value)}
                                     containerStyle={{ marginLeft: '10px' }}
-                                    className={"input-c w-full h-10 border border-gray-300"}
-                                    classNamediv={"w-60 flex items-center mt-2 "}
-
+                                    className={"input-c h-10 border border-gray-300 pr-8"}
+                                    classNamediv={"flex items-center mt-2 "}
+                                    style={{ width: '12rem' }}
                                 />
                             </div>
                         </div>
                         <hr className="mb-5" />
-                        <div className="flex justify-between mb-4">
+                        <div className="flex mb-4" >
                             <InputField
                                 label="Total a pagar"
                                 symbol="S/."
@@ -300,18 +300,21 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 style={{ height: "40px", border: "solid 0.2rem #171a1f28", backgroundColor: "#f5f5f5" }}
                                 className={"input-c w-40 ml-2 focus:outline-none"}
                             />
-                            <SelectField
-                                label="Método de pago"
-                                options={['AMERICAN EXPRESS', 'DEPOSITO BBVA', 'DEPOSITO BCP', 'DEPOSITO CAJA PIURA', 'DEPOSITO INTERBANK', 'MASTER CARD', 'PLIN', 'VISA', 'YAPE', 'EFECTIVO']}
-                                value={metodo_pago}
-                                onChange={(e) => setmetodo_pago(e.target.value)}
-                                containerStyle={{ marginLeft: '10px' }}
-                                className={"input-c w-full h-10 border border-gray-300"}
-                                classNamediv={"w-60 flex items-center mt-2 "}
+                            <div >
+                                <SelectField
+                                    label="Método de pago"
+                                    options={['AMERICAN EXPRESS', 'DEPOSITO BBVA', 'DEPOSITO BCP', 'DEPOSITO CAJA PIURA', 'DEPOSITO INTERBANK', 'MASTER CARD', 'PLIN', 'VISA', 'YAPE', 'EFECTIVO']}
+                                    value={metodo_pago}
+                                    onChange={(e) => setmetodo_pago(e.target.value)}
+                                    containerStyle={{ marginLeft: '45px' }}
+                                    className={"input-c h-10 border border-gray-300 pr-8"}
+                                    classNamediv={"flex items-center mt-2 "}
+                                    style={{ width: '12rem' }}
+                                />
+                            </div>
 
-                            />
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex">
                             <InputField
                                 label="Monto recibido"
                                 symbol="S/."
@@ -322,9 +325,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                 className={"input-c w-40 ml-2"}
                             />
-                            <div className='ml-10 mb-4'>
+                            <div className='mb-4' style={{marginLeft: "45px"}}>
                                 <label className="text-gray-800 font-semibold">Aplicar descuento</label>
-                                <div className='w-60 flex items-center h-50' >
+                                <div className='flex items-center h-50' >
                                     <span className='mt-2'>S/.</span>
                                     <input
                                         type="checkbox"
@@ -332,7 +335,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         onChange={(e) => setDescuentoActivado(e.target.checked)}
                                     />
                                     <InputField
-                                        className={"input-c w-full ml-2"}
+                                        className={"input-c ml-2"}
                                         label=""
                                         symbol=""
                                         value={montoDescuento}
@@ -346,12 +349,12 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         }}
                                         disabled={!descuentoActivado}
                                         onKeyDown={validateDecimalInput}
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
+                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '8.5rem' }}
                                     />
                                 </div>
                             </div>
                         </div>
-                        <div className="flex justify-between mb-4">
+                        <div className="flex  mb-4">
                             <div>
                                 <InputField
                                     label="Cambio"
@@ -368,7 +371,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     symbol="S/."
                                     value={faltante >= 0 ? faltante.toFixed(2) : ''}
                                     readOnly
-                                    style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
+                                    style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '10.1rem' }}
                                     className={"input-c w-full ml-2"}
                                 />
                             </div>
@@ -387,7 +390,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     />
 
                                 </div>
-                                <div className="flex justify-between mb-4">
+                                <div className="flex mb-4">
                                     <InputField
                                         label="Monto recibido adicional"
                                         symbol="S/."
@@ -396,7 +399,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         onChange={(e) => setMontoRecibido2(e.target.value)}
                                         pattern="[0-9]*[.]?[0-9]{0,2}"
                                         onKeyDown={validateDecimalInput}
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
+                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28"}}
                                         className={"input-c w-40 ml-2"}
                                     />
                                     <SelectField
@@ -404,12 +407,13 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         options={['AMERICAN EXPRESS', 'DEPOSITO BBVA', 'DEPOSITO BCP', 'DEPOSITO CAJA PIURA', 'DEPOSITO INTERBANK', 'MASTER CARD', 'PLIN', 'VISA', 'YAPE', 'EFECTIVO']}
                                         value={metodo_pago2}
                                         onChange={(e) => setmetodo_pago2(e.target.value)}
-                                        containerStyle={{ marginLeft: '10px' }}
-                                        className={"input-c w-full h-10 border border-gray-300"}
-                                        classNamediv={"w-60 flex items-center mt-2 "}
+                                        containerStyle={{ marginLeft: '45px' }}
+                                        className={"input-c h-10 border border-gray-300 pr-8"}
+                                        classNamediv={"flex items-center mt-2 "}
+                                        style={{ width: '12rem' }}
                                     />
                                 </div>
-                                <div className="flex justify-between mb-4">
+                                <div className="flex mb-4">
                                     <InputField
                                         label="Cambio"
                                         symbol="S/."
@@ -424,8 +428,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                             symbol="S/."
                                             value={faltante2 >= 0 ? faltante2.toFixed(2) : ''}
                                             readOnly
-                                            style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                            className={"input-c w-full ml-2"}
+                                            style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '10.1rem' }}
+                                            className={"input-c ml-2"}
                                         />
                                     </div>
                                 </div>
@@ -446,7 +450,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     />
 
                                 </div>
-                                <div className="flex justify-between mb-4">
+                                <div className="flex mb-4">
                                     <InputField
                                         placeholder={faltante2.toFixed(2)}
 
@@ -465,9 +469,10 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                         options={['AMERICAN EXPRESS', 'DEPOSITO BBVA', 'DEPOSITO BCP', 'DEPOSITO CAJA PIURA', 'DEPOSITO INTERBANK', 'MASTER CARD', 'PLIN', 'VISA', 'YAPE', 'EFECTIVO']}
                                         value={metodo_pago3}
                                         onChange={(e) => setmetodo_pago3(e.target.value)}
-                                        containerStyle={{ marginLeft: '10px' }}
-                                        className={"input-c w-full h-10 border border-gray-300"}
-                                        classNamediv={"w-60 flex items-center mt-2 "}
+                                        containerStyle={{ marginLeft: '45px' }}
+                                        className={"input-c h-10 border border-gray-300 pr-8"}
+                                        classNamediv={"flex items-center mt-2 "}
+                                        style={{ width: '12rem' }}
                                     />
                                 </div>
                                 <div className="flex justify-between mb-4">
@@ -485,8 +490,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                             symbol="S/."
                                             value={faltante3 >= 0 ? faltante3.toFixed(2) : ''}
                                             readOnly
-                                            style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                            className={"input-c w-full ml-2"}
+                                            style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '10.1rem' }}
+                                            className={"input-c ml-2"}
                                         />
                                     </div>
                                 </div>
@@ -512,19 +517,20 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
 
                     </form>
                     {showNuevoCliente && (
-                        <div className=" mt-5 py-4 pl-4 rounded-lg">
+                        <div className="pt-0 py-4 pl-4 rounded-lg">
                             <h3 className="text-lg font-semibold mb-4 flex">
                                 <IoPersonAddSharp className="mr-2" style={{ fontSize: '25px' }} />
 
                                 Agregar Cliente</h3>
-                            <div className="flex justify-between mb-4">
-                                <div className="w-1/2 pr-2 ml-2">
+                            <div className="flexflex-col mb-4">
+                                <div className="w-full">
                                     <SelectField
                                         label="Tipo de cliente"
                                         options={['Natural', 'Jurídico']}
                                         value={tipo_cliente}
                                         onChange={(e) => settipo_cliente(e.target.value)}
-                                        className="input-c w-full h-10 border border-gray-300 mt-2"
+                                        className={"input-c w-full h-10 border border-gray-300 pr-8"}
+                                        classNamediv={"flex items-center mt-2 "}
                                     />
                                 </div>
                             </div>
@@ -534,8 +540,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     <InputField
                                         placeholder="EJEM: 78541236"
                                         label="DNI/RUC: *"
-                                        className="input-c w-full"
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
+                                        className="input-c "
+                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '11rem' }}
                                         value={dniOrRuc}
                                         onChange={(e) => setDni(e.target.value)}
                                     />

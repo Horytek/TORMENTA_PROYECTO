@@ -4,6 +4,10 @@
   border-radius: 10px;
 }
 
+.div-pagar-1 {
+  width: 26.5rem !important;
+}
+
 .modal-prod {
   box-shadow: 0 0 10px #171a1f33;
   background-color: #ededed;

@@ -1,4 +1,4 @@
-import { useState,useEffect,useCallback} from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
@@ -9,7 +9,7 @@ import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import { Link } from 'react-router-dom';
 import useVentasData from '../Data/data_venta';
-import { Toaster} from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { handleDelete } from '../Data/delete_venta';
 
 const Ventas = () => {
@@ -26,7 +26,7 @@ const Ventas = () => {
   const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado, refetchVentas } = useVentasData(filters);
 
   // Estado para el manejo del modal y opciones de eliminación
-  const [SelectedRowId,setSelectedRowId] = useState(null);
+  const [SelectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
@@ -46,19 +46,19 @@ const Ventas = () => {
 
   saveDetallesToLocalStorage();
   // Funciones para abrir y cerrar el modal de opciones
-  const openModal = (id,estado) => {
+  const openModal = (id, estado) => {
     setSelectedRowId(id);
     setModalOpen(true);
 
-    if (estado=='En proceso') {
-      estado= 2;
-    } else if (estado=='Inactivo') {
-      estado= 0;
-    } else if (estado=='Activo') {
-      estado= 1;
+    if (estado == 'En proceso') {
+      estado = 2;
+    } else if (estado == 'Inactivo') {
+      estado = 0;
+    } else if (estado == 'Activo') {
+      estado = 1;
     }
 
-    if(estado==1 || estado==0) {
+    if (estado == 1 || estado == 0) {
       setModalOpen(false);
     }
   };
@@ -127,7 +127,7 @@ const Ventas = () => {
         modalOpen={modalOpen}
         deleteOptionSelected={deleteOptionSelected}
         openModal={openModal}
-        /* currentPage={currentPage} */
+      /* currentPage={currentPage} */
       />
 
       {/* Modal para opciones */}
@@ -150,14 +150,19 @@ const Ventas = () => {
 
       {/* Contenedor para paginación */}
       <div className="flex justify-between mt-4">
-      <div className="flex">
+        <div className="flex" >
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
-        <select className="input-c cant-pag-c" value={ventasPerPage} onChange={(e) => setVentasPerPage(Number(e.target.value))}>
+        <select
+          className="input-c cant-pag-c pr-8"
+          value={ventasPerPage}
+          onChange={(e) => setVentasPerPage(Number(e.target.value))}
+        >
           <option value={5}>5</option>
           <option value={10}>10</option>
           <option value={20}>20</option>
         </select>
+
       </div>
     </div>
   );

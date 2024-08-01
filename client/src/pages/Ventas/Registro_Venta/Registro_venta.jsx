@@ -185,7 +185,7 @@ const Registro_Venta = () => {
             </div>
           </div>
           <div className="flex items-center mb-4">
-            <input type="text" className={` mr-2 form-input py-2 px-4 w-full text-gray-700 placeholder-gray-400 rounded focus:outline-none ${!detalleMode ? 'cursor-not-allowed bg-gray-200' : ''}`}
+            <input type="text" className={` mr-2 form-input py-2 px-4 w-full text-gray-700 placeholder-gray-400 rounded border-none focus:outline-none ${!detalleMode ? 'cursor-not-allowed bg-gray-200' : ''}`}
               placeholder="Buscar producto en el detalle" style={{ boxShadow: '0 0 10px #171a1f33' }} value={searchTerm2} onChange={(e) => setSearchTerm2(e.target.value)} disabled={!detalleMode} />
             <button className="btn ml-2 btn-producto px-6 py-2 " onClick={() => setIsModalOpen(true)}>Producto</button>
           </div>

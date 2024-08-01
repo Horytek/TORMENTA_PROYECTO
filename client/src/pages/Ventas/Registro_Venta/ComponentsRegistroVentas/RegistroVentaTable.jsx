@@ -94,8 +94,8 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
                 <button className="decrement" onClick={() => handleQuantityChange(index, detalle.cantidad - 1)}>-</button>
                 <input
                   type="text"
-                  className="w-12 text-center rounded-md focus:outline-none"
-                  style={{ background: "transparent" }}
+                  className="w-12 text-center rounded-md border-none"
+                  style={{ background: "transparent", outline: "none !important" }}
                   value={detalle.cantidad}
                   onChange={(e) => {
                     const newValue = e.target.value.trim(); // Elimina espacios en blanco al inicio y al final
@@ -117,8 +117,8 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
               </span>
               <input
                 type="text"
-                className="w-12 text-start rounded-md focus:outline-none"
-                style={{ background: "transparent" }}
+                className="w-12 text-start rounded-md border-none"
+                style={{ background: "transparent", outline: "none !important" }}
                 value={detalle.precio}
                 onChange={(e) => {
                   const newPrecio = e.target.value.trim(); // Elimina espacios en blanco al inicio y al final
@@ -134,8 +134,8 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
               </span>
               <input
                 type="text"
-                className="w-12 text-start rounded-md focus:outline-none"
-                style={{ background: "transparent" }}
+                className="w-12 text-start rounded-md border-none"
+                style={{ background: "transparent", outline: "none !important" }}
                 value={detalle.descuento}
                 inputMode="numeric"
                 onChange={(e) => {
