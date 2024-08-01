@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
-import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
+import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { Link } from 'react-router-dom';
-import { LuFilter } from "react-icons/lu";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
@@ -28,17 +27,17 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
     const [isModalOpenExcel, setIsModalOpenExcel] = useState(false);
     const [isModalOpenExcelDetalle, setIsModalOpenExcelDetalle] = useState(false);
 
-    const today = new Date();
-    const todayDate = parseDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+   // const today = new Date();
+   // const todayDate = parseDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
 
     const [value, setValue] = useState({
-        start: todayDate,
-        end: todayDate,
+        start: parseDate("2024-04-01"),
+        end: parseDate("2028-04-08"),
     });
 
     const [razon, setRazon] = useState('');
 
-    const applyFilters = () => {
+    const applyFilters = useCallback(() => {
         const date_i = `${value.start.year}-${String(value.start.month).padStart(2, '0')}-${String(value.start.day).padStart(2, '0')}`;
         const date_e = `${value.end.year}-${String(value.end.month).padStart(2, '0')}-${String(value.end.day).padStart(2, '0')}`;
 
@@ -50,7 +49,11 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
         };
 
         onFiltersChange(filtros);
-    };
+    }, [value, razon, almacenSeleccionado, onFiltersChange]);
+
+    useEffect(() => {
+        applyFilters();
+    }, [applyFilters]);
 
     const handleAlmacenChange = (event) => {
         const almacen = event.target.value === '%' ? { id: '%', sucursal: '' } : almacenes.find(a => a.id === parseInt(event.target.value));
@@ -145,9 +148,6 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
                 />
             </div>
             <div className="flex items-center gap-2">
-                <ButtonNormal color={'#01BDD6'} onClick={applyFilters}>
-                    <LuFilter className='icon-white w-4 h-4 ' />
-                </ButtonNormal>
                 <div className='flex items-center gap-2'>
                     <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" onChange={handleSelectChange}>
                         <option value="">Seleccione...</option>

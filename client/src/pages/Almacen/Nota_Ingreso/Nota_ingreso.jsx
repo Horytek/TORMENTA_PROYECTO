@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaIngresos from './ComponentsNotaIngreso/NotaIngresoTable';
-import useIngresosData from './data/data_ingreso';
-import useAlmacenData from './data/data_almacen_ingreso'; // Importa los datos del almacén
+import getIngresosData from './data/data_ingreso';
+import useAlmacenData from './data/data_almacen_ingreso';
 import './Nota_ingreso.css';
 import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
 
@@ -14,11 +14,22 @@ const Ingresos = () => {
     almacen: '%',
   });
   const [ingresos, setIngresos] = useState([]);
-  const { almacenes } = useAlmacenData(); // Obtén los almacenes
+  const { almacenes } = useAlmacenData();
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
     const almacenIdGuardado = localStorage.getItem('almacen');
     return almacenIdGuardado && almacenes ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) : null;
   });
+
+  // Función para obtener datos de ingresos
+  const fetchIngresos = useCallback(async () => {
+    const data = await getIngresosData(filters);
+    setIngresos(data.ingresos);
+  }, [filters]); // Solo depende de filters
+
+  // Llamada a la API cuando cambian los filtros
+  useEffect(() => {
+    fetchIngresos();
+  }, [fetchIngresos]); // Solo depende de fetchIngresos
 
   useEffect(() => {
     const almacenIdGuardado = localStorage.getItem('almacen');
@@ -30,10 +41,13 @@ const Ingresos = () => {
     }
   }, [almacenes]);
 
-  const handleFiltersChange = async (newFilters) => {
-    setFilters(newFilters);
-    const data = await useIngresosData(newFilters);
-    setIngresos(data.ingresos);
+  const handleFiltersChange = (newFilters) => {
+    setFilters(prevFilters => {
+      if (JSON.stringify(prevFilters) !== JSON.stringify(newFilters)) {
+        return newFilters;
+      }
+      return prevFilters;
+    });
   };
 
   const handleAlmacenChange = (almacen) => {

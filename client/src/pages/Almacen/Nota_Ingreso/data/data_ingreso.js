@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const useIngresosData = async (filters) => {
+const getIngresosData = async (filters) => {
   try {
     const response = await axios.get('http://localhost:4000/api/nota_ingreso', {
       params: filters,
@@ -18,4 +18,4 @@ const useIngresosData = async (filters) => {
   }
 };
 
-export default useIngresosData;
+export default getIngresosData;

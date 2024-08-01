@@ -1,5 +1,4 @@
-import { useState,useRef,useEffect } from 'react';
-import Quagga from 'quagga'; // Importa QuaggaJS
+import { useState,useRef } from 'react';// Importa QuaggaJS
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
@@ -162,36 +161,6 @@ const Registro_Venta = () => {
     }).filter(detalle => detalle !== null),
   };
 
-  useEffect(() => {
-    const initQuagga = () => {
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.querySelector('#barcode-scanner') // El elemento DOM debe existir
-        },
-        decoder: {
-          readers: ['code_128_reader', 'ean_reader', 'ean_8_reader', 'code_39_reader'],
-        }
-      }, function (err) {
-        if (err) {
-          console.log(err);
-          return;
-        }
-        console.log("Initialization finished. Ready to start");
-        Quagga.start();
-      });
-
-      Quagga.onDetected((data) => {
-        console.log('Detected: ', data);
-      });
-    };
-
-    // Asegúrate de que el DOM esté listo antes de inicializar Quagga
-    if (document.querySelector('#barcode-scanner')) {
-      initQuagga();
-    }
-  }, []);
 
 
   return (
@@ -199,7 +168,6 @@ const Registro_Venta = () => {
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/ventas' }, { name: 'Registrar', href: '/ventas/registro_venta' }]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
-      <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
         <h1 className="text-xl font-bold mb-5" style={{ fontSize: '36px' }}> Registrar Venta </h1>
       </div>
       <div className="flex flex-col lg:flex-row gap-4">

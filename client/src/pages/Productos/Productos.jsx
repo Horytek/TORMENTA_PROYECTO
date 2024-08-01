@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ProductosForm from './ProductosForm';
 import { Toaster } from "react-hot-toast";
@@ -6,6 +6,7 @@ import {ShowProductos} from './ShowProductos';
 import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
+import Quagga from 'quagga'; 
  
 function Productos() {
   // Modal de Agregar Producto
@@ -14,6 +15,37 @@ function Productos() {
     setModalOpen(!activeAdd);
   };
 
+  useEffect(() => {
+    const initQuagga = () => {
+      Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: document.querySelector('#barcode-scanner') // El elemento DOM debe existir
+        },
+        decoder: {
+          readers: ['code_128_reader', 'ean_reader', 'ean_8_reader', 'code_39_reader'],
+        }
+      }, function (err) {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        console.log("Initialization finished. Ready to start");
+        Quagga.start();
+      });
+
+      Quagga.onDetected((data) => {
+        console.log('Detected: ', data);
+      });
+    };
+
+    // Asegúrate de que el DOM esté listo antes de inicializar Quagga
+    if (document.querySelector('#barcode-scanner')) {
+      initQuagga();
+    }
+  }, []);
+
   return (
     <div>
       <Toaster/>
@@ -21,6 +53,7 @@ function Productos() {
       <hr className="mb-4" />
       <h1 className='font-extrabold text-4xl'>Productos</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
+      <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
         <h6 className='font-bold'>Lista de Productos</h6>
         <div className='relative w-2/4'>
           <div className='absolute inset-y-0 start-0 top-0 flex items-center ps-3.5 pointer-events-none'>
