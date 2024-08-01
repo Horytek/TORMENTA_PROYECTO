@@ -3,9 +3,11 @@ import axios from "axios";
 import { Toaster, toast } from "react-hot-toast";
 import "./Marcas.css";
 import "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal.css";
-import { FaSearch } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
+import { IoIosSearch } from "react-icons/io";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { MdAddCircleOutline } from "react-icons/md";
+import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
 import Pagination from "@/components/Pagination/Pagination";
 import TablaMarcas from "./ComponentsMarcas/MarcasTable";
 import OptionsModal from "./ComponentsMarcas/Modals/OptionsModal";
@@ -161,13 +163,16 @@ const Marcas = () => {
           <div className="flex items-center space-x-4">
             {/* Barra de búsqueda */}
             <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <IoIosSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Buscar por nombre"
                 className="border rounded pl-10 pr-20 py-2"
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+            <div className="flex gap-5">
+              <ButtonNormal color={"#01BDD6"}>Filtrar</ButtonNormal>
             </div>
             {/* Botón para agregar nueva marca */}
             <button
@@ -176,10 +181,7 @@ const Marcas = () => {
               }
               className="flex items-center justify-center text-white bg-blue-500 hover:bg-blue-600 rounded-md px-5 py-2"
             >
-              <MdAddCircleOutline
-                className="mr-2"
-                style={{ fontSize: "20px" }}
-              />
+              <FaPlus className="mr-2" style={{ fontSize: "20px" }} />
               Nueva marca
             </button>
           </div>
