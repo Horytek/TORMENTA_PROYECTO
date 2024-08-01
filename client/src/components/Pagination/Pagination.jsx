@@ -30,7 +30,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
           href="#"
           className={`relative ${
             page === currentPage
-              ? 'z-10 bg-cyan-400 text-white focus:outline focus:ring-2 focus:bg-cyan-500 focus:ring-opacity-50'
+              ? 'z-10 bg-blue-600 text-white focus:outline focus:ring-2 focus:bg-blue-600 focus:ring-opacity-50'
               : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
           } inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md`}
           onClick={() => handleClick(page)}

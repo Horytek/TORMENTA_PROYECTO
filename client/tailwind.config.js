@@ -1,6 +1,6 @@
-/** @type {import('tailwindcss').Config} */
 import colors from 'tailwindcss/colors';
-import { nextui } from "@nextui-org/react";
+import { nextui }  from "@nextui-org/react";
+import forms from '@tailwindcss/forms';
 
 export default {
   content: [
@@ -135,8 +135,7 @@ export default {
     },
   ],
   plugins: [
-    require('@headlessui/tailwindcss'),
-    require('@tailwindcss/forms'),
+    forms,
     nextui(),
   ],
 }
