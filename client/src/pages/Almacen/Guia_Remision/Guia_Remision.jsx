@@ -36,7 +36,12 @@ const Guias = () => {
   };
 
   const handleFiltersChange = (newFilters) => {
-    setFilters(newFilters);
+    setFilters((prevFilters) => {
+      if (JSON.stringify(prevFilters) !== JSON.stringify(newFilters)) {
+        return newFilters;
+      }
+      return prevFilters;
+    });
   };
 
   return (
