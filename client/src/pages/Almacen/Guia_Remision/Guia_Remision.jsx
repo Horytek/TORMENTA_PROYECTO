@@ -68,7 +68,7 @@ const Guias = () => {
 
       <div className="flex justify-between mt-4">
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
-        <select className="input-d cant-pag-d" value={guiasPerPage} onChange={(e) => setGuiasPerPage(parseInt(e.target.value))}>
+        <select className="input-d cant-pag-d pr-8" value={guiasPerPage} onChange={(e) => setGuiasPerPage(parseInt(e.target.value))}>
           <option value={5}>5</option>
           <option value={10}>10</option>
           <option value={20}>20</option>
