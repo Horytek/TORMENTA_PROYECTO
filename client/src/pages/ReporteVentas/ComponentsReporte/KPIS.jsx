@@ -1,16 +1,21 @@
 import React from 'react';
 import { Card, Metric, Text } from "@tremor/react";
+import useVentasData from '../data/data_soles';
+import useProductosVendidos from '../data/data_prod';
 
 const SalesCard = () => {
+  const { totalRecaudado } = useVentasData();
+  const { totalProductosVendidos } = useProductosVendidos();
+
   return (
     <>
       <Card
-        className="max-w-xs mx-auto mb-6 "
+        className="max-w-xs mx-auto mb-6"
         decoration="top"
         decorationColor="indigo"
       >
         <Text>Ventas totales</Text>
-        <Metric>S/. 34,743</Metric>
+        <Metric>S/. {totalRecaudado}</Metric>
       </Card>
 
       <Card
@@ -19,7 +24,7 @@ const SalesCard = () => {
         decorationColor="indigo"
       >
         <Text>Productos vendidos</Text>
-        <Metric>34,743</Metric>
+        <Metric>{totalProductosVendidos}</Metric>
       </Card>
 
       <Card

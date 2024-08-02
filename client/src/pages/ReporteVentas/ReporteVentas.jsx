@@ -10,6 +10,7 @@ import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
 import KPIS from "./ComponentsReporte/KPIS";
 import Comparativa from "./ComponentsReporte/Comparativa";
 import DatePicker from "react-datepicker";
+import { ButtonSearch } from "@/components/Buttons/Buttons/";
 import "react-datepicker/dist/react-datepicker.css";
 
 const ReporteVentas = () => {
@@ -128,25 +129,27 @@ const ReporteVentas = () => {
             <Tab key="arica3" title="Tienda Arica-3" />
             <Tab key="balta" title="Tienda Balta" />
           </Tabs>
-          <div className="element-right">
-            <div className="flex-grow" style={{ marginLeft: "80px" }}>
+          <div className="element-right" style={{ display: "flex", alignItems: "center", marginLeft: "auto" }}>
+            <div className="flex-grow" style={{ display: "flex", alignItems: "center" }}>
               <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
                 Selecciona el mes y año
               </p>
-              <DatePicker
-                selected={new Date()}
-                className="border-gray-300 rounded-lg shadow-lg bg-white"
-                customInput={<CustomInput />}
-                renderMonthContent={(month, shortMonth, longMonth, day) => {
-                  const fullYear = new Date(day).getFullYear();
-                  const tooltipText = `Tooltip for month: ${longMonth} ${fullYear}`;
-
-                  return <span title={tooltipText}>{shortMonth}</span>;
-                }}
-                showMonthYearPicker
-                dateFormat="MM/yyyy"
-                style={{ width: "200px" }} // Aumentar el ancho del DatePicker
-              />
+              <div style={{ display: "flex", alignItems: "center", marginLeft: "20px" }}>
+                <DatePicker
+                  selected={new Date()}
+                  className="border-gray-300 rounded-lg shadow-lg bg-white"
+                  customInput={<CustomInput />}
+                  renderMonthContent={(month, shortMonth, longMonth, day) => {
+                    const fullYear = new Date(day).getFullYear();
+                    const tooltipText = `Tooltip for month: ${longMonth} ${fullYear}`;
+                    return <span title={tooltipText}>{shortMonth}</span>;
+                  }}
+                  showMonthYearPicker
+                  dateFormat="MM/yyyy"
+                  style={{ width: "200px" }} // Aumentar el ancho del DatePicker
+                />
+                <ButtonSearch style={{ marginLeft: "10px" }} />
+              </div>
             </div>
           </div>
         </div>

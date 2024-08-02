@@ -476,6 +476,24 @@ const addCliente = async (req, res) => {
   }
 };
 
+const getTotalProductosVendidos = async (req, res) => {
+  try {
+    const connection = await getConnection();
+    
+    const [result] = await connection.query(`
+      SELECT SUM(dv.cantidad) AS total_productos_vendidos
+      FROM detalle_venta dv
+    `);
+    
+    const totalProductosVendidos = result[0].total_productos_vendidos || 0;
+
+    res.json({ code: 1, totalProductosVendidos, message: "Total de productos vendidos obtenido correctamente" });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+
 const updateVenta = async (req, res) => {
   const connection = await getConnection();
 
@@ -585,4 +603,5 @@ export const methods = {
   updateVenta,
   generarComprobante,
   getEstado,
+  getTotalProductosVendidos,
 };
