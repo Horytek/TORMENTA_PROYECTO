@@ -1,129 +1,49 @@
+import React from "react";
+import { BarChart, Card } from "@tremor/react";
 
-import { useState } from 'react';
-import { BarChart, Card, Divider, Switch } from '@tremor/react';
-
-const data1 = [
-  {
-    date: 'Jan 23',
-    'This Year': 68560,
-    'Last Year': 28560,
-  },
-  {
-    date: 'Feb 23',
-    'This Year': 70320,
-    'Last Year': 30320,
-  },
-  {
-    date: 'Mar 23',
-    'This Year': 80233,
-    'Last Year': 70233,
-  },
-  {
-    date: 'Apr 23',
-    'This Year': 55123,
-    'Last Year': 45123,
-  },
-  {
-    date: 'May 23',
-    'This Year': 56000,
-    'Last Year': 80600,
-  },
-  {
-    date: 'Jun 23',
-    'This Year': 100000,
-    'Last Year': 85390,
-  },
-  {
-    date: 'Jul 23',
-    'This Year': 85390,
-    'Last Year': 45340,
-  },
-  {
-    date: 'Aug 23',
-    'This Year': 80100,
-    'Last Year': 70120,
-  },
-  {
-    date: 'Sep 23',
-    'This Year': 75090,
-    'Last Year': 69450,
-  },
-  {
-    date: 'Oct 23',
-    'This Year': 71080,
-    'Last Year': 63345,
-  },
-  {
-    date: 'Nov 23',
-    'This Year': 61210,
-    'Last Year': 100330,
-  },
-  {
-    date: 'Dec 23',
-    'This Year': 60143,
-    'Last Year': 45321,
-  },
+const chartdata = [
+  { name: "Amphibians", "Número de productos vendidos": 2488 },
+  { name: "Birds", "Número de productos vendidos": 1445 },
+  { name: "Crustaceans", "Número de productos vendidos": 743 },
+  { name: "Ferns", "Número de productos vendidos": 281 },
+  { name: "Arachnids", "Número de productos vendidos": 251 },
+  { name: "Corals", "Número de productos vendidos": 232 },
+  { name: "Algae", "Número de productos vendidos": 98 },
+  { name: "Mammals", "Número de productos vendidos": 98 },
+  { name: "a", "Número de productos vendidos": 98 },
+  { name: "ba", "Número de productos vendidos": 98 },
+  { name: "accccc", "Número de productos vendidos": 98 },
+  { name: "pantalon", "Número de productos vendidos": 98 },
+  { name: "pantalo ntormenta", "Número de productos vendidos": 98 },
+  { name: "accccc", "Número de productos vendidos": 98 },
 ];
 
-function valueFormatter(number) {
-  const formatter = new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 0,
-    notation: 'compact',
-    compactDisplay: 'short',
-    style: 'currency',
-    currency: 'USD',
-  });
+const dataFormatter = (number) =>
+  Intl.NumberFormat("us").format(number).toString();
 
-  return formatter.format(number);
-}
+const BarChartHero = () => (
+  <Card className="p-6 border border-gray-300 rounded-lg shadow-lg bg-white">
+    <h3 className="ml-1 mr-1 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
+      Cantidad de ventas por producto
+    </h3>
+    <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+      Representación de la cantidad de ventas por producto
+    </p>
+    <div className="overflow-x-scroll custom-scrollbar" style={{ width: '600px' }}>
+      <div style={{ width: '1000px' }}>
+        <BarChart
+          data={chartdata}
+          index="name"
+          categories={["Número de productos vendidos"]}
+          colors={["blue"]}
+          valueFormatter={dataFormatter}
+          yAxisWidth={48}
+          className="mt-6 h-60"
+          onValueChange={(v) => console.log(v)}
+        />
+      </div>
+    </div>
+  </Card>
+);
 
-export default function TablaGanancias() {
-  const [showComparison, setShowComparison] = useState(false);
-  return (
-    <>
-      <Card className="sm:mx-auto sm:max-w-2xl">
-        <h3 className="ml-1 mr-1 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-          Sales overview
-        </h3>
-        <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
-          Lorem ipsum dolor sit amet, consetetur sadipscing elitr.
-        </p>
-        <BarChart
-          data={data1}
-          index="date"
-          categories={
-            showComparison ? ['Last Year', 'This Year'] : ['This Year']
-          }
-          colors={showComparison ? ['cyan', 'blue'] : ['blue']}
-          valueFormatter={valueFormatter}
-          yAxisWidth={50}
-          className="mt-6 hidden h-60 sm:block"
-        />
-        <BarChart
-          data={data1}
-          index="date"
-          categories={
-            showComparison ? ['Last Year', 'This Year'] : ['This Year']
-          }
-          colors={showComparison ? ['cyan', 'blue'] : ['blue']}
-          valueFormatter={valueFormatter}
-          showYAxis={false}
-          className="mt-4 h-56 sm:hidden"
-        />
-        <Divider />
-        <div className="mb-2 flex items-center space-x-3">
-          <Switch
-            id="comparison"
-            onChange={() => setShowComparison(!showComparison)}
-          />
-          <label
-            htmlFor="comparison"
-            className="text-tremor-default text-tremor-content dark:text-dark-tremor-content"
-          >
-            Show same period last year
-          </label>
-        </div>
-      </Card>
-    </>
-  );
-}
+export default BarChartHero;

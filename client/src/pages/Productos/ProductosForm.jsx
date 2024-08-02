@@ -43,7 +43,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
   
               <div className='w-full text-start mb-5'>
                 <label htmlFor="descripcion" className='text-sm font-bold text-black'>Descripción:</label>
-                <textarea name="descripcion" id="descripcion" rows={4} className='block w-full text-sm bg-gray-50 text-gray-900 rounded-lg border'></textarea>
+                <textarea name="descripcion" id="descripcion" rows={4} className='block w-full text-sm border border-gray-300 bg-gray-50 text-gray-900 rounded-lg resize-none'></textarea>
               </div>
   
               {/* Segunda Fila */}

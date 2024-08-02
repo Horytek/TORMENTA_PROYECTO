@@ -103,3 +103,95 @@
   margin-left: 5px; /* Espacio entre el ícono y el texto */
 }
 
+
+.container-overview {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Adjust the columns ratio to fit your needs */
+  gap: 20px; /* Adjust the gap to add space between the columns */
+  grid-template-areas: 
+    "overview categoria"; /* Define the areas for the grid */
+}
+
+.overview {
+  grid-area: overview;
+}
+
+.categoria {
+  grid-area: categoria;
+}
+
+
+.container-kpis {  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  gap: 0px 0px;
+  grid-auto-flow: row;
+  grid-template-areas:
+    ". . . . ."
+    "kpis kpis kpis kpis kpis"
+    ". . . . .";
+}
+
+.kpis {  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr;
+  gap: 0px 0px;
+  grid-auto-flow: row;
+  grid-template-areas:
+    ". . ."
+    ". . ."
+    ". . .";
+  grid-area: kpis;
+}
+
+
+.overflow-x-scroll {
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+
+/* Estilizando la barra de desplazamiento */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.container-comparativa {  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 0.9fr;
+  gap: 0px 0px;
+  grid-auto-flow: row;
+  grid-template-areas:
+    ". . . . ."
+    "comparativa comparativa comparativa comparativa comparativa"
+    ". . . . .";
+}
+
+.comparativa {  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 3fr;
+  gap: 0px 0px;
+  grid-auto-flow: row;
+  grid-template-areas:
+    ". . ."
+    ". . ."
+    ". . .";
+  grid-area: comparativa;
+}
+
+
+
+

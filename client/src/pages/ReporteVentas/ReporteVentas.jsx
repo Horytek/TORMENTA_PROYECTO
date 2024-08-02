@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
-import { DateRangePicker } from "@nextui-org/date-picker";
 import { SlOptionsVertical } from "react-icons/sl";
 import { LuRefreshCcw } from "react-icons/lu";
+import { AiOutlineCalendar } from "react-icons/ai"; // Importa el icono de calendario
 import { Input, Divider, Select, Tabs, Tab } from "@nextui-org/react";
 import TablaGanancias from "./ComponentsReporte/Overview";
-import KPIS from "./ComponentsReporte/KPIS";
 import "./ReporteVentas.css";
+import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
+import KPIS from "./ComponentsReporte/KPIS";
+import Comparativa from "./ComponentsReporte/Comparativa";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const ReporteVentas = () => {
   const [ventas, setVentas] = useState([]);
@@ -24,6 +28,23 @@ const ReporteVentas = () => {
     console.log("Buscando ventas...");
     setVentas([]);
   };
+
+  const CustomInput = ({ value, onClick }) => (
+    <button
+      className="example-custom-input"
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        border: "1px solid gray",
+        padding: "5px",
+        borderRadius: "5px",
+      }}
+    >
+      <AiOutlineCalendar style={{ marginRight: "5px" }} />
+      {value}
+    </button>
+  );
 
   return (
     <div>
@@ -91,14 +112,14 @@ const ReporteVentas = () => {
             userSelect: "none",
           }}
         >
-          Visualiza el reporte de ventas por tienda/almacen.
+          Visualiza el análisis de ventas y productos de las sucursales.
         </p>
       </div>
       <div className="max-w-md">
         <Divider className="my-2" />
       </div>
 
-      <div className="container-rv">
+      <div className="container-rv" style={{ marginBottom: "10px" }}>
         <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 relative">
           <Tabs variant="underlined" aria-label="Tabs variants">
             <Tab key="all" title="@Todos" />
@@ -107,14 +128,52 @@ const ReporteVentas = () => {
             <Tab key="arica3" title="Tienda Arica-3" />
             <Tab key="balta" title="Tienda Balta" />
           </Tabs>
+          <div className="element-right">
+            <div className="flex-grow" style={{ marginLeft: "80px" }}>
+              <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+                Selecciona el mes y año
+              </p>
+              <DatePicker
+                selected={new Date()}
+                className="border-gray-300 rounded-lg shadow-lg bg-white"
+                customInput={<CustomInput />}
+                renderMonthContent={(month, shortMonth, longMonth, day) => {
+                  const fullYear = new Date(day).getFullYear();
+                  const tooltipText = `Tooltip for month: ${longMonth} ${fullYear}`;
+
+                  return <span title={tooltipText}>{shortMonth}</span>;
+                }}
+                showMonthYearPicker
+                dateFormat="MM/yyyy"
+                style={{ width: "200px" }} // Aumentar el ancho del DatePicker
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex-grow" style={{ marginBottom: "30px" }}>
-        <KPIS />
+      <div className="flex-grow" style={{ marginBottom: "15px" }}>
+        <div className="container-kpis">
+          <div className="kpis">
+            <KPIS />
+          </div>
+        </div>
       </div>
-      <div className="flex-grow" style={{ marginBottom: "30px" }}>
-        <TablaGanancias />
+      <div
+        className="flex-grow container-overview"
+        style={{ marginBottom: "30px" }}
+      >
+        <div className="overview">
+          <TablaGanancias />
+        </div>
+        <div className="categoria">
+          <CategoriaProducto />
+        </div>
+      </div>
+      <div className="container-comparativa">
+        <div className="comparativa">
+          <Comparativa />
+        </div>
       </div>
     </div>
   );

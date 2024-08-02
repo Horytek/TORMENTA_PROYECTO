@@ -89,7 +89,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
         </td>
         <td>
     <IoMdOptions
-        className={`ml-2 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' : 'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
+        className={`ml-2 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' : venta.estado === 'Aceptada' ? 'text-gray-300' : 'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
         style={{ fontSize: '20px' }}
         onClick={() => openModal(venta.id, venta.estado)}
     />

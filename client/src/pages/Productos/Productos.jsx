@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState} from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ProductosForm from './ProductosForm';
 import { Toaster } from "react-hot-toast";
@@ -6,7 +6,6 @@ import {ShowProductos} from './ShowProductos';
 import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
-import Quagga from 'quagga'; 
  
 function Productos() {
   // Modal de Agregar Producto
@@ -15,36 +14,6 @@ function Productos() {
     setModalOpen(!activeAdd);
   };
 
-  useEffect(() => {
-    const initQuagga = () => {
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.querySelector('#barcode-scanner') // El elemento DOM debe existir
-        },
-        decoder: {
-          readers: ['code_128_reader', 'ean_reader', 'ean_8_reader', 'code_39_reader'],
-        }
-      }, function (err) {
-        if (err) {
-          console.log(err);
-          return;
-        }
-        console.log("Initialization finished. Ready to start");
-        Quagga.start();
-      });
-
-      Quagga.onDetected((data) => {
-        console.log('Detected: ', data);
-      });
-    };
-
-    // Asegúrate de que el DOM esté listo antes de inicializar Quagga
-    if (document.querySelector('#barcode-scanner')) {
-      initQuagga();
-    }
-  }, []);
 
   return (
     <div>

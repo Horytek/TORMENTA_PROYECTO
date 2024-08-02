@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FaRegBell, FaSearch, FaBars, FaTimes } from 'react-icons/fa';
+import { FaRegBell, FaBars, FaTimes } from 'react-icons/fa';
+import { IoIosSearch } from "react-icons/io";
 import { HiOutlineShoppingCart } from "react-icons/hi";
 import { LuUserCircle } from "react-icons/lu";
 import './Navbar.css';
@@ -39,19 +40,19 @@ function Navbar() {
       <div className="flex items-center space-x-4">
         {/* Barra de búsqueda */}
         <div className="relative">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <IoIosSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Buscar..."
-            className="border rounded pl-10 pr-2 py-1"
+            className="border pl-10 pr-2 py-1 border-gray-300 text-gray-900 text-sm rounded-lg"
           />
         </div>
 
         {/* Iconos de notificaciones, carrito y usuario */}
         <div className="flex items-center space-x-2">
-          <FaRegBell className="text-gray-700 text-xl cursor-pointer" style={{ fontSize: "25px" }} />
-          <HiOutlineShoppingCart className="text-gray-700 text-xl cursor-pointer" style={{ fontSize: "25px" }} />
-          <LuUserCircle className="text-gray-700 text-xl cursor-pointer" style={{ fontSize: "25px" }} />
+          <FaRegBell className="text-gray-500 text-xl cursor-pointer hover:text-gray-800" style={{ fontSize: "25px" }} />
+          <HiOutlineShoppingCart className="text-gray-500 text-xl cursor-pointer hover:text-gray-800" style={{ fontSize: "25px" }} />
+          <LuUserCircle className="text-gray-500 text-xl cursor-pointer hover:text-gray-800" style={{ fontSize: "25px" }} />
         </div>
       </div>
     </div>
