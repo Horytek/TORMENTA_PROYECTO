@@ -18,6 +18,10 @@ export const ModalSublinea = ({ modalTitle, closeModel }) => {
                     <div className='modal-body'>
     
                         <div className='w-full text-start mb-5'>
+                            <label htmlFor="linea" className='text-sm font-bold text-black'>Línea:</label>
+                            <select id='linea' className='w-full text-sm mb-2 bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                                <option>Seleccione...</option>
+                            </select>
                             <label htmlFor="descripcion" className='text-sm font-bold text-black'>Nombre:</label>
                             <input type="text" name='marca' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' placeholder='Nombre de Sub-Línea' />
                         </div>
