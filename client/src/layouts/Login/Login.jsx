@@ -41,7 +41,7 @@ function Login() {
         className="input-field w-full px-4 py-2 rounded-lg focus:outline-none border border-gray-300 focus:border-gray-300 focus:ring-gray-300"
         placeholder={placeholder}
       />
-      <label className={`input-label absolute left-4 transition-all pointer-events-none ${value ? '-top-0' : 'top-0'}`}>
+      <label className={`input-label absolute left-4 transition-all pointer-events-none pt-1.5 ${value ? '-top-0' : 'top-0'}`}>
         {label}
       </label>
       {showToggle && (
