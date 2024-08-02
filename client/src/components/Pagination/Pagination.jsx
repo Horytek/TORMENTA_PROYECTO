@@ -16,7 +16,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     <nav aria-label="Pagination" className="isolate inline-flex -space-x-px rounded-md shadow-sm">
       <a
         href="#"
-        className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+        className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-200 focus:z-20 focus:outline-offset-0 ${
           currentPage === 1 ? 'pointer-events-none opacity-50' : ''
         }`}
         onClick={() => handleClick(currentPage - 1)}
@@ -31,8 +31,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
           className={`relative ${
             page === currentPage
               ? 'z-10 bg-blue-600 text-white focus:outline focus:ring-2 focus:bg-blue-600 focus:ring-opacity-50'
-              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
-          } inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md`}
+              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-200'
+          } inline-flex items-center px-4 py-2 text-sm font-semibold`}
           onClick={() => handleClick(page)}
           aria-current={page === currentPage ? 'page' : undefined}
         >
@@ -41,7 +41,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       ))}
       <a
         href="#"
-        className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+        className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-200 focus:z-20 focus:outline-offset-0 ${
           currentPage === totalPages ? 'pointer-events-none opacity-50' : ''
         }`}
         onClick={() => handleClick(currentPage + 1)}
