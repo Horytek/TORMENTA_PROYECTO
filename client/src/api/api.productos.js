@@ -10,7 +10,7 @@ export const addProductosRequest = async (producto) =>
   await axios.post("http://localhost:4000/api/productos", producto);
 
 export const updateProductoRequest = async (id, newFields) =>
-  await axios.put(`http://localhost:4000/api/productos/${id}`, newFields);
+  await axios.put(`http://localhost:4000/api/productos/${id}`, newFields); 
 
 export const deleteProductosRequest = async (id) =>
   await axios.delete(`http://localhost:4000/api/productos/${id}`);

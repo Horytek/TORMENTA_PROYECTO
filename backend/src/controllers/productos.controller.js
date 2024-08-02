@@ -22,10 +22,8 @@ const getProducto = async (req, res) => {
         const { id } = req.params;
         const connection = await getConnection();
         const [result] = await connection.query(`
-                SELECT PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto
+                SELECT *
                 FROM producto PR
-                INNER JOIN marca MA ON MA.id_marca = PR.id_marca
-                INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
                 WHERE PR.id_producto = ?`, id);
         
         if (result.length === 0) {
@@ -51,7 +49,7 @@ const addProducto = async (req, res) => {
         const connection = await getConnection();
         await connection.query("INSERT INTO producto SET ? ", producto);
 
-        res.json({ message: "Producto añadido" });
+        res.json({code: 1, message: "Producto añadido" });
     } catch (error) {
         res.status(500);
         res.send(error.message);
