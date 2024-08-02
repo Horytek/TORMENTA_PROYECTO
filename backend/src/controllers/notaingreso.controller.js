@@ -114,11 +114,24 @@ const getProductos = async (req, res) => {
     }
   };
   
+  const getNuevoDocumento = async (req, res) => {
+    try {
+        const connection = await getConnection();
+        const [result] = await connection.query(`
+            SELECT CONCAT('400-', LPAD(SUBSTRING(MAX(nom_nota), 5) + 1, 8, '0')) AS nuevo_numero_de_nota
+            FROM nota;
+        `);
+        res.json({ code: 1, data: result, message: "Nuevo numero de nota" });
+    } catch (error) {
+        res.status(500);
+        res.send(error.message);
+    }
+};
 
 export const methods = {
     getIngresos,
     getAlmacen,
-    getProductos
-
+    getProductos,
+    getNuevoDocumento
 };
 

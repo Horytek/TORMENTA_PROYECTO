@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';
-
 import ProductosModal from '@/pages/Productos/ProductosForm';
 import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
@@ -21,6 +20,14 @@ function Registro_Ingresos() {
   const [modalTitle, setModalTitle] = useState('');
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
+  const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
+    const saved = localStorage.getItem('productosSeleccionados');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
+  }, [productosSeleccionados]);
 
   const openModalBuscarProducto = () => setIsModalOpen(true);
   const closeModalBuscarProducto = () => setIsModalOpen(false);
@@ -51,6 +58,25 @@ function Registro_Ingresos() {
 
     const result = await useProductosData(filters);
     setProductos(result.productos);
+  };
+
+  const handleCancel = () => {
+    localStorage.removeItem('productosSeleccionados');
+    setProductosSeleccionados([]);
+  };
+
+  const agregarProducto = (producto, cantidad) => {
+    setProductosSeleccionados((prevProductos) => {
+      const productoExistente = prevProductos.find(p => p.codigo === producto.codigo);
+      if (productoExistente) {
+        return prevProductos.map(p =>
+          p.codigo === producto.codigo ? { ...p, cantidad: p.cantidad + cantidad } : p
+        );
+      } else {
+        return [...prevProductos, { ...producto, cantidad }];
+      }
+    });
+    closeModalBuscarProducto();
   };
 
   return (
@@ -109,8 +135,12 @@ function Registro_Ingresos() {
                 <FaBarcode className="inline-block mr-2" /> Buscar producto
               </button>
               <Link to="/almacen/nota_ingreso">
-                <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-                <MdCancelPresentation className="inline-block mr-2"  /> Cancelar
+                <button 
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" 
+                  type="button" 
+                  onClick={handleCancel} // Agrega el evento onClick
+                >
+                  <MdCancelPresentation className="inline-block mr-2"  /> Cancelar
                 </button>
               </Link>
               <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
@@ -136,7 +166,7 @@ function Registro_Ingresos() {
         <div>
           <br />
           <br />
-          <RegistroTablaIngreso ingresos={ingresos} />
+          <RegistroTablaIngreso ingresos={productosSeleccionados} setProductosSeleccionados={setProductosSeleccionados} />
         </div>
       </div>
       <ModalBuscarProducto 
@@ -145,14 +175,13 @@ function Registro_Ingresos() {
         onBuscar={handleBuscarProducto} 
         setSearchInput={setSearchInput}
         productos={productos}
+        agregarProducto={agregarProducto}
       />
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
-      <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
-        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>SUCURSAL: TIENDA ARICA 3 / CAJA ARICA3</h1>
-      </div>
+
     </div>
   );
 }

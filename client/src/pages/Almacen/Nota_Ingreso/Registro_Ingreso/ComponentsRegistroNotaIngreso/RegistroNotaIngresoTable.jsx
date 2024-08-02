@@ -3,29 +3,37 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaTrash } from 'react-icons/fa';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-const RegistroTablaIngreso = ({ ingresos }) => {
+const RegistroTablaIngreso = ({ ingresos, setProductosSeleccionados }) => {
   const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
+  const [productoAEliminar, setProductoAEliminar] = useState(null);
   
-  const openModalEliminar = () => {
+  const openModalEliminar = (producto) => {
+    setProductoAEliminar(producto);
     setIsModalOpenEliminar(true);
   };
 
   const closeModalEliminar = () => {
     setIsModalOpenEliminar(false);
+    setProductoAEliminar(null);
   };
+
   const handleConfirmEliminar = () => {
-    setIsModalOpenEliminar(false);
+    if (productoAEliminar) {
+      const nuevosProductosSeleccionados = ingresos.filter(p => p.codigo !== productoAEliminar.codigo);
+      setProductosSeleccionados(nuevosProductosSeleccionados);
+      localStorage.setItem('productosSeleccionados', JSON.stringify(nuevosProductosSeleccionados));
+    }
+    closeModalEliminar();
   };
 
   const renderEntradaRow = (ingreso) => (
-    <tr key={ingreso.id} className='tr-tabla-nuevoingreso'>
+    <tr key={ingreso.codigo} className='tr-tabla-nuevoingreso'>
       <td className="text-center">{ingreso.codigo}</td>
       <td className="text-center">{ingreso.descripcion}</td>
       <td className="text-center">{ingreso.marca}</td>
-      <td className="text-center">{ingreso.stockActual}</td>
       <td className="text-center">{ingreso.cantidad}</td>
-      <td className="flex text-center justify-center items-center align-center">
-        <button className="flex justify-center items-center" onClick={openModalEliminar}>
+      <td className="text-center">
+        <button onClick={() => openModalEliminar(ingreso)}>
           <FaTrash className="w-4 h-4 text-red-500" />
         </button>
       </td>
@@ -38,9 +46,8 @@ const RegistroTablaIngreso = ({ ingresos }) => {
         <thead>
           <tr>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CÓDIGO</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
+            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">MARCA</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">STOCK ACTUAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
           </tr>
@@ -63,6 +70,7 @@ const RegistroTablaIngreso = ({ ingresos }) => {
 
 RegistroTablaIngreso.propTypes = {
   ingresos: PropTypes.array.isRequired,
+  setProductosSeleccionados: PropTypes.func.isRequired,
 };
 
 export default RegistroTablaIngreso;
