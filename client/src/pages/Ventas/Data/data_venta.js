@@ -35,8 +35,8 @@ const useVentasData = (filters) => {
           total: `S/ ${parseFloat(venta.total).toFixed(2)}`,
           cajero: venta.cajero,
           cajeroId: venta.cajeroId,
-          estado: venta.estado === 0 ? 'Inactivo' :
-          venta.estado === 1 ? 'Activo' :
+          estado: venta.estado === 0 ? 'Anulada' :
+          venta.estado === 1 ? 'Aceptada' :
           venta.estado === 2 ? 'En proceso' :
           'Desconocido', // Valor por defecto para estados no especificados
           detalles: venta.detalles.map(detalle => ({

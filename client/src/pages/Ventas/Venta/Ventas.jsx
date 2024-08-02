@@ -52,9 +52,9 @@ const Ventas = () => {
 
     if (estado == 'En proceso') {
       estado = 2;
-    } else if (estado == 'Inactivo') {
+    } else if (estado == 'Anulada') {
       estado = 0;
-    } else if (estado == 'Activo') {
+    } else if (estado == 'Aceptada') {
       estado = 1;
     }
 
@@ -124,7 +124,7 @@ const Ventas = () => {
         modalOpen={modalOpen}
         deleteOptionSelected={deleteOptionSelected}
         openModal={openModal}
-      /* currentPage={currentPage} */
+        currentPage={currentPage} 
       />
 
       {/* Modal para opciones */}

@@ -13,7 +13,7 @@ const categoryButtons = [
   { category: 'bufanda', icon: FaTshirt }
 ];
 
-const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, handleProductSelect, filteredProductos }) => {
+const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, handleProductSelect, filteredProductos, searchTerm2 }) => {
   const [barcode, setBarcode] = useState('');
 
   useEffect(() => {
@@ -21,7 +21,12 @@ const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm,
       if (event.key === 'Enter') {
         // Al presionar Enter, se supone que el escáner ha terminado de enviar el código
         console.log('Scanned barcode:', barcode);
-        const productoEscaneado = filteredProductos.find(p => p.codigo_barras === barcode);
+        var productoEscaneado = '';
+        productoEscaneado = filteredProductos.find(p => p.codigo_barras === barcode);
+        if (searchTerm2){
+        productoEscaneado = filteredProductos.find(p => p.codigo_barras === searchTerm2);
+        }
+
         if (productoEscaneado) {
           handleProductSelect(productoEscaneado);
         } else {
@@ -39,7 +44,7 @@ const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm,
     return () => {
       window.removeEventListener('keypress', handleKeyPress);
     };
-  }, [barcode, filteredProductos, handleProductSelect]);
+  }, [barcode, filteredProductos, handleProductSelect, searchTerm2]);
 
   if (!isModalOpen) return null;
 
@@ -107,12 +112,13 @@ ModalProducto.propTypes = {
   handleProductSelect: PropTypes.func.isRequired,
   filteredProductos: PropTypes.arrayOf(
     PropTypes.shape({
-      codigo: PropTypes.string.isRequired,
+      codigo: PropTypes.number.isRequired,
       nombre: PropTypes.string.isRequired,
       precio: PropTypes.number.isRequired,
       stock: PropTypes.number.isRequired
     })
-  ).isRequired
+  ).isRequired,
+  searchTerm2: PropTypes.string.isRequired,
 };
 
 export default ModalProducto;

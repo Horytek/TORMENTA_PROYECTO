@@ -118,7 +118,6 @@ const datosClientes = loadDetallesFromLocalStorage2();*/
 
 OptionsModal.propTypes = {
   modalOpen: PropTypes.bool.isRequired,
-  toggleDeleteDetalleOption: PropTypes.func.isRequired,
   closeModal: PropTypes.func.isRequired,
   setConfirmDeleteModalOpen: PropTypes.func.isRequired,
   deleteOptionSelected: PropTypes.bool.isRequired,

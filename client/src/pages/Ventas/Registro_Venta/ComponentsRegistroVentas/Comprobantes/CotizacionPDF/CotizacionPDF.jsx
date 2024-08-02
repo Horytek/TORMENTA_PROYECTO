@@ -15,7 +15,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     const [pdfUrl, setPdfUrl] = useState(null);
 
     const generatePDF = async () => {
-        const publicPdfUrl = "https://www.tormentajeans.com";
+        const publicPdfUrl = "https://www.facebook.com/profile.php?id=100055385846115";
         setPdfUrl(publicPdfUrl);
     };
 
@@ -194,12 +194,12 @@ Comprobante.propTypes = {
         nombre_cliente: PropTypes.string.isRequired,
         documento_cliente: PropTypes.string.isRequired,
         direccion_cliente: PropTypes.string.isRequired,
-        igv: PropTypes.string.isRequired,
+        igv: PropTypes.number.isRequired,
         total_t: PropTypes.number.isRequired,
         totalImporte_venta: PropTypes.number.isRequired,
         descuento_venta: PropTypes.number.isRequired,
         detalles: PropTypes.arrayOf(PropTypes.shape({
-            id_producto: PropTypes.string.isRequired,
+            id_producto: PropTypes.number.isRequired,
             nombre: PropTypes.string.isRequired,
             undm: PropTypes.string.isRequired,
             nom_marca: PropTypes.string.isRequired,

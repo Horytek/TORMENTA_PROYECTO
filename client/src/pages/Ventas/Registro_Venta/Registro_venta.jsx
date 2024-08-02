@@ -62,7 +62,7 @@ const Registro_Venta = () => {
 
   const totalImporte = detalles.reduce((acc, item) => acc + parseFloat(item.subtotal.slice(2)), 0).toFixed(2);
   const igv_t = (totalImporte * 0.18).toFixed(2);
-  const total_t = (parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2);
+  const total_t = parseFloat((parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2));
 
   const datos_precio = {
     igv_t:igv_t,
@@ -143,10 +143,10 @@ const Registro_Venta = () => {
     nombre_cliente: cliente ? cliente.nombre : '',
     documento_cliente: cliente ? cliente.documento : '',
     direccion_cliente: cliente ? cliente.direccion : '',
-    igv: igv_t,
-    total_t: total_t,
-    totalImporte_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2),
-    descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
+    igv: parseFloat(igv_t),
+    total_t: parseFloat(total_t),
+    totalImporte_venta: parseFloat(detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2)),
+    descuento_venta: parseFloat(detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2)),
     detalles: detalles.map(detalle => {
       const producto = productos.find(producto => producto.codigo === detalle.codigo);
       return {
@@ -245,6 +245,7 @@ const Registro_Venta = () => {
         setSelectedCategory={setSelectedCategory}
         handleProductSelect={handleProductSelect}
         filteredProductos={filteredProductos}
+        searchTerm2={searchTerm2}
       />
       <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} totalImporte={` ${total_t}`} />
     </>
@@ -253,6 +254,10 @@ const Registro_Venta = () => {
 
 Registro_Venta.propTypes = {
   clienteSeleccionado: PropTypes.string.isRequired,
+};
+
+Registro_Venta.defaultProps = {
+  clienteSeleccionado: '', // Valor por defecto si no se pasa ninguna prop
 };
 
 

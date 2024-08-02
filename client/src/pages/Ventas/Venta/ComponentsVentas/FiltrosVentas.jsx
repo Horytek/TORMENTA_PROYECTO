@@ -20,6 +20,8 @@ const FiltrosVentas = ({onFiltersChange}) => {
       const handleChange = (event) => {
         setRazon(event.target.value);
       };    
+
+      
     
       useEffect(() => {
         const date_i = new Date(value.start.year, value.start.month - 1, value.start.day);
@@ -54,7 +56,7 @@ const FiltrosVentas = ({onFiltersChange}) => {
                     <select id="tipo" className="input-c" style={{width: "190px"}} value={comprobanteSeleccionado}
                                 onChange={(e) => setComprobanteSeleccionado(e.target.value)}
                                                                     >
-                        <option value="" selected>Tipo Comprobante</option>
+                        <option value="">Tipo Comprobante</option>
                         {comprobantes.map((comprobante, index) => (
                                         <option key={index} value={comprobante.nombre}>{comprobante.nombre}</option>
                                     ))}
@@ -66,7 +68,7 @@ const FiltrosVentas = ({onFiltersChange}) => {
                     </label> */}
                     <select id="campo" className="input-c" style={{width: "170px"}} value={sucursalSeleccionado}
                                 onChange={(e) => setSucursalSeleccionado(e.target.value)}>
-                        <option value="" selected>Sucursal</option>
+                        <option value="">Sucursal</option>
                         {sucursales.map((sucursal, index) => (
                                         <option key={index} value={sucursal.nombre}>{sucursal.nombre}</option>
                                     ))}
