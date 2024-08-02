@@ -22,7 +22,7 @@ export const ModalMarca = ({ modalTitle, closeModel }) => {
                             <input type="text" name='marca' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' placeholder='Nombre de Marca' />
                         </div>
     
-                        <div className='modal-buttons'>
+                        <div className='modal-buttons flex justify-between'>
                             <ButtonClose onClick={closeModel} />
                             <ButtonSave />
                         </div>
