@@ -9,7 +9,7 @@ import TablaRegGuia from "./ComponentsRegGuias/RegGuiaTable";
 import UbigeoForm from './UbigeoForm';
 import TransporteForm from './UndTrans';
 import ClienteForm from './ClienteForm';
-import ProductosModal from '@/pages/Productos/ProductosForm';
+import ProductosForm from '@/pages/Productos/ProductosForm';
 
 function RegistroGuia() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -168,7 +168,7 @@ function RegistroGuia() {
                 <div className='w-full relative group text-start'>
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
                   <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded focus:outline-none focus:shadow-outline" 
-                  type="button" onClick={() => openModal('Buscar Producto', 'buscarProducto')}>
+                  type="button" onClick={() => openModal('Buscar Producto', 'producto')}>
                     <FaBarcode className="inline-block mr-2" /> Buscar producto
                   </button>
                 </div>
@@ -245,7 +245,7 @@ function RegistroGuia() {
           {modalType === 'ubicacion' && <UbigeoForm modalTitle={modalTitle} onClose={closeModal} />}
           {modalType === 'transporte' && <TransporteForm modalTitle={modalTitle} onClose={closeModal} />}
           {modalType === 'cliente' && <ClienteForm modalTitle={modalTitle} onClose={closeModal} />}
-          {modalType === 'producto' && <ProductosModal modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'producto' && <ProductosForm  modalTitle={modalTitle} onClose={closeModal} />}
         </>
       )}
     </div>
