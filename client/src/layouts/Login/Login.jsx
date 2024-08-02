@@ -38,7 +38,7 @@ function Login() {
         type={type}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="input-field w-full px-4 py-2 rounded focus:outline-none"
+        className="input-field w-full px-4 py-2 rounded-lg focus:outline-none border border-gray-300 focus:border-gray-300 focus:ring-gray-300"
         placeholder={placeholder}
       />
       <label className={`input-label absolute left-4 transition-all pointer-events-none ${value ? '-top-0' : 'top-0'}`}>
@@ -67,10 +67,10 @@ function Login() {
         <div className="login-form bg-white flex flex-col justify-center p-20">
           <h1 className="text-3xl font-bold text-center pb-14">Iniciar Sesión</h1>
 
-          {renderInputField("email", usuario, setUsuario, "usuario", "Usuario")}
+          {renderInputField("email", usuario, setUsuario, "Tormenta", "Usuario")}
           {renderInputField(showPassword ? "text" : "password", password, setPassword, "*******", "Contraseña", true)}
 
-          <div className="checkbox-container flex items-center mb-11">
+          <div className="checkbox-container flex items-center mt-1 mb-8">
             <input type="checkbox" id="remember" className="custom-checkbox mr-2 relative" />
             <label htmlFor="remember" className="text-sm">Recordar Sesión</label>
           </div>
@@ -84,7 +84,7 @@ function Login() {
         </div>
 
         {/* Panel derecho (imagen u otros contenidos relacionados) */}
-        <div className="login-image-container lg:flex lg:items-center lg:justify-center hidden bg-white border-l-2 border-[#a07ce9]">
+        <div className="login-image-container lg:flex lg:items-center lg:justify-center hidden bg-white border-l-2 border-[#e7e4e4]">
           <img src={loginImage} alt="Login Image" className="h-max" />
         </div>
       </div>
