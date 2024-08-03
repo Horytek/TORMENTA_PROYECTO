@@ -6,8 +6,7 @@ import "./Registro_Marca/ComponentsRegistroMarcas/Modals/RegistroModal.css";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
-import { MdAddCircleOutline } from "react-icons/md";
-import { ButtonNormal, ButtonIcon } from '@/components/Buttons/Buttons';
+import { ButtonNormal } from '@/components/Buttons/Buttons';
 import Pagination from "@/components/Pagination/Pagination";
 import TablaMarcas from "./ComponentsMarcas/MarcasTable";
 import OptionsModal from "./ComponentsMarcas/Modals/OptionsModal";
@@ -167,7 +166,7 @@ const Marcas = () => {
               <input
                 type="text"
                 placeholder="Buscar por nombre"
-                className="border rounded pl-10 pr-20 py-2"
+                className="border rounded-lg pl-10 pr-20 py-2 border-gray-300"
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
@@ -267,7 +266,7 @@ const Marcas = () => {
           onPageChange={setCurrentPage}
         />
         <select
-          className="input-c cant-pag-c"
+          className="input-c cant-pag-c w-20"
           value={marcasPerPage}
           onChange={(e) => setMarcasPerPage(Number(e.target.value))}
         >

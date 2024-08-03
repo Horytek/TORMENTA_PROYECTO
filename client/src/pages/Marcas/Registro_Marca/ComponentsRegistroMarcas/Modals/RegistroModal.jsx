@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import "./RegistroModal.css";
 
@@ -66,15 +66,15 @@ const RegistroModal = ({ onClose, onSubmit }) => {
           <div className="rvm-modal-body">
             <div className="rvm-space-y-4">
               <div className="rvm-flex rvm-flex-col rvm-space-y-2 rvm-align-left">
-                <Label htmlFor="brand-name">
-                  Nombre de la Marca <span className="rvm-text-red-500">*</span>
+                <Label htmlFor="brand-name" className="font-bold">
+                  Nombre de la Marca: <span className="text-red-500">(*)</span>
                 </Label>
                 <Input
                   id="brand-name"
                   placeholder="Ingresa el nombre"
                   value={nombreMarca}
                   onChange={(e) => setNombreMarca(e.target.value)}
-                  className="rv-modal-input"
+                  className="rv-modal-input border-gray-300 rounded-lg"
                 />
               </div>
             </div>

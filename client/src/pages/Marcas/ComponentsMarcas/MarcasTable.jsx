@@ -1,6 +1,5 @@
 import PropTypes from "prop-types";
-import { MdDeleteForever, MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
-import { IoIosCloudDone } from "react-icons/io";
+import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 
 const TablaMarcas = ({ marcas, openModal, openEditModal, darBajaModal }) => {

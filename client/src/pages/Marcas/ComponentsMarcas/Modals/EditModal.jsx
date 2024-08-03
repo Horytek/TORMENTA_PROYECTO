@@ -61,22 +61,22 @@ const EditModal = ({ onClose, onSubmit, initialName, initialStatus }) => {
           </div>
           <div className="rv-modal-body">
             <div className="rv-modal-space-y-4">
-              <div className="rv-modal-flex rv-modal-flex-col rv-modal-space-y-2">
+              <div className="rv-modal-flex rv-modal-flex-col rv-modal-space">
                 <Label htmlFor="brand-name" className="rv-modal-label">
-                  Nombre de la Marca{" "}
-                  <span className="rv-modal-text-red-500">*</span>
+                  Nombre de la marca:{" "}
+                  <span className="text-red-500">(*)</span>
                 </Label>
                 <Input
                   id="brand-name"
                   placeholder="Ingresa el nombre"
                   value={nombreMarca}
                   onChange={(e) => setNombreMarca(e.target.value)}
-                  className="rv-modal-input"
+                  className="rv-modal-input border border-gray-300 rounded-lg"
                 />
               </div>
               <div className="rv-modal-flex rv-modal-flex-col rv-modal-space-y-2">
                 <Label htmlFor="brand-status" className="rv-modal-label">
-                  Estado de la Marca
+                  Estado:
                 </Label>
                 <Select
                   id="brand-status"
@@ -91,7 +91,7 @@ const EditModal = ({ onClose, onSubmit, initialName, initialStatus }) => {
               </div>
             </div>
 
-            <div className="modal-buttons mt-4 flex justify-end space-x-2" style={{gap: "25px", marginTop:"60px"}}>
+            <div className="modal-buttons mt-4 flex justify-end space-x-2" style={{gap: "25px", marginTop:"30px"}}>
               <ButtonClose onClick={onClose} />
               <ButtonSave
                 onClick={() => {
