@@ -15,6 +15,28 @@ const getSubCategorias = async (req, res) => {
     }
 };
 
+const getSubcategoriesForCategory = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const connection = await getConnection();
+        const [result] = await connection.query(`
+            SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
+            FROM sub_categoria
+            WHERE id_categoria = ? AND estado_subcat = 1
+        `, [id]);
+
+        if (result.length === 0) {
+            return res.status(404).json({code: 0, data: result, message: "Subcategorías de categoría no encontradas" });
+        }
+
+        res.json({ code: 1, data: result, message: "Subcategorías de categoría listadas" });
+    } catch (error) {
+        if (!res.headersSent) {
+            res.status(500).send(error.message);
+        }
+    }
+};
+
 const getSubCategoria = async (req, res) => {
     try {
         const { id } = req.params;
@@ -117,6 +139,7 @@ const deleteSubCategoria = async (req, res) => {
 
 export const methods = {
     getSubCategorias,
+    getSubcategoriesForCategory,
     getSubCategoria,
     addSubCategoria,
     updateSubCategoria,
