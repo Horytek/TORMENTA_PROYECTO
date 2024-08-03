@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useSucursalData from '../../data/data_sucursal_guia';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
@@ -52,12 +52,12 @@ const FiltrosGuias = ({ onFiltersChange }) => {
         <div className="flex flex-wrap mb-4 justify-between">
             <div className="block ms:block md:flex lg:w-12/12 xl:8/12 items-center md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap justify-between">
                 <div className="input-wrapper flex">
-                    <input type="text" id="numGuia" className="input-d" placeholder="Número de guía"
+                    <input type="text" id="numGuia" className="input border border-gray-300 rounded-lg" placeholder="Número de guía"
                         value={numGuia}
                         onChange={handleNumGuiaChange} />
                 </div>
                 <div className="input-wrapper flex">
-                    <input type="text" id="documento" className="input-d" placeholder="documento o RUC"
+                    <input type="text" id="documento" className="input border border-gray-300 rounded-lg" placeholder="Documento o RUC"
                         value={documento}
                         onChange={handleDocumentoChange} />
                 </div>
@@ -72,7 +72,7 @@ const FiltrosGuias = ({ onFiltersChange }) => {
                     {/* <label htmlFor="campo" className="label">
                         Campo
                     </label> */}
-                    <select id="campo" className="input-c" style={{width: "170px"}} value={sucursalSeleccionado}
+                    <select id="campo" className="border border-gray-300 rounded-lg" style={{width: "170px"}} value={sucursalSeleccionado}
                                 onChange={(e) => setSucursalSeleccionado(e.target.value)}>
                         <option value="" selected>Sucursal</option>
                         {sucursales.map((sucursal, index) => (

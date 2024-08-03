@@ -88,8 +88,8 @@ const TablaIngresos = ({ ingresos }) => {
           </p>
         </td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick} onChange={handleSelectChange2}>
-            <option value="">Seleccione...</option>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm' name="select" onClick={handleSelectClick} onChange={handleSelectChange2}>
+            <option value="">...</option>
             <option value="imprimir2">Imprimir</option>
             <option value="anular">Anular</option>
             <option value="clonar">Clonar</option>

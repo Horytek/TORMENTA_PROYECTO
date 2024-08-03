@@ -84,8 +84,8 @@ const TablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) =>
         </p>
         </td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}  onChange={handleSelectChange2}>
-            <option value="" selected>Seleccione...</option>
+          <select className='b text-center custom-select border border-gray-300 p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick}  onChange={handleSelectChange2}>
+            <option value="" selected>...</option>
             <option value="imprimir2">Imprimir</option>
             <option className={`ml-2 rounded-lg cursor-pointer ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => openModal(salida.id)}  value="anular">Anular</option>
             <option value="clonar">Clonar</option>

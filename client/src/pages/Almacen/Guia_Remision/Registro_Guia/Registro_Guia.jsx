@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { IoMdPin, IoMdCar, IoMdAdd, IoIosSearch } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
@@ -93,7 +93,7 @@ function RegistroGuia() {
               <div className="">
                 <label className="block text-gray-700 text-sm font-bold mt-5" htmlFor="direcdest">
                 </label>
-                <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline" 
+                <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded" 
                 type="button" onClick={() => openModal('Ubicación de Partida / Ubicación de Destino', 'ubicacion')}>
                   <IoMdPin className="inline-block mr-2" /> Ub. de Partida/Ub. de Destino
                 </button>
@@ -145,14 +145,14 @@ function RegistroGuia() {
               <div className="flex">
                 <div className="flex-1 mr-2">
                   <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold  "></label>
-                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" 
+                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm" 
                   type="button" onClick={() => openModal('Datos del Transporte', 'transporte')}>
                     <IoMdCar className="inline-block mr-2 text-lg" /> Datos de Transporte
                   </button>
                 </div>
                 <div className="flex-1 ml-2">
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold"></label>
-                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline text-sm" 
+                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm" 
                   type="button" onClick={() => openModal('Nuevo Cliente', 'cliente')}>
                     <MdPersonAdd className="inline-block mr-2 text-lg" />Nuevo Cliente
                   </button>
@@ -167,7 +167,7 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
-                  <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded focus:outline-none focus:shadow-outline" 
+                  <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded" 
                   type="button" onClick={() => openModal('Buscar Producto', 'producto')}>
                     <FaBarcode className="inline-block mr-2" /> Buscar producto
                   </button>
@@ -180,11 +180,11 @@ function RegistroGuia() {
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="observacion">
                 Observación:
               </label>
-              <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              <textarea className="shadow appearance-none border border-gray-300 rounded w-full py-2 px-3 text-gray-700 leading-tight resize-none"
                     id="observacion" style={{ height: "94%" }}></textarea>           
             </div>
             <div className="mt-10 flex justify-end">
-              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded" type="button">
                 <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
             </div>

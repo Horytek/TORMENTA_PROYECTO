@@ -68,7 +68,7 @@ const Ingresos = () => {
 
       <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
         <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>
-          {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'Seleccione un almacén'}
+          {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL:'}
         </h1>
       </div>
     </div>

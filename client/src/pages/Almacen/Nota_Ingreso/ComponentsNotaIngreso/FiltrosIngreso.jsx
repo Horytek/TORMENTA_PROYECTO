@@ -118,7 +118,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
             <div className="flex items-center gap-2">
                 <h6 className='font-bold'>Almacén:</h6>
                 <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' onChange={handleAlmacenChange} value={almacenSeleccionado.id}>
-                    <option value="%">Seleccione un almacén...</option>
+                    <option value="%">Seleccione...</option>
                     {almacenes.map((almacen, index) => (
                         <option key={index} value={almacen.id}>{almacen.almacen}</option>
                     ))}
@@ -135,7 +135,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
                         placeholder=''
                         value={razon}
                         onChange={(e) => setRazon(e.target.value)}
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5'
+                        className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
                     />
                 </div>
             </div>
@@ -149,8 +149,8 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
             </div>
             <div className="flex items-center gap-2">
                 <div className='flex items-center gap-2'>
-                    <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" onChange={handleSelectChange}>
-                        <option value="">Seleccione...</option>
+                    <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full' name="select" onChange={handleSelectChange}>
+                        <option value="">...</option>
                         <option value="imprimir">Imprimir</option>
                         <option value="excel">Excel</option>
                         <option value="excel-detalle">Excel Detalle</option>

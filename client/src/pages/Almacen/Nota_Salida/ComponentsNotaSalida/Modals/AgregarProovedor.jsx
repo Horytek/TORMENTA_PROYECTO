@@ -71,13 +71,12 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                         <div className="form-group">
                             <label className='text-sm font-bold text-black' htmlFor="status-sunat">Status Sunat:</label>
                             <div id="status-sunat" className="status-sunat"></div>
-
                         </div>
                         <div className="form-row">
-                            <div>
+                            <div className="form-group">
                                 <input className='bg-gray-100 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" placeholder="" />
                             </div>
-                            <div>
+                            <div className="form-group">
                                 <input className='bg-gray-100 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" placeholder="" />
                             </div>
                         </div>

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+import { useState } from 'react';
 
 const TablaRegGuia = () => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -15,11 +14,11 @@ const TablaRegGuia = () => {
           <tr>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CÓDIGO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">MARCA</th>
-            <th className="w-1/6 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
+            <th className="w-1/6 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
-            <th className="w-1/6 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
+            <th className="w-1/6 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
           </tr>
         </thead>
         <tbody>
@@ -37,7 +36,7 @@ const TablaRegGuia = () => {
           ))}
         </tbody>
       </table>
-      <style jsx>{`
+      <style>{`
         .table-custom {
           width: 100%;
           border-collapse: collapse;

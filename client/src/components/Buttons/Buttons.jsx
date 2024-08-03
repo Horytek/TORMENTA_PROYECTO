@@ -34,7 +34,7 @@ export function ButtonNormal({ children, color, ...props }) {
 
 export function ButtonIcon({ children, icon, color, ...props }) {
   return (
-    <button className="btn m-0" style={{ backgroundColor: color }} {...props}>
+    <button className="btn m-0 " style={{ backgroundColor: color }} {...props}>
       {icon}
       {children}
     </button>

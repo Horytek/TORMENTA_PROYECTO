@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
 import { FaSearch } from 'react-icons/fa';
@@ -23,7 +22,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
               <hr />
               <div className='w-full relative group mb-5 text-start'>
                 <label htmlFor="dept" className='text-sm font-bold text-black'>Departamento:</label>
-                <input type="search" name='dept' className='input-field' />
+                <input type="search" name='dept' className='input-field border-lg' />
                 <FaSearch className='search-icon' />
 
               </div>

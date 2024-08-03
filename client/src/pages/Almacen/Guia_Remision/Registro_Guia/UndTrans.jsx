@@ -62,7 +62,7 @@ const TransporteForm = ({ modalTitle, onClose }) => {
               <div className='form-row'>
                 <div className='form-group'>
                   <label htmlFor="ruc">RUC:</label>
-                  <input type="text" id="ruc" disabled={!transportePublico} />
+                  <input type="text" id="ruc"  disabled={!transportePublico} />
                 </div>
                 <div className='form-group'>
                   

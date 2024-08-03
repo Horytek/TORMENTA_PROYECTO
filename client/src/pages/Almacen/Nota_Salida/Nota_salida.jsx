@@ -16,7 +16,6 @@ const Salidas = () => {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
-  const [isConfirmationModalOpenImprimir, setIsConfirmationModalOpen] = useState(false);
   const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
   const [isModalOpenExcel, setIsModalOpenExcel] = useState(false);
   const [isModalOpenExcelDetalle, setIsModalOpenExcelDetalle] = useState(false);
@@ -97,7 +96,8 @@ const Salidas = () => {
       <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
         <div className="flex items-center gap-2">
           <h6 className='font-bold'>Almacén:</h6>
-          <select className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' htmlFor="">
+          <select className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg w-38' htmlFor="" style={{width: "220px"}}>
+            <option>Seleccione...</option>
             <option>ALM CENTRAL ESCALERA</option>
           </select>
         </div>
@@ -126,8 +126,8 @@ const Salidas = () => {
             <LuFilter className='icon-white w-4 h-4 ' />
           </ButtonNormal>
           <div className='flex items-center gap-2'>
-            <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" onChange={handleSelectChange}>
-              <option value="">Seleccione...</option>
+            <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm' name="select" onChange={handleSelectChange}>
+              <option value="">...</option>
               <option value="imprimir">Imprimir</option>
               <option value="excel">Excel</option>
               <option value="excel-detalle">Excel Detalle</option>
