@@ -5,8 +5,8 @@ import { FaRegPlusSquare } from "react-icons/fa";
 import { Toaster, toast } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { ModalMarca } from './ModalForms/ModalMarca';
-import { ModalLinea } from './ModalForms/ModalLinea';
-import { ModalSublinea } from './ModalForms/ModalSubLinea';
+import { ModalCategoria } from './ModalForms/ModalCategoria';
+import { ModalSubCategoria } from './ModalForms/ModalSubCategoria';
 import { useForm } from "react-hook-form";
 import { addProducto, updateProducto, getLastIdProducto } from '@/services/productos.services'; 
 import './ProductosForm.css';
@@ -78,21 +78,21 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
     })
 
     const [isModalOpenMarca, setIsModalOpenMarca] = useState(false);
-    const [isModalOpenLinea, setIsModalOpenLinea] = useState(false);
-    const [isModalOpenSubLinea, setIsModalOpenSubLinea] = useState(false);
+    const [isModalOpenCategoria, setIsModalOpenCategoria] = useState(false);
+    const [isModalOpenSubCategoria, setIsModalOpenSubCategorias] = useState(false);
 
     // Logica Modal Marca
     const handleModalMarca = () => {
       setIsModalOpenMarca(!isModalOpenMarca);
     };
 
-    const handleModalLinea = () => {
-      setIsModalOpenLinea(!isModalOpenLinea);
+    const handleModalCategoria = () => {
+      setIsModalOpenCategoria(!isModalOpenCategoria);
     };
 
     // Logica Modal Sublinea
-    const handleModalSubLinea = () => {
-      setIsModalOpenSubLinea(!isModalOpenSubLinea);
+    const handleModalSubCategoria = () => {
+      setIsModalOpenSubCategorias(!isModalOpenSubCategoria);
     };
 
     const handlePrice = (e) => {
@@ -135,7 +135,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                   name="descripcion" 
                   id="descripcion"
                   rows={4} 
-                  className={`block w-full text-sm border rounded-lg resize-none ${errors.descripcion ? 'border-red-600' : 'border-gray-300'} bg-gray-50 text-gray-900`}
+                  className={`block w-full text-sm border rounded-lg resize-none ${errors.descripcion ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} bg-gray-50 text-gray-900`}
                   ></textarea>
                 </div>
     
@@ -143,7 +143,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
     
                 <div className='grid grid-cols-2 gap-6'>
                   <div className='w-full relative group mb-5 text-start'>
-                    <label htmlFor="linea" className='text-sm font-bold text-black'>Línea:</label>
+                    <label htmlFor="linea" className='text-sm font-bold text-black'>Categoría:</label>
                     <div className='flex justify-center items-center gap-2'>
                       <select 
                       {...register('id_categoria', 
@@ -151,16 +151,16 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                       )}
                       id='linea'
                       name='id_categoria'
-                      className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                      className={`w-full text-sm bg-gray-50 ${errors.id_categoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
                         <option value="2">Producto</option>
                       </select>
-                      <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalLinea} />
+                      <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalCategoria} />
                     </div>
                     
                   </div>
                   <div className='w-full relative group mb-5 text-start'>
-                    <label htmlFor="Sub-Línea" className='text-sm font-bold text-black'>Sub-Línea:</label>
+                    <label htmlFor="Sub-Línea" className='text-sm font-bold text-black'>Sub-Categoría:</label>
                     <div className='flex justify-center items-center gap-2'>
                       <select 
                       {...register('id_subcategoria', 
@@ -168,11 +168,11 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                       )}
                       id='sublinea'
                       name='id_subcategoria'
-                      className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                      className={`w-full text-sm bg-gray-50 ${errors.id_subcategoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
                         <option value="1">Pantalón</option>
                       </select>
-                      <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalSubLinea} />
+                      <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalSubCategoria} />
                     </div>
                   </div>
                 </div>
@@ -189,7 +189,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                         )}
                         id='marca' 
                         name='id_marca'
-                        className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                        className={`w-full text-sm bg-gray-50 ${errors.id_marca ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                           <option value="">Seleccione...</option>
                           <option value="1">Tormenta</option>
                         </select>
@@ -209,7 +209,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                     step={0.01}
                     name='precio'
                     placeholder='89.99'
-                    className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                    className={`w-full bg-gray-50 ${errors.precio ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
                   </div>
                 </div>
     
@@ -224,7 +224,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                     )}
                     id='unidadMedida' 
                     name='undm'
-                    className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                    className={`w-full text-sm bg-gray-50 ${errors.undm ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
                         <option value="KGM">KGM</option>
                         <option value="NIU">NIU</option>
@@ -238,7 +238,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                     )}
                     id='estado'
                     name='estado_producto'
-                    className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                    className={`w-full text-sm bg-gray-50 ${errors.estado_producto ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                       <option value="">Seleccione...</option>
                       <option value={1} >Activo</option>
                       <option value={0} >Inactivo</option>
@@ -273,13 +273,13 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
         )}
   
         {/* Modal de Nueva Linea */}
-        {isModalOpenLinea && (
-          <ModalLinea modalTitle={'Linea'} closeModel={handleModalLinea} />
+        {isModalOpenCategoria && (
+          <ModalCategoria modalTitle={'Categoría'} closeModel={handleModalCategoria} />
         )}
   
         {/* Modal de Nueva SubLinea */}
-        {isModalOpenSubLinea && (
-          <ModalSublinea modalTitle={'Sub-Línea'} closeModel={handleModalSubLinea} />
+        {isModalOpenSubCategoria && (
+          <ModalSubCategoria modalTitle={'Sub-Categoría'} closeModel={handleModalSubCategoria} />
         )}
   
       </div>

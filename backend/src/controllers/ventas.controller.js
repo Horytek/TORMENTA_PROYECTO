@@ -132,7 +132,7 @@ const getProductosVentas = async (req, res) => {
                 INNER JOIN marca MA ON MA.id_marca = PR.id_marca
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
                 INNER JOIN inventario inv ON inv.id_producto=PR.id_producto
-				INNER JOIN almacen al ON al.id_almacen=inv.id_almacen where PR.estado_producto
+				INNER JOIN almacen al ON al.id_almacen=inv.id_almacen where PR.estado_producto=1 and inv.stock > 0
             `);
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
@@ -674,6 +674,34 @@ const getCantidadVentasPorProducto = async (req, res) => {
   }
 };
 
+const getAnalisisGananciasSucursales = async (req, res) => {
+  try {
+      const connection = await getConnection();
+      const [result] = await connection.query(`
+          SELECT 
+              s.nombre_sucursal,
+              SUM(dv.total) AS ganancias_totales,
+              COUNT(v.id_venta) AS total_ventas
+          FROM 
+              sucursal s
+          JOIN 
+              venta v ON s.id_sucursal = v.id_sucursal
+          JOIN 
+              detalle_venta dv ON v.id_venta = dv.id_venta
+          GROUP BY 
+              s.id_sucursal
+          ORDER BY 
+              ganancias_totales DESC
+      `);
+
+      res.json({ code: 1, data: result, message: "Análisis de ganancias por sucursal obtenido correctamente" });
+  } catch (error) {
+      if (!res.headersSent) {
+          res.status(500).send(error.message);
+      }
+  }
+};
+
 
 export const methods = {
   getVentas,
@@ -690,4 +718,5 @@ export const methods = {
   getProductoMasVendido,
   getCantidadVentasPorProducto,
   getCantidadVentasPorCategoria,
+  getAnalisisGananciasSucursales,
 };
