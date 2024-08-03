@@ -10,7 +10,7 @@ const BarChartHero = () => {
 
   const chartdata = ventasPorProducto.map(producto => ({
     name: producto.descripcion,
-    "Número de productos vendidos": producto.cantidad_vendida,
+    "Existencias vendidas": producto.cantidad_vendida,
   }));
 
   return (
@@ -31,7 +31,7 @@ const BarChartHero = () => {
             <BarChart
               data={chartdata}
               index="name"
-              categories={["Número de productos vendidos"]}
+              categories={["Existencias vendidas"]}
               colors={["blue"]}
               valueFormatter={dataFormatter}
               yAxisWidth={48}

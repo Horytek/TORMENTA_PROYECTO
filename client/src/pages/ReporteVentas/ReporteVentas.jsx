@@ -15,19 +15,19 @@ import "react-datepicker/dist/react-datepicker.css";
 
 const ReporteVentas = () => {
   const [ventas, setVentas] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
-
-  const openModal = (ventaId, estadoVenta) => {
-    setModalOpen(true);
-    console.log(
-      `Abriendo modal para venta ID: ${ventaId}, Estado: ${estadoVenta}`
-    );
-  };
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const handleSearch = () => {
     console.log("Buscando ventas...");
     setVentas([]);
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
+  }
+
+  const toggleMenu = () => {
+    setMenuVisible(!menuVisible);
   };
 
   const CustomInput = ({ value, onClick }) => (
@@ -85,8 +85,8 @@ const ReporteVentas = () => {
             <div style={{ display: "flex", alignItems: "center" }}>
               <div className="icon-tormenta">
                 <LuRefreshCcw
-                  onClick={handleSearch}
-                  style={{ fontSize: "20px", marginRight: "5px" }}
+                  onClick={handleRefresh}
+                  style={{ fontSize: "20px", marginRight: "5px", cursor: "pointer", animation: "spin 2s linear infinite"}}
                 />
               </div>
               <span
@@ -99,8 +99,18 @@ const ReporteVentas = () => {
                 Recargar datos
               </span>
             </div>
-            <div className="icon-tormenta">
-              <SlOptionsVertical style={{ fontSize: "20px" }} />
+            <div className="icon-tormenta" style={{ position: "relative" }}>
+              <SlOptionsVertical
+                style={{ fontSize: "20px", cursor: "pointer" }}
+                onClick={toggleMenu}
+              />
+              {menuVisible && (
+                <div className="menu-tormenta">
+                  <ul>
+                    <li>Excel Reporte</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -120,7 +130,7 @@ const ReporteVentas = () => {
         <Divider className="my-2" />
       </div>
 
-      <div className="container-rv" style={{ marginBottom: "10px" }}>
+      <div className="container-rv" style={{ marginBottom: "10px", marginTop: "17px" }}>
         <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 relative">
           <Tabs variant="underlined" aria-label="Tabs variants">
             <Tab key="all" title="@Todos" />
@@ -129,12 +139,28 @@ const ReporteVentas = () => {
             <Tab key="arica3" title="Tienda Arica-3" />
             <Tab key="balta" title="Tienda Balta" />
           </Tabs>
-          <div className="element-right" style={{ display: "flex", alignItems: "center", marginLeft: "auto" }}>
-            <div className="flex-grow" style={{ display: "flex", alignItems: "center" }}>
+          <div
+            className="element-right"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginLeft: "auto",
+            }}
+          >
+            <div
+              className="flex-grow"
+              style={{ display: "flex", alignItems: "center" }}
+            >
               <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
                 Selecciona el mes y año
               </p>
-              <div style={{ display: "flex", alignItems: "center", marginLeft: "20px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginLeft: "20px",
+                }}
+              >
                 <DatePicker
                   selected={new Date()}
                   className="border-gray-300 rounded-lg shadow-lg bg-white"
