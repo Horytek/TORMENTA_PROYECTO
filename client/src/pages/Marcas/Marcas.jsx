@@ -266,7 +266,7 @@ const Marcas = () => {
           onPageChange={setCurrentPage}
         />
         <select
-          className="input-c cant-pag-c w-20"
+          className="cant-pag-c w-20 border-gray-300 bg-gray-50 rounded-lg"
           value={marcasPerPage}
           onChange={(e) => setMarcasPerPage(Number(e.target.value))}
         >

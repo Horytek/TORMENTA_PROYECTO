@@ -107,7 +107,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
             <thead>
               <tr>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CODIGO</th>
-                <th className="w-1/3 text-start text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NOMBRE</th>
+                <th className="w-1/3 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">NOMBRE</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
                 <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
                 <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCUENTO</th>

@@ -150,7 +150,7 @@ const Ventas = () => {
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
         <select
-          className="input-c cant-pag-c pr-8"
+          className="cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg"
           value={ventasPerPage}
           onChange={(e) => setVentasPerPage(Number(e.target.value))}
         >
