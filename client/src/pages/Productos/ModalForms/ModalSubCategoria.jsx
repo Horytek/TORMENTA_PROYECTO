@@ -4,7 +4,7 @@ import '../ProductosForm.css';
 import { IoMdClose } from "react-icons/io";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 
-export const ModalSublinea = ({ modalTitle, closeModel }) => {
+export const ModalSubCategoria = ({ modalTitle, closeModel }) => {
     return (
         <div className="modal-overlay">
             <div className="modal">
@@ -23,7 +23,7 @@ export const ModalSublinea = ({ modalTitle, closeModel }) => {
                                 <option>Seleccione...</option>
                             </select>
                             <label htmlFor="descripcion" className='text-sm font-bold text-black'>Nombre:</label>
-                            <input type="text" name='marca' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' placeholder='Nombre de Sub-Línea' />
+                            <input type="text" name='marca' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5 text-sm' placeholder='Nombre de Sub-Línea' />
                         </div>
     
                         <div className='modal-buttons flex justify-between'>
@@ -37,7 +37,7 @@ export const ModalSublinea = ({ modalTitle, closeModel }) => {
     );
 };
 
-ModalSublinea.propTypes = {
+ModalSubCategoria.propTypes = {
     modalTitle: PropTypes.string.isRequired,
     closeModel: PropTypes.func.isRequired,
 };
