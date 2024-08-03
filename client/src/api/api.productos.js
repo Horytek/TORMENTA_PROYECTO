@@ -3,6 +3,9 @@ import axios from "axios";
 export const getProductosRequest = async () =>
   await axios.get("http://localhost:4000/api/productos");
 
+export const getLastIdProductoRequest = async () =>
+  await axios.get("http://localhost:4000/api/productos/lastid");
+
 export const getProductoRequest = async (id) =>
     await axios.get(`http://localhost:4000/api/productos/${id}`);
 

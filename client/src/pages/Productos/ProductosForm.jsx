@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
 import { FaRegPlusSquare } from "react-icons/fa";
@@ -8,8 +8,7 @@ import { ModalMarca } from './ModalForms/ModalMarca';
 import { ModalLinea } from './ModalForms/ModalLinea';
 import { ModalSublinea } from './ModalForms/ModalSubLinea';
 import { useForm } from "react-hook-form";
-import { addProducto, updateProducto } from '@/services/productos.services'; 
-
+import { addProducto, updateProducto, getLastIdProducto } from '@/services/productos.services'; 
 import './ProductosForm.css';
 
 const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
@@ -27,6 +26,22 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
         estado_producto: ''
       }
     });
+
+    // Generar barcode de productos
+    useEffect(() => {
+      const generateBarcode = async () => {
+        if (!initialData) {
+          try {
+            const lastId = await getLastIdProducto();
+            const barcode = `P${lastId.toString().padStart(11, '0')}`;
+            setValue('cod_barras', barcode);
+          } catch (error) {
+            console.error("Error generating barcode:", error);
+          }
+        }
+      };
+      generateBarcode();
+    }, [initialData, setValue]);
 
     const onSubmit = handleSubmit(async (data) => {
       try {

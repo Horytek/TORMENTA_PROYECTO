@@ -4,6 +4,7 @@ import { methods as productosController } from "./../controllers/productos.contr
 const router = Router();
 
 router.get("/", productosController.getProductos);
+router.get("/lastid", productosController.getUltimoIdProducto);
 router.get("/:id", productosController.getProducto);
 router.post("/", productosController.addProducto);
 router.put("/:id", productosController.updateProducto);

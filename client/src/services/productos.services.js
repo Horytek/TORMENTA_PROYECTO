@@ -1,4 +1,4 @@
-import { getProductosRequest, getProductoRequest, addProductosRequest, updateProductoRequest, deleteProductosRequest } 
+import { getProductosRequest, getProductoRequest, addProductosRequest, updateProductoRequest, deleteProductosRequest, getLastIdProductoRequest } 
 from '@/api/api.productos';
 import { transformData } from '@/utils/producto';
 import { toast } from "react-hot-toast";
@@ -15,6 +15,17 @@ const getProductos = async () => {
     console.error('Error en la solicitud: ', error.message);
   }
 };
+
+const getLastIdProducto = async () => {
+  try {
+    const response = await getLastIdProductoRequest();
+    if (response.data.code === 1) {
+      return response.data.data[0].ultimo_id;
+    }
+  } catch (error) {
+    console.error('Error en la solicitud: ', error.message);
+  }
+}
 
 const getProducto = async (id) => {
   try {
@@ -76,4 +87,4 @@ const deleteProducto = async (id) => {
   }
 };
 
-export { getProductos, getProducto, addProducto, updateProducto, deleteProducto };
+export { getProductos, getLastIdProducto, getProducto, addProducto, updateProducto, deleteProducto };

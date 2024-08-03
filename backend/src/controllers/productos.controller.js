@@ -18,6 +18,19 @@ const getProductos = async (req, res) => {
     }
 };
 
+const getUltimoIdProducto = async (req, res) => {
+    try {
+        const connection = await getConnection();
+        const [result] = await connection.query(`
+                SELECT MAX(id_producto+1) AS ultimo_id FROM producto;
+            `);
+        res.json({code:1, data: result});
+    } catch (error) {
+        res.status(500);
+        res.send(error.message);
+    }
+};
+
 const getProducto = async (req, res) => {
     try {
         const { id } = req.params;
@@ -119,6 +132,7 @@ const deleteProducto = async (req, res) => {
 
 export const methods = {
     getProductos,
+    getUltimoIdProducto,
     getProducto,
     addProducto,
     updateProducto,
