@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 
 const TablaKardex = ({ ingresos }) => {
@@ -19,8 +18,8 @@ const TablaKardex = ({ ingresos }) => {
       <td className="text-center px-2">{ingreso.transito}</td>
       <td className="text-center px-2">NOT</td>
       <td className='text-center px-2'>
-        <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick} defaultValue="">
-          <option value="">Seleccione...</option>
+        <select className='b text-center custom-select border border-gray-300 p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick} defaultValue="">
+          <option value="">...</option>
           <option value="value1">Imprimir</option>
           <option value="value2">Anular</option>
           <option value="value3">Clonar</option>

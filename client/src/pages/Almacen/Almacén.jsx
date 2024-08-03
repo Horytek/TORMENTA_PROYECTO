@@ -10,10 +10,10 @@ const Kardex = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 5; // Número total de páginas
 
-      // Función para cambiar de página en la paginación
-  const onPageChange = (page) => {
-    setCurrentPage(page);
-  };
+    // Función para cambiar de página en la paginación
+    const onPageChange = (page) => {
+        setCurrentPage(page);
+    };
     return (
         <div>
             {/* Componente de migas de pan */}
@@ -24,9 +24,13 @@ const Kardex = () => {
                     Kardex Movimientos
                 </h1>
             </div>
-            <div className="mt-5 mb-4 font-bold">
-                <label htmlFor="">Kardex de Movimientos / Tienda: Almacén:</label>
-                <select className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5'>
+            <div className="mt-5 mb-4">
+                <label htmlFor="" className='mr-2 font-bold'>Kardex de Movimientos / Tienda: Almacén:</label>
+                <select 
+                style={{ width: '250px' }}
+                className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
+                >
+                    <option value="">Seleccione...</option>
                     <option value="">ALMACEN BALTA 7-8</option>
                     {/* Add other options here */}
                 </select>
@@ -36,36 +40,44 @@ const Kardex = () => {
                     <input
                         type="text"
                         placeholder='CÓDIGO'
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5'
+                        className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
                     />
                 </div>
                 <div className="flex items-center gap-2">
                     <input
                         type="text"
                         placeholder='DESCRIPCIÓN'
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5'
+                        className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
                     />
                 </div>
                 <div className="flex items-center gap-2">
-                    <select className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5'>
+                    <select 
+                    style={{ width: '120px' }}
+                    className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'>
                         <option value="">LÍNEA</option>
                         {/* Add other options here */}
                     </select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <select className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5'>
+                    <select
+                    style={{ width: '120px' }} 
+                    className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'>
                         <option value="">SUB-LÍNEA</option>
                         {/* Add other options here */}
                     </select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <select className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5'>
+                    <select
+                    style={{ width: '180px' }}
+                    className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'>
                         <option value="">CUALQUIER MARCA</option>
                         {/* Add other options here */}
                     </select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <select className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5'>
+                    <select
+                    style={{ width: '120px' }}
+                    className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'>
                         <option value="">@Todos</option>
                         {/* Add other options here */}
                     </select>
@@ -76,8 +88,8 @@ const Kardex = () => {
                     </ButtonNormal>
                 </div>
                 <div className='flex items-center gap-2'>
-                    <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" defaultValue="">
-                        <option value="">Seleccione...</option>
+                    <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm' name="select" defaultValue="">
+                        <option value="">...</option>
                         <option value="value1">Imprimir</option>
                         <option value="value2">Excel</option>
                         <option value="value3">Excel Detalle</option>

@@ -1,4 +1,3 @@
-import React from 'react';
 import './HeaderHistorico.css';
 import { MdOutlineLocalPrintshop } from "react-icons/md";
 import { FaRegFileExcel } from "react-icons/fa";

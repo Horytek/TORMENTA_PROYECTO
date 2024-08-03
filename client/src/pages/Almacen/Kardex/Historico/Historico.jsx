@@ -1,4 +1,3 @@
-import React from 'react';
 import './Historico.css';
 import HeaderHistorico from './ComponentsHistorico/HeaderHistorico';
 import HistoricoTable from './ComponentsHistorico/HistoricoTable';
