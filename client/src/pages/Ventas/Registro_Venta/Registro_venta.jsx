@@ -1,4 +1,4 @@
-import { useState,useRef, useEffect} from 'react';// Importa QuaggaJS
+import { useState, useRef } from 'react';// Importa QuaggaJS
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
@@ -14,6 +14,7 @@ import useClientesData from '../Data/data_cliente_venta';
 import { useReactToPrint } from 'react-to-print';
 import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes/CotizacionPDF/CotizacionPDF';  // Asegúrate de ajustar la ruta según sea necesario
 import PropTypes from 'prop-types';
+import {Toaster} from "react-hot-toast";
 import {toast} from "react-hot-toast";
 
 const Registro_Venta = () => {
@@ -30,7 +31,7 @@ const Registro_Venta = () => {
   //const [barcode, setBarcode] = useState('');
 
   const handlePrint = useReactToPrint({
-      content: () => componentRef.current,
+    content: () => componentRef.current,
   });
 
   const handleProductSelect = (producto) => {
@@ -66,8 +67,8 @@ const Registro_Venta = () => {
   const total_t = parseFloat((parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2));
 
   const datos_precio = {
-    igv_t:igv_t,
-    total_t:total_t,
+    igv_t: igv_t,
+    total_t: total_t,
   }
 
   const saveDetallesToLocalStorage_1 = () => {
@@ -134,9 +135,9 @@ const Registro_Venta = () => {
   };
 
   saveDetallesToLocalStorage();
-  
-  const { clientes } = useClientesData(); 
-  const cliente = clientes.find(cliente => cliente.id === 1); 
+
+  const { clientes } = useClientesData();
+  const cliente = clientes.find(cliente => cliente.id === 1);
 
   const datosVentaComprobante = {
 
@@ -163,14 +164,23 @@ const Registro_Venta = () => {
     }).filter(detalle => detalle !== null),
   };
 
-  useEffect(() => {
+
+  const Comprobar_mayor_499 = () => {
     if (total_t > 499) {
-        toast.error('La venta no puede tener un monto mayor a 499 soles');
+      toast.error('La venta no puede tener un monto mayor a 499 soles');
+    } else {
+      if (total_t <= 0) {
+        toast.error('No hay productos en la venta');
+      } else {
+        setIsCobrarModalOpen(true);
+      }
     }
-}, [total_t]);
+  };
 
   return (
     <>
+      <Toaster />
+
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/ventas' }, { name: 'Registrar', href: '/ventas/registro_venta' }]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
@@ -218,7 +228,7 @@ const Registro_Venta = () => {
               <MdCleaningServices style={{ fontSize: '22px' }} />
               Limpiar</button>
             <div className='items-center flex ml-2'>
-              <button className="btn btn-cotizar  flex items-center" onClick={()=> handlePrint(true)} disabled={detalles.length === 0}>
+              <button className="btn btn-cotizar  flex items-center" onClick={() => handlePrint(true)} disabled={detalles.length === 0}>
                 <GrDocumentPerformance style={{ fontSize: '22px' }} />
                 Cotizar</button>
             </div>
@@ -226,9 +236,10 @@ const Registro_Venta = () => {
               <Comprobante ref={componentRef} datosVentaComprobante={datosVentaComprobante} />
             </div>
             <div className='items-center flex ml-2'>
-              <button className="btn btn-cobrar mr-0 flex items-center" onClick={() => setIsCobrarModalOpen(true)} disabled={detalles.length === 0 || total_t > 499}>
+              <button className="btn btn-cobrar mr-0 flex items-center" onClick={Comprobar_mayor_499}>
                 <BsCashCoin style={{ fontSize: '22px' }} />
                 Cobrar
+
               </button>
             </div>
           </div>
