@@ -49,7 +49,6 @@ function Sidebar() {
             {
               to: '/ventas', icon: <FaChartLine className="text-xl" />, text: 'Ventas', subLinks: [
                 { to: '/ventas/registro_venta', text: 'Nueva Venta' },
-                { to: '/ventas/reporte_venta', icon: <BiSolidReport className="text-xl" />, text: 'Reporte de Ventas' },
               ]
             },
             { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén', subLinks: [
@@ -57,6 +56,9 @@ function Sidebar() {
               { to: '/almacen/guia_remision', text: 'Guia de remisión' },
               { to: '/almacen/nota_salida', text: 'Nota de salida' }
             ]
+
+            },
+            { to: '/reportes', icon: <BiSolidReport className="text-xl" />, text: 'Reportes'
               
             },
             { to: '/configuracion', icon: <FaCog className="text-xl" />, text: 'Configuración' },

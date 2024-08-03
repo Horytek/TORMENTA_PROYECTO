@@ -37,7 +37,6 @@ function Dashboard() {
             <Route path="/ventas" element={<Ventas />} />
             {/* Ruta para la página de configuración */}
             <Route path="/ventas/registro_venta" element={<Registro_venta />} />
-            <Route path="/ventas/reporte_venta" element={<ReporteVentas />} />
             {/* Ruta para la página de empleados */}
             <Route path="/empleados" element={<Empleados />} />
             {/* Ruta para la página de productos */}
@@ -60,6 +59,8 @@ function Dashboard() {
             <Route path="/almacen/guia_remision" element={<Guia_Remision />} />
             {/* Ruta para la página de guia de remision */}
             <Route path="/almacen/guia_remision/registro_guia" element={<RegistroGuia />} />
+            {/* Ruta para la página de reporte de ventas */}
+            <Route path="/reportes" element={<ReporteVentas />} />
             {/* Ruta para la página de configuración */}
             <Route path="/configuracion" element={<Configuracion />} />
           </Routes>
