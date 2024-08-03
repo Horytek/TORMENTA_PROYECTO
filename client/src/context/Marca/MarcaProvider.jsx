@@ -10,7 +10,7 @@ export const useMarcas = () => {
     return context;
 };
 
-export const TaskContextProvider = ({ children }) => {
+export const MarcaContextProvider = ({ children }) => {
     const [marcas, setMarcas] = useState([]);
   
     async function loadMarcas() {

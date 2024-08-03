@@ -16,6 +16,15 @@ import './ProductosForm.css';
 
 const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
 
+    // Consumir context de categorias
+    const { categorias, loadCategorias, createCategoria } = useCategorias();
+
+    // Consumir context de subcategorias
+    const { subcategorias, loadSubCategoriasForCategoria, createSubcategoria } = useSubcategorias();
+
+    // Consumir context de marcas
+    const { marcas, loadMarcas, createMarca } = useMarcas();
+
     // Registro de producto
     const { register, handleSubmit, setValue, getValues, formState: {errors} } = useForm({
       defaultValues: initialData?.data || {

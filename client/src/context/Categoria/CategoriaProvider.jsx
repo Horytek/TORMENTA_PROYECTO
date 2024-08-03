@@ -10,8 +10,8 @@ export const useCategorias = () => {
     return context;
 };
 
-export const TaskContextProvider = ({ children }) => {
-    const [categoria, setCategoria] = useState([]);
+export const CategoriaContextProvider = ({ children }) => {
+    const [categorias, setCategoria] = useState([]);
   
     async function loadCategorias() {
       const response = await getCategorias();
@@ -32,7 +32,7 @@ export const TaskContextProvider = ({ children }) => {
     return (
       <CategoriaContext.Provider
         value={{
-          categoria,
+          categorias,
           loadCategorias,
           createCategoria
         }}

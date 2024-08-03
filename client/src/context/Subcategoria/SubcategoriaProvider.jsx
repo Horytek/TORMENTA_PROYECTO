@@ -11,9 +11,9 @@ export const useSubcategorias = () => {
 };
 
 export const SubcategoriaContextProvider = ({ children }) => {
-    const [subcategoria, setSubcategoria] = useState([]);
+    const [subcategorias, setSubcategoria] = useState([]);
   
-    async function loadCategorias() {
+    async function loadSubcategorias() {
       const response = await getSubcategorias();
       setSubcategoria(response);
     }
@@ -23,7 +23,7 @@ export const SubcategoriaContextProvider = ({ children }) => {
         return response;
     };
   
-    const createCategoria = async (subcategoria) => {
+    const createSubcategoria = async (subcategoria) => {
       try {
         const success = await addSubcategoria(subcategoria);
         if (success) {
@@ -37,10 +37,10 @@ export const SubcategoriaContextProvider = ({ children }) => {
     return (
       <SubcategoriaContext.Provider
         value={{
-          subcategoria,
-          loadCategorias,
+          subcategorias,
+          loadSubcategorias,
           loadSubCategoriasForCategoria,
-          createCategoria
+          createSubcategoria
         }}
       >
         {children}
