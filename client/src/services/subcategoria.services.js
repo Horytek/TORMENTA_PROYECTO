@@ -1,5 +1,5 @@
 import { getSubcategoriasRequest, getSubcategoriasForCategoriasRequest, addSubcategoriaRequest } 
-from '@/api/api.categoria';
+from '@/api/api.subcategoria';
 import { toast } from "react-hot-toast";
 
 const getSubcategorias = async () => {

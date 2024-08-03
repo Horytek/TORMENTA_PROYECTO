@@ -20,8 +20,10 @@ export const TaskContextProvider = ({ children }) => {
   
     const createCategoria = async (categoria) => {
       try {
-        await addCategoria(categoria);
-        // setCategoria([...categoria, response]);
+        const success = await addCategoria(categoria);
+        if (success) {
+          setCategoria([...categoria, categoria]);
+        }
       } catch (error) {
         console.error(error);
       }

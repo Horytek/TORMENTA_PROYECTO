@@ -10,7 +10,7 @@ export const useSubcategorias = () => {
     return context;
 };
 
-export const TaskContextProvider = ({ children }) => {
+export const SubcategoriaContextProvider = ({ children }) => {
     const [subcategoria, setSubcategoria] = useState([]);
   
     async function loadCategorias() {
@@ -25,8 +25,10 @@ export const TaskContextProvider = ({ children }) => {
   
     const createCategoria = async (subcategoria) => {
       try {
-        await addSubcategoria(subcategoria);
-        // setSubcategoria([...categoria, response]);
+        const success = await addSubcategoria(subcategoria);
+        if (success) {
+          setSubcategoria([...subcategoria, subcategoria]);
+        }
       } catch (error) {
         console.error(error);
       }

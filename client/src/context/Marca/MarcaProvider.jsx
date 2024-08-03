@@ -20,8 +20,10 @@ export const TaskContextProvider = ({ children }) => {
   
     const createMarca = async (marca) => {
       try {
-        await addMarca(marca);
-        // setMarcas([...marcas, response.data]);
+        const success = await addMarca(marca);
+        if (success) {
+          setMarcas([...marcas, marca]);
+        }
       } catch (error) {
         console.error(error);
       }

@@ -8,6 +8,9 @@ import { ModalMarca } from './ModalForms/ModalMarca';
 import { ModalCategoria } from './ModalForms/ModalCategoria';
 import { ModalSubCategoria } from './ModalForms/ModalSubCategoria';
 import { useForm } from "react-hook-form";
+import { useCategorias } from '@/context/Categoria/CategoriaProvider';
+import { useMarcas } from '@/context/Marca/MarcaProvider';
+import { useSubcategorias } from '@/context/Subcategoria/SubcategoriaProvider';
 import { addProducto, updateProducto, getLastIdProducto } from '@/services/productos.services'; 
 import './ProductosForm.css';
 
