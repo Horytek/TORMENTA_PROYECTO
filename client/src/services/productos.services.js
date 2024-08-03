@@ -19,8 +19,8 @@ const getProductos = async () => {
 const getProducto = async (id) => {
   try {
     const response = await getProductoRequest(id);
-    if (response.data.status === 404) {
-      return response.data.data; // Devuelve el producto transformado en el formato deseado
+    if (response.data.code === 1) {
+      return response.data.data;
     } else {
       console.error('Error en la solicitud: ', response.data.message);
     }
@@ -49,8 +49,10 @@ const updateProducto = async (id, newFields) => {
     const response = await updateProductoRequest(id, newFields);
     if (response.data.code === 1) {
       toast.success("Producto actualizado con éxito");
+      return true;
     } else {
       toast.error("Ocurrió un error al actualizar el producto");
+      return false;
     }
   } catch (error) {
     toast.error("Error en el servidor interno");

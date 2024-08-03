@@ -8,15 +8,15 @@ import { ModalMarca } from './ModalForms/ModalMarca';
 import { ModalLinea } from './ModalForms/ModalLinea';
 import { ModalSublinea } from './ModalForms/ModalSubLinea';
 import { useForm } from "react-hook-form";
-import { addProducto } from '@/services/productos.services'; 
+import { addProducto, updateProducto } from '@/services/productos.services'; 
 
 import './ProductosForm.css';
 
-const ProductosForm = ({ modalTitle, onClose }) => {
+const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
 
     // Registro de producto
     const { register, handleSubmit, setValue, getValues, formState: {errors} } = useForm({
-      defaultValues: {
+      defaultValues: initialData?.data || {
         descripcion: '',
         id_marca: '',
         id_categoria: '',
@@ -40,16 +40,24 @@ const ProductosForm = ({ modalTitle, onClose }) => {
           undm,
           estado_producto: parseInt(estado_producto)
         };
-        console.log(newProduct);
-        const result = await addProducto(newProduct);
+
+        let result;
+        if (initialData) {
+          result = await updateProducto(initialData?.id_producto,newProduct); // Llamada a la API para añadir el producto
+        } else {
+          result = await addProducto(newProduct); // Llamada a la API para añadir el producto
+        }
+        
+        // Cerrar modal y recargar la página
         if (result) {
-          onClose(); // Cerrar el modal después de añadir el producto
+          onClose();
           setTimeout(() => {
-            window.location.reload(); // Recargar la página después de 1 segundo
+            window.location.reload();
           }, 1000);
         }
+
       } catch (error) {
-        toast.error("Error al añadir el producto");
+        toast.error("Error al realizar la gestión del producto");
         console.error(error);
       }
     })
@@ -130,7 +138,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
                       name='id_categoria'
                       className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                         <option value="">Seleccione...</option>
-                        <option value="1">Producto</option>
+                        <option value="2">Producto</option>
                       </select>
                       <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalLinea} />
                     </div>
@@ -267,6 +275,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
 ProductosForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
+  initialData: PropTypes.object
 };
 
 export default ProductosForm;

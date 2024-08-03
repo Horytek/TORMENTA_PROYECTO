@@ -23,15 +23,16 @@ const getProducto = async (req, res) => {
         const { id } = req.params;
         const connection = await getConnection();
         const [result] = await connection.query(`
-                SELECT *
+                SELECT id_producto, id_marca, SC.id_categoria, PR.id_subcategoria, descripcion, precio, cod_barras, undm, estado_producto
                 FROM producto PR
+                INNER JOIN sub_categoria SC ON PR.id_subcategoria = SC.id_subcategoria
                 WHERE PR.id_producto = ?`, id);
         
         if (result.length === 0) {
             return res.status(404).json({data: result, message: "Producto no encontrado"});
         }
 
-        res.json({data: result, message: "Producto encontrado"});
+        res.json({code: 1 ,data: result, message: "Producto encontrado"});
     } catch (error) {
         res.status(500);
         res.send(error.message);
