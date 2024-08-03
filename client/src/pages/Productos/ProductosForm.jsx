@@ -135,7 +135,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                   name="descripcion" 
                   id="descripcion"
                   rows={4} 
-                  className={`block w-full text-sm border rounded-lg resize-none ${errors.descripcion ? 'border-red-600' : 'border-gray-300'} bg-gray-50 text-gray-900`}
+                  className={`block w-full text-sm border rounded-lg resize-none ${errors.descripcion ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} bg-gray-50 text-gray-900`}
                   ></textarea>
                 </div>
     
@@ -151,7 +151,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                       )}
                       id='linea'
                       name='id_categoria'
-                      className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                      className={`w-full text-sm bg-gray-50 ${errors.id_categoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
                         <option value="2">Producto</option>
                       </select>
@@ -168,7 +168,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                       )}
                       id='sublinea'
                       name='id_subcategoria'
-                      className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                      className={`w-full text-sm bg-gray-50 ${errors.id_subcategoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
                         <option value="1">Pantalón</option>
                       </select>
@@ -189,7 +189,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                         )}
                         id='marca' 
                         name='id_marca'
-                        className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                        className={`w-full text-sm bg-gray-50 ${errors.id_marca ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                           <option value="">Seleccione...</option>
                           <option value="1">Tormenta</option>
                         </select>
@@ -209,7 +209,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                     step={0.01}
                     name='precio'
                     placeholder='89.99'
-                    className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                    className={`w-full bg-gray-50 ${errors.precio ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
                   </div>
                 </div>
     
@@ -224,7 +224,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                     )}
                     id='unidadMedida' 
                     name='undm'
-                    className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                    className={`w-full text-sm bg-gray-50 ${errors.undm ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
                         <option value="KGM">KGM</option>
                         <option value="NIU">NIU</option>
@@ -238,7 +238,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                     )}
                     id='estado'
                     name='estado_producto'
-                    className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                    className={`w-full text-sm bg-gray-50 ${errors.estado_producto ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                       <option value="">Seleccione...</option>
                       <option value={1} >Activo</option>
                       <option value={0} >Inactivo</option>

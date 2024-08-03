@@ -5,3 +5,6 @@ export const getSubcategoriasRequest = async () =>
 
 export const getSubcategoriasForCategoriasRequest = async (id) =>
     await axios.get(`http://localhost:4000/api/subcategorias/categoria/${id}`);
+
+export const addSubcategoriaRequest = async (subcategoria) =>
+  await axios.post("http://localhost:4000/api/subcategorias", subcategoria);
