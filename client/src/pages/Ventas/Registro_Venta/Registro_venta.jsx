@@ -1,4 +1,4 @@
-import { useState,useRef, /*useEffect */} from 'react';// Importa QuaggaJS
+import { useState,useRef, useEffect} from 'react';// Importa QuaggaJS
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
@@ -14,6 +14,7 @@ import useClientesData from '../Data/data_cliente_venta';
 import { useReactToPrint } from 'react-to-print';
 import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes/CotizacionPDF/CotizacionPDF';  // Asegúrate de ajustar la ruta según sea necesario
 import PropTypes from 'prop-types';
+import {toast} from "react-hot-toast";
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
@@ -162,8 +163,11 @@ const Registro_Venta = () => {
     }).filter(detalle => detalle !== null),
   };
 
-  
-  
+  useEffect(() => {
+    if (total_t > 499) {
+        toast.error('La venta no puede tener un monto mayor a 499 soles');
+    }
+}, [total_t]);
 
   return (
     <>
@@ -222,7 +226,7 @@ const Registro_Venta = () => {
               <Comprobante ref={componentRef} datosVentaComprobante={datosVentaComprobante} />
             </div>
             <div className='items-center flex ml-2'>
-              <button className="btn btn-cobrar mr-0 flex items-center" onClick={() => setIsCobrarModalOpen(true)} disabled={detalles.length === 0}>
+              <button className="btn btn-cobrar mr-0 flex items-center" onClick={() => setIsCobrarModalOpen(true)} disabled={detalles.length === 0 || total_t > 499}>
                 <BsCashCoin style={{ fontSize: '22px' }} />
                 Cobrar
               </button>

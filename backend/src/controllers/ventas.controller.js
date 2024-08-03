@@ -132,7 +132,7 @@ const getProductosVentas = async (req, res) => {
                 INNER JOIN marca MA ON MA.id_marca = PR.id_marca
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
                 INNER JOIN inventario inv ON inv.id_producto=PR.id_producto
-				INNER JOIN almacen al ON al.id_almacen=inv.id_almacen
+				INNER JOIN almacen al ON al.id_almacen=inv.id_almacen where PR.estado_producto
             `);
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
