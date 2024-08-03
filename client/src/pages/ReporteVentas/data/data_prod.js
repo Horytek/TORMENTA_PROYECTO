@@ -6,7 +6,7 @@ const useTotalProductosVendidos = () => {
 
   const fetchTotalProductosVendidos = useCallback(async () => {
     try {
-      const response = await axios.post('http://localhost:4000/api/productos_vendidos');
+      const response = await axios.post('http://localhost:4000/api/ventas/productos_vendidos');
   
       if (response.data.code === 1) {
         setTotalProductosVendidos(response.data.totalProductosVendidos);

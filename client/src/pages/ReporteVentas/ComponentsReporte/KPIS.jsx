@@ -2,10 +2,12 @@ import React from 'react';
 import { Card, Metric, Text } from "@tremor/react";
 import useVentasData from '../data/data_soles';
 import useProductosVendidos from '../data/data_prod';
+import useProductoTop from '../data/data_top';
 
 const SalesCard = () => {
   const { totalRecaudado } = useVentasData();
   const { totalProductosVendidos } = useProductosVendidos();
+  const { productoTop, loading, error } = useProductoTop();
 
   return (
     <>
@@ -33,7 +35,13 @@ const SalesCard = () => {
         decorationColor="indigo"
       >
         <Text>Producto más vendido</Text>
-        <Metric>Pantalon Tormenta</Metric>
+        {loading ? (
+          <Metric>Cargando...</Metric>
+        ) : error ? (
+          <Metric>Error: {error}</Metric>
+        ) : (
+          <Metric>{productoTop?.descripcion || 'No disponible'}</Metric>
+        )}
       </Card>
     </>
   );

@@ -14,5 +14,8 @@ router.post("/eliminar_venta", ventasController.updateVenta);
 router.get("/numero_comprobante", ventasController.generarComprobante);
 router.post("/actualizar_venta", ventasController.getEstado);
 router.post("/productos_vendidos", ventasController.getTotalProductosVendidos);
+router.get("/producto_top", ventasController.getProductoMasVendido);
+router.get("/cantidad_por_producto", ventasController.getCantidadVentasPorProducto);
+router.get("/cantidad_por_categoria", ventasController.getCantidadVentasPorCategoria);
 
 export default router;

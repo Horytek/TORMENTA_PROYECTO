@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const useProductoTop = () => {
-  const [productoTop, setProductoTop] = useState(null);
+const useCantidadVentasPorCategoria = () => {
+  const [ventasPorCategoria, setVentasPorCategoria] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchProductoTop = useCallback(async () => {
+  const fetchCantidadVentasPorCategoria = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await axios.get('http://localhost:4000/api/ventas/producto_top');
-
+      const response = await axios.get('http://localhost:4000/api/ventas/cantidad_por_categoria');
+      
       if (response.data.code === 1) {
-        setProductoTop(response.data.data);
+        setVentasPorCategoria(response.data.data);
       } else {
         setError('Error en la solicitud: ' + response.data.message);
       }
@@ -26,10 +26,10 @@ const useProductoTop = () => {
   }, []);
 
   useEffect(() => {
-    fetchProductoTop();
-  }, [fetchProductoTop]);
+    fetchCantidadVentasPorCategoria();
+  }, [fetchCantidadVentasPorCategoria]);
 
-  return { productoTop, loading, error };
+  return { ventasPorCategoria, loading, error };
 };
 
-export default useProductoTop;
+export default useCantidadVentasPorCategoria;
