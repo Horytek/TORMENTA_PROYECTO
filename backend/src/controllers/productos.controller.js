@@ -9,6 +9,7 @@ const getProductos = async (req, res) => {
                 FROM producto PR
                 INNER JOIN marca MA ON MA.id_marca = PR.id_marca
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
+                ORDER BY PR.id_producto DESC
             `);
         res.json({code:1, data: result, message: "Productos listados"});
     } catch (error) {

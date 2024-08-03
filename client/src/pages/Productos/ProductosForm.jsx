@@ -44,6 +44,9 @@ const ProductosForm = ({ modalTitle, onClose }) => {
         const result = await addProducto(newProduct);
         if (result) {
           onClose(); // Cerrar el modal después de añadir el producto
+          setTimeout(() => {
+            window.location.reload(); // Recargar la página después de 1 segundo
+          }, 1000);
         }
       } catch (error) {
         toast.error("Error al añadir el producto");
