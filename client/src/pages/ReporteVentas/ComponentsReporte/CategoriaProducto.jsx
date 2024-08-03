@@ -20,7 +20,7 @@ const DonutChartUsageExample = () => {
     <div className="flex items-center justify-center">
       <div className="p-6 border border-gray-300 rounded-lg shadow-lg bg-white">
         <h3 className="text-center font-semibold text-lg mb-4">
-          Cantidad de ventas por categoría de producto
+          Ventas por sub categoría de producto
         </h3>
         {loading ? (
           <p className="text-center">Cargando...</p>

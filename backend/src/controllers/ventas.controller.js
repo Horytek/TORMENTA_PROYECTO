@@ -674,6 +674,34 @@ const getCantidadVentasPorProducto = async (req, res) => {
   }
 };
 
+const getAnalisisGananciasSucursales = async (req, res) => {
+  try {
+      const connection = await getConnection();
+      const [result] = await connection.query(`
+          SELECT 
+              s.nombre_sucursal,
+              SUM(dv.total) AS ganancias_totales,
+              COUNT(v.id_venta) AS total_ventas
+          FROM 
+              sucursal s
+          JOIN 
+              venta v ON s.id_sucursal = v.id_sucursal
+          JOIN 
+              detalle_venta dv ON v.id_venta = dv.id_venta
+          GROUP BY 
+              s.id_sucursal
+          ORDER BY 
+              ganancias_totales DESC
+      `);
+
+      res.json({ code: 1, data: result, message: "Análisis de ganancias por sucursal obtenido correctamente" });
+  } catch (error) {
+      if (!res.headersSent) {
+          res.status(500).send(error.message);
+      }
+  }
+};
+
 
 export const methods = {
   getVentas,
@@ -690,4 +718,5 @@ export const methods = {
   getProductoMasVendido,
   getCantidadVentasPorProducto,
   getCantidadVentasPorCategoria,
+  getAnalisisGananciasSucursales,
 };
