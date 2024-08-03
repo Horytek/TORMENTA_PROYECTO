@@ -48,12 +48,12 @@ const FiltrosVentas = ({onFiltersChange}) => {
             {/* Contenedor principal con filtros */}
             <div className="block ms:block md:flex lg:w-12/12 xl:8/12 items-center md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap justify-between">
                 <div className="input-wrapper flex">
-                    <input type="text" id="valor" className="input-c" placeholder="Nombre o Razón Social"
+                    <input type="text" id="valor" className="input border border-gray-300 rounded-lg" placeholder="Nombre o Razón Social"
                     value={razon} // El valor del input se controla con useState
                     onChange={handleChange} />
                 </div>
                 <div className="input-wrapper mb-2 md:mb-0">
-                    <select id="tipo" className="input-c" style={{width: "190px"}} value={comprobanteSeleccionado}
+                    <select id="tipo" className="border border-gray-300 rounded-lg p-2" style={{width: "190px"}} value={comprobanteSeleccionado}
                                 onChange={(e) => setComprobanteSeleccionado(e.target.value)}
                                                                     >
                         <option value="">Tipo Comprobante</option>
@@ -66,7 +66,7 @@ const FiltrosVentas = ({onFiltersChange}) => {
                     {/* <label htmlFor="campo" className="label">
                         Campo
                     </label> */}
-                    <select id="campo" className="input-c" style={{width: "170px"}} value={sucursalSeleccionado}
+                    <select id="campo" className="border border-gray-300 rounded-lg p-2" style={{width: "170px"}} value={sucursalSeleccionado}
                                 onChange={(e) => setSucursalSeleccionado(e.target.value)}>
                         <option value="">Sucursal</option>
                         {sucursales.map((sucursal, index) => (
