@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
@@ -16,17 +17,19 @@ import './ProductosForm.css';
 
 const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
 
-    // Consumir context de categorias
-    const { categorias, loadCategorias, createCategoria } = useCategorias();
+    // Consumir context de categorias y marcas
+    const { categorias, loadCategorias } = useCategorias();
+    const { marcas, loadMarcas } = useMarcas();
+    useEffect(() => {
+      loadCategorias();
+      loadMarcas();
+    }, []);
 
     // Consumir context de subcategorias
-    const { subcategorias, loadSubCategoriasForCategoria, createSubcategoria } = useSubcategorias();
-
-    // Consumir context de marcas
-    const { marcas, loadMarcas, createMarca } = useMarcas();
-
+    const { loadSubCategoriasForCategoria } = useSubcategorias();
+    
     // Registro de producto
-    const { register, handleSubmit, setValue, getValues, formState: {errors} } = useForm({
+    const { register, handleSubmit, setValue, getValues, watch, formState: {errors} } = useForm({
       defaultValues: initialData?.data || {
         descripcion: '',
         id_marca: '',
@@ -38,6 +41,15 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
         estado_producto: ''
       }
     });
+
+    // Cargar subcategorias al seleccionar una categoría
+    const idCategoria = watch('id_categoria');
+    useEffect(() => {
+      if (idCategoria) {
+        loadSubCategoriasForCategoria(idCategoria);
+        setValue('id_subcategoria', '');
+      }
+    }, []);
 
     // Generar barcode de productos
     useEffect(() => {
@@ -165,7 +177,11 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                       name='id_categoria'
                       className={`w-full text-sm bg-gray-50 ${errors.id_categoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
-                        <option value="2">Producto</option>
+                        {categorias.length > 0 && categorias.map((categoria) => (
+                          <option key={categoria.id_categoria} value={categoria.id_categoria}>
+                            {categoria.nom_categoria.toUpperCase()}
+                          </option>
+                        ))}
                       </select>
                       <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalCategoria} />
                     </div>
@@ -182,7 +198,12 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                       name='id_subcategoria'
                       className={`w-full text-sm bg-gray-50 ${errors.id_subcategoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
-                        <option value="1">Pantalón</option>
+                        <option value="1">PANTALÓN</option>
+                        {/* {subcategorias.length > 0 && subcategorias.map((subcategorias) => (
+                          <option key={subcategorias.id_subcategoria} value={subcategorias.id_subcategoria}>
+                            {subcategorias.nom_subcategoria.toUpperCase()}
+                          </option>
+                        ))} */}
                       </select>
                       <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalSubCategoria} />
                     </div>
@@ -203,7 +224,11 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                         name='id_marca'
                         className={`w-full text-sm bg-gray-50 ${errors.id_marca ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                           <option value="">Seleccione...</option>
-                          <option value="1">Tormenta</option>
+                          {marcas.length > 0 && marcas.map((marca) => (
+                            <option key={marca.id_marca} value={marca.id_marca}>
+                              {marca.nom_marca.toUpperCase()}
+                            </option>
+                          ))}
                         </select>
                         <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalMarca} />
                       </div>

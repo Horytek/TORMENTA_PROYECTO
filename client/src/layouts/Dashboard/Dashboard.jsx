@@ -19,6 +19,12 @@ import Guia_Remision from '@/pages/Almacen/Guia_Remision/Guia_Remision';
 import RegistroGuia from '@/pages/Almacen/Guia_Remision/Registro_Guia/Registro_Guia';
 import Historico from '@/pages/Almacen/Kardex/Historico/Historico';
 import ReporteVentas from '@/pages/ReporteVentas/ReporteVentas';
+
+// Contexts
+import { CategoriaContextProvider } from "@/context/Categoria/CategoriaProvider";
+import { SubcategoriaContextProvider } from "@/context/Subcategoria/SubcategoriaProvider";
+import { MarcaContextProvider } from "@/context/Marca/MarcaProvider";
+
 function Dashboard() {
   return (
     <div className="flex min-h-screen">
@@ -30,40 +36,46 @@ function Dashboard() {
         {/* Contenedor para los componentes de las páginas que cambiarán */}
         <div className="p-4 contenido-cambiante">
           {/* Configuración de rutas para diferentes páginas dentro del dashboard */}
-          <Routes>
-            {/* Ruta para la página de inicio */}
-            <Route path="/inicio" element={<Inicio />} />
-            {/* Ruta para la página de ventas */}
-            <Route path="/ventas" element={<Ventas />} />
-            {/* Ruta para la página de configuración */}
-            <Route path="/ventas/registro_venta" element={<Registro_venta />} />
-            {/* Ruta para la página de empleados */}
-            <Route path="/empleados" element={<Empleados />} />
-            {/* Ruta para la página de productos */}
-            <Route path="/productos" element={<Productos />} />
-            {/* Ruta para la página de marcas */}	
-            <Route path="/productos/marcas" element={<Marcas />} />
-            {/* Ruta para la página de almacén */}
-            <Route path="/almacen" element={<Almacen />} />
-            {/* Ruta para la página de Historico */}
-            <Route path="/almacen/kardex/historico/:id" element={<Historico />} />
-            {/* Ruta para la página de nota de ingreso */}
-            <Route path="/almacen/nota_ingreso" element={<Nota_Ingreso />} />
-            {/* Ruta para la página de nueva nota de ingreso */}
-            <Route path="/almacen/nota_ingreso/registro_ingreso" element={<Nueva_Nota_Ingreso />} />
-            {/* Ruta para la página de nota de salida */}
-            <Route path="/almacen/nota_salida" element={<Nota_Salida />} />
-            {/* Ruta para la página de nueva nota de salida */}
-            <Route path="/almacen/nota_salida/nueva_nota_salida" element={<Nueva_Nota_Salida />} />
-            {/* Ruta para la página de guia de remision */}
-            <Route path="/almacen/guia_remision" element={<Guia_Remision />} />
-            {/* Ruta para la página de guia de remision */}
-            <Route path="/almacen/guia_remision/registro_guia" element={<RegistroGuia />} />
-            {/* Ruta para la página de reporte de ventas */}
-            <Route path="/reportes" element={<ReporteVentas />} />
-            {/* Ruta para la página de configuración */}
-            <Route path="/configuracion" element={<Configuracion />} />
-          </Routes>
+          <SubcategoriaContextProvider>
+              <CategoriaContextProvider>
+                <MarcaContextProvider>
+                  <Routes>
+                    {/* Ruta para la página de inicio */}
+                    <Route path="/inicio" element={<Inicio />} />
+                    {/* Ruta para la página de ventas */}
+                    <Route path="/ventas" element={<Ventas />} />
+                    {/* Ruta para la página de configuración */}
+                    <Route path="/ventas/registro_venta" element={<Registro_venta />} />
+                    {/* Ruta para la página de empleados */}
+                    <Route path="/empleados" element={<Empleados />} />
+                    {/* Ruta para la página de productos */}
+                    <Route path="/productos" element={<Productos />} />
+                    {/* Ruta para la página de marcas */}	
+                    <Route path="/productos/marcas" element={<Marcas />} />
+                    {/* Ruta para la página de almacén */}
+                    <Route path="/almacen" element={<Almacen />} />
+                    {/* Ruta para la página de Historico */}
+                    <Route path="/almacen/kardex/historico/:id" element={<Historico />} />
+                    {/* Ruta para la página de nota de ingreso */}
+                    <Route path="/almacen/nota_ingreso" element={<Nota_Ingreso />} />
+                    {/* Ruta para la página de nueva nota de ingreso */}
+                    <Route path="/almacen/nota_ingreso/registro_ingreso" element={<Nueva_Nota_Ingreso />} />
+                    {/* Ruta para la página de nota de salida */}
+                    <Route path="/almacen/nota_salida" element={<Nota_Salida />} />
+                    {/* Ruta para la página de nueva nota de salida */}
+                    <Route path="/almacen/nota_salida/nueva_nota_salida" element={<Nueva_Nota_Salida />} />
+                    {/* Ruta para la página de guia de remision */}
+                    <Route path="/almacen/guia_remision" element={<Guia_Remision />} />
+                    {/* Ruta para la página de guia de remision */}
+                    <Route path="/almacen/guia_remision/registro_guia" element={<RegistroGuia />} />
+                    {/* Ruta para la página de reporte de ventas */}
+                    <Route path="/reportes" element={<ReporteVentas />} />
+                    {/* Ruta para la página de configuración */}
+                    <Route path="/configuracion" element={<Configuracion />} />
+                  </Routes>
+                </MarcaContextProvider>
+              </CategoriaContextProvider>
+            </SubcategoriaContextProvider>
         </div>
       </div>
     </div>

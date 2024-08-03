@@ -22,7 +22,7 @@ const getSubcategoriesForCategory = async (req, res) => {
         const [result] = await connection.query(`
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
-            WHERE id_categoria = ? AND estado_subcat = 1
+            WHERE id_categoria = ?
         `, [id]);
 
         if (result.length === 0) {
