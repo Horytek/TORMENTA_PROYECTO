@@ -64,9 +64,11 @@ const TransporteForm = ({ modalTitle, onClose }) => {
                   <label htmlFor="ruc">RUC:</label>
                   <input type="text" id="ruc"  disabled={!transportePublico} />
                 </div>
-                <div className='form-group'>
-                  
-                  <label htmlFor="m1l"><input type="checkbox" id="m1l" disabled={!transportePublico} />Traslado en vehículos de categoría M1 o L</label>
+                <div className='form-group mt-7'>
+                  <label htmlFor="m1l">
+                    <input type="checkbox" id="m1l" disabled={!transportePublico} />
+                    <span>Traslado en vehículos de categoría M1 o L</span>
+                  </label>
                 </div>
                 <div className='form-group'>
                   <label htmlFor="empresa">Empresa:</label>
