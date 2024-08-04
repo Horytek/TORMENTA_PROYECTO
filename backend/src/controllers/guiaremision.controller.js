@@ -32,6 +32,7 @@ const getGuias = async (req, res) => {
                 END AS cliente,
                 COALESCE(d.dni, d.ruc) AS documento,
                 CONCAT(v.nombres, ' ', v.apellidos) AS vendedor,
+                v.dni as dni,
                 SUBSTRING(c.num_comprobante, 2, 3) AS serieNum, 
                 SUBSTRING(c.num_comprobante, 6, 8) AS num,
                 gr.total as total,
@@ -104,7 +105,21 @@ const getSucursal = async (req, res) => {
     }
   };
 
-export const methods = {
+
+
+const getUbigeoGuia = async (req, res) => {
+    try {
+      const connection = await getConnection();
+      const [result] = await connection.query(`SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, departamento AS departamento, provincia AS provincia, distrito AS distrito FROM ubigeo`);
+      res.json({ code: 1, data: result, message: "Ubigeo listados" });
+    } catch (error) {
+      res.status(500);
+      res.send(error.message);
+    }
+  };
+
+  export const methods = {
     getGuias,
     getSucursal,
+    getUbigeoGuia,
 };

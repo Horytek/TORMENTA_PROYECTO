@@ -2,15 +2,21 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FaSearch, FaTshirt } from 'react-icons/fa';
 import { IoCloseSharp, IoSearchOutline, IoHome } from 'react-icons/io5';
-import { GiUnderwearShorts, GiArmoredPants, GiAmpleDress, GiLabCoat } from 'react-icons/gi';
+import { GiUnderwearShorts, GiArmoredPants, GiAmpleDress, GiShorts,GiPoloShirt, GiMonclerJacket, GiPassport,GiSkirt,GiShirt,GiTankTop  } from 'react-icons/gi';
 
 const categoryButtons = [
   { category: '', icon: IoHome },
-  { category: 'pantalon', icon: GiArmoredPants },
-  { category: 'vestido', icon: GiAmpleDress },
-  { category: 'short', icon: GiUnderwearShorts },
-  { category: 'bolso', icon: GiLabCoat },
-  { category: 'bufanda', icon: FaTshirt }
+  { category: 'Pantalon', icon: GiArmoredPants },
+  { category: 'Vestidos Jeans', icon: GiAmpleDress },
+  { category: 'Shorts', icon: GiUnderwearShorts },
+  { category: 'Torero', icon: GiShorts },
+  { category: 'Polos', icon: GiPoloShirt },
+  { category: 'Blusas Jeans', icon: FaTshirt },
+  { category: 'Casacas Jeans', icon: GiMonclerJacket},
+  { category: 'Conjunto Deportivos', icon: GiPassport  },
+  { category: 'Minifaldas', icon: GiSkirt },
+  { category: 'Overoles', icon: GiTankTop },
+  { category: 'Poleras Franeladas', icon: GiShirt }
 ];
 
 const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm, selectedCategory, setSelectedCategory, handleProductSelect, filteredProductos, searchTerm2 }) => {
@@ -50,7 +56,7 @@ const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm,
 
   return (
     <div className="modal-container" style={{ zIndex: '1000' }}>
-      <div className="modal-prod p-6 rounded-xl relative" style={{ width: '850px' }}>
+      <div className="modal-prod p-6 rounded-xl relative" style={{ width: '950px' }}>
         <button className="close-modal-prod absolute top-0 right-0 text-black-500 p-2" onClick={() => setIsModalOpen(false)}>
           <IoCloseSharp />
         </button>

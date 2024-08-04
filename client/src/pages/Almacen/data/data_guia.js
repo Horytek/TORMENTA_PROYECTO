@@ -30,6 +30,7 @@ const useGuiasData = (filters) => {
           cliente: guia.cliente,
           documento: guia.documento,
           vendedor: guia.vendedor,
+          dni: guia.dni,
           serieNum: guia.serieNum,
           num: guia.num,
           total: `S/ ${parseFloat(guia.total).toFixed(2)}`,
