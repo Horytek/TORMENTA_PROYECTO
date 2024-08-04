@@ -142,7 +142,6 @@ const ReporteVentas = () => {
       >
         <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 relative">
           <Tabs variant="underlined" aria-label="Tabs variants">
-            <Tab key="all" title="@Todos" />
             <Tab key="arica1" title="Tienda Arica-1" />
             <Tab key="arica2" title="Tienda Arica-2" />
             <Tab key="arica3" title="Tienda Arica-3" />
