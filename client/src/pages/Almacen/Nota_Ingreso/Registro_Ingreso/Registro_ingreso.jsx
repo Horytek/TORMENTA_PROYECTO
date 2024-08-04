@@ -13,6 +13,7 @@ import useAlmacenData from '../data/data_almacen_ingreso';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
 import useProductosData from './data/data_buscar_producto';
+import insertNotaAndDetalle from '../data/add_nota'; // Importa la función de inserción
 
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
@@ -95,6 +96,44 @@ function Registro_Ingresos() {
     closeModalBuscarProducto();
   };
 
+  const handleGuardar = async () => {
+    const almacenO = document.getElementById('almacen_origen').value;
+    const almacenD = document.getElementById('almacen_destino').value;
+    const destinatario = document.getElementById('destinatario').value;
+    const glosa = document.getElementById('glosa').value;
+    const fecha = document.getElementById('fechaDocu').value;
+    const nota = document.getElementById('proveedor').value;
+    const numComprobante = document.getElementById('numero').value;
+    const observacion = document.getElementById('observacion').value;
+
+    const productos = productosSeleccionados.map(producto => ({
+      id: producto.codigo,
+      cantidad: producto.cantidad
+    }));
+
+    const data = {
+      almacenO,
+      almacenD,
+      destinatario,
+      glosa,
+      fecha,
+      nota,
+      producto: productos.map(p => p.id),
+      numComprobante,
+      cantidad: productos.map(p => p.cantidad),
+      observacion
+    };
+
+    const result = await insertNotaAndDetalle(data);
+
+    if (result.success) {
+      alert('Nota y detalle insertados correctamente');
+      handleCancel();
+    } else {
+      alert('Error al insertar nota y detalle: ' + result.message);
+    }
+  };
+
   const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
   const currentDate = new Date().toISOString().split('T')[0];
 
@@ -173,17 +212,16 @@ function Registro_Ingresos() {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
-                  Número:
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="proveedor">
+                  Proveedor:
                 </label>
                 <input 
                   className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
-                  id="numero" 
+                  id="proveedor" 
                   type="text" 
-                  value={currentDocumento} 
-                  readOnly
                 />
               </div>
+              
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
                   Fecha Docu:
@@ -216,12 +254,24 @@ function Registro_Ingresos() {
                   <MdCancelPresentation className="inline-block mr-2"  /> Cancelar
                 </button>
               </Link>
-              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={handleGuardar}>
                 <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
             </div>
           </div>
           <div className="ml-4 flex flex-col w-1/2">
+          <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
+                  Número:
+                </label>
+                <input 
+                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
+                  id="numero" 
+                  type="text" 
+                  value={currentDocumento} 
+                  readOnly
+                />
+              </div>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
                 Glosa:

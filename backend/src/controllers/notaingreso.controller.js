@@ -13,7 +13,7 @@ const getIngresos = async (req, res) => {
           SELECT 
               n.id_nota AS id,
               DATE_FORMAT(n.fecha, '%Y-%m-%d') AS fecha,
-              n.nom_nota AS documento,
+              c.num_comprobante AS documento,
               ao.nom_almacen AS almacen_O,
               ad.nom_almacen AS almacen_D,
               COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
@@ -23,6 +23,7 @@ const getIngresos = async (req, res) => {
               nota n
           LEFT JOIN 
               destinatario d ON n.id_destinatario = d.id_destinatario
+          LEFT JOIN comprobante c ON n.id_comprobante = c.id_comprobante
           LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
           LEFT JOIN almacen ad ON n.id_almacenD= ad.id_almacen
           WHERE 
@@ -118,8 +119,9 @@ const getProductos = async (req, res) => {
     try {
         const connection = await getConnection();
         const [result] = await connection.query(`
-            SELECT CONCAT('400-', LPAD(SUBSTRING(MAX(nom_nota), 5) + 1, 8, '0')) AS nuevo_numero_de_nota
-            FROM nota;
+            SELECT CONCAT('I400-', LPAD(SUBSTRING(MAX(num_comprobante), 6) + 1, 8, '0')) AS nuevo_numero_de_nota
+            FROM comprobante
+            WHERE id_tipocomprobante = 6;
         `);
         res.json({ code: 1, data: result, message: "Nuevo numero de nota" });
     } catch (error) {
@@ -142,77 +144,89 @@ const getDestinatario = async (req, res) => {
         res.send(error.message);
     }
 };
+
 const insertNotaAndDetalle = async (req, res) => {
-    const { almacenO, almacenD, destinatario, glosa, fecha, producto, nota, cantidad } = req.body;
-  
-    try {
-      const connection = await getConnection();
-  
-      // Iniciar la transacción
-      await connection.beginTransaction();
-  
-      // Insertar la nota
-      const [notaResult] = await connection.query(
-        `
-        INSERT INTO nota (id_almacenO, id_almacenD, id_tiponota, id_destinatario, glosa, fecha, nom_nota, estado_nota) 
-        VALUES (?, ?, 1, ?, ?, ?, ?, 0);
-        `,
-        [almacenO, almacenD, destinatario, glosa, fecha, nota]
-      );
-  
-      const id_nota = notaResult.insertId;
-  
-      // Insertar el detalle de la nota
+  const { almacenO, almacenD, destinatario, glosa, fecha, nota, producto, numComprobante, cantidad, observacion } = req.body;
+
+  try {
+    const connection = await getConnection();
+
+    // Iniciar la transacción
+    await connection.beginTransaction();
+
+    // Insertar el nuevo comprobante
+    const [comprobanteResult] = await connection.query(
+      `
+      INSERT INTO comprobante (id_tipocomprobante, num_comprobante) VALUES (6, ?);
+      `,
+      [numComprobante]
+    );
+
+    const id_comprobante = comprobanteResult.insertId;
+
+    // Insertar la nota
+    const [notaResult] = await connection.query(
+      `
+      INSERT INTO nota (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion) 
+      VALUES (?, ?, 1, ?, ?, ?, ?, 0, ?);
+      `,
+      [almacenO, almacenD, destinatario, id_comprobante, glosa, fecha, nota, observacion]
+    );
+
+    const id_nota = notaResult.insertId;
+
+    // Insertar el detalle de la nota
+    await connection.query(
+      `
+      INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total) 
+      VALUES (?, ?, ?, 0, 0);
+      `,
+      [producto, id_nota, cantidad]
+    );
+
+    // Verificar si el producto existe en el almacén
+    const [productoExistente] = await connection.query(
+      `
+      SELECT 1 FROM producto WHERE id_producto = ?;
+      `,
+      [producto]
+    );
+
+    if (productoExistente.length > 0) {
+      // Actualizar el inventario si el producto existe en el almacén
       await connection.query(
         `
-        INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total) 
-        VALUES (?, ?, ?, 0, 0);
+        UPDATE inventario 
+        SET stock = stock + ? 
+        WHERE id_producto = ? 
+        AND id_almacen = ?;
         `,
-        [producto, id_nota, cantidad]
+        [cantidad, producto, almacenD]
       );
-  
-      // Verificar si el producto existe en el almacén
-      const [productoExistente] = await connection.query(
+    } else {
+      // Insertar nuevo inventario si el producto no existe en el almacén
+      await connection.query(
         `
-        SELECT 1 FROM producto WHERE id_producto = ?;
+        INSERT INTO inventario (id_producto, id_almacen, stock) 
+        VALUES (?, ?, ?);
         `,
-        [producto]
+        [producto, almacenD, cantidad]
       );
-  
-      if (productoExistente.length > 0) {
-        // Actualizar el inventario si el producto existe en el almacén
-        await connection.query(
-          `
-          UPDATE inventario 
-          SET stock = stock + ? 
-          WHERE id_producto = ? 
-          AND id_almacen = ?;
-          `,
-          [cantidad, producto, almacenD]
-        );
-      } else {
-        // Insertar nuevo inventario si el producto no existe en el almacén
-        await connection.query(
-          `
-          INSERT INTO inventario (id_producto, id_almacen, stock) 
-          VALUES (?, ?, ?);
-          `,
-          [producto, almacenD, cantidad]
-        );
-      }
-  
-      // Confirmar la transacción
-      await connection.commit();
-  
-      res.json({ code: 1, message: 'Nota y detalle insertados correctamente' });
-    } catch (error) {
-      // Revertir la transacción en caso de error
-      await connection.rollback();
-      res.status(500).send(error.message);
-    } finally {
-      connection.release();
     }
-  };
+
+    // Confirmar la transacción
+    await connection.commit();
+
+    res.json({ code: 1, message: 'Nota y detalle insertados correctamente' });
+  } catch (error) {
+    // Revertir la transacción en caso de error
+    await connection.rollback();
+    res.status(500).send(error.message);
+  } finally {
+    connection.release();
+  }
+};
+
   
 export const methods = {
     getIngresos,
