@@ -32,6 +32,7 @@ const getGuias = async (req, res) => {
                 END AS cliente,
                 COALESCE(d.dni, d.ruc) AS documento,
                 CONCAT(v.nombres, ' ', v.apellidos) AS vendedor,
+                v.dni as dni,
                 SUBSTRING(c.num_comprobante, 2, 3) AS serieNum, 
                 SUBSTRING(c.num_comprobante, 6, 8) AS num,
                 gr.total as total,

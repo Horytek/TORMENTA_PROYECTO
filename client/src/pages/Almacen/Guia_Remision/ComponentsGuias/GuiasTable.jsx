@@ -33,7 +33,10 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
             <div className="whitespace-normal">{guia.cliente}</div>
             <div className="text-gray-500 whitespace-normal">{guia.documento}</div>
           </td>
-          <td className="text-center">{guia.vendedor}</td>
+          <td className="font-bold text-center">
+            <div className="whitespace-normal">{guia.vendedor}</div>
+            <div className="text-gray-500 whitespace-normal">{guia.dni}</div>
+          </td>
           <td className="font-bold text-center">
             <div>{guia.serieNum}</div>
             <div className="text-gray-500">{guia.num}</div>
@@ -97,7 +100,7 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NUM GUIA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
+            <th className="w-1/4 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOC VENTA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
