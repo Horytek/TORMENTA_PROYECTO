@@ -21,8 +21,14 @@ export const MarcaContextProvider = ({ children }) => {
     const createMarca = async (marca) => {
       try {
         const success = await addMarca(marca);
-        if (success) {
-          setMarcas([...marcas, marca]);
+        if (success[0]) {
+          const { nom_marca, estado_marca } = marca
+          const newMarca = {
+            id_marca: success[1],
+            nom_marca,
+            estado_marca
+          };
+          setMarcas([...marcas, newMarca]);
         }
         return success;
       } catch (error) {

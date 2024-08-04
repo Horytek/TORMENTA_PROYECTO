@@ -20,10 +20,10 @@ const addCategoria = async (categoria) => {
       const response = await addCategoriaRequest(categoria);
       if (response.data.code === 1) {
         toast.success("Categoría añadido con éxito");
-        return true;
+        return [true, response.data.id];
       } else {
         toast.error("Ocurrió un error al guardar la categoría");
-        return false;
+        return [false];
       }
     } catch (error) {
       toast.error("Error en el servidor interno");

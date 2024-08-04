@@ -20,10 +20,10 @@ const addMarca = async (marca) => {
       const response = await addMarcasRequest(marca);
       if (response.data.code === 1) {
         toast.success("Marca añadido con éxito");
-        return true;
+        return [true, response.data.id];
       } else {
         toast.error("Ocurrió un error al guardar la marca");
-        return false;
+        return [false];
       }
     } catch (error) {
       toast.error("Error en el servidor interno");

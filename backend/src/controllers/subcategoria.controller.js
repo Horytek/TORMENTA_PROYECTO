@@ -69,8 +69,9 @@ const addSubCategoria = async (req, res) => {
         const subcategoria = { id_categoria, nom_subcat: nom_subcat.trim(), estado_subcat };
         const connection = await getConnection();
         await connection.query("INSERT INTO sub_categoria SET ? ", subcategoria);
+        const [idAdd] = await connection.query("SELECT id_subcategoria FROM sub_categoria WHERE nom_subcat = ?", nom_subcat);
 
-        res.status(201).json({code:1, message: "Subcategoría añadida con éxito" });
+        res.status(201).json({code:1, message: "Subcategoría añadida con éxito", id: idAdd[0].id_subcategoria });
     } catch (error) {
         if (!res.headersSent) {
             res.status(500).send(error.message);

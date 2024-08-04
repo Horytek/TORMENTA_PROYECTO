@@ -21,8 +21,14 @@ export const CategoriaContextProvider = ({ children }) => {
     const createCategoria = async (categoria) => {
       try {
         const success = await addCategoria(categoria);
-        if (success) {
-          setCategoria([...categorias, categoria]);
+        if (success[0]) {
+          const { nom_categoria, estado_categoria } = categoria
+          const newCategoria = {
+            id_categoria: success[1],
+            nom_categoria,
+            estado_categoria
+          };
+          setCategoria([...categorias, newCategoria]);
         }
         return success;
       } catch (error) {

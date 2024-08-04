@@ -21,8 +21,15 @@ export const SubcategoriaContextProvider = ({ children }) => {
     const createSubcategoria = async (subcategoria) => {
       try {
         const success = await addSubcategoria(subcategoria);
-        if (success) {
-          setSubcategoria([...subcategorias, subcategoria]);
+        if (success[0]) {
+          const { id_categoria, nom_subcat, estado_subcat } = subcategoria
+          const newSubcategoria = {
+            id_subcategoria: success[1],
+            id_categoria,
+            nom_subcat,
+            estado_subcat
+          };
+          setSubcategoria([...subcategorias, newSubcategoria]);
         }
         return success;
       } catch (error) {
