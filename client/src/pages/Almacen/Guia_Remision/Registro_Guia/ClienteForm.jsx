@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
 import './ModalGuias.css';
@@ -18,19 +18,23 @@ function ClienteForm({ modalTitle, onClose }) {
             </button>
           </div>
           <div className="modal-bodywa">
-            <div className="tabs">
-              <button 
-                className={`p-4 ${tab === 'registro' ? 'active' : ''}`}
-                onClick={() => setTab('registro')}
-              >
-                Registro
-              </button>
-              <button 
-                className={`p-4 ${tab === 'otros' ? 'active' : ''}`}
-                onClick={() => setTab('otros')}
-              >
-                Otros datos
-              </button>
+            <div className="tabs flex justify-center mt-2">
+              <div className='w-full'>
+                <button 
+                  className={`p-4 ${tab === 'registro' ? 'active' : ''} w-full`}
+                  onClick={() => setTab('registro')}
+                >
+                  Registro
+                </button>
+              </div>
+              <div className='w-full'>
+                <button 
+                  className={`p-4 ${tab === 'otros' ? 'active' : ''} w-full`}
+                  onClick={() => setTab('otros')}
+                >
+                  Otros datos
+                </button>
+              </div>
             </div>
             <form>
               {tab === 'registro' && (

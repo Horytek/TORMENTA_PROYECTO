@@ -143,7 +143,6 @@
   }
   
   .datos-transporte .form-group input[type="checkbox"] {
-    margin-top: 30px;
     margin-right: 10px;
   }
 
@@ -205,12 +204,8 @@
     background: #ffffff; /* Plomo más oscuro, igual que el botón activo */
     top: 0;
     margin-bottom: 0;   
-    padding: 15px;
-    border-top: none; /* Borde superior */
-    border-left: 2px solid #e0e1e2; /* Borde izquierdo */
-    border-right: none; /* Borde derecho */
-    border-bottom: 2px solid #e0e1e2; /* Sin borde inferior */
-    
+    padding: 10px 0px 10px 0px;
+    border: none; /* Borde superior */
   }
   
   /* Estilos de los campos del formulario */
@@ -290,7 +285,6 @@
   textarea {
     height: 100px; /* Altura para el área de texto */
   }
-  
   
 /* Estilos del overlay del modal */
 /* Estilos del overlay del modal */
@@ -402,25 +396,21 @@
   
   /* Pestaña activa */
   .tabs button.active {
-    background: #ffffff; /* Plomo más oscuro para la pestaña activa */
+    background: #eeeaea; /* Plomo más oscuro para la pestaña activa */
     color: black; /* Letra negra para la pestaña activa */
-    border-top: 2px solid #e0e1e2; /* Borde superior */
-    border-left: 2px solid #e0e1e2; /* Borde izquierdo */
-    border-right: 2px solid #e0e1e2; /* Borde derecho */
-    border-bottom: none; /* Sin borde inferior */
-    border-radius: 12px 12px 0 0; /* Esquinas redondeadas en la parte superior */
+    font-weight: bold;
   }
   
   /* Pestañas inactivas */
   .tabs button:not(.active) {
-    color: #007BFF; /* Color del texto de las pestañas inactivas */
+    color: black; /* Color del texto de las pestañas inactivas */
     background: #ffffff; /* Fondo plomo claro */
   }
   
   /* Hover para pestañas no seleccionadas */
   .tabs button:not(.active):hover {
-    background: #B0B0B0; /* Plomo más oscuro al pasar el ratón */
-    color: #ffffff; /* Letra blanca al pasar el ratón */
+    color: black;
+    font-weight: bold;
   }
 
   
