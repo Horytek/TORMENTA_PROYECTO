@@ -50,7 +50,7 @@ const getGuias = async (req, res) => {
                 AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') >= ? 
                 AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') <= ?
                 AND s.nombre_sucursal LIKE ?
-            ORDER BY gr.f_generacion DESC
+            ORDER BY c.num_comprobante ASC
             LIMIT ? OFFSET ?;
             `,
             [`${num_guia}%`, `${documento}%`, `${documento}%`, fecha_i, fecha_e, `${nombre_sucursal}%`, parseInt(limit), parseInt(offset)]
