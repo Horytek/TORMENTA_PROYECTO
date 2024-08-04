@@ -110,7 +110,7 @@ const getSucursal = async (req, res) => {
 const getUbigeoGuia = async (req, res) => {
     try {
       const connection = await getConnection();
-      const [result] = await connection.query(`SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, departamento, provincia, distrito FROM ubigeo`);
+      const [result] = await connection.query(`SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, departamento AS departamento, provincia AS provincia, distrito AS distrito FROM ubigeo`);
       res.json({ code: 1, data: result, message: "Ubigeo listados" });
     } catch (error) {
       res.status(500);
