@@ -37,10 +37,10 @@ const LineChartUsageExampleAxisLabel = () => {
   return (
     <div className="p-6 border border-gray-300 rounded-lg shadow-lg bg-white">
       <h3 className="ml-1 mr-1 font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-        Análisis general de las ganancias en las sucursales
+        Análisis general de las ventas en las sucursales
       </h3>
       <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
-        Representación de las ganancias generadas por las sucursales
+        Representación de las ganancias generadas por las sucursales (12 meses)
       </p>
       {loading ? (
         <p className="text-center">Cargando...</p>
@@ -55,8 +55,8 @@ const LineChartUsageExampleAxisLabel = () => {
           categories={categories}
           colors={['indigo', 'cyan', 'red', 'green', 'orange']}
           valueFormatter={valueFormatter}
-          xAxisLabel="Mes del año"
-          yAxisLabel="Ganancia (Soles)"
+          xAxisLabel="Meses del año"
+          yAxisLabel="Ventas (Soles)"
         />
       )}
     </div>

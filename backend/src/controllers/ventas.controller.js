@@ -623,12 +623,12 @@ const updateVenta = async (req, res) => {
   }
 };
 
-const getCantidadVentasPorCategoria = async (req, res) => {
+const getCantidadVentasPorSubcategoria = async (req, res) => {
   try {
     const connection = await getConnection();
     const [result] = await connection.query(`
       SELECT 
-        c.nom_categoria AS categoria,
+        sc.nom_subcat AS subcategoria,
         SUM(dv.cantidad) AS cantidad_vendida
       FROM 
         detalle_venta dv
@@ -636,19 +636,18 @@ const getCantidadVentasPorCategoria = async (req, res) => {
         producto p ON dv.id_producto = p.id_producto
       JOIN 
         sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
-      JOIN 
-        categoria c ON sc.id_categoria = c.id_categoria
       GROUP BY 
-        c.nom_categoria
+        sc.nom_subcat
       ORDER BY 
         cantidad_vendida DESC;
     `);
 
-    res.json({ code: 1, data: result, message: "Cantidad de ventas por categoría obtenida correctamente" });
+    res.json({ code: 1, data: result, message: "Cantidad de ventas por subcategoría obtenida correctamente" });
   } catch (error) {
     res.status(500).send(error.message);
   }
 };
+
 
 const getCantidadVentasPorProducto = async (req, res) => {
   try {
@@ -719,6 +718,6 @@ export const methods = {
   getTotalProductosVendidos,
   getProductoMasVendido,
   getCantidadVentasPorProducto,
-  getCantidadVentasPorCategoria,
+  getCantidadVentasPorSubcategoria,
   getAnalisisGananciasSucursales,
 };

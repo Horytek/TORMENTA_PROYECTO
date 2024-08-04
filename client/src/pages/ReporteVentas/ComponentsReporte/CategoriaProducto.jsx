@@ -1,26 +1,33 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { DonutChart, Legend } from "@tremor/react";
-import useCantidadVentasPorCategoria from '../data/data_venta_cat'; // Asegúrate de que la ruta sea correcta
+import useCantidadVentasPorSubcategoria from '../data/data_venta_subcat'; // Asegúrate de que la ruta sea correcta
 
 const valueFormatter = (number) =>
   `${Intl.NumberFormat("us").format(number).toString()}`;
 
 const DonutChartUsageExample = () => {
-  const { ventasPorCategoria, loading, error } = useCantidadVentasPorCategoria();
+  const { data, loading, error } = useCantidadVentasPorSubcategoria();
 
-  const sales = ventasPorCategoria.map(categoria => ({
-    name: categoria.categoria,
-    sales: categoria.cantidad_vendida,
-  }));
+  useEffect(() => {
+    console.log('Data from hook:', data);
+  }, [data]);
 
-  // Debugging: Verificar los datos recibidos
-  console.log('Ventas por Categoría:', sales);
+  const sales = data.map(subcat => {
+    return {
+      name: subcat.subcategoria,
+      sales: Number(subcat.cantidad_vendida) 
+    };
+  });
+
+  useEffect(() => {
+    console.log('Sales data for DonutChart:', sales);
+  }, [sales]);
 
   return (
     <div className="flex items-center justify-center">
       <div className="p-6 border border-gray-300 rounded-lg shadow-lg bg-white">
         <h3 className="text-center font-semibold text-lg mb-4">
-          Ventas por sub categoría de producto
+          Cantidad de ventas por SubCategoría de producto
         </h3>
         {loading ? (
           <p className="text-center">Cargando...</p>
@@ -34,7 +41,7 @@ const DonutChartUsageExample = () => {
               index="name"
               valueFormatter={valueFormatter}
               colors={["blue", "cyan", "indigo", "violet", "fuchsia"]}
-              className="w-80 mx-auto"
+              className="w-40 mx-auto"
             />
             <Legend
               categories={sales.map(item => item.name)}
