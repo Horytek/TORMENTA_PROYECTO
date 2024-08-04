@@ -34,7 +34,7 @@
     padding: 0 !important;
   }
   
-  .modal-body {
+  .modal-body, .ubigeo-body {
     padding-top: 15px;
     width: 100% !important;
     
@@ -315,10 +315,36 @@
     animation: fadeIn 0.3s ease-in-out;
   }
   
+
+  .close-modal-ubigeo {
+    position: relative;
+    background-color: #e05858ff;
+    font-size: 20px;
+    left: 28.5rem;
+   
+  }
+
   /* Estilos del contenido del modal */
   .content-modal3 {
     background: #fff;
     padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 700px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    max-height: auto !important;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .content-modal4 {
+    background: #fff;
+    
+    padding-left: 25px;
+    padding-top: 0px;
+    padding-bottom: 25px;
+    padding-right: 25px;
     border-radius: 12px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     max-width: 700px;

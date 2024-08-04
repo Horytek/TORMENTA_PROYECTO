@@ -8,18 +8,15 @@ const useSucursalData = () => {
     const fetchUbigeos = async () => {
       try {
         const response = await axios.get('http://localhost:4000/api/guia_remision/ubigeo');
-        
         if (response.data.code === 1) {
           const ubigeos = response.data.data.map(ubi => ({
             id: ubi.idubi,
             cod: ubi.codubi,
             departamento: ubi.departamento,
             provincia: ubi.provincia,
-            distrito: ubi.distrito,
-            nombre: ubi.nombre,
-            nombreCompleto: `${ubi.departamento} - ${ubi.provincia} - ${ubi.distrito} - ${ubi.nombre}`,
+            distrito: ubi.distrito
           }));
-          setSucursal(ubigeos);
+          setUbigeo(ubigeos);
         } else {
           console.error('Error en la solicitud: ', response.data.message);
         }
@@ -31,7 +28,7 @@ const useSucursalData = () => {
     fetchUbigeos();
   }, []);
 
-  return {ubigeos, setUbigeo};
+  return { ubigeos };
 };
 
 export default useSucursalData;
