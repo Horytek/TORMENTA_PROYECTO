@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
@@ -102,7 +103,6 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
 
       } catch (error) {
         toast.error("Error al realizar la gestión del producto");
-        console.error(error);
       }
     })
 
@@ -112,7 +112,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
 
     // Logica Modal Marca
     const handleModalMarca = () => {
-      setIsModalOpenMarca(!isModalOpenMarca);
+      setIsModalOpenMarca(!isModalOpenMarca);   
     };
 
     const handleModalCategoria = () => {
@@ -140,191 +140,185 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
     }
 
   return (
-    <form onSubmit={onSubmit}>
-      <Toaster />
-      <div className="modal-overlay">
-        <div className="modal">
-          <div className='content-modal'>
-            <div className="modal-header">
-              <h3 className="modal-title">{modalTitle}</h3>
-              <button className="modal-close" onClick={onClose}>
-                <IoMdClose className='text-3xl'/>
-              </button>
-            </div>
-            <div className='modal-body'>
-                
-                {/* Primera Fila */}
-    
-                <div className='w-full text-start mb-5'>
-                  <label htmlFor="descripcion" className='text-sm font-bold text-black'>Descripción:</label>
-                  <textarea 
-                  {...register('descripcion', 
-                    { required: true }
-                  )}
-                  name="descripcion" 
-                  id="descripcion"
-                  rows={4} 
-                  className={`block w-full text-sm border rounded-lg resize-none ${errors.descripcion ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} bg-gray-50 text-gray-900`}
-                  ></textarea>
-                </div>
-    
-                {/* Segunda Fila */}
-    
-                <div className='grid grid-cols-2 gap-6'>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label htmlFor="linea" className='text-sm font-bold text-black'>Categoría:</label>
-                    <div className='flex justify-center items-center gap-2'>
-                      <select 
-                      {...register('id_categoria', 
-                        { required: true }
-                      )}
-                      id='linea'
-                      name='id_categoria'
-                      className={`w-full text-sm bg-gray-50 ${errors.id_categoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                        <option value="">Seleccione...</option>
-                        {categorias.length > 0 && categorias.map((categoria) => (
-                          <option key={categoria.id_categoria} value={categoria.id_categoria}>
-                            {categoria.nom_categoria.toUpperCase()}
-                          </option>
-                        ))}
-                      </select>
-                      <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalCategoria} />
-                    </div>
-                    
+    <div>
+      <form onSubmit={onSubmit}>
+        <Toaster />
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className='content-modal'>
+              <div className="modal-header">
+                <h3 className="modal-title">{modalTitle}</h3>
+                <button className="modal-close" onClick={onClose}>
+                  <IoMdClose className='text-3xl'/>
+                </button>
+              </div>
+              <div className='modal-body'>
+                  
+                  {/* Primera Fila */}
+      
+                  <div className='w-full text-start mb-5'>
+                    <label htmlFor="descripcion" className='text-sm font-bold text-black'>Descripción:</label>
+                    <textarea 
+                    {...register('descripcion', 
+                      { required: true }
+                    )}
+                    name="descripcion" 
+                    rows={4} 
+                    className={`block w-full text-sm border rounded-lg resize-none ${errors.descripcion ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} bg-gray-50 text-gray-900`}
+                    ></textarea>
                   </div>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label htmlFor="Sub-Línea" className='text-sm font-bold text-black'>Sub-Categoría:</label>
-                    <div className='flex justify-center items-center gap-2'>
-                      <select 
-                      {...register('id_subcategoria', 
-                        { required: true }
-                      )}
-                      id='sublinea'
-                      name='id_subcategoria'
-                      className={`w-full text-sm bg-gray-50 ${errors.id_subcategoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                        <option value="">Seleccione...</option>
-                        {filteredSubcategorias.length > 0 && filteredSubcategorias.map((subcategoria) => (
-                          <option key={subcategoria.id_subcategoria} value={subcategoria.id_subcategoria}>
-                            {subcategoria.nom_subcat.toUpperCase()}
-                          </option>
-                        ))}
-                      </select>
-                      <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalSubCategoria} />
-                    </div>
-                  </div>
-                </div>
-    
-                {/* Tercera Fila */}
-    
-                <div className='grid grid-cols-2 gap-6'>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label htmlFor="Sub-Línea" className='text-sm font-bold text-black'>Marca:</label>
+      
+                  {/* Segunda Fila */}
+      
+                  <div className='grid grid-cols-2 gap-6'>
+                    <div className='w-full relative group mb-5 text-start'>
+                      <label htmlFor="linea" className='text-sm font-bold text-black'>Categoría:</label>
                       <div className='flex justify-center items-center gap-2'>
                         <select 
-                        {...register('id_marca', 
+                        {...register('id_categoria', 
                           { required: true }
                         )}
-                        id='marca' 
-                        name='id_marca'
-                        className={`w-full text-sm bg-gray-50 ${errors.id_marca ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
+                        name='id_categoria'
+                        className={`w-full text-sm bg-gray-50 ${errors.id_categoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                           <option value="">Seleccione...</option>
-                          {marcas.length > 0 && marcas.map((marca) => (
-                            <option key={marca.id_marca} value={marca.id_marca}>
-                              {marca.nom_marca.toUpperCase()}
+                          {categorias.length > 0 && categorias.map((categoria, index) => (
+                            <option key={index} value={categoria.id_categoria}>
+                              {categoria.nom_categoria.toUpperCase()}
                             </option>
                           ))}
                         </select>
-                        <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalMarca} />
+                        <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalCategoria} />
                       </div>
+                      
+                    </div>
+                    <div className='w-full relative group mb-5 text-start'>
+                      <label htmlFor="Sub-Línea" className='text-sm font-bold text-black'>Sub-Categoría:</label>
+                      <div className='flex justify-center items-center gap-2'>
+                        <select 
+                        {...register('id_subcategoria', 
+                          { required: true }
+                        )}
+                        name='id_subcategoria'
+                        className={`w-full text-sm bg-gray-50 ${errors.id_subcategoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
+                          <option value="">Seleccione...</option>
+                          {filteredSubcategorias.length > 0 && filteredSubcategorias.map((subcategoria, index) => (
+                            <option key={index} value={subcategoria.id_subcategoria}>
+                              {subcategoria.nom_subcat.toUpperCase()}
+                            </option>
+                          ))}
+                        </select>
+                        <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalSubCategoria} />
+                      </div>
+                    </div>
                   </div>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label htmlFor="precio" className='text-sm font-bold text-black'>Precio:</label>
-                    <input 
-                    {...register('precio', 
-                      { required: true }
-                    )}
-                    type="number"
-                    onChange={handlePrice}
-                    onBlur={changePrice}
-                    min={0}
-                    step={0.01}
-                    name='precio'
-                    placeholder='89.99'
-                    className={`w-full bg-gray-50 ${errors.precio ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
+      
+                  {/* Tercera Fila */}
+      
+                  <div className='grid grid-cols-2 gap-6'>
+                    <div className='w-full relative group mb-5 text-start'>
+                      <label htmlFor="Sub-Línea" className='text-sm font-bold text-black'>Marca:</label>
+                        <div className='flex justify-center items-center gap-2'>
+                          <select 
+                          {...register('id_marca', 
+                            { required: true }
+                          )}
+                          name='id_marca'
+                          className={`w-full text-sm bg-gray-50 ${errors.id_marca ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
+                            <option value="">Seleccione...</option>
+                            {marcas.length > 0 && marcas.map((marca, index) => (
+                              <option key={index} value={marca.id_marca}>
+                                {marca.nom_marca.toUpperCase()}
+                              </option>
+                            ))}
+                          </select>
+                          <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalMarca} />
+                        </div>
+                    </div>
+                    <div className='w-full relative group mb-5 text-start'>
+                      <label htmlFor="precio" className='text-sm font-bold text-black'>Precio:</label>
+                      <input 
+                      {...register('precio', 
+                        { required: true }
+                      )}
+                      type="number"
+                      onChange={handlePrice}
+                      onBlur={changePrice}
+                      min={0}
+                      step={0.01}
+                      name='precio'
+                      placeholder='89.99'
+                      className={`w-full bg-gray-50 ${errors.precio ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
+                    </div>
                   </div>
-                </div>
-    
-                {/* Cuarta Fila */}
-    
-                <div className='grid grid-cols-2 gap-6'>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label htmlFor="unidadMedida" className='text-sm font-bold text-black'>Und. Medida:</label>
-                    <select 
-                    {...register('undm', 
-                      { required: true }
-                    )}
-                    id='unidadMedida' 
-                    name='undm'
-                    className={`w-full text-sm bg-gray-50 ${errors.undm ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
+      
+                  {/* Cuarta Fila */}
+      
+                  <div className='grid grid-cols-2 gap-6'>
+                    <div className='w-full relative group mb-5 text-start'>
+                      <label htmlFor="unidadMedida" className='text-sm font-bold text-black'>Und. Medida:</label>
+                      <select 
+                      {...register('undm', 
+                        { required: true }
+                      )}
+                      name='undm'
+                      className={`w-full text-sm bg-gray-50 ${errors.undm ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
+                          <option value="">Seleccione...</option>
+                          <option value="KGM">KGM</option>
+                          <option value="NIU">NIU</option>
+                      </select>
+                    </div>
+                    <div className='w-full relative group mb-5 text-start'>
+                      <label htmlFor="estado" className='text-sm font-bold text-black'>Estado:</label>
+                      <select 
+                      {...register('estado_producto', 
+                        { required: true }
+                      )}
+                      name='estado_producto'
+                      className={`w-full text-sm bg-gray-50 ${errors.estado_producto ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
-                        <option value="KGM">KGM</option>
-                        <option value="NIU">NIU</option>
-                    </select>
+                        <option value={1} >Activo</option>
+                        <option value={0} >Inactivo</option>
+                      </select>
+                    </div>
                   </div>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label htmlFor="estado" className='text-sm font-bold text-black'>Estado:</label>
-                    <select 
-                    {...register('estado_producto', 
-                      { required: true }
+      
+                  {/* Final de Fila */}
+  
+                  <div>
+                    <input
+                    {...register('cod_barras', 
+                      { required: false }
                     )}
-                    id='estado'
-                    name='estado_producto'
-                    className={`w-full text-sm bg-gray-50 ${errors.estado_producto ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                      <option value="">Seleccione...</option>
-                      <option value={1} >Activo</option>
-                      <option value={0} >Inactivo</option>
-                    </select>
+                    type="text"
+                    name="cod_barras"
+                    disabled
+                    hidden />
                   </div>
-                </div>
-    
-                {/* Final de Fila */}
-
-                <div>
-                  <input
-                  {...register('cod_barras', 
-                    { required: false }
-                  )}
-                  type="text"
-                  name="cod_barras"
-                  disabled
-                  hidden />
-                </div>
-    
-                <div className='modal-buttons'>
-                  <ButtonClose onClick={onClose}/>
-                  <ButtonSave type="submit"/>
-                </div>
+      
+                  <div className='modal-buttons'>
+                    <ButtonClose onClick={onClose}/>
+                    <ButtonSave type="submit"/>
+                  </div>
+              </div>
             </div>
-          </div>
+          </div> 
         </div>
-  
-        {/* Modal de Nueva Marca */}
-        {isModalOpenMarca && (
-          <ModalMarca modalTitle={'Marca'} closeModel={handleModalMarca} />
-        )}
-  
-        {/* Modal de Nueva Linea */}
-        {isModalOpenCategoria && (
-          <ModalCategoria modalTitle={'Categoría'} closeModel={handleModalCategoria} />
-        )}
-  
-        {/* Modal de Nueva SubLinea */}
-        {isModalOpenSubCategoria && (
-          <ModalSubCategoria modalTitle={'Sub-Categoría'} closeModel={handleModalSubCategoria} />
-        )}
-  
-      </div>
-    </form>
+      </form>
+          {/* Modal de Nueva Marca */}
+          {isModalOpenMarca && (
+            <ModalMarca modalTitle={'Marca'} closeModel={handleModalMarca} />
+          )}
+    
+          {/* Modal de Nueva Linea */}
+          {isModalOpenCategoria && (
+            <ModalCategoria modalTitle={'Categoría'} closeModel={handleModalCategoria} />
+          )}
+    
+          {/* Modal de Nueva SubLinea */}
+          {isModalOpenSubCategoria && (
+            <ModalSubCategoria modalTitle={'Sub-Categoría'} closeModel={handleModalSubCategoria} />
+          )}
+    </div>
   );
 };
 

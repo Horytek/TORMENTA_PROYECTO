@@ -24,6 +24,7 @@ export const SubcategoriaContextProvider = ({ children }) => {
         if (success) {
           setSubcategoria([...subcategorias, subcategoria]);
         }
+        return success;
       } catch (error) {
         console.error(error);
       }

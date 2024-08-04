@@ -70,7 +70,7 @@ const addSubCategoria = async (req, res) => {
         const connection = await getConnection();
         await connection.query("INSERT INTO sub_categoria SET ? ", subcategoria);
 
-        res.status(201).json({ message: "Subcategoría añadida con éxito" });
+        res.status(201).json({code:1, message: "Subcategoría añadida con éxito" });
     } catch (error) {
         if (!res.headersSent) {
             res.status(500).send(error.message);

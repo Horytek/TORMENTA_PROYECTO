@@ -24,6 +24,7 @@ export const MarcaContextProvider = ({ children }) => {
         if (success) {
           setMarcas([...marcas, marca]);
         }
+        return success;
       } catch (error) {
         console.error(error);
       }

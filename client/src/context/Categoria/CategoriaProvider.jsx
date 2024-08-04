@@ -22,8 +22,9 @@ export const CategoriaContextProvider = ({ children }) => {
       try {
         const success = await addCategoria(categoria);
         if (success) {
-          setCategoria([...categoria, categoria]);
+          setCategoria([...categorias, categoria]);
         }
+        return success;
       } catch (error) {
         console.error(error);
       }

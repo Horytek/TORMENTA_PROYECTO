@@ -48,7 +48,7 @@ const addMarca = async (req, res) => {
         const connection = await getConnection();
         await connection.query("INSERT INTO marca SET ? ", marca);
 
-        res.status(201).json({ message: "Marca añadida con éxito" });
+        res.status(201).json({ code: 1, message: "Marca añadida con éxito" });
     } catch (error) {
         if (!res.headersSent) {
             res.status(500).send(error.message);
