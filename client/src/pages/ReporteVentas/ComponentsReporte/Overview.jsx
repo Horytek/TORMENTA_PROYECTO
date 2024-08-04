@@ -1,9 +1,9 @@
 import React from "react";
 import { BarChart, Card } from "@tremor/react";
-import useCantidadVentasPorProducto from '../data/data_prod_venta'; // Asegúrate de que la ruta sea correcta
+import useCantidadVentasPorProducto from '../data/data_prod_venta';
 
-const dataFormatter = (number) =>
-  Intl.NumberFormat("us").format(number).toString();
+const dataFormatter = (number) => ` ${Intl.NumberFormat("us").format(number).toString()}`;
+const currencyFormatter = (number) => `S/ ${Intl.NumberFormat("us").format(number).toString()}`;
 
 const BarChartHero = () => {
   const { ventasPorProducto, loading, error } = useCantidadVentasPorProducto();
@@ -11,6 +11,7 @@ const BarChartHero = () => {
   const chartdata = ventasPorProducto.map(producto => ({
     name: producto.descripcion,
     "Existencias vendidas": producto.cantidad_vendida,
+    "Dinero generado (S/)": producto.dinero_generado
   }));
 
   return (
@@ -19,7 +20,7 @@ const BarChartHero = () => {
         Cantidad de ventas por producto
       </h3>
       <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
-        Representación de la cantidad de ventas por producto
+        Representación de la cantidad de ventas por producto y dinero generado
       </p>
       <div className="overflow-x-scroll custom-scrollbar" style={{ width: '600px' }}>
         <div style={{ width: '1000px' }}>
@@ -31,9 +32,10 @@ const BarChartHero = () => {
             <BarChart
               data={chartdata}
               index="name"
-              categories={["Existencias vendidas"]}
-              colors={["blue"]}
-              valueFormatter={dataFormatter}
+              categories={["Existencias vendidas", "Dinero generado (S/)"]}
+              colors={["blue", "green"]}
+              valueFormatter={(value, index, category) => 
+                category === "Dinero generado (S/)" ? currencyFormatter(value) : dataFormatter(value)}
               yAxisWidth={48}
               className="mt-6 h-60"
               onValueChange={(v) => console.log(v)}

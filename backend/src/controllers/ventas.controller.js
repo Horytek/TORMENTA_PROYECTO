@@ -656,7 +656,8 @@ const getCantidadVentasPorProducto = async (req, res) => {
       SELECT 
         p.id_producto,
         p.descripcion,
-        SUM(dv.cantidad) AS cantidad_vendida
+        SUM(dv.cantidad) AS cantidad_vendida,
+        SUM(dv.total) AS dinero_generado
       FROM 
         detalle_venta dv
       JOIN 
@@ -672,6 +673,7 @@ const getCantidadVentasPorProducto = async (req, res) => {
     res.status(500).send(error.message);
   }
 };
+
 
 const getAnalisisGananciasSucursales = async (req, res) => {
   try {
