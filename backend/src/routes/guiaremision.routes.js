@@ -5,5 +5,6 @@ const router = Router();
 
 router.get("/", guiasController.getGuias);
 router.get("/sucursal",guiasController.getSucursal);
+router.get("/ubigeo", guiasController.getUbigeoGuia);
 
 export default router;
