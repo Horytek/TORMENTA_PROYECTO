@@ -1,19 +1,38 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { LineChart } from '@tremor/react';
-import useAnalisisGananciasSucursales from '../data/data_ganancias_sucr'; // Asegúrate de que la ruta sea correcta
+import useAnalisisGananciasSucursales from '../data/data_ganancias_sucr'; 
 
 const valueFormatter = (number) => {
-  return '$ ' + new Intl.NumberFormat('us').format(number).toString();
+  return 'S/. ' + new Intl.NumberFormat('us').format(number).toString();
 };
 
 const LineChartUsageExampleAxisLabel = () => {
   const { data, loading, error } = useAnalisisGananciasSucursales();
 
-  const chartdata = data.map((item, index) => ({
-    date: `Sucursal ${index + 1}`,
-    Ganancias: item.ganancias_totales,
-    Ventas: item.total_ventas
-  }));
+  useEffect(() => {
+    console.log('Raw data:', data); 
+  }, [data]);
+
+  const months = [
+    'Jan 24', 'Feb 24', 'Mar 24', 'Apr 24', 'May 24', 'Jun 24',
+    'Jul 24', 'Aug 24', 'Sep 24', 'Oct 24', 'Nov 24', 'Dec 24'
+  ];
+
+  const organizedData = months.map(month => {
+    const entry = { date: month };
+    data.forEach(item => {
+      if (item.mes === month) {
+        entry[item.sucursal] = parseFloat(item.ganancias); 
+      }
+    });
+    return entry;
+  });
+
+  useEffect(() => {
+    console.log('Organized data:', organizedData); 
+  }, [organizedData]);
+
+  const categories = [...new Set(data.map(item => item.sucursal))];
 
   return (
     <div className="p-6 border border-gray-300 rounded-lg shadow-lg bg-white">
@@ -30,14 +49,14 @@ const LineChartUsageExampleAxisLabel = () => {
       ) : (
         <LineChart
           className="mt-4 h-80"
-          data={chartdata}
+          data={organizedData}
           index="date"
           yAxisWidth={65}
-          categories={['Ganancias', 'Ventas']}
-          colors={['indigo', 'cyan']}
+          categories={categories}
+          colors={['indigo', 'cyan', 'red', 'green', 'orange']}
           valueFormatter={valueFormatter}
-          xAxisLabel="Sucursal"
-          yAxisLabel="USD"
+          xAxisLabel="Mes del año"
+          yAxisLabel="Ganancia (Soles)"
         />
       )}
     </div>

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { SlOptionsVertical } from "react-icons/sl";
 import { LuRefreshCcw } from "react-icons/lu";
-import { AiOutlineCalendar } from "react-icons/ai"; // Importa el icono de calendario
+import { AiOutlineCalendar } from "react-icons/ai";
 import { Input, Divider, Select, Tabs, Tab } from "@nextui-org/react";
 import TablaGanancias from "./ComponentsReporte/Overview";
 import "./ReporteVentas.css";
@@ -16,6 +16,7 @@ import "react-datepicker/dist/react-datepicker.css";
 const ReporteVentas = () => {
   const [ventas, setVentas] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const handleSearch = () => {
     console.log("Buscando ventas...");
@@ -24,7 +25,7 @@ const ReporteVentas = () => {
 
   const handleRefresh = () => {
     window.location.reload();
-  }
+  };
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
@@ -86,7 +87,12 @@ const ReporteVentas = () => {
               <div className="icon-tormenta">
                 <LuRefreshCcw
                   onClick={handleRefresh}
-                  style={{ fontSize: "20px", marginRight: "5px", cursor: "pointer", animation: "spin 2s linear infinite"}}
+                  style={{
+                    fontSize: "20px",
+                    marginRight: "5px",
+                    cursor: "pointer",
+                    animation: "spin 2s linear infinite",
+                  }}
                 />
               </div>
               <span
@@ -130,7 +136,10 @@ const ReporteVentas = () => {
         <Divider className="my-2" />
       </div>
 
-      <div className="container-rv" style={{ marginBottom: "10px", marginTop: "17px" }}>
+      <div
+        className="container-rv"
+        style={{ marginBottom: "10px", marginTop: "17px" }}
+      >
         <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 relative">
           <Tabs variant="underlined" aria-label="Tabs variants">
             <Tab key="all" title="@Todos" />
@@ -162,17 +171,23 @@ const ReporteVentas = () => {
                 }}
               >
                 <DatePicker
-                  selected={new Date()}
+                  selected={selectedDate}
+                  onChange={(date) => setSelectedDate(date)}
                   className="border-gray-300 rounded-lg shadow-lg bg-white"
                   customInput={<CustomInput />}
-                  renderMonthContent={(month, shortMonth, longMonth, day) => {
+                  renderMonthContent={(
+                    month,
+                    shortMonth,
+                    longMonth,
+                    day
+                  ) => {
                     const fullYear = new Date(day).getFullYear();
                     const tooltipText = `Tooltip for month: ${longMonth} ${fullYear}`;
                     return <span title={tooltipText}>{shortMonth}</span>;
                   }}
                   showMonthYearPicker
                   dateFormat="MM/yyyy"
-                  style={{ width: "200px" }} // Aumentar el ancho del DatePicker
+                  style={{ width: "200px" }}
                 />
                 <ButtonSearch style={{ marginLeft: "10px" }} />
               </div>

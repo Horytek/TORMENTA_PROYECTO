@@ -679,9 +679,9 @@ const getAnalisisGananciasSucursales = async (req, res) => {
       const connection = await getConnection();
       const [result] = await connection.query(`
           SELECT 
-              s.nombre_sucursal,
-              SUM(dv.total) AS ganancias_totales,
-              COUNT(v.id_venta) AS total_ventas
+              s.nombre_sucursal AS sucursal,
+              DATE_FORMAT(v.f_venta, '%b %y') AS mes,
+              SUM(dv.total) AS ganancias
           FROM 
               sucursal s
           JOIN 
@@ -689,11 +689,12 @@ const getAnalisisGananciasSucursales = async (req, res) => {
           JOIN 
               detalle_venta dv ON v.id_venta = dv.id_venta
           GROUP BY 
-              s.id_sucursal
+              s.id_sucursal, mes
           ORDER BY 
-              ganancias_totales DESC
+              mes, s.id_sucursal
       `);
 
+      console.log(result);  
       res.json({ code: 1, data: result, message: "Análisis de ganancias por sucursal obtenido correctamente" });
   } catch (error) {
       if (!res.headersSent) {
@@ -701,6 +702,7 @@ const getAnalisisGananciasSucursales = async (req, res) => {
       }
   }
 };
+
 
 
 export const methods = {
