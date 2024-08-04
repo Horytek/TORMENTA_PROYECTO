@@ -117,10 +117,75 @@ const getSucursal = async (req, res) => {
       res.send(error.message);
     }
   };
+
+  const generarCodigoGuia = async (req, res) => {
+    try {
+      const { id_comprobante } = req.query; // Cambiar a req.query
+  
+      const connection = await getConnection();
+  
+      // Verificar si el comprobante es una guía de remisión
+      if (id_comprobante !== 'Guia de remision') {
+        return res.status(400).json({ message: "Invalid comprobante type." });
+      }
+  
+      const prefijoBase = 'T';
+      const serieFija = '400';
+  
+      // Obtener el último número de comprobante y generar el siguiente
+      const [ultimoComprobanteResult] = await connection.query(
+        "SELECT num_comprobante FROM comprobante WHERE id_tipocomprobante = ? ORDER BY num_comprobante DESC LIMIT 1",
+        [id_comprobante]
+      );
+  
+      console.log("Resultado del último comprobante:", ultimoComprobanteResult); // Log para verificar el resultado del último comprobante
+  
+      let nuevoNumComprobante;
+      if (ultimoComprobanteResult.length > 0) {
+        const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
+        const partes = ultimoNumComprobante.split("-");
+        const numero = parseInt(partes[1], 10) + 1;
+  
+        // Verificar si el número actual supera el límite
+        if (numero > 99999999) {
+          // Cambiar de serie si el límite es alcanzado
+          return res.status(500).json({ message: "Series limit reached." });
+        } else {
+          nuevoNumComprobante = `${prefijoBase}${serieFija}-${numero.toString().padStart(8, "0")}`;
+        }
+      } else {
+        // Si no hay comprobantes, comenzar con la primera serie
+        nuevoNumComprobante = `${prefijoBase}${serieFija}-00000001`;
+      }
+  
+      console.log("Nuevo número de comprobante:", nuevoNumComprobante); // Log para verificar el nuevo número de comprobante
+  
+      res.json({ nuevoNumComprobante });
+    } catch (error) {
+      console.error('Error en la función generarComprobante:', error.message); // Log para depuración
+      res.status(500).send(error.message);
+    }
+  };
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
   
 
   export const methods = {
     getGuias,
     getSucursal,
     getUbigeoGuia,
+    generarCodigoGuia,
 };
