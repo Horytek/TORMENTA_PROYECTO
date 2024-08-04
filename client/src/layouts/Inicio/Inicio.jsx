@@ -42,7 +42,7 @@ function Inicio() {
                   <CardComponent titleCard={"Total de productos"} contentCard={"250"} color={"purple"} icon={LuShirt}  />
                   <CardComponent titleCard={"Producto del día"} contentCard={"Polo Verano"} color={"cyan"} icon={TiStarburstOutline} />
                 </div>
-                <div>
+                <div className='mt-7'>
                   <LineChartComponent />
                 </div>
               </TabPanel>
