@@ -40,6 +40,13 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
               <IoIosSearch className='w-4 h-4 mr-1' />
               Buscar
             </button>
+            <button 
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" 
+              onClick={() => openModalProducto('Agregar Producto')}
+            >
+              <IoMdAdd className='w-4 h-4 mr-1' />
+              Nuevo
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white">
