@@ -29,7 +29,7 @@ const getVentas = async (req, res) => {
         INNER JOIN vendedor ve ON ve.dni = s.dni
       	WHERE tp.nom_tipocomp LIKE ? AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=?
         GROUP BY id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, fecha, igv, cajero, cajeroId, estado
-        ORDER BY v.f_venta
+        ORDER BY v.f_venta desc
         LIMIT ? OFFSET ?
       `,
       [nom_tipocomp+'%',razon_social+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,parseInt(limit), parseInt(offset)]

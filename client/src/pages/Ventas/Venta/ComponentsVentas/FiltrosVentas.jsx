@@ -15,11 +15,21 @@ const FiltrosVentas = ({onFiltersChange}) => {
         start: parseDate("2024-04-01"),
         end: parseDate("2028-04-08"),
       });
-      
+      const [tempValue, setTempValue] = useState(value);
       const [razon, setRazon] = useState('');
       const handleChange = (event) => {
         setRazon(event.target.value);
-      };    
+      };
+      
+      const handleDateChange = (newValue) => {
+        // Validar las fechas antes de actualizar el estado
+        if (newValue.start && newValue.end) {
+          setValue(newValue);
+          setTempValue(newValue);
+        } else {
+          setTempValue(newValue);
+        }
+      };
 
       
     
@@ -75,12 +85,17 @@ const FiltrosVentas = ({onFiltersChange}) => {
                     </select>
                 </div>
                 <div className="input-wrapper flex gap-2">
-                    <DateRangePicker 
-                        className="w-xs"
-                        classNames={{ inputWrapper: "bg-white" }}
-                        value={value} onChange={setValue}
-                    />
-                </div>
+            <DateRangePicker
+              className="w-xs"
+              classNames={{ inputWrapper: "bg-white" }}
+              value={tempValue}
+              onChange={handleDateChange}
+              // Deshabilitar la entrada manual de fecha
+              renderInput={(props) => (
+                <input {...props} className="border border-gray-300 rounded-lg p-2 bg-white" />
+              )}
+            />
+          </div>
             </div>
 
             {/* Segundo div para botones de acción */}
