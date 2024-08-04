@@ -81,6 +81,26 @@ export function ShowProductos({ searchTerm }) {
         setInitialData(null);
     };
 
+    // Función para descargar código de barras
+    const downloadBarcode = (producto) => {
+        // Seleccionar el elemento SVG
+        const svg = document.querySelector(`#barcode-${producto.id_producto} svg`);
+        if (!svg) {
+            console.error('SVG element not found');
+            return;
+        }
+
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svg);
+        const dataUri = 'data:image/svg+xml;base64,' + btoa(source);
+        const a = document.createElement('a');
+        a.href = dataUri;
+        a.download = `${producto.descripcion}-barcode.svg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
@@ -107,7 +127,11 @@ export function ShowProductos({ searchTerm }) {
                                 <td className='py-2 text-center'>{producto.precio}</td>
                                 <td className='py-2 text-center'>
                                     {producto.cod_barras === '-' ? '-' :
-                                        <div className="flex justify-center items-center">
+                                        <div
+                                            id={`barcode-${producto.id_producto}`}
+                                            className="flex justify-center items-center cursor-pointer"
+                                            onClick={() => downloadBarcode(producto)}
+                                        >
                                             <Barcode
                                                 className="bg-transparent"
                                                 value={producto.cod_barras}
