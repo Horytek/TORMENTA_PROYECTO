@@ -146,11 +146,11 @@ const Ventas = () => {
 
       {/* Contenedor para paginación */}
       <div className="flex justify-between mt-4">
-        <div className="flex" >
+        <div className="flex">
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
         <select
-          className="cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg"
+          className="input-c cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg"
           value={ventasPerPage}
           onChange={(e) => setVentasPerPage(Number(e.target.value))}
         >

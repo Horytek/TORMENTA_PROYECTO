@@ -29,7 +29,7 @@ const getVentas = async (req, res) => {
         INNER JOIN vendedor ve ON ve.dni = s.dni
       	WHERE tp.nom_tipocomp LIKE ? AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=?
         GROUP BY id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, fecha, igv, cajero, cajeroId, estado
-        ORDER BY v.f_venta
+        ORDER BY v.f_venta desc
         LIMIT ? OFFSET ?
       `,
       [nom_tipocomp+'%',razon_social+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,parseInt(limit), parseInt(offset)]
@@ -623,12 +623,12 @@ const updateVenta = async (req, res) => {
   }
 };
 
-const getCantidadVentasPorCategoria = async (req, res) => {
+const getCantidadVentasPorSubcategoria = async (req, res) => {
   try {
     const connection = await getConnection();
     const [result] = await connection.query(`
       SELECT 
-        c.nom_categoria AS categoria,
+        sc.nom_subcat AS subcategoria,
         SUM(dv.cantidad) AS cantidad_vendida
       FROM 
         detalle_venta dv
@@ -636,19 +636,18 @@ const getCantidadVentasPorCategoria = async (req, res) => {
         producto p ON dv.id_producto = p.id_producto
       JOIN 
         sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
-      JOIN 
-        categoria c ON sc.id_categoria = c.id_categoria
       GROUP BY 
-        c.nom_categoria
+        sc.nom_subcat
       ORDER BY 
         cantidad_vendida DESC;
     `);
 
-    res.json({ code: 1, data: result, message: "Cantidad de ventas por categoría obtenida correctamente" });
+    res.json({ code: 1, data: result, message: "Cantidad de ventas por subcategoría obtenida correctamente" });
   } catch (error) {
     res.status(500).send(error.message);
   }
 };
+
 
 const getCantidadVentasPorProducto = async (req, res) => {
   try {
@@ -679,9 +678,9 @@ const getAnalisisGananciasSucursales = async (req, res) => {
       const connection = await getConnection();
       const [result] = await connection.query(`
           SELECT 
-              s.nombre_sucursal,
-              SUM(dv.total) AS ganancias_totales,
-              COUNT(v.id_venta) AS total_ventas
+              s.nombre_sucursal AS sucursal,
+              DATE_FORMAT(v.f_venta, '%b %y') AS mes,
+              SUM(dv.total) AS ganancias
           FROM 
               sucursal s
           JOIN 
@@ -689,11 +688,12 @@ const getAnalisisGananciasSucursales = async (req, res) => {
           JOIN 
               detalle_venta dv ON v.id_venta = dv.id_venta
           GROUP BY 
-              s.id_sucursal
+              s.id_sucursal, mes
           ORDER BY 
-              ganancias_totales DESC
+              mes, s.id_sucursal
       `);
 
+      console.log(result);  
       res.json({ code: 1, data: result, message: "Análisis de ganancias por sucursal obtenido correctamente" });
   } catch (error) {
       if (!res.headersSent) {
@@ -701,6 +701,7 @@ const getAnalisisGananciasSucursales = async (req, res) => {
       }
   }
 };
+
 
 
 export const methods = {
@@ -717,6 +718,6 @@ export const methods = {
   getTotalProductosVendidos,
   getProductoMasVendido,
   getCantidadVentasPorProducto,
-  getCantidadVentasPorCategoria,
+  getCantidadVentasPorSubcategoria,
   getAnalisisGananciasSucursales,
 };
