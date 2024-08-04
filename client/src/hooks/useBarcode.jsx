@@ -12,7 +12,7 @@ const useBarcode = (value, options = {}) => {
         width: 0.62,
         height: 40,
         fontSize: 11,
-        displayValue: false,
+        displayValue: true,
         ...options,
       });
     }
