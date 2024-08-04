@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
@@ -17,17 +16,19 @@ import './ProductosForm.css';
 
 const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
 
-    // Consumir context de categorias y marcas
+    // Consumir context de categorias, subcategorias y marcas
     const { categorias, loadCategorias } = useCategorias();
     const { marcas, loadMarcas } = useMarcas();
+    const { subcategorias, loadSubcategorias } = useSubcategorias();
     useEffect(() => {
       loadCategorias();
       loadMarcas();
+      loadSubcategorias();
     }, []);
 
-    // Consumir context de subcategorias
-    const { loadSubCategoriasForCategoria } = useSubcategorias();
-    
+    // Estado para subcategorías filtradas
+    const [filteredSubcategorias, setFilteredSubcategorias] = useState([]);
+
     // Registro de producto
     const { register, handleSubmit, setValue, getValues, watch, formState: {errors} } = useForm({
       defaultValues: initialData?.data || {
@@ -44,12 +45,16 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
 
     // Cargar subcategorias al seleccionar una categoría
     const idCategoria = watch('id_categoria');
+
     useEffect(() => {
+      // Filtrar subcategorías basadas en la categoría seleccionada
       if (idCategoria) {
-        loadSubCategoriasForCategoria(idCategoria);
-        setValue('id_subcategoria', '');
+        const filtered = subcategorias.filter(subcategoria => subcategoria.id_categoria === parseInt(idCategoria));
+        setFilteredSubcategorias(filtered);
+      } else {
+        setFilteredSubcategorias([]);
       }
-    }, []);
+    }, [idCategoria, subcategorias]);
 
     // Generar barcode de productos
     useEffect(() => {
@@ -198,12 +203,11 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
                       name='id_subcategoria'
                       className={`w-full text-sm bg-gray-50 ${errors.id_subcategoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
                         <option value="">Seleccione...</option>
-                        <option value="1">PANTALÓN</option>
-                        {/* {subcategorias.length > 0 && subcategorias.map((subcategorias) => (
-                          <option key={subcategorias.id_subcategoria} value={subcategorias.id_subcategoria}>
-                            {subcategorias.nom_subcategoria.toUpperCase()}
+                        {filteredSubcategorias.length > 0 && filteredSubcategorias.map((subcategoria) => (
+                          <option key={subcategoria.id_subcategoria} value={subcategoria.id_subcategoria}>
+                            {subcategoria.nom_subcat.toUpperCase()}
                           </option>
-                        ))} */}
+                        ))}
                       </select>
                       <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalSubCategoria} />
                     </div>
