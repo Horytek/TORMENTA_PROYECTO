@@ -47,7 +47,6 @@ const useGuiasData = (filters) => {
             um: detalle.um,
             precio: `S/ ${parseFloat(detalle.precio).toFixed(2)}`,
             total: `S/ ${parseFloat(detalle.total).toFixed(2)}`,
-            almacen: detalle.almacen
           }))
         }));
         console.log('Transformed Guias:', guias);   // Agrega este log para verificar los datos

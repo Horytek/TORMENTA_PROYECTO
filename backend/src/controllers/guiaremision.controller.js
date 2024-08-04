@@ -50,7 +50,7 @@ const getGuias = async (req, res) => {
                 AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') >= ? 
                 AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') <= ?
                 AND s.nombre_sucursal LIKE ?
-            ORDER BY gr.f_generacion DESC
+            ORDER BY c.num_comprobante ASC
             LIMIT ? OFFSET ?;
             `,
             [`${num_guia}%`, `${documento}%`, `${documento}%`, fecha_i, fecha_e, `${nombre_sucursal}%`, parseInt(limit), parseInt(offset)]
@@ -60,20 +60,19 @@ const getGuias = async (req, res) => {
             guiasResult.map(async (guia) => {
                 const [detallesResult] = await connection.query(
                     `
-                    SELECT 
+                    SELECT DISTINCT
                         de.id_producto AS codigo, 
                         m.nom_marca AS marca, 
                         p.descripcion, 
                         de.cantidad, 
                         p.undm AS um, 
                         de.precio, 
-                        de.total,
-                        a.nom_almacen AS almacen
+                        de.total
                     FROM detalle_envio de
                     INNER JOIN producto p ON de.id_producto = p.id_producto
                     INNER JOIN marca m ON p.id_marca = m.id_marca
                     INNER JOIN inventario i ON de.id_producto = i.id_producto
-                    INNER JOIN almacen a ON i.id_almacen = a.id_almacen
+                    
                     WHERE de.id_guiaremision = ? ;
                     `,
                     [guia.id]
@@ -167,7 +166,63 @@ const getSucursal = async (req, res) => {
     }
   };
   
+  const addCliente = async (req, res) => {
+    const connection = await getConnection();
   
+    try {
+      const { dniOrRuc, tipo_cliente, nombreCompleto, direccion } = req.body;
+  
+      console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
+  
+      if (
+        !dniOrRuc ||
+        !tipo_cliente ||
+        !nombreCompleto ||
+        (tipo_cliente === "Jurídico" && !direccion)
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Bad Request. Please fill all fields correctly." });
+      }
+  
+      let nombres = "";
+      let apellidos = "";
+      let razon_social = "";
+  
+      if (tipo_cliente === "Natural") {
+        // Separar nombre completo en nombres y apellidos
+        const partesNombre = nombreCompleto.split(" ");
+        if (partesNombre.length > 1) {
+          // Considerar que el primer nombre puede tener múltiples partes
+          nombres = partesNombre.slice(0, -2).join(" ");
+          apellidos = partesNombre.slice(-2).join(" ");
+        } else {
+          nombres = nombreCompleto; // Asumir que es un nombre único si no se puede dividir
+        }
+  
+        // Insertar cliente natural
+        await connection.query(
+          "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES (?, '', ?, ?, '', '', 0)",
+          [dniOrRuc, nombres, apellidos]
+        );
+      } else {
+        razon_social = nombreCompleto;
+        // Insertar cliente jurídico
+        await connection.query(
+          "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES ('', ?, '', '', ?, ?, 0)",
+          [dniOrRuc, razon_social, direccion]
+        );
+      }
+  
+      res.json({ message: "Cliente añadido correctamente" });
+    } catch (error) {
+      console.error("Error en el backend:", error.message); // Log para verificar errores
+      res.status(500).send(error.message);
+    }
+  };
+
+
+
 
 
 
