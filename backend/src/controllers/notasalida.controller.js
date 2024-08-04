@@ -186,7 +186,7 @@ const insertNotaAndDetalle = async (req, res) => {
         await connection.query(
           `
           UPDATE inventario 
-          SET stock = stock + ? 
+          SET stock = stock - ? 
           WHERE id_producto = ? 
           AND id_almacen = ?;
           `,
