@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';
 import ProductosModal from '@/pages/Productos/ProductosForm';
@@ -73,7 +73,7 @@ function Registro_Ingresos() {
       almacen: almacenId,
     };
 
-    const result = await useProductosData(filters);
+  const result = await useProductosData(filters);
     setProductos(result.productos);
   };
 
@@ -116,8 +116,8 @@ function Registro_Ingresos() {
       almacenD,
       destinatario,
       glosa,
-      fecha,
       nota,
+      fecha,
       producto: productos.map(p => p.id),
       numComprobante,
       cantidad: productos.map(p => p.cantidad),
