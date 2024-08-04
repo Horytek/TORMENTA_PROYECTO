@@ -2,37 +2,41 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaTrash } from 'react-icons/fa6';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-const NuevaTablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal }) => {
-  const [expandedRow, setExpandedRow] = useState(null);
+const NuevaTablaSalida = ({ ingresos, setProductosSeleccionados }) => {
   const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
+  const [productoAEliminar, setProductoAEliminar] = useState(null);
   
-  const openModalEliminar = () => {
+  const openModalEliminar = (producto) => {
+    setProductoAEliminar(producto);
     setIsModalOpenEliminar(true);
   };
 
   const closeModalEliminar = () => {
     setIsModalOpenEliminar(false);
+    setProductoAEliminar(null);
   };
+
   const handleConfirmEliminar = () => {
-    setIsModalOpenEliminar(false);
+    if (productoAEliminar) {
+      const nuevosProductosSeleccionados = ingresos.filter(p => p.codigo !== productoAEliminar.codigo);
+      setProductosSeleccionados(nuevosProductosSeleccionados);
+      localStorage.setItem('productosSeleccionados', JSON.stringify(nuevosProductosSeleccionados));
+    }
+    closeModalEliminar();
   };
-  const renderSalidaRow = (salida) => (
-    <React.Fragment key={salida.id}>
-      <tr className='tr-tabla-salida'>
-        <td className="text-center">{salida.codigo}</td>
-        <td className="text-center">{salida.descripcion}</td>
-        <td className="text-center">{salida.marca}</td>
-        <td className="text-center">{salida.stockActual}</td>
-        <td className="text-center">{salida.cantidad}</td>
-        <td className="flex text-center justify-center items-center align-center">
-        <button className="flex justify-center items-center" onClick={openModalEliminar}>
+
+  const renderEntradaRow = (ingreso) => (
+    <tr key={ingreso.codigo} className='tr-tabla-nuevoingreso'>
+      <td className="text-center">{ingreso.codigo}</td>
+      <td className="text-center">{ingreso.descripcion}</td>
+      <td className="text-center">{ingreso.marca}</td>
+      <td className="text-center">{ingreso.cantidad}</td>
+      <td className="text-center">
+        <button onClick={() => openModalEliminar(ingreso)}>
           <FaTrash className="w-4 h-4 text-red-500" />
         </button>
       </td>
-
-      </tr>
-      {expandedRow === salida.id && renderVentaDetails(salida.detalles)}
-    </React.Fragment>
+    </tr>
   );
 
   return (
@@ -41,15 +45,14 @@ const NuevaTablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal 
         <thead>
           <tr>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CÓDIGO</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
+            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">MARCA</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">STOCK ACTUAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
           </tr>
         </thead>
         <tbody>
-          {salidas.map(renderSalidaRow)}
+          {ingresos.map(renderEntradaRow)}
         </tbody>
       </table>
       {isModalOpenEliminar && (
@@ -65,11 +68,8 @@ const NuevaTablaSalida = ({ salidas, modalOpen, deleteOptionSelected, openModal 
 };
 
 NuevaTablaSalida.propTypes = {
-  salidas: PropTypes.array.isRequired,
-  modalOpen: PropTypes.bool.isRequired,
-  deleteOptionSelected: PropTypes.bool.isRequired,
-  openModal: PropTypes.func.isRequired,
-  currentPage: PropTypes.number.isRequired,
+  ingresos: PropTypes.array.isRequired,
+  setProductosSeleccionados: PropTypes.func.isRequired,
 };
 
 export default NuevaTablaSalida;
