@@ -69,20 +69,20 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACÉN</th>
+                
               </tr>
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
                 <tr key={index}>
                   <td className="font-bold text-center">{detalle.codigo}</td>
-                  <td className="font-bold">{detalle.marca}</td>
+                  <td className="font-bold text-center">{detalle.marca}</td>
                   <td className="text-center">{detalle.descripcion}</td>
                   <td className="text-center">{detalle.cantidad}</td>
                   <td className="text-center">{detalle.um}</td>
                   <td className="text-center">{detalle.precio}</td>
                   <td className="text-center">{detalle.total}</td>
-                  <td className="text-center">{detalle.almacen}</td>
+                  
                 </tr>
               ))}
             </tbody>

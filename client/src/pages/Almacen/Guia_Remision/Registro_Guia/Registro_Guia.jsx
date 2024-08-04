@@ -44,12 +44,11 @@ function RegistroGuia() {
         <div className="flex rounded" style={{ backgroundColor: '#F2F3F4', padding: 10 }}>
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
-              <div className='w-full relative group  text-start'>
-                <label htmlFor="documento" className='text-sm font-bold text-black'>Documento:</label>
-                <select id='documento' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
-                  <option>Guia de Remision</option>
-                  <option>Seleccione...</option>
-                </select>
+             <div className="">
+                <div className='w-full relative group text-start'>
+                  <label htmlFor="numguia" className='text-sm font-bold text-black'>Número de guía:</label>
+                  <input type="numguia" name='numguia' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
+                </div>
               </div>
               <div className="">
                 <label htmlFor="glosa" className='text-sm font-bold text-black'>Glosa.Sal:</label>
