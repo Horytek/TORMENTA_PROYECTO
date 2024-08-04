@@ -165,6 +165,35 @@ const getSucursal = async (req, res) => {
       res.status(500).send(error.message);
     }
   };
+
+  const getDestinatariosGuia = async (req, res) => {
+    try {
+      const connection = await getConnection();
+      const [result] = await connection.query(`
+                            SELECT 
+    id_destinatario AS id,
+    COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS destinatario_t,
+    COALESCE(NULLIF(dni, ''), ruc) AS documento_t
+FROM 
+    destinatario
+WHERE 
+    (nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
+    OR
+    (razon_social IS NOT NULL AND razon_social <> '')
+ORDER BY 
+    (CASE 
+        WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 
+        ELSE 1 
+     END),
+    destinatario_t;
+            `);
+      res.json({ code: 1, data: result, message: "Productos listados" });
+    } catch (error) {
+      res.status(500);
+      res.send(error.message);
+    }
+  };
+
   
   const addCliente = async (req, res) => {
     const connection = await getConnection();
@@ -225,18 +254,6 @@ const getSucursal = async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   
 
   export const methods = {
@@ -244,4 +261,6 @@ const getSucursal = async (req, res) => {
     getSucursal,
     getUbigeoGuia,
     generarCodigoGuia,
+    getDestinatariosGuia,
+    
 };

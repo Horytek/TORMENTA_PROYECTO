@@ -7,5 +7,6 @@ router.get("/", guiasController.getGuias);
 router.get("/sucursal",guiasController.getSucursal);
 router.get("/ubigeo", guiasController.getUbigeoGuia);
 router.get("/num_comprobante", guiasController.generarCodigoGuia);
+router.get("/clienteguia", guiasController.getDestinatariosGuia);
 
 export default router;

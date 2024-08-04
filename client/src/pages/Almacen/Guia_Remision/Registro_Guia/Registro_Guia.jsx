@@ -7,14 +7,22 @@ import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 import TablaRegGuia from "./ComponentsRegGuias/RegGuiaTable";
 import UbigeoForm from './UbigeoForm';
+import useClienteData from '../../data/data_cliente_guia';
+import useSucursalData from '../../data/data_sucursal_guia';
 import TransporteForm from './UndTrans';
 import ClienteForm from './ClienteForm';
 import ProductosForm from '@/pages/Productos/ProductosForm';
+
 
 function RegistroGuia() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalType, setModalType] = useState('');
+  const { clientes } = useClienteData();
+  const { sucursales } = useSucursalData();
+
+  const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+  const [sucursalSeleccionado, setSucursalSeleccionado] = useState('');
 
   const openModal = (title, type) => {
     setModalTitle(title);
@@ -44,39 +52,43 @@ function RegistroGuia() {
         <div className="flex rounded" style={{ backgroundColor: '#F2F3F4', padding: 10 }}>
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
-             <div className="">
+              <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="numguia" className='text-sm font-bold text-black'>Número de guía:</label>
-                  <input type="numguia" name='numguia' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
-                </div>
-              </div>
-              <div className="">
-                <label htmlFor="glosa" className='text-sm font-bold text-black'>Glosa.Sal:</label>
-                <select id='glosa' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
-                  <option>Seleccione...</option>
-                </select>
-              </div>
-              <div className="">
-                <div className='w-full relative group text-start'>
-                  <label htmlFor="cliente" className='text-sm font-bold text-black'>Cliente:</label>
-                  <input type="cliente" name='cliente' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
+                  <input type="numguia" name='numguia' className='w-full bg-gray-200 border-gray-300 text-black rounded-lg border p-1 ' placeholder='T400-00000010' disabled />
                 </div>
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="dirdest" className='text-sm font-bold text-black'>Fecha:</label>
-                  <input type="date" name='date' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                  <input type="date" name='date' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' defaultValue={new Date().toISOString().slice(0, 10)} />
                 </div>
               </div>
+
+              <div className="">
+                <label htmlFor="cliente" className='text-sm font-bold text-black' value={clienteSeleccionado}
+                  onChange={(e) => setClienteSeleccionado(e.target.value)}>Cliente:</label>
+                <select id='cliente' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                  <option>Seleccione...</option>
+                  {clientes.map((cliente, index) => (
+                    <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="">
+                <div className='w-full relative group text-start'>
+                  <label htmlFor="tipodoc" className='text-sm font-bold text-black'>RUC/DNI:</label>
+                  <input type="tipodoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
+                </div>
+              </div>
+
               <div className='w-full relative group  text-start'>
                 <label htmlFor="vendedor" className='text-sm font-bold text-black'>Vendedor:</label>
-                <select id='vendedor' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                <select id='vendedor' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2' value={sucursalSeleccionado} onChange={(e) => setSucursalSeleccionado(e.target.value)}>
                   <option>Seleccione...</option>
-                  <option>CENTRAL 22</option>
-                  <option>CENTRAL 52 - 53</option>
-                  <option>CENTRAL ESCALERA</option>
-                  <option>OFICINA</option>
-                  <option>TIENDA BALTA</option>
+                  {sucursales.map((sucursal, index) => (
+                    <option key={index} value={sucursal.nombre}>{sucursal.nombre}</option>
+                  ))}
                 </select>
               </div>
               <div className="flex">
@@ -92,23 +104,31 @@ function RegistroGuia() {
               <div className="">
                 <label className="block text-gray-700 text-sm font-bold mt-5" htmlFor="direcdest">
                 </label>
-                <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded" 
-                type="button" onClick={() => openModal('Ubicación de Partida / Ubicación de Destino', 'ubicacion')}>
+                <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded"
+                  type="button" onClick={() => openModal('Ubicación de Partida / Ubicación de Destino', 'ubicacion')}>
                   <IoMdPin className="inline-block mr-2" /> Ub. de Partida/Ub. de Destino
                 </button>
               </div>
-              <div className='w-full relative group  text-start'>
-                <label htmlFor="referencia" className='text-sm font-bold text-black'>Referencia:</label>
-                <select id='referencia' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+              <div className="">
+                <label htmlFor="glosa" className='text-sm font-bold text-black'>Glosa.Sal:</label>
+                <select id='glosa' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                   <option>Seleccione...</option>
-                  <option>NINGUNA</option>
-                  <option>FACTURA</option>
-                  <option>BOLETA</option>
-                  <option>COTIZACION</option>
-                  <option>NOTA PEDIDO</option>
+                  <option>01 | VENTA</option>
+                  <option>02 | COMPRA</option>
+                  <option>03 | VENTA CON ENTREGA A TERCEROS</option>
+                  <option>04 | TRASLADO ENTRE ALMACENES DE LA MISMA CIA.</option>
+                  <option>05 | CONSIGNACION</option>
+                  <option>06 | DEVOLUCION</option>
+                  <option>07 | RECOJO DE BIENES TRANSFORMADOS</option>
+                  <option>08 | IMPORTACION</option>
+                  <option>09 | EXPORTACION</option>
+                  <option>13 | OTROS</option>
+                  <option>14 | VENTA SUJETA A CONFIRMACION DEL COMPRADOR</option>
+                  <option>17 | TRASLADO DE BIENES PARA TRANSFORMACION</option>
+                  <option>18 | TRASLADO EMISOR ITINERANTE CP</option>
                 </select>
               </div>
-              
+
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="ubipart" className='text-sm font-bold text-black'>Ubi. Part:</label>
@@ -121,7 +141,6 @@ function RegistroGuia() {
                   <input type="dirpart" name='dirpart' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
                 </div>
               </div>
-              
               <div className="">
                 <div className='w-full relative group mb-5 text-start'>
                   <label htmlFor="ubidest" className='text-sm font-bold text-black'>Ubi. Dest:</label>
@@ -134,40 +153,39 @@ function RegistroGuia() {
                   <input type="dirdest" name='dirdest' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
                 </div>
               </div>
-              
+
               <div className="">
                 <div className='w-full relative group text-start'>
-                  <label htmlFor="numdoc" className='text-sm font-bold text-black'>Num. Doc:</label>
-                  <input type="numdoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
+                  <label htmlFor="trans" className='text-sm font-bold text-black'>Transporte:</label>
+                  <input type="trans" name='trans' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
                 </div>
               </div>
               <div className="flex">
                 <div className="flex-1 mr-2">
                   <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold  "></label>
-                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm" 
-                  type="button" onClick={() => openModal('Datos del Transporte', 'transporte')}>
+                  <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
+                    type="button" onClick={() => openModal('Datos del Transporte', 'transporte')}>
                     <IoMdCar className="inline-block mr-2 text-lg" /> Datos de Transporte
                   </button>
                 </div>
                 <div className="flex-1 ml-2">
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold"></label>
-                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm" 
-                  type="button" onClick={() => openModal('Nuevo Cliente', 'cliente')}>
+                  <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
+                    type="button" onClick={() => openModal('Nuevo Cliente', 'cliente')}>
                     <MdPersonAdd className="inline-block mr-2 text-lg" />Nuevo Cliente
                   </button>
                 </div>
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
-                  <label htmlFor="tipodoc" className='text-sm font-bold text-black'>RUC/DNI:</label>
-                  <input type="tipodoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
+
                 </div>
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
-                  <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded" 
-                  type="button" onClick={() => openModal('Buscar Producto', 'producto')}>
+                  <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded"
+                    type="button" onClick={() => openModal('Buscar Producto', 'producto')}>
                     <FaBarcode className="inline-block mr-2" /> Buscar producto
                   </button>
                 </div>
@@ -180,7 +198,7 @@ function RegistroGuia() {
                 Observación:
               </label>
               <textarea className="shadow appearance-none border border-gray-300 rounded w-full py-2 px-3 text-gray-700 leading-tight resize-none"
-                    id="observacion" style={{ height: "94%" }}></textarea>           
+                id="observacion" style={{ height: "94%" }}></textarea>
             </div>
             <div className="mt-10 flex justify-end">
               <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded" type="button">
@@ -189,17 +207,17 @@ function RegistroGuia() {
             </div>
           </div>
         </div>
-        
+
         <br />
         <TablaRegGuia />
       </div>
       {modalType === 'buscarProducto' && (
         <ModalBuscarProducto isOpen={isModalOpen} onClose={closeModal}>
           <div className="flex mb-4">
-            <input 
-              type="text" 
-              placeholder="Buscar producto" 
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow" 
+            <input
+              type="text"
+              placeholder="Buscar producto"
+              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
             />
             <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center">
               <IoIosSearch className='w-4 h-4 mr-1' />
@@ -244,7 +262,7 @@ function RegistroGuia() {
           {modalType === 'ubicacion' && <UbigeoForm modalTitle={modalTitle} onClose={closeModal} />}
           {modalType === 'transporte' && <TransporteForm modalTitle={modalTitle} onClose={closeModal} />}
           {modalType === 'cliente' && <ClienteForm modalTitle={modalTitle} onClose={closeModal} />}
-          {modalType === 'producto' && <ProductosForm  modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'producto' && <ProductosForm modalTitle={modalTitle} onClose={closeModal} />}
         </>
       )}
     </div>
