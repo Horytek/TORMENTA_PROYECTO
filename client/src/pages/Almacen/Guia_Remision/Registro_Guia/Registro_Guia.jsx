@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { IoMdPin, IoMdCar, IoMdAdd, IoIosSearch } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
@@ -18,7 +18,7 @@ import ProductosForm from '@/pages/Productos/ProductosForm';
 const glosaOptions = [
   "COMPRA", "VENTA CON ENTREGA A TERCEROS", "TRASLADO ENTRE ALMACENES DE LA MISMA CIA.",
   "CONSIGNACION", "DEVOLUCION", "RECOJO DE BIENES TRANSFORMADOS",
-  "IMPORTACION", "EXPORTACION", 
+  "IMPORTACION", "EXPORTACION",
   "OTROS", "VENTA SUJETA A CONFIRMACION DEL COMPRADOR", "TRASLADO DE BIENES PARA TRANSFORMACION",
   "TRASLADO EMISOR ITINERANTE CP"
 ];
@@ -31,10 +31,13 @@ function RegistroGuia() {
   const { clientes } = useClienteData();
   const { sucursales } = useSucursalData();
   const { documentos } = useDocumentoData();
-  const [codubiPartida, setCodubiPartida] = useState('');
-  const [codubiDestino, setCodubiDestino] = useState('');
+  const [ubipart, setUbipart] = useState('');
+  const [ubidest, setUbidest] = useState('');
 
-  
+  const handleSaveUbigeo = (selectedUbipart, selectedUbidest) => {
+    setUbipart(selectedUbipart);
+    setUbidest(selectedUbidest);
+  };
 
   const openModal = (title, type) => {
     setModalTitle(title);
@@ -49,7 +52,7 @@ function RegistroGuia() {
   };
 
   const currentDocumento = documentos.length > 0 ? documentos[0].guia : '';
-  
+
 
   return (
     <div>
@@ -64,16 +67,17 @@ function RegistroGuia() {
         </h1>
       </div>
       <div className="rounded" style={{ backgroundColor: '#F2F3F4' }}>
+
         <div className="flex rounded" style={{ backgroundColor: '#F2F3F4', padding: 10 }}>
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="numguia" className='text-sm font-bold text-black'>Número de guía:</label>
-                  <input id="numero" 
-                  type="text" 
-                  value={currentDocumento} 
-                  className='w-full bg-gray-200 border-gray-300 text-black rounded-lg border p-1 ' disabled />
+                  <input id="numero"
+                    type="text"
+                    value={currentDocumento}
+                    className='w-full bg-gray-200 border-gray-300 text-black rounded-lg border p-1 ' disabled />
                 </div>
               </div>
               <div className="">
@@ -86,9 +90,9 @@ function RegistroGuia() {
               <div className="">
                 <label htmlFor="cliente" className='text-sm font-bold text-black' >Cliente:</label>
                 <select id='cliente' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2' onChange={(e) => {
-                    const selected = clientes.find(d => d.id === parseInt(e.target.value));
-                    document.getElementById('documento').value = selected ? selected.documento : '';
-                  }}>
+                  const selected = clientes.find(d => d.id === parseInt(e.target.value));
+                  document.getElementById('documento').value = selected ? selected.documento : '';
+                }}>
                   <option>Seleccione...</option>
                   {clientes.map((cliente) => (
                     <option key={cliente.id} value={cliente.id}>{cliente.nombre}</option>
@@ -98,19 +102,19 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="documento" className='text-sm font-bold text-black'>RUC/DNI:</label>
-                  <input type="text" 
-                  name='documento'
-                  id="documento" 
-                  className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
+                  <input type="text"
+                    name='documento'
+                    id="documento"
+                    className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
                 </div>
               </div>
 
               <div className='w-full relative group  text-start'>
                 <label htmlFor="vendedor" className='text-sm font-bold text-black'>Vendedor:</label>
                 <select id='vendedor' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2' onChange={(e) => {
-                    const selected = sucursales.find(s => s.id === parseInt(e.target.value));
-                    document.getElementById('id').value = selected ? selected.id : '';
-                  }}>
+                  const selected = sucursales.find(s => s.id === parseInt(e.target.value));
+                  document.getElementById('id').value = selected ? selected.id : '';
+                }}>
                   <option>Seleccione...</option>
                   {sucursales.map((sucursal) => (
                     <option key={sucursal.id} value={sucursal.id}>{sucursal.nombre}</option>
@@ -140,15 +144,21 @@ function RegistroGuia() {
                 <select id='glosa' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                   <option>Seleccione...</option>
                   {glosaOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
+                    <option key={option} value={option}>{option}</option>
+                  ))}
                 </select>
               </div>
 
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="ubipart" className='text-sm font-bold text-black'>Ubi. Part:</label>
-                  <input type="ubipart" name='ubipart' className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
+                  <input
+                    type="text"
+                    name='ubipart'
+                    value={ubipart}
+                    className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
+                    disabled
+                  />
                 </div>
               </div>
               <div className="">
@@ -160,7 +170,13 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group mb-5 text-start'>
                   <label htmlFor="ubidest" className='text-sm font-bold text-black'>Ubi. Dest:</label>
-                  <input type="ubidest" name='ubidest' className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
+                  <input
+                    type="text"
+                    name='ubidest'
+                    value={ubidest}
+                    className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
+                    disabled
+                  />
                 </div>
               </div>
               <div className="">
@@ -275,7 +291,7 @@ function RegistroGuia() {
       {/* Modals */}
       {isModalOpen && modalType !== 'buscarProducto' && (
         <>
-          {modalType === 'ubicacion' && <UbigeoForm modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'ubicacion' && <UbigeoForm modalTitle={modalTitle} onClose={closeModal} onSave={handleSaveUbigeo} />}
           {modalType === 'transporte' && <TransporteForm modalTitle={modalTitle} onClose={closeModal} />}
           {modalType === 'cliente' && <ClienteForm modalTitle={modalTitle} onClose={closeModal} />}
           {modalType === 'producto' && <ProductosForm modalTitle={modalTitle} onClose={closeModal} />}

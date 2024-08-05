@@ -6,9 +6,11 @@ import './ModalGuias.css';
 import { ButtonSave } from '@/components/Buttons/Buttons';
 import useSucursalData from '../../data/data_ubigeo_guia';
 
-const ProductosForm = ({ modalTitle, onClose }) => {
+const UbigeoForm = ({ modalTitle, onClose, onSave }) => {
   const { ubigeos } = useSucursalData();
-  
+  const [selectedUbipart, setSelectedUbipart] = useState('');
+  const [selectedUbidest, setSelectedUbidest] = useState('');
+
   // Estados para Ubigeo de Partida
   const [departamentosPartida, setDepartamentosPartida] = useState([]);
   const [provinciasPartida, setProvinciasPartida] = useState([]);
@@ -16,7 +18,7 @@ const ProductosForm = ({ modalTitle, onClose }) => {
   const [selectedDepartamentoPartida, setSelectedDepartamentoPartida] = useState(null);
   const [selectedProvinciaPartida, setSelectedProvinciaPartida] = useState(null);
   const [selectedDistritoPartida, setSelectedDistritoPartida] = useState(null);
-  
+
   // Estados para Ubigeo de Destino
   const [departamentosDestino, setDepartamentosDestino] = useState([]);
   const [provinciasDestino, setProvinciasDestino] = useState([]);
@@ -93,101 +95,101 @@ const ProductosForm = ({ modalTitle, onClose }) => {
     }
   }, [selectedProvinciaDestino, selectedDepartamentoDestino, ubigeos]);
 
+  const handleSave = () => {
+    const partida = `${selectedDistritoPartida?.label}, ${selectedProvinciaPartida?.label}, ${selectedDepartamentoPartida?.label}`;
+    const destino = `${selectedDistritoDestino?.label}, ${selectedProvinciaDestino?.label}, ${selectedDepartamentoDestino?.label}`;
+    onSave(partida, destino); // Guarda los datos
+    onClose(); // Cierra el modal
+  };
+  
+
   return (
-    <div className="modal-container" >
-      <div className="modal-ubi ">
-        <div className='content-modal4'>
-        <button onClick={onClose} className="close-modal-ubigeo top-0 right-0 text-black-500 p-3">
-                                <IoCloseSharp />
-            </button>
-          <div className="modal-header ">
+    <div className="modal-container">
+      <div className="modal-ubi">
+        <div className="content-modal4">
+          <button onClick={onClose} className="close-modal-ubigeo top-0 right-0 text-black-500 p-3">
+            <IoCloseSharp />
+          </button>
+          <div className="modal-header">
             <h3 className="modal-title">{modalTitle}</h3>
-            
           </div>
-          <div className='ubigeo-body'>
+          <div className="ubigeo-body">
             {/* Partida */}
-            <div className='modal-content'>
+            <div className="modal-content">
               <h4>Ubigeo de Partida</h4>
               <hr />
-              <div className='form-group'>
-                <label htmlFor="departamentoPartida" className='text-sm font-bold text-black'>Departamento:</label>
+              <div className="form-group">
+                <label htmlFor="departamentoPartida" className="text-sm font-bold text-black">Departamento:</label>
                 <Select 
                   options={departamentosPartida}
                   value={selectedDepartamentoPartida}
                   onChange={setSelectedDepartamentoPartida}
                   className="input-c"
-                  style={{ border: "solid 0.1rem #171a1f28", width: '11rem' }}
                   placeholder="Selecciona un departamento"
                 />
               </div>
-              <div className='form-group'>
-                <label htmlFor="provinciaPartida" className='text-sm font-bold text-black'>Provincia:</label>
+              <div className="form-group">
+                <label htmlFor="provinciaPartida" className="text-sm font-bold text-black">Provincia:</label>
                 <Select 
                   options={provinciasPartida}
                   value={selectedProvinciaPartida}
                   onChange={setSelectedProvinciaPartida}
                   className="input-c"
-                  style={{ border: "solid 0.1rem #171a1f28", width: '11rem' }}
                   placeholder="Selecciona una provincia"
                   isDisabled={!selectedDepartamentoPartida}
                 />
               </div>
-              <div className='form-group'>
-                <label htmlFor="distritoPartida" className='text-sm font-bold text-black'>Distrito:</label>
+              <div className="form-group">
+                <label htmlFor="distritoPartida" className="text-sm font-bold text-black">Distrito:</label>
                 <Select 
                   options={distritosPartida}
                   value={selectedDistritoPartida}
                   onChange={setSelectedDistritoPartida}
                   className="input-c"
-                  style={{ border: "solid 0.1rem #171a1f28", width: '11rem' }}
                   placeholder="Selecciona un distrito"
                   isDisabled={!selectedProvinciaPartida}
                 />
               </div>
             </div>
             {/* Destino */}
-            <div className='modal-content'>
+            <div className="modal-content">
               <h4>Ubigeo de Destino</h4>
               <hr />
-              <div className='form-group'>
-                <label htmlFor="departamentoDestino" className='text-sm font-bold text-black'>Departamento:</label>
+              <div className="form-group">
+                <label htmlFor="departamentoDestino" className="text-sm font-bold text-black">Departamento:</label>
                 <Select 
                   options={departamentosDestino}
                   value={selectedDepartamentoDestino}
                   onChange={setSelectedDepartamentoDestino}
                   className="input-c"
-                  style={{ border: "solid 0.1rem #171a1f28", width: '11rem' }}
                   placeholder="Selecciona un departamento"
                 />
               </div>
-              <div className='form-group'>
-                <label htmlFor="provinciaDestino" className='text-sm font-bold text-black'>Provincia:</label>
+              <div className="form-group">
+                <label htmlFor="provinciaDestino" className="text-sm font-bold text-black">Provincia:</label>
                 <Select 
                   options={provinciasDestino}
                   value={selectedProvinciaDestino}
                   onChange={setSelectedProvinciaDestino}
                   className="input-c"
-                  style={{ border: "solid 0.1rem #171a1f28", width: '11rem' }}
                   placeholder="Selecciona una provincia"
                   isDisabled={!selectedDepartamentoDestino}
                 />
               </div>
-              <div className='form-group'>
-                <label htmlFor="distritoDestino" className='text-sm font-bold text-black'>Distrito:</label>
+              <div className="form-group">
+                <label htmlFor="distritoDestino" className="text-sm font-bold text-black">Distrito:</label>
                 <Select 
                   options={distritosDestino}
                   value={selectedDistritoDestino}
                   onChange={setSelectedDistritoDestino}
                   className="input-c"
-                  style={{ border: "solid 0.1rem #171a1f28", width: '11rem' }}
                   placeholder="Selecciona un distrito"
                   isDisabled={!selectedProvinciaDestino}
                 />
               </div>
             </div>
-            <div className='modal-buttons'>
-              
-              <ButtonSave/>
+            <div className="modal-buttons">
+              <ButtonSave onClick={handleSave} />
             </div>
           </div>
         </div>
@@ -196,9 +198,10 @@ const ProductosForm = ({ modalTitle, onClose }) => {
   );
 };
 
-ProductosForm.propTypes = {
+UbigeoForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
 };
 
-export default ProductosForm;
+export default UbigeoForm;
