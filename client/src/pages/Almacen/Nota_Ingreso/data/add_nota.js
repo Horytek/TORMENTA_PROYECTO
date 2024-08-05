@@ -16,7 +16,6 @@ const insertNotaAndDetalle = async (data) => {
       cantidad,
       observacion,
     });
-
     if (response.data.code === 1) {
       console.log('Nota y detalle insertados correctamente');
       return { success: true, message: 'Nota y detalle insertados correctamente' };
