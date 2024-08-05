@@ -9,9 +9,19 @@ import TablaRegGuia from "./ComponentsRegGuias/RegGuiaTable";
 import UbigeoForm from './UbigeoForm';
 import useClienteData from '../../data/data_cliente_guia';
 import useSucursalData from '../../data/data_sucursal_guia';
+import useDocumentoData from '../../data/generar_doc_guia';
 import TransporteForm from './UndTrans';
 import ClienteForm from './ClienteForm';
 import ProductosForm from '@/pages/Productos/ProductosForm';
+
+
+const glosaOptions = [
+  "COMPRA", "VENTA CON ENTREGA A TERCEROS", "TRASLADO ENTRE ALMACENES DE LA MISMA CIA.",
+  "CONSIGNACION", "DEVOLUCION", "RECOJO DE BIENES TRANSFORMADOS",
+  "IMPORTACION", "EXPORTACION", 
+  "OTROS", "VENTA SUJETA A CONFIRMACION DEL COMPRADOR", "TRASLADO DE BIENES PARA TRANSFORMACION",
+  "TRASLADO EMISOR ITINERANTE CP"
+];
 
 
 function RegistroGuia() {
@@ -20,9 +30,9 @@ function RegistroGuia() {
   const [modalType, setModalType] = useState('');
   const { clientes } = useClienteData();
   const { sucursales } = useSucursalData();
+  const { documentos } = useDocumentoData();
 
-  const [clienteSeleccionado, setClienteSeleccionado] = useState('');
-  const [sucursalSeleccionado, setSucursalSeleccionado] = useState('');
+  
 
   const openModal = (title, type) => {
     setModalTitle(title);
@@ -35,6 +45,9 @@ function RegistroGuia() {
     setModalTitle('');
     setModalType('');
   };
+
+  const currentDocumento = documentos.length > 0 ? documentos[0].guia : '';
+  
 
   return (
     <div>
@@ -55,7 +68,10 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="numguia" className='text-sm font-bold text-black'>Número de guía:</label>
-                  <input type="numguia" name='numguia' className='w-full bg-gray-200 border-gray-300 text-black rounded-lg border p-1 ' placeholder='T400-00000010' disabled />
+                  <input id="numero" 
+                  type="text" 
+                  value={currentDocumento} 
+                  className='w-full bg-gray-200 border-gray-300 text-black rounded-lg border p-1 ' disabled />
                 </div>
               </div>
               <div className="">
@@ -66,28 +82,36 @@ function RegistroGuia() {
               </div>
 
               <div className="">
-                <label htmlFor="cliente" className='text-sm font-bold text-black' value={clienteSeleccionado}
-                  onChange={(e) => setClienteSeleccionado(e.target.value)}>Cliente:</label>
-                <select id='cliente' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                <label htmlFor="cliente" className='text-sm font-bold text-black' >Cliente:</label>
+                <select id='cliente' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2' onChange={(e) => {
+                    const selected = clientes.find(d => d.id === parseInt(e.target.value));
+                    document.getElementById('documento').value = selected ? selected.documento : '';
+                  }}>
                   <option>Seleccione...</option>
-                  {clientes.map((cliente, index) => (
-                    <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
+                  {clientes.map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>{cliente.nombre}</option>
                   ))}
                 </select>
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
-                  <label htmlFor="tipodoc" className='text-sm font-bold text-black'>RUC/DNI:</label>
-                  <input type="tipodoc" name='cliente' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
+                  <label htmlFor="documento" className='text-sm font-bold text-black'>RUC/DNI:</label>
+                  <input type="text" 
+                  name='documento'
+                  id="documento" 
+                  className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
                 </div>
               </div>
 
               <div className='w-full relative group  text-start'>
                 <label htmlFor="vendedor" className='text-sm font-bold text-black'>Vendedor:</label>
-                <select id='vendedor' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2' value={sucursalSeleccionado} onChange={(e) => setSucursalSeleccionado(e.target.value)}>
+                <select id='vendedor' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2' onChange={(e) => {
+                    const selected = sucursales.find(s => s.id === parseInt(e.target.value));
+                    document.getElementById('id').value = selected ? selected.id : '';
+                  }}>
                   <option>Seleccione...</option>
-                  {sucursales.map((sucursal, index) => (
-                    <option key={index} value={sucursal.nombre}>{sucursal.nombre}</option>
+                  {sucursales.map((sucursal) => (
+                    <option key={sucursal.id} value={sucursal.id}>{sucursal.nombre}</option>
                   ))}
                 </select>
               </div>
@@ -113,26 +137,16 @@ function RegistroGuia() {
                 <label htmlFor="glosa" className='text-sm font-bold text-black'>Glosa.Sal:</label>
                 <select id='glosa' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
                   <option>Seleccione...</option>
-                  <option>01 | VENTA</option>
-                  <option>02 | COMPRA</option>
-                  <option>03 | VENTA CON ENTREGA A TERCEROS</option>
-                  <option>04 | TRASLADO ENTRE ALMACENES DE LA MISMA CIA.</option>
-                  <option>05 | CONSIGNACION</option>
-                  <option>06 | DEVOLUCION</option>
-                  <option>07 | RECOJO DE BIENES TRANSFORMADOS</option>
-                  <option>08 | IMPORTACION</option>
-                  <option>09 | EXPORTACION</option>
-                  <option>13 | OTROS</option>
-                  <option>14 | VENTA SUJETA A CONFIRMACION DEL COMPRADOR</option>
-                  <option>17 | TRASLADO DE BIENES PARA TRANSFORMACION</option>
-                  <option>18 | TRASLADO EMISOR ITINERANTE CP</option>
+                  {glosaOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
                 </select>
               </div>
 
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="ubipart" className='text-sm font-bold text-black'>Ubi. Part:</label>
-                  <input type="ubipart" name='ubipart' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
+                  <input type="ubipart" name='ubipart' className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
                 </div>
               </div>
               <div className="">
@@ -144,7 +158,7 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group mb-5 text-start'>
                   <label htmlFor="ubidest" className='text-sm font-bold text-black'>Ubi. Dest:</label>
-                  <input type="ubidest" name='ubidest' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
+                  <input type="ubidest" name='ubidest' className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1 ' disabled />
                 </div>
               </div>
               <div className="">
@@ -157,7 +171,7 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="trans" className='text-sm font-bold text-black'>Transporte:</label>
-                  <input type="trans" name='trans' className='w-full bg-gray-300 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
+                  <input type="trans" name='trans' className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
                 </div>
               </div>
               <div className="flex">

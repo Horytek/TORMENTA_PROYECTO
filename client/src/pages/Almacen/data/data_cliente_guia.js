@@ -12,8 +12,8 @@ const useClientesData = () => {
         if (response.data.code === 1) {
           const clientes = response.data.data.map(item => ({
             id:item.id,
-            nombre: item.destinatario_t,
-            documento: item.documento_t,
+            nombre: item.destinatario,
+            documento: item.documento,
           }));
           setClientes(clientes);
         } else {
