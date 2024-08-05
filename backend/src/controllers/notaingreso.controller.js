@@ -146,7 +146,7 @@ const getDestinatario = async (req, res) => {
 };
 
 const insertNotaAndDetalle = async (req, res) => {
-  const { almacenO, almacenD, destinatario, glosa, fecha, nota, producto, numComprobante, cantidad, observacion } = req.body;
+  const { almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion } = req.body;
 
   try {
     const connection = await getConnection();
@@ -168,7 +168,7 @@ const insertNotaAndDetalle = async (req, res) => {
     const [notaResult] = await connection.query(
       `
       INSERT INTO nota (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion) 
-      VALUES (?, ?, 1, ?, ?, ?, ?, 0, ?);
+      VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ?);
       `,
       [almacenO, almacenD, destinatario, id_comprobante, glosa, fecha, nota, observacion]
     );
@@ -187,9 +187,9 @@ const insertNotaAndDetalle = async (req, res) => {
     // Verificar si el producto existe en el almacén
     const [productoExistente] = await connection.query(
       `
-      SELECT 1 FROM producto WHERE id_producto = ?;
+      SELECT 1 FROM inventario WHERE id_producto = ? AND id_almacen = ?;
       `,
-      [producto]
+      [producto, almacenD]
     );
 
     if (productoExistente.length > 0) {
@@ -219,13 +219,18 @@ const insertNotaAndDetalle = async (req, res) => {
 
     res.json({ code: 1, message: 'Nota y detalle insertados correctamente' });
   } catch (error) {
-    // Revertir la transacción en caso de error
-    await connection.rollback();
-    res.status(500).send(error.message);
+    if (connection) {
+      // Revertir la transacción en caso de error
+      await connection.rollback();
+    }
+    res.status(500).send({ code: 0, message: error.message });
   } finally {
-    connection.release();
+    if (connection) {
+      connection.release();
+    }
   }
 };
+
 
   
 export const methods = {
