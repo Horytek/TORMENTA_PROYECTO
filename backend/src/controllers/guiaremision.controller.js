@@ -1,5 +1,6 @@
 import { getConnection } from "./../database/database";
 
+//MOSTRAR TODAS LAS GUIAS DE REMISION
 const getGuias = async (req, res) => {
     const {
         page = 0,
@@ -93,31 +94,33 @@ const getGuias = async (req, res) => {
     }
 };
 
+//SUCURSALES
 const getSucursal = async (req, res) => {
     try {
-      const connection = await getConnection();
-      const [result] = await connection.query(`SELECT id_sucursal AS id, nombre_sucursal AS nombre FROM sucursal`);
-      res.json({ code: 1, data: result, message: "Sucursal listados" });
+        const connection = await getConnection();
+        const [result] = await connection.query(`SELECT id_sucursal AS id, nombre_sucursal AS nombre FROM sucursal`);
+        res.json({ code: 1, data: result, message: "Sucursal listados" });
     } catch (error) {
-      res.status(500);
-      res.send(error.message);
+        res.status(500);
+        res.send(error.message);
     }
-  };
+};
 
-
-
-  const getUbigeoGuia = async (req, res) => {
+//UBIGEO
+const getUbigeoGuia = async (req, res) => {
     try {
-      const connection = await getConnection();
-      const [result] = await connection.query(`SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, departamento AS departamento, provincia AS provincia, distrito AS distrito FROM ubigeo`);
-      res.json({ code: 1, data: result, message: "Ubigeo listados" });
+        const connection = await getConnection();
+        const [result] = await connection.query(`SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, departamento AS departamento, provincia AS provincia, distrito AS distrito FROM ubigeo`);
+        res.json({ code: 1, data: result, message: "Ubigeo listados" });
     } catch (error) {
-      res.status(500);
-      res.send(error.message);
+        res.status(500);
+        res.send(error.message);
     }
-  };
+};
 
-  const generarCodigoGuia = async (req, res) => {
+
+//CODIGO PARA NUEVA GUIA
+const generarCodigoGuia = async (req, res) => {
     try {
         const connection = await getConnection();
         const [result] = await connection.query(`
@@ -132,12 +135,12 @@ const getSucursal = async (req, res) => {
     }
 };
 
-  
 
-  const getDestinatariosGuia = async (req, res) => {
+//DESTINATARIOS
+const getDestinatariosGuia = async (req, res) => {
     try {
-      const connection = await getConnection();
-      const [result] = await connection.query(`
+        const connection = await getConnection();
+        const [result] = await connection.query(`
                             SELECT 
     id_destinatario AS id,
     COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS destinatario,
@@ -155,80 +158,133 @@ ORDER BY
      END),
     destinatario;
             `);
-      res.json({ code: 1, data: result, message: "Productos listados" });
+        res.json({ code: 1, data: result, message: "Productos listados" });
     } catch (error) {
-      res.status(500);
-      res.send(error.message);
+        res.status(500);
+        res.send(error.message);
     }
-  };
+};
 
-  
-  const addCliente = async (req, res) => {
-    const connection = await getConnection();
-  
+//OBTENER TRANSPORTE PÚBLICO
+const getTransportePublicoGuia = async (req, res) => {
     try {
-      const { dniOrRuc, tipo_cliente, nombreCompleto, direccion } = req.body;
-  
-      console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
-  
-      if (
-        !dniOrRuc ||
-        !tipo_cliente ||
-        !nombreCompleto ||
-        (tipo_cliente === "Jurídico" && !direccion)
-      ) {
-        return res
-          .status(400)
-          .json({ message: "Bad Request. Please fill all fields correctly." });
-      }
-  
-      let nombres = "";
-      let apellidos = "";
-      let razon_social = "";
-  
-      if (tipo_cliente === "Natural") {
-        // Separar nombre completo en nombres y apellidos
-        const partesNombre = nombreCompleto.split(" ");
-        if (partesNombre.length > 1) {
-          // Considerar que el primer nombre puede tener múltiples partes
-          nombres = partesNombre.slice(0, -2).join(" ");
-          apellidos = partesNombre.slice(-2).join(" ");
-        } else {
-          nombres = nombreCompleto; // Asumir que es un nombre único si no se puede dividir
-        }
-  
-        // Insertar cliente natural
-        await connection.query(
-          "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES (?, '', ?, ?, '', '', 0)",
-          [dniOrRuc, nombres, apellidos]
-        );
-      } else {
-        razon_social = nombreCompleto;
-        // Insertar cliente jurídico
-        await connection.query(
-          "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES ('', ?, '', '', ?, ?, 0)",
-          [dniOrRuc, razon_social, direccion]
-        );
-      }
-  
-      res.json({ message: "Cliente añadido correctamente" });
+        const connection = await getConnection();
+        const [result] = await connection.query(`SELECT id_transportista AS id, placa AS placa, ruc AS ruc, razon_social AS razonsocial, telefono AS telefono 
+            FROM transportista 
+            WHERE ruc IS NOT NULL;`);
+        res.json({ code: 1, data: result, message: "Transportes Publicos listados" });
     } catch (error) {
-      console.error("Error en el backend:", error.message); // Log para verificar errores
-      res.status(500).send(error.message);
+        res.status(500);
+        res.send(error.message);
     }
-  };
+};
+
+//OBTENER TRANSPORTE PRIVADO
+const getTransportePrivadoGuia = async (req, res) => {
+    try {
+        const connection = await getConnection();
+        const [result] = await connection.query(`SELECT id_transportista AS id, placa AS placa, dni AS dni, CONCAT(nombres, ' ', apellidos) AS transportista, telefono AS telefono 
+            FROM transportista 
+            WHERE dni IS NOT NULL;`);
+        res.json({ code: 1, data: result, message: "Transportes Privados listados" });
+    } catch (error) {
+        res.status(500);
+        res.send(error.message);
+    }
+};
+
+//INSERTAR NUEVO TRANSPORTE PÚBLICO
+const addTransportistaPublico = async (req, res) => {
+    const {id, placa, ruc, razon_social, telefono } = req.body;
+
+    if (!placa || !ruc || !razon_social || !telefono) {
+        return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
+    }
+    try {
+        const connection = await getConnection();
+        const result = await connection.query(
+            `INSERT INTO transportista (id_transportista, placa, ruc, razon_social, telefono) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [id, placa, ruc, razon_social, telefono]
+        );
+        res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
+    } catch (error) {
+        res.status(500).send({ code: 0, message: error.message });
+    }
+};
+
+
+
+
+//INSERTAR NUEVO TRANSPORTE PRIVADO
+
+//AÑADIR CLIENTE
+const addCliente = async (req, res) => {
+    const connection = await getConnection();
+
+    try {
+        const { dniOrRuc, tipo_cliente, nombreCompleto, direccion } = req.body;
+
+        console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
+
+        if (
+            !dniOrRuc ||
+            !tipo_cliente ||
+            !nombreCompleto ||
+            (tipo_cliente === "Jurídico" && !direccion)
+        ) {
+            return res
+                .status(400)
+                .json({ message: "Bad Request. Please fill all fields correctly." });
+        }
+
+        let nombres = "";
+        let apellidos = "";
+        let razon_social = "";
+
+        if (tipo_cliente === "Natural") {
+            // Separar nombre completo en nombres y apellidos
+            const partesNombre = nombreCompleto.split(" ");
+            if (partesNombre.length > 1) {
+                // Considerar que el primer nombre puede tener múltiples partes
+                nombres = partesNombre.slice(0, -2).join(" ");
+                apellidos = partesNombre.slice(-2).join(" ");
+            } else {
+                nombres = nombreCompleto; // Asumir que es un nombre único si no se puede dividir
+            }
+
+            // Insertar cliente natural
+            await connection.query(
+                "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES (?, '', ?, ?, '', '', 0)",
+                [dniOrRuc, nombres, apellidos]
+            );
+        } else {
+            razon_social = nombreCompleto;
+            // Insertar cliente jurídico
+            await connection.query(
+                "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES ('', ?, '', '', ?, ?, 0)",
+                [dniOrRuc, razon_social, direccion]
+            );
+        }
+
+        res.json({ message: "Cliente añadido correctamente" });
+    } catch (error) {
+        console.error("Error en el backend:", error.message); // Log para verificar errores
+        res.status(500).send(error.message);
+    }
+};
 
 
 
 
 
-  
 
-  export const methods = {
+
+export const methods = {
     getGuias,
     getSucursal,
     getUbigeoGuia,
     generarCodigoGuia,
     getDestinatariosGuia,
-    
+
 };

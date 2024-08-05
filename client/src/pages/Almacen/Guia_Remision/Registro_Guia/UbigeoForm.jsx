@@ -96,8 +96,8 @@ const UbigeoForm = ({ modalTitle, onClose, onSave }) => {
   }, [selectedProvinciaDestino, selectedDepartamentoDestino, ubigeos]);
 
   const handleSave = () => {
-    const partida = `${selectedDistritoPartida?.label}, ${selectedProvinciaPartida?.label}, ${selectedDepartamentoPartida?.label}`;
-    const destino = `${selectedDistritoDestino?.label}, ${selectedProvinciaDestino?.label}, ${selectedDepartamentoDestino?.label}`;
+    const partida = `${selectedDistritoPartida?.label}/ ${selectedProvinciaPartida?.label}/ ${selectedDepartamentoPartida?.label}`;
+    const destino = `${selectedDistritoDestino?.label}/ ${selectedProvinciaDestino?.label}/ ${selectedDepartamentoDestino?.label}`;
     onSave(partida, destino); // Guarda los datos
     onClose(); // Cierra el modal
   };
