@@ -31,6 +31,8 @@ function RegistroGuia() {
   const { clientes } = useClienteData();
   const { sucursales } = useSucursalData();
   const { documentos } = useDocumentoData();
+  const [codubiPartida, setCodubiPartida] = useState('');
+  const [codubiDestino, setCodubiDestino] = useState('');
 
   
 
