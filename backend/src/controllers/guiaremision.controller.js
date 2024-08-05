@@ -213,10 +213,25 @@ const addTransportistaPublico = async (req, res) => {
     }
 };
 
-
-
-
 //INSERTAR NUEVO TRANSPORTE PRIVADO
+const addTransportistaPrivado = async (req, res) => {
+    const {id, placa, dni, nombres, apellidos, telefono } = req.body;
+
+    if (!placa || !dni || !nombres || !apellidos || !telefono) {
+        return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
+    }
+    try {
+        const connection = await getConnection();
+        const result = await connection.query(
+            `INSERT INTO transportista (id_transportista, placa, dni, nombres, apellidos, telefono) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, placa, ruc, razon_social, telefono]
+        );
+        res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
+    } catch (error) {
+        res.status(500).send({ code: 0, message: error.message });
+    }
+};
 
 //AÑADIR CLIENTE
 const addCliente = async (req, res) => {
@@ -286,5 +301,7 @@ export const methods = {
     getUbigeoGuia,
     generarCodigoGuia,
     getDestinatariosGuia,
-
+    getTransportePublicoGuia,
+    getTransportePrivadoGuia,
+    
 };
