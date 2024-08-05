@@ -7,7 +7,11 @@ const useProductosData = () => {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/ventas/producto_venta');
+        const response = await axios.get('http://localhost:4000/api/ventas/producto_venta', {
+          params: {
+            id_sucursal: localStorage.getItem('usuario'),
+          }
+        });
         
         if (response.data.code === 1) {
           const productos = response.data.data.map(item => ({

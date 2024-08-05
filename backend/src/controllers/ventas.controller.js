@@ -124,6 +124,7 @@ const generarComprobante = async (req, res) => {
 
 const getProductosVentas = async (req, res) => {
   try {
+    const { id_sucursal } = req.query; // Cambiar a req.query
     const connection = await getConnection();
     const [result] = await connection.query(`
                 SELECT PR.id_producto AS codigo, PR.descripcion AS nombre, 
@@ -132,8 +133,12 @@ const getProductosVentas = async (req, res) => {
                 INNER JOIN marca MA ON MA.id_marca = PR.id_marca
                 INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
                 INNER JOIN inventario inv ON inv.id_producto=PR.id_producto
-				INNER JOIN almacen al ON al.id_almacen=inv.id_almacen where PR.estado_producto=1 and inv.stock > 0
-            `);
+				INNER JOIN almacen al ON al.id_almacen=inv.id_almacen 
+				INNER JOIN sucursal_almacen sa ON sa.id_almacen=al.id_almacen
+				INNER JOIN sucursal su ON su.id_sucursal=sa.id_sucursal
+				INNER JOIN vendedor ven ON ven.dni=su.dni
+				INNER JOIN usuario us ON us.id_usuario=ven.id_usuario where PR.estado_producto=1 and inv.stock > 0 AND us.usua=?
+            `, [id_sucursal]);
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
     res.status(500);
