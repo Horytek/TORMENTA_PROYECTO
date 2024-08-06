@@ -7,11 +7,17 @@ import './ModalGuias.css';
 import { ModalTransporte } from './ModalGuias/ModalTransporte';
 import { ModalTransportista } from './ModalGuias/ModalTransportista';
 
+import useTransPubData from '../../data/data_transpub';
+
 const TransporteForm = ({ modalTitle, onClose }) => {
   const [transportePublico, setTransportePublico] = useState(true);
   const [isModalOpenTransporte, setIsModalOpenTransporte] = useState(false);
   const [isModalOpenTransportista, setIsModalOpenTransportista] = useState(false);
-
+  const { transpublicos } = useTransPubData();
+  const [selectedEmpresa, setSelectedEmpresa] = useState('');
+  const [ruc, setRuc] = useState('');
+  const [placa, setPlaca] = useState('');
+  const [telefonopub, setTelef] = useState('');
 
   // Logica Modal Transporte
   const openModalTransporte = () => {
@@ -31,6 +37,28 @@ const TransporteForm = ({ modalTitle, onClose }) => {
 
   const handleTransporteToggle = (value) => {
     setTransportePublico(value);
+    if (!value) {
+      setSelectedEmpresa('');
+      setRuc('');
+      setPlaca('');
+      setTelef('');
+    }
+  };
+
+  const handleEmpresaChange = (e) => {
+    const empresa = e.target.value;
+    setSelectedEmpresa(empresa);
+
+    const selectedTrans = transpublicos.find(trans => trans.razonsocial === empresa);
+    if (selectedTrans) {
+      setRuc(selectedTrans.ruc);
+      setPlaca(selectedTrans.placa);
+      setTelef(selectedTrans.telefonopub);
+    } else {
+      setRuc('');
+      setPlaca('');
+      setTelef('');
+    }
   };
 
   return (
@@ -61,22 +89,49 @@ const TransporteForm = ({ modalTitle, onClose }) => {
               </div>
               <div className='form-row'>
                 <div className='form-group'>
-                  <label htmlFor="ruc">RUC:</label>
-                  <input type="text" id="ruc"  disabled={!transportePublico} />
-                </div>
-                <div className='form-group mt-7'>
-                  <label htmlFor="m1l">
-                    <input type="checkbox" id="m1l" disabled={!transportePublico} />
-                    <span>Traslado en vehículos de categoría M1 o L</span>
-                  </label>
+                  <label htmlFor="empresa">Empresa:</label>
+                  <select 
+                    id="empresa" 
+                    value={selectedEmpresa} 
+                    onChange={handleEmpresaChange} 
+                    disabled={!transportePublico} 
+                    className={!transportePublico ? 'bg-gray-300' : ''}
+                  >
+                    <option value="">Seleccione una Empresa</option>
+                    {transpublicos.map(trans => (
+                      <option key={trans.id} value={trans.razonsocial}>{trans.razonsocial}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className='form-group'>
-                  <label htmlFor="empresa">Empresa:</label>
-                  <input type="text" id="empresa" disabled={!transportePublico} />
+                  <label htmlFor="telefonopub">Telefono:</label>
+                  <input 
+                    type="text" 
+                    id="telefonopub" 
+                    value={telefonopub} 
+                    disabled 
+                    className="form-input disabled:bg-gray-300" 
+                  />
+                </div>
+                <div className='form-group'>
+                  <label htmlFor="ruc">RUC:</label>
+                  <input 
+                    type="text" 
+                    id="ruc" 
+                    value={ruc} 
+                    disabled 
+                    className="form-input disabled:bg-gray-300" 
+                  />
                 </div>
                 <div className='form-group'>
                   <label htmlFor="placa">Placa:</label>
-                  <input type="text" id="placa" disabled={!transportePublico} />
+                  <input 
+                    type="text" 
+                    id="placa" 
+                    value={placa} 
+                    disabled 
+                    className="form-input disabled:bg-gray-300" 
+                  />
                 </div>
               </div>
             </div>
@@ -99,31 +154,31 @@ const TransporteForm = ({ modalTitle, onClose }) => {
               <div className='form-row'>
                 <div className='form-group'>
                   <label htmlFor="nombre-conductor">Nomb. Conductor:</label>
-                  <input type="text" id="nombre-conductor" disabled={transportePublico} />
+                  <input type="text" id="nombre-conductor" disabled={transportePublico} className={transportePublico ? 'bg-gray-300' : ''}/>
                 </div>
                 <div className='form-group'>
                   <label htmlFor="brevete">Brevete:</label>
-                  <input type="text" id="brevete" disabled={transportePublico} />
+                  <input type="text" id="brevete" disabled={transportePublico} className={transportePublico ? 'bg-gray-300' : ''}/>
                 </div>
                 <div className='form-group'>
                   <label htmlFor="apellidos-conductor">Apellidos Conductor:</label>
-                  <input type="text" id="apellidos-conductor" disabled={transportePublico} />
+                  <input type="text" id="apellidos-conductor" disabled={transportePublico} className={transportePublico ? 'bg-gray-300' : ''}/>
                 </div>
                 <div className='form-group'>
                   <label htmlFor="placa-privada">Placa:</label>
-                  <input type="text" id="placa-privada" disabled={transportePublico} />
+                  <input type="text" id="placa-privada" disabled={transportePublico} className={transportePublico ? 'bg-gray-300' : ''}/>
                 </div>
                 <div className='form-group'>
                   <label htmlFor="marca">Marca:</label>
-                  <input type="text" id="marca" disabled={transportePublico} />
+                  <input type="text" id="marca" disabled={transportePublico} className={transportePublico ? 'bg-gray-300' : ''}/>
                 </div>
                 <div className='form-group'>
                   <label htmlFor="inscripcion">Inscripción:</label>
-                  <input type="text" id="inscripcion" disabled={transportePublico} />
+                  <input type="text" id="inscripcion" disabled={transportePublico} className={transportePublico ? 'bg-gray-300' : ''}/>
                 </div>
                 <div className='form-group'>
                   <label htmlFor="carreta">Carreta:</label>
-                  <input type="text" id="carreta" disabled={transportePublico} />
+                  <input type="text" id="carreta" disabled={transportePublico} className={transportePublico ? 'bg-gray-300' : ''}/>
                 </div>
               </div>
             </div>

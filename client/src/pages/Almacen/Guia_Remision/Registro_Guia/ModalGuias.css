@@ -146,6 +146,19 @@
     margin-right: 10px;
   }
 
+  .datos-transporte .form-group select {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+  }
+
+  .datos-transporte .form-group select:disabled {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    color: #6c757d;
+  }
+
   
   .modal1 {
     width: 80%; /* Cambia este valor según lo ancho que quieras el modal */

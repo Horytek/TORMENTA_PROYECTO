@@ -169,9 +169,8 @@ ORDER BY
 const getTransportePublicoGuia = async (req, res) => {
     try {
         const connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_transportista AS id, placa AS placa, ruc AS ruc, razon_social AS razonsocial, telefono AS telefono 
-            FROM transportista 
-            WHERE ruc IS NOT NULL;`);
+        const sql = `SELECT id_transportista AS id, placa AS placa, ruc AS ruc, razon_social AS razonsocial, telefono AS telefonopub FROM transportista WHERE ruc IS NOT NULL`;
+        const [result] = await connection.query(sql, []); // Empty array for prepared statement
         res.json({ code: 1, data: result, message: "Transportes Publicos listados" });
     } catch (error) {
         res.status(500);
@@ -183,7 +182,7 @@ const getTransportePublicoGuia = async (req, res) => {
 const getTransportePrivadoGuia = async (req, res) => {
     try {
         const connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_transportista AS id, placa AS placa, dni AS dni, CONCAT(nombres, ' ', apellidos) AS transportista, telefono AS telefono 
+        const [result] = await connection.query(`SELECT id_transportista AS id, placa AS placa, dni AS dni, CONCAT(nombres, ' ', apellidos) AS transportista, telefono AS telefonopriv 
             FROM transportista 
             WHERE dni IS NOT NULL;`);
         res.json({ code: 1, data: result, message: "Transportes Privados listados" });

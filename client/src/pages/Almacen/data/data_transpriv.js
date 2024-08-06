@@ -15,7 +15,7 @@ const useDocumentoData = () => {
                         placa: item.placa,
                         dni: item.dni,
                         transportista: item.transportista,
-                        telefono: item.telefono,
+                        telefonopriv: item.telefonopriv,
                     }));
                     setTransportes(transportes);
                 } else {
