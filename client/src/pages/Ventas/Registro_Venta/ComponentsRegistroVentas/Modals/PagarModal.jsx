@@ -156,10 +156,14 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                 'Nota de venta',
         totalImporte_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2),
         descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
-        vuelto: cambio >= 0 ? cambio.toFixed(2) : '0.00' + cambio2 >= 0 ? cambio2.toFixed(2) : '0.00' + cambio3 >= 0 ? cambio3.toFixed(2) : '0.00',
-        recibido: (Number(montoRecibido) || 0) +
+        vuelto: (
+            (cambio >= 0 ? Number(cambio) : 0) +
+            (faltante > 0 && cambio2 >= 0 ? Number(cambio2) : 0) +
+            (faltante2 > 0 && cambio3 >= 0 ? Number(cambio3) : 0)
+          ).toFixed(2),
+        recibido: ((Number(montoRecibido) || 0) +
             (faltante > 0 ? (Number(montoRecibido2) || 0) : 0) +
-            (faltante2 > 0 ? (Number(montoRecibido3) || 0) : 0),
+            (faltante2 > 0 ? (Number(montoRecibido3) || 0) : 0)).toFixed(2),
         formadepago: metodo_pago +
             (faltante > 0 ? ", " + (metodo_pago2 || '') : '') +
             (faltante2 > 0 ? ", " + (metodo_pago3 || '') : '')
