@@ -157,8 +157,13 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         totalImporte_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2),
         descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
         vuelto: cambio >= 0 ? cambio.toFixed(2) : '0.00' + cambio2 >= 0 ? cambio2.toFixed(2) : '0.00' + cambio3 >= 0 ? cambio3.toFixed(2) : '0.00',
-        recibido: (montoRecibido + montoRecibido2 + montoRecibido3),
-        formadepago: metodo_pago ? metodo_pago : '' + ", " + metodo_pago2 ? metodo_pago2 : '' + ", " + metodo_pago3 ? metodo_pago3 : '',
+        recibido: (Number(montoRecibido) || 0) +
+            (faltante > 0 ? (Number(montoRecibido2) || 0) : 0) +
+            (faltante2 > 0 ? (Number(montoRecibido3) || 0) : 0),
+        formadepago: metodo_pago +
+            (faltante > 0 ? ", " + (metodo_pago2 || '') : '') +
+            (faltante2 > 0 ? ", " + (metodo_pago3 || '') : '')
+        ,
         detalles: detalles.map(detalle => {
             const producto = productos.find(producto => producto.codigo === detalle.codigo);
             return {
@@ -173,6 +178,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
             };
         }).filter(detalle => detalle !== null),
     };
+
     console.log(datosVentaComprobante);
     {/* Fin de los datos que pasan al voucher */ }
 
@@ -325,7 +331,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                 className={"input-c w-40 ml-2"}
                             />
-                            <div className='mb-4' style={{marginLeft: "45px"}}>
+                            <div className='mb-4' style={{ marginLeft: "45px" }}>
                                 <label className="text-gray-800 font-semibold">Aplicar descuento</label>
                                 <div className='flex items-center h-50' >
                                     <span className='mt-2'>S/.</span>
@@ -392,14 +398,14 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 </div>
                                 <div className="flex mb-4">
                                     <InputField
-                                        label="Monto recibido adicional"
+                                        label="N°2 || Monto recibido"
                                         symbol="S/."
                                         placeholder={faltante.toFixed(2)}
                                         value={montoRecibido2}
                                         onChange={(e) => setMontoRecibido2(e.target.value)}
                                         pattern="[0-9]*[.]?[0-9]{0,2}"
                                         onKeyDown={validateDecimalInput}
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28"}}
+                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
                                         className={"input-c w-40 ml-2"}
                                     />
                                     <SelectField
@@ -454,7 +460,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     <InputField
                                         placeholder={faltante2.toFixed(2)}
 
-                                        label="Monto recibido adicional"
+                                        label="N°3 || Monto recibido"
                                         symbol="S/."
                                         value={montoRecibido3}
                                         onChange={(e) => setMontoRecibido3(e.target.value)}
