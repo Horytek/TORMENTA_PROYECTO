@@ -33,7 +33,7 @@ const getSalidas = async (req, res) => {
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
               AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
-              AND (? = '%' OR n.id_almacenD = ?)
+              AND (? = '%' OR n.id_almacenO = ?)
           GROUP BY 
               id, fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
           ORDER BY 
