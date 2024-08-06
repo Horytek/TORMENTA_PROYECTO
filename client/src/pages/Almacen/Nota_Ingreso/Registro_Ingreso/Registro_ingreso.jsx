@@ -184,7 +184,7 @@ function Registro_Ingresos() {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
-                  Destinatario:
+                  Proveedor:
                 </label>
                 <select 
                   className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
@@ -213,7 +213,7 @@ function Registro_Ingresos() {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="proveedor">
-                  Proveedor:
+                  Nombre de nota:
                 </label>
                 <input 
                   className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
