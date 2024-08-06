@@ -16,6 +16,7 @@ const useTransPubData = () => {
             ruc: item.ruc,
             razonsocial: item.razonsocial,
             telefonopub: item.telefonopub,
+            vehiculopub: item.vehiculopub,
           }));
           setTranspublicos(transportes);
         } else {

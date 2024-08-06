@@ -169,7 +169,11 @@ ORDER BY
 const getTransportePublicoGuia = async (req, res) => {
     try {
         const connection = await getConnection();
-        const sql = `SELECT id_transportista AS id, placa AS placa, ruc AS ruc, razon_social AS razonsocial, telefono AS telefonopub FROM transportista WHERE ruc IS NOT NULL`;
+        const sql = `SELECT t.id_transportista AS id, v.placa AS placa, t.ruc AS ruc, t.razon_social AS razonsocial, t.telefono AS telefonopub, v.tipo AS vehiculopub
+                    FROM transportista t
+                    INNER JOIN vehiculo v 
+                    ON t.placa = v.placa 
+                    WHERE ruc IS NOT NULL;`;
         const [result] = await connection.query(sql, []); // Empty array for prepared statement
         res.json({ code: 1, data: result, message: "Transportes Publicos listados" });
     } catch (error) {
@@ -182,9 +186,11 @@ const getTransportePublicoGuia = async (req, res) => {
 const getTransportePrivadoGuia = async (req, res) => {
     try {
         const connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_transportista AS id, placa AS placa, dni AS dni, CONCAT(nombres, ' ', apellidos) AS transportista, telefono AS telefonopriv 
-            FROM transportista 
-            WHERE dni IS NOT NULL;`);
+        const [result] = await connection.query(`SELECT t.id_transportista AS id, v.placa AS placa, t.dni AS dni, CONCAT(t.nombres, ' ', t.apellidos) AS transportista, t.telefono AS telefonopriv, v.tipo AS vehiculopriv
+                        FROM transportista t
+                        INNER JOIN vehiculo v 
+                        ON t.placa = v.placa
+                        WHERE dni IS NOT NULL;`);
         res.json({ code: 1, data: result, message: "Transportes Privados listados" });
     } catch (error) {
         res.status(500);
@@ -194,7 +200,7 @@ const getTransportePrivadoGuia = async (req, res) => {
 
 //INSERTAR NUEVO TRANSPORTE PÚBLICO
 const addTransportistaPublico = async (req, res) => {
-    const {id, placa, ruc, razon_social, telefono } = req.body;
+    const { id, placa, ruc, razon_social, telefono } = req.body;
 
     if (!placa || !ruc || !razon_social || !telefono) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -214,7 +220,7 @@ const addTransportistaPublico = async (req, res) => {
 
 //INSERTAR NUEVO TRANSPORTE PRIVADO
 const addTransportistaPrivado = async (req, res) => {
-    const {id, placa, dni, nombres, apellidos, telefono } = req.body;
+    const { id, placa, dni, nombres, apellidos, telefono } = req.body;
 
     if (!placa || !dni || !nombres || !apellidos || !telefono) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -302,5 +308,5 @@ export const methods = {
     getDestinatariosGuia,
     getTransportePublicoGuia,
     getTransportePrivadoGuia,
-    
+
 };
