@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaTrash } from 'react-icons/fa6';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-const NuevaTablaSalida = ({ ingresos, setProductosSeleccionados }) => {
+const NuevaTablaSalida = ({ salidas, setProductosSeleccionados }) => {
   const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
   
@@ -18,21 +18,21 @@ const NuevaTablaSalida = ({ ingresos, setProductosSeleccionados }) => {
 
   const handleConfirmEliminar = () => {
     if (productoAEliminar) {
-      const nuevosProductosSeleccionados = ingresos.filter(p => p.codigo !== productoAEliminar.codigo);
+      const nuevosProductosSeleccionados = salidas.filter(p => p.codigo !== productoAEliminar.codigo);
       setProductosSeleccionados(nuevosProductosSeleccionados);
       localStorage.setItem('productosSeleccionados', JSON.stringify(nuevosProductosSeleccionados));
     }
     closeModalEliminar();
   };
 
-  const renderEntradaRow = (ingreso) => (
-    <tr key={ingreso.codigo} className='tr-tabla-nuevoingreso'>
-      <td className="text-center">{ingreso.codigo}</td>
-      <td className="text-center">{ingreso.descripcion}</td>
-      <td className="text-center">{ingreso.marca}</td>
-      <td className="text-center">{ingreso.cantidad}</td>
+  const renderEntradaRow = (salida) => (
+    <tr key={salida.codigo} className='tr-tabla-nuevoingreso'>
+      <td className="text-center">{salida.codigo}</td>
+      <td className="text-center">{salida.descripcion}</td>
+      <td className="text-center">{salida.marca}</td>
+      <td className="text-center">{salida.cantidad}</td>
       <td className="text-center">
-        <button onClick={() => openModalEliminar(ingreso)}>
+        <button onClick={() => openModalEliminar(salida)}>
           <FaTrash className="w-4 h-4 text-red-500" />
         </button>
       </td>
@@ -52,7 +52,7 @@ const NuevaTablaSalida = ({ ingresos, setProductosSeleccionados }) => {
           </tr>
         </thead>
         <tbody>
-          {ingresos.map(renderEntradaRow)}
+          {salidas.map(renderEntradaRow)}
         </tbody>
       </table>
       {isModalOpenEliminar && (
@@ -68,7 +68,7 @@ const NuevaTablaSalida = ({ ingresos, setProductosSeleccionados }) => {
 };
 
 NuevaTablaSalida.propTypes = {
-  ingresos: PropTypes.array.isRequired,
+  salidas: PropTypes.array.isRequired,
   setProductosSeleccionados: PropTypes.func.isRequired,
 };
 

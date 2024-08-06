@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import ModalBuscarProducto from '@/pages/Almacen/Nota_Ingreso/ComponentsNotaIngreso/Modals/BuscarProductoForm';  // Asegúrate de que la ruta del componente Modal sea correcta
+import ModalBuscarProducto from './ComponentsNuevaNotaSalida/BuscarProductoForm';  // Asegúrate de que la ruta del componente Modal sea correcta
 import { MdPersonAdd } from "react-icons/md";
 import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
@@ -14,7 +14,7 @@ import useDestinatarioData from '../data/data_destinatario_salida';
 import useDocumentoData from '../data/data_documento_salida';
 import useAlmacenData from '../data/data_almacen_salida';
 import './Nueva_Nota_salida.css';
-
+import insertNotaAndDetalle from '../data/insert_nota_salida';
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
   "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA", "DEVOLUCION", "CLIENTE",
@@ -38,7 +38,7 @@ function NuevaSalidas() {
   const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
 
-  const [almacenDestino, setAlmacenDestino] = useState(() => {
+  const [almacenOrigen, setalmacenOrigen] = useState(() => {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
@@ -48,10 +48,10 @@ function NuevaSalidas() {
   }, [productosSeleccionados]);
 
   useEffect(() => {
-    if (almacenDestino !== '') {
-      localStorage.setItem('almacen', almacenDestino.toString());
+    if (almacenOrigen !== '') {
+      localStorage.setItem('almacen', almacenOrigen.toString());
     }
-  }, [almacenDestino]);
+  }, [almacenOrigen]);
 
   const openModalBuscarProducto = () => setIsModalOpen(true);
   const closeModalBuscarProducto = () => setIsModalOpen(false);
@@ -74,7 +74,7 @@ function NuevaSalidas() {
   };
 
   const handleBuscarProducto = async () => {
-    const almacenId = almacenDestino || 1;
+    const almacenId = almacenOrigen || 1;
     const filters = {
       descripcion: searchInput,
       almacen: almacenId,
@@ -91,6 +91,20 @@ function NuevaSalidas() {
 
   const agregarProducto = (producto, cantidad) => {
     setProductosSeleccionados((prevProductos) => {
+      const cantidadExistente = prevProductos
+        .filter(p => p.codigo === producto.codigo)
+        .reduce((total, p) => total + p.cantidad, 0);
+      const cantidadTotal = cantidadExistente + cantidad;
+
+      if (cantidadTotal > producto.stock) {
+        const maxCantidad = producto.stock - cantidadExistente;
+        if (maxCantidad > 0) {
+          alert(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
+        }
+        alert(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
+        return prevProductos;
+      }
+
       const productoExistente = prevProductos.find(p => p.codigo === producto.codigo);
       if (productoExistente) {
         return prevProductos.map(p =>
@@ -100,7 +114,59 @@ function NuevaSalidas() {
         return [...prevProductos, { ...producto, cantidad }];
       }
     });
+
     closeModalBuscarProducto();
+  };
+
+  const handleGuardar = async () => {
+
+    let stockExcedido = false;
+    productosSeleccionados.forEach(producto => {
+      if (producto.cantidad > producto.stock) {
+        stockExcedido = true;
+      }
+    });
+
+    if (stockExcedido) {
+      alert('La cantidad de algunos productos excede el stock disponible.');
+      return;
+    }
+
+    const almacenO = document.getElementById('almacen_origen').value;
+    const almacenD = document.getElementById('almacen_destino').value;
+    const destinatario = document.getElementById('destinatario').value;
+    const glosa = document.getElementById('glosa').value;
+    const fecha = document.getElementById('fechaDocu').value;
+    const nota = document.getElementById('nomnota').value;
+    const numComprobante = document.getElementById('numero').value;
+    const observacion = document.getElementById('observacion').value;
+
+    const productos = productosSeleccionados.map(producto => ({
+      id: producto.codigo,
+      cantidad: producto.cantidad
+    }));
+
+    const data = {
+      almacenO,
+      almacenD,
+      destinatario,
+      glosa,
+      nota,
+      fecha,
+      producto: productos.map(p => p.id),
+      numComprobante,
+      cantidad: productos.map(p => p.cantidad),
+      observacion
+    };
+
+    const result = await insertNotaAndDetalle(data);
+
+    if (result.success) {
+      alert('Nota y detalle insertados correctamente');
+      handleCancel();
+    } else {
+      alert('Error al insertar nota y detalle: ' + result.message);
+    }
   };
 
   const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
@@ -124,79 +190,66 @@ function NuevaSalidas() {
         <form className="flex rounded-lg" >
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
-            <div className="mb-4">
-  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
-    Almacén origen:
-  </label>
-  <select className='form-elementwasalida' id="almacen_origen">
-    <option value="">Seleccionar</option>
-    {almacenes.map(almacen => (
-      <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
-    ))}
-  </select>
-</div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
+                  Almacén origen:
+                </label>
+                <select className='form-elementwasalida' id="almacen_origen" value={almacenOrigen} onChange={(e) => setalmacenOrigen(parseInt(e.target.value))} >
+                  <option value="">Seleccionar</option>
+                  {almacenes.map(almacen => (<option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>))}
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
+                  Almacén destino:
+                </label>
+                <select className='form-elementwasalida' id="almacen_destino">
+                  <option value="">Seleccionar</option>
+                  {almacenes.map(almacen => (
+                    <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
+                  ))}
+                </select>
+              </div>
 
-<div className="mb-4">
-  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
-    Almacén destino:
-  </label>
-  <select
-    className='form-elementwasalida'
-    id="almacen_destino"
-    value={almacenDestino}
-    onChange={(e) => setAlmacenDestino(parseInt(e.target.value))}
-  >
-    <option value="">Seleccionar</option>
-    {almacenes.map(almacen => (
-      <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
-    ))}
-  </select>
-</div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
+                  Destinatario:
+                </label>
+                <select
+                  className='form-elementwasalida'
+                  id="destinatario"
+                  onChange={(e) => {
+                    const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
+                    document.getElementById('ruc').value = selected ? selected.documento : '';
+                  }}
+                >
+                  <option value="">Seleccionar</option>
+                  {destinatarios.map(destinatario => (
+                    <option key={destinatario.id} value={destinatario.id}>{destinatario.destinatario}</option>
+                  ))}
+                </select>
+              </div>
 
-<div className="mb-4">
-  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
-    Destinatario:
-  </label>
-  <select
-    className='form-elementwasalida'
-    id="destinatario"
-    onChange={(e) => {
-      const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
-      document.getElementById('ruc').value = selected ? selected.documento : '';
-    }}
-  >
-    <option value="">Seleccionar</option>
-    {destinatarios.map(destinatario => (
-      <option key={destinatario.id} value={destinatario.id}>{destinatario.destinatario}</option>
-    ))}
-  </select>
-</div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
+                  RUC:
+                </label>
+                <input className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="ruc" type="text" readOnly />
+              </div>
 
-<div className="mb-4">
-  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
-    RUC:
-  </label>
-  <input
-    className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3'
-    id="ruc"
-    type="text"
-    readOnly
-  />
-</div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nomnota">
+                  Nombre de nota:
+                </label>
+                <input className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="nomnota" type="text" />
+              </div>
 
-<div className="mb-4">
-  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nomnota">
-    Nombre de nota:
-  </label>
-  <input className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="nomnota" type="text" />
-</div>
-
-<div className="mb-4">
-  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
-    Fecha Docu:
-  </label>
-  <input type="date" className="form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3" id="fechaDocu" defaultValue={currentDate} />
-</div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
+                  Fecha Docu:
+                </label>
+                <input type="date" className="form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3" id="fechaDocu" defaultValue={currentDate} />
+              </div>
 
             </div>
             <div className="flex justify-start mt-4 space-x-2">
@@ -214,7 +267,7 @@ function NuevaSalidas() {
                 </button>
               </Link>
 
-              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={handleGuardar}>
                 <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
             </div>
@@ -225,18 +278,15 @@ function NuevaSalidas() {
                 Número:
               </label>
               <input
-                className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3'
-                id="numero"
-                type="text"
-                value={currentDocumento}
-                readOnly
+                className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full'
+                id="numero" type="text" value={currentDocumento} readOnly
               />
             </div>
             <div className="mb-8">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
                 Glosa:
               </label>
-              <select className="form-elementwasalida" id="glosa">
+              <select className="form-elementwasalida w-full" id="glosa">
                 {glosaOptions.map(option => (
                   <option key={option} value={option}>{option}</option>
                 ))}
@@ -246,17 +296,15 @@ function NuevaSalidas() {
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="observacion">
                 Observación:
               </label>
-              <textarea className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-24 p-2.5 w-full h-full" id="observacion"></textarea>
+              <textarea className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full h-full" id="observacion"></textarea>
             </div>
           </div>
         </form>
         <div>
           <br />
           <br />
-          {/* Componente de tabla de ingresos */}
           <NuevaTablaSalida
-            ingresos={productosSeleccionados} setProductosSeleccionados={setProductosSeleccionados}
-          /* currentPage={currentPage} */
+            salidas={productosSeleccionados} setProductosSeleccionados={setProductosSeleccionados}
           />
         </div>
       </div>
@@ -272,12 +320,6 @@ function NuevaSalidas() {
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
-      {/* Modal de Agregar Producto */}
-      {isModalOpenProducto && (
-        <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
-      )}
-      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
-
 
     </div>
   );
