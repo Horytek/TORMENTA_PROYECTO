@@ -41,7 +41,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
         const filtros = {
             fecha_i: date_i,
             fecha_e: date_e,
-            razon: razon,
+            razon_social: razon,
             almacen: almacenSeleccionado.id !== '%' ? almacenSeleccionado.id : '%',
         };
 

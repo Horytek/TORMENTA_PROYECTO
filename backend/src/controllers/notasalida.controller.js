@@ -3,7 +3,7 @@ import { getConnection } from "../database/database";
 
 
 const getSalidas = async (req, res) => {
-  const { fecha_i = '2022-01-01', fecha_e = '2027-12-27', razon_social = '', almacen = '%' } = req.query;
+  const { fecha_i = '2022-01-01', fecha_e = '2057-12-27', razon_social = '', almacen = '%' } = req.query;
 
   try {
       const connection = await getConnection();
