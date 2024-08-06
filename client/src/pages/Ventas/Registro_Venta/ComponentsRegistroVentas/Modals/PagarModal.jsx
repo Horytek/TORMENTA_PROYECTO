@@ -191,20 +191,26 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const handlePrint = async () => {
         let nombreImpresora = "BASIC 230 STYLE";
         let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
-
+    
         // eslint-disable-next-line no-undef
         const conector = new connetor_plugin();
         const content = generateReceiptContent(datosVentaComprobante, datosVenta);
-
+    
         conector.textaling("center");
-        conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", { width: 100, height: 100 });
+    
+        // Verifica si las opciones de tamaño están en el formato correcto
+        const imgOptions = { width: 50, height: 50 };
+        const qrOptions = { width: 300, height: 300 };
+    
+        conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", imgOptions);
         content.split('\n').forEach(line => {
             conector.text(line);
         });
-        conector.qr("https://www.facebook.com/profile.php?id=100055385846115", { width: 700, height: 700 });
+    
+        conector.qr("https://www.facebook.com/profile.php?id=100055385846115", qrOptions);
         conector.feed(5);
         conector.cut("0");
-
+    
         const resp = await conector.imprimir(nombreImpresora, api_key);
         if (resp === true) {
             console.log("Impresión exitosa");
