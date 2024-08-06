@@ -18,7 +18,7 @@ import './Nueva_Nota_salida.css';
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
   "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA", "DEVOLUCION", "CLIENTE",
-  "MERCAD DEVOLUCIÓN (PRUEBA)", "PROD.DESVOLUCIÓN (M.P.)", 
+  "MERCAD DEVOLUCIÓN (PRUEBA)", "PROD.DESVOLUCIÓN (M.P.)",
   "ING. PRODUCCIÓN(P.T.)", "AJUSTE INVENTARIO", "OTROS INGRESOS",
   "DESARROLLO CONSUMO INTERNO", "INGRESO DIFERIDO"
 ];
@@ -125,97 +125,92 @@ function NuevaSalidas() {
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
             <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
-                  Almacén origen:
-                </label>
-                <select className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-2.5' id="almacen_origen">
-                <option value="">Seleccionar</option>
-                  {almacenes.map(almacen => (
-                    <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
-                  Almacén destino:
-                </label>
-                <select 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-2.5' 
-                  id="almacen_destino"
-                  value={almacenDestino}
-                  onChange={(e) => setAlmacenDestino(parseInt(e.target.value))}
-                >
-                  <option value="">Seleccionar</option>
-                  {almacenes.map(almacen => (
-                    <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
-                  Destinatario:
-                </label>
-                <select 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-2.5' 
-                  id="destinatario"
-                  onChange={(e) => {
-                    const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
-                    document.getElementById('ruc').value = selected ? selected.documento : '';
-                  }}
-                >
-                  <option value="">Seleccionar</option>
-                  {destinatarios.map(destinatario => (
-                    <option key={destinatario.id} value={destinatario.id}>{destinatario.destinatario}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
-                  RUC:
-                </label>
-                <input 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-2.5' 
-                  id="ruc" 
-                  type="text" 
-                  readOnly
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
-                  Número:
-                </label>
-                <input 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-2.5' 
-                  id="numero" 
-                  type="text" 
-                  value={currentDocumento} 
-                  readOnly
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
-                  Fecha Docu:
-                </label>
-                <input 
-                  type="date" 
-                  className="border border-gray-300 rounded-lg p-2.5" 
-                  id="fechaDocu" 
-                  defaultValue={currentDate}
-                />
-              </div>
+  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
+    Almacén origen:
+  </label>
+  <select className='form-elementwasalida' id="almacen_origen">
+    <option value="">Seleccionar</option>
+    {almacenes.map(almacen => (
+      <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
+    ))}
+  </select>
+</div>
+
+<div className="mb-4">
+  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
+    Almacén destino:
+  </label>
+  <select
+    className='form-elementwasalida'
+    id="almacen_destino"
+    value={almacenDestino}
+    onChange={(e) => setAlmacenDestino(parseInt(e.target.value))}
+  >
+    <option value="">Seleccionar</option>
+    {almacenes.map(almacen => (
+      <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
+    ))}
+  </select>
+</div>
+
+<div className="mb-4">
+  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
+    Destinatario:
+  </label>
+  <select
+    className='form-elementwasalida'
+    id="destinatario"
+    onChange={(e) => {
+      const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
+      document.getElementById('ruc').value = selected ? selected.documento : '';
+    }}
+  >
+    <option value="">Seleccionar</option>
+    {destinatarios.map(destinatario => (
+      <option key={destinatario.id} value={destinatario.id}>{destinatario.destinatario}</option>
+    ))}
+  </select>
+</div>
+
+<div className="mb-4">
+  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
+    RUC:
+  </label>
+  <input
+    className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3'
+    id="ruc"
+    type="text"
+    readOnly
+  />
+</div>
+
+<div className="mb-4">
+  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nomnota">
+    Nombre de nota:
+  </label>
+  <input className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="nomnota" type="text" />
+</div>
+
+<div className="mb-4">
+  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
+    Fecha Docu:
+  </label>
+  <input type="date" className="form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3" id="fechaDocu" defaultValue={currentDate} />
+</div>
+
             </div>
             <div className="flex justify-start mt-4 space-x-2">
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor} >
-                <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
+                <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo destinatario
               </button>
-              
+
               <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalBuscarProducto} >
                 <FaBarcode className="inline-block mr-2" /> Buscar producto
               </button>
 
               <Link to="/almacen/nota_salida">
-              <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={handleCancel}>
-                <MdCancelPresentation className="inline-block mr-2"  /> Cancelar
+                <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={handleCancel}>
+                  <MdCancelPresentation className="inline-block mr-2" /> Cancelar
                 </button>
               </Link>
 
@@ -225,11 +220,23 @@ function NuevaSalidas() {
             </div>
           </div>
           <div className="ml-4 flex flex-col w-1/2">
-            <div className="mb-4">
+            <div className="mb-8">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
+                Número:
+              </label>
+              <input
+                className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3'
+                id="numero"
+                type="text"
+                value={currentDocumento}
+                readOnly
+              />
+            </div>
+            <div className="mb-8">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
                 Glosa:
               </label>
-              <select className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-2.5 w-full" id="glosa">
+              <select className="form-elementwasalida" id="glosa">
                 {glosaOptions.map(option => (
                   <option key={option} value={option}>{option}</option>
                 ))}
@@ -253,10 +260,10 @@ function NuevaSalidas() {
           />
         </div>
       </div>
-      <ModalBuscarProducto 
-        isOpen={isModalOpen} 
-        onClose={closeModalBuscarProducto} 
-        onBuscar={handleBuscarProducto} 
+      <ModalBuscarProducto
+        isOpen={isModalOpen}
+        onClose={closeModalBuscarProducto}
+        onBuscar={handleBuscarProducto}
         setSearchInput={setSearchInput}
         productos={productos}
         agregarProducto={agregarProducto}
@@ -270,9 +277,7 @@ function NuevaSalidas() {
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
-      <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
-        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }} >SUCURSAL: TIENDA ARICA 3 / CAJA ARICA3</h1>
-      </div>
+
 
     </div>
   );
