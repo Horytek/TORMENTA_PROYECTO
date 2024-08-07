@@ -42,7 +42,10 @@ function Sidebar() {
           {[
             { to: '/inicio', icon: <FaHome className="text-xl" />, text: 'Inicio' },
             { to: '/productos', icon: <FaChartLine className="text-xl" />, text: 'Productos' , subLinks: [
-              { to: '/productos/marcas', text: 'Marcas' }
+              { to: '/productos/marcas', text: 'Marcas' },
+              { to: '/productos/categorias', text: 'Categorias'},
+              { to: '/productos/subcategorias', text: 'Subcategorias'},
+
             ]},
             
             { to: '/empleados', icon: <FaUsers className="text-xl" />, text: 'Empleados' },

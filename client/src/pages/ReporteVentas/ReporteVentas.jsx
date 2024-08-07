@@ -142,6 +142,7 @@ const ReporteVentas = () => {
       >
         <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 relative">
           <Tabs variant="underlined" aria-label="Tabs variants">
+            <Tab key="arica" title="Tienda Arica" />
             <Tab key="arica1" title="Tienda Arica-1" />
             <Tab key="arica2" title="Tienda Arica-2" />
             <Tab key="arica3" title="Tienda Arica-3" />
@@ -174,12 +175,7 @@ const ReporteVentas = () => {
                   onChange={(date) => setSelectedDate(date)}
                   className="border-gray-300 rounded-lg shadow-lg bg-white"
                   customInput={<CustomInput />}
-                  renderMonthContent={(
-                    month,
-                    shortMonth,
-                    longMonth,
-                    day
-                  ) => {
+                  renderMonthContent={(month, shortMonth, longMonth, day) => {
                     const fullYear = new Date(day).getFullYear();
                     const tooltipText = `Tooltip for month: ${longMonth} ${fullYear}`;
                     return <span title={tooltipText}>{shortMonth}</span>;
@@ -195,13 +191,8 @@ const ReporteVentas = () => {
         </div>
       </div>
 
-      <div className="flex-grow" style={{ marginBottom: "15px" }}>
-        <div className="container-kpis">
-          <div className="kpis">
-            <KPIS />
-          </div>
-        </div>
-      </div>
+      <KPIS />
+
       <div
         className="flex-grow container-overview"
         style={{ marginBottom: "30px" }}

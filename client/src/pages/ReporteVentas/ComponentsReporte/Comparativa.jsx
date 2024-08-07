@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { LineChart } from '@tremor/react';
+import { Legend, LineChart } from '@tremor/react';
 import useAnalisisGananciasSucursales from '../data/data_ganancias_sucr'; 
 
 const valueFormatter = (number) => {
@@ -57,7 +57,9 @@ const LineChartUsageExampleAxisLabel = () => {
           valueFormatter={valueFormatter}
           xAxisLabel="Meses del año"
           yAxisLabel="Ventas (Soles)"
+          
         />
+        
       )}
     </div>
   );

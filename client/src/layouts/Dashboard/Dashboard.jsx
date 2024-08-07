@@ -8,6 +8,8 @@ import Ventas from '@/pages/Ventas/Venta/Ventas';
 import Empleados from '@/pages/Empleados/Empleados';
 import Productos from '@/pages/Productos/Productos';
 import Marcas from '@/pages/Marcas/Marcas';
+import Categorias from '@/pages/Categorias/Categorias';
+import Subcategorias from '@/pages/Subcategorias/Subcategorias';
 import Almacen from '@/pages/Almacen/Almacén';
 import Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Nota_ingreso';
 import Nueva_Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Registro_Ingreso/Registro_ingreso';
@@ -52,6 +54,10 @@ function Dashboard() {
                     <Route path="/productos" element={<Productos />} />
                     {/* Ruta para la página de marcas */}	
                     <Route path="/productos/marcas" element={<Marcas />} />
+                    {/* Ruta para la pagina de categorias*/}
+                    <Route path="/productos/categorias" element={<Categorias />} />
+                    {/* Ruta para la pagina de subcategorias*/}
+                    <Route path="/productos/subcategorias" element={<Subcategorias />} />
                     {/* Ruta para la página de almacén */}
                     <Route path="/almacen" element={<Almacen />} />
                     {/* Ruta para la página de Historico */}
