@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmationModal from './Modals/ConfirmationModal';
+import Pagination from '@/components/Pagination/Pagination'; // Asegúrate de ajustar la ruta
 import anularNota from '../data/anular_nota_salida'; // Asegúrate de ajustar la ruta
 
 const TablaSalida = ({ salidas }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
-  const [notaIdToAnular, setNotaIdToAnular] = useState(null); // Para almacenar la nota seleccionada para anular
+  const [notaIdToAnular, setNotaIdToAnular] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6); // Estado para cantidad de elementos por página
 
   const handleSelectChange2 = (event, id) => {
     const value = event.target.value;
@@ -16,9 +19,9 @@ const TablaSalida = ({ salidas }) => {
         setIsModalOpenImprimir2(true);
         break;
       case 'anular':
-        setNotaIdToAnular(id); // Guarda el id de la nota a anular
+        setNotaIdToAnular(id);
         setIsModalOpenAnular(true);
-        break;  
+        break;
       default:
         break;
     }
@@ -32,7 +35,6 @@ const TablaSalida = ({ salidas }) => {
     setIsModalOpenAnular(false);
   };
 
-
   const handleConfirmImprimir2 = () => {
     setIsModalOpenImprimir2(false);
   };
@@ -41,7 +43,6 @@ const TablaSalida = ({ salidas }) => {
     if (notaIdToAnular) {
       const result = await anularNota(notaIdToAnular);
       if (result.success) {
-        // Actualizar la lista de salidas si es necesario
         console.log(result.message);
         window.location.reload();
       } else {
@@ -50,7 +51,6 @@ const TablaSalida = ({ salidas }) => {
     }
     setIsModalOpenAnular(false);
   };
-
 
   const handleSelectClick = (event) => {
     event.stopPropagation();
@@ -137,6 +137,16 @@ const TablaSalida = ({ salidas }) => {
     </tr>
   );
 
+  // Función para obtener las notas que se deben mostrar en la página actual
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return salidas.slice(startIndex, endIndex);
+  };
+
+  // Número total de páginas
+  const totalPages = Math.ceil(salidas.length / itemsPerPage);
+
   return (
     <div className="container-table-reg px-4 bg-white rounded-lg">
       <table className="table w-full">
@@ -152,7 +162,7 @@ const TablaSalida = ({ salidas }) => {
           </tr>
         </thead>
         <tbody>
-          {salidas.map(renderSalidaRow)}
+          {getCurrentPageItems().map(renderSalidaRow)}
         </tbody>
       </table>
       {isModalOpenImprimir2 && (
@@ -172,7 +182,31 @@ const TablaSalida = ({ salidas }) => {
           onConfirm={handleConfirmAnular}
         />
       )}
+            {/* Paginación */}
+            <div className="flex justify-between mt-4">
+        <div className="flex">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
 
+        </div>
+        <select
+          id="itemsPerPage"
+          className="input-c cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg"
+          value={itemsPerPage}
+          onChange={(e) => {
+            setItemsPerPage(Number(e.target.value));
+            setCurrentPage(1); 
+          }}
+        >
+          <option value={5}>05</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+        </select>
+
+      </div>
     </div>
   );
 };

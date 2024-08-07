@@ -15,7 +15,7 @@ const getSalidas = async (req, res) => {
               DATE_FORMAT(n.fecha, '%Y-%m-%d') AS fecha,
               c.num_comprobante AS documento,
               ao.nom_almacen AS almacen_O,
-              ad.nom_almacen AS almacen_D,
+              COALESCE(ad.nom_almacen,'Almacen externo') AS almacen_D,
               COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
               n.glosa AS concepto,
               n.estado_nota AS estado,
@@ -74,10 +74,10 @@ const getAlmacen = async (req, res) => {
   try {
     const connection = await getConnection();
     const [result] = await connection.query(`
-            SELECT a.id_almacen AS id, a.nom_almacen AS almacen, s.nombre_sucursal AS sucursal 
+            SELECT a.id_almacen AS id, a.nom_almacen AS almacen, COALESCE(s.nombre_sucursal,'Sin Sucursal') AS sucursal 
             FROM almacen a 
-            INNER JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
-            INNER JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
+            LEFT JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
+            LEFT JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
             WHERE a.estado_almacen = 1
         `);
     res.json({ code: 1, data: result, message: "Almacenes listados" });
@@ -103,7 +103,7 @@ const getProductos = async (req, res) => {
       FROM producto p 
       INNER JOIN marca m ON p.id_marca = m.id_marca 
       INNER JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
-      WHERE p.descripcion LIKE ?
+      WHERE p.descripcion LIKE ? and i.stock > 0
       GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock;
       `,
       [almacen, `%${descripcion}%`]
