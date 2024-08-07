@@ -30,8 +30,9 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="content-modal max-w-7xl mx-auto">
+    <div className="modal-overlay" >
+
+      <div className="content-modal max-w-7xl mx-auto" style={{ maxHeight: '90%', overflowY: 'auto' }}>
         <div className="modal-header">
           <h2 className="modal-title">Buscar producto</h2>
           <button className="modal-close" onClick={onClose}>
@@ -40,21 +41,21 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
         </div>
         <div className="modal-body">
           <div className="flex mb-4">
-            <input 
-              type="text" 
-              placeholder="Buscar producto" 
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow" 
+            <input
+              type="text"
+              placeholder="Buscar producto"
+              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
               onChange={(e) => setSearchInput(e.target.value)}
             />
-            <button 
+            <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
               onClick={onBuscar}
             >
               <IoIosSearch className='w-4 h-4 mr-1' />
               Buscar
             </button>
-            <button 
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" 
+            <button
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
               onClick={handleModalAdd}
             >
               <IoMdAdd className='w-4 h-4 mr-1' />
@@ -90,7 +91,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                       />
                     </td>
                     <td className="py-2 px-4 border-b text-center">
-                      <button 
+                      <button
                         className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                         onClick={() => handleAgregarProducto(producto)}
                       >
@@ -104,7 +105,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
           </div>
         </div>
         <div className="modal-buttons flex justify-end mt-4">
-          <button 
+          <button
             className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center"
             onClick={onClose}
           >
