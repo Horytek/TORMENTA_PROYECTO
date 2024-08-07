@@ -254,12 +254,80 @@ const insertNotaAndDetalle = async (req, res) => {
   }
 };
 
+const anularNota = async (req, res) => {
+  const { notaId } = req.body; // El número de la nota o ID de la nota
+
+  if (!notaId) {
+    return res.status(400).json({ message: "El ID de la nota es necesario." });
+  }
+console.log(notaId);
+  let connection;
+  try {
+    connection = await getConnection();
+
+    await connection.beginTransaction();
+
+    // Obtener los detalles de la nota
+    const [notaResult] = await connection.query(
+      "SELECT id_almacenO, id_almacenD, id_comprobante FROM nota WHERE id_nota = ? AND estado_nota = 0",
+      [notaId]
+    );
+
+    if (notaResult.length === 0) {
+      return res.status(404).json({ message: "Nota no encontrada o ya anulada." });
+    }
+
+    const { id_almacenO, id_almacenD, id_comprobante } = notaResult[0];
+
+    // Obtener los detalles de los productos de la nota
+    const [detalleResult] = await connection.query(
+      "SELECT id_producto, cantidad FROM detalle_nota WHERE id_nota = ?",
+      [notaId]
+    );
+
+    for (let i = 0; i < detalleResult.length; i++) {
+      const { id_producto, cantidad } = detalleResult[i];
+
+      // Restaurar stock en el almacén de origen
+      await connection.query(
+        "UPDATE inventario SET stock = stock + ? WHERE id_producto = ? AND id_almacen = ?",
+        [cantidad, id_producto, id_almacenO]
+      );
+
+      // Retirar stock del almacén de destino si existe
+      if (id_almacenD) {
+        await connection.query(
+          "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
+          [cantidad, id_producto, id_almacenD]
+        );
+      }
+    }
+
+    // Actualizar el estado de la nota a 1 (anulada)
+    await connection.query(
+      "UPDATE nota SET estado_nota = 1 WHERE id_nota = ?",
+      [notaId]
+    );
+
+    await connection.commit();
+
+    res.json({ code: 1, message: 'Nota anulada correctamente' });
+  } catch (error) {
+    console.error("Error en el backend:", error.message);
+    if (connection) {
+      await connection.rollback();
+    }
+    res.status(500).send({ code: 0, message: error.message });
+  }
+};
+
 export const methods = {
   getSalidas,
   getAlmacen,
   getProductos,
   getNuevoDocumento,
   getDestinatario,
-  insertNotaAndDetalle
+  insertNotaAndDetalle,
+  anularNota
 };
 
