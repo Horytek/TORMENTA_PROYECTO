@@ -7,7 +7,6 @@ const TablaSalida = ({ salidas }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
-  const [isModalOpenClonar, setIsModalOpenClonar] = useState(false);
   const [notaIdToAnular, setNotaIdToAnular] = useState(null); // Para almacenar la nota seleccionada para anular
 
   const handleSelectChange2 = (event, id) => {
@@ -19,10 +18,7 @@ const TablaSalida = ({ salidas }) => {
       case 'anular':
         setNotaIdToAnular(id); // Guarda el id de la nota a anular
         setIsModalOpenAnular(true);
-        break;
-      case 'clonar':
-        setIsModalOpenClonar(true);
-        break;
+        break;  
       default:
         break;
     }
@@ -36,9 +32,6 @@ const TablaSalida = ({ salidas }) => {
     setIsModalOpenAnular(false);
   };
 
-  const closeModalClonar = () => {
-    setIsModalOpenClonar(false);
-  };
 
   const handleConfirmImprimir2 = () => {
     setIsModalOpenImprimir2(false);
@@ -58,9 +51,6 @@ const TablaSalida = ({ salidas }) => {
     setIsModalOpenAnular(false);
   };
 
-  const handleConfirmClonar = () => {
-    setIsModalOpenClonar(false);
-  };
 
   const handleSelectClick = (event) => {
     event.stopPropagation();
@@ -103,7 +93,6 @@ const TablaSalida = ({ salidas }) => {
             <option value="">...</option>
             <option value="imprimir2">Imprimir</option>
             <option value="anular">Anular</option>
-            <option value="clonar">Clonar</option>
           </select>
         </td>
       </tr>
@@ -184,14 +173,6 @@ const TablaSalida = ({ salidas }) => {
         />
       )}
 
-      {isModalOpenClonar && (
-        <ConfirmationModal
-          message="¿Desea clonar esta nota de ingreso?"
-          onClose={closeModalClonar}
-          isOpen={isModalOpenClonar}
-          onConfirm={handleConfirmClonar}
-        />
-      )}
     </div>
   );
 };
