@@ -125,7 +125,7 @@ h6 {
   border-radius: 0.375rem; /* Border radius */
   padding: 0.625rem 1.25rem; /* Padding */
   box-sizing: border-box; /* Box sizing to include padding in width */
-  width: 100%; /* Make the element take full width of the container */
+  width: 90%; /* Make the element take full width of the container */
 }
 
 .form-elementwa:focus {

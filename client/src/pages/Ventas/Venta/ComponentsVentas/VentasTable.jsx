@@ -10,9 +10,9 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
 
     if (estado=='En proceso') {
       estado= 2;
-    } else if (estado=='Anulada') {
-      estado= 1;
     } else if (estado=='Aceptada') {
+      estado= 1;
+    } else if (estado=='Anulada') {
       estado= 0;
     }
 

@@ -74,9 +74,10 @@ function formatDetail(nombre, cantidad, precio, subTotal) {
 
             formattedDetail += `${formattedNombre} ${formattedCantidad} ${formattedPrecio} ${formattedTotal}\n`;
         } else {
-            // Líneas adicionales: Solo el nombre, alineado con la columna
+            // Líneas adicionales: Solo el nombre, alineado con la columna y espacios para las otras columnas
             const formattedNombre = line.padEnd(nombreWidth, ' ').substring(0, nombreWidth);
-            formattedDetail += `${formattedNombre}\n`;
+            const spacesForOtherColumns = ' '.repeat(cantidadWidth + precioWidth + totalWidth + 2); // +2 para los espacios entre columnas
+            formattedDetail += `${formattedNombre}${spacesForOtherColumns}\n`;
         }
     });
 
@@ -159,7 +160,7 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
     appendContent(centerText("Chiclayo - Chiclayo - Lambayeque"));
     appendContent(centerText("RUC: 20610508901"));
     appendContent(centerText("Tel: 918378590"));
-    appendContent(centerText( datosVentaComprobante.comprobante_pago +": " + detail.nuevoNumComprobante));
+    appendContent(centerText(datosVentaComprobante.comprobante_pago + ": " + detail.nuevoNumComprobante));
     appendContent("==================================");
     appendContent("Fecha de Emisión: " + datosVentaComprobante.fecha);
     appendContent("Tienda: AV. BALTA Y LEGUIA");
@@ -205,6 +206,7 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
 
     return content;
 };
+
 
 const Voucher = ({ datosVentaComprobante, datosVenta }) => {
     const content = generateReceiptContent(datosVentaComprobante, datosVenta);
