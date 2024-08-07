@@ -187,7 +187,7 @@ function NuevaSalidas() {
       handleCancel();
       window.location.reload();
     } else {
-      alert('Error al insertar nota y detalle: ' + result.message);
+      alert('Por favor complete todos los campos');
     }
   };
 
@@ -215,7 +215,7 @@ function NuevaSalidas() {
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
                   Almacén origen:
                 </label>
-                <select className='form-elementwasalida' id="almacen_origen" value={almacenOrigen} onChange={(e) => setalmacenOrigen(parseInt(e.target.value))} >
+                <select className='form-elementwasalida' id="almacen_origen" value={almacenOrigen} onChange={(e) => setalmacenOrigen(parseInt(e.target.value))} disabled={productosSeleccionados.length > 0}>
                   <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (<option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>))}
                 </select>

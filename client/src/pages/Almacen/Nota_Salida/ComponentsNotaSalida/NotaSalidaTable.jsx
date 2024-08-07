@@ -89,7 +89,7 @@ const TablaSalida = ({ salidas }) => {
           </p>
         </td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm' name="select" onClick={handleSelectClick} onChange={(e) => handleSelectChange2(e, salida.id)}>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg text-gray-900 text-sm w-25' name="select" onClick={handleSelectClick} onChange={(e) => handleSelectChange2(e, salida.id)}>
             <option value="">...</option>
             <option value="imprimir2">Imprimir</option>
             <option value="anular">Anular</option>
