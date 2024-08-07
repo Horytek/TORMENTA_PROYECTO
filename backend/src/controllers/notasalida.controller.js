@@ -102,7 +102,7 @@ const getProductos = async (req, res) => {
         COALESCE(i.stock, 0) AS stock 
       FROM producto p 
       INNER JOIN marca m ON p.id_marca = m.id_marca 
-      LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
+      INNER JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
       WHERE p.descripcion LIKE ?
       GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock;
       `,

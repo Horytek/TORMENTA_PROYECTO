@@ -114,7 +114,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
             <div className="flex items-center gap-2">
                 <h6 className='font-bold'>Almacén:</h6>
-                <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' onChange={handleAlmacenChange} value={almacenSeleccionado.id}>
+                <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-4 w-56' onChange={handleAlmacenChange} value={almacenSeleccionado.id}>
                     <option value="%">Seleccione...</option>
                     {almacenes.map((almacen, index) => (
                         <option key={index} value={almacen.id}>{almacen.almacen}</option>

@@ -63,13 +63,15 @@ function NuevaSalidas() {
       handleBuscarProducto();
     }
   }, [isModalOpen, almacenOrigen]);
-  
+
   const openModalBuscarProducto = () => {
-  setIsModalOpen(true);
-  if (almacenOrigen) {
-    handleBuscarProducto();  // Ejecuta la búsqueda automáticamente al abrir el modal
-  }
-};
+    if (almacenOrigen) {
+      setIsModalOpen(true);
+      handleBuscarProducto();
+    } else {
+      alert('Por favor seleccione un almacén de origen primero.');
+    }
+  };
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
   const openModalProducto = (title) => {
@@ -183,7 +185,7 @@ function NuevaSalidas() {
     if (result.success) {
       alert('Nota y detalle insertados correctamente');
       handleCancel();
-      window.location.reload(); 
+      window.location.reload();
     } else {
       alert('Error al insertar nota y detalle: ' + result.message);
     }
