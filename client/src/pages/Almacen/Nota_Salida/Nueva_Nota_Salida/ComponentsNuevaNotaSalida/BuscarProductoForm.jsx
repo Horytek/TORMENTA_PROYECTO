@@ -27,7 +27,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
 
   return (
     <div className="modal-overlay">
-      <div className="content-modal max-w-4xl mx-auto">
+      <div className="content-modal max-w-7xl mx-auto">
         <div className="modal-header">
           <h2 className="modal-title">Buscar producto</h2>
           <button className="modal-close" onClick={onClose}>
@@ -62,7 +62,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
               <thead>
                 <tr>
                   <th className=" py-2 px-4 border-b">Código</th>
-                  <th className="py-2 px-4 border-b">Descripción</th>
+                  <th className="py-2 px-4 border-b w-96">Descripción</th>
                   <th className="py-2 px-4 border-b">Marca</th>
                   <th className="py-2 px-4 border-b">Stock</th>
                   <th className="py-2 px-4 border-b">Cantidad</th>

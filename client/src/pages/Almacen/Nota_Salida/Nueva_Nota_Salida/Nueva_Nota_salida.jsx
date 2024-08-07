@@ -37,7 +37,7 @@ function NuevaSalidas() {
   const { almacenes } = useAlmacenData();
   const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
-
+  const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
@@ -53,7 +53,23 @@ function NuevaSalidas() {
     }
   }, [almacenOrigen]);
 
-  const openModalBuscarProducto = () => setIsModalOpen(true);
+  useEffect(() => {
+    if (documentos.length > 0) {
+      setCurrentDocumento(documentos[0].nota);
+    }
+  }, [documentos]);
+  useEffect(() => {
+    if (isModalOpen && almacenOrigen) {
+      handleBuscarProducto();
+    }
+  }, [isModalOpen, almacenOrigen]);
+  
+  const openModalBuscarProducto = () => {
+  setIsModalOpen(true);
+  if (almacenOrigen) {
+    handleBuscarProducto();  // Ejecuta la búsqueda automáticamente al abrir el modal
+  }
+};
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
   const openModalProducto = (title) => {
@@ -119,7 +135,10 @@ function NuevaSalidas() {
   };
 
   const handleGuardar = async () => {
-
+    if (productosSeleccionados.length === 0) {
+      alert('Debe agregar al menos un producto.');
+      return;
+    }
     let stockExcedido = false;
     productosSeleccionados.forEach(producto => {
       if (producto.cantidad > producto.stock) {
@@ -164,12 +183,12 @@ function NuevaSalidas() {
     if (result.success) {
       alert('Nota y detalle insertados correctamente');
       handleCancel();
+      window.location.reload(); 
     } else {
       alert('Error al insertar nota y detalle: ' + result.message);
     }
   };
 
-  const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
   const currentDate = new Date().toISOString().split('T')[0];
 
   return (

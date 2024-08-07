@@ -78,7 +78,7 @@ const getAlmacen = async (req, res) => {
             FROM almacen a 
             INNER JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
             INNER JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
-            WHERE a.estado_almacen = 0
+            WHERE a.estado_almacen = 1
         `);
     res.json({ code: 1, data: result, message: "Almacenes listados" });
   } catch (error) {
@@ -152,9 +152,11 @@ const insertNotaAndDetalle = async (req, res) => {
   } = req.body;
 
   console.log("Datos recibidos:", req.body);
-
+  console.log("Datos recibidos:", {
+    almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion,
+  });
   if (
-    !almacenO || !almacenD || !destinatario || !glosa || !nota || !fecha || !producto || !numComprobante || !cantidad
+    !almacenO || !destinatario || !glosa || !nota || !fecha || !producto || !numComprobante || !cantidad
   ) {
     console.log("Error en los datos:", {
       almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad,
@@ -170,18 +172,20 @@ const insertNotaAndDetalle = async (req, res) => {
 
     await connection.beginTransaction();
 
+    // Insertar el comprobante
     const [comprobanteResult] = await connection.query(
-      "INSERT INTO comprobante (id_tipocomprobante, num_comprobante) VALUES (6, ?)",
+      "INSERT INTO comprobante (id_tipocomprobante, num_comprobante) VALUES (7, ?)",
       [numComprobante]
     );
 
     const id_comprobante = comprobanteResult.insertId;
 
+    // Insertar la nota
     const [notaResult] = await connection.query(
       `INSERT INTO nota 
       (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion) 
-      VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ?)`,
-      [almacenO, almacenD, destinatario, id_comprobante, glosa, fecha, nota, observacion]
+      VALUES (?, ?, 2, ?, ?, ?, ?, ?, 0, ?)`,
+      [almacenO, almacenD || null, destinatario, id_comprobante, glosa, fecha, nota, observacion]
     );
 
     const id_nota = notaResult.insertId;
@@ -190,26 +194,51 @@ const insertNotaAndDetalle = async (req, res) => {
       const id_producto = producto[i];
       const cantidadProducto = cantidad[i];
 
+      // Obtener el precio del producto
+      const [precioResult] = await connection.query(
+        "SELECT precio FROM producto WHERE id_producto = ?",
+        [id_producto]
+      );
+
+      if (precioResult.length === 0) {
+        throw new Error(`El producto con ID ${id_producto} no existe.`);
+      }
+
+      const precio = precioResult[0].precio;
+      const totalProducto = cantidadProducto * precio;
+
+      // Insertar en detalle_nota
       await connection.query(
-        "INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total) VALUES (?, ?, ?, 0, 0)",
-        [id_producto, id_nota, cantidadProducto]
+        "INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total) VALUES (?, ?, ?, ?, ?)",
+        [id_producto, id_nota, cantidadProducto, precio, totalProducto]
       );
 
-      const [productoExistente] = await connection.query(
-        "SELECT 1 FROM inventario WHERE id_producto = ? AND id_almacen = ?",
-        [id_producto, almacenD]
+      // Reducir stock en el almacén de origen
+      await connection.query(
+        "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
+        [cantidadProducto, id_producto, almacenO]
       );
 
-      if (productoExistente.length > 0) {
-        await connection.query(
-          "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
-          [cantidadProducto, id_producto, almacenD]
+      // Verificar y actualizar stock en el almacén de destino si es proporcionado
+      if (almacenD) {
+        const [productoExistente] = await connection.query(
+          "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
+          [id_producto, almacenD]
         );
-      } else {
-        await connection.query(
-          "INSERT INTO inventario (id_producto, id_almacen, stock) VALUES (?, ?, ?)",
-          [id_producto, almacenD, cantidadProducto]
-        );
+
+        if (productoExistente.length > 0) {
+          // Actualizar stock si el producto ya existe en el almacén de destino
+          await connection.query(
+            "UPDATE inventario SET stock = stock + ? WHERE id_producto = ? AND id_almacen = ?",
+            [cantidadProducto, id_producto, almacenD]
+          );
+        } else {
+          // Insertar nuevo registro si el producto no existe en el almacén de destino
+          await connection.query(
+            "INSERT INTO inventario (id_producto, id_almacen, stock) VALUES (?, ?, ?)",
+            [id_producto, almacenD, cantidadProducto]
+          );
+        }
       }
     }
 

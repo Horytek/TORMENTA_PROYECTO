@@ -8,5 +8,5 @@ router.get("/almacen", notasalidaController.getAlmacen);
 router.get("/productos", notasalidaController.getProductos);
 router.get("/nuevodocumento", notasalidaController.getNuevoDocumento);
 router.get("/destinatario", notasalidaController.getDestinatario);
-router.get("/nuevaNota", notasalidaController.insertNotaAndDetalle);
+router.post("/nuevanota", notasalidaController.insertNotaAndDetalle);
 export default router;
