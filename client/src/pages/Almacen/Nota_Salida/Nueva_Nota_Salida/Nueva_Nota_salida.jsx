@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from './ComponentsNuevaNotaSalida/BuscarProductoForm';  // Asegúrate de que la ruta del componente Modal sea correcta
 import { MdPersonAdd } from "react-icons/md";
+import { Toaster, toast } from "react-hot-toast";
 import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
@@ -69,7 +70,7 @@ function NuevaSalidas() {
       setIsModalOpen(true);
       handleBuscarProducto();
     } else {
-      alert('Por favor seleccione un almacén de origen primero.');
+      toast.error('Por favor seleccione un almacén de origen primero.');
     }
   };
   const closeModalBuscarProducto = () => setIsModalOpen(false);
@@ -117,9 +118,9 @@ function NuevaSalidas() {
       if (cantidadTotal > producto.stock) {
         const maxCantidad = producto.stock - cantidadExistente;
         if (maxCantidad > 0) {
-          alert(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
+          toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
         }
-        alert(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
+        toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
         return prevProductos;
       }
 
@@ -138,7 +139,7 @@ function NuevaSalidas() {
 
   const handleGuardar = async () => {
     if (productosSeleccionados.length === 0) {
-      alert('Debe agregar al menos un producto.');
+      toast.error('Debe agregar al menos un producto.');
       return;
     }
     let stockExcedido = false;
@@ -149,10 +150,9 @@ function NuevaSalidas() {
     });
 
     if (stockExcedido) {
-      alert('La cantidad de algunos productos excede el stock disponible.');
+      toast.error('La cantidad de algunos productos excede el stock disponible.');
       return;
     }
-
     const almacenO = document.getElementById('almacen_origen').value;
     const almacenD = document.getElementById('almacen_destino').value;
     const destinatario = document.getElementById('destinatario').value;
@@ -161,6 +161,11 @@ function NuevaSalidas() {
     const nota = document.getElementById('nomnota').value;
     const numComprobante = document.getElementById('numero').value;
     const observacion = document.getElementById('observacion').value;
+
+    if (almacenO == almacenD){
+      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
+      return;
+    };
 
     const productos = productosSeleccionados.map(producto => ({
       id: producto.codigo,
@@ -183,11 +188,11 @@ function NuevaSalidas() {
     const result = await insertNotaAndDetalle(data);
 
     if (result.success) {
-      alert('Nota y detalle insertados correctamente');
+      toast.success('Nota y detalle insertados correctamente');
       handleCancel();
       window.location.reload();
     } else {
-      alert('Por favor complete todos los campos');
+      toast.error('Por favor complete todos los campos');
     }
   };
 
@@ -209,6 +214,7 @@ function NuevaSalidas() {
       </div>
       <div className="container-registro-detalle-venta" style={{ backgroundColor: 'lightgray', padding: 20 }}>
         <form className="flex rounded-lg" >
+          <Toaster />
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
               <div className="mb-4">

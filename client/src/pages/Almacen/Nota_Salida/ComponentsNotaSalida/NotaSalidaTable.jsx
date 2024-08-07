@@ -96,11 +96,11 @@ const TablaSalida = ({ salidas }) => {
           </select>
         </td>
       </tr>
-      {expandedRow === salida.id && renderIngresoDetails(salida.id, salida.detalles, salida.almacen_D)}
+      {expandedRow === salida.id && renderIngresoDetails(salida.detalles, salida.almacen_D)}
     </React.Fragment>
   );
 
-  const renderIngresoDetails = (id, detalles, almacen) => (
+  const renderIngresoDetails = (detalles, almacen) => (
     <tr className="bg-gray-100">
       <td colSpan="9">
         <div className="container-table-details px-4">
@@ -119,7 +119,7 @@ const TablaSalida = ({ salidas }) => {
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
-                <tr key={index} onClick={() => handleDetailClick(id)} className='tr-tabla-detalle-ingreso'>
+                <tr key={index} onClick={() => handleDetailClick(detalle.id_producto)} className='tr-tabla-detalle-ingreso'>
                   <td className="text-center py-2 px-4">{detalle.codigo}</td>
                   <td className="text-center py-2 px-4">{detalle.marca}</td>
                   <td className="text-center py-2 px-4">{detalle.descripcion}</td>

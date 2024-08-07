@@ -3,7 +3,7 @@ import { getConnection } from "../database/database";
 
 
 const getSalidas = async (req, res) => {
-  const { fecha_i = '2022-01-01', fecha_e = '2057-12-27', razon_social = '', almacen = '%' } = req.query;
+  const { fecha_i = '2012-01-01', fecha_e = '2057-12-27', razon_social = '', almacen = '%' } = req.query;
 
   try {
     const connection = await getConnection();
@@ -38,7 +38,7 @@ const getSalidas = async (req, res) => {
           GROUP BY 
               id, fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
           ORDER BY 
-              n.fecha;
+              n.fecha desc, documento desc;
           `,
       [fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`, almacen, almacen]
     );
@@ -49,7 +49,7 @@ const getSalidas = async (req, res) => {
         const [detallesResult] = await connection.query(
           `
                   SELECT dn.id_detalle_nota AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
-                  dn.cantidad AS cantidad, p.undm AS unidad, dn.precio AS precio, dn.total AS total
+                  dn.cantidad AS cantidad, p.undm AS unidad, dn.precio AS precio, dn.total AS total, p.id_producto
                   FROM producto p INNER JOIN marca m ON p.id_marca=m.id_marca
                   INNER JOIN sub_categoria sc ON p.id_subcategoria=sc.id_subcategoria
                   INNER JOIN detalle_nota dn ON p.id_producto=dn.id_producto

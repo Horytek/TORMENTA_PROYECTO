@@ -3,12 +3,16 @@ import { RiCloseLargeLine } from "react-icons/ri";
 import { IoMdClose } from "react-icons/io";
 import { IoMdAdd } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
-
+import { toast } from "react-hot-toast";
+import ProductosForm from '../../../../Productos/ProductosForm';
 const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto }) => {
   if (!isOpen) return null;
 
   const [cantidades, setCantidades] = useState({});
-
+  const [activeAdd, setModalOpen] = useState(false);
+  const handleModalAdd = () => {
+    setModalOpen(!activeAdd);
+  };
   const handleCantidadChange = (codigo, cantidad) => {
     setCantidades({
       ...cantidades,
@@ -19,7 +23,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
   const handleAgregarProducto = (producto) => {
     const cantidadSolicitada = cantidades[producto.codigo] || 1;
     if (cantidadSolicitada > producto.stock) {
-      alert(`La cantidad solicitada (${cantidadSolicitada}) excede el stock disponible (${producto.stock}).`);
+      toast.error(`La cantidad solicitada (${cantidadSolicitada}) excede el stock disponible (${producto.stock}).`);
     } else {
       agregarProducto(producto, cantidadSolicitada);
     }
@@ -51,7 +55,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
             </button>
             <button 
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" 
-              onClick={() => openModalProducto('Agregar Producto')}
+              onClick={handleModalAdd}
             >
               <IoMdAdd className='w-4 h-4 mr-1' />
               Nuevo
@@ -109,6 +113,9 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
           </button>
         </div>
       </div>
+      {activeAdd && (
+        <ProductosForm modalTitle={'Nuevo Producto'} onClose={handleModalAdd} />
+      )}
     </div>
   );
 };
