@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { DonutChart, Legend } from "@tremor/react";
-import useCantidadVentasPorSubcategoria from '../data/data_venta_subcat'; // Asegúrate de que la ruta sea correcta
+import useCantidadVentasPorSubcategoria from '../data/data_venta_subcat'; 
 
 const valueFormatter = (number) =>
   `${Intl.NumberFormat("us").format(number).toString()}`;
@@ -43,11 +43,13 @@ const DonutChartUsageExample = () => {
               colors={["blue", "cyan", "indigo", "violet", "fuchsia"]}
               className="w-40 mx-auto"
             />
-            <Legend
-              categories={sales.map(item => item.name)}
-              colors={["blue", "cyan", "indigo", "violet", "fuchsia"]}
-              className="max-w-xs mx-auto mt-4"
-            />
+            <div className="flex flex-col items-center mt-4">
+              <Legend
+                categories={sales.map(sale => sale.name)}
+                colors={["blue", "cyan", "indigo", "violet", "fuchsia"]}
+                className="flex flex-wrap justify-center"
+              />
+            </div>
           </>
         )}
       </div>

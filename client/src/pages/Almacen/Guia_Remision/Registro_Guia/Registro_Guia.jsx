@@ -33,11 +33,18 @@ function RegistroGuia() {
   const { documentos } = useDocumentoData();
   const [ubipart, setUbipart] = useState('');
   const [ubidest, setUbidest] = useState('');
+  const [transporte, setTransporte] = useState('');
 
   const handleSaveUbigeo = (selectedUbipart, selectedUbidest) => {
     setUbipart(selectedUbipart);
     setUbidest(selectedUbidest);
   };
+
+  const handleSaveTransporte = (transporte) => {
+    setTransporte(transporte);
+  };
+
+
 
   const openModal = (title, type) => {
     setModalTitle(title);
@@ -189,7 +196,13 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="trans" className='text-sm font-bold text-black'>Transporte:</label>
-                  <input type="trans" name='trans' className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1' disabled />
+                  <input
+                    type="text"
+                    name='trans'
+                    value={transporte ? `${transporte.empresa || transporte.conductor}` : ''}
+                    className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
+                    disabled
+                  />
                 </div>
               </div>
               <div className="flex">
@@ -292,7 +305,7 @@ function RegistroGuia() {
       {isModalOpen && modalType !== 'buscarProducto' && (
         <>
           {modalType === 'ubicacion' && <UbigeoForm modalTitle={modalTitle} onClose={closeModal} onSave={handleSaveUbigeo} />}
-          {modalType === 'transporte' && <TransporteForm modalTitle={modalTitle} onClose={closeModal} />}
+          {modalType === 'transporte' && <TransporteForm modalTitle={modalTitle} onClose={closeModal} onSave={handleSaveTransporte} />}
           {modalType === 'cliente' && <ClienteForm modalTitle={modalTitle} onClose={closeModal} />}
           {modalType === 'producto' && <ProductosForm modalTitle={modalTitle} onClose={closeModal} />}
         </>

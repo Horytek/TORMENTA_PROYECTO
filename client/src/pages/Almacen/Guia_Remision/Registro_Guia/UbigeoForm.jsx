@@ -5,6 +5,7 @@ import { IoCloseSharp } from 'react-icons/io5';
 import './ModalGuias.css';
 import { ButtonSave } from '@/components/Buttons/Buttons';
 import useSucursalData from '../../data/data_ubigeo_guia';
+import { Toaster, toast } from 'react-hot-toast';
 
 const UbigeoForm = ({ modalTitle, onClose, onSave }) => {
   const { ubigeos } = useSucursalData();
@@ -96,15 +97,27 @@ const UbigeoForm = ({ modalTitle, onClose, onSave }) => {
   }, [selectedProvinciaDestino, selectedDepartamentoDestino, ubigeos]);
 
   const handleSave = () => {
+    if (
+      !selectedDepartamentoPartida ||
+      !selectedProvinciaPartida ||
+      !selectedDistritoPartida ||
+      !selectedDepartamentoDestino ||
+      !selectedProvinciaDestino ||
+      !selectedDistritoDestino
+    ) {
+      toast.error('Por favor, selecciona todos los campos para Ubigeo de Partida y Destino.');
+      return;
+    }
+
     const partida = `${selectedDistritoPartida?.label}/ ${selectedProvinciaPartida?.label}/ ${selectedDepartamentoPartida?.label}`;
     const destino = `${selectedDistritoDestino?.label}/ ${selectedProvinciaDestino?.label}/ ${selectedDepartamentoDestino?.label}`;
     onSave(partida, destino); // Guarda los datos
     onClose(); // Cierra el modal
   };
   
-
   return (
     <div className="modal-container">
+      <Toaster />
       <div className="modal-ubi">
         <div className="content-modal4">
           <button onClick={onClose} className="close-modal-ubigeo top-0 right-0 text-black-500 p-3">

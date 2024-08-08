@@ -1,0 +1,69 @@
+import { useState } from "react";
+import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
+import { Toaster } from "react-hot-toast";
+import { ButtonIcon } from "@/components/Buttons/Buttons";
+import { FaPlus } from "react-icons/fa";
+import { IoIosSearch } from "react-icons/io";
+
+function Categorias() {
+  const [activeAdd, setModalOpen] = useState(false);
+  const handleModalAdd = () => {
+    setModalOpen(!activeAdd);
+  };
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  return (
+    <div>
+      <Toaster />
+      <Breadcrumb
+        paths={[
+          { name: "Inicio", href: "/inicio" },
+          { name: "Productos", href: "/productos" },
+          { name: "Categorias", href: "/productos/categorias" },
+        ]}
+      />
+      <hr className="mb-4" />
+      <h1 className="font-extrabold text-4xl">Categorias</h1>
+      <div className="flex justify-between mt-5 mb-4 items-center">
+        <div
+          id="barcode-scanner"
+          hidden
+          style={{ width: "100%", height: "400px" }}
+        ></div>
+        <h6 className="font-bold">Lista de Categorias</h6>
+        <div className="flex items-center gap-4 ml-auto">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <IoIosSearch className="w-4 h-4 text-gray-500" />
+            </div>
+            <input
+              type="text"
+              placeholder="Ingrese una categoria de producto"
+              className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-96 pl-10 p-2.5"
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <div className="flex items-center gap-2"> 
+            <ButtonIcon color={"#01BDD6"}>Filtrar</ButtonIcon>
+            
+          </div>
+          <ButtonIcon
+            color={"#4069E4"}
+            icon={<FaPlus style={{ fontSize: "25px" }} />}
+            onClick={handleModalAdd}
+          >
+            Agregar categoría
+          </ButtonIcon>
+        </div>
+      </div>
+      <div></div>
+    </div>
+  );
+}
+
+export default Categorias;

@@ -3,19 +3,19 @@ import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
 import { FaPlus } from "react-icons/fa";
 import './ModalGuias.css';
-
+import { ButtonSave } from '@/components/Buttons/Buttons';
 import { ModalTransporte } from './ModalGuias/ModalTransporte';
 import { ModalTransportista } from './ModalGuias/ModalTransportista';
-
 import useTransPubData from '../../data/data_transpub';
 import useTransPrivData from '../../data/data_transpriv';
+import { Toaster, toast } from 'react-hot-toast';
 
-const TransporteForm = ({ modalTitle, onClose }) => {
+const TransporteForm = ({ modalTitle, onClose, onSave }) => {
   const [transportePublico, setTransportePublico] = useState(true);
   const [isModalOpenTransporte, setIsModalOpenTransporte] = useState(false);
   const [isModalOpenTransportista, setIsModalOpenTransportista] = useState(false);
 
-  //TRANSPORTE PUBLICO
+  // TRANSPORTE PUBLICO
   const { transpublicos } = useTransPubData();
   const [selectedEmpresa, setSelectedEmpresa] = useState('');
   const [ruc, setRuc] = useState('');
@@ -23,7 +23,7 @@ const TransporteForm = ({ modalTitle, onClose }) => {
   const [telefonopub, setTelefPub] = useState('');
   const [vehiculopub, setVehiculoPub] = useState('');
 
-  //TRANSPORTE PRIVADO
+  // TRANSPORTE PRIVADO
   const { transprivados } = useTransPrivData();
   const [selectedConductor, setSelectedConductor] = useState('');
   const [dni, setDni] = useState('');
@@ -104,8 +104,44 @@ const TransporteForm = ({ modalTitle, onClose }) => {
     }
   };
 
+  const handleSave = () => {
+    if (transportePublico) {
+      // Validar Transporte Público
+      if (!selectedEmpresa || !ruc || !placa || !telefonopub || !vehiculopub) {
+        toast.error('Por favor, selecciona una Transporte Público.');
+        return;
+      }
+    } else {
+      // Validar Transporte Privado
+      if (!selectedConductor || !dni || !placapriv || !telefonopriv || !vehiculopriv) {
+        toast.error('Por favor, selecciona una Transporte Privado.');
+        return;
+      }
+    }
+
+    const selectedTransporte = transportePublico
+      ? {
+          empresa: selectedEmpresa,
+          ruc,
+          placa,
+          telefonopub,
+          vehiculopub,
+        }
+      : {
+          conductor: selectedConductor,
+          dni,
+          placa: placapriv,
+          telefonopriv,
+          vehiculopriv,
+        };
+
+    onSave(selectedTransporte); // Guarda los datos
+    onClose(); // Cierra el modal
+  };
+
   return (
     <div className="modal1-overlay">
+      <Toaster />
       <div className="modal1">
         <div className='content-modal1'>
           <div className="modal-header">
@@ -263,6 +299,9 @@ const TransporteForm = ({ modalTitle, onClose }) => {
               </div>
             </div>
           </div>
+          <div className="modal-buttons">
+            <ButtonSave onClick={handleSave} />
+          </div>
         </div>
       </div>
       {/* Modal de Nuevo Transportista */}
@@ -281,6 +320,7 @@ const TransporteForm = ({ modalTitle, onClose }) => {
 TransporteForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
 };
 
 export default TransporteForm;

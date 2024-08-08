@@ -100,7 +100,7 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NUM GUIA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
-            <th className="w-1/4 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOC VENTA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from './ComponentsNuevaNotaSalida/BuscarProductoForm';  // Asegúrate de que la ruta del componente Modal sea correcta
 import { MdPersonAdd } from "react-icons/md";
+import { Toaster, toast } from "react-hot-toast";
 import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
@@ -37,7 +38,7 @@ function NuevaSalidas() {
   const { almacenes } = useAlmacenData();
   const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
-
+  const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
@@ -53,7 +54,25 @@ function NuevaSalidas() {
     }
   }, [almacenOrigen]);
 
-  const openModalBuscarProducto = () => setIsModalOpen(true);
+  useEffect(() => {
+    if (documentos.length > 0) {
+      setCurrentDocumento(documentos[0].nota);
+    }
+  }, [documentos]);
+  useEffect(() => {
+    if (isModalOpen && almacenOrigen) {
+      handleBuscarProducto();
+    }
+  }, [isModalOpen, almacenOrigen]);
+
+  const openModalBuscarProducto = () => {
+    if (almacenOrigen) {
+      setIsModalOpen(true);
+      handleBuscarProducto();
+    } else {
+      toast.error('Por favor seleccione un almacén de origen primero.');
+    }
+  };
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
   const openModalProducto = (title) => {
@@ -99,9 +118,9 @@ function NuevaSalidas() {
       if (cantidadTotal > producto.stock) {
         const maxCantidad = producto.stock - cantidadExistente;
         if (maxCantidad > 0) {
-          alert(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
+          toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
         }
-        alert(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
+        toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
         return prevProductos;
       }
 
@@ -119,7 +138,10 @@ function NuevaSalidas() {
   };
 
   const handleGuardar = async () => {
-
+    if (productosSeleccionados.length === 0) {
+      toast.error('Debe agregar al menos un producto.');
+      return;
+    }
     let stockExcedido = false;
     productosSeleccionados.forEach(producto => {
       if (producto.cantidad > producto.stock) {
@@ -128,10 +150,9 @@ function NuevaSalidas() {
     });
 
     if (stockExcedido) {
-      alert('La cantidad de algunos productos excede el stock disponible.');
+      toast.error('La cantidad de algunos productos excede el stock disponible.');
       return;
     }
-
     const almacenO = document.getElementById('almacen_origen').value;
     const almacenD = document.getElementById('almacen_destino').value;
     const destinatario = document.getElementById('destinatario').value;
@@ -140,6 +161,11 @@ function NuevaSalidas() {
     const nota = document.getElementById('nomnota').value;
     const numComprobante = document.getElementById('numero').value;
     const observacion = document.getElementById('observacion').value;
+
+    if (almacenO == almacenD){
+      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
+      return;
+    };
 
     const productos = productosSeleccionados.map(producto => ({
       id: producto.codigo,
@@ -162,14 +188,14 @@ function NuevaSalidas() {
     const result = await insertNotaAndDetalle(data);
 
     if (result.success) {
-      alert('Nota y detalle insertados correctamente');
+      toast.success('Nota y detalle insertados correctamente');
       handleCancel();
+      window.location.reload();
     } else {
-      alert('Error al insertar nota y detalle: ' + result.message);
+      toast.error('Por favor complete todos los campos');
     }
   };
 
-  const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
   const currentDate = new Date().toISOString().split('T')[0];
 
   return (
@@ -188,13 +214,14 @@ function NuevaSalidas() {
       </div>
       <div className="container-registro-detalle-venta" style={{ backgroundColor: 'lightgray', padding: 20 }}>
         <form className="flex rounded-lg" >
+          <Toaster />
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
                   Almacén origen:
                 </label>
-                <select className='form-elementwasalida' id="almacen_origen" value={almacenOrigen} onChange={(e) => setalmacenOrigen(parseInt(e.target.value))} >
+                <select className='form-elementwasalida' id="almacen_origen" value={almacenOrigen} onChange={(e) => setalmacenOrigen(parseInt(e.target.value))} disabled={productosSeleccionados.length > 0}>
                   <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (<option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>))}
                 </select>

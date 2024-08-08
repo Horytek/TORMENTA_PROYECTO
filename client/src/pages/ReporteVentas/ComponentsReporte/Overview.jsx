@@ -22,7 +22,7 @@ const BarChartHero = () => {
       <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
         Representación de la cantidad de ventas por producto y dinero generado
       </p>
-      <div className="overflow-x-scroll custom-scrollbar" style={{ width: '600px' }}>
+      <div className="overflow-x-scroll custom-scrollbar" style={{ width: '700px' }}>
         <div style={{ width: '1000px' }}>
           {loading ? (
             <p>Cargando...</p>
@@ -37,7 +37,7 @@ const BarChartHero = () => {
               valueFormatter={(value, index, category) => 
                 category === "Dinero generado (S/)" ? currencyFormatter(value) : dataFormatter(value)}
               yAxisWidth={48}
-              className="mt-6 h-60"
+              className="mt-6 h-80"
               onValueChange={(v) => console.log(v)}
             />
           )}

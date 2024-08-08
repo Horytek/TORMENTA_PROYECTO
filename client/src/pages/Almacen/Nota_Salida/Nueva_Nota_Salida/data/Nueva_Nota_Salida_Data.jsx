@@ -1,4 +1,4 @@
-// nIngresoData.jsx
+// Ya no usamos este jsx nIngresoData.jsx
 import { useState } from 'react';
 
 const useNuevaNotaSalidaData = () => {
