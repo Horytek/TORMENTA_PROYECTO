@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { FRONTEND_URL } from "./config.js";
 //Rutas
 import auhtRoutes from "./routes/auth.routes";
 import usuariosRoutes from "./routes/usuarios.routes";
@@ -22,6 +23,7 @@ app.set("port", 4000);
 // Middlewares
 app.use(morgan("dev"));
 app.use(cors({
+    origin: FRONTEND_URL,
     credentials: true
 }));
 app.use(express.json());

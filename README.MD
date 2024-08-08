@@ -27,12 +27,20 @@ npm install
 npm run dev
 ```
 
-- **Configurar Acceso a BD**
+- **Variables de entorno - Backend**
 > Crea un archivo .env dentro de la carpeta backend con el siguiente contenido:
 
 ```
 HOST=localhost
 DATABASE=db_tormenta
 USER=root
-PASSWORD=tupassword
+PASSWORD=tupass
+TOKEN_SECRET=tormenta_secreto
+FRONTEND_URL=http://localhost:5173
+```
+
+- **Variables de entorno - Frontend**
+> Crea un archivo .env dentro de la carpeta client con el siguiente contenido:
+```
+VITE_API_URL=http://localhost:4000/api
 ```
