@@ -1,10 +1,12 @@
+import './Login.css';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import axios from 'axios';
-import loginImage from '../../assets/img-login.png';
-import AlertModal from '../../components/Modals/AlertModal';
-import './Login.css';
+import loginImage from '@/assets/img-login.png';
+import AlertModal from '@/components/Modals/AlertModal';
+
+// Auth Context
+import { useAuth } from '@/context/Auth/AuthProvider';
 
 function Login() {
   const [usuario, setUsuario] = useState('');
@@ -13,14 +15,22 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
+  // Contexto de autenticación
+  const { login, isAuthenticated } = useAuth();
+
+  if  (isAuthenticated) {
+    navigate('/Inicio');
+  } else {
+    navigate('/');
+  }
+
   // Maneja el evento de inicio de sesión
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://localhost:4000/api/usuarios/login', { usuario, password });
-      if (response.data.success) {
-              // Guardar el usuario y la contraseña en el localStorage
-      localStorage.setItem('usuario', usuario);
-      localStorage.setItem('password', password);
+      const user = { usuario, password };
+      const response = await login(user);
+      if (response.success) {
+        localStorage.setItem('usuario', usuario);
         navigate('/Inicio');
       } else {
         setShowAlert(true);

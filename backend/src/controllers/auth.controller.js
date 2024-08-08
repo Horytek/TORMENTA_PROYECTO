@@ -1,7 +1,7 @@
 import { getConnection } from "./../database/database";
 import { createAccessToken } from "../libs/jwt";
 import jwt from "jsonwebtoken";
-import config from "./../config";
+import { TOKEN_SECRET } from "../config.js";
 
 const login = async (req, res) => {
     
@@ -13,7 +13,7 @@ const login = async (req, res) => {
         const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ?", user.usuario);
 
         if (userFound.length === 0) {
-            return res.json({ success: false, message: 'El usuario ingresado no existe' });
+            return res.status(400).json({ success: false, message: 'El usuario ingresado no existe' });
         }
 
         const [userValid] = await connection.query("SELECT * FROM usuario WHERE usua = ? AND contra = ?", [user.usuario, user.password]);
@@ -21,9 +21,14 @@ const login = async (req, res) => {
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
             res.cookie("token", token)
-            res.json({ success: true, message: 'Usuario encontrado' });
+            const userbd = userValid[0]
+            res.json({ success: true, data: {
+                id: userbd.id_usuario,
+                rol: userbd.id_rol,
+                usuario: userbd.usua
+            }, message: 'Usuario encontrado' });
         } else {
-            res.json({ success: false, message: 'La contraseña ingresada no es correcta' });
+            res.status(400).json({ success: false, message: 'La contraseña ingresada no es correcta' });
         }
 
     } catch (error) {
@@ -37,7 +42,7 @@ const verifyToken = async (req, res) => {
     const { token } = req.cookies;
     if (!token) return res.send(false);
 
-    jwt.verify(token, config.token_secret, async (error, user) => {
+    jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
         const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser)
@@ -46,11 +51,9 @@ const verifyToken = async (req, res) => {
         const userbd = userFound[0]
 
         return res.json({
-            data: {
-                id: userbd.id_usuario,
-                rol: userbd.id_rol,
-                usuario: userbd.usua
-            }
+            id: userbd.id_usuario,
+            rol: userbd.id_rol,
+            usuario: userbd.usua
         });
     });
 };
