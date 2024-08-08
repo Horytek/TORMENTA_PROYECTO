@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
+import { ShowCategorias } from "./ShowCategorias";
 
 function Categorias() {
   const [activeAdd, setModalOpen] = useState(false);
@@ -48,9 +49,8 @@ function Categorias() {
               onChange={handleSearchChange}
             />
           </div>
-          <div className="flex items-center gap-2"> 
+          <div className="flex items-center gap-2">
             <ButtonIcon color={"#01BDD6"}>Filtrar</ButtonIcon>
-            
           </div>
           <ButtonIcon
             color={"#4069E4"}
@@ -61,7 +61,9 @@ function Categorias() {
           </ButtonIcon>
         </div>
       </div>
-      <div></div>
+      <div>
+        <ShowCategorias searchTerm={searchTerm} />
+      </div>
     </div>
   );
 }
