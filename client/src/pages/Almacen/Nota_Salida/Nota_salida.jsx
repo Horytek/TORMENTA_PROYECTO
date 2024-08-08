@@ -5,7 +5,7 @@ import getSalidasData from './data/data_salida';
 import useAlmacenData from './data/data_almacen_salida';
 import './Nota_salida.css';
 import FiltrosSalida from './ComponentsNotaSalida/FiltrosSalida';
-
+import ReactToPrint from 'react-to-print';
 const Salidas = () => {
   const [filters, setFilters] = useState({
     fecha_i: '',
@@ -61,7 +61,8 @@ const Salidas = () => {
         </h1>
       </div>
       <FiltrosSalida almacenes={almacenes} onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange} />
-      <TablaSalida salidas={ salidas } />
+      <div>
+      <TablaSalida salidas={ salidas } /> </div>
       <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
         <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>
           {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL:'}

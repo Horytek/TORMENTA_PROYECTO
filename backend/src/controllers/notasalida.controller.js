@@ -8,7 +8,7 @@ const getSalidas = async (req, res) => {
   try {
     const connection = await getConnection();
 
-    const [ingresosResult] = await connection.query(
+    const [salidaResult] = await connection.query(
       `
           SELECT 
               n.id_nota AS id,
@@ -38,14 +38,14 @@ const getSalidas = async (req, res) => {
           GROUP BY 
               id, fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
           ORDER BY 
-              n.fecha desc, documento desc;
+              n.fecha, documento;
           `,
       [fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`, almacen, almacen]
     );
 
     // Obtener los detalles de venta correspondientes
     const ingresos = await Promise.all(
-      ingresosResult.map(async (ingreso) => {
+      salidaResult.map(async (ingreso) => {
         const [detallesResult] = await connection.query(
           `
                   SELECT dn.id_detalle_nota AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
@@ -220,7 +220,7 @@ const insertNotaAndDetalle = async (req, res) => {
       );
 
       // Verificar y actualizar stock en el almacén de destino si es proporcionado
-      if (almacenD) {
+    /*if (almacenD) {
         const [productoExistente] = await connection.query(
           "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
           [id_producto, almacenD]
@@ -239,7 +239,7 @@ const insertNotaAndDetalle = async (req, res) => {
             [id_producto, almacenD, cantidadProducto]
           );
         }
-      }
+      }*/
     }
 
     await connection.commit();
@@ -295,12 +295,12 @@ console.log(notaId);
       );
 
       // Retirar stock del almacén de destino si existe
-      if (id_almacenD) {
+    /*if (id_almacenD) {
         await connection.query(
           "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
           [cantidad, id_producto, id_almacenD]
         );
-      }
+      }*/
     }
 
     // Actualizar el estado de la nota a 1 (anulada)

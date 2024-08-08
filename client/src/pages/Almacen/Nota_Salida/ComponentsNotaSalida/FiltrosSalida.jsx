@@ -5,6 +5,7 @@ import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { Link } from 'react-router-dom';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
+import ReactToPrint from 'react-to-print';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
 const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => {
@@ -148,7 +149,14 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                 <div className='flex items-center gap-2'>
                     <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full' name="select" onChange={handleSelectChange}>
                         <option value="">...</option>
-                        <option value="imprimir">Imprimir</option>
+                        <ReactToPrint
+                            trigger={() => {
+                                return <option value="imprimir">Imprimir</option>
+                            }}
+                            content={()=>this.componentRef}
+                            documentTitle='TORMENTA JEANS - 20610588981'
+                            pageSytle="print"
+                        />
                         <option value="excel">Excel</option>
                         <option value="excel-detalle">Excel Detalle</option>
                     </select>

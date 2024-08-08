@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import ConfirmationModal from './Modals/ConfirmationModal';
 import Pagination from '@/components/Pagination/Pagination'; // Asegúrate de ajustar la ruta
 import anularNota from '../data/anular_nota_salida'; // Asegúrate de ajustar la ruta
-
+import ReactToPrint from 'react-to-print';
 const TablaSalida = ({ salidas }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
@@ -25,6 +25,7 @@ const TablaSalida = ({ salidas }) => {
       default:
         break;
     }
+    event.target.value = '';
   };
 
   const closeModalImprimir2 = () => {
@@ -91,7 +92,14 @@ const TablaSalida = ({ salidas }) => {
         <td className='text-center'>
           <select className='b text-center custom-select border border-gray-300 rounded-lg text-gray-900 text-sm w-25' name="select" onClick={handleSelectClick} onChange={(e) => handleSelectChange2(e, salida.id)}>
             <option value="">...</option>
-            <option value="imprimir2">Imprimir</option>
+            <ReactToPrint
+              trigger={() => {
+                return <option value="imprimir2">Imprimir</option>
+              }}
+                                          content={()=>this.componentRef}
+                            documentTitle='TORMENTA JEANS - 20610588981'
+                            pageSytle="print"
+            />
             <option value="anular">Anular</option>
           </select>
         </td>
@@ -182,8 +190,8 @@ const TablaSalida = ({ salidas }) => {
           onConfirm={handleConfirmAnular}
         />
       )}
-            {/* Paginación */}
-            <div className="flex justify-between mt-4">
+      {/* Paginación */}
+      <div className="flex justify-between mt-4">
         <div className="flex">
           <Pagination
             currentPage={currentPage}
@@ -198,7 +206,7 @@ const TablaSalida = ({ salidas }) => {
           value={itemsPerPage}
           onChange={(e) => {
             setItemsPerPage(Number(e.target.value));
-            setCurrentPage(1); 
+            setCurrentPage(1);
           }}
         >
           <option value={5}>05</option>
