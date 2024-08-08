@@ -1,16 +1,16 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { SlOptionsVertical } from "react-icons/sl";
 import { LuRefreshCcw } from "react-icons/lu";
 import { AiOutlineCalendar } from "react-icons/ai";
-import { Input, Divider, Select, Tabs, Tab } from "@nextui-org/react";
+import { Divider, Tabs, Tab } from "@nextui-org/react";
 import TablaGanancias from "./ComponentsReporte/Overview";
 import "./ReporteVentas.css";
 import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
 import KPIS from "./ComponentsReporte/KPIS";
 import Comparativa from "./ComponentsReporte/Comparativa";
 import DatePicker from "react-datepicker";
-import { ButtonSearch } from "@/components/Buttons/Buttons/";
+import { ButtonSearch } from "@/components/Buttons/Buttons";
 import "react-datepicker/dist/react-datepicker.css";
 
 const ReporteVentas = () => {
