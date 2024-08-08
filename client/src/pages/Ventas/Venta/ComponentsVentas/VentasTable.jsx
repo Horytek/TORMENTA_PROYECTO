@@ -98,7 +98,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       {expandedRow === venta.id && renderVentaDetails(venta.detalles)}
     </React.Fragment>
   );
-
+/*px-6 py-3 w-1/3 text-xs font-bold text-gray-500 uppercase text-center*/
   const renderVentaDetails = (detalles) => (
     <tr className="bg-gray-100">
       <td colSpan="9">
@@ -106,12 +106,12 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           <table className="table-details w-full">
             <thead>
               <tr>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CODIGO</th>
-                <th className="w-1/3 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">NOMBRE</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCUENTO</th>
-                <th className="w-1/12 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">SUBTOTAL</th>
+                <th className="w-1/12 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">CODIGO</th>
+                <th className="w-1/3 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">NOMBRE</th>
+                <th className="w-1/12 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
+                <th className="w-1/12 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">PRECIO</th>
+                <th className="w-1/12 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">DESCUENTO</th>
+                <th className="w-1/12 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">SUBTOTAL</th>
               </tr>
             </thead>
             <tbody>
@@ -148,15 +148,15 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       <table className="table w-full">
         <thead>
           <tr>
-            <th className="w-1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TIPO.COMP</th>
-            <th className="w-1/6 text-start text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">F. EMISIÓN</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">IGV</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
-            <th className="w-1/6 text-start  text-sm font-semibold text-gray-500 uppercase tracking-wider">CAJERO</th>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider"></th>
+            <th className="w-1 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
+            <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">TIPO.COMP</th>
+            <th className="w-1/6 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">CLIENTE</th>
+            <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">F. EMISIÓN</th>
+            <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">IGV</th>
+            <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">TOTAL</th>
+            <th className="w-1/6 text-start  text-xs font-bold text-gray-500 uppercase tracking-wider">CAJERO</th>
+            <th className="w-1/1 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">ESTADO</th>
+            <th className="w-1/1 text-center text-xs font-bold text-gray-500 uppercase tracking-wider"></th>
           </tr>
         </thead>
         <tbody>
