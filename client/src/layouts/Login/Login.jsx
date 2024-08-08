@@ -20,7 +20,6 @@ function Login() {
       if (response.data.success) {
               // Guardar el usuario y la contraseña en el localStorage
       localStorage.setItem('usuario', usuario);
-      localStorage.setItem('password', password);
         navigate('/Inicio');
       } else {
         setShowAlert(true);
