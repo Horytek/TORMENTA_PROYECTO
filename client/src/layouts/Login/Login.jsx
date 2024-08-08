@@ -1,6 +1,6 @@
 import './Login.css';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { redirect, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import loginImage from '@/assets/img-login.png';
 import AlertModal from '@/components/Modals/AlertModal';
@@ -21,7 +21,7 @@ function Login() {
   if  (isAuthenticated) {
     navigate('/Inicio');
   } else {
-    navigate('/');
+    redirect('/Login');
   }
 
   // Maneja el evento de inicio de sesión
