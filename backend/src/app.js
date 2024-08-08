@@ -1,6 +1,7 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 //Rutas
 import auhtRoutes from "./routes/auth.routes";
 import usuariosRoutes from "./routes/usuarios.routes";
@@ -20,8 +21,11 @@ app.set("port", 4000);
 
 // Middlewares
 app.use(morgan("dev"));
-app.use(cors());
+app.use(cors({
+    credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", auhtRoutes);

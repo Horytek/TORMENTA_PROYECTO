@@ -33,19 +33,24 @@ const login = async (req, res) => {
 }
 
 const verifyToken = async (req, res) => {
+    const connection = await getConnection();
     const { token } = req.cookies;
     if (!token) return res.send(false);
 
     jwt.verify(token, config.token_secret, async (error, user) => {
         if (error) return res.sendStatus(401);
 
-        const userFound = await User.findById(user.id);
-        if (!userFound) return res.sendStatus(401);
+        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser)
+        if (userFound.length === 0) return res.sendStatus(401);
+
+        const userbd = userFound[0]
 
         return res.json({
-            id: userFound._id,
-            username: userFound.username,
-            email: userFound.email,
+            data: {
+                id: userbd.id_usuario,
+                rol: userbd.id_rol,
+                usuario: userbd.usua
+            }
         });
     });
 };
@@ -61,5 +66,6 @@ const logout = async (req, res) => {
 
 export const methods = {
     login,
+    verifyToken,
     logout
 };
