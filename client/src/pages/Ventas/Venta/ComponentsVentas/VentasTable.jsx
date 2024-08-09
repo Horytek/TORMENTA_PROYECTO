@@ -146,7 +146,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   return (
     <div className="container-table-venta px-4 bg-white rounded-lg">
       <table className="table w-full">
-        <thead>
+        <thead> 
           <tr>
             <th className="w-1 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
             <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">TIPO.COMP</th>
@@ -156,7 +156,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
             <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">TOTAL</th>
             <th className="w-1/6 text-start  text-xs font-bold text-gray-500 uppercase tracking-wider">CAJERO</th>
             <th className="w-1/1 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">ESTADO</th>
-            <th className="w-1/1 text-center text-xs font-bold text-gray-500 uppercase tracking-wider"></th>
+            <th className="w-1/12"></th>
           </tr>
         </thead>
         <tbody>

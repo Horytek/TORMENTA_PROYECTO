@@ -172,9 +172,9 @@ const getComprobante = async (req, res) => {
   try {
     const connection = await getConnection();
     const [result] = await connection.query(`
-      	SELECT id_tipocomprobante AS id, case when nom_tipocomp='Nota de venta' then 'Nota' else nom_tipocomp end as nombre 
+      	      	SELECT id_tipocomprobante AS id, case when nom_tipocomp='Nota de venta' then 'Nota' else nom_tipocomp end as nombre 
 			FROM tipo_comprobante WHERE nom_tipocomp NOT LIKE'Guia de remision' AND nom_tipocomp NOT LIKE'Nota de credito' 
-			AND nom_tipocomp NOT LIKE'Nota de ingreso'
+			AND nom_tipocomp NOT LIKE'Nota de ingreso' AND nom_tipocomp NOT LIKE 'Nota de Salida'
             `);
     res.json({ code: 1, data: result, message: "Comprobante listados" });
   } catch (error) {
