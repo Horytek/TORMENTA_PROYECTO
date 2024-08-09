@@ -20,6 +20,7 @@
     "axios": "^1.7.2",
     "js-cookie": "^3.0.5",
     "jsbarcode": "^3.11.6",
+    "lodash.debounce": "^4.0.8",
     "num2words": "^1.0.2",
     "number-to-words": "^1.2.4",
     "numero-a-letras": "^1.0.6",
