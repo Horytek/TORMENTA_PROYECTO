@@ -19,6 +19,7 @@ import Guia_Remision from '@/pages/Almacen/Guia_Remision/Guia_Remision';
 import RegistroGuia from '@/pages/Almacen/Guia_Remision/Registro_Guia/Registro_Guia';
 import Historico from '@/pages/Almacen/Kardex/Historico/Historico';
 import ReporteVentas from '@/pages/ReporteVentas/ReporteVentas';
+import { Toaster } from "react-hot-toast";
 
 // Contexts
 import { CategoriaContextProvider } from "@/context/Categoria/CategoriaProvider";
@@ -30,8 +31,12 @@ import {RouteProtectedRol} from '../../routes';
 
 function Dashboard() {
 
+  const ADMIN_ROL = 1;
+  const EMP_ROL = 3;
+
   return (
     <div className="flex min-h-screen">
+      <Toaster position="top-center" reverseOrder={true} />
       {/* Componente Sidebar que contiene el menú de navegación */}
       <Sidebar />
       <div className="flex-1 flex flex-col ml-5">
@@ -46,92 +51,92 @@ function Dashboard() {
                 <Routes>
                   {/* Rutas accesibles para todos los roles */}
                   <Route path="/inicio" element={
-                    <RouteProtectedRol allowedRoles={[1, 3]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
                       <Inicio />
                     </RouteProtectedRol>
                   } />
                   <Route path="/ventas" element={
-                    <RouteProtectedRol allowedRoles={[1, 3]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Ventas />
                     </RouteProtectedRol>
                   } />
                   <Route path="/ventas/registro_venta" element={
-                    <RouteProtectedRol allowedRoles={[1, 3]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
                       <Registro_venta />
                     </RouteProtectedRol>
                   } />
                   <Route path="/empleados" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Empleados />
                     </RouteProtectedRol>
                   } />
                   <Route path="/productos" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Productos />
                     </RouteProtectedRol>
                   } />
                   <Route path="/productos/marcas" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Marcas />
                     </RouteProtectedRol>
                   } />
                   <Route path="/productos/categorias" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Categorias />
                     </RouteProtectedRol>
                   } />
                   <Route path="/productos/subcategorias" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Subcategorias />
                     </RouteProtectedRol>
                   } />
                   <Route path="/almacen" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Almacen />
                     </RouteProtectedRol>
                   } />
                   <Route path="/almacen/kardex/historico/:id" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Historico />
                     </RouteProtectedRol>
                   } />
                   <Route path="/almacen/nota_ingreso" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Nota_Ingreso />
                     </RouteProtectedRol>
                   } />
                   <Route path="/almacen/nota_ingreso/registro_ingreso" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Nueva_Nota_Ingreso />
                     </RouteProtectedRol>
                   } />
                   <Route path="/almacen/nota_salida" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Nota_Salida />
                     </RouteProtectedRol>
                   } />
                   <Route path="/almacen/nota_salida/nueva_nota_salida" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Nueva_Nota_Salida />
                     </RouteProtectedRol>
                   } />
                   <Route path="/almacen/guia_remision" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Guia_Remision />
                     </RouteProtectedRol>
                   } />
                   <Route path="/almacen/guia_remision/registro_guia" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <RegistroGuia />
                     </RouteProtectedRol>
                   } />
                   <Route path="/reportes" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <ReporteVentas />
                     </RouteProtectedRol>
                   } />
                   <Route path="/configuracion" element={
-                    <RouteProtectedRol allowedRoles={[1]}>
+                    <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                       <Configuracion />
                     </RouteProtectedRol>
                   } />
