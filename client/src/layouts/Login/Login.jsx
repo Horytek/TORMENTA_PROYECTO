@@ -80,11 +80,6 @@ function Login() {
           {renderInputField("email", usuario, setUsuario, "Tormenta", "Usuario")}
           {renderInputField(showPassword ? "text" : "password", password, setPassword, "*******", "Contraseña", true)}
 
-          <div className="checkbox-container flex items-center mt-1 mb-8">
-            <input type="checkbox" id="remember" className="custom-checkbox mr-2 relative" />
-            <label htmlFor="remember" className="text-sm">Recordar Sesión</label>
-          </div>
-
           <button
             onClick={handleLogin}
             className="login-button w-full text-white py-2 rounded focus:outline-none bg-[#00BDD6]"
