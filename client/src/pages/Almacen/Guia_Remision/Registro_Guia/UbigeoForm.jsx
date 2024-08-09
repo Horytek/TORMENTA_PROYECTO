@@ -12,6 +12,12 @@ const UbigeoForm = ({ modalTitle, onClose, onSave }) => {
   const [selectedUbipart, setSelectedUbipart] = useState('');
   const [selectedUbidest, setSelectedUbidest] = useState('');
 
+  // Estado para Ubigeo de Partida
+const [ubigeoPartida, setUbigeoPartida] = useState({});
+
+// Estado para Ubigeo de Destino
+const [ubigeoDestino, setUbigeoDestino] = useState({});
+
   // Estados para Ubigeo de Partida
   const [departamentosPartida, setDepartamentosPartida] = useState([]);
   const [provinciasPartida, setProvinciasPartida] = useState([]);
@@ -39,81 +45,100 @@ const UbigeoForm = ({ modalTitle, onClose, onSave }) => {
   }, [ubigeos]);
 
   // Cargar provincias y distritos para Ubigeo de Partida
-  useEffect(() => {
-    if (selectedDepartamentoPartida) {
-      const filteredProvincias = ubigeos
-        .filter(item => item.departamento === selectedDepartamentoPartida.value)
-        .map(item => item.provincia);
-      const uniqueProvincias = [...new Set(filteredProvincias)];
-      setProvinciasPartida(uniqueProvincias.map(provincia => ({ value: provincia, label: provincia })));
-      setSelectedProvinciaPartida(null); // Reset provincia y distrito al cambiar departamento
-      setSelectedDistritoPartida(null);
-    } else {
-      setProvinciasPartida([]);
-      setDistritosPartida([]);
-    }
-  }, [selectedDepartamentoPartida, ubigeos]);
+  // Cargar provincias y distritos para Ubigeo de Partida
+useEffect(() => {
+  if (selectedDepartamentoPartida) {
+    const filteredProvincias = ubigeos
+      .filter(item => item.departamento === selectedDepartamentoPartida.value)
+      .map(item => item.provincia);
+    const uniqueProvincias = [...new Set(filteredProvincias)];
+    setProvinciasPartida(uniqueProvincias.map(provincia => ({
+      value: provincia,
+      label: provincia,
+      cod: ubigeos.find(item => item.provincia === provincia && item.departamento === selectedDepartamentoPartida.value)?.cod
+    })));
+    setSelectedProvinciaPartida(null);
+    setSelectedDistritoPartida(null);
+  } else {
+    setProvinciasPartida([]);
+    setDistritosPartida([]);
+  }
+}, [selectedDepartamentoPartida, ubigeos]);
 
-  useEffect(() => {
-    if (selectedProvinciaPartida) {
-      const filteredDistritos = ubigeos
-        .filter(item => item.provincia === selectedProvinciaPartida.value && item.departamento === selectedDepartamentoPartida.value)
-        .map(item => item.distrito);
-      const uniqueDistritos = [...new Set(filteredDistritos)];
-      setDistritosPartida(uniqueDistritos.map(distrito => ({ value: distrito, label: distrito })));
-      setSelectedDistritoPartida(null);
-    } else {
-      setDistritosPartida([]);
-    }
-  }, [selectedProvinciaPartida, selectedDepartamentoPartida, ubigeos]);
+useEffect(() => {
+  if (selectedProvinciaPartida) {
+    const filteredDistritos = ubigeos
+      .filter(item => item.provincia === selectedProvinciaPartida.value && item.departamento === selectedDepartamentoPartida.value)
+      .map(item => item.distrito);
+    const uniqueDistritos = [...new Set(filteredDistritos)];
+    setDistritosPartida(uniqueDistritos.map(distrito => ({
+      value: distrito,
+      label: distrito,
+      cod: ubigeos.find(item => item.distrito === distrito && item.provincia === selectedProvinciaPartida.value && item.departamento === selectedDepartamentoPartida.value)?.cod
+    })));
+    setSelectedDistritoPartida(null);
+  } else {
+    setDistritosPartida([]);
+  }
+}, [selectedProvinciaPartida, selectedDepartamentoPartida, ubigeos]);
 
-  // Cargar provincias y distritos para Ubigeo de Destino
-  useEffect(() => {
-    if (selectedDepartamentoDestino) {
-      const filteredProvincias = ubigeos
-        .filter(item => item.departamento === selectedDepartamentoDestino.value)
-        .map(item => item.provincia);
-      const uniqueProvincias = [...new Set(filteredProvincias)];
-      setProvinciasDestino(uniqueProvincias.map(provincia => ({ value: provincia, label: provincia })));
-      setSelectedProvinciaDestino(null); // Reset provincia y distrito al cambiar departamento
-      setSelectedDistritoDestino(null);
-    } else {
-      setProvinciasDestino([]);
-      setDistritosDestino([]);
-    }
-  }, [selectedDepartamentoDestino, ubigeos]);
+// Cargar provincias y distritos para Ubigeo de Destino
+useEffect(() => {
+  if (selectedDepartamentoDestino) {
+    const filteredProvincias = ubigeos
+      .filter(item => item.departamento === selectedDepartamentoDestino.value)
+      .map(item => item.provincia);
+    const uniqueProvincias = [...new Set(filteredProvincias)];
+    setProvinciasDestino(uniqueProvincias.map(provincia => ({
+      value: provincia,
+      label: provincia,
+      cod: ubigeos.find(item => item.provincia === provincia && item.departamento === selectedDepartamentoDestino.value)?.cod
+    })));
+    setSelectedProvinciaDestino(null);
+    setSelectedDistritoDestino(null);
+  } else {
+    setProvinciasDestino([]);
+    setDistritosDestino([]);
+  }
+}, [selectedDepartamentoDestino, ubigeos]);
 
-  useEffect(() => {
-    if (selectedProvinciaDestino) {
-      const filteredDistritos = ubigeos
-        .filter(item => item.provincia === selectedProvinciaDestino.value && item.departamento === selectedDepartamentoDestino.value)
-        .map(item => item.distrito);
-      const uniqueDistritos = [...new Set(filteredDistritos)];
-      setDistritosDestino(uniqueDistritos.map(distrito => ({ value: distrito, label: distrito })));
-      setSelectedDistritoDestino(null);
-    } else {
-      setDistritosDestino([]);
-    }
-  }, [selectedProvinciaDestino, selectedDepartamentoDestino, ubigeos]);
+useEffect(() => {
+  if (selectedProvinciaDestino) {
+    const filteredDistritos = ubigeos
+      .filter(item => item.provincia === selectedProvinciaDestino.value && item.departamento === selectedDepartamentoDestino.value)
+      .map(item => item.distrito);
+    const uniqueDistritos = [...new Set(filteredDistritos)];
+    setDistritosDestino(uniqueDistritos.map(distrito => ({
+      value: distrito,
+      label: distrito,
+      cod: ubigeos.find(item => item.distrito === distrito && item.provincia === selectedProvinciaDestino.value && item.departamento === selectedDepartamentoDestino.value)?.cod
+    })));
+    setSelectedDistritoDestino(null);
+  } else {
+    setDistritosDestino([]);
+  }
+}, [selectedProvinciaDestino, selectedDepartamentoDestino, ubigeos]);
 
-  const handleSave = () => {
-    if (
-      !selectedDepartamentoPartida ||
-      !selectedProvinciaPartida ||
-      !selectedDistritoPartida ||
-      !selectedDepartamentoDestino ||
-      !selectedProvinciaDestino ||
-      !selectedDistritoDestino
-    ) {
-      toast.error('Por favor, selecciona todos los campos para Ubigeo de Partida y Destino.');
-      return;
-    }
 
-    const partida = `${selectedDistritoPartida?.label}/ ${selectedProvinciaPartida?.label}/ ${selectedDepartamentoPartida?.label}`;
-    const destino = `${selectedDistritoDestino?.label}/ ${selectedProvinciaDestino?.label}/ ${selectedDepartamentoDestino?.label}`;
-    onSave(partida, destino); // Guarda los datos
-    onClose(); // Cierra el modal
-  };
+const handleSave = () => {
+  if (
+    !selectedDepartamentoPartida ||
+    !selectedProvinciaPartida ||
+    !selectedDistritoPartida ||
+    !selectedDepartamentoDestino ||
+    !selectedProvinciaDestino ||
+    !selectedDistritoDestino
+  ) {
+    toast.error('Por favor, selecciona todos los campos para Ubigeo de Partida y Destino.');
+    return;
+  }
+
+  const partida = `${distritosPartida.find(d => d.value === selectedDistritoPartida.value)?.cod}`;
+  const destino = `${distritosDestino.find(d => d.value === selectedDistritoDestino.value)?.cod}`;
+  
+  onSave(partida, destino); // Guarda los datos
+  onClose(); // Cierra el modal
+};
   
   return (
     <div className="modal-container">

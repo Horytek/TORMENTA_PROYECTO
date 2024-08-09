@@ -199,7 +199,7 @@ function RegistroGuia() {
                   <input
                     type="text"
                     name='trans'
-                    value={transporte ? `${transporte.empresa || transporte.conductor} (${transporte.ruc || transporte.dni})`  : ''}
+                    value={transporte ? `${transporte.empresa || transporte.conductor}`  : ''}
                     className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
                     disabled
                   />
