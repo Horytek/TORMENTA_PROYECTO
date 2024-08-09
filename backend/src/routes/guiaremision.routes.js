@@ -10,5 +10,10 @@ router.get("/num_comprobante", guiasController.generarCodigoGuia);
 router.get("/clienteguia", guiasController.getDestinatariosGuia);
 router.get("/transpublico", guiasController.getTransportePublicoGuia);
 router.get("/transprivado", guiasController.getTransportePrivadoGuia);
+router.get("/cod_transporte", guiasController.generarCodigoTrans);
+router.get("/nuevo_transportepub", guiasController.addTransportistaPublico);
+router.get("/nuevo_transportepriv", guiasController.addTransportistaPrivado);
+
+
 
 export default router;

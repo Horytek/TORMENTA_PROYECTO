@@ -198,6 +198,21 @@ const getTransportePrivadoGuia = async (req, res) => {
     }
 };
 
+//CODIGO PARA NUEVO TRANSPORISTA
+const generarCodigoTrans = async (req, res) => {
+    try {
+        const connection = await getConnection();
+        const [result] = await connection.query(`
+           SELECT CONCAT('T', LPAD(SUBSTRING(MAX(id_transportista), 6) + 1, 7, '0')) AS nuevo_codigo_trans
+            FROM transportista;
+        `);
+        res.json({ code: 1, data: result, message: "Nuevo código de transportista" });
+    } catch (error) {
+        res.status(500);
+        res.send(error.message);
+    }
+};
+
 //INSERTAR NUEVO TRANSPORTE PÚBLICO
 const addTransportistaPublico = async (req, res) => {
     const { id, placa, ruc, razon_social, telefono } = req.body;
@@ -230,7 +245,7 @@ const addTransportistaPrivado = async (req, res) => {
         const result = await connection.query(
             `INSERT INTO transportista (id_transportista, placa, dni, nombres, apellidos, telefono) 
              VALUES (?, ?, ?, ?, ?, ?)`,
-            [id, placa, ruc, razon_social, telefono]
+            [id, placa, dni, nombres, apellidos, telefono]
         );
         res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
     } catch (error) {
@@ -308,5 +323,8 @@ export const methods = {
     getDestinatariosGuia,
     getTransportePublicoGuia,
     getTransportePrivadoGuia,
+    generarCodigoTrans,
+    addTransportistaPublico,
+    addTransportistaPrivado,
 
 };
