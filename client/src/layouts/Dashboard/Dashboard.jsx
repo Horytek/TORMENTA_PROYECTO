@@ -5,7 +5,6 @@ import Inicio from '@/layouts/Inicio/Inicio';
 import Ventas from '@/pages/Ventas/Venta/Ventas';
 import Empleados from '@/pages/Empleados/Empleados';
 import Productos from '@/pages/Productos/Productos';
-import Marcas from '@/pages/Marcas/Marcas';
 import Categorias from '@/pages/Categorias/Categorias';
 import Subcategorias from '@/pages/Subcategorias/Subcategorias';
 import Almacen from '@/pages/Almacen/Almacén';
@@ -18,6 +17,7 @@ import Registro_venta from '@/pages/Ventas/Registro_Venta/Registro_venta';
 import Guia_Remision from '@/pages/Almacen/Guia_Remision/Guia_Remision';
 import RegistroGuia from '@/pages/Almacen/Guia_Remision/Registro_Guia/Registro_Guia';
 import Historico from '@/pages/Almacen/Kardex/Historico/Historico';
+import Marcas from '@/pages/Marcas/Marcas';
 import ReporteVentas from '@/pages/ReporteVentas/ReporteVentas';
 import { Toaster } from "react-hot-toast";
 
