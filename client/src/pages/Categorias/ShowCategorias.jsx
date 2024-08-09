@@ -8,10 +8,10 @@ import {
   deleteCategoria,
   deactivateCategoria as apiDeactivateCategoria,
 } from "@/services/categoria.services";
+import CategoriasForm from "./CategoriasForm";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 export function ShowCategorias({ searchTerm }) {
-  // Estados de listado de productos
   const [categorias, setCategorias] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const productosPerPage = 10;
@@ -20,18 +20,15 @@ export function ShowCategorias({ searchTerm }) {
     loadCategorias();
   }, []);
 
-  // Obtener productos mediante API
   const loadCategorias = async () => {
     const data = await fetchCategorias();
     setCategorias(data);
   };
 
-  // Filtrar productos
   const filteredProductos = categorias.filter((categoria) =>
     categoria.nom_categoria.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Productos a mostrar en la página actual
   const indexOfLastProducto = currentPage * productosPerPage;
   const indexOfFirstProducto = indexOfLastProducto - productosPerPage;
   const currentProductos = filteredProductos.slice(
@@ -39,21 +36,18 @@ export function ShowCategorias({ searchTerm }) {
     indexOfLastProducto
   );
 
-  // Eliminar producto mediante API
   const deleteProduct = async (id) => {
     await deleteCategoria(id);
     loadCategorias();
   };
 
-  // Desactivar categoría mediante API
   const deactivateCategoria = async (id) => {
     await apiDeactivateCategoria(id);
     loadCategorias();
   };
 
-  // Estado de Modal de Edición de Producto
   const [activeEdit, setActiveEdit] = useState(false);
-  const [initialData, setInitialData] = useState(null); // Datos iniciales del producto a editar
+  const [initialData, setInitialData] = useState(null);
 
   const handleModalEdit = async (id_categoria) => {
     const data = await getCategoria(id_categoria);
@@ -62,7 +56,7 @@ export function ShowCategorias({ searchTerm }) {
         id_categoria: id_categoria,
         data: data[0],
       });
-      setActiveEdit(true); // Abre el modal solo si los datos están disponibles
+      setActiveEdit(true);
     }
   };
 
@@ -81,13 +75,11 @@ export function ShowCategorias({ searchTerm }) {
     setSelectedRow(null);
   };
 
-  // Función para manejar la acción de confirmación de eliminación de producto
   const handleConfirmDelete = () => {
-    deleteProduct(selectedId); // Eliminación de producto mediante api
+    deleteProduct(selectedId);
     handleCloseConfirmationModal();
   };
 
-  // abrir modal de deactivate
   const handleOpenDeactivationModal = (row, id_categoria) => {
     setSelectedRow(row);
     setSelectedId(id_categoria);
@@ -97,9 +89,8 @@ export function ShowCategorias({ searchTerm }) {
     setDeactivateCat(false);
     setSelectedRow(null);
   };
-  // confirmacion
   const handleConfirmDeactivate = () => {
-    deactivateCategoria(selectedId); // Desactivar categoría mediante api
+    deactivateCategoria(selectedId);
     handleCloseDeactivationModal();
   };
 
@@ -208,7 +199,6 @@ export function ShowCategorias({ searchTerm }) {
         </div>
       </div>
 
-      {/* Modal de Confirmación para eliminar Producto */}
       {isConfirmationModalOpen && (
         <ConfirmationModal
           message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
@@ -217,10 +207,10 @@ export function ShowCategorias({ searchTerm }) {
         />
       )}
 
-      {/* Modal de Editar Producto */}
+      {/* Modal de Editar categoria */}
       {activeEdit && (
-        <ProductosForm
-          modalTitle={"Editar Producto"}
+        <CategoriasForm
+          modalTitle={"Editar categoria"}
           onClose={handleCloseModal}
           initialData={initialData}
         />
