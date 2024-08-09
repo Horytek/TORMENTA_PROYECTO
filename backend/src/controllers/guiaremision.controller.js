@@ -208,16 +208,16 @@ const generarCodigoTrans = async (req, res) => {
         `);
         res.json({ code: 1, data: result, message: "Nuevo código de transportista" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).send(error.message);
     }
 };
+
 
 //INSERTAR NUEVO TRANSPORTE PÚBLICO
 const addTransportistaPublico = async (req, res) => {
     const { id, placa, ruc, razon_social, telefono } = req.body;
 
-    if (!placa || !ruc || !razon_social || !telefono) {
+    if (!id || !placa || !ruc || !razon_social || !telefono) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
     }
     try {

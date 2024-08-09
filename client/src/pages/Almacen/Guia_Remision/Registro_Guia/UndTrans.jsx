@@ -1,3 +1,5 @@
+// TransporteForm.js
+
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
@@ -14,24 +16,19 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
   const [transportePublico, setTransportePublico] = useState(true);
   const [isModalOpenTransporte, setIsModalOpenTransporte] = useState(false);
   const [isModalOpenTransportista, setIsModalOpenTransportista] = useState(false);
-
-  // TRANSPORTE PUBLICO
-  const { transpublicos } = useTransPubData();
+  const { transpublicos, setTranspublicos } = useTransPubData(); // Añade setTranspublicos
+  const { transprivados } = useTransPrivData();
   const [selectedEmpresa, setSelectedEmpresa] = useState('');
   const [ruc, setRuc] = useState('');
   const [placa, setPlaca] = useState('');
   const [telefonopub, setTelefPub] = useState('');
   const [vehiculopub, setVehiculoPub] = useState('');
-
-  // TRANSPORTE PRIVADO
-  const { transprivados } = useTransPrivData();
   const [selectedConductor, setSelectedConductor] = useState('');
   const [dni, setDni] = useState('');
   const [placapriv, setPlacaPriv] = useState('');
   const [telefonopriv, setTelefPriv] = useState('');
   const [vehiculopriv, setVehiculoPriv] = useState('');
 
-  // Lógica Modal Transporte
   const openModalTransporte = () => {
     setIsModalOpenTransporte(true);
   };
@@ -40,7 +37,6 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
     setIsModalOpenTransporte(false);
   };
 
-  // Lógica Modal Transportista
   const openModalTransportista = () => {
     setIsModalOpenTransportista(true);
   };
@@ -52,14 +48,12 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
   const handleTransporteToggle = (value) => {
     setTransportePublico(value);
     if (value) {
-      // Limpiar los campos de transporte privado
       setSelectedConductor('');
       setDni('');
       setPlacaPriv('');
       setTelefPriv('');
       setVehiculoPriv('');
     } else {
-      // Limpiar los campos de transporte público
       setSelectedEmpresa('');
       setRuc('');
       setPlaca('');
@@ -106,13 +100,11 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
 
   const handleSave = () => {
     if (transportePublico) {
-      // Validar Transporte Público
       if (!selectedEmpresa || !ruc || !placa || !telefonopub || !vehiculopub) {
         toast.error('Por favor, selecciona una Transporte Público.');
         return;
       }
     } else {
-      // Validar Transporte Privado
       if (!selectedConductor || !dni || !placapriv || !telefonopriv || !vehiculopriv) {
         toast.error('Por favor, selecciona una Transporte Privado.');
         return;
@@ -135,15 +127,20 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
           vehiculopriv,
         };
 
-    onSave(selectedTransporte); // Guarda los datos
-    onClose(); // Cierra el modal
+    onSave(selectedTransporte);
+    onClose();
+  };
+
+  const handleTransportistaAdded = () => {
+    // Recargar los datos de transporte público
+    useTransPubData().fetchTransPublicos(); // Suponiendo que fetchTransPublicos es el método para actualizar los datos
   };
 
   return (
     <div className="modal1-overlay">
       <Toaster />
       <div className="modal1">
-        <div className='content-modal1'>
+        <div className="content-modal1">
           <div className="modal-header">
             <h3 className="modal-title">{modalTitle}</h3>
             <button className="modal-close" onClick={onClose}>
@@ -304,12 +301,9 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
           </div>
         </div>
       </div>
-      {/* Modal de Nuevo Transportista */}
       {isModalOpenTransportista && (
-        <ModalTransportista modalTitle={'Registrar Transporte'} closeModel={closeModalTransportista} />
+        <ModalTransportista modalTitle={'Registrar Transporte'} closeModel={closeModalTransportista} onTransportistaAdded={handleTransportistaAdded} />
       )}
-
-      {/* Modal de Nuevo Transporte */}
       {isModalOpenTransporte && (
         <ModalTransporte modalTitle={'Registrar Transportista'} closeModel={closeModalTransporte} />
       )}
