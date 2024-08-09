@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { FaRegBell, FaBars, FaTimes } from 'react-icons/fa';
-import { IoIosSearch } from "react-icons/io";
-import { HiOutlineShoppingCart } from "react-icons/hi";
-import { LuUserCircle } from "react-icons/lu";
 import './Navbar.css';
+import { useState } from 'react';
+import { FaBars, FaTimes, FaUser } from 'react-icons/fa';
+import { IoIosSearch } from "react-icons/io";
 import { Link } from 'react-router-dom';
+import {Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User} from "@nextui-org/react";
+
+// Auth Context
+import { useAuth } from '@/context/Auth/AuthProvider';
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,6 +14,9 @@ function Navbar() {
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
+
+  // Contexto de autenticación
+  const { logout, user } = useAuth();
 
   return (
     <div className="bg-white p-4 pb-2 flex justify-between items-center relative">
@@ -49,10 +54,29 @@ function Navbar() {
         </div>
 
         {/* Iconos de notificaciones, carrito y usuario */}
-        <div className="flex items-center space-x-2">
-          <FaRegBell className="text-gray-500 text-xl cursor-pointer hover:text-gray-800" style={{ fontSize: "25px" }} />
-          <HiOutlineShoppingCart className="text-gray-500 text-xl cursor-pointer hover:text-gray-800" style={{ fontSize: "25px" }} />
-          <LuUserCircle className="text-gray-500 text-xl cursor-pointer hover:text-gray-800" style={{ fontSize: "25px" }} />
+        <div className="flex items-center gap-4">
+        
+          <Dropdown placement="bottom-end">
+          <DropdownTrigger>
+            <User
+              as="button"
+              avatarProps={{
+                isBordered: true,
+                icon: <FaUser style={{ fontSize: '20px', color:'gray' }} />,
+                size: 'sm',
+              }}
+              className="transition-transform"
+              description={user?.rol === 1 ? "Administrador" : user?.rol === 3 ? "Empleado" : "Rol desconocido"}
+              name={user?.usuario.toUpperCase()}
+            />
+          </DropdownTrigger>
+          <DropdownMenu aria-label="Profile Actions" variant="flat">
+            <DropdownItem key="logout" color="danger" onClick={logout}>
+              Cerrar sesión
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+          
         </div>
       </div>
     </div>
