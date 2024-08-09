@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from './Modals/ConfirmationModal';
 import Pagination from '@/components/Pagination/Pagination'; // Asegúrate de ajustar la ruta
 import anularNota from '../data/anular_nota_salida'; // Asegúrate de ajustar la ruta
@@ -72,8 +73,10 @@ const TablaSalida = ({ salidas }) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
 
+  const navigate = useNavigate();
+
   const handleDetailClick = (id) => {
-    window.open(`/almacen/kardex/historico/${id}`, '_blank');
+    navigate(`/almacen/kardex/historico/${id}`);
   };
 
   const renderSalidaRow = (salida) => (
@@ -96,9 +99,9 @@ const TablaSalida = ({ salidas }) => {
               trigger={() => {
                 return <option value="imprimir2">Imprimir</option>
               }}
-                                          content={()=>this.componentRef}
-                            documentTitle='TORMENTA JEANS - 20610588981'
-                            pageSytle="print"
+              content={() => this.componentRef}
+              documentTitle='TORMENTA JEANS - 20610588981'
+              pageSytle="print"
             />
             <option value="anular">Anular</option>
           </select>
