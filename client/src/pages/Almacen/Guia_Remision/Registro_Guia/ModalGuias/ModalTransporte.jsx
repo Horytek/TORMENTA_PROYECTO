@@ -9,12 +9,19 @@ import ModalVehiculo from './ModalVehiculo'; // Importa el modal de vehículo
 
 export const ModalTransporte = ({ modalTitle, closeModel }) => {
     const [isVehiculoModalOpen, setVehiculoModalOpen] = useState(false);
+    const [vehiculoPlaca, setVehiculoPlaca] = useState(''); // Estado para la placa del vehículo
 
     const { codigos } = useCodigoData();
     const currentCod = codigos.length > 0 ? codigos[0].codtrans : '';
 
     const openVehiculoModal = () => setVehiculoModalOpen(true);
     const closeVehiculoModal = () => setVehiculoModalOpen(false);
+
+    // Función para actualizar la placa del vehículo
+    const handlePlacaUpdate = (placa) => {
+        setVehiculoPlaca(placa);
+        closeVehiculoModal(); // Cierra el modal después de guardar el vehículo
+    };
 
     return (
         <>
@@ -38,22 +45,6 @@ export const ModalTransporte = ({ modalTitle, closeModel }) => {
                             </div>
         
                             <div className='w-full text-start mb-5'>
-                                <label htmlFor="placa" className='text-sm font-bold text-black'>Placa:</label>
-                                <div className="flex items-center">
-                                <input 
-                                type="text" 
-                                name='placa' 
-                                className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1.5' 
-                                
-                                disabled/>
-                                <FaRegPlusSquare 
-                                    className='text-2xl cursor-pointer text-gray-500 ml-2'
-                                    onClick={openVehiculoModal} // Abre el modal de vehículo al hacer clic
-                                />
-                                </div>
-                                
-                            </div>
-                            <div className='w-full text-start mb-5'>
                                 <label htmlFor="dni" className='text-sm font-bold text-black'>DNI:</label>
                                 <input type="text" name='dni' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' 
                                  />
@@ -71,13 +62,28 @@ export const ModalTransporte = ({ modalTitle, closeModel }) => {
                                 />
                             </div>
                             <div className='w-full text-start mb-5'>
+                                <label htmlFor="placa" className='text-sm font-bold text-black'>Placa:</label>
+                                <div className="flex items-center">
+                                    <input 
+                                        type="text" 
+                                        name='placa' 
+                                        className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1.5' 
+                                        value={vehiculoPlaca} // Muestra la placa del vehículo
+                                        disabled
+                                    />
+                                    <FaRegPlusSquare 
+                                        className='text-2xl cursor-pointer text-gray-500 ml-2'
+                                        onClick={openVehiculoModal} // Abre el modal de vehículo al hacer clic
+                                    />
+                                </div>
+                            </div>
+                            <div className='w-full text-start mb-5'>
                                 <label htmlFor="telef" className='text-sm font-bold text-black'>Teléfono:</label>
                                 <input type="text" name='telef' 
                                 className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' 
                                 />
                             </div>
                             
-        
                             <div className='modal-buttons'>
                                 <ButtonClose onClick={closeModel} />
                                 <ButtonSave />
@@ -91,6 +97,7 @@ export const ModalTransporte = ({ modalTitle, closeModel }) => {
                 <ModalVehiculo 
                     modalTitle="Nuevo Vehículo"
                     closeModel={closeVehiculoModal} // Pasa la función para cerrar el modal de vehículo
+                    onVehiculoSaved={handlePlacaUpdate} // Pasa la función para actualizar la placa
                 />
             )}
         </>

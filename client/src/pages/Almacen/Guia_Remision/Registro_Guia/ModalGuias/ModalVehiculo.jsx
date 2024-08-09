@@ -5,11 +5,9 @@ import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
-import addVehiculo from '../../../data/add_vehiculo';
+import { addVehiculo } from '../../../data/add_vehiculo';
 
-export const ModalVehiculo = ({ modalTitle, closeModel }) => {
-
-    // Registro de vehiculo
+export const ModalVehiculo = ({ modalTitle, closeModel, onVehiculoSaved }) => {
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: {
           placa: '',
@@ -19,24 +17,23 @@ export const ModalVehiculo = ({ modalTitle, closeModel }) => {
 
     const onSubmit = handleSubmit(async (data) => {
         try {
-          const { placa, tipo } = data;
-          const newVehiculo = {
-            placa: placa.toUpperCase().trim(),
-            tipo: tipo.toUpperCase().trim(),
-          };
-  
-          const result = await addVehiculo(newVehiculo); // Llamada a la API para añadir el vehículo
-          if (result.success) {
-            toast.success(result.message);
-            closeModel(); // Cerrar modal
-          } else {
-            toast.error(result.message);
-          }
-          
+            const { placa, tipo } = data;
+            const newVehiculo = {
+                placa: placa.toUpperCase().trim(),
+                tipo: tipo.toUpperCase().trim(),
+            };
+
+            const result = await addVehiculo(newVehiculo, closeModel); // Llamada a la API para añadir el vehículo
+            if (result.success) {
+                toast.success(result.message);
+                onVehiculoSaved(newVehiculo.placa); // Llama a la función para actualizar la placa
+            } else {
+                toast.error(result.message);
+            }
         } catch (error) {
-          toast.error("Error al añadir el vehículo");
+            toast.error("Error al añadir el vehículo");
         }
-      });
+    });
 
     return (
         <form onSubmit={onSubmit}>
@@ -51,31 +48,28 @@ export const ModalVehiculo = ({ modalTitle, closeModel }) => {
                             </button>
                         </div>
                         <div className='modal-body'>
-        
                             <div className='w-full text-start mb-5'>
                                 <label htmlFor="placa" className='text-sm font-bold text-black'>Placa:</label>
                                 <input 
-                                {...register('placa', 
-                                    { required: true }
-                                )}
-                                type="text" 
-                                name='placa' 
-                                className={`w-full bg-gray-50 ${errors.placa ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2 text-sm`}
-                                placeholder='Placa del Vehículo' />
+                                    {...register('placa', { required: true })}
+                                    type="text" 
+                                    name='placa' 
+                                    className={`w-full bg-gray-50 ${errors.placa ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2 text-sm`}
+                                    placeholder='Placa del Vehículo' 
+                                />
                             </div>
 
                             <div className='w-full text-start mb-5'>
                                 <label htmlFor="tipo" className='text-sm font-bold text-black'>Tipo:</label>
                                 <input 
-                                {...register('tipo', 
-                                    { required: true }
-                                )}
-                                type="text" 
-                                name='tipo' 
-                                className={`w-full bg-gray-50 ${errors.tipo ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2 text-sm`}
-                                placeholder='Tipo de Vehículo' />
+                                    {...register('tipo', { required: true })}
+                                    type="text" 
+                                    name='tipo' 
+                                    className={`w-full bg-gray-50 ${errors.tipo ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2 text-sm`}
+                                    placeholder='Tipo de Vehículo' 
+                                />
                             </div>
-        
+
                             <div className='modal-buttons flex justify-between'>
                                 <ButtonClose onClick={closeModel} />
                                 <ButtonSave type="submit"/>
@@ -91,6 +85,7 @@ export const ModalVehiculo = ({ modalTitle, closeModel }) => {
 ModalVehiculo.propTypes = {
     modalTitle: PropTypes.string.isRequired,
     closeModel: PropTypes.func.isRequired,
+    onVehiculoSaved: PropTypes.func.isRequired,
 };
 
 export default ModalVehiculo;
