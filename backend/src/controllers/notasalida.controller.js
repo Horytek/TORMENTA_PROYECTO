@@ -19,7 +19,7 @@ const getSalidas = async (req, res) => {
               COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
               n.glosa AS concepto,
               n.estado_nota AS estado,
-              IFNULL(SUM(dn.total), 0) AS total_nota
+              ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota
           FROM 
               nota n
           LEFT JOIN 
@@ -34,13 +34,15 @@ const getSalidas = async (req, res) => {
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
               AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
-              AND (? = '%' OR n.id_almacenO = ?)
+              ${almacen !== '%' ? 'AND n.id_almacenO = ?' : ''}
           GROUP BY 
               id, fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
           ORDER BY 
-              n.fecha, documento;
+              n.fecha DESC, documento DESC;
           `,
-      [fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`, almacen, almacen]
+      almacen !== '%' 
+        ? [fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`, almacen]
+        : [fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`]
     );
 
     // Obtener los detalles de venta correspondientes
@@ -49,7 +51,7 @@ const getSalidas = async (req, res) => {
         const [detallesResult] = await connection.query(
           `
                   SELECT dn.id_detalle_nota AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
-                  dn.cantidad AS cantidad, p.undm AS unidad, dn.precio AS precio, dn.total AS total, p.id_producto
+                  dn.cantidad AS cantidad, p.undm AS unidad, ROUND(dn.precio, 2) AS precio, ROUND(dn.total, 2) AS total, p.id_producto
                   FROM producto p INNER JOIN marca m ON p.id_marca=m.id_marca
                   INNER JOIN sub_categoria sc ON p.id_subcategoria=sc.id_subcategoria
                   INNER JOIN detalle_nota dn ON p.id_producto=dn.id_producto
