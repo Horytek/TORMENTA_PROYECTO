@@ -104,7 +104,7 @@ const TablaSalida = ({ salidas }) => {
           </select>
         </td>
       </tr>
-      {expandedRow === salida.id && renderIngresoDetails(salida.detalles, salida.almacen_D)}
+      {expandedRow === salida.id && renderIngresoDetails(salida.detalles, salida.almacen_O)}
     </React.Fragment>
   );
 
@@ -122,7 +122,7 @@ const TablaSalida = ({ salidas }) => {
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Um</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Precio</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                <th className="w-2/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Almacén destino</th>
+                <th className="w-2/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Almacén</th>
               </tr>
             </thead>
             <tbody>

@@ -8,10 +8,7 @@ import FiltrosSalida from './ComponentsNotaSalida/FiltrosSalida';
 import ReactToPrint from 'react-to-print';
 const Salidas = () => {
   const [filters, setFilters] = useState({
-    fecha_i: '',
-    fecha_e: '',
-    razon: '',
-    almacen: '%',
+
   });
   const [salidas, setSalidas] = useState([]);
   const { almacenes } = useAlmacenData();
