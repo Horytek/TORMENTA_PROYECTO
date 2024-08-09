@@ -2,10 +2,10 @@ import PropTypes from "prop-types";
 import { IoMdClose } from "react-icons/io";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import { useForm } from "react-hook-form";
-import { useCategorias } from "@/context/Categoria/CategoriaProvider";
+import { useMarcas } from "@/context/Marca/MarcaProvider";
 
-const CategoriasForm = ({ modalTitle, onClose }) => {
-  const { createCategoria} = useCategorias();
+const MarcasForm = ({ modalTitle, onClose }) => {
+  const { createMarca} = useMarcas();
 
   const {
     register,
@@ -13,26 +13,26 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      nom_categoria: "",
+      nom_marca: "",
     },
   });
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const { nom_categoria } = data;
-      const newCategory = {
-        nom_categoria: nom_categoria.toUpperCase().trim(),
-        estado_categoria: 1,
+      const { nom_marca } = data;
+      const newMarca = {
+        nom_marca: nom_marca.toUpperCase().trim(),
+        estado_marca: 1
       };
 
-      const result = await createCategoria(newCategory);
+      const result = await createMarca(newMarca);
 
       if (result) {
         onClose();
         window.location.reload();
       }
     } catch (error) {
-      console.error("Error al realizar la gestión de la categoría");
+      console.error("Error al realizar la gestión de la marca");
     }
   });
 
@@ -59,21 +59,21 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
               <div className="modal-body">
                 <div className="w-full text-start mb-5">
                   <label
-                    htmlFor="nom_categoria"
+                    htmlFor="nom_marca"
                     className="text-sm font-bold text-black mb-3"
                     style={{ display: "block", marginBottom: "10px" }}
                   >
-                    Nombre de Categoría:
+                    Nombre de marca:
                   </label>
                   <input
-                    {...register("nom_categoria", { required: true })}
-                    name="nom_categoria"
+                    {...register("nom_marca", { required: true })}
+                    name="nom_marca"
                     className={`block w-full text-sm border rounded-lg ${
-                      errors.nom_categoria
+                      errors.nom_marca
                         ? "border-red-600 focus:border-red-600 focus:ring-red-600"
                         : "border-gray-300"
                     } bg-gray-50 text-gray-900`}
-                    placeholder="Ingrese el nombre de la categoría"
+                    placeholder="Ingrese el nombre de la marca"
                   />
                 </div>
 
@@ -93,9 +93,9 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
   );
 };
 
-CategoriasForm.propTypes = {
+MarcasForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
 };
 
-export default CategoriasForm;
+export default MarcasForm;
