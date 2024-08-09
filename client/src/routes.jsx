@@ -40,7 +40,7 @@ export function RouteProtectedRol({ children, allowedRoles }) {
   }, [user, allowedRoles]);
 
   if (!hasAccess) {
-    return <Navigate to="/Inicio" replace />;
+    return null;
   }
 
   return children;
