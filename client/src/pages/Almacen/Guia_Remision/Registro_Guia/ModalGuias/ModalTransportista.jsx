@@ -6,13 +6,14 @@ import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import useCodigoData from '../../../data/generar_cod_trans';
 import { FaRegPlusSquare } from "react-icons/fa";
 
-
+import useVehiculoData from '../../../data/data_vehiculos_guia';
 
 export const ModalTransportista = ({ modalTitle, closeModel }) => {
     const { codigos } = useCodigoData();
 
     const currentCod = codigos.length > 0 ? codigos[0].codtrans : '';
 
+    const { vehiculos } = useVehiculoData();
 
     // Logica Modal Vehiculo
 
@@ -38,26 +39,44 @@ export const ModalTransportista = ({ modalTitle, closeModel }) => {
                         </div>
                         <div className='w-full text-start mb-5'>
                             <label htmlFor="ruc" className='text-sm font-bold text-black'>RUC:</label>
-                            <input type="text" name='ruc' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' placeholder='RUC del Transportista' />
+                            <input type="text" name='ruc'
+                                className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
+                            />
                         </div>
                         <div className='w-full text-start mb-5'>
                             <label htmlFor="empresa" className='text-sm font-bold text-black'>Empresa:</label>
-                            <input type="text" name='empresa' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' placeholder='Empresa del Transportista' />
+                            <input type="text" name='empresa'
+                                className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
+                            />
                         </div>
                         <div className='w-full text-start mb-5'>
                             <label htmlFor="placa" className='text-sm font-bold text-black'>Placa:</label>
-                            <div className='flex justify-center items-center gap-2'>
+                            <div className="flex items-center">
                                 <select
+                                    id='placa'
                                     name='placa'
-                                    className={`w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2`}>
-                                    <option value="">Placa del transportista</option>
+                                    className={`w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2`}
+                                >
+                                    <option value="" >Seleccione...</option>
+                                    {vehiculos.map(vehiculo => (
+                                        <option key={vehiculo.placa} value={vehiculo.placa}>{vehiculo.placa}</option>
+                                    ))}
                                 </select>
-                                <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' />
+                                <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500 ml-2' />
                             </div>
+
                         </div>
                         <div className='w-full text-start mb-5'>
                             <label htmlFor="telef" className='text-sm font-bold text-black'>Teléfono:</label>
-                            <input type="text" name='telef' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' placeholder='Teléfono del Transportista' />
+                            <input type="text" name='telef'
+                                className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
+                            />
+                        </div>
+                        <div className='w-full text-start mb-5'>
+                            <label htmlFor="trans" className='text-sm font-bold text-black'>Transportista:</label>
+                            <select id='trans' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'>
+                                <option>Seleccione...</option>
+                            </select>
                         </div>
                         <div className='modal-buttons'>
                             <ButtonClose onClick={closeModel} />
@@ -74,3 +93,4 @@ ModalTransportista.propTypes = {
     modalTitle: PropTypes.string.isRequired,
     closeModel: PropTypes.func.isRequired,
 };
+

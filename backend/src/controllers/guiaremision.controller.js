@@ -253,63 +253,61 @@ const addTransportistaPrivado = async (req, res) => {
     }
 };
 
-//AÑADIR CLIENTE
-const addCliente = async (req, res) => {
-    const connection = await getConnection();
+//LÓGICA VEHÍCULO
 
+//OBTENER VEHÍCULOS
+const getVehiculos = async (req, res) => {
     try {
-        const { dniOrRuc, tipo_cliente, nombreCompleto, direccion } = req.body;
-
-        console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
-
-        if (
-            !dniOrRuc ||
-            !tipo_cliente ||
-            !nombreCompleto ||
-            (tipo_cliente === "Jurídico" && !direccion)
-        ) {
-            return res
-                .status(400)
-                .json({ message: "Bad Request. Please fill all fields correctly." });
-        }
-
-        let nombres = "";
-        let apellidos = "";
-        let razon_social = "";
-
-        if (tipo_cliente === "Natural") {
-            // Separar nombre completo en nombres y apellidos
-            const partesNombre = nombreCompleto.split(" ");
-            if (partesNombre.length > 1) {
-                // Considerar que el primer nombre puede tener múltiples partes
-                nombres = partesNombre.slice(0, -2).join(" ");
-                apellidos = partesNombre.slice(-2).join(" ");
-            } else {
-                nombres = nombreCompleto; // Asumir que es un nombre único si no se puede dividir
-            }
-
-            // Insertar cliente natural
-            await connection.query(
-                "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES (?, '', ?, ?, '', '', 0)",
-                [dniOrRuc, nombres, apellidos]
-            );
-        } else {
-            razon_social = nombreCompleto;
-            // Insertar cliente jurídico
-            await connection.query(
-                "INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente) VALUES ('', ?, '', '', ?, ?, 0)",
-                [dniOrRuc, razon_social, direccion]
-            );
-        }
-
-        res.json({ message: "Cliente añadido correctamente" });
+        const connection = await getConnection();
+        const [result] = await connection.query(`
+           SELECT placa as placa, tipo as tipo FROM vehiculo;
+        `);
+        res.json({ code: 1, data: result, message: "Vehículos listados" });
     } catch (error) {
-        console.error("Error en el backend:", error.message); // Log para verificar errores
-        res.status(500).send(error.message);
+        if (!res.headersSent) {
+            res.status(500).send(error.message);
+        }
     }
 };
 
+//INSERTAR NUEVO VEHÍCULO
+const addVehiculo = async (req, res) => {
+    const { placa, tipo } = req.body;
 
+    if (!placa || !tipo) {
+        return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
+    }
+    try {
+        const connection = await getConnection();
+        const result = await connection.query(
+            `INSERT INTO vehiculo (placa, tipo) VALUES (?, ?)`,
+            [placa, tipo]
+        );
+        res.json({ code: 1, data: result, message: "Vehículo añadido exitosamente" });
+    } catch (error) {
+        res.status(500).send({ code: 0, message: error.message });
+    }
+};
+
+//OBTENER VEHÍCULO POR PLACA
+const getVehiculo = async (req, res) => {
+    try {
+        const { placa } = req.params;
+        const connection = await getConnection();
+        const [result] = await connection.query(`
+            SELECT placa, tipo FROM vehiculo WHERE placa =  ?`, [placa]);
+        
+        if (result.length === 0) {
+            return res.status(404).json({ data: result, message: "Vehículo no encontrado" });
+        }
+
+        res.json({ data: result, message: "Vehículo encontradp" });
+    } catch (error) {
+        if (!res.headersSent) {
+            res.status(500).send(error.message);
+        }
+    }
+};
 
 
 
@@ -326,5 +324,6 @@ export const methods = {
     generarCodigoTrans,
     addTransportistaPublico,
     addTransportistaPrivado,
-
+    getVehiculos,
+    addVehiculo,
 };

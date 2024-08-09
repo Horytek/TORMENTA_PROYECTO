@@ -306,12 +306,12 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
       </div>
       {/* Modal de Nuevo Transportista */}
       {isModalOpenTransportista && (
-        <ModalTransportista modalTitle={'Registrar Transportista'} closeModel={closeModalTransportista} />
+        <ModalTransportista modalTitle={'Registrar Transporte'} closeModel={closeModalTransportista} />
       )}
 
       {/* Modal de Nuevo Transporte */}
       {isModalOpenTransporte && (
-        <ModalTransporte modalTitle={'Registrar Unidad de Transporte'} closeModel={closeModalTransporte} />
+        <ModalTransporte modalTitle={'Registrar Transportista'} closeModel={closeModalTransporte} />
       )}
     </div>
   );
