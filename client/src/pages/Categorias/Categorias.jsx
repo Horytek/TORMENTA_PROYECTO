@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
+import CategoriasForm from "./CategoriasForm";
 import { Toaster } from "react-hot-toast";
 import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
@@ -64,6 +65,10 @@ function Categorias() {
       <div>
         <ShowCategorias searchTerm={searchTerm} />
       </div>
+      {/* Modal de Agregar Producto */}
+      {activeAdd && (
+        <CategoriasForm modalTitle={'Nueva categoria'} onClose={handleModalAdd} />
+      )}
     </div>
   );
 }
