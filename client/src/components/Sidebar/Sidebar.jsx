@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaHome, FaBox, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaHome, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import {BiSolidReport} from 'react-icons/bi';
 import { Link } from 'react-router-dom';
 import './sidebar.css';
