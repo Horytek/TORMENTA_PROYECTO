@@ -13,8 +13,8 @@ const SalesCard = () => {
   return (
     <div className="container mx-auto px-4 mb-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="mx-auto w-full max-w-lg p-4 flex items-center" decoration="top" decorationColor="indigo">
-          <div className="flex items-center space-x-4 w-full">
+        <Card className="mx-auto w-full max-w-md p-2 flex items-center" decoration="top" decorationColor="green">
+          <div className="flex items-center space-x-2 w-full">
             <Icon
               icon={RiCashFill}
               color="indigo"
@@ -30,8 +30,8 @@ const SalesCard = () => {
           </div>
         </Card>
 
-        <Card className="mx-auto w-full max-w-lg p-4 flex items-center" decoration="top" decorationColor="indigo">
-          <div className="flex items-center space-x-4 w-full">
+        <Card className="mx-auto w-full max-w-md p-2 flex items-center" decoration="top" decorationColor="purple">
+          <div className="flex items-center space-x-2 w-full">
             <Icon
               icon={RiTShirt2Line}
               color="indigo"
@@ -47,8 +47,8 @@ const SalesCard = () => {
           </div>
         </Card>
 
-        <Card className="mx-auto w-full max-w-lg p-4 flex items-center" decoration="top" decorationColor="indigo">
-          <div className="flex items-center space-x-4 w-full">
+        <Card className="mx-auto w-full max-w-md p-2 flex items-center" decoration="top" decorationColor="blue">
+          <div className="flex items-center space-x-2 w-full">
             <Icon
               icon={RiLineChartFill}
               color="indigo"

@@ -1,71 +1,5 @@
 
 
-.container-rv {  display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 0.3fr 0.3fr 0.3fr;
-    gap: 0px 0px;
-    grid-auto-flow: row;
-    grid-template-areas:
-      "rv-header rv-header rv-header"
-      ". . ."
-      ". . .";
-  }
-  
-  .rv-header { grid-area: rv-header; }
-  
-  .select-width {
-    width: 200px;  /* Ajusta el valor según tus necesidades */
-  }
-
-  
-  .container-rv {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.flex-grow {
-  flex-grow: 1;
-}
-
-.flex {
-  display: flex;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-.w-18 {
-  width: 18rem;
-}
-
-.w-xs {
-  width: 100%;
-  max-width: 20rem;
-}
-
-.max-w-xs {
-  max-width: 20rem;
-}
-
-.relative {
-  position: relative;
-}
-
-.space-y-2 {
-  margin-bottom: 0.5rem;
-}
-
-.space-x-2 {
-  margin-right: 0.5rem;
-}
-
-
 .container-tormenta {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -103,48 +37,6 @@
   margin-left: 5px; /* Espacio entre el ícono y el texto */
 }
 
-
-.container-overview {
-  display: grid;
-  grid-template-columns: 2fr 1fr; /* Adjust the columns ratio to fit your needs */
-  gap: 20px; /* Adjust the gap to add space between the columns */
-  grid-template-areas: 
-    "overview categoria"; /* Define the areas for the grid */
-}
-
-.overview {
-  grid-area: overview;
-}
-
-.categoria {
-  grid-area: categoria;
-}
-
-
-.container-kpis {  display: grid;
-  grid-template-columns: 0.5fr;
-  grid-template-rows: 0.5fr;
-  gap: 0px 0px;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". . . . ."
-    "kpis kpis kpis kpis kpis"
-    ". . . . .";
-}
-
-.kpis {  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr;
-  gap: 0px 0px;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". . ."
-    ". . ."
-    ". . .";
-  grid-area: kpis;
-}
-
-
 .overflow-x-scroll {
   overflow-x: scroll;
   white-space: nowrap;
@@ -169,28 +61,7 @@
   background: #555;
 }
 
-.container-comparativa {  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 0.9fr;
-  gap: 0px 0px;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". . . . ."
-    "comparativa comparativa comparativa comparativa comparativa"
-    ". . . . .";
-}
 
-.comparativa {  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 3fr;
-  gap: 0px 0px;
-  grid-auto-flow: row;
-  grid-template-areas:
-    ". . ."
-    ". . ."
-    ". . .";
-  grid-area: comparativa;
-}
 
 
 .menu-tormenta {

@@ -75,6 +75,11 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
                     } bg-gray-50 text-gray-900`}
                     placeholder="Ingrese el nombre de la categoría"
                   />
+                  {errors.nom_categoria && (
+                    <span className="text-xs text-red-600">
+                      Este campo es obligatorio
+                    </span>
+                  )}
                 </div>
 
                 <div

@@ -3,7 +3,7 @@ import { getConnection } from "../database/database";
 
 
 const getSalidas = async (req, res) => {
-  const { fecha_i = '2012-01-01', fecha_e = '2057-12-27', razon_social = '', almacen = '%' } = req.query;
+  const { fecha_i = '2012-01-01', fecha_e = '2057-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
 
   try {
     const connection = await getConnection();
@@ -20,7 +20,7 @@ const getSalidas = async (req, res) => {
               n.glosa AS concepto,
               n.estado_nota AS estado,
               ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
-              u.usua as usuario
+              COALESCE(u.usua, '') as usuario
           FROM 
               nota n
           LEFT JOIN 
@@ -30,22 +30,33 @@ const getSalidas = async (req, res) => {
           LEFT JOIN almacen ad ON n.id_almacenD= ad.id_almacen
           LEFT JOIN 
               detalle_nota dn ON n.id_nota = dn.id_nota
-          INNER JOIN
+          LEFT JOIN
               usuario u ON n.id_usuario = u.id_usuario
           WHERE 
               n.id_tiponota = 2
+              AND c.num_comprobante LIKE ?
+              ${usuario ? 'AND (u.usua LIKE ? OR u.usua IS NULL)' : ''}
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
               AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
               ${almacen !== '%' ? 'AND n.id_almacenO = ?' : ''}
+              ${estado !== '%' ? 'AND n.estado_nota LIKE ?' : ''}
+              ${usuario ? 'AND (u.usua LIKE ? OR u.usua IS NULL)' : ''}
           GROUP BY 
-              id, fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
+              id, n.fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
           ORDER BY 
               n.fecha DESC, documento DESC;
           `,
-      almacen !== '%' 
-        ? [fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`, almacen]
-        : [fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`]
+          [
+            `%${documento}%`,
+            fecha_i,
+            fecha_e,
+            `%${razon_social}%`,
+            `%${razon_social}%`,
+            ...(almacen !== '%' ? [almacen] : []),
+            ...(estado !== '%' ? [`%${estado}%`] : []),
+            ...(usuario ? [`%${usuario}%`] : [])
+          ]
     );
 
     // Obtener los detalles de venta correspondientes
