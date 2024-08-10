@@ -2,14 +2,19 @@ import { useEffect, useState } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
-import { getSubcategoriaNomCategoria as fetchSubcategorias } from "@/services/subcategoria.services";
+import {
+  getSubcategoriaNomCategoria as fetchSubcategorias,
+  deleteSubcategoria,
+  deactivateSubcategoria,
+} from "@/services/subcategoria.services";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 export function ShowSubcategorias({ searchTerm }) {
   const [subcategorias, setSubcategorias] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeactivationModalOpen, setIsDeactivationModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState("");
+  const [selectedRow, setSelectedRow] = useState(null); 
   const productosPerPage = 10;
 
   useEffect(() => {
@@ -20,19 +25,50 @@ export function ShowSubcategorias({ searchTerm }) {
     loadSubcategorias();
   }, []);
 
-  const handleOpenConfirmationModal = (nombre, id) => {
-    setSelectedRow(nombre);
+  const handleOpenConfirmationModal = (id, nombre) => {
+    setSelectedRow({ id, nombre });
     setIsConfirmationModalOpen(true);
   };
 
   const handleCloseConfirmationModal = () => {
     setIsConfirmationModalOpen(false);
+    setSelectedRow(null); 
   };
 
-  const handleConfirmDelete = async (id) => {
-    await deleteSubcategoria(id);
-    handleCloseConfirmationModal();
-    loadSubcategorias();
+  const handleOpenDeactivationModal = (id, nombre) => { 
+    setSelectedRow({ id, nombre });
+    setIsDeactivationModalOpen(true);
+  };
+
+  const handleCloseDeactivationModal = () => {
+    setIsDeactivationModalOpen(false);
+    setSelectedRow(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (selectedRow?.id) {
+      await deleteSubcategoria(selectedRow.id);
+      setSubcategorias((prev) =>
+        prev.filter(
+          (sub_categoria) => sub_categoria.id_subcategoria !== selectedRow.id
+        )
+      );
+      handleCloseConfirmationModal();
+    }
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (selectedRow?.id) {
+      await deactivateSubcategoria(selectedRow.id);
+      setSubcategorias((prev) =>
+        prev.map((sub_categoria) =>
+          sub_categoria.id_subcategoria === selectedRow.id
+            ? { ...sub_categoria, estado_subcat: 0 }
+            : sub_categoria
+        )
+      );
+      handleCloseDeactivationModal();
+    }
   };
 
   const filteredSubcategorias = subcategorias.filter((sub_categoria) =>
@@ -105,11 +141,8 @@ export function ShowSubcategorias({ searchTerm }) {
                     <div className="flex justify-center items-center">
                       <button
                         className="px-2 py-1 text-yellow-400 text-xl"
-                        onClick={() =>
-                          handleOpenConfirmationModal(
-                            sub_categoria.nom_subcat,
-                            sub_categoria.id_subcategoria
-                          )
+                        onClick={
+                          () => console.log("Edit action") // Aquí iría la acción de editar
                         }
                       >
                         <MdEdit />
@@ -118,8 +151,8 @@ export function ShowSubcategorias({ searchTerm }) {
                         className="px-2 py-1 text-red-500"
                         onClick={() =>
                           handleOpenConfirmationModal(
-                            sub_categoria.nom_subcat,
-                            sub_categoria.id_subcategoria
+                            sub_categoria.id_subcategoria,
+                            sub_categoria.nom_subcat
                           )
                         }
                       >
@@ -129,9 +162,9 @@ export function ShowSubcategorias({ searchTerm }) {
                         className="px-3 py-1 text-red-600"
                         style={{ fontSize: "20px" }}
                         onClick={() =>
-                          handleOpenConfirmationModal(
-                            sub_categoria.nom_subcat,
-                            sub_categoria.id_subcategoria
+                          handleOpenDeactivationModal(
+                            sub_categoria.id_subcategoria,
+                            sub_categoria.nom_subcat
                           )
                         }
                       >
@@ -160,11 +193,18 @@ export function ShowSubcategorias({ searchTerm }) {
           onPageChange={setCurrentPage}
         />
       </div>
-      {isConfirmationModalOpen && (
+      {isConfirmationModalOpen && selectedRow && (
         <ConfirmationModal
-          message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
+          message={`¿Estás seguro que deseas eliminar "${selectedRow.nombre}"?`}
           onClose={handleCloseConfirmationModal}
-          onConfirm={() => handleConfirmDelete(selectedRow)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
+      {isDeactivationModalOpen && selectedRow && (
+        <ConfirmationModal
+          message={`¿Estas seguro que deseas dar de baja a "${selectedRow.nombre}"?`}
+          onClose={handleCloseDeactivationModal}
+          onConfirm={handleConfirmDeactivate}
         />
       )}
     </div>

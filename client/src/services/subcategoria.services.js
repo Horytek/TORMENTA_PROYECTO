@@ -1,4 +1,4 @@
-import { getSubcategoriasRequest, getSubcategoriasForCategoriasRequest, getSubcategoriaNomCategoriaRequest, addSubcategoriaRequest, updateSubcategoriaRequest, deactivateSubcategoriaRequest } 
+import { getSubcategoriasRequest, getSubcategoriasForCategoriasRequest, getSubcategoriaNomCategoriaRequest, addSubcategoriaRequest, updateSubcategoriaRequest, deleteSubcategoriaRequest, deactivateSubcategoriaRequest } 
 from '@/api/api.subcategoria';
 import { toast } from "react-hot-toast";
 
@@ -34,17 +34,17 @@ const getSubcategoriaNomCategoria = async () => {
   try {
     const response = await getSubcategoriaNomCategoriaRequest();
     if (response.data.code === 1) {
-      console.log("Subcategorías data:", response.data.data); // Debugging: Verify data structure
+      console.log("Subcategorías data:", response.data.data); 
       return response.data.data;
     } else {
       console.error('Error en la solicitud: ', response.data.message);
       toast.error(`Error en la solicitud: ${response.data.message}`);
-      return []; // Return an empty array to avoid potential issues in components
+      return []; 
     }
   } catch (error) {
     console.error('Error en la solicitud: ', error.message);
     toast.error(`Error en la solicitud: ${error.message}`);
-    return []; // Return an empty array to avoid potential issues in components
+    return []; 
   }
 };
 
@@ -76,6 +76,19 @@ const updateSubcategoria = async (subcategoria) => {
   }
 };
 
+const deleteSubcategoria = async (id) => {
+  try {
+    const response = await deleteSubcategoriaRequest(id);
+    if (response.data.code === 1) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error("Error en el servidor interno");
+  }
+}
+
 const deactivateSubcategoria = async (id) => {
   try {
     const response = await deactivateSubcategoriaRequest(id);
@@ -89,4 +102,4 @@ const deactivateSubcategoria = async (id) => {
   }
 }
 
-export { getSubcategorias, getSubcategoriasForCategoria, getSubcategoriaNomCategoria, addSubcategoria, updateSubcategoria, deactivateSubcategoria };
+export { getSubcategorias, getSubcategoriasForCategoria, getSubcategoriaNomCategoria, addSubcategoria, updateSubcategoria, deleteSubcategoria, deactivateSubcategoria };

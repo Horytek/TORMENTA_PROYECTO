@@ -15,5 +15,8 @@ export const addSubcategoriaRequest = async (subcategoria) =>
 export const updateSubcategoriaRequest = async (subcategoria) =>
   await axios.put(`/subcategorias/update/${subcategoria.id}`, subcategoria);
 
+export const deleteSubcategoriaRequest = async (id) =>
+  await axios.delete(`/subcategorias/${id}`);
+
 export const deactivateSubcategoriaRequest = async (id) =>
   await axios.put(`/subcategorias/deactivate/${id}`);
