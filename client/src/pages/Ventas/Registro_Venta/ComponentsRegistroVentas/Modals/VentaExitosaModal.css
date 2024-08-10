@@ -42,3 +42,14 @@
     animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) 0.7s forwards, scale 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.9s both;
     transform-origin: 50% 50%;
 }
+
+.autocomplete-no-border .nextui-autocomplete {
+    border: none !important;
+    box-shadow: none !important; /* Elimina cualquier sombra */
+  }
+  
+  .autocomplete-no-border input {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important; /* Asegúrate de que no haya borde de enfoque */
+  }

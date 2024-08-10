@@ -16,6 +16,7 @@ import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes
 import PropTypes from 'prop-types';
 import {Toaster} from "react-hot-toast";
 import {toast} from "react-hot-toast";
+import {Button} from "@nextui-org/react";
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
@@ -203,7 +204,7 @@ const Registro_Venta = () => {
           <div className="flex items-center mb-4">
             <input type="text" className={` mr-2 form-input py-2 px-4 w-full text-gray-700 placeholder-gray-400 rounded border-none focus:outline-none ${!detalleMode ? 'cursor-not-allowed bg-gray-200' : ''}`}
               placeholder="Buscar producto en el detalle" style={{ boxShadow: '0 0 10px #171a1f33' }} value={searchTerm2} onChange={(e) => setSearchTerm2(e.target.value)} disabled={!detalleMode} />
-            <button className="btn ml-2 btn-producto px-6 py-2 " onClick={() => setIsModalOpen(true)}>Producto</button>
+            <Button className="btn ml-2 btn-producto px-6 py-2" color="#006FEE" variant="shadow" onClick={() => setIsModalOpen(true)}>Producto</Button>
           </div>
           <TablaDetallesVenta detalles={detalles} handleProductRemove={handleProductRemove} handleQuantityChange={handleQuantityChange} handleDiscountChange={handleDiscountChange} handlePrecieChange={handlePrecieChange} />
 

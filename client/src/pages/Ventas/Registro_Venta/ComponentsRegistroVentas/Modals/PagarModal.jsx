@@ -18,7 +18,7 @@ import { generateReceiptContent } from '../Comprobantes/Voucher/Voucher';
 // import Voucher from '../Comprobantes/Voucher/VoucherPreview';
 // import { useReactToPrint } from 'react-to-print';
 import generateComprobanteNumber from '../../../Data/generate_comprobante';
-
+import {Autocomplete, AutocompleteItem} from "@nextui-org/autocomplete";
 
 const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const { productos } = useProductosData();
@@ -42,6 +42,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         return savedDetalles ? JSON.parse(savedDetalles) : [];
     };
     const detalles = loadDetallesFromLocalStorage();
+    
 
     const comprobante_pago1 = JSON.parse(localStorage.getItem('comprobante')) || {};
     const comp = comprobante_pago1.comprobante_pago;
@@ -128,6 +129,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
 
     const saveDetallesToLocalStorage = () => {
         localStorage.setItem('comprobante', JSON.stringify({ comprobante_pago }));
+        localStorage.setItem('cliente_d', JSON.stringify({ clienteSeleccionado }));
     };
 
     saveDetallesToLocalStorage();
@@ -139,6 +141,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         handleCobrar(datosVenta, setShowConfirmacion);
         handlePrint();  // Esto llamará a la función de impresión
     };
+
     const cliente = clientes.find(cliente => cliente.nombre === clienteSeleccionado);
 
 
@@ -259,6 +262,22 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         }
     };
 
+  // Maneja el cambio de valor del input
+  const handleInputChange = (e) => {
+    setClienteSeleccionado(e.target.value); // Actualiza el estado con el valor del input
+  };
+
+  // Maneja la selección de un elemento de la lista
+  const handleSelectionChange = (value) => {
+    setClienteSeleccionado(value);
+    if (value){
+        setClienteSeleccionado(value);
+    } else {
+        setClienteSeleccionado('Cliente Varios');
+    } //Actualiza el estado con el valor seleccionado
+  };
+    
+
     return (
         <div className="modal-container" style={{ overflowY: 'auto' }} >
             <div className={` modal-pagar px-6 py-7 rounded-xl shadow-lg relative ${showNuevoCliente ? 'expanded' : ''}`} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
@@ -277,17 +296,18 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                             <div>
                                 <label className="block text-gray-800 mb-2 font-semibold">Seleccione el cliente</label>
                                 <div className='flex items-center justify-between'>
-                                    <select
-                                        className="input-c mr-1 pr-8"
-                                        style={{ border: "solid 0.1rem #171a1f28", width: '11rem' }}
+                                <Autocomplete
+                                        className="input-c mr-1 autocomplete-no-border"
+                                        placeholder="Seleccionar cliente"
+                                        style={{ width: '6rem' }}
                                         value={clienteSeleccionado}
-                                        onChange={(e) => setClienteSeleccionado(e.target.value)}
+                                        onChange={handleInputChange} // Usa onChange para manejar cambios en el input
+                                        onSelectionChange={handleSelectionChange} // Usa onSelectionChange para manejar la selección
                                     >
-                                        <option value="">Seleccionar cliente</option>
-                                        {clientes.map((cliente, index) => (
-                                            <option key={index} value={cliente.nombre}>{cliente.nombre}</option>
+                                        {clientes.map((cliente) => (
+                                            <AutocompleteItem key={cliente.nombre} value={cliente.nombre}>{cliente.nombre}</AutocompleteItem>
                                         ))}
-                                    </select>
+                                    </Autocomplete>
                                     <button type="button" className="btn-nuevo-cliente px-1 py-2" onClick={() => setShowNuevoCliente(true)}>
                                         <GrFormAdd style={{ fontSize: '24px' }} />
                                     </button>

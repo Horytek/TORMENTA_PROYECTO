@@ -12,6 +12,17 @@ const getVentas = async (req, res) => {
       "SELECT COUNT(*) as total FROM venta"
     );
     const totalVentas = totalResult[0].total;
+    // Procesar nom_tipocomp para la cláusula IN
+    const nomTipocompArray = nom_tipocomp.split(',').map(item => item.trim()).filter(item => item !== '');
+    let inClause = '';
+    const params = [];
+
+    if (nomTipocompArray.length > 0) {
+      inClause = `tp.id_tipocomprobante IN (${nomTipocompArray.map(() => '?').join(',')})`;
+      params.push(...nomTipocompArray);
+    } else {
+      inClause = '1=1'; // Esto no filtra ningún registro
+    }
 
     // Obtener las ventas con paginación
     const [ventasResult] = await connection.query(
@@ -27,12 +38,12 @@ const getVentas = async (req, res) => {
         INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
         INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
         INNER JOIN vendedor ve ON ve.dni = s.dni
-      	WHERE tp.nom_tipocomp LIKE ? AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=?
+      	WHERE ${inClause} AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=?
         GROUP BY id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, fecha, igv, cajero, cajeroId, estado
         ORDER BY v.id_venta desc
         LIMIT ? OFFSET ?
       `,
-      [nom_tipocomp+'%',razon_social+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,parseInt(limit), parseInt(offset)]
+      [...params,razon_social+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,parseInt(limit), parseInt(offset)]
     );
 
     // Obtener los detalles de venta correspondientes

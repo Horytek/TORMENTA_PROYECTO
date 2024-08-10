@@ -5,6 +5,8 @@ import {DateRangePicker} from "@nextui-org/date-picker";
 import useComprobanteData from '../../Data/data_comprobante_venta';
 import useSucursalData from '../../Data/data_sucursal_venta';
 import {parseDate} from "@internationalized/date";
+import {Select, SelectItem} from "@nextui-org/react";
+
 
 const FiltrosVentas = ({onFiltersChange}) => {
     const {comprobantes} = useComprobanteData();
@@ -63,26 +65,24 @@ const FiltrosVentas = ({onFiltersChange}) => {
                     onChange={handleChange} />
                 </div>
                 <div className="input-wrapper mb-2 md:mb-0">
-                    <select id="tipo" className="border border-gray-300 rounded-lg p-2" style={{width: "190px"}} value={comprobanteSeleccionado}
+                    <Select id="tipo" placeholder="Tipo Comprobante" className="rounded-lg p-0" style={{width: "190px"}} value={comprobanteSeleccionado}
                                 onChange={(e) => setComprobanteSeleccionado(e.target.value)}
                                                                     >
-                        <option value="">Tipo Comprobante</option>
-                        {comprobantes.map((comprobante, index) => (
-                                        <option key={index} value={comprobante.nombre}>{comprobante.nombre}</option>
+                        {comprobantes.map((comprobante) => (
+                                        <SelectItem key={comprobante.id} value={comprobante.nombre}>{comprobante.nombre}</SelectItem>
                                     ))}
-                    </select>
+                    </Select>
                 </div>
                 <div className="input-wrapper mb-2 md:mb-0">
                     {/* <label htmlFor="campo" className="label">
                         Campo
                     </label> */}
-                    <select id="campo" className="border border-gray-300 rounded-lg p-2" style={{width: "170px"}} value={sucursalSeleccionado}
+                    <Select id="campo" placeholder="Sucursal" selectionMode="multiple" className="rounded-lg p-2" style={{width: "170px"}} value={sucursalSeleccionado}
                                 onChange={(e) => setSucursalSeleccionado(e.target.value)}>
-                        <option value="">Sucursal</option>
-                        {sucursales.map((sucursal, index) => (
-                                        <option key={index} value={sucursal.nombre}>{sucursal.nombre}</option>
+                        {sucursales.map((sucursal) => (
+                                        <SelectItem key={sucursal.nombre} value={sucursal.nombre}>{sucursal.nombre}</SelectItem>
                                     ))}
-                    </select>
+                    </Select>
                 </div>
                 <div className="input-wrapper flex gap-2">
             <DateRangePicker
