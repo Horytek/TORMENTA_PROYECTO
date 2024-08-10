@@ -46,8 +46,8 @@ const getSalidas = async (req, res) => {
     );
 
     // Obtener los detalles de venta correspondientes
-    const ingresos = await Promise.all(
-      salidaResult.map(async (ingreso) => {
+    const salidas = await Promise.all(
+      salidaResult.map(async (salida) => {
         const [detallesResult] = await connection.query(
           `
                   SELECT dn.id_detalle_nota AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
@@ -57,17 +57,17 @@ const getSalidas = async (req, res) => {
                   INNER JOIN detalle_nota dn ON p.id_producto=dn.id_producto
                   WHERE dn.id_nota= ?
                   `,
-          [ingreso.id]
+          [salida.id]
         );
 
         return {
-          ...ingreso,
+          ...salida,
           detalles: detallesResult,
         };
       })
     );
 
-    res.json({ code: 1, data: ingresos });
+    res.json({ code: 1, data: salidas });
   } catch (error) {
     res.status(500).send(error.message);
   }

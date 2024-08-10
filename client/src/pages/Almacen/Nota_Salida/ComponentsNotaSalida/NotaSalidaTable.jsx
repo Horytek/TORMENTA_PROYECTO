@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from './Modals/ConfirmationModal';
 import Pagination from '@/components/Pagination/Pagination'; // Asegúrate de ajustar la ruta
 import anularNota from '../data/anular_nota_salida'; // Asegúrate de ajustar la ruta
 import ReactToPrint from 'react-to-print';
+import { Toaster, toast } from "react-hot-toast";
 const TablaSalida = ({ salidas }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
   const [notaIdToAnular, setNotaIdToAnular] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6); // Estado para cantidad de elementos por página
-
+  const [itemsPerPage, setItemsPerPage] = useState(5); // Estado para cantidad de elementos por página
+  const [almacen, setAlmacen] = useState(() => {
+    const savedAlmacen = localStorage.getItem('almacen');
+    return savedAlmacen ? parseInt(savedAlmacen) : '';
+  });
   const handleSelectChange2 = (event, id) => {
     const value = event.target.value;
     switch (value) {
@@ -46,8 +50,10 @@ const TablaSalida = ({ salidas }) => {
       const result = await anularNota(notaIdToAnular);
       if (result.success) {
         console.log(result.message);
+        toast.success('Nota anulada')
         window.location.reload();
       } else {
+        toast.error('La nota ya está anulada.')
         console.error(result.message);
       }
     }
@@ -57,6 +63,21 @@ const TablaSalida = ({ salidas }) => {
   const handleSelectClick = (event) => {
     event.stopPropagation();
   };
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedAlmacen = localStorage.getItem('almacen');
+      setAlmacen(savedAlmacen ? parseInt(savedAlmacen, 10) : '');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    handleStorageChange();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  });
 
   const getEstadoClassName = (estado) => {
     switch (estado) {
@@ -76,7 +97,12 @@ const TablaSalida = ({ salidas }) => {
   const navigate = useNavigate();
 
   const handleDetailClick = (id) => {
-    navigate(`/almacen/kardex/historico/${id}`);
+    console.log(almacen, 'sdsdsds')
+    if (almacen){
+      navigate(`/almacen/kardex/historico/${id}`);
+    } else {
+    toast.error('Por favor seleccione un almacén primero para visualizar el kardex');
+    }
   };
 
   const renderSalidaRow = (salida) => (
@@ -160,6 +186,7 @@ const TablaSalida = ({ salidas }) => {
 
   return (
     <div className="container-table-reg px-4 bg-white rounded-lg">
+      <Toaster />
       <table className="table w-full">
         <thead>
           <tr>

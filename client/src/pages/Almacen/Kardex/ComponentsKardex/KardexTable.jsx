@@ -1,28 +1,26 @@
 import PropTypes from 'prop-types';
 
-const TablaKardex = ({ ingresos }) => {
+const TablaKardex = ({ kardex }) => {
 
   const handleSelectClick = () => {
     // Implement the select click handler logic
   };
 
-  const renderEntradaRow = (ingreso) => (
-    <tr key={ingreso.id} className='tr-tabla-kardex'>
-      <td className="text-center px-2">{ingreso.codigo}</td>
-      <td className="text-center px-2">{ingreso.descripcion}</td>
-      <td className="text-center px-2">{ingreso.marca}</td>
-      <td className="text-center px-2">{ingreso.stockActual}</td>
-      <td className="text-center px-2">{ingreso.cantidad}</td>
-      <td className="text-center px-2">{ingreso.um}</td>
-      <td className="text-center px-2">{ingreso.smin}</td>
-      <td className="text-center px-2">{ingreso.transito}</td>
+  const renderEntradaRow = (kardex) => (
+    <tr key={kardex.id} className='tr-tabla-kardex'>
+      <td className="text-center px-2">{kardex.codigo}</td>
+      <td className="text-center px-2">{kardex.descripcion}</td>
+      <td className="text-center px-2">{kardex.marca}</td>
+      <td className="text-center px-2">{kardex.stock}</td>
+      <td className="text-center px-2">{kardex.um}</td>
+      <td className="text-center px-2">{kardex.marca}</td>
       <td className="text-center px-2">NOT</td>
       <td className='text-center px-2'>
         <select className='b text-center custom-select border border-gray-300 p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick} defaultValue="">
           <option value="">...</option>
-          <option value="value1">Imprimir</option>
-          <option value="value2">Anular</option>
-          <option value="value3">Clonar</option>
+          <option value="value1">Lotes</option>
+          <option value="value2">Almacenes</option>
+          <option value="value3">Kardex</option>
         </select>
       </td>
     </tr>
@@ -37,16 +35,14 @@ const TablaKardex = ({ ingresos }) => {
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">DESCRIPCIÓN</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">MARCA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">STOCK ACTUAL</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">CANTIDAD</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">UM</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">S.MIN</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">TRÁNSITO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">BARRA</th>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">ACCIÓN</th>
           </tr>
         </thead>
         <tbody>
-          {ingresos.map(renderEntradaRow)}
+          {kardex.map(renderEntradaRow)}
         </tbody>
       </table>
     </div>
@@ -54,7 +50,7 @@ const TablaKardex = ({ ingresos }) => {
 };
 
 TablaKardex.propTypes = {
-  ingresos: PropTypes.array.isRequired,
+  kardex: PropTypes.array.isRequired,
 };
 
 export default TablaKardex;

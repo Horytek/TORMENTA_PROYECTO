@@ -11,6 +11,7 @@ import ventasRoutes from "./routes/ventas.routes";
 import marcasRoutes from "./routes/marcas.routes";
 import ingresosRoutes from "./routes/notaingreso.routes";
 import salidaRoutes from "./routes/notasalida.routes";
+import kardexRoutes from "./routes/kardex.routes.js"
 import guiasRoutes from "./routes/guiaremision.routes";
 import categoriaRoutes from "./routes/categoria.routes";
 import subcategoriaRoutes from "./routes/subcategoria.routes";
@@ -37,6 +38,7 @@ app.use("/api/ventas", ventasRoutes);
 app.use("/api/marcas", marcasRoutes);
 app.use("/api/nota_ingreso", ingresosRoutes);
 app.use("/api/nota_salida", salidaRoutes);
+app.use("/api/kardex", kardexRoutes);
 app.use("/api/guia_remision", guiasRoutes);
 app.use("/api/categorias", categoriaRoutes);
 app.use("/api/subcategorias", subcategoriaRoutes);
