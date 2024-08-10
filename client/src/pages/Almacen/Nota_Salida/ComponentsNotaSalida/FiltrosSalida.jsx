@@ -5,7 +5,6 @@ import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { Link } from 'react-router-dom';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
-import ReactToPrint from 'react-to-print';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
 const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => {
@@ -25,8 +24,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
     }, [almacenes]);
 
     const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
-    const [isModalOpenExcel, setIsModalOpenExcel] = useState(false);
-    const [isModalOpenExcelDetalle, setIsModalOpenExcelDetalle] = useState(false);
+    const [isModalOpenPDF, setIsModalOpenPDF] = useState(false);
 
     const [value, setValue] = useState({
         start: parseDate("2024-04-01"),
@@ -68,103 +66,143 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
         setIsModalOpenImprimir(false);
     };
 
-    const openModalExcel = () => {
-        setIsModalOpenExcel(true);
+    const openModalPDF = () => {
+        setIsModalOpenPDF(true);
     };
 
-    const closeModalExcel = () => {
-        setIsModalOpenExcel(false);
+    const closeModalPDF = () => {
+        setIsModalOpenPDF(false);
     };
 
-    const openModalExcelDetalle = () => {
-        setIsModalOpenExcelDetalle(true);
-    };
-
-    const closeModalExcelDetalle = () => {
-        setIsModalOpenExcelDetalle(false);
-    };
 
     const handleConfirmImprimir = () => {
         console.log('Nota de salida impresa.');
         setIsModalOpenImprimir(false);
     };
 
-    const handleConfirmExcel = () => {
-        console.log('Exportar a Excel.');
-        setIsModalOpenExcel(false);
-    };
-
-    const handleConfirmExcelDetalle = () => {
-        console.log('Exportar a Excel Detalle.');
-        setIsModalOpenExcelDetalle(false);
+    const handleConfirmPDF = () => {
+        console.log('Exportar a PDF.');
+        setIsModalOpenPDF(false);
     };
 
     const handleSelectChange = (event) => {
         const value = event.target.value;
         if (value === "imprimir") {
             openModalImprimir();
-        } else if (value === "excel") {
-            openModalExcel();
-        } else if (value === "excel-detalle") {
-            openModalExcelDetalle();
+        } else if (value === "pdf") {
+            openModalPDF();
         }
         event.target.value = '';
     };
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
-            <div className="flex items-center gap-2">
-                <h6 className='font-bold'>Almacén:</h6>
-                <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-4 w-56' onChange={handleAlmacenChange} value={almacenSeleccionado.id}>
-                    <option value="%">Seleccione...</option>
-                    {almacenes.map((almacen, index) => (
-                        <option key={index} value={almacen.id}>{almacen.almacen}</option>
-                    ))}
-                </select>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className='relative'>
-                    <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                        <IoIosSearch className='w-4 h-4 text-gray-500' />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder='Nombre o razón social'
-                        value={razon}
-                        onChange={(e) => setRazon(e.target.value)}
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
-                    />
-                </div>
-            </div>
-            <div className="flex items-center gap-2">
-                <DateRangePicker
-                    className="w-xs"
-                    classNames={{ inputWrapper: "bg-white" }}
-                    value={value}
-                    onChange={setValue}
-                />
-            </div>
-            <div className="flex items-center gap-2">
-                <div className='flex items-center gap-2'>
-                    <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full' name="select" onChange={handleSelectChange}>
-                        <option value="">...</option>
-                        <ReactToPrint
-                            trigger={() => {
-                                return <option value="imprimir">Imprimir</option>
-                            }}
-                            content={()=>this.componentRef}
-                            documentTitle='TORMENTA JEANS - 20610588981'
-                            pageSytle="print"
-                        />
-                        <option value="excel">Excel</option>
-                        <option value="excel-detalle">Excel Detalle</option>
+            <div className="flex items-center justify-between gap-4 w-full" >
+                <div className="flex items-center gap-2">
+                    <h6 className='font-bold'>Almacén:</h6>
+                    <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-4 w-56' onChange={handleAlmacenChange} value={almacenSeleccionado.id}>
+                        <option value="%">Seleccione...</option>
+                        {almacenes.map((almacen, index) => (
+                            <option key={index} value={almacen.id}>{almacen.almacen}</option>
+                        ))}
                     </select>
                 </div>
-                <Link to="/almacen/nota_salida/nueva_nota_salida">
-                    <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '20px' }} />}>
-                        Nota de salida
-                    </ButtonIcon>
-                </Link>
+
+                <div className="flex items-center gap-2">
+                    <h6 className='font-bold'>Nombre o razón social:</h6>
+                    <div className='relative'>
+                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                            <IoIosSearch className='w-4 h-4 text-gray-500' />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder=''
+                            value={razon}
+                            onChange={(e) => setRazon(e.target.value)}
+                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
+                            style={{ width: '300px' }}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <h6 className='font-bold'>Comprobante:</h6>
+                    <div className='relative'>
+                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                            <IoIosSearch className='w-4 h-4 text-gray-500' />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder='S400-00000000'
+                            value={razon}
+                            onChange={(e) => setRazon(e.target.value)}
+                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-auto'
+                            style={{ width: '175px' }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 w-full" >
+                <div className="flex items-center gap-2">
+                    <h6 className='font-bold'>Fecha:&nbsp;&nbsp;&nbsp;&nbsp;</h6>
+                    <DateRangePicker
+                        className="w-xs"
+                        classNames={{ inputWrapper: "bg-white" }}
+                        value={value}
+                        onChange={setValue}
+                    />
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <h6 className='font-bold'>Estado:</h6>
+                    <select id=""
+                        className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-4 w-56'
+                        onChange={handleAlmacenChange} style={{ width: '100px' }}>
+                        <option value="%">...</option>
+                        <option value="%">Activo</option>
+                        <option value="%">Inactivo</option>
+                        {almacenes.map((almacen, index) => (
+                            <option key={index} value={almacen.id}>{almacen.almacen}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <h6 className='font-bold'>Usuario:</h6>
+                    <div className='relative'>
+                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                            <IoIosSearch className='w-4 h-4 text-gray-500' />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder='Ej: tormenta'
+                            value={razon}
+                            onChange={(e) => setRazon(e.target.value)}
+                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
+                            style={{ width: '200px' }}
+                        />
+                    </div>
+                </div>
+
+
+
+                <div className="flex items-center gap-2">
+                    <div className='flex items-center gap-2'>
+                        <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full'
+                            name="select" onChange={handleSelectChange} style={{ width: '100px' }}>
+                            <option value="">...</option>
+                            <option value="pdf">PDF</option>
+                            <option value="imprimir">Imprimir</option>
+                        </select>
+                    </div>
+
+                    <Link to="/almacen/nota_salida/nueva_nota_salida">
+                        <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '20px' }} />}>
+                            Nota de salida
+                        </ButtonIcon>
+                    </Link>
+                </div>
             </div>
             {isModalOpenImprimir && (
                 <ConfirmationModal
@@ -174,20 +212,12 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                     onConfirm={handleConfirmImprimir}
                 />
             )}
-            {isModalOpenExcel && (
+            {isModalOpenPDF && (
                 <ConfirmationModal
-                    message='¿Desea exportar a Excel?'
-                    onClose={closeModalExcel}
-                    isOpen={isModalOpenExcel}
-                    onConfirm={handleConfirmExcel}
-                />
-            )}
-            {isModalOpenExcelDetalle && (
-                <ConfirmationModal
-                    message='¿Desea exportar a Excel Detalle?'
-                    onClose={closeModalExcelDetalle}
-                    isOpen={isModalOpenExcelDetalle}
-                    onConfirm={handleConfirmExcelDetalle}
+                    message='¿Desea exportar a PDF?'
+                    onClose={closeModalPDF}
+                    isOpen={isModalOpenPDF}
+                    onConfirm={handleConfirmPDF}
                 />
             )}
         </div>

@@ -115,17 +115,11 @@ const TablaSalida = ({ salidas }) => {
             {salida.estado === 1 ? 'Inactivo' : 'Activo'}
           </p>
         </td>
+        <td className="text-center">{salida.usuario}</td>
         <td className='text-center'>
-          <select className='b text-center custom-select border border-gray-300 rounded-lg text-gray-900 text-sm w-25' name="select" onClick={handleSelectClick} onChange={(e) => handleSelectChange2(e, salida.id)}>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg text-gray-900 text-sm w-20' name="select" onClick={handleSelectClick} onChange={(e) => handleSelectChange2(e, salida.id)}>
             <option value="">...</option>
-            <ReactToPrint
-              trigger={() => {
-                return <option value="imprimir2">Imprimir</option>
-              }}
-              content={() => this.componentRef}
-              documentTitle='TORMENTA JEANS - 20610588981'
-              pageSytle="print"
-            />
+            <option value="imprimir2">Imprimir</option>
             <option value="anular">Anular</option>
           </select>
         </td>
@@ -187,13 +181,14 @@ const TablaSalida = ({ salidas }) => {
       <table className="table w-full">
         <thead>
           <tr>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOCUMENTO</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total S/.</th>
+            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
+            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOCUMENTO</th>
+            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
+            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total S/.</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
+            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
+            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">USUARIO</th>
+            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
           </tr>
         </thead>
         <tbody>

@@ -19,7 +19,8 @@ const getSalidas = async (req, res) => {
               COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
               n.glosa AS concepto,
               n.estado_nota AS estado,
-              ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota
+              ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
+              u.usua as usuario
           FROM 
               nota n
           LEFT JOIN 
@@ -29,6 +30,8 @@ const getSalidas = async (req, res) => {
           LEFT JOIN almacen ad ON n.id_almacenD= ad.id_almacen
           LEFT JOIN 
               detalle_nota dn ON n.id_nota = dn.id_nota
+          INNER JOIN
+              usuario u ON n.id_usuario = u.id_usuario
           WHERE 
               n.id_tiponota = 2
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
