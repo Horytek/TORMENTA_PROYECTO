@@ -12,7 +12,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
         const almacenIdGuardado = localStorage.getItem('almacen');
         return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
     });
-
+    const [estado, setEstado] = useState('');
     useEffect(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
         if (almacenIdGuardado && almacenes.length > 0) {
@@ -32,6 +32,8 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
     });
 
     const [razon, setRazon] = useState('');
+    const [usuario, setUsuario] = useState('');
+    const [documento, setDocumento] = useState('');
 
     const applyFilters = useCallback(() => {
         const date_i = `${value.start.year}-${String(value.start.month).padStart(2, '0')}-${String(value.start.day).padStart(2, '0')}`;
@@ -42,10 +44,13 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
             fecha_e: date_e,
             razon_social: razon,
             almacen: almacenSeleccionado.id !== '%' ? almacenSeleccionado.id : '%',
+            usuario: usuario,
+            documento: documento,
+            estado: estado !== '%' ? estado : '%'
         };
 
         onFiltersChange(filtros);
-    }, [value, razon, almacenSeleccionado, onFiltersChange]);
+    }, [value, razon, almacenSeleccionado, usuario, documento, estado, onFiltersChange]);
 
     useEffect(() => {
         applyFilters();
@@ -116,7 +121,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                         </div>
                         <input
                             type="text"
-                            placeholder=''
+                            placeholder='Ej: Juan Perez o Empresa SA'
                             value={razon}
                             onChange={(e) => setRazon(e.target.value)}
                             className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
@@ -134,8 +139,8 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                         <input
                             type="text"
                             placeholder='S400-00000000'
-                            value={razon}
-                            onChange={(e) => setRazon(e.target.value)}
+                            value={documento}
+                            onChange={(e) => setDocumento(e.target.value)}
                             className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-auto'
                             style={{ width: '175px' }}
                         />
@@ -157,14 +162,12 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                 <div className="flex items-center gap-2">
                     <h6 className='font-bold'>Estado:</h6>
                     <select id=""
-                        className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-4 w-56'
-                        onChange={handleAlmacenChange} style={{ width: '100px' }}>
+                        className='border border-gray-300 text-center text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500'
+                        onChange={(e) => setEstado(e.target.value)} value={estado}
+                        style={{ width: '110px' }}>
                         <option value="%">...</option>
-                        <option value="%">Activo</option>
-                        <option value="%">Inactivo</option>
-                        {almacenes.map((almacen, index) => (
-                            <option key={index} value={almacen.id}>{almacen.almacen}</option>
-                        ))}
+                        <option value="0">Activo</option>
+                        <option value="1">Inactivo</option>
                     </select>
                 </div>
 
@@ -177,8 +180,8 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                         <input
                             type="text"
                             placeholder='Ej: tormenta'
-                            value={razon}
-                            onChange={(e) => setRazon(e.target.value)}
+                            value={usuario}
+                            onChange={(e) => setUsuario(e.target.value)}
                             className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
                             style={{ width: '200px' }}
                         />
