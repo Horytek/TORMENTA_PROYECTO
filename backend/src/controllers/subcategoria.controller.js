@@ -58,6 +58,40 @@ const getSubCategoria = async (req, res) => {
     }
 };
 
+const getSubcategoriaNomCategoria = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params; // Add this line to define the 'id' variable
+        connection = await getConnection();
+        const [results] = await connection.query(`
+            SELECT sc.id_subcategoria, c.nom_categoria, sc.nom_subcat, sc.estado_subcat
+            FROM sub_categoria sc
+            INNER JOIN categoria c ON sc.id_categoria = c.id_categoria where sc.id_subcategoria = ?`, [id]);
+
+
+        const formattedResults = results.map(row => ({
+            id_subcategoria: row.id_subcategoria,
+            categoria: { nom_categoria: row.nom_categoria },  // Include nom_categoria here
+            nom_subcat: row.nom_subcat,
+            estado_subcat: row.estado_subcat,
+        }));
+
+        res.json({ code: 1, data: formattedResults, message: "Subcategorías encontradas" });
+    } catch (error) {
+        console.error("Error retrieving subcategorias:", error.message); 
+        res.status(500).send({ code: 0, message: error.message });
+    } finally {
+        if (connection) {
+            connection.end();
+        }
+    }
+};
+
+
+
+
+
+
 const addSubCategoria = async (req, res) => {
     try {
         const { id_categoria, nom_subcat, estado_subcat } = req.body;
@@ -141,6 +175,7 @@ const deleteSubCategoria = async (req, res) => {
 export const methods = {
     getSubCategorias,
     getSubcategoriesForCategory,
+    getSubcategoriaNomCategoria,
     getSubCategoria,
     addSubCategoria,
     updateSubCategoria,

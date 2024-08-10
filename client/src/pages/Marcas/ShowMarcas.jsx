@@ -179,7 +179,7 @@ export function ShowMarcas({ searchTerm }) {
             ) : (
               <tr>
                 <td colSpan="4" className="py-4 text-center">
-                  No hay marcas existentes.
+                  No hay marcas correspondientes/existentes.
                 </td>
               </tr>
             )}

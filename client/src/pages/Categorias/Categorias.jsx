@@ -58,7 +58,7 @@ function Categorias() {
             icon={<FaPlus style={{ fontSize: "25px" }} />}
             onClick={handleModalAdd}
           >
-            Agregar categoría
+            Crear categoría
           </ButtonIcon>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
+import ShowSubcategorias from "./ShowSubcategoria";
 
 function Subcategorias() {
   const [activeAdd, setModalOpen] = useState(false);
@@ -27,7 +28,7 @@ function Subcategorias() {
         ]}
       />
       <hr className="mb-4" />
-      <h1 className="font-extrabold text-4xl">Subategorias</h1>
+      <h1 className="font-extrabold text-4xl">Subcategorias</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
         <div
           id="barcode-scanner"
@@ -60,7 +61,9 @@ function Subcategorias() {
           </ButtonIcon>
         </div>
       </div>
-      <div></div>
+      <div>
+        <ShowSubcategorias searchTerm={searchTerm} />
+      </div>
     </div>
   );
 }

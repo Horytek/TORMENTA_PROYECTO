@@ -180,7 +180,7 @@ export function ShowCategorias({ searchTerm }) {
             ) : (
               <tr>
                 <td colSpan="4" className="py-4 text-center">
-                  No hay categorías existentes.
+                  No hay categorías correspondientes/existentes.
                 </td>
               </tr>
             )}
