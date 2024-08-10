@@ -193,19 +193,17 @@ const ReporteVentas = () => {
 
       <KPIS />
 
-      <div
-        className="flex-grow container-overview"
-        style={{ marginBottom: "30px" }}
-      >
-        <div className="overview">
+      <div className="flex-grow mb-8 grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-5 sm:grid-areas-[overview_categoria]">
+        <div className="sm:grid-area-[overview]">
           <TablaGanancias />
         </div>
-        <div className="categoria">
+        <div className="sm:grid-area-[categoria]">
           <CategoriaProducto />
         </div>
       </div>
-      <div className="container-comparativa">
-        <div className="comparativa">
+
+      <div className="grid grid-cols-5 grid-rows-[0.9fr] gap-0">
+        <div className="col-start-1 col-end-6 row-start-2 row-end-3">
           <Comparativa />
         </div>
       </div>
