@@ -1,7 +1,7 @@
 import { getConnection } from "./../database/database";
 
 const getProductos = async (req, res) => {
-    const { descripcion = '', almacen = 1 } = req.query;
+    const { descripcion = '', almacen = 2 } = req.query;
 
     console.log('Filtros recibidos:', { descripcion, almacen });
     try {

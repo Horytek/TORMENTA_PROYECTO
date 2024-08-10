@@ -138,16 +138,6 @@ const Kardex = () => {
             {/* Componente de tabla de ingresos */}
             <TablaKardex kardex={kardex} />
 
-            <div className="flex justify-between mt-4">
-                <div className="flex">
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
-                </div>
-                <select className="input-d cant-pag-d">
-                    <option>5</option>
-                    <option>10</option>
-                    <option>20</option>
-                </select>
-            </div>
         </div>
     );
 }

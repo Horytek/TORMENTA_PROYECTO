@@ -1,11 +1,21 @@
 import PropTypes from 'prop-types';
-
+import Pagination from '@/components/Pagination/Pagination';
+import React, { useEffect, useState } from 'react';
 const TablaKardex = ({ kardex }) => {
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const handleSelectClick = () => {
     // Implement the select click handler logic
   };
+  // Función para obtener las notas que se deben mostrar en la página actual
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return kardex.slice(startIndex, endIndex);
+  };
 
+  // Número total de páginas
+  const totalPages = Math.ceil(kardex.length / itemsPerPage);
   const renderEntradaRow = (kardex) => (
     <tr key={kardex.id} className='tr-tabla-kardex'>
       <td className="text-center px-2">{kardex.codigo}</td>
@@ -42,9 +52,33 @@ const TablaKardex = ({ kardex }) => {
           </tr>
         </thead>
         <tbody>
-          {kardex.map(renderEntradaRow)}
+        {getCurrentPageItems().map(renderEntradaRow)}
         </tbody>
       </table>
+      <div className="flex justify-between mt-4">
+        <div className="flex">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+
+        </div>
+        <select
+          id="itemsPerPage"
+          className="input-c cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg"
+          value={itemsPerPage}
+          onChange={(e) => {
+            setItemsPerPage(Number(e.target.value));
+            setCurrentPage(1);
+          }}
+        >
+          <option value={5}>05</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+        </select>
+
+      </div>
     </div>
   );
 };

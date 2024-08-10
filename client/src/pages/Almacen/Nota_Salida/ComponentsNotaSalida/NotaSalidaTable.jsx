@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from './Modals/ConfirmationModal';
 import Pagination from '@/components/Pagination/Pagination'; // Asegúrate de ajustar la ruta
 import anularNota from '../data/anular_nota_salida'; // Asegúrate de ajustar la ruta
@@ -93,8 +92,6 @@ const TablaSalida = ({ salidas }) => {
   const handleRowClick = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
-
-  const navigate = useNavigate();
 
   const handleDetailClick = (id) => {
     console.log(almacen, 'sdsdsds')
