@@ -31,6 +31,7 @@ const glosaOptions = [
 function RegistroGuia() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
+  const [isProductoModalOpen, setIsProductoModalOpen] = useState(false);
   const [modalType, setModalType] = useState('');
   const { clientes } = useClienteData();
   const { sucursales } = useSucursalData();
@@ -58,10 +59,10 @@ function RegistroGuia() {
   };
 
   useEffect(() => {
-    if (isModalOpen) {
+    if (isProductoModalOpen) {
       handleBuscarProducto();
     }
-  }, [isModalOpen]);
+  }, [isProductoModalOpen]);
 
   
 
@@ -101,11 +102,11 @@ function RegistroGuia() {
   const [selectedCliente, setSelectedCliente] = useState(null);
 
   const openModalBuscarProducto = () => {
-      setIsModalOpen(true);
+    setIsProductoModalOpen(true);
       handleBuscarProducto();
   };
 
-  const closeModalBuscarProducto = () => setIsModalOpen(false);
+  const closeModalBuscarProducto = () => setIsProductoModalOpen(false);
 
   
 
@@ -330,7 +331,6 @@ function RegistroGuia() {
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
-
                 </div>
               </div>
               <div className="">
@@ -366,7 +366,7 @@ function RegistroGuia() {
           />
       </div>
       <ModalBuscarProducto
-        isOpen={isModalOpen}
+        isOpen={isProductoModalOpen}
         onClose={closeModalBuscarProducto}
         onBuscar={handleBuscarProducto}
         setSearchInput={setSearchInput}
