@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import "./Inicio.css";
 import { CardComponent } from "@/components/Cards/Card";
 import { LineChartComponent } from "@/components/Charts/LineChart";
@@ -45,21 +46,21 @@ function Inicio() {
             color={"indigo"}
             icon={RiShoppingBag4Line}
             tooltip="Producto más vendido"
-            className="h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 w-full sm:w-72 md:w-96 lg:w-full"
+            className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 sm:w-72 md:w-96 lg:w-full"
           />
           <CardComponent
             titleCard={"Total de productos"}
             contentCard={`${totalProductsSold}`}
             color={"purple"}
             icon={LuShirt}
-            className="h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 w-full sm:w-72 md:w-96 lg:w-full"
+            className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 sm:w-72 md:w-96 lg:w-full"
           />
           <CardComponent
             titleCard={"Producto del día"}
             contentCard={productTop ? productTop.descripcion : "No disponible"}
             color={"cyan"}
             icon={TiStarburstOutline}
-            className="h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 w-full sm:w-72 md:w-96 lg:w-full"
+            className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 sm:w-72 md:w-96 lg:w-full"
           />
         </div>
 
@@ -71,9 +72,9 @@ function Inicio() {
   };
 
   return (
-    <div className="bg-white justify-between items-center relative">
+    <div className="relative items-center justify-between bg-white">
       <header>
-        <h1 className="title-Inicio text-5xl font-bold text-gray-700 tracking-wide">
+        <h1 className="text-5xl font-bold tracking-wide text-gray-700 title-Inicio">
           DASHBOARD TORMENTA
         </h1>
       </header>

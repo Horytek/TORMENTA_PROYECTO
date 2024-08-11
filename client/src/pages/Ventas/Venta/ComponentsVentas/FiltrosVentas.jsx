@@ -1,12 +1,15 @@
 import React from "react";
+import { Link } from 'react-router-dom';
+import { MdAddCircleOutline } from 'react-icons/md';
 import { useState,useEffect} from 'react';
-import { GrDocumentWindows } from 'react-icons/gr';
 import {DateRangePicker} from "@nextui-org/date-picker";
 import useComprobanteData from '../../Data/data_comprobante_venta';
 import useSucursalData from '../../Data/data_sucursal_venta';
 import {parseDate} from "@internationalized/date";
 import {Select, SelectItem} from "@nextui-org/react";
-
+import {Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar} from "@nextui-org/react";
+import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
+import { RiFileExcel2Line } from "react-icons/ri";
 
 const FiltrosVentas = ({onFiltersChange}) => {
     const {comprobantes} = useComprobanteData();
@@ -56,16 +59,16 @@ const FiltrosVentas = ({onFiltersChange}) => {
 
     return (
         <>
-        <div className="flex flex-wrap mb-4 justify-between">
+        <div className="flex flex-wrap justify-between mb-4">
             {/* Contenedor principal con filtros */}
-            <div className="block ms:block md:flex lg:w-12/12 xl:8/12 items-center md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap justify-between">
-                <div className="input-wrapper flex">
-                    <input type="text" id="valor" className="input border border-gray-300 rounded-lg" placeholder="Nombre o Razón Social"
+            <div className="items-center justify-between block ms:block md:flex lg:w-12/12 xl:8/12 md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap">
+                <div className="flex input-wrapper">
+                    <input type="text" id="valor" className="border border-gray-300 rounded-lg input" placeholder="Nombre o Razón Social"
                     value={razon} // El valor del input se controla con useState
                     onChange={handleChange} />
                 </div>
-                <div className="input-wrapper mb-2 md:mb-0">
-                    <Select id="tipo" placeholder="Tipo Comprobante" className="rounded-lg p-0" style={{width: "190px"}} value={comprobanteSeleccionado}
+                <div className="mb-2 input-wrapper md:mb-0">
+                    <Select id="tipo" placeholder="Tipo Comprobante" className="p-0 rounded-lg" style={{width: "190px"}} value={comprobanteSeleccionado}
                                 onChange={(e) => setComprobanteSeleccionado(e.target.value)}
                                                                     >
                         {comprobantes.map((comprobante) => (
@@ -73,18 +76,18 @@ const FiltrosVentas = ({onFiltersChange}) => {
                                     ))}
                     </Select>
                 </div>
-                <div className="input-wrapper mb-2 md:mb-0">
+                <div className="mb-2 input-wrapper md:mb-0">
                     {/* <label htmlFor="campo" className="label">
                         Campo
                     </label> */}
-                    <Select id="campo" placeholder="Sucursal" selectionMode="multiple" className="rounded-lg p-2" style={{width: "170px"}} value={sucursalSeleccionado}
+                    <Select id="campo" placeholder="Sucursal" selectionMode="multiple" className="p-2 rounded-lg" style={{width: "170px"}} value={sucursalSeleccionado}
                                 onChange={(e) => setSucursalSeleccionado(e.target.value)}>
                         {sucursales.map((sucursal) => (
                                         <SelectItem key={sucursal.nombre} value={sucursal.nombre}>{sucursal.nombre}</SelectItem>
                                     ))}
                     </Select>
                 </div>
-                <div className="input-wrapper flex gap-2">
+                <div className="flex gap-2 input-wrapper">
             <DateRangePicker
               className="w-xs"
               classNames={{ inputWrapper: "bg-white" }}
@@ -92,18 +95,41 @@ const FiltrosVentas = ({onFiltersChange}) => {
               onChange={handleDateChange}
               // Deshabilitar la entrada manual de fecha
               renderInput={(props) => (
-                <input {...props} className="border border-gray-300 rounded-lg p-2 bg-white" />
+                <input {...props} className="p-2 bg-white border border-gray-300 rounded-lg" />
               )}
             />
           </div>
             </div>
 
             {/* Segundo div para botones de acción */}
-            <div className="flex items-center xl:justify-end mt-3 md:mt-3 lg:mt-0 xl:mt-0">
-                <button className="btn btn-exportar flex items-center mr-0">
-                    <GrDocumentWindows className="inline-block mr-2" style={{ fontSize: '20px' }} />
-                    Exportar
-                </button>
+            <div className="flex items-center mt-3 xl:justify-end md:mt-3 lg:mt-0 xl:mt-0">
+              <button className="mr-4">
+              <Dropdown>
+                <DropdownTrigger className="bg-gray-100">
+                <Avatar
+                  isBordered
+                  as="button"
+                  className="transition-transform"
+                  icon={<PiMicrosoftExcelLogoFill className="text-xl"/>}
+                />
+                </DropdownTrigger>
+                <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">
+                  <DropdownItem key="diario" startContent={<RiFileExcel2Line />} >
+                    Excel C/ Quiebre diario
+                  </DropdownItem>
+                  <DropdownItem key="diario" startContent={<RiFileExcel2Line />} >
+                    Excel Listado General
+                  </DropdownItem>
+                  <DropdownItem key="diario" startContent={<RiFileExcel2Line />} >
+                    Excel por Comprobante
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+              </button>
+            <Link to="/ventas/registro_venta" className="mr-0 btn btn-nueva-venta">
+              <MdAddCircleOutline className="inline-block mr-2" style={{ fontSize: '25px' }} />
+              Nueva venta
+            </Link>
             </div>
         </div>
     </>

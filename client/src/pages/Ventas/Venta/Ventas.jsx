@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import { MdAddCircleOutline } from 'react-icons/md';
 import Pagination from '@/components/Pagination/Pagination';
 import TablaVentas from './ComponentsVentas/VentasTable';
 import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
-import { Link } from 'react-router-dom';
 import useVentasData from '../Data/data_venta';
 import { Toaster } from "react-hot-toast";
 import { handleDelete } from '../Data/delete_venta';
@@ -107,12 +105,29 @@ const Ventas = () => {
       {/* Encabezado principal */}
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-          Ventas  S/. {totalRecaudado}
+          Ventas
         </h1>
-        <Link to="/ventas/registro_venta" className="btn btn-nueva-venta mr-0">
-          <MdAddCircleOutline className="inline-block mr-2" style={{ fontSize: '25px' }} />
-          Nueva venta
-        </Link>
+      </div>
+
+      <div className='w-full mb-3 rounded-lg'>
+        <table className='w-full text-sm divide-gray-200 rounded-lg table-auto'>
+          <tbody className="bg-gray-50">
+            <tr className='text-center'>
+              <td className='border-none'> 
+                <strong>Cant. Ventas:</strong> <span>50</span> 
+              </td>
+              <td className='border-none'>
+                <strong>Total Efectivo: S/.</strong> <span>9580</span> 
+              </td>
+              <td className='border-none'>
+                <strong>Total Pago Electr: S/.</strong> <span>25640</span> 
+              </td>
+              <td className='border-none'>
+                <strong>Total General: S/.</strong> {totalRecaudado}<span></span> 
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* Componente de filtros */}
@@ -150,7 +165,7 @@ const Ventas = () => {
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
         <select
-          className="input-c cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg"
+          className="pr-8 border-gray-300 rounded-lg input-c cant-pag-c bg-gray-50"
           value={ventasPerPage}
           onChange={(e) => setVentasPerPage(Number(e.target.value))}
         >

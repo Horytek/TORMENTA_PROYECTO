@@ -104,23 +104,23 @@ export function ShowProductos({ searchTerm }) {
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <table className="w-full text-sm table-auto divide-gray-200 rounded-lg">
+                <table className="w-full text-sm divide-gray-200 rounded-lg table-auto">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 w-1/3 text-xs font-bold text-gray-500 uppercase text-center">DESCRIPCIÓN</th>
-                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">LÍNEA</th>
-                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">SUB-LÍNEA</th>
-                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">UND. MED.</th>
-                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">PRECIO (S/.)</th>
-                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">COD. BARRAS</th>
-                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">ESTADO</th>
-                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">ACCIONES</th>
+                            <th className="w-1/3 px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">DESCRIPCIÓN</th>
+                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">LÍNEA</th>
+                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">SUB-LÍNEA</th>
+                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">UND. MED.</th>
+                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">PRECIO (S/.)</th>
+                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">COD. BARRAS</th>
+                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">ESTADO</th>
+                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-gray-200">
                         {currentProductos.map((producto) => (
                             <tr className='hover:bg-gray-100' key={producto.id_producto} data-product={producto.id_producto}>
-                                <td className='py-2 px-2 max-w-xs whitespace-nowrap'>{producto.descripcion}</td>
+                                <td className='max-w-xs px-2 py-2 whitespace-nowrap'>{producto.descripcion}</td>
                                 <td className='py-2 text-center'>{producto.nom_marca}</td>
                                 <td className='py-2 text-center'>{producto.nom_subcat}</td>
                                 <td className='py-2 text-center'>{producto.undm}</td>
@@ -129,7 +129,7 @@ export function ShowProductos({ searchTerm }) {
                                     {producto.cod_barras === '-' ? '-' :
                                         <div
                                             id={`barcode-${producto.id_producto}`}
-                                            className="flex justify-center items-center cursor-pointer"
+                                            className="flex items-center justify-center cursor-pointer"
                                             onClick={() => downloadBarcode(producto)}
                                         >
                                             <Barcode
@@ -149,8 +149,8 @@ export function ShowProductos({ searchTerm }) {
                                     </span>
                                 </td>
                                 <td className='py-4 text-center'>
-                                    <div className="flex justify-center items-center">
-                                        <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => handleModalEdit(producto.id_producto)}>
+                                    <div className="flex items-center justify-center">
+                                        <button className="px-2 py-1 text-xl text-yellow-400" onClick={() => handleModalEdit(producto.id_producto)}>
                                             <MdEdit />
                                         </button>
                                         <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(producto.descripcion, producto.id_producto)}>
