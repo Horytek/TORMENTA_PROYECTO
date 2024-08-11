@@ -35,6 +35,14 @@ function RegistroGuia() {
   const [ubidest, setUbidest] = useState('');
   const [transporte, setTransporte] = useState('');
 
+  const [selectedCliente, setSelectedCliente] = useState(null);
+
+  const handleClienteChange = (e) => {
+    const selectedId = e.target.value;
+    const cliente = clientes.find(cliente => cliente.id === selectedId);
+    setSelectedCliente(cliente);
+  };
+
   const handleSaveUbigeo = (selectedUbipart, selectedUbidest) => {
     setUbipart(selectedUbipart);
     setUbidest(selectedUbidest);
@@ -96,12 +104,24 @@ function RegistroGuia() {
 
               <div className="">
                 <label htmlFor="cliente" className='text-sm font-bold text-black' >Cliente:</label>
-                <select id='cliente' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2' onChange={(e) => {
-                  const selected = clientes.find(d => d.id === parseInt(e.target.value));
-                  document.getElementById('documento').value = selected ? selected.documento : '';
-                }}>
+                <select
+                  id='cliente'
+                  className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'
+                  onChange={(e) => {
+                    const selectedId = parseInt(e.target.value);
+                    const selected = clientes.find(cliente => cliente.id === selectedId);
+
+                    if (selected) {
+                      document.getElementById('documento').value = selected.documento;
+                      document.getElementById('ubicacion').value = selected.ubicacion;
+                    } else {
+                      document.getElementById('documento').value = '';
+                      document.getElementById('ubicacion').value = '';
+                    }
+                  }}
+                >
                   <option>Seleccione...</option>
-                  {clientes.map((cliente) => (
+                  {clientes.map(cliente => (
                     <option key={cliente.id} value={cliente.id}>{cliente.nombre}</option>
                   ))}
                 </select>
@@ -118,9 +138,17 @@ function RegistroGuia() {
 
               <div className='w-full relative group  text-start'>
                 <label htmlFor="vendedor" className='text-sm font-bold text-black'>Vendedor:</label>
-                <select id='vendedor' className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2' onChange={(e) => {
-                  const selected = sucursales.find(s => s.id === parseInt(e.target.value));
-                  document.getElementById('id').value = selected ? selected.id : '';
+                <select id='vendedor' 
+                className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'
+                onChange={(e) => {
+                  const selectedId = parseInt(e.target.value);
+                  const selected = sucursales.find(sucursal => sucursal.id === selectedId);
+
+                  if (selected) {
+                    document.getElementById('direccion').value = selected.direccion;
+                  } else {
+                    document.getElementById('direccion').value = '';
+                  }
                 }}>
                   <option>Seleccione...</option>
                   {sucursales.map((sucursal) => (
@@ -171,7 +199,10 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="dirpart" className='text-sm font-bold text-black'>Dir. Partida:</label>
-                  <input type="dirpart" name='dirpart' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
+                  <input type="text" name='dirpart' 
+                   id='direccion'
+                  className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
+                  disabled/>
                 </div>
               </div>
               <div className="">
@@ -189,7 +220,10 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="dirdest" className='text-sm font-bold text-black'>Dir. Destino:</label>
-                  <input type="dirdest" name='dirdest' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1' />
+                  <input type="text"
+                    id='ubicacion'
+                    className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
+                    disabled />
                 </div>
               </div>
 
@@ -199,7 +233,7 @@ function RegistroGuia() {
                   <input
                     type="text"
                     name='trans'
-                    value={transporte ? `${transporte.empresa || transporte.conductor}`  : ''}
+                    value={transporte ? `${transporte.empresa || transporte.conductor}` : ''}
                     className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
                     disabled
                   />

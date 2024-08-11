@@ -14,6 +14,7 @@ const useClientesData = () => {
             id:item.id,
             nombre: item.destinatario,
             documento: item.documento,
+            ubicacion: item.ubicacion,
           }));
           setClientes(clientes);
         } else {

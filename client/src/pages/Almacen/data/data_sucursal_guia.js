@@ -13,6 +13,7 @@ const useSucursalData = () => {
           const sucursales = response.data.data.map(item => ({
             id: item.id,
             nombre: item.nombre,
+            direccion: item.direccion,
           }));
           setSucursal(sucursales);
         } else {
