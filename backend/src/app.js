@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { FRONTEND_URL } from "./config.js";
 //Rutas
+import dashboardRoutes from "./routes/dashboard.routes";
 import auhtRoutes from "./routes/auth.routes";
 import usuariosRoutes from "./routes/usuarios.routes";
 import productosRoutes from "./routes/productos.routes";
@@ -31,6 +32,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
+app.use("/api/dashboard",dashboardRoutes);
 app.use("/api/auth", auhtRoutes);
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/productos", productosRoutes);

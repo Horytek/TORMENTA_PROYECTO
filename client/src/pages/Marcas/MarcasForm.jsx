@@ -29,8 +29,11 @@ const MarcasForm = ({ modalTitle, onClose }) => {
 
       if (result) {
         onClose();
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 550);
       }
+    
     } catch (error) {
       console.error("Error al realizar la gestión de la marca");
     }

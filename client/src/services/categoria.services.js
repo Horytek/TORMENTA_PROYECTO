@@ -67,7 +67,7 @@ const deleteCategoria = async (id) => {
 const deactivateCategoria = async (id) => {
     try {
       const response = await deactivateCategoriaRequest(id);
-      if (response.data.code === 1) {
+      if (response.data.message === "Categoría dada de baja con éxito") {
         toast.success("Categoría desactivada con éxito");
         return true;
       } else {

@@ -76,18 +76,18 @@ const updateMarca = async (id, marca) => {
 
 const deactivateMarca = async (id) => {
     try {
-      const response = await deactivateMarcaRequest(id);
-      if (response.data.code === 1) {
-        toast.success("Marca desactivada con éxito");
-        return true;
-      } else {
-        toast.error("Ocurrió un error al desactivar la marca");
-        return false;
-      }
+        const response = await deactivateMarcaRequest(id);
+        console.log('Response:', response); 
+        if (response.data.message === 'Marca dada de baja con éxito') {
+            toast.success("Marca desactivada con éxito");
+            return true;
+        } else {
+            toast.error("Ocurrió un error al desactivar la marca");
+            return false;
+        }
+    } catch (error) {
+        toast.error("Error en el servidor interno");
     }
-    catch (error) {
-      toast.error("Error en el servidor interno");
-    } 
 }
 
 export { getMarcas, getMarca, addMarca, deleteMarca, updateMarca, deactivateMarca };
