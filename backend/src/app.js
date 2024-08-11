@@ -4,8 +4,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { FRONTEND_URL } from "./config.js";
 //Rutas
+import dashboardRoutes from "./routes/dashboard.routes";
 import auhtRoutes from "./routes/auth.routes";
 import usuariosRoutes from "./routes/usuarios.routes";
+import rolRoutes from "./routes/rol.routes.js";
 import productosRoutes from "./routes/productos.routes";
 import ventasRoutes from "./routes/ventas.routes";
 import marcasRoutes from "./routes/marcas.routes";
@@ -31,8 +33,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
+app.use("/api/dashboard",dashboardRoutes);
 app.use("/api/auth", auhtRoutes);
-app.use("/api/usuarios", usuariosRoutes);
+app.use("/api/usuario", usuariosRoutes);
+app.use("/api/rol", rolRoutes);
 app.use("/api/productos", productosRoutes);
 app.use("/api/ventas", ventasRoutes);
 app.use("/api/marcas", marcasRoutes);

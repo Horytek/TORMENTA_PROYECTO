@@ -1,18 +1,50 @@
-import './Inicio.css';
-import { CardComponent } from '@/components/Cards/Card';
-import { LineChartComponent } from '@/components/Charts/LineChart';
-import { RiShoppingBag4Line } from '@remixicon/react';
+import "./Inicio.css";
+import { CardComponent } from "@/components/Cards/Card";
+import { LineChartComponent } from "@/components/Charts/LineChart";
+import { RiShoppingBag4Line } from "@remixicon/react";
 import { LuShirt } from "react-icons/lu";
 import { TiStarburstOutline } from "react-icons/ti";
-import {
-  Tab,
-  TabGroup,
-  TabList,
-  TabPanel,
-  TabPanels,
-} from '@tremor/react';
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@tremor/react";
+import useProductTop from './data/product_top';
+import useProductSell from './data/product_sell';
 
 function Inicio() {
+  const renderTabContent = (timePeriod) => {
+    const { productTop, loading: loadingTop, error: errorTop } = useProductTop(timePeriod);
+    const { totalProductsSold, loading: loadingSell, error: errorSell } = useProductSell(timePeriod);
+
+    if (loadingTop || loadingSell) return <p>Cargando...</p>;
+    if (errorTop || errorSell) return <p>Error: {errorTop?.message || errorSell?.message}</p>;
+
+    return (
+      <>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <CardComponent
+            titleCard={"Ventas del día"}
+            contentCard={`S/. ${totalProductsSold}`} 
+            color={"indigo"}
+            icon={RiShoppingBag4Line}
+            tooltip="Producto más vendido"
+          />
+          <CardComponent
+            titleCard={"Total de productos"}
+            contentCard={`${totalProductsSold}`} 
+            color={"purple"}
+            icon={LuShirt}
+          />
+          <CardComponent
+            titleCard={"Producto del día"}
+            contentCard={productTop ? productTop.descripcion : "No disponible"} 
+            color={"cyan"}
+            icon={TiStarburstOutline}
+          />
+        </div>
+        <div className="mt-7">
+          <LineChartComponent />
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="bg-white justify-between items-center relative">
@@ -21,9 +53,8 @@ function Inicio() {
           DASHBOARD TORMENTA
         </h1>
       </header>
-      
-      { /* Tabs de Reporte */}
 
+      {/* Tabs de Reporte */}
       <div>
         <main>
           <TabGroup>
@@ -34,52 +65,30 @@ function Inicio() {
               <Tab>Ult. año</Tab>
             </TabList>
             <TabPanels>
-              { /* Tab Numero 1 */}
-
+              {/* Tab Numero 1 */}
               <TabPanel className="mt-4">
-                <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-                  <CardComponent titleCard={"Ventas del día"} contentCard={"S/. 5800"} color={"indigo"} icon={RiShoppingBag4Line} />
-                  <CardComponent titleCard={"Total de productos"} contentCard={"250"} color={"purple"} icon={LuShirt}  />
-                  <CardComponent titleCard={"Producto del día"} contentCard={"Polo Verano"} color={"cyan"} icon={TiStarburstOutline} />
-                </div>
-                <div className='mt-7'>
-                  <LineChartComponent />
-                </div>
+                {renderTabContent('24h')}
               </TabPanel>
 
-              { /* Fin Tab Numero 1 */}
-
-              { /* Tab Numero 2 */}
-
+              {/* Tab Numero 2 */}
               <TabPanel className="mt-4">
-                Content-2
+                {renderTabContent('semana')}
               </TabPanel>
 
-              { /* Fin Tab Numero 2 */}
-
-              { /* Tab Numero 3 */}
-
+              {/* Tab Numero 3 */}
               <TabPanel className="mt-4">
-                Content-3
+                {renderTabContent('mes')}
               </TabPanel>
 
-              { /* Fin Tab Numero 3 */}
-
-              { /* Tab Numero 4 */}
-
+              {/* Tab Numero 4 */}
               <TabPanel className="mt-4">
-                Content-4
+                {renderTabContent('anio')}
               </TabPanel>
-
-              { /* Fin Tab Numero 4 */}
-
             </TabPanels>
           </TabGroup>
         </main>
       </div>
-
     </div>
-
   );
 }
 

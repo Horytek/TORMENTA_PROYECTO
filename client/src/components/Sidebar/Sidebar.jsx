@@ -22,22 +22,22 @@ function Sidebar() {
 
   return (
     <div className={`sidebar bg-blue-700 text-white flex flex-col relative ${collapsed ? 'w-16' : 'w-60'} transition-all duration-300`}>
-      <div className="flex justify-between items-center p-4">
+      <div className="flex items-center justify-between p-4">
         {!collapsed ? (
-          <h2 className="font-bold flex items-center text-base md:text-md lg:text-md xl:text-2xl">
-            <img src={img} alt="Logo" className="h-8 w-8 mr-2" />
+          <h2 className="flex items-center text-base font-bold md:text-md lg:text-md xl:text-2xl">
+            <img src={img} alt="Logo" className="w-8 h-8 mr-2" />
             TORMENTA
           </h2>
 
 
         ) : (
-          <img src={img} alt="Logo" className="h-8 w-8 m-auto" />
+          <img src={img} alt="Logo" className="w-8 h-8 m-auto" />
         )}
         <button onClick={toggleSidebar} className="toggle-button">
           {collapsed ? <FaArrowRight /> : <FaArrowLeft />}
         </button>
       </div>
-      <nav className="mt-4 flex-1">
+      <nav className="flex-1 mt-4">
         <ul className="space-y-2">
           {[
             { to: '/inicio', icon: <FaHome className="text-xl" />, text: 'Inicio' },
@@ -64,7 +64,9 @@ function Sidebar() {
             { to: '/reportes', icon: <BiSolidReport className="text-xl" />, text: 'Reportes'
               
             },
-            { to: '/configuracion', icon: <FaCog className="text-xl" />, text: 'Configuración' },
+            { icon: <FaCog className="text-xl" />, text: 'Configuración', subLinks: [
+              { to: '/configuracion/usuarios', text: 'Usuarios' },
+            ]},
           ].map(({ to, icon, text, subLinks }) => (
             <div key={to}>
               <li className={`flex items-center ${collapsed ? 'justify-center' : 'pl-4'} py-2 px-2 w-full`}>
@@ -81,10 +83,10 @@ function Sidebar() {
 
 
               {!collapsed && expandedLinks[to] && subLinks && (
-                <ul className="ml-10 mt-2 space-y-2">
+                <ul className="mt-2 ml-10 space-y-2">
                   {subLinks.map((subLink) => (
                     <li key={subLink.to}>
-                      <Link to={subLink.to} className="flex items-center pl-4 py-2 px-2 w-full ">
+                      <Link to={subLink.to} className="flex items-center w-full px-2 py-2 pl-4 ">
                         <span>{subLink.text}</span>
                       </Link>
                     </li>

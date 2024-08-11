@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useCategorias } from "@/context/Categoria/CategoriaProvider";
 
 const CategoriasForm = ({ modalTitle, onClose }) => {
-  const { createCategoria} = useCategorias();
+  const { createCategoria } = useCategorias();
 
   const {
     register,
@@ -29,7 +29,9 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
 
       if (result) {
         onClose();
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 550);
       }
     } catch (error) {
       console.error("Error al realizar la gestión de la categoría");

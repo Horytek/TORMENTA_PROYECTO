@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
+import SubcategoriaForm from "./SubcategoriaForm";
 import ShowSubcategorias from "./ShowSubcategoria";
 
 function Subcategorias() {
@@ -64,6 +65,9 @@ function Subcategorias() {
       <div>
         <ShowSubcategorias searchTerm={searchTerm} />
       </div>
+      {activeAdd && (
+        <SubcategoriaForm modalTitle={'Nueva subcategoria'} closeModal={handleModalAdd} />
+      )}
     </div>
   );
 }

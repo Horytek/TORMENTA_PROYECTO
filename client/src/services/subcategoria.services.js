@@ -80,25 +80,29 @@ const deleteSubcategoria = async (id) => {
   try {
     const response = await deleteSubcategoriaRequest(id);
     if (response.data.code === 1) {
+      toast.success("Subcategoría eliminada con éxito");
       return true;
     } else {
+      toast.error("Ocurrió un error al eliminar la categoría");
       return false;
     }
   } catch (error) {
-    console.error("Error en el servidor interno");
+    toast.error("Error en el servidor interno");
   }
 }
 
 const deactivateSubcategoria = async (id) => {
   try {
     const response = await deactivateSubcategoriaRequest(id);
-    if (response.data.code === 1) {
+    if (response.data.message === "Subcategoría dada de baja con éxito") {
+      toast.success("Subcategoría dada de baja con éxito");
       return true;
     } else {
+      toast.error("Ocurrio un error al desactivar la subcategoria");
       return false;
     }
   } catch (error) {
-    console.error("Error en el servidor interno");
+    toast.error("Error en el servidor interno");
   }
 }
 
