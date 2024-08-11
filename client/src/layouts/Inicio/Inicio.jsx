@@ -6,6 +6,7 @@ import { RiShoppingBag4Line } from "@remixicon/react";
 import { LuShirt } from "react-icons/lu";
 import { TiStarburstOutline } from "react-icons/ti";
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@tremor/react";
+
 import useProductTop from "./hooks/product_top";
 import useProductSell from "./hooks/product_sell";
 import useVentasTotal from "./hooks/ventas_total";
