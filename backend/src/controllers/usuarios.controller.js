@@ -3,35 +3,95 @@ import { getConnection } from "./../database/database";
 const getUsuarios = async (req, res) => {
     try {
         const connection = await getConnection();
-        const result = await connection.query("SELECT usua, contra FROM usuario");
-        res.json(result);
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario FROM usuario U
+            INNER JOIN rol R ON U.id_rol = R.id_rol`);
+        res.json({ code: 1, data: result });
     } catch (error) {
         res.status(500);
         res.send(error.message);
     }
 };
 
-const verifyUsuario = async (req, res) => {
+const addUsuario = async (req, res) => {
     try {
-        const { usuario, password } = req.body;
-        
-        const params = [ usuario, password ];
-        const connection = await getConnection();
-        const [result] = await connection.query("SELECT * FROM usuario WHERE usua = ? AND contra = ?", params);
-        
-        if (result.length > 0) {
-            res.json({ success: true, message: 'Login successful' });
-        } else {
-            res.json({ success: false, message: 'Invalid credentials' });
+        const { id_rol, usua, contra } = req.body;
+
+        if (id_rol === undefined || usua === undefined || contra === undefined) {
+            res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
+        const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario: 1 };
+        const connection = await getConnection();
+        await connection.query("INSERT INTO usuario SET ? ", usuario);
+
+        res.json({code: 1, message: "Usuario añadido" });
     } catch (error) {
         res.status(500);
         res.send(error.message);
     }
-};
+}
+
+const updateUsuario = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { id_rol, usua, contra, estado_usuario } = req.body;
+
+        if (id_rol === undefined || usua === undefined || contra === undefined || estado_usuario === undefined) {
+            res.status(400).json({ message: "Bad Request. Please fill all field." });
+        }
+
+        const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario };
+        const connection = await getConnection();
+        const [result] = await connection.query("UPDATE usuario SET ? WHERE id_usuario = ?", [usuario, id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({code: 0, message: "Usuario no encontrado"});
+        }
+
+        res.json({code: 1 ,message: "Usuario modificado"});
+    } catch (error) {
+        res.status(500);
+        res.send(error.message);
+    }
+}
+
+const deleteUsuario = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const connection = await getConnection();
+        
+        // Verificar si el usuario está en uso dentro de la base de datos
+        const [verify] = await connection.query("SELECT 1 FROM vendedor WHERE id_usuario = ?", id);
+        const isUserInUse = verify.length > 0
+
+        if (isUserInUse) {
+            const [Updateresult] = await connection.query("UPDATE usuario SET estado_usuario = 0 WHERE id_usuario = ?", id);
+
+            if (Updateresult.affectedRows === 0) {
+                return res.status(404).json({code: 0, message: "Usuario no encontrado"});
+            }
+
+            res.json({code: 2 ,message: "Usuario dado de baja"});
+        } else {
+            const [result] = await connection.query("DELETE FROM usuario WHERE id_usuario = ?", id);
+                
+            if (result.affectedRows === 0) {
+                return res.status(404).json({code: 0, message: "Usuario no encontrado"});
+            }
+
+            res.json({code: 1 ,message: "Usuario eliminado"});
+        }
+        
+    } catch (error) {
+        res.status(500);
+        res.send(error.message);
+    }
+}
 
 export const methods = {
     getUsuarios,
-    verifyUsuario
+    addUsuario,
+    updateUsuario,
+    updateUsuario,
+    deleteUsuario
 };

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { IoMdPin, IoMdCar, IoMdAdd, IoIosSearch } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
-import ModalBuscarProducto from '../../Nota_Ingreso/ComponentsNotaIngreso/Modals/BuscarProductoForm';
+import ModalBuscarProducto from './ComponentsRegGuias/BuscarProdGuiaForm';
+import NuevaTablaGuia from '../../Nota_Salida/Nueva_Nota_Salida/ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
-import TablaRegGuia from "./ComponentsRegGuias/RegGuiaTable";
 import UbigeoForm from './UbigeoForm';
 import useClienteData from '../../data/data_cliente_guia';
 import useSucursalData from '../../data/data_sucursal_guia';
@@ -13,6 +13,10 @@ import useDocumentoData from '../../data/generar_doc_guia';
 import TransporteForm from './UndTrans';
 import ClienteForm from './ClienteForm';
 import ProductosForm from '@/pages/Productos/ProductosForm';
+import useProductosData from '../../data/data_buscar_producto';
+
+
+
 
 
 const glosaOptions = [
@@ -27,6 +31,7 @@ const glosaOptions = [
 function RegistroGuia() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
+  const [isProductoModalOpen, setIsProductoModalOpen] = useState(false);
   const [modalType, setModalType] = useState('');
   const { clientes } = useClienteData();
   const { sucursales } = useSucursalData();
@@ -34,8 +39,76 @@ function RegistroGuia() {
   const [ubipart, setUbipart] = useState('');
   const [ubidest, setUbidest] = useState('');
   const [transporte, setTransporte] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [productos, setProductos] = useState([]); // Tu array de productos
+
+  const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
+    const saved = localStorage.getItem('productosSeleccionados');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
+  }, [productosSeleccionados]);
+
+  const handleBuscarProducto = async () => {
+    const filters = {
+      descripcion: searchInput,
+    };
+    await useProductosData(filters.descripcion, setProductos);
+  };
+
+  useEffect(() => {
+    if (isProductoModalOpen) {
+      handleBuscarProducto();
+    }
+  }, [isProductoModalOpen]);
+
+  
+
+
+
+  const agregarProducto = (producto, cantidad) => {
+    setProductosSeleccionados((prevProductos) => {
+      const cantidadExistente = prevProductos
+        .filter(p => p.codigo === producto.codigo)
+        .reduce((total, p) => total + p.cantidad, 0);
+      const cantidadTotal = cantidadExistente + cantidad;
+
+      if (cantidadTotal > producto.stock) {
+        const maxCantidad = producto.stock - cantidadExistente;
+        if (maxCantidad > 0) {
+          toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
+        }
+        toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
+        return prevProductos;
+      }
+
+      const productoExistente = prevProductos.find(p => p.codigo === producto.codigo);
+      if (productoExistente) {
+        return prevProductos.map(p =>
+          p.codigo === producto.codigo ? { ...p, cantidad: p.cantidad + cantidad } : p
+        );
+      } else {
+        return [...prevProductos, { ...producto, cantidad }];
+      }
+    });
+
+    closeModalBuscarProducto();
+  };
+
+
 
   const [selectedCliente, setSelectedCliente] = useState(null);
+
+  const openModalBuscarProducto = () => {
+    setIsProductoModalOpen(true);
+      handleBuscarProducto();
+  };
+
+  const closeModalBuscarProducto = () => setIsProductoModalOpen(false);
+
+  
 
   const handleClienteChange = (e) => {
     const selectedId = e.target.value;
@@ -52,6 +125,7 @@ function RegistroGuia() {
     setTransporte(transporte);
   };
 
+  
 
 
   const openModal = (title, type) => {
@@ -257,14 +331,13 @@ function RegistroGuia() {
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
-
                 </div>
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
                   <button className="bg-yellow-500 hover:bg-yellow-600 text-black w-full font-bold py-1.5 px-4 rounded"
-                    type="button" onClick={() => openModal('Buscar Producto', 'producto')}>
+                    type="button" onClick={openModalBuscarProducto}>
                     <FaBarcode className="inline-block mr-2" /> Buscar producto
                   </button>
                 </div>
@@ -288,53 +361,18 @@ function RegistroGuia() {
         </div>
 
         <br />
-        <TablaRegGuia />
+        <NuevaTablaGuia
+            salidas={productosSeleccionados} setProductosSeleccionados={setProductosSeleccionados}
+          />
       </div>
-      {modalType === 'buscarProducto' && (
-        <ModalBuscarProducto isOpen={isModalOpen} onClose={closeModal}>
-          <div className="flex mb-4">
-            <input
-              type="text"
-              placeholder="Buscar producto"
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
-            />
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center">
-              <IoIosSearch className='w-4 h-4 mr-1' />
-              Buscar
-            </button>
-            <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" onClick={() => openModal('Agregar Producto', 'producto')}>
-              <IoMdAdd className='w-4 h-4 mr-1' />
-              Nuevo
-            </button>
-          </div>
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr>
-                <th className="py-2 px-4 border-b">Código</th>
-                <th className="py-2 px-4 border-b">Descripción</th>
-                <th className="py-2 px-4 border-b">Marca</th>
-                <th className="py-2 px-4 border-b">Cantidad</th>
-                <th className="py-2 px-4 border-b">Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Aquí puedes mapear tus datos de productos */}
-              <tr>
-                <td className="py-2 px-4 border-b text-center">001</td>
-                <td className="py-2 px-4 border-b text-center">Producto A</td>
-                <td className="py-2 px-4 border-b text-center">Marca A</td>
-                <td className="py-2 px-4 border-b text-center">10</td>
-                <td className="py-2 px-4 border-b text-center">
-                  <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                    <IoMdAdd />
-                  </button>
-                </td>
-              </tr>
-              {/* Repite las filas según tus datos */}
-            </tbody>
-          </table>
-        </ModalBuscarProducto>
-      )}
+      <ModalBuscarProducto
+        isOpen={isProductoModalOpen}
+        onClose={closeModalBuscarProducto}
+        onBuscar={handleBuscarProducto}
+        setSearchInput={setSearchInput}
+        productos={productos}
+        agregarProducto={agregarProducto}
+      />
       {/* Modals */}
       {isModalOpen && modalType !== 'buscarProducto' && (
         <>
