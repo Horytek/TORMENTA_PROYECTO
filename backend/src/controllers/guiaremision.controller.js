@@ -292,6 +292,47 @@ const addVehiculo = async (req, res) => {
     }
 };
 
+//OBTENER PRODUCTOS
+const getProductos = async (req, res) => {
+    const { descripcion = ''} = req.query;
+  
+    console.log('Filtros recibidos:', {descripcion});
+    try {
+      const connection = await getConnection();
+  
+      const [productosResult] = await connection.query(
+        `
+        SELECT 
+        p.id_producto AS codigo, 
+        p.descripcion AS descripcion, 
+        m.nom_marca AS marca, 
+        COALESCE(i.stock, 0) AS stock 
+        FROM 
+            producto p 
+        INNER JOIN 
+            marca m ON p.id_marca = m.id_marca 
+        LEFT JOIN 
+            inventario i ON p.id_producto = i.id_producto
+        WHERE 
+             p.descripcion LIKE ? AND i.stock > 0  
+        GROUP BY 
+            p.id_producto, p.descripcion, m.nom_marca, i.stock;
+        `,
+        [`%${descripcion}%`]
+      );
+      
+  
+      console.log('Productos encontrados:', productosResult);
+  
+      res.json({ code: 1, data: productosResult });
+    } catch (error) {
+      res.status(500).send(error.message);
+    }
+  };
+  
+  
+  
+
 //OBTENER VEHÍCULO POR PLACA
 const getVehiculo = async (req, res) => {
     try {
@@ -329,4 +370,5 @@ export const methods = {
     addTransportistaPrivado,
     getVehiculos,
     addVehiculo,
+    getProductos,
 };
