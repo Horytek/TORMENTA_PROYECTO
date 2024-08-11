@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
+import { ShowUsuarios } from '@/pages/Usuarios/ShowUsuarios';
 
 function Usuarios() {
   
@@ -46,9 +47,9 @@ function Usuarios() {
           </ButtonIcon>
         </div>
       </div>
-      {/* <div>
-        <ShowProductos searchTerm={searchTerm} />
-      </div> */}
+      <div>
+        <ShowUsuarios searchTerm={searchTerm} />
+      </div>
 
       {/* Modal de Agregar Usuario */}
       {/* {activeAdd && (

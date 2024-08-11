@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
-    //const [errors, setErrors] = useState([]);
 
     const login = async (user) => {
         try {

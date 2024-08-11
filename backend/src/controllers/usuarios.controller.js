@@ -12,6 +12,19 @@ const getUsuarios = async (req, res) => {
     }
 };
 
+const getUsuario = async (req, res) => {
+    try {
+        const { id } = req.params.id;
+        const connection = await getConnection();
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario FROM usuario U
+            INNER JOIN rol R ON U.id_rol = R.id_rol WHERE id_usuario = ?`, id);
+        res.json({ code: 1, data: result });
+    } catch (error) {
+        res.status(500);
+        res.send(error.message);
+    }
+};
+
 const addUsuario = async (req, res) => {
     try {
         const { id_rol, usua, contra } = req.body;
@@ -90,6 +103,7 @@ const deleteUsuario = async (req, res) => {
 
 export const methods = {
     getUsuarios,
+    getUsuario,
     addUsuario,
     updateUsuario,
     updateUsuario,
