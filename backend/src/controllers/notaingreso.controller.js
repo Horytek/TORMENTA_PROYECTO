@@ -3,41 +3,58 @@ import { getConnection } from "../database/database";
 
 
 const getIngresos = async (req, res) => {
-  const { fecha_i = '2022-01-01', fecha_e = '2027-12-27', razon_social = '', almacen = '%' } = req.query;
+  const { fecha_i = '2022-01-01', fecha_e = '2027-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
 
   try {
       const connection = await getConnection();
 
       const [ingresosResult] = await connection.query(
-          `
-          SELECT 
-              n.id_nota AS id,
-              DATE_FORMAT(n.fecha, '%Y-%m-%d') AS fecha,
-              c.num_comprobante AS documento,
-              ao.nom_almacen AS almacen_O,
-              ad.nom_almacen AS almacen_D,
-              COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
-              n.glosa AS concepto,
-              n.estado_nota AS estado
-          FROM 
-              nota n
-          LEFT JOIN 
-              destinatario d ON n.id_destinatario = d.id_destinatario
-          LEFT JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-          LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
-          LEFT JOIN almacen ad ON n.id_almacenD= ad.id_almacen
-          WHERE 
-              n.id_tiponota = 1
-              AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
-              AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
-              AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
-              AND (? = '%' OR n.id_almacenD = ?)
-          GROUP BY 
-              id, fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
-          ORDER BY 
-              n.fecha;
-          `,
-          [fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`, almacen, almacen]
+        `
+        SELECT 
+            n.id_nota AS id,
+            DATE_FORMAT(n.fecha, '%Y-%m-%d') AS fecha,
+            c.num_comprobante AS documento,
+            ao.nom_almacen AS almacen_O,
+            COALESCE(ad.nom_almacen,'Almacen externo') AS almacen_D,
+            COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
+            n.glosa AS concepto,
+            n.estado_nota AS estado,
+            ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
+            COALESCE(u.usua, '') as usuario
+        FROM 
+            nota n
+        LEFT JOIN 
+            destinatario d ON n.id_destinatario = d.id_destinatario
+        LEFT JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+        LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
+        LEFT JOIN almacen ad ON n.id_almacenD= ad.id_almacen
+        LEFT JOIN 
+            detalle_nota dn ON n.id_nota = dn.id_nota
+        LEFT JOIN
+            usuario u ON n.id_usuario = u.id_usuario
+        WHERE 
+            n.id_tiponota = 1
+            AND c.num_comprobante LIKE ?
+            ${usuario ? 'AND (u.usua LIKE ? OR u.usua IS NULL)' : ''}
+            AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
+            AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
+            AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
+            ${almacen !== '%' ? 'AND n.id_almacenD = ?' : ''}
+            ${estado !== '%' ? 'AND n.estado_nota LIKE ?' : ''}
+            ${usuario ? 'AND (u.usua LIKE ? OR u.usua IS NULL)' : ''}
+        GROUP BY 
+            id, n.fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
+        ORDER BY 
+            n.fecha DESC, documento DESC;
+        `,
+          [            `%${documento}%`,
+            fecha_i,
+            fecha_e,
+            `%${razon_social}%`,
+            `%${razon_social}%`,
+            ...(almacen !== '%' ? [almacen] : []),
+            ...(estado !== '%' ? [`%${estado}%`] : []),
+            ...(usuario ? [`%${usuario}%`] : [])]
       );
 
       // Obtener los detalles de venta correspondientes
@@ -71,11 +88,11 @@ const getAlmacen = async (req, res) => {
     try {
         const connection = await getConnection();
         const [result] = await connection.query(`
-            SELECT a.id_almacen AS id, a.nom_almacen AS almacen, s.nombre_sucursal AS sucursal 
+            SELECT a.id_almacen AS id, a.nom_almacen AS almacen, COALESCE(s.nombre_sucursal,'Sin Sucursal') AS sucursal 
             FROM almacen a 
-            INNER JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
-            INNER JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
-            WHERE a.estado_almacen = 0
+            LEFT JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
+            LEFT JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
+            WHERE a.estado_almacen = 1;
         `);
         res.json({ code: 1, data: result, message: "Almacenes listados" });
     } catch (error) {
@@ -93,25 +110,16 @@ const getProductos = async (req, res) => {
   
       const [productosResult] = await connection.query(
         `
-        SELECT 
+     SELECT 
         p.id_producto AS codigo, 
         p.descripcion AS descripcion, 
         m.nom_marca AS marca, 
         COALESCE(i.stock, 0) AS stock 
-        FROM 
-            producto p 
-        INNER JOIN 
-            marca m ON p.id_marca = m.id_marca 
-        LEFT JOIN 
-            inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
-        LEFT JOIN 
-            detalle_nota dn ON p.id_producto = dn.id_producto
-        LEFT JOIN 
-            nota n ON dn.id_nota = n.id_nota AND n.id_tiponota = 1
-        WHERE 
-            p.descripcion LIKE ?
-        GROUP BY 
-            codigo, descripcion, marca, stock;
+      FROM producto p 
+      INNER JOIN marca m ON p.id_marca = m.id_marca 
+      INNER JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
+      WHERE p.descripcion LIKE ? and i.stock > 0
+      GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock;
         `,
         [almacen, `${descripcion}%`]
       );
@@ -228,9 +236,22 @@ const insertNotaAndDetalle = async (req, res) => {
       const id_producto = producto[i];
       const cantidadProducto = cantidad[i];
 
+            // Obtener el precio del producto
+            const [precioResult] = await connection.query(
+              "SELECT precio FROM producto WHERE id_producto = ?",
+              [id_producto]
+            );
+      
+            if (precioResult.length === 0) {
+              throw new Error(`El producto con ID ${id_producto} no existe.`);
+            }
+      
+            const precio = precioResult[0].precio;
+            const totalProducto = cantidadProducto * precio;
+
       await connection.query(
-        "INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total) VALUES (?, ?, ?, 0, 0)",
-        [id_producto, id_nota, cantidadProducto]
+        "INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total) VALUES (?, ?, ?, ?, ?)",
+        [id_producto, id_nota, cantidadProducto,precio, totalProducto]
       );
 
       // Verificar si el producto existe en el almacén
@@ -268,7 +289,66 @@ const insertNotaAndDetalle = async (req, res) => {
   }
 };
 
+const anularNota = async (req, res) => {
+  const { notaId } = req.body; // El número de la nota o ID de la nota
 
+  if (!notaId) {
+    return res.status(400).json({ message: "El ID de la nota es necesario." });
+  }
+console.log(notaId);
+  let connection;
+  try {
+    connection = await getConnection();
+
+    await connection.beginTransaction();
+
+    // Obtener los detalles de la nota
+    const [notaResult] = await connection.query(
+      "SELECT id_almacenO, id_almacenD, id_comprobante FROM nota WHERE id_nota = ? AND estado_nota = 0",
+      [notaId]
+    );
+
+    if (notaResult.length === 0) {
+      return res.status(404).json({ message: "Nota no encontrada o ya anulada." });
+    }
+
+    const { id_almacenO, id_almacenD, id_comprobante } = notaResult[0];
+
+    // Obtener los detalles de los productos de la nota
+    const [detalleResult] = await connection.query(
+      "SELECT id_producto, cantidad FROM detalle_nota WHERE id_nota = ?",
+      [notaId]
+    );
+
+    for (let i = 0; i < detalleResult.length; i++) {
+      const { id_producto, cantidad } = detalleResult[i];
+
+      // Retirar stock del almacén de destino si existe
+      if (id_almacenD) {
+        await connection.query(
+          "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
+          [cantidad, id_producto, id_almacenD]
+        );
+      }
+    }
+
+    // Actualizar el estado de la nota a 1 (anulada)
+    await connection.query(
+      "UPDATE nota SET estado_nota = 1 WHERE id_nota = ?",
+      [notaId]
+    );
+
+    await connection.commit();
+
+    res.json({ code: 1, message: 'Nota anulada correctamente' });
+  } catch (error) {
+    console.error("Error en el backend:", error.message);
+    if (connection) {
+      await connection.rollback();
+    }
+    res.status(500).send({ code: 0, message: error.message });
+  }
+};
 
 
   
@@ -278,6 +358,7 @@ export const methods = {
     getProductos,
     getNuevoDocumento,
     getDestinatario,
-    insertNotaAndDetalle
+    insertNotaAndDetalle,
+    anularNota
 };
 

@@ -14,6 +14,8 @@ import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIn
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
 import useProductosData from './data/data_buscar_producto';
 import insertNotaAndDetalle from '../data/add_nota'; // Importa la función de inserción
+import './Registro_ingreso.css'; // Asegúrate de importar el mismo archivo de estilos
+import { Toaster, toast } from "react-hot-toast"; // Importa el mismo paquete de validaciones
 
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
@@ -39,7 +41,9 @@ function Registro_Ingresos() {
   const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
 
-  const [almacenDestino, setAlmacenDestino] = useState(() => {
+
+  // Agregar la lógica de almacenOrigen
+  const [almacenOrigen, setAlmacenOrigen] = useState(() => {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
@@ -48,32 +52,36 @@ function Registro_Ingresos() {
     localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
   }, [productosSeleccionados]);
 
+  // Guardar almacenOrigen en localStorage
   useEffect(() => {
-    if (almacenDestino !== '') {
-      localStorage.setItem('almacen', almacenDestino.toString());
+    if (almacenOrigen !== '') {
+      localStorage.setItem('almacen', almacenOrigen.toString());
     }
-  }, [almacenDestino]);
+  }, [almacenOrigen]);
 
-  const openModalBuscarProducto = () => setIsModalOpen(true);
+  const openModalBuscarProducto = () => {
+    if (almacenOrigen) {
+      setIsModalOpen(true);
+      handleBuscarProducto();
+    } else {
+      toast.error('Por favor seleccione un almacén de origen primero.');
+    }
+  };
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
-  const openModalProducto = (title) => {
-    setModalTitle(title);
-    setIsModalOpenProducto(true);
-  };
 
   const closeModalProducto = () => setIsModalOpenProducto(false);
   const openModalProovedor = () => setIsModalOpenProovedor(true);
   const closeModalProovedor = () => setIsModalOpenProovedor(false);
 
   const handleBuscarProducto = async () => {
-    const almacenId = almacenDestino || 1;
+    const almacenId = almacenOrigen || 1;
     const filters = {
       descripcion: searchInput,
       almacen: almacenId,
     };
 
-  const result = await useProductosData(filters);
+    const result = await useProductosData(filters);
     setProductos(result.productos);
   };
 
@@ -84,6 +92,20 @@ function Registro_Ingresos() {
 
   const agregarProducto = (producto, cantidad) => {
     setProductosSeleccionados((prevProductos) => {
+      const cantidadExistente = prevProductos
+        .filter(p => p.codigo === producto.codigo)
+        .reduce((total, p) => total + p.cantidad, 0);
+      const cantidadTotal = cantidadExistente + cantidad;
+
+      if (cantidadTotal > producto.stock) {
+        const maxCantidad = producto.stock - cantidadExistente;
+        if (maxCantidad > 0) {
+          toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
+        }
+        toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
+        return prevProductos;
+      }
+
       const productoExistente = prevProductos.find(p => p.codigo === producto.codigo);
       if (productoExistente) {
         return prevProductos.map(p =>
@@ -93,18 +115,39 @@ function Registro_Ingresos() {
         return [...prevProductos, { ...producto, cantidad }];
       }
     });
+
     closeModalBuscarProducto();
   };
 
   const handleGuardar = async () => {
+    if (productosSeleccionados.length === 0) {
+      toast.error('Debe agregar al menos un producto.');
+      return;
+    }
+    let stockExcedido = false;
+    productosSeleccionados.forEach(producto => {
+      if (producto.cantidad > producto.stock) {
+        stockExcedido = true;
+      }
+    });
+
+    if (stockExcedido) {
+      toast.error('La cantidad de algunos productos excede el stock disponible.');
+      return;
+    }
     const almacenO = document.getElementById('almacen_origen').value;
     const almacenD = document.getElementById('almacen_destino').value;
     const destinatario = document.getElementById('destinatario').value;
     const glosa = document.getElementById('glosa').value;
     const fecha = document.getElementById('fechaDocu').value;
-    const nota = document.getElementById('proveedor').value;
+    const nota = document.getElementById('nomnota').value;
     const numComprobante = document.getElementById('numero').value;
     const observacion = document.getElementById('observacion').value;
+
+    if (almacenO == almacenD){
+      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
+      return;
+    };
 
     const productos = productosSeleccionados.map(producto => ({
       id: producto.codigo,
@@ -127,10 +170,11 @@ function Registro_Ingresos() {
     const result = await insertNotaAndDetalle(data);
 
     if (result.success) {
-      alert('Nota y detalle insertados correctamente');
+      toast.success('Nota y detalle insertados correctamente');
       handleCancel();
+      window.location.reload();
     } else {
-      alert('Error al insertar nota y detalle: ' + result.message);
+      toast.error('Por favor complete todos los campos');
     }
   };
 
@@ -153,14 +197,20 @@ function Registro_Ingresos() {
       </div>
       <div className="container-registro-detalle-venta" style={{ backgroundColor: 'lightgray', padding: 20 }}>
         <form className="flex rounded-lg">
+        <Toaster />
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
                   Almacén origen:
                 </label>
-                <select className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' id="almacen_origen">
-                <option value="">Seleccionar</option>
+                <select 
+                   className='form-elementwaentrada'
+                  id="almacen_origen"
+                  value={almacenOrigen}
+                  onChange={(e) => setAlmacenOrigen(parseInt(e.target.value))}
+                >
+                  <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (
                     <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
                   ))}
@@ -171,10 +221,9 @@ function Registro_Ingresos() {
                   Almacén destino:
                 </label>
                 <select 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
+                  className='form-elementwaentrada'
                   id="almacen_destino"
-                  value={almacenDestino}
-                  onChange={(e) => setAlmacenDestino(parseInt(e.target.value))}
+
                 >
                   <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (
@@ -187,7 +236,7 @@ function Registro_Ingresos() {
                   Proveedor:
                 </label>
                 <select 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
+                  className='form-elementwaentrada'
                   id="destinatario"
                   onChange={(e) => {
                     const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
@@ -205,19 +254,17 @@ function Registro_Ingresos() {
                   RUC:
                 </label>
                 <input 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
-                  id="ruc" 
+className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3'                  id="ruc" 
                   type="text" 
                   readOnly
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="proveedor">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nomnota">
                   Nombre de nota:
                 </label>
                 <input 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
-                  id="proveedor" 
+className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3'                  id="nomnota" 
                   type="text" 
                 />
               </div>
@@ -228,7 +275,7 @@ function Registro_Ingresos() {
                 </label>
                 <input 
                   type="date" 
-                  className="border border-gray-300 rounded-lg p-2.5" 
+                  className="form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3"
                   id="fechaDocu" 
                   defaultValue={currentDate}
                 />
@@ -260,23 +307,22 @@ function Registro_Ingresos() {
             </div>
           </div>
           <div className="ml-4 flex flex-col w-1/2">
-          <div className="mb-4">
+          <div className="mb-8">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
                   Número:
                 </label>
                 <input 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5' 
-                  id="numero" 
+                  className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full'                  id="numero" 
                   type="text" 
                   value={currentDocumento} 
                   readOnly
                 />
               </div>
-            <div className="mb-4">
+            <div className="mb-8">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
                 Glosa:
               </label>
-              <select className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5 w-full" id="glosa">
+              <select className="form-elementwaentrada w-full" id="glosa">
                 {glosaOptions.map(option => (
                   <option key={option} value={option}>{option}</option>
                 ))}
@@ -286,7 +332,7 @@ function Registro_Ingresos() {
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="observacion">
                 Observación:
               </label>
-              <textarea className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 p-2.5 w-full h-full" id="observacion"></textarea>
+              <textarea className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full h-full" id="observacion"></textarea>
             </div>
           </div>
         </form>

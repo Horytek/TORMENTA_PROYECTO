@@ -12,7 +12,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
         const almacenIdGuardado = localStorage.getItem('almacen');
         return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
     });
-
+    const [estado, setEstado] = useState('');
     useEffect(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
         if (almacenIdGuardado && almacenes.length > 0) {
@@ -24,9 +24,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
     }, [almacenes]);
 
     const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
-    const [isModalOpenExcel, setIsModalOpenExcel] = useState(false);
-    const [isModalOpenExcelDetalle, setIsModalOpenExcelDetalle] = useState(false);
-
+    const [isModalOpenPDF, setIsModalOpenPDF] = useState(false);
    // const today = new Date();
    // const todayDate = parseDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
 
@@ -36,21 +34,26 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
     });
 
     const [razon, setRazon] = useState('');
+    const [usuario, setUsuario] = useState('');
+    const [documento, setDocumento] = useState('');
 
     const applyFilters = useCallback(() => {
         const date_i = `${value.start.year}-${String(value.start.month).padStart(2, '0')}-${String(value.start.day).padStart(2, '0')}`;
         const date_e = `${value.end.year}-${String(value.end.month).padStart(2, '0')}-${String(value.end.day).padStart(2, '0')}`;
-
+      
         const filtros = {
-            fecha_i: date_i,
-            fecha_e: date_e,
-            razon: razon,
-            almacen: almacenSeleccionado.id !== '%' ? almacenSeleccionado.id : '%',
+          fecha_i: date_i,
+          fecha_e: date_e,
+          razon_social: razon, // Asegúrate de que este valor se está incluyendo
+          almacen: almacenSeleccionado.id !== '%' ? almacenSeleccionado.id : '%',
+          usuario: usuario,
+          documento: documento,
+          estado: estado !== '%' ? estado : '%'
         };
-
+      
         onFiltersChange(filtros);
-    }, [value, razon, almacenSeleccionado, onFiltersChange]);
-
+      }, [value, razon, almacenSeleccionado, usuario, documento, estado, onFiltersChange]);
+      
     useEffect(() => {
         applyFilters();
     }, [applyFilters]);
@@ -70,45 +73,31 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
         setIsModalOpenImprimir(false);
     };
 
-    const openModalExcel = () => {
-        setIsModalOpenExcel(true);
+    const openModalPDF = () => {
+        setIsModalOpenPDF(true);
     };
 
-    const closeModalExcel = () => {
-        setIsModalOpenExcel(false);
-    };
-
-    const openModalExcelDetalle = () => {
-        setIsModalOpenExcelDetalle(true);
-    };
-
-    const closeModalExcelDetalle = () => {
-        setIsModalOpenExcelDetalle(false);
+    const closeModalPDF = () => {
+        setIsModalOpenPDF(false);
     };
 
     const handleConfirmImprimir = () => {
-        console.log('Nota de salida impresa.');
+        console.log('Nota de entrada impresa.');
         setIsModalOpenImprimir(false);
     };
 
-    const handleConfirmExcel = () => {
-        console.log('Exportar a Excel.');
+    const handleConfirmPDF = () => {
+        console.log('Exportar a PDF.');
         setIsModalOpenExcel(false);
     };
 
-    const handleConfirmExcelDetalle = () => {
-        console.log('Exportar a Excel Detalle.');
-        setIsModalOpenExcelDetalle(false);
-    };
 
     const handleSelectChange = (event) => {
         const value = event.target.value;
         if (value === "imprimir") {
             openModalImprimir();
-        } else if (value === "excel") {
-            openModalExcel();
-        } else if (value === "excel-detalle") {
-            openModalExcelDetalle();
+        } else if (value === "pdf") {
+            openModalPDF();
         }
         event.target.value = '';
     };
@@ -140,6 +129,23 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
                 </div>
             </div>
             <div className="flex items-center gap-2">
+                    <h6 className='font-bold'>Comprobante:</h6>
+                    <div className='relative'>
+                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                            <IoIosSearch className='w-4 h-4 text-gray-500' />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder='I400-00000000'
+                            value={documento}
+                            onChange={(e) => setDocumento(e.target.value)}
+                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-auto'
+                            style={{ width: '175px' }}
+                        />
+                    </div>
+                </div>
+            <div className="flex items-center gap-2">
+            <h6 className='font-bold'>Fecha:&nbsp;&nbsp;&nbsp;&nbsp;</h6>
                 <DateRangePicker
                     className="w-xs"
                     classNames={{ inputWrapper: "bg-white" }}
@@ -148,13 +154,40 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
                 />
             </div>
             <div className="flex items-center gap-2">
-                <div className='flex items-center gap-2'>
-                    <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full' name="select" onChange={handleSelectChange}>
-                        <option value="">...</option>
-                        <option value="imprimir">Imprimir</option>
-                        <option value="excel">Excel</option>
-                        <option value="excel-detalle">Excel Detalle</option>
+                    <h6 className='font-bold'>Estado:</h6>
+                    <select id=""
+                        className='border border-gray-300 text-center text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500'
+                        onChange={(e) => setEstado(e.target.value)} value={estado}
+                        style={{ width: '110px' }}>
+                        <option value="%">...</option>
+                        <option value="0">Activo</option>
+                        <option value="1">Inactivo</option>
                     </select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <h6 className='font-bold'>Usuario:</h6>
+                    <div className='relative'>
+                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
+                            <IoIosSearch className='w-4 h-4 text-gray-500' />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder='Ej: tormenta'
+                            value={usuario}
+                            onChange={(e) => setUsuario(e.target.value)}
+                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
+                            style={{ width: '200px' }}
+                        />
+                    </div>
+                </div>
+            <div className="flex items-center gap-2">
+                <div className='flex items-center gap-2'>
+                <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full'
+                            name="select" onChange={handleSelectChange} style={{ width: '100px' }}>
+                            <option value="">...</option>
+                            <option value="pdf">PDF</option>
+                            <option value="imprimir">Imprimir</option>
+                        </select>
                 </div>
                 <Link to="/almacen/nota_ingreso/registro_ingreso">
                     <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
@@ -164,26 +197,18 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
             </div>
             {isModalOpenImprimir && (
                 <ConfirmationModal
-                    message='¿Desea imprimir la nota de ingreso?'
+                    message='¿Desea imprimir la nota de salida?'
                     onClose={closeModalImprimir}
                     isOpen={isModalOpenImprimir}
                     onConfirm={handleConfirmImprimir}
                 />
             )}
-            {isModalOpenExcel && (
+            {isModalOpenPDF && (
                 <ConfirmationModal
-                    message='¿Desea exportar a Excel?'
-                    onClose={closeModalExcel}
-                    isOpen={isModalOpenExcel}
-                    onConfirm={handleConfirmExcel}
-                />
-            )}
-            {isModalOpenExcelDetalle && (
-                <ConfirmationModal
-                    message='¿Desea exportar a Excel Detalle?'
-                    onClose={closeModalExcelDetalle}
-                    isOpen={isModalOpenExcelDetalle}
-                    onConfirm={handleConfirmExcelDetalle}
+                    message='¿Desea exportar a PDF?'
+                    onClose={closeModalPDF}
+                    isOpen={isModalOpenPDF}
+                    onConfirm={handleConfirmPDF}
                 />
             )}
         </div>

@@ -8,10 +8,7 @@ import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
 
 const Ingresos = () => {
   const [filters, setFilters] = useState({
-    fecha_i: '',
-    fecha_e: '',
-    razon: '',
-    almacen: '%',
+
   });
   const [ingresos, setIngresos] = useState([]);
   const { almacenes } = useAlmacenData();

@@ -9,4 +9,5 @@ router.get("/productos", notaingresoController.getProductos);
 router.get("/ndocumento", notaingresoController.getNuevoDocumento);
 router.get("/destinatario", notaingresoController.getDestinatario);
 router.post("/addNota", notaingresoController.insertNotaAndDetalle);
+router.post("/anular", notaingresoController.anularNota);
 export default router;
