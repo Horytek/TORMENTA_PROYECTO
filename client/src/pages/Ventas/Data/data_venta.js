@@ -31,6 +31,7 @@ const useVentasData = (filters) => {
           ruc: venta.ruc ? venta.ruc : `${venta.dni}`,
           fechaEmision: venta.fecha ? venta.fecha : '',
           fecha_iso: venta.fecha_iso,
+          metodo_pago: venta.metodo_pago,
           igv: `S/ ${parseFloat(venta.igv).toFixed(2)}`,
           total: `S/ ${parseFloat(venta.total).toFixed(2)}`,
           cajero: venta.cajero,
@@ -94,6 +95,39 @@ const useVentasData = (filters) => {
   
   const totalRecaudado = getTotalRecaudado();
 
+    // Función para calcular el total de efectivo
+    const getTotalEfectivo = () => {
+      return ventas.reduce((total, venta) => {
+        const pagos = venta.metodo_pago.split(', ');
+        const pagoEfectivo = pagos.find(pago => pago.startsWith('EFECTIVO'));
+  
+        if (pagoEfectivo) {
+          const monto = parseFloat(pagoEfectivo.split(':')[1]) || 0;
+          return total + monto;
+        }
+        return total;
+      }, 0).toFixed(2);
+    };
+  
+    const totalEfectivo = getTotalEfectivo();
+  
+    // Función para calcular el total de pagos electrónicos
+    const getTotalPagoElectronico = () => {
+      return ventas.reduce((total, venta) => {
+        const pagos = venta.metodo_pago.split(', ');
+        const pagosElectronicos = pagos.filter(pago => !pago.startsWith('EFECTIVO'));
+  
+        const totalElectronico = pagosElectronicos.reduce((suma, pago) => {
+          const monto = parseFloat(pago.split(':')[1]) || 0;
+          return suma + monto;
+        }, 0);
+  
+        return total + totalElectronico;
+      }, 0).toFixed(2);
+    };
+  
+    const totalPagoElectronico = getTotalPagoElectronico();
+
   const updateDetalle = (updatedDetalle) => {
     setDetalles(prevDetalles =>
       prevDetalles.map(detalle =>
@@ -119,7 +153,7 @@ const useVentasData = (filters) => {
   };
 
 
-  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle, totalRecaudado,updateVenta,refetchVentas  };
+  return { ventas, removeVenta, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, detalles, addVenta, addDetalle, removeDetalle, updateDetalle, totalRecaudado,updateVenta,refetchVentas,totalEfectivo,totalPagoElectronico};
 };
 
 

@@ -21,7 +21,7 @@ const Ventas = () => {
   });
 
 
-  const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado, refetchVentas } = useVentasData(filters);
+  const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado, refetchVentas,totalEfectivo,totalPagoElectronico } = useVentasData(filters);
 
   // Estado para el manejo del modal y opciones de eliminación
   const [SelectedRowId, setSelectedRowId] = useState(null);
@@ -114,13 +114,13 @@ const Ventas = () => {
           <tbody className="bg-gray-50">
             <tr className='text-center'>
               <td className='border-r-2 border-t-0'> 
-                <strong>Cant. Ventas:</strong> <span>50</span> 
+                <strong>Cant. Ventas:</strong> <span>{ventas.length}</span> 
               </td>
               <td className='border-l-2 border-r-2 border-t-0'>
-                <strong>Total Efectivo: S/.</strong> <span>9580</span> 
+                <strong>Total Efectivo: S/.</strong> <span>{totalEfectivo}</span> 
               </td>
               <td className='border-l-2 border-r-2 border-t-0'>
-                <strong>Total Pago Electr: S/.</strong> <span>25640</span> 
+                <strong>Total Pago Electr: S/.</strong> <span>{totalPagoElectronico}</span> 
               </td>
               <td className='border-l border-t-0'>
                 <strong>Total General: S/.</strong> {totalRecaudado}<span></span> 

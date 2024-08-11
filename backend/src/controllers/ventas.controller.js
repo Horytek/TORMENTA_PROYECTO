@@ -30,7 +30,7 @@ const getVentas = async (req, res) => {
         SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, SUBSTRING(com.num_comprobante, 6, 8) AS num,
         case when tp.nom_tipocomp='Nota de venta' then 'Nota' else tp.nom_tipocomp end as tipoComprobante, CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
         cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total, CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero,
-        ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal, cl.direccion, v.fecha_iso
+        ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal, cl.direccion, v.fecha_iso, v.metodo_pago
         FROM venta v
         INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
         INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
@@ -249,6 +249,7 @@ const addVenta = async (req, res) => {
       igv,
       detalles,
       fecha_iso,
+      metodo_pago,
     } = req.body;
 
     console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
@@ -371,6 +372,7 @@ const addVenta = async (req, res) => {
       f_venta,
       igv,
       fecha_iso,
+      metodo_pago,
     };
     const [ventaResult] = await connection.query(
       "INSERT INTO venta SET ?",

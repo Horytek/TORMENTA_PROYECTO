@@ -10,6 +10,7 @@ import {Select, SelectItem} from "@nextui-org/react";
 import {Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar} from "@nextui-org/react";
 import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
 import { RiFileExcel2Line } from "react-icons/ri";
+import {Input} from "@nextui-org/input";
 
 const FiltrosVentas = ({onFiltersChange}) => {
     const {comprobantes} = useComprobanteData();
@@ -63,9 +64,14 @@ const FiltrosVentas = ({onFiltersChange}) => {
             {/* Contenedor principal con filtros */}
             <div className="items-center justify-between block ms:block md:flex lg:w-12/12 xl:8/12 md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap">
                 <div className="flex input-wrapper">
-                    <input type="text" id="valor" className="border border-gray-300 rounded-lg input" placeholder="Nombre o Razón Social"
+                    <Input type="text" id="valor" className="rounded-lg" placeholder="Nombre o Razón Social"
                     value={razon} // El valor del input se controla con useState
-                    onChange={handleChange} />
+                    onChange={handleChange} 
+                    style={{
+                      border: "none", // Sin !important
+                      boxShadow: "none", // Sin !important
+                      outline: "none", // Sin !important
+                    }}/>
                 </div>
                 <div className="mb-2 input-wrapper md:mb-0">
                     <Select id="tipo" placeholder="Tipo Comprobante" className="p-0 rounded-lg" style={{width: "190px"}} value={comprobanteSeleccionado}
@@ -80,7 +86,7 @@ const FiltrosVentas = ({onFiltersChange}) => {
                     {/* <label htmlFor="campo" className="label">
                         Campo
                     </label> */}
-                    <Select id="campo" placeholder="Sucursal" selectionMode="multiple" className="p-2 rounded-lg" style={{width: "170px"}} value={sucursalSeleccionado}
+                    <Select id="campo" placeholder="Sucursal" className="p-2 rounded-lg" style={{width: "170px"}} value={sucursalSeleccionado}
                                 onChange={(e) => setSucursalSeleccionado(e.target.value)}>
                         {sucursales.map((sucursal) => (
                                         <SelectItem key={sucursal.nombre} value={sucursal.nombre}>{sucursal.nombre}</SelectItem>

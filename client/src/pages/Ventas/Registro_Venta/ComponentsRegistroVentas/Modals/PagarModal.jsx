@@ -151,6 +151,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
             total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
         })),
         fecha_iso: new Date(),
+        metodo_pago: metodo_pago + ':' + montoRecibido +
+        (faltante > 0 ? ", " + ((metodo_pago2 + ':' + montoRecibido2) || '') : '') +
+        (faltante2 > 0 ? ", " + ((metodo_pago3 + ':' + montoRecibido3) || '') : ''),
     };
 
     const datosCliente = {
