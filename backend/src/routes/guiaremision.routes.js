@@ -15,6 +15,8 @@ router.post("/nuevo_vehiculo", guiasController.addVehiculo);
 router.post("/nuevo_transportepub", guiasController.addTransportistaPublico);
 router.post("/nuevo_transportepriv", guiasController.addTransportistaPrivado);
 router.get("/productos", guiasController.getProductos);
+router.post("/destnatural", guiasController.addDestinatarioNatural);
+router.post("/destjuridico", guiasController.addDestinatarioJuridico);
 
 
 

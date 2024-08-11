@@ -353,6 +353,51 @@ const getVehiculo = async (req, res) => {
     }
 };
 
+// INSERTAR DESTINATARIO NATURAL
+const addDestinatarioNatural = async (req, res) => {
+    const { dni, nombres, apellidos, ubicacion } = req.body;
+
+    if (!dni || !nombres || !apellidos || !ubicacion) {
+        return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
+    }
+
+    try {
+        const connection = await getConnection();
+        const result = await connection.query(
+            `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion) 
+             VALUES (?, ?, ?, ?)`,
+            [dni, nombres, apellidos, ubicacion]
+        );
+        res.json({ code: 1, data: result, message: "Destinatario natural añadido exitosamente" });
+    } catch (error) {
+        res.status(500).send({ code: 0, message: error.message });
+    }
+};
+
+
+// INSERTAR DESTINATARIO JURÍDICO
+const addDestinatarioJuridico = async (req, res) => {
+    const { ruc, razon_social, ubicacion } = req.body;
+
+    if (!ruc || !razon_social || !ubicacion) {
+        return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
+    }
+
+    try {
+        const connection = await getConnection();
+        const result = await connection.query(
+            `INSERT INTO destinatario (ruc, razon_social, ubicacion) 
+             VALUES (?, ?, ?)`,
+            [ruc, razon_social, ubicacion]
+        );
+        res.json({ code: 1, data: result, message: "Destinatario jurídico añadido exitosamente" });
+    } catch (error) {
+        res.status(500).send({ code: 0, message: error.message });
+    }
+};
+
+
+
 
 
 
@@ -371,4 +416,6 @@ export const methods = {
     getVehiculos,
     addVehiculo,
     getProductos,
+    addDestinatarioNatural,
+    addDestinatarioJuridico,
 };
