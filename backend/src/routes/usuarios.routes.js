@@ -4,6 +4,8 @@ import { methods as usuariosController } from "./../controllers/usuarios.control
 const router = Router();
 
 router.get("/", usuariosController.getUsuarios);
-router.post("/login", usuariosController.verifyUsuario);
+router.post("/", usuariosController.addUsuario);
+router.put("/:id", usuariosController.updateUsuario);
+router.delete("/:id", usuariosController.deleteUsuario);
 
 export default router;
