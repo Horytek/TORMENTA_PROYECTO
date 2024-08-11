@@ -110,7 +110,7 @@ const FiltrosVentas = ({onFiltersChange}) => {
                   isBordered
                   as="button"
                   className="transition-transform"
-                  icon={<PiMicrosoftExcelLogoFill className="text-xl"/>}
+                  icon={<PiMicrosoftExcelLogoFill className="text-xl text-gray-600"/>}
                 />
                 </DropdownTrigger>
                 <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">

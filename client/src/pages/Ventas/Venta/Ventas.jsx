@@ -110,19 +110,19 @@ const Ventas = () => {
       </div>
 
       <div className='w-full mb-3 rounded-lg'>
-        <table className='w-full text-sm divide-gray-200 rounded-lg table-auto'>
+        <table className='w-full text-sm divide-gray-200 rounded-lg table-auto border-collapse'>
           <tbody className="bg-gray-50">
             <tr className='text-center'>
-              <td className='border-none'> 
+              <td className='border-r-2 border-t-0'> 
                 <strong>Cant. Ventas:</strong> <span>50</span> 
               </td>
-              <td className='border-none'>
+              <td className='border-l-2 border-r-2 border-t-0'>
                 <strong>Total Efectivo: S/.</strong> <span>9580</span> 
               </td>
-              <td className='border-none'>
+              <td className='border-l-2 border-r-2 border-t-0'>
                 <strong>Total Pago Electr: S/.</strong> <span>25640</span> 
               </td>
-              <td className='border-none'>
+              <td className='border-l border-t-0'>
                 <strong>Total General: S/.</strong> {totalRecaudado}<span></span> 
               </td>
             </tr>
