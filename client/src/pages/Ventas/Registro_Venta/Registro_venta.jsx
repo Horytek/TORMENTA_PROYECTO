@@ -63,7 +63,13 @@ const Registro_Venta = () => {
     setProductos(prevProductos => prevProductos.map(p => p.codigo === codigo ? { ...p, stock: p.stock + cantidad } : p));
   };
 
-  const totalImporte = detalles.reduce((acc, item) => acc + parseFloat(item.subtotal.slice(2)), 0).toFixed(2);
+  const totalImporte = detalles.reduce((acc, item) => {
+    // Asumiendo que item.subtotal está en formato "S/ 70.00"
+    // Usa la función replace para quitar el símbolo de moneda y convertir a número
+    const subtotalNumber = parseFloat(item.subtotal.replace('S/ ', '').replace(',', '.'));
+    return (acc + subtotalNumber)/1.18;
+}, 0).toFixed(2);
+
   const igv_t = (totalImporte * 0.18).toFixed(2);
   const total_t = parseFloat((parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2));
 
@@ -140,15 +146,33 @@ const Registro_Venta = () => {
   const { clientes } = useClientesData();
   const cliente = clientes.find(cliente => cliente.id === 1);
 
+
   const datosVentaComprobante = {
 
     fecha: new Date().toISOString().slice(0, 10),
     nombre_cliente: cliente ? cliente.nombre : '',
     documento_cliente: cliente ? cliente.documento : '',
     direccion_cliente: cliente ? cliente.direccion : '',
-    igv: parseFloat(igv_t),
-    total_t: parseFloat(total_t),
-    totalImporte_venta: parseFloat(detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * detalle.cantidad), 0).toFixed(2)),
+  // Calcular el total importe sin IGV
+  totalImporte_venta: detalles.reduce((acc, detalle) => {
+    const precioSinIGV = parseFloat(detalle.precio) / 1.18; // Dividir el precio por 1.18 para obtener el valor sin IGV
+    return acc + (precioSinIGV * detalle.cantidad);
+  }, 0).toFixed(2),
+
+  // Calcular el IGV basado en el total importe sin IGV
+  igv: detalles.reduce((acc, detalle) => {
+    const precioSinIGV = parseFloat(detalle.precio) / 1.18;
+    const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad; // Calcular el IGV del detalle
+    return acc + igvDetalle;
+  }, 0).toFixed(2),
+
+  // Calcular el total sumando el total importe sin IGV y el IGV
+  total_t: detalles.reduce((acc, detalle) => {
+    const precioSinIGV = parseFloat(detalle.precio) / 1.18;
+    const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad;
+    return acc + (precioSinIGV + igvDetalle) * detalle.cantidad;
+  }, 0).toFixed(2),
+  
     descuento_venta: parseFloat(detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2)),
     detalles: detalles.map(detalle => {
       const producto = productos.find(producto => producto.codigo === detalle.codigo);

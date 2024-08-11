@@ -8,13 +8,12 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
     updatedDetalles[index].descuento = newDescuento;
 
     const detalleToUpdate = updatedDetalles[index];
-    const precio = parseFloat(detalleToUpdate.precio);
-    const cantidad = detalleToUpdate.cantidad;
-    const descuento = (((parseFloat(newDescuento) / 100) * precio)*cantidad) || 0
+    const precio = parseFloat(detalleToUpdate.precio) || 0;
+    const cantidad = parseFloat(detalleToUpdate.cantidad) || 1;
+    const descuento = (((parseFloat(newDescuento) / 100) * precio) * cantidad) || 0;
     const subtotal = (precio * cantidad - descuento).toFixed(2);
 
     detalleToUpdate.subtotal = `S/ ${subtotal}`;
-
     handleDiscountChange(index, detalleToUpdate);
   };
 
@@ -23,31 +22,34 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
     updatedDetalles[index].precio = newPrecio;
 
     const detalleToUpdate = updatedDetalles[index];
-    const precio = parseFloat(newPrecio) || 1;
-    const cantidad = detalleToUpdate.cantidad || 1;
-    const descuento = (((parseFloat(detalleToUpdate.descuento) / 100) * precio)*cantidad) || 1;
+    const precio = parseFloat(newPrecio) || 0;
+    const cantidad = parseFloat(detalleToUpdate.cantidad) || 1;
+    const descuento = (((parseFloat(detalleToUpdate.descuento) / 100) * precio) * cantidad) || 0;
     const subtotal = (precio * cantidad - descuento).toFixed(2);
 
     detalleToUpdate.subtotal = `S/ ${subtotal}`;
-
     handlePrecieChange(index, detalleToUpdate);
   };
 
   const handleDescuentoBlur = (index) => {
     const updatedDetalles = [...detalles];
     const detalleToUpdate = updatedDetalles[index];
-    if (detalleToUpdate.descuento === '') {
+    if (detalleToUpdate.descuento === '' || isNaN(parseFloat(detalleToUpdate.descuento))) {
       detalleToUpdate.descuento = '0';
       handleDescuentoChange(index, '0');
+    } else if (parseFloat(detalleToUpdate.descuento) > 100) {
+      detalleToUpdate.descuento = '100';
+      handleDescuentoChange(index, '100');
     }
   };
+
 
   const handlePrecioBlur = (index) => {
     const updatedDetalles = [...detalles];
     const detalleToUpdate = updatedDetalles[index];
-    if (detalleToUpdate.precio === '') {
-      detalleToUpdate.precio = 1;
-      handlePrecioChange(index, 1);
+    if (detalleToUpdate.precio === '' || isNaN(parseFloat(detalleToUpdate.precio))) {
+      detalleToUpdate.precio = '0';
+      handlePrecioChange(index, '0');
     }
   };
 
@@ -55,10 +57,26 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
     const updatedDetalles = [...detalles];
     const detalleToUpdate = updatedDetalles[index];
     if (detalleToUpdate.cantidad === '' || detalleToUpdate.cantidad <= 0) {
-      detalleToUpdate.cantidad = 1;
+      detalleToUpdate.cantidad = '1';
       handleQuantityChange(index, 1);
     }
-  }
+  };
+
+  const handleIncrement = (index) => {
+    const updatedDetalles = [...detalles];
+    updatedDetalles[index].cantidad = (parseFloat(updatedDetalles[index].cantidad) || 1) + 1;
+    handleQuantityChange(index, updatedDetalles[index].cantidad);
+  };
+
+  const handleDecrement = (index) => {
+    const updatedDetalles = [...detalles];
+    const currentCantidad = parseFloat(updatedDetalles[index].cantidad) || 1;
+    if (currentCantidad > 1) {
+      updatedDetalles[index].cantidad = currentCantidad - 1;
+      handleQuantityChange(index, updatedDetalles[index].cantidad);
+    }
+  };
+
   const validateDecimalInput = (e) => {
     const { value } = e.target;
     const allowedKeys = ['Backspace', 'ArrowLeft', 'ArrowRight', 'Delete', '.', ...Array.from(Array(10).keys()).map(String)];
@@ -72,7 +90,6 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
       }
     }
   };
-
   return (
     <table className="table w-full">
       <thead>
@@ -91,7 +108,7 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
             <td className="py-3 text-start font-bold">{detalle.nombre}</td>
             <td className="py-3 text-center">
               <div className="spinner flex items-center justify-center">
-                <button className="decrement" onClick={() => handleQuantityChange(index, detalle.cantidad - 1)}>-</button>
+                <button className="decrement" onClick={() => handleDecrement(index)}>-</button>
                 <input
                   type="text"
                   className="w-12 text-center rounded-md border-none"
@@ -101,14 +118,13 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
                     const newValue = e.target.value.trim(); // Elimina espacios en blanco al inicio y al final
                     if (newValue === '' || !isNaN(parseInt(newValue))) {
                       // Actualiza el estado solo si el nuevo valor es una cadena vacía o un número válido
-                      handleQuantityChange(index, newValue === '' ? '' : parseInt(newValue));
+                      handleQuantityChange(index, newValue === '' ? '' : Math.max(1, parseFloat(newValue)));
                     }
                   }}
                   onBlur={() => handleCantidadBlur(index)}
 
                 />
-
-                <button className="increment" onClick={() => handleQuantityChange(index, detalle.cantidad + 1)}>+</button>
+              <button className="increment" onClick={() => handleIncrement(index)}>+</button>
               </div>
             </td>
             <td className="py-2 text-start">
@@ -140,20 +156,17 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
                 inputMode="numeric"
                 onChange={(e) => {
                   const newValue = e.target.value.trim();
-                  // Si el valor es una cadena vacía, actualizar el valor a una cadena vacía
                   if (newValue === "") {
                     handleDescuentoChange(index, newValue);
                   } else {
-                    const newDescuento = parseInt(newValue, 10);
-                    if (!isNaN(newDescuento)) {
+                    const newDescuento = parseFloat(newValue);
+                    if (!isNaN(newDescuento) && newDescuento <= 100) {
                       handleDescuentoChange(index, newDescuento);
                     }
                   }
                 }}
                 onBlur={() => handleDescuentoBlur(index)}
               />
-
-
             </td>
             <td className="py-2 text-start">{detalle.subtotal}</td>
             <td className="py-3 text-center">

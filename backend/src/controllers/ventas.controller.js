@@ -197,7 +197,9 @@ const getComprobante = async (req, res) => {
 const getSucursal = async (req, res) => {
   try {
     const connection = await getConnection();
-    const [result] = await connection.query(`SELECT id_sucursal AS id, nombre_sucursal AS nombre FROM sucursal`);
+    const [result] = await connection.query(`SELECT su.id_sucursal AS id, su.nombre_sucursal AS nombre, su.ubicacion AS ubicacion, usu.usua As usuario 
+FROM sucursal su INNER JOIN vendedor ven ON ven.dni = su.dni
+INNER JOIN usuario usu ON usu.id_usuario = ven.id_usuario`);
     res.json({ code: 1, data: result, message: "Sucursal listados" });
   } catch (error) {
     res.status(500);

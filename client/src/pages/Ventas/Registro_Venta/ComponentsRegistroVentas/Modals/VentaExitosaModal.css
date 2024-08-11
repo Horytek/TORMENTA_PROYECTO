@@ -48,7 +48,7 @@
     box-shadow: none !important; /* Elimina cualquier sombra */
   }
   
-  .autocomplete-no-border input {
+  .autocomplete-no-border input,textarea {
     border: none !important;
     box-shadow: none !important;
     outline: none !important; /* Asegúrate de que no haya borde de enfoque */

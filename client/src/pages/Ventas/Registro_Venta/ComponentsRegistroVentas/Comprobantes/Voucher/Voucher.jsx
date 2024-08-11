@@ -1,3 +1,4 @@
+
 function centerText(text, lineWidth) {
     const wrapText = (text, maxWidth) => {
         let lines = [];
@@ -152,7 +153,16 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
         const savedDetalles = localStorage.getItem('comprobante1');
         return savedDetalles ? JSON.parse(savedDetalles) : [];
     };
+
     const detail = loadDetallesFromLocalStorage();
+
+
+       const loadDetallesFromLocalStorage1 = () => {
+        const savedDetalles = localStorage.getItem('observacion');
+        return savedDetalles ? JSON.parse(savedDetalles) : [];
+    };
+
+    const observaciones = loadDetallesFromLocalStorage1();
 
     appendContent(centerText("TEXTILES CREANDO MODA S.A.C."));
     appendContent(centerText("Cal San Martin 1573 Urb"));
@@ -163,12 +173,14 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
     appendContent(centerText(datosVentaComprobante.comprobante_pago + ": " + detail.nuevoNumComprobante));
     appendContent("==================================");
     appendContent("Fecha de Emisión: " + datosVentaComprobante.fecha);
-    appendContent("Tienda: AV. BALTA Y LEGUIA");
-    appendContent(leftAlignText("Vendedor: " + datosVenta.usuario));
+    appendContent("Dirección: " + datosVenta.direccion);
+    appendContent(leftAlignText("Sucursal: " + datosVenta.sucursal));
     appendContent("==================================");
     appendContent(leftAlignText("CLIENTE: " + datosVentaComprobante.nombre_cliente));
     appendContent("RUC/DNI: " + datosVentaComprobante.documento_cliente);
     appendContent(leftAlignText(datosVentaComprobante.direccion_cliente));
+    appendContent("==================================");
+    appendContent(leftAlignText("Observacion: " + observaciones.observacion));
     appendContent("==================================");
     appendContent("Descrip      Cant   P.Unit   TOTAL");
     appendContent("==================================");
@@ -178,11 +190,11 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
     });
 
     appendContent("==================================");
-    appendContent(rightAlignText("SUBTOTAL S/: " + totalImporteVenta.toFixed(2)));
+    appendContent(rightAlignText("Total Original S/: " + totalImporteVenta.toFixed(2)));
     appendContent(rightAlignText("DESCUENTO S/: " + descuentoVenta.toFixed(2)));
     appendContent(rightAlignText("OP.GRAVADA S/: " + (totalT - igv).toFixed(2)));
     appendContent(rightAlignText("Exonerado S/: 0.00"));
-    appendContent(rightAlignText("IGV. 18.00% S/: " + igv.toFixed(2)));
+    appendContent(rightAlignText("IGV. 18.00% S/: " + (igv).toFixed(2)));
     appendContent(rightAlignText("ICBPER S/: 0.00"));
     appendContent(rightAlignText("Importe Total S/: " + totalT.toFixed(2)));
     appendContent("\n");
