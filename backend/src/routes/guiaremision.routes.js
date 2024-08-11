@@ -11,6 +11,7 @@ router.get("/clienteguia", guiasController.getDestinatariosGuia);
 router.get("/transpublico", guiasController.getTransportePublicoGuia);
 router.get("/transprivado", guiasController.getTransportePrivadoGuia);
 router.get("/cod_transporte", guiasController.generarCodigoTrans);
+//vehiculo
 router.get("/vehiculosguia", guiasController.getVehiculos);
 // Ruta para añadir un vehículo
 router.post("/nuevo_vehiculo", guiasController.addVehiculo);

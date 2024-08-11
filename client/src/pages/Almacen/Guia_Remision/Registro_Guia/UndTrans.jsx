@@ -100,12 +100,12 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
 
   const handleSave = () => {
     if (transportePublico) {
-      if (!selectedEmpresa || !ruc || !placa || !telefonopub || !vehiculopub) {
+      if (!selectedEmpresa) {
         toast.error('Por favor, selecciona una Transporte Público.');
         return;
       }
     } else {
-      if (!selectedConductor || !dni || !placapriv || !telefonopriv || !vehiculopriv) {
+      if (!selectedConductor) {
         toast.error('Por favor, selecciona una Transporte Privado.');
         return;
       }
@@ -194,7 +194,7 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
                   <input
                     type="text"
                     id="vehiculopub"
-                    value={vehiculopub}
+                    value={selectedEmpresa && !vehiculopub ? "No presenta" : vehiculopub}
                     disabled
                     className="form-input disabled:bg-gray-300"
                   />
@@ -204,7 +204,7 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
                   <input
                     type="text"
                     id="placa"
-                    value={placa}
+                    value={selectedEmpresa && !placa ? "No presenta" : placa}
                     disabled
                     className="form-input disabled:bg-gray-300"
                   />
@@ -268,7 +268,7 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
                   <input
                     type="text"
                     id="vehiculo"
-                    value={vehiculopriv}
+                    value={selectedConductor && !vehiculopriv ? "No presenta" : vehiculopriv}
                     disabled
                     className={transportePublico ? 'bg-gray-300' : ''}
                   />
@@ -278,7 +278,7 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
                   <input
                     type="text"
                     id="placa-privada"
-                    value={placapriv}
+                    value={selectedConductor && !placapriv ? "No presenta" : placapriv}
                     disabled
                     className={transportePublico ? 'bg-gray-300' : ''}
                   />

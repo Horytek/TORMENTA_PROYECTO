@@ -105,7 +105,7 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
                                 />
                             </div>
                             <div className='w-full text-start mb-5'>
-                                <label htmlFor="placa" className='text-sm font-bold text-black'>Placa:</label>
+                                <label htmlFor="placa" className='text-sm font-bold text-black'>Placa (Opcional):</label>
                                 <div className="flex items-center">
                                     <input 
                                         type="text" 

@@ -12,7 +12,7 @@ const useTransPubData = () => {
         if (response.data.code === 1) {
           const transportes = response.data.data.map(item => ({
             id: item.id,
-            placa: item.placa,
+            placa: item.placa || null, // Maneja la placa como nula si no se proporciona
             ruc: item.ruc,
             razonsocial: item.razonsocial,
             telefonopub: item.telefonopub,

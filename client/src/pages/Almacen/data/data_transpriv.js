@@ -12,7 +12,7 @@ const useTransPrivData = () => {
         if (response.data.code === 1) {
           const transportes = response.data.data.map(item => ({
             id: item.id,
-            placa: item.placa,
+            placa: item.placa || null, // Maneja la placa como nula si no se proporciona
             dni: item.dni,
             transportista: item.transportista,
             telefonopriv: item.telefonopriv,
