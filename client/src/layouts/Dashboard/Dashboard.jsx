@@ -12,7 +12,7 @@ import Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Nota_ingreso';
 import Nueva_Nota_Ingreso from '@/pages/Almacen/Nota_Ingreso/Registro_Ingreso/Registro_ingreso';
 import Nota_Salida from '@/pages/Almacen/Nota_Salida/Nota_salida';
 import Nueva_Nota_Salida from '@/pages/Almacen/Nota_Salida/Nueva_Nota_Salida/Nueva_Nota_salida';
-import Configuracion from '@/pages/Configuración';
+import Usuarios from '@/pages/Usuarios/Usuarios';
 import Registro_venta from '@/pages/Ventas/Registro_Venta/Registro_venta';
 import Guia_Remision from '@/pages/Almacen/Guia_Remision/Guia_Remision';
 import RegistroGuia from '@/pages/Almacen/Guia_Remision/Registro_Guia/Registro_Guia';
@@ -39,7 +39,7 @@ function Dashboard() {
       <Toaster position="top-center" reverseOrder={true} />
       {/* Componente Sidebar que contiene el menú de navegación */}
       <Sidebar />
-      <div className="flex-1 flex flex-col ml-5">
+      <div className="flex flex-col flex-1 ml-5">
         {/* Componente Navbar que contiene la barra de navegación superior */}
         <Navbar />
         {/* Contenedor para los componentes de las páginas que cambiarán */}
@@ -135,9 +135,9 @@ function Dashboard() {
                       <ReporteVentas />
                     </RouteProtectedRol>
                   } />
-                  <Route path="/configuracion" element={
+                  <Route path="/configuracion/usuarios" element={
                     <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
-                      <Configuracion />
+                      <Usuarios />
                     </RouteProtectedRol>
                   } />
                 </Routes>
