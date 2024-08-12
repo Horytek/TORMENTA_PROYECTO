@@ -396,6 +396,49 @@ const addDestinatarioJuridico = async (req, res) => {
     }
 };
 
+//ANULAR GUIA
+const anularGuia = async (req, res) => {
+    const { guiaId } = req.body; // El número de la guía o ID de la guía
+  
+    if (!guiaId) {
+      return res.status(400).json({ message: "El ID de la guía es necesario." });
+    }
+  
+    let connection;
+    try {
+      connection = await getConnection();
+  
+      await connection.beginTransaction();
+  
+      // Verificar si la guía ya está anulada o no existe
+      const [guiaResult] = await connection.query(
+        "SELECT id_guiaremision FROM guia_remision WHERE id_guiaremision = ? AND estado_guia = 1",
+        [guiaId]
+      );
+  
+      if (guiaResult.length === 0) {
+        return res.status(404).json({ message: "Guía de remisión no encontrada o ya anulada." });
+      }
+  
+      // Anular la guía de remisión (estado_guia = 0)
+      await connection.query(
+        "UPDATE guia_remision SET estado_guia = 0 WHERE id_guiaremision = ?",
+        [guiaId]
+      );
+  
+      await connection.commit();
+  
+      res.json({ code: 1, message: 'Guía de remisión anulada correctamente' });
+    } catch (error) {
+      console.error("Error en el backend:", error.message);
+      if (connection) {
+        await connection.rollback();
+      }
+      res.status(500).send({ code: 0, message: error.message });
+    }
+  };
+  
+
 
 
 
@@ -418,4 +461,5 @@ export const methods = {
     getProductos,
     addDestinatarioNatural,
     addDestinatarioJuridico,
+    anularGuia,
 };

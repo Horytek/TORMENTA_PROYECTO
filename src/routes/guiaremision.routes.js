@@ -17,8 +17,6 @@ router.post("/nuevo_transportepriv", guiasController.addTransportistaPrivado);
 router.get("/productos", guiasController.getProductos);
 router.post("/destnatural", guiasController.addDestinatarioNatural);
 router.post("/destjuridico", guiasController.addDestinatarioJuridico);
-
-
-
+router.post("/anularguia", guiasController.anularGuia);
 
 export default router;
