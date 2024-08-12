@@ -408,12 +408,69 @@ const anularGuia = async (req, res) => {
       res.status(500).send({ code: 0, message: error.message });
     }
   };
+
+  const insertGuiaRemisionAndDetalle = async (req, res) => {
+    const {
+      id_sucursal, id_ubigeo, id_destinatario, id_transportista, glosa, ubi_partida, ubi_destino, dir_partida, dir_destino, observacion, f_generacion, total, productos, num_comprobante
+    } = req.body;
   
-
-
-
-
-
+    if (
+      !id_sucursal || !id_ubigeo || !id_destinatario || !id_transportista || !glosa || !f_generacion || !total || !productos || !num_comprobante
+    ) {
+      return res.status(400).json({ message: "Bad Request. Please fill all fields correctly." });
+    }
+  
+    let connection;
+    try {
+      connection = await getConnection();
+      await connection.beginTransaction();
+  
+      // Obtener la hora actual para h_generacion
+      const h_generacion = new Date().toLocaleTimeString('en-GB', { hour12: false });
+  
+      // Insertar el comprobante
+      const [comprobanteResult] = await connection.query(
+        "INSERT INTO comprobante (id_tipocomprobante, num_comprobante) VALUES (?, ?)",
+        [5, num_comprobante]
+      );
+  
+      const id_comprobante = comprobanteResult.insertId;
+  
+      // Insertar la guía de remisión con la hora actual
+      const [guiaRemisionResult] = await connection.query(
+        `INSERT INTO guia_remision 
+        (id_sucursal, id_ubigeo, id_destinatario, id_transportista, id_comprobante, glosa, ubi_partida, ubi_destino, dir_partida, dir_destino, observacion, f_generacion, h_generacion, estado_guia, total) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+        [id_sucursal, id_ubigeo, id_destinatario, id_transportista, id_comprobante, glosa, ubi_partida || null, ubi_destino || null, dir_partida || null, dir_destino || null, observacion || null, f_generacion, h_generacion, total]
+      );
+  
+      const id_guiaremision = guiaRemisionResult.insertId;
+  
+      // Insertar los detalles del envío
+      for (let i = 0; i < productos.length; i++) {
+        const { id_producto, cantidad, precio, marca, descripcion } = productos[i];
+        const totalProducto = cantidad * precio;
+  
+        const [detalleEnvioResult] = await connection.query(
+          "INSERT INTO detalle_envio (id_guiaremision, id_producto, descripcion, marca, cantidad, precio, total) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          [id_guiaremision, id_producto, descripcion || null, marca || null, cantidad, precio, totalProducto]
+        );
+  
+        if (!detalleEnvioResult.insertId) {
+          throw new Error(`Error al insertar el detalle del producto con id ${id_producto}`);
+        }
+      }
+  
+      await connection.commit();
+      res.json({ code: 1, message: 'Guía de remisión y detalles insertados correctamente' });
+    } catch (error) {
+      console.error("Error en el backend:", error.message);
+      if (connection) {
+        await connection.rollback();
+      }
+      res.status(500).send({ code: 0, message: error.message });
+    }
+  };
 
 
 export const methods = {
@@ -433,4 +490,5 @@ export const methods = {
     addDestinatarioNatural,
     addDestinatarioJuridico,
     anularGuia,
+    insertGuiaRemisionAndDetalle,
 };

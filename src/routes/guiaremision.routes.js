@@ -18,5 +18,6 @@ router.get("/productos", guiasController.getProductos);
 router.post("/destnatural", guiasController.addDestinatarioNatural);
 router.post("/destjuridico", guiasController.addDestinatarioJuridico);
 router.post("/anularguia", guiasController.anularGuia);
+router.post("/nuevaguia", guiasController.insertGuiaRemisionAndDetalle);
 
 export default router;

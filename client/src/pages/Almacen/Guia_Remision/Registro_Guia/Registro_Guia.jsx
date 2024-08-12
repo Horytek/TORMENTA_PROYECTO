@@ -14,6 +14,9 @@ import TransporteForm from './UndTrans';
 import ClienteForm from './ClienteForm';
 import ProductosForm from '@/pages/Productos/ProductosForm';
 import useProductosData from '../../data/data_buscar_producto';
+import insertGuiaandDetalle from '../../data/insert_guiaremision';
+import { Toaster, toast } from 'react-hot-toast'; // <-- Importación añadida
+
 
 
 
@@ -42,6 +45,57 @@ function RegistroGuia() {
   const [searchInput, setSearchInput] = useState('');
   const [productos, setProductos] = useState([]); // Tu array de productos
 
+  const handleGuardar = async () => { 
+    // Recolectar los datos del formulario
+    //num de guia
+    const numeroGuia = document.getElementById('numero').value;
+    //
+    const fecha = document.getElementById('fechaDocu').value;
+    const clienteId = parseInt(document.getElementById('cliente').value);
+    const ubicacion = document.getElementById('ubicacion').value;
+    const vendedorId = parseInt(document.getElementById('vendedor').value);
+    const cantidad = document.querySelector('input[name="cant"]').value;
+    const peso = document.querySelector('input[name="peso"]').value;
+    const glosa = document.getElementById('glosa').value;
+    const ubipart = document.querySelector('input[name="ubipart"]').value;
+    const dirpartida = document.querySelector('input[name="dirpart"]').value;
+    const ubidest = document.querySelector('input[name="ubidest"]').value;
+    const dirdest = document.getElementById('ubicacion').value;
+    const transporte = document.querySelector('input[name="trans"]').value;
+    const observacion = document.getElementById('observacion').value;
+
+    const guiaData = {
+      numeroGuia,
+      fecha,
+      clienteId,
+      ubicacion,
+      vendedorId,
+      cantidad,
+      peso,
+      glosa,
+      ubipart,
+      dirpartida,
+      ubidest,
+      dirdest,
+      transporte,
+      observacion
+    };
+
+    try {
+      const response = await insertGuiaandDetalle(guiaData, productosSeleccionados);
+      console.log(response); // <-- Verifica qué está devolviendo el servidor
+      if (response.success) {
+          toast.success("Guía de Remisión y detalles guardados exitosamente");
+      } else {
+          toast.error("Error al guardar la Guía de Remisión");
+      }
+  } catch (error) {
+      console.error(error); // <-- Verifica si hay errores más detallados
+      toast.error("Error al guardar la Guía de Remisión");
+  }
+  
+  };
+
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
     const saved = localStorage.getItem('productosSeleccionados');
     return saved ? JSON.parse(saved) : [];
@@ -64,7 +118,6 @@ function RegistroGuia() {
     }
   }, [isProductoModalOpen]);
 
-  
 
 
 
@@ -103,12 +156,12 @@ function RegistroGuia() {
 
   const openModalBuscarProducto = () => {
     setIsProductoModalOpen(true);
-      handleBuscarProducto();
+    handleBuscarProducto();
   };
 
   const closeModalBuscarProducto = () => setIsProductoModalOpen(false);
 
-  
+
 
   const handleClienteChange = (e) => {
     const selectedId = e.target.value;
@@ -125,7 +178,8 @@ function RegistroGuia() {
     setTransporte(transporte);
   };
 
-  
+
+  const currentDate = new Date().toISOString().split('T')[0];
 
 
   const openModal = (title, type) => {
@@ -172,7 +226,9 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="dirdest" className='text-sm font-bold text-black'>Fecha:</label>
-                  <input type="date" name='date' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' defaultValue={new Date().toISOString().slice(0, 10)} />
+                  <input type="date" name='date' 
+                  className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' 
+                  id="fechaDocu" defaultValue={currentDate} />
                 </div>
               </div>
 
@@ -212,18 +268,18 @@ function RegistroGuia() {
 
               <div className='w-full relative group  text-start'>
                 <label htmlFor="vendedor" className='text-sm font-bold text-black'>Vendedor:</label>
-                <select id='vendedor' 
-                className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'
-                onChange={(e) => {
-                  const selectedId = parseInt(e.target.value);
-                  const selected = sucursales.find(sucursal => sucursal.id === selectedId);
+                <select id='vendedor'
+                  className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'
+                  onChange={(e) => {
+                    const selectedId = parseInt(e.target.value);
+                    const selected = sucursales.find(sucursal => sucursal.id === selectedId);
 
-                  if (selected) {
-                    document.getElementById('direccion').value = selected.direccion;
-                  } else {
-                    document.getElementById('direccion').value = '';
-                  }
-                }}>
+                    if (selected) {
+                      document.getElementById('direccion').value = selected.direccion;
+                    } else {
+                      document.getElementById('direccion').value = '';
+                    }
+                  }}>
                   <option>Seleccione...</option>
                   {sucursales.map((sucursal) => (
                     <option key={sucursal.id} value={sucursal.id}>{sucursal.nombre}</option>
@@ -273,10 +329,10 @@ function RegistroGuia() {
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="dirpart" className='text-sm font-bold text-black'>Dir. Partida:</label>
-                  <input type="text" name='dirpart' 
-                   id='direccion'
-                  className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
-                  disabled/>
+                  <input type="text" name='dirpart'
+                    id='direccion'
+                    className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
+                    disabled />
                 </div>
               </div>
               <div className="">
@@ -353,7 +409,7 @@ function RegistroGuia() {
                 id="observacion" style={{ height: "94%" }}></textarea>
             </div>
             <div className="mt-10 flex justify-end">
-              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded" type="button">
+              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded" type="button" onClick={handleGuardar}>
                 <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
             </div>
@@ -362,8 +418,8 @@ function RegistroGuia() {
 
         <br />
         <NuevaTablaGuia
-            salidas={productosSeleccionados} setProductosSeleccionados={setProductosSeleccionados}
-          />
+          salidas={productosSeleccionados} setProductosSeleccionados={setProductosSeleccionados}
+        />
       </div>
       <ModalBuscarProducto
         isOpen={isProductoModalOpen}
