@@ -12,4 +12,5 @@ router.put("/update/:id", subCategoriaController.updateSubCategoria);
 router.put("/deactivate/:id", subCategoriaController.deactivateSubCategoria);
 router.delete("/:id", subCategoriaController.deleteSubCategoria);
 
+
 export default router;

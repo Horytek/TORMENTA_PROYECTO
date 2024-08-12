@@ -109,39 +109,47 @@ const updateSubCategoria = async (req, res) => {
 
 const deactivateSubCategoria = async (req, res) => {
     const { id } = req.params;
-    const connection = await getConnection();
     try {
-        const [result] = await connection.query("UPDATE sub_categoria SET estado_subcat = 0 WHERE id_subcategoria = ?", [id]);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Subcategoría no encontrada" });
-        }
-
-        res.json({ message: "Subcategoría dada de baja con éxito" });
-    } catch (error) {
-        if (!res.headersSent) {
-            res.status(500).send(error.message);
-        }
-    }
-};
-
-const deleteSubCategoria = async (req, res) => {
-    try {
-        const { id } = req.params;
         const connection = await getConnection();
-        const [result] = await connection.query("DELETE FROM sub_categoria WHERE id_subcategoria = ?", [id]);
-                
+        const [result] = await connection.query(
+            "UPDATE sub_categoria SET estado_subcat = 0 WHERE id_subcategoria = ?",
+            [id]
+        );
+
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "Subcategoría no encontrada" });
         }
 
-        res.json({ code: 1, message: "Subcategoría eliminada" });
+        res.json({ code: 1, message: "Subcategoría dada de baja con éxito" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error al dar de baja la subcategoría", error: error.message });
         }
     }
 };
+
+
+const deleteSubCategoria = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const connection = await getConnection();
+        const [result] = await connection.query(
+            "DELETE FROM sub_categoria WHERE id_subcategoria = ?",
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ code: 0, message: "Subcategoría no encontrada" });
+        }
+
+        res.json({ code: 1, message: "Subcategoría eliminada con éxito" });
+    } catch (error) {
+        if (!res.headersSent) {
+            res.status(500).json({ code: 0, message: "Error al eliminar la subcategoría", error: error.message });
+        }
+    }
+};
+
 
 
 const getSubcategoriasConCategoria = async (req, res) => {

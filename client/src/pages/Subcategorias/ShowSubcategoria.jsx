@@ -2,20 +2,41 @@ import { useEffect, useState } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
-import {
-  deleteSubcategoria,
-  deactivateSubcategoria,
-} from "@/services/subcategoria.services";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import  { useSubcategoriasConCategoria } from './data/data_list';
+import { useSubcategoriasConCategoria } from './hooks/data_list';
+import { useDeleteSubcategoria } from './hooks/delete';
+import { useDeactivateSubcategoria } from './hooks/deactivate';
 
 export function ShowSubcategorias({ searchTerm }) {
-  const { subcategorias, loading, error } = useSubcategoriasConCategoria();
+  const { subcategorias, setSubcategorias, loading, error } = useSubcategoriasConCategoria();  
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeactivationModalOpen, setIsDeactivationModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null); 
   const productosPerPage = 10;
+
+  const { deleteSubcategoria, success: deleteSuccess } = useDeleteSubcategoria();
+  const { deactivateSubcategoria, success: deactivateSuccess } = useDeactivateSubcategoria();
+
+  useEffect(() => {
+    if (deleteSuccess) {
+      setSubcategorias((prev) =>
+        prev.filter((sub_categoria) => sub_categoria.id_subcategoria !== selectedRow.id)
+      );
+    }
+  }, [deleteSuccess, selectedRow, setSubcategorias]);
+
+  useEffect(() => {
+    if (deactivateSuccess) {
+      setSubcategorias((prev) =>
+        prev.map((sub_categoria) =>
+          sub_categoria.id_subcategoria === selectedRow.id
+            ? { ...sub_categoria, estado_subcat: 0 }
+            : sub_categoria
+        )
+      );
+    }
+  }, [deactivateSuccess, selectedRow, setSubcategorias]);
 
   const handleOpenConfirmationModal = (id, nombre) => {
     setSelectedRow({ id, nombre });
@@ -37,28 +58,16 @@ export function ShowSubcategorias({ searchTerm }) {
     setSelectedRow(null);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (selectedRow?.id) {
-      await deleteSubcategoria(selectedRow.id);
-      setSubcategorias((prev) =>
-        prev.filter(
-          (sub_categoria) => sub_categoria.id_subcategoria !== selectedRow.id
-        )
-      );
+      deleteSubcategoria(selectedRow.id);
       handleCloseConfirmationModal();
     }
   };
 
-  const handleConfirmDeactivate = async () => {
+  const handleConfirmDeactivate = () => {
     if (selectedRow?.id) {
-      await deactivateSubcategoria(selectedRow.id);
-      setSubcategorias((prev) =>
-        prev.map((sub_categoria) =>
-          sub_categoria.id_subcategoria === selectedRow.id
-            ? { ...sub_categoria, estado_subcat: 0 }
-            : sub_categoria
-        )
-      );
+      deactivateSubcategoria(selectedRow.id);
       handleCloseDeactivationModal();
     }
   };
