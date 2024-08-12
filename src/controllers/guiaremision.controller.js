@@ -305,22 +305,16 @@ const getProductos = async (req, res) => {
         SELECT 
         p.id_producto AS codigo, 
         p.descripcion AS descripcion, 
-        m.nom_marca AS marca, 
-        COALESCE(i.stock, 0) AS stock 
+        m.nom_marca AS marca
         FROM 
             producto p 
         INNER JOIN 
-            marca m ON p.id_marca = m.id_marca 
-        LEFT JOIN 
-            inventario i ON p.id_producto = i.id_producto
+            marca m ON p.id_marca = m.id_marca
         WHERE 
-             p.descripcion LIKE ? AND i.stock > 0  
-        GROUP BY 
-            p.id_producto, p.descripcion, m.nom_marca, i.stock;
+             p.descripcion LIKE ?
         `,
         [`%${descripcion}%`]
       );
-      
   
       console.log('Productos encontrados:', productosResult);
   
@@ -329,29 +323,6 @@ const getProductos = async (req, res) => {
       res.status(500).send(error.message);
     }
   };
-  
-  
-  
-
-//OBTENER VEHÍCULO POR PLACA
-const getVehiculo = async (req, res) => {
-    try {
-        const { placa } = req.params;
-        const connection = await getConnection();
-        const [result] = await connection.query(`
-            SELECT placa, tipo FROM vehiculo WHERE placa =  ?`, [placa]);
-        
-        if (result.length === 0) {
-            return res.status(404).json({ data: result, message: "Vehículo no encontrado" });
-        }
-
-        res.json({ data: result, message: "Vehículo encontradp" });
-    } catch (error) {
-        if (!res.headersSent) {
-            res.status(500).send(error.message);
-        }
-    }
-};
 
 // INSERTAR DESTINATARIO NATURAL
 const addDestinatarioNatural = async (req, res) => {

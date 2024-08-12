@@ -3,8 +3,8 @@ import { RiCloseLargeLine } from "react-icons/ri";
 import { IoMdClose } from "react-icons/io";
 import { IoMdAdd } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
-import { toast } from "react-hot-toast";
 import ProductosForm from '../../../../Productos/ProductosForm';
+
 const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto }) => {
   if (!isOpen) return null;
 
@@ -13,6 +13,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
   };
+
   const handleCantidadChange = (codigo, cantidad) => {
     setCantidades({
       ...cantidades,
@@ -22,16 +23,11 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
 
   const handleAgregarProducto = (producto) => {
     const cantidadSolicitada = cantidades[producto.codigo] || 1;
-    if (cantidadSolicitada > producto.stock) {
-      toast.error(`La cantidad solicitada (${cantidadSolicitada}) excede el stock disponible (${producto.stock}).`);
-    } else {
-      agregarProducto(producto, cantidadSolicitada);
-    }
+    agregarProducto(producto, cantidadSolicitada);
   };
 
   return (
-    <div className="modal-overlay" >
-
+    <div className="modal-overlay">
       <div className="content-modal max-w-7xl mx-auto" style={{ maxHeight: '90%', overflowY: 'auto' }}>
         <div className="modal-header">
           <h2 className="modal-title">Buscar producto</h2>
@@ -69,7 +65,6 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                   <th className=" py-2 px-4 border-b">Código</th>
                   <th className="py-2 px-4 border-b w-96">Descripción</th>
                   <th className="py-2 px-4 border-b">Marca</th>
-                  <th className="py-2 px-4 border-b">Stock</th>
                   <th className="py-2 px-4 border-b">Cantidad</th>
                   <th className="py-2 px-4 border-b">Acción</th>
                 </tr>
@@ -80,7 +75,6 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                     <td className="py-2 px-4 border-b text-center">{producto.codigo}</td>
                     <td className="py-2 px-4 border-b text-center">{producto.descripcion}</td>
                     <td className="py-2 px-4 border-b text-center">{producto.marca}</td>
-                    <td className="py-2 px-4 border-b text-center">{producto.stock}</td>
                     <td className="py-2 px-4 border-b text-center">
                       <input
                         type="number"
