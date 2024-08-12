@@ -5,7 +5,7 @@ const router = Router();
 
 router.get("/", subCategoriaController.getSubCategorias);
 router.get("/categoria/:id", subCategoriaController.getSubcategoriesForCategory);
-router.get("/", subCategoriaController.getSubcategoriaNomCategoria);
+router.get("/subcategoria_list", subCategoriaController.getSubcategoriasConCategoria);
 router.get("/:id", subCategoriaController.getSubCategoria);
 router.post("/", subCategoriaController.addSubCategoria);
 router.put("/update/:id", subCategoriaController.updateSubCategoria);
