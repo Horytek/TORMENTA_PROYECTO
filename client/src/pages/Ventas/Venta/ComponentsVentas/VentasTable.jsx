@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from "react-icons/io";
+import { TiPrinter } from "react-icons/ti";
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -36,27 +37,28 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   
     saveDetallesToLocalStorage();
 
-
     const datosClientes = {
       nombre: venta.cliente,
       documento: venta.ruc,
-  };
-
-  const saveDetallesToLocalStorage1 = () => {
-      localStorage.setItem('datosClientes', JSON.stringify({datosClientes}));
     };
-    saveDetallesToLocalStorage1();
-  };
-/*
-  const saveDetallesToLocalStorage = () => {
-    localStorage.setItem('ventas', JSON.stringify(ventas));
-  };
 
-  saveDetallesToLocalStorage();*/
+    const saveDetallesToLocalStorage1 = () => {
+        localStorage.setItem('datosClientes', JSON.stringify({datosClientes}));
+      };
+      saveDetallesToLocalStorage1();
+    };
+
+    const handleRowClick = (e, venta) => {
+      // Verificar si el clic no fue en un icono
+      if (e.target.closest('.ignore-toggle')) {
+        return;
+      }
+      toggleRow(venta.id, venta.estado, venta);
+    };
 
   const renderVentaRow = (venta) => (
     <React.Fragment key={venta.id}>
-      <tr onClick={() => toggleRow(venta.id,venta.estado,venta)} className='tr-tabla-venta'>
+      <tr onClick={(e) => handleRowClick(e,venta)} className='tr-tabla-venta'>
         <td className="font-bold text-center">
           <div>{venta.serieNum}</div>
           <div className="text-gray-500">{venta.num}</div>
@@ -88,11 +90,14 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           </div>
         </td>
         <td>
-    <IoMdOptions
-        className={`ml-2 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' : venta.estado === 'Aceptada' ? 'text-gray-300' : 'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
-        style={{ fontSize: '20px' }}
-        onClick={() => openModal(venta.id, venta.estado)}
-    />
+          <div className='flex justify-content-center'>
+            <IoMdOptions
+                className={`ml-2 ml-5 mr-4 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' : venta.estado === 'Aceptada' ? 'text-gray-300' : 'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
+                style={{ fontSize: '20px' }}
+                onClick={() => openModal(venta.id, venta.estado)}
+            />
+            <TiPrinter className='text-gray-500' style={{ fontSize: '20px' }}/>
+          </div>
         </td>
       </tr>
       {expandedRow === venta.id && renderVentaDetails(venta.detalles)}
@@ -148,15 +153,15 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       <table className="table w-full">
         <thead> 
           <tr>
-            <th className="w-1 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
+            <th className="w-1/8 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
             <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">TIPO.COMP</th>
             <th className="w-1/6 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">CLIENTE</th>
             <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">F. EMISIÓN</th>
-            <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">IGV</th>
+            <th className="w-1/8 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">IGV</th>
             <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">TOTAL</th>
-            <th className="w-1/6 text-start  text-xs font-bold text-gray-500 uppercase tracking-wider">CAJERO</th>
-            <th className="w-1/1 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">ESTADO</th>
-            <th className="w-1/12"></th>
+            <th className="w-1/4 text-start  text-xs font-bold text-gray-500 uppercase tracking-wider">CAJERO</th>
+            <th className="w-1/4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">ESTADO</th>
+            <th className="W-1/6 tracking-wider"></th>
           </tr>
         </thead>
         <tbody>
