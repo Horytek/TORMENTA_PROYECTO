@@ -4,7 +4,7 @@ import CategoriasForm from "./CategoriasForm";
 import { Toaster } from "react-hot-toast";
 import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
-import { IoIosSearch } from "react-icons/io";
+import BarraSearch from "@/components/Search/Search";
 import { ShowCategorias } from "./ShowCategorias";
 
 function Categorias() {
@@ -17,7 +17,10 @@ function Categorias() {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-
+  const handleClearSearch = () => {
+    setSearchTerm(""); 
+  };
+  
   return (
     <div>
       <Toaster />
@@ -39,15 +42,12 @@ function Categorias() {
         <h6 className="font-bold">Lista de Categorias</h6>
         <div className="flex items-center gap-4 ml-auto">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <IoIosSearch className="w-4 h-4 text-gray-500" />
-            </div>
-            <input
-              type="text"
-              placeholder="Ingrese una categoria de producto"
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-96 pl-10 p-2.5"
+            <BarraSearch
               value={searchTerm}
               onChange={handleSearchChange}
+              placeholder="Ingrese la categoria a buscar"
+              isClearable={true}
+              onClear={handleClearSearch}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -67,7 +67,10 @@ function Categorias() {
       </div>
       {/* Modal de Agregar Producto */}
       {activeAdd && (
-        <CategoriasForm modalTitle={'Nueva categoria'} onClose={handleModalAdd} />
+        <CategoriasForm
+          modalTitle={"Nueva categoria"}
+          onClose={handleModalAdd}
+        />
       )}
     </div>
   );

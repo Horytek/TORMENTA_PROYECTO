@@ -3,7 +3,7 @@ import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { Toaster } from "react-hot-toast";
 import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
-import { IoIosSearch } from "react-icons/io";
+import BarraSearch from "@/components/Search/Search";
 import SubcategoriaForm from "./SubcategoriaForm";
 import ShowSubcategorias from "./ShowSubcategoria";
 
@@ -16,6 +16,10 @@ function Subcategorias() {
   const [searchTerm, setSearchTerm] = useState("");
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
   };
 
   return (
@@ -38,16 +42,15 @@ function Subcategorias() {
         ></div>
         <h6 className="font-bold">Lista de subcategorias</h6>
         <div className="flex items-center gap-4 ml-auto">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <IoIosSearch className="w-4 h-4 text-gray-500" />
-            </div>
-            <input
-              type="text"
-              placeholder="Ingrese una subcategoria de producto"
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-96 pl-10 p-2.5"
+          <div className="relative flex-grow max-w-md">
+            {" "}
+            {/* Adjusted flex-grow and max-width */}
+            <BarraSearch
               value={searchTerm}
               onChange={handleSearchChange}
+              placeholder="Ingrese la subcategoria a buscar"
+              isClearable={true}
+              onClear={handleClearSearch}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -66,7 +69,10 @@ function Subcategorias() {
         <ShowSubcategorias searchTerm={searchTerm} />
       </div>
       {activeAdd && (
-        <SubcategoriaForm modalTitle={'Nueva subcategoria'} closeModal={handleModalAdd} />
+        <SubcategoriaForm
+          modalTitle={"Nueva subcategoria"}
+          closeModal={handleModalAdd}
+        />
       )}
     </div>
   );

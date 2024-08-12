@@ -15,8 +15,11 @@ const styles = {
     "focus:ring-0",
     "py-2",
     "leading-normal",
+    "w-full",            
+    "overflow-hidden",   
+    "text-ellipsis",     
   ],
-  innerWrapper: "bg-transparent",
+  innerWrapper: "bg-transparent flex items-center",   
   inputWrapper: [
     "shadow-none",
     "border-none",
@@ -32,6 +35,7 @@ const styles = {
     "flex",
     "items-center",
     "px-5",
+    "w-full",
   ],
 };
 
@@ -56,6 +60,7 @@ const BarraSearch = forwardRef((props, ref) => {
     getDescriptionProps,
     getErrorMessageProps,
     getClearButtonProps,
+    setValue,
   } = useInput({
     ...props,
     ref,
@@ -70,10 +75,14 @@ const BarraSearch = forwardRef((props, ref) => {
 
   const labelContent = <label {...getLabelProps()}>{label}</label>;
 
+  const onClear = () => {
+    setValue("");
+  };
+
   const end = React.useMemo(() => {
     if (isClearable) {
       return (
-        <span {...getClearButtonProps()}>
+        <span {...getClearButtonProps()} onClick={onClear}>
           <CloseFilledIcon />
         </span>
       );

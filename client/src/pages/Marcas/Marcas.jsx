@@ -14,8 +14,13 @@ function Marcas() {
   };
 
   const [searchTerm, setSearchTerm] = useState("");
+
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm(""); 
   };
 
   return (
@@ -44,6 +49,7 @@ function Marcas() {
               onChange={handleSearchChange}
               placeholder="Ingrese la marca a buscar"
               isClearable={true}
+              onClear={handleClearSearch} 
             />
           </div>
           <div className="flex items-center gap-2">
