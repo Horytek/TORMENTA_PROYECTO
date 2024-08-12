@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { FaSearch, FaTshirt } from 'react-icons/fa';
 import { IoCloseSharp, IoSearchOutline, IoHome } from 'react-icons/io5';
 import { GiUnderwearShorts, GiArmoredPants, GiAmpleDress, GiShorts,GiPoloShirt, GiMonclerJacket, GiPassport,GiSkirt,GiShirt,GiTankTop  } from 'react-icons/gi';
+import {ScrollShadow} from "@nextui-org/scroll-shadow";
 
 const categoryButtons = [
   { category: '', icon: IoHome },
@@ -56,6 +57,7 @@ const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm,
 
   return (
     <div className="modal-container" style={{ zIndex: '1000' }}>
+      <ScrollShadow hideScrollBar className="w-[975px] h-[85vh] p-4">
       <div className="modal-prod p-6 rounded-xl relative" style={{ width: '950px' }}>
         <button className="close-modal-prod absolute top-0 right-0 text-black-500 p-2" onClick={() => setIsModalOpen(false)}>
           <IoCloseSharp />
@@ -104,6 +106,7 @@ const ModalProducto = ({ isModalOpen, setIsModalOpen, searchTerm, setSearchTerm,
           </tbody>
         </table>
       </div>
+      </ScrollShadow>
     </div>
   );
 };
