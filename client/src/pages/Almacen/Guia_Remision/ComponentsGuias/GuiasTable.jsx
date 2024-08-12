@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import ReactToPrint from 'react-to-print';
+import anularGuia from '../../data/anular_guia'; // Asegúrate de ajustar la ruta
+import { Toaster, toast } from "react-hot-toast";
 
 const TablaGuias = ({ guias }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
-  const [notaIdToAnular, setNotaIdToAnular] = useState(null);
+  const [guiaIdToAnular, setGuiaIdToAnular] = useState(null);
 
   const handleSelectChange = (event, id) => {
     const value = event.target.value;
@@ -16,7 +18,7 @@ const TablaGuias = ({ guias }) => {
         setIsModalOpenImprimir(true);
         break;
       case 'anular':
-        setNotaIdToAnular(id);
+        setGuiaIdToAnular(id);
         setIsModalOpenAnular(true);
         break;
       default:
@@ -35,15 +37,17 @@ const TablaGuias = ({ guias }) => {
 
   const handleConfirmImprimir = () => {
     setIsModalOpenImprimir(false);
+    // Lógica de impresión aquí si es necesario
   };
 
   const handleConfirmAnular = async () => {
-    if (notaIdToAnular) {
-      const result = await anularNota(notaIdToAnular);
+    if (guiaIdToAnular) {
+      const result = await anularGuia(guiaIdToAnular); // Llamada a la función para anular la guía
       if (result.success) {
-        console.log(result.message);
+        toast.success('Guía de remisión anulada');
         window.location.reload();
       } else {
+        toast.error(result.message);
         console.error(result.message);
       }
     }
@@ -81,14 +85,7 @@ const TablaGuias = ({ guias }) => {
         <td className='text-center'>
           <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm' name="select" onChange={(e) => handleSelectChange(e, guia.id)}>
             <option value="">...</option>
-            <ReactToPrint
-              trigger={() => {
-                return <option value="imprimir">Imprimir</option>
-              }}
-              content={()=>this.componentRef}
-              documentTitle='TORMENTA JEANS - 20610588981'
-              pageSytle="print"
-            />
+            <option value="imprimir">Imprimir</option>
             <option value="anular">Anular</option>
           </select>
         </td>
@@ -134,6 +131,7 @@ const TablaGuias = ({ guias }) => {
 
   return (
     <div className="container-table-guia px-4 bg-white rounded-lg">
+      <Toaster />
       <table className="tabla-guia table-auto w-full">
         <thead>
           <tr>
