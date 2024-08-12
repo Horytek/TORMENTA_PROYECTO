@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RiCloseLargeLine } from "react-icons/ri";
 import { IoMdClose } from "react-icons/io";
 import { IoMdAdd } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
 import ProductosForm from '../../../../Productos/ProductosForm';
 
-const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto }) => {
+const ModalBuscarProducto = ({ isOpen, onClose, setSearchInput, productos, agregarProducto }) => {
   if (!isOpen) return null;
 
   const [cantidades, setCantidades] = useState({});
   const [activeAdd, setModalOpen] = useState(false);
+  const [searchInput, setSearchInputState] = useState('');
+  const [filteredProductos, setFilteredProductos] = useState(productos);
+
+  useEffect(() => {
+    setFilteredProductos(
+      productos.filter((producto) =>
+        producto.descripcion.toLowerCase().includes(searchInput.toLowerCase())
+      )
+    );
+  }, [searchInput, productos]);
+
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
   };
@@ -41,15 +52,10 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
               type="text"
               placeholder="Buscar producto"
               className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
-              onChange={(e) => setSearchInput(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInputState(e.target.value)}
             />
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
-              onClick={onBuscar}
-            >
-              <IoIosSearch className='w-4 h-4 mr-1' />
-              Buscar
-            </button>
+            
             <button
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
               onClick={handleModalAdd}
@@ -70,7 +76,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                 </tr>
               </thead>
               <tbody>
-                {productos.map((producto) => (
+                {filteredProductos.map((producto) => (
                   <tr key={producto.codigo}>
                     <td className="py-2 px-4 border-b text-center">{producto.codigo}</td>
                     <td className="py-2 px-4 border-b text-center">{producto.descripcion}</td>
