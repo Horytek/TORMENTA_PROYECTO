@@ -4,7 +4,7 @@
 
 - **Iniciar Aplicación/Servidor**
 ```
-npm i (solo nuevos para paquetes)
+npm i (solo para nuevos paquetes)
 npm start
 ```
 
@@ -13,7 +13,7 @@ npm start
 - **Iniciar Aplicación React**
 ```
 cd client
-npm install (solo nuevos para paquetes)
+npm install (solo para nuevos paquetes)
 npm run dev
 ```
 
@@ -21,7 +21,7 @@ npm run dev
 
 - **Iniciar Servidor Express**
 ```
-npm install (solo nuevos para paquetes)
+npm install (solo para nuevos paquetes)
 npm run dev
 ```
 
