@@ -405,7 +405,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                     isRequired
                                     className="input-c mr-1 autocomplete-no-border"
                                     placeholder="Seleccionar cliente"
-                                    style={{ width: '6rem' }}
+                                    style={{ width: '6rem',border: "none", // Sin !important
+                                        boxShadow: "none", // Sin !important
+                                        outline: "none", }}
                                     value={clienteSeleccionado}
                                     onChange={handleInputChange}
                                     onSelectionChange={handleSelectionChange}
@@ -456,6 +458,11 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
                                 className="w-full max-w-md"
                                 value={observacion}
                                 onChange={(e) => setObservacion(e.target.value)}
+                                style={{
+                                    border: "none", // Sin !important
+                                    boxShadow: "none", // Sin !important
+                                    outline: "none", // Sin !important
+                                  }}
                                 />
                             </div>
                             </div>
