@@ -2,13 +2,14 @@ import React from "react";
 import { Link } from 'react-router-dom';
 import { MdAddCircleOutline } from 'react-icons/md';
 import { useState,useEffect} from 'react';
+import { MdOutlineRealEstateAgent } from "react-icons/md";
 import {DateRangePicker} from "@nextui-org/date-picker";
 import useComprobanteData from '../../Data/data_comprobante_venta';
 import useSucursalData from '../../Data/data_sucursal_venta';
 import {parseDate} from "@internationalized/date";
 import {Select, SelectItem} from "@nextui-org/react";
 import {Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar} from "@nextui-org/react";
-import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
+import { CgOptions } from "react-icons/cg";
 import { RiFileExcel2Line } from "react-icons/ri";
 import {Input} from "@nextui-org/input";
 
@@ -116,17 +117,20 @@ const FiltrosVentas = ({onFiltersChange}) => {
                   isBordered
                   as="button"
                   className="transition-transform"
-                  icon={<PiMicrosoftExcelLogoFill className="text-xl text-gray-600"/>}
+                  icon={<CgOptions className="text-xl text-gray-600"/>}
                 />
                 </DropdownTrigger>
                 <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">
+                <DropdownItem key="sunat" startContent={<MdOutlineRealEstateAgent />} >
+                    Enviar a SUNAT
+                  </DropdownItem>
                   <DropdownItem key="diario" startContent={<RiFileExcel2Line />} >
                     Excel C/ Quiebre diario
                   </DropdownItem>
-                  <DropdownItem key="diario" startContent={<RiFileExcel2Line />} >
+                  <DropdownItem key="general" startContent={<RiFileExcel2Line />} >
                     Excel Listado General
                   </DropdownItem>
-                  <DropdownItem key="diario" startContent={<RiFileExcel2Line />} >
+                  <DropdownItem key="comprobante" startContent={<RiFileExcel2Line />} >
                     Excel por Comprobante
                   </DropdownItem>
                 </DropdownMenu>

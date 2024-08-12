@@ -67,8 +67,6 @@ const Ventas = () => {
     setDeleteOptionSelected(false);
   };
 
-
-
   // Función para eliminar una venta
   const handleDeleteVenta = () => {
     SelectedRowId;
