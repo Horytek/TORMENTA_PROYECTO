@@ -32,6 +32,7 @@ const getUsuario = async (id) => {
 const addUsuario= async (user) => {
   try {
     const response = await addUsuarioRequest(user);
+    console.log(user)
     if (response.data.code === 1) {
       toast.success("Usuario añadido con éxito");
       return true;

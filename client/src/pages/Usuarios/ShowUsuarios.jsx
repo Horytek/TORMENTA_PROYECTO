@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import Pagination from '@/components/Pagination/Pagination';
+import UsuariosForm from './UsuariosForm';
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { getUsuarios, deleteUsuario, getUsuario } from '@/services/usuario.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-
 
 export function ShowUsuarios({ searchTerm }) {
   
@@ -105,7 +105,7 @@ export function ShowUsuarios({ searchTerm }) {
                     </thead>
                     <tbody className="bg-white divide-gray-200">
                         {currentUsuarios.map((usuario) => (
-                            <tr className='hover:bg-gray-100' key={usuario.id_producto} data-product={usuario.id_producto}>
+                            <tr className='hover:bg-gray-100' key={usuario.id_usuario} data-product={usuario.id_usuario}>
                                 <td className='py-2 text-center'>{usuario.nom_rol}</td>
                                 <td className='py-2 text-center'>{usuario.usua}</td>
                                 <td className='py-2 text-center'>
@@ -170,13 +170,13 @@ export function ShowUsuarios({ searchTerm }) {
             )}
 
             {/* Modal de Editar Producto */}
-            {/* {activeEdit && (
-                <ProductosForm 
-                    modalTitle={'Editar Producto'} 
+            {activeEdit && (
+                <UsuariosForm 
+                    modalTitle={'Editar Usuario'} 
                     onClose={handleCloseModal}
                     initialData={initialData} 
                 />
-            )} */}
+            )}
         </div>
     );
 }

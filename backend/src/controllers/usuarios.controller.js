@@ -14,11 +14,16 @@ const getUsuarios = async (req, res) => {
 
 const getUsuario = async (req, res) => {
     try {
-        const { id } = req.params.id;
+        const { id } = req.params;
         const connection = await getConnection();
         const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario FROM usuario U
-            INNER JOIN rol R ON U.id_rol = R.id_rol WHERE id_usuario = ?`, id);
-        res.json({ code: 1, data: result });
+            INNER JOIN rol R ON U.id_rol = R.id_rol WHERE U.id_usuario = ?`, id);
+        
+            if (result.length === 0) {
+            return res.status(404).json({data: result, message: "Usuario no encontrado"});
+        }
+    
+        res.json({code: 1 ,data: result, message: "Usuario encontrado"});
     } catch (error) {
         res.status(500);
         res.send(error.message);
@@ -27,13 +32,13 @@ const getUsuario = async (req, res) => {
 
 const addUsuario = async (req, res) => {
     try {
-        const { id_rol, usua, contra } = req.body;
+        const { id_rol, usua, contra, estado_usuario } = req.body;
 
         if (id_rol === undefined || usua === undefined || contra === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario: 1 };
+        const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario };
         const connection = await getConnection();
         await connection.query("INSERT INTO usuario SET ? ", usuario);
 

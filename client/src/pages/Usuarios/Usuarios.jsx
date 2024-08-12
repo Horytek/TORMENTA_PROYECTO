@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
+import UsuariosForm from './UsuariosForm';
 import { Toaster } from "react-hot-toast";
 import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
@@ -52,9 +53,9 @@ function Usuarios() {
       </div>
 
       {/* Modal de Agregar Usuario */}
-      {/* {activeAdd && (
-        <ProductosForm modalTitle={'Nuevo Producto'} onClose={handleModalAdd} />
-      )} */}
+      {activeAdd && (
+        <UsuariosForm modalTitle={'Nuevo Usuario'} onClose={handleModalAdd} />
+      )}
       
     </div>
   );
