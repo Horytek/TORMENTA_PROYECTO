@@ -64,15 +64,15 @@ const getGuias = async (req, res) => {
                     SELECT DISTINCT
                         de.id_producto AS codigo, 
                         m.nom_marca AS marca, 
-                        p.descripcion, 
-                        de.cantidad, 
+                        p.descripcion AS descripcion, 
+                        de.cantidad AS cantidad, 
                         p.undm AS um, 
-                        de.precio, 
-                        de.total
+                        p.precio AS precio, 
+                        de.total AS total
                     FROM detalle_envio de
                     INNER JOIN producto p ON de.id_producto = p.id_producto
                     INNER JOIN marca m ON p.id_marca = m.id_marca
-                    INNER JOIN inventario i ON de.id_producto = i.id_producto
+                    
                     
                     WHERE de.id_guiaremision = ? ;
                     `,
