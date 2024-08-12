@@ -10,7 +10,7 @@ import NumeroALetras from '../../../../../../utils/ConvertidorDeNumALetras';
 
 const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
 
-    const { detalles, fecha, total_t, igv, totalImporte_venta, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
+    const { detalles, fecha, total_t, igv, /*totalImporte_venta,*/ descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
     const [currentDate, setCurrentDate] = useState('');
     const [pdfUrl, setPdfUrl] = useState(null);
 
@@ -166,7 +166,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
 
                     <div className="flex flex-col items-center bg-gray-100 p-4 rounded border shadow-inner">
                         <div className="w-full mb-4">
-                            <p className="text-sm text-gray-700 mb-1 text-right">Total Orig. S/ : <span className="font-bold text-gray-900"> {totalImporte_venta} </span></p>
+                            <p className="text-sm text-gray-700 mb-1 text-right">Total Orig. S/ : <span className="font-bold text-gray-900"> {total_t} </span></p>
                             <p className="text-sm text-gray-700 mb-1 text-right">Descuento S/ : <span className="font-bold text-gray-900">{descuento_venta}</span></p>
                             <p className="text-sm text-gray-700 mb-1 text-right">Sub.Total S/ : <span className="font-bold text-gray-900">{(total_t - igv).toFixed(2)}</span></p>
                             <p className="text-sm text-gray-700 mb-1 text-right">Exonerado S/ : <span className="font-bold text-gray-900">0.00</span></p>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { MdAddCircleOutline } from 'react-icons/md';
 import { useState,useEffect} from 'react';
 import { MdOutlineRealEstateAgent } from "react-icons/md";
@@ -12,12 +13,17 @@ import {Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar} from "@ne
 import { CgOptions } from "react-icons/cg";
 import { RiFileExcel2Line } from "react-icons/ri";
 import {Input} from "@nextui-org/input";
+import {  handleSunatMultiple } from '../../Data/add_sunat_multiple';
+import {  handleUpdateMultiple } from '../../Data/update_venta_multiple';
+import {Toaster} from "react-hot-toast";
+import {toast} from "react-hot-toast";
 
-const FiltrosVentas = ({onFiltersChange}) => {
+const FiltrosVentas = ({onFiltersChange, refetchVentas}) => {
     const {comprobantes} = useComprobanteData();
     const {sucursales} = useSucursalData();
     const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState('');
     const [sucursalSeleccionado, setSucursalSeleccionado] = useState('');
+    const [isDeleted, setIsDeleted] = useState(false);
     const [value, setValue] = React.useState({
         start: parseDate("2024-04-01"),
         end: parseDate("2028-04-08"),
@@ -57,10 +63,37 @@ const FiltrosVentas = ({onFiltersChange}) => {
 
         onFiltersChange(filtros);
         localStorage.setItem('filtros', JSON.stringify(filtros));
+        /*localStorage.setItem('d_new', JSON.stringify(ventas_new));*/
     }, [comprobanteSeleccionado, sucursalSeleccionado, value, razon, onFiltersChange]);
+
+    const loadDetallesFromLocalStorage = () => {
+      const savedDetalles = localStorage.getItem('total_ventas');
+      return savedDetalles ? JSON.parse(savedDetalles) : [];
+    };
+  
+    const d_ventas = loadDetallesFromLocalStorage();
+    const ventas_new = d_ventas.filter(venta => venta.estado === "En proceso");
+    localStorage.setItem('d_new', JSON.stringify(ventas_new));
+    const handleAccept = () => {
+        const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
+        handleSunatMultiple(ventas_new);
+        handleUpdateMultiple(ventas_new); setTimeout(() => {
+        setIsDeleted(true);
+        toast.dismiss(loadingToastId);
+        toast.success('Los datos se han enviado con éxito!');
+        }, 3000);
+    };
+
+    useEffect(() => {
+      if (isDeleted) {
+        refetchVentas();
+        setIsDeleted(false);
+      }
+    }, [isDeleted, refetchVentas]);
 
     return (
         <>
+        <Toaster />
         <div className="flex flex-wrap justify-between mb-4">
             {/* Contenedor principal con filtros */}
             <div className="items-center justify-between block ms:block md:flex lg:w-12/12 xl:8/12 md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap">
@@ -121,7 +154,7 @@ const FiltrosVentas = ({onFiltersChange}) => {
                 />
                 </DropdownTrigger>
                 <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">
-                <DropdownItem key="sunat" startContent={<MdOutlineRealEstateAgent />} >
+                <DropdownItem key="sunat" onClick={handleAccept} startContent={<MdOutlineRealEstateAgent />} >
                     Enviar a SUNAT
                   </DropdownItem>
                   <DropdownItem key="diario" startContent={<RiFileExcel2Line />} >
@@ -144,6 +177,10 @@ const FiltrosVentas = ({onFiltersChange}) => {
         </div>
     </>
     );
+};
+
+FiltrosVentas.propTypes = {
+  refetchVentas: PropTypes.func.isRequired,
 };
 
 export default FiltrosVentas;

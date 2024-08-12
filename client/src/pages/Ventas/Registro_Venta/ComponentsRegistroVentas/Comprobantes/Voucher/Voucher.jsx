@@ -140,7 +140,7 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
     };
 
     // Convertir a números para asegurar que toFixed funcione
-    const totalImporteVenta = Number(datosVentaComprobante.totalImporte_venta);
+    //const totalImporteVenta = Number(datosVentaComprobante.totalImporte_venta);
     const descuentoVenta = Number(datosVentaComprobante.descuento_venta);
     const totalT = Number(datosVentaComprobante.total_t);
     const igv = Number(datosVentaComprobante.igv);
@@ -190,7 +190,7 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
     });
 
     appendContent("==================================");
-    appendContent(rightAlignText("Total Original S/: " + totalImporteVenta.toFixed(2)));
+    appendContent(rightAlignText("Total Original S/: " + totalT.toFixed(2)));
     appendContent(rightAlignText("DESCUENTO S/: " + descuentoVenta.toFixed(2)));
     appendContent(rightAlignText("OP.GRAVADA S/: " + (totalT - igv).toFixed(2)));
     appendContent(rightAlignText("Exonerado S/: 0.00"));

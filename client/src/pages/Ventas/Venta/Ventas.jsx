@@ -37,7 +37,6 @@ const Ventas = () => {
 
   const d_ventas = loadDetallesFromLocalStorage();
 
-
   const saveDetallesToLocalStorage = () => {
     localStorage.setItem('total_ventas', JSON.stringify(ventas));
   };
@@ -93,6 +92,7 @@ const Ventas = () => {
     setCurrentPage(1); // Resetear la página actual al cambiar filtros
   }, [setCurrentPage]);
 
+
   return (
     <div>
       <Toaster />
@@ -129,7 +129,7 @@ const Ventas = () => {
       </div>
 
       {/* Componente de filtros */}
-      <FiltrosVentas onFiltersChange={handleFilterChange} />
+      <FiltrosVentas onFiltersChange={handleFilterChange} refetchVentas={refetchVentas} />
 
       {/* Componente de tabla de ventas */}
       <TablaVentas

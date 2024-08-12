@@ -88,7 +88,13 @@ const enviarVentaASunat = async (data) => {
 
 // Función principal para manejar la aceptación de la venta
 export const handleSunat = (cliente, detalles, productos) => {
-  const totalGravada = detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio.replace('S/ ', '')) * detalle.cantidad), 0);
+  // Calcular el monto total considerando que los precios ya incluyen IGV
+  const totalGravada = detalles.reduce((acc, detalle) => {
+    const precioUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', ''));
+    const precioSinIgv = precioUnitarioConIgv / 1.18; // Eliminar el IGV para obtener el valor base
+    return acc + (precioSinIgv * detalle.cantidad);
+  }, 0);
+
   const mtoIGV = totalGravada * 0.18; // IGV calculado como el 18% del total gravado
   const subTotal = totalGravada + mtoIGV;
 
@@ -163,19 +169,20 @@ export const handleSunat = (cliente, detalles, productos) => {
     details: detalles.map(detalle => {
       const producto = productos.find(prod => prod.codigo === detalle.codigo);
       const cantidad = parseInt(detalle.cantidad);
-      const mtoValorUnitario = parseFloat(detalle.precio.replace('S/ ', '')).toFixed(2);
-      const mtoValorVenta = (cantidad * mtoValorUnitario).toFixed(2);
+      const mtoValorUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', '')).toFixed(2);
+      const mtoValorUnitarioSinIgv = (mtoValorUnitarioConIgv / 1.18).toFixed(2);
+      const mtoValorVenta = (cantidad * mtoValorUnitarioSinIgv).toFixed(2);
       const mtoBaseIgv = mtoValorVenta;
       const igv = (parseFloat(mtoBaseIgv) * 0.18).toFixed(2);
       const totalImpuestos = igv;
-      const mtoPrecioUnitario = (parseFloat(mtoValorUnitario) * 1.18).toFixed(2);
-  
+      const mtoPrecioUnitario = mtoValorUnitarioConIgv;
+
       return {
         codProducto: detalle.codigo,
         unidad: producto?.undm || 'ZZ',
         descripcion: detalle.nombre,
         cantidad: cantidad,
-        mtoValorUnitario: mtoValorUnitario,
+        mtoValorUnitario: mtoValorUnitarioSinIgv,
         mtoValorVenta: mtoValorVenta,
         mtoBaseIgv: mtoBaseIgv,
         porcentajeIgv: 18,
@@ -203,6 +210,7 @@ export const handleSunat = (cliente, detalles, productos) => {
       toast.dismiss(loadingToastId);
     });
 };
+
 
 /*
 // Ejemplo de uso de la función handleAccept con datos dinámicos
