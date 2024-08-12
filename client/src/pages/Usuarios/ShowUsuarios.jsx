@@ -49,7 +49,7 @@ export function ShowUsuarios({ searchTerm }) {
         const data = await getUsuario(id_usuario);
         if (data && data[0]) {
             setInitialData({
-                id_usuario: id_usuario,
+                id_usuario: parseInt(id_usuario),
                 data: data[0]
             });
             setActiveEdit(true); // Abre el modal solo si los datos están disponibles

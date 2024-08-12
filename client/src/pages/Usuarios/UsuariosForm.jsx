@@ -40,9 +40,9 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
         console.log(newUser);
         let result;
         if (initialData) {
-          result = await updateUsuario(initialData?.id_producto,newUser); // Llamada a la API para actualizar el producto
+          result = await updateUsuario(initialData?.id_usuario,newUser); // Llamada a la API para actualizar un usuario
         } else {
-          result = await addUsuario(newUser); // Llamada a la API para añadir el producto
+          result = await addUsuario(newUser); // Llamada a la API para añadir el usuario
         }
         
         // Cerrar modal y recargar la página
