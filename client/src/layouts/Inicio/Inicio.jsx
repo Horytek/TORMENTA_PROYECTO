@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import "./Inicio.css";
 import { CardComponent } from "@/components/Cards/Card";
-import { LineChartComponent } from "@/components/Charts/LineChart";
+import { LineChartComponent } from "./LineChart";
 import { RiShoppingBag4Line } from "@remixicon/react";
 import { LuShirt } from "react-icons/lu";
 import { TiStarburstOutline } from "react-icons/ti";

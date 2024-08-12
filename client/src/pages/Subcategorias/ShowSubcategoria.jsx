@@ -3,27 +3,19 @@ import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
 import {
-  getSubcategoriaNomCategoria as fetchSubcategorias,
   deleteSubcategoria,
   deactivateSubcategoria,
 } from "@/services/subcategoria.services";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import  { useSubcategoriasConCategoria } from './data/data_list';
 
 export function ShowSubcategorias({ searchTerm }) {
-  const [subcategorias, setSubcategorias] = useState([]);
+  const { subcategorias, loading, error } = useSubcategoriasConCategoria();
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeactivationModalOpen, setIsDeactivationModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null); 
   const productosPerPage = 10;
-
-  useEffect(() => {
-    const loadSubcategorias = async () => {
-      const data = await fetchSubcategorias();
-      setSubcategorias(data);
-    };
-    loadSubcategorias();
-  }, []);
 
   const handleOpenConfirmationModal = (id, nombre) => {
     setSelectedRow({ id, nombre });
@@ -82,6 +74,14 @@ export function ShowSubcategorias({ searchTerm }) {
     indexOfLastSubcategoria
   );
 
+  if (loading) {
+    return <div>Cargando subcategorías...</div>;
+  }
+
+  if (error) {
+    return <div>Error al cargar las subcategorías: {error.message}</div>;
+  }
+
   return (
     <div>
       <div className="overflow-x-auto shadow-md sm:rounded-lg">
@@ -116,9 +116,7 @@ export function ShowSubcategorias({ searchTerm }) {
                     {sub_categoria.id_subcategoria}
                   </td>
                   <td className="py-2 text-center">
-                    {sub_categoria.categoria
-                      ? sub_categoria.categoria.nom_categoria
-                      : "Sin categoría"}
+                    {sub_categoria.nom_categoria || "Sin categoría"}
                   </td>
 
                   <td className="py-2 text-center">

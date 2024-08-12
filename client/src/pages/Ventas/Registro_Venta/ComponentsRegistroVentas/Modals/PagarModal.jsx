@@ -133,6 +133,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     const cambio3 = parseFloat(montoRecibido3) - faltante2;
     const faltante3 = Math.max(faltante2 - parseFloat(montoRecibido3), 0);
     const sucursal_v = sucursales.find(sucursal => sucursal.usuario === localStorage.getItem('usuario'))
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    const localDate = today.toISOString().slice(0, 10);
 
     const datosVenta = {
         usuario: localStorage.getItem('usuario'),
@@ -141,7 +144,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         estado_venta: 2,
         sucursal: sucursal_v.nombre,
         direccion: sucursal_v.ubicacion,
-        f_venta: new Date().toISOString().slice(0, 10),
+        f_venta: localDate,
         igv: igv_total,
         detalles: detalles.map(detalle => ({
             id_producto: detalle.codigo,
@@ -184,7 +187,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         let errorMessage = '';
     
         // Consolidar validaciones en un solo mensaje
-        if (montoRecibido === '' || montoRecibido < totalImporte) {
+        if (montoRecibido === '' || montoRecibido < totalImporte || metodo_pago === '') {
             errorMessage += 'Ingrese una cantidad que cubra el total requerido o seleccione un ítem. ';
         }
 
