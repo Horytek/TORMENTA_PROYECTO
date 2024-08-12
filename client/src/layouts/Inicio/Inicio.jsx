@@ -46,7 +46,7 @@ function Inicio() {
             contentCard={`S/. ${ventasTotal}`}
             color={"indigo"}
             icon={RiShoppingBag4Line}
-            tooltip="Producto más vendido"
+            tooltip="Dinero recaudado"
             className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 sm:w-72 md:w-96 lg:w-full"
           />
           <CardComponent
@@ -54,13 +54,15 @@ function Inicio() {
             contentCard={`${totalProductsSold}`}
             color={"purple"}
             icon={LuShirt}
+            tooltip="Productos vendidos"
             className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 sm:w-72 md:w-96 lg:w-full"
           />
           <CardComponent
-            titleCard={"Producto del día"}
+            titleCard={"Producto más vendido"}
             contentCard={productTop ? productTop.descripcion : "No disponible"}
             color={"cyan"}
             icon={TiStarburstOutline}
+            tooltip="Producto top"
             className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 sm:w-72 md:w-96 lg:w-full"
           />
         </div>
@@ -84,7 +86,7 @@ function Inicio() {
       <div>
         <main>
           <TabGroup>
-            <TabList variant="line" className="mt-6">
+            <TabList className="mt-4">
               <Tab>Ult. 24hrs</Tab>
               <Tab>Ult. Semana</Tab>
               <Tab>Ult. mes</Tab>
@@ -92,16 +94,24 @@ function Inicio() {
             </TabList>
             <TabPanels>
               {/* Tab Numero 1 */}
-              <TabPanel className="mt-4">{renderTabContent("24h")}</TabPanel>
+              <TabPanel className="mt-4  leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+                {renderTabContent("24h")}
+              </TabPanel>
 
               {/* Tab Numero 2 */}
-              <TabPanel className="mt-4">{renderTabContent("semana")}</TabPanel>
+              <TabPanel className="mt-4  leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+                {renderTabContent("semana")}
+              </TabPanel>
 
               {/* Tab Numero 3 */}
-              <TabPanel className="mt-4">{renderTabContent("mes")}</TabPanel>
+              <TabPanel className="mt-4  leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+                {renderTabContent("mes")}
+              </TabPanel>
 
               {/* Tab Numero 4 */}
-              <TabPanel className="mt-4">{renderTabContent("anio")}</TabPanel>
+              <TabPanel className="mt-4  leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+                {renderTabContent("anio")}
+              </TabPanel>
             </TabPanels>
           </TabGroup>
         </main>
