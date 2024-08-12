@@ -1,59 +1,101 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { MdEdit } from 'react-icons/md';
-import { FaTrash } from 'react-icons/fa';
+import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+import ReactToPrint from 'react-to-print';
 
-const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
+const TablaGuias = ({ guias }) => {
   const [expandedRow, setExpandedRow] = useState(null);
+  const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
+  const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
+  const [notaIdToAnular, setNotaIdToAnular] = useState(null);
+
+  const handleSelectChange = (event, id) => {
+    const value = event.target.value;
+    switch (value) {
+      case 'imprimir':
+        setIsModalOpenImprimir(true);
+        break;
+      case 'anular':
+        setNotaIdToAnular(id);
+        setIsModalOpenAnular(true);
+        break;
+      default:
+        break;
+    }
+    event.target.value = '';
+  };
+
+  const closeModalImprimir = () => {
+    setIsModalOpenImprimir(false);
+  };
+
+  const closeModalAnular = () => {
+    setIsModalOpenAnular(false);
+  };
+
+  const handleConfirmImprimir = () => {
+    setIsModalOpenImprimir(false);
+  };
+
+  const handleConfirmAnular = async () => {
+    if (notaIdToAnular) {
+      const result = await anularNota(notaIdToAnular);
+      if (result.success) {
+        console.log(result.message);
+        window.location.reload();
+      } else {
+        console.error(result.message);
+      }
+    }
+    setIsModalOpenAnular(false);
+  };
 
   const toggleRow = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
 
-  const renderActions = (row) => (
-    <div className="flex justify-center items-center">
-      <button className="px-2 py-1 text-yellow-400 text-xl" onClick={() => handleEditGuia(row)}>
-        <MdEdit />
-      </button>
-      <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(row)}>
-        <FaTrash />
-      </button>
-    </div>
+  const renderGuiaRow = (guia) => (
+    <React.Fragment key={guia.id}>
+      <tr onClick={() => toggleRow(guia.id)} className="tr-tabla-guia">
+        <td className="text-center">{guia.fecha}</td>
+        <td className="text-center">{guia.numGuia}</td>
+        <td className="font-bold text-center">
+          <div className="whitespace-normal">{guia.cliente}</div>
+          <div className="text-gray-500 whitespace-normal">{guia.documento}</div>
+        </td>
+        <td className="font-bold text-center">
+          <div className="whitespace-normal">{guia.vendedor}</div>
+          <div className="text-gray-500 whitespace-normal">{guia.dni}</div>
+        </td>
+        <td className="font-bold text-center">
+          <div>{guia.serieNum}</div>
+          <div className="text-gray-500">{guia.num}</div>
+        </td>
+        <td className="text-center">{guia.total}</td>
+        <td className="text-center">{guia.concepto}</td>
+        <td className="text-center" style={{ color: guia.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400" }}>
+          <div className="ml-2 px-2.5 py-1.5 rounded-full" style={{ background: guia.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }}>
+            <span>{guia.estado}</span>
+          </div>
+        </td>
+        <td className='text-center'>
+          <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm' name="select" onChange={(e) => handleSelectChange(e, guia.id)}>
+            <option value="">...</option>
+            <ReactToPrint
+              trigger={() => {
+                return <option value="imprimir">Imprimir</option>
+              }}
+              content={()=>this.componentRef}
+              documentTitle='TORMENTA JEANS - 20610588981'
+              pageSytle="print"
+            />
+            <option value="anular">Anular</option>
+          </select>
+        </td>
+      </tr>
+      {expandedRow === guia.id && renderGuiaDetails(guia.detalles)}
+    </React.Fragment>
   );
-
-  const renderGuiaRow = (guia) => {
-    console.log('Rendering Guia:', guia); // Log for debugging
-
-    return (
-      <React.Fragment key={guia.id}>
-        <tr onClick={() => toggleRow(guia.id)} className="tr-tabla-guia">
-          <td className="text-center">{guia.fecha}</td>
-          <td className="text-center">{guia.numGuia}</td>
-          <td className="font-bold text-center">
-            <div className="whitespace-normal">{guia.cliente}</div>
-            <div className="text-gray-500 whitespace-normal">{guia.documento}</div>
-          </td>
-          <td className="font-bold text-center">
-            <div className="whitespace-normal">{guia.vendedor}</div>
-            <div className="text-gray-500 whitespace-normal">{guia.dni}</div>
-          </td>
-          <td className="font-bold text-center">
-            <div>{guia.serieNum}</div>
-            <div className="text-gray-500">{guia.num}</div>
-          </td>
-          <td className="text-center">{guia.total}</td>
-          <td className="text-center">{guia.concepto}</td>
-          <td className="text-center" style={{ color: guia.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400" }}>
-            <div className="ml-2 px-2.5 py-1.5 rounded-full" style={{ background: guia.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }}>
-              <span>{guia.estado}</span>
-            </div>
-          </td>
-          <td className="text-center">{renderActions(guia)}</td>
-        </tr>
-        {expandedRow === guia.id && renderGuiaDetails(guia.detalles)}
-      </React.Fragment>
-    );
-  };
 
   const renderGuiaDetails = (detalles) => (
     <tr className="bg-gray-100">
@@ -69,7 +111,6 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
-                
               </tr>
             </thead>
             <tbody>
@@ -82,7 +123,6 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
                   <td className="text-center">{detalle.um}</td>
                   <td className="text-center">{detalle.precio}</td>
                   <td className="text-center">{detalle.total}</td>
-                  
                 </tr>
               ))}
             </tbody>
@@ -95,17 +135,17 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
   return (
     <div className="container-table-guia px-4 bg-white rounded-lg">
       <table className="tabla-guia table-auto w-full">
-      <thead>
+        <thead>
           <tr>
             <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NUM GUIA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
+            <th className="w-1/5 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOC VENTA</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
+            <th className="w-1/7 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider"></th>
+            <th className="w-1/7 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
           </tr>
         </thead>
         <tbody>
@@ -118,13 +158,30 @@ const TablaGuias = ({ guias, handleOpenConfirmationModal, handleEditGuia }) => {
           )}
         </tbody>
       </table>
+
+      {isModalOpenImprimir && (
+        <ConfirmationModal
+          message="¿Desea imprimir esta guía?"
+          onClose={closeModalImprimir}
+          isOpen={isModalOpenImprimir}
+          onConfirm={handleConfirmImprimir}
+        />
+      )}
+
+      {isModalOpenAnular && (
+        <ConfirmationModal
+          message="¿Desea anular esta guía?"
+          onClose={closeModalAnular}
+          isOpen={isModalOpenAnular}
+          onConfirm={handleConfirmAnular}
+        />
+      )}
     </div>
   );
 };
 
 TablaGuias.propTypes = {
   guias: PropTypes.array.isRequired,
-  handleOpenConfirmationModal: PropTypes.func.isRequired,
 };
 
 export default TablaGuias;

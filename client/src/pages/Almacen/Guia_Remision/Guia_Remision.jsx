@@ -7,29 +7,16 @@ import TablaGuias from './ComponentsGuias/GuiasTable';
 import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
 import { Link } from 'react-router-dom';
 import useGuiasData from '../data/data_guia';
-import ConfirmationModal from '@/components/Modals/ConfirmationModal';
+
 
 const Guias = () => {
   const [filters, setFilters] = useState({});
   const { guias, removeGuia, currentPage, setCurrentPage, totalPages, guiasPerPage, setGuiasPerPage } = useGuiasData(filters);
 
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+
   const [selectedRowId, setSelectedRowId] = useState(null);
 
-  const handleOpenConfirmationModal = (rowId) => {
-    setSelectedRowId(rowId);
-    setIsConfirmationModalOpen(true);
-  };
 
-  const handleCloseConfirmationModal = () => {
-    setIsConfirmationModalOpen(false);
-    setSelectedRowId(null);
-  };
-
-  const handleConfirmDelete = () => {
-    removeGuia(selectedRowId);
-    handleCloseConfirmationModal();
-  };
 
   const onPageChange = (page) => {
     setCurrentPage(page);
@@ -62,8 +49,8 @@ const Guias = () => {
 
       <TablaGuias
         guias={guias}
-        handleOpenConfirmationModal={handleOpenConfirmationModal}
-        handleEditGuia={() => {}}
+
+        handleEditGuia={() => { }}
       />
 
       <div className="flex justify-between mt-4">
@@ -75,13 +62,7 @@ const Guias = () => {
         </select>
       </div>
 
-      {isConfirmationModalOpen && (
-        <ConfirmationModal
-          message={`¿Estás seguro que deseas eliminar esta guía?`}
-          onClose={handleCloseConfirmationModal}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
+
     </div>
   );
 };
