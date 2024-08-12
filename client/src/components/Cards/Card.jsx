@@ -1,6 +1,6 @@
 import { Card, Icon } from '@tremor/react';
 
-export function CardComponent ({titleCard, contentCard, color, icon}) {
+export function CardComponent ({titleCard,tooltip, contentCard, color, icon}) {
   return (
     <Card
       className="mx-auto max-w-sm"
@@ -11,6 +11,7 @@ export function CardComponent ({titleCard, contentCard, color, icon}) {
             <Icon
             icon={icon}
             color={color}
+            tooltip={tooltip}
             variant="solid"
             size="lg"
             />

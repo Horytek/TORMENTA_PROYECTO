@@ -4,7 +4,7 @@ import img from '@/assets/icono.ico';
 import './CotizacionPDF.css';
 import QRCode from 'qrcode.react';
 import PropTypes from 'prop-types';
-import NumeroALetras from '../../../../ConvertidorDeNumALetras/ConvertidorDeNumALetras';
+import NumeroALetras from '../../../../../../utils/ConvertidorDeNumALetras';
 
 // Uso en el componente React
 
