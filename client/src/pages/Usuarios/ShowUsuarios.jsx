@@ -12,8 +12,8 @@ export function ShowUsuarios({ searchTerm }) {
     // Estados de listado de usuarios
     const [usuarios, setUsuarios] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const usuariosPerPage = 10;
     const [showPassword, setShowPassword] = useState({}); // Estado para manejar la visibilidad de contraseñas
+    const usuariosPerPage = 10;
 
     useEffect(() => {
         getUsers();

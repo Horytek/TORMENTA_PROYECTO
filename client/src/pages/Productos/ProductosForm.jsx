@@ -31,7 +31,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
     const [filteredSubcategorias, setFilteredSubcategorias] = useState([]);
 
     // Registro de producto
-    const { register, handleSubmit, setValue, getValues, watch, formState: {errors} } = useForm({
+    const { register, handleSubmit, setValue, getValues, watch, reset, formState: {errors} } = useForm({
       defaultValues: initialData?.data || {
         descripcion: '',
         id_marca: '',
@@ -56,6 +56,12 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
         setFilteredSubcategorias([]);
       }
     }, [idCategoria, subcategorias]);
+
+    useEffect(() => {
+      if (initialData && categorias.length > 0 && marcas.length > 0 && subcategorias.length > 0) {
+        reset(initialData.data);
+      }
+    }, [initialData, marcas, categorias, subcategorias, reset]);
 
     // Generar barcode de productos
     useEffect(() => {
