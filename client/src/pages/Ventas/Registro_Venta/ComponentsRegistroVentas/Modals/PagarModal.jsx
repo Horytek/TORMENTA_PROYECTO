@@ -204,7 +204,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
         }
         
         if (faltante2>0){
-            if (montoRecibido3 === '' || montoRecibido3 < faltante2 && faltante2 > 0) {
+            if (montoRecibido3 === '' || montoRecibido3 < faltante2 && faltante2 > 0 || metodo_pago3 === '') {
                 errorMessage += 'Ingrese una cantidad para el tercer monto o seleccione un ítem. ';
             }            
         }

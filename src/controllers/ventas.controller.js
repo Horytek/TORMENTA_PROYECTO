@@ -252,6 +252,207 @@ const addVenta = async (req, res) => {
       metodo_pago,
     } = req.body;
 
+    console.log("Datos recibidos:", req.body);
+
+    if (
+      usuario === undefined ||
+      id_comprobante === undefined ||
+      id_cliente === undefined ||
+      estado_venta === undefined ||
+      f_venta === undefined ||
+      igv === undefined ||
+      !Array.isArray(detalles) ||
+      detalles.length === 0
+    ) {
+      console.log("Error en los datos:", {
+        usuario,
+        id_comprobante,
+        id_cliente,
+        estado_venta,
+        f_venta,
+        igv,
+        detalles,
+      });
+      return res
+        .status(400)
+        .json({ message: "Bad Request. Please fill all fields correctly." });
+    }
+
+    await connection.beginTransaction();
+
+    // Obtener id_sucursal basado en el usuario
+    const [sucursalResult] = await connection.query(
+      "SELECT id_sucursal FROM sucursal su INNER JOIN vendedor ve ON ve.dni=su.dni INNER JOIN usuario u ON u.id_usuario=ve.id_usuario WHERE u.usua=?",
+      [usuario]
+    );
+
+    console.log("Resultado de sucursal:", sucursalResult);
+
+    if (sucursalResult.length === 0) {
+      throw new Error("Sucursal not found for the given user.");
+    }
+
+    const id_sucursal = sucursalResult[0].id_sucursal;
+
+    // Obtener id_tipocomprobante y nom_tipocomp basado en el nombre del comprobante
+    const [comprobanteResult] = await connection.query(
+      "SELECT id_tipocomprobante, nom_tipocomp FROM tipo_comprobante WHERE nom_tipocomp=?",
+      [id_comprobante]
+    );
+
+    console.log("Resultado de comprobante:", comprobanteResult);
+
+    if (comprobanteResult.length === 0) {
+      throw new Error("Comprobante type not found.");
+    }
+
+    const { id_tipocomprobante, nom_tipocomp } = comprobanteResult[0];
+    const prefijoBase = nom_tipocomp.charAt(0); // Usa nom_tipocomp como prefijo
+
+    // Obtener la última venta para verificar el estado
+    const [ultimaVentaResult] = await connection.query(
+      "SELECT num_comprobante, estado_venta FROM venta v INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante=c.id_tipocomprobante WHERE tp.nom_tipocomp= ? ORDER BY v.id_venta DESC LIMIT 1",
+      [id_comprobante]
+    );
+
+    let nuevoNumComprobante;
+
+    if (ultimaVentaResult.length > 0) {
+      const ultimaVenta = ultimaVentaResult[0];
+      if (ultimaVenta.estado_venta === 0) {
+        // Usar el mismo comprobante si el estado es 0
+        nuevoNumComprobante = ultimaVenta.num_comprobante;
+      } else {
+        // Obtener el último número de comprobante y generar el siguiente
+        const [ultimoComprobanteResult] = await connection.query(
+          "SELECT num_comprobante FROM comprobante WHERE id_tipocomprobante = ? ORDER BY num_comprobante DESC LIMIT 1",
+          [id_tipocomprobante]
+        );
+
+        console.log("Resultado del último comprobante:", ultimoComprobanteResult);
+
+        if (ultimoComprobanteResult.length > 0) {
+          const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
+          const partes = ultimoNumComprobante.split("-");
+          const serie = partes[0].substring(1);
+          const numero = parseInt(partes[1], 10) + 1;
+
+          if (numero > 99999999) {
+            const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
+            nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
+          } else {
+            nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
+          }
+        } else {
+          nuevoNumComprobante = `${prefijoBase}001-00000001`;
+        }
+      }
+    } else {
+      nuevoNumComprobante = `${prefijoBase}001-00000001`;
+    }
+
+    console.log("Nuevo número de comprobante:", nuevoNumComprobante);
+
+    // Insertar el nuevo comprobante y obtener su id_comprobante
+    const [nuevoComprobanteResult] = await connection.query(
+      "INSERT INTO comprobante (id_tipocomprobante, num_comprobante) VALUES (?, ?)",
+      [id_tipocomprobante, nuevoNumComprobante]
+    );
+
+    console.log("Resultado de nuevo comprobante:", nuevoComprobanteResult);
+
+    const id_comprobante_final = nuevoComprobanteResult.insertId;
+
+    // Obtener id_cliente basado en el nombre completo o razón social
+    const [clienteResult] = await connection.query(
+      "SELECT id_cliente, COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS cliente_t FROM cliente WHERE CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ? ORDER BY (CASE WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 ELSE 1 END), cliente_t;",
+      [id_cliente, id_cliente]
+    );
+
+    console.log("Resultado del cliente:", clienteResult);
+
+    if (clienteResult.length === 0) {
+      throw new Error("Cliente not found.");
+    }
+
+    const id_cliente_final = clienteResult[0].id_cliente;
+
+    // Insertar venta
+    const [ventaResult] = await connection.query(
+      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [id_comprobante_final, id_cliente_final, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago]
+    );
+
+    console.log("Resultado de inserción de venta:", ventaResult);
+
+    const id_venta = ventaResult.insertId;
+
+    // Insertar detalles de la venta y actualizar el stock
+    for (const detalle of detalles) {
+      const { id_producto, cantidad, precio, descuento, total } = detalle;
+
+      // Verificar y descontar stock
+      const [inventarioResult] = await connection.query(
+        "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = (SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ? LIMIT 1)",
+        [id_producto, id_sucursal]
+      );
+
+      console.log("Resultado del inventario para producto ID", id_producto, ":", inventarioResult);
+
+      if (inventarioResult.length === 0) {
+        throw new Error(`No stock found for product ID ${id_producto} in the current store.`);
+      }
+
+      const stockActual = inventarioResult[0].stock;
+
+      if (stockActual < cantidad) {
+        throw new Error(`Not enough stock for product ID ${id_producto}.`);
+      }
+
+      const stockNuevo = stockActual - cantidad;
+
+      // Actualizar el stock en la tabla inventario
+      const [updateResult] = await connection.query(
+        "UPDATE inventario SET stock = ? WHERE id_producto = ? AND id_almacen = (SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ? LIMIT 1)",
+        [stockNuevo, id_producto, id_sucursal]
+      );
+
+      console.log("Resultado de actualización de stock:", updateResult);
+
+      // Insertar detalle de la venta
+      await connection.query(
+        "INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total) VALUES (?, ?, ?, ?, ?, ?)",
+        [id_producto, id_venta, cantidad, precio, descuento, total]
+      );
+    }
+
+    await connection.commit();
+
+    res.json({ message: "Venta y detalles añadidos" });
+  } catch (error) {
+    console.error("Error en el backend:", error.message);
+    await connection.rollback();
+    res.status(500).send(error.message);
+  }
+};
+
+
+/*const addVenta = async (req, res) => {
+  const connection = await getConnection();
+
+  try {
+    const {
+      usuario,
+      id_comprobante,
+      id_cliente,
+      estado_venta,
+      f_venta,
+      igv,
+      detalles,
+      fecha_iso,
+      metodo_pago,
+    } = req.body;
+
     console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
 
     if (
@@ -309,31 +510,49 @@ const addVenta = async (req, res) => {
     const { id_tipocomprobante, nom_tipocomp } = comprobanteResult[0];
     const prefijoBase = nom_tipocomp.charAt(0); // Usa nom_tipocomp como prefijo
 
-    // Obtener el último número de comprobante y generar el siguiente
-    const [ultimoComprobanteResult] = await connection.query(
-      "SELECT num_comprobante FROM comprobante WHERE id_tipocomprobante = ? ORDER BY num_comprobante DESC LIMIT 1",
-      [id_tipocomprobante]
+    // Obtener la última venta para verificar el estado
+    const [ultimaVentaResult] = await connection.query(
+      "SELECT num_comprobante, estado_venta FROM venta v INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante=c.id_tipocomprobante WHERE tp.nom_tipocomp= ? ORDER BY v.id_venta DESC LIMIT 1",
+      [id_comprobante]
     );
 
-    console.log("Resultado del último comprobante:", ultimoComprobanteResult); // Log para verificar el resultado del último comprobante
-
     let nuevoNumComprobante;
-    if (ultimoComprobanteResult.length > 0) {
-      const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
-      const partes = ultimoNumComprobante.split("-");
-      const serie = partes[0].substring(1); // Obtener la serie numérica actual
-      const numero = parseInt(partes[1], 10) + 1;
-    
-      // Verificar si el número actual supera el límite
-      if (numero > 99999999) {
-        // Cambiar de serie si el límite es alcanzado
-        const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
-        nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
+
+    if (ultimaVentaResult.length > 0) {
+      const ultimaVenta = ultimaVentaResult[0];
+      if (ultimaVenta.estado_venta === 0) {
+        // Usar el mismo comprobante si el estado es 0
+        nuevoNumComprobante = ultimaVenta.num_comprobante;
       } else {
-        nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
+        // Obtener el último número de comprobante y generar el siguiente
+        const [ultimoComprobanteResult] = await connection.query(
+          "SELECT num_comprobante FROM comprobante WHERE id_tipocomprobante = ? ORDER BY num_comprobante DESC LIMIT 1",
+          [id_tipocomprobante]
+        );
+
+        console.log("Resultado del último comprobante:", ultimoComprobanteResult); // Log para verificar el resultado del último comprobante
+
+        if (ultimoComprobanteResult.length > 0) {
+          const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
+          const partes = ultimoNumComprobante.split("-");
+          const serie = partes[0].substring(1); // Obtener la serie numérica actual
+          const numero = parseInt(partes[1], 10) + 1;
+
+          // Verificar si el número actual supera el límite
+          if (numero > 99999999) {
+            // Cambiar de serie si el límite es alcanzado
+            const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
+            nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
+          } else {
+            nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
+          }
+        } else {
+          // Si no hay comprobantes, comenzar con la primera serie
+          nuevoNumComprobante = `${prefijoBase}001-00000001`;
+        }
       }
     } else {
-      // Si no hay comprobantes, comenzar con la primera serie
+      // Si no hay ventas previas, generar el primer número de comprobante
       nuevoNumComprobante = `${prefijoBase}001-00000001`;
     }
 
@@ -364,26 +583,15 @@ const addVenta = async (req, res) => {
     const id_cliente_final = clienteResult[0].id_cliente;
 
     // Insertar venta
-    const venta = {
-      id_sucursal,
-      id_comprobante: id_comprobante_final,
-      id_cliente: id_cliente_final,
-      estado_venta,
-      f_venta,
-      igv,
-      fecha_iso,
-      metodo_pago,
-    };
     const [ventaResult] = await connection.query(
-      "INSERT INTO venta SET ?",
-      venta
+      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [id_comprobante_final, id_cliente_final, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago]
     );
 
-    console.log("Resultado de la venta:", ventaResult); // Log para verificar el resultado de la inserción de la venta
+    console.log("Resultado de inserción de venta:", ventaResult); // Log para verificar el resultado de la inserción de la venta
 
-    const id_venta = ventaResult.insertId;
+    const id_venta_final = ventaResult.insertId;
 
-    // Insertar detalles de la venta y actualizar el stock
     for (const detalle of detalles) {
       const { id_producto, cantidad, precio, descuento, total } = detalle;
 
@@ -434,10 +642,8 @@ const addVenta = async (req, res) => {
     console.error("Error en el backend:", error.message); // Log para verificar errores
     await connection.rollback();
     res.status(500).send(error.message);
-  }
-};
-
-
+  };
+    */
 
 
 
