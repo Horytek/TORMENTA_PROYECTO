@@ -70,18 +70,29 @@ const FiltrosVentas = ({onFiltersChange, refetchVentas}) => {
       const savedDetalles = localStorage.getItem('total_ventas');
       return savedDetalles ? JSON.parse(savedDetalles) : [];
     };
-  
-    const d_ventas = loadDetallesFromLocalStorage();
-    const ventas_new = d_ventas.filter(venta => venta.estado === "En proceso");
-    localStorage.setItem('d_new', JSON.stringify(ventas_new));
+
     const handleAccept = () => {
-        const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
-        handleSunatMultiple(ventas_new);
-        handleUpdateMultiple(ventas_new); setTimeout(() => {
+      const d_ventas = loadDetallesFromLocalStorage();
+      const ventas_new = d_ventas.filter(venta => venta.estado === "En proceso");
+      localStorage.setItem('d_new', JSON.stringify(ventas_new));
+    
+      if (ventas_new.length === 0) {
+        // Mostrar una notificación si no hay ventas en proceso
+        toast.error('Todas las ventas de esta paginación ya han sido enviadas a la Sunat.');
+        return; // Salir de la función si no hay ventas en proceso
+      }
+    
+      // Si hay ventas en proceso, proceder con el envío y actualización
+      const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
+      
+      handleSunatMultiple(ventas_new);
+      handleUpdateMultiple(ventas_new);
+    
+      setTimeout(() => {
         setIsDeleted(true);
         toast.dismiss(loadingToastId);
         toast.success('Los datos se han enviado con éxito!');
-        }, 3000);
+      }, 3000);
     };
 
     useEffect(() => {
