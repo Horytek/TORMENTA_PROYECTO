@@ -17,6 +17,7 @@ import kardexRoutes from "./routes/kardex.routes.js"
 import guiasRoutes from "./routes/guiaremision.routes";
 import categoriaRoutes from "./routes/categoria.routes";
 import subcategoriaRoutes from "./routes/subcategoria.routes";
+import reporteRoutes from "./routes/reporte.routes";
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api/dashboard",dashboardRoutes);
+app.use("/api/reporte", reporteRoutes);
 app.use("/api/auth", auhtRoutes);
 app.use("/api/usuario", usuariosRoutes);
 app.use("/api/rol", rolRoutes);

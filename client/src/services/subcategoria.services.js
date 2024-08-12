@@ -20,6 +20,11 @@ const addSubcategoria = async (subcategoria) => {
     const response = await addSubcategoriaRequest(subcategoria);
     if (response.data.code === 1) {
       toast.success("Subcategoría añadido con éxito");
+      setTimeout(() => {
+        window.location.reload();
+      }, 400); 
+    
+
       return [true, response.data.id];
     } else {
       toast.error("Ocurrió un error al guardar la subcategoría");
