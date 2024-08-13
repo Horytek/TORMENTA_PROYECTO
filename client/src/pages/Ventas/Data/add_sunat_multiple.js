@@ -134,7 +134,7 @@ export const handleSunatMultiple = (ventas) => {
             tipoOperacion: "0101",
             tipoDoc: tipoDoc,
             serie: nuevaSerie_t.toString(),
-            correlativo: nuevoCorrelativo.toString(),
+            correlativo: venta.num.toString(),
             fechaEmision: result,
             formaPago: {
                 moneda: "PEN",

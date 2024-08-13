@@ -89,6 +89,7 @@ const datosClientes = loadDetallesFromLocalStorage2();*/
               className="custom-checkbox mr-2 relative"
               onChange={() => handleCheckboxChange('sendToSunat')}
               checked={sendToSunat}
+              disabled={d_venta.estado===1}
             />{' '}
             <p>Enviar los datos a la Sunat</p>
           </div>

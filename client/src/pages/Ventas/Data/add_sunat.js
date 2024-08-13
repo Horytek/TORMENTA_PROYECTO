@@ -109,7 +109,7 @@ export const handleSunat = (cliente, detalles, productos) => {
 
   // Obtener el nuevo correlativo
   const ultimaSerie = comprobante.serieNum;
-  const nuevoCorrelativo = parseInt(comprobante.num, 10);
+  //const nuevoCorrelativo = parseInt(comprobante.num, 10);
 
   const tipoDocMapping1 = {
     "Boleta": "B",
@@ -129,7 +129,7 @@ export const handleSunat = (cliente, detalles, productos) => {
     tipoOperacion: "0101",
     tipoDoc: tipoDoc,
     serie: nuevaSerie_t.toString(),
-    correlativo: nuevoCorrelativo.toString(),
+    correlativo: comprobante.num.toString(),
     fechaEmision: result,
     formaPago: {
       moneda: "PEN",

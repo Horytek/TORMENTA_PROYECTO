@@ -55,7 +55,7 @@ const Ventas = () => {
       estado = 1;
     }
 
-    if (estado == 1 || estado == 0) {
+    if (estado == 0) {
       setModalOpen(false);
     }
   };
