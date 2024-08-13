@@ -86,7 +86,7 @@ export const anularVentaEnSunatF = async (ventaData) => {
     console.log('Respuesta de la API:', response.data);
     
     if (response.status === 200) {
-     toast.success('La anulación de la venta se ha enviado con éxito a la Sunat.');
+     //toast.success('La anulación de la venta se ha enviado con éxito a la Sunat.');
     } else {
       toast.error('Error al anular la venta en la Sunat. Por favor, inténtelo de nuevo.');
     }
@@ -186,7 +186,7 @@ export const anularVentaEnSunatB = async (ventaData,detalles) => {
       console.log('Respuesta de la API:', response.data);
   
       if (response.status === 200) {
-        toast.success('La anulación de la venta se ha enviado con éxito a la Sunat.');
+        //toast.success('La anulación de la venta se ha enviado con éxito a la Sunat.');
       } else {
         toast.error('Error al anular la venta en la Sunat. Por favor, inténtelo de nuevo.');
       }
