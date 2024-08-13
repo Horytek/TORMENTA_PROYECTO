@@ -26,7 +26,7 @@ import {Toaster} from "react-hot-toast";
 import {toast} from "react-hot-toast";
 import useSucursalData from '../../../Data/data_sucursal_venta';
 
-const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
+const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     const { productos } = useProductosData();
     const {sucursales} = useSucursalData();
     const [montoRecibido, setMontoRecibido] = useState('');
@@ -125,7 +125,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte }) => {
     if (!isOpen) return null;
 
     const totalAPagarConDescuento = descuentoActivado ? totalImporte - montoDescuento : totalImporte;
-    const igv_total = parseFloat(totalImporte * 0.18).toFixed(2);
+    const igv_total = parseFloat(total_I* 0.18).toFixed(2);
     const cambio = parseFloat(montoRecibido) - totalAPagarConDescuento;
     const faltante = Math.max(totalAPagarConDescuento - parseFloat(montoRecibido), 0);
     const cambio2 = parseFloat(montoRecibido2) - faltante;
@@ -833,6 +833,7 @@ CobrarModal.propTypes = {
     isOpen: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
     totalImporte: PropTypes.number.isRequired,
+    total_I: PropTypes.number.isRequired,
 };
 
 export default CobrarModal;

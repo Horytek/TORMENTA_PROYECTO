@@ -287,7 +287,7 @@ const Registro_Venta = () => {
         filteredProductos={filteredProductos}
         searchTerm2={searchTerm2}
       />
-      <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} totalImporte={` ${total_t}`} />
+      <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} totalImporte={` ${total_t}`} total_I={` ${totalImporte}`} />
     </>
   );
 };

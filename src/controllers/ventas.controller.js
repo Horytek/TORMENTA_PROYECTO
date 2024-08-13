@@ -378,11 +378,13 @@ const addVenta = async (req, res) => {
     }
 
     const id_cliente_final = clienteResult[0].id_cliente;
+    const id_anular =4;
+    const id_anular_b =5;
 
     // Insertar venta
     const [ventaResult] = await connection.query(
-      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [id_comprobante_final, id_cliente_final, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago]
+      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular,id_anular_b) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id_comprobante_final, id_cliente_final, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago,id_anular,id_anular_b]
     );
 
     console.log("Resultado de inserción de venta:", ventaResult);
