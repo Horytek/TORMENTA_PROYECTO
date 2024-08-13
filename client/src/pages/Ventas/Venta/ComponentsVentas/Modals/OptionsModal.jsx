@@ -89,7 +89,7 @@ const datosClientes = loadDetallesFromLocalStorage2();*/
               className="custom-checkbox mr-2 relative"
               onChange={() => handleCheckboxChange('sendToSunat')}
               checked={sendToSunat}
-              disabled={d_venta.estado===1}
+              disabled={d_venta.estado===1 || d_venta.tipoComprobante === 'Nota'}
             />{' '}
             <p>Enviar los datos a la Sunat</p>
           </div>
@@ -108,7 +108,7 @@ const datosClientes = loadDetallesFromLocalStorage2();*/
           <button className="btn btn-cancel" onClick={closeModal}>
             Cancelar
           </button>
-          <button className="btn btn-aceptar" onClick={handleAccept} disabled={!deleteOptionSelected && !sendToSunat}>
+          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat) || (sendToSunat && d_venta.estado===1) || (sendToSunat && d_venta.tipoComprobante === 'Nota')}>
             Aceptar
           </button>
         </div>

@@ -7,7 +7,9 @@ export const handleDelete = async (datosVenta) => {
     try {
         console.log('Datos de venta:', datosVenta);
         const response = await axios.post('http://localhost:4000/api/ventas/eliminar_venta', {
-            id_venta: datosVenta.id
+            id_venta: datosVenta.id,
+            comprobante: datosVenta.tipoComprobante,
+            estado_sunat: datosVenta.estado_sunat
           }, {
             headers: {
               'Content-Type': 'application/json'

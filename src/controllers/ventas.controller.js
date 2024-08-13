@@ -30,7 +30,7 @@ const getVentas = async (req, res) => {
         SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, SUBSTRING(com.num_comprobante, 6, 8) AS num,
         case when tp.nom_tipocomp='Nota de venta' then 'Nota' else tp.nom_tipocomp end as tipoComprobante, CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
         cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total, CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero,
-        ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal, cl.direccion, v.fecha_iso, v.metodo_pago
+        ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal, cl.direccion, v.fecha_iso, v.metodo_pago, anl.id_anular, anl.anular, anlb.id_anular_b, anlb.anular_b, v.estado_sunat
         FROM venta v
         INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
         INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
@@ -38,6 +38,8 @@ const getVentas = async (req, res) => {
         INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
         INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
         INNER JOIN vendedor ve ON ve.dni = s.dni
+        INNER JOIN anular_sunat anl on anl.id_anular=v.id_anular
+        INNER JOIN anular_sunat_b anlb on anlb.id_anular_b=v.id_anular_b
       	WHERE ${inClause} AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=?
         GROUP BY id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, fecha, igv, cajero, cajeroId, estado
         ORDER BY v.id_venta desc
@@ -703,7 +705,7 @@ const updateVenta = async (req, res) => {
   const connection = await getConnection();
 
   try {
-    const { id_venta } = req.body;
+    const { id_venta,comprobante, estado_sunat} = req.body;
 
     if (!id_venta ) {
       return res
@@ -784,6 +786,24 @@ const updateVenta = async (req, res) => {
       `,
       [0, id_venta]
     );
+
+    if (estado_sunat === 1 && comprobante === 'Factura') {
+      await connection.query(
+        `
+        UPDATE anular_sunat
+        SET anular = anular + 1
+        `
+      );
+    }
+
+    if (estado_sunat === 1 && comprobante === 'Boleta') {
+      await connection.query(
+        `
+        UPDATE anular_sunat_b
+        SET anular_b = anular_b + 1
+        `
+      );
+    }
 
     await connection.commit();
 

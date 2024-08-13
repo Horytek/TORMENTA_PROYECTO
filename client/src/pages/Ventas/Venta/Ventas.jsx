@@ -9,7 +9,7 @@ import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import useVentasData from '../Data/data_venta';
 import { Toaster } from "react-hot-toast";
 import { handleDelete } from '../Data/delete_venta';
-
+import { anularVentaEnSunatF,anularVentaEnSunatB } from '../Data/anular_sunat';
 const Ventas = () => {
   // Estado para manejar la lista de ventas
   const [filters, setFilters] = useState({
@@ -41,6 +41,13 @@ const Ventas = () => {
     localStorage.setItem('total_ventas', JSON.stringify(ventas));
   };
 
+  const loadDetallesFromLocalStorage1 = () => {
+    const savedDetalles = localStorage.getItem('new_detalle');
+    return savedDetalles ? JSON.parse(savedDetalles) : [];
+  };
+
+  const detalles = loadDetallesFromLocalStorage1();
+
   saveDetallesToLocalStorage();
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id, estado) => {
@@ -70,6 +77,11 @@ const Ventas = () => {
   const handleDeleteVenta = () => {
     SelectedRowId;
     handleDelete(d_ventas);
+    if(d_ventas.tipoComprobante ==='Boleta' && d_ventas.estado_sunat===1){
+      anularVentaEnSunatB(d_ventas,detalles);
+    } else if(d_ventas.tipoComprobante ==='Factura' && d_ventas.estado_sunat===1){
+      anularVentaEnSunatF(d_ventas);
+    }
     closeModal();
     setConfirmDeleteModalOpen(false);
     setIsDeleted(true); // Activa el efecto para actualizar las ventas

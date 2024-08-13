@@ -27,6 +27,11 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       nombre: venta.cliente,
       documento: venta.ruc,
       fechaEmision:venta.fecha_iso,
+      id_anular:venta.id_anular,
+      id_anular_b:venta.id_anular_b,
+      estado_sunat:venta.estado_sunat,
+      anular:venta.anular,
+      anular_b:venta.anular_b,
     }
 
     localStorage.setItem('ventas', JSON.stringify(datos_venta));
