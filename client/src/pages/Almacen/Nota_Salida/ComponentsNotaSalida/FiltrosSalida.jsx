@@ -138,7 +138,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                         </div>
                         <input
                             type="text"
-                            placeholder='S400-00000000'
+                            placeholder='Ej: S400-00000000'
                             value={documento}
                             onChange={(e) => setDocumento(e.target.value)}
                             className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-auto'
@@ -150,7 +150,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
 
             <div className="flex items-center justify-between gap-4 w-full" >
                 <div className="flex items-center gap-2">
-                    <h6 className='font-bold'>Fecha:&nbsp;&nbsp;&nbsp;&nbsp;</h6>
+                    <h6 className='font-bold'>Fecha:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h6>
                     <DateRangePicker
                         className="w-xs"
                         classNames={{ inputWrapper: "bg-white" }}
@@ -183,7 +183,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                             value={usuario}
                             onChange={(e) => setUsuario(e.target.value)}
                             className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
-                            style={{ width: '200px' }}
+                            style={{ width: '180px' }}
                         />
                     </div>
                 </div>

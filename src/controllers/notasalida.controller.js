@@ -19,7 +19,7 @@ const getSalidas = async (req, res) => {
               COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
               n.glosa AS concepto,
               n.estado_nota AS estado,
-              ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
+              # ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
               COALESCE(u.usua, '') as usuario
           FROM 
               nota n
@@ -47,16 +47,16 @@ const getSalidas = async (req, res) => {
           ORDER BY 
               n.fecha DESC, documento DESC;
           `,
-          [
-            `%${documento}%`,
-            fecha_i,
-            fecha_e,
-            `%${razon_social}%`,
-            `%${razon_social}%`,
-            ...(almacen !== '%' ? [almacen] : []),
-            ...(estado !== '%' ? [`%${estado}%`] : []),
-            ...(usuario ? [`%${usuario}%`] : [])
-          ]
+      [
+        `%${documento}%`,
+        fecha_i,
+        fecha_e,
+        `%${razon_social}%`,
+        `%${razon_social}%`,
+        ...(almacen !== '%' ? [almacen] : []),
+        ...(estado !== '%' ? [`%${estado}%`] : []),
+        ...(usuario ? [`%${usuario}%`] : [])
+      ]
     );
 
     // Obtener los detalles de venta correspondientes
@@ -65,7 +65,8 @@ const getSalidas = async (req, res) => {
         const [detallesResult] = await connection.query(
           `
                   SELECT dn.id_detalle_nota AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
-                  dn.cantidad AS cantidad, p.undm AS unidad, ROUND(dn.precio, 2) AS precio, ROUND(dn.total, 2) AS total, p.id_producto
+                  dn.cantidad AS cantidad, p.undm AS unidad, #/*ROUND(dn.precio, 2) AS precio, ROUND(dn.total, 2) AS total,*/ 
+                  p.id_producto
                   FROM producto p INNER JOIN marca m ON p.id_marca=m.id_marca
                   INNER JOIN sub_categoria sc ON p.id_subcategoria=sc.id_subcategoria
                   INNER JOIN detalle_nota dn ON p.id_producto=dn.id_producto
@@ -124,7 +125,7 @@ const getProductos = async (req, res) => {
       `,
       [almacen, `%${descripcion}%`]
     );
-    
+
 
     console.log('Productos encontrados:', productosResult);
 
@@ -138,9 +139,14 @@ const getNuevoDocumento = async (req, res) => {
   try {
     const connection = await getConnection();
     const [result] = await connection.query(`
-            SELECT CONCAT('S400-', LPAD(SUBSTRING(MAX(num_comprobante), 6) + 1, 8, '0')) AS nuevo_numero_de_nota
-            FROM comprobante
-            WHERE id_tipocomprobante = 7;
+      SELECT 
+        IFNULL(
+          CONCAT('S400-', LPAD(SUBSTRING(MAX(num_comprobante), 6) + 1, 8, '0')),
+          'S400-00000001'
+        ) AS nuevo_numero_de_nota
+      FROM comprobante
+      WHERE id_tipocomprobante = 7 ;
+
         `);
     res.json({ code: 1, data: result, message: "Nuevo numero de nota" });
   } catch (error) {
@@ -164,7 +170,7 @@ const getDestinatario = async (req, res) => {
 };
 const insertNotaAndDetalle = async (req, res) => {
   const {
-    almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion,
+    almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion, nom_usuario
   } = req.body;
 
   console.log("Datos recibidos:", req.body);
@@ -172,11 +178,11 @@ const insertNotaAndDetalle = async (req, res) => {
     almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion,
   });
   if (
-    !almacenO || !destinatario || !glosa || !nota || !fecha || !producto || !numComprobante || !cantidad
+    !almacenO || !destinatario || !glosa || !nota || !fecha || !producto || !numComprobante || !cantidad || !nom_usuario
   ) {
     console.log("Error en los datos:", {
       almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad,
-    }); 
+    });
     return res
       .status(400)
       .json({ message: "Bad Request. Please fill all fields correctly." });
@@ -195,13 +201,16 @@ const insertNotaAndDetalle = async (req, res) => {
     );
 
     const id_comprobante = comprobanteResult.insertId;
-
+    const [usuarioResult] = await connection.query(
+      "SELECT id_usuario FROM usuario where usua = ?", [nom_usuario]
+    );
+    const id_usuario = usuarioResult[0].id_usuario;
     // Insertar la nota
     const [notaResult] = await connection.query(
       `INSERT INTO nota 
-      (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion) 
-      VALUES (?, ?, 2, ?, ?, ?, ?, ?, 0, ?)`,
-      [almacenO, almacenD || null, destinatario, id_comprobante, glosa, fecha, nota, observacion]
+      (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario) 
+      VALUES (?, ?, 2, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      [almacenO, almacenD || null, destinatario, id_comprobante, glosa, fecha, nota, observacion, id_usuario]
     );
 
     const id_nota = notaResult.insertId;
@@ -236,26 +245,26 @@ const insertNotaAndDetalle = async (req, res) => {
       );
 
       // Verificar y actualizar stock en el almacén de destino si es proporcionado
-    /*if (almacenD) {
-        const [productoExistente] = await connection.query(
-          "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
-          [id_producto, almacenD]
-        );
-
-        if (productoExistente.length > 0) {
-          // Actualizar stock si el producto ya existe en el almacén de destino
-          await connection.query(
-            "UPDATE inventario SET stock = stock + ? WHERE id_producto = ? AND id_almacen = ?",
-            [cantidadProducto, id_producto, almacenD]
+      /*if (almacenD) {
+          const [productoExistente] = await connection.query(
+            "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
+            [id_producto, almacenD]
           );
-        } else {
-          // Insertar nuevo registro si el producto no existe en el almacén de destino
-          await connection.query(
-            "INSERT INTO inventario (id_producto, id_almacen, stock) VALUES (?, ?, ?)",
-            [id_producto, almacenD, cantidadProducto]
-          );
-        }
-      }*/
+  
+          if (productoExistente.length > 0) {
+            // Actualizar stock si el producto ya existe en el almacén de destino
+            await connection.query(
+              "UPDATE inventario SET stock = stock + ? WHERE id_producto = ? AND id_almacen = ?",
+              [cantidadProducto, id_producto, almacenD]
+            );
+          } else {
+            // Insertar nuevo registro si el producto no existe en el almacén de destino
+            await connection.query(
+              "INSERT INTO inventario (id_producto, id_almacen, stock) VALUES (?, ?, ?)",
+              [id_producto, almacenD, cantidadProducto]
+            );
+          }
+        }*/
     }
 
     await connection.commit();
@@ -276,7 +285,7 @@ const anularNota = async (req, res) => {
   if (!notaId) {
     return res.status(400).json({ message: "El ID de la nota es necesario." });
   }
-console.log(notaId);
+  console.log(notaId);
   let connection;
   try {
     connection = await getConnection();
@@ -311,12 +320,12 @@ console.log(notaId);
       );
 
       // Retirar stock del almacén de destino si existe
-    /*if (id_almacenD) {
-        await connection.query(
-          "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
-          [cantidad, id_producto, id_almacenD]
-        );
-      }*/
+      /*if (id_almacenD) {
+          await connection.query(
+            "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
+            [cantidad, id_producto, id_almacenD]
+          );
+        }*/
     }
 
     // Actualizar el estado de la nota a 1 (anulada)

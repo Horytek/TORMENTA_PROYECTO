@@ -15,6 +15,7 @@ import useDestinatarioData from '../data/data_destinatario_salida';
 import useDocumentoData from '../data/data_documento_salida';
 import useAlmacenData from '../data/data_almacen_salida';
 import './Nueva_Nota_salida.css';
+import ConfirmationModal from '././../ComponentsNotaSalida/Modals/ConfirmationModal';
 import insertNotaAndDetalle from '../data/insert_nota_salida';
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
@@ -30,6 +31,8 @@ function NuevaSalidas() {
   const [modalTitle, setModalTitle] = useState('');
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
+  const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState(''); // Nuevo estado para el mensaje de confirmación
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
     const saved = localStorage.getItem('productosSeleccionados');
     return saved ? JSON.parse(saved) : [];
@@ -43,7 +46,10 @@ function NuevaSalidas() {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
-
+  const [usuario, setUsuario] = useState(() => {
+    const savedUsuario = localStorage.getItem('usuario');
+    return savedUsuario ? (savedUsuario) : '';
+  });
   useEffect(() => {
     localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
   }, [productosSeleccionados]);
@@ -79,10 +85,74 @@ function NuevaSalidas() {
     setModalTitle(title);
     setIsModalOpenProducto(true);
   };
+  const openModalOpenGuardar = () => {
+    const almacenDestino = document.getElementById('almacen_destino').value;
+    if (almacenDestino) {
+        setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
+    } else {
+        setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
+    }
+    setisModalOpenGuardar(true);
+};
 
+  const closeModalOpenGuardar = () => {
+    setisModalOpenGuardar(false);
+  };
   const closeModalProducto = () => {
     setIsModalOpenProducto(false);
   };
+  const handleConfirmGuardar = async () => {
+      closeModalOpenGuardar();
+      await handleGuardarAction(); // Llamar a la función de guardado
+  };
+  const handleGuardarAction = async () => {
+    const almacenO = document.getElementById('almacen_origen').value;
+    const almacenD = document.getElementById('almacen_destino').value || null;
+    const destinatario = document.getElementById('destinatario').value;
+    const glosa = document.getElementById('glosa').value;
+    const fecha = document.getElementById('fechaDocu').value;
+    const nota = document.getElementById('nomnota').value;
+    const numComprobante = document.getElementById('numero').value;
+    const observacion = document.getElementById('observacion').value;
+    const nom_usuario = usuario;
+
+    if (almacenO == almacenD) {
+        toast.error('El almacen de origen y de destino no pueden ser el mismo.');
+        return;
+    }
+if (!almacenO || !destinatario || !glosa || !fecha|| !nota || !numComprobante ) {
+  toast.error('Por favor complete todos los campos.');
+  return;
+}
+    const productos = productosSeleccionados.map(producto => ({
+        id: producto.codigo,
+        cantidad: producto.cantidad
+    }));
+
+    const data = {
+        almacenO,
+        almacenD,
+        destinatario,
+        glosa,
+        nota,
+        fecha,
+        producto: productos.map(p => p.id),
+        numComprobante,
+        cantidad: productos.map(p => p.cantidad),
+        observacion,
+        nom_usuario
+    };
+
+    const result = await insertNotaAndDetalle(data);
+
+    if (result.success) {
+        toast.success('Nota y detalle insertados correctamente.');
+        handleCancel();
+        window.location.reload();
+    } else {
+        toast.error('Error inesperado, intente nuevamente.');
+    }
+};
 
   const openModalProovedor = () => {
     setIsModalOpenProovedor(true);
@@ -153,47 +223,14 @@ function NuevaSalidas() {
       toast.error('La cantidad de algunos productos excede el stock disponible.');
       return;
     }
-    const almacenO = document.getElementById('almacen_origen').value;
-    const almacenD = document.getElementById('almacen_destino').value;
-    const destinatario = document.getElementById('destinatario').value;
-    const glosa = document.getElementById('glosa').value;
-    const fecha = document.getElementById('fechaDocu').value;
-    const nota = document.getElementById('nomnota').value;
-    const numComprobante = document.getElementById('numero').value;
-    const observacion = document.getElementById('observacion').value;
 
-    if (almacenO == almacenD){
-      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
-      return;
-    };
-
-    const productos = productosSeleccionados.map(producto => ({
-      id: producto.codigo,
-      cantidad: producto.cantidad
-    }));
-
-    const data = {
-      almacenO,
-      almacenD,
-      destinatario,
-      glosa,
-      nota,
-      fecha,
-      producto: productos.map(p => p.id),
-      numComprobante,
-      cantidad: productos.map(p => p.cantidad),
-      observacion
-    };
-
-    const result = await insertNotaAndDetalle(data);
-
-    if (result.success) {
-      toast.success('Nota y detalle insertados correctamente');
-      handleCancel();
-      window.location.reload();
+    const almacenDestino = document.getElementById('almacen_destino').value;
+    if (almacenDestino) {
+        setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
     } else {
-      toast.error('Por favor complete todos los campos');
+        setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
     }
+    openModalOpenGuardar();
   };
 
   const currentDate = new Date().toISOString().split('T')[0];
@@ -225,6 +262,11 @@ function NuevaSalidas() {
                   <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (<option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>))}
                 </select>
+                {productosSeleccionados.length > 0 && (
+                  <p className="font-bold text-red-500 text-sm mt-1">
+                    *Para cambiar vacíe los productos.
+                  </p>
+                )}
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
@@ -347,7 +389,15 @@ function NuevaSalidas() {
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
-
+      
+      {isModalOpenGuardar && (
+        <ConfirmationModal
+          message={confirmationMessage}
+          onClose={closeModalOpenGuardar}
+          isOpen={isModalOpenGuardar}
+          onConfirm={handleConfirmGuardar}
+        />
+      )}
     </div>
   );
 }

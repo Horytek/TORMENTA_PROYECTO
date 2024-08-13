@@ -108,7 +108,7 @@ const TablaSalida = ({ salidas }) => {
         <td className="text-center">{salida.fecha}</td>
         <td className="text-center">{salida.documento}</td>
         <td className="text-center">{salida.proveedor}</td>
-        <td className="text-center">{salida.total_nota}</td>
+        {/* <td className="text-center">{salida.total_nota}</td> */}
         <td className="text-center">{salida.concepto}</td>
         <td className="text-center">
           <p className={getEstadoClassName(salida.estado)}>
@@ -140,8 +140,8 @@ const TablaSalida = ({ salidas }) => {
                 <th className="w-3/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Descripción</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Cantidad</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Um</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Precio</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                {/* <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Precio</th>
+                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total</th> */}
                 <th className="w-2/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Almacén</th>
               </tr>
             </thead>
@@ -153,8 +153,8 @@ const TablaSalida = ({ salidas }) => {
                   <td className="text-center py-2 px-4">{detalle.descripcion}</td>
                   <td className="text-center py-2 px-4">{detalle.cantidad}</td>
                   <td className="text-center py-2 px-4">{detalle.unidad}</td>
-                  <td className="text-center py-2 px-4">{detalle.precio}</td>
-                  <td className="text-center py-2 px-4">{detalle.total}</td>
+                  {/* <td className="text-center py-2 px-4">{detalle.precio}</td>
+                  <td className="text-center py-2 px-4">{detalle.total}</td> */}
                   <td className="text-center py-2 px-4">{almacen}</td>
                 </tr>
               ))}
@@ -184,7 +184,7 @@ const TablaSalida = ({ salidas }) => {
             <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">FECHA</th>
             <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOCUMENTO</th>
             <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total S/.</th>
+            {/* <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total S/.</th> */}
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
             <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
             <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">USUARIO</th>

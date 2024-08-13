@@ -1,27 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RiCloseLargeLine } from "react-icons/ri";
 import { IoMdClose } from "react-icons/io";
 import { IoMdAdd } from "react-icons/io";
-import { IoIosSearch } from "react-icons/io";
 import { toast } from "react-hot-toast";
 import ProductosForm from '../../../../Productos/ProductosForm';
+
 const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto }) => {
   if (!isOpen) return null;
 
   const [cantidades, setCantidades] = useState({});
   const [activeAdd, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Establece todos los valores iniciales a '1' cuando se abre el modal
+      const initialCantidades = productos.reduce((acc, producto) => {
+        acc[producto.codigo] = '1';
+        return acc;
+      }, {});
+      setCantidades(initialCantidades);
+    }
+  }, [isOpen, productos]);
+
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
   };
+
   const handleCantidadChange = (codigo, cantidad) => {
-    setCantidades({
-      ...cantidades,
-      [codigo]: parseInt(cantidad, 10),
-    });
+    // Permite valores vacíos y números que no comiencen con 0 (a menos que el valor sea '0')
+    if (/^\d*$/g.test(cantidad) && (cantidad === '' || !/^0[0-9]/.test(cantidad))) {
+      setCantidades({
+        ...cantidades,
+        [codigo]: cantidad,
+      });
+    }
+  };
+
+  const handleBlur = (codigo) => {
+    if (cantidades[codigo] === '') { // Si está vacío, establece 1
+      setCantidades({
+        ...cantidades,
+        [codigo]: '1',
+      });
+    }
   };
 
   const handleAgregarProducto = (producto) => {
-    const cantidadSolicitada = cantidades[producto.codigo] || 1;
+    const cantidadSolicitada = parseInt(cantidades[producto.codigo] || '1', 10);
     if (cantidadSolicitada > producto.stock) {
       toast.error(`La cantidad solicitada (${cantidadSolicitada}) excede el stock disponible (${producto.stock}).`);
     } else {
@@ -30,8 +55,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
   };
 
   return (
-    <div className="modal-overlay" >
-
+    <div className="modal-overlay">
       <div className="content-modal max-w-7xl mx-auto" style={{ maxHeight: '90%', overflowY: 'auto' }}>
         <div className="modal-header">
           <h2 className="modal-title">Buscar producto</h2>
@@ -45,15 +69,11 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
               type="text"
               placeholder="Buscar producto"
               className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                onBuscar();  // Llama a la función de búsqueda automáticamente
+              }}
             />
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
-              onClick={onBuscar}
-            >
-              <IoIosSearch className='w-4 h-4 mr-1' />
-              Buscar
-            </button>
             <button
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
               onClick={handleModalAdd}
@@ -66,7 +86,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
             <table className="min-w-full bg-white">
               <thead>
                 <tr>
-                  <th className=" py-2 px-4 border-b">Código</th>
+                  <th className="py-2 px-4 border-b">Código</th>
                   <th className="py-2 px-4 border-b w-96">Descripción</th>
                   <th className="py-2 px-4 border-b">Marca</th>
                   <th className="py-2 px-4 border-b">Stock</th>
@@ -85,9 +105,15 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                       <input
                         type="number"
                         className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2 text-center w-16 mx-auto"
-                        value={cantidades[producto.codigo] || 1}
+                        value={cantidades[producto.codigo] || ''}
                         min="1"
+                        onKeyDown={(e) => {
+                          if (e.key === '.' || e.key === '-'|| e.key === 'e'|| e.key === '+') {
+                            e.preventDefault();
+                          }
+                        }}
                         onChange={(e) => handleCantidadChange(producto.codigo, e.target.value)}
+                        onBlur={() => handleBlur(producto.codigo)}
                       />
                     </td>
                     <td className="py-2 px-4 border-b text-center">

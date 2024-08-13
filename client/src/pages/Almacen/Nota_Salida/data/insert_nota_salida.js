@@ -1,21 +1,8 @@
 import axios from 'axios';
 
 const insertNotaAndDetalle = async (data) => {
-  const { almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion } = data;
-
   try {
-    const response = await axios.post('http://localhost:4000/api/nota_salida/nuevanota', {
-      almacenO,
-      almacenD,
-      destinatario,
-      glosa,
-      nota,
-      fecha,
-      producto,
-      numComprobante,
-      cantidad,
-      observacion,
-    });
+    const response = await axios.post('http://localhost:4000/api/nota_salida/nuevanota', data);
     if (response.data.code === 1) {
       console.log('Nota y detalle insertados correctamente');
       return { success: true, message: 'Nota y detalle insertados correctamente' };
