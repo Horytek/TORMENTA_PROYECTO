@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { RiCloseLargeLine } from "react-icons/ri";
 import { IoMdClose } from "react-icons/io";
 import { IoMdAdd } from "react-icons/io";
-import { IoIosSearch } from "react-icons/io";
 import ProductosForm from '../../../../Productos/ProductosForm';
 
 const ModalBuscarProducto = ({ isOpen, onClose, setSearchInput, productos, agregarProducto }) => {
@@ -12,6 +11,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, setSearchInput, productos, agreg
   const [activeAdd, setModalOpen] = useState(false);
   const [searchInput, setSearchInputState] = useState('');
   const [filteredProductos, setFilteredProductos] = useState(productos);
+  const [barcode, setBarcode] = useState('');
 
   useEffect(() => {
     setFilteredProductos(
@@ -20,6 +20,30 @@ const ModalBuscarProducto = ({ isOpen, onClose, setSearchInput, productos, agreg
       )
     );
   }, [searchInput, productos]);
+
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.key === 'Enter') {
+        // Al presionar Enter, se supone que el escáner ha terminado de enviar el código
+        const productoEscaneado = productos.find(p => p.codigo_barras === barcode);
+        if (productoEscaneado) {
+          setFilteredProductos([productoEscaneado]); // Filtra automáticamente por el producto escaneado
+        } else {
+          console.warn('Producto no encontrado');
+        }
+        setBarcode(''); // Limpia el código de barras después de procesar
+      } else {
+        // Concatenar caracteres ingresados
+        setBarcode(prev => prev + event.key);
+      }
+    };
+
+    window.addEventListener('keypress', handleKeyPress);
+
+    return () => {
+      window.removeEventListener('keypress', handleKeyPress);
+    };
+  }, [barcode, productos]);
 
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
