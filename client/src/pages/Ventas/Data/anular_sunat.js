@@ -135,12 +135,12 @@ export const anularVentaEnSunatB = async (ventaData,detalles) => {
       const ultimaSerie_n = tipoDocMapping1[ventaData.tipoComprobante] || "B";
       const nuevaSerie_t = ultimaSerie_n + ultimaSerie;
 
-      const serieNum = nuevaSerie_t + '-' + ultimaSerie;
+      const serieNum = nuevaSerie_t + '-' + ventaData.num;
       const tipoDocCliente = ventaData.documento.length === 11 ? "6" : "1";
   
     const data = {
       fecGeneracion: result,
-      fecComunicacion: result1,
+      fecResumen: result1,
       correlativo: ventaData.anular_b,
       moneda: "PEN",
       company: {
@@ -162,13 +162,13 @@ export const anularVentaEnSunatB = async (ventaData,detalles) => {
         estado: "3",
         clienteTipo: tipoDocCliente,
         clienteNro: ventaData.documento,
-        total: subTotal,
-        mtoOperGravadas: totalGravada,
+        total: subTotal.toFixed(2),
+        mtoOperGravadas: totalGravada.toFixed(2),
         mtoOperInafectas: 0,
         mtoOperExoneradas: 0,
         mtoOperExportacion: 0,
         mtoOtrosCargos: 0,
-        mtoIGV: mtoIGV
+        mtoIGV: mtoIGV.toFixed(2)
       }
       ]
     };
