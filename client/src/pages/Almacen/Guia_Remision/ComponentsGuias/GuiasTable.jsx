@@ -75,7 +75,6 @@ const TablaGuias = ({ guias }) => {
           <div>{guia.serieNum}</div>
           <div className="text-gray-500">{guia.num}</div>
         </td>
-        <td className="text-center">{guia.total}</td>
         <td className="text-center">{guia.concepto}</td>
         <td className="text-center" style={{ color: guia.estado === 'Activo' ? '#117B34FF' : '#E05858FF', fontWeight: "400" }}>
           <div className="ml-2 px-2.5 py-1.5 rounded-full" style={{ background: guia.estado === 'Activo' ? 'rgb(191, 237, 206)' : '#F5CBCBFF' }}>
@@ -107,7 +106,7 @@ const TablaGuias = ({ guias }) => {
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -119,7 +118,7 @@ const TablaGuias = ({ guias }) => {
                   <td className="text-center">{detalle.cantidad}</td>
                   <td className="text-center">{detalle.um}</td>
                   <td className="text-center">{detalle.precio}</td>
-                  <td className="text-center">{detalle.total}</td>
+                  
                 </tr>
               ))}
             </tbody>
@@ -140,7 +139,6 @@ const TablaGuias = ({ guias }) => {
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CLIENTE</th>
             <th className="w-1/5 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DOC VENTA</th>
-            <th className="w-1/7 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">TOTAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
             <th className="w-1/7 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>

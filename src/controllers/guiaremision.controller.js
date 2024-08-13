@@ -36,10 +36,9 @@ const getGuias = async (req, res) => {
                 v.dni as dni,
                 SUBSTRING(c.num_comprobante, 2, 3) AS serieNum, 
                 SUBSTRING(c.num_comprobante, 6, 8) AS num,
-                gr.total as total,
                 gr.glosa AS concepto,
                 gr.estado_guia AS estado,
-                s.nombre_sucursal
+                s.nombre_sucursal   
             FROM guia_remision gr
             INNER JOIN destinatario d ON gr.id_destinatario = d.id_destinatario
             INNER JOIN sucursal s ON gr.id_sucursal = s.id_sucursal
@@ -67,8 +66,7 @@ const getGuias = async (req, res) => {
                         p.descripcion AS descripcion, 
                         de.cantidad AS cantidad, 
                         p.undm AS um, 
-                        p.precio AS precio, 
-                        de.total AS total
+                        p.precio AS precio
                     FROM detalle_envio de
                     INNER JOIN producto p ON de.id_producto = p.id_producto
                     INNER JOIN marca m ON p.id_marca = m.id_marca
