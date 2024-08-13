@@ -414,7 +414,7 @@ const anularGuia = async (req, res) => {
 
     console.log("Datos recibidos:", req.body);
     console.log("Datos recibidos:", {
-        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, observacion, f_generacion, h_generacion, producto, num_comprobante, cantidad,
+        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, observacion, f_generacion, h_generacion, producto, num_comprobante, cantidad, 
     });
 
     if (
@@ -480,7 +480,6 @@ const anularGuia = async (req, res) => {
         for (let i = 0; i < producto.length; i++) {
             const id_producto = producto[i];
             const cantidadProducto = cantidad[i];
-            console.log(`ID de la guía de remisión insertada: ${id_guiaremision}`);
 
             const [detalleEnvioResult] = await connection.query(
                 "INSERT INTO detalle_envio (id_guiaremision, id_producto, cantidad, undm) VALUES (?, ?, ?, 'KGM')",
@@ -488,7 +487,8 @@ const anularGuia = async (req, res) => {
             );
 
             if (!detalleEnvioResult.insertId) {
-                throw new Error(`Error al insertar el detalle del producto con id ${id_producto}`);
+                throw new Error(`Error al insertar el detalle del envío con 
+                    producto; ${id_producto}, guia: ${id_guiaremision} y cantidad: ${cantidadProducto}`);
             }
         }
 
