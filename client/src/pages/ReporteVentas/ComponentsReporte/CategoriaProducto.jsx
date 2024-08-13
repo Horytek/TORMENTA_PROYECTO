@@ -1,33 +1,37 @@
 import React, { useEffect } from "react";
-import { DonutChart, Legend } from "@tremor/react";
-import useCantidadVentasPorSubcategoria from '../data/data_venta_subcat'; 
+import { Card, DonutChart, List, ListItem } from '@tremor/react';
+import useCantidadVentasPorSubcategoria from '../data/data_venta_subcat';
 
-const valueFormatter = (number) =>
-  `${Intl.NumberFormat("us").format(number).toString()}`;
+function classNames(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
 
-const DonutChartUsageExample = () => {
+const currencyFormatter = (number) => {
+  return Intl.NumberFormat('us').format(number).toString();
+};
+
+export default function Example() {
   const { data, loading, error } = useCantidadVentasPorSubcategoria();
 
   useEffect(() => {
     console.log('Data from hook:', data);
   }, [data]);
 
-  const sales = data.map(subcat => {
-    return {
-      name: subcat.subcategoria,
-      sales: Number(subcat.cantidad_vendida) 
-    };
-  });
+  // Array de colores que se utilizará para asignar colores a las subcategorías
+  const colors = ['bg-cyan-500', 'bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-fuchsia-500'];
 
-  useEffect(() => {
-    console.log('Sales data for DonutChart:', sales);
-  }, [sales]);
+  const salesData = data.map((subcat, index) => ({
+    name: subcat.subcategoria,
+    amount: Number(subcat.cantidad_vendida),
+    share: ((Number(subcat.cantidad_vendida) / data.reduce((sum, item) => sum + Number(item.cantidad_vendida), 0)) * 100).toFixed(1) + '%',
+    color: colors[index % colors.length], // Asigna un color según el índice
+  }));
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="p-6 border border-gray-300 rounded-lg shadow-lg bg-white">
-        <h3 className="text-center font-semibold text-lg mb-4">
-          Cantidad de ventas por SubCategoría de producto
+    <>
+      <Card className="sm:mx-auto sm:max-w-lg">
+        <h3 className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
+          Cantidad de ventas por SubCategoría
         </h3>
         {loading ? (
           <p className="text-center">Cargando...</p>
@@ -36,25 +40,47 @@ const DonutChartUsageExample = () => {
         ) : (
           <>
             <DonutChart
-              data={sales}
-              category="sales"
+              className="mt-8"
+              data={salesData}
+              category="amount"
               index="name"
-              valueFormatter={valueFormatter}
-              colors={["blue", "cyan", "indigo", "violet", "fuchsia"]}
-              className="w-40 mx-auto"
+              valueFormatter={currencyFormatter}
+              showTooltip={false}
+              colors={['cyan', 'blue', 'indigo', 'violet', 'fuchsia']} 
             />
-            <div className="flex flex-col items-center mt-4">
-              <Legend
-                categories={sales.map(sale => sale.name)}
-                colors={["blue", "cyan", "indigo", "violet", "fuchsia"]}
-                className="flex flex-wrap justify-center"
-              />
-            </div>
+            <p className="mt-8 flex items-center justify-between text-tremor-label text-tremor-content dark:text-dark-tremor-content">
+              <span>SubCategoría</span>
+              <span>Cantidad / Porcentaje</span>
+            </p>
+            <List className="mt-2">
+              {salesData.map((item) => (
+                <ListItem key={item.name} className="space-x-6">
+                  <div className="flex items-center space-x-2.5 truncate">
+                    <span
+                      className={classNames(
+                        item.color,
+                        'size-2.5 shrink-0 rounded-sm',
+                      )}
+                      aria-hidden={true}
+                    />
+                    <span className="truncate dark:text-dark-tremor-content-emphasis">
+                      {item.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium tabular-nums text-tremor-content-strong dark:text-dark-tremor-content-strong">
+                      {currencyFormatter(item.amount)}
+                    </span>
+                    <span className="rounded-tremor-small bg-tremor-background-subtle px-1.5 py-0.5 text-tremor-label font-medium tabular-nums text-tremor-content-emphasis dark:bg-dark-tremor-background-subtle dark:text-dark-tremor-content-emphasis">
+                      {item.share}
+                    </span>
+                  </div>
+                </ListItem>
+              ))}
+            </List>
           </>
         )}
-      </div>
-    </div>
+      </Card>
+    </>
   );
-};
-
-export default DonutChartUsageExample;
+}
