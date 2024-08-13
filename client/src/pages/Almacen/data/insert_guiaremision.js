@@ -2,25 +2,25 @@ import axios from 'axios';
 
 const insertGuiaRemisionAndDetalle = async (data) => {
   const {
-    id_sucursal, id_ubigeo, id_destinatario, id_transportista, glosa, ubi_partida, ubi_destino, dir_partida, dir_destino, observacion, f_generacion, total, productos, num_comprobante
+    id_sucursal, id_ubigeo_o,id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, observacion, f_generacion, h_generacion, producto, num_comprobante, cantidad,
   } = data;
 
   try {
     const response = await axios.post('http://localhost:4000/api/guia_remision/nuevaguia', {
       id_sucursal,
-      id_ubigeo,
+      id_ubigeo_o,
+      id_ubigeo_d,
       id_destinatario,
       id_transportista,
       glosa,
-      ubi_partida,
-      ubi_destino,
       dir_partida,
       dir_destino,
       observacion,
       f_generacion,
-      total,
-      productos,
-      num_comprobante
+      h_generacion,
+      producto,
+      num_comprobante,
+      cantidad
     });
 
     if (response.data.code === 1) {

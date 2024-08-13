@@ -18,11 +18,13 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
   const [isModalOpenTransportista, setIsModalOpenTransportista] = useState(false);
   const { transpublicos, setTranspublicos } = useTransPubData(); // Añade setTranspublicos
   const { transprivados } = useTransPrivData();
+  const [id, setID] = useState('');
   const [selectedEmpresa, setSelectedEmpresa] = useState('');
   const [ruc, setRuc] = useState('');
   const [placa, setPlaca] = useState('');
   const [telefonopub, setTelefPub] = useState('');
   const [vehiculopub, setVehiculoPub] = useState('');
+  const [idpriv, setIDPriv] = useState('');
   const [selectedConductor, setSelectedConductor] = useState('');
   const [dni, setDni] = useState('');
   const [placapriv, setPlacaPriv] = useState('');
@@ -68,6 +70,7 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
 
     const selectedTrans = transpublicos.find(trans => trans.razonsocial === empresa);
     if (selectedTrans) {
+      setID(selectedTrans.id);
       setRuc(selectedTrans.ruc);
       setPlaca(selectedTrans.placa);
       setTelefPub(selectedTrans.telefonopub);
@@ -86,6 +89,7 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
 
     const selectedTransPriv = transprivados.find(transp => transp.transportista === conductor);
     if (selectedTransPriv) {
+      setID(selectedTransPriv.id);
       setDni(selectedTransPriv.dni);
       setPlacaPriv(selectedTransPriv.placa);
       setTelefPriv(selectedTransPriv.telefonopriv);
@@ -113,6 +117,7 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
 
     const selectedTransporte = transportePublico
       ? {
+          id:id,
           empresa: selectedEmpresa,
           ruc,
           placa,
@@ -120,6 +125,7 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
           vehiculopub,
         }
       : {
+          id:id,
           conductor: selectedConductor,
           dni,
           placa: placapriv,

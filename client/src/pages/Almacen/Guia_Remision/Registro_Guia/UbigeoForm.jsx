@@ -74,7 +74,7 @@ useEffect(() => {
     setDistritosPartida(uniqueDistritos.map(distrito => ({
       value: distrito,
       label: distrito,
-      cod: ubigeos.find(item => item.distrito === distrito && item.provincia === selectedProvinciaPartida.value && item.departamento === selectedDepartamentoPartida.value)?.cod
+      id: ubigeos.find(item => item.distrito === distrito && item.provincia === selectedProvinciaPartida.value && item.departamento === selectedDepartamentoPartida.value)?.id
     })));
     setSelectedDistritoPartida(null);
   } else {
@@ -111,7 +111,7 @@ useEffect(() => {
     setDistritosDestino(uniqueDistritos.map(distrito => ({
       value: distrito,
       label: distrito,
-      cod: ubigeos.find(item => item.distrito === distrito && item.provincia === selectedProvinciaDestino.value && item.departamento === selectedDepartamentoDestino.value)?.cod
+      id: ubigeos.find(item => item.distrito === distrito && item.provincia === selectedProvinciaDestino.value && item.departamento === selectedDepartamentoDestino.value)?.id
     })));
     setSelectedDistritoDestino(null);
   } else {
@@ -133,8 +133,8 @@ const handleSave = () => {
     return;
   }
 
-  const partida = `${distritosPartida.find(d => d.value === selectedDistritoPartida.value)?.cod}`;
-  const destino = `${distritosDestino.find(d => d.value === selectedDistritoDestino.value)?.cod}`;
+  const partida = `${distritosPartida.find(d => d.value === selectedDistritoPartida.value)?.id}`;
+  const destino = `${distritosDestino.find(d => d.value === selectedDistritoDestino.value)?.id}`;
   
   onSave(partida, destino); // Guarda los datos
   onClose(); // Cierra el modal

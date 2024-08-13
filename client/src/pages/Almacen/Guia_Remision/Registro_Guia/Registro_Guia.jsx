@@ -32,6 +32,7 @@ const glosaOptions = [
 
 
 function RegistroGuia() {
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [isProductoModalOpen, setIsProductoModalOpen] = useState(false);
@@ -45,55 +46,62 @@ function RegistroGuia() {
   const [searchInput, setSearchInput] = useState('');
   const [productos, setProductos] = useState([]); // Tu array de productos
 
-  const handleGuardar = async () => { 
+  const handleGuardar = async () => {
+
+    if (productosSeleccionados.length === 0) {
+      toast.error('Debe agregar al menos un producto.');
+      return;
+    }
     // Recolectar los datos del formulario
     //num de guia
-    const numeroGuia = document.getElementById('numero').value;
-    //
-    const fecha = document.getElementById('fechaDocu').value;
-    const clienteId = parseInt(document.getElementById('cliente').value);
-    const ubicacion = document.getElementById('ubicacion').value;
-    const vendedorId = parseInt(document.getElementById('vendedor').value);
-    const cantidad = document.querySelector('input[name="cant"]').value;
-    const peso = document.querySelector('input[name="peso"]').value;
+    const id_sucursal = document.getElementById('vendedor').value;
+    const id_ubigeo_o = document.getElementById('ubipart').value;
+    const id_ubigeo_d = document.getElementById('ubidest').value;
+    const id_destinatario = document.getElementById('cliente').value;
+    const id_transportista = document.getElementById('transporte').value;
     const glosa = document.getElementById('glosa').value;
-    const ubipart = document.querySelector('input[name="ubipart"]').value;
-    const dirpartida = document.querySelector('input[name="dirpart"]').value;
-    const ubidest = document.querySelector('input[name="ubidest"]').value;
-    const dirdest = document.getElementById('ubicacion').value;
-    const transporte = document.querySelector('input[name="trans"]').value;
+    const dir_partida = document.getElementById('dirpart').value;
+    const dir_destino = document.getElementById('dirdest').value;
     const observacion = document.getElementById('observacion').value;
+    const f_generacion = document.getElementById('fechaDocu').value;
+    const h_generacion = document.getElementById('horaDocu').value;
+    const num_comprobante = document.getElementById('numero').value;
+   
+    const productos = productosSeleccionados.map(producto => ({
+      id: producto.codigo,
+      cantidad: producto.cantidad
+    }));
 
     const guiaData = {
-      numeroGuia,
-      fecha,
-      clienteId,
-      ubicacion,
-      vendedorId,
-      cantidad,
-      peso,
+      id_sucursal,
+      id_ubigeo_o,
+      id_ubigeo_d,
+      id_destinatario,
+      id_transportista,
       glosa,
-      ubipart,
-      dirpartida,
-      ubidest,
-      dirdest,
-      transporte,
-      observacion
+      dir_partida,
+      dir_destino,
+      observacion,
+      f_generacion,
+      h_generacion,
+      producto: productos.map(p => p.id),
+      num_comprobante,
+      cantidad: productos.map(p => p.cantidad),
     };
 
     try {
       const response = await insertGuiaandDetalle(guiaData, productosSeleccionados);
       console.log(response); // <-- Verifica qué está devolviendo el servidor
       if (response.success) {
-          toast.success("Guía de Remisión y detalles guardados exitosamente");
+        toast.success("Guía de Remisión y detalles guardados exitosamente");
       } else {
-          toast.error("Error al guardar la Guía de Remisión");
+        toast.error("Error al guardar la Guía de Remisión");
       }
-  } catch (error) {
+    } catch (error) {
       console.error(error); // <-- Verifica si hay errores más detallados
       toast.error("Error al guardar la Guía de Remisión");
-  }
-  
+    }
+
   };
 
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
@@ -181,6 +189,15 @@ function RegistroGuia() {
 
   const currentDate = new Date().toISOString().split('T')[0];
 
+  const [currentHour, setCurrentHour] = useState(new Date().toLocaleTimeString('en-GB', { hour12: false }));
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHour(new Date().toLocaleTimeString('en-GB', { hour12: false }));
+    }, 1000);
+
+    return () => clearInterval(interval); // Limpia el intervalo al desmontar el componente
+  }, []);
+
 
   const openModal = (title, type) => {
     setModalTitle(title);
@@ -216,22 +233,27 @@ function RegistroGuia() {
             <div className="grid grid-cols-2 gap-4">
               <div className="">
                 <div className='w-full relative group text-start'>
-                  <label htmlFor="numguia" className='text-sm font-bold text-black'>Número de guía:</label>
+                  <label htmlFor="numero" className='text-sm font-bold text-black'>Número de guía:</label>
                   <input id="numero"
                     type="text"
                     value={currentDocumento}
                     className='w-full bg-gray-200 border-gray-300 text-black rounded-lg border p-1 ' disabled />
                 </div>
               </div>
-              <div className="">
-                <div className='w-full relative group text-start'>
-                  <label htmlFor="dirdest" className='text-sm font-bold text-black'>Fecha:</label>
-                  <input type="date" name='date' 
-                  className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' 
-                  id="fechaDocu" defaultValue={currentDate} />
+              <div className="flex">
+                <div className="flex-1 mr-2">
+                  <label htmlFor="fechaDocu" className='text-sm font-bold text-black'>Fecha:</label>
+                  <input type="date" name='fechaDocu'
+                    className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
+                    id="fechaDocu" defaultValue={currentDate} readOnly/>
+                </div>
+                <div className="flex-1 ml-2">
+                  <label htmlFor="horaDocu" className='text-sm font-bold text-black'>Hora:</label>
+                  <input type="time" name='horaDocu'
+                    className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
+                    id="horaDocu" value={currentHour} readOnly/>
                 </div>
               </div>
-
               <div className="">
                 <label htmlFor="cliente" className='text-sm font-bold text-black' >Cliente:</label>
                 <select
@@ -243,10 +265,10 @@ function RegistroGuia() {
 
                     if (selected) {
                       document.getElementById('documento').value = selected.documento;
-                      document.getElementById('ubicacion').value = selected.ubicacion;
+                      document.getElementById('dirdest').value = selected.ubicacion;
                     } else {
                       document.getElementById('documento').value = '';
-                      document.getElementById('ubicacion').value = '';
+                      document.getElementById('dirdest').value = '';
                     }
                   }}
                 >
@@ -275,9 +297,9 @@ function RegistroGuia() {
                     const selected = sucursales.find(sucursal => sucursal.id === selectedId);
 
                     if (selected) {
-                      document.getElementById('direccion').value = selected.direccion;
+                      document.getElementById('dirpart').value = selected.direccion;
                     } else {
-                      document.getElementById('direccion').value = '';
+                      document.getElementById('dirpart').value = '';
                     }
                   }}>
                   <option>Seleccione...</option>
@@ -289,15 +311,15 @@ function RegistroGuia() {
               <div className="flex">
                 <div className="flex-1 mr-2">
                   <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
-                  <input type="cant" name='cant' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                  <input type="text" name='cantidad' id='cantidad' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
                 <div className="flex-1 ml-2">
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>
-                  <input type="peso" name='peso' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                  <input type="text" name='peso' id='peso' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
               </div>
               <div className="">
-                <label className="block text-gray-700 text-sm font-bold mt-5" htmlFor="direcdest">
+                <label className="block text-gray-700 text-sm font-bold mt-5" htmlFor="ubigeo">
                 </label>
                 <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-2 rounded"
                   type="button" onClick={() => openModal('Ubicación de Partida / Ubicación de Destino', 'ubicacion')}>
@@ -320,6 +342,7 @@ function RegistroGuia() {
                   <input
                     type="text"
                     name='ubipart'
+                    id='ubipart'
                     value={ubipart}
                     className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
                     disabled
@@ -330,7 +353,7 @@ function RegistroGuia() {
                 <div className='w-full relative group text-start'>
                   <label htmlFor="dirpart" className='text-sm font-bold text-black'>Dir. Partida:</label>
                   <input type="text" name='dirpart'
-                    id='direccion'
+                    id='dirpart'
                     className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
                     disabled />
                 </div>
@@ -341,6 +364,7 @@ function RegistroGuia() {
                   <input
                     type="text"
                     name='ubidest'
+                    id='ubidest'
                     value={ubidest}
                     className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
                     disabled
@@ -351,18 +375,19 @@ function RegistroGuia() {
                 <div className='w-full relative group text-start'>
                   <label htmlFor="dirdest" className='text-sm font-bold text-black'>Dir. Destino:</label>
                   <input type="text"
-                    id='ubicacion'
+                    id='dirdest'
                     className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
                     disabled />
                 </div>
               </div>
-
+            
               <div className="">
                 <div className='w-full relative group text-start'>
-                  <label htmlFor="trans" className='text-sm font-bold text-black'>Transporte:</label>
+                  <label htmlFor="namtrans" className='text-sm font-bold text-black'>Transporte:</label>
                   <input
                     type="text"
-                    name='trans'
+                    name='namtrans'
+                    id='namtrans'
                     value={transporte ? `${transporte.empresa || transporte.conductor}` : ''}
                     className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
                     disabled
@@ -371,7 +396,7 @@ function RegistroGuia() {
               </div>
               <div className="flex">
                 <div className="flex-1 mr-2">
-                  <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold  "></label>
+                  <label htmlFor="transport" className="block text-gray-700 text-sm font-bold  "></label>
                   <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
                     type="button" onClick={() => openModal('Datos del Transporte', 'transporte')}>
                     <IoMdCar className="inline-block mr-2 text-lg" /> Datos de Transporte
@@ -387,8 +412,18 @@ function RegistroGuia() {
               </div>
               <div className="">
                 <div className='w-full relative group text-start'>
+                  <label htmlFor="transporte" className='text-sm font-bold text-black'>Código Transporte:</label>
+                  <input
+                    type="text"
+                    name='transporte'
+                    id='transporte'
+                    value={transporte ? `${transporte.id}` : ''}
+                    className='w-full bg-gray-200 border-gray-300 text-gray-900 rounded-lg border p-1'
+                    disabled
+                  />
                 </div>
               </div>
+              
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
