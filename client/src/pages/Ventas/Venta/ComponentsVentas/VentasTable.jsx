@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, /*useEffect*/ } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from "react-icons/io";
 import { TiPrinter } from "react-icons/ti";
+import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
+import useBoucher from '../../Data/data_boucher'; // Asegúrate de que la ruta sea correcta
+//import useSucursalData from '../../Data/data_sucursal_venta';
+import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
-
+  //const {sucursales} = useSucursalData();
+  const {isOpen, onOpen, onOpenChange} = useDisclosure();
   const toggleRow = (id,estado,venta) => {
     setExpandedRow(expandedRow === id ? null : id);
 
@@ -17,7 +22,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       estado= 0;
     }
 
-    const datos_venta= {
+    const datos_venta = {
       id:id,
       serieNum:venta.serieNum,
       num:venta.num,
@@ -32,10 +37,15 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       estado_sunat:venta.estado_sunat,
       anular:venta.anular,
       anular_b:venta.anular_b,
+      id_venta_boucher:venta.id_venta_boucher,
+      sucursal:venta.nombre_sucursal,
+      direccion:venta.ubicacion,
+      usua_vendedor:venta.usua_vendedor,
+      observacion:venta.observacion || '',
     }
 
     localStorage.setItem('ventas', JSON.stringify(datos_venta));
-
+    localStorage.setItem('boucher', JSON.stringify(datos_venta.id_venta_boucher));
     const saveDetallesToLocalStorage = () => {
       localStorage.setItem('new_detalle', JSON.stringify(venta.detalles));
     };
@@ -47,8 +57,14 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       documento: venta.ruc,
     };
 
+    const surB = {
+      sucursal:venta.nombre_sucursal,
+      direccion:venta.ubicacion,
+    };
+
     const saveDetallesToLocalStorage1 = () => {
         localStorage.setItem('datosClientes', JSON.stringify({datosClientes}));
+        localStorage.setItem('surB', JSON.stringify({surB }));
       };
       saveDetallesToLocalStorage1();
     };
@@ -60,6 +76,97 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       }
       toggleRow(venta.id, venta.estado, venta);
     };
+
+    const loadDetallesFromLocalStorage = () => {
+      const savedDetalles = localStorage.getItem('ventas');
+      return savedDetalles ? JSON.parse(savedDetalles) : [];
+  };
+
+  const ventas_VB = loadDetallesFromLocalStorage();
+
+
+
+  console.log(ventas_VB);
+  
+
+  const {venta_B} = useBoucher(ventas_VB.id_venta_boucher);
+  //const isoDate = venta_B.fecha.toISOString().slice(0, 10);
+  const nuevoNumComprobante = { nuevoNumComprobante: venta_B.num_comprobante }
+  localStorage.setItem('comprobante1', JSON.stringify(nuevoNumComprobante));
+  const observacion = { observacion: ventas_VB.observacion}
+  localStorage.setItem('observacion', JSON.stringify(observacion));
+  console.log(venta_B);
+  //console.log(new Date(venta_B.fecha).toISOString().slice(0, 10));
+  //const sucursal_v = sucursales.find(sucursal => sucursal.usuario === ventas_VB.usua_vendedor)
+  //console.log(sucursal_v);
+  //console.log(surB);
+  const handlePrint = async () => {
+    let nombreImpresora = "BASIC 230 STYLE";
+    let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
+
+    // eslint-disable-next-line no-undef
+    const conector = new connetor_plugin();
+    const content = generateReceiptContent(venta_B, ventas_VB);
+
+    conector.textaling("center");
+
+    // Verifica si las opciones de tamaño están en el formato correcto
+    const imgOptions = { width: 50, height: 50 };
+    const qrOptions = { width: 300, height: 300 };
+
+    conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", imgOptions);
+    content.split('\n').forEach(line => {
+        conector.text(line);
+    });
+
+    conector.qr("https://www.facebook.com/profile.php?id=100055385846115", qrOptions);
+    conector.feed(5);
+    conector.cut("0");
+
+    const resp = await conector.imprimir(nombreImpresora, api_key);
+    if (resp === true) {
+        console.log("Impresión exitosa");
+    } else {
+        console.log("Problema al imprimir: " + resp);
+    }
+};
+
+  /* const datosVenta= {
+    sucursal: sucursal_v.nombre,
+    direccion: sucursal_v.ubicacion,
+  }*/
+
+  /*const handlePrint = async () => {
+    let nombreImpresora = "BASIC 230 STYLE";
+    let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
+
+    // eslint-disable-next-line no-undef
+    const conector = new connetor_plugin();
+    const content = generateReceiptContent(venta_B, datosVenta);
+
+    conector.textaling("center");
+
+    // Verifica si las opciones de tamaño están en el formato correcto
+    const imgOptions = { width: 50, height: 50 };
+    const qrOptions = { width: 300, height: 300 };
+
+    conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", imgOptions);
+    content.split('\n').forEach(line => {
+        conector.text(line);
+    });
+
+    conector.qr("https://www.facebook.com/profile.php?id=100055385846115", qrOptions);
+    conector.feed(5);
+    conector.cut("0");
+
+    const resp = await conector.imprimir(nombreImpresora, api_key);
+    if (resp === true) {
+        console.log("Impresión exitosa");
+    } else {
+        console.log("Problema al imprimir: " + resp);
+    }
+};*/
+
 
   const renderVentaRow = (venta) => (
     <React.Fragment key={venta.id}>
@@ -101,7 +208,34 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
                 style={{ fontSize: '20px' }}
                 onClick={() => openModal(venta.id, venta.estado)}
             />
-            <TiPrinter className='text-gray-500' style={{ fontSize: '20px' }}/>
+            <TiPrinter className='text-gray-500' onClick={onOpen} style={{ fontSize: '20px' }}/>
+            <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}  classNames={{
+          backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20" 
+        }}
+        style={{ zIndex: 1000 }} // Asegura un z-index alto para el modal
+        >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
+              <ModalBody>
+                <p> 
+                  ¿Desea imprimir nuevamente el boucher de la venta electronica?
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Cerrar
+                </Button>
+                <Button color="primary" onPress={onClose} onClick={handlePrint}>
+                  Imprimir
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
           </div>
         </td>
       </tr>

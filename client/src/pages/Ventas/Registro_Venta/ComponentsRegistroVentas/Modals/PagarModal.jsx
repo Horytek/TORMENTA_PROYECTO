@@ -136,6 +136,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     const today = new Date();
     today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
     const localDate = today.toISOString().slice(0, 10);
+    const cliente = clientes.find(cliente => cliente.nombre === clienteSeleccionado);
 
     const datosVenta = {
         usuario: localStorage.getItem('usuario'),
@@ -157,6 +158,50 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         metodo_pago: metodo_pago + ':' + montoRecibido +
         (faltante > 0 ? ", " + ((metodo_pago2 + ':' + montoRecibido2) || '') : '') +
         (faltante2 > 0 ? ", " + ((metodo_pago3 + ':' + montoRecibido3) || '') : ''),
+        fecha: new Date().toISOString().slice(0, 10),
+        nombre_cliente: cliente ? cliente.nombre : '',
+        documento_cliente: cliente ? cliente.documento : '',
+        direccion_cliente: cliente ? cliente.direccion : '',
+        igv_b: detalles.reduce((acc, detalle) => {
+            const precioSinIGV = parseFloat(detalle.precio) / 1.18;
+            const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad; // Calcular el IGV del detalle
+            return acc + igvDetalle;
+          }, 0).toFixed(2),
+        total_t: totalAPagarConDescuento,
+        comprobante_pago: comprobante_pago === 'Boleta' ? 'Boleta de venta electronica' :
+            comprobante_pago === 'Factura' ? 'Factura de venta electronica' :
+                'Nota de venta',
+                totalImporte_venta: detalles.reduce((acc, detalle) => {
+                    const precioSinIGV = parseFloat(detalle.precio) / 1.18; // Dividir el precio por 1.18 para obtener el valor sin IGV
+                    return acc + (precioSinIGV * detalle.cantidad);
+                  }, 0).toFixed(2),
+        descuento_venta: detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2),
+        vuelto: (
+            (cambio >= 0 ? Number(cambio) : 0) +
+            (faltante > 0 && cambio2 >= 0 ? Number(cambio2) : 0) +
+            (faltante2 > 0 && cambio3 >= 0 ? Number(cambio3) : 0)
+          ).toFixed(2),
+        recibido: ((Number(montoRecibido) || 0) +
+            (faltante > 0 ? (Number(montoRecibido2) || 0) : 0) +
+            (faltante2 > 0 ? (Number(montoRecibido3) || 0) : 0)).toFixed(2),
+        formadepago: metodo_pago +
+            (faltante > 0 ? ", " + (metodo_pago2 || '') : '') +
+            (faltante2 > 0 ? ", " + (metodo_pago3 || '') : '')
+        ,
+        detalles_b: detalles.map(detalle => {
+            const producto = productos.find(producto => producto.codigo === detalle.codigo);
+            return {
+                id_producto: detalle.codigo,
+                nombre: detalle.nombre,
+                undm: producto ? producto.undm : '',
+                nom_marca: producto ? producto.nom_marca : '',
+                cantidad: detalle.cantidad,
+                precio: parseFloat(detalle.precio),
+                descuento: parseFloat(detalle.descuento),
+                sub_total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
+            };
+        }).filter(detalle => detalle !== null),
+        observacion:observacion,
     };
 
     const datosCliente = {
@@ -219,9 +264,6 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         handleCobrar(datosVenta, setShowConfirmacion);
         handlePrint();  // Llama a la función de impresión
     };
-
-    const cliente = clientes.find(cliente => cliente.nombre === clienteSeleccionado);
-
 
     {/* Esto son los datos que pasan al voucher */ }
     const datosVentaComprobante = {
