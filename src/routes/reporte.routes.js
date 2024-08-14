@@ -4,7 +4,7 @@ import { methods as reporteController } from "./../controllers/reporte.controlle
 const router = Router();
 
 router.get("/ganancias", reporteController.getTotalSalesRevenue);
-router.post("/productos_vendidos", reporteController.getTotalProductosVendidos);
+router.get("/productos_vendidos", reporteController.getTotalProductosVendidos);
 router.get("/producto_top", reporteController.getProductoMasVendido);
 router.get("/cantidad_por_producto", reporteController.getCantidadVentasPorProducto);
 router.get("/cantidad_por_subcategoria", reporteController.getCantidadVentasPorSubcategoria);
