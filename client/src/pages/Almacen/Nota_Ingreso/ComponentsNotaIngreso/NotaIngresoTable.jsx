@@ -133,20 +133,16 @@ const TablaIngresos = ({ ingresos }) => {
                 <th className="w-3/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Descripción</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Cantidad</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Unidad</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Precio</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">Total</th>
               </tr>
             </thead>
             <tbody>
               {detalles.map((detalle, index) => (
-                <tr key={index} onClick={() => handleDetailClick(id)} className='tr-tabla-detalle-ingreso'>
+                <tr key={index} onClick={() => handleDetailClick(detalle.codigo)} className='tr-tabla-detalle-ingreso'>
                   <td className="text-center py-2 px-4">{detalle.codigo}</td>
                   <td className="text-center py-2 px-4">{detalle.marca}</td>
                   <td className="text-center py-2 px-4">{detalle.descripcion}</td>
                   <td className="text-center py-2 px-4">{detalle.cantidad}</td>
                   <td className="text-center py-2 px-4">{detalle.unidad}</td>
-                  <td className="text-center py-2 px-4">{detalle.precio}</td>
-                  <td className="text-center py-2 px-4">{detalle.total}</td>
                 </tr>
               ))}
             </tbody>

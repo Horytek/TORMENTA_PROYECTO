@@ -67,9 +67,172 @@ const getAlmacen = async (req, res) => {
       res.send(error.message);
     }
   };
+
+  const getMarcas = async (req, res) => {
+    try {
+      const connection = await getConnection();
+      const [result] = await connection.query(`
+              	SELECT id_marca AS id, nom_marca AS marca FROM marca
+	            WHERE estado_marca = 1;
+          `);
+      res.json({ code: 1, data: result, message: "Marcas listadas" });
+    } catch (error) {
+      res.status(500);
+      res.send(error.message);
+    }
+  };
+
+  const getSubCategorias= async (req, res) => {
+    try {
+      const connection = await getConnection();
+      const [result] = await connection.query(`
+              	   SELECT id_subcategoria AS id, nom_subcat AS sub_categoria FROM sub_categoria
+	                WHERE estado_subcat = 1;
+          `);
+      res.json({ code: 1, data: result, message: "Sub categorias listadas" });
+    } catch (error) {
+      res.status(500);
+      res.send(error.message);
+    }
+  };
+
+  const getCategorias= async (req, res) => {
+    try {
+      const connection = await getConnection();
+      const [result] = await connection.query(`
+              	      SELECT id_categoria as id, nom_categoria as categoria FROM categoria
+	                  WHERE estado_categoria = 1;
+          `);
+      res.json({ code: 1, data: result, message: "Categorias listadas" });
+    } catch (error) {
+      res.status(500);
+      res.send(error.message);
+    }
+  };
+
+  const getDetalleKardex = async (req, res) => {
+    const { fechaInicio, fechaFin, idProducto, idAlmacen} = req.query;
+
+    try {
+        const connection = await getConnection();
+
+        const [detalleKardexResult] = await connection.query(
+            `
+            SELECT 
+                n.fecha AS fecha, 
+                c.num_comprobante AS documento, 
+                n.nom_nota AS nombre, 
+                CASE 
+                    WHEN n.id_tiponota = 1 THEN dn.cantidad 
+                    ELSE '' 
+                END AS entra, 
+                CASE 
+                    WHEN n.id_tiponota = 2 THEN dn.cantidad 
+                    ELSE '' 
+                END AS sale, 
+                i.stock AS stock, 
+                p.precio AS precio, 
+                n.glosa AS glosa 
+            FROM 
+                nota n
+            INNER JOIN 
+                comprobante c ON n.id_comprobante = c.id_comprobante 
+            INNER JOIN 
+                detalle_nota dn ON n.id_nota = dn.id_nota
+            INNER JOIN 
+                producto p ON dn.id_producto = p.id_producto
+            INNERJOIN 
+                inventario i ON p.id_producto = i.id_producto
+            WHERE 
+                DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ? 
+                AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ? 
+                AND p.id_producto = ? 
+                AND (n.id_almacenO = ? OR n.id_almacenD = ?)
+            GROUP BY 
+                fecha, documento, nombre, entra, sale, stock, precio, glosa
+            ORDER BY 
+                documento
+            `,
+            [fechaInicio, fechaFin, idProducto, idAlmacen, idAlmacen]
+        );
+
+        res.json({ code: 1, data: detalleKardexResult });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+};
+
+
+const getDetalleKardexAnteriores = async (req, res) => {
+    const { fecha, idProducto ,idAlmacen } = req.query;
+
+    try {
+        const connection = await getConnection();
+
+        const [detalleKardexAnterioresResult] = await connection.query(
+            `
+            SELECT 
+                COUNT(*) AS numero, 
+                SUM(CASE 
+                    WHEN n.id_tiponota = 1 THEN dn.cantidad 
+                    ELSE 0 
+                END) AS entra, 
+                SUM(CASE 
+                    WHEN n.id_tiponota = 2 THEN dn.cantidad 
+                    ELSE 0 
+                END) AS sale
+            FROM 
+                nota n
+            INNER JOIN 
+                detalle_nota dn ON n.id_nota = dn.id_nota
+            WHERE 
+                DATE_FORMAT(n.fecha, '%Y-%m-%d') < ? 
+                AND p.id_producto = ? 
+                AND (n.id_almacenO = ? OR n.id_almacenD = ?)
+            `,
+            [fecha, idProducto,idAlmacen, idAlmacen]
+        );
+
+        res.json({ code: 1, data: detalleKardexAnterioresResult });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+};
+
+const getInfProducto = async (req, res) => {
+    const { idProducto ,idAlmacen } = req.query;
+
+    try {
+        const connection = await getConnection();
+
+        const [infProductoResult] = await connection.query(
+            `
+            SELECT p.id_producto AS codigo, p.descripcion AS descripcion, m.nom_marca AS marca, i.stock AS stock
+            FROM producto p 
+            INNER JOIN marca m on p.id_marca = m.id_marca
+            INNER JOIN inventario i on p.id_producto = i.id_producto
+            WHERE p.id_producto = ?
+            AND i.id_almacen = ?
+            GROUP BY codigo, descripcion, marca, stock;
+            `,
+            [idProducto,idAlmacen]
+        );
+
+        res.json({ code: 1, data: infProductoResult });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+};
+
+
 export const methods = {
     getProductos,
     getAlmacen,
-    getMovimientosProducto
-
+    getMovimientosProducto,
+    getMarcas,
+    getSubCategorias,
+    getCategorias,
+    getDetalleKardex,
+    getDetalleKardexAnteriores,
+    getInfProducto
 };

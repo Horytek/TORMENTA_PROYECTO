@@ -4,14 +4,17 @@ import axios from 'axios';
 const useTotalProductosVendidos = (idSucursal) => { 
   const [totalProductosVendidos, setTotalProductosVendidos] = useState(0);
 
-  const fetchTotalProductosVendidos = useCallback(async () => {
+  const fetchProductos = useCallback(async () => {
     try {
-      const response = await axios.post('http://localhost:4000/api/reporte/productos_vendidos', {
-        id_sucursal: idSucursal, 
+      const response = await axios.get('http://localhost:4000/api/reporte/productos_vendidos', {
+        params: {
+          id_sucursal: idSucursal,
+        },
       });
-  
-      if (response.data.code === 1) {
-        setTotalProductosVendidos(response.data.totalProductosVendidos);
+
+      if (response.status === 200) {
+        const total = parseInt(response.data.totalProductosVendidos || 0, 10); 
+        setTotalProductosVendidos(total);
       } else {
         console.error('Error en la solicitud: ', response.data.message);
       }
@@ -21,8 +24,8 @@ const useTotalProductosVendidos = (idSucursal) => {
   }, [idSucursal]); 
 
   useEffect(() => {
-    fetchTotalProductosVendidos();
-  }, [fetchTotalProductosVendidos]);
+    fetchProductos();
+  }, [fetchProductos]);
 
   return { totalProductosVendidos };
 };
