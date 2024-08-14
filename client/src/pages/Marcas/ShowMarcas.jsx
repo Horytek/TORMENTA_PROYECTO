@@ -8,11 +8,13 @@ import {
   deleteMarca,
   deactivateMarca as apiDeactivateMarca,
 } from "@/services/marca.services";
+import EditForm from "./EditMarca";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 export function ShowMarcas({ searchTerm }) {
   const [marcas, setMarcas] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const productosPerPage = 10;
 
   useEffect(() => {
@@ -35,6 +37,16 @@ export function ShowMarcas({ searchTerm }) {
     indexOfLastProducto
   );
 
+  const handleOpenEditModal = (id_marca, nom_marca, estado_marca) => {
+    setSelectedRow({ id_marca, nom_marca, estado_marca });
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedRow(null);
+  };
+
   const deleteProduct = async (id) => {
     await deleteMarca(id);
     loadMarcas();
@@ -44,9 +56,6 @@ export function ShowMarcas({ searchTerm }) {
     await apiDeactivateMarca(id);
     loadMarcas();
   };
-
-  const [activeEdit, setActiveEdit] = useState(false);
-  const [initialData, setInitialData] = useState(null);
 
   const handleModalEdit = async (id_marca) => {
     const data = await getMarca(id_marca);
@@ -127,9 +136,7 @@ export function ShowMarcas({ searchTerm }) {
                   data-product={marca.id_marca}
                 >
                   <td className="py-2 text-center">{marca.id_marca}</td>
-                  <td className="py-2 text-center">
-                    {marca.nom_marca}
-                  </td>
+                  <td className="py-2 text-center">{marca.nom_marca}</td>
                   <td className="py-2 text-center">
                     <span
                       className={
@@ -145,7 +152,13 @@ export function ShowMarcas({ searchTerm }) {
                     <div className="flex justify-center items-center">
                       <button
                         className="px-2 py-1 text-yellow-400 text-xl"
-                        onClick={() => handleModalEdit(marca.id_marca)}
+                        onClick={() =>
+                          handleOpenEditModal(
+                            marca.id_marca,
+                            marca.nom_marca,
+                            marca.estado_marca
+                          )
+                        }
                       >
                         <MdEdit />
                       </button>
@@ -206,13 +219,14 @@ export function ShowMarcas({ searchTerm }) {
         />
       )}
 
-      {/* {activeEdit && (
+      {isEditModalOpen && selectedRow && (
         <EditForm
+          isOpen={isEditModalOpen}
           modalTitle={"Editar marca"}
-          onClose={handleCloseModal}
+          onClose={handleCloseEditModal}
           initialData={initialData}
         />
-      )} */}
+      )}
 
       {deactivateBrand && (
         <ConfirmationModal

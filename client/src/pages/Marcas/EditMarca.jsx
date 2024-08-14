@@ -1,38 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
-import { Toaster, toast } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
-import { useSubcategorias } from "@/context/Subcategoria/SubcategoriaProvider";
-import { useCategorias } from "@/context/Categoria/CategoriaProvider";
-import useEditSubCategoria from "./hooks/edit";
+import { useMarcas } from "@/context/Marca/MarcaProvider";
+import useEditMarca from "./hook/editFunc";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
-  const { editSubCategoria, loading } = useEditSubCategoria();
-  const { categorias, loadCategorias } = useCategorias();
+  const { editMarca, loading } = useEditMarca();
   const { register, handleSubmit, setValue, formState: { errors } } = useForm();
 
   useEffect(() => {
     if (initialData) {
-      setValue("nom_categoria", initialData.nom_categoria);
-      setValue("nom_subcat", initialData.nom_subcat);
-      setValue("estado_subcat", initialData.estado_subcat);
+      setValue("nom_marca", initialData.nom_marca);
+      setValue("estado_marca", initialData.estado_marca);
     }
-    loadCategorias();
-  }, [initialData, setValue, loadCategorias]);
+    loadMarcas();
+  }, [initialData, setValue, loadMarcas]);
 
   const onSubmit = async (data) => {
     try {
       const updatedData = {
         ...data,
-        estado_subcat: parseInt(data.estado_subcat, 10),
+        estado_marca: parseInt(data.estado_marca, 10),
       };
-      await editSubCategoria(updatedData);
-      toast.success("Subcategoría actualizada con éxito");
+      await editMarca(updatedData);
       onClose();
     } catch (error) {
-      toast.error("Error al actualizar la subcategoría");
+      console.error("Error al actualizar la marca");
     }
   };
 
@@ -40,7 +35,6 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Toaster />
       <div className="modal-overlay">
         <div className="modal w-96 h-auto">
           <div className="content-modal">
@@ -52,69 +46,41 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
             </div>
             <div className="modal-body">
               <div className="w-full text-start mb-5">
-                <label htmlFor="nom_categoria" className="text-sm font-bold text-black">
-                  Categoría:
-                </label>
-                <select
-                  {...register("nom_categoria", { required: true })}
-                  id="nom_categoria"
-                  className={`w-full text-sm bg-gray-50 ${
-                    errors.nom_categoria
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500"
-                      : "border-gray-300"
-                  } text-gray-900 rounded-lg border p-2`}
-                >
-                  <option value="">Seleccione...</option>
-                  {categorias.length > 0 &&
-                    categorias.map((categoria) => (
-                      <option
-                        key={categoria.id_categoria}
-                        value={categoria.nom_categoria}
-                      >
-                        {categoria.nom_categoria.toUpperCase()}
-                      </option>
-                    ))}
-                </select>
-                {errors.nom_categoria && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Selecciona una categoría.
-                  </p>
-                )}
-
+                
                 <label
-                  htmlFor="nom_subcat"
+                  htmlFor="nom_marca"
                   className="text-sm font-bold text-black mt-4 block"
                 >
-                  Subcategoría:
+                  Marca:
                 </label>
                 <input
-                  {...register("nom_subcat", { required: true })}
+                  {...register("nom_marca", { required: true })}
                   type="text"
-                  id="nom_subcat"
+                  id="nom_marca"
                   className={`w-full bg-gray-50 ${
-                    errors.nom_subcat
+                    errors.nom_marca
                       ? "border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500"
                       : "border-gray-300"
                   } text-gray-900 rounded-lg border p-2 text-sm`}
-                  placeholder="Nombre de Subcategoría"
+                  placeholder="Nombre de marca"
                 />
-                {errors.nom_subcat && (
+                {errors.nom_marca && (
                   <p className="text-red-600 text-sm mt-1">
-                    Ingrese una subcategoría.
+                    Ingrese una marca.
                   </p>
                 )}
 
                 <label
-                  htmlFor="estado_subcat"
+                  htmlFor="estado_marca"
                   className="text-sm font-bold text-black mt-4 block"
                 >
-                  Estado de la Subcategoría:
+                  Estado de la marca:
                 </label>
                 <select
-                  {...register("estado_subcat", { required: true })}
-                  id="estado_subcat"
+                  {...register("estado_marca", { required: true })}
+                  id="estado_marca"
                   className={`w-full text-sm bg-gray-50 ${
-                    errors.estado_subcat
+                    errors.estado_marca
                       ? "border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500"
                       : "border-gray-300"
                   } text-gray-900 rounded-lg border p-2`}

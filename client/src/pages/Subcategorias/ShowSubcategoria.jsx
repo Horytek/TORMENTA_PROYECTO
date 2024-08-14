@@ -3,10 +3,10 @@ import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import EditForm from "./EditForm";
-import { useSubcategoriasConCategoria } from './hooks/data_list';
-import { useDeleteSubcategoria } from './hooks/delete';
-import { useDeactivateSubcategoria } from './hooks/deactivate';
+import EditForm from "./EditSubcat";
+import { useSubcategoriasConCategoria } from './hooks/getSubcategory';
+import { useDeleteSubcategoria } from './hooks/deleteFunc';
+import { useDeactivateSubcategoria } from './hooks/deactivateFunc';
 
 export function ShowSubcategorias({ searchTerm }) {
   const { subcategorias, setSubcategorias, loading, error } = useSubcategoriasConCategoria();  
