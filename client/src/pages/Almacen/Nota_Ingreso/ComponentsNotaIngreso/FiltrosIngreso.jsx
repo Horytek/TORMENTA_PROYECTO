@@ -114,14 +114,13 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
                 </select>
             </div>
             <div className="flex items-center gap-2">
-                <h6 className='font-bold'>Nombre o razón social:</h6>
                 <div className='relative'>
                     <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
                         <IoIosSearch className='w-4 h-4 text-gray-500' />
                     </div>
                     <input
                         type="text"
-                        placeholder=''
+                        placeholder='Nombre o razón social'
                         value={razon}
                         onChange={(e) => setRazon(e.target.value)}
                         className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'

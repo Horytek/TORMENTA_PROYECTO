@@ -62,7 +62,7 @@ const getIngresos = async (req, res) => {
           ingresosResult.map(async (ingreso) => {
               const [detallesResult] = await connection.query(
                   `
-                  SELECT dn.id_detalle_nota AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
+                  SELECT p.id_producto AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
                   dn.cantidad AS cantidad, p.undm AS unidad, dn.precio AS precio, dn.total AS total
                   FROM producto p INNER JOIN marca m ON p.id_marca=m.id_marca
                   INNER JOIN sub_categoria sc ON p.id_subcategoria=sc.id_subcategoria

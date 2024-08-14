@@ -3,19 +3,30 @@ import { RiCloseLargeLine } from "react-icons/ri";
 import { IoMdClose } from "react-icons/io";
 import { IoMdAdd } from "react-icons/io";
 import { IoIosSearch } from "react-icons/io";
-
+import ProductosForm from '../../../../Productos/ProductosForm';
+import { toast } from "react-hot-toast";
 const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto }) => {
   if (!isOpen) return null;
 
   const [cantidades, setCantidades] = useState({});
-
+  const [activeAdd, setModalOpen] = useState(false);
+  const handleModalAdd = () => {
+    setModalOpen(!activeAdd);
+  };
   const handleCantidadChange = (codigo, cantidad) => {
     setCantidades({
       ...cantidades,
       [codigo]: parseInt(cantidad, 10),
     });
   };
-
+  const handleAgregarProducto = (producto) => {
+    const cantidadSolicitada = cantidades[producto.codigo] || 1;
+    if (cantidadSolicitada > producto.stock) {
+      toast.error(`La cantidad solicitada (${cantidadSolicitada}) excede el stock disponible (${producto.stock}).`);
+    } else {
+      agregarProducto(producto, cantidadSolicitada);
+    }
+  };
   return (
     <div className="modal-overlay">
       <div className="content-modal max-w-4xl mx-auto">
@@ -40,9 +51,9 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
               <IoIosSearch className='w-4 h-4 mr-1' />
               Buscar
             </button>
-            <button 
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center" 
-              onClick={() => openModalProducto('Agregar Producto')}
+            <button
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
+              onClick={handleModalAdd}
             >
               <IoMdAdd className='w-4 h-4 mr-1' />
               Nuevo
@@ -68,7 +79,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                     <td className="py-2 px-4 border-b text-center">{producto.marca}</td>
                     <td className="py-2 px-4 border-b text-center">{producto.stock}</td>
                     <td className="py-2 px-4 border-b text-center">
-                      <input
+                    <input
                         type="number"
                         className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2 text-center w-16 mx-auto"
                         value={cantidades[producto.codigo] || 1}
@@ -77,9 +88,9 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                       />
                     </td>
                     <td className="py-2 px-4 border-b text-center">
-                      <button 
+                    <button
                         className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                        onClick={() => agregarProducto(producto, cantidades[producto.codigo] || 1)}
+                        onClick={() => handleAgregarProducto(producto)}
                       >
                         <IoMdAdd />
                       </button>
@@ -100,6 +111,9 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
           </button>
         </div>
       </div>
+      {activeAdd && (
+        <ProductosForm modalTitle={'Nuevo Producto'} onClose={handleModalAdd} />
+      )}
     </div>
   );
 };
