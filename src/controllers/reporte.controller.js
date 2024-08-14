@@ -5,15 +5,21 @@ const getTotalProductosVendidos = async (req, res) => {
 
   try {
     const connection = await getConnection();
-    
-    const [result] = await connection.query(
-      `SELECT SUM(dv.cantidad) AS total_productos_vendidos
-       FROM detalle_venta dv
-       JOIN venta v ON dv.id_venta = v.id_venta
-       WHERE v.id_sucursal = ?`, 
-      [id_sucursal]
-    );
-    
+
+    let query = `
+      SELECT SUM(dv.cantidad) AS total_productos_vendidos
+      FROM detalle_venta dv
+      JOIN venta v ON dv.id_venta = v.id_venta
+    `;
+
+    const params = [];
+
+    if (id_sucursal) {
+      query += ` WHERE v.id_sucursal = ?`;
+      params.push(id_sucursal);
+    }
+
+    const [result] = await connection.query(query, params);
     const totalProductosVendidos = result[0].total_productos_vendidos || 0;
 
     res.json({ code: 1, totalProductosVendidos, message: "Total de productos vendidos obtenido correctamente" });
@@ -22,19 +28,27 @@ const getTotalProductosVendidos = async (req, res) => {
   }
 };
 
+
 const getTotalSalesRevenue = async (req, res) => {
   const { id_sucursal } = req.query;
 
   try {
     const connection = await getConnection();
-    const query = 
-      `SELECT SUM(dv.total) AS totalRevenue 
-       FROM detalle_venta dv
-       JOIN venta v ON dv.id_venta = v.id_venta
-       WHERE v.id_sucursal = ?`;
 
-    const [result] = await connection.query(query, [id_sucursal]);
+    let query = `
+      SELECT SUM(dv.total) AS totalRevenue 
+      FROM detalle_venta dv
+      JOIN venta v ON dv.id_venta = v.id_venta
+    `;
 
+    const params = [];
+
+    if (id_sucursal) {
+      query += ` WHERE v.id_sucursal = ?`;
+      params.push(id_sucursal);
+    }
+
+    const [result] = await connection.query(query, params);
     res.status(200).json({ totalRevenue: result[0].totalRevenue || 0 });
   } catch (error) {
     console.error('Error en el servidor:', error.message);
@@ -42,107 +56,138 @@ const getTotalSalesRevenue = async (req, res) => {
   }
 };
 
+
 const getProductoMasVendido = async (req, res) => {
   const { id_sucursal } = req.query;
 
   try {
     const connection = await getConnection();
-    const [result] = await connection.query(
-      `SELECT 
+
+    let query = `
+      SELECT 
         p.id_producto,
         p.descripcion,
         SUM(dv.cantidad) AS total_vendido
-       FROM 
+      FROM 
         detalle_venta dv
-       JOIN 
+      JOIN 
         producto p ON dv.id_producto = p.id_producto
-       JOIN 
+      JOIN 
         venta v ON dv.id_venta = v.id_venta
-       WHERE 
-        v.id_sucursal = ?
-       GROUP BY 
+    `;
+
+    const params = [];
+
+    if (id_sucursal) {
+      query += ` WHERE v.id_sucursal = ?`;
+      params.push(id_sucursal);
+    }
+
+    query += `
+      GROUP BY 
         p.id_producto, p.descripcion
-       ORDER BY 
+      ORDER BY 
         total_vendido DESC
-       LIMIT 1`, 
-      [id_sucursal]
-    );
+      LIMIT 1
+    `;
+
+    const [result] = await connection.query(query, params);
 
     if (result.length === 0) {
       return res.status(404).json({ message: "No se encontraron productos vendidos." });
     }
 
     const productoMasVendido = result[0];
-
     res.json({ code: 1, data: productoMasVendido, message: "Producto más vendido obtenido correctamente" });
   } catch (error) {
     res.status(500).send(error.message);
   }
 };
 
+
 const getCantidadVentasPorSubcategoria = async (req, res) => {
   const { id_sucursal } = req.query;
 
   try {
     const connection = await getConnection();
-    const [result] = await connection.query(
-      `SELECT 
+
+    let query = `
+      SELECT 
         sc.nom_subcat AS subcategoria,
         SUM(dv.cantidad) AS cantidad_vendida
-       FROM 
+      FROM 
         detalle_venta dv
-       JOIN 
+      JOIN 
         producto p ON dv.id_producto = p.id_producto
-       JOIN 
+      JOIN 
         sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
-       JOIN 
+      JOIN 
         venta v ON dv.id_venta = v.id_venta
-       WHERE 
-        v.id_sucursal = ?
-       GROUP BY 
-        sc.nom_subcat
-       ORDER BY 
-        cantidad_vendida DESC`, 
-      [id_sucursal]
-    );
+    `;
 
+    const params = [];
+
+    if (id_sucursal) {
+      query += ` WHERE v.id_sucursal = ?`;
+      params.push(id_sucursal);
+    }
+
+    query += `
+      GROUP BY 
+        sc.nom_subcat
+      ORDER BY 
+        cantidad_vendida DESC
+    `;
+
+    const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Cantidad de ventas por subcategoría obtenida correctamente" });
   } catch (error) {
     res.status(500).send(error.message);
   }
 };
 
+
 const getCantidadVentasPorProducto = async (req, res) => {
   const { id_sucursal } = req.query;
 
   try {
     const connection = await getConnection();
-    const [result] = await connection.query(
-      `SELECT 
+
+    let query = `
+      SELECT 
         p.id_producto,
         p.descripcion,
         SUM(dv.cantidad) AS cantidad_vendida,
         SUM(dv.total) AS dinero_generado
-       FROM 
+      FROM 
         detalle_venta dv
-       JOIN 
+      JOIN 
         producto p ON dv.id_producto = p.id_producto
-       JOIN 
+      JOIN 
         venta v ON dv.id_venta = v.id_venta
-       WHERE 
-        v.id_sucursal = ?
-       GROUP BY 
-        p.id_producto, p.descripcion
-       ORDER BY 
-        cantidad_vendida DESC`, 
-      [id_sucursal]
-    );
+    `;
 
+    const params = [];
+
+    if (id_sucursal) {
+      query += ` WHERE v.id_sucursal = ?`;
+      params.push(id_sucursal);
+    }
+
+    query += `
+      GROUP BY 
+        p.id_producto, p.descripcion
+      ORDER BY 
+        cantidad_vendida DESC
+    `;
+
+    const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Cantidad de ventas por producto obtenida correctamente" });
   } catch (error) {
     res.status(500).send(error.message);
   }
 };
+
 
 const getAnalisisGananciasSucursales = async (req, res) => {
   try {
