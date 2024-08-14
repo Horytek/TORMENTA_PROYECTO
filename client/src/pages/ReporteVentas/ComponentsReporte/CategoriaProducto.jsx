@@ -10,8 +10,8 @@ const currencyFormatter = (number) => {
   return Intl.NumberFormat('us').format(number).toString();
 };
 
-export default function Example() {
-  const { data, loading, error } = useCantidadVentasPorSubcategoria();
+export default function Example({ idSucursal }) { 
+  const { data, loading, error } = useCantidadVentasPorSubcategoria(idSucursal); 
 
   useEffect(() => {
     console.log('Data from hook:', data);

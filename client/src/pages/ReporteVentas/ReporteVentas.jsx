@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { SlOptionsVertical } from "react-icons/sl";
 import { LuRefreshCcw } from "react-icons/lu";
@@ -17,12 +17,16 @@ const ReporteVentas = () => {
   const [ventas, setVentas] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTab, setSelectedTab] = useState("todas"); // Estado inicial para la pestaña seleccionada
 
-  const handleSearch = () => {
-    console.log("Buscando ventas...");
-    setVentas([]);
+  const sucursales = {
+    arica1: 3,
+    arica2: 2,
+    arica3: 1,
+    balta: 4,
   };
 
+ 
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -141,8 +145,13 @@ const ReporteVentas = () => {
         style={{ marginBottom: "10px", marginTop: "17px" }}
       >
         <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 relative">
-          <Tabs variant="underlined" aria-label="Tabs variants">
-            <Tab key="arica" title="Tienda Arica" />
+          <Tabs
+            variant="underlined"
+            aria-label="Tabs variants"
+            selectedKey={selectedTab}
+            onSelectionChange={setSelectedTab} 
+          >
+            <Tab key="todas" title="Todas" />
             <Tab key="arica1" title="Tienda Arica-1" />
             <Tab key="arica2" title="Tienda Arica-2" />
             <Tab key="arica3" title="Tienda Arica-3" />
@@ -183,27 +192,28 @@ const ReporteVentas = () => {
                   showMonthYearPicker
                   dateFormat="MM/yyyy"
                   style={{ width: "200px" }}
-                />{" "}
-                </div>
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <KPIS />
+      {/* Si la pestaña seleccionada es "todas", no pasamos idSucursal */}
+      <KPIS idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null} />
 
       <div className="flex-grow mb-8 grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-5 sm:grid-areas-[overview_categoria]">
         <div className="sm:grid-area-[overview]">
-          <TablaGanancias />
+          <TablaGanancias idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null} />
         </div>
         <div className="sm:grid-area-[categoria]">
-          <CategoriaProducto />
+          <CategoriaProducto idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null} />
         </div>
       </div>
 
       <div className="grid grid-cols-5 grid-rows-[0.9fr] gap-0">
         <div className="col-start-1 col-end-6 row-start-2 row-end-3">
-          <Comparativa />
+          <Comparativa idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null} />
         </div>
       </div>
     </div>

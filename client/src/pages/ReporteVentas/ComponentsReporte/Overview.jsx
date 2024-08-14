@@ -5,8 +5,8 @@ import useCantidadVentasPorProducto from '../data/data_prod_venta';
 const dataFormatter = (number) => ` ${Intl.NumberFormat("us").format(number).toString()}`;
 const currencyFormatter = (number) => `S/ ${Intl.NumberFormat("us").format(number).toString()}`;
 
-const BarChartHero = () => {
-  const { ventasPorProducto, loading, error } = useCantidadVentasPorProducto();
+const BarChartHero = ({ idSucursal }) => { 
+  const { ventasPorProducto, loading, error } = useCantidadVentasPorProducto(idSucursal); 
 
   const chartdata = ventasPorProducto.map(producto => ({
     name: producto.descripcion,
