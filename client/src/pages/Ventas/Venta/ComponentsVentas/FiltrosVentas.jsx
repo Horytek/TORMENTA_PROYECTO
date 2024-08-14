@@ -119,7 +119,7 @@ const FiltrosVentas = ({onFiltersChange, refetchVentas}) => {
                     }}/>
                 </div>
                 <div className="mb-2 input-wrapper md:mb-0">
-                    <Select id="tipo" placeholder="Tipo Comprobante" className="p-0 rounded-lg" style={{width: "190px"}} value={comprobanteSeleccionado}
+                    <Select id="tipo" placeholder="Tipo Comprobante" selectionMode="multiple" className="p-0 rounded-lg" style={{width: "190px"}} value={comprobanteSeleccionado}
                                 onChange={(e) => setComprobanteSeleccionado(e.target.value)}
                                                                     >
                         {comprobantes.map((comprobante) => (
