@@ -217,7 +217,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
+              <ModalHeader className="flex flex-col gap-1">Opciones de impresion</ModalHeader>
               <ModalBody>
                 <p> 
                   ¿Desea imprimir nuevamente el boucher de la venta electronica?
