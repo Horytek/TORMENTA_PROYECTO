@@ -3,15 +3,17 @@ import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import { useSubcategoriasConCategoria } from './hooks/data_list';
-import { useDeleteSubcategoria } from './hooks/delete';
-import { useDeactivateSubcategoria } from './hooks/deactivate';
+import EditForm from "./EditSubcat";
+import { useSubcategoriasConCategoria } from './hooks/getSubcategory';
+import { useDeleteSubcategoria } from './hooks/deleteFunc';
+import { useDeactivateSubcategoria } from './hooks/deactivateFunc';
 
 export function ShowSubcategorias({ searchTerm }) {
   const { subcategorias, setSubcategorias, loading, error } = useSubcategoriasConCategoria();  
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeactivationModalOpen, setIsDeactivationModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); 
   const [selectedRow, setSelectedRow] = useState(null); 
   const productosPerPage = 10;
 
@@ -37,6 +39,16 @@ export function ShowSubcategorias({ searchTerm }) {
       );
     }
   }, [deactivateSuccess, selectedRow, setSubcategorias]);
+
+  const handleOpenEditModal = (id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria) => {
+    setSelectedRow({ id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria });
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedRow(null);
+  };
 
   const handleOpenConfirmationModal = (id, nombre) => {
     setSelectedRow({ id, nombre });
@@ -148,8 +160,15 @@ export function ShowSubcategorias({ searchTerm }) {
                     <div className="flex justify-center items-center">
                       <button
                         className="px-2 py-1 text-yellow-400 text-xl"
-                        onClick={
-                          () => console.log("Edit action") // Aquí iría la acción de editar
+                        onClick={() =>
+                          handleOpenEditModal(
+                            sub_categoria.id_subcategoria,
+                            sub_categoria.id_categoria,
+                            sub_categoria.nom_subcat,
+                            sub_categoria.estado_subcat,
+                            sub_categoria.nom_categoria,
+                            sub_categoria.estado_categoria
+                          )
                         }
                       >
                         <MdEdit />
@@ -212,6 +231,14 @@ export function ShowSubcategorias({ searchTerm }) {
           message={`¿Estas seguro que deseas dar de baja a "${selectedRow.nombre}"?`}
           onClose={handleCloseDeactivationModal}
           onConfirm={handleConfirmDeactivate}
+        />
+      )}
+      {isEditModalOpen && selectedRow && (
+        <EditForm
+          isOpen={isEditModalOpen}
+          modalTitle={"Editar Subcategoria"}
+          onClose={handleCloseEditModal}
+          initialData={selectedRow}
         />
       )}
     </div>

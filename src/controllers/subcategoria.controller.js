@@ -86,26 +86,32 @@ const addSubCategoria = async (req, res) => {
 
 const updateSubCategoria = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { id_categoria, nom_subcat, estado_subcat } = req.body;
+        const { id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria } = req.body;
 
         const connection = await getConnection();
-        const [result] = await connection.query(`
+        
+        const [resultSubCat] = await connection.query(`
             UPDATE sub_categoria 
             SET id_categoria = ?, nom_subcat = ?, estado_subcat = ?
-            WHERE id_subcategoria = ?`, [id_categoria, nom_subcat, estado_subcat, id]);
+            WHERE id_subcategoria = ?`, [id_categoria, nom_subcat, estado_subcat, id_subcategoria]);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Subcategoría no encontrada" });
+        const [resultCat] = await connection.query(`
+            UPDATE categoria 
+            SET nom_categoria = ?, estado_categoria = ?
+            WHERE id_categoria = ?`, [nom_categoria, estado_categoria, id_categoria]);
+
+        if (resultSubCat.affectedRows === 0 && resultCat.affectedRows === 0) {
+            return res.status(404).json({ message: "Subcategoría o categoría no encontrada" });
         }
 
-        res.json({ message: "Subcategoría actualizada con éxito" });
+        res.json({ message: "Subcategoría y categoría actualizadas con éxito" });
     } catch (error) {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
     }
 };
+
 
 const deactivateSubCategoria = async (req, res) => {
     const { id } = req.params;
