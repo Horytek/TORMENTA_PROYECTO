@@ -492,7 +492,7 @@ const anularGuia = async (req, res) => {
 
             if (!detalleEnvioResult.insertId) {
                 throw new Error(`Error al insertar el detalle del envío con 
-                    producto; ${id_producto}, guia: ${id_guiaremision} y cantidad: ${cantidadProducto}`);
+                    producto: ${id_producto}, guia: ${id_guiaremision} y cantidad: ${cantidadProducto}`);
             }
         }
 
