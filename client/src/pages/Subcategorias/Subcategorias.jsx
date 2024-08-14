@@ -44,7 +44,6 @@ function Subcategorias() {
         <div className="flex items-center gap-4 ml-auto">
           <div className="relative flex-grow max-w-md">
             {" "}
-            {/* Adjusted flex-grow and max-width */}
             <BarraSearch
               value={searchTerm}
               onChange={handleSearchChange}
