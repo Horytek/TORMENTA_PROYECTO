@@ -14,9 +14,11 @@ const ModalBuscarProducto = ({ isOpen, onClose, setSearchInput, productos, agreg
   const [barcode, setBarcode] = useState('');
 
   useEffect(() => {
+    // Filtrar productos por descripción o código de barras
     setFilteredProductos(
       productos.filter((producto) =>
-        producto.descripcion.toLowerCase().includes(searchInput.toLowerCase())
+        producto.descripcion.toLowerCase().includes(searchInput.toLowerCase()) ||
+        producto.codbarras?.toLowerCase().includes(searchInput.toLowerCase())
       )
     );
   }, [searchInput, productos]);
@@ -25,7 +27,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, setSearchInput, productos, agreg
     const handleKeyPress = (event) => {
       if (event.key === 'Enter') {
         // Al presionar Enter, se supone que el escáner ha terminado de enviar el código
-        const productoEscaneado = productos.find(p => p.codigo_barras === barcode);
+        const productoEscaneado = productos.find(p => p.codbarras === barcode);
         if (productoEscaneado) {
           setFilteredProductos([productoEscaneado]); // Filtra automáticamente por el producto escaneado
         } else {
@@ -92,7 +94,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, setSearchInput, productos, agreg
             <table className="min-w-full bg-white">
               <thead>
                 <tr>
-                  <th className=" py-2 px-4 border-b">Código</th>
+                  <th className="py-2 px-4 border-b">Código</th>
                   <th className="py-2 px-4 border-b w-96">Descripción</th>
                   <th className="py-2 px-4 border-b">Marca</th>
                   <th className="py-2 px-4 border-b">Cantidad</th>

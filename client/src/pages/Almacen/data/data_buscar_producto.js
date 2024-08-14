@@ -4,7 +4,10 @@ import { toast } from 'react-hot-toast';
 const useProductosData = async (searchInput, setProductos) => {
   try {
     const response = await axios.get('http://localhost:4000/api/guia_remision/productos', {
-      params: { descripcion: searchInput },  // Enviar el input de búsqueda como parámetro
+      params: { 
+        descripcion: searchInput,  // Enviar el input de búsqueda como parámetro para descripcion
+        codbarras: searchInput     // Enviar el mismo input de búsqueda como parámetro para codbarras
+      },
     });
 
     if (response.data.code === 1) {

@@ -292,35 +292,39 @@ const addVehiculo = async (req, res) => {
 
 //OBTENER PRODUCTOS
 const getProductos = async (req, res) => {
-    const { descripcion = ''} = req.query;
-  
-    console.log('Filtros recibidos:', {descripcion});
+    const { descripcion = '', codbarras = '' } = req.query;
+
+    console.log('Filtros recibidos:', { descripcion, codbarras });
+
     try {
-      const connection = await getConnection();
-  
-      const [productosResult] = await connection.query(
-        `
-        SELECT 
-        p.id_producto AS codigo, 
-        p.descripcion AS descripcion, 
-        m.nom_marca AS marca
-        FROM 
-            producto p 
-        INNER JOIN 
-            marca m ON p.id_marca = m.id_marca
-        WHERE 
-             p.descripcion LIKE ?
-        `,
-        [`%${descripcion}%`]
-      );
-  
-      console.log('Productos encontrados:', productosResult);
-  
-      res.json({ code: 1, data: productosResult });
+        const connection = await getConnection();
+
+        const [productosResult] = await connection.query(
+            `
+            SELECT 
+                p.id_producto AS codigo, 
+                p.descripcion AS descripcion, 
+                m.nom_marca AS marca,
+                p.cod_barras AS codbarras
+            FROM 
+                producto p 
+            INNER JOIN 
+                marca m ON p.id_marca = m.id_marca
+            WHERE 
+                p.descripcion LIKE ? AND
+                p.cod_barras LIKE ?
+            `,
+            [`%${descripcion}%`, `%${codbarras}%`]
+        );
+
+        console.log('Productos encontrados:', productosResult);
+
+        res.json({ code: 1, data: productosResult });
     } catch (error) {
-      res.status(500).send(error.message);
+        res.status(500).send(error.message);
     }
-  };
+};
+
 
 // INSERTAR DESTINATARIO NATURAL
 const addDestinatarioNatural = async (req, res) => {
