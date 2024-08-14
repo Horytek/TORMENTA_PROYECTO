@@ -10,14 +10,13 @@ import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
 import KPIS from "./ComponentsReporte/KPIS";
 import Comparativa from "./ComponentsReporte/Comparativa";
 import DatePicker from "react-datepicker";
-import { ButtonSearch } from "@/components/Buttons/Buttons";
 import "react-datepicker/dist/react-datepicker.css";
 
 const ReporteVentas = () => {
   const [ventas, setVentas] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedTab, setSelectedTab] = useState("todas"); // Estado inicial para la pestaña seleccionada
+  const [selectedTab, setSelectedTab] = useState("todas"); // Estado inicial 
 
   const sucursales = {
     arica1: 3,

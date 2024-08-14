@@ -1,33 +1,34 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import "./Inicio.css";
 import { CardComponent } from "@/components/Cards/Card";
 import { LineChartComponent } from "./LineChart";
 import { RiShoppingBag4Line } from "@remixicon/react";
 import { LuShirt } from "react-icons/lu";
 import { TiStarburstOutline } from "react-icons/ti";
-import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@tremor/react";
-
+import { Tabs, Tab, Divider } from "@nextui-org/react";
 import useProductTop from "./hooks/product_top";
 import useProductSell from "./hooks/product_sell";
 import useVentasTotal from "./hooks/ventas_total";
+import { useState } from "react";
 
 function Inicio() {
-  const renderTabContent = (timePeriod) => {
+  const [selectedTab, setSelectedTab] = useState("24h");
+
+  const renderTabContent = () => {
     const {
       productTop,
       loading: loadingTop,
       error: errorTop,
-    } = useProductTop(timePeriod);
+    } = useProductTop(selectedTab);
     const {
       totalProductsSold,
       loading: loadingSell,
       error: errorSell,
-    } = useProductSell(timePeriod);
+    } = useProductSell(selectedTab);
     const {
       ventasTotal,
       loading: loadingVentas,
       error: errorVentas,
-    } = useVentasTotal(timePeriod);
+    } = useVentasTotal(selectedTab);
 
     if (loadingTop || loadingSell || loadingVentas) return <p>Cargando...</p>;
     if (errorTop || errorSell || errorVentas)
@@ -80,40 +81,39 @@ function Inicio() {
         <h1 className="text-5xl font-bold tracking-wide text-gray-700 title-Inicio">
           DASHBOARD TORMENTA
         </h1>
+        <p
+          className="text-small text-default-400"
+          style={{
+            fontSize: "16px",
+            pointerEvents: "none",
+            userSelect: "none",
+            marginTop: "10px",
+          }}
+        >
+          Visualiza el dashboard general de ventas por periodos de tiempo.
+        </p>
       </header>
-
+      <div className="max-w-md">
+        <Divider className="my-3" />
+      </div>
       {/* Tabs de Reporte */}
-      <div>
+      <div style={{ marginTop: "15px" }}>
         <main>
-          <TabGroup>
-            <TabList className="mt-4">
-              <Tab>Ult. 24hrs</Tab>
-              <Tab>Ult. Semana</Tab>
-              <Tab>Ult. mes</Tab>
-              <Tab>Ult. año</Tab>
-            </TabList>
-            <TabPanels>
-              {/* Tab Numero 1 */}
-              <TabPanel className="mt-4  leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
-                {renderTabContent("24h")}
-              </TabPanel>
+          <Tabs
+            variant="underlined"
+            aria-label="Tabs variants"
+            selectedKey={selectedTab}
+            onSelectionChange={setSelectedTab}
+          >
+            <Tab key="24h" title="Ult. 24hrs" />
+            <Tab key="semana" title="Ult. Semana" />
+            <Tab key="mes" title="Ult. mes" />
+            <Tab key="anio" title="Ult. año" />
+          </Tabs>
 
-              {/* Tab Numero 2 */}
-              <TabPanel className="mt-4  leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
-                {renderTabContent("semana")}
-              </TabPanel>
-
-              {/* Tab Numero 3 */}
-              <TabPanel className="mt-4  leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
-                {renderTabContent("mes")}
-              </TabPanel>
-
-              {/* Tab Numero 4 */}
-              <TabPanel className="mt-4  leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
-                {renderTabContent("anio")}
-              </TabPanel>
-            </TabPanels>
-          </TabGroup>
+          <div className="mt-4 leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+            {renderTabContent()}
+          </div>
         </main>
       </div>
     </div>
