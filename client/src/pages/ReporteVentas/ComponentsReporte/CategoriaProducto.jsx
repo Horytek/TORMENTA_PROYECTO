@@ -25,7 +25,6 @@ export default function Example() {
     console.log("Data from hook:", data);
   }, [data]);
 
-  // Array de colores que se utilizará para asignar colores a las subcategorías
   const colors = [
     "bg-cyan-500",
     "bg-blue-500",

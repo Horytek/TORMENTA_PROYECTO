@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const useCantidadVentasPorProducto = () => {
+const useCantidadVentasPorProducto = (idSucursal) => { 
   const [ventasPorProducto, setVentasPorProducto] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,7 +11,11 @@ const useCantidadVentasPorProducto = () => {
     setError(null);
 
     try {
-      const response = await axios.get('http://localhost:4000/api/reporte/cantidad_por_producto');
+      const response = await axios.get('http://localhost:4000/api/reporte/cantidad_por_producto', {
+        params: {
+          id_sucursal: idSucursal, 
+        },
+      });
       
       if (response.data.code === 1) {
         setVentasPorProducto(response.data.data);
@@ -23,7 +27,7 @@ const useCantidadVentasPorProducto = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [idSucursal]); 
 
   useEffect(() => {
     fetchCantidadVentasPorProducto();

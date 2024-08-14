@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const useCantidadVentasPorSubcategoria = () => {
+const useCantidadVentasPorSubcategoria = (idSucursal) => { 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,7 +12,12 @@ const useCantidadVentasPorSubcategoria = () => {
       setError(null);
 
       try {
-        const response = await axios.get('http://localhost:4000/api/reporte/cantidad_por_subcategoria');
+        const response = await axios.get('http://localhost:4000/api/reporte/cantidad_por_subcategoria', {
+          params: {
+            id_sucursal: idSucursal, 
+          },
+        });
+
         if (response.data.code === 1) {
           setData(response.data.data);
         } else {
@@ -26,7 +31,7 @@ const useCantidadVentasPorSubcategoria = () => {
     };
 
     fetchData();
-  }, []);
+  }, [idSucursal]); 
 
   return { data, loading, error };
 };

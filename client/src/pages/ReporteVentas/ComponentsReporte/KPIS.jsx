@@ -5,10 +5,10 @@ import useProductosVendidos from "../data/data_prod";
 import useProductoTop from "../data/data_top";
 import { RiCashFill, RiLineChartFill, RiTShirt2Line } from "@remixicon/react";
 
-const SalesCard = () => {
-  const { totalRecaudado } = useVentasData();
-  const { totalProductosVendidos } = useProductosVendidos();
-  const { productoTop, loading, error } = useProductoTop();
+const SalesCard = ({ idSucursal }) => { 
+  const { totalRecaudado } = useVentasData(idSucursal); 
+  const { totalProductosVendidos } = useProductosVendidos(idSucursal); 
+  const { productoTop, loading, error } = useProductoTop(idSucursal); 
 
   return (
     <div className="container mx-auto px-4 mb-4">

@@ -183,9 +183,8 @@ const ReporteVentas = () => {
                   showMonthYearPicker
                   dateFormat="MM/yyyy"
                   style={{ width: "200px" }}
-                />
-                <ButtonSearch style={{ marginLeft: "10px" }} />
-              </div>
+                />{" "}
+                </div>
             </div>
           </div>
         </div>
