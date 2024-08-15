@@ -138,10 +138,31 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       const content = generateReceiptContent(venta_B, ventas_VB);
       const printWindow = window.open('', '', 'height=600,width=800');
     
-      printWindow.document.write('<html><head><title>Recibo</title>');
-      printWindow.document.write('</head><body >');
-      printWindow.document.write(`<pre>${content}</pre>`);
-      printWindow.document.write('</body></html>');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Recibo</title>
+        <style>
+          @page {
+            size: 72mm 297mm; /* Tamaño de papel en milímetros */
+            margin: 20; /* Ajusta los márgenes según sea necesario */
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+          }
+          pre {
+            margin: 0;
+          }
+        </style>
+      </head>
+      <body>
+        <pre>${content}</pre>
+      </body>
+    </html>
+  `);
     
       printWindow.document.close();
       printWindow.focus();
