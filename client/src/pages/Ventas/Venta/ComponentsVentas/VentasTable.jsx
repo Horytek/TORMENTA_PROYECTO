@@ -263,11 +263,8 @@ const handlePrint1 = () => {
                 onClick={() => openModal(venta.id, venta.estado)}
             />
             <TiPrinter className='text-gray-500' onClick={onOpen} style={{ fontSize: '20px' }}/>
-            <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}  classNames={{
-          backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20" 
-        }}
-        style={{ zIndex: 1000 }} // Asegura un z-index alto para el modal
-        >
+            <Modal backdrop={"transparent"} isOpen={isOpen} onOpenChange={onOpenChange} // Asegura un z-index alto para el modal
+       >
         <ModalContent>
           {(onClose) => (
             <>
@@ -279,7 +276,7 @@ const handlePrint1 = () => {
                   onChange={(e) => setPrintOption(e.target.value)}
                 >
                   <Radio value="print">Descargar PDF</Radio>
-                  <Radio value="print-1">Imprimir</Radio>
+                  <Radio value="print-1">Imprimir boucher de la venta</Radio>
                 </RadioGroup>
               </ModalBody>
               <ModalFooter>
