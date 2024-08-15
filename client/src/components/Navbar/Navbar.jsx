@@ -2,9 +2,9 @@ import './Navbar.css';
 import { useState } from 'react';
 import { FaBars, FaTimes, FaUser } from 'react-icons/fa';
 import { IoIosSearch } from "react-icons/io";
-import { Link } from 'react-router-dom';
+//import { Link } from 'react-router-dom';
 import {Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User} from "@nextui-org/react";
-
+import { Link} from "@nextui-org/react";
 // Auth Context
 import { useAuth } from '@/context/Auth/AuthProvider';
 
@@ -26,17 +26,18 @@ function Navbar() {
           {menuOpen ? <FaTimes className="text-gray-700" /> : <FaBars className="text-gray-700" />}
         </button>
         {/* Menú desplegable */}
-        <div className={`menu-desplegable w-full md:flex md:items-center ${menuOpen ? 'block shadow-md' : 'hidden'} md:block absolute md:static`}>
-          <Link to="/ventas" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">
+        <div className={`w-full md:flex md:items-center ${menuOpen ? 'block shadow-md' : 'hidden'} md:block absolute md:static`}>
+          <Link  href="/ventas" color="primary" isBlock
+      as={Link} className="block md:inline-block text-gray-600 text-center py-2 ">
             Venta
           </Link>
-          <Link to="/almacen" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">
+          <Link as={Link} color="primary" isBlock href="/almacen" className="block md:inline-block text-center text-gray-600 px-2 py-2">
             Almacén
           </Link>
-          <Link to="/empleados" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">
+          <Link as={Link} color="primary" isBlock href="/empleados" className="block md:inline-block text-gray-600 px-2 py-2 ">
             Empleados
           </Link>
-          <Link to="/productos" className="block md:inline-block text-gray-600 px-2 py-2 hover:bg-gray-200">
+          <Link as={Link} color="primary" isBlock href="/productos" className="block md:inline-block text-gray-600 px-2 py-2">
             Productos
           </Link>
         </div>

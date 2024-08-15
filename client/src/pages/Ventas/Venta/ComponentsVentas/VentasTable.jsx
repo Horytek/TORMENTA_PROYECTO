@@ -263,7 +263,30 @@ const handlePrint1 = () => {
                 onClick={() => openModal(venta.id, venta.estado)}
             />
             <TiPrinter className='text-gray-500' onClick={onOpen} style={{ fontSize: '20px' }}/>
-            <Modal backdrop={"transparent"} isOpen={isOpen} onOpenChange={onOpenChange} // Asegura un z-index alto para el modal
+            <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
+            motionProps={{
+              variants: {
+                enter: {
+                  y: 0,
+                  opacity: 1,
+                  transition: {
+                    duration: 0.2,
+                    ease: "easeOut",
+                  },
+                },
+                exit: {
+                  y: -20,
+                  opacity: 0,
+                  transition: {
+                    duration: 0.2,
+                    ease: "easeIn",
+                  },
+                },
+              }
+            }}
+            classNames={{
+              backdrop: "bg-[#27272A]/10 backdrop-opacity-4"
+            }}
        >
         <ModalContent>
           {(onClose) => (
@@ -284,7 +307,7 @@ const handlePrint1 = () => {
                   Cerrar
                 </Button>
                 <Button color="primary" onPress={onClose} onClick={handlePrint}>
-                  Imprimir
+                  Aceptar
                 </Button>
               </ModalFooter>
             </>
