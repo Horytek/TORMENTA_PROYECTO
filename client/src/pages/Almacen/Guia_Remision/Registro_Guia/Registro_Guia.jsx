@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { IoMdPin, IoMdCar, IoMdAdd, IoIosSearch } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
@@ -16,6 +17,8 @@ import ProductosForm from '@/pages/Productos/ProductosForm';
 import useProductosData from '../../data/data_buscar_producto';
 import insertGuiaandDetalle from '../../data/insert_guiaremision';
 import { Toaster, toast } from 'react-hot-toast'; // <-- Importación añadida
+
+
 
 
 
@@ -46,14 +49,24 @@ function RegistroGuia() {
   const [searchInput, setSearchInput] = useState('');
   const [productos, setProductos] = useState([]); // Tu array de productos
 
+  const handleCancel = () => {
+    localStorage.removeItem('productosSeleccionados');
+    setProductosSeleccionados([]);
+  };
+
   const handleGuardar = async () => {
+
+    const confirmacion = window.confirm("¿Está seguro de que desea guardar la guía de remisión?");
+  if (!confirmacion) {
+    return; // Si no se confirma, salimos de la función
+  }
 
     if (productosSeleccionados.length === 0) {
       toast.error('Debe agregar al menos un producto.');
       return;
     }
-    // Recolectar los datos del formulario
-    //num de guia
+    
+    
     const id_sucursal = document.getElementById('vendedor').value;
     const id_ubigeo_o = document.getElementById('ubipart').value;
     const id_ubigeo_d = document.getElementById('ubidest').value;
@@ -89,20 +102,18 @@ function RegistroGuia() {
       cantidad: productos.map(p => p.cantidad),
     };
 
-    try {
-      const response = await insertGuiaandDetalle(guiaData, productosSeleccionados);
-      console.log(response); // <-- Verifica qué está devolviendo el servidor
+      const response = await insertGuiaandDetalle(guiaData); // Pasar solo guiaData
+      console.log(response);
       if (response.success) {
         toast.success("Guía de Remisión y detalles guardados exitosamente");
+        handleCancel();
+        window.location.reload();
       } else {
         toast.error("Error al guardar la Guía de Remisión");
       }
-    } catch (error) {
-      console.error(error); // <-- Verifica si hay errores más detallados
-      toast.error("Error al guardar la Guía de Remisión");
-    }
 
   };
+
 
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
     const saved = localStorage.getItem('productosSeleccionados');
@@ -185,6 +196,11 @@ function RegistroGuia() {
   const handleSaveTransporte = (transporte) => {
     setTransporte(transporte);
   };
+
+  const clienteOptions = clientes.map(cliente => ({
+    value: cliente.id,
+    label: cliente.nombre,
+  }));
 
 
   const currentDate = new Date().toISOString().split('T')[0];
@@ -301,11 +317,12 @@ function RegistroGuia() {
                     } else {
                       document.getElementById('dirpart').value = '';
                     }
-                  }}>
+                  }} >
                   <option>Seleccione...</option>
                   {sucursales.map((sucursal) => (
                     <option key={sucursal.id} value={sucursal.id}>{sucursal.nombre}</option>
                   ))}
+                  
                 </select>
               </div>
               <div className="flex">

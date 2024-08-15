@@ -141,7 +141,7 @@ const getAlmacen = async (req, res) => {
                 detalle_nota dn ON n.id_nota = dn.id_nota
             INNER JOIN 
                 producto p ON dn.id_producto = p.id_producto
-            INNERJOIN 
+            INNER JOIN 
                 inventario i ON p.id_producto = i.id_producto
             WHERE 
                 DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ? 
@@ -151,7 +151,7 @@ const getAlmacen = async (req, res) => {
             GROUP BY 
                 fecha, documento, nombre, entra, sale, stock, precio, glosa
             ORDER BY 
-                documento
+                documento;
             `,
             [fechaInicio, fechaFin, idProducto, idAlmacen, idAlmacen]
         );
@@ -164,7 +164,7 @@ const getAlmacen = async (req, res) => {
 
 
 const getDetalleKardexAnteriores = async (req, res) => {
-    const { fecha, idProducto ,idAlmacen } = req.query;
+    const { fecha = '2024-08-01', idProducto = 3 ,idAlmacen = 2 } = req.query;
 
     try {
         const connection = await getConnection();
@@ -173,22 +173,24 @@ const getDetalleKardexAnteriores = async (req, res) => {
             `
             SELECT 
                 COUNT(*) AS numero, 
-                SUM(CASE 
+                COALESCE( SUM(CASE 
                     WHEN n.id_tiponota = 1 THEN dn.cantidad 
                     ELSE 0 
-                END) AS entra, 
-                SUM(CASE 
+                END), 0 ) AS entra, 
+                COALESCE ( SUM(CASE 
                     WHEN n.id_tiponota = 2 THEN dn.cantidad 
                     ELSE 0 
-                END) AS sale
+                END), 0 ) AS sale
             FROM 
                 nota n
             INNER JOIN 
                 detalle_nota dn ON n.id_nota = dn.id_nota
+            INNER JOIN
+                producto p on dn.id_producto=p.id_producto
             WHERE 
                 DATE_FORMAT(n.fecha, '%Y-%m-%d') < ? 
                 AND p.id_producto = ? 
-                AND (n.id_almacenO = ? OR n.id_almacenD = ?)
+                AND (n.id_almacenO = ? OR n.id_almacenD = ?);
             `,
             [fecha, idProducto,idAlmacen, idAlmacen]
         );
@@ -201,7 +203,7 @@ const getDetalleKardexAnteriores = async (req, res) => {
 
 const getInfProducto = async (req, res) => {
     const { idProducto ,idAlmacen } = req.query;
-
+    
     try {
         const connection = await getConnection();
 

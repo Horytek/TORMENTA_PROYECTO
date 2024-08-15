@@ -485,14 +485,16 @@ const anularGuia = async (req, res) => {
             const id_producto = producto[i];
             const cantidadProducto = cantidad[i];
 
+            console.log(`Intentando insertar detalle con id_producto: ${id_producto}, cantidad: ${cantidadProducto}`);
+
             const [detalleEnvioResult] = await connection.query(
                 "INSERT INTO detalle_envio (id_guiaremision, id_producto, cantidad, undm) VALUES (?, ?, ?, 'KGM')",
                 [id_guiaremision, id_producto, cantidadProducto]
             );
+            console.log("Resultado de la inserción:", detalleEnvioResult);
 
-            if (!detalleEnvioResult.insertId) {
-                throw new Error(`Error al insertar el detalle del envío con 
-                    producto: ${id_producto}, guia: ${id_guiaremision} y cantidad: ${cantidadProducto}`);
+            if (detalleEnvioResult.affectedRows === 0) {
+                throw new Error(`Error al insertar el detalle del envío con producto: ${id_producto}, guia: ${id_guiaremision}, cantidad: ${cantidadProducto}`);
             }
         }
 

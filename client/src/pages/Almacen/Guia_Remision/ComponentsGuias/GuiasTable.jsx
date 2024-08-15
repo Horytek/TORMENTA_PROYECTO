@@ -35,6 +35,10 @@ const TablaGuias = ({ guias }) => {
     setIsModalOpenAnular(false);
   };
 
+  //FALTA LÓGICA PARA IMPRIMIR
+  
+  
+
   const handleConfirmImprimir = () => {
     setIsModalOpenImprimir(false);
     // Lógica de impresión aquí si es necesario
@@ -105,7 +109,6 @@ const TablaGuias = ({ guias }) => {
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
                 <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">UM</th>
-                <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PRECIO</th>
                 
               </tr>
             </thead>
@@ -117,7 +120,6 @@ const TablaGuias = ({ guias }) => {
                   <td className="text-center">{detalle.descripcion}</td>
                   <td className="text-center">{detalle.cantidad}</td>
                   <td className="text-center">{detalle.um}</td>
-                  <td className="text-center">{detalle.precio}</td>
                   
                 </tr>
               ))}
