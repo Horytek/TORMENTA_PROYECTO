@@ -5,11 +5,13 @@ import { TiPrinter } from "react-icons/ti";
 import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
 import useBoucher from '../../Data/data_boucher'; // Asegúrate de que la ruta sea correcta
 //import useSucursalData from '../../Data/data_sucursal_venta';
-import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure} from "@nextui-org/react";
+import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure,RadioGroup, Radio } from "@nextui-org/react";
+
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   //const {sucursales} = useSucursalData();
+  const [printOption, setPrintOption] = useState(''); 
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
   const toggleRow = (id,estado,venta) => {
     setExpandedRow(expandedRow === id ? null : id);
@@ -100,34 +102,50 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   //const sucursal_v = sucursales.find(sucursal => sucursal.usuario === ventas_VB.usua_vendedor)
   //console.log(sucursal_v);
   //console.log(surB);
+
+  
   const handlePrint = async () => {
-    let nombreImpresora = "BASIC 230 STYLE";
-    let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
-
-    // eslint-disable-next-line no-undef
-    const conector = new connetor_plugin();
-    const content = generateReceiptContent(venta_B, ventas_VB);
-
-    conector.textaling("center");
-
-    // Verifica si las opciones de tamaño están en el formato correcto
-    const imgOptions = { width: 50, height: 50 };
-    const qrOptions = { width: 300, height: 300 };
-
-    conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", imgOptions);
-    content.split('\n').forEach(line => {
-        conector.text(line);
-    });
-
-    conector.qr("https://www.facebook.com/profile.php?id=100055385846115", qrOptions);
-    conector.feed(5);
-    conector.cut("0");
-
-    const resp = await conector.imprimir(nombreImpresora, api_key);
-    if (resp === true) {
-        console.log("Impresión exitosa");
-    } else {
-        console.log("Problema al imprimir: " + resp);
+    if (printOption === 'print-1') {
+      let nombreImpresora = "BASIC 230 STYLE";
+      let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
+  
+      // eslint-disable-next-line no-undef
+      const conector = new connetor_plugin();
+      const content = generateReceiptContent(venta_B, ventas_VB);
+  
+      conector.textaling("center");
+  
+      // Verifica si las opciones de tamaño están en el formato correcto
+      const imgOptions = { width: 50, height: 50 };
+      const qrOptions = { width: 300, height: 300 };
+  
+      conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", imgOptions);
+      content.split('\n').forEach(line => {
+          conector.text(line);
+      });
+  
+      conector.qr("https://www.facebook.com/profile.php?id=100055385846115", qrOptions);
+      conector.feed(5);
+      conector.cut("0");
+  
+      const resp = await conector.imprimir(nombreImpresora, api_key);
+      if (resp === true) {
+          console.log("Impresión exitosa");
+      } else {
+          console.log("Problema al imprimir: " + resp);
+      }
+    } else if (printOption === 'print') {
+      const content = generateReceiptContent(venta_B, ventas_VB);
+      const printWindow = window.open('', '', 'height=600,width=800');
+    
+      printWindow.document.write('<html><head><title>Recibo</title>');
+      printWindow.document.write('</head><body >');
+      printWindow.document.write(`<pre>${content}</pre>`);
+      printWindow.document.write('</body></html>');
+    
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print(); // Abre el diálogo de impresión
     }
 };
 
@@ -167,6 +185,21 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
     }
 };*/
 
+/*
+const handlePrint1 = () => {
+  const content = generateReceiptContent(venta_B, ventas_VB);
+  const printWindow = window.open('', '', 'height=600,width=800');
+
+  printWindow.document.write('<html><head><title>Recibo</title>');
+  printWindow.document.write('</head><body >');
+  printWindow.document.write(`<pre>${content}</pre>`);
+  printWindow.document.write('</body></html>');
+
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print(); // Abre el diálogo de impresión
+};
+*/
 
   const renderVentaRow = (venta) => (
     <React.Fragment key={venta.id}>
@@ -219,9 +252,14 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
             <>
               <ModalHeader className="flex flex-col gap-1">Opciones de impresion</ModalHeader>
               <ModalBody>
-                <p> 
-                  ¿Desea imprimir nuevamente el boucher de la venta electronica?
-                </p>
+                <RadioGroup
+                  label="Selecciona la opcion para el formato del boucher"
+                  value={printOption}
+                  onChange={(e) => setPrintOption(e.target.value)}
+                >
+                  <Radio value="print">Descargar PDF</Radio>
+                  <Radio value="print-1">Imprimir</Radio>
+                </RadioGroup>
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
@@ -288,6 +326,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   };
 
   return (
+    <>
     <div className="container-table-venta px-4 bg-white rounded-lg">
       <table className="table w-full">
         <thead> 
@@ -308,6 +347,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
         </tbody>
       </table>
     </div>
+    </>
   );
 };
 

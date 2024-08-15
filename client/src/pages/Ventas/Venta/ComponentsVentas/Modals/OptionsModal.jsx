@@ -118,6 +118,7 @@ const handleAccept = () => {
               className="custom-checkbox mr-2 relative"
               onChange={() => handleCheckboxChange('generatePdf')}
               checked={generatePdfSelected}
+              disabled={d_venta.tipoComprobante === 'Nota'}
             />{' '}
             <p>Generar PDF</p>
           </div>
@@ -126,7 +127,7 @@ const handleAccept = () => {
           <button className="btn btn-cancel" onClick={closeModal}>
             Cancelar
           </button>
-          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado===1) || (sendToSunat && d_venta.tipoComprobante === 'Nota')}>
+          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado===1) || (sendToSunat && d_venta.tipoComprobante === 'Nota') || (generatePdfSelected && d_venta.tipoComprobante === 'Nota')}>
             Aceptar
           </button>
         </div>
