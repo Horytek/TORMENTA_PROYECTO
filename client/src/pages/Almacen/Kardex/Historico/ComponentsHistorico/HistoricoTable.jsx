@@ -1,16 +1,10 @@
 import PropTypes from 'prop-types';
 import './HistoricoTable.css';
 
-function HistoricoTabla() {
-  const transactions = [
-    { date: '09/06/2024', document: '68 / 400-0006245', name: 'CLIENTE VARIOS', entry: 1, sale: 1, stock: 108, price: 30, note: 'VENTA DE PRODUCTOS' },
-    { date: '09/06/2024', document: '68 / 400-0006246', name: 'CLIENTE VARIOS', entry: 1, sale: 1, stock: 107, price: 30, note: 'VENTA DE PRODUCTOS' },
-    { date: '09/06/2024', document: '68 / 400-0006247', name: 'CLIENTE VARIOS', entry: 1, sale: 1, stock: 106, price: 30, note: 'VENTA DE PRODUCTOS' },
-  ];
-
-  const totalEntry = transactions.reduce((total, trans) => total + trans.entry, 0);
-  const totalSale = transactions.reduce((total, trans) => total + trans.sale, 0);
-  const totalStock = transactions.reduce((total, trans) => total + trans.stock, 0);
+function HistoricoTable({ transactions, previousTransactions }) {
+  const totalEntry = transactions.reduce((total, trans) => total + (trans.entra ? parseFloat(trans.entra) : 0), 0);
+  const totalSale = transactions.reduce((total, trans) => total + (trans.sale ? parseFloat(trans.sale) : 0), 0);
+  const totalStock = transactions.reduce((total, trans) => total + (trans.stock ? parseFloat(trans.stock) : 0), 0);
 
   return (
     <div className="container-table-reg px-4 bg-white rounded-lg">
@@ -28,6 +22,17 @@ function HistoricoTabla() {
           </tr>
         </thead>
         <tbody>
+          {/* Yellow Bar for previous transactions */}
+          {previousTransactions && previousTransactions.length > 0 && (
+            <tr style={{ backgroundColor: '#FFFF00' }}>
+              <td colSpan="8" className="text-center font-bold">
+                TRANSACCIONES ANTERIORES ({previousTransactions[0].numero} documentos)
+              </td>
+              <td className="text-center py-2 px-4 font-semibold">{previousTransactions[0].entra}</td>
+              <td className="text-center py-2 px-4 font-semibold">{previousTransactions[0].sale}</td>
+            </tr>
+          )}
+
           {transactions.map((transaction, index) => (
             <HistoricoFilas key={index} transaction={transaction} />
           ))}
@@ -44,23 +49,28 @@ function HistoricoTabla() {
   );
 }
 
+HistoricoTable.propTypes = {
+  transactions: PropTypes.array.isRequired,
+  previousTransactions: PropTypes.array, // Optional prop for previous transactions data
+};
+
 function HistoricoFilas({ transaction }) {
   return (
     <tr>
-      <td className="text-center py-2 px-4">{transaction.date}</td>
-      <td className="text-center py-2 px-4">{transaction.document}</td>
-      <td className="text-center py-2 px-4">{transaction.name}</td>
-      <td className="text-center py-2 px-4">{transaction.entry}</td>
+      <td className="text-center py-2 px-4">{transaction.fecha}</td>
+      <td className="text-center py-2 px-4">{transaction.documento}</td>
+      <td className="text-center py-2 px-4">{transaction.nombre}</td>
+      <td className="text-center py-2 px-4">{transaction.entra}</td>
       <td className="text-center py-2 px-4">{transaction.sale}</td>
       <td className="text-center py-2 px-4">{transaction.stock}</td>
-      <td className="text-center py-2 px-4">{transaction.price}</td>
-      <td className="text-center py-2 px-4">{transaction.note}</td>
+      <td className="text-center py-2 px-4">{transaction.precio}</td>
+      <td className="text-center py-2 px-4">{transaction.glosa}</td>
     </tr>
   );
 }
 
-HistoricoTabla.propTypes = {
-  transactions: PropTypes.array.isRequired,
+HistoricoFilas.propTypes = {
+  transaction: PropTypes.object.isRequired,
 };
 
-export default HistoricoTabla;
+export default HistoricoTable;

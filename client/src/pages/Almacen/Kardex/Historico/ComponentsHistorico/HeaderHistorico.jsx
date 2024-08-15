@@ -4,15 +4,11 @@ import { FaRegFileExcel } from "react-icons/fa";
 import { ButtonNormal } from '@/components/Buttons/Buttons';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import useAlmacenData from '../../data/data_almacen_kardex';
-import getProductoData from '../../data/data_producto_kardex';
-import useDetalleKardexData from '../../data/data_detalle_kardex';
-import useDetalleKardexAData from '../../data/data_detallea_kardex';
 import { useState, useEffect } from 'react';
 
-function HeaderHistorico({ productId }) {
+function HeaderHistorico({ productId, productoData }) {
   const { almacenes } = useAlmacenData();
   const [selectedAlmacen, setSelectedAlmacen] = useState('');
-  const [productoData, setProductoData] = useState(null);
 
   useEffect(() => {
     const storedAlmacenId = localStorage.getItem('almacen');
@@ -20,18 +16,6 @@ function HeaderHistorico({ productId }) {
       setSelectedAlmacen(storedAlmacenId);
     }
   }, []);
-
-  useEffect(() => {
-    const fetchProductoData = async () => {
-      if (productId && selectedAlmacen) {
-        const data = await getProductoData({ idProducto: productId, idAlmacen: selectedAlmacen });
-        if (data.productos.length > 0) {
-          setProductoData(data.productos[0]);
-        }
-      }
-    };
-    fetchProductoData();
-  }, [productId, selectedAlmacen]);
 
   const handleChange = (event) => {
     const selectedId = event.target.value;
@@ -45,12 +29,12 @@ function HeaderHistorico({ productId }) {
         <p>TORMENTA JEANS - 20610968801</p>
         <p>
           Producto: 
-          {productoData ? ` ${productoData.descripcion} - ${productoData.marca}` : 'Cargando...'}
+          {productoData.length > 0 ? ` ${productoData[0].descripcion} - ${productoData[0].marca}` : 'Cargando...'}
         </p>
         <p>
-          COD: {productoData?.codigo || 'Cargando...'} / 
-          Stock Actual: {productoData?.stock || 'Cargando...'} UND / 
-          Marca: {productoData?.marca || 'Cargando...'}
+          COD: {productoData.length > 0 ? productoData[0].codigo : 'Cargando...'} / 
+          Stock Actual: {productoData.length > 0 ? productoData[0].stock : 'Cargando...'} UND / 
+          Marca: {productoData.length > 0 ? productoData[0].marca : 'Cargando...'}
         </p>
         <br />
         <div className="fecha-container">
