@@ -11,7 +11,7 @@ const useEditSubCategoria = () => {
         setError(null);
 
         try {
-            const response = await axios.put(`http://localhost:4000/api/subcategorias/api/subcategoria/update/${id_subcategoria}`, {
+            const response = await axios.put(`http://localhost:4000/api/subcategorias/update/${id_subcategoria}`, {
                 id_categoria,
                 nom_subcat,
                 estado_subcat,

@@ -3,12 +3,14 @@ import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
 //import toast from 'react-hot-toast';
 import {  handleSunat } from '../../../Data/add_sunat';
+import {  handleSunatPDF } from '../../../Data/data_pdf';
 import {  handleUpdate } from '../../../Data/update_venta';
 
 const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetchVentas }) => {
   const [sendToSunat, setSendToSunat] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [generatePdfSelected, setGeneratePdfSelected] = useState(false);
   const loadDetallesFromLocalStorage2 = () => {
     const savedDetalles = localStorage.getItem('ventas');
     return savedDetalles ? JSON.parse(savedDetalles) : [];
@@ -34,31 +36,37 @@ const datos_precio = loadDetallesFromLocalStorage1();
 };
 const datosClientes = loadDetallesFromLocalStorage2();*/
 
-  const handleCheckboxChange = (option) => {
-    if (option === 'sendToSunat') {
-      setSendToSunat(true);
-      setDeleteOptionSelected(false);
-    } else if (option === 'deleteOption') {
-      setSendToSunat(false);
-      setDeleteOptionSelected(true);
-    }
-  };
+const handleCheckboxChange = (option) => {
+  if (option === 'sendToSunat') {
+    setSendToSunat(true);
+    setDeleteOptionSelected(false);
+    setGeneratePdfSelected(false);
+  } else if (option === 'deleteOption') {
+    setSendToSunat(false);
+    setDeleteOptionSelected(true);
+    setGeneratePdfSelected(false);
+  } else if (option === 'generatePdf') {
+    setSendToSunat(false);
+    setDeleteOptionSelected(false);
+    setGeneratePdfSelected(true);
+  }
+};
 
-  const handleAccept = () => {
-    if (sendToSunat) {
-      closeModal();
-      //const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
-      handleSunat(datos_precio,detalles,detalles);
-      handleUpdate(d_venta);   setTimeout(() => {
-        setIsDeleted(true);
-        //toast.dismiss(loadingToastId);
-        //toast.success('Los datos se han enviado con éxito!');
-      }, 3000);
-    } else if (deleteOptionSelected) {
-      handleDeleteVenta();
-      setConfirmDeleteModalOpen(true);
-    }
-  };
+const handleAccept = () => {
+  if (sendToSunat) {
+    closeModal();
+    handleSunat(datos_precio, detalles, detalles);
+    handleUpdate(d_venta);
+    setTimeout(() => {
+      setIsDeleted(true);
+    }, 3000);
+  } else if (deleteOptionSelected) {
+    handleDeleteVenta();
+    setConfirmDeleteModalOpen(true);
+  } else if (generatePdfSelected) {
+    handleSunatPDF(d_venta,detalles);
+  }
+};
 
   useEffect(() => {
     if (isDeleted) {
@@ -103,12 +111,22 @@ const datosClientes = loadDetallesFromLocalStorage2();*/
             />{' '}
             <p>Eliminar la Venta</p>
           </div>
+          <div className="flex mt-4" style={{ alignItems: "center" }}>
+            <input
+              type="checkbox"
+              id="eliminar"
+              className="custom-checkbox mr-2 relative"
+              onChange={() => handleCheckboxChange('generatePdf')}
+              checked={generatePdfSelected}
+            />{' '}
+            <p>Generar PDF</p>
+          </div>
         </div>
         <div className="modal-actions flex justify-end">
           <button className="btn btn-cancel" onClick={closeModal}>
             Cancelar
           </button>
-          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat) || (sendToSunat && d_venta.estado===1) || (sendToSunat && d_venta.tipoComprobante === 'Nota')}>
+          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado===1) || (sendToSunat && d_venta.tipoComprobante === 'Nota')}>
             Aceptar
           </button>
         </div>

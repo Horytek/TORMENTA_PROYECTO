@@ -14,7 +14,7 @@ const SalesCard = ({ idSucursal }) => {
     <div className="container mx-auto px-4 mb-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <CardComponent
-          titleCard="Ventas totales"
+          titleCard="Total de ganancias"
           contentCard={`S/. ${totalRecaudado}`}
           color="green"
           icon={RiCashFill}
@@ -23,7 +23,7 @@ const SalesCard = ({ idSucursal }) => {
         />
 
         <CardComponent
-          titleCard="Productos vendidos"
+          titleCard="Total de productos"
           contentCard={`${totalProductosVendidos}`}
           color="purple"
           icon={RiTShirt2Line}
@@ -42,7 +42,7 @@ const SalesCard = ({ idSucursal }) => {
           }
           color="blue"
           icon={RiLineChartFill}
-          tooltip="Producto más vendido"
+          tooltip="Producto top"
           className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 sm:w-72 md:w-96 lg:w-full"
         />
       </div>
