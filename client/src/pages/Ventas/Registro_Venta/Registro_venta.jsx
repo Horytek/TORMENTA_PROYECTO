@@ -6,7 +6,6 @@ import useVentasData from '../Data/data_venta';
 import useProductosData from '../Data/data_producto_venta';
 import { BsCashCoin } from "react-icons/bs";
 import { GrDocumentPerformance } from "react-icons/gr";
-import { MdCleaningServices } from "react-icons/md";
 import AlertModal from '../../../components/Modals/AlertModal';
 import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';
 import './Registro_Venta.css';
@@ -249,9 +248,6 @@ const Registro_Venta = () => {
             </div>
           </div>
           <div className="flex justify-end mt-4">
-            <button className="btn btn-cerrar  flex items-center">
-              <MdCleaningServices style={{ fontSize: '22px' }} />
-              Limpiar</button>
             <div className='items-center flex ml-2'>
               <button className="btn btn-cotizar  flex items-center" onClick={() => handlePrint(true)} disabled={detalles.length === 0}>
                 <GrDocumentPerformance style={{ fontSize: '22px' }} />
