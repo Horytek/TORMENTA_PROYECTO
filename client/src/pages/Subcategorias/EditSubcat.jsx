@@ -4,37 +4,56 @@ import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
-import { useSubcategorias } from "@/context/Subcategoria/SubcategoriaProvider";
 import { useCategorias } from "@/context/Categoria/CategoriaProvider";
 import useEditSubCategoria from "./hooks/editFunc";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
   const { editSubCategoria, loading } = useEditSubCategoria();
   const { categorias, loadCategorias } = useCategorias();
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm();
 
   useEffect(() => {
-    if (initialData) {
+    loadCategorias();
+  }, [loadCategorias]);
+
+  useEffect(() => {
+    if (initialData && categorias.length > 0) {
+      const selectedCategoria = categorias.find(
+        (categoria) => categoria.nom_categoria === initialData.nom_categoria
+      );
+      if (selectedCategoria) {
+        setValue("id_categoria", selectedCategoria.id_categoria); // Set id_categoria
+      }
       setValue("nom_categoria", initialData.nom_categoria);
       setValue("nom_subcat", initialData.nom_subcat);
       setValue("estado_subcat", initialData.estado_subcat);
     }
-    loadCategorias();
-  }, [initialData, setValue, loadCategorias]);
+  }, [initialData, categorias, setValue]);
+  
 
   const onSubmit = async (data) => {
     try {
       const updatedData = {
         ...data,
+        id_subcategoria: initialData.id_subcategoria,
         estado_subcat: parseInt(data.estado_subcat, 10),
       };
       await editSubCategoria(updatedData);
       toast.success("Subcategoría actualizada con éxito");
+      // setTimeout(() => { 
+      //   window.location.reload();
+      // }, 420);
       onClose();
     } catch (error) {
       toast.error("Error al actualizar la subcategoría");
     }
   };
+  
 
   if (!isOpen) return null;
 
@@ -52,14 +71,17 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
             </div>
             <div className="modal-body">
               <div className="w-full text-start mb-5">
-                <label htmlFor="nom_categoria" className="text-sm font-bold text-black">
+                <label
+                  htmlFor="nom_categoria"
+                  className="text-sm font-bold text-black"
+                >
                   Categoría:
                 </label>
                 <select
-                  {...register("nom_categoria", { required: true })}
-                  id="nom_categoria"
+                  {...register("id_categoria", { required: true })}
+                  id="id_categoria"
                   className={`w-full text-sm bg-gray-50 ${
-                    errors.nom_categoria
+                    errors.id_categoria
                       ? "border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500"
                       : "border-gray-300"
                   } text-gray-900 rounded-lg border p-2`}
@@ -69,12 +91,13 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
                     categorias.map((categoria) => (
                       <option
                         key={categoria.id_categoria}
-                        value={categoria.nom_categoria}
+                        value={categoria.id_categoria} // Use id_categoria as the value
                       >
                         {categoria.nom_categoria.toUpperCase()}
                       </option>
                     ))}
                 </select>
+
                 {errors.nom_categoria && (
                   <p className="text-red-600 text-sm mt-1">
                     Selecciona una categoría.

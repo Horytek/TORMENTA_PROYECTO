@@ -88,7 +88,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
 
 
 
-  console.log(ventas_VB);
+  //console.log(ventas_VB);
   
 
   const {venta_B} = useBoucher(ventas_VB.id_venta_boucher);
@@ -97,7 +97,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   localStorage.setItem('comprobante1', JSON.stringify(nuevoNumComprobante));
   const observacion = { observacion: ventas_VB.observacion}
   localStorage.setItem('observacion', JSON.stringify(observacion));
-  console.log(venta_B);
+  //console.log(venta_B);
   //console.log(new Date(venta_B.fecha).toISOString().slice(0, 10));
   //const sucursal_v = sucursales.find(sucursal => sucursal.usuario === ventas_VB.usua_vendedor)
   //console.log(sucursal_v);

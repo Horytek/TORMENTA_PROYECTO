@@ -1,6 +1,5 @@
 import { useState } from "react";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 
 const useEditCat = () => {
     const [loading, setLoading] = useState(false);
@@ -18,13 +17,13 @@ const useEditCat = () => {
             });
 
             if (response.data && response.data.message) {
-                toast.success(response.data.message);
+               // toast.success(response.data.message);
             } else {
-                toast.success("Categoría actualizada con éxito");
+              //  toast.success("Categoría actualizada con éxito");
             }
         } catch (err) {
             setError(err);
-            toast.error("Error al actualizar la categoria");
+           // toast.error("Error al actualizar la categoria");
         } finally {
             setLoading(false);
         }

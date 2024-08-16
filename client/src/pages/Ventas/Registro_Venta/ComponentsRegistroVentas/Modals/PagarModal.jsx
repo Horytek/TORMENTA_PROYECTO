@@ -95,13 +95,13 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
 
                 const nuevoNumComprobante = await generateComprobanteNumber(comp);
 
-                console.log('Nuevo número de comprobante:', nuevoNumComprobante);
+                //console.log('Nuevo número de comprobante:', nuevoNumComprobante);
 
                 // Almacena el número de comprobante en el localStorage
                 localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante }));
 
                 // Verifica si el almacenamiento local se actualizó correctamente
-                console.log('Contenido actualizado de localStorage:', localStorage.getItem('comprobante1'));
+                //console.log('Contenido actualizado de localStorage:', localStorage.getItem('comprobante1'));
             } catch (error) {
                 console.error('Error al obtener el número de comprobante:', error);
             }
@@ -313,7 +313,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         }).filter(detalle => detalle !== null),
     };
 
-    console.log(datosVentaComprobante);
+    //console.log(datosVentaComprobante);
     {/* Fin de los datos que pasan al voucher */ }
 
     {/* Este handlePrint es para el voucher automatico */ }
@@ -343,9 +343,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     
         const resp = await conector.imprimir(nombreImpresora, api_key);
         if (resp === true) {
-            console.log("Impresión exitosa");
+            //console.log("Impresión exitosa");
         } else {
-            console.log("Problema al imprimir: " + resp);
+           //console.log("Problema al imprimir: " + resp);
         }
     };
     {/* Fin del handlePrint del voucher automatico */ }
@@ -357,12 +357,14 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         addCliente(datosCliente_P);
     };
 
+    const token_cliente = import.meta.env.VITE_TOKEN_PROVEDOR || '';
+
     const handleValidate = async () => {
         if (dniOrRuc != '') {
             const url =
                 tipo_cliente === 'Natural'
-                    ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`
-                    : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`;
+                    ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=${token_cliente}`
+                    : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=${token_cliente}`;
 
             try {
                 const response = await fetch(url);

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+//import axios from 'axios';
+import axios from "../../../api/axios";
 
 const useProductosData = () => {
   const [productos, setProductos] = useState([]);
@@ -7,7 +8,7 @@ const useProductosData = () => {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/ventas/producto_venta', {
+        const response = await axios.get('/ventas/producto_venta', {
           params: {
             id_sucursal: localStorage.getItem('usuario'),
           }

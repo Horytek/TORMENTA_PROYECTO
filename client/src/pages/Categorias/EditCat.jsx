@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import { useCategorias } from "@/context/Categoria/CategoriaProvider";
 import useEditCat from "./hook/editFunc";
@@ -30,12 +31,17 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
     try {
       const updatedData = {
         ...data,
+        id_categoria: initialData.id_categoria,
         estado_categoria: parseInt(data.estado_categoria, 10),
       };
       await editCat(updatedData);
+      toast.success("Categoría actualizada con éxito");
+      setTimeout(() => {
+        window.location.reload();
+      }, 420);
       onClose();
     } catch (error) {
-      console.error("Error al actualizar la subcategoría");
+      // console.error("Error al actualizar la subcategoría");
     }
   };
 

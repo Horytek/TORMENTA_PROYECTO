@@ -56,7 +56,7 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 // Función para enviar los datos a SUNAT
 const generarPDF = async (data) => {
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/pdf';
-  const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VybmFtZSI6IkRhdmlzdEVkdUJ1c3RhbWFudGUxMjMiLCJjb21wYW55IjoiMjA2MTA1ODg5ODEiLCJpYXQiOjE3MjIyMTIxODMsImV4cCI6ODAyOTQxMjE4M30.jTISqfzQh-HAa8XLPjJDipnCunA8aisPDmlOH3-Gqy4t3jRJUUSS1XElkimQj2qpiWJbS4bu-ySqC6WTy9kbbojo6_IgWvgtbs55EG3OMCDRTPrsFjADMf8OjLQ0geKUFqn981cDZkAamIVB9UTa5V8tU2anyUams4zr2JZf_qydBwa5ScaGiWRyPoCOi8Z7akdzNL5nfOKtYYtlg8qzGA2Za3bEMp7uxAVr2O-m9D-j_3zsU0TgSnnNiD4_sm6_R0YdZl-WfHlvxCrTHakLFxC_lC2UGTx-Q4zw0NXrybcq2nqESEuQZn-Su777yCc-oTGTm5zwO220NOBiEHXCm0imFW1NtptWtxE0jWatHM2s-TvTRSHndcMuunbIb9DWdkQ1PlQgx3o17LZDEDjnmQPG3b-z7h-wgtmW6OvJiEfQwvycGuOu0j_OkZaGZsXQcVAkItSLjZhPX5Yor0COwnccdBdbmd5mxNy5qiOT8E-Ssu1ua-iyT308saytvAGq36HP1CQHVIFAF0lciBR--AGl4ha24_7H4WhH3MUBljLc5xwxLq2659XSFmMe_x7QWa8rycQi1ZjeAIxv9fFr5JlSm-APz4Yw8v3nxu9gm7dCUUm2fYDyHDuAjlh5Lnt2RGtkmmZSa22e3PpBPshUgtEqQMrT-zBlJlsXwyU1uRc';
+  const token = import.meta.env.VITE_TOKEN_SUNAT || '';
   
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
