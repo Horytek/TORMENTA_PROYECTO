@@ -51,7 +51,7 @@ export function LineChartComponent() {
               onValueChange={setValue}
               locale={es}
               placeholder="Selecciona un rango de fechas"
-              selectPlaceholder="Filtros por rango"
+              selectPlaceholder="Filtros"
               aria-label="Selecciona un rango"
               color="rose"
             >
