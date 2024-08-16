@@ -357,12 +357,14 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         addCliente(datosCliente_P);
     };
 
+    const token_cliente = import.meta.env.VITE_TOKEN_PROVEDOR || '';
+
     const handleValidate = async () => {
         if (dniOrRuc != '') {
             const url =
                 tipo_cliente === 'Natural'
-                    ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`
-                    : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`;
+                    ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=${token_cliente}`
+                    : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=${token_cliente}`;
 
             try {
                 const response = await fetch(url);
