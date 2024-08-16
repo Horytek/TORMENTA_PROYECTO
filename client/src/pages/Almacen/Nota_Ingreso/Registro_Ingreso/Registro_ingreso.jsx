@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React,  { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';
 import ProductosModal from '@/pages/Productos/ProductosForm';
@@ -16,7 +16,7 @@ import useProductosData from './data/data_buscar_producto';
 import insertNotaAndDetalle from '../data/add_nota'; // Importa la función de inserción
 import './Registro_ingreso.css'; // Asegúrate de importar el mismo archivo de estilos
 import { Toaster, toast } from "react-hot-toast"; // Importa el mismo paquete de validaciones
-
+import ConfirmationModal from '../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
   "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA", "DEVOLUCION", "CLIENTE",
@@ -32,6 +32,13 @@ function Registro_Ingresos() {
   const [modalTitle, setModalTitle] = useState('');
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
+  const [codigoBarras, setCodigoBarras] = useState('');
+
+  const handleBarcodeInput = (e) => {
+    setCodigoBarras(e.target.value);
+  };
+  const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState(''); // Nuevo estado para el mensaje de confirmación
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
     const saved = localStorage.getItem('productosSeleccionados');
     return saved ? JSON.parse(saved) : [];
@@ -59,6 +66,12 @@ function Registro_Ingresos() {
     }
   }, [almacenOrigen]);
 
+  useEffect(() => {
+    if (isModalOpen && almacenOrigen) {
+      handleBuscarProducto();
+    }
+  }, [isModalOpen, almacenOrigen]);
+
   const openModalBuscarProducto = () => {
     if (almacenOrigen) {
       setIsModalOpen(true);
@@ -69,8 +82,72 @@ function Registro_Ingresos() {
   };
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
+  const openModalOpenGuardar = () => {
+    const almacenDestino = document.getElementById('almacen_destino').value;
+    if (almacenDestino) {
+      setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
+    } else {
+      setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
+    }
+    setisModalOpenGuardar(true);
+  };
 
+  const closeModalOpenGuardar = () => {
+    setisModalOpenGuardar(false);
+  };
+  
   const closeModalProducto = () => setIsModalOpenProducto(false);
+
+  const handleConfirmGuardar = async () => {
+    closeModalOpenGuardar();
+    await handleGuardarAction(); // Llamar a la función de guardado
+  };
+
+
+  const handleGuardarAction = async () => {
+    const almacenO = document.getElementById('almacen_origen').value;
+    const almacenD = document.getElementById('almacen_destino').value || null;
+    const destinatario = document.getElementById('destinatario').value;
+    const glosa = document.getElementById('glosa').value;
+    const fecha = document.getElementById('fechaDocu').value;
+    const nota = document.getElementById('nomnota').value;
+    const numComprobante = document.getElementById('numero').value;
+    const observacion = document.getElementById('observacion').value;
+    const usuario = localStorage.getItem('usuario');
+    if (!usuario) {
+      toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
+      return;
+    }
+
+    const productos = productosSeleccionados.map(producto => ({
+      id: producto.codigo,
+      cantidad: producto.cantidad
+    }));
+
+    const data = {
+      almacenO,
+      almacenD,
+      destinatario,
+      glosa,
+      nota,
+      fecha,
+      producto: productos.map(p => p.id),
+      numComprobante,
+      cantidad: productos.map(p => p.cantidad),
+      observacion,
+      usuario
+    };
+
+    const result = await insertNotaAndDetalle(data);
+
+    if (result.success) {
+      toast.success('Nota y detalle insertados correctamente.');
+      handleCancel();
+      window.location.reload();
+    } else {
+      toast.error('Error inesperado, intente nuevamente.');
+    }
+  };
   const openModalProovedor = () => setIsModalOpenProovedor(true);
   const closeModalProovedor = () => setIsModalOpenProovedor(false);
 
@@ -79,16 +156,20 @@ function Registro_Ingresos() {
     const filters = {
       descripcion: searchInput,
       almacen: almacenId,
+      cod_barras: codigoBarras
     };
 
     const result = await useProductosData(filters);
     setProductos(result.productos);
   };
 
+
+
   const handleCancel = () => {
     localStorage.removeItem('productosSeleccionados');
     setProductosSeleccionados([]);
   };
+
 
   const agregarProducto = (producto, cantidad) => {
     setProductosSeleccionados((prevProductos) => {
@@ -118,7 +199,26 @@ function Registro_Ingresos() {
 
     closeModalBuscarProducto();
   };
+
+
   const handleGuardar = async () => {
+    const almacenO = document.getElementById('almacen_origen').value;
+    const almacenD = document.getElementById('almacen_destino').value || null;
+    const destinatario = document.getElementById('destinatario').value;
+    const glosa = document.getElementById('glosa').value;
+    const fecha = document.getElementById('fechaDocu').value;
+    const nota = document.getElementById('nomnota').value;
+    const numComprobante = document.getElementById('numero').value;
+
+    if (almacenO == almacenD) {
+      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
+      return;
+    }
+    if (!almacenO || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
+      toast.error('Por favor complete todos los campos.');
+      return;
+    }
+
     if (productosSeleccionados.length === 0) {
       toast.error('Debe agregar al menos un producto.');
       return;
@@ -129,61 +229,19 @@ function Registro_Ingresos() {
         stockExcedido = true;
       }
     });
-  
+
     if (stockExcedido) {
       toast.error('La cantidad de algunos productos excede el stock disponible.');
       return;
     }
-  
-    // Obtener usuario desde localStorage
-    const usuario = localStorage.getItem('usuario');
-    if (!usuario) {
-      toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
-      return;
-    }
-  
-    const almacenO = document.getElementById('almacen_origen').value;
-    const almacenD = document.getElementById('almacen_destino').value;
-    const destinatario = document.getElementById('destinatario').value;
-    const glosa = document.getElementById('glosa').value;
-    const fecha = document.getElementById('fechaDocu').value;
-    const nota = document.getElementById('nomnota').value;
-    const numComprobante = document.getElementById('numero').value;
-    const observacion = document.getElementById('observacion').value;
-  
-    if (almacenO == almacenD) {
-      toast.error('El almacén de origen y de destino no pueden ser el mismo.');
-      return;
-    }
-  
-    const productos = productosSeleccionados.map(producto => ({
-      id: producto.codigo,
-      cantidad: producto.cantidad
-    }));
-  
-    const data = {
-      almacenO,
-      almacenD,
-      destinatario,
-      glosa,
-      nota,
-      fecha,
-      producto: productos.map(p => p.id),
-      numComprobante,
-      cantidad: productos.map(p => p.cantidad),
-      observacion,
-      usuario  // Incluye el usuario en los datos enviados
-    };
-  
-    const result = await insertNotaAndDetalle(data);
-  
-    if (result.success) {
-      toast.success('Nota y detalle insertados correctamente');
-      handleCancel();
-      window.location.reload();
+
+    const almacenDestino = document.getElementById('almacen_destino').value;
+    if (almacenDestino) {
+      setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
     } else {
-      toast.error(result.message || 'Por favor complete todos los campos');
+      setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
     }
+    openModalOpenGuardar();
   };
   
 
@@ -218,12 +276,18 @@ function Registro_Ingresos() {
                   id="almacen_origen"
                   value={almacenOrigen}
                   onChange={(e) => setAlmacenOrigen(parseInt(e.target.value))}
+                  disabled={productosSeleccionados.length > 0}
                 >
                   <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (
                     <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
                   ))}
                 </select>
+                {productosSeleccionados.length > 0 && (
+                  <p className="font-bold text-red-500 text-sm mt-1">
+                    *Para cambiar vacíe los productos.
+                  </p>
+                )}
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
@@ -242,7 +306,7 @@ function Registro_Ingresos() {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
-                  Proveedor:
+                  Destinatario:
                 </label>
                 <select 
                   className='form-elementwaentrada'
@@ -292,7 +356,7 @@ className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm ro
             </div>
             <div className="flex justify-start mt-4 space-x-2">
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor}>
-                <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo proveedor
+                <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo destinatario
               </button>
               <button 
                 className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" 
@@ -358,11 +422,20 @@ className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm ro
         setSearchInput={setSearchInput}
         productos={productos}
         agregarProducto={agregarProducto}
+        setCodigoBarras={setCodigoBarras}
       />
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
+      {isModalOpenGuardar && (
+        <ConfirmationModal
+          message={confirmationMessage}
+          onClose={closeModalOpenGuardar}
+          isOpen={isModalOpenGuardar}
+          onConfirm={handleConfirmGuardar}
+        />
+      )}
     </div>
   );
 }

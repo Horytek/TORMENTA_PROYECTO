@@ -4,7 +4,7 @@ import { FaRegFileExcel } from "react-icons/fa";
 import { ButtonNormal } from '@/components/Buttons/Buttons';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import useAlmacenData from '../../data/data_almacen_kardex';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 function HeaderHistorico({ productId, productoData, onDateChange }) {
   const { almacenes } = useAlmacenData();
@@ -15,47 +15,40 @@ function HeaderHistorico({ productId, productoData, onDateChange }) {
   });
 
   useEffect(() => {
-    // Set initial almacen from localStorage
     const storedAlmacenId = localStorage.getItem('almacen');
     if (storedAlmacenId) {
       setSelectedAlmacen(storedAlmacenId);
     }
 
-    // Calculate initial date range (2 months before today)
-    const today = new Date();
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(today.getMonth() - 2);
+    const initialStartDate = new Date('2024-04-01');
+    const initialEndDate = new Date('2028-04-08');
 
     setSelectedDates({
-      startDate: twoMonthsAgo,
-      endDate: today,
+      startDate: initialStartDate,
+      endDate: initialEndDate,
     });
 
-    // Format dates as YYYY-MM-DD
-    const formattedStartDate = twoMonthsAgo.toISOString().split('T')[0];
-    const formattedEndDate = today.toISOString().split('T')[0];
+    const formattedStartDate = initialStartDate.toISOString().split('T')[0];
+    const formattedEndDate = initialEndDate.toISOString().split('T')[0];
 
-    // Trigger the callback to fetch data with the initial date range
     onDateChange(formattedStartDate, formattedEndDate);
-  }, []);
+  }, [onDateChange]);
 
-  const handleAlmacenChange = (event) => {
+  const handleAlmacenChange = useCallback((event) => {
     const selectedId = event.target.value;
     setSelectedAlmacen(selectedId);
     localStorage.setItem('almacen', selectedId);
-  };
+  }, []);
 
-  const handleDateChange = (range) => {
+  const handleDateChange = useCallback((range) => {
     const [start, end] = range;
     setSelectedDates({ startDate: start, endDate: end });
 
-    // Format dates as YYYY-MM-DD
     const formattedStartDate = start.toISOString().split('T')[0];
     const formattedEndDate = end.toISOString().split('T')[0];
 
-    // Trigger the callback to fetch data with the updated date range
     onDateChange(formattedStartDate, formattedEndDate);
-  };
+  }, [onDateChange]);
 
   return (
     <div className="headerHistorico">

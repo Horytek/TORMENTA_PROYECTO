@@ -101,28 +101,42 @@ const getAlmacen = async (req, res) => {
     }
 };
 const getProductos = async (req, res) => {
-    const { descripcion = '', almacen = 1 } = req.query;
+    const { descripcion = '', almacen = 1, cod_barras = '' } = req.query;
   
-    console.log('Filtros recibidos:', { descripcion, almacen });
+    console.log('Filtros recibidos:', { descripcion, almacen,cod_barras });
   
     try {
       const connection = await getConnection();
   
-      const [productosResult] = await connection.query(
-        `
-     SELECT 
+      let query = `
+      SELECT 
         p.id_producto AS codigo, 
         p.descripcion AS descripcion, 
         m.nom_marca AS marca, 
-        COALESCE(i.stock, 0) AS stock 
+        COALESCE(i.stock, 0) AS stock,
+        p.cod_barras as cod_barras 
       FROM producto p 
       INNER JOIN marca m ON p.id_marca = m.id_marca 
       INNER JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
-      WHERE p.descripcion LIKE ? and i.stock > 0
-      GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock;
-        `,
-        [almacen, `${descripcion}%`]
-      );
+      WHERE i.stock > 0
+    `;
+
+    const queryParams = [almacen];
+
+    if (descripcion) {
+      query += ' AND p.descripcion LIKE ?';
+      queryParams.push(`%${descripcion}%`);
+    }
+
+    if (cod_barras) {
+      query += ' AND p.cod_barras LIKE ?';
+      queryParams.push(`%${cod_barras}%`);
+    }
+
+    query += ' GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock';
+
+    const [productosResult] = await connection.query(query, queryParams);
+
   
       console.log('Productos encontrados:', productosResult);
   

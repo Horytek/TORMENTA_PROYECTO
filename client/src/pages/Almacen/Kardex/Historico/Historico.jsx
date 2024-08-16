@@ -2,8 +2,8 @@ import './Historico.css';
 import HeaderHistorico from './ComponentsHistorico/HeaderHistorico';
 import HistoricoTable from './ComponentsHistorico/HistoricoTable';
 import { useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import getAllKardexData from '../data/data_detalle_kardex';  // Import the unified function
+import { useState, useEffect, useCallback } from 'react';
+import getAllKardexData from '../data/data_detalle_kardex';
 
 function Historico() {
   const { id } = useParams();
@@ -15,31 +15,30 @@ function Historico() {
     fechaFin: null,
   });
 
+  const fetchKardexData = useCallback(async (filters) => {
+    const data = await getAllKardexData(filters);
+    setKardexData(data.kardex);
+    setPreviousTransactions(data.previousTransactions);
+    setProductoData(data.productos);
+  }, []);
+
   useEffect(() => {
     if (dateRange.fechaInicio && dateRange.fechaFin) {
-      const fetchKardexData = async () => {
-        const idAlmacen = localStorage.getItem('almacen');
-
-        const filters = { 
-          fechaInicio: dateRange.fechaInicio, 
-          fechaFin: dateRange.fechaFin, 
-          idProducto: id, 
-          idAlmacen 
-        };
-        
-        const data = await getAllKardexData(filters);
-        setKardexData(data.kardex);
-        setPreviousTransactions(data.previousTransactions);
-        setProductoData(data.productos);
+      const idAlmacen = localStorage.getItem('almacen');
+      const filters = {
+        fechaInicio: dateRange.fechaInicio,
+        fechaFin: dateRange.fechaFin,
+        idProducto: id,
+        idAlmacen,
       };
 
-      fetchKardexData();
+      fetchKardexData(filters);
     }
-  }, [id, dateRange]);
+  }, [id, dateRange, fetchKardexData]);
 
-  const handleDateChange = (fechaInicio, fechaFin) => {
+  const handleDateChange = useCallback((fechaInicio, fechaFin) => {
     setDateRange({ fechaInicio, fechaFin });
-  };
+  }, []);
 
   return (
     <div className="Historico">
