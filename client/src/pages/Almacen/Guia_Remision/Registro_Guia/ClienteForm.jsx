@@ -34,8 +34,8 @@ function ClienteForm({ modalTitle, onClose }) {
               setNombres(data.nombres || '');
               setApellidos(`${data.apellidoPaterno} ${data.apellidoMaterno}` || '');
               setDireccion(data.direccion || '');
-            } else if (tipoCliente === 'Juridico') {
-              setRazonSocial(data.razonSocial || '');
+            } else if (tipoCliente === 'Juridico') { // Add this check
+              setRazonSocial(data.razonSocial || ''); // Set provider to razonSocial
               setDireccion(data.direccion || '');
             }
           } else {
