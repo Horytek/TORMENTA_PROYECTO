@@ -34,6 +34,15 @@ function HeaderHistorico({ productId, productoData, onDateChange }) {
     onDateChange(formattedStartDate, formattedEndDate);
   }, [onDateChange]);
 
+  // Este useEffect se encargará de actualizar los datos en tiempo real
+  useEffect(() => {
+    if (selectedAlmacen && selectedDates.startDate && selectedDates.endDate) {
+      const formattedStartDate = selectedDates.startDate.toISOString().split('T')[0];
+      const formattedEndDate = selectedDates.endDate.toISOString().split('T')[0];
+      onDateChange(formattedStartDate, formattedEndDate, selectedAlmacen);
+    }
+  }, [selectedAlmacen, selectedDates, onDateChange]);
+
   const handleAlmacenChange = useCallback((event) => {
     const selectedId = event.target.value;
     setSelectedAlmacen(selectedId);
@@ -43,12 +52,7 @@ function HeaderHistorico({ productId, productoData, onDateChange }) {
   const handleDateChange = useCallback((range) => {
     const [start, end] = range;
     setSelectedDates({ startDate: start, endDate: end });
-
-    const formattedStartDate = start.toISOString().split('T')[0];
-    const formattedEndDate = end.toISOString().split('T')[0];
-
-    onDateChange(formattedStartDate, formattedEndDate);
-  }, [onDateChange]);
+  }, []);
 
   return (
     <div className="headerHistorico">
