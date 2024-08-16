@@ -91,25 +91,26 @@ const TablaGuias = ({ guias }) => {
           </div>
   
           <table class="w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
-              <thead class="bg-blue-200 text-blue-800">
-                  <tr>
-                      <th class="border-b p-3 text-center">Código</th>
-                      <th class="border-b p-3 text-start">Descripción</th>
-                      <th class="border-b p-3 text-center">Cant.</th>
-                      <th class="border-b p-3 text-center">U.M.</th>
-                  </tr>
-              </thead>
-              <tbody>
-                ${guia.detalles.map(detalle => `
-                  <tr class="bg-gray-50 hover:bg-gray-100">
-                      <td class="border-b p-2 text-center">${detalle.codigo}</td>
-                      <td class="border-b p-2 text-start">${detalle.descripcion}</td>
-                      <td class="border-b p-2 text-center">${detalle.cantidad}</td>
-                      <td class="border-b p-2 text-center">${detalle.um}</td>
-                  </tr>
-                `).join('')}
-            </tbody>
-          </table>
+  <thead class="bg-blue-200 text-blue-800">
+    <tr>
+      <th class="border-b p-3 text-center">Código</th>
+      <th class="border-b p-3 text-center">Descripción</th>
+      <th class="border-b p-3 text-center">Cant.</th>
+      <th class="border-b p-3 text-center">U.M.</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${guia.detalles.map(detalle => `
+      <tr class="bg-gray-50 hover:bg-gray-100">
+        <td class="border-b p-2 text-center">${detalle.codigo}</td>
+        <td class="border-b p-2 text-center">${detalle.descripcion}</td>
+        <td class="border-b p-2 text-center">${detalle.cantidad}</td>
+        <td class="border-b p-2 text-center">${detalle.um}</td>
+      </tr>
+    `).join('')}
+  </tbody>
+</table>
+
   
           <div class="bg-white rounded-lg shadow-lg">
               <div class="px-4 py-2 border-b border-gray-700 rounded-lg bg-gray-100">
@@ -250,7 +251,7 @@ const TablaGuias = ({ guias }) => {
         <td className='text-center'>
           <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm' name="select" onChange={(e) => handleSelectChange(e, guia.id)}>
             <option value="">...</option>
-            <option value="imprimir">Imprimir</option>
+            <option value="imprimir">Guardar PDF</option>
             <option value="anular">Anular</option>
           </select>
         </td>

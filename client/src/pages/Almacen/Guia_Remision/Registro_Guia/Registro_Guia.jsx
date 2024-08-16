@@ -25,6 +25,8 @@ import { Toaster, toast } from 'react-hot-toast'; // <-- Importación añadida
 
 
 
+
+
 const glosaOptions = [
   "COMPRA", "VENTA CON ENTREGA A TERCEROS", "TRASLADO ENTRE ALMACENES DE LA MISMA CIA.",
   "CONSIGNACION", "DEVOLUCION", "RECOJO DE BIENES TRANSFORMADOS",
