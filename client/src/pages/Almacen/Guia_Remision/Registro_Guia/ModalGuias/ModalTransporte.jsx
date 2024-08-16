@@ -66,6 +66,7 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
                             </button>
                         </div>
                         <div className='modal-body'>
+                            
                             <div className='w-full text-start mb-5'>
                                 <label htmlFor="idtranspriv" className='text-sm font-bold text-black'>Nuevo Código:</label>
                                 <input type="text"
@@ -130,6 +131,7 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
                                     onChange={(e) => setTelefono(e.target.value)}
                                 />
                             </div>
+                            <h4 className="mensaje">*Al registrar, cerrar y volver abrir el modal de Transporte*</h4>
                             <div className='modal-buttons'>
                                 <ButtonClose onClick={closeModel} />
                                 <ButtonSave onClick={handleSave} />

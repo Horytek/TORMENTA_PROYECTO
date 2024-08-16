@@ -118,6 +118,7 @@ export const ModalTransportista = ({ modalTitle, closeModel, onTransportistaAdde
                                     onChange={(e) => setTelefono(e.target.value)}
                                 />
                             </div>
+                            <h4 className="mensaje">*Al registrar, cerrar y volver abrir el modal de Transporte*</h4>
                             <div className='modal-buttons'>
                                 <ButtonClose onClick={closeModel} />
                                 <ButtonSave onClick={handleSave} /> {/* Llama a handleSave para guardar el transportista */}
