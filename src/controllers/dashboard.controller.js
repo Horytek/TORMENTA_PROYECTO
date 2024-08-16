@@ -173,64 +173,61 @@ const getTotalProductosVendidos = async (req, res) => {
 };
 
 
-const getComparacionVentasActualVsAnterior = async (req, res) => {
+const getComparacionVentasPorRango = async (req, res) => {
   try {
     const connection = await getConnection();
 
-    const hoy = new Date();
-    const anioActual = hoy.getFullYear();
-    const anioAnterior = anioActual - 1;
+    const { fechaInicio, fechaFin } = req.body;
 
-    const fechaInicioAnioActual = format(new Date(anioActual, 0, 1), 'yyyy-MM-dd HH:mm:ss');
-    const fechaFinAnioActual = format(new Date(anioActual, 11, 31, 23, 59, 59), 'yyyy-MM-dd HH:mm:ss');
-    
-    const fechaInicioAnioAnterior = format(new Date(anioAnterior, 0, 1), 'yyyy-MM-dd HH:mm:ss');
-    const fechaFinAnioAnterior = format(new Date(anioAnterior, 11, 31, 23, 59, 59), 'yyyy-MM-dd HH:mm:ss');
-
-    console.log('Año actual:', anioActual, ' | Inicio:', fechaInicioAnioActual, ' | Fin:', fechaFinAnioActual);
-    console.log('Año anterior:', anioAnterior, ' | Inicio:', fechaInicioAnioAnterior, ' | Fin:', fechaFinAnioAnterior);
-
-    const [result] = await connection.query(`
+    let query = `
       SELECT 
         MONTH(v.f_venta) AS mes,
-        SUM(CASE WHEN YEAR(v.f_venta) = ? THEN dv.total ELSE 0 END) AS total_ventas_anio_actual,
-        SUM(CASE WHEN YEAR(v.f_venta) = ? THEN dv.total ELSE 0 END) AS total_ventas_anio_anterior
+        SUM(dv.total) AS total_ventas
       FROM 
         detalle_venta dv
       JOIN 
         venta v ON dv.id_venta = v.id_venta
-      WHERE 
-        v.f_venta BETWEEN ? AND ?
-        OR v.f_venta BETWEEN ? AND ?
-      GROUP BY 
-        mes
-      ORDER BY 
-        mes;
-    `, [anioActual, anioAnterior, fechaInicioAnioActual, fechaFinAnioActual, fechaInicioAnioAnterior, fechaFinAnioAnterior]);
+      `;
+    
+    let params = [];
 
-    const ventasPorMes = {};
+    if (fechaInicio && fechaFin) {
+      const fechaInicioFormatted = format(new Date(fechaInicio), 'yyyy-MM-dd HH:mm:ss');
+      const fechaFinFormatted = format(new Date(fechaFin), 'yyyy-MM-dd HH:mm:ss');
+      query += ` WHERE v.f_venta BETWEEN ? AND ? `;
+      params.push(fechaInicioFormatted, fechaFinFormatted);
+    }
+    
+    query += ` GROUP BY mes ORDER BY mes;`;
+
+    const [result] = await connection.query(query, params);
+
+    const ventasPorMes = Array.from({ length: 12 }, (_, index) => ({
+      mes: index + 1,
+      total_ventas: 0,
+    }));
+
     result.forEach(row => {
-      const mes = row.mes;
-      ventasPorMes[mes] = {
-        [`${anioActual}`]: row.total_ventas_anio_actual,
-        [`${anioAnterior}`]: row.total_ventas_anio_anterior,
-      };
+      const mesIndex = row.mes - 1;
+      ventasPorMes[mesIndex].total_ventas = row.total_ventas;
     });
 
     res.json({
       code: 1,
       data: ventasPorMes,
-      message: "Comparación de ventas por mes entre el año actual y el año anterior obtenida correctamente"
+      message: "Ventas por mes obtenidas correctamente"
     });
   } catch (error) {
-    console.error('Error en getComparacionVentasActualVsAnterior:', error);
+    console.error('Error en getComparacionVentasPorRango:', error);
     res.status(500).send(error.message);
   }
 };
+
+
 
 export const methods = {
     getProductoMasVendido,
     getTotalProductosVendidos,
     getTotalVentas,
-    getComparacionVentasActualVsAnterior
+    getComparacionVentasPorRango
 };
