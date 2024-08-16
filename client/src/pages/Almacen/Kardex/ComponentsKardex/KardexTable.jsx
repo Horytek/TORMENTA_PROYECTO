@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import Pagination from '@/components/Pagination/Pagination';
 import React, { useEffect, useState } from 'react';
+import './KardexTable.css';
 const TablaKardex = ({ kardex }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -14,24 +15,19 @@ const TablaKardex = ({ kardex }) => {
     return kardex.slice(startIndex, endIndex);
   };
 
+  const handleDetailClick = (id) => {
+    window.open(`/almacen/kardex/historico/${id}`, '_blank');
+  };
+
   // Número total de páginas
   const totalPages = Math.ceil(kardex.length / itemsPerPage);
   const renderEntradaRow = (kardex) => (
-    <tr key={kardex.id} className='tr-tabla-kardex'>
+    <tr key={kardex.id} onClick={() => handleDetailClick(kardex.codigo)} className='tr-tabla-kardex'>
       <td className="text-center px-2">{kardex.codigo}</td>
       <td className="text-center px-2">{kardex.descripcion}</td>
       <td className="text-center px-2">{kardex.marca}</td>
       <td className="text-center px-2">{kardex.stock}</td>
       <td className="text-center px-2">{kardex.um}</td>
-      <td className="text-center px-2">NOT</td>
-      <td className='text-center px-2'>
-        <select className='b text-center custom-select border border-gray-300 p-1.5 text-gray-900 text-sm rounded-lg' name="select" onClick={handleSelectClick} defaultValue="">
-          <option value="">...</option>
-          <option value="value1">Lotes</option>
-          <option value="value2">Almacenes</option>
-          <option value="value3">Kardex</option>
-        </select>
-      </td>
     </tr>
   );
 
@@ -45,8 +41,6 @@ const TablaKardex = ({ kardex }) => {
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">MARCA</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">STOCK ACTUAL</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">UM</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">BARRA</th>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider px-2">ACCIÓN</th>
           </tr>
         </thead>
         <tbody>
