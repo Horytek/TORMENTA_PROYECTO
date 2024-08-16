@@ -1,26 +1,31 @@
 import { getConnection } from "./../database/database";
 
 const getProductos = async (req, res) => {
-    const { descripcion = '', almacen = 2 } = req.query;
+    const { descripcion = '', almacen = '', idProducto = '', marca = '', cat= '' , subcat = '' } = req.query;
 
-    console.log('Filtros recibidos:', { descripcion, almacen });
+    console.log('Filtros recibidos:', { descripcion, almacen, idProducto, marca, cat, subcat  });
     try {
         const connection = await getConnection();
 
         const [productosResult] = await connection.query(
             `
         SELECT 
-          p.id_producto as codigo, p.descripcion as descripcion, m.nom_marca as marca, COALESCE(i.stock, 0) AS stock, p.undm as um, 
-          CAST(p.precio AS DECIMAL(10, 2)) AS precio, p.cod_barras, p.estado_producto as estado
+         p.id_producto as codigo, p.descripcion as descripcion, m.nom_marca as marca, COALESCE(i.stock, 0) AS stock, p.undm as um, 
+         CAST(p.precio AS DECIMAL(10, 2)) AS precio, p.cod_barras, p.estado_producto as estado
         FROM producto p 
         INNER JOIN marca m ON p.id_marca = m.id_marca 
-        INNER JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
+        INNER JOIN inventario i ON p.id_producto = i.id_producto 
         INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
-        WHERE p.descripcion LIKE ? and i.stock > 0
+        WHERE p.descripcion LIKE ?
+          AND i.id_almacen LIKE ?
+		  AND p.id_producto LIKE ?
+		  AND m.id_marca LIKE ?
+		  AND CA.id_categoria LIKE ?
+          AND CA.id_subcategoria LIKE ?
         GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock
-        ORDER BY p.id_producto DESC
+        ORDER BY p.id_producto, p.descripcion
         `,
-            [almacen, `%${descripcion}%`]
+            [`%${descripcion}%`, `%${almacen}`, `%${idProducto}`, `%${marca}`, `%${cat}`, `%${subcat}`]
         );
 
 
@@ -83,12 +88,17 @@ const getAlmacen = async (req, res) => {
   };
 
   const getSubCategorias= async (req, res) => {
+    const { cat= '' } = req.query;
+
+    console.log('Filtros recibidos:', { cat });
     try {
       const connection = await getConnection();
       const [result] = await connection.query(`
               	   SELECT id_subcategoria AS id, nom_subcat AS sub_categoria FROM sub_categoria
-	                WHERE estado_subcat = 1;
-          `);
+	                WHERE estado_subcat = 1
+                    AND id_categoria = ?;
+          `,
+          [cat]);
       res.json({ code: 1, data: result, message: "Sub categorias listadas" });
     } catch (error) {
       res.status(500);

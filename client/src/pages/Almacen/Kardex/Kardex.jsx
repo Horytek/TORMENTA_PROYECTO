@@ -85,8 +85,6 @@ const Kardex = () => {
                     <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm rounded-lg' name="select" defaultValue="">
                         <option value="">Seleccione...</option>
                         <option value="value1">Imprimir</option>
-                        <option value="value2">Excel</option>
-                        <option value="value3">Excel Detalle</option>
                     </select>
                 </div>
             </div>
