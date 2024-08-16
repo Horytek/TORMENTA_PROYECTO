@@ -2,12 +2,12 @@ import { getConnection } from "../database/database";
 
 const insertDestinatario = async (req, res) => {
   const {
-    ruc, dni, nombres, apellidos, razon_social, ubicacion
+    ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email
   } = req.body;
 
   console.log("Datos recibidos:", req.body);
   console.log("Datos recibidos:", {
-    ruc, dni, nombres, apellidos, razon_social, ubicacion,
+    ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email
   });
   if (
     !ubicacion
@@ -24,8 +24,8 @@ const insertDestinatario = async (req, res) => {
     const connection = await getConnection();
 
     const [result] = await connection.query(
-      "INSERT INTO destinatario (ruc, dni, nombres, apellidos, razon_social, ubicacion) VALUES (?, ?, ?, ?, ?, ?)",
-      [ruc, dni, nombres, apellidos, razon_social, ubicacion]
+      "INSERT INTO destinatario (ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email) VALUES (?, ?, ?, ?, ?, ?,?,?)",
+      [ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email]
     );
 
     res.json({ code: 1, message: 'Destinatario insertado correctamente', id: result.insertId });

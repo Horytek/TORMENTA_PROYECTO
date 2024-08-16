@@ -28,8 +28,6 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
         const address = document.getElementById('address').value;
         const phone = document.getElementById('phone').value;
         const email = document.getElementById('email').value;
-        const web = document.getElementById('web').value;
-        const observation = document.getElementById('observation').value;
 
         const data = {
             ruc: tipoCliente === 'Juridico' ? DNIruc : null,
@@ -37,11 +35,9 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
             nombres: tipoCliente === 'Natural' ? provider.split(' ').slice(0, -2).join(' ') : null,
             apellidos: tipoCliente === 'Natural' ? provider.split(' ').slice(-2).join(' ') : null,
             razon_social: tipoCliente === 'Juridico' ?  provider : null,
-            ubicacion: address,/*
+            ubicacion: address,
             telefono: phone,
             correo: email,
-            web: web,
-            observacion: observation,*/
         };
     console.log(data);
         const result = await insertDestinatario(data);
@@ -72,20 +68,14 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                                 provider: `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`,
                                 address: '',
                                 phone: '',
-                                email: '',
-                                web: '',
-                                observation: '',
-                                statusSunat: ''
+                                email: ''
                             });
                         } else if (tipoCliente === 'Juridico') {
                             setFormData({
                                 provider: data.razonSocial,
                                 address: data.direccion,
                                 phone: '',
-                                email: '',
-                                web: '',
-                                observation: '',
-                                statusSunat: data.estado
+                                email: ''
                             });
                         }
                     } else {
@@ -129,7 +119,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
             newErrors.phone = true;
         }
 
-        if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        if (formData.email & !/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = true;
         }
 
@@ -155,9 +145,6 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
             address: '',
             phone: '',
             email: '',
-            web: '',
-            observation: '',
-            statusSunat: ''
         });
         setErrors({
             dniOrRuc: false,
@@ -255,56 +242,6 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                                     value={formData.email}
                                     onChange={handleInputChange}
                                 />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className='text-sm font-bold text-black' htmlFor="web">Web:</label>
-                            <input
-                                className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border'
-                                type="text"
-                                id="web"
-                                placeholder="Ej: tormenta.com"
-                                value={formData.web}
-                               onChange={(e) => setFormData({ ...formData, web: e.target.value })}
-                            />
-                        </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label className='text-sm font-bold text-black' htmlFor="status">Estado:</label>
-                                <select id="status" className="input pocaal">
-                                    <option value="activo">Activo (Default)</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className='text-sm font-bold text-black' htmlFor="cat-sunat">Cat. Sunat:</label>
-                                <select id="cat-sunat" className="input pocaal">
-                                    <option value="">Seleccione</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div className="form-group">
-                            <label className=' text-sm font-bold text-black' htmlFor="observation">Observación:</label>
-                            <textarea
-                                className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                                id="observation"
-                                placeholder="Observación"
-                                value={formData.observation}
-                                onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
-                            ></textarea>
-                        </div>
-                        <div className="form-group">
-                            <label className='text-sm font-bold text-black' htmlFor="status-sunat">Status Sunat:</label>
-                            <div id="status-sunat" className="status-sunat">
-                                {formData.statusSunat}
-                            </div>
-                        </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <input className='bg-gray-100 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" placeholder="" />
-                            </div>
-                            <div className="form-group">
-                                <input className='bg-gray-100 border-gray-300 text-gray-900 rounded-lg border p-1.5' type="text" placeholder="" />
                             </div>
                         </div>
                         <div className='modal-buttons'>

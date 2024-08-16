@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaSalida from './ComponentsNotaSalida/NotaSalidaTable';
 import getSalidasData from './data/data_salida';
@@ -6,10 +6,10 @@ import useAlmacenData from './data/data_almacen_salida';
 import './Nota_salida.css';
 import FiltrosSalida from './ComponentsNotaSalida/FiltrosSalida';
 import ReactToPrint from 'react-to-print';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 const Salidas = () => {
-  const [filters, setFilters] = useState({
-
-  });
+  const [filters, setFilters] = useState({});
   const [salidas, setSalidas] = useState([]);
   const { almacenes } = useAlmacenData();
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
@@ -48,6 +48,25 @@ const Salidas = () => {
   const handleAlmacenChange = (almacen) => {
     setAlmacenSeleccionado(almacen);
   };
+
+  // Ref for printing
+  const componentRef = useRef();
+
+  // Function to generate PDF
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    doc.text("Nota de Salida wa travieso :v", 10, 10); // Example text
+
+    // Generate the table data, replace with actual data
+    doc.autoTable({
+      startY: 20,
+      head: [['Header 1', 'Codigo', 'Header 3']],
+      body: salidas.map((salida) => [salida.fecha, salida.documento, salida.fecha]),
+    });
+
+    doc.save("NotaSalida.pdf");
+  };
+
   return (
     <div className="relative min-h-screen pb-7">
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacén', href: '/almacen' }, { name: 'Nota de salida', href: '/almacen/nota_salida' }]} />
@@ -56,17 +75,24 @@ const Salidas = () => {
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
           Nota de salida
         </h1>
+        <div>
+          <button onClick={generatePDF}>Generar PDF</button>
+          <ReactToPrint
+            trigger={() => <button>Imprimir</button>}
+            content={() => componentRef.current}
+          />
+        </div>
       </div>
       <FiltrosSalida almacenes={almacenes} onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange} />
-      <div>
-      <TablaSalida salidas={ salidas } /> </div>
+      <div ref={componentRef}>
+        <TablaSalida salidas={salidas} />
+      </div>
       <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
         <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>
           {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL:'}
         </h1>
       </div>
     </div>
-
   );
 };
 
