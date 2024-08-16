@@ -19,6 +19,7 @@
     "@tremor/react": "^3.17.4",
     "axios": "^1.7.2",
     "date-fns": "^3.6.0",
+    "dayjs": "^1.11.12",
     "js-cookie": "^3.0.5",
     "jsbarcode": "^3.11.6",
     "jspdf": "^2.5.1",

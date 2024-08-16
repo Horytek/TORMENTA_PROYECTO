@@ -4,7 +4,7 @@ import './HistoricoTable.css';
 function HistoricoTable({ transactions, previousTransactions }) {
   const totalEntry = transactions.reduce((total, trans) => total + (trans.entra ? parseFloat(trans.entra) : 0), 0);
   const totalSale = transactions.reduce((total, trans) => total + (trans.sale ? parseFloat(trans.sale) : 0), 0);
-  const totalStock = transactions.reduce((total, trans) => total + (trans.stock ? parseFloat(trans.stock) : 0), 0);
+  const totalStock = totalEntry - totalSale;
 
   return (
     <div className="container-table-reg px-4 bg-white rounded-lg">
@@ -25,11 +25,15 @@ function HistoricoTable({ transactions, previousTransactions }) {
           {/* Yellow Bar for previous transactions */}
           {previousTransactions && previousTransactions.length > 0 && (
             <tr style={{ backgroundColor: '#FFFF00' }}>
-              <td colSpan="8" className="text-center font-bold">
+              <td colSpan="3" className="text-center font-bold">
                 TRANSACCIONES ANTERIORES ({previousTransactions[0].numero} documentos)
               </td>
               <td className="text-center py-2 px-4 font-semibold">{previousTransactions[0].entra}</td>
               <td className="text-center py-2 px-4 font-semibold">{previousTransactions[0].sale}</td>
+              <td className="text-center py-2 px-4 font-semibold">
+                {parseFloat(previousTransactions[0].entra) - parseFloat(previousTransactions[0].sale)}
+              </td>
+              <td colSpan="2"></td>
             </tr>
           )}
 
@@ -55,6 +59,9 @@ HistoricoTable.propTypes = {
 };
 
 function HistoricoFilas({ transaction }) {
+  // Calculate stock difference for each transaction
+  const stockDifference = parseFloat(transaction.entra) - parseFloat(transaction.sale);
+
   return (
     <tr>
       <td className="text-center py-2 px-4">{transaction.fecha}</td>

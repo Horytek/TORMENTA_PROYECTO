@@ -10,32 +10,40 @@ function Historico() {
   const [kardexData, setKardexData] = useState([]);
   const [previousTransactions, setPreviousTransactions] = useState(null);
   const [productoData, setProductoData] = useState([]);
+  const [dateRange, setDateRange] = useState({
+    fechaInicio: null,
+    fechaFin: null,
+  });
 
   useEffect(() => {
-    const fetchKardexData = async () => {
-      const fechaInicio = '2024-08-01'; // Obtener estos valores del DateRangePicker
-      const fechaFin = '2024-08-14'; // Obtener estos valores del DateRangePicker
-      const idAlmacen = localStorage.getItem('almacen');
+    if (dateRange.fechaInicio && dateRange.fechaFin) {
+      const fetchKardexData = async () => {
+        const idAlmacen = localStorage.getItem('almacen');
 
-      const filters = { 
-        fechaInicio, 
-        fechaFin, 
-        idProducto: id, 
-        idAlmacen 
+        const filters = { 
+          fechaInicio: dateRange.fechaInicio, 
+          fechaFin: dateRange.fechaFin, 
+          idProducto: id, 
+          idAlmacen 
+        };
+        
+        const data = await getAllKardexData(filters);
+        setKardexData(data.kardex);
+        setPreviousTransactions(data.previousTransactions);
+        setProductoData(data.productos);
       };
-      
-      const data = await getAllKardexData(filters);
-      setKardexData(data.kardex);
-      setPreviousTransactions(data.previousTransactions);
-      setProductoData(data.productos);
-    };
 
-    fetchKardexData();
-  }, [id]);
+      fetchKardexData();
+    }
+  }, [id, dateRange]);
+
+  const handleDateChange = (fechaInicio, fechaFin) => {
+    setDateRange({ fechaInicio, fechaFin });
+  };
 
   return (
     <div className="Historico">
-      <HeaderHistorico productId={id} productoData={productoData} />
+      <HeaderHistorico productId={id} productoData={productoData} onDateChange={handleDateChange} />
       <br />
       <HistoricoTable transactions={kardexData} previousTransactions={previousTransactions} />
     </div>

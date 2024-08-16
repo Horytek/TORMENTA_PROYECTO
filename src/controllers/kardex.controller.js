@@ -118,19 +118,13 @@ const getAlmacen = async (req, res) => {
 
         const [detalleKardexResult] = await connection.query(
             `
-            SELECT 
+            SELECT DISTINCT 
                 n.fecha AS fecha, 
                 c.num_comprobante AS documento, 
                 n.nom_nota AS nombre, 
-                CASE 
-                    WHEN n.id_tiponota = 1 THEN dn.cantidad 
-                    ELSE '' 
-                END AS entra, 
-                CASE 
-                    WHEN n.id_tiponota = 2 THEN dn.cantidad 
-                    ELSE '' 
-                END AS sale, 
-                i.stock AS stock, 
+                bn.entra AS entra,
+                bn.sale AS sale,
+                bn.stock_actual AS stock, 
                 p.precio AS precio, 
                 n.glosa AS glosa 
             FROM 
@@ -143,13 +137,13 @@ const getAlmacen = async (req, res) => {
                 producto p ON dn.id_producto = p.id_producto
             INNER JOIN 
                 inventario i ON p.id_producto = i.id_producto
+            INNER JOIN
+                bitacora_nota bn ON n.id_nota = bn.id_nota
             WHERE 
-                DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ? 
+                DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
                 AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ? 
-                AND p.id_producto = ? 
+                AND p.id_producto = ?
                 AND (n.id_almacenO = ? OR n.id_almacenD = ?)
-            GROUP BY 
-                fecha, documento, nombre, entra, sale, stock, precio, glosa
             ORDER BY 
                 documento;
             `,
@@ -173,23 +167,19 @@ const getDetalleKardexAnteriores = async (req, res) => {
             `
             SELECT 
                 COUNT(*) AS numero, 
-                COALESCE( SUM(CASE 
-                    WHEN n.id_tiponota = 1 THEN dn.cantidad 
-                    ELSE 0 
-                END), 0 ) AS entra, 
-                COALESCE ( SUM(CASE 
-                    WHEN n.id_tiponota = 2 THEN dn.cantidad 
-                    ELSE 0 
-                END), 0 ) AS sale
+                COALESCE(SUM(bn.entra), 0) AS entra, 
+                COALESCE(SUM(bn.sale), 0) AS sale
             FROM 
                 nota n
             INNER JOIN 
                 detalle_nota dn ON n.id_nota = dn.id_nota
             INNER JOIN
-                producto p on dn.id_producto=p.id_producto
+                producto p ON dn.id_producto = p.id_producto
+            INNER JOIN 
+                bitacora_nota bn ON n.id_nota = bn.id_nota
             WHERE 
-                DATE_FORMAT(n.fecha, '%Y-%m-%d') < ? 
-                AND p.id_producto = ? 
+                DATE_FORMAT(n.fecha, '%Y-%m-%d') < ?
+                AND p.id_producto = ?
                 AND (n.id_almacenO = ? OR n.id_almacenD = ?);
             `,
             [fecha, idProducto,idAlmacen, idAlmacen]

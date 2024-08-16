@@ -6,21 +6,55 @@ import { DateRangePicker } from "@nextui-org/date-picker";
 import useAlmacenData from '../../data/data_almacen_kardex';
 import { useState, useEffect } from 'react';
 
-function HeaderHistorico({ productId, productoData }) {
+function HeaderHistorico({ productId, productoData, onDateChange }) {
   const { almacenes } = useAlmacenData();
   const [selectedAlmacen, setSelectedAlmacen] = useState('');
+  const [selectedDates, setSelectedDates] = useState({
+    startDate: null,
+    endDate: null,
+  });
 
   useEffect(() => {
+    // Set initial almacen from localStorage
     const storedAlmacenId = localStorage.getItem('almacen');
     if (storedAlmacenId) {
       setSelectedAlmacen(storedAlmacenId);
     }
+
+    // Calculate initial date range (2 months before today)
+    const today = new Date();
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(today.getMonth() - 2);
+
+    setSelectedDates({
+      startDate: twoMonthsAgo,
+      endDate: today,
+    });
+
+    // Format dates as YYYY-MM-DD
+    const formattedStartDate = twoMonthsAgo.toISOString().split('T')[0];
+    const formattedEndDate = today.toISOString().split('T')[0];
+
+    // Trigger the callback to fetch data with the initial date range
+    onDateChange(formattedStartDate, formattedEndDate);
   }, []);
 
-  const handleChange = (event) => {
+  const handleAlmacenChange = (event) => {
     const selectedId = event.target.value;
     setSelectedAlmacen(selectedId);
     localStorage.setItem('almacen', selectedId);
+  };
+
+  const handleDateChange = (range) => {
+    const [start, end] = range;
+    setSelectedDates({ startDate: start, endDate: end });
+
+    // Format dates as YYYY-MM-DD
+    const formattedStartDate = start.toISOString().split('T')[0];
+    const formattedEndDate = end.toISOString().split('T')[0];
+
+    // Trigger the callback to fetch data with the updated date range
+    onDateChange(formattedStartDate, formattedEndDate);
   };
 
   return (
@@ -29,7 +63,7 @@ function HeaderHistorico({ productId, productoData }) {
         <p>TORMENTA JEANS - 20610968801</p>
         <p>
           Producto: 
-          {productoData.length > 0 ? ` ${productoData[0].descripcion} - ${productoData[0].marca}` : 'Cargando...'}
+          {productoData.length > 0 ? `${productoData[0].descripcion} - ${productoData[0].marca}` : 'Cargando...'}
         </p>
         <p>
           COD: {productoData.length > 0 ? productoData[0].codigo : 'Cargando...'} / 
@@ -39,7 +73,12 @@ function HeaderHistorico({ productId, productoData }) {
         <br />
         <div className="fecha-container">
           <h6 className='font-bold'>Fecha:&nbsp;</h6>
-          <DateRangePicker className= "w-100" classNames={{ inputWrapper: "bg-white date-range-picker" }} />
+          <DateRangePicker
+            className="w-100"
+            classNames={{ inputWrapper: "bg-white date-range-picker" }}
+            value={[selectedDates.startDate, selectedDates.endDate]}
+            onChange={handleDateChange}
+          />
         </div>
       </div>
       <div className="actions">
@@ -51,7 +90,7 @@ function HeaderHistorico({ productId, productoData }) {
         </ButtonNormal>
         <select 
           value={selectedAlmacen} 
-          onChange={handleChange} 
+          onChange={handleAlmacenChange} 
           disabled={almacenes.length === 0}>
           {almacenes.map((almacen) => (
             <option key={almacen.id} value={almacen.id}>

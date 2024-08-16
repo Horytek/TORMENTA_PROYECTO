@@ -118,7 +118,6 @@ function Registro_Ingresos() {
 
     closeModalBuscarProducto();
   };
-
   const handleGuardar = async () => {
     if (productosSeleccionados.length === 0) {
       toast.error('Debe agregar al menos un producto.');
@@ -130,11 +129,19 @@ function Registro_Ingresos() {
         stockExcedido = true;
       }
     });
-
+  
     if (stockExcedido) {
       toast.error('La cantidad de algunos productos excede el stock disponible.');
       return;
     }
+  
+    // Obtener usuario desde localStorage
+    const usuario = localStorage.getItem('usuario');
+    if (!usuario) {
+      toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
+      return;
+    }
+  
     const almacenO = document.getElementById('almacen_origen').value;
     const almacenD = document.getElementById('almacen_destino').value;
     const destinatario = document.getElementById('destinatario').value;
@@ -143,17 +150,17 @@ function Registro_Ingresos() {
     const nota = document.getElementById('nomnota').value;
     const numComprobante = document.getElementById('numero').value;
     const observacion = document.getElementById('observacion').value;
-
-    if (almacenO == almacenD){
-      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
+  
+    if (almacenO == almacenD) {
+      toast.error('El almacén de origen y de destino no pueden ser el mismo.');
       return;
-    };
-
+    }
+  
     const productos = productosSeleccionados.map(producto => ({
       id: producto.codigo,
       cantidad: producto.cantidad
     }));
-
+  
     const data = {
       almacenO,
       almacenD,
@@ -164,19 +171,21 @@ function Registro_Ingresos() {
       producto: productos.map(p => p.id),
       numComprobante,
       cantidad: productos.map(p => p.cantidad),
-      observacion
+      observacion,
+      usuario  // Incluye el usuario en los datos enviados
     };
-
+  
     const result = await insertNotaAndDetalle(data);
-
+  
     if (result.success) {
       toast.success('Nota y detalle insertados correctamente');
       handleCancel();
       window.location.reload();
     } else {
-      toast.error('Por favor complete todos los campos');
+      toast.error(result.message || 'Por favor complete todos los campos');
     }
   };
+  
 
   const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
   const currentDate = new Date().toISOString().split('T')[0];
