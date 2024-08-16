@@ -17,14 +17,7 @@ import ProductosForm from '@/pages/Productos/ProductosForm';
 import useProductosData from '../../data/data_buscar_producto';
 import insertGuiaandDetalle from '../../data/insert_guiaremision';
 import { Toaster, toast } from 'react-hot-toast'; // <-- Importación añadida
-
-
-
-
-
-
-
-
+import ConfirmationModal from '././../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
 
 const glosaOptions = [
@@ -34,7 +27,6 @@ const glosaOptions = [
   "OTROS", "VENTA SUJETA A CONFIRMACION DEL COMPRADOR", "TRASLADO DE BIENES PARA TRANSFORMACION",
   "TRASLADO EMISOR ITINERANTE CP"
 ];
-
 
 function RegistroGuia() {
   
@@ -51,6 +43,10 @@ function RegistroGuia() {
   const [searchInput, setSearchInput] = useState('');
   const [productos, setProductos] = useState([]); // Tu array de productos
 
+  const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState('');
+
+
   const handleCancel = () => {
     localStorage.removeItem('productosSeleccionados');
     setProductosSeleccionados([]);
@@ -58,10 +54,7 @@ function RegistroGuia() {
 
   const handleGuardar = async () => {
 
-    const confirmacion = window.confirm("¿Está seguro de que desea guardar la guía de remisión?");
-  if (!confirmacion) {
-    return; // Si no se confirma, salimos de la función
-  }
+   
 
     if (productosSeleccionados.length === 0) {
       toast.error('Debe agregar al menos un producto.');
@@ -174,6 +167,21 @@ function RegistroGuia() {
 
     closeModalBuscarProducto();
   };
+
+  const openModalOpenGuardar = () => {
+    setConfirmationMessage('¿Desea guardar esta nueva guía de remisión?');
+    setisModalOpenGuardar(true);
+  };
+
+  const handleConfirmGuardar = async () => {
+    closeModalOpenGuardar();
+    await handleGuardar(); // Aquí llamas la función de guardado
+  };
+  
+  const closeModalOpenGuardar = () => {
+    setisModalOpenGuardar(false);
+  };
+  
 
 
 
@@ -467,7 +475,7 @@ function RegistroGuia() {
                 id="observacion" style={{ height: "94%" }}></textarea>
             </div>
             <div className="mt-10 flex justify-end">
-              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded" type="button" onClick={handleGuardar}>
+              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1.5 px-4 rounded" type="button" onClick={openModalOpenGuardar}>
                 <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
             </div>
@@ -487,6 +495,13 @@ function RegistroGuia() {
         productos={productos}
         agregarProducto={agregarProducto}
       />
+      <ConfirmationModal
+      isOpen={isModalOpenGuardar}
+      onRequestClose={closeModalOpenGuardar}
+      onConfirm={handleConfirmGuardar}
+      title="Confirmación"
+      message={confirmationMessage}
+    />
       {/* Modals */}
       {isModalOpen && modalType !== 'buscarProducto' && (
         <>
