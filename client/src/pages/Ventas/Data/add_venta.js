@@ -1,7 +1,5 @@
-
-
-import axios from 'axios';
-
+//import axios from 'axios';
+import axios from "../../../api/axios";
 // Valida el formato decimal
 export const validateDecimalInput = (e) => {
     const { value } = e.target;
@@ -21,7 +19,7 @@ export const validateDecimalInput = (e) => {
 export const handleCobrar = async (datosVenta, setShowConfirmacion) => {
     try {
         console.log('Datos de venta:', datosVenta);
-        const response = await axios.post('http://localhost:4000/api/ventas/agregar_venta', datosVenta, {
+        const response = await axios.post('/ventas/agregar_venta', datosVenta, {
             headers: {
                 'Content-Type': 'application/json',
             }

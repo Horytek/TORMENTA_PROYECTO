@@ -95,13 +95,13 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
 
                 const nuevoNumComprobante = await generateComprobanteNumber(comp);
 
-                console.log('Nuevo número de comprobante:', nuevoNumComprobante);
+                //console.log('Nuevo número de comprobante:', nuevoNumComprobante);
 
                 // Almacena el número de comprobante en el localStorage
                 localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante }));
 
                 // Verifica si el almacenamiento local se actualizó correctamente
-                console.log('Contenido actualizado de localStorage:', localStorage.getItem('comprobante1'));
+                //console.log('Contenido actualizado de localStorage:', localStorage.getItem('comprobante1'));
             } catch (error) {
                 console.error('Error al obtener el número de comprobante:', error);
             }
@@ -313,7 +313,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         }).filter(detalle => detalle !== null),
     };
 
-    console.log(datosVentaComprobante);
+    //console.log(datosVentaComprobante);
     {/* Fin de los datos que pasan al voucher */ }
 
     {/* Este handlePrint es para el voucher automatico */ }
@@ -343,9 +343,9 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     
         const resp = await conector.imprimir(nombreImpresora, api_key);
         if (resp === true) {
-            console.log("Impresión exitosa");
+            //console.log("Impresión exitosa");
         } else {
-            console.log("Problema al imprimir: " + resp);
+           //console.log("Problema al imprimir: " + resp);
         }
     };
     {/* Fin del handlePrint del voucher automatico */ }

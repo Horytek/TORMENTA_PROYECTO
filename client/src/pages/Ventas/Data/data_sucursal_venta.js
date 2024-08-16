@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-
+//import axios from 'axios';
+import axios from "../../../api/axios";
 const useSucursalData = () => {
   const [sucursales, setSucursal] = useState([]);
 
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/ventas/sucursal');
+        const response = await axios.get('/ventas/sucursal');
         
         if (response.data.code === 1) {
           const sucursales = response.data.data.map(item => ({
