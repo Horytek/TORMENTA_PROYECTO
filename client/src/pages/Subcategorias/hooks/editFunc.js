@@ -11,6 +11,7 @@ const useEditSubCategoria = () => {
 
         try {
             const response = await axios.put(`http://localhost:4000/api/subcategorias/update/${id_subcategoria}`, {
+                id_subcategoria,
                 id_categoria,
                 nom_subcat,
                 estado_subcat,
@@ -18,12 +19,13 @@ const useEditSubCategoria = () => {
                 estado_categoria
             });
 
+            // Handle response without console.log
             if (response.data && response.data.message) {
-                console.log(response.data.message);
+                
             } else {
-                console.log("Subcategoría y categoría actualizadas con éxito");
             }
         } catch (err) {
+            
             setError(err);
         } finally {
             setLoading(false);

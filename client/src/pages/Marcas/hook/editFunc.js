@@ -1,6 +1,5 @@
 import { useState } from "react";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 
 const useEditMarca = () => {
     const [loading, setLoading] = useState(false);
@@ -18,13 +17,13 @@ const useEditMarca = () => {
             });
 
             if (response.data && response.data.message) {
-                toast.success(response.data.message);
+                // toast.success(response.data.message);
             } else {
-                toast.success("Marca actualizada con éxito");
+              //  toast.success("Marca actualizada con éxito");
             }
         } catch (err) {
             setError(err);
-            toast.error("Error al actualizar la marca");
+           // toast.error("Error al actualizar la marca");
         } finally {
             setLoading(false);
         }

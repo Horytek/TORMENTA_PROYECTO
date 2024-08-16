@@ -88,6 +88,11 @@ const updateSubCategoria = async (req, res) => {
     try {
         const { id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria } = req.body;
 
+        // Verifica si id_categoria está definido
+        if (id_categoria === undefined) {
+            return res.status(400).json({ message: "ID de categoría es requerido" });
+        }
+
         const connection = await getConnection();
         
         const [resultSubCat] = await connection.query(`
@@ -111,6 +116,7 @@ const updateSubCategoria = async (req, res) => {
         }
     }
 };
+
 
 
 const deactivateSubCategoria = async (req, res) => {

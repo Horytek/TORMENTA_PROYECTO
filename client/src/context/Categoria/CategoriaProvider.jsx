@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useCallback } from "react";
 import { CategoriaContext } from "./CategoriaContext";
 import { getCategorias, addCategoria } from "@/services/categoria.services";
 
@@ -13,28 +13,34 @@ export const useCategorias = () => {
 export const CategoriaContextProvider = ({ children }) => {
     const [categorias, setCategoria] = useState([]);
   
-    async function loadCategorias() {
-      const response = await getCategorias();
-      setCategoria(response);
-    }
-  
-    const createCategoria = async (categoria) => {
+    const loadCategorias = useCallback(async () => {
+      try {
+        const response = await getCategorias();
+        if (JSON.stringify(categorias) !== JSON.stringify(response)) {
+          setCategoria(response);
+        }
+      } catch (error) {
+        console.error("Error loading categories:", error);
+      }
+    }, [categorias]); // Memoiza la función y la referencia no cambiará a menos que 'categorias' cambie
+    
+    const createCategoria = useCallback(async (categoria) => {
       try {
         const success = await addCategoria(categoria);
         if (success[0]) {
-          const { nom_categoria, estado_categoria } = categoria
+          const { nom_categoria, estado_categoria } = categoria;
           const newCategoria = {
             id_categoria: success[1],
             nom_categoria,
-            estado_categoria
+            estado_categoria,
           };
-          setCategoria([...categorias, newCategoria]);
+          setCategoria((prevCategorias) => [...prevCategorias, newCategoria]); 
         }
         return success;
       } catch (error) {
-        console.error(error);
+       // console.error(error);
       }
-    };
+    }, []); 
   
     return (
       <CategoriaContext.Provider

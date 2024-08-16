@@ -4,6 +4,7 @@ import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import { useMarcas } from "@/context/Marca/MarcaProvider";
+import { toast } from "react-hot-toast";
 import useEditMarca from "./hook/editFunc";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
@@ -24,19 +25,24 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
     if (!initialData) {
       loadMarcas();
     }
-  }, [initialData, setValue]); 
-  
+  }, [initialData, setValue]);
 
   const onSubmit = async (data) => {
     try {
       const updatedData = {
         ...data,
+        id_marca: initialData.id_marca,
         estado_marca: parseInt(data.estado_marca, 10),
       };
       await editMarca(updatedData);
       onClose();
+      toast.success("Marca actualizada con éxito");
+      setTimeout(() => {
+        window.location.reload();
+      }
+      , 420);
     } catch (error) {
-      console.error("Error al actualizar la marca");
+      toast.error("Error al actualizar la marca");
     }
   };
 
