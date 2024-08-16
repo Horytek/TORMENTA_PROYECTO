@@ -29,7 +29,7 @@ const glosaOptions = [
 ];
 
 function RegistroGuia() {
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [isProductoModalOpen, setIsProductoModalOpen] = useState(false);
@@ -46,6 +46,9 @@ function RegistroGuia() {
   const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
 
+  const [selectedClienteId, setSelectedClienteId] = useState(null);
+  const [selectedSucursalId, setSelectedSucursalId] = useState(null);
+
 
   const handleCancel = () => {
     localStorage.removeItem('productosSeleccionados');
@@ -54,18 +57,15 @@ function RegistroGuia() {
 
   const handleGuardar = async () => {
 
-   
-
     if (productosSeleccionados.length === 0) {
       toast.error('Debe agregar al menos un producto.');
       return;
     }
-    
-    
-    const id_sucursal = document.getElementById('vendedor').value;
+
+    const id_sucursal = selectedSucursalId; // ID de la sucursal seleccionada
     const id_ubigeo_o = document.getElementById('ubipart').value;
     const id_ubigeo_d = document.getElementById('ubidest').value;
-    const id_destinatario = document.getElementById('cliente').value;
+    const id_destinatario = selectedClienteId; // ID del cliente seleccionado
     const id_transportista = document.getElementById('transporte').value;
     const glosa = document.getElementById('glosa').value;
     const dir_partida = document.getElementById('dirpart').value;
@@ -76,7 +76,7 @@ function RegistroGuia() {
     const f_generacion = document.getElementById('fechaDocu').value;
     const h_generacion = document.getElementById('horaDocu').value;
     const num_comprobante = document.getElementById('numero').value;
-   
+
     const productos = productosSeleccionados.map(producto => ({
       id: producto.codigo,
       cantidad: producto.cantidad
@@ -101,15 +101,15 @@ function RegistroGuia() {
       cantidad: productos.map(p => p.cantidad),
     };
 
-      const response = await insertGuiaandDetalle(guiaData); // Pasar solo guiaData
-      console.log(response);
-      if (response.success) {
-        toast.success("Guía de Remisión y detalles guardados exitosamente");
-        handleCancel();
-        window.location.reload();
-      } else {
-        toast.error("Error al guardar la Guía de Remisión");
-      }
+    const response = await insertGuiaandDetalle(guiaData); // Pasar solo guiaData
+    console.log(response);
+    if (response.success) {
+      toast.success("Guía de Remisión y detalles guardados exitosamente");
+      handleCancel();
+      window.location.reload();
+    } else {
+      toast.error("Error al guardar la Guía de Remisión");
+    }
 
   };
 
@@ -177,11 +177,11 @@ function RegistroGuia() {
     closeModalOpenGuardar();
     await handleGuardar(); // Aquí llamas la función de guardado
   };
-  
+
   const closeModalOpenGuardar = () => {
     setisModalOpenGuardar(false);
   };
-  
+
 
 
 
@@ -275,39 +275,38 @@ function RegistroGuia() {
                   <label htmlFor="fechaDocu" className='text-sm font-bold text-black'>Fecha:</label>
                   <input type="date" name='fechaDocu'
                     className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                    id="fechaDocu" defaultValue={currentDate} readOnly/>
+                    id="fechaDocu" defaultValue={currentDate} readOnly />
                 </div>
                 <div className="flex-1 ml-2">
                   <label htmlFor="horaDocu" className='text-sm font-bold text-black'>Hora:</label>
                   <input type="time" name='horaDocu'
                     className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                    id="horaDocu" value={currentHour} readOnly/>
+                    id="horaDocu" value={currentHour} readOnly />
                 </div>
               </div>
               <div className="">
-                <label htmlFor="cliente" className='text-sm font-bold text-black' >Cliente:</label>
-                <select
-                  id='cliente'
-                  className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'
-                  onChange={(e) => {
-                    const selectedId = parseInt(e.target.value);
-                    const selected = clientes.find(cliente => cliente.id === selectedId);
+    <label htmlFor="cliente" className='text-sm font-bold text-black'>Cliente:</label>
+    <Select
+        id='cliente'
+        classNamePrefix='react-select'
+        options={clientes.map(cliente => ({ value: cliente.id, label: cliente.nombre }))}
+        onChange={(selectedOption) => {
+            const selectedId = selectedOption ? selectedOption.value : null;
+            setSelectedClienteId(selectedId);
 
-                    if (selected) {
-                      document.getElementById('documento').value = selected.documento;
-                      document.getElementById('dirdest').value = selected.ubicacion;
-                    } else {
-                      document.getElementById('documento').value = '';
-                      document.getElementById('dirdest').value = '';
-                    }
-                  }}
-                >
-                  <option>Seleccione...</option>
-                  {clientes.map(cliente => (
-                    <option key={cliente.id} value={cliente.id}>{cliente.nombre}</option>
-                  ))}
-                </select>
-              </div>
+            const selected = clientes.find(cliente => cliente.id === selectedId);
+
+            if (selected) {
+                document.getElementById('documento').value = selected.documento;
+                document.getElementById('dirdest').value = selected.ubicacion;
+            } else {
+                document.getElementById('documento').value = '';
+                document.getElementById('dirdest').value = '';
+            }
+        }}
+        placeholder="Seleccione..."
+    />
+</div>
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="documento" className='text-sm font-bold text-black'>RUC/DNI:</label>
@@ -318,27 +317,27 @@ function RegistroGuia() {
                 </div>
               </div>
 
-              <div className='w-full relative group  text-start'>
-                <label htmlFor="vendedor" className='text-sm font-bold text-black'>Vendedor:</label>
-                <select id='vendedor'
-                  className='w-full text-sm bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-2'
-                  onChange={(e) => {
-                    const selectedId = parseInt(e.target.value);
-                    const selected = sucursales.find(sucursal => sucursal.id === selectedId);
+              <div className='w-full relative group text-start'>
+    <label htmlFor="vendedor" className='text-sm font-bold text-black'>Vendedor:</label>
+    <Select
+        id='vendedor'
+        classNamePrefix='react-select'
+        options={sucursales.map(sucursal => ({ value: sucursal.id, label: sucursal.nombre }))}
+        onChange={(selectedOption) => {
+            const selectedId = selectedOption ? selectedOption.value : null;
+            setSelectedSucursalId(selectedId);
 
-                    if (selected) {
-                      document.getElementById('dirpart').value = selected.direccion;
-                    } else {
-                      document.getElementById('dirpart').value = '';
-                    }
-                  }} >
-                  <option>Seleccione...</option>
-                  {sucursales.map((sucursal) => (
-                    <option key={sucursal.id} value={sucursal.id}>{sucursal.nombre}</option>
-                  ))}
-                  
-                </select>
-              </div>
+            const selected = sucursales.find(sucursal => sucursal.id === selectedId);
+
+            if (selected) {
+                document.getElementById('dirpart').value = selected.direccion;
+            } else {
+                document.getElementById('dirpart').value = '';
+            }
+        }}
+        placeholder="Seleccione..."
+    />
+</div>
               <div className="flex">
                 <div className="flex-1 mr-2">
                   <label htmlFor="canti" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
@@ -411,7 +410,7 @@ function RegistroGuia() {
                     disabled />
                 </div>
               </div>
-            
+
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="namtrans" className='text-sm font-bold text-black'>Transporte:</label>
@@ -454,7 +453,7 @@ function RegistroGuia() {
                   />
                 </div>
               </div>
-              
+
               <div className="">
                 <div className='w-full relative group text-start'>
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold mt-6"></label>
@@ -496,12 +495,12 @@ function RegistroGuia() {
         agregarProducto={agregarProducto}
       />
       <ConfirmationModal
-      isOpen={isModalOpenGuardar}
-      onRequestClose={closeModalOpenGuardar}
-      onConfirm={handleConfirmGuardar}
-      title="Confirmación"
-      message={confirmationMessage}
-    />
+        isOpen={isModalOpenGuardar}
+        onRequestClose={closeModalOpenGuardar}
+        onConfirm={handleConfirmGuardar}
+        title="Confirmación"
+        message={confirmationMessage}
+      />
       {/* Modals */}
       {isModalOpen && modalType !== 'buscarProducto' && (
         <>
