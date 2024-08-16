@@ -8,12 +8,17 @@ import {
   deleteCategoria,
   deactivateCategoria as apiDeactivateCategoria,
 } from "@/services/categoria.services";
-import CategoriasForm from "./CategoriasForm";
+import EditCat from "./EditCat";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 export function ShowCategorias({ searchTerm }) {
   const [categorias, setCategorias] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [deactivateCat, setDeactivateCat] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
   const productosPerPage = 10;
 
   useEffect(() => {
@@ -46,30 +51,26 @@ export function ShowCategorias({ searchTerm }) {
     loadCategorias();
   };
 
-  const [activeEdit, setActiveEdit] = useState(false);
-  const [initialData, setInitialData] = useState(null);
-
-  const handleModalEdit = async (id_categoria) => {
-    const data = await getCategoria(id_categoria);
-    if (data && data[0]) {
-      setInitialData({
-        id_categoria: id_categoria,
-        data: data[0],
-      });
-      setActiveEdit(true);
-    }
+  const handleOpenEditModal = (
+    id_categoria,
+    nom_categoria,
+    estado_categoria
+  ) => {
+    setSelectedRow({ id_categoria, nom_categoria, estado_categoria });
+    setIsEditModalOpen(true);
   };
 
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [deactivateCat, setDeactivateCat] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [selectedId, setSelectedId] = useState(null);
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedRow(null);
+  };
 
   const handleOpenConfirmationModal = (row, id_categoria) => {
     setSelectedRow(row);
     setSelectedId(id_categoria);
     setIsConfirmationModalOpen(true);
   };
+
   const handleCloseConfirmationModal = () => {
     setIsConfirmationModalOpen(false);
     setSelectedRow(null);
@@ -92,11 +93,6 @@ export function ShowCategorias({ searchTerm }) {
   const handleConfirmDeactivate = () => {
     deactivateCategoria(selectedId);
     handleCloseDeactivationModal();
-  };
-
-  const handleCloseModal = () => {
-    setActiveEdit(false);
-    setInitialData(null);
   };
 
   return (
@@ -146,7 +142,13 @@ export function ShowCategorias({ searchTerm }) {
                     <div className="flex justify-center items-center">
                       <button
                         className="px-2 py-1 text-yellow-400 text-xl"
-                        onClick={() => handleModalEdit(categoria.id_categoria)}
+                        onClick={() =>
+                          handleOpenEditModal(
+                            categoria.id_categoria,
+                            categoria.nom_categoria,
+                            categoria.estado_categoria,
+                          )
+                        }
                       >
                         <MdEdit />
                       </button>
@@ -207,12 +209,12 @@ export function ShowCategorias({ searchTerm }) {
         />
       )}
 
-      {/* Modal de Editar categoria */}
-      {activeEdit && (
-        <CategoriasForm
+      {isEditModalOpen && selectedRow && (
+        <EditCat
+          isOpen={isEditModalOpen}
           modalTitle={"Editar categoria"}
-          onClose={handleCloseModal}
-          initialData={initialData}
+          onClose={handleCloseEditModal}
+          initialData={selectedRow}
         />
       )}
 

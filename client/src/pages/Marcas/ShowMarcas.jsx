@@ -15,6 +15,10 @@ export function ShowMarcas({ searchTerm }) {
   const [marcas, setMarcas] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [deactivateBrand, setDeactivateBrand] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
   const productosPerPage = 10;
 
   useEffect(() => {
@@ -56,22 +60,6 @@ export function ShowMarcas({ searchTerm }) {
     await apiDeactivateMarca(id);
     loadMarcas();
   };
-
-  const handleModalEdit = async (id_marca) => {
-    const data = await getMarca(id_marca);
-    if (data && data[0]) {
-      setInitialData({
-        id_marca: id_marca,
-        data: data[0],
-      });
-      setActiveEdit(true);
-    }
-  };
-
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [deactivateBrand, setDeactivateBrand] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [selectedId, setSelectedId] = useState(null);
 
   const handleOpenConfirmationModal = (row, id_marca) => {
     setSelectedRow(row);
@@ -224,7 +212,7 @@ export function ShowMarcas({ searchTerm }) {
           isOpen={isEditModalOpen}
           modalTitle={"Editar marca"}
           onClose={handleCloseEditModal}
-          initialData={initialData}
+          initialData={selectedRow}
         />
       )}
 

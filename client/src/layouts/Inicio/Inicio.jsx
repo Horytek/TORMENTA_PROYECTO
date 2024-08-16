@@ -16,29 +16,15 @@ function Inicio() {
   const renderTabContent = () => {
     const {
       productTop,
-      loading: loadingTop,
-      error: errorTop,
     } = useProductTop(selectedTab);
     const {
       totalProductsSold,
-      loading: loadingSell,
-      error: errorSell,
     } = useProductSell(selectedTab);
     const {
       ventasTotal,
-      loading: loadingVentas,
-      error: errorVentas,
     } = useVentasTotal(selectedTab);
 
-    if (loadingTop || loadingSell || loadingVentas) return <p>Cargando...</p>;
-    if (errorTop || errorSell || errorVentas)
-      return (
-        <p>
-          Error:{" "}
-          {errorTop?.message || errorSell?.message || errorVentas?.message}
-        </p>
-      );
-
+    
     return (
       <>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

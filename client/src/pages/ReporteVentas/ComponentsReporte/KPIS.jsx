@@ -8,7 +8,7 @@ import { RiCashFill, RiTShirt2Line, RiLineChartFill } from "@remixicon/react";
 const SalesCard = ({ idSucursal }) => {
   const { totalRecaudado } = useVentasData(idSucursal);
   const { totalProductosVendidos } = useProductosVendidos(idSucursal);
-  const { productoTop, loading, error } = useProductoTop(idSucursal);
+  const { productoTop } = useProductoTop(idSucursal);
 
   return (
     <div className="container mx-auto px-4 mb-4">
@@ -33,13 +33,7 @@ const SalesCard = ({ idSucursal }) => {
 
         <CardComponent
           titleCard="Producto más vendido"
-          contentCard={
-            loading
-              ? "Cargando..."
-              : error
-              ? `Error: ${error}`
-              : productoTop?.descripcion || "No disponible"
-          }
+          contentCard={productoTop ? productoTop.descripcion : "No disponible"}
           color="blue"
           icon={RiLineChartFill}
           tooltip="Producto top"

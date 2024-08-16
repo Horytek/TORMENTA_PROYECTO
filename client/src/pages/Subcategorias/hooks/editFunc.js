@@ -1,6 +1,5 @@
 import { useState } from "react";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 
 const useEditSubCategoria = () => {
     const [loading, setLoading] = useState(false);
@@ -20,13 +19,12 @@ const useEditSubCategoria = () => {
             });
 
             if (response.data && response.data.message) {
-                toast.success(response.data.message);
+                console.log(response.data.message);
             } else {
-                toast.success("Subcategoría y categoría actualizadas con éxito");
+                console.log("Subcategoría y categoría actualizadas con éxito");
             }
         } catch (err) {
             setError(err);
-            toast.error("Error al actualizar la subcategoría o categoría");
         } finally {
             setLoading(false);
         }

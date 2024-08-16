@@ -8,15 +8,24 @@ import useEditMarca from "./hook/editFunc";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
   const { editMarca, loading } = useEditMarca();
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+  const { loadMarcas } = useMarcas();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm();
 
   useEffect(() => {
     if (initialData) {
       setValue("nom_marca", initialData.nom_marca);
       setValue("estado_marca", initialData.estado_marca);
     }
-    loadMarcas();
-  }, [initialData, setValue, loadMarcas]);
+    if (!initialData) {
+      loadMarcas();
+    }
+  }, [initialData, setValue]); 
+  
 
   const onSubmit = async (data) => {
     try {
@@ -46,7 +55,6 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
             </div>
             <div className="modal-body">
               <div className="w-full text-start mb-5">
-                
                 <label
                   htmlFor="nom_marca"
                   className="text-sm font-bold text-black mt-4 block"
