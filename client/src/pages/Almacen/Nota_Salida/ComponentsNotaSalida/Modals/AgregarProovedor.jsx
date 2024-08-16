@@ -12,10 +12,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
         provider: '',
         address: '',
         phone: '',
-        email: '',
-        web: '',
-        observation: '',
-        statusSunat: ''
+        email: ''
     });
     const [errors, setErrors] = useState({
         dniOrRuc: false,
@@ -35,9 +32,9 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
             nombres: tipoCliente === 'Natural' ? provider.split(' ').slice(0, -2).join(' ') : null,
             apellidos: tipoCliente === 'Natural' ? provider.split(' ').slice(-2).join(' ') : null,
             razon_social: tipoCliente === 'Juridico' ?  provider : null,
-            ubicacion: address,
-            telefono: phone,
-            correo: email,
+            ubicacion: address !== '' ? address : null,
+            telefono: phone !== '' ? phone : null,
+            correo: email !== '' ? email : null,
         };
     console.log(data);
         const result = await insertDestinatario(data);

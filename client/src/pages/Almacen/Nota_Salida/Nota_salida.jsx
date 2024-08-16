@@ -20,7 +20,7 @@ const Salidas = () => {
   const fetchSalidas = useCallback(async () => {
     const data = await getSalidasData(filters);
     setSalidas(data.salida);
-  }, [filters]); 
+  }, [filters]);
 
   useEffect(() => {
     fetchSalidas();
@@ -55,12 +55,14 @@ const Salidas = () => {
   // Function to generate PDF
   const generatePDF = () => {
     const doc = new jsPDF();
-    doc.text("Nota de Salida wa travieso :v", 10, 10); // Example text
+    doc.text("TORMENTA JEANS - 20610588981", 10, 10); // Example text
+    const fechaActual = new Date().toLocaleDateString(); // Formato de fecha, cambia según necesidad
 
+    doc.text(`Notas de Salida: ${almacenSeleccionado.almacen} / Fecha: ${fechaActual}`, 10, 20);
     // Generate the table data, replace with actual data
     doc.autoTable({
-      startY: 20,
-      head: [['Header 1', 'Codigo', 'Header 3']],
+      startY: 22,
+      head: [['Fecha', 'Codigo', 'Header 3']],
       body: salidas.map((salida) => [salida.fecha, salida.documento, salida.fecha]),
     });
 
