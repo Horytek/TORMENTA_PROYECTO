@@ -1,9 +1,9 @@
-import axios from 'axios';
-
+//import axios from 'axios';
+import axios from "../../../api/axios";
 const generateComprobanteNumber = async (id_comprobante) => {
   try {
     // Hacer la solicitud GET
-    const response = await axios.get('http://localhost:4000/api/ventas/numero_comprobante', {
+    const response = await axios.get('/ventas/numero_comprobante', {
           params: { id_comprobante, usuario: localStorage.getItem('usuario') }
         });
     // Suponiendo que la respuesta es un objeto con un campo 'nuevoNumComprobante'

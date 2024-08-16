@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+//import axios from 'axios';
+import axios from "../../../api/axios";
 
 // Función para obtener ventas
 const useVentasData = (filters) => {
@@ -10,7 +11,7 @@ const useVentasData = (filters) => {
 
   const fetchVentas = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/ventas', {
+      const response = await axios.get('/ventas', {
         params: {
           page: currentPage - 1,
           limit: ventasPerPage,
