@@ -1,17 +1,24 @@
+import { useState, useEffect, useCallback } from "react";
 import './HeaderHistorico.css';
 import { MdOutlineLocalPrintshop } from "react-icons/md";
 import { FaRegFileExcel } from "react-icons/fa";
 import { ButtonNormal } from '@/components/Buttons/Buttons';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import useAlmacenData from '../../data/data_almacen_kardex';
-import { useState, useEffect, useCallback } from 'react';
+import { parseDate } from "@internationalized/date";
 
-function HeaderHistorico({ productId, productoData, onDateChange }) {
+function HeaderHistorico({ productoData, onDateChange }) {
   const { almacenes } = useAlmacenData();
   const [selectedAlmacen, setSelectedAlmacen] = useState('');
   const [selectedDates, setSelectedDates] = useState({
-    startDate: null,
-    endDate: null,
+    startDate: new Date('2024-04-01'),
+    endDate: new Date('2028-04-08'),
+  });
+
+  // Guardamos las fechas iniciales con parseDate para el DateRangePicker
+  const [value, setValue] = useState({
+    start: parseDate("2024-04-01"),
+    end: parseDate("2028-04-08"),
   });
 
   useEffect(() => {
@@ -20,28 +27,20 @@ function HeaderHistorico({ productId, productoData, onDateChange }) {
       setSelectedAlmacen(storedAlmacenId);
     }
 
-    const initialStartDate = new Date('2024-04-01');
-    const initialEndDate = new Date('2028-04-08');
+    const formattedStartDate = selectedDates.startDate.toISOString().split('T')[0];
+    const formattedEndDate = selectedDates.endDate.toISOString().split('T')[0];
+    
+    onDateChange(formattedStartDate, formattedEndDate, storedAlmacenId || '');
+  }, [onDateChange, selectedDates.startDate, selectedDates.endDate]);
 
-    setSelectedDates({
-      startDate: initialStartDate,
-      endDate: initialEndDate,
-    });
-
-    const formattedStartDate = initialStartDate.toISOString().split('T')[0];
-    const formattedEndDate = initialEndDate.toISOString().split('T')[0];
-
-    onDateChange(formattedStartDate, formattedEndDate);
-  }, [onDateChange]);
-
-  // Este useEffect se encargará de actualizar los datos en tiempo real
+  // Este useEffect se encargará de actualizar los datos en tiempo real cuando cambien las fechas o el almacén
   useEffect(() => {
     if (selectedAlmacen && selectedDates.startDate && selectedDates.endDate) {
       const formattedStartDate = selectedDates.startDate.toISOString().split('T')[0];
       const formattedEndDate = selectedDates.endDate.toISOString().split('T')[0];
       onDateChange(formattedStartDate, formattedEndDate, selectedAlmacen);
     }
-  }, [selectedAlmacen, selectedDates, onDateChange]);
+  }, [selectedAlmacen, selectedDates.startDate, selectedDates.endDate, onDateChange]);
 
   const handleAlmacenChange = useCallback((event) => {
     const selectedId = event.target.value;
@@ -49,10 +48,18 @@ function HeaderHistorico({ productId, productoData, onDateChange }) {
     localStorage.setItem('almacen', selectedId);
   }, []);
 
-  const handleDateChange = useCallback((range) => {
-    const [start, end] = range;
-    setSelectedDates({ startDate: start, endDate: end });
-  }, []);
+  const handleDateChange = (newValue) => {
+    if (newValue.start && newValue.end) {
+      const newStartDate = new Date(newValue.start.year, newValue.start.month - 1, newValue.start.day);
+      const newEndDate = new Date(newValue.end.year, newValue.end.month - 1, newValue.end.day);
+
+      setValue(newValue);
+      setSelectedDates({
+        startDate: newStartDate,
+        endDate: newEndDate,
+      });
+    }
+  };
 
   return (
     <div className="headerHistorico">
@@ -72,8 +79,8 @@ function HeaderHistorico({ productId, productoData, onDateChange }) {
           <h6 className='font-bold'>Fecha:&nbsp;</h6>
           <DateRangePicker
             className="w-100"
-            classNames={{ inputWrapper: "bg-white date-range-picker" }}
-            value={[selectedDates.startDate, selectedDates.endDate]}
+            classNames={{ inputWrapper: "bg-white" }}
+            value={value}
             onChange={handleDateChange}
           />
         </div>
