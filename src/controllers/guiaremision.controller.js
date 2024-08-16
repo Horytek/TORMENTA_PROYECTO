@@ -226,40 +226,50 @@ const generarCodigoTrans = async (req, res) => {
 
 //INSERTAR NUEVO TRANSPORTE PÚBLICO
 const addTransportistaPublico = async (req, res) => {
-    const { id, placa, ruc, razon_social, telefono } = req.body;
+    const { id, placa, ruc, razon_social, ubicacion, telefono } = req.body;
 
-    if (!id || !ruc || !razon_social || !telefono) {
+    console.log("Datos recibidos:", req.body);
+    console.log("Datos recibidos:", {
+        id, placa, ruc, razon_social, ubicacion, telefono,
+    });
+    if (!id || !ruc || !razon_social || !ubicacion) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
     }
     try {
         const connection = await getConnection();
         const result = await connection.query(
-            `INSERT INTO transportista (id_transportista, placa, ruc, razon_social, telefono) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [id, placa || null, ruc, razon_social, telefono] // Maneja la placa como nula si no se proporciona
+            `INSERT INTO transportista (id_transportista, placa, ruc, razon_social, direccion, telefono) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, placa || null, ruc, razon_social, ubicacion, telefono] // Maneja la placa como nula si no se proporciona
         );
         res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
     } catch (error) {
+        console.error("Error en el backend:", error.message);
         res.status(500).send({ code: 0, message: error.message });
     }
 };
 
 //INSERTAR NUEVO TRANSPORTE PRIVADO
 const addTransportistaPrivado = async (req, res) => {
-    const { id, placa, dni, nombres, apellidos, telefono } = req.body;
+    const { id, placa, dni, nombres, apellidos, ubicacion, telefono } = req.body;
+    console.log("Datos recibidos:", req.body);
+    console.log("Datos recibidos:", {
+        id, placa, dni, nombres, apellidos, ubicacion, telefono,
+    });
 
-    if (!id || !dni || !nombres || !apellidos || !telefono) {
+    if (!id || !dni || !nombres || !apellidos || !ubicacion) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
     }
     try {
         const connection = await getConnection();
         const result = await connection.query(
-            `INSERT INTO transportista (id_transportista, placa, dni, nombres, apellidos, telefono) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [id, placa || null, dni, nombres, apellidos, telefono] // Maneja la placa como nula si no se proporciona
+            `INSERT INTO transportista (id_transportista, placa, dni, nombres, apellidos, direccion, telefono) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [id, placa || null, dni, nombres, apellidos, ubicacion, telefono] // Maneja la placa como nula si no se proporciona
         );
         res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
     } catch (error) {
+        console.error("Error en el backend:", error.message);
         res.status(500).send({ code: 0, message: error.message });
     }
 };
