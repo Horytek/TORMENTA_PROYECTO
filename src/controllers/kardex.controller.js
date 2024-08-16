@@ -128,34 +128,32 @@ const getAlmacen = async (req, res) => {
 
         const [detalleKardexResult] = await connection.query(
             `
-            SELECT DISTINCT 
-                n.fecha AS fecha, 
-                c.num_comprobante AS documento, 
-                n.nom_nota AS nombre, 
-                bn.entra AS entra,
-                bn.sale AS sale,
-                bn.stock_actual AS stock, 
-                p.precio AS precio, 
-                n.glosa AS glosa 
-            FROM 
-                nota n
-            INNER JOIN 
-                comprobante c ON n.id_comprobante = c.id_comprobante 
-            INNER JOIN 
-                detalle_nota dn ON n.id_nota = dn.id_nota
-            INNER JOIN 
-                producto p ON dn.id_producto = p.id_producto
-            INNER JOIN 
-                inventario i ON p.id_producto = i.id_producto
-            INNER JOIN
-                bitacora_nota bn ON n.id_nota = bn.id_nota
-            WHERE 
-                DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
-                AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ? 
-                AND p.id_producto = ?
-                AND bn.id_almacen = ?
-            ORDER BY 
-                documento;
+                       SELECT  
+                        n.fecha AS fecha, 
+                        c.num_comprobante AS documento, 
+                        n.nom_nota AS nombre, 
+                        bn.entra AS entra,
+                        bn.sale AS sale,
+                        bn.stock_actual AS stock, 
+                        p.precio AS precio, 
+                        n.glosa AS glosa 
+                    FROM 
+                        nota n
+                    INNER JOIN 
+                        comprobante c ON n.id_comprobante = c.id_comprobante
+                    INNER JOIN
+                        bitacora_nota bn ON n.id_nota = bn.id_nota  
+                    INNER JOIN 
+                        producto p ON bn.id_producto = p.id_producto 
+
+                    WHERE 
+                        DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
+                        AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
+                        AND bn.id_producto = ?
+                        AND bn.id_almacen = ?
+                    ORDER BY 
+                        documento;
+
             `,
             [fechaInicio, fechaFin, idProducto, idAlmacen]
         );

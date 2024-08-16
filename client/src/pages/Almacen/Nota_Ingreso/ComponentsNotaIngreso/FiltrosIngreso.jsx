@@ -65,13 +65,6 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
         onAlmacenChange(almacen);
     };
 
-    const openModalImprimir = () => {
-        setIsModalOpenImprimir(true);
-    };
-
-    const closeModalImprimir = () => {
-        setIsModalOpenImprimir(false);
-    };
 
     const openModalPDF = () => {
         setIsModalOpenPDF(true);
@@ -81,10 +74,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
         setIsModalOpenPDF(false);
     };
 
-    const handleConfirmImprimir = () => {
-        console.log('Nota de entrada impresa.');
-        setIsModalOpenImprimir(false);
-    };
+
 
     const handleConfirmPDF = () => {
         console.log('Exportar a PDF.');
@@ -182,7 +172,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
                 <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full'
                             name="select" onChange={handleSelectChange} style={{ width: '100px' }}>
                             <option value="">...</option>
-                            <option value="pdf">PDF</option>
+                            <option value="pdf">Guardar a PDF</option>
                         </select>
                 </div>
                 <Link to="/almacen/nota_ingreso/registro_ingreso">

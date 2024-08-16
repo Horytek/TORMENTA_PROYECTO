@@ -301,14 +301,6 @@ const TablaIngresos = ({ ingresos }) => {
         />
       )}
 
-      {isModalOpenClonar && (
-        <ConfirmationModal
-          message="¿Desea clonar esta nota de ingreso?"
-          onClose={closeModalClonar}
-          isOpen={isModalOpenClonar}
-          onConfirm={handleConfirmClonar}
-        />
-      )}
       {/* Paginación */}
       <div className="flex justify-between mt-4">
         <div className="flex">

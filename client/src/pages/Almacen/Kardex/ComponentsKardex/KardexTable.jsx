@@ -24,7 +24,11 @@ const TablaKardex = ({ kardex }) => {
   const renderEntradaRow = (kardex) => (
     <tr key={kardex.id} onClick={() => handleDetailClick(kardex.codigo)} className='tr-tabla-kardex'>
       <td className="text-center px-2">{kardex.codigo}</td>
-      <td className="text-center px-2">{kardex.descripcion}</td>
+      <td
+        className={`text-center px-2 ${kardex.stock === 0 ? 'text-red-500' : ''}`}
+      >
+        {kardex.descripcion}
+      </td>
       <td className="text-center px-2">{kardex.marca}</td>
       <td className="text-center px-2">{kardex.stock}</td>
       <td className="text-center px-2">{kardex.um}</td>
@@ -44,7 +48,7 @@ const TablaKardex = ({ kardex }) => {
           </tr>
         </thead>
         <tbody>
-        {getCurrentPageItems().map(renderEntradaRow)}
+          {getCurrentPageItems().map(renderEntradaRow)}
         </tbody>
       </table>
       <div className="flex justify-between mt-4">
