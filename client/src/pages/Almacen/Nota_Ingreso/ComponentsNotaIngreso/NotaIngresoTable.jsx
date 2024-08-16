@@ -13,7 +13,7 @@ const TablaIngresos = ({ ingresos }) => {
   const [isModalOpenClonar, setIsModalOpenClonar] = useState(false);
   const [notaIdToAnular, setNotaIdToAnular] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const handleSelectChange2 = (event, id) => {
     const value = event.target.value;
@@ -52,8 +52,10 @@ const TablaIngresos = ({ ingresos }) => {
       const result = await anularNota(notaIdToAnular);
       if (result.success) {
         console.log(result.message);
+        toast.success('Nota anulada')
         window.location.reload();
       } else {
+        toast.error('La nota ya está anulada.')
         console.error(result.message);
       }
     }
@@ -96,12 +98,12 @@ const TablaIngresos = ({ ingresos }) => {
         <td className="text-center">{ingreso.proveedor}</td>
         <td className="text-center">{ingreso.concepto}</td>
         <td className="text-center">{ingreso.almacen_D}</td>
-        <td className="text-center">{ingreso.usuario}</td>
         <td className="text-center">
           <p className={getEstadoClassName(ingreso.estado)}>
             {ingreso.estado === 1 ? 'Inactivo' : 'Activo'}
           </p>
         </td>
+        <td className="text-center">{ingreso.usuario}</td>
         <td className='text-center'>
           <select className='b text-center custom-select border border-gray-300 rounded-lg p-1.5 text-gray-900 text-sm' name="select" onClick={handleSelectClick} onChange={(e) => handleSelectChange2(e, ingreso.id)}>
             <option value="">...</option>
@@ -113,7 +115,6 @@ const TablaIngresos = ({ ingresos }) => {
                             documentTitle='TORMENTA JEANS - 20610588981'
                             pageSytle="print"
             />
-            <option value="anular">Anular</option>
           </select>
         </td>
       </tr>
@@ -172,8 +173,8 @@ const TablaIngresos = ({ ingresos }) => {
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">PROVEEDOR</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CONCEPTO</th>
             <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ALMACÉN DESTINO</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">USUARIO</th>
             <th className="w-1/12text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
+            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">USUARIO</th>
             <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
           </tr>
         </thead>

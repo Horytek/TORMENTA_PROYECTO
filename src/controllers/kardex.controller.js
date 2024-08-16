@@ -143,11 +143,11 @@ const getAlmacen = async (req, res) => {
                 DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
                 AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ? 
                 AND p.id_producto = ?
-                AND (n.id_almacenO = ? OR n.id_almacenD = ?)
+                AND bn.id_almacen = ?
             ORDER BY 
                 documento;
             `,
-            [fechaInicio, fechaFin, idProducto, idAlmacen, idAlmacen]
+            [fechaInicio, fechaFin, idProducto, idAlmacen]
         );
 
         res.json({ code: 1, data: detalleKardexResult });
@@ -180,9 +180,9 @@ const getDetalleKardexAnteriores = async (req, res) => {
             WHERE 
                 DATE_FORMAT(n.fecha, '%Y-%m-%d') < ?
                 AND p.id_producto = ?
-                AND (n.id_almacenO = ? OR n.id_almacenD = ?);
+                AND bn.id_almacen = ?;
             `,
-            [fecha, idProducto,idAlmacen, idAlmacen]
+            [fecha, idProducto,idAlmacen]
         );
 
         res.json({ code: 1, data: detalleKardexAnterioresResult });

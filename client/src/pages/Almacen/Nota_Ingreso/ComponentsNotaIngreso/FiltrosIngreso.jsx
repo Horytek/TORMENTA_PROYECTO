@@ -94,11 +94,9 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
 
     const handleSelectChange = (event) => {
         const value = event.target.value;
-        if (value === "imprimir") {
-            openModalImprimir();
-        } else if (value === "pdf") {
+        if (value === "pdf") {
             openModalPDF();
-        }
+        } 
         event.target.value = '';
     };
 
@@ -185,7 +183,6 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
                             name="select" onChange={handleSelectChange} style={{ width: '100px' }}>
                             <option value="">...</option>
                             <option value="pdf">PDF</option>
-                            <option value="imprimir">Imprimir</option>
                         </select>
                 </div>
                 <Link to="/almacen/nota_ingreso/registro_ingreso">
@@ -194,14 +191,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange }) =
                     </ButtonIcon>
                 </Link>
             </div>
-            {isModalOpenImprimir && (
-                <ConfirmationModal
-                    message='¿Desea imprimir la nota de salida?'
-                    onClose={closeModalImprimir}
-                    isOpen={isModalOpenImprimir}
-                    onConfirm={handleConfirmImprimir}
-                />
-            )}
+
             {isModalOpenPDF && (
                 <ConfirmationModal
                     message='¿Desea exportar a PDF?'

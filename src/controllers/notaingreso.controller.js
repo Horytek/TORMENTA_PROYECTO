@@ -45,7 +45,7 @@ const getIngresos = async (req, res) => {
         GROUP BY 
             id, n.fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
         ORDER BY 
-            n.fecha DESC, documento DESC;
+            n.fecha , documento ;
         `,
           [            `%${documento}%`,
             fecha_i,
@@ -313,10 +313,11 @@ const insertNotaAndDetalle = async (req, res) => {
 
       // Insertar en bitacora_nota
       await connection.query(
-        "INSERT INTO bitacora_nota (id_nota, id_producto, id_detalle_nota, entra, stock_anterior, stock_actual, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen ,id_detalle_nota, entra, stock_anterior, stock_actual, fecha) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         [
           id_nota,
           id_producto,
+          almacenD,
           id_detalle,
           cantidadProducto,
           stockResult[0]?.stock || 0,
