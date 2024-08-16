@@ -31,6 +31,12 @@ function NuevaSalidas() {
   const [modalTitle, setModalTitle] = useState('');
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
+  const [codigoBarras, setCodigoBarras] = useState('');
+  
+  // Función para manejar la entrada del código de barras
+  const handleBarcodeInput = (e) => {
+    setCodigoBarras(e.target.value);
+  };
   const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState(''); // Nuevo estado para el mensaje de confirmación
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
@@ -88,12 +94,12 @@ function NuevaSalidas() {
   const openModalOpenGuardar = () => {
     const almacenDestino = document.getElementById('almacen_destino').value;
     if (almacenDestino) {
-        setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
+      setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
     } else {
-        setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
+      setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
     }
     setisModalOpenGuardar(true);
-};
+  };
 
   const closeModalOpenGuardar = () => {
     setisModalOpenGuardar(false);
@@ -102,8 +108,8 @@ function NuevaSalidas() {
     setIsModalOpenProducto(false);
   };
   const handleConfirmGuardar = async () => {
-      closeModalOpenGuardar();
-      await handleGuardarAction(); // Llamar a la función de guardado
+    closeModalOpenGuardar();
+    await handleGuardarAction(); // Llamar a la función de guardado
   };
   const handleGuardarAction = async () => {
     const almacenO = document.getElementById('almacen_origen').value;
@@ -116,43 +122,35 @@ function NuevaSalidas() {
     const observacion = document.getElementById('observacion').value;
     const nom_usuario = usuario;
 
-    if (almacenO == almacenD) {
-        toast.error('El almacen de origen y de destino no pueden ser el mismo.');
-        return;
-    }
-if (!almacenO || !destinatario || !glosa || !fecha|| !nota || !numComprobante ) {
-  toast.error('Por favor complete todos los campos.');
-  return;
-}
     const productos = productosSeleccionados.map(producto => ({
-        id: producto.codigo,
-        cantidad: producto.cantidad
+      id: producto.codigo,
+      cantidad: producto.cantidad
     }));
 
     const data = {
-        almacenO,
-        almacenD,
-        destinatario,
-        glosa,
-        nota,
-        fecha,
-        producto: productos.map(p => p.id),
-        numComprobante,
-        cantidad: productos.map(p => p.cantidad),
-        observacion,
-        nom_usuario
+      almacenO,
+      almacenD,
+      destinatario,
+      glosa,
+      nota,
+      fecha,
+      producto: productos.map(p => p.id),
+      numComprobante,
+      cantidad: productos.map(p => p.cantidad),
+      observacion,
+      nom_usuario
     };
 
     const result = await insertNotaAndDetalle(data);
 
     if (result.success) {
-        toast.success('Nota y detalle insertados correctamente.');
-        handleCancel();
-        window.location.reload();
+      toast.success('Nota y detalle insertados correctamente.');
+      handleCancel();
+      window.location.reload();
     } else {
-        toast.error('Error inesperado, intente nuevamente.');
+      toast.error('Error inesperado, intente nuevamente.');
     }
-};
+  };
 
   const openModalProovedor = () => {
     setIsModalOpenProovedor(true);
@@ -167,6 +165,7 @@ if (!almacenO || !destinatario || !glosa || !fecha|| !nota || !numComprobante ) 
     const filters = {
       descripcion: searchInput,
       almacen: almacenId,
+      cod_barras: codigoBarras
     };
 
     const result = await useProductosData(filters);
@@ -208,6 +207,23 @@ if (!almacenO || !destinatario || !glosa || !fecha|| !nota || !numComprobante ) 
   };
 
   const handleGuardar = async () => {
+    const almacenO = document.getElementById('almacen_origen').value;
+    const almacenD = document.getElementById('almacen_destino').value || null;
+    const destinatario = document.getElementById('destinatario').value;
+    const glosa = document.getElementById('glosa').value;
+    const fecha = document.getElementById('fechaDocu').value;
+    const nota = document.getElementById('nomnota').value;
+    const numComprobante = document.getElementById('numero').value;
+
+    if (almacenO == almacenD) {
+      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
+      return;
+    }
+    if (!almacenO || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
+      toast.error('Por favor complete todos los campos.');
+      return;
+    }
+
     if (productosSeleccionados.length === 0) {
       toast.error('Debe agregar al menos un producto.');
       return;
@@ -226,9 +242,9 @@ if (!almacenO || !destinatario || !glosa || !fecha|| !nota || !numComprobante ) 
 
     const almacenDestino = document.getElementById('almacen_destino').value;
     if (almacenDestino) {
-        setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
+      setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
     } else {
-        setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
+      setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
     }
     openModalOpenGuardar();
   };
@@ -384,12 +400,14 @@ if (!almacenO || !destinatario || !glosa || !fecha|| !nota || !numComprobante ) 
         setSearchInput={setSearchInput}
         productos={productos}
         agregarProducto={agregarProducto}
+        setCodigoBarras={setCodigoBarras}
+        
       />
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
-      
+
       {isModalOpenGuardar && (
         <ConfirmationModal
           message={confirmationMessage}

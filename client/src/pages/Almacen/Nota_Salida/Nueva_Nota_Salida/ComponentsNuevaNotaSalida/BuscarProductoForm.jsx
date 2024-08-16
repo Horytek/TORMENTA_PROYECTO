@@ -5,11 +5,13 @@ import { IoMdAdd } from "react-icons/io";
 import { toast } from "react-hot-toast";
 import ProductosForm from '../../../../Productos/ProductosForm';
 
-const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto }) => {
+const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto, setCodigoBarras }) => {
   if (!isOpen) return null;
 
   const [cantidades, setCantidades] = useState({});
   const [activeAdd, setModalOpen] = useState(false);
+  const [searchInputValue, setSearchInputValue] = useState('');
+  const [codigoBarrasValue, setCodigoBarrasValue] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -22,8 +24,19 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
     }
   }, [isOpen, productos]);
 
+  useEffect(() => {
+    onBuscar();
+  }, [searchInputValue, codigoBarrasValue]);
+
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && e.target.value.trim() !== '') {
+      setCodigoBarras(e.target.value);
+      onBuscar();  // Lógica que se ejecuta después de escanear
+    }
   };
 
   const handleCantidadChange = (codigo, cantidad) => {
@@ -69,11 +82,24 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
               type="text"
               placeholder="Buscar producto"
               className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
+              value={searchInputValue}
               onChange={(e) => {
-                setSearchInput(e.target.value);
-                onBuscar();  // Llama a la función de búsqueda automáticamente
+                setSearchInputValue(e.target.value);
+                setSearchInput(e.target.value); // Actualiza el valor del input
               }}
             />
+            <input
+              type="text"
+              placeholder="Buscar por código de barras"
+              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 ml-2"
+              value={codigoBarrasValue}
+              onChange={(e) => {
+                setCodigoBarrasValue(e.target.value);
+                setCodigoBarras(e.target.value); // Actualiza el valor del input
+              }}
+              onKeyDown={handleKeyDown} 
+            />
+
             <button
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
               onClick={handleModalAdd}
@@ -108,7 +134,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                         value={cantidades[producto.codigo] || ''}
                         min="1"
                         onKeyDown={(e) => {
-                          if (e.key === '.' || e.key === '-'|| e.key === 'e'|| e.key === '+') {
+                          if (e.key === '.' || e.key === '-' || e.key === 'e' || e.key === '+') {
                             e.preventDefault();
                           }
                         }}
