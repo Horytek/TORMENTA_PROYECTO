@@ -48,6 +48,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
     
         if (result.success) {
           toast.success('Destinatario insertado correctamente.');
+          handleClear()
         } else {
           toast.error('Error inesperado, intente nuevamente.');
         }
@@ -64,7 +65,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                     const response = await fetch(url);
                     const data = await response.json();
                     console.log(data);
-                    if (data.success === true){
+                    if (data.success === true || data.ruc ){
 
                         if (tipoCliente === 'Natural') {
                             setFormData({

@@ -35,7 +35,6 @@ const getSalidas = async (req, res) => {
           WHERE 
               n.id_tiponota = 2
               AND c.num_comprobante LIKE ?
-              ${usuario ? 'AND (u.usua LIKE ? OR u.usua IS NULL)' : ''}
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
               AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
               AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
