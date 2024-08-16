@@ -7,7 +7,6 @@ const valueFormatter = (number) => {
   return "S/. " + new Intl.NumberFormat("us").format(number).toString();
 };
 
-// Utility to convert month number to month name
 const getMonthName = (monthNumber) => {
   const date = new Date();
   date.setMonth(monthNumber - 1);
@@ -51,7 +50,8 @@ export function LineChartComponent() {
               value={value}
               onValueChange={setValue}
               locale={es}
-              selectPlaceholder="Seleccionar"
+              placeholder="Selecciona un rango de fechas"
+              selectPlaceholder="Filtros por rango"
               aria-label="Selecciona un rango"
               color="rose"
             >
