@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
 import { ButtonIcon } from '@/components/Buttons/Buttons';
@@ -7,7 +7,7 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
-const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => {
+const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDFOptionClick }) => {
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
         return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
@@ -92,10 +92,8 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
 
     const handleSelectChange = (event) => {
         const value = event.target.value;
-        if (value === "imprimir") {
-            openModalImprimir();
-        } else if (value === "pdf") {
-            openModalPDF();
+        if (value === "pdf") {
+            onPDFOptionClick();
         }
         event.target.value = '';
     };
@@ -196,7 +194,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange }) => 
                             name="select" onChange={handleSelectChange} style={{ width: '100px' }}>
                             <option value="">...</option>
                             <option value="pdf">PDF</option>
-                            <option value="imprimir">Imprimir</option>
+                            {/* <option value="imprimir">Imprimir</option> */}
                         </select>
                     </div>
 

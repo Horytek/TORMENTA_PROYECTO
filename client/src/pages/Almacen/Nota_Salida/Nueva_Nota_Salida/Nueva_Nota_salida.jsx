@@ -18,11 +18,11 @@ import './Nueva_Nota_salida.css';
 import ConfirmationModal from '././../ComponentsNotaSalida/Modals/ConfirmationModal';
 import insertNotaAndDetalle from '../data/insert_nota_salida';
 const glosaOptions = [
-  "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
-  "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA", "DEVOLUCION", "CLIENTE",
-  "MERCAD DEVOLUCIÓN (PRUEBA)", "PROD.DESVOLUCIÓN (M.P.)",
-  "ING. PRODUCCIÓN(P.T.)", "AJUSTE INVENTARIO", "OTROS INGRESOS",
-  "DESARROLLO CONSUMO INTERNO", "INGRESO DIFERIDO"
+  "VENTA DE PRODUCTOS", "VENTA AL EXTERIOR", "CONSIGNACION CLIENTE",
+  "TRASLADO ENTRE ALMACENES", "ITINERANTE", "CAMBIO MERCAD. PROV.",
+  "MATERIA PRIMAR PRODUCCION", "DEVOLUCION PROOVEDOR", 
+  "AJUSTE INVENTARIO", "OTRAS SALIDAS", "RESERVADO",
+  "CONSUMO INTERNO", "EXTORNO DIFERIDO" , "TRANSFORMACION"
 ];
 function NuevaSalidas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,6 +43,35 @@ function NuevaSalidas() {
     const saved = localStorage.getItem('productosSeleccionados');
     return saved ? JSON.parse(saved) : [];
   });
+  useEffect(() => {
+    let barcodeInput = '';
+
+    const handleGlobalKeyPress = (e) => {
+      if (e.key === 'Enter' && e.target.value.trim() !== '') { // Filtra solo números y "Enter"
+        barcodeInput += e.key;
+        if (e.key === 'Enter') {
+          setCodigoBarras(barcodeInput.trim());
+          barcodeInput = ''; // Limpia la entrada después de procesar
+        }
+      } else {
+        barcodeInput = ''; // Resetea la entrada si se ingresa un carácter no válido
+      }
+    };
+
+    // Agrega el listener de eventos
+    document.addEventListener('keydown', handleGlobalKeyPress);
+
+    // Limpia el listener cuando el componente se desmonta
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyPress);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (codigoBarras !== '') {
+      handleBuscarProducto();
+    }
+  }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
   const { destinatarios } = useDestinatarioData();

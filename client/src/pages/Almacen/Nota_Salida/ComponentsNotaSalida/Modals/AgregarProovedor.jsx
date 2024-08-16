@@ -4,6 +4,7 @@ import { IoMdClose } from "react-icons/io";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { toast, Toaster } from 'react-hot-toast';
 import insertDestinatario from './data/insert_destinatario';
+
 const AgregarProovedor = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
     const [dniOrRuc, setDniOrRuc] = useState('');
@@ -43,16 +44,17 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
           toast.success('Destinatario insertado correctamente.');
           handleClear()
         } else {
-          toast.error('Error inesperado, intente nuevamente.');
+          toast.error('Asegurese que los campos sean correctos o que el destinario no esté registrado.');
         }
       };
     useEffect(() => {
         const fetchData = async () => {
             if (dniOrRuc.length === 8 || dniOrRuc.length === 11) {
+                const token_proovedor = import.meta.env.VITE_TOKEN_PROOVEDOR || '';
                 const url =
                     tipoCliente === 'Natural'
-                        ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`
-                        : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`;
+                        ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=${token_proovedor}`
+                        : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=${token_proovedor}`;
 
                 try {
                     const response = await fetch(url);
@@ -116,7 +118,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
             newErrors.phone = true;
         }
 
-        if (formData.email & !/\S+@\S+\.\S+/.test(formData.email)) {
+        if (formData.email & !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = true;
         }
 
@@ -241,7 +243,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                                 />
                             </div>
                         </div>
-                        <div className='modal-buttons'>
+                        <div className='modal-buttons mt-4'>
                             <ButtonClose onClick={onClose} />
                             <ButtonSave />
                         </div>
