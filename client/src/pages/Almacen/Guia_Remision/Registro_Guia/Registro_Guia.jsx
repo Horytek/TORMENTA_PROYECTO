@@ -75,6 +75,8 @@ function RegistroGuia() {
     const glosa = document.getElementById('glosa').value;
     const dir_partida = document.getElementById('dirpart').value;
     const dir_destino = document.getElementById('dirdest').value;
+    const canti = document.getElementById('canti').value;
+    const peso = document.getElementById('peso').value;
     const observacion = document.getElementById('observacion').value;
     const f_generacion = document.getElementById('fechaDocu').value;
     const h_generacion = document.getElementById('horaDocu').value;
@@ -94,6 +96,8 @@ function RegistroGuia() {
       glosa,
       dir_partida,
       dir_destino,
+      canti,
+      peso,
       observacion,
       f_generacion,
       h_generacion,
@@ -327,8 +331,8 @@ function RegistroGuia() {
               </div>
               <div className="flex">
                 <div className="flex-1 mr-2">
-                  <label htmlFor="cantidad" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
-                  <input type="text" name='cantidad' id='cantidad' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
+                  <label htmlFor="canti" className="block text-gray-700 text-sm font-bold ">Cant. Paq:</label>
+                  <input type="text" name='canti' id='canti' className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5' />
                 </div>
                 <div className="flex-1 ml-2">
                   <label htmlFor="peso" className="block text-gray-700 text-sm font-bold">Peso Kg:</label>

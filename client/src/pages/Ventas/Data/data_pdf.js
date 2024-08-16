@@ -53,7 +53,6 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
     return formattedDate;
 }
 
-
 // Función para enviar los datos a SUNAT
 const generarPDF = async (data) => {
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/pdf';

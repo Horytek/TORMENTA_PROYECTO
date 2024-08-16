@@ -36,21 +36,32 @@ const getGuias = async (req, res) => {
                 v.dni as dni,
                 SUBSTRING(c.num_comprobante, 2, 3) AS serieNum, 
                 SUBSTRING(c.num_comprobante, 6, 8) AS num,
+                gr.total as total,
                 gr.glosa AS concepto,
                 gr.estado_guia AS estado,
-                s.nombre_sucursal   
+                s.nombre_sucursal,
+                gr.dir_partida AS dir_partida,
+                gr.dir_destino AS dir_destino,
+                gr.observacion AS observacion,
+                CONCAT(t.nombres, ' ', t.apellidos) AS transportistapriv,
+                CONCAT(t.razon_social) AS transportistapub,
+                t.dni AS docpriv,
+                t.ruc AS docpub,
+                gr.cantidad as canti,
+                gr.peso as peso
             FROM guia_remision gr
             INNER JOIN destinatario d ON gr.id_destinatario = d.id_destinatario
             INNER JOIN sucursal s ON gr.id_sucursal = s.id_sucursal
             INNER JOIN vendedor v ON s.dni = v.dni
             INNER JOIN comprobante c ON gr.id_comprobante = c.id_comprobante
+            INNER JOIN transportista t ON gr.id_transportista = t.id_transportista
             WHERE
                 c.num_comprobante LIKE ?
                 AND (d.dni LIKE ? OR d.ruc LIKE ?)
                 AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') >= ? 
                 AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') <= ?
                 AND s.nombre_sucursal LIKE ?
-            ORDER BY c.num_comprobante ASC
+            ORDER BY c.num_comprobante DESC
             LIMIT ? OFFSET ?;
             `,
             [`${num_guia}%`, `${documento}%`, `${documento}%`, fecha_i, fecha_e, `${nombre_sucursal}%`, parseInt(limit), parseInt(offset)]
@@ -413,19 +424,19 @@ const anularGuia = async (req, res) => {
  
   const insertGuiaRemisionAndDetalle = async (req, res) => {
     const {
-        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, observacion, f_generacion, h_generacion, total, producto, num_comprobante, cantidad,
+        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, canti, peso, observacion, f_generacion, h_generacion, total, producto, num_comprobante, cantidad,
     } = req.body;
 
     console.log("Datos recibidos:", req.body);
     console.log("Datos recibidos:", {
-        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, observacion, f_generacion, h_generacion, producto, num_comprobante, cantidad, 
+        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, canti, peso, observacion, f_generacion, h_generacion, producto, num_comprobante, cantidad, 
     });
 
     if (
         !id_sucursal || !id_ubigeo_o || !id_destinatario || !id_transportista || !glosa || !f_generacion ||!h_generacion || !id_ubigeo_d || !producto || !num_comprobante || !cantidad
     ) {
         console.log("Error en los datos:", {
-            id_sucursal, id_ubigeo_o, id_destinatario, id_transportista, glosa, f_generacion, h_generacion, id_ubigeo_d, producto, num_comprobante, cantidad,
+            id_sucursal, id_ubigeo_o, id_destinatario, id_transportista, glosa, f_generacion, h_generacion, id_ubigeo_d, producto, num_comprobante, cantidad, canti, peso
         });
         return res
             .status(400)
@@ -456,13 +467,15 @@ const anularGuia = async (req, res) => {
             id_comprobante, 
             glosa, 
             dir_partida, 
-            dir_destino, 
+            dir_destino,
+            cantidad,
+            peso, 
             observacion, 
             f_generacion, 
             h_generacion, 
             estado_guia, 
             total) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
             [id_sucursal,
                 id_ubigeo_o,
                 id_ubigeo_d,
@@ -472,6 +485,8 @@ const anularGuia = async (req, res) => {
                 glosa,
                 dir_partida || null,
                 dir_destino || null,
+                canti || null, 
+                peso || null,
                 observacion || null,
                 f_generacion,
                 h_generacion,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
 import './ModalGuias.css';
@@ -9,18 +9,62 @@ import { Toaster, toast } from 'react-hot-toast';
 
 function ClienteForm({ modalTitle, onClose }) {
   const [tab, setTab] = useState('registro');
-  const [dni, setDni] = useState('');
+  const [dniOrRuc, setDniOrRuc] = useState('');
   const [nombres, setNombres] = useState('');
   const [apellidos, setApellidos] = useState('');
   const [direccion, setDireccion] = useState('');
-  const [ruc, setRuc] = useState('');
   const [razonSocial, setRazonSocial] = useState('');
+  const [tipoCliente, setTipoCliente] = useState('');
+
+  useEffect(() => {
+    const fetchSunatData = async () => {
+      if (dniOrRuc.length === 8 || dniOrRuc.length === 11) {
+        const url = tipoCliente === 'Natural'
+          ? `https://dniruc.apisperu.com/api/v1/dni/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`
+          : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`;
+
+        try {
+          console.log(`Consultando RUC: ${dniOrRuc}`);
+          const response = await fetch(url);
+          const data = await response.json();
+          console.log(data);
+
+          if (data.success === true) {
+            if (tipoCliente === 'Natural') {
+              setNombres(data.nombres || '');
+              setApellidos(`${data.apellidoPaterno} ${data.apellidoMaterno}` || '');
+              setDireccion(data.direccion || '');
+            } else if (tipoCliente === 'Juridico') {
+              setRazonSocial(data.razonSocial || '');
+              setDireccion(data.direccion || '');
+            }
+          } else {
+            toast.error('DNI/RUC no válido');
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          toast.error('Error al conectarse a SUNAT');
+        }
+      }
+    };
+
+    fetchSunatData();
+  }, [dniOrRuc, tipoCliente]);
+
+  const handleInputChange = (event) => {
+    const { id, value } = event.target;
+    if (id === 'ruc-dni') {
+      const filteredValue = value.replace(/[^\d]/g, '').slice(0, tab === 'registro' ? 8 : 11);
+      setDniOrRuc(filteredValue);
+      setTipoCliente(filteredValue.length === 8 ? 'Natural' : filteredValue.length === 11 ? 'Juridico' : '');
+    }
+  };
 
   const handleSave = async (e) => {
-    e.preventDefault();  // Previene la recarga de la página
+    e.preventDefault();
 
     if (tab === 'registro') {
-      if (dni.length !== 8 || isNaN(dni)) {
+      if (dniOrRuc.length !== 8 || isNaN(dniOrRuc)) {
         toast.error('El DNI debe tener 8 dígitos y solo contener números.');
         return;
       }
@@ -29,16 +73,16 @@ function ClienteForm({ modalTitle, onClose }) {
         return;
       }
 
-      const dataNatural = { dni, nombres, apellidos, ubicacion: direccion };
+      const dataNatural = { dni: dniOrRuc, nombres, apellidos, ubicacion: direccion };
       const result = await useDestNatural(dataNatural, onClose);
       if (!result.success) {
-        toast.error(result.message); // Muestra un mensaje de error si algo sale mal
+        toast.error(result.message);
       } else {
         toast.success('Destinatario natural añadido exitosamente');
         onClose();
       }
     } else if (tab === 'otros') {
-      if (ruc.length !== 11 || isNaN(ruc)) {
+      if (dniOrRuc.length !== 11 || isNaN(dniOrRuc)) {
         toast.error('El RUC debe tener 11 dígitos y solo contener números.');
         return;
       }
@@ -47,10 +91,10 @@ function ClienteForm({ modalTitle, onClose }) {
         return;
       }
 
-      const dataJuridica = { ruc, razon_social: razonSocial, ubicacion: direccion };
+      const dataJuridica = { ruc: dniOrRuc, razon_social: razonSocial, ubicacion: direccion };
       const result = await useDestJuridica(dataJuridica, onClose);
       if (!result.success) {
-        toast.error(result.message); // Muestra un mensaje de error si algo sale mal
+        toast.error(result.message);
       } else {
         toast.success('Destinatario jurídico añadido exitosamente');
         onClose();
@@ -66,7 +110,7 @@ function ClienteForm({ modalTitle, onClose }) {
           <div className="modal3-header">
             <h2 className="modal3-title">{modalTitle}</h2>
             <button className="close-button" onClick={onClose}>
-              <IoMdClose className='text-3xl'/>
+              <IoMdClose className='text-3xl' />
             </button>
           </div>
           <div className="modal-bodywa">
@@ -93,17 +137,14 @@ function ClienteForm({ modalTitle, onClose }) {
                 <div className='modal2-content'>
                   <div className="form-row">
                     <div className="form-group">
-                      <label className='text-sm font-bold text-black' htmlFor="dni">DNI:</label>
+                      <label className='text-sm font-bold text-black' htmlFor="ruc-dni">DNI:</label>
                       <input
                         className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5 wider2-input'
                         type="text"
                         id="ruc-dni"
-                        value={dni}
-                        onChange={(e) => setDni(e.target.value)}
+                        value={dniOrRuc}
+                        onChange={handleInputChange}
                       />
-                    </div>
-                    <div className="items-center justify-center pt-5">
-                      <button className="sunat-button rounded-lg border p-2.5">SUNAT</button>
                     </div>
                   </div>
                   <div className="form-group">
@@ -149,12 +190,9 @@ function ClienteForm({ modalTitle, onClose }) {
                         className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5 wider2-input'
                         type="text"
                         id="ruc-dni"
-                        value={ruc}
-                        onChange={(e) => setRuc(e.target.value)}
+                        value={dniOrRuc}
+                        onChange={handleInputChange}
                       />
-                    </div>
-                    <div className="items-center justify-center pt-5">
-                      <button className="sunat-button rounded-lg border p-2.5">SUNAT</button>
                     </div>
                   </div>
                   <div className="form-group">

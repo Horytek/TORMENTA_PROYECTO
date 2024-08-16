@@ -35,6 +35,15 @@ const useGuiasData = (filters) => {
           num: guia.num,
           total: `S/ ${parseFloat(guia.total).toFixed(2)}`,
           concepto: guia.concepto,
+          dirpartida: guia.dir_partida,
+          dirdestino: guia.dir_destino,
+          observacion: guia.observacion,
+          docpub: guia.docpub,
+          docpriv: guia.docpriv,
+          canti: guia.canti,
+          peso: guia.peso,
+          transpub: guia.transportistapub,
+          transpriv: guia.transportistapriv,
           estado: guia.estado === 0 ? 'Inactivo' :
           guia.estado === 1 ? 'Activo' :
           guia.estado === 2 ? 'En proceso' :
