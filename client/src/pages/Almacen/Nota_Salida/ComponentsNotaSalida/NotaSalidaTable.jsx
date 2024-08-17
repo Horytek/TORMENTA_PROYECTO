@@ -221,7 +221,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
     // Convert HTML to PDF
     const options = {
       margin: [10, 10],
-      filename: `Notas_Salida_General.pdf`,
+      filename: `Nota_Salida.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
