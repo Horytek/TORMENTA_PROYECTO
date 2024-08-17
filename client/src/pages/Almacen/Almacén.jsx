@@ -6,7 +6,6 @@ import useAlmacenData from './Kardex/data/data_almacen_kardex';
 import useMarcaData from './Kardex/data/data_marca_kardex';
 import useCategoriaData from './Kardex/data/data_categoria_kardex';
 import useSubCategoriaData from './Kardex/data/data_subcategoria_kardex';
-import Pagination from '@/components/Pagination/Pagination';
 import html2pdf from 'html2pdf.js';
 import 'jspdf-autotable';
 
