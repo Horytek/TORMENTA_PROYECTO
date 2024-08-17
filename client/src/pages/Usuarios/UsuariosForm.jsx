@@ -6,7 +6,7 @@ import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { useForm } from "react-hook-form";
 import { addUsuario, updateUsuario } from '@/services/usuario.services';
 import { getRoles } from '@/services/rol.services';
-import '@/Pages/Productos/ProductosForm.css';
+import '../Productos/ProductosForm.css';
 
 const ProductosForm = ({ modalTitle, onClose, initialData }) => {
 
