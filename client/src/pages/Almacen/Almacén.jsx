@@ -105,7 +105,7 @@ const Kardex = () => {
                     className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
                     onChange={handleAlmacenChange} value={almacenSeleccionado.id}
                 >
-                    <option value="%">Seleccione...</option>
+                    
                     {almacenes.map((almacen, index) => (
                         <option key={index} value={almacen.id}>{almacen.almacen}</option>
                     ))}
@@ -168,7 +168,7 @@ const Kardex = () => {
                 <div className='flex items-center gap-2'>
                     <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm' name="select" defaultValue="">
                         <option value="">...</option>
-                        <option value="value1">Imprimir</option>
+                        <option value="pdf">Guardar PDF</option>
                     </select>
                 </div>
             </div>

@@ -47,6 +47,8 @@ const Ingresos = () => {
     });
   };
 
+  const currentDate = new Date().toLocaleDateString('es-ES');
+
   const handleAlmacenChange = (almacen) => {
     setAlmacenSeleccionado(almacen);
   };
@@ -60,7 +62,7 @@ const Ingresos = () => {
           Nota de ingreso
         </h1>
       </div>
-      <FiltrosIngresos almacenes={almacenes} onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange} />
+      <FiltrosIngresos almacenes={almacenes} onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange}  ingresos={ingresos} almacenSseleccionado={almacenSeleccionado} />
       <TablaIngresos ingresos={ingresos} />
 
       <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
