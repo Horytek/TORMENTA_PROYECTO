@@ -1,11 +1,12 @@
 import mysql from "mysql2/promise";
-import { HOST, DATABASE, USER, PASSWORD } from "../config.js";
+import { HOST, DATABASE, USER, PASSWORD, PORT } from "../config.js";
 
 const connection = mysql.createConnection({
     host: HOST,
     database: DATABASE,
     user: USER,
-    password: PASSWORD
+    password: PASSWORD,
+    port: PORT,
 });
 
 const getConnection = () => {
