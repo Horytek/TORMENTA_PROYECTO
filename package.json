@@ -7,7 +7,7 @@
     "babel-node": "babel-node --presets-@babel/present-env",
     "dev": "nodemon --exec npm run babel-node src/index.js",
     "client": "cd. && npm run dev --prefix ./client",
-    "build": "npm install --prefix ./client && npm run build --prefix ./client && npm install",
+    "build": "npm install --prefix ./client && npm install",
     "start": "npm run build && npm run dev"
   },
   "keywords": [],
