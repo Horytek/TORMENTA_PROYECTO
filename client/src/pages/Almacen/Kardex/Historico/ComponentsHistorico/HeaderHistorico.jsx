@@ -59,17 +59,20 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
      const htmlContent = `
     <div class="p-5 text-sm leading-6 font-sans w-full">
         <div class="flex justify-between items-center mb-3">
-            <div class='flex'>
-                <div class="text-start ml-8">
-                    <h1 class="text-xl font-extrabold leading-snug text-blue-800">TORMENTA JEANS</h1>
-                    <p class="font-semibold leading-snug text-gray-700">TEXTILES CREANDO MODA S.A.C.</p>
-                    <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">Central:</span> Cal San Martin 1573 Urb Urrunaga SC Tres</p>
-                    <p class="leading-snug text-gray-600">Chiclayo - Chiclayo - Lambayeque</p>
-                    <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">TELF:</span> 918378590</p>
-                    <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">EMAIL:</span> textiles.creando.moda.sac@gmail.com</p>
+                <div class='flex'>
+                    <div class="Logo-compro">
+                        <img src="${base64Image}" alt="Logo-comprobante" />
+                    </div>
+                    <div class="text-start ml-8">
+                        <h1 class="text-xl font-extrabold leading-snug text-blue-800">TORMENTA JEANS</h1>
+                        <p class="font-semibold leading-snug text-gray-700">TEXTILES CREANDO MODA S.A.C.</p>
+                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">Central:</span> Cal San Martin 1573 Urb Urrunaga SC Tres</p>
+                        <p class="leading-snug text-gray-600">Chiclayo - Chiclayo - Lambayeque</p>
+                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">TELF:</span> 918378590</p>
+                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">EMAIL:</span> textiles.creando.moda.sac@gmail.com</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
         <!-- Información del Producto -->
         <div class="container-datos-compro bg-white rounded-lg mb-6">
