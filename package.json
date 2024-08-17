@@ -8,7 +8,7 @@
     "dev": "nodemon --exec npm run babel-node src/index.js",
     "client": "cd. && npm run dev --prefix ./client",
     "build": "npm install --prefix ./client && npm install",
-    "start": "npm run build && npm run dev"
+    "start": "npm run build && babel-node src/index.js"
   },
   "keywords": [],
   "author": "",
