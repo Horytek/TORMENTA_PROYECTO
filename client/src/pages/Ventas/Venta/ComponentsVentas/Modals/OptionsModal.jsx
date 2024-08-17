@@ -1,7 +1,7 @@
 import { useState,useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
-//import toast from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import {  handleSunat } from '../../../Data/add_sunat';
 import {  handleSunatPDF } from '../../../Data/data_pdf';
 import {  handleUpdate } from '../../../Data/update_venta';
@@ -54,17 +54,25 @@ const handleCheckboxChange = (option) => {
 
 const handleAccept = () => {
   if (sendToSunat) {
-    closeModal();
-    handleSunat(datos_precio, detalles, detalles);
-    handleUpdate(d_venta);
-    setTimeout(() => {
-      setIsDeleted(true);
-    }, 3000);
+    if (sendToSunat && d_venta.tipoComprobante === 'Nota'){
+      toast.error('Error, no se puede usar esta opción');
+    } else{
+      closeModal();
+      handleSunat(datos_precio, detalles, detalles);
+      handleUpdate(d_venta);
+      setTimeout(() => {
+        setIsDeleted(true);
+      }, 3000);
+    }
   } else if (deleteOptionSelected) {
     handleDeleteVenta();
     setConfirmDeleteModalOpen(true);
   } else if (generatePdfSelected) {
-    handleSunatPDF(d_venta,detalles);
+    if (generatePdfSelected && d_venta.tipoComprobante === 'Nota'){
+      toast.error('Error, no se puede usar esta opción');
+    } else {
+      handleSunatPDF(d_venta,detalles);
+    }
   }
 };
 
@@ -81,6 +89,8 @@ const handleAccept = () => {
   };
 
   if (!modalOpen) return null;
+
+
 
   return (
     <div className="modal-container">
@@ -127,7 +137,7 @@ const handleAccept = () => {
           <button className="btn btn-cancel" onClick={closeModal}>
             Cancelar
           </button>
-          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado===1) || (sendToSunat && d_venta.tipoComprobante === 'Nota') || (generatePdfSelected && d_venta.tipoComprobante === 'Nota')}>
+          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado===1)}>
             Aceptar
           </button>
         </div>
