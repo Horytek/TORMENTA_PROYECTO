@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
-import { SlOptionsVertical } from "react-icons/sl";
-import { LuRefreshCcw } from "react-icons/lu";
 import { AiOutlineCalendar } from "react-icons/ai";
 import { Divider, Tabs, Tab } from "@nextui-org/react";
 import TablaGanancias from "./ComponentsReporte/Overview";
@@ -9,14 +7,14 @@ import "./ReporteVentas.css";
 import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
 import KPIS from "./ComponentsReporte/KPIS";
 import Comparativa from "./ComponentsReporte/Comparativa";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { DateRangePicker, DateRangePickerItem } from "@tremor/react";
+import { es } from "date-fns/locale";
 
 const ReporteVentas = () => {
   const [ventas, setVentas] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedTab, setSelectedTab] = useState("todas"); // Estado inicial 
+  const [value, setValue] = useState(null);
+  const [selectedTab, setSelectedTab] = useState("todas"); // Estado inicial
 
   const sucursales = {
     arica1: 3,
@@ -25,7 +23,6 @@ const ReporteVentas = () => {
     balta: 4,
   };
 
- 
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -33,23 +30,6 @@ const ReporteVentas = () => {
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
   };
-
-  const CustomInput = ({ value, onClick }) => (
-    <button
-      className="example-custom-input"
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        border: "1px solid gray",
-        padding: "5px",
-        borderRadius: "5px",
-      }}
-    >
-      <AiOutlineCalendar style={{ marginRight: "5px" }} />
-      {value}
-    </button>
-  );
 
   return (
     <div>
@@ -77,51 +57,62 @@ const ReporteVentas = () => {
               Reporte de sucursales Tormenta
             </h3>
           </div>
-          <div
-            className="elements-right"
-            style={{
-              gap: "70px",
-              marginRight: "20px",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
+
+          
             <div style={{ display: "flex", alignItems: "center" }}>
-              <div className="icon-tormenta">
-                <LuRefreshCcw
-                  onClick={handleRefresh}
-                  style={{
-                    fontSize: "20px",
-                    marginRight: "5px",
-                    cursor: "pointer",
-                    animation: "spin 2s linear infinite",
-                  }}
-                />
-              </div>
-              <span
-                style={{
-                  color: "gray",
-                  pointerEvents: "none",
-                  userSelect: "none",
+              <DateRangePicker
+                className="w-xs"
+                value={value}
+                onValueChange={setValue}
+                locale={es}
+                placeholder="Selecciona un rango de fechas"
+                selectPlaceholder="Filtros"
+                aria-label="Selecciona un rango"
+                color="rose"
+                dropdownPosition="bottom" // Asegura que el dropdown se despliegue hacia abajo
+                classNames={{
+                  container: "relative z-50", // Asegura que el DateRangePicker esté en un nivel superior
                 }}
               >
-                Recargar datos
-              </span>
+                <DateRangePickerItem
+                  key="today"
+                  value="today"
+                  from={new Date()}
+                >
+                  Hoy
+                </DateRangePickerItem>
+                <DateRangePickerItem
+                  key="last7days"
+                  value="last7days"
+                  from={new Date(new Date().setDate(new Date().getDate() - 7))}
+                >
+                  Últ. 7 días
+                </DateRangePickerItem>
+                <DateRangePickerItem
+                  key="last30days"
+                  value="last30days"
+                  from={new Date(new Date().setDate(new Date().getDate() - 30))}
+                >
+                  Últ. 30 días
+                </DateRangePickerItem>
+                <DateRangePickerItem
+                  key="monthToDate"
+                  value="monthToDate"
+                  from={
+                    new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+                  }
+                >
+                  Mes transcurrido
+                </DateRangePickerItem>
+                <DateRangePickerItem
+                  key="yearToDate"
+                  value="yearToDate"
+                  from={new Date(new Date().getFullYear(), 0, 1)}
+                >
+                  Año transcurrido
+                </DateRangePickerItem>
+              </DateRangePicker>
             </div>
-            <div className="icon-tormenta" style={{ position: "relative" }}>
-              <SlOptionsVertical
-                style={{ fontSize: "20px", cursor: "pointer" }}
-                onClick={toggleMenu}
-              />
-              {menuVisible && (
-                <div className="menu-tormenta">
-                  <ul>
-                    <li>Excel Reporte</li>
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         <p
@@ -148,7 +139,7 @@ const ReporteVentas = () => {
             variant="underlined"
             aria-label="Tabs variants"
             selectedKey={selectedTab}
-            onSelectionChange={setSelectedTab} 
+            onSelectionChange={setSelectedTab}
           >
             <Tab key="todas" title="Todas" />
             <Tab key="arica1" title="Tienda Arica-1" />
@@ -163,56 +154,39 @@ const ReporteVentas = () => {
               alignItems: "center",
               marginLeft: "auto",
             }}
-          >
-            <div
-              className="flex-grow"
-              style={{ display: "flex", alignItems: "center" }}
-            >
-              <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
-                Selecciona el mes y año
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginLeft: "20px",
-                }}
-              >
-                <DatePicker
-                  selected={selectedDate}
-                  onChange={(date) => setSelectedDate(date)}
-                  className="border-gray-300 rounded-lg shadow-lg bg-white"
-                  customInput={<CustomInput />}
-                  renderMonthContent={(month, shortMonth, longMonth, day) => {
-                    const fullYear = new Date(day).getFullYear();
-                    const tooltipText = `Tooltip for month: ${longMonth} ${fullYear}`;
-                    return <span title={tooltipText}>{shortMonth}</span>;
-                  }}
-                  showMonthYearPicker
-                  dateFormat="MM/yyyy"
-                  style={{ width: "200px" }}
-                />
-              </div>
-            </div>
-          </div>
+          ></div>
         </div>
       </div>
 
       {/* Si la pestaña seleccionada es "todas", no pasamos idSucursal */}
-      <KPIS idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null} />
+      <KPIS
+        idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null}
+      />
 
       <div className="flex-grow mb-8 grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-5 sm:grid-areas-[overview_categoria]">
         <div className="sm:grid-area-[overview]">
-          <TablaGanancias idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null} />
+          <TablaGanancias
+            idSucursal={
+              selectedTab !== "todas" ? sucursales[selectedTab] : null
+            }
+          />
         </div>
         <div className="sm:grid-area-[categoria]">
-          <CategoriaProducto idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null} />
+          <CategoriaProducto
+            idSucursal={
+              selectedTab !== "todas" ? sucursales[selectedTab] : null
+            }
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-5 grid-rows-[0.9fr] gap-0">
         <div className="col-start-1 col-end-6 row-start-2 row-end-3">
-          <Comparativa idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null} />
+          <Comparativa
+            idSucursal={
+              selectedTab !== "todas" ? sucursales[selectedTab] : null
+            }
+          />
         </div>
       </div>
     </div>
