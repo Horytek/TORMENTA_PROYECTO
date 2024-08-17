@@ -217,9 +217,75 @@ const getAnalisisGananciasSucursales = async (req, res) => {
   }
 };
 
+const getVentasPDF = async (req, res) => {
+  try {
+    const connection = await getConnection();
+
+    const [result] = await connection.query(`
+      SELECT 
+          v.id_venta AS id, 
+          SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, 
+          SUBSTRING(com.num_comprobante, 6, 8) AS num,
+          CASE 
+              WHEN tp.nom_tipocomp = 'Nota de venta' THEN 'Nota' 
+              ELSE tp.nom_tipocomp 
+          END AS tipoComprobante, 
+          CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, 
+          cl.razon_social AS cliente_r,
+          cl.dni AS dni, 
+          cl.ruc AS ruc, 
+          DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, 
+          v.igv AS igv, 
+          SUM(dv.total) AS total, 
+          CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero,
+          ve.dni AS cajeroId, 
+          v.estado_venta AS estado, 
+          s.nombre_sucursal, 
+          s.ubicacion, 
+          cl.direccion, 
+          v.fecha_iso, 
+          v.metodo_pago, 
+          v.estado_sunat, 
+          vb.id_venta_boucher, 
+          usu.usua, 
+          v.observacion
+      FROM 
+          venta v
+      INNER JOIN 
+          comprobante com ON com.id_comprobante = v.id_comprobante
+      INNER JOIN 
+          tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
+      INNER JOIN 
+          cliente cl ON cl.id_cliente = v.id_cliente
+      INNER JOIN 
+          detalle_venta dv ON dv.id_venta = v.id_venta
+      INNER JOIN 
+          sucursal s ON s.id_sucursal = v.id_sucursal
+      INNER JOIN 
+          vendedor ve ON ve.dni = s.dni
+      INNER JOIN 
+          venta_boucher vb ON vb.id_venta_boucher = v.id_venta_boucher
+      INNER JOIN 
+          usuario usu ON usu.id_usuario = ve.id_usuario
+      GROUP BY 
+          id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, 
+          DATE_FORMAT(v.f_venta, '%Y-%m-%d'), igv, cajero, cajeroId, estado
+      ORDER BY 
+          v.id_venta DESC;
+    `);
+
+    res.json({ code: 1, data: result, message: "Reporte de ventas" });
+
+  } catch (error) {
+    console.error('Error al obtener los datos de ventas:', error);
+    res.status(500).json({ message: 'Error al obtener los datos de ventas' });
+  }
+};
+
 export const methods = {
   getTotalSalesRevenue,
   getTotalProductosVendidos,
+  getVentasPDF,
   getProductoMasVendido,
   getCantidadVentasPorProducto,
   getCantidadVentasPorSubcategoria,

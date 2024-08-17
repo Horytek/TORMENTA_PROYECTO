@@ -15,7 +15,7 @@ import { handleSunatMultiple } from "../../Data/add_sunat_multiple";
 import { handleUpdateMultiple } from "../../Data/update_venta_multiple";
 import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
-import PDFModal from "../ComponentsVentas/Modals/PDFModal"; // Importa el modal
+import PDFModal from "../hook/PDFModal"; 
 
 const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const { comprobantes } = useComprobanteData();
@@ -216,21 +216,21 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
                   startContent={<FaRegFilePdf />}
                   onClick={() => handleOpenPDFModal("PDF C/ Quiebre diario")}
                 >
-                  PDF C/ Quiebre diario
+                  Rep. C/ Quiebre diario
                 </DropdownItem>
                 <DropdownItem
                   key="general"
                   startContent={<FaRegFilePdf />}
                   onClick={() => handleOpenPDFModal("PDF Listado General")}
                 >
-                  PDF Listado General
+                  Rep. Listado General
                 </DropdownItem>
                 <DropdownItem
                   key="comprobante"
                   startContent={<FaRegFilePdf />}
                   onClick={() => handleOpenPDFModal("PDF por Comprobante")}
                 >
-                  PDF por Comprobante
+                  Rep. por Comprobante
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>

@@ -9,7 +9,7 @@ export default function PDFModal({ isOpen, onClose, onConfirm, modalTitle }) {
       onClose={onClose}
       className="fixed inset-0 z-[100] overflow-y-auto"
     >
-      <div className="flex items-center justify-center min-h-screen px-4 text-center sm:block sm:p-0">
+      <div className="flex items-center justify-center min-h-screen px-10 text-center sm:block sm:p-0">
         <div
           className="fixed inset-0 transition-opacity bg-black bg-opacity-50"
           aria-hidden="true"
