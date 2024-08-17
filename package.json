@@ -7,7 +7,7 @@
     "babel-node": "babel-node --presets-@babel/present-env",
     "dev": "nodemon --exec npm run babel-node src/index.js",
     "client": "cd. && npm run dev --prefix ./client",
-    "start": "npm run dev"
+    "start": "concurrently --kill-others-on-fail \"npm run dev\" \"npm run client\""
   },
   "keywords": [],
   "author": "",

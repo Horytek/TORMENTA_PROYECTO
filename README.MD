@@ -33,6 +33,7 @@ HOST=localhost
 DATABASE=db_tormenta
 USER=root
 PASSWORD=tupass
+PORT_DB=3306
 TOKEN_SECRET=tormenta_secreto
 FRONTEND_URL=http://localhost:5173
 ```
