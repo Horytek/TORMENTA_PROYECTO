@@ -23,7 +23,7 @@ import destinatarioRoutes from "./routes/destinatario.routes";
 const app = express();
 
 // Settings
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 10000;
 app.set("port", port);
 
 // Middlewares
