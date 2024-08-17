@@ -3,13 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "module",
   "scripts": {
-    "babel-node": "babel-node --presets @babel/preset-env",
+    "babel-node": "babel-node --presets-@babel/present-env",
     "dev": "nodemon --exec npm run babel-node src/index.js",
-    "client": "npm run dev --prefix ./client",
-    "start": "concurrently --kill-others-on-fail \"npm run dev\" \"npm run client\"",
-    "build": "npm install --prefix ./client && npm run build --prefix ./client && npm install"
+    "client": "cd. && npm run dev --prefix ./client",
+    "start": "concurrently --kill-others-on-fail \"npm run dev\" \"npm run client\""
   },
   "keywords": [],
   "author": "",

@@ -2,13 +2,6 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import path from 'path';
-import { fileURLToPath } from "url";
-
-//Resolving dirname for ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 import { FRONTEND_URL } from "./config.js";
 //Rutas
 import dashboardRoutes from "./routes/dashboard.routes";
@@ -26,7 +19,6 @@ import categoriaRoutes from "./routes/categoria.routes";
 import subcategoriaRoutes from "./routes/subcategoria.routes";
 import reporteRoutes from "./routes/reporte.routes";
 import destinatarioRoutes from "./routes/destinatario.routes";
-
 
 const app = express();
 
@@ -58,14 +50,5 @@ app.use("/api/kardex", kardexRoutes);
 app.use("/api/guia_remision", guiasRoutes);
 app.use("/api/categorias", categoriaRoutes);
 app.use("/api/subcategorias", subcategoriaRoutes);
-
-// Use the client app
-app.use(express.static(path.join(__dirname,'/client/dist')));
-
-//Render client for any path
-app.get('*',(req, res) => 
-    res.sendFile(path.join(__dirname,"/client/dist/index.html"))
-);
-
 
 export default app;
