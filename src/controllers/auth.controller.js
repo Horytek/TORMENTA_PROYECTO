@@ -20,7 +20,7 @@ const login = async (req, res) => {
         
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
-            res.cookie("token", token)
+            res.cookie("token", token, {sameSite: 'None', secure: true});
             const userbd = userValid[0]
             res.json({ success: true, data: {
                 id: userbd.id_usuario,
