@@ -74,7 +74,7 @@ function NuevaSalidas() {
   }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
-  const [destinatarios, setDestinatarios] = useState([]);
+  const [destinatarios, setDestinatarios] = useState('');
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
@@ -95,20 +95,21 @@ function NuevaSalidas() {
     }
   }, [almacenOrigen]);
   const fetchDestinatarios = async () => {
-    const data = useDestinatarioData(); // `useDestinatarioData` devuelve una promesa
-    return data; // Devuelve la data
+    const destinatarios = useDestinatarioData(); // `useDestinatarioData` devuelve una promesa
+    return destinatarios; // Devuelve la data
   };
   
   useEffect(() => {
+    destinatarios = useDestinatarioData();
     // Obtener la lista de destinatarios al cargar el componente
-    fetchDestinatarios().then(data => setDestinatarios(data));
+    fetchDestinatarios().then(destinatarios => setDestinatarios(destinatarios));
   }, []);
   
   const closeModalProovedor = () => {
     setIsModalOpenProovedor(false);
   
     // Actualizar la lista de destinatarios cuando se cierre el modal
-    fetchDestinatarios().then(data => setDestinatarios(data));
+    fetchDestinatarios().then(destinatarios => setDestinatarios(destinatarios));
   };
 
   useEffect(() => {
