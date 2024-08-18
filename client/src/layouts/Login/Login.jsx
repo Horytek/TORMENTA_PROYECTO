@@ -15,8 +15,13 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Contexto de autenticación
-  const { login, isAuthenticated } = useAuth();
+  // Datos de prueba
+  const testCredentials = {
+    usua: 'tormenta',
+    contra: '123'
+  };
+
+  const { isAuthenticated } = useAuth();
 
   if  (isAuthenticated) {
     navigate('/Inicio');
@@ -27,9 +32,7 @@ function Login() {
   // Maneja el evento de inicio de sesión
   const handleLogin = async () => {
     try {
-      const user = { usuario, password };
-      const response = await login(user);
-      if (response.success) {
+      if (usuario === testCredentials.usuario && password === testCredentials.password) {
         localStorage.setItem('usuario', usuario);
         navigate('/Inicio');
       } else {
