@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const useSucursalData = () => {
   const [ubigeos, setUbigeo] = useState([]);
@@ -7,7 +7,7 @@ const useSucursalData = () => {
   useEffect(() => {
     const fetchUbigeos = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/guia_remision/ubigeo');
+        const response = await axios.get('/guia_remision/ubigeo');
         if (response.data.code === 1) {
           const ubigeos = response.data.data.map(ubi => ({
             id: ubi.idubi,

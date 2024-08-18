@@ -1,9 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 import { toast } from 'react-hot-toast';
 
 const useProductosData = async (searchInput, setProductos) => {
   try {
-    const response = await axios.get('http://localhost:4000/api/guia_remision/productos', {
+    const response = await axios.get('/guia_remision/productos', {
       params: { 
         descripcion: searchInput,  // Enviar el input de búsqueda como parámetro para descripcion
         codbarras: searchInput     // Enviar el mismo input de búsqueda como parámetro para codbarras

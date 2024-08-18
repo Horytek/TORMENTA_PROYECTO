@@ -1,9 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 
 export const addDestinatarioNatural = async (data, setShowModal) => {
     try {
         console.log('Datos del destinatario natural:', data);
-        const response = await axios.post('http://localhost:4000/api/guia_remision/destnatural', data, {
+        const response = await axios.post('/guia_remision/destnatural', data, {
             headers: {
                 'Content-Type': 'application/json',
             }

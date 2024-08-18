@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axios from "@/api/axios";
 
 // Función para obtener guías de remisión
 const useGuiasData = (filters) => {
@@ -10,7 +10,7 @@ const useGuiasData = (filters) => {
 
   const fetchGuias = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/guia_remision', {
+      const response = await axios.get('/guia_remision/', {
         params: {
           page: currentPage - 1,
           limit: guiasPerPage,

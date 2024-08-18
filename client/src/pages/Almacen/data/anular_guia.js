@@ -1,8 +1,8 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const anularGuia = async (guiaId) => {
   try {
-    const response = await axios.post('http://localhost:4000/api/guia_remision/anularguia', {
+    const response = await axios.post('/guia_remision/anularguia', {
       guiaId,
     });
     if (response.data.code === 1) {
