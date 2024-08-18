@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from "@api/axios";
+import axios from "@/api/axios";
 
 const useTotalProductosVendidos = (idSucursal) => { 
   const [totalProductosVendidos, setTotalProductosVendidos] = useState(0);
