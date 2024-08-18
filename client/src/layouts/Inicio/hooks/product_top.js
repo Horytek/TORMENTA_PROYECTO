@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "@api/axios";
 
 const useProductTop = (timePeriod) => {
   const [productTop, setProductTop] = useState(null);
@@ -10,7 +10,7 @@ const useProductTop = (timePeriod) => {
     const fetchProductTop = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:4000/api/dashboard/product_top', {
+        const response = await axios.get('/dashboard/product_top', {
           params: {
             tiempo: timePeriod, 
           },

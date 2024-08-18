@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axios from "@api/axios";
 
 const useProductoTop = (idSucursal) => { 
   const [productoTop, setProductoTop] = useState(null);
@@ -8,7 +8,7 @@ const useProductoTop = (idSucursal) => {
   const fetchProductoTop = useCallback(async () => {
 
     try {
-      const response = await axios.get('http://localhost:4000/api/reporte/producto_top', {
+      const response = await axios.get('/reporte/producto_top', {
         params: {
           id_sucursal: idSucursal, 
         },

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axios from "@api/axios";
 
 const useCantidadVentasPorProducto = (idSucursal) => { 
   const [ventasPorProducto, setVentasPorProducto] = useState([]);
@@ -11,7 +11,7 @@ const useCantidadVentasPorProducto = (idSucursal) => {
     setError(null);
 
     try {
-      const response = await axios.get('http://localhost:4000/api/reporte/cantidad_por_producto', {
+      const response = await axios.get('/reporte/cantidad_por_producto', {
         params: {
           id_sucursal: idSucursal, 
         },
