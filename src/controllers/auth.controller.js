@@ -20,7 +20,7 @@ const login = async (req, res) => {
         
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
-            res.cookie("_vercel_jwt", token, {sameSite: 'None', secure: true, httpOnly: true});
+            res.cookie("_vercel_jwt", token, {sameSite: 'None', secure: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000});
             const userbd = userValid[0]
             res.json({ success: true, data: {
                 id: userbd.id_usuario,
