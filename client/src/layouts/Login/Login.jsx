@@ -40,7 +40,7 @@ function Login() {
       setShowAlert(true);
     }
   };
-
+  //Comentario
   // Renderiza un campo de entrada con o sin opción de mostrar/ocultar contraseña
   const renderInputField = (type, value, setValue, placeholder, label, showToggle = false) => (
     <div className="input-container relative mb-4">
@@ -79,7 +79,7 @@ function Login() {
           <div className="login-form bg-white flex flex-col justify-center p-20">
             <h1 className="text-3xl font-bold text-center pb-14">Iniciar Sesión</h1>
   
-            {renderInputField("email", usuario, setUsuario, "Tormenta", "Usuario")}
+            {renderInputField("text", usuario, setUsuario, "Tormenta", "Usuario")}
             {renderInputField(showPassword ? "text" : "password", password, setPassword, "*******", "Contraseña", true)}
   
             <button
