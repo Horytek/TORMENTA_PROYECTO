@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "@api/axios";
+import axios from "@/api/axios";
 
 const useComparacionTotal = (fechaInicio, fechaFin) => {
   const [comparacionVentas, setComparacionVentas] = useState(null);
