@@ -2,7 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { FRONTEND_URL } from "./config.js";
+//import { FRONTEND_URL } from "./config.js";
 //Rutas
 import dashboardRoutes from "./routes/dashboard.routes";
 import auhtRoutes from "./routes/auth.routes";
@@ -29,7 +29,7 @@ app.set("port", port);
 // Middlewares
 app.use(morgan("dev"));
 app.use(cors({
-    origin: FRONTEND_URL,
+    origin: "https://tormenta-proyecto-kmj2.vercel.app",
     credentials: true
 }));
 app.use(express.json());
