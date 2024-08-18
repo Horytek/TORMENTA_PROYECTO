@@ -20,7 +20,12 @@ const login = async (req, res) => {
         
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
-            res.cookie("token", token);
+            res.cookie("token", token, {
+                httpOnly: true, // Asegura que la cookie no pueda ser accedida desde JavaScript del lado del cliente
+                secure: process.env.NODE_ENV === 'production', // Asegura que la cookie solo se envíe sobre HTTPS en producción
+                sameSite: 'strict', // Ayuda a prevenir CSRF (Cross-Site Request Forgery)
+                maxAge: 24 * 60 * 60 * 1000 // Duración de la cookie en milisegundos (1 día en este caso)
+            });
             const userbd = userValid[0]
             res.json({ success: true, data: {
                 id: userbd.id_usuario,
