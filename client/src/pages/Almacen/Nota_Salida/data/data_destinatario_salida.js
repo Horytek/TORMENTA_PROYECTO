@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@/api/axios";
+
 
 const useDestinatarioData = () => {
     const [destinatarios, setDestinatarios] = useState([]);
@@ -7,7 +8,7 @@ const useDestinatarioData = () => {
     useEffect(() => {
         const fetchDestinatarios = async () => {
             try {
-                const response = await axios.get('http://localhost:4000/api/nota_salida/destinatario');
+                const response = await axios.get('/nota_salida/destinatario');
                 
                 if (response.data.code === 1) {
                     const destinatarios = response.data.data.map(item => ({
