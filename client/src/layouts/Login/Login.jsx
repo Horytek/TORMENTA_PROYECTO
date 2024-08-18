@@ -1,12 +1,12 @@
 import './Login.css';
 import { useState } from 'react';
-import { redirect, useNavigate } from 'react-router-dom';
+import { /*redirect*/ useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import loginImage from '@/assets/img-login.png';
 import AlertModal from '@/components/Modals/AlertModal';
 
 // Auth Context
-import { useAuth } from '@/context/Auth/AuthProvider';
+//import { useAuth } from '@/context/Auth/AuthProvider';
 
 function Login() {
   const [usuario, setUsuario] = useState('');
@@ -15,33 +15,16 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Datos de prueba
-  const testCredentials = {
-    usua: 'tormenta',
-    contra: '123'
-  };
-
-  const { isAuthenticated } = useAuth();
-
-  if  (isAuthenticated) {
-    navigate('/Inicio');
-  } else {
-    redirect('/Login');
-  }
-
   // Maneja el evento de inicio de sesión
-  const handleLogin = async () => {
-    try {
-      if (usuario === testCredentials.usuario && password === testCredentials.password) {
-        localStorage.setItem('usuario', usuario);
-        navigate('/Inicio');
-      } else {
-        setShowAlert(true);
-      }
-    } catch (error) {
-      console.error('Error logging in:', error);
-      setShowAlert(true);
-    }
+  const handleLogin = () => {
+    // Simula un inicio de sesión exitoso
+    localStorage.setItem('usuario', usuario);
+
+    // Redirige al usuario a la página de inicio
+    navigate('/Inicio');
+
+    // Mostrar alerta aunque el login sea exitoso (solo para prueba)
+    setShowAlert(true);
   };
 
   // Renderiza un campo de entrada con o sin opción de mostrar/ocultar contraseña
