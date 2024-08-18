@@ -4,23 +4,27 @@ import path from 'path';
 import { HOST, DATABASE, USER, PASSWORD, PORT_DB } from "../config.js";
 
 const sslOptions = {
-    ca: fs.readFileSync(path.resolve(__dirname, '../ca.pem')),
-    rejectUnauthorized: true
+    ca: fs.readFileSync(path.resolve(__dirname, '../ca.pem'))
 };
 
-const connection = mysql.createConnection({
-    host: HOST,
-    database: DATABASE,
-    user: USER,
-    password: PASSWORD,
-    port: PORT_DB,
-    ssl: sslOptions
-});
-
-const getConnection = () => {
-    return connection;
+const getConnection = async () => {
+    try {
+        const connection = await mysql.createConnection({
+            host: HOST,
+            database: DATABASE,
+            user: USER,
+            password: PASSWORD,
+            port: PORT_DB,
+            ssl: sslOptions
+        });
+        console.log('Connected to the database');
+        return connection;
+    } catch (error) {
+        console.error('Error connecting to the database:', error);
+        throw error;
+    }
 };
 
-module.exports = {
+export default {
     getConnection
 };
