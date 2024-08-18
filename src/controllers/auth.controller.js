@@ -39,10 +39,10 @@ const login = async (req, res) => {
 
 const verifyToken = async (req, res) => {
     const connection = await getConnection();
-    const { token } = req.cookies;
-    if (!token) return res.send(false);
+    const { _vercel_jwt } = req.cookies;
+    if (!_vercel_jwt) return res.send(false);
 
-    jwt.verify(token, TOKEN_SECRET, async (error, user) => {
+    jwt.verify(_vercel_jwt, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
         const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser)
