@@ -94,20 +94,22 @@ function NuevaSalidas() {
       localStorage.setItem('almacen', almacenOrigen.toString());
     }
   }, [almacenOrigen]);
-
+  const fetchDestinatarios = async () => {
+    const data = useDestinatarioData(); // `useDestinatarioData` devuelve una promesa
+    return data; // Devuelve la data
+  };
+  
   useEffect(() => {
-    if (documentos.length > 0) {
-      setCurrentDocumento(documentos[0].nota);
-    }
-  }, [documentos]);
-  useEffect(() => {
-    const data = useDestinatarioData();
-    setDestinatarios(data); // Actualiza el estado con los datos obtenidos
+    // Obtener la lista de destinatarios al cargar el componente
+    fetchDestinatarios().then(data => setDestinatarios(data));
   }, []);
-  useEffect(() => {
-    const data = useDestinatarioData();
-    setDestinatarios(data); // Actualiza el estado con los datos obtenidos
-  }, [closeModalProovedor]);
+  
+  const closeModalProovedor = () => {
+    setIsModalOpenProovedor(false);
+  
+    // Actualizar la lista de destinatarios cuando se cierre el modal
+    fetchDestinatarios().then(data => setDestinatarios(data));
+  };
 
   useEffect(() => {
     if (isModalOpen && almacenOrigen) {
@@ -194,9 +196,6 @@ function NuevaSalidas() {
     setIsModalOpenProovedor(true);
   };
 
-  const closeModalProovedor = () => {
-    setIsModalOpenProovedor(false);
-  };
 
   const handleBuscarProducto = async () => {
     const almacenId = almacenOrigen || 1;
