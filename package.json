@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "babel-node": "babel-node --presets-@babel/present-env",
-    "dev": "nodemon --exec npm run babel-node index.js",
-    "client": "cd. && npm run dev --prefix ./client",
-    "build": "npm install --prefix ./client && npm install",
+    "babel-node": "babel-node --presets @babel/preset-env",
+    "dev": "nodemon --exec babel-node index.js",
+    "client": "cd ./client && npm run dev",
+    "build": "npm install --prefix ./client",
     "start": "npm run build && babel-node index.js"
   },
   "keywords": [],
