@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "@api/axios";
+import axios from "@/api/axios";
 
 const useEditCat = () => {
     const [loading, setLoading] = useState(false);
