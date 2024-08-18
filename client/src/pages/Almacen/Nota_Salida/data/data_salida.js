@@ -1,8 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
+
 
 const getSalidaData = async (filters) => {
   try {
-    const response = await axios.get('http://localhost:4000/api/nota_salida', {
+    const response = await axios.get('/nota_salida', {
       params: filters,
     });
 
