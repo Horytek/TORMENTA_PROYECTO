@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axios from "@api/axios";
 
 const useEditSubCategoria = () => {
     const [loading, setLoading] = useState(false);
@@ -10,7 +10,7 @@ const useEditSubCategoria = () => {
         setError(null);
 
         try {
-            const response = await axios.put(`http://localhost:4000/api/subcategorias/update/${id_subcategoria}`, {
+            const response = await axios.put(`/subcategorias/update/${id_subcategoria}`, {
                 id_subcategoria,
                 id_categoria,
                 nom_subcat,

@@ -3,7 +3,7 @@ import axios from "@/api/axios";
 
 const getSalidaData = async (filters) => {
   try {
-    const response = await axios.get('/nota_salida', {
+    const response = await axios.get('/nota_salida/', {
       params: filters,
     });
 

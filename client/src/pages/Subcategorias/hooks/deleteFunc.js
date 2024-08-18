@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@api/axios";
 import { toast } from "react-hot-toast";
 
 export const useDeleteSubcategoria = () => {
@@ -20,7 +20,7 @@ export const useDeleteSubcategoria = () => {
     setSuccess(false);
 
     try {
-      const response = await axios.delete(`http://localhost:4000/api/subcategorias/${id}`);
+      const response = await axios.delete(`/subcategorias/${id}`);
       if (response.data.code === 1) {
         localStorage.setItem('subcategoriaDeleted', 'true');
         window.location.reload();

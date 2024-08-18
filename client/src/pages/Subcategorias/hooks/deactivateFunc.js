@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@api/axios";
 import { toast } from "react-hot-toast";
 
 export const useDeactivateSubcategoria = () => {
@@ -20,7 +20,7 @@ export const useDeactivateSubcategoria = () => {
     setSuccess(false);
 
     try {
-      const response = await axios.put(`http://localhost:4000/api/subcategorias/deactivate/${id}`);
+      const response = await axios.put(`/subcategorias/deactivate/${id}`);
       if (response.data.message === "Subcategoría dada de baja con éxito") {
         localStorage.setItem('subcategoriaDeactivated', 'true');
         window.location.reload();

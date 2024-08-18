@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axios from "@api/axios";
 
 const useEditMarca = () => {
     const [loading, setLoading] = useState(false);
@@ -10,7 +10,7 @@ const useEditMarca = () => {
         setError(null);
 
         try {
-            const response = await axios.put(`http://localhost:4000/api/marcas/update/${id_marca}`, {
+            const response = await axios.put(`/marcas/update/${id_marca}`, {
                 id_marca, 
                 nom_marca, 
                 estado_marca 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "@api/axios";
 
 const useVentasTotal = (timePeriod) => {
   const [ventasTotal, setVentasTotal] = useState(null);
@@ -10,7 +10,7 @@ const useVentasTotal = (timePeriod) => {
     const fetchVentasTotal = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:4000/api/dashboard/ventas_total', {
+        const response = await axios.get('/dashboard/ventas_total', {
           params: {
             tiempo: timePeriod, 
           },

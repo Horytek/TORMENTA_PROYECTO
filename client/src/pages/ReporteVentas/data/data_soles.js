@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axios from "@api/axios";
 
 const useVentasData = (idSucursal) => { 
   const [totalRecaudado, setTotalRecaudado] = useState(0);
 
   const fetchVentas = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/reporte/ganancias', {
+      const response = await axios.get('/reporte/ganancias', {
         params: {
           id_sucursal: idSucursal,
         },
