@@ -20,9 +20,9 @@ import insertNotaAndDetalle from '../data/insert_nota_salida';
 const glosaOptions = [
   "VENTA DE PRODUCTOS", "VENTA AL EXTERIOR", "CONSIGNACION CLIENTE",
   "TRASLADO ENTRE ALMACENES", "ITINERANTE", "CAMBIO MERCAD. PROV.",
-  "MATERIA PRIMAR PRODUCCION", "DEVOLUCION PROOVEDOR", 
+  "MATERIA PRIMAR PRODUCCION", "DEVOLUCION PROOVEDOR",
   "AJUSTE INVENTARIO", "OTRAS SALIDAS", "RESERVADO",
-  "CONSUMO INTERNO", "EXTORNO DIFERIDO" , "TRANSFORMACION"
+  "CONSUMO INTERNO", "EXTORNO DIFERIDO", "TRANSFORMACION"
 ];
 function NuevaSalidas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,7 +32,7 @@ function NuevaSalidas() {
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [codigoBarras, setCodigoBarras] = useState('');
-  
+
   // Función para manejar la entrada del código de barras
   const handleBarcodeInput = (e) => {
     setCodigoBarras(e.target.value);
@@ -74,7 +74,7 @@ function NuevaSalidas() {
   }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
-  const { destinatarios } = useDestinatarioData();
+  const [destinatarios, setDestinatarios] = useState([]);
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
@@ -100,6 +100,11 @@ function NuevaSalidas() {
       setCurrentDocumento(documentos[0].nota);
     }
   }, [documentos]);
+  useEffect(() => {
+    const data = useDestinatarioData();
+    setDestinatarios(data); // Actualiza el estado con los datos obtenidos
+  }, [useDestinatarioData]);
+
   useEffect(() => {
     if (isModalOpen && almacenOrigen) {
       handleBuscarProducto();
@@ -430,7 +435,7 @@ function NuevaSalidas() {
         productos={productos}
         agregarProducto={agregarProducto}
         setCodigoBarras={setCodigoBarras}
-        
+
       />
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
