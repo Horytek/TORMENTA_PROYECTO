@@ -1,12 +1,12 @@
 import './Login.css';
-import { useState } from 'react';
-import { /*redirect*/ useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import loginImage from '@/assets/img-login.png';
 import AlertModal from '@/components/Modals/AlertModal';
 
 // Auth Context
-//import { useAuth } from '@/context/Auth/AuthProvider';
+import { useAuth } from '@/context/Auth/AuthProvider';
 
 function Login() {
   const [usuario, setUsuario] = useState('');
@@ -15,16 +15,31 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
+  // Contexto de autenticación
+  const { login, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/Inicio');
+    }
+  }, [isAuthenticated, navigate]);
+
   // Maneja el evento de inicio de sesión
-  const handleLogin = () => {
-    // Simula un inicio de sesión exitoso
-    localStorage.setItem('usuario', usuario);
-
-    // Redirige al usuario a la página de inicio
-    navigate('/Inicio');
-
-    // Mostrar alerta aunque el login sea exitoso (solo para prueba)
-    setShowAlert(true);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const user = { usuario, password };
+      const response = await login(user);
+      if (response.success) {
+        localStorage.setItem('usuario', usuario);
+        navigate('/Inicio');
+      } else {
+        setShowAlert(true);
+      }
+    } catch (error) {
+      console.error('Error logging in:', error);
+      setShowAlert(true);
+    }
   };
 
   // Renderiza un campo de entrada con o sin opción de mostrar/ocultar contraseña
@@ -53,7 +68,7 @@ function Login() {
   );
 
   return (
-    <form>
+    <form onSubmit={handleLogin}>
       <div className="min-h-screen flex items-center justify-center bg-[#a07ce9]">
         {/* Fondos decorativos */}
         <div className="absolute top-0 left-0 z-0 rounded-full bg-circle-top-left w-96 h-96"></div>
@@ -69,7 +84,7 @@ function Login() {
             {renderInputField(showPassword ? "text" : "password", password, setPassword, "*******", "Contraseña", true)}
   
             <button
-              onClick={handleLogin}
+              type="submit"
               className="login-button w-full text-white py-2 rounded focus:outline-none bg-[#00BDD6]"
             >
               Iniciar sesión

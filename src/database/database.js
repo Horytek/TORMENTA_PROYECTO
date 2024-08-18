@@ -25,6 +25,4 @@ const getConnection = async () => {
     }
 };
 
-export default {
-    getConnection
-};
+export { getConnection }; // Exportar directamente la función
