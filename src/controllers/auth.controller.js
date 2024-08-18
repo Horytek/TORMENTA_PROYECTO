@@ -57,7 +57,7 @@ const verifyToken = async (req, res) => {
         });
     });
 };
-
+//Revisa
 const logout = async (req, res) => {
     res.cookie("token", "_vercel_jwt", "" ,{
       httpOnly: true,
