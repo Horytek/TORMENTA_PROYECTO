@@ -5,7 +5,7 @@ import { HOST, DATABASE, USER, PASSWORD, PORT_DB } from "../config.js";
 
 const sslOptions = {
     ca: fs.readFileSync(path.resolve(__dirname, '../ca.pem')),
-    rejectUnauthorized: false
+    rejectUnauthorized: true
 };
 
 const connection = mysql.createConnection({
