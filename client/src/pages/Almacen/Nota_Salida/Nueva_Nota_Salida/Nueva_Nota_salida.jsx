@@ -104,6 +104,10 @@ function NuevaSalidas() {
     const data = useDestinatarioData();
     setDestinatarios(data); // Actualiza el estado con los datos obtenidos
   }, []);
+  useEffect(() => {
+    const data = useDestinatarioData();
+    setDestinatarios(data); // Actualiza el estado con los datos obtenidos
+  }, [closeModalProovedor]);
 
   useEffect(() => {
     if (isModalOpen && almacenOrigen) {
