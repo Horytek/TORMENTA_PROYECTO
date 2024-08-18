@@ -75,6 +75,7 @@ function NuevaSalidas() {
 
   const { almacenes } = useAlmacenData();
   const [destinatarios] = useDestinatarioData();
+  console.log(destinatarios);
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
