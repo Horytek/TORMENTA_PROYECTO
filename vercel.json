@@ -1,16 +1,15 @@
 {
   "version": 2,
-  "name": "TORMENTA_PROYECTO",
   "builds": [
     {
-      "src": "index.js",
+      "src": "*.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/index.js"
+      "src": "/(.*)",
+      "dest": "/"
     }
   ]
 }
