@@ -103,7 +103,7 @@ function NuevaSalidas() {
   useEffect(() => {
     const data = useDestinatarioData();
     setDestinatarios(data); // Actualiza el estado con los datos obtenidos
-  }, [useDestinatarioData]);
+  }, []);
 
   useEffect(() => {
     if (isModalOpen && almacenOrigen) {
