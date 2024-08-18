@@ -1,8 +1,8 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const insertNotaAndDetalle = async (data) => {
   try {
-    const response = await axios.post('http://localhost:4000/api/nota_salida/nuevanota', data);
+    const response = await axios.post('/nota_salida/nuevanota', data);
     if (response.data.code === 1) {
       console.log('Nota y detalle insertados correctamente');
       return { success: true, message: 'Nota y detalle insertados correctamente' };

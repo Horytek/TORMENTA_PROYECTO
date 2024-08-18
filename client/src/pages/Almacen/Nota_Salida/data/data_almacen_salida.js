@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@/api/axios";
+
 
 const useAlmacenData = () => {
     const [almacenes, setAlmacenes] = useState([]);
@@ -7,7 +8,7 @@ const useAlmacenData = () => {
     useEffect(() => {
         const fetchAlmacenes = async () => {
             try {
-                const response = await axios.get('http://localhost:4000/api/nota_salida/almacen');
+                const response = await axios.get('/nota_salida/almacen');
                 
                 if (response.data.code === 1) {
                     const almacenes = response.data.data.map(item => ({
