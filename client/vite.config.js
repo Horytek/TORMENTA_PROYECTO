@@ -9,7 +9,4 @@ export default defineConfig({
       '@': resolve('./src/'),
     },
   },
-  build: {
-    outDir: 'dist' // Este es el directorio donde se generarán los archivos de producción
-  }
 });
