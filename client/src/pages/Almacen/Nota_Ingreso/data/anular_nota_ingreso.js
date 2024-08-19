@@ -1,9 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const anularNota = async (notaId) => {
 
   try {
-    const response = await axios.post('http://localhost:4000/api/nota_ingreso/anular', {
+    const response = await axios.post('/nota_ingreso/anular', {
       notaId,
     });
     if (response.data.code === 1) {
