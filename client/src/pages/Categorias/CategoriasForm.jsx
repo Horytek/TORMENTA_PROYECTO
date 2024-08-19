@@ -34,7 +34,7 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
         }, 550);
       }
     } catch (error) {
-      console.error("Error al realizar la gestión de la categoría");
+      // console.error("Error al realizar la gestión de la categoría");
     }
   });
 

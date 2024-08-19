@@ -29,7 +29,7 @@ const LineChartUsageExampleAxisLabel = () => {
   });
 
   useEffect(() => {
-    console.log('Organized data:', organizedData); 
+    // console.log('Organized data:', organizedData); 
   }, [organizedData]);
 
   const categories = [...new Set(data.map(item => item.sucursal))];
