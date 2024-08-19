@@ -63,6 +63,8 @@ const logout = async (req, res) => {
     res.cookie("token", "" ,{
       httpOnly: true,
       secure: true,
+      sameSite: 'none',
+      domain: '.bck-omega.vercel.app', // Mismo dominio utilizado en el login
       expires: new Date(0),
     });
     return res.sendStatus(200);

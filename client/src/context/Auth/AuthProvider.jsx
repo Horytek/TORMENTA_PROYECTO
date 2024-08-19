@@ -3,6 +3,7 @@ import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
 import { loginRequest, verifyTokenRequest } from "../../api/api.auth";
 import Cookies from "js-cookie";
+import axios from "../../api/axios";
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -27,12 +28,16 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
-        Cookies.remove("token");
-        setUser(null);
-        setIsAuthenticated(false);
-        redirect('/');
-    };
+    const logout = async () => {
+      try {
+          await axios.get("/auth/logout"); // Llama al backend para eliminar la cookie
+          setUser(null);
+          setIsAuthenticated(false);
+          redirect('/');
+      } catch (error) {
+          console.log(error);
+      }
+  };
 
     useEffect(() => {
         const checkLogin = async () => {
