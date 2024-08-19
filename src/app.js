@@ -30,6 +30,8 @@ app.set("port", port);
 app.use(morgan("dev"));
 app.use(cors({
     origin: FRONTEND_URL,
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type,Authorization",
     credentials: true
 }));
 app.use(express.json());
