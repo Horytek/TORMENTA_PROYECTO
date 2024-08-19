@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
       try {
-          Cookies.remove("token", { path: '' });
           setUser(null);
           setIsAuthenticated(false);
           redirect('/');
