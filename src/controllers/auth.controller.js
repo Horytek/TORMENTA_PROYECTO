@@ -59,7 +59,7 @@ const verifyToken = async (req, res) => {
 };
 //Revisa
 const logout = async (req, res) => {
-    res.cookie("token", "_vercel_jwt", "" ,{
+    res.cookie("_vercel_jwt", "" ,{
       httpOnly: true,
       secure: true,
       expires: new Date(0),
