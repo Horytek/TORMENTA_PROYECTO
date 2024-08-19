@@ -8,5 +8,8 @@ export default defineConfig({
     alias: {
       '@': resolve('./src/'),
     },
+    build: {
+      outDir: 'dist', // Aquí es donde se generarán los archivos estáticos
+    },
   },
 });
