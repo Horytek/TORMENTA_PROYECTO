@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 
 const login = async (req, res) => {
-    
     try {
         const { usuario, password } = req.body;
         
@@ -17,17 +16,20 @@ const login = async (req, res) => {
         }
 
         const [userValid] = await connection.query("SELECT * FROM usuario WHERE usua = ? AND contra = ?", [user.usuario, user.password]);
-        //Veamos
+
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
-            res.cookie("token", token, 
-            {sameSite: 'none', secure: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000, domain: '.bac-orcin.vercel.app'});
-            const userbd = userValid[0]
-            res.json({ success: true, data: {
-                id: userbd.id_usuario,
-                rol: userbd.id_rol,
-                usuario: userbd.usua
-            }, message: 'Usuario encontrado' });
+            const userbd = userValid[0];
+            res.json({
+                success: true,
+                data: {
+                    id: userbd.id_usuario,
+                    rol: userbd.id_rol,
+                    usuario: userbd.usua
+                },
+                token, // Devuelve el token en la respuesta JSON
+                message: 'Usuario encontrado'
+            });
         } else {
             res.status(400).json({ success: false, message: 'La contraseña ingresada no es correcta' });
         }
@@ -36,20 +38,22 @@ const login = async (req, res) => {
         res.status(500);
         res.send(error.message);
     }
-}
+};
+
 
 const verifyToken = async (req, res) => {
     const connection = await getConnection();
-    const { token } = req.cookies;
+    const token = req.headers['authorization'];
+
     if (!token) return res.send(false);
 
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
-        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser)
+        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser);
         if (userFound.length === 0) return res.sendStatus(401);
 
-        const userbd = userFound[0]
+        const userbd = userFound[0];
 
         return res.json({
             id: userbd.id_usuario,
@@ -58,6 +62,7 @@ const verifyToken = async (req, res) => {
         });
     });
 };
+
 //Revisa
 const logout = async (req, res) => {
     res.cookie("token", "" ,{

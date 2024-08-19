@@ -2,7 +2,7 @@ import { AuthContext } from "./AuthContext";
 import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
 import { loginRequest, verifyTokenRequest } from "../../api/api.auth";
-import Cookies from "js-cookie";
+//import Cookies from "js-cookie";
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -17,49 +17,51 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const login = async (user) => {
-        try {
+      try {
           const res = await loginRequest(user);
+          sessionStorage.setItem("token", res.data.token); // Guardar el token en sessionStorage
           setUser(res.data.data);
           setIsAuthenticated(true);
           return res.data;
-        } catch (error) {
-          console.log(error);
-        }
-    };
-
-    const logout = async () => {
-      try {
-          Cookies.remove("token", { path: '' });
-          setUser(null);
-          setIsAuthenticated(false);
-          redirect('/');
       } catch (error) {
           console.log(error);
       }
   };
 
-    useEffect(() => {
-        const checkLogin = async () => {
-          const cookies = Cookies.get();
-          if (!cookies.token) {
-            setIsAuthenticated(false);
-            setLoading(false);
-            return;
-          }
-    
-          try {
-            const res = await verifyTokenRequest(cookies.token);
-            if (!res.data) return setIsAuthenticated(false);
-            setIsAuthenticated(true);
-            setUser(res.data);
-            setLoading(false);
-          } catch (error) {
-            setIsAuthenticated(false);
-            setLoading(false);
-          }
-        };
-        checkLogin();
-    }, []);
+  const logout = async () => {
+    try {
+        sessionStorage.removeItem("token"); // Eliminar el token de sessionStorage
+        setUser(null);
+        setIsAuthenticated(false);
+        redirect('/');
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+useEffect(() => {
+  const checkLogin = async () => {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+          setIsAuthenticated(false);
+          setLoading(false);
+          return;
+      }
+
+      try {
+          const res = await verifyTokenRequest(token); // Pasa el token en la petición
+          if (!res.data) return setIsAuthenticated(false);
+          setIsAuthenticated(true);
+          setUser(res.data);
+          setLoading(false);
+      } catch (error) {
+          setIsAuthenticated(false);
+          setLoading(false);
+      }
+  };
+  checkLogin();
+}, []);
+
 
     return (
         <AuthContext.Provider value={{
