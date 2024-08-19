@@ -32,7 +32,6 @@ function NuevaSalidas() {
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [codigoBarras, setCodigoBarras] = useState('');
-
   // Función para manejar la entrada del código de barras
   const handleBarcodeInput = (e) => {
     setCodigoBarras(e.target.value);
@@ -45,7 +44,6 @@ function NuevaSalidas() {
   });
   useEffect(() => {
     let barcodeInput = '';
-
     const handleGlobalKeyPress = (e) => {
       if (e.key === 'Enter' && e.target.value.trim() !== '') { // Filtra solo números y "Enter"
         barcodeInput += e.key;
@@ -57,24 +55,20 @@ function NuevaSalidas() {
         barcodeInput = ''; // Resetea la entrada si se ingresa un carácter no válido
       }
     };
-
     // Agrega el listener de eventos
     document.addEventListener('keydown', handleGlobalKeyPress);
-
     // Limpia el listener cuando el componente se desmonta
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyPress);
     };
   }, []);
-
   useEffect(() => {
     if (codigoBarras !== '') {
       handleBuscarProducto();
     }
   }, [codigoBarras]);
-
   const { almacenes } = useAlmacenData();
-  const [destinatarios] = useDestinatarioData();
+  const [destinatarios, setDestinatarios] = useState([]);
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
@@ -88,27 +82,30 @@ function NuevaSalidas() {
   useEffect(() => {
     localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
   }, [productosSeleccionados]);
-
   useEffect(() => {
     if (almacenOrigen !== '') {
       localStorage.setItem('almacen', almacenOrigen.toString());
     }
   }, [almacenOrigen]);
-  
-  const closeModalProovedor = () => {
-    setIsModalOpenProovedor(false);
-  };
   useEffect(() => {
     if (documentos.length > 0) {
       setCurrentDocumento(documentos[0].nota);
     }
   }, [documentos]);
   useEffect(() => {
+    const data = useDestinatarioData();
+    setDestinatarios(data); // Actualiza el estado con los datos obtenidos
+  }, []);
+  useEffect(() => {
+    const data = useDestinatarioData();
+    setDestinatarios(data); // Actualiza el estado con los datos obtenidos
+  }, [closeModalProovedor]);
+
+  useEffect(() => {
     if (isModalOpen && almacenOrigen) {
       handleBuscarProducto();
     }
   }, [isModalOpen, almacenOrigen]);
-
   const openModalBuscarProducto = () => {
     if (almacenOrigen) {
       setIsModalOpen(true);
@@ -118,7 +115,6 @@ function NuevaSalidas() {
     }
   };
   const closeModalBuscarProducto = () => setIsModalOpen(false);
-
   const openModalProducto = (title) => {
     setModalTitle(title);
     setIsModalOpenProducto(true);
@@ -132,7 +128,6 @@ function NuevaSalidas() {
     }
     setisModalOpenGuardar(true);
   };
-
   const closeModalOpenGuardar = () => {
     setisModalOpenGuardar(false);
   };
@@ -153,12 +148,10 @@ function NuevaSalidas() {
     const numComprobante = document.getElementById('numero').value;
     const observacion = document.getElementById('observacion').value;
     const nom_usuario = usuario;
-
     const productos = productosSeleccionados.map(producto => ({
       id: producto.codigo,
       cantidad: producto.cantidad
     }));
-
     const data = {
       almacenO,
       almacenD,
@@ -172,9 +165,7 @@ function NuevaSalidas() {
       observacion,
       nom_usuario
     };
-
     const result = await insertNotaAndDetalle(data);
-
     if (result.success) {
       toast.success('Nota y detalle insertados correctamente.');
       handleCancel();
@@ -183,12 +174,12 @@ function NuevaSalidas() {
       toast.error('Error inesperado, intente nuevamente.');
     }
   };
-
   const openModalProovedor = () => {
     setIsModalOpenProovedor(true);
   };
-
-
+  const closeModalProovedor = () => {
+    setIsModalOpenProovedor(false);
+  };
   const handleBuscarProducto = async () => {
     const almacenId = almacenOrigen || 1;
     const filters = {
@@ -196,23 +187,19 @@ function NuevaSalidas() {
       almacen: almacenId,
       cod_barras: codigoBarras
     };
-
     const result = await useProductosData(filters);
     setProductos(result.productos);
   };
-
   const handleCancel = () => {
     localStorage.removeItem('productosSeleccionados');
     setProductosSeleccionados([]);
   };
-
   const agregarProducto = (producto, cantidad) => {
     setProductosSeleccionados((prevProductos) => {
       const cantidadExistente = prevProductos
         .filter(p => p.codigo === producto.codigo)
         .reduce((total, p) => total + p.cantidad, 0);
       const cantidadTotal = cantidadExistente + cantidad;
-
       if (cantidadTotal > producto.stock) {
         const maxCantidad = producto.stock - cantidadExistente;
         if (maxCantidad > 0) {
@@ -221,7 +208,6 @@ function NuevaSalidas() {
         toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
         return prevProductos;
       }
-
       const productoExistente = prevProductos.find(p => p.codigo === producto.codigo);
       if (productoExistente) {
         return prevProductos.map(p =>
@@ -231,10 +217,8 @@ function NuevaSalidas() {
         return [...prevProductos, { ...producto, cantidad }];
       }
     });
-
     closeModalBuscarProducto();
   };
-
   const handleGuardar = async () => {
     const almacenO = document.getElementById('almacen_origen').value;
     const almacenD = document.getElementById('almacen_destino').value || null;
@@ -243,7 +227,6 @@ function NuevaSalidas() {
     const fecha = document.getElementById('fechaDocu').value;
     const nota = document.getElementById('nomnota').value;
     const numComprobante = document.getElementById('numero').value;
-
     if (almacenO == almacenD) {
       toast.error('El almacen de origen y de destino no pueden ser el mismo.');
       return;
@@ -252,7 +235,6 @@ function NuevaSalidas() {
       toast.error('Por favor complete todos los campos.');
       return;
     }
-
     if (productosSeleccionados.length === 0) {
       toast.error('Debe agregar al menos un producto.');
       return;
@@ -263,12 +245,10 @@ function NuevaSalidas() {
         stockExcedido = true;
       }
     });
-
     if (stockExcedido) {
       toast.error('La cantidad de algunos productos excede el stock disponible.');
       return;
     }
-
     const almacenDestino = document.getElementById('almacen_destino').value;
     if (almacenDestino) {
       setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
@@ -277,9 +257,7 @@ function NuevaSalidas() {
     }
     openModalOpenGuardar();
   };
-
   const currentDate = new Date().toISOString().split('T')[0];
-
   return (
     <div>
       <Breadcrumb paths={[
@@ -324,7 +302,6 @@ function NuevaSalidas() {
                   ))}
                 </select>
               </div>
-
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
                   Destinatario:
@@ -343,44 +320,37 @@ function NuevaSalidas() {
                   ))}
                 </select>
               </div>
-
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
                   RUC:
                 </label>
                 <input className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="ruc" type="text" readOnly />
               </div>
-
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nomnota">
                   Nombre de nota:
                 </label>
                 <input className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="nomnota" type="text" />
               </div>
-
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
                   Fecha Docu:
                 </label>
                 <input type="date" className="form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3" id="fechaDocu" defaultValue={currentDate} />
               </div>
-
             </div>
             <div className="flex justify-start mt-4 space-x-2">
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor} >
                 <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo destinatario
               </button>
-
               <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalBuscarProducto} >
                 <FaBarcode className="inline-block mr-2" /> Buscar producto
               </button>
-
               <Link to="/almacen/nota_salida">
                 <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={handleCancel}>
                   <MdCancelPresentation className="inline-block mr-2" /> Cancelar
                 </button>
               </Link>
-
               <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={handleGuardar}>
                 <FiSave className="inline-block mr-2 text-lg" /> Guardar
               </button>
@@ -430,13 +400,11 @@ function NuevaSalidas() {
         productos={productos}
         agregarProducto={agregarProducto}
         setCodigoBarras={setCodigoBarras}
-
       />
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
       <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
-
       {isModalOpenGuardar && (
         <ConfirmationModal
           message={confirmationMessage}
@@ -448,5 +416,4 @@ function NuevaSalidas() {
     </div>
   );
 }
-
 export default NuevaSalidas;
