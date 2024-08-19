@@ -201,7 +201,7 @@ export const handleSunat = (cliente, detalles, productos) => {
   };
 
   const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
-  console.log('Datos de la venta:', data);
+  //console.log('Datos de la venta:', data);
   enviarVentaASunat(data)
     .then(() => {
       toast.dismiss(loadingToastId);
