@@ -7,8 +7,8 @@
     "babel-node": "babel-node --presets @babel/preset-env",
     "dev": "nodemon --exec babel-node index.js",
     "client": "cd ./client && npm run dev",
-    "build": "npm install --prefix ./client",
-    "start": "node index.js"
+    "build": "react-scripts build",
+    "start": "npm run build && babel-node index.js"
   },
   "keywords": [],
   "author": "",
