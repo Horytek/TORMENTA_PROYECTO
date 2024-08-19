@@ -38,7 +38,7 @@ const BarChartHero = ({ idSucursal }) => {
                 category === "Dinero generado (S/)" ? currencyFormatter(value) : dataFormatter(value)}
               yAxisWidth={48}
               className="mt-6 h-80"
-              onValueChange={(v) => console.log(v)}
+              // onValueChange={(v) => console.log(v)}
             />
           )}
         </div>

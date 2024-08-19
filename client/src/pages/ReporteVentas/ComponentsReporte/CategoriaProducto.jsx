@@ -14,7 +14,7 @@ export default function Example({ idSucursal }) {
   const { data, loading, error } = useCantidadVentasPorSubcategoria(idSucursal); 
 
   useEffect(() => {
-    console.log('Data from hook:', data);
+    // console.log('Data from hook:', data);
   }, [data]);
 
   const colors = [
