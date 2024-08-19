@@ -10,7 +10,7 @@ const LineChartUsageExampleAxisLabel = () => {
   const { data, loading, error } = useAnalisisGananciasSucursales();
 
   useEffect(() => {
-    console.log('Raw data:', data); 
+    // console.log('Raw data:', data); 
   }, [data]);
 
   const months = [
