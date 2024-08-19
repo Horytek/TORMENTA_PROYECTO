@@ -22,7 +22,7 @@ const glosaOptions = [
   "TRASLADO ENTRE ALMACENES", "ITINERANTE", "CAMBIO MERCAD. PROV.",
   "MATERIA PRIMAR PRODUCCION", "DEVOLUCION PROOVEDOR",
   "AJUSTE INVENTARIO", "OTRAS SALIDAS", "RESERVADO",
-  "CONSUMO INTERNO", "EXTORNO DIFERIDO", "TRANSFORMACION"
+  "CONSUMO INTERNO", "EXTORNO DIFERIDO" , "TRANSFORMACION"
 ];
 function NuevaSalidas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +32,7 @@ function NuevaSalidas() {
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [codigoBarras, setCodigoBarras] = useState('');
+
   // Función para manejar la entrada del código de barras
   const handleBarcodeInput = (e) => {
     setCodigoBarras(e.target.value);
@@ -44,6 +45,7 @@ function NuevaSalidas() {
   });
   useEffect(() => {
     let barcodeInput = '';
+
     const handleGlobalKeyPress = (e) => {
       if (e.key === 'Enter' && e.target.value.trim() !== '') { // Filtra solo números y "Enter"
         barcodeInput += e.key;
@@ -55,20 +57,24 @@ function NuevaSalidas() {
         barcodeInput = ''; // Resetea la entrada si se ingresa un carácter no válido
       }
     };
+
     // Agrega el listener de eventos
     document.addEventListener('keydown', handleGlobalKeyPress);
+
     // Limpia el listener cuando el componente se desmonta
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyPress);
     };
   }, []);
+
   useEffect(() => {
     if (codigoBarras !== '') {
       handleBuscarProducto();
     }
   }, [codigoBarras]);
+
   const { almacenes } = useAlmacenData();
-  const [destinatarios, setDestinatarios] = useState([]);
+  const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
@@ -82,30 +88,29 @@ function NuevaSalidas() {
   useEffect(() => {
     localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
   }, [productosSeleccionados]);
+
   useEffect(() => {
     if (almacenOrigen !== '') {
       localStorage.setItem('almacen', almacenOrigen.toString());
     }
   }, [almacenOrigen]);
+
   useEffect(() => {
     if (documentos.length > 0) {
       setCurrentDocumento(documentos[0].nota);
     }
   }, [documentos]);
-  useEffect(() => {
-    const data = useDestinatarioData();
-    setDestinatarios(data); // Actualiza el estado con los datos obtenidos
-  }, []);
-  useEffect(() => {
-    const data = useDestinatarioData();
-    setDestinatarios(data); // Actualiza el estado con los datos obtenidos
-  }, [closeModalProovedor]);
+  // useEffect(() => {
+  //   const data = useDestinatarioData();
+  //   setDestinatarios(data); // Actualiza el estado con los datos obtenidos
+  // }, [useDestinatarioData]);
 
   useEffect(() => {
     if (isModalOpen && almacenOrigen) {
       handleBuscarProducto();
     }
   }, [isModalOpen, almacenOrigen]);
+
   const openModalBuscarProducto = () => {
     if (almacenOrigen) {
       setIsModalOpen(true);
@@ -115,6 +120,7 @@ function NuevaSalidas() {
     }
   };
   const closeModalBuscarProducto = () => setIsModalOpen(false);
+
   const openModalProducto = (title) => {
     setModalTitle(title);
     setIsModalOpenProducto(true);
@@ -128,6 +134,7 @@ function NuevaSalidas() {
     }
     setisModalOpenGuardar(true);
   };
+
   const closeModalOpenGuardar = () => {
     setisModalOpenGuardar(false);
   };
