@@ -1,8 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
+
 
 const getDetalleKardexData = async (filters) => {
   try {
-    const response = await axios.get('http://localhost:4000/api/kardex/detalleKA', {
+    const response = await axios.get('/kardex/detalleKA', {
       params: filters,
     });
 

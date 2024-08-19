@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const useVehiculoData = () => {
   const [vehiculos, setVehiculo] = useState([]);
@@ -7,7 +7,7 @@ const useVehiculoData = () => {
   useEffect(() => {
     const fetchVehiculos = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/guia_remision/vehiculosguia');
+        const response = await axios.get('/guia_remision/vehiculosguia');
 
         if (response.data.code === 1) {
           const vehiculos = response.data.data.map(item => ({

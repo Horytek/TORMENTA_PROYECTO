@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const useTransPrivData = () => {
   const [transprivados, setTransprivados] = useState([]);
@@ -7,7 +7,7 @@ const useTransPrivData = () => {
   useEffect(() => {
     const fetchTransPriv = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/guia_remision/transprivado');
+        const response = await axios.get('/guia_remision/transprivado');
         
         if (response.data.code === 1) {
           const transportes = response.data.data.map(item => ({

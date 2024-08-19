@@ -1,14 +1,15 @@
-import axios from 'axios';
+import axios from "@/api/axios";
+
 
 const getAllKardexData = async (filters) => {
   try {
     // Fetch current transactions data
-    const responseKardex = await axios.get('http://localhost:4000/api/kardex/detalleK', {
+    const responseKardex = await axios.get('/kardex/detalleK', {
       params: filters,
     });
 
     // Fetch previous transactions data
-    const responsePrev = await axios.get('http://localhost:4000/api/kardex/detalleKA', {
+    const responsePrev = await axios.get('/kardex/detalleKA', {
       params: {
         fecha: filters.fechaInicio,  // Use fechaInicio as the cutoff date
         idProducto: filters.idProducto,
@@ -17,7 +18,7 @@ const getAllKardexData = async (filters) => {
     });
 
     // Fetch product data
-    const responseProducto = await axios.get('http://localhost:4000/api/kardex/producto', {
+    const responseProducto = await axios.get('/kardex/producto', {
       params: filters,
     });
 

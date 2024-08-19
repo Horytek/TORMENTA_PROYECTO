@@ -1,9 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const insertGuiaRemisionAndDetalle = async (data) => {
 
   try {
-    const response = await axios.post('http://localhost:4000/api/guia_remision/nuevaguia', data);
+    const response = await axios.post('/guia_remision/nuevaguia', data);
     if (response.data.code === 1) {
       console.log('Guía de remisión y detalles insertados correctamente');
       return { success: true, message: 'Guía de remisión y detalles insertados correctamente' };

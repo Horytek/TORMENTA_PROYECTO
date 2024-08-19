@@ -1,9 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 
 export const addTransportistaPublico = async (data, setShowModal) => {
     try {
         console.log('Datos del transportista:', data);
-        const response = await axios.post('http://localhost:4000/api/guia_remision/nuevo_transportepub', data, {
+        const response = await axios.post('/guia_remision/nuevo_transportepub', data, {
             headers: {
                 'Content-Type': 'application/json',
             }

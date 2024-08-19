@@ -1,8 +1,8 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const getProductoData = async (filters) => {
   try {
-    const response = await axios.get('http://localhost:4000/api/kardex/producto', {
+    const response = await axios.get('/kardex/producto', {
       params: filters,
     });
 

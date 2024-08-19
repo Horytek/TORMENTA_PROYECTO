@@ -1,8 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
+
 
 const useProductosData = async (filters) => {
   try {
-    const response = await axios.get('http://localhost:4000/api/nota_ingreso/productos', {
+    const response = await axios.get('/nota_ingreso/productos', {
       params: filters,
     });
 

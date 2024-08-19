@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 import toast from 'react-hot-toast';
 
 //POR AHORA NO FUNCIONA

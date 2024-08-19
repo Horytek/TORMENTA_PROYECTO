@@ -1,9 +1,9 @@
-import axios from 'axios';
+import axios from "@/api/axios";
 
 export const addDestinatarioJuridico = async (data, setShowModal) => {
     try {
         console.log('Datos del destinatario jurídico:', data);
-        const response = await axios.post('http://localhost:4000/api/guia_remision/destjuridico', data, {
+        const response = await axios.post('/guia_remision/destjuridico', data, {
             headers: {
                 'Content-Type': 'application/json',
             }

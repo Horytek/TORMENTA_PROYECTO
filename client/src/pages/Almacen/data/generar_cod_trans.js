@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@/api/axios";
 
 const useCodigoData = () => {
     const [codigos, setCodigos] = useState([]);
@@ -7,7 +7,7 @@ const useCodigoData = () => {
     useEffect(() => {
         const fetchCodigos = async () => {
             try {
-                const response = await axios.get('http://localhost:4000/api/guia_remision/cod_transporte');
+                const response = await axios.get('/guia_remision/cod_transporte');
                 if (response.data.code === 1) {
                     const codigos = response.data.data.map(item => ({
                         codtrans: item.nuevo_codigo_trans,

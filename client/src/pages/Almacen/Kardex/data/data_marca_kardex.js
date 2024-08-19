@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from "@/api/axios";
+
 
 const useMarcaData = () => {
     const [marcas, setMarcas] = useState([]);
@@ -7,7 +8,7 @@ const useMarcaData = () => {
     useEffect(() => {
         const fetchMarcas = async () => {
             try {
-                const response = await axios.get('http://localhost:4000/api/kardex/marca');
+                const response = await axios.get('/kardex/marca');
                 
                 if (response.data.code === 1) {
                     const marcas = response.data.data.map(item => ({
