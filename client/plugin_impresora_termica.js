@@ -260,3 +260,6 @@ const connetor_plugin = (() => {
   }
   return _0x4d9d0d;
 })();
+
+
+window.connetor_plugin = connetor_plugin;
