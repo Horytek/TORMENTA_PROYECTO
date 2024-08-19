@@ -1,4 +1,9 @@
 // index.js
 import app from './src/app';
 
-export default app;  // Exporta la aplicación en lugar de usar app.listen
+const main = () => {
+    app.listen(app.get('port'));
+    console.log(`Server started`);
+}
+
+main();
