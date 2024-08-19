@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        Cookies.remove("_vercel_jwt");
+        Cookies.remove("token");
         setUser(null);
         setIsAuthenticated(false);
         redirect('/');

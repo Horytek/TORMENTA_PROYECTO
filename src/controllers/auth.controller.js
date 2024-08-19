@@ -20,7 +20,7 @@ const login = async (req, res) => {
         
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
-            res.cookie("_vercel_jwt", token, {sameSite: 'None', secure: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000});
+            res.cookie("token", token, {sameSite: 'strict', secure: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000, priority: 'high'});
             const userbd = userValid[0]
             res.json({ success: true, data: {
                 id: userbd.id_usuario,
@@ -39,10 +39,10 @@ const login = async (req, res) => {
 
 const verifyToken = async (req, res) => {
     const connection = await getConnection();
-    const { _vercel_jwt } = req.cookies;
-    if (!_vercel_jwt) return res.send(false);
+    const { token } = req.cookies;
+    if (!token) return res.send(false);
 
-    jwt.verify(_vercel_jwt, TOKEN_SECRET, async (error, user) => {
+    jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
         const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser)
@@ -59,7 +59,7 @@ const verifyToken = async (req, res) => {
 };
 //Revisa
 const logout = async (req, res) => {
-    res.cookie("_vercel_jwt", "" ,{
+    res.cookie("token", "" ,{
       httpOnly: true,
       secure: true,
       expires: new Date(0),
