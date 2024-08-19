@@ -17,7 +17,7 @@ const login = async (req, res) => {
         }
 
         const [userValid] = await connection.query("SELECT * FROM usuario WHERE usua = ? AND contra = ?", [user.usuario, user.password]);
-        
+        //Veamos
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
             res.cookie("token", token, 
