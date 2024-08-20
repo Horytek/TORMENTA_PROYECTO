@@ -120,7 +120,7 @@ export const handleSunat = (cliente, detalles, productos) => {
   const nuevaSerie_t = ultimaSerie_n + ultimaSerie;
 
   // Determinar el tipo de documento basado en el documento del cliente
-  const tipoDocCliente = cliente?.documento?.length === 8 ? "1" : "6";
+  const tipoDocCliente = cliente?.documento?.length === 11 ? "6" : "1";
   const isoDate = cliente.fechaEmision;
   const offsetHours = -5; // Ajuste de zona horaria para -05:00
   const result = convertDateToDesiredFormat(isoDate, offsetHours);
