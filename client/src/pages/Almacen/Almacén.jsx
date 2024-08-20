@@ -10,11 +10,11 @@ import html2pdf from 'html2pdf.js';
 import 'jspdf-autotable';
 
 const Kardex = () => {
-    
+
     const { almacenes } = useAlmacenData();
 
-    const almacenInicial = localStorage.getItem('almacen') 
-    ? almacenes.find(a => a.id === parseInt(localStorage.getItem('almacen'))) 
+    const almacenInicial = almacenes.length > 0 ? 
+    (localStorage.getItem('almacen') ? almacenes.find(a => a.id === parseInt(localStorage.getItem('almacen'))) : { id: '%', sucursal: '' })
     : { id: '%', sucursal: '' };
 
     const [filters, setFilters] = useState({
