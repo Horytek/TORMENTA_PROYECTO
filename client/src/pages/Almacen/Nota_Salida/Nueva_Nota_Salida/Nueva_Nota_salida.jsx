@@ -74,7 +74,10 @@ function NuevaSalidas() {
   }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
-  const [destinatarios, setDestinatarios] = useState('');
+  const [destinatarios, setDestinatarios] = useState(() => {
+    const data = useDestinatarioData();
+    return data;
+  });
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
@@ -82,7 +85,7 @@ function NuevaSalidas() {
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
   useEffect(() => {
-    data = useDestinatarioData();
+    const data = useDestinatarioData();
     setDestinatarios(data);
   }, []);
   useEffect(() => {
