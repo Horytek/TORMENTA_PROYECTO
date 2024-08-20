@@ -74,7 +74,7 @@ function NuevaSalidas() {
   }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
-  const { destinatarios, setDestinatarios } = useState('');
+  const [destinatarios, setDestinatarios] = useState('');
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
