@@ -80,14 +80,8 @@ function NuevaSalidas() {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
-  const [destinatarios, setDestinatariosData] = useState(useDestinatarioData());
+  const { destinatarios } = useDestinatarioData();
 
-  useEffect(() => {
-    if (!isModalOpenProovedor) {
-      const data = useDestinatarioData();
-      setDestinatariosData(data);
-    }
-  }, [isModalOpenProovedor]);  
   
   const [usuario, setUsuario] = useState(() => {
     const savedUsuario = localStorage.getItem('usuario');

@@ -44,6 +44,9 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
           toast.success('Destinatario insertado correctamente.');
           handleClear();
           onClose();
+          setTimeout(() => {
+            window.location.reload();
+        }, 100); // 100 milisegundos de retraso
         } else {
           toast.error('Asegurese que los campos sean correctos o que el destinario no esté registrado.');
         }
