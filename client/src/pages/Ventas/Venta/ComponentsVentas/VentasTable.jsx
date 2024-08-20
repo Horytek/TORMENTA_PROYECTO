@@ -137,46 +137,50 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       }*/
           const content = generateReceiptContent(venta_B, ventas_VB);
 
-          // Conversión de milímetros a puntos (1 mm = 2.83465 puntos)
-          const widthInPoints = 72 * 2.83465; // 72mm
-          const heightInPoints = 297 * 2.83465; // 297mm
-          
-          // Crear una instancia de jsPDF con las dimensiones de la impresora térmica
-          const doc = new jsPDF({
-              orientation: 'portrait',
-              unit: 'pt', // puntos
-              format: [widthInPoints, heightInPoints] // [ancho, alto]
-          });
-          
-          // Establecer un margen adecuado
-          const margin = 20;
-          let yPosition = margin;
-          
-          // Agregar la imagen en la parte superior (ajustada a tu diseño)
-          const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
-          const imgOptions = { width: 50 * 2.83465, height: 50 * 2.83465 }; // Conversión a puntos
-          
-          doc.addImage(imgUrl, 'PNG', (widthInPoints - imgOptions.width) / 2, yPosition, imgOptions.width, imgOptions.height);
-          yPosition += imgOptions.height + 20; // Aumentar el espaciado después de la imagen
-          
-          // Agregar el contenido del recibo línea por línea
-          content.split('\n').forEach(line => {
-              doc.text(line, margin, yPosition);
-              yPosition += 10; // Aumentar el espaciado entre líneas
-          });
-          
-          // Generar y agregar el código QR al final
-          QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, url) {
-              if (!err) {
-                  const qrSize = 100 * 2.83465; // Conversión de tamaño QR a puntos
-                  doc.addImage(url, 'PNG', (widthInPoints - qrSize) / 2, yPosition, qrSize, qrSize);
-          
-                  // Guardar el PDF en el dispositivo del usuario
-                  doc.save('recibo.pdf');
-              } else {
-                  console.error('Error generando el código QR:', err);
-              }
-          });
+          // Ajustar dimensiones a la impresora térmica
+const widthInMm = 72; // 72mm
+const heightInMm = 200; // Ajusta la altura según lo necesario
+const widthInPoints = widthInMm * 2.83465; // Conversión a puntos
+const heightInPoints = heightInMm * 2.83465;
+
+// Crear una instancia de jsPDF con las dimensiones de la impresora térmica
+const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'pt', // puntos
+    format: [widthInPoints, heightInPoints] // [ancho, alto]
+});
+
+// Configurar márgenes y el tamaño de fuente
+const margin = 10;
+let yPosition = margin;
+const fontSize = 10; // Tamaño de fuente ajustado para un recibo térmico
+doc.setFontSize(fontSize);
+
+// Agregar la imagen en la parte superior (si es necesario)
+const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+const imgOptions = { width: 30 * 2.83465, height: 30 * 2.83465 }; // Imagen ajustada a 30mm
+
+doc.addImage(imgUrl, 'PNG', (widthInPoints - imgOptions.width) / 2, yPosition, imgOptions.width, imgOptions.height);
+yPosition += imgOptions.height + 10; // Ajustar espaciado después de la imagen
+
+// Agregar el contenido del recibo línea por línea
+content.split('\n').forEach(line => {
+    doc.text(line, margin, yPosition);
+    yPosition += fontSize + 4; // Ajustar espaciado entre líneas
+});
+
+// Generar y agregar el código QR al final
+QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 50, height: 50 }, function (err, url) {
+    if (!err) {
+        const qrSize = 50 * 2.83465; // Ajustar tamaño del QR
+        doc.addImage(url, 'PNG', (widthInPoints - qrSize) / 2, yPosition, qrSize, qrSize);
+
+        // Guardar el PDF en el dispositivo del usuario
+        doc.save('recibo.pdf');
+    } else {
+        console.error('Error generando el código QR:', err);
+    }
+});
     } else if (printOption === 'print') {
       const content = generateReceiptContent(venta_B, ventas_VB);
       const printWindow = window.open('', '', 'height=600,width=800');
