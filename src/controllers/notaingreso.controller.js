@@ -44,7 +44,7 @@ const getIngresos = async (req, res) => {
         GROUP BY 
             id, n.fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
         ORDER BY 
-            n.fecha , documento ;
+            n.fecha DESC, documento DESC;
         `,
           [            `%${documento}%`,
             fecha_i,
