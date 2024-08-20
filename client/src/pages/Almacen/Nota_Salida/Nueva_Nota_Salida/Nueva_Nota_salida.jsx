@@ -74,10 +74,7 @@ function NuevaSalidas() {
   }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
-  const [destinatarios, setDestinatarios] = useState(() => {
-    const data = useDestinatarioData();
-    return data;
-  });
+  const [destinatarios, setDestinatarios] = useState([]);
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
@@ -85,15 +82,16 @@ function NuevaSalidas() {
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
   useEffect(() => {
-    const data = useDestinatarioData();
+    data = useDestinatarioData();
     setDestinatarios(data);
   }, []);
   useEffect(() => {
-    if (!isModalOpenProovedor) { // Se ejecuta solo cuando el modal se cierra
+    if (!isModalOpenProovedor) {
       const data = useDestinatarioData();
       setDestinatarios(data);
     }
   }, [isModalOpenProovedor]);
+  
   const [usuario, setUsuario] = useState(() => {
     const savedUsuario = localStorage.getItem('usuario');
     return savedUsuario ? (savedUsuario) : '';
