@@ -177,62 +177,65 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           });
     } else if (printOption === 'print-1') {
       const content = generateReceiptContent(venta_B, ventas_VB);
-const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+      const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
 
-const printWindow = window.open('', '', 'height=600,width=800');
-    // Generar QR dinámicamente
-QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
-  if (!err) {
-      printWindow.document.write(`
-      <html>
-        <head>
-          <title>Recibo</title>
-          <style>
-            @page {
-              size: 72mm 297mm; /* Tamaño de papel en milímetros */
-              margin: 17; /* Ajusta los márgenes según sea necesario */
-            }
-            body {
-              margin: 0;
-              padding: 0;
-              font-family: Arial, sans-serif;
-              font-size: 12pt;
-            }
-            pre {
-              margin: 0;
-            }
-            .center {
-              text-align: center;
-            }
-            .qr {
-              display: block;
-              margin: 10px auto;
-            }
-            .image-container {
-              display: flex;
-              justify-content: center;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="image-container">
-            <img src="${imgUrl}" alt="Logo" style="width: 50px; height: 50px;" />
-          </div>
-          <pre>${content}</pre>
-          <div class="image-container">
-            <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 100px; height: 100px;" />
-          </div>
-        </body>
-      </html>
-    `);
-
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print(); // Abre el diálogo de impresión
-  } else {
-      console.error('Error generando el código QR:', err);
-  }
-});
+      const printWindow = window.open('', '', 'height=600,width=800');
+      // Generar QR dinámicamente
+      QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
+        if (!err) {
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Recibo</title>
+                <style>
+                  @page {
+                    size: 72mm 297mm; /* Tamaño de papel en milímetros */
+                    margin: 10px; /* Ajusta los márgenes según sea necesario */
+                  }
+                  body {
+                    margin: 0;
+                    padding: 0;
+                    font-family: Arial, sans-serif;
+                    font-size: 10pt; /* Reducir el tamaño de la fuente */
+                    width: 100%; /* Asegurar que el contenido utilice todo el ancho disponible */
+                  }
+                  pre {
+                    margin: 0;
+                    font-size: 10pt; /* Asegurar que el texto del preformateado sea más pequeño */
+                    white-space: pre-wrap; /* Permitir el ajuste del texto en lugar de cortar palabras */
+                  }
+                  .center {
+                    text-align: center;
+                  }
+                  .qr {
+                    display: block;
+                    margin: 10px auto;
+                  }
+                  .image-container {
+                    display: flex;
+                    justify-content: center;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="image-container">
+                  <img src="${imgUrl}" alt="Logo" style="width: 40px; height: 40px;" /> <!-- Ajustar tamaño de la imagen -->
+                </div>
+                <pre>${content}</pre>
+                <div class="image-container">
+                  <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" /> <!-- Ajustar tamaño del QR -->
+                </div>
+              </body>
+            </html>
+          `);
+      
+          printWindow.document.close();
+          printWindow.focus();
+          printWindow.print(); // Abre el diálogo de impresión
+        } else {
+          console.error('Error generando el código QR:', err);
+        }
+      });
     }
 };
 

@@ -1,5 +1,5 @@
 //import axios from 'axios';
-//import {toast} from "react-hot-toast";
+import {toast} from "react-hot-toast";
 import axios from "../../../api/axios";
 
 // Maneja la solicitud de cobro
@@ -16,6 +16,7 @@ export const handleUpdate = async (datosVenta) => {
 
         if (response.status === 200) {
             //toast.success('Venta eliminada correctamente');
+            toast.success('Se cambio el estado correctamente');
         } else {
             console.error('Error al registrar la venta:', response.data);
         }

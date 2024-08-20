@@ -2,7 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { FRONTEND_URL } from "./config.js";
+import { FRONTEND_URL,BACKEND_URL } from "./config.js";
 //Rutas
 import dashboardRoutes from "./routes/dashboard.routes";
 import auhtRoutes from "./routes/auth.routes";
@@ -29,10 +29,10 @@ app.set("port", port);
 // Middlewares
 app.use(morgan("dev"));
 app.use(cors({
-    origin: FRONTEND_URL,
+    origin: [FRONTEND_URL, BACKEND_URL],  // Configura los orígenes permitidos aquí
     methods: "GET,POST,PUT,DELETE,OPTIONS",
     allowedHeaders: "Content-Type,Authorization",
-    credentials: true
+    credentials: true  // Permitir el envío de cookies o credenciales de sesión
 }));
 app.use(express.json());
 app.use(cookieParser());
