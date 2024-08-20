@@ -194,7 +194,6 @@ function NuevaSalidas() {
   };
   const closeModalProovedor = () => {
     setIsModalOpenProovedor(false);
-    refetchDestinatarios();
 
   };
   const handleBuscarProducto = async () => {
