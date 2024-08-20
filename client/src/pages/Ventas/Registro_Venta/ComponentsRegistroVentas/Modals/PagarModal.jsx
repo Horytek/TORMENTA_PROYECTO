@@ -25,6 +25,7 @@ import {Button} from "@nextui-org/react";
 import {Toaster} from "react-hot-toast";
 import {toast} from "react-hot-toast";
 import useSucursalData from '../../../Data/data_sucursal_venta';
+import QRCode from 'qrcode';
 
 const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     const { productos } = useProductosData();
@@ -319,7 +320,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     {/* Este handlePrint es para el voucher automatico */ }
 
     const handlePrint = async () => {
-        let nombreImpresora = "BASIC 230 STYLE";
+        /*let nombreImpresora = "BASIC 230 STYLE";
         let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
     
         // eslint-disable-next-line no-undef
@@ -346,7 +347,64 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
             //console.log("Impresión exitosa");
         } else {
            //console.log("Problema al imprimir: " + resp);
-        }
+        }*/
+           const content = generateReceiptContent(datosVentaComprobante, datosVenta);
+           const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+           
+           const printWindow = window.open('', '', 'height=600,width=800');
+               // Generar QR dinámicamente
+           QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
+             if (!err) {
+                 printWindow.document.write(`
+                 <html>
+                   <head>
+                     <title>Recibo</title>
+                     <style>
+                       @page {
+                         size: 72mm 297mm; /* Tamaño de papel en milímetros */
+                         margin: 17; /* Ajusta los márgenes según sea necesario */
+                       }
+                       body {
+                         margin: 0;
+                         padding: 0;
+                         font-family: Arial, sans-serif;
+                         font-size: 12pt;
+                       }
+                       pre {
+                         margin: 0;
+                       }
+                       .center {
+                         text-align: center;
+                       }
+                       .qr {
+                         display: block;
+                         margin: 10px auto;
+                       }
+                       .image-container {
+                         display: flex;
+                         justify-content: center;
+                       }
+                     </style>
+                   </head>
+                   <body>
+                     <div class="image-container">
+                       <img src="${imgUrl}" alt="Logo" style="width: 50px; height: 50px;" />
+                     </div>
+                     <pre>${content}</pre>
+                     <div class="image-container">
+                       <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 100px; height: 100px;" />
+                     </div>
+                   </body>
+                 </html>
+               `);
+           
+                 printWindow.document.close();
+                 printWindow.focus();
+                 printWindow.print(); // Abre el diálogo de impresión
+             } else {
+                 console.error('Error generando el código QR:', err);
+             }
+           });
     };
     {/* Fin del handlePrint del voucher automatico */ }
 
