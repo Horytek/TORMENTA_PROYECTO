@@ -110,7 +110,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
   
       // eslint-disable-next-line no-undef
-      const conector = new window.connetor_plugin();
+      const conector = new connetor_plugin();
       const content = generateReceiptContent(venta_B, ventas_VB);
   
       conector.textaling("center");
