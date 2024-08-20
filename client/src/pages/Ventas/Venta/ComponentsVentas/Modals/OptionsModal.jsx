@@ -58,7 +58,7 @@ const handleAccept = () => {
       toast.error('Error, no se puede usar esta opción');
     } else{
       closeModal();
-      handleSunat(datos_precio, detalles, detalles);
+      //handleSunat(datos_precio, detalles, detalles);
       handleUpdate(d_venta);
       setTimeout(() => {
         setIsDeleted(true);
