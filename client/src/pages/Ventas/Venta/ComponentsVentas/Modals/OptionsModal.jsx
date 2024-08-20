@@ -65,6 +65,7 @@ const handleAccept = () => {
       }, 3000);
     }
   } else if (deleteOptionSelected) {
+    setIsDeleted(true);
     handleDeleteVenta();
     setConfirmDeleteModalOpen(true);
   } else if (generatePdfSelected) {
