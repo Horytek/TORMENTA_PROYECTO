@@ -10,10 +10,6 @@ export const handleDelete = async (datosVenta) => {
             id_venta: datosVenta.id,
             comprobante: datosVenta.tipoComprobante,
             estado_sunat: datosVenta.estado_sunat
-          }, {
-            headers: {
-              'Content-Type': 'application/json'
-            }
           });
 
         if (response.status === 200) {

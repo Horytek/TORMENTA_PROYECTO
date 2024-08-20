@@ -8,10 +8,6 @@ export const handleUpdate = async (datosVenta) => {
         console.log('Datos de venta:', datosVenta);
         const response = await axios.post('/ventas/actualizar_venta', {
             id_venta: datosVenta.id
-          }, {
-            headers: {
-              'Content-Type': 'application/json'
-            }
           });
 
         if (response.status === 200) {
