@@ -74,24 +74,13 @@ function NuevaSalidas() {
   }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
-  const [destinatarios, setDestinatarios] = useState([]);
+  const [destinatarios] = useDestinatarioData();
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
-  useEffect(() => {
-    data = useDestinatarioData();
-    setDestinatarios(data);
-  }, []);
-  useEffect(() => {
-    if (!isModalOpenProovedor) {
-      const data = useDestinatarioData();
-      setDestinatarios(data);
-    }
-  }, [isModalOpenProovedor]);
-  
   const [usuario, setUsuario] = useState(() => {
     const savedUsuario = localStorage.getItem('usuario');
     return savedUsuario ? (savedUsuario) : '';
@@ -197,6 +186,7 @@ function NuevaSalidas() {
   };
   const closeModalProovedor = () => {
     setIsModalOpenProovedor(false);
+    
   };
   const handleBuscarProducto = async () => {
     const almacenId = almacenOrigen || 1;
