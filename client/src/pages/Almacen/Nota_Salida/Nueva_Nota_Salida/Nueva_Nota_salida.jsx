@@ -74,7 +74,7 @@ function NuevaSalidas() {
   }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
-  const [destinatarios] = useDestinatarioData();
+  const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
@@ -186,7 +186,7 @@ function NuevaSalidas() {
   };
   const closeModalProovedor = () => {
     setIsModalOpenProovedor(false);
-    
+
   };
   const handleBuscarProducto = async () => {
     const almacenId = almacenOrigen || 1;
