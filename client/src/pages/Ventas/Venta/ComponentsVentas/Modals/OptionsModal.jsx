@@ -52,20 +52,20 @@ const handleCheckboxChange = (option) => {
   }
 };
 
-const handleAccept = () => {
+const handleAccept = async () => {
   if (sendToSunat) {
     if (sendToSunat && d_venta.tipoComprobante === 'Nota'){
       toast.error('Error, no se puede usar esta opción');
     } else{
       closeModal();
       handleSunat(datos_precio, detalles, detalles);
-      handleUpdate(d_venta);
+      await handleUpdate(d_venta); // Asegúrate de esperar su finalización
       setTimeout(() => {
         setIsDeleted(true);
       }, 3000);
     }
   } else if (deleteOptionSelected) {
-    handleDeleteVenta();
+     handleDeleteVenta();
     setConfirmDeleteModalOpen(true);
   } else if (generatePdfSelected) {
     if (generatePdfSelected && d_venta.tipoComprobante === 'Nota'){
