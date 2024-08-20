@@ -31,7 +31,6 @@ app.use(morgan("dev"));
 app.use(cors({
     origin: [FRONTEND_URL, BACKEND_URL],  // Configura los orígenes permitidos aquí
     methods: "GET,POST,PUT,DELETE,OPTIONS",
-    allowedHeaders: "Content-Type,Authorization",
     credentials: true  // Permitir el envío de cookies o credenciales de sesión
 }));
 app.use(express.json());
