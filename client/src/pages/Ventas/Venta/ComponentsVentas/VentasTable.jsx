@@ -6,7 +6,8 @@ import { generateReceiptContent } from '../../../Ventas/Registro_Venta/Component
 import useBoucher from '../../Data/data_boucher'; // Asegúrate de que la ruta sea correcta
 //import useSucursalData from '../../Data/data_sucursal_venta';
 import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure,RadioGroup, Radio } from "@nextui-org/react";
-
+import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -106,7 +107,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   
   const handlePrint = async () => {
     if (printOption === 'print-1') {
-      let nombreImpresora = "BASIC 230 STYLE";
+      /*let nombreImpresora = "BASIC 230 STYLE";
       let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
   
       // eslint-disable-next-line no-undef
@@ -133,7 +134,49 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           console.log("Impresión exitosa");
       } else {
           console.log("Problema al imprimir: " + resp);
-      }
+      }*/
+          const content = generateReceiptContent(venta_B, ventas_VB);
+
+          // Conversión de milímetros a puntos (1 mm = 2.83465 puntos)
+          const widthInPoints = 72 * 2.83465; // 72mm
+          const heightInPoints = 297 * 2.83465; // 297mm
+          
+          // Crear una instancia de jsPDF con las dimensiones de la impresora térmica
+          const doc = new jsPDF({
+              orientation: 'portrait',
+              unit: 'pt', // puntos
+              format: [widthInPoints, heightInPoints] // [ancho, alto]
+          });
+          
+          // Establecer un margen adecuado
+          const margin = 20;
+          let yPosition = margin;
+          
+          // Agregar la imagen en la parte superior (ajustada a tu diseño)
+          const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+          const imgOptions = { width: 50 * 2.83465, height: 50 * 2.83465 }; // Conversión a puntos
+          
+          doc.addImage(imgUrl, 'PNG', (widthInPoints - imgOptions.width) / 2, yPosition, imgOptions.width, imgOptions.height);
+          yPosition += imgOptions.height + 20; // Aumentar el espaciado después de la imagen
+          
+          // Agregar el contenido del recibo línea por línea
+          content.split('\n').forEach(line => {
+              doc.text(line, margin, yPosition);
+              yPosition += 10; // Aumentar el espaciado entre líneas
+          });
+          
+          // Generar y agregar el código QR al final
+          QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, url) {
+              if (!err) {
+                  const qrSize = 100 * 2.83465; // Conversión de tamaño QR a puntos
+                  doc.addImage(url, 'PNG', (widthInPoints - qrSize) / 2, yPosition, qrSize, qrSize);
+          
+                  // Guardar el PDF en el dispositivo del usuario
+                  doc.save('recibo.pdf');
+              } else {
+                  console.error('Error generando el código QR:', err);
+              }
+          });
     } else if (printOption === 'print') {
       const content = generateReceiptContent(venta_B, ventas_VB);
       const printWindow = window.open('', '', 'height=600,width=800');

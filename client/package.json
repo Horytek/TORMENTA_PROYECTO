@@ -31,6 +31,7 @@
     "number-to-words": "^1.2.4",
     "numero-a-letras": "^1.0.6",
     "print-js": "^1.6.0",
+    "qrcode": "^1.5.4",
     "qrcode.react": "^3.1.0",
     "quagga": "^0.6.16",
     "react": "^18.3.1",
