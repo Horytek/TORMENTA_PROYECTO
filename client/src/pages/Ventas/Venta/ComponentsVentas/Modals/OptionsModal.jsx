@@ -58,10 +58,10 @@ const handleAccept = () => {
       toast.error('Error, no se puede usar esta opción');
     } else{
       closeModal();
-      //handleSunat(datos_precio, detalles, detalles);
-      handleUpdate(d_venta);
+      handleSunat(datos_precio, detalles, detalles);
       setTimeout(() => {
         setIsDeleted(true);
+        handleUpdate(d_venta);
       }, 3000);
     }
   } else if (deleteOptionSelected) {
