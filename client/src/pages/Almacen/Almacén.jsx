@@ -10,6 +10,10 @@ import html2pdf from 'html2pdf.js';
 import 'jspdf-autotable';
 
 const Kardex = () => {
+    const almacenInicial = localStorage.getItem('almacen') 
+    ? almacenes.find(a => a.id === parseInt(localStorage.getItem('almacen'))) 
+    : { id: '%', sucursal: '' };
+
     const [filters, setFilters] = useState({
         descripcion: '',
         almacen: almacenInicial.id || '',
@@ -28,7 +32,6 @@ const Kardex = () => {
         const almacenIdGuardado = localStorage.getItem('almacen');
         return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
     });
-    const almacenInicial = localStorage.getItem('almacen') ? almacenes.find(a => a.id === parseInt(localStorage.getItem('almacen'))) : { id: '%', sucursal: '' };
 
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 5; // Número total de páginas
@@ -183,7 +186,7 @@ const Kardex = () => {
             <hr className="mb-4" />
             <div className="flex justify-between mt-5 mb-4">
                 <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-                    Kardex Movimientos 1
+                    Kardex Movimientos
                 </h1>
             </div>
             <div className="mt-5 mb-4">
