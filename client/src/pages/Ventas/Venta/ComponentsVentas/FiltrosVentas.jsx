@@ -86,7 +86,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const handleAccept = () => {
     const d_ventas = loadDetallesFromLocalStorage();
     const ventas_new = d_ventas.filter(
-      (venta) => venta.estado === "En proceso"
+      (venta) => venta.estado === "En proceso" && venta.tipoComprobante != "Nota"
     );
     localStorage.setItem("d_new", JSON.stringify(ventas_new));
 
