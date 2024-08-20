@@ -74,13 +74,21 @@ function NuevaSalidas() {
   }, [codigoBarras]);
 
   const { almacenes } = useAlmacenData();
-  const { destinatarios } = useDestinatarioData();
+  const { destinatarios, setDestinatarios } = useState('');
   const { documentos } = useDocumentoData();
   const [currentDocumento, setCurrentDocumento] = useState('');
   const [almacenOrigen, setalmacenOrigen] = useState(() => {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
+  useEffect(() => {
+    data = useDestinatarioData();
+    setDestinatarios(data);
+  }, []);
+  useEffect(() => {
+    data = useDestinatarioData();
+    setDestinatarios(data);
+  }, [closeModalProovedor]);
   const [usuario, setUsuario] = useState(() => {
     const savedUsuario = localStorage.getItem('usuario');
     return savedUsuario ? (savedUsuario) : '';

@@ -107,7 +107,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
   const handleDetailClick = (id) => {
     console.log(almacen, 'sdsdsds')
     if (almacen) {
-      navigate(`/almacen/kardex/historico/${id}`);
+      window.open(`/almacen/kardex/historico/${id}`, '_blank');
     } else {
       toast.error('Por favor seleccione un almacén primero para visualizar el kardex');
     }
