@@ -62,14 +62,28 @@ const Ingresos = () => {
           Nota de ingreso
         </h1>
       </div>
+      <div className='w-full mb-3 rounded-lg'>
+        <table className='w-full text-sm divide-gray-200 rounded-lg table-auto border-collapse'>
+          <tbody className="bg-gray-50">
+            <tr className='text-center'>
+              <td className='border-r-2 border-t-0'> 
+                <strong>{almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL: Sin almacén seleccionado'}</strong> <span>{}</span> 
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <FiltrosIngresos almacenes={almacenes} onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange}  ingresos={ingresos} almacenSseleccionado={almacenSeleccionado} />
+      <div>
       <TablaIngresos ingresos={ingresos} />
+      </div>
+      
 
-      <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
+      {/* <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
         <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>
           {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL:'}
         </h1>
-      </div>
+      </div> */}
     </div>
   );
 };
