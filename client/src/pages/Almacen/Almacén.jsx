@@ -12,7 +12,7 @@ import 'jspdf-autotable';
 const Kardex = () => {
     const [filters, setFilters] = useState({
         descripcion: '',
-        almacen: '',
+        almacen: almacenInicial.id || '',
         idProducto: '',
         marca: '',
         cat: '',
@@ -28,6 +28,8 @@ const Kardex = () => {
         const almacenIdGuardado = localStorage.getItem('almacen');
         return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
     });
+    const almacenInicial = localStorage.getItem('almacen') ? almacenes.find(a => a.id === parseInt(localStorage.getItem('almacen'))) : { id: '%', sucursal: '' };
+
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 5; // Número total de páginas
 
@@ -47,6 +49,14 @@ const Kardex = () => {
             if (almacen) {
                 setAlmacenSeleccionado(almacen);
             }
+        }
+    }, [almacenes]);
+
+    useEffect(() => {
+        if (almacenes.length > 0 && !almacenSeleccionado.id) {
+            const defaultAlmacen = almacenes[0]; 
+            setAlmacenSeleccionado(defaultAlmacen);
+            setFilters(f => ({ ...f, almacen: defaultAlmacen.id }));
         }
     }, [almacenes]);
 
@@ -173,7 +183,7 @@ const Kardex = () => {
             <hr className="mb-4" />
             <div className="flex justify-between mt-5 mb-4">
                 <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-                    Kardex Movimientos
+                    Kardex Movimientos 1
                 </h1>
             </div>
             <div className="mt-5 mb-4">
@@ -183,7 +193,7 @@ const Kardex = () => {
                     style={{ width: '250px' }}
                     className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
                     onChange={handleAlmacenChange} value={almacenSeleccionado.id}
-                >
+                >   <option value="">Seleccione...</option>
 
                     {almacenes.map((almacen, index) => (
                         <option key={index} value={almacen.id}>{almacen.almacen}</option>
