@@ -13,9 +13,7 @@ const Kardex = () => {
 
     const { almacenes } = useAlmacenData();
 
-    const almacenInicial = almacenes.length > 0 ? 
-    (localStorage.getItem('almacen') ? almacenes.find(a => a.id === parseInt(localStorage.getItem('almacen'))) : { id: '%', sucursal: '' })
-    : { id: '%', sucursal: '' };
+    const almacenInicial = localStorage.getItem('almacen');
 
     const [filters, setFilters] = useState({
         descripcion: '',
