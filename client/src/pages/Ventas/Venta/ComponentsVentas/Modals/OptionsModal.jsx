@@ -59,9 +59,9 @@ const handleAccept = () => {
     } else{
       closeModal();
       handleSunat(datos_precio, detalles, detalles);
+      handleUpdate(d_venta);
       setTimeout(() => {
         setIsDeleted(true);
-        handleUpdate(d_venta);
       }, 3000);
     }
   } else if (deleteOptionSelected) {
