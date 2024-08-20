@@ -156,17 +156,17 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
         });
     };
     return (
-        <div className="modal-overlaywa">
+        <div className="modal-overlay-proovedor">
             <Toaster />
-            <div className="modalwa">
-                <div className="modal-headerwa">
-                    <h2 className='modal-titlewa'>Agregar proveedor</h2>
+            <div className="modal-proovedor">
+                <div className="modal-header-proovedor">
+                    <h2 className='modal-title-proovedor'>Agregar proveedor</h2>
                     <button className="" onClick={onClose}>
                         <IoMdClose className='text-3xl' />
                     </button>
                 </div>
                 <br />
-                <div className="modal-bodywa">
+                <div className="modal-body-proovedor">
                     <form onSubmit={handleSubmit}>
                         <div className="form-row">
                             <div className="form-group">
@@ -184,7 +184,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                             <div className="items-center justify-center pt-1">
                                 <button
                                     type="button"
-                                    className="sunat-buttonwa rounded-lg border text-center items-center justify-center"
+                                    className="sunat-button_proovedor rounded-lg border text-center items-center justify-center"
                                     onClick={handleInputChange}
                                 >
                                     SUNAT
@@ -193,7 +193,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                             <div className="items-center justify-center pt-1">
                                 <button
                                     type="button"
-                                    className="sunat-buttonwa rounded-lg border text-center items-center justify-center"
+                                    className="sunat-button_proovedor rounded-lg border text-center items-center justify-center"
                                     onClick={handleClear}
                                     style={{backgroundColor:'blue'}}
                                 >

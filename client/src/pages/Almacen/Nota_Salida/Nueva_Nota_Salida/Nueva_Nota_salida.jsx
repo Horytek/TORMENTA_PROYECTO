@@ -123,10 +123,6 @@ function NuevaSalidas() {
   };
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
-  const openModalProducto = (title) => {
-    setModalTitle(title);
-    setIsModalOpenProducto(true);
-  };
   const openModalOpenGuardar = () => {
     const almacenDestino = document.getElementById('almacen_destino').value;
     if (almacenDestino) {
@@ -291,7 +287,7 @@ function NuevaSalidas() {
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
                   Almacén origen:
                 </label>
-                <select className='form-elementwasalida' id="almacen_origen" value={almacenOrigen} onChange={(e) => setalmacenOrigen(parseInt(e.target.value))} disabled={productosSeleccionados.length > 0}>
+                <select className='form-elementnotasalida' id="almacen_origen" value={almacenOrigen} onChange={(e) => setalmacenOrigen(parseInt(e.target.value))} disabled={productosSeleccionados.length > 0}>
                   <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (<option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>))}
                 </select>
@@ -305,7 +301,7 @@ function NuevaSalidas() {
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
                   Almacén destino:
                 </label>
-                <select className='form-elementwasalida' id="almacen_destino">
+                <select className='form-elementnotasalida' id="almacen_destino">
                   <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (
                     <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
@@ -317,7 +313,7 @@ function NuevaSalidas() {
                   Destinatario:
                 </label>
                 <select
-                  className='form-elementwasalida'
+                  className='form-elementnotasalida'
                   id="destinatario"
                   onChange={(e) => {
                     const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
@@ -334,19 +330,19 @@ function NuevaSalidas() {
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
                   RUC:
                 </label>
-                <input className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="ruc" type="text" readOnly />
+                <input className='form-elementnotasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="ruc" type="text" readOnly />
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nomnota">
                   Nombre de nota:
                 </label>
-                <input className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="nomnota" type="text" />
+                <input className='form-elementnotasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' id="nomnota" type="text" />
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
                   Fecha Docu:
                 </label>
-                <input type="date" className="form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3" id="fechaDocu" defaultValue={currentDate} />
+                <input type="date" className="form-elementnotasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3" id="fechaDocu" defaultValue={currentDate} />
               </div>
             </div>
             <div className="flex justify-start mt-4 space-x-2">
@@ -372,7 +368,7 @@ function NuevaSalidas() {
                 Número:
               </label>
               <input
-                className='form-elementwasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full'
+                className='form-elementnotasalida border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full'
                 id="numero" type="text" value={currentDocumento} readOnly
               />
             </div>
@@ -380,7 +376,7 @@ function NuevaSalidas() {
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
                 Glosa:
               </label>
-              <select className="form-elementwasalida w-full" id="glosa">
+              <select className="form-elementnotasalida w-full" id="glosa">
                 {glosaOptions.map(option => (
                   <option key={option} value={option}>{option}</option>
                 ))}

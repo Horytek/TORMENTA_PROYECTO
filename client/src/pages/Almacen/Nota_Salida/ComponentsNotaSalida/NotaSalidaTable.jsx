@@ -3,9 +3,6 @@ import PropTypes from 'prop-types';
 import ConfirmationModal from './Modals/ConfirmationModal';
 import Pagination from '@/components/Pagination/Pagination'; // Asegúrate de ajustar la ruta
 import anularNota from '../data/anular_nota_salida'; // Asegúrate de ajustar la ruta
-import ReactToPrint from 'react-to-print';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import html2pdf from 'html2pdf.js';
 import { Toaster, toast } from "react-hot-toast";
 const TablaSalida = forwardRef(({ salidas }, ref)  => {
