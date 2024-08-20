@@ -86,9 +86,11 @@ function NuevaSalidas() {
     setDestinatarios(data);
   }, []);
   useEffect(() => {
-    data = useDestinatarioData();
-    setDestinatarios(data);
-  }, [closeModalProovedor]);
+    if (!isModalOpenProovedor) { // Se ejecuta solo cuando el modal se cierra
+      const data = useDestinatarioData();
+      setDestinatarios(data);
+    }
+  }, [isModalOpenProovedor]);
   const [usuario, setUsuario] = useState(() => {
     const savedUsuario = localStorage.getItem('usuario');
     return savedUsuario ? (savedUsuario) : '';

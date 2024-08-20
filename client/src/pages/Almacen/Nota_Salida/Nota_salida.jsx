@@ -62,7 +62,7 @@ const Salidas = () => {
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-          Nota de salida
+          Nota de salida 3
         </h1>
       </div>
       <div className='w-full mb-3 rounded-lg'>
