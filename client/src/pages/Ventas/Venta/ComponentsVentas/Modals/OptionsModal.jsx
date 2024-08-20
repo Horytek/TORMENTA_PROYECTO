@@ -10,6 +10,7 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
   const [sendToSunat, setSendToSunat] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [isDeleted1, setIsDeleted1] = useState(false);
   const [generatePdfSelected, setGeneratePdfSelected] = useState(false);
   const loadDetallesFromLocalStorage2 = () => {
     const savedDetalles = localStorage.getItem('ventas');
@@ -67,6 +68,9 @@ const handleAccept = () => {
   } else if (deleteOptionSelected) {
     handleDeleteVenta();
     setConfirmDeleteModalOpen(true);
+    setTimeout(() => {
+      setIsDeleted1(true);
+    }, 1000);
   } else if (generatePdfSelected) {
     if (generatePdfSelected && d_venta.tipoComprobante === 'Nota'){
       toast.error('Error, no se puede usar esta opción');
@@ -81,7 +85,12 @@ const handleAccept = () => {
       refetchVentas();
       setIsDeleted(false);
     }
-  }, [isDeleted, refetchVentas]);
+
+    if (isDeleted1) {
+      refetchVentas();
+      setIsDeleted1(false);
+    }
+  }, [isDeleted,isDeleted1, refetchVentas]);
 
   const handleDeleteVenta = () => {
     // Agrega aquí la lógica para eliminar la venta
