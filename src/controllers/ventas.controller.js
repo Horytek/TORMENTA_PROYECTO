@@ -201,8 +201,8 @@ const getEstado = async (req, res) => {
 
     // Obtener id_sucursal basado en el usuario
     await connection.query(
-      "UPDATE venta set estado_venta=? , estado_sunat=? where id_venta=?",
-      [1,1,id_venta]
+      "UPDATE venta set estado_venta=1 , estado_sunat=1 where id_venta=?",
+      [id_venta]
     );
     
     await connection.commit();

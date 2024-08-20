@@ -29,7 +29,7 @@ app.set("port", port);
 // Middlewares
 app.use(morgan("dev"));
 app.use(cors({
-    origin: FRONTEND_URL,
+    origin: [FRONTEND_URL , "http://localhost:3000"],
     methods: "GET,POST,PUT,DELETE,OPTIONS",
     credentials: true
 }));
