@@ -199,7 +199,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
                 <td class="border-b p-2 text-center">${salida.documento}</td>
                 <td class="border-b p-2 text-center">${salida.proveedor}</td>
                 <td class="border-b p-2 text-center">${salida.concepto}</td>
-                <td class="border-b p-2 text-center">${salida.estado === 1 ? 'Inactivo' : 'Activo'}</td>
+                <td class="border-b p-2 text-center">${salida.estado === 1 ? 'INACTIVO' : 'ACTIVO'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -293,7 +293,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
 
                       </p>
                                 <p class="text-sm font-semibold text-gray-800" className={getEstadoClassName(salida.estado)}>
-            <span class="font-bold text-gray-900">ESTADO:</span> <span class="font-semibold text-gray-600">${nota.estado === 1 ? 'Inactivo' : 'Activo'}</span>
+            <span class="font-bold text-gray-900">ESTADO:</span> <span class="font-semibold text-gray-600">${nota.estado === 1 ? 'INACTIVO' : 'ACTIVO'}</span>
           </p>
                   </div>
               </div>
