@@ -19,7 +19,7 @@ const Kardex = () => {
     const { subcategorias } = useSubCategoriaData(categoriaSeleccionada);
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
-        return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
+        return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '', sucursal: '' } : { id: '', sucursal: '' };
     });
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -155,7 +155,7 @@ const Kardex = () => {
     };
 
     const handleAlmacenChange = (event) => {
-        const almacen = event.target.value === '%' ? { id: '%', sucursal: '' } : almacenes.find(a => a.id === parseInt(event.target.value));
+        const almacen = event.target.value === '' ? { id: '', sucursal: '' } : almacenes.find(a => a.id === parseInt(event.target.value));
         setAlmacenSeleccionado(almacen);
         localStorage.setItem('almacen', almacen.id);
         handleFiltersChange({ almacen: event.target.value });
