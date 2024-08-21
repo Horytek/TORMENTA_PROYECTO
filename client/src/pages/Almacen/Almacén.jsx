@@ -13,16 +13,7 @@ const Kardex = () => {
 
     const { almacenes } = useAlmacenData();
 
-    const almacenInicial = localStorage.getItem('almacen');
 
-    const [filters, setFilters] = useState({
-        descripcion: '',
-        almacen: almacenInicial.id || '',
-        idProducto: '',
-        marca: '',
-        cat: '',
-        subcat: '',
-    });
     const [kardex, setKarddex] = useState([]);
   
     const { marcas } = useMarcaData();
@@ -63,6 +54,18 @@ const Kardex = () => {
             setFilters(f => ({ ...f, almacen: defaultAlmacen.id }));
         }
     }, [almacenes]);
+
+
+
+    
+    const [filters, setFilters] = useState({
+        descripcion: '',
+        almacen: almacenSeleccionado.id !== '' ? almacenSeleccionado.id : '',
+        idProducto: '',
+        marca: '',
+        cat: '',
+        subcat: '',
+    });
 
     const onPageChange = (page) => {
         setCurrentPage(page);
