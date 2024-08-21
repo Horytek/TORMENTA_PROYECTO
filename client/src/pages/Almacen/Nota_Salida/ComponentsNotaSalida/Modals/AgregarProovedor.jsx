@@ -5,7 +5,7 @@ import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { toast, Toaster } from 'react-hot-toast';
 import insertDestinatario from './data/insert_destinatario';
 
-const AgregarProovedor = ({ isOpen, onClose }) => {
+const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
     if (!isOpen) return null;
     const [dniOrRuc, setDniOrRuc] = useState('');
     const [tipoCliente, setTipoCliente] = useState('');
@@ -160,7 +160,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
             <Toaster />
             <div className="modal-proovedor">
                 <div className="modal-header-proovedor">
-                    <h2 className='modal-title-proovedor'>Agregar proveedor</h2>
+                    <h2 className='modal-title-proovedor'>Agregar {titulo}</h2>
                     <button className="" onClick={onClose}>
                         <IoMdClose className='text-3xl' />
                     </button>

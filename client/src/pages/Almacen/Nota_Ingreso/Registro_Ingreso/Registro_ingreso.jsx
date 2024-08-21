@@ -427,7 +427,7 @@ className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm ro
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
-      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
+      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} titulo={'proovedor'} />
       {isModalOpenGuardar && (
         <ConfirmationModal
           message={confirmationMessage}

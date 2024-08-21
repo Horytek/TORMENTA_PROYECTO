@@ -410,7 +410,7 @@ function NuevaSalidas() {
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
-      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} />
+      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} titulo={'destinatario'} />
       {isModalOpenGuardar && (
         <ConfirmationModal
           message={confirmationMessage}
