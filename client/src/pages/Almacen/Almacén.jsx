@@ -12,10 +12,7 @@ import 'jspdf-autotable';
 const Kardex = () => {
 
     const { almacenes } = useAlmacenData();
-
-
     const [kardex, setKarddex] = useState([]);
-  
     const { marcas } = useMarcaData();
     const { categorias } = useCategoriaData();
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
@@ -28,14 +25,7 @@ const Kardex = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 5; // Número total de páginas
 
-    const fetchKardex = useCallback(async () => {
-        const data = await getSalidaData(filters);
-        setKarddex(data.salida);
-    }, [filters]);
 
-    useEffect(() => {
-        fetchKardex();
-    }, [fetchKardex]);
 
     useEffect(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
@@ -56,7 +46,6 @@ const Kardex = () => {
     }, [almacenes]);
 
 
-
     
     const [filters, setFilters] = useState({
         descripcion: '',
@@ -66,6 +55,15 @@ const Kardex = () => {
         cat: '',
         subcat: '',
     });
+
+    const fetchKardex = useCallback(async () => {
+        const data = await getSalidaData(filters);
+        setKarddex(data.salida);
+    }, [filters]);
+
+    useEffect(() => {
+        fetchKardex();
+    }, [fetchKardex]);
 
     const onPageChange = (page) => {
         setCurrentPage(page);
