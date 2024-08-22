@@ -5,7 +5,7 @@ import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { toast, Toaster } from 'react-hot-toast';
 import insertDestinatario from './data/insert_destinatario';
 
-const AgregarProovedor = ({ isOpen, onClose }) => {
+const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
     if (!isOpen) return null;
     const [dniOrRuc, setDniOrRuc] = useState('');
     const [tipoCliente, setTipoCliente] = useState('');
@@ -42,7 +42,11 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
     
         if (result.success) {
           toast.success('Destinatario insertado correctamente.');
-          handleClear()
+          handleClear();
+          onClose();
+          setTimeout(() => {
+            window.location.reload();
+        }, 100); // 100 milisegundos de retraso
         } else {
           toast.error('Asegurese que los campos sean correctos o que el destinario no esté registrado.');
         }
@@ -152,17 +156,17 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
         });
     };
     return (
-        <div className="modal-overlaywa">
+        <div className="modal-overlay-proovedor">
             <Toaster />
-            <div className="modalwa">
-                <div className="modal-headerwa">
-                    <h2 className='modal-titlewa'>Agregar proveedor</h2>
+            <div className="modal-proovedor">
+                <div className="modal-header-proovedor">
+                    <h2 className='modal-title-proovedor'>Agregar {titulo}</h2>
                     <button className="" onClick={onClose}>
                         <IoMdClose className='text-3xl' />
                     </button>
                 </div>
                 <br />
-                <div className="modal-bodywa">
+                <div className="modal-body-proovedor">
                     <form onSubmit={handleSubmit}>
                         <div className="form-row">
                             <div className="form-group">
@@ -180,7 +184,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                             <div className="items-center justify-center pt-1">
                                 <button
                                     type="button"
-                                    className="sunat-buttonwa rounded-lg border text-center items-center justify-center"
+                                    className="sunat-button_proovedor rounded-lg border text-center items-center justify-center"
                                     onClick={handleInputChange}
                                 >
                                     SUNAT
@@ -189,7 +193,7 @@ const AgregarProovedor = ({ isOpen, onClose }) => {
                             <div className="items-center justify-center pt-1">
                                 <button
                                     type="button"
-                                    className="sunat-buttonwa rounded-lg border text-center items-center justify-center"
+                                    className="sunat-button_proovedor rounded-lg border text-center items-center justify-center"
                                     onClick={handleClear}
                                     style={{backgroundColor:'blue'}}
                                 >

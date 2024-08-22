@@ -17,16 +17,14 @@ const Ingresos = () => {
     return almacenIdGuardado && almacenes ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) : null;
   });
 
-  // Función para obtener datos de ingresos
   const fetchIngresos = useCallback(async () => {
     const data = await getIngresosData(filters);
     setIngresos(data.ingresos);
-  }, [filters]); // Solo depende de filters
+  }, [filters]); 
 
-  // Llamada a la API cuando cambian los filtros
   useEffect(() => {
     fetchIngresos();
-  }, [fetchIngresos]); // Solo depende de fetchIngresos
+  }, [fetchIngresos]); 
 
   useEffect(() => {
     const almacenIdGuardado = localStorage.getItem('almacen');

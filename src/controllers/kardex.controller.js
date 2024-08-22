@@ -17,7 +17,7 @@ const getProductos = async (req, res) => {
         INNER JOIN inventario i ON p.id_producto = i.id_producto 
         INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
         WHERE p.descripcion LIKE ?
-          AND i.id_almacen LIKE ?
+          AND i.id_almacen = ?
 		  AND p.id_producto LIKE ?
 		  AND m.id_marca LIKE ?
 		  AND CA.id_categoria LIKE ?
@@ -25,7 +25,7 @@ const getProductos = async (req, res) => {
         GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock
         ORDER BY p.id_producto, p.descripcion
         `,
-            [`%${descripcion}%`, `%${almacen}`, `%${idProducto}`, `%${marca}`, `%${cat}`, `%${subcat}`]
+            [`%${descripcion}%`, almacen, `%${idProducto}`, `%${marca}`, `%${cat}`, `%${subcat}`]
         );
 
 

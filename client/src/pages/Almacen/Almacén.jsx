@@ -10,35 +10,22 @@ import html2pdf from 'html2pdf.js';
 import 'jspdf-autotable';
 
 const Kardex = () => {
-    const [filters, setFilters] = useState({
-        descripcion: '',
-        almacen: '',
-        idProducto: '',
-        marca: '',
-        cat: '',
-        subcat: '',
-    });
-    const [kardex, setKarddex] = useState([]);
+
     const { almacenes } = useAlmacenData();
+    const [kardex, setKarddex] = useState([]);
     const { marcas } = useMarcaData();
     const { categorias } = useCategoriaData();
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
     const { subcategorias } = useSubCategoriaData(categoriaSeleccionada);
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
-        return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
+        return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '', sucursal: '' } : { id: '', sucursal: '' };
     });
+
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 5; // Número total de páginas
 
-    const fetchKardex = useCallback(async () => {
-        const data = await getSalidaData(filters);
-        setKarddex(data.salida);
-    }, [filters]);
 
-    useEffect(() => {
-        fetchKardex();
-    }, [fetchKardex]);
 
     useEffect(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
@@ -49,6 +36,34 @@ const Kardex = () => {
             }
         }
     }, [almacenes]);
+
+    useEffect(() => {
+        if (almacenes.length > 0 && !almacenSeleccionado.id) {
+            const defaultAlmacen = almacenes[0]; 
+            setAlmacenSeleccionado(defaultAlmacen);
+            setFilters(f => ({ ...f, almacen: defaultAlmacen.id }));
+        }
+    }, [almacenes]);
+
+
+    
+    const [filters, setFilters] = useState({
+        descripcion: '',
+        almacen: almacenSeleccionado.id !== '' ? almacenSeleccionado.id : '',
+        idProducto: '',
+        marca: '',
+        cat: '',
+        subcat: '',
+    });
+
+    const fetchKardex = useCallback(async () => {
+        const data = await getSalidaData(filters);
+        setKarddex(data.salida);
+    }, [filters]);
+
+    useEffect(() => {
+        fetchKardex();
+    }, [fetchKardex]);
 
     const onPageChange = (page) => {
         setCurrentPage(page);
@@ -140,7 +155,7 @@ const Kardex = () => {
     };
 
     const handleAlmacenChange = (event) => {
-        const almacen = event.target.value === '%' ? { id: '%', sucursal: '' } : almacenes.find(a => a.id === parseInt(event.target.value));
+        const almacen = event.target.value === '' ? { id: '', sucursal: '' } : almacenes.find(a => a.id === parseInt(event.target.value));
         setAlmacenSeleccionado(almacen);
         localStorage.setItem('almacen', almacen.id);
         handleFiltersChange({ almacen: event.target.value });
@@ -183,7 +198,7 @@ const Kardex = () => {
                     style={{ width: '250px' }}
                     className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
                     onChange={handleAlmacenChange} value={almacenSeleccionado.id}
-                >
+                >   <option value="">Seleccione...</option>
 
                     {almacenes.map((almacen, index) => (
                         <option key={index} value={almacen.id}>{almacen.almacen}</option>

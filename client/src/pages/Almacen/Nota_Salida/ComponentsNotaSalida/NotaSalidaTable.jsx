@@ -3,9 +3,6 @@ import PropTypes from 'prop-types';
 import ConfirmationModal from './Modals/ConfirmationModal';
 import Pagination from '@/components/Pagination/Pagination'; // Asegúrate de ajustar la ruta
 import anularNota from '../data/anular_nota_salida'; // Asegúrate de ajustar la ruta
-import ReactToPrint from 'react-to-print';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import html2pdf from 'html2pdf.js';
 import { Toaster, toast } from "react-hot-toast";
 const TablaSalida = forwardRef(({ salidas }, ref)  => {
@@ -107,7 +104,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
   const handleDetailClick = (id) => {
     console.log(almacen, 'sdsdsds')
     if (almacen) {
-      navigate(`/almacen/kardex/historico/${id}`);
+      window.open(`/almacen/kardex/historico/${id}`, '_blank');
     } else {
       toast.error('Por favor seleccione un almacén primero para visualizar el kardex');
     }
@@ -202,7 +199,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
                 <td class="border-b p-2 text-center">${salida.documento}</td>
                 <td class="border-b p-2 text-center">${salida.proveedor}</td>
                 <td class="border-b p-2 text-center">${salida.concepto}</td>
-                <td class="border-b p-2 text-center">${salida.estado === 1 ? 'Inactivo' : 'Activo'}</td>
+                <td class="border-b p-2 text-center">${salida.estado === 1 ? 'INACTIVO' : 'ACTIVO'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -296,7 +293,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
 
                       </p>
                                 <p class="text-sm font-semibold text-gray-800" className={getEstadoClassName(salida.estado)}>
-            <span class="font-bold text-gray-900">ESTADO:</span> <span class="font-semibold text-gray-600">${nota.estado === 1 ? 'Inactivo' : 'Activo'}</span>
+            <span class="font-bold text-gray-900">ESTADO:</span> <span class="font-semibold text-gray-600">${nota.estado === 1 ? 'INACTIVO' : 'ACTIVO'}</span>
           </p>
                   </div>
               </div>

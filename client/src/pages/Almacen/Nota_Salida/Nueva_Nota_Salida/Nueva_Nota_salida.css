@@ -118,7 +118,7 @@ h6 {
   margin-left: 5px;
 }
 
-.form-elementwasalida {
+.form-elementnotasalida {
   border: 1px solid #d1d5db; /* Border color */
   color: #1f2937; /* Text color */
   font-size: 0.875rem; /* Font size */
@@ -128,7 +128,7 @@ h6 {
   width: 90%; /* Make the element take full width of the container */
 }
 
-.form-elementwa:focus {
+.form-elementnotasalida:focus {
   border-color: #3b82f6; /* Focus border color */
 }
 

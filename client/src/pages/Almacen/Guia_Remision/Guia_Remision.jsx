@@ -39,13 +39,16 @@ const Guias = () => {
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
           Guias de Remision
         </h1>
-        <Link to="/almacen/guia_remision/registro_guia" className="btn btn-nueva-guia mr-0">
+        
+      </div>
+
+      <div className="flex justify-between items-center mb-4">
+        <FiltrosGuias onFiltersChange={handleFiltersChange} />
+        <Link to="/almacen/guia_remision/registro_guia" className="btn btn-nueva-guia">
           <MdAddCircleOutline className="inline-block mr-2" style={{ fontSize: '25px' }} />
           Nueva guia
         </Link>
       </div>
-
-      <FiltrosGuias onFiltersChange={handleFiltersChange} />
 
       <TablaGuias
         guias={guias}
