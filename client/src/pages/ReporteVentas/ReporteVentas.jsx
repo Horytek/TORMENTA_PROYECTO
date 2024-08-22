@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { Divider, Tabs, Tab } from "@nextui-org/react";
 import TablaGanancias from "./ComponentsReporte/Overview";
-import "./ReporteVentas.css";
 import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
 import KPIS from "./ComponentsReporte/KPIS";
 import Comparativa from "./ComponentsReporte/Comparativa";
