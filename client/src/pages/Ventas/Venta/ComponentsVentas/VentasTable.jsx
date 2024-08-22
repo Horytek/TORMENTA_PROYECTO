@@ -138,41 +138,35 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           const content = generateReceiptContent(venta_B, ventas_VB);
           const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
           
+          // Crear una instancia de jsPDF
+          const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: [75, 284] // Tamaño en milímetros (72mm x 297mm)
+          });
+          
+          // Generar QR dinámicamente
           QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
             if (!err) {
-              const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: [72, 297] // Tamaño de papel en milímetros
-              });
+              // Agregar la imagen del logo
+              doc.addImage(imgUrl, 'JPEG', 10, 10, 50, 50); // Ajustar la posición y tamaño de la imagen del logo
           
-              // Añadir imagen del logo
-              doc.addImage(imgUrl, 'JPEG', 16, 10, 40, 40); // Ajustar las coordenadas y tamaño del logo
+              // Agregar el contenido
+              doc.setFont('Courier'); // Cambiar la fuente a Courier
+              doc.setFontSize(8); // Reducir el tamaño de la fuente
+              doc.text(content, 3, 55); // Ajustar la posición del texto
           
-              // Cambiar la fuente a Courier, que es más adecuada para recibos
-              doc.setFont('Courier', 'normal');
-              doc.setFontSize(10);
+              // Agregar el código QR
+              doc.addImage(qrUrl, 'PNG', 16, 230, 43, 43); // Ajustar la posición y tamaño del QR
           
-              // Añadir contenido del recibo y calcular la altura actual del texto
-              let y = 60; // Posición inicial del texto en Y
-              const lineHeight = 10; // Altura de cada línea en el documento
-              const lines = doc.splitTextToSize(content, 50); // Dividir el texto para ajustarlo al ancho máximo
-          
-              lines.forEach(line => {
-                doc.text(line, 10, y); 
-                y += lineHeight; // Mover la posición Y hacia abajo después de cada línea
-              });
-          
-              // Añadir código QR al final del contenido
-              const qrPositionY = y + 20; // Añadir un margen antes de colocar el QR
-              doc.addImage(qrUrl, 'PNG', 16, qrPositionY, 40, 40); // Posicionar el QR después del texto
-          
-              // Descargar el PDF
+              // Guardar el PDF
               doc.save('recibo.pdf');
             } else {
               console.error('Error generando el código QR:', err);
             }
           });
+
+          
           
     } else if (printOption === 'print-1') {
       const content = generateReceiptContent(venta_B, ventas_VB);
