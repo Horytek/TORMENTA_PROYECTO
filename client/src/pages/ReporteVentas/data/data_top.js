@@ -3,10 +3,10 @@ import axios from "@/api/axios";
 
 const useProductoTop = (idSucursal) => { 
   const [productoTop, setProductoTop] = useState(null);
-  
+  const [loading, setLoading] = useState(true); // Define the loading state
 
   const fetchProductoTop = useCallback(async () => {
-
+    setLoading(true); 
     try {
       const response = await axios.get('/reporte/producto_top', {
         params: {
@@ -22,7 +22,7 @@ const useProductoTop = (idSucursal) => {
     } catch (error) {
       console.error('Error en la solicitud: ' + error.message);
     } finally {
-      setLoading(false);
+      setLoading(false); 
     }
   }, [idSucursal]); 
 
@@ -30,7 +30,7 @@ const useProductoTop = (idSucursal) => {
     fetchProductoTop();
   }, [fetchProductoTop]);
 
-  return {productoTop};
+  return { productoTop, loading }; 
 };
 
 export default useProductoTop;
