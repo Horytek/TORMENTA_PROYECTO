@@ -149,13 +149,15 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
               // Añadir imagen del logo
               doc.addImage(imgUrl, 'JPEG', 16, 10, 40, 40); // Ajustar las coordenadas y tamaño del logo
           
-              // Añadir contenido del recibo
-              doc.setFont('Arial', 'normal');
+              // Cambiar la fuente a Courier, que es más adecuada para recibos
+              doc.setFont('Courier', 'normal');
               doc.setFontSize(10);
+          
+              // Añadir contenido del recibo
               doc.text(content, 10, 60, { maxWidth: 50 }); // Ajustar las coordenadas y el ancho máximo del texto
           
-              // Ajustar la posición del QR para que no esté en medio
-              doc.addImage(qrUrl, 'PNG', 16, 120, 40, 40); // Cambiar la coordenada Y (segundo número) para moverlo hacia abajo
+              // Ajustar la posición del QR más abajo, evitando el texto
+              doc.addImage(qrUrl, 'PNG', 16, 160, 40, 40); // Cambiar la coordenada Y (segundo número) a 160 para moverlo hacia abajo
           
               // Descargar el PDF
               doc.save('recibo.pdf');
@@ -163,6 +165,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
               console.error('Error generando el código QR:', err);
             }
           });
+          
     } else if (printOption === 'print-1') {
       const content = generateReceiptContent(venta_B, ventas_VB);
       const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
@@ -183,7 +186,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
                   body {
                     margin: 0;
                     padding: 0;
-                    font-family: Arial, sans-serif;
+                    font-family: Courier, monospace; /* Cambiar la fuente a Courier */
                     font-size: 10pt; /* Reducir el tamaño de la fuente */
                     width: 100%; /* Asegurar que el contenido utilice todo el ancho disponible */
                   }
@@ -207,11 +210,11 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
               </head>
               <body>
                 <div class="image-container">
-                  <img src="${imgUrl}" alt="Logo" style="width: 40px; height: 40px;" /> <!-- Ajustar tamaño de la imagen -->
+                  <img src="${imgUrl}" alt="Logo" style="width: 200px; height: 200px;" /> <!-- Ajustar tamaño de la imagen -->
                 </div>
                 <pre>${content}</pre>
                 <div class="image-container">
-                  <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" /> <!-- Ajustar tamaño del QR -->
+                  <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 100px; height: 100px;" /> <!-- Ajustar tamaño del QR -->
                 </div>
               </body>
             </html>
