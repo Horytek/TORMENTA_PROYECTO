@@ -367,7 +367,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                        body {
                          margin: 0;
                          padding: 0;
-                         font-family: Arial, sans-serif;
+                         font-family: Courier, monospace; /* Cambiar la fuente a Courier */
                          font-size: 10pt; /* Reducir el tamaño de la fuente */
                          width: 100%; /* Asegurar que el contenido utilice todo el ancho disponible */
                        }
@@ -391,7 +391,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                    </head>
                    <body>
                      <div class="image-container">
-                       <img src="${imgUrl}" alt="Logo" style="width: 40px; height: 40px;" /> <!-- Ajustar tamaño de la imagen -->
+                       <img src="${imgUrl}" alt="Logo" style="width: 140px; height: 140px;" /> <!-- Ajustar tamaño de la imagen -->
                      </div>
                      <pre>${content}</pre>
                      <div class="image-container">

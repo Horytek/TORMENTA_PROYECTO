@@ -153,11 +153,19 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
               doc.setFont('Courier', 'normal');
               doc.setFontSize(10);
           
-              // Añadir contenido del recibo
-              doc.text(content, 10, 60, { maxWidth: 50 }); // Ajustar las coordenadas y el ancho máximo del texto
+              // Añadir contenido del recibo y calcular la altura actual del texto
+              let y = 60; // Posición inicial del texto en Y
+              const lineHeight = 10; // Altura de cada línea en el documento
+              const lines = doc.splitTextToSize(content, 50); // Dividir el texto para ajustarlo al ancho máximo
           
-              // Ajustar la posición del QR más abajo, evitando el texto
-              doc.addImage(qrUrl, 'PNG', 16, 160, 40, 40); // Cambiar la coordenada Y (segundo número) a 160 para moverlo hacia abajo
+              lines.forEach(line => {
+                doc.text(line, 10, y); 
+                y += lineHeight; // Mover la posición Y hacia abajo después de cada línea
+              });
+          
+              // Añadir código QR al final del contenido
+              const qrPositionY = y + 20; // Añadir un margen antes de colocar el QR
+              doc.addImage(qrUrl, 'PNG', 16, qrPositionY, 40, 40); // Posicionar el QR después del texto
           
               // Descargar el PDF
               doc.save('recibo.pdf');
@@ -210,11 +218,11 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
               </head>
               <body>
                 <div class="image-container">
-                  <img src="${imgUrl}" alt="Logo" style="width: 200px; height: 200px;" /> <!-- Ajustar tamaño de la imagen -->
+                  <img src="${imgUrl}" alt="Logo" style="width: 140px; height: 140px;" /> <!-- Ajustar tamaño de la imagen -->
                 </div>
                 <pre>${content}</pre>
                 <div class="image-container">
-                  <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 100px; height: 100px;" /> <!-- Ajustar tamaño del QR -->
+                  <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" /> <!-- Ajustar tamaño del QR -->
                 </div>
               </body>
             </html>
