@@ -74,6 +74,20 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
                 </div>
             </div>
 
+            <div class="container-datos-compro bg-white rounded-lg mb-6 ">
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div class="space-y-2">
+                    <p class="text-sm font-semibold text-gray-800">
+                        <span class="font-bold text-gray-900">HISTÓRICO</span> <span class="font-semibold text-gray-600"></span>
+                    </p>
+                    <p class="text-sm font-semibold text-gray-800">
+                        <span class="font-bold text-gray-900">RUC:</span> <span class="font-semibold text-gray-600">10454317934</span>
+                    </p>
+
+                    
+                </div>
+            </div>
+        </div>
         <!-- Información del Producto -->
         <div class="container-datos-compro bg-white rounded-lg mb-6">
             <div class="grid grid-cols-2 gap-6 mb-6">

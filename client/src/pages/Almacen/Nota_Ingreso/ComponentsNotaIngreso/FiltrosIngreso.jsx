@@ -126,7 +126,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                         <span class="font-bold text-gray-900">NOTA INGRESO</span> <span class="font-semibold text-gray-600"></span>
                     </p>
                     <p class="text-sm font-semibold text-gray-800">
-                        <span class="font-bold text-gray-900">RUC:</span> <span class="font-semibold text-gray-600">20610588981</span>
+                        <span class="font-bold text-gray-900">RUC:</span> <span class="font-semibold text-gray-600">10454317934</span>
                     </p>
                     <p class="text-sm font-semibold text-gray-800">
                         <span class="font-bold text-gray-900">Almacén:</span> <span class="font-semibold text-gray-600">${almacenSseleccionado?.almacen || 'N/A'}</span>
