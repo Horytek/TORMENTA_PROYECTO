@@ -164,11 +164,11 @@ export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
 
     const observaciones = loadDetallesFromLocalStorage1();
 
-    appendContent(centerText("BUSTAMANTE BUENO GLIDEN MAGALI"));
-    //appendContent(centerText("Calle San Martin 1573 Urb"));
-    //appendContent(centerText("Urrunaga SC Tres"));
+    appendContent(centerText("TEXTILES CREANDO MODA S.A.C."));
+    appendContent(centerText("Calle San Martin 1573 Urb"));
+    appendContent(centerText("Urrunaga SC Tres"));
     appendContent(centerText("Chiclayo - Chiclayo - Lambayeque"));
-    appendContent(centerText("RUC: 10454317934"));
+    appendContent(centerText("RUC: 20610588981"));
     appendContent(centerText("Tel: 918378590"));
     appendContent(centerText(datosVentaComprobante.comprobante_pago + ": " + detail.nuevoNumComprobante));
     appendContent("==================================");

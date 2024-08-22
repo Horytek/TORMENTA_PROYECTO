@@ -44,7 +44,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                     </div>
                     <div className="text-start ml-8">
                         <h1 className="text-xl font-extrabold leading-snug text-blue-800">TORMENTA JEANS</h1>
-                        <p className="font-semibold leading-snug text-gray-700">BUSTAMANTE BUENO GLIDEN MAGALI</p>
+                        <p className="font-semibold leading-snug text-gray-700">TEXTILES CREANDO MODA S.A.C.</p>
                         <p className="leading-snug text-gray-600"><span className="font-bold text-gray-800">Central:</span> Cal San Martin 1573 Urb Urrunaga SC Tres</p>
                         <p className="leading-snug text-gray-600">Chiclayo - Chiclayo - Lambayeque</p>
                         <p className="leading-snug text-gray-600"><span className="font-bold text-gray-800">TELF:</span> 918378590</p>
