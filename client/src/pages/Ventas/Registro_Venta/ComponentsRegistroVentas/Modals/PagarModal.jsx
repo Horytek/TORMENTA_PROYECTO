@@ -349,7 +349,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
            //console.log("Problema al imprimir: " + resp);
         }*/
            const content = generateReceiptContent(datosVentaComprobante, datosVenta);
-           const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+           const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
 
            const printWindow = window.open('', '', 'height=600,width=800');
            // Generar QR dinámicamente

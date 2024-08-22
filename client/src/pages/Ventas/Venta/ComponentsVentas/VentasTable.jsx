@@ -135,49 +135,37 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       } else {
           console.log("Problema al imprimir: " + resp);
       }*/
-          const content = generateReceiptContent(venta_B, ventas_VB);
-          const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+const content = generateReceiptContent(venta_B, ventas_VB);
+const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
 
-          // Conversión de milímetros a puntos (1 mm = 2.83465 puntos)
-          const widthInPoints = 72 * 2.83465; // 72mm
-          const heightInPoints = 297 * 2.83465; // 297mm
-          
-          // Crear una instancia de jsPDF con las dimensiones de la impresora térmica
-          const doc = new jsPDF({
-              orientation: 'portrait',
-              unit: 'pt', // puntos
-              format: [widthInPoints, heightInPoints] // [ancho, alto]
-          });
-          
-          // Establecer un margen adecuado
-          const margin = 17;
-          let yPosition = margin;
-          
-          // Agregar la imagen en la parte superior
-          doc.addImage(imgUrl, 'PNG', (widthInPoints - 50 * 2.83465) / 2, yPosition, 50 * 2.83465, 50 * 2.83465);
-          yPosition += 50 * 2.83465 + 10; // Aumentar el espaciado después de la imagen
-          
-          // Agregar el contenido del recibo línea por línea con un estilo más ordenado
-          content.split('\n').forEach(line => {
-              doc.text(line, margin, yPosition);
-              yPosition += 10; // Aumentar el espaciado entre líneas
-          });
-          
-          // Generar y agregar el código QR al final
-          QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, url) {
-              if (!err) {
-                  const qrSize = 100 * 2.83465; // Conversión de tamaño QR a puntos
-                  doc.addImage(url, 'PNG', (widthInPoints - qrSize) / 2, yPosition, qrSize, qrSize);
-                  
-                  // Guardar el PDF en el dispositivo del usuario
-                  doc.save('recibo.pdf');
-              } else {
-                  console.error('Error generando el código QR:', err);
-              }
-          });
+QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
+  if (!err) {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [72, 297] // Tamaño de papel en milímetros
+    });
+
+    // Añadir imagen del logo
+    doc.addImage(imgUrl, 'PNG', 16, 10, 40, 40); // Ajustar las coordenadas y tamaño del logo
+
+    // Añadir contenido del recibo
+    doc.setFont('Arial', 'normal');
+    doc.setFontSize(10);
+    doc.text(content, 10, 60, { maxWidth: 50 }); // Ajustar las coordenadas y el ancho máximo del texto
+
+    // Añadir código QR
+    doc.addImage(qrUrl, 'PNG', 16, 100, 40, 40); // Ajustar las coordenadas y tamaño del QR
+
+    // Descargar el PDF
+    doc.save('recibo.pdf');
+  } else {
+    console.error('Error generando el código QR:', err);
+  }
+});
     } else if (printOption === 'print-1') {
       const content = generateReceiptContent(venta_B, ventas_VB);
-      const imgUrl = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+      const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
 
       const printWindow = window.open('', '', 'height=600,width=800');
       // Generar QR dinámicamente
