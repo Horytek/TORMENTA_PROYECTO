@@ -164,7 +164,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
           </div>
   
           <div class="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
-            <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC 10454317934</h2>
+            <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC 20610588981</h2>
             <div class="bg-blue-200">
               <h2 class="text-lg font-bold text-gray-900 py-2">NOTA DE SALIDA</h2>
             </div>
@@ -257,7 +257,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
               </div>
   
               <div class="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
-                  <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC 10454317934</h2>
+                  <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC 20610588981</h2>
                   <div class="bg-blue-200">
                       <h2 class="text-lg font-bold text-gray-900 py-2">NOTA DE SALIDA</h2>
                   </div>
