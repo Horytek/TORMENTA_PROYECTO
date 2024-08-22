@@ -135,34 +135,34 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       } else {
           console.log("Problema al imprimir: " + resp);
       }*/
-const content = generateReceiptContent(venta_B, ventas_VB);
-const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
-
-QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
-  if (!err) {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: [72, 297] // Tamaño de papel en milímetros
-    });
-
-    // Añadir imagen del logo
-    doc.addImage(imgUrl, 'PNG', 16, 10, 40, 40); // Ajustar las coordenadas y tamaño del logo
-
-    // Añadir contenido del recibo
-    doc.setFont('Arial', 'normal');
-    doc.setFontSize(10);
-    doc.text(content, 10, 60, { maxWidth: 50 }); // Ajustar las coordenadas y el ancho máximo del texto
-
-    // Añadir código QR
-    doc.addImage(qrUrl, 'PNG', 16, 100, 40, 40); // Ajustar las coordenadas y tamaño del QR
-
-    // Descargar el PDF
-    doc.save('recibo.pdf');
-  } else {
-    console.error('Error generando el código QR:', err);
-  }
-});
+          const content = generateReceiptContent(venta_B, ventas_VB);
+          const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
+          
+          QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
+            if (!err) {
+              const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [72, 297] // Tamaño de papel en milímetros
+              });
+          
+              // Añadir imagen del logo
+              doc.addImage(imgUrl, 'JPEG', 16, 10, 40, 40); // Ajustar las coordenadas y tamaño del logo
+          
+              // Añadir contenido del recibo
+              doc.setFont('Arial', 'normal');
+              doc.setFontSize(10);
+              doc.text(content, 10, 60, { maxWidth: 50 }); // Ajustar las coordenadas y el ancho máximo del texto
+          
+              // Ajustar la posición del QR para que no esté en medio
+              doc.addImage(qrUrl, 'PNG', 16, 120, 40, 40); // Cambiar la coordenada Y (segundo número) para moverlo hacia abajo
+          
+              // Descargar el PDF
+              doc.save('recibo.pdf');
+            } else {
+              console.error('Error generando el código QR:', err);
+            }
+          });
     } else if (printOption === 'print-1') {
       const content = generateReceiptContent(venta_B, ventas_VB);
       const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
