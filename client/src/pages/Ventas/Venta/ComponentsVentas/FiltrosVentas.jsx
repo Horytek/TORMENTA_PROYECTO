@@ -111,6 +111,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     }, 3000);
   };
 
+
   useEffect(() => {
     if (isDeleted) {
       refetchVentas();
