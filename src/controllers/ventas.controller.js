@@ -228,6 +228,20 @@ const getComprobante = async (req, res) => {
   }
 };
 
+const getLastVenta = async (req, res) => {
+  try {
+    const connection = await getConnection();
+    const [result] = await connection.query(`
+      	      	select id_venta + 1 as id from venta order by id_venta desc limit 1
+            `);
+    res.json({ code: 1, data: result, message: "Comprobante listados" });
+  } catch (error) {
+    res.status(500);
+    res.send(error.message);
+  }
+};
+
+
 const getSucursal = async (req, res) => {
   try {
     const connection = await getConnection();
@@ -767,5 +781,6 @@ export const methods = {
   updateVenta,
   generarComprobante,
   getEstado,
-  getVentaById
+  getVentaById,
+  getLastVenta
 };

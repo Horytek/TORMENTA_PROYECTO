@@ -1,5 +1,7 @@
 //import axios from 'axios';
 import axios from "../../../api/axios";
+import { handleSunatUnique } from "../Data/add_sunat_unique";
+import {  handleUpdate } from '../Data/update_venta';
 // Valida el formato decimal
 export const validateDecimalInput = (e) => {
     const { value } = e.target;
@@ -16,15 +18,22 @@ export const validateDecimalInput = (e) => {
 };
 
 // Maneja la solicitud de cobro
-export const handleCobrar = async (datosVenta, setShowConfirmacion) => {
+export const handleCobrar = async (datosVenta, setShowConfirmacion,datosVenta_1,ven) => {
     try {
-        console.log('Datos de venta:', datosVenta);
+        /*console.log('Datos de venta:', datosVenta);
+        console.log('Datos de venta_1:', datosVenta_1);
+        console.log('Datos de ven:', ven);*/
         const response = await axios.post('/ventas/agregar_venta', datosVenta, {
             headers: {
                 'Content-Type': 'application/json',
             }
         });
 
+        if(datosVenta_1.tipoComprobante != "Nota de venta"){
+            handleSunatUnique(datosVenta_1);
+            handleUpdate(ven);
+        }
+        
         if (response.status === 200) {
             setShowConfirmacion(true);
         } else {

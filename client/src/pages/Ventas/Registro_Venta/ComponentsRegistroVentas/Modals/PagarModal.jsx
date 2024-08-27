@@ -26,10 +26,14 @@ import {Toaster} from "react-hot-toast";
 import {toast} from "react-hot-toast";
 import useSucursalData from '../../../Data/data_sucursal_venta';
 import QRCode from 'qrcode';
+import { useLastData } from '../../../Data/getLastVenta';
+/*import { handleSunatMultiple } from "../../../Data/add_sunat_multiple";
+import {  handleUpdate } from '../../../Data/update_venta';*/
 
 const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     const { productos } = useProductosData();
     const {sucursales} = useSucursalData();
+    const { last } = useLastData();
     const [montoRecibido, setMontoRecibido] = useState('');
     const [observacion,setObservacion] = useState('');
     const [descuentoActivado, setDescuentoActivado] = useState(false);
@@ -44,6 +48,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     const [showNuevoCliente, setShowNuevoCliente] = useState(false);
     const [tipo_cliente, settipo_cliente] = useState('Natural');
     const { clientes, addCliente } = useClientesData();
+    const [serie, SetSerie] = useState('');
+    const [nu,SetNum] = useState('');
     // Llama al hook personalizado para obtener los clientes
     const [clienteSeleccionado, setClienteSeleccionado] = useState('');
     const loadDetallesFromLocalStorage = () => {
@@ -96,6 +102,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
 
                 const nuevoNumComprobante = await generateComprobanteNumber(comp);
 
+                SetSerie(nuevoNumComprobante.substring(1, nuevoNumComprobante.indexOf('-')));
+                SetNum(nuevoNumComprobante.substring(nuevoNumComprobante.indexOf('-') + 1));
                 //console.log('Nuevo número de comprobante:', nuevoNumComprobante);
 
                 // Almacena el número de comprobante en el localStorage
@@ -205,11 +213,37 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         observacion:observacion,
     };
 
+    const datosVenta_1 = {
+        tipoComprobante: comprobante_pago,
+        serieNum: serie,
+        num: nu,
+        ruc: cliente ? cliente.documento : '',
+        fecha_iso: new Date(),
+        cliente: cliente ? cliente.nombre : '',
+        detalles: detalles.map(detalle => {
+            const producto = productos.find(producto => producto.codigo === detalle.codigo);
+            return {
+                codigo: detalle.codigo,
+                nombre: detalle.nombre,
+                undm: producto ? producto.undm : '',
+                nom_marca: producto ? producto.nom_marca : '',
+                cantidad: detalle.cantidad,
+                precio: parseFloat(detalle.precio),
+                descuento: parseFloat(detalle.descuento),
+                sub_total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
+            };
+        }).filter(detalle => detalle !== null)
+    };
+
     const datosCliente = {
         dniOrRuc: dniOrRuc,
         tipo_cliente: tipo_cliente,
         nombreCompleto: nombreCliente,
         direccion: direccionCliente,
+    };
+
+    const ven = {
+        id: last.length > 0 ? last[0].id : ''
     };
 
     const datosCliente_P = {
@@ -221,6 +255,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         localStorage.setItem('comprobante', JSON.stringify({ comprobante_pago }));
         localStorage.setItem('cliente_d', JSON.stringify({ clienteSeleccionado }));
         localStorage.setItem('observacion', JSON.stringify({observacion}));
+        localStorage.setItem('last', JSON.stringify(ven)); 
+        localStorage.setItem('vent', JSON.stringify([datosVenta_1]));
     };
 
     saveDetallesToLocalStorage();
@@ -262,8 +298,10 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         }
     
         // Si todas las validaciones pasan, procede con el manejo del cobro e impresión
-        handleCobrar(datosVenta, setShowConfirmacion);
         handlePrint();  // Llama a la función de impresión
+        handleCobrar(datosVenta, setShowConfirmacion,datosVenta_1,ven);
+        /*handleSunatMultiple([datosVenta_1]);
+        handleUpdate(ven);*/
     };
 
     {/* Esto son los datos que pasan al voucher */ }
