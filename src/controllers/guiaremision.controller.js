@@ -42,6 +42,8 @@ const getGuias = async (req, res) => {
                 s.nombre_sucursal,
                 gr.dir_partida AS dir_partida,
                 gr.dir_destino AS dir_destino,
+                gr.id_ubigeo_o as id_ubigeo_o,
+                gr.id_ubigeo_d as id_ubigeo_d,
                 gr.observacion AS observacion,
                 CONCAT(t.nombres, ' ', t.apellidos) AS transportistapriv,
                 CONCAT(t.razon_social) AS transportistapub,
