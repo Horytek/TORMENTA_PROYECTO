@@ -67,7 +67,7 @@ export const handleGuiaRemisionSunat = (guia, destinata, transportista, detalles
     version: 2022,
     tipoDoc: tipoDoc,
     serie: ultimaSerie.toString(),
-    correlativo: guia.num.toString(),
+    correlativo: guia.num,
     fechaEmision: result,
     company: {
       ruc: 20610588981,
