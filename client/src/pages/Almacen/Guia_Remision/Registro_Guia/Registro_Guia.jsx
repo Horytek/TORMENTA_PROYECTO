@@ -17,6 +17,7 @@ import ProductosForm from '@/pages/Productos/ProductosForm';
 import useProductosData from '../../data/data_buscar_producto';
 import insertGuiaandDetalle from '../../data/insert_guiaremision';
 import { Toaster, toast } from 'react-hot-toast'; // <-- Importación añadida
+import { handleGuiaRemisionSunat } from '../../data/add_sunat_guia'; // Asegúrate de que el path sea correcto
 import ConfirmationModal from '././../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
 
@@ -105,8 +106,22 @@ function RegistroGuia() {
     console.log(response);
     if (response.success) {
       toast.success("Guía de Remisión y detalles guardados exitosamente");
-      handleCancel();
-      window.location.reload();
+
+    // Después de guardar localmente, llama a la función para enviar la guía a la Sunat
+    const destinatario = {
+      documento: document.getElementById('documento').value,
+      destinatario: selectedCliente ? selectedCliente.nombre : '',
+    };
+
+    const transportista = {
+      placa: document.getElementById('transporte').value || '',
+    };
+
+    handleGuiaRemisionSunat(guiaData, destinatario, transportista, productosSeleccionados);
+
+    handleCancel();
+    window.location.reload();
+    
     } else {
       toast.error("Error al guardar la Guía de Remisión");
     }
