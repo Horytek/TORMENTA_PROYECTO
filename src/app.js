@@ -28,10 +28,19 @@ app.set("port", port);
 
 // Middlewares
 app.use(morgan("dev"));
+const allowedOrigin = (origin, callback) => {
+    // Verifica si el origen está en el rango 192.168.194.0/24
+    if (origin && /^http:\/\/192\.168\.194\.\d{1,3}(:\d+)?$/.test(origin)) {
+        callback(null, true);  // Permite la solicitud si coincide con el rango
+    } else {
+        callback(new Error('Not allowed by CORS'));  // Rechaza si no coincide
+    }
+};
+
 app.use(cors({
-    origin: [FRONTEND_URL , "http://localhost:3000"],
+    origin: allowedOrigin,  // Usa la función personalizada para validar el origen
     methods: "GET,POST,PUT,DELETE,OPTIONS",
-    credentials: true
+    credentials: true  // Permite el uso de credenciales (cookies, tokens, etc.)
 }));
 app.use(express.json());
 app.use(cookieParser());

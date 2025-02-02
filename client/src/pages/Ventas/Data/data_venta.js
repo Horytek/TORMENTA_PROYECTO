@@ -6,7 +6,7 @@ import axios from "../../../api/axios";
 const useVentasData = (filters) => {
   const [ventas, setVentas] = useState([]);
   const [totalVentas, setTotalVentas] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(2);
   const [ventasPerPage, setVentasPerPage] = useState(10);
 
   const fetchVentas = useCallback(async () => {
@@ -20,6 +20,7 @@ const useVentasData = (filters) => {
           nombre_sucursal: filters.sucursalSeleccionado,
           fecha_i: filters.fecha_i,
           fecha_e: filters.fecha_e,
+          numC: filters.numC,
         }
       });
       if (response.data.code === 1) {
@@ -43,6 +44,9 @@ const useVentasData = (filters) => {
           usua_vendedor:venta.usua,
           nombre_sucursal: venta.nombre_sucursal,
           observacion: venta.observacion,
+          hora_creacion: venta.hora_creacion,
+          fecha_anulacion: venta.fecha_anulacion,
+          u_modifica:venta.u_modifica,
           igv: `S/ ${parseFloat(venta.igv).toFixed(2)}`,
           total: `S/ ${parseFloat(venta.total).toFixed(2)}`,
           cajero: venta.cajero,
@@ -78,7 +82,6 @@ const useVentasData = (filters) => {
   }, [fetchVentas]);
 
 
-
   const removeVenta = (id) => {
     setVentas(ventas.filter(venta => venta.id !== id));
   };
@@ -97,6 +100,8 @@ const useVentasData = (filters) => {
 
   const getTotalRecaudado = () => {
     return ventas.reduce((total, venta) => {
+      if (venta.estado === 'Anulada') return total;
+      
       const subtotalVenta = venta.detalles.reduce((subtotal, detalle) => {
         return subtotal + parseFloat(detalle.subtotal.replace('S/ ', ''));
       }, 0);
@@ -106,38 +111,44 @@ const useVentasData = (filters) => {
   
   const totalRecaudado = getTotalRecaudado();
 
-    // Función para calcular el total de efectivo
-    const getTotalEfectivo = () => {
-      return ventas.reduce((total, venta) => {
-        const pagos = venta.metodo_pago.split(', ');
-        const pagoEfectivo = pagos.find(pago => pago.startsWith('EFECTIVO'));
-  
-        if (pagoEfectivo) {
-          const monto = parseFloat(pagoEfectivo.split(':')[1]) || 0;
-          return total + monto;
-        }
-        return total;
-      }, 0).toFixed(2);
-    };
-  
-    const totalEfectivo = getTotalEfectivo();
-  
-    // Función para calcular el total de pagos electrónicos
-    const getTotalPagoElectronico = () => {
-      return ventas.reduce((total, venta) => {
-        const pagos = venta.metodo_pago.split(', ');
-        const pagosElectronicos = pagos.filter(pago => !pago.startsWith('EFECTIVO'));
-  
-        const totalElectronico = pagosElectronicos.reduce((suma, pago) => {
-          const monto = parseFloat(pago.split(':')[1]) || 0;
-          return suma + monto;
-        }, 0);
-  
-        return total + totalElectronico;
-      }, 0).toFixed(2);
-    };
-  
-    const totalPagoElectronico = getTotalPagoElectronico();
+// Función para calcular el total de efectivo
+const getTotalEfectivo = () => {
+  return ventas.reduce((total, venta) => {
+    // Filtrar las ventas cuyo estado no sea 'Anulada' (estado === 0)
+    if (venta.estado === 'Anulada') return total;
+
+    const pagos = venta.metodo_pago.split(', ');
+    const pagoEfectivo = pagos.find(pago => pago.startsWith('EFECTIVO'));
+
+    if (pagoEfectivo) {
+      const monto = parseFloat(pagoEfectivo.split(':')[1]) || 0;
+      return total + monto;
+    }
+    return total;
+  }, 0).toFixed(2);
+};
+
+const totalEfectivo = getTotalEfectivo();
+
+// Función para calcular el total de pagos electrónicos
+const getTotalPagoElectronico = () => {
+  return ventas.reduce((total, venta) => {
+    // Filtrar las ventas cuyo estado no sea 'Anulada' (estado === 0)
+    if (venta.estado === 'Anulada') return total;
+
+    const pagos = venta.metodo_pago.split(', ');
+    const pagosElectronicos = pagos.filter(pago => !pago.startsWith('EFECTIVO'));
+
+    const totalElectronico = pagosElectronicos.reduce((suma, pago) => {
+      const monto = parseFloat(pago.split(':')[1]) || 0;
+      return suma + monto;
+    }, 0);
+
+    return total + totalElectronico;
+  }, 0).toFixed(2);
+};
+
+const totalPagoElectronico = getTotalPagoElectronico();
 
   const updateDetalle = (updatedDetalle) => {
     setDetalles(prevDetalles =>

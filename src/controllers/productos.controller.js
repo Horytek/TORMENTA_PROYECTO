@@ -1,26 +1,36 @@
 import { getConnection } from "./../database/database";
 
 const getProductos = async (req, res) => {
+    let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
-                SELECT PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, 
-                CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras, PR.estado_producto as estado
-                FROM producto PR
-                INNER JOIN marca MA ON MA.id_marca = PR.id_marca
-                INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
-                ORDER BY PR.id_producto DESC
-            `);
-        res.json({code:1, data: result, message: "Productos listados"});
+            SELECT PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, 
+            CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras, PR.estado_producto as estado
+            FROM producto PR
+            INNER JOIN marca MA ON MA.id_marca = PR.id_marca
+            INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
+            ORDER BY PR.id_producto DESC
+        `);
+
+        if (result.length === 0) {
+            return res.status(404).json({ code: 0, message: "No se encontraron productos" });
+        }
+
+        res.json({ code: 1, data: result, message: "Productos listados" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).send({ error: error.message });
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const getUltimoIdProducto = async (req, res) => {
+    let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
                 SELECT MAX(id_producto+1) AS ultimo_id FROM producto;
             `);
@@ -28,13 +38,18 @@ const getUltimoIdProducto = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const getProducto = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
                 SELECT id_producto, id_marca, SC.id_categoria, PR.id_subcategoria, descripcion, precio, cod_barras, undm, estado_producto
                 FROM producto PR
@@ -49,10 +64,15 @@ const getProducto = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const addProducto = async (req, res) => {
+    let connection;
     try {
         const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto } = req.body;
 
@@ -61,17 +81,22 @@ const addProducto = async (req, res) => {
         }
 
         const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
-        const connection = await getConnection();
+        connection = await getConnection();
         await connection.query("INSERT INTO producto SET ? ", producto);
 
         res.json({code: 1, message: "Producto añadido" });
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const updateProducto = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
         const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto } = req.body;
@@ -81,7 +106,7 @@ const updateProducto = async (req, res) => {
         }
 
         const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query("UPDATE producto SET ? WHERE id_producto = ?", [producto, id]);
 
         if (result.affectedRows === 0) {
@@ -92,13 +117,18 @@ const updateProducto = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    }  finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const deleteProducto = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         
         // Verificar si el producto existe dentro de una Nota de Ingreso
         const [verify1] = await connection.query("SELECT 1 FROM detalle_venta WHERE id_producto = ?", id);
@@ -127,6 +157,10 @@ const deleteProducto = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    }   finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 

@@ -8,3 +8,6 @@ env.bak/
 venv.bak/
 node_modules/
 none_modules
+src/app.js
+index.js
+src/database/database.js

@@ -4,11 +4,12 @@ import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 
 const login = async (req, res) => {
+    let connection;
     try {
         const { usuario, password } = req.body;
         
         const user = { usuario: usuario.trim(), password: password.trim() };
-        const connection = await getConnection();
+        connection = await getConnection();
         const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ?", user.usuario);
 
         if (userFound.length === 0) {
@@ -37,12 +38,17 @@ const login = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    }   finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 
 const verifyToken = async (req, res) => {
-    const connection = await getConnection();
+    let connection;
+    connection = await getConnection();
     const token = req.headers['authorization'];
 
     if (!token) return res.send(false);

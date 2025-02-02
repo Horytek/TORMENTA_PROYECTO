@@ -1,8 +1,9 @@
 import { getConnection } from "./../database/database";
 
 const getSubCategorias = async (req, res) => {
+    let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
@@ -12,13 +13,18 @@ const getSubCategorias = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }  finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const getSubcategoriesForCategory = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
@@ -34,13 +40,18 @@ const getSubcategoriesForCategory = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }   finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const getSubCategoria = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
@@ -55,6 +66,10 @@ const getSubCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }    finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
@@ -64,6 +79,7 @@ const getSubCategoria = async (req, res) => {
 
 
 const addSubCategoria = async (req, res) => {
+    let connection;
     try {
         const { id_categoria, nom_subcat, estado_subcat } = req.body;
 
@@ -72,7 +88,7 @@ const addSubCategoria = async (req, res) => {
         }
 
         const subcategoria = { id_categoria, nom_subcat: nom_subcat.trim(), estado_subcat };
-        const connection = await getConnection();
+        connection = await getConnection();
         await connection.query("INSERT INTO sub_categoria SET ? ", subcategoria);
         const [idAdd] = await connection.query("SELECT id_subcategoria FROM sub_categoria WHERE nom_subcat = ?", nom_subcat);
 
@@ -81,10 +97,15 @@ const addSubCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }    finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const updateSubCategoria = async (req, res) => {
+    let connection;
     try {
         const { id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria } = req.body;
 
@@ -93,7 +114,7 @@ const updateSubCategoria = async (req, res) => {
             return res.status(400).json({ message: "ID de categoría es requerido" });
         }
 
-        const connection = await getConnection();
+        connection = await getConnection();
         
         const [resultSubCat] = await connection.query(`
             UPDATE sub_categoria 
@@ -114,15 +135,20 @@ const updateSubCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }     finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 
 
 const deactivateSubCategoria = async (req, res) => {
+    let connection;
     const { id } = req.params;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(
             "UPDATE sub_categoria SET estado_subcat = 0 WHERE id_subcategoria = ?",
             [id]
@@ -137,14 +163,19 @@ const deactivateSubCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error al dar de baja la subcategoría", error: error.message });
         }
-    }
+    }     finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
+    } 
 };
 
 
 const deleteSubCategoria = async (req, res) => {
+    let connection;
     const { id } = req.params;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(
             "DELETE FROM sub_categoria WHERE id_subcategoria = ?",
             [id]
@@ -159,14 +190,19 @@ const deleteSubCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error al eliminar la subcategoría", error: error.message });
         }
-    }
+    }      finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
+    } 
 };
 
 
 
 const getSubcategoriasConCategoria = async (req, res) => {
+    let connection;
     try {
-      const connection = await getConnection();
+      connection = await getConnection();
   
       const query = `
         SELECT 
@@ -187,7 +223,11 @@ const getSubcategoriasConCategoria = async (req, res) => {
       res.json(result);
     } catch (error) {
       res.status(500).json({ message: "Error al obtener las subcategorías con sus categorías", error });
-    }
+    }      finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
+    } 
   };
   
   

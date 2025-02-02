@@ -1,12 +1,21 @@
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { parseDate } from "@internationalized/date";
+import { DateRangePicker } from "@nextui-org/date-picker";
 import TablaKardex from './Kardex/ComponentsKardex/KardexTable';
 import getSalidaData from './Kardex/data/data_kardex';
 import useAlmacenData from './Kardex/data/data_almacen_kardex';
 import useMarcaData from './Kardex/data/data_marca_kardex';
 import useCategoriaData from './Kardex/data/data_categoria_kardex';
 import useSubCategoriaData from './Kardex/data/data_subcategoria_kardex';
+import downloadExcelReport from './Kardex/data/generateExcel';
+import downloadExcelReportByPeriod from './Kardex/data/generateExcelDates';
+import { Toaster, toast } from 'react-hot-toast';
 import html2pdf from 'html2pdf.js';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
+import { CgOptions } from "react-icons/cg";
+import { FaRegFilePdf } from "react-icons/fa";
+import { FaFileExcel } from "react-icons/fa";
 import 'jspdf-autotable';
 
 const Kardex = () => {
@@ -24,7 +33,23 @@ const Kardex = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 5; // Número total de páginas
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalContent, setModalContent] = useState({ mes: "", almacen: "", year: "" });
+    const hoy = new Date();
+    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    const [value, setValue] = React.useState({
+        start: parseDate(hoyStr),
+        end: parseDate(hoyStr),
+    });
 
+    const [tempValue, setTempValue] = useState(value);
+
+    const [isWeeklyModalOpen, setIsWeeklyModalOpen] = useState(false);
+    const [weeklyModalContent, setWeeklyModalContent] = useState({
+        start: null,
+        end: null,
+        almacen: "",
+    });
 
 
     useEffect(() => {
@@ -39,14 +64,14 @@ const Kardex = () => {
 
     useEffect(() => {
         if (almacenes.length > 0 && !almacenSeleccionado.id) {
-            const defaultAlmacen = almacenes[0]; 
+            const defaultAlmacen = almacenes[0];
             setAlmacenSeleccionado(defaultAlmacen);
             setFilters(f => ({ ...f, almacen: defaultAlmacen.id }));
         }
     }, [almacenes]);
 
 
-    
+
     const [filters, setFilters] = useState({
         descripcion: '',
         almacen: almacenSeleccionado.id !== '' ? almacenSeleccionado.id : '',
@@ -182,8 +207,97 @@ const Kardex = () => {
         handleFiltersChange({ idProducto: event.target.value });
     };
 
+
+
+    const resetModalContent = () => {
+        setModalContent({ mes: "", almacen: "", year: "" });
+    };
+
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        resetModalContent();
+        setIsModalOpen(false);
+    };
+
+    const handleModalChange = (field, value) => {
+        setModalContent((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
+    const handleModalSubmit = () => {
+        if (modalContent.mes && modalContent.almacen && modalContent.year) {
+            downloadExcelReport(modalContent.mes, modalContent.year, modalContent.almacen);
+            resetModalContent();
+            setIsModalOpen(false);
+        } else {
+            toast.error('Por favor completa todos los campos.');
+            return;
+        }
+
+    };
+
+
+    const handleOpenWeeklyModal = () => {
+        setIsWeeklyModalOpen(true);
+    };
+
+    const handleCloseWeeklyModal = () => {
+        setIsWeeklyModalOpen(false);
+        resetWeeklyModalContent();
+    };
+
+    const resetWeeklyModalContent = () => {
+        setWeeklyModalContent({
+            startDate: null,
+            endDate: null,
+            almacen: "",
+        });
+    };
+
+    const handleDateChange = (newValue) => {
+        if (newValue.start && newValue.end) {
+            setValue(newValue);
+            setTempValue(newValue);
+        } else {
+            setTempValue(newValue);
+        }
+    };
+
+    const handleAlmacenModalChange = (e) => {
+        setWeeklyModalContent((prev) => ({
+            ...prev,
+            almacen: e.target.value,
+        }));
+    };
+
+    const handleWeeklyModalSubmit = async () => {
+        const { start, end } = tempValue;
+        const { almacen } = weeklyModalContent;
+    
+        // Verificar si los campos están completos
+        if (!start || !end || !almacen) {
+            toast.error("Por favor selecciona un rango de fechas y un almacén.");
+            return;
+        } else{
+            const startDate = new Date(start).toISOString().split('T')[0];
+            const endDate = new Date(end).toISOString().split('T')[0];
+
+            downloadExcelReportByPeriod(startDate, endDate, almacen);
+            handleCloseWeeklyModal();
+        }
+       
+    };
+    
+
     return (
         <div>
+            <Toaster />
+
             <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacén', href: '/almacen' }, { name: 'Kardex Movimientos', href: '/almacen/kardex' }]} />
             <hr className="mb-4" />
             <div className="flex justify-between mt-5 mb-4">
@@ -259,19 +373,157 @@ const Kardex = () => {
                         ))}
                     </select>
                 </div>
-                <div className='flex items-center gap-2'>
-                    <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm' onChange={(e) => {
-                        if (e.target.value === "pdf") {
-                            handleGeneratePDF();
-                        }
-                    }} name="select" defaultValue="">
-                        <option value="" >...</option>
-                        <option value="pdf">Guardar PDF</option>
-                    </select>
-                </div>
+                <Dropdown>
+                    <DropdownTrigger className="bg-gray-100">
+                        <Avatar
+                            isBordered
+                            as="button"
+                            className="transition-transform"
+                            icon={<CgOptions className="text-xl text-gray-600" />}
+                        />
+                    </DropdownTrigger>
+                    <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">
+                        <DropdownItem
+                            key="pdf"
+                            startContent={<FaRegFilePdf />}
+                            onClick={() => handleGeneratePDF()} // Llama a tu función aquí
+                        >
+                            Guardar PDF Productos
+                        </DropdownItem>
+                        <DropdownItem
+                            key=""
+                            startContent={<FaFileExcel />}
+                            onClick={handleOpenModal}
+                        >
+                            Rep. Mensual
+                        </DropdownItem>
+                        <DropdownItem
+                            key=""
+                            startContent={<FaFileExcel />}
+                            onClick={handleOpenWeeklyModal}
+                        >
+                            Rep. Semanal
+                        </DropdownItem>
+
+                    </DropdownMenu>
+                </Dropdown>
+
+
             </div>
             <TablaKardex kardex={kardex} />
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-75">
+                    <div className="bg-white p-6 rounded-md w-96">
+                        <h2 className="text-xl font-bold mb-4">Seleccionar Opciones</h2>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Mes:</label>
+                            <select
+                                className="w-full border border-gray-300 p-2 rounded-lg"
+                                value={modalContent.mes}
+                                onChange={(e) => handleModalChange("mes", e.target.value)}
+                            >
+                                <option value="">Seleccione un mes</option>
+                                {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].map(
+                                    (mes, index) => (
+                                        <option key={index} value={index + 1}>
+                                            {mes}
+                                        </option>
+                                    )
+                                )}
+                            </select>
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Año:</label>
+                            <input
+                                type="number"
+                                className="w-full border border-gray-300 p-2 rounded-lg"
+                                value={modalContent.year}
+                                onChange={(e) => handleModalChange("year", e.target.value)}
+                                placeholder="Ingrese el año"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Almacén:</label>
+                            <select
+                                className="w-full border border-gray-300 p-2 rounded-lg"
+                                value={modalContent.almacen}
+                                onChange={(e) => handleModalChange("almacen", e.target.value)}
+                            >
+                                <option value="">Seleccione un almacén</option>
+                                {almacenes.map((almacen) => (
+                                    <option key={almacen.id} value={almacen.id}>
+                                        {almacen.almacen}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                className="px-4 py-2 bg-gray-300 rounded-md"
+                                onClick={handleCloseModal}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                                onClick={handleModalSubmit}
+                            >
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+{isWeeklyModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-75">
+                    <div className="bg-white p-6 rounded-md w-96">
+                        <h2 className="text-xl font-bold mb-4">Seleccionar Rango Semanal</h2>
+                        <div className="mb-4">
+                            <DateRangePicker
+                                classNames={{ inputWrapper: "bg-white" }}
+                                value={tempValue}
+                                onChange={handleDateChange}
+                                renderInput={(props) => (
+                                    <input {...props} className="p-2 bg-white border border-gray-300 rounded-lg" />
+                                )}
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Almacén:</label>
+                            <select
+                                className="w-full border border-gray-300 p-2 rounded-lg"
+                                value={weeklyModalContent.almacen}
+                                onChange={handleAlmacenModalChange}
+                            >
+                                <option value="">Seleccione un almacén</option>
+                                {almacenes.map((almacen) => (
+                                    <option key={almacen.id} value={almacen.id}>
+                                        {almacen.almacen}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                className="px-4 py-2 bg-gray-300 rounded-md"
+                                onClick={handleCloseWeeklyModal}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                                onClick={handleWeeklyModalSubmit}
+                            >
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
+
     );
 };
 

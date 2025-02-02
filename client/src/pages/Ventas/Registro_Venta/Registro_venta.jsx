@@ -15,7 +15,7 @@ import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes
 import PropTypes from 'prop-types';
 import {Toaster} from "react-hot-toast";
 import {toast} from "react-hot-toast";
-//import {Button} from "@nextui-org/react";
+import {Button} from "@nextui-org/react";
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
@@ -63,14 +63,14 @@ const Registro_Venta = () => {
   };
 
   const totalImporte = detalles.reduce((acc, item) => {
-    // Asumiendo que item.subtotal está en formato "S/ 70.00"
-    // Usa la función replace para quitar el símbolo de moneda y convertir a número
-    const subtotalNumber = parseFloat(item.subtotal.replace('S/ ', '').replace(',', '.'));
-    return (acc + subtotalNumber)/1.18;
+    const subtotalNumber = parseFloat(item.subtotal.replace(/[^\d.-]/g, '')); // Elimina todo menos números y puntos
+    return acc + subtotalNumber / 1.18;
 }, 0).toFixed(2);
 
+
   const igv_t = (totalImporte * 0.18).toFixed(2);
-  const total_t = parseFloat((parseFloat(totalImporte) + parseFloat(igv_t)).toFixed(2));
+  const total_t = Math.round(parseFloat(totalImporte) + parseFloat(igv_t));
+
 
   const datos_precio = {
     igv_t: igv_t,
@@ -227,7 +227,8 @@ const Registro_Venta = () => {
           <div className="flex items-center mb-4">
             <input type="text" className={` mr-2 form-input py-2 px-4 w-full text-gray-700 placeholder-gray-400 rounded border-none focus:outline-none ${!detalleMode ? 'cursor-not-allowed bg-gray-200' : ''}`}
               placeholder="Buscar producto en el detalle" style={{ boxShadow: '0 0 10px #171a1f33' }} value={searchTerm2} onChange={(e) => setSearchTerm2(e.target.value)} disabled={!detalleMode} />
-            <button className="btn ml-2 btn-producto px-6 py-2" onClick={() => setIsModalOpen(true)}>Producto</button>
+            <Button className="btn ml-2 btn-producto px-6 py-2" variant="shadow" onClick={() => setIsModalOpen(true)}>Producto</Button>
+             
           </div>
           <TablaDetallesVenta detalles={detalles} handleProductRemove={handleProductRemove} handleQuantityChange={handleQuantityChange} handleDiscountChange={handleDiscountChange} handlePrecieChange={handlePrecieChange} />
 
@@ -249,19 +250,18 @@ const Registro_Venta = () => {
           </div>
           <div className="flex justify-end mt-4">
             <div className='items-center flex ml-2'>
-              <button className="btn btn-cotizar  flex items-center" onClick={() => handlePrint(true)} disabled={detalles.length === 0}>
+              <Button className="btn btn-cotizar  flex items-center" onClick={() => handlePrint(true)} disabled={detalles.length === 0}>
                 <GrDocumentPerformance style={{ fontSize: '22px' }} />
-                Cotizar</button>
+                Cotizar</Button>
             </div>
             <div style={{ display: 'none' }}>
               <Comprobante ref={componentRef} datosVentaComprobante={datosVentaComprobante} />
             </div>
             <div className='items-center flex ml-2'>
-              <button className="btn btn-cobrar mr-0 flex items-center" onClick={Comprobar_mayor_499}>
+              <Button className="btn btn-cobrar mr-0 flex items-center" onClick={Comprobar_mayor_499}>
                 <BsCashCoin style={{ fontSize: '22px' }} />
                 Cobrar
-
-              </button>
+              </Button>
             </div>
           </div>
         </div>

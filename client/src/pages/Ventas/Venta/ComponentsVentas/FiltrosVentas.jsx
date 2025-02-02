@@ -9,7 +9,7 @@ import { parseDate } from "@internationalized/date";
 import { Select, SelectItem } from "@nextui-org/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
 import { CgOptions } from "react-icons/cg";
-import { FaRegFilePdf } from "react-icons/fa";
+//import { FaRegFilePdf } from "react-icons/fa";
 import { Input } from "@nextui-org/input";
 import { handleSunatMultiple } from "../../Data/add_sunat_multiple";
 import { handleUpdateMultiple } from "../../Data/update_venta_multiple";
@@ -29,54 +29,62 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   });
   const [tempValue, setTempValue] = useState(value);
   const [razon, setRazon] = useState("");
-  const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
-  const [modalTitle, setModalTitle] = useState(""); // Estado para el título del modal
-
-  const handleChange = (event) => {
-    setRazon(event.target.value);
-  };
-
-  const handleDateChange = (newValue) => {
-    if (newValue.start && newValue.end) {
-      setValue(newValue);
-      setTempValue(newValue);
-    } else {
-      setTempValue(newValue);
-    }
-  };
-
-  useEffect(() => {
-    const date_i = new Date(
-      value.start.year,
-      value.start.month - 1,
-      value.start.day
-    );
-    const fecha_i = `${date_i.getFullYear()}-${String(
-      date_i.getMonth() + 1
-    ).padStart(2, "0")}-${String(date_i.getDate()).padStart(2, "0")}`;
-
-    const date_e = new Date(value.end.year, value.end.month - 1, value.end.day);
-    const fecha_e = `${date_e.getFullYear()}-${String(
-      date_e.getMonth() + 1
-    ).padStart(2, "0")}-${String(date_e.getDate()).padStart(2, "0")}`;
-
-    const filtros = {
-      comprobanteSeleccionado,
-      sucursalSeleccionado,
-      fecha_i,
-      fecha_e,
-      razon,
-    };
-
-    onFiltersChange(filtros);
-    localStorage.setItem("filtros", JSON.stringify(filtros));
-  }, [
-    comprobanteSeleccionado,
-    sucursalSeleccionado,
-    value,
-    razon,
-    onFiltersChange,
-  ]);
+   const [numC, setNumC] = useState("");
+   const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
+   //const [modalTitle, setModalTitle] = useState(""); // Estado para el título del modal
+ 
+   const handleChange = (event) => {
+     setRazon(event.target.value);
+   };
+ 
+    const handleChanger = (event) => {
+     setNumC(event.target.value);
+   };
+ 
+   const handleDateChange = (newValue) => {
+     if (newValue.start && newValue.end) {
+       setValue(newValue);
+       setTempValue(newValue);
+     } else {
+       setTempValue(newValue);
+     }
+   };
+ 
+   useEffect(() => {
+     const date_i = new Date(
+       value.start.year,
+       value.start.month - 1,
+       value.start.day
+     );
+     const fecha_i = `${date_i.getFullYear()}-${String(
+       date_i.getMonth() + 1
+     ).padStart(2, "0")}-${String(date_i.getDate()).padStart(2, "0")}`;
+ 
+     const date_e = new Date(value.end.year, value.end.month - 1, value.end.day);
+     const fecha_e = `${date_e.getFullYear()}-${String(
+       date_e.getMonth() + 1
+     ).padStart(2, "0")}-${String(date_e.getDate()).padStart(2, "0")}`;
+ 
+     const filtros = {
+       comprobanteSeleccionado,
+       sucursalSeleccionado,
+       fecha_i,
+       fecha_e,
+       razon,
+       numC,
+     };
+ 
+     onFiltersChange(filtros);
+     localStorage.setItem("filtros", JSON.stringify(filtros));
+   }, [
+     comprobanteSeleccionado,
+     sucursalSeleccionado,
+     value,
+     razon,
+     numC,
+     onFiltersChange,
+   ]);
+ 
 
   const loadDetallesFromLocalStorage = () => {
     const savedDetalles = localStorage.getItem("total_ventas");
@@ -119,16 +127,31 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     }
   }, [isDeleted, refetchVentas]);
 
+  /*
   const handleOpenPDFModal = (title) => {
     setModalTitle(title);
     setModalOpen(true);
-  };
+  };*/
 
   return (
     <>
       <Toaster />
       <div className="flex flex-wrap justify-between mb-4">
         <div className="items-center justify-between block ms:block md:flex lg:w-12/12 xl:8/12 md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap">
+          <div className="flex input-wrapper">
+            <Input
+              type="text"
+              id="numC"
+              className="rounded-lg"
+              placeholder="Numero de comprobante"
+              value={numC}
+              onChange={handleChanger}
+              style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+              }}
+              /></div>
           <div className="flex input-wrapper">
             <Input
               type="text"
@@ -212,27 +235,6 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
                 >
                   Enviar a SUNAT
                 </DropdownItem>
-                <DropdownItem
-                  key="diario"
-                  startContent={<FaRegFilePdf />}
-                  onClick={() => handleOpenPDFModal("PDF C/ Quiebre diario")}
-                >
-                  Rep. C/ Quiebre diario
-                </DropdownItem>
-                <DropdownItem
-                  key="general"
-                  startContent={<FaRegFilePdf />}
-                  onClick={() => handleOpenPDFModal("PDF Listado General")}
-                >
-                  Rep. Listado General
-                </DropdownItem>
-                <DropdownItem
-                  key="comprobante"
-                  startContent={<FaRegFilePdf />}
-                  onClick={() => handleOpenPDFModal("PDF por Comprobante")}
-                >
-                  Rep. por Comprobante
-                </DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </button>
@@ -252,10 +254,10 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
       {/* Modal para confirmación de descarga de PDF */}
       <PDFModal
         isOpen={modalOpen}
-        modalTitle={modalTitle}
+        //modalTitle={modalTitle}
         onClose={() => setModalOpen(false)}
         onConfirm={() => {
-          console.log(`Descargando ${modalTitle}...`);
+          //console.log(`Descargando ${modalTitle}...`);
           setModalOpen(false);
         }}
       />

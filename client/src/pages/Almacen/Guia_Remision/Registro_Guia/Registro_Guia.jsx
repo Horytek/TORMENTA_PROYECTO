@@ -232,7 +232,8 @@ function RegistroGuia() {
   }));
 
 
-  const currentDate = new Date().toISOString().split('T')[0];
+  const currentDate = new Date();
+  const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
 
   const [currentHour, setCurrentHour] = useState(new Date().toLocaleTimeString('en-GB', { hour12: false }));
   useEffect(() => {
@@ -290,7 +291,7 @@ function RegistroGuia() {
                   <label htmlFor="fechaDocu" className='text-sm font-bold text-black'>Fecha:</label>
                   <input type="date" name='fechaDocu'
                     className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                    id="fechaDocu" defaultValue={currentDate} readOnly />
+                    id="fechaDocu" defaultValue={formattedDate} readOnly />
                 </div>
                 <div className="flex-1 ml-2">
                   <label htmlFor="horaDocu" className='text-sm font-bold text-black'>Hora:</label>

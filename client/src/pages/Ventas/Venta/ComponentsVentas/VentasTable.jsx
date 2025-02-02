@@ -45,6 +45,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       direccion:venta.ubicacion,
       usua_vendedor:venta.usua_vendedor,
       observacion:venta.observacion || '',
+      usua_usuario: localStorage.getItem('usuario')
     }
 
     localStorage.setItem('ventas', JSON.stringify(datos_venta));
@@ -120,7 +121,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       const imgOptions = { width: 50, height: 50 };
       const qrOptions = { width: 300, height: 300 };
   
-      conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", imgOptions);
+      conector.img_url("https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg", imgOptions);
       content.split('\n').forEach(line => {
           conector.text(line);
       });
@@ -136,7 +137,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           console.log("Problema al imprimir: " + resp);
       }*/
           const content = generateReceiptContent(venta_B, ventas_VB);
-          const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
+          const imgUrl = 'https://i.postimg.cc/J4zBMDJX/Whats-App-Image-2024-08-22-at-12-07-38-AM.png';
           
           // Crear una instancia de jsPDF
           const doc = new jsPDF({
@@ -170,7 +171,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
           
     } else if (printOption === 'print-1') {
       const content = generateReceiptContent(venta_B, ventas_VB);
-      const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
+      const imgUrl = 'https://i.postimg.cc/J4zBMDJX/Whats-App-Image-2024-08-22-at-12-07-38-AM.png';
 
       const printWindow = window.open('', '', 'height=600,width=800');
       // Generar QR dinámicamente

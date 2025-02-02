@@ -12,4 +12,6 @@ router.get("/categoria", kardexController.getCategorias);
 router.get("/detalleK", kardexController.getDetalleKardex);
 router.get("/detalleKA", kardexController.getDetalleKardexAnteriores);
 router.get("/producto", kardexController.getInfProducto);
+router.get("/generate-excel", kardexController.generateExcelReport);
+router.get("/generate-excel-dates", kardexController.generateExcelReportByDateRange);
 export default router;

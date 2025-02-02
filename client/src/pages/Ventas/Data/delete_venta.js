@@ -9,7 +9,8 @@ export const handleDelete = async (datosVenta) => {
         const response = await axios.post('/ventas/eliminar_venta', {
             id_venta: datosVenta.id,
             comprobante: datosVenta.tipoComprobante,
-            estado_sunat: datosVenta.estado_sunat
+            estado_sunat: datosVenta.estado_sunat,
+            usua: datosVenta.usua_usuario,
           });
 
         if (response.status === 200) {

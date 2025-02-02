@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import Pagination from '@/components/Pagination/Pagination';
+//import Pagination from '@/components/Pagination/Pagination';
 import TablaVentas from './ComponentsVentas/VentasTable';
 import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
@@ -9,9 +9,11 @@ import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import useVentasData from '../Data/data_venta';
 import { Toaster } from "react-hot-toast";
 import { handleDelete } from '../Data/delete_venta';
+import {Pagination} from "@nextui-org/pagination";
 import { anularVentaEnSunatF,anularVentaEnSunatB } from '../Data/anular_sunat';
 const Ventas = () => {
   // Estado para manejar la lista de ventas
+  
   const [filters, setFilters] = useState({
     comprobanteSeleccionado: '',
     sucursalSeleccionado: '',
@@ -29,6 +31,7 @@ const Ventas = () => {
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  //const [page, setPage] = useState(1);
 
   const loadDetallesFromLocalStorage = () => {
     const savedDetalles = localStorage.getItem('ventas');
@@ -95,9 +98,13 @@ const Ventas = () => {
   }, [isDeleted, refetchVentas]);
 
   // Función para cambiar de página en la paginación
-  const onPageChange = (page) => {
+  /*const onPageChange = (page) => {
     setCurrentPage(page);
-  };
+  };*/
+
+  /*const changePage = (newPage) => {
+    setCurrentPage(newPage);
+  };*/
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -172,7 +179,7 @@ const Ventas = () => {
       {/* Contenedor para paginación */}
       <div className="flex justify-between mt-4">
         <div className="flex">
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
+          <Pagination showControls color="primary" page={currentPage} total={totalPages} onChange={setCurrentPage}/>
         </div>
         <select
           className="pr-8 border-gray-300 rounded-lg input-c cant-pag-c bg-gray-50"
@@ -184,7 +191,6 @@ const Ventas = () => {
           <option value={20}>20</option>
           <option value={100000}>Todos</option>
         </select>
-
       </div>
     </div>
   );

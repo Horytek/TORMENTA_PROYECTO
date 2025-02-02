@@ -1,8 +1,9 @@
 import { getConnection } from "./../database/database";
 
 const getMarcas = async (req, res) => {
+    let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT id_marca, nom_marca, estado_marca
             FROM marca
@@ -12,13 +13,18 @@ const getMarcas = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }   finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const getMarca = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT id_marca, nom_marca, estado_marca
             FROM marca
@@ -33,10 +39,15 @@ const getMarca = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }   finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const addMarca = async (req, res) => {
+    let connection;
     try {
         const { nom_marca, estado_marca } = req.body;
 
@@ -45,7 +56,7 @@ const addMarca = async (req, res) => {
         }
 
         const marca = { nom_marca: nom_marca.trim(), estado_marca };
-        const connection = await getConnection();
+        connection = await getConnection();
         await connection.query("INSERT INTO marca SET ? ", marca);
 
         const [idAdd] = await connection.query("SELECT id_marca FROM marca WHERE nom_marca = ?", nom_marca);
@@ -55,15 +66,20 @@ const addMarca = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }   finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const updateMarca = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
         const { nom_marca, estado_marca } = req.body;
 
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             UPDATE marca 
             SET nom_marca = ?, estado_marca = ?
@@ -78,6 +94,10 @@ const updateMarca = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }    finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
@@ -86,8 +106,9 @@ const updateMarca = async (req, res) => {
 
 
 const deactivateMarca = async (req, res) => {
+    let connection;
     const { id } = req.params;
-    const connection = await getConnection();
+    connection = await getConnection();
     try {
         const [result] = await connection.query("UPDATE marca SET estado_marca = 0 WHERE id_marca = ?", [id]);
 
@@ -100,14 +121,19 @@ const deactivateMarca = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    }    finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 
 const deleteMarca = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query("DELETE FROM marca WHERE id_marca = ?", [id]);
                 
         if (result.affectedRows === 0) {
@@ -118,6 +144,10 @@ const deleteMarca = async (req, res) => {
     } catch (error) {
         if (!res.headersSent) {
             res.status(500).send(error.message);
+        }
+    }     finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
         }
     }
 };

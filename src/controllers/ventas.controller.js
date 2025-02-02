@@ -1,11 +1,12 @@
 import { getConnection } from "./../database/database";
 
 const getVentas = async (req, res) => {
-  const { page = 0, limit = 10, nom_tipocomp = '', razon_social = '', nombre_sucursal = '', fecha_i = '2022-01-01', fecha_e = '2027-12-27' } = req.query;
+  let connection;
+  const { page = 0, limit = 10, nom_tipocomp = '', razon_social = '', nombre_sucursal = '', fecha_i = '2022-01-01', fecha_e = '2027-12-27', numC= '' } = req.query;
   const offset = page * limit;
 
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
 
     // Obtener el número total de ventas
     const [totalResult] = await connection.query(
@@ -30,7 +31,7 @@ const getVentas = async (req, res) => {
         SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, SUBSTRING(com.num_comprobante, 6, 8) AS num,
         case when tp.nom_tipocomp='Nota de venta' then 'Nota' else tp.nom_tipocomp end as tipoComprobante, CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
         cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total, CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero,
-        ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal,s.ubicacion, cl.direccion, v.fecha_iso, v.metodo_pago, anl.id_anular, anl.anular, anlb.id_anular_b, anlb.anular_b, v.estado_sunat, vb.id_venta_boucher, usu.usua, v.observacion
+        ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal,s.ubicacion, cl.direccion, v.fecha_iso, v.metodo_pago, anl.id_anular, anl.anular, anlb.id_anular_b, anlb.anular_b, v.estado_sunat, vb.id_venta_boucher, usu.usua, v.observacion, v.hora_creacion, v.fecha_anulacion, (SELECT usu.usua FROM usuario usu WHERE usu.id_usuario = v.u_modifica) AS u_modifica
         FROM venta v
         INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
         INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
@@ -42,12 +43,12 @@ const getVentas = async (req, res) => {
         INNER JOIN anular_sunat_b anlb on anlb.id_anular_b=v.id_anular_b
         INNER JOIN venta_boucher vb ON vb.id_venta_boucher = v.id_venta_boucher
         INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
-      	WHERE ${inClause} AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=?
+      	WHERE ${inClause} AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=? AND com.num_comprobante LIKE ?
         GROUP BY id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d'), igv, cajero, cajeroId, estado
         ORDER BY v.id_venta desc
         LIMIT ? OFFSET ?
       `,
-      [...params,razon_social+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,parseInt(limit), parseInt(offset)]
+      [...params,razon_social+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,numC+'%',parseInt(limit), parseInt(offset)]
     );
 
     // Obtener los detalles de venta correspondientes
@@ -74,14 +75,20 @@ const getVentas = async (req, res) => {
     res.json({ code: 1, data: ventas, totalVentas });
   } catch (error) {
     res.status(500).send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
+
 const generarComprobante = async (req, res) => {
+  let connection;
   try {
     const { id_comprobante, usuario } = req.query; // Cambiar a req.query
 
-    const connection = await getConnection();
+    connection = await getConnection();
 
 // Obtener id_sucursal basado en el usuario
 const [sucursalResult] = await connection.query(
@@ -160,15 +167,20 @@ console.log("Nuevo número de comprobante:", nuevoNumComprobante);
   } catch (error) {
     console.error('Error en la función generarComprobante:', error.message); // Log para depuración
     res.status(500).send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
 
 const getProductosVentas = async (req, res) => {
+  let connection;
   try {
     const { id_sucursal } = req.query; // Cambiar a req.query
-    const connection = await getConnection();
+    connection = await getConnection();
     const [result] = await connection.query(`
                 SELECT PR.id_producto AS codigo, PR.descripcion AS nombre, 
                 CAST(PR.precio AS DECIMAL(10, 2)) AS precio, inv.stock as stock,PR.undm, MA.nom_marca, CA.nom_subcat AS categoria_p, PR.cod_barras as codigo_barras
@@ -186,12 +198,17 @@ const getProductosVentas = async (req, res) => {
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 const getEstado = async (req, res) => {
-  const connection = await getConnection();
+  let connection;
   try {
+    connection = await getConnection();
     const {
       id_venta,
     } = req.body;
@@ -210,12 +227,17 @@ const getEstado = async (req, res) => {
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 const getComprobante = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [result] = await connection.query(`
       	      	SELECT id_tipocomprobante AS id, case when nom_tipocomp='Nota de venta' then 'Nota' else nom_tipocomp end as nombre 
 			FROM tipo_comprobante WHERE nom_tipocomp NOT LIKE'Guia de remision' AND nom_tipocomp NOT LIKE'Nota de credito' 
@@ -225,12 +247,17 @@ const getComprobante = async (req, res) => {
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 const getLastVenta = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [result] = await connection.query(`
       	      	select id_venta + 1 as id from venta order by id_venta desc limit 1
             `);
@@ -238,13 +265,18 @@ const getLastVenta = async (req, res) => {
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
 const getSucursal = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [result] = await connection.query(`SELECT su.id_sucursal AS id, su.nombre_sucursal AS nombre, su.ubicacion AS ubicacion, usu.usua As usuario 
 FROM sucursal su INNER JOIN vendedor ven ON ven.dni = su.dni
 INNER JOIN usuario usu ON usu.id_usuario = ven.id_usuario`);
@@ -252,12 +284,17 @@ INNER JOIN usuario usu ON usu.id_usuario = ven.id_usuario`);
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 const getClienteVentas = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [result] = await connection.query(`
               			SELECT 
     id_cliente AS id,
@@ -281,11 +318,16 @@ ORDER BY
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  }   finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 const addVenta = async (req, res) => {
-  const connection = await getConnection();
+  let connection;
+  connection = await getConnection();
 
   try {
     const {
@@ -525,13 +567,18 @@ const addVenta = async (req, res) => {
     console.error("Error en el backend:", error.message);
     await connection.rollback();
     res.status(500).send(error.message);
-  }
+  }   finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 const addCliente = async (req, res) => {
-  const connection = await getConnection();
+  let connection;
 
   try {
+     connection = await getConnection();
     const { dniOrRuc, tipo_cliente, nombreCompleto, direccion } = req.body;
 
     console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
@@ -580,15 +627,20 @@ const addCliente = async (req, res) => {
   } catch (error) {
     console.error("Error en el backend:", error.message); // Log para verificar errores
     res.status(500).send(error.message);
-  }
+  }   finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
 const updateVenta = async (req, res) => {
-  const connection = await getConnection();
+  let connection;
 
   try {
-    const { id_venta,comprobante, estado_sunat} = req.body;
+    connection = await getConnection();
+    const { id_venta,comprobante, estado_sunat, usua} = req.body;
 
     if (!id_venta ) {
       return res
@@ -611,6 +663,24 @@ const updateVenta = async (req, res) => {
     if (detallesResult.length === 0) {
       throw new Error("No details found for the given sale.");
     }
+
+        // Obtener el id_usuario a partir del usua
+        const [usuarioResult] = await connection.query(
+          `
+          SELECT id_usuario
+          FROM usuario
+          WHERE usua = ?
+          `,
+          [usua]
+        );
+    
+        console.log("Resultado de usuario:", usuarioResult); 
+    
+        if (usuarioResult.length === 0) {
+          throw new Error("Usuario no encontrado.");
+        }
+    
+        const id_usuario = usuarioResult[0].id_usuario;
 
     // Restaurar el stock de los productos
     for (const detalle of detallesResult) {
@@ -665,9 +735,9 @@ const updateVenta = async (req, res) => {
     await connection.query(
       `
       UPDATE venta
-      SET estado_venta = ? WHERE id_venta = ?
+      SET estado_venta = ? , u_modifica = ? WHERE id_venta = ?
       `,
-      [0, id_venta]
+      [0, id_usuario, id_venta]
     );
 
     if (estado_sunat === 1 && comprobante === 'Factura') {
@@ -695,12 +765,16 @@ const updateVenta = async (req, res) => {
     console.error("Error en el backend:", error.message); // Log para verificar errores
     await connection.rollback();
     res.status(500).send(error.message);
-  }
+  }   finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
-
 const getVentaById = async (req, res) => {
-  const connection = await getConnection();
+  let connection;
+
   const { id_venta_boucher } = req.query;
 
   if (!id_venta_boucher) {
@@ -708,6 +782,7 @@ const getVentaById = async (req, res) => {
   }
 
   try {
+    connection = await getConnection();
     // Consulta para obtener los datos de la venta
     const [venta] = await connection.query(
       `SELECT vb.id_venta_boucher,vb.fecha,vb.nombre_cliente,vb.documento_cliente,
@@ -765,7 +840,11 @@ vb.descuento_venta,vb.vuelto,vb.recibido,vb.formadepago, com.num_comprobante
   } catch (error) {
     console.error("Error al obtener los datos de la venta:", error.message);
     res.status(500).send("Error al obtener los datos de la venta: " + error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
@@ -782,5 +861,5 @@ export const methods = {
   generarComprobante,
   getEstado,
   getVentaById,
-  getLastVenta
+  getLastVenta,
 };

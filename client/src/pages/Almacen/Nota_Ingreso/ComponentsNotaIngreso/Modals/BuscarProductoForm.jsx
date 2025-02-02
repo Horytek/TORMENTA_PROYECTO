@@ -5,7 +5,7 @@ import { IoMdAdd } from "react-icons/io";
 import ProductosForm from '../../../../Productos/ProductosForm';
 import { toast } from "react-hot-toast";
 
-const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto, setCodigoBarras }) => {
+const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto, setCodigoBarras, hideStock }) => {
   if (!isOpen) return null;
 
   const [cantidades, setCantidades] = useState({});
@@ -38,10 +38,8 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
       onBuscar();  // Lógica que se ejecuta después de escanear
     }
   };
-  
 
   const handleCantidadChange = (codigo, cantidad) => {
-    // Permite valores vacíos y números que no comiencen con 0 (a menos que el valor sea '0')
     if (/^\d*$/g.test(cantidad) && (cantidad === '' || !/^0[0-9]/.test(cantidad))) {
       setCantidades({
         ...cantidades,
@@ -115,7 +113,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                   <th className="py-2 px-4 border-b">Código</th>
                   <th className="py-2 px-4 border-b w-96">Descripción</th>
                   <th className="py-2 px-4 border-b">Marca</th>
-                  <th className="py-2 px-4 border-b">Stock</th>
+                  {!hideStock && <th className="py-2 px-4 border-b">Stock</th>}
                   <th className="py-2 px-4 border-b">Cantidad</th>
                   <th className="py-2 px-4 border-b">Acción</th>
                 </tr>
@@ -126,9 +124,11 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                     <td className="py-2 px-4 border-b text-center">{producto.codigo}</td>
                     <td className="py-2 px-4 border-b text-center">{producto.descripcion}</td>
                     <td className="py-2 px-4 border-b text-center">{producto.marca}</td>
-                    <td className="py-2 px-4 border-b text-center">{producto.stock}</td>
+                    {!hideStock && (
+                      <td className="py-2 px-4 border-b text-center">{producto.stock}</td>
+                    )}
                     <td className="py-2 px-4 border-b text-center">
-                    <input
+                      <input
                         type="number"
                         className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2 text-center w-16 mx-auto"
                         value={cantidades[producto.codigo] || ''}
@@ -143,7 +143,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
                       />
                     </td>
                     <td className="py-2 px-4 border-b text-center">
-                    <button
+                      <button
                         className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                         onClick={() => handleAgregarProducto(producto)}
                       >

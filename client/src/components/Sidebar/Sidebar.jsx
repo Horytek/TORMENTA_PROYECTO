@@ -52,6 +52,7 @@ function Sidebar() {
             {
               to: '/ventas', icon: <FaChartLine className="text-xl" />, text: 'Ventas', subLinks: [
                 { to: '/ventas/registro_venta', text: 'Nueva Venta' },
+                { to: 'ventas/libro_ventas', text: 'Libro de Ventas' },
               ]
             },
             { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén', subLinks: [
@@ -66,6 +67,7 @@ function Sidebar() {
             },
             { icon: <FaCog className="text-xl" />, text: 'Configuración', subLinks: [
               { to: '/configuracion/usuarios', text: 'Usuarios' },
+              { to: '/configuracion/historial', text: 'Historial' },
             ]},
           ].map(({ to, icon, text, subLinks }) => (
             <div key={to}>

@@ -3,10 +3,11 @@ import { getConnection } from "../database/database";
 
 
 const getSalidas = async (req, res) => {
+  let connection;
   const { fecha_i = '2012-01-01', fecha_e = '2057-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
 
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
 
     const [salidaResult] = await connection.query(
       `
@@ -84,11 +85,18 @@ const getSalidas = async (req, res) => {
     res.json({ code: 1, data: salidas });
   } catch (error) {
     res.status(500).send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
+
+
 const getAlmacen = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [result] = await connection.query(`
             SELECT a.id_almacen AS id, a.nom_almacen AS almacen, COALESCE(s.nombre_sucursal,'Sin Sucursal') AS sucursal 
             FROM almacen a 
@@ -100,14 +108,21 @@ const getAlmacen = async (req, res) => {
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
+
+
 const getProductos = async (req, res) => {
+  let connection;
   const { descripcion = '', almacen = 1, cod_barras = '' } = req.query;
 
   console.log('Filtros recibidos:', { descripcion, almacen, cod_barras });
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
 
     let query = `
       SELECT 
@@ -143,14 +158,19 @@ const getProductos = async (req, res) => {
     res.json({ code: 1, data: productosResult });
   } catch (error) {
     res.status(500).send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
 
 const getNuevoDocumento = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [result] = await connection.query(`
       SELECT 
         IFNULL(
@@ -165,11 +185,17 @@ const getNuevoDocumento = async (req, res) => {
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  } finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
+
 const getDestinatario = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [result] = await connection.query(`
             SELECT id_destinatario AS id,COALESCE(ruc, dni) AS documento ,COALESCE(razon_social, CONCAT(nombres, ' ', apellidos)) AS destinatario 
             FROM destinatario;
@@ -179,8 +205,14 @@ const getDestinatario = async (req, res) => {
   } catch (error) {
     res.status(500);
     res.send(error.message);
-  }
+  } finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
+
+
 const insertNotaAndDetalle = async (req, res) => {
   const {
     almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion, nom_usuario
@@ -289,7 +321,11 @@ const insertNotaAndDetalle = async (req, res) => {
       await connection.rollback();
     }
     res.status(500).send({ code: 0, message: error.message });
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 const anularNota = async (req, res) => {
@@ -356,7 +392,11 @@ const anularNota = async (req, res) => {
       await connection.rollback();
     }
     res.status(500).send({ code: 0, message: error.message });
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 export const methods = {

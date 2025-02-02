@@ -2,8 +2,9 @@ import { getConnection } from "./../database/database";
 import { subDays, subWeeks, subMonths, subYears, format } from "date-fns";
 
 const getProductoMasVendido = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     
     const { tiempo } = req.query;
     
@@ -65,13 +66,18 @@ const getProductoMasVendido = async (req, res) => {
     res.json({ code: 1, data: productoMasVendido, message: "Producto más vendido obtenido correctamente" });
   } catch (error) {
     res.status(500).send(error.message);
-  }
+  }   finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
 const getTotalVentas = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
 
     const { tiempo } = req.query;
 
@@ -108,7 +114,7 @@ const getTotalVentas = async (req, res) => {
       SELECT SUM(dv.total) AS total_dinero_ventas
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
-      WHERE v.f_venta >= ? AND v.f_venta <= ?;
+      WHERE v.f_venta >= ? AND v.f_venta <= ? AND v.estado_venta!=0;
     `, [fechaInicioISO, fechaFinISO]);
 
     const totalVentas = result[0].total_dinero_ventas || 0;
@@ -117,14 +123,19 @@ const getTotalVentas = async (req, res) => {
   } catch (error) {
     console.error('Error en getTotalVentas:', error);
     res.status(500).send(error.message);
-  }
+  }   finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
 
 const getTotalProductosVendidos = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
 
     const { tiempo } = req.query;
     
@@ -169,13 +180,18 @@ const getTotalProductosVendidos = async (req, res) => {
     res.json({ code: 1, totalProductosVendidos, message: "Total de productos vendidos obtenido correctamente" });
   } catch (error) {
     res.status(500).send(error.message);
-  }
+  }   finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
 const getComparacionVentasPorRango = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
 
     const { fechaInicio, fechaFin } = req.body;
 
@@ -220,7 +236,11 @@ const getComparacionVentasPorRango = async (req, res) => {
   } catch (error) {
     console.error('Error en getComparacionVentasPorRango:', error);
     res.status(500).send(error.message);
-  }
+  }  finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 

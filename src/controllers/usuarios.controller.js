@@ -1,21 +1,27 @@
 import { getConnection } from "./../database/database";
 
 const getUsuarios = async (req, res) => {
+    let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol ORDER BY id_usuario desc`);
         res.json({ code: 1, data: result });
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const getUsuario = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol WHERE U.id_usuario = ?`, id);
         
@@ -27,10 +33,15 @@ const getUsuario = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const addUsuario = async (req, res) => {
+    let connection;
     try {
         const { id_rol, usua, contra, estado_usuario } = req.body;
 
@@ -39,17 +50,22 @@ const addUsuario = async (req, res) => {
         }
 
         const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario };
-        const connection = await getConnection();
+        connection = await getConnection();
         await connection.query("INSERT INTO usuario SET ? ", usuario);
 
         res.json({code: 1, message: "Usuario añadido" });
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 }
 
 const updateUsuario = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
         const { id_rol, usua, contra, estado_usuario } = req.body;
@@ -59,7 +75,7 @@ const updateUsuario = async (req, res) => {
         }
 
         const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario };
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query("UPDATE usuario SET ? WHERE id_usuario = ?", [usuario, id]);
 
         if (result.affectedRows === 0) {
@@ -70,13 +86,18 @@ const updateUsuario = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 }
 
 const deleteUsuario = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         
         // Verificar si el usuario está en uso dentro de la base de datos
         const [verify] = await connection.query("SELECT 1 FROM vendedor WHERE id_usuario = ?", id);
@@ -103,6 +124,10 @@ const deleteUsuario = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 }
 

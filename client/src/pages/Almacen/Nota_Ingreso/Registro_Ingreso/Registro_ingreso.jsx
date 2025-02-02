@@ -1,4 +1,4 @@
-import React,  { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';
 import ProductosModal from '@/pages/Productos/ProductosForm';
@@ -13,10 +13,12 @@ import useAlmacenData from '../data/data_almacen_ingreso';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
 import useProductosData from './data/data_buscar_producto';
+import useSinStockProductosData from './data/data_buscar_producto_s';
 import insertNotaAndDetalle from '../data/add_nota'; // Importa la función de inserción
 import './Registro_ingreso.css'; // Asegúrate de importar el mismo archivo de estilos
 import { Toaster, toast } from "react-hot-toast"; // Importa el mismo paquete de validaciones
 import ConfirmationModal from '../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
   "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA", "DEVOLUCION", "CLIENTE",
@@ -33,10 +35,6 @@ function Registro_Ingresos() {
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [codigoBarras, setCodigoBarras] = useState('');
-
-  const handleBarcodeInput = (e) => {
-    setCodigoBarras(e.target.value);
-  };
   const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState(''); // Nuevo estado para el mensaje de confirmación
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
@@ -48,23 +46,12 @@ function Registro_Ingresos() {
   const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
 
-
-  // Agregar la lógica de almacenOrigen
-  const [almacenOrigen, setAlmacenOrigen] = useState(() => {
-    const savedAlmacen = localStorage.getItem('almacen');
-    return savedAlmacen ? parseInt(savedAlmacen) : '';
-  });
+  // Elimina el uso de localStorage para almacenOrigen
+  const [almacenOrigen, setAlmacenOrigen] = useState('');
 
   useEffect(() => {
     localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
   }, [productosSeleccionados]);
-
-  // Guardar almacenOrigen en localStorage
-  useEffect(() => {
-    if (almacenOrigen !== '') {
-      localStorage.setItem('almacen', almacenOrigen.toString());
-    }
-  }, [almacenOrigen]);
 
   useEffect(() => {
     if (isModalOpen && almacenOrigen) {
@@ -72,30 +59,31 @@ function Registro_Ingresos() {
     }
   }, [isModalOpen, almacenOrigen]);
 
-  const openModalBuscarProducto = () => {
-    if (almacenOrigen) {
-      setIsModalOpen(true);
-      handleBuscarProducto();
-    } else {
-      toast.error('Por favor seleccione un almacén de origen primero.');
-    }
+  const openModalBuscarProducto = async () => {
+    /*if (almacenOrigen === '') {
+      const result = await useSinStockProductosData();
+      setProductos(result.productos);
+      setIsModalOpen(true); 
+    } else {*/
+      await handleBuscarProducto();
+      setIsModalOpen(true); 
+   /* }*/
   };
+
   const closeModalBuscarProducto = () => setIsModalOpen(false);
 
   const openModalOpenGuardar = () => {
     const almacenDestino = document.getElementById('almacen_destino').value;
     if (almacenDestino) {
       setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
-    } else {
-      setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
-    }
+    } 
     setisModalOpenGuardar(true);
   };
 
   const closeModalOpenGuardar = () => {
     setisModalOpenGuardar(false);
   };
-  
+
   const closeModalProducto = () => setIsModalOpenProducto(false);
 
   const handleConfirmGuardar = async () => {
@@ -103,73 +91,76 @@ function Registro_Ingresos() {
     await handleGuardarAction(); // Llamar a la función de guardado
   };
 
-
   const handleGuardarAction = async () => {
-    const almacenO = document.getElementById('almacen_origen').value;
-    const almacenD = document.getElementById('almacen_destino').value || null;
-    const destinatario = document.getElementById('destinatario').value;
-    const glosa = document.getElementById('glosa').value;
-    const fecha = document.getElementById('fechaDocu').value;
-    const nota = document.getElementById('nomnota').value;
-    const numComprobante = document.getElementById('numero').value;
-    const observacion = document.getElementById('observacion').value;
-    const usuario = localStorage.getItem('usuario');
-    if (!usuario) {
-      toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
-      return;
-    }
-
-    const productos = productosSeleccionados.map(producto => ({
-      id: producto.codigo,
-      cantidad: producto.cantidad
-    }));
-
-    const data = {
-      almacenO,
-      almacenD,
-      destinatario,
-      glosa,
-      nota,
-      fecha,
-      producto: productos.map(p => p.id),
-      numComprobante,
-      cantidad: productos.map(p => p.cantidad),
-      observacion,
-      usuario
-    };
-
-    const result = await insertNotaAndDetalle(data);
-
-    if (result.success) {
-      toast.success('Nota y detalle insertados correctamente.');
-      handleCancel();
-      window.location.reload();
-    } else {
-      toast.error('Error inesperado, intente nuevamente.');
+    try {
+      const almacenO = document.getElementById('almacen_origen').value || "";
+      const almacenD = document.getElementById('almacen_destino').value ;
+      const destinatario = document.getElementById('destinatario').value;
+      const glosa = document.getElementById('glosa').value;
+      const fecha = document.getElementById('fechaDocu').value;
+      const nota = document.getElementById('nomnota').value;
+      const numComprobante = document.getElementById('numero').value;
+      const observacion = document.getElementById('observacion').value;
+      const usuario = localStorage.getItem('usuario');
+  
+      if (!usuario) {
+        toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
+        return;
+      }
+  
+      const productos = productosSeleccionados.map(producto => ({
+        id: producto.codigo,
+        cantidad: producto.cantidad
+      }));
+  
+      const data = {
+        almacenO,
+        almacenD,
+        destinatario,
+        glosa,
+        nota,
+        fecha,
+        producto: productos.map(p => p.id),
+        numComprobante,
+        cantidad: productos.map(p => p.cantidad),
+        observacion,
+        usuario
+      };
+  
+      const result = await insertNotaAndDetalle(data);
+  
+      if (result.success) {
+        toast.success('Nota y detalle insertados correctamente.');
+        handleCancel();
+        window.location.reload();
+      } else {
+        throw new Error('Error inesperado en la inserción de la nota.');
+      }
+    } catch (error) {
+      console.error('Error en handleGuardarAction:', error);
+      toast.error`(Error inesperado: ${error.message})`;
     }
   };
+
   const openModalProovedor = () => setIsModalOpenProovedor(true);
   const closeModalProovedor = () => setIsModalOpenProovedor(false);
 
   const handleBuscarProducto = async () => {
-    const almacenId = almacenOrigen || 1;
+    const almacenId = almacenOrigen || '';
     const filters = {
       descripcion: searchInput,
       almacen: almacenId,
       cod_barras: codigoBarras
     };
-
+  
     const result = await useProductosData(filters);
     setProductos(result.productos);
   };
-
-
 
   const handleCancel = () => {
     localStorage.removeItem('productosSeleccionados');
     setProductosSeleccionados([]);
   };
-
 
   const agregarProducto = (producto, cantidad) => {
     setProductosSeleccionados((prevProductos) => {
@@ -181,9 +172,9 @@ function Registro_Ingresos() {
       if (cantidadTotal > producto.stock) {
         const maxCantidad = producto.stock - cantidadExistente;
         if (maxCantidad > 0) {
-          toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
+          toast.error`(No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Solo puedes agregar ${maxCantidad})`;
         }
-        toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
+        toast.error`(No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.)`;
         return prevProductos;
       }
 
@@ -200,21 +191,16 @@ function Registro_Ingresos() {
     closeModalBuscarProducto();
   };
 
-
   const handleGuardar = async () => {
-    const almacenO = document.getElementById('almacen_origen').value;
-    const almacenD = document.getElementById('almacen_destino').value || null;
+    const almacenD = document.getElementById('almacen_destino').value;
     const destinatario = document.getElementById('destinatario').value;
     const glosa = document.getElementById('glosa').value;
     const fecha = document.getElementById('fechaDocu').value;
     const nota = document.getElementById('nomnota').value;
     const numComprobante = document.getElementById('numero').value;
 
-    if (almacenO == almacenD) {
-      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
-      return;
-    }
-    if (!almacenO || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
+
+    if (!almacenD || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
       toast.error('Por favor complete todos los campos.');
       return;
     }
@@ -223,6 +209,7 @@ function Registro_Ingresos() {
       toast.error('Debe agregar al menos un producto.');
       return;
     }
+
     let stockExcedido = false;
     productosSeleccionados.forEach(producto => {
       if (producto.cantidad > producto.stock) {
@@ -235,19 +222,13 @@ function Registro_Ingresos() {
       return;
     }
 
-    const almacenDestino = document.getElementById('almacen_destino').value;
-    if (almacenDestino) {
-      setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
-    } else {
-      setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
-    }
     openModalOpenGuardar();
   };
-  
 
   const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
-  const currentDate = new Date().toISOString().split('T')[0];
-
+  const currentDate = new Date();
+  const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
+  
   return (
     <div>
       <Breadcrumb paths={[
@@ -264,7 +245,7 @@ function Registro_Ingresos() {
       </div>
       <div className="container-registro-detalle-venta" style={{ backgroundColor: 'lightgray', padding: 20 }}>
         <form className="flex rounded-lg">
-        <Toaster />
+          <Toaster />
           <div className="flex flex-col w-1/2">
             <div className="grid grid-cols-2 gap-4">
               <div className="mb-4">
@@ -272,10 +253,9 @@ function Registro_Ingresos() {
                   Almacén origen:
                 </label>
                 <select 
-                   className='form-elementwaentrada'
+                  className='form-elementwaentrada'
                   id="almacen_origen"
-                  value={almacenOrigen}
-                  onChange={(e) => setAlmacenOrigen(parseInt(e.target.value))}
+                  onChange={(e) => setAlmacenOrigen(e.target.value)}  
                   disabled={productosSeleccionados.length > 0}
                 >
                   <option value="">Seleccionar</option>
@@ -296,7 +276,6 @@ function Registro_Ingresos() {
                 <select 
                   className='form-elementwaentrada'
                   id="almacen_destino"
-
                 >
                   <option value="">Seleccionar</option>
                   {almacenes.map(almacen => (
@@ -327,7 +306,8 @@ function Registro_Ingresos() {
                   RUC:
                 </label>
                 <input 
-className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3'                  id="ruc" 
+                  className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' 
+                  id="ruc" 
                   type="text" 
                   readOnly
                 />
@@ -337,7 +317,8 @@ className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm ro
                   Nombre de nota:
                 </label>
                 <input 
-className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3'                  id="nomnota" 
+                  className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' 
+                  id="nomnota" 
                   type="text" 
                 />
               </div>
@@ -350,7 +331,7 @@ className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm ro
                   type="date" 
                   className="form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3"
                   id="fechaDocu" 
-                  defaultValue={currentDate}
+                  defaultValue={formattedDate}
                 />
               </div>
             </div>
@@ -385,7 +366,8 @@ className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm ro
                   Número:
                 </label>
                 <input 
-                  className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full'                  id="numero" 
+                  className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full' 
+                  id="numero" 
                   type="text" 
                   value={currentDocumento} 
                   readOnly
@@ -423,7 +405,9 @@ className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm ro
         productos={productos}
         agregarProducto={agregarProducto}
         setCodigoBarras={setCodigoBarras}
+        hideStock={!almacenOrigen} 
       />
+
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}

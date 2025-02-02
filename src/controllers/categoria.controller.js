@@ -1,8 +1,9 @@
 import { getConnection } from "./../database/database";
 
 const getCategorias = async (req, res) => {
+    let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT id_categoria, nom_categoria, estado_categoria
             FROM categoria
@@ -12,13 +13,18 @@ const getCategorias = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const getCategoria = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT id_categoria, nom_categoria, estado_categoria
             FROM categoria
@@ -33,10 +39,15 @@ const getCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const addCategoria = async (req, res) => {
+    let connection;
     try {
         const { nom_categoria, estado_categoria } = req.body;
 
@@ -45,7 +56,7 @@ const addCategoria = async (req, res) => {
         }
 
         const categoria = { nom_categoria: nom_categoria.trim(), estado_categoria };
-        const connection = await getConnection();
+        connection = await getConnection();
         await connection.query("INSERT INTO categoria SET ? ", categoria);
         const [idAdd] = await connection.query("SELECT id_categoria FROM categoria WHERE nom_categoria = ?", nom_categoria);
 
@@ -54,15 +65,20 @@ const addCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const updateCategoria = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
         const { nom_categoria, estado_categoria } = req.body;
 
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             UPDATE categoria 
             SET nom_categoria = ?, estado_categoria = ?
@@ -77,12 +93,17 @@ const updateCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const deactivateCategoria = async (req, res) => {
+    let connection;
     const { id } = req.params;
-    const connection = await getConnection();
+    connection = await getConnection();
     try {
         const [result] = await connection.query("UPDATE categoria SET estado_categoria = 0 WHERE id_categoria = ?", [id]);
 
@@ -95,13 +116,18 @@ const deactivateCategoria = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send(error.message);
         }
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
     }
 };
 
 const deleteCategoria = async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query("DELETE FROM categoria WHERE id_categoria = ?", [id]);
                 
         if (result.affectedRows === 0) {
@@ -112,6 +138,10 @@ const deleteCategoria = async (req, res) => {
     } catch (error) {
         if (!res.headersSent) {
             res.status(500).send(error.message);
+        }
+    }  finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
         }
     }
 };

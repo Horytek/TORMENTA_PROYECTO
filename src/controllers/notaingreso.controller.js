@@ -4,9 +4,9 @@ import { getConnection } from "../database/database";
 
 const getIngresos = async (req, res) => {
   const { fecha_i = '2022-01-01', fecha_e = '2027-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
-
+  let connection;
   try {
-      const connection = await getConnection();
+      connection = await getConnection();
 
       const [ingresosResult] = await connection.query(
         `
@@ -81,11 +81,18 @@ const getIngresos = async (req, res) => {
       res.json({ code: 1, data: ingresos });
   } catch (error) {
       res.status(500).send(error.message);
-  }
+  } finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
+
+
 const getAlmacen = async (req, res) => {
+  let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT a.id_almacen AS id, a.nom_almacen AS almacen, COALESCE(s.nombre_sucursal,'Sin Sucursal') AS sucursal 
             FROM almacen a 
@@ -97,57 +104,129 @@ const getAlmacen = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
-    }
+    } finally {
+      if (connection) {
+          connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      }
+  }
 };
+
+
 const getProductos = async (req, res) => {
-    const { descripcion = '', almacen = 1, cod_barras = '' } = req.query;
-  
-    console.log('Filtros recibidos:', { descripcion, almacen,cod_barras });
-  
-    try {
-      const connection = await getConnection();
-  
-      let query = `
-      SELECT 
-        p.id_producto AS codigo, 
-        p.descripcion AS descripcion, 
-        m.nom_marca AS marca, 
-        COALESCE(i.stock, 0) AS stock,
-        p.cod_barras as cod_barras 
-      FROM producto p 
-      INNER JOIN marca m ON p.id_marca = m.id_marca 
-      INNER JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
-      WHERE i.stock > 0
-    `;
+  let connection;
+  const { descripcion = '', almacen = 1, cod_barras = '' } = req.query;
 
-    const queryParams = [almacen];
+  console.log('Filtros recibidos:', { descripcion, almacen, cod_barras });
 
-    if (descripcion) {
-      query += ' AND p.descripcion LIKE ?';
-      queryParams.push(`%${descripcion}%`);
+  try {
+    connection = await getConnection();
+
+    let query = '';
+    const queryParams = [];
+
+    // Si el almacen tiene valor, buscar productos con stock en ese almacen
+    if (almacen && almacen !== '0') {
+      query = `
+        SELECT 
+          p.id_producto AS codigo, 
+          p.descripcion AS descripcion, 
+          m.nom_marca AS marca, 
+          COALESCE(i.stock, 0) AS stock,
+          p.cod_barras as cod_barras 
+        FROM producto p 
+        INNER JOIN marca m ON p.id_marca = m.id_marca 
+        INNER JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
+        WHERE i.stock > 0
+      `;
+      queryParams.push(almacen);
+
+      if (descripcion) {
+        query += ' AND p.descripcion LIKE ?';
+        queryParams.push(`%${descripcion}%`);
+      }
+
+      if (cod_barras) {
+        query += ' AND p.cod_barras LIKE ?';
+        queryParams.push(`%${cod_barras}%`);
+      }
+
+      query += ' GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock';
+    } else {
+      // Si el almacen no tiene valor, buscar productos sin stock
+      query = `
+        SELECT 
+          p.id_producto AS codigo, 
+          p.descripcion AS descripcion, 
+          m.nom_marca AS marca,
+          p.cod_barras AS cod_barras
+        FROM producto p 
+        INNER JOIN marca m ON p.id_marca = m.id_marca
+        WHERE p.descripcion LIKE ? AND p.cod_barras LIKE ?
+      `;
+      queryParams.push(`%${descripcion}%`, `%${cod_barras}%`);
     }
-
-    if (cod_barras) {
-      query += ' AND p.cod_barras LIKE ?';
-      queryParams.push(`%${cod_barras}%`);
-    }
-
-    query += ' GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock';
 
     const [productosResult] = await connection.query(query, queryParams);
 
-  
-      console.log('Productos encontrados:', productosResult);
-  
-      res.json({ code: 1, data: productosResult });
-    } catch (error) {
-      res.status(500).send(error.message);
+    console.log('Productos encontrados:', productosResult);
+
+    res.json({ code: 1, data: productosResult });
+  } catch (error) {
+    res.status(500).send(error.message);
+  } finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
     }
-  };
+}
+};
+
   
+//OBTENER PRODUCTOS
+const getProductos_SinStock = async (req, res) => {
+  let connection;
+  const { descripcion = '', codbarras = '' } = req.query;
+
+  console.log('Filtros recibidos:', { descripcion, codbarras });
+
+  try {
+      connection = await getConnection();
+
+      const [productosResult] = await connection.query(
+          `
+          SELECT 
+              p.id_producto AS codigo, 
+              p.descripcion AS descripcion, 
+              m.nom_marca AS marca,
+              p.cod_barras AS codbarras
+          FROM 
+              producto p 
+          INNER JOIN 
+              marca m ON p.id_marca = m.id_marca
+          WHERE 
+              p.descripcion LIKE ? AND
+              p.cod_barras LIKE ?
+          `,
+          [`%${descripcion}%`, `%${codbarras}%`]
+      );
+
+      console.log('Productos encontrados:', productosResult);
+
+      res.json({ code: 1, data: productosResult });
+  } catch (error) {
+      res.status(500).send(error.message);
+  } finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
+};
+
+
+
   const getNuevoDocumento = async (req, res) => {
+    let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT CONCAT('I400-', LPAD(COALESCE(SUBSTRING(MAX(num_comprobante), 6) + 1, 1), 8, '0')) AS nuevo_numero_de_nota
             FROM comprobante
@@ -157,12 +236,17 @@ const getProductos = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
-    }
+    } finally {
+      if (connection) {
+          connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      }
+  }
 };
 
 const getDestinatario = async (req, res) => {
+  let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         const [result] = await connection.query(`
             SELECT id_destinatario AS id,COALESCE(ruc, dni) AS documento ,COALESCE(razon_social, CONCAT(nombres, ' ', apellidos)) AS destinatario 
             FROM destinatario;
@@ -172,13 +256,17 @@ const getDestinatario = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
-    }
+    } finally {
+      if (connection) {
+          connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      }
+  }
 };
 
 const insertNotaAndDetalle = async (req, res) => {
   const {
-    almacenO,
-    almacenD,
+    almacenO = null,
+    almacenD ,
     destinatario,
     glosa,
     nota,
@@ -192,9 +280,8 @@ const insertNotaAndDetalle = async (req, res) => {
 
   console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
 
-  // Validar los datos recibidos
+  // Validar los datos recibidos (almacenO y almacenD ya no son obligatorios)
   if (
-    !almacenO ||
     !almacenD ||
     !destinatario ||
     !glosa ||
@@ -202,7 +289,8 @@ const insertNotaAndDetalle = async (req, res) => {
     !fecha ||
     !producto ||
     !numComprobante ||
-    !cantidad
+    !cantidad ||
+    !usuario
   ) {
     console.log("Error en los datos:", {
       almacenO,
@@ -239,26 +327,46 @@ const insertNotaAndDetalle = async (req, res) => {
     );
 
     const id_comprobante = comprobanteResult.insertId;
+   
+    let notaResult;
 
-    // Insertar la nota
-    const [notaResult] = await connection.query(
-      `INSERT INTO nota 
-      (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario) 
-      VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ? , ?)`,
-      [
-        almacenO,
-        almacenD,
-        destinatario,
-        id_comprobante,
-        glosa,
-        fecha,
-        nota,
-        observacion,
-        usuarioResult[0]?.id_usuario,
-      ]
-    );
+if (almacenO) {
+  [notaResult] = await connection.query(
+    `INSERT INTO nota 
+    (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario) 
+    VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ? , ?)`,
+    [
+      almacenO,
+      almacenD,
+      destinatario,
+      id_comprobante,
+      glosa,
+      fecha,
+      nota,
+      observacion,
+      usuarioResult[0]?.id_usuario,
+    ]
+  );
+} else {
+  [notaResult] = await connection.query(
+    `INSERT INTO nota 
+    (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario) 
+    VALUES (null, ?, 1, ?, ?, ?, ?, ?, 0, ?, ?)`,
+    [
+      almacenD,
+      destinatario,
+      id_comprobante,
+      glosa,
+      fecha,
+      nota,
+      observacion,
+      usuarioResult[0]?.id_usuario,
+    ]
+  );
+}
 
-    const id_nota = notaResult.insertId;
+const id_nota = notaResult.insertId;
+  
 
     // Insertar el detalle de la nota
     for (let i = 0; i < producto.length; i++) {
@@ -272,7 +380,7 @@ const insertNotaAndDetalle = async (req, res) => {
       );
 
       if (precioResult.length === 0) {
-        throw new Error(`El producto con ID ${id_producto} no existe.`);
+        throw new Error`(El producto con ID ${id_producto} no existe.)`;
       }
 
       const precio = precioResult[0].precio;
@@ -285,45 +393,47 @@ const insertNotaAndDetalle = async (req, res) => {
 
       const id_detalle = detalleResult.insertId;
 
-      // Verificar y actualizar el stock
-      const [stockResult] = await connection.query(
-        "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
-        [id_producto, almacenD]
-      );
-
-      let totalStock;
-
-      if (stockResult.length > 0) {
-        totalStock = cantidadProducto + stockResult[0].stock;
-
-        await connection.query(
-          "UPDATE inventario SET stock = ? WHERE id_producto = ? AND id_almacen = ?",
-          [totalStock, id_producto, almacenD]
+      // Verificar y actualizar el stock (solo si almacenD no es null)
+      if (almacenD) {
+        const [stockResult] = await connection.query(
+          "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
+          [id_producto, almacenD]
         );
-      } else {
-        totalStock = cantidadProducto;
 
-        // Insertar nuevo inventario si el producto no existe en el almacén
+        let totalStock;
+
+        if (stockResult.length > 0) {
+          totalStock = cantidadProducto + stockResult[0].stock;
+
+          await connection.query(
+            "UPDATE inventario SET stock = ? WHERE id_producto = ? AND id_almacen = ?",
+            [totalStock, id_producto, almacenD]
+          );
+        } else {
+          totalStock = cantidadProducto;
+
+          // Insertar nuevo inventario si el producto no existe en el almacén
+          await connection.query(
+            "INSERT INTO inventario (id_producto, id_almacen, stock) VALUES (?, ?, ?)",
+            [id_producto, almacenD, cantidadProducto]
+          );
+        }
+
+        // Insertar en bitacora_nota
         await connection.query(
-          "INSERT INTO inventario (id_producto, id_almacen, stock) VALUES (?, ?, ?)",
-          [id_producto, almacenD, cantidadProducto]
+          "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            id_nota,
+            id_producto,
+            almacenD,
+            id_detalle,
+            cantidadProducto,
+            stockResult[0]?.stock || 0,
+            totalStock,
+            fecha,
+          ]
         );
       }
-
-      // Insertar en bitacora_nota
-      await connection.query(
-        "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen ,id_detalle_nota, entra, stock_anterior, stock_actual, fecha) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id_nota,
-          id_producto,
-          almacenD,
-          id_detalle,
-          cantidadProducto,
-          stockResult[0]?.stock || 0,
-          totalStock,
-          fecha,
-        ]
-      );
     }
 
     // Confirmar la transacción
@@ -337,7 +447,11 @@ const insertNotaAndDetalle = async (req, res) => {
       await connection.rollback();
     }
     res.status(500).send({ code: 0, message: error.message });
-  }
+  } finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
@@ -399,7 +513,11 @@ console.log(notaId);
       await connection.rollback();
     }
     res.status(500).send({ code: 0, message: error.message });
-  }
+  } finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 
@@ -408,6 +526,7 @@ export const methods = {
     getIngresos,
     getAlmacen,
     getProductos,
+    getProductos_SinStock,
     getNuevoDocumento,
     getDestinatario,
     insertNotaAndDetalle,

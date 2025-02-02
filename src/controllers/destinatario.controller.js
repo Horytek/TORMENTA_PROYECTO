@@ -1,6 +1,7 @@
 import { getConnection } from "../database/database";
 
 const insertDestinatario = async (req, res) => {
+  let connection;
   const {
     ruc, dni, nombres, apellidos, razon_social, ubicacion, telefono, correo
   } = req.body;
@@ -21,7 +22,7 @@ const insertDestinatario = async (req, res) => {
   }
 
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
 
     const [result] = await connection.query(
       "INSERT INTO destinatario (ruc, dni, nombres, apellidos, razon_social, direccion, email, telefono) VALUES (?, ?, ?, ?, ?, ?,?,?)",
@@ -32,7 +33,11 @@ const insertDestinatario = async (req, res) => {
   } catch (error) {
     console.error("Error en el backend:", error.message);
     res.status(500).send({ code: 0, message: error.message });
-  }
+  }   finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
 
 export const methods = {

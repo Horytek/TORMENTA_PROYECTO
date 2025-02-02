@@ -22,6 +22,9 @@ import {Autocomplete, AutocompleteItem} from "@nextui-org/autocomplete";
 import {Textarea} from "@nextui-org/input";
 import {Select, SelectItem} from "@nextui-org/select";
 import {Button} from "@nextui-org/react";
+//
+import {ScrollShadow} from "@nextui-org/scroll-shadow";
+import {Input} from "@nextui-org/input";
 import {Toaster} from "react-hot-toast";
 import {toast} from "react-hot-toast";
 import useSucursalData from '../../../Data/data_sucursal_venta';
@@ -71,11 +74,17 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         { key: 'MASTER CARD', value: 'MASTER CARD', label: 'MASTER CARD' },
       ];
     
-
+    var disabledKeys1 = []
   // Obtener las claves de los elementos deshabilitados para cada Select
-  const disabledKeys1 = options
-    .filter(({ value }) => value === metodo_pago2 || value === metodo_pago3)
-    .map(({ key }) => key);
+    if (comprobante_pago != 'Nota de venta'){
+        disabledKeys1 = options
+        .filter(({ value }) => value === metodo_pago2 || value === metodo_pago3)
+        .map(({ key }) => key);
+    } else {
+        disabledKeys1 = options
+        .filter(({ value }) => value != 'EFECTIVO')
+        .map(({ key }) => key);
+    }
 
   const disabledKeys2 = options
     .filter(({ value }) => value === metodo_pago || value === metodo_pago3)
@@ -164,7 +173,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
             total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
         })),
         fecha_iso: new Date(),
-        metodo_pago: metodo_pago + ':' + montoRecibido +
+        metodo_pago: metodo_pago + ':' + (metodo_pago === 'EFECTIVO' ? montoRecibido - cambio : montoRecibido ) +
         (faltante > 0 ? ", " + ((metodo_pago2 + ':' + montoRecibido2) || '') : '') +
         (faltante2 > 0 ? ", " + ((metodo_pago3 + ':' + montoRecibido3) || '') : ''),
         fecha: new Date().toISOString().slice(0, 10),
@@ -261,8 +270,6 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
 
     saveDetallesToLocalStorage();
 
-
-
     const handleSubmit = (e) => {
         e.preventDefault();
     
@@ -270,24 +277,24 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     
         // Consolidar validaciones en un solo mensaje
         if (montoRecibido === '' || montoRecibido < totalImporte || metodo_pago === '') {
-            errorMessage += 'Ingrese una cantidad que cubra el total requerido o seleccione un ítem. ';
+            errorMessage += 'Ingrese una cantidad que cubra el total requerido o seleccione un ítem faltante. ';
         }
 
         if (faltante > 0){
             if (faltante2 ==="" || faltante2 === null || faltante2 === undefined){
                 if (montoRecibido2 === ''|| montoRecibido2 < faltante ||  metodo_pago2 === '') {
-                    errorMessage += 'Ingrese una cantidad para el segundo monto o seleccione un ítem. ';
+                    errorMessage += 'Ingrese una cantidad para el segundo monto o seleccione un ítem faltante. ';
                 }
             } else {
                 if (montoRecibido2 === '' || metodo_pago2 === '') {
-                    errorMessage += 'Ingrese una cantidad para el segundo monto o seleccione un ítem. ';
+                    errorMessage += 'Ingrese una cantidad para el segundo monto o seleccione un ítem faltante. ';
                 }
             }
         }
         
         if (faltante2>0){
             if (montoRecibido3 === '' || montoRecibido3 < faltante2 && faltante2 > 0 || metodo_pago3 === '') {
-                errorMessage += 'Ingrese una cantidad para el tercer monto o seleccione un ítem. ';
+                errorMessage += 'Ingrese una cantidad para el tercer monto o seleccione un ítem faltante. ';
             }            
         }
 
@@ -358,7 +365,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     {/* Este handlePrint es para el voucher automatico */ }
 
     const handlePrint = async () => {
-        /*let nombreImpresora = "BASIC 230 STYLE";
+        let nombreImpresora = "BASIC 230 STYLE";
         let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
     
         // eslint-disable-next-line no-undef
@@ -371,7 +378,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         const imgOptions = { width: 50, height: 50 };
         const qrOptions = { width: 300, height: 300 };
     
-        conector.img_url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", imgOptions);
+        conector.img_url("https://i.ibb.co/k2hnMfCc/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg", imgOptions);
         content.split('\n').forEach(line => {
             conector.text(line);
         });
@@ -382,71 +389,73 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     
         const resp = await conector.imprimir(nombreImpresora, api_key);
         if (resp === true) {
-            //console.log("Impresión exitosa");
+            console.log("Impresión exitosa");
         } else {
-           //console.log("Problema al imprimir: " + resp);
-        }*/
-           const content = generateReceiptContent(datosVentaComprobante, datosVenta);
-           const imgUrl = 'https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
+           console.log("Problema al imprimir: " + resp);
+        }
+       
+           //const content = generateReceiptContent(datosVentaComprobante, datosVenta);
+           //const imgUrl = 'https://i.postimg.cc/mDJwxYpT/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
 
-           const printWindow = window.open('', '', 'height=600,width=800');
+           //const printWindow = window.open('', '', 'height=600,width=800');
            // Generar QR dinámicamente
-           QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
-             if (!err) {
-               printWindow.document.write(`
-                 <html>
-                   <head>
-                     <title>Recibo</title>
-                     <style>
-                       @page {
-                         size: 72mm 297mm; /* Tamaño de papel en milímetros */
-                         margin: 10px; /* Ajusta los márgenes según sea necesario */
-                       }
-                       body {
-                         margin: 0;
-                         padding: 0;
-                         font-family: Courier, monospace; /* Cambiar la fuente a Courier */
-                         font-size: 10pt; /* Reducir el tamaño de la fuente */
-                         width: 100%; /* Asegurar que el contenido utilice todo el ancho disponible */
-                       }
-                       pre {
-                         margin: 0;
-                         font-size: 10pt; /* Asegurar que el texto del preformateado sea más pequeño */
-                         white-space: pre-wrap; /* Permitir el ajuste del texto en lugar de cortar palabras */
-                       }
-                       .center {
-                         text-align: center;
-                       }
-                       .qr {
-                         display: block;
-                         margin: 10px auto;
-                       }
-                       .image-container {
-                         display: flex;
-                         justify-content: center;
-                       }
-                     </style>
-                   </head>
-                   <body>
-                     <div class="image-container">
-                       <img src="${imgUrl}" alt="Logo" style="width: 140px; height: 140px;" /> <!-- Ajustar tamaño de la imagen -->
-                     </div>
-                     <pre>${content}</pre>
-                     <div class="image-container">
-                       <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" /> <!-- Ajustar tamaño del QR -->
-                     </div>
-                   </body>
-                 </html>
-               `);
+          // QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
+           //  if (!err) {
+              // printWindow.document.write(`
+               //  <html>
+              //     <head>
+              //       <title>Recibo</title>
+              //       <style>
+               //        @page {
+                //         size: 72mm 297mm; /* Tamaño de papel en milímetros */
+                //         margin: 10px; /* Ajusta los márgenes según sea necesario */
+               //        }
+               //        body {
+                //         margin: 0;
+                 //        padding: 0;
+                  //       font-family: Courier, monospace; /* Cambiar la fuente a Courier */
+                   //      font-size: 10pt; /* Reducir el tamaño de la fuente */
+                   //      width: 100%; /* Asegurar que el contenido utilice todo el ancho disponible */
+                  //     }
+                  //     pre {
+                    //     margin: 0;
+                   //      font-size: 10pt; /* Asegurar que el texto del preformateado sea más pequeño */
+                  //       white-space: pre-wrap; /* Permitir el ajuste del texto en lugar de cortar palabras */
+                  //     }
+                  //     .center {
+                  //       text-align: center;
+                  //     }
+                  //     .qr {
+                  //       display: block;
+                  //       margin: 10px auto;
+                   //    }
+                   //    .image-container {
+                   //      display: flex;
+                   //      justify-content: center;
+                  //     }
+                 //    </style>
+                 //  </head>
+               //    <body>
+               //      <div class="image-container">
+             //          <img src="${imgUrl}" alt="Logo" style="width: 140px; height: 140px;" /> <!-- Ajustar tamaño de la imagen -->
+             //        </div>
+             //        <pre>${content}</pre>
+              //       <div class="image-container">
+             //         <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" /> <!-- Ajustar tamaño del QR -->
+            //         </div>
+            //       </body>
+          //       </html>
+        //       `);
            
-               printWindow.document.close();
-               printWindow.focus();
-               printWindow.print(); // Abre el diálogo de impresión
-             } else {
-               console.error('Error generando el código QR:', err);
-             }
-           });
+             //  printWindow.document.close();
+          //     printWindow.focus();
+            //   printWindow.print(); // Abre el diálogo de impresión
+           //  } else {
+           //    console.error('Error generando el código QR:', err);
+            // }
+          // });
     };
+
     {/* Fin del handlePrint del voucher automatico */ }
 
 
@@ -456,7 +465,7 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         addCliente(datosCliente_P);
     };
 
-    const token_cliente = import.meta.env.VITE_TOKEN_PROVEDOR || '';
+    const token_cliente = import.meta.env.VITE_TOKEN_PROOVEDOR || '';
 
     const handleValidate = async () => {
         if (dniOrRuc != '') {
@@ -506,284 +515,395 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
   };
     
 
-    return (
-        <>
-              <Toaster />
-              <div className="modal-container" style={{ overflowY: 'auto' }} >
-            <div className={` modal-pagar px-6 py-7 rounded-xl shadow-lg relative ${showNuevoCliente ? 'expanded' : ''}`} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-                <div className='flex '>
-                    <form className='div-pagar-1'>
-                        <div className="flex justify-between items-center mb-4">
-                        <Button 
-                        onClick={onClose} 
-                        color="#C20E4D" 
-                        variant="shadow" 
-                        className="close-modal-pagar absolute top-0 right-0 text-black-500"
-                        style={{
-                            width: "2rem", // Ajuste para un tamaño más pequeño
-                            height: "2rem", // Mantén un tamaño pequeño y cuadrado
-                            padding: "0.25rem", // Padding reducido
-                            borderRadius: "0.25rem", // Ligero redondeo en las esquinas
-                            minWidth: "auto", // Elimina el ancho mínimo
-                            gap: "0", // Elimina el espacio entre elementos
-                        }}
-                        >
-                        <IoCloseSharp style={{ fontSize: "1rem" }} /> {/* Ícono reducido */}
-                        </Button>
-                            <h2 className="text-lg font-bold flex items-center">
-                                <BsCash className="mr-2" style={{ fontSize: '25px' }} />
-                                Pago
-                            </h2>
-                        </div>
-                        <div className="mb-4">
-                            {/* Contenedor para cliente y comprobante */}
-                            <div className="flex items-start">
-                                {/* Selección de cliente */}
-                                <div className="mr-4">
-                                <label className="block text-gray-800 mb-2 font-semibold">
-                                    Seleccione el cliente
-                                </label>
-                                <div className="flex items-center">
-                                    <Autocomplete
-                                    isRequired
-                                    className="input-c mr-1 autocomplete-no-border"
-                                    placeholder="Seleccionar cliente"
-                                    style={{ width: '6rem',border: "none", // Sin !important
-                                        boxShadow: "none", // Sin !important
-                                        outline: "none", }}
-                                    value={clienteSeleccionado}
-                                    onChange={handleInputChange}
-                                    onSelectionChange={handleSelectionChange}
-                                    >
-                                    {clientes.map((cliente) => (
-                                        <AutocompleteItem key={cliente.nombre} value={cliente.nombre}>
-                                        {cliente.nombre}
-                                        </AutocompleteItem>
-                                    ))}
-                                    </Autocomplete>
-                                    <button
-                                    type="button"
-                                    className="btn-nuevo-cliente px-1 py-1"
-                                    onClick={() => setShowNuevoCliente(true)}
-                                    >
-                                    <GrFormAdd style={{ fontSize: '24px' }} />
-                                    </button>
-                                </div>
-                                </div>
-
-                                {/* Selección de comprobante */}
-                                <div>
-                                <label className="block text-gray-800 mb-2 font-semibold">
-                                    Select. el comprobante
-                                </label>
-                                          <Select
-                                          isRequired
-        placeholder="Comprob. de pago" 
-        className={"input-c mt-2"}
-        style={{ width: '12rem' }}
-        value={comprobante_pago}
-        onChange={(e) => setcomprobante_pago(e.target.value)}
-      >
-        (
-          <SelectItem key={'Boleta'} value={'Boleta'}>{'Boleta'}</SelectItem>
-          <SelectItem key={'Factura'} value={'Factura'}>{'Factura'}</SelectItem>
-          <SelectItem key={'Nota de venta'} value={'Nota de venta'}>{'Nota de venta'}</SelectItem>
-        )
-      </Select>
-                                </div>
+  return (
+    <>
+          <Toaster />
+          <div className="modal-container fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto">
+  <div 
+    className={`modal-pagar px-6 py-7 rounded-xl shadow-lg relative transition-all duration-300 flex flex-col 
+      ${showNuevoCliente ? 'sm:w-[90%] md:w-[70%] lg:w-[50%]' : 'sm:w-[90%] md:w-[45%] lg:w-[30%]'}`} 
+    style={{ 
+      maxHeight: '90vh', 
+      overflowY: 'auto', 
+      backgroundColor: 'white',  
+      margin: '0 auto'
+    }}
+  >
+    <ScrollShadow hideScrollBar className="w-full h-full"       offset={100}
+      orientation="horizontal">
+<div className="flex w-full h-full justify-center items-center m-0 p-0 box-border overflow-x-hidden">
+                
+                <form className='div-pagar-1'>
+                    <div className="flex justify-between items-center mb-4">
+                    <Button 
+                    onClick={onClose} 
+                    color="#C20E4D" 
+                    variant="shadow" 
+                    className="close-modal-pagar absolute top-0 right-0 text-black-500"
+                    style={{
+                        width: "2rem", // Ajuste para un tamaño más pequeño
+                        height: "2rem", // Mantén un tamaño pequeño y cuadrado
+                        padding: "0.25rem", // Padding reducido
+                        borderRadius: "0.25rem", // Ligero redondeo en las esquinas
+                        minWidth: "auto", // Elimina el ancho mínimo
+                        gap: "0", // Elimina el espacio entre elementos
+                    }}
+                    >
+                    <IoCloseSharp style={{ fontSize: "1rem" }} /> {/* Ícono reducido */}
+                    </Button>
+                        <h2 className="text-lg font-bold flex items-center">
+                            <BsCash className="mr-2" style={{ fontSize: '25px' }} />
+                            Pago
+                        </h2>
+                    </div>
+                    <div className="mb-4">
+                        {/* Contenedor para cliente y comprobante */}
+                        <div className="flex items-start">
+                            {/* Selección de cliente */}
+                            <div className="mr-4">
+                            <label className="block text-gray-800 mb-2 font-semibold">
+                                Seleccione el cliente
+                            </label>
+                            <div className="flex items-center">
+                                <Autocomplete
+                                isRequired
+                                className="input-c mr-1 autocomplete-no-border"
+                                placeholder="Seleccionar cliente"
+                                style={{ width: '6rem',border: "none", // Sin !important
+                                    boxShadow: "none", // Sin !important
+                                    outline: "none", }}
+                                value={clienteSeleccionado}
+                                onChange={handleInputChange}
+                                onSelectionChange={handleSelectionChange}
+                                >
+                                {clientes.map((cliente) => (
+                                    <AutocompleteItem key={cliente.nombre} value={cliente.nombre}>
+                                    {cliente.nombre}
+                                    </AutocompleteItem>
+                                ))}
+                                </Autocomplete>
+                                <button
+                                type="button"
+                                className="btn-nuevo-cliente px-1 py-1"
+                                onClick={() => setShowNuevoCliente(true)}
+                                >
+                                <GrFormAdd style={{ fontSize: '24px' }} />
+                                </button>
+                            </div>
                             </div>
 
-                            {/* Textarea debajo de cliente y comprobante */}
-                            <div className="mt-4">
-                                <Textarea
-                                label="Descripción"
-                                placeholder="Ingrese la descripción"
-                                className="w-full max-w-md"
-                                value={observacion}
-                                onChange={(e) => setObservacion(e.target.value)}
+                            {/* Selección de comprobante */}
+                            <div>
+                            <label className="block text-gray-800 mb-2 font-semibold">
+                                Select. el comprobante
+                            </label>
+                                      <Select
+                                      isRequired
+    placeholder="Comprob. de pago" 
+    className={"input-c mt-2"}
+    style={{ width: '12rem' }}
+    value={comprobante_pago}
+    onChange={(e) => setcomprobante_pago(e.target.value)}
+  >
+    (
+      <SelectItem key={'Boleta'} value={'Boleta'}>{'Boleta'}</SelectItem>
+      <SelectItem key={'Factura'} value={'Factura'}>{'Factura'}</SelectItem>
+      <SelectItem key={'Nota de venta'} value={'Nota de venta'}>{'Nota de venta'}</SelectItem>
+    )
+  </Select>
+                            </div>
+                        </div>
+
+                        {/* Textarea debajo de cliente y comprobante */}
+                        <div className="mt-4">
+                            <Textarea
+                            label="Descripción"
+                            placeholder="Ingrese la descripción"
+                            className="w-full max-w-md"
+                            value={observacion}
+                            onChange={(e) => setObservacion(e.target.value)}
+                            style={{
+                                border: "none", // Sin !important
+                                boxShadow: "none", // Sin !important
+                                outline: "none", // Sin !important
+                              }}
+                            />
+                        </div>
+                        </div>
+                    <hr className="mb-5" />
+                    <div className="flex mb-4">
+{/* Total a pagar */}
+<InputField
+  label="Total a pagar"
+  symbol="S/."
+  value={totalImporte}
+  readOnly
+  style={{
+    height: "40px",
+    border: "1px solid #ccc", // Borde más suave
+    backgroundColor: "#f5f5f5", // Fondo gris claro
+    borderRadius: "8px", // Bordes redondeados
+    padding: "0 12px", // Relleno horizontal
+    fontSize: "16px", // Tamaño de fuente optimizado
+    color: "#333", // Color de texto más oscuro
+    outline: "none", // Elimina el borde de enfoque predeterminado
+    boxShadow: "inset 0 0 5px rgba(0, 0, 0, 0.1)", // Sombra interna suave
+    transition: "box-shadow 0.3s ease", // Transición suave en el enfoque
+  }}
+  className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+/>
+
+
+{/* Método de pago */}
+<div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
+<label className="block text-gray-800 mb-2 font-semibold">
+  Método de pago
+</label>
+
+<Select
+isRequired
+  placeholder="Método de pago"
+  className={"input-c h-10 pr-8"}
+  classNamediv={"flex items-center mt-2"}
+  value={metodo_pago}
+  style={{ width: '13rem' }}
+  onChange={(e) => setmetodo_pago(e.target.value)}
+  containerStyle={{ marginLeft: "5px" }}
+  disabledKeys={disabledKeys1}  // Ajusta el margen aquí si es necesario
+>
+        {options.map(({ key, value, label }) => (
+      <SelectItem key={key} value={value}>
+        {label}
+      </SelectItem>
+    ))}
+</Select>
+</div>
+</div>
+                    <div className="flex">
+                    <InputField
+  label="Monto recibido"
+  symbol="S/."
+  value={montoRecibido}
+  onChange={(e) => setMontoRecibido(e.target.value)}
+  pattern="[0-9]*[.]?[0-9]{0,2}"
+  onKeyDown={validateDecimalInput}
+  style={{
+    height: "40px",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    padding: "0 12px",
+    fontSize: "16px",
+    color: "#333",
+    outline: "none",
+    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+  }}
+  className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+/>
+
+                        <div className='mb-4' style={{ marginLeft: "45px" }}>
+                            <label className="text-gray-800 font-semibold">Aplicar descuento</label>
+                            <div className='flex items-center h-50' >
+                                <span className='mt-2'>S/.</span>
+                                <input
+  type="checkbox"
+  className="ml-2 custom-checkbox relative mt-2 w-5 h-5 cursor-pointer transition-all duration-300"
+  onChange={(e) => setDescuentoActivado(e.target.checked)}
+  style={{
+    appearance: 'none', // Eliminar el estilo predeterminado del navegador
+    width: '20px', // Tamaño del checkbox
+    height: '20px', // Tamaño del checkbox
+    borderRadius: '5px', // Bordes redondeados
+    border: '2px solid #ccc', // Borde suave
+    backgroundColor: '#fff', // Fondo blanco por defecto
+    position: 'relative', // Posición para el ícono dentro
+    transition: 'background-color 0.3s, border-color 0.3s', // Transición suave para los cambios
+  }}
+  checked={descuentoActivado} // Estado de marcado/desmarcado
+/>
+
+                                <InputField
+                                label=""
+                                symbol=""
+                                value={montoDescuento}
+                                onChange={(e) => {
+                                    const { value } = e.target;
+                                    if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                    setMontoDescuento(value);
+                                    } else if (value === '' || value === '.') {
+                                    setMontoDescuento(value);
+                                    }
+                                }}
+                                disabled={!descuentoActivado}
+                                onKeyDown={validateDecimalInput}
                                 style={{
-                                    border: "none", // Sin !important
-                                    boxShadow: "none", // Sin !important
-                                    outline: "none", // Sin !important
-                                  }}
+                                    height: "40px",
+                                    width: "8.5rem",
+                                    border: "1px solid #ccc", // Borde más suave
+                                    borderRadius: "8px", // Bordes redondeados
+                                    backgroundColor: descuentoActivado ? "#fff" : "#f5f5f5", // Fondo gris cuando está deshabilitado
+                                    padding: "0 12px", // Relleno para separar el texto de los bordes
+                                    fontSize: "16px", // Tamaño de fuente ajustado
+                                    color: "#333", // Color de texto
+                                    outline: "none", // Eliminar borde de enfoque predeterminado
+                                    boxShadow: descuentoActivado ? "0 0 5px rgba(0, 0, 0, 0.1)" : "none", // Sombra sutil cuando está habilitado
+                                    transition: "border-color 0.3s ease, box-shadow 0.3s ease", // Transiciones suaves
+                                }}
+                                className={`input-c ml-2 ${descuentoActivado ? 'focus:border-blue-500 focus:ring-2 focus:ring-blue-500' : ''}`}
                                 />
                             </div>
-                            </div>
-                        <hr className="mb-5" />
-                        <div className="flex mb-4">
-  {/* Total a pagar */}
-  <InputField
-    label="Total a pagar"
-    symbol="S/."
-    value={totalImporte}
-    readOnly
-    style={{
-      height: "40px",
-      border: "solid 0.2rem #171a1f28",
-      backgroundColor: "#f5f5f5",
-    }}
-    className={"input-c w-40 ml-2 focus:outline-none"}
-  />
-
-  {/* Método de pago */}
-  <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
-    <label className="block text-gray-800 mb-2 font-semibold">
-      Método de pago
-    </label>
-    <Select
-    isRequired
-      placeholder="Método de pago"
-      className={"input-c h-10 pr-8"}
-      classNamediv={"flex items-center mt-2"}
-      value={metodo_pago}
-      style={{ width: '13rem' }}
-      onChange={(e) => setmetodo_pago(e.target.value)}
-      containerStyle={{ marginLeft: "5px" }}
-      disabledKeys={disabledKeys1}  // Ajusta el margen aquí si es necesario
-    >
-            {options.map(({ key, value, label }) => (
-          <SelectItem key={key} value={value}>
-            {label}
-          </SelectItem>
-        ))}
-    </Select>
-  </div>
-</div>
-                        <div className="flex">
-                            <InputField
-                                label="Monto recibido"
-                                symbol="S/."
-                                value={montoRecibido}
-                                onChange={(e) => setMontoRecibido(e.target.value)}
-                                pattern="[0-9]*[.]?[0-9]{0,2}"
-                                onKeyDown={validateDecimalInput}
-                                style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                className={"input-c w-40 ml-2"}
-                            />
-                            <div className='mb-4' style={{ marginLeft: "45px" }}>
-                                <label className="text-gray-800 font-semibold">Aplicar descuento</label>
-                                <div className='flex items-center h-50' >
-                                    <span className='mt-2'>S/.</span>
-                                    <input
-                                        type="checkbox"
-                                        className="ml-1 custom-checkbox relative mt-2"
-                                        onChange={(e) => setDescuentoActivado(e.target.checked)}
-                                    />
-                                    <InputField
-                                        className={"input-c ml-2"}
-                                        label=""
-                                        symbol=""
-                                        value={montoDescuento}
-                                        onChange={(e) => {
-                                            const { value } = e.target;
-                                            if (/^\d*\.?\d{0,2}$/.test(value)) {
-                                                setMontoDescuento(value);
-                                            } else if (value === '' || value === '.') {
-                                                setMontoDescuento(value);
-                                            }
-                                        }}
-                                        disabled={!descuentoActivado}
-                                        onKeyDown={validateDecimalInput}
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '8.5rem' }}
-                                    />
-                                </div>
-                            </div>
                         </div>
-                        <div className="flex  mb-4">
-                            <div>
+                    </div>
+                    <div className="flex  mb-4">
+                        <div>
+                            <InputField
+                                label="Cambio"
+                                symbol="S/."
+                                value={cambio >= 0 ? cambio.toFixed(2) : ''}
+                                readOnly
+                                style={{
+                                    height: "40px",
+                                    border: "1px solid #ddd",
+                                    borderRadius: "8px",
+                                    padding: "0 12px",
+                                    fontSize: "16px",
+                                    color: "#333",
+                                    outline: "none",
+                                    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                  }}
+                                  className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        <div className='ml-12 w-60'>
+                            <InputField
+                                label="Faltante"
+                                symbol="S/."
+                                value={faltante >= 0 ? faltante.toFixed(2) : ''}
+                                readOnly
+                                style={{
+                                    height: "40px",
+                                    border: "1px solid #ddd",
+                                    borderRadius: "8px",
+                                    padding: "0 12px",
+                                    fontSize: "16px",
+                                    color: "#333",
+                                    outline: "none",
+                                    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                  }}
+                                  className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                    </div>
+                    <hr className="mb-5" />
+                    {faltante > 0 && comprobante_pago !='Nota de venta' && (
+                        <div>
+                            <div className="flex justify-center text-center mb-4">
+                                <InputField
+                                    label="Total a pagar"
+                                    symbol="S/."
+                                    value={faltante.toFixed(2)}
+                                    readOnly
+                                    style={{
+                                        height: "40px",
+                                        border: "1px solid #ccc", // Borde más suave
+                                        backgroundColor: "#f5f5f5", // Fondo gris claro
+                                        borderRadius: "8px", // Bordes redondeados
+                                        padding: "0 12px", // Relleno horizontal
+                                        fontSize: "16px", // Tamaño de fuente optimizado
+                                        color: "#333", // Color de texto más oscuro
+                                        outline: "none", // Elimina el borde de enfoque predeterminado
+                                        boxShadow: "inset 0 0 5px rgba(0, 0, 0, 0.1)", // Sombra interna suave
+                                        transition: "box-shadow 0.3s ease", // Transición suave en el enfoque
+                                      }}
+                                      className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                    />
+
+                            </div>
+                            <div className="flex mb-4">
+                                <InputField
+                                    label="N°2 || Monto recibido"
+                                    symbol="S/."
+                                    placeholder={faltante.toFixed(2)}
+                                    value={montoRecibido2}
+                                    onChange={(e) => setMontoRecibido2(e.target.value)}
+                                    pattern="[0-9]*[.]?[0-9]{0,2}"
+                                    onKeyDown={validateDecimalInput}
+                                    style={{
+                                        height: "40px",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        padding: "0 12px",
+                                        fontSize: "16px",
+                                        color: "#333",
+                                        outline: "none",
+                                        transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                      }}
+                                      className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                  <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
+<label className="block text-gray-800 mb-2 font-semibold">
+  Método de pago
+</label>
+<Select
+isRequired
+  placeholder="Método de pago"
+  className={"input-c h-10 pr-8"}
+  classNamediv={"flex items-center mt-2"}
+  value={metodo_pago2}
+  style={{ width: '13rem' }}
+  onChange={(e) => setmetodo_pago2(e.target.value)}
+  containerStyle={{ marginLeft: "5px" }}
+  disabledKeys={disabledKeys2} // Ajusta el margen aquí si es necesario
+>
+        {options.map(({ key, value, label }) => (
+      <SelectItem key={key} value={value}>
+        {label}
+      </SelectItem>
+    ))}
+</Select>
+</div>
+                            </div>
+                            <div className="flex mb-4">
                                 <InputField
                                     label="Cambio"
                                     symbol="S/."
-                                    value={cambio >= 0 ? cambio.toFixed(2) : ''}
+                                    value={cambio2 >= 0 ? cambio2.toFixed(2) : ''}
                                     readOnly
-                                    className={"input-c w-40 ml-2"}
-                                    style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                />
-                            </div>
-                            <div className='ml-12 w-60'>
-                                <InputField
-                                    label="Faltante"
-                                    symbol="S/."
-                                    value={faltante >= 0 ? faltante.toFixed(2) : ''}
-                                    readOnly
-                                    style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '10.1rem' }}
-                                    className={"input-c w-full ml-2"}
-                                />
-                            </div>
-                        </div>
-                        <hr className="mb-5" />
-                        {faltante > 0 && (
-                            <div>
-                                <div className="flex justify-center text-center mb-4">
+                                    style={{
+                                        height: "40px",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        padding: "0 12px",
+                                        fontSize: "16px",
+                                        color: "#333",
+                                        outline: "none",
+                                        transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                      }}
+                                      className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                <div className='ml-12 w-60'>
                                     <InputField
-                                        label="Total a pagar"
+                                        label="Faltante"
                                         symbol="S/."
-                                        value={faltante.toFixed(2)}
+                                        value={faltante2 >= 0 ? faltante2.toFixed(2) : ''}
                                         readOnly
-                                        style={{ height: "40px", border: "solid 0.2rem #171a1f28", backgroundColor: "#f5f5f5" }}
-                                        className={"input-c w-40 ml-2 focus:outline-none"}
-                                    />
-
-                                </div>
-                                <div className="flex mb-4">
-                                    <InputField
-                                        label="N°2 || Monto recibido"
-                                        symbol="S/."
-                                        placeholder={faltante.toFixed(2)}
-                                        value={montoRecibido2}
-                                        onChange={(e) => setMontoRecibido2(e.target.value)}
-                                        pattern="[0-9]*[.]?[0-9]{0,2}"
-                                        onKeyDown={validateDecimalInput}
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        className={"input-c w-40 ml-2"}
-                                    />
-                                      <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
-    <label className="block text-gray-800 mb-2 font-semibold">
-      Método de pago
-    </label>
-    <Select
-    isRequired
-      placeholder="Método de pago"
-      className={"input-c h-10 pr-8"}
-      classNamediv={"flex items-center mt-2"}
-      value={metodo_pago2}
-      style={{ width: '13rem' }}
-      onChange={(e) => setmetodo_pago2(e.target.value)}
-      containerStyle={{ marginLeft: "5px" }}
-      disabledKeys={disabledKeys2} // Ajusta el margen aquí si es necesario
-    >
-            {options.map(({ key, value, label }) => (
-          <SelectItem key={key} value={value}>
-            {label}
-          </SelectItem>
-        ))}
-    </Select>
-  </div>
-                                </div>
-                                <div className="flex mb-4">
-                                    <InputField
-                                        label="Cambio"
-                                        symbol="S/."
-                                        value={cambio2 >= 0 ? cambio2.toFixed(2) : ''}
-                                        readOnly
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        className={"input-c w-40 ml-2"}
-                                    />
-                                    <div className='ml-12 w-60'>
-                                        <InputField
-                                            label="Faltante"
-                                            symbol="S/."
-                                            value={faltante2 >= 0 ? faltante2.toFixed(2) : ''}
-                                            readOnly
-                                            style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '10.1rem' }}
-                                            className={"input-c ml-2"}
+                                        style={{
+                                            height: "40px",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "8px",
+                                            padding: "0 12px",
+                                            fontSize: "16px",
+                                            color: "#333",
+                                            outline: "none",
+                                            transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                          }}
+                                          className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                                         />
-                                    </div>
                                 </div>
-                                <hr className='mb-5' />
-
                             </div>
-                        )}
+                            <hr className='mb-5' />
+
+                        </div>
+                    )}
                         {faltante2 > 0 && (
                             <div>
                                 <div className="flex justify-center text-center mb-4">
@@ -792,9 +912,20 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                                         symbol="S/."
                                         value={faltante2.toFixed(2)}
                                         readOnly
-                                        style={{ height: "40px", border: "solid 0.2rem #171a1f28", backgroundColor: "#f5f5f5" }}
-                                        className={"input-c w-40 ml-2 focus:outline-none"}
-                                    />
+                                        style={{
+                                            height: "40px",
+                                            border: "1px solid #ccc", // Borde más suave
+                                            backgroundColor: "#f5f5f5", // Fondo gris claro
+                                            borderRadius: "8px", // Bordes redondeados
+                                            padding: "0 12px", // Relleno horizontal
+                                            fontSize: "16px", // Tamaño de fuente optimizado
+                                            color: "#333", // Color de texto más oscuro
+                                            outline: "none", // Elimina el borde de enfoque predeterminado
+                                            boxShadow: "inset 0 0 5px rgba(0, 0, 0, 0.1)", // Sombra interna suave
+                                            transition: "box-shadow 0.3s ease", // Transición suave en el enfoque
+                                          }}
+                                          className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                        />
 
                                 </div>
                                 <div className="flex mb-4">
@@ -807,10 +938,18 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                                         onChange={(e) => setMontoRecibido3(e.target.value)}
                                         pattern="[0-9]*[.]?[0-9]{0,2}"
                                         onKeyDown={validateDecimalInput}
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        className={"input-c w-40 ml-2"}
-
-                                    />
+                                        style={{
+                                            height: "40px",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "8px",
+                                            padding: "0 12px",
+                                            fontSize: "16px",
+                                            color: "#333",
+                                            outline: "none",
+                                            transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                          }}
+                                          className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                        />
   <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
     <label className="block text-gray-800 mb-2 font-semibold">
       Método de pago
@@ -840,18 +979,36 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                                         symbol="S/."
                                         value={cambio3 >= 0 ? cambio3.toFixed(2) : ''}
                                         readOnly
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        className={"input-c w-40 ml-2"}
-                                    />
+                                        style={{
+                                            height: "40px",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "8px",
+                                            padding: "0 12px",
+                                            fontSize: "16px",
+                                            color: "#333",
+                                            outline: "none",
+                                            transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                          }}
+                                          className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                        />
                                     <div className='ml-12 w-60'>
                                         <InputField
                                             label="Faltante"
                                             symbol="S/."
                                             value={faltante3 >= 0 ? faltante3.toFixed(2) : ''}
                                             readOnly
-                                            style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '10.1rem' }}
-                                            className={"input-c ml-2"}
-                                        />
+                                            style={{
+                                                height: "40px",
+                                                border: "1px solid #ddd",
+                                                borderRadius: "8px",
+                                                padding: "0 12px",
+                                                fontSize: "16px",
+                                                color: "#333",
+                                                outline: "none",
+                                                transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                              }}
+                                              className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                            />
                                     </div>
                                 </div>
                                 <hr className='mb-5' />
@@ -866,10 +1023,10 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                         {/* Fin del div para el voucher con preview */}
 
                         <div className="flex justify-end mt-4">
-                            <button type="submit" className="btn btn-cobrar mr-0" onClick={handleSubmit}>
+                            <Button type="submit" className="btn btn-cobrar mr-0" onClick={handleSubmit}>
                                 <BsCashCoin className="mr-2" />
                                 Cobrar e Imprimir
-                            </button>
+                            </Button>
                         </div>
                         <VentaExitosaModal isOpen={showConfirmacion} onClose={() => setShowConfirmacion(false)} />
                         {showConfirmacion && <VentaExitosaModal onClose={() => setShowConfirmacion(false)} />}
@@ -963,10 +1120,12 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                             </div>
                         </div>
                     )}
+                
                 </div>
 
-
+                </ScrollShadow>
             </div>
+            
         </div>
         </>
     );
