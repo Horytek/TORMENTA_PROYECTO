@@ -80,7 +80,7 @@ const getProductoMasVendido = async (req, res) => {
         FROM detalle_venta dv
         JOIN producto p ON dv.id_producto = p.id_producto
         JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ?
+        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
         GROUP BY p.id_producto, p.descripcion
         ORDER BY total_vendido DESC
         LIMIT 1;
@@ -96,7 +96,7 @@ const getProductoMasVendido = async (req, res) => {
         FROM detalle_venta dv
         JOIN producto p ON dv.id_producto = p.id_producto
         JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.id_sucursal = ?
+        WHERE v.f_venta BETWEEN ? AND ? AND v.id_sucursal = ? AND v.estado_venta != 0
         GROUP BY p.id_producto, p.descripcion
         ORDER BY total_vendido DESC
         LIMIT 1;
@@ -228,7 +228,7 @@ const getTotalProductosVendidos = async (req, res) => {
         SELECT SUM(dv.cantidad) AS total_productos_vendidos
         FROM detalle_venta dv
         JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ?
+        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
       `;
       params = [fechaInicioISO, fechaFinISO];
     } else {
@@ -237,7 +237,7 @@ const getTotalProductosVendidos = async (req, res) => {
         SELECT SUM(dv.cantidad) AS total_productos_vendidos
         FROM detalle_venta dv
         JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.id_sucursal = ?
+        WHERE v.f_venta BETWEEN ? AND ? AND v.id_sucursal = ? AND v.estado_venta != 0
       `;
       params = [fechaInicioISO, fechaFinISO, id_sucursal];
     }
@@ -287,6 +287,8 @@ const getComparacionVentasPorRango = async (req, res) => {
       query += " AND v.id_sucursal = ?";
       params.push(id_sucursal);
     }
+
+    query += `AND v.estado_venta != 0 `;
 
     query += " GROUP BY mes ORDER BY mes;";
 

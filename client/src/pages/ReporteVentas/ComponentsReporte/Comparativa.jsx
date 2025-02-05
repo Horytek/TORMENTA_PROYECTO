@@ -16,9 +16,11 @@ const LineChartUsageExampleAxisLabel = () => {
     // console.log('Raw data:', data); 
   }, [data]);
 
+  const currentYear = new Date().getFullYear().toString().slice(-2); // Obtiene los últimos 2 dígitos del año actual
+
   const months = [
-    'Jan 24', 'Feb 24', 'Mar 24', 'Apr 24', 'May 24', 'Jun 24',
-    'Jul 24', 'Aug 24', 'Sep 24', 'Oct 24', 'Nov 24', 'Dec 24'
+    `Jan ${currentYear}`, `Feb ${currentYear}`, `Mar ${currentYear}`, `Apr ${currentYear}`, `May ${currentYear}`, `Jun ${currentYear}`,
+    `Jul ${currentYear}`, `Aug ${currentYear}`, `Sep ${currentYear}`, `Oct ${currentYear}`, `Nov ${currentYear}`, `Dec ${currentYear}`
   ];
 
   const organizedData = months.map(month => {
