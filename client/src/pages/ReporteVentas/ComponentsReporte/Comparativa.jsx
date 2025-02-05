@@ -3,7 +3,10 @@ import { Legend, LineChart } from '@tremor/react';
 import useAnalisisGananciasSucursales from '../data/data_ganancias_sucr'; 
 
 const valueFormatter = (number) => {
-  return 'S/. ' + new Intl.NumberFormat('us').format(number).toString();
+  return 'S/. ' + new Intl.NumberFormat('es-PE', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(number);
 };
 
 const LineChartUsageExampleAxisLabel = () => {

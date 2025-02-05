@@ -51,7 +51,7 @@ function Dashboard() {
                 <Suspense fallback={<div>Cargando...</div>}>
                   <Routes>
                     <Route path="/inicio" element={
-                      <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
+                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                         <Inicio />
                       </RouteProtectedRol>
                     } />
@@ -146,7 +146,7 @@ function Dashboard() {
                       </RouteProtectedRol>
                     } />
                     <Route path="/configuracion/historial" element={
-                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+                      <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
                         <Historial />
                       </RouteProtectedRol>
                     } />

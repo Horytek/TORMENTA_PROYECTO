@@ -115,6 +115,133 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   //console.log(sucursal_v);
   //console.log(surB);
 
+    const handlePrint = async () => {
+      if (printOption === 'print') {
+        /*let nombreImpresora = "BASIC 230 STYLE";
+        let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
+    
+        // eslint-disable-next-line no-undef
+        const conector = new connetor_plugin();
+        const content = generateReceiptContent(venta_B, ventas_VB);
+    
+        conector.textaling("center");
+    
+        // Verifica si las opciones de tamaño están en el formato correcto
+        const imgOptions = { width: 50, height: 50 };
+        const qrOptions = { width: 300, height: 300 };
+    
+        conector.img_url("https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg", imgOptions);
+        content.split('\n').forEach(line => {
+            conector.text(line);
+        });
+    
+        conector.qr("https://www.facebook.com/profile.php?id=100055385846115", qrOptions);
+        conector.feed(5);
+        conector.cut("0");
+    
+        const resp = await conector.imprimir(nombreImpresora, api_key);
+        if (resp === true) {
+            console.log("Impresión exitosa");
+        } else {
+            console.log("Problema al imprimir: " + resp);
+        }*/
+            const content = generateReceiptContent(venta_B, ventas_VB);
+            const imgUrl = 'https://i.ibb.co/k2hnMfCc/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
+            
+            // Crear una instancia de jsPDF
+            const doc = new jsPDF({
+              orientation: 'portrait',
+              unit: 'mm',
+              format: [75, 284] // Tamaño en milímetros (72mm x 297mm)
+            });
+            
+            // Generar QR dinámicamente
+            QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
+              if (!err) {
+                // Agregar la imagen del logo
+                doc.addImage(imgUrl, 'JPEG', 10, 10, 50, 50); // Ajustar la posición y tamaño de la imagen del logo
+            
+                // Agregar el contenido
+                doc.setFont('Courier'); // Cambiar la fuente a Courier
+                doc.setFontSize(8); // Reducir el tamaño de la fuente
+                doc.text(content, 3, 55); // Ajustar la posición del texto
+            
+                // Agregar el código QR
+                doc.addImage(qrUrl, 'PNG', 16, 230, 43, 43); // Ajustar la posición y tamaño del QR
+            
+                // Guardar el PDF
+                doc.save('recibo.pdf');
+              } else {
+                console.error('Error generando el código QR:', err);
+              }
+            });
+  
+            
+            
+      } else if (printOption === 'print-1') {
+        const content = generateReceiptContent(venta_B, ventas_VB);
+        const imgUrl = 'https://i.ibb.co/k2hnMfCc/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
+  
+        const printWindow = window.open('', '', 'height=600,width=800');
+        // Generar QR dinámicamente
+        QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
+          if (!err) {
+            printWindow.document.write(`
+              <html>
+                <head>
+                  <title>Recibo</title>
+                  <style>
+                    @page {
+                      size: 72mm 297mm; /* Tamaño de papel en milímetros */
+                      margin: 10px; /* Ajusta los márgenes según sea necesario */
+                    }
+                    body {
+                      margin: 0;
+                      padding: 0;
+                      font-family: Courier, monospace; /* Cambiar la fuente a Courier */
+                      font-size: 10pt; /* Reducir el tamaño de la fuente */
+                      width: 100%; /* Asegurar que el contenido utilice todo el ancho disponible */
+                    }
+                    pre {
+                      margin: 0;
+                      font-size: 10pt; /* Asegurar que el texto del preformateado sea más pequeño */
+                      white-space: pre-wrap; /* Permitir el ajuste del texto en lugar de cortar palabras */
+                    }
+                    .center {
+                      text-align: center;
+                    }
+                    .qr {
+                      display: block;
+                      margin: 10px auto;
+                    }
+                    .image-container {
+                      display: flex;
+                      justify-content: center;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div class="image-container">
+                    <img src="${imgUrl}" alt="Logo" style="width: 140px; height: 140px;" /> <!-- Ajustar tamaño de la imagen -->
+                  </div>
+                  <pre>${content}</pre>
+                  <div class="image-container">
+                    <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" /> <!-- Ajustar tamaño del QR -->
+                  </div>
+                </body>
+              </html>
+            `);
+        
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print(); // Abre el diálogo de impresión
+          } else {
+            console.error('Error generando el código QR:', err);
+          }
+        });
+      }
+  };
+
   const renderVentaRow = (venta) => (
     <React.Fragment key={venta.id}>
       <tr onClick={(e) => handleRowClick(e,venta)} className='tr-tabla-venta'>
@@ -159,6 +286,68 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
             <span>{venta.estado}</span>
           </div>
         </td>
+                <td>
+                  <div className='flex justify-content-center'>
+                    <IoMdOptions
+                        className={`ml-2 ml-5 mr-4 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' :  'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
+                        style={{ fontSize: '20px' }}
+                        onClick={() => openModal(venta.id, venta.estado)}
+                    />
+                    <TiPrinter className='text-gray-500' onClick={onOpen} style={{ fontSize: '20px' }}/>
+                    <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
+                    motionProps={{
+                      variants: {
+                        enter: {
+                          y: 0,
+                          opacity: 1,
+                          transition: {
+                            duration: 0.2,
+                            ease: "easeOut",
+                          },
+                        },
+                        exit: {
+                          y: -20,
+                          opacity: 0,
+                          transition: {
+                            duration: 0.2,
+                            ease: "easeIn",
+                          },
+                        },
+                      }
+                    }}
+                    classNames={{
+                      backdrop: "bg-[#27272A]/10 backdrop-opacity-4"
+                    }}
+               >
+                <ModalContent>
+                  {(onClose) => (
+                    <>
+                      <ModalHeader className="flex flex-col gap-1">Opciones de impresion</ModalHeader>
+                      <ModalBody>
+                        <RadioGroup
+                          label="Selecciona la opcion para el formato del boucher"
+                          value={printOption}
+                          onChange={(e) => setPrintOption(e.target.value)}
+                        >
+                          <Radio value="print">Descargar PDF</Radio>
+                          <Radio value="print-1">Imprimir boucher de la venta</Radio>
+                        </RadioGroup>
+                      </ModalBody>
+                      <ModalFooter>
+                        <Button color="danger" variant="light" onPress={onClose}>
+                          Cerrar
+                        </Button>
+                        <Button color="primary" onPress={onClose} onClick={handlePrint}>
+                          Aceptar
+                        </Button>
+                      </ModalFooter>
+                    </>
+                  )}
+                </ModalContent>
+              </Modal>
+        
+                  </div>
+                </td>
       </tr>
       {expandedRow === venta.id && renderVentaDetails(venta.detalles)}
     </React.Fragment>

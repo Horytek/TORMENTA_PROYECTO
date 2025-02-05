@@ -112,27 +112,6 @@ const handleAccept = () => {
           <div className="flex mt-4" style={{ alignItems: "center" }}>
             <input
               type="checkbox"
-              id="sendToSunat"
-              className="custom-checkbox mr-2 relative"
-              onChange={() => handleCheckboxChange('sendToSunat')}
-              checked={sendToSunat}
-              disabled={d_venta.estado===1 || d_venta.tipoComprobante === 'Nota'}
-            />{' '}
-            <p>Enviar los datos a la Sunat</p>
-          </div>
-          <div className="flex mt-4" style={{ alignItems: "center" }}>
-            <input
-              type="checkbox"
-              id="eliminar"
-              className="custom-checkbox mr-2 relative"
-              onChange={() => handleCheckboxChange('deleteOption')}
-              checked={deleteOptionSelected}
-            />{' '}
-            <p>Eliminar la Venta</p>
-          </div>
-          <div className="flex mt-4" style={{ alignItems: "center" }}>
-            <input
-              type="checkbox"
               id="eliminar"
               className="custom-checkbox mr-2 relative"
               onChange={() => handleCheckboxChange('generatePdf')}

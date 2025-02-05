@@ -278,15 +278,39 @@ const insertNotaAndDetalle = async (req, res) => {
       const totalProducto = cantidadProducto * precio;
 
       // Insertar en detalle_nota
-      await connection.query(
+      const [detalleResult] =  await connection.query(
         "INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total) VALUES (?, ?, ?, ?, ?)",
         [id_producto, id_nota, cantidadProducto, precio, totalProducto]
       );
 
+      const id_detalle = detalleResult.insertId;
+
+
+      const [stockResult] = await connection.query(
+        "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
+        [id_producto, almacenO]
+      );
+
+      let totalStock;
+      totalStock = stockResult[0].stock - cantidadProducto;
       // Reducir stock en el almacén de origen
       await connection.query(
         "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
         [cantidadProducto, id_producto, almacenO]
+      );
+
+      await connection.query(
+        "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id_nota,
+          id_producto,
+          almacenO,
+          id_detalle,
+          cantidadProducto,
+          stockResult[0]?.stock || 0,
+          totalStock,
+          fecha,
+        ]
       );
 
       // Verificar y actualizar stock en el almacén de destino si es proporcionado

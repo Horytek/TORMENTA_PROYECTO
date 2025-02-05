@@ -12,5 +12,6 @@ router.get("/cantidad_por_subcategoria", reporteController.getCantidadVentasPorS
 router.get("/analisis_ganancias_sucursales", reporteController.getAnalisisGananciasSucursales);
 router.get("/libro_ventas_sunat", reporteController.obtenerRegistroVentas);
 router.get("/registro_ventas_sunat", reporteController.exportarRegistroVentas);
+router.get("/sucursales", reporteController.getSucursales);
 
 export default router;

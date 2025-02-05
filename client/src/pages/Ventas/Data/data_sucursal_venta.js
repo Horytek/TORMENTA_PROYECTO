@@ -15,6 +15,7 @@ const useSucursalData = () => {
             nombre: item.nombre,
             ubicacion: item.ubicacion,
             usuario: item.usuario,
+            rol: item.rol,
           }));
           setSucursal(sucursales);
         } else {

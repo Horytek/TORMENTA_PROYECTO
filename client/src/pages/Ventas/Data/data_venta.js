@@ -112,7 +112,7 @@ const useVentasData = (filters) => {
   const totalRecaudado = getTotalRecaudado();
 
 // Función para calcular el total de efectivo
-const getTotalEfectivo = () => {
+/*const getTotalEfectivo = () => {
   return ventas.reduce((total, venta) => {
     // Filtrar las ventas cuyo estado no sea 'Anulada' (estado === 0)
     if (venta.estado === 'Anulada') return total;
@@ -126,9 +126,9 @@ const getTotalEfectivo = () => {
     }
     return total;
   }, 0).toFixed(2);
-};
+};*/
 
-const totalEfectivo = getTotalEfectivo();
+//const totalEfectivo = getTotalEfectivo();
 
 // Función para calcular el total de pagos electrónicos
 const getTotalPagoElectronico = () => {
@@ -149,6 +149,9 @@ const getTotalPagoElectronico = () => {
 };
 
 const totalPagoElectronico = getTotalPagoElectronico();
+
+
+const totalEfectivo = (totalRecaudado - totalPagoElectronico).toFixed(2);
 
   const updateDetalle = (updatedDetalle) => {
     setDetalles(prevDetalles =>

@@ -5,22 +5,23 @@ import { FiDownload } from "react-icons/fi";
 import { CiSearch, CiFilter} from "react-icons/ci";
 import { RiCloseLargeLine } from "react-icons/ri";
 import { IoIosArrowDropdownCircle } from "react-icons/io";
+import {Button, ButtonGroup} from "@nextui-org/button";
 
 export function ButtonSave({ ...props }) {
   return (
-    <button className="btn btn-save m-0" {...props}>
+    <Button className="btn btn-save m-0" {...props}>
       <FiSave style={{ fontSize: "25px" }} />
       Guardar
-    </button>
+    </Button>
   );
 }
 
 export function ButtonClose({ ...props }) {
   return (
-    <button className="btn btn-close m-0" {...props}>
+    <Button className="btn btn-close m-0" {...props}>
       <RiCloseLargeLine style={{ fontSize: "25px" }} />
       Cerrar
-    </button>
+    </Button>
   );
 }
 
@@ -34,10 +35,10 @@ export function ButtonNormal({ children, color, ...props }) {
 
 export function ButtonIcon({ children, icon, color, ...props }) {
   return (
-    <button className="btn m-0 " style={{ backgroundColor: color }} {...props}>
+    <Button className="btn m-0 " style={{ backgroundColor: color }} {...props}>
       {icon}
       {children}
-    </button>
+    </Button>
   );
 }
 

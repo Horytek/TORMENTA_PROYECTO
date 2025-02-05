@@ -32,6 +32,9 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const [numC, setNumC] = useState("");
   const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
   //const [modalTitle, setModalTitle] = useState(""); // Estado para el título del modal
+  const ver_usu = localStorage.getItem('usuario');
+  const ver_rol = localStorage.getItem('rol');
+  //const ver_sur = localStorage.getItem('sur');
 
   const handleChange = (event) => {
     setRazon(event.target.value);
@@ -76,6 +79,21 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
 
     onFiltersChange(filtros);
     localStorage.setItem("filtros", JSON.stringify(filtros));
+
+   /* const sucursalesDict = sucursales.reduce((acc, item) => {
+      acc[item.usuario] = {
+        ubicacion: item.ubicacion,
+        nombre: item.nombre,
+      };
+      return acc;
+    }, {});
+
+    // Obtener la sucursal fija en base al usuario
+    const sucursal_fija = sucursalesDict[ver_usu]?.nombre || ""; // Solo obtenemos el nombre
+
+    // Guardar la sucursal fija en el localStorage
+    localStorage.setItem('sur', sucursal_fija);*/
+    
   }, [
     comprobanteSeleccionado,
     sucursalSeleccionado,
@@ -83,6 +101,8 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     razon,
     numC,
     onFiltersChange,
+    sucursales,
+    ver_usu
   ]);
 
 
@@ -99,6 +119,46 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     setModalTitle(title);
     setModalOpen(true);
   };*/
+ 
+ // const sucursalEncontrada = sucursales.find(sucursal => sucursal.usuario === ver_usu);
+  //localStorage.setItem("sur", JSON.stringify(sucursalEncontrada));
+
+
+  /*const loadDetallesFromLocalStorage = () => {
+      const savedDetalles = localStorage.getItem('sur');
+      return savedDetalles ? JSON.parse(savedDetalles) : [];
+  };
+
+  const sucursal_fija = loadDetallesFromLocalStorage();*/
+
+  /*const loadDetallesFromLocalStorage = () => {
+    const savedDetalles = localStorage.getItem('sur');
+    
+    // Verifica si los datos existen
+    if (savedDetalles) {
+      try {
+        // Intentar parsear los datos almacenados
+        return JSON.parse(savedDetalles);
+      } catch (e) {
+        console.error("Error al parsear JSON:", e);
+        return null;  // Devuelve null en caso de error
+      }
+    } else {
+      console.warn("No hay sucursal guardada en localStorage");
+      return null;  // Devuelve null si no existe en localStorage
+    }
+  };
+  
+  const sucursal_fija = loadDetallesFromLocalStorage();
+  const nombreSucursal = sucursal_fija ? sucursal_fija.nombre : null;
+
+  const sucursalesDict = sucursales.reduce((acc, sucursal) => {
+    acc[sucursal.nombre] = { key: sucursal.nombre, label: sucursal.nombre };
+    return acc;
+  }, {});
+
+  localStorage.setItem("tipo", sucursalesDict);*/
+
 
   return (
     <>
@@ -153,12 +213,14 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
           </div>
           <div className="mb-2 input-wrapper md:mb-0">
             <Select
+              isDisabled={ver_rol !=1}
               id="campo"
               placeholder="Sucursal"
               className="p-2 rounded-lg"
               style={{ width: "170px" }}
               value={sucursalSeleccionado}
               onChange={(e) => setSucursalSeleccionado(e.target.value)}
+              defaultSelectedKeys={[ver_rol != 1 ? localStorage.getItem('sur') : sucursalSeleccionado]}
             >
               {sucursales.map((sucursal) => (
                 <SelectItem key={sucursal.nombre} value={sucursal.nombre}>

@@ -6,6 +6,10 @@ import { FaTrash } from "react-icons/fa";
 import { getUsuarios, deleteUsuario, getUsuario } from '@/services/usuario.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { VscDebugDisconnect } from "react-icons/vsc";
+import { PiPlugsConnected } from "react-icons/pi";
+import {Tooltip} from "@nextui-org/tooltip";
+import {Avatar, AvatarGroup, AvatarIcon} from "@nextui-org/avatar";
 
 export function ShowUsuarios({ searchTerm }) {
   
@@ -18,6 +22,8 @@ export function ShowUsuarios({ searchTerm }) {
     useEffect(() => {
         getUsers();
     }, []);
+
+    const estado_token = localStorage.getItem("estado_token");
 
     // Obtener usuarios mediante API
     const getUsers = async () => {
@@ -107,7 +113,25 @@ export function ShowUsuarios({ searchTerm }) {
                         {currentUsuarios.map((usuario) => (
                             <tr className='hover:bg-gray-100' key={usuario.id_usuario} data-product={usuario.id_usuario}>
                                 <td className='py-2 text-center'>{usuario.nom_rol}</td>
-                                <td className='py-2 text-center'>{usuario.usua}</td>
+                                <td className='py-2 text-center flex items-center justify-center gap-x-2'>
+    <Tooltip content={usuario.estado_token == 1  ? "Conectado" : "Desconectado"}>
+    <div className="flex items-center justify-center gap-x-2">
+            <span className="font-medium text-gray-700">{usuario.usua}</span>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 p-1 transition-all duration-200 ease-in-out 
+                ${usuario.estado_token === 1 
+                    ? 'border-success-300 bg-success-100' // Verde claro para conectado
+                    : 'border-danger-300 bg-danger-100'   // Rojo claro para desconectado
+                }`}>
+                {usuario.estado_token === 1 
+                    ? <PiPlugsConnected className="text-success-600 text-lg transition-all duration-300 ease-in-out transform hover:scale-105" />
+                    : <VscDebugDisconnect className="text-danger-600 text-lg transition-all duration-300 ease-in-out transform hover:scale-105" />
+                }
+            </div>
+        </div>
+    </Tooltip>
+</td>
+
+
                                 <td className='py-2 text-center'>
                                     <div className="flex items-center justify-center">
                                         

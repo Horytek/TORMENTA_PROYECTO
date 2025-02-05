@@ -7,6 +7,7 @@ export function transformData(usuarios) {
         usua: usuario.usua,
         contra: usuario.contra,
         estado_usuario: parseInt(usuario.estado_usuario) === 0 ? "Inactivo" : "Activo",
+        estado_token: usuario.estado_token
     }));
   
     return usuariosTransformados;

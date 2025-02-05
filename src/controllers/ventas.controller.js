@@ -277,9 +277,10 @@ const getSucursal = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    const [result] = await connection.query(`SELECT su.id_sucursal AS id, su.nombre_sucursal AS nombre, su.ubicacion AS ubicacion, usu.usua As usuario 
+    const [result] = await connection.query(`SELECT su.id_sucursal AS id, su.nombre_sucursal AS nombre, su.ubicacion AS ubicacion, usu.usua As usuario, ro.nom_rol AS rol
 FROM sucursal su INNER JOIN vendedor ven ON ven.dni = su.dni
-INNER JOIN usuario usu ON usu.id_usuario = ven.id_usuario`);
+INNER JOIN usuario usu ON usu.id_usuario = ven.id_usuario
+INNER JOIN rol ro ON ro.id_rol=usu.id_rol`);
     res.json({ code: 1, data: result, message: "Sucursal listados" });
   } catch (error) {
     res.status(500);
@@ -389,14 +390,26 @@ const addVenta = async (req, res) => {
       "SELECT id_sucursal FROM sucursal su INNER JOIN vendedor ve ON ve.dni=su.dni INNER JOIN usuario u ON u.id_usuario=ve.id_usuario WHERE u.usua=?",
       [usuario]
     );
+    
 
-    console.log("Resultado de sucursal:", sucursalResult);
+    //console.log("Resultado de sucursal:", sucursalResult);
 
     if (sucursalResult.length === 0) {
       throw new Error("Sucursal not found for the given user.");
     }
 
     const id_sucursal = sucursalResult[0].id_sucursal;
+
+    // ALMACENES AGREGADOS
+    const [almacenResult] = await connection.query(
+      "SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal =?",
+      [id_sucursal]
+    );
+
+    const id_almacen = almacenResult[0].id_almacen;
+    //console.log("Resultado de almacen:", id_almacen);
+    // 
+
 
     // Obtener id_tipocomprobante y nom_tipocomp basado en el nombre del comprobante
     const [comprobanteResult] = await connection.query(
@@ -530,6 +543,22 @@ const addVenta = async (req, res) => {
         "INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total) VALUES (?, ?, ?, ?, ?, ?)",
         [id_producto, id_venta, cantidad, precio, descuento, total]
       );
+
+      // Insertar bitacora 
+    await connection.query(
+      "INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha) VALUES (? , ? , ? , ? , ? , ?)",
+      [
+        id_producto,
+        id_almacen,
+        cantidad,
+        stockActual,
+        stockNuevo,
+        fecha
+      ]
+    );
+
+    //
+
     }
 
       // Insertar la venta en la tabla 'venta'
@@ -549,6 +578,7 @@ const addVenta = async (req, res) => {
       [id_venta_boucher, id_venta]
     );
 
+    
 
     // Insertar los detalles de la venta en la tabla 'detalle_venta'
     for (const detalle of detalles_b) {
@@ -674,13 +704,42 @@ const updateVenta = async (req, res) => {
           [usua]
         );
     
-        console.log("Resultado de usuario:", usuarioResult); 
+        //console.log("Resultado de usuario:", usuarioResult); 
     
         if (usuarioResult.length === 0) {
           throw new Error("Usuario no encontrado.");
         }
     
         const id_usuario = usuarioResult[0].id_usuario;
+
+        // Obtener id_sucursal de la venta
+        const [ventaResult] = await connection.query(
+          `
+          SELECT id_sucursal, f_venta
+          FROM venta
+          WHERE id_venta = ?
+          `,
+          [id_venta]
+        );
+    
+        if (ventaResult.length === 0) {
+          throw new Error("Venta no encontrada.");
+        }
+    
+        const id_sucursal = ventaResult[0].id_sucursal;
+        const f_venta = ventaResult[0].f_venta;
+    
+        // Obtener el id_almacen a partir de la sucursal
+        const [almacenResult] = await connection.query(
+          "SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ?",
+          [id_sucursal]
+        );
+    
+        if (almacenResult.length === 0) {
+          throw new Error("Almacén no encontrado para la sucursal.");
+        }
+    
+        const id_almacen = almacenResult[0].id_almacen;
 
     // Restaurar el stock de los productos
     for (const detalle of detallesResult) {
@@ -729,6 +788,15 @@ const updateVenta = async (req, res) => {
         `,
         [stockActual + cantidad, id_producto, id_venta]
       );
+
+            // Insertar en bitacora_nota solo cuando se aumenta el stock (entra)
+            await connection.query(
+              `
+              INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha)
+              VALUES (?, ?, ?, ?, ?, ?)
+              `,
+              [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta]
+            );
     }
 
     // Cambiar el estado de la venta

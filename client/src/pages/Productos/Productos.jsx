@@ -6,6 +6,7 @@ import { ShowProductos } from './ShowProductos';
 import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
+import {Button, ButtonGroup} from "@nextui-org/button";
 
 function Productos() {
   

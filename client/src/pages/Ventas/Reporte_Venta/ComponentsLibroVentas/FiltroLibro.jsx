@@ -1,18 +1,22 @@
 import { DateRangePicker, Select, SelectItem, Button } from "@nextui-org/react";
 import { useState, useCallback, useEffect } from "react";
 import { format, isValid } from "date-fns";
+import useSucursalData from "../../Data/data_sucursal_venta";
 
 const FiltroLibro = ({ onFilter, filters }) => {
+    const { sucursales } = useSucursalData();
     const [dateRange, setDateRange] = useState(filters.startDate ? { start: filters.startDate, end: filters.endDate } : null);
-    const [tipoComprobante, setTipoComprobante] = useState(new Set(filters.tipoComprobante ? [filters.tipoComprobante] : []));
-    const [sucursal, setSucursal] = useState(new Set(filters.idSucursal ? [filters.idSucursal] : []));
+    const [tipoComprobante, setTipoComprobante] = useState(
+        localStorage.getItem("tipoComprobante_r") ? new Set(localStorage.getItem("tipoComprobante_r").split(',')) : new Set()
+    );
+    const [sucursal1, setSucursal] = useState(new Set(filters.idSucursal ? [filters.idSucursal] : []));
 
     useEffect(() => {
         // Al cambiar los filtros, los almacenamos en localStorage
-        localStorage.setItem("filters", JSON.stringify({ startDate: filters.startDate, endDate: filters.endDate, tipoComprobante: filters.tipoComprobante, idSucursal: filters.idSucursal }));
-    }, [filters]);
+        localStorage.setItem("filters", JSON.stringify({ startDate: filters.startDate, endDate: filters.endDate, tipoComprobante: Array.from(tipoComprobante), idSucursal: filters.idSucursal }));
+    }, [filters, tipoComprobante]);
 
-    const sucursales = [
+    const sucursales1 = [
         { id: 1, nombre: "Tienda Arica-3" },
         { id: 2, nombre: "Tienda Arica-2" },
         { id: 3, nombre: "Tienda Arica-1" },
@@ -21,8 +25,9 @@ const FiltroLibro = ({ onFilter, filters }) => {
     ];
 
     const comprobantes = [
-        { label: "Boleta", value: "boleta" },
-        { label: "Factura", value: "factura" },
+        { label: "Boleta", value: "Boleta" },
+        { label: "Factura", value: "Factura" },
+        { label: "Nota de venta", value: "Nota de venta" },
     ];
 
     const formatDateSafely = useCallback((dateObj) => {
@@ -32,7 +37,7 @@ const FiltroLibro = ({ onFilter, filters }) => {
     }, []);
 
     const applyFilters = useCallback((newDateRange, newTipoComprobante, newSucursal) => {
-        const selectedComprobante = Array.from(newTipoComprobante)[0] || null;
+        const selectedComprobante = Array.from(newTipoComprobante);
         const selectedSucursal = Array.from(newSucursal)[0] || null;
         let startDate = null;
         let endDate = null;
@@ -52,12 +57,12 @@ const FiltroLibro = ({ onFilter, filters }) => {
 
     const handleDateChange = (value) => {
         setDateRange(value);
-        applyFilters(value, tipoComprobante, sucursal);
+        applyFilters(value, tipoComprobante, sucursal1);
     };
 
     const handleComprobanteChange = (selected) => {
-        setTipoComprobante(selected);
-        applyFilters(dateRange, selected, sucursal);
+        setTipoComprobante(new Set(selected));
+        applyFilters(dateRange, new Set(selected), sucursal1);
     };
 
     const handleSucursalChange = (selected) => {
@@ -72,13 +77,19 @@ const FiltroLibro = ({ onFilter, filters }) => {
         applyFilters(null, new Set([]), new Set([]));
     };
 
+    const handleChange = (e) => {
+        const value = e.target.value;
+        setTipoComprobante(new Set([value]));
+        localStorage.setItem("tipoComprobante_r", value);
+    };
+
     return (
         <div className="flex flex-col gap-4 md:flex-row md:items-end">
             <Select
                 label="Sucursal"
                 placeholder="Seleccione sucursal"
                 className="w-[200px]"
-                selectedKeys={sucursal}
+                selectedKeys={sucursal1}
                 onSelectionChange={handleSucursalChange}
             >
                 {sucursales.map((suc) => (
@@ -103,6 +114,7 @@ const FiltroLibro = ({ onFilter, filters }) => {
                 label="Tipo de comprobante"
                 placeholder="Seleccione tipo"
                 className="w-[200px]"
+                selectionMode="multiple"
                 selectedKeys={tipoComprobante}
                 onSelectionChange={handleComprobanteChange}
             >

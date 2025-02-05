@@ -6,6 +6,7 @@ import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { ShowUsuarios } from '@/pages/Usuarios/ShowUsuarios';
+import {Button, ButtonGroup} from "@nextui-org/button";
 
 function Usuarios() {
   
@@ -43,9 +44,9 @@ function Usuarios() {
           />
         </div>
         <div className="flex gap-5">
-          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />} onClick={handleModalAdd}>
-            Agregar usuario
-          </ButtonIcon>
+          <Button color="primary" endContent={<FaPlus style={{ fontSize: '25px' }} />} onClick={handleModalAdd}>
+          Agregar usuario
+      </Button>
         </div>
       </div>
       <div>

@@ -32,6 +32,8 @@ function Login() {
       const response = await login(user);
       if (response.success) {
         localStorage.setItem('usuario', usuario);
+        localStorage.setItem('rol', response.data.rol);
+        localStorage.setItem('sur', response.data.sucursal);
         navigate('/Inicio');
       } else {
         setShowAlert(true);

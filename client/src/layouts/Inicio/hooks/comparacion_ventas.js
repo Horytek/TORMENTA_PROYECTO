@@ -7,13 +7,15 @@ const useComparacionTotal = (fechaInicio, fechaFin) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const usuario = localStorage.getItem("usuario"); // obtiene el usuario desde localStorage
     const fetchComparacionVentas = async () => {
       try {
         setLoading(true);
 
         const response = await axios.post('/dashboard/comparacion_ventas', {
           fechaInicio: fechaInicio || `${new Date().getFullYear()}-01-01`,
-          fechaFin: fechaFin || `${new Date().getFullYear()}-12-31`
+          fechaFin: fechaFin || `${new Date().getFullYear()}-12-31`,
+          usuario // se envía en el body para que el backend lo use
         });
 
         setComparacionVentas(response.data.data);
@@ -30,6 +32,5 @@ const useComparacionTotal = (fechaInicio, fechaFin) => {
 
   return { comparacionVentas, loading, error };
 };
-
 
 export default useComparacionTotal;

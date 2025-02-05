@@ -7,12 +7,14 @@ const useProductTop = (timePeriod) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const usuario = localStorage.getItem("usuario"); // obtiene el usuario desde localStorage
     const fetchProductTop = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/dashboard/product_top', {
+        const response = await axios.get("/dashboard/product_top", {
           params: {
-            tiempo: timePeriod, 
+            tiempo: timePeriod,
+            usuario, // se envía en la query para que el backend lo use
           },
         });
         setProductTop(response.data.data);
@@ -23,7 +25,6 @@ const useProductTop = (timePeriod) => {
         setLoading(false);
       }
     };
-
     fetchProductTop();
   }, [timePeriod]);
 

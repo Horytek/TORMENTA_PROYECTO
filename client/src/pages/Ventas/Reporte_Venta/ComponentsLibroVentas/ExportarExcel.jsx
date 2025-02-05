@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "@/api/axios";
+import useSucursalData from "../../Data/data_sucursal_venta";
 import {
   Button,
   Modal,
@@ -40,15 +41,23 @@ const SUCURSALES = [
   { id: 5, nombre: "Oficina" }
 ];
 
+const COMPROBANTES = [
+  { value: "Boleta", label: "Boleta" },
+  { value: "Factura", label: "Factura" },
+  { value: "Nota de venta", label: "Nota de venta" }
+];
+
 const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const { sucursales } = useSucursalData();
   const [mesSeleccionado, setMesSeleccionado] = useState(new Set());
   const [anoSeleccionado, setAnoSeleccionado] = useState(new Set());
   const [sucursalSeleccionada, setSucursalSeleccionada] = useState(new Set());
+  const [tipoComprobanteSeleccionado, setTipoComprobanteSeleccionado] = useState(new Set());
 
-  const handleExportExcel = async (mes, ano, idSucursal) => {
+  const handleExportExcel = async (mes, ano, idSucursal, tipoComprobante) => {
     try {
-      let url = `/reporte/registro_ventas_sunat?mes=${mes}&ano=${ano}`;
+      let url = `/reporte/registro_ventas_sunat?mes=${mes}&ano=${ano}&tipoComprobante=${tipoComprobante}`;
       if (idSucursal) {
         url += `&idSucursal=${idSucursal}`;
       }
@@ -65,10 +74,10 @@ const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
       link.href = downloadUrl;
       
       const sucursalNombre = idSucursal ? 
-        SUCURSALES.find(s => s.id === parseInt(idSucursal))?.nombre : '';
+      sucursales.find(s => s.id === parseInt(idSucursal))?.nombre : '';
       const fileName = idSucursal ? 
-        `RegistroVentas_${sucursalNombre}_${mes}_${ano}.xlsx` : 
-        `RegistroVentas_${mes}_${ano}.xlsx`;
+        `RegistroVentas_${sucursalNombre}_${tipoComprobante}_${mes}_${ano}.xlsx` : 
+        `RegistroVentas_${tipoComprobante}_${mes}_${ano}.xlsx`;
       
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
@@ -85,13 +94,14 @@ const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
     const mes = mesSeleccionado.size > 0 ? Array.from(mesSeleccionado)[0] : null;
     const ano = anoSeleccionado.size > 0 ? Array.from(anoSeleccionado)[0] : null;
     const idSucursal = sucursalSeleccionada.size > 0 ? Array.from(sucursalSeleccionada)[0] : null;
+    const tipoComprobante = tipoComprobanteSeleccionado.size > 0 ? Array.from(tipoComprobanteSeleccionado) : null;
 
-    if (!mes || !ano || !idSucursal) {
-      alert("Por favor, seleccione la sucursal, mes y año antes de exportar.");
+    if (!mes || !ano || !idSucursal || !tipoComprobante) {
+      alert("Por favor, seleccione la sucursal, mes, año y tipo de comprobante antes de exportar.");
       return;
     }
 
-    handleExportExcel(mes, ano, idSucursal);
+    handleExportExcel(mes, ano, idSucursal, tipoComprobante);
   };
 
   return (
@@ -119,7 +129,7 @@ const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
                   onSelectionChange={setSucursalSeleccionada}
                   isRequired
                 >
-                  {SUCURSALES.map((sucursal) => (
+                  {sucursales.map((sucursal) => (
                     <SelectItem key={sucursal.id} value={sucursal.id}>
                       {sucursal.nombre}
                     </SelectItem>
@@ -147,6 +157,20 @@ const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
                 >
                   {["2024", "2025"].map((ano) => (
                     <SelectItem key={ano}>{ano}</SelectItem>
+                  ))}
+                </Select>
+                <Select
+                  label="Tipo de Comprobante"
+                  placeholder="Seleccione tipo de comprobante"
+                  selectionMode="multiple"
+                  selectedKeys={tipoComprobanteSeleccionado}
+                  onSelectionChange={setTipoComprobanteSeleccionado}
+                  isRequired
+                >
+                  {COMPROBANTES.map((comprobante) => (
+                    <SelectItem key={comprobante.value} value={comprobante.value}>
+                      {comprobante.label}
+                    </SelectItem>
                   ))}
                 </Select>
               </ModalBody>

@@ -20,6 +20,7 @@ const LibroVentas = () => {
             setFilters(savedFilters);
         }
     }, []);
+    
 
     const {
         ventas,
@@ -83,5 +84,7 @@ const LibroVentas = () => {
         </div>
     );
 };
+
+
 
 export default LibroVentas;

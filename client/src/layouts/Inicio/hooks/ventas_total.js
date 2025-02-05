@@ -7,16 +7,16 @@ const useVentasTotal = (timePeriod) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const usuario = localStorage.getItem("usuario"); // obtiene el usuario desde localStorage
     const fetchVentasTotal = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/dashboard/ventas_total', {
+        const response = await axios.get("/dashboard/ventas_total", {
           params: {
-            tiempo: timePeriod, 
+            tiempo: timePeriod,
+            usuario, // se envía en la query para que el backend lo use
           },
         });
-        
-        
         setVentasTotal(response.data.data);
         setError(null);
       } catch (err) {
@@ -25,8 +25,6 @@ const useVentasTotal = (timePeriod) => {
         setLoading(false);
       }
     };
-    
-
     fetchVentasTotal();
   }, [timePeriod]);
 

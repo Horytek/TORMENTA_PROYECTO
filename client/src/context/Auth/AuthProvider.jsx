@@ -1,7 +1,7 @@
 import { AuthContext } from "./AuthContext";
 import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
-import { loginRequest, verifyTokenRequest } from "../../api/api.auth";
+import { loginRequest,logoutRequest,nameRequest, verifyTokenRequest } from "../../api/api.auth";
 //import Cookies from "js-cookie";
 
 export const useAuth = () => {
@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
       try {
           const res = await loginRequest(user);
           sessionStorage.setItem("token", res.data.token); // Guardar el token en sessionStorage
+          //localStorage.setItem("estado_token", 1);
           setUser(res.data.data);
           setIsAuthenticated(true);
           return res.data;
@@ -30,7 +31,11 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+        const token = sessionStorage.getItem("token");
+        logoutRequest(token);
+        localStorage.removeItem("usuario");
         sessionStorage.removeItem("token"); // Eliminar el token de sessionStorage
+        //localStorage.setItem("estado_token", 0);
         setUser(null);
         setIsAuthenticated(false);
         redirect('/');
@@ -41,8 +46,31 @@ export const AuthProvider = ({ children }) => {
 
 useEffect(() => {
   const checkLogin = async () => {
+
+    if (performance.navigation.type === performance.navigation.TYPE_RELOAD || performance.navigation.type === 0) {
+        //sessionStorage.setItem('reload', 'true');
+      } else {
+       /* const usua = localStorage.getItem("usuario");
+
+        const usuario = {
+                usua: usua
+        };
+
+        nameRequest(usuario);*/
+        sessionStorage.removeItem("token"); // Eliminar el token de sessionStorage
+      }
+      
       const token = sessionStorage.getItem("token");
+
       if (!token) {
+            const usua = localStorage.getItem("usuario");
+
+            const usuario = {
+                usua: usua
+            };
+
+          nameRequest(usuario);
+          //localStorage.setItem("estado_token", 0);
           setIsAuthenticated(false);
           setLoading(false);
           return;
@@ -59,6 +87,7 @@ useEffect(() => {
           setLoading(false);
       }
   };
+
   checkLogin();
 }, []);
 

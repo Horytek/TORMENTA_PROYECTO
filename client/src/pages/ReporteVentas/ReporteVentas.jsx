@@ -1,20 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "@/api/axios";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
-import { Divider, Tabs, Tab } from "@nextui-org/react";
+import { Divider, Tabs, Tab, Spinner } from "@nextui-org/react";
 import TablaGanancias from "./ComponentsReporte/Overview";
 import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
 import KPIS from "./ComponentsReporte/KPIS";
 import Comparativa from "./ComponentsReporte/Comparativa";
 
 const ReporteVentas = () => {
-  const [selectedTab, setSelectedTab] = useState("todas"); // Estado inicial
+  const [selectedTab, setSelectedTab] = useState("todas");
+  const [sucursales, setSucursales] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const sucursales = {
-    arica1: 3,
-    arica2: 2,
-    arica3: 1,
-    balta: 4,
-  };
+  useEffect(() => {
+    const fetchSucursales = async () => {
+      try {
+        const response = await axios.get('/reporte/sucursales');
+        if (response.data.code === 1) {
+          const filteredSucursales = response.data.data.filter(
+            sucursal => sucursal.id_sucursal !== 5
+          );
+          setSucursales(filteredSucursales || []);
+        }
+      } catch (error) {
+        console.error("Error al cargar sucursales:", error);
+        setSucursales([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSucursales();
+  }, []);
 
   return (
     <div>
@@ -64,18 +81,24 @@ const ReporteVentas = () => {
         style={{ marginBottom: "10px", marginTop: "17px" }}
       >
         <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 relative">
-          <Tabs
-            variant="underlined"
-            aria-label="Tabs variants"
-            selectedKey={selectedTab}
-            onSelectionChange={setSelectedTab}
-          >
-            <Tab key="todas" title="Todas" />
-            <Tab key="arica1" title="Tienda Arica-1" />
-            <Tab key="arica2" title="Tienda Arica-2" />
-            <Tab key="arica3" title="Tienda Arica-3" />
-            <Tab key="balta" title="Tienda Balta" />
-          </Tabs>
+          {loading ? (
+            <Spinner />
+          ) : (
+            <Tabs
+              variant="underlined"
+              aria-label="Tabs variants"
+              selectedKey={selectedTab}
+              onSelectionChange={setSelectedTab}
+            >
+              <Tab key="todas" title="Todas" />
+              {Array.isArray(sucursales) && sucursales.map((sucursal) => (
+                <Tab 
+                  key={sucursal.id_sucursal} 
+                  title={sucursal.nombre} // Changed from nombre_sucursal to nombre
+                />
+              ))}
+            </Tabs>
+          )}
           <div
             className="element-right"
             style={{
@@ -89,21 +112,21 @@ const ReporteVentas = () => {
 
       {/* Si la pestaña seleccionada es "todas", no pasamos idSucursal */}
       <KPIS
-        idSucursal={selectedTab !== "todas" ? sucursales[selectedTab] : null}
+        idSucursal={selectedTab !== "todas" ? selectedTab : null}
       />
 
       <div className="flex-grow mb-8 grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-5 sm:grid-areas-[overview_categoria]">
         <div className="sm:grid-area-[overview]">
           <TablaGanancias
             idSucursal={
-              selectedTab !== "todas" ? sucursales[selectedTab] : null
+              selectedTab !== "todas" ? selectedTab : null
             }
           />
         </div>
         <div className="sm:grid-area-[categoria]">
           <CategoriaProducto
             idSucursal={
-              selectedTab !== "todas" ? sucursales[selectedTab] : null
+              selectedTab !== "todas" ? selectedTab : null
             }
           />
         </div>
@@ -113,7 +136,7 @@ const ReporteVentas = () => {
         <div className="col-start-1 col-end-6 row-start-2 row-end-3">
           <Comparativa
             idSucursal={
-              selectedTab !== "todas" ? sucursales[selectedTab] : null
+              selectedTab !== "todas" ? selectedTab : null
             }
           />
         </div>

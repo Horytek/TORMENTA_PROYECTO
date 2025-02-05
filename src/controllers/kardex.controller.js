@@ -163,30 +163,29 @@ const getAlmacen = async (req, res) => {
         const [detalleKardexResult] = await connection.query(
             `
                        SELECT  
-                        n.fecha AS fecha, 
-                        c.num_comprobante AS documento, 
-                        n.nom_nota AS nombre, 
+                        bn.fecha AS fecha,
+								COALESCE( c.num_comprobante, 'Venta') AS documento, 
+                        COALESCE( n.nom_nota, 'Venta' ) AS nombre, 
                         bn.entra AS entra,
                         bn.sale AS sale,
                         bn.stock_actual AS stock, 
-                        p.precio AS precio, 
-                        n.glosa AS glosa 
+                        p.precio AS precio,
+                        COALESCE (n.glosa, 'VENTA DE PRODUCTOS' ) AS glosa   
                     FROM 
-                        nota n
-                    INNER JOIN 
-                        comprobante c ON n.id_comprobante = c.id_comprobante
-                    INNER JOIN
-                        bitacora_nota bn ON n.id_nota = bn.id_nota  
+                        bitacora_nota bn
                     INNER JOIN 
                         producto p ON bn.id_producto = p.id_producto 
-
+                    LEFT JOIN 
+                    	   nota n ON bn.id_nota= n.id_nota
+                  	LEFT JOIN
+                  		comprobante c ON n.id_comprobante= c.id_comprobante
                     WHERE 
-                        DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
-                        AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
+                        DATE_FORMAT(bn.fecha, '%Y-%m-%d') >= ?
+                        AND DATE_FORMAT(bn.fecha, '%Y-%m-%d') <= ?
                         AND bn.id_producto = ?
                         AND bn.id_almacen = ?
                     ORDER BY 
-                        documento;
+                        fecha;
 
             `,
             [fechaInicio, fechaFin, idProducto, idAlmacen]
@@ -204,7 +203,7 @@ const getAlmacen = async (req, res) => {
 
 
 const getDetalleKardexAnteriores = async (req, res) => {
-    const { fecha = '2024-08-01', idProducto = 3 ,idAlmacen = 2 } = req.query;
+    const { fecha = '2024-08-01', idProducto ,idAlmacen } = req.query;
     let connection;
     try {
         connection = await getConnection();
@@ -216,16 +215,11 @@ const getDetalleKardexAnteriores = async (req, res) => {
                 COALESCE(SUM(bn.entra), 0) AS entra, 
                 COALESCE(SUM(bn.sale), 0) AS sale
             FROM 
-                nota n
-            INNER JOIN 
-                detalle_nota dn ON n.id_nota = dn.id_nota
-            INNER JOIN
-                producto p ON dn.id_producto = p.id_producto
-            INNER JOIN 
-                bitacora_nota bn ON n.id_nota = bn.id_nota
+            
+                bitacora_nota bn 
             WHERE 
-                DATE_FORMAT(n.fecha, '%Y-%m-%d') < ?
-                AND p.id_producto = ?
+                DATE_FORMAT(bn.fecha, '%Y-%m-%d') < ?
+                AND bn.id_producto = ?
                 AND bn.id_almacen = ?;
             `,
             [fecha, idProducto,idAlmacen]

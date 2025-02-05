@@ -71,7 +71,9 @@ function HistoricoFilas({ transaction }) {
       <td className="text-center py-2 px-4">{transaction.sale}</td>
       <td className="text-center py-2 px-4">{transaction.stock}</td>
       <td className="text-center py-2 px-4">{transaction.precio}</td>
-      <td className="text-center py-2 px-4">{transaction.glosa}</td>
+      <td className="text-center py-2 px-4">
+  {transaction.glosa || "VENTA POR PRODUCTOS"}
+</td>
     </tr>
   );
 }

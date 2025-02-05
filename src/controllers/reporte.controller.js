@@ -67,6 +67,44 @@ const getTotalSalesRevenue = async (req, res) => {
 };
 
 
+const getSucursales = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    
+    const query = `
+      SELECT 
+        id_sucursal,
+        nombre_sucursal as nombre
+      FROM 
+        sucursal
+      WHERE 
+        estado_sucursal = 1
+      ORDER BY 
+        nombre_sucursal
+    `;
+
+    const [sucursales] = await connection.query(query);
+    
+    res.json({ 
+      code: 1, 
+      data: sucursales,
+      message: "Sucursales obtenidas correctamente" 
+    });
+    
+  } catch (error) {
+    console.error('Error al obtener sucursales:', error);
+    res.status(500).json({ 
+      code: 0,
+      message: "Error al obtener las sucursales",
+      error: error.message 
+    });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+
 const getProductoMasVendido = async (req, res) => {
   let connection;
   const { id_sucursal } = req.query;
@@ -347,13 +385,13 @@ const parseMetodoPago = (metodoPago) => {
   return { efectivo: montoEfectivo, electronico: montoElectronico };
 };
 
-const exportarRegistroVentas = async (req, res) => {
+/*const exportarRegistroVentas = async (req, res) => {
   let connection;
   try {
     console.log("Iniciando exportarRegistroVentas...");
 
     connection = await getConnection();
-    const { mes, ano, idSucursal } = req.query;
+    const { mes, ano, idSucursal, tipoComprobante } = req.query;
 
     if (!mes || !ano) {
       console.error("No se proporcionaron mes y año.");
@@ -370,6 +408,13 @@ const exportarRegistroVentas = async (req, res) => {
         nombreSucursal = sucursalResult[0].nombre_sucursal;
       }
     }
+
+    const tipoComprobanteArray = tipoComprobante.split(',').map(tc => tc.trim()).filter(tc => tc !== '');
+    if (tipoComprobanteArray.length > 0) {
+      filters.push(`tc.nom_tipocomp IN (${tipoComprobanteArray.map(() => '?').join(', ')})`);
+      queryParams.push(...tipoComprobanteArray);
+    }
+
 
     const query = `
     SELECT 
@@ -552,7 +597,231 @@ const exportarRegistroVentas = async (req, res) => {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
     }
 }
+};*/
+
+const exportarRegistroVentas = async (req, res) => {
+  let connection;
+  try {
+    console.log("Iniciando exportarRegistroVentas...");
+
+    connection = await getConnection();
+    const { mes, ano, idSucursal, tipoComprobante } = req.query;
+
+    if (!mes || !ano) {
+      console.error("No se proporcionaron mes y año.");
+      return res.status(400).json({ message: "Debe proporcionar mes y año." });
+    }
+
+    let nombreSucursal = "TODAS LAS SUCURSALES";
+    if (idSucursal) {
+      const [sucursalResult] = await connection.query(
+        "SELECT nombre_sucursal FROM sucursal WHERE id_sucursal = ?",
+        [idSucursal]
+      );
+      if (sucursalResult.length > 0) {
+        nombreSucursal = sucursalResult[0].nombre_sucursal;
+      }
+    }
+
+    // Inicializar los filtros y parámetros
+    const filters = [];
+    const queryParams = [mes, ano];
+
+    // Tratamos el tipo de comprobante
+    if (tipoComprobante) {
+      const tipoComprobanteArray = tipoComprobante.split(',').map(tc => tc.trim()).filter(tc => tc !== '');
+      if (tipoComprobanteArray.length > 0) {
+        filters.push(`tc.nom_tipocomp IN (${tipoComprobanteArray.map(() => '?').join(', ')})`);
+        queryParams.push(...tipoComprobanteArray);
+      }
+    }
+
+    // Agregar filtro por sucursal si existe
+    if (idSucursal) {
+      filters.push("v.id_sucursal = ?");
+      queryParams.push(idSucursal);
+    }
+
+    const query = `
+      SELECT 
+        ROW_NUMBER() OVER (ORDER BY v.id_venta) AS numero_correlativo,
+        DAY(v.f_venta) AS dia_emision,
+        DAY(v.f_venta) AS dia_vencimiento,
+        c.num_comprobante AS num_comprobante,
+        v.metodo_pago,
+        CASE 
+            WHEN cl.dni IS NOT NULL AND cl.dni <> '' THEN '1'
+            ELSE '6'
+        END AS tipo_doc_cliente,
+        CASE 
+            WHEN cl.dni IS NOT NULL AND cl.dni <> '' THEN cl.dni 
+            ELSE cl.ruc 
+        END AS documento_cliente,
+        CASE 
+            WHEN cl.nombres IS NOT NULL AND cl.nombres <> '' AND cl.apellidos IS NOT NULL AND cl.apellidos <> '' 
+            THEN CONCAT(cl.nombres, ' ', cl.apellidos) 
+            ELSE cl.razon_social 
+        END AS nombre_cliente,
+        s.nombre_sucursal,
+        ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18, 2) AS base_imponible,
+        ROUND((SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18) * 0.18, 2) AS igv,
+        ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento), 2) AS total
+      FROM venta v
+      INNER JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+      INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante
+      INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
+      INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
+      INNER JOIN tipo_comprobante tc ON tc.id_tipocomprobante = c.id_tipocomprobante
+      WHERE MONTH(v.f_venta) = ? AND v.estado_venta !=0 AND YEAR(v.f_venta) = ?
+      ${filters.length > 0 ? 'AND ' + filters.join(' AND ') : ''}
+      GROUP BY v.id_venta, c.num_comprobante, cl.dni, cl.ruc, cl.nombres, cl.apellidos, cl.razon_social, 
+               v.f_venta, s.nombre_sucursal, v.metodo_pago
+      ORDER BY v.id_venta`;
+
+    const [resultados] = await connection.query(query, queryParams);
+
+    const projectRoot = path.resolve(__dirname, '..', '..');
+    const templatePath = path.join(projectRoot, "client", "src", "assets", "FormatoVentaSUNAT.xlsx");
+
+    if (!fs.existsSync(templatePath)) {
+      console.error("No se encontró la plantilla en la ruta:", templatePath);
+      return res.status(500).json({ message: "No se encontró la plantilla." });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(templatePath);
+
+    const worksheet = workbook.getWorksheet("Plantilla");
+    if (!worksheet) {
+      console.error("No se pudo encontrar la hoja 'Plantilla' en el workbook.");
+      return res.status(500).json({ message: "No se encontró la hoja requerida en la plantilla." });
+    }
+
+    const getMonthAbbreviation = (monthNumber) => {
+      const months = {
+        '01': 'ene', '02': 'feb', '03': 'mar', '04': 'abr',
+        '05': 'may', '06': 'jun', '07': 'jul', '08': 'ago',
+        '09': 'sep', '10': 'oct', '11': 'nov', '12': 'dic'
+      };
+      return months[monthNumber];
+    };
+
+    worksheet.getCell("B2").value = nombreSucursal;
+    worksheet.getCell("B3").value = `${getMonthAbbreviation(mes)}-${ano.slice(-2)}`;
+    worksheet.getCell("B4").value = "20610588981";
+    worksheet.getCell("E5").value = "TEXTILES CREANDO MODA S.A.C.";
+
+    const startRow = 12;
+    const totalColumns = 22;
+
+    resultados.forEach((row, index) => {
+      const currentRow = startRow + index;
+      const { efectivo, electronico } = parseMetodoPago(row.metodo_pago);
+
+      for (let col = 1; col <= totalColumns; col++) {
+        const cell = worksheet.getCell(currentRow, col);
+        cell.value = null;
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: 'center',
+          wrapText: true,
+        };
+        cell.font = { size: 11 };
+      }
+
+      worksheet.getCell(`A${currentRow}`).value = row.numero_correlativo;
+      worksheet.getCell(`B${currentRow}`).value = row.dia_emision;
+      worksheet.getCell(`C${currentRow}`).value = row.dia_vencimiento;
+      worksheet.getCell(`D${currentRow}`).value = "01";
+      worksheet.getCell(`E${currentRow}`).value = (row.num_comprobante || "").split("-")[0] || "";
+      worksheet.getCell(`F${currentRow}`).value = (row.num_comprobante || "").split("-")[1] || "";
+      worksheet.getCell(`G${currentRow}`).value = row.tipo_doc_cliente;
+      worksheet.getCell(`H${currentRow}`).value = row.documento_cliente;
+      worksheet.getCell(`I${currentRow}`).value = row.nombre_cliente;
+      worksheet.getCell(`K${currentRow}`).value = parseFloat(row.base_imponible || 0).toFixed(2);
+      worksheet.getCell(`O${currentRow}`).value = parseFloat(row.igv || 0).toFixed(2);
+      worksheet.getCell(`Q${currentRow}`).value = parseFloat(row.total || 0).toFixed(2);
+      worksheet.getCell(`R${currentRow}`).value = row.metodo_pago;
+      worksheet.getCell(`S${currentRow}`).value = efectivo.toFixed(2);
+      worksheet.getCell(`T${currentRow}`).value = electronico.toFixed(2);
+    });
+
+    const lastDataRow = startRow + resultados.length;
+    const totalsRow = lastDataRow + 1;
+
+    // Format totals row
+    for (let col = 1; col <= totalColumns; col++) {
+      const cell = worksheet.getCell(totalsRow, col);
+      cell.border = {
+        top: {style:'thin'},
+        left: {style:'thin'},
+        bottom: {style:'thin'},
+        right: {style:'thin'}
+      };
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center'
+      };
+      cell.font = { size: 11 };
+    }
+
+    worksheet.mergeCells(`I${totalsRow}:J${totalsRow}`);
+    const mergedCell = worksheet.getCell(`I${totalsRow}`);
+    mergedCell.value = 'TOTALES';
+    mergedCell.font = { bold: true, size: 11 };
+    mergedCell.alignment = {
+      vertical: 'middle',
+      horizontal: 'center'
+    };
+
+    const totales = resultados.reduce((acc, row) => {
+      const { efectivo, electronico } = parseMetodoPago(row.metodo_pago);
+      return {
+        baseImponible: acc.baseImponible + parseFloat(row.base_imponible || 0),
+        igv: acc.igv + parseFloat(row.igv || 0),
+        total: acc.total + parseFloat(row.total || 0),
+        efectivo: acc.efectivo + efectivo,
+        electronico: acc.electronico + electronico
+      };
+    }, { baseImponible: 0, igv: 0, total: 0, efectivo: 0, electronico: 0 });
+
+    worksheet.getCell(`K${totalsRow}`).value = totales.baseImponible.toFixed(2);
+    worksheet.getCell(`O${totalsRow}`).value = totales.igv.toFixed(2);
+    worksheet.getCell(`Q${totalsRow}`).value = totales.total.toFixed(2);
+    worksheet.getCell(`S${totalsRow}`).value = totales.efectivo.toFixed(2);
+    worksheet.getCell(`T${totalsRow}`).value = totales.electronico.toFixed(2);
+
+    ['K','O','Q','S','T'].forEach(col => {
+      const cell = worksheet.getCell(`${col}${totalsRow}`);
+      cell.font = { bold: true, size: 11 };
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    const fileName = idSucursal 
+      ? `RegistroVentasSUNAT-${nombreSucursal.replace(/\s+/g, '_')}-${mes}-${ano}.xlsx`
+      : `RegistroVentasSUNAT-${mes}-${ano}.xlsx`;
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
+    res.send(buffer);
+
+  } catch (error) {
+    console.error("Error al exportar registro de ventas:", error);
+    res.status(500).json({ message: "Error al exportar el archivo Excel." });
+  }    finally {
+    if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+    }
+}
 };
+
 
 
 
@@ -566,7 +835,7 @@ const obtenerRegistroVentas = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    const tipoComprobante = req.query.tipoComprobante || null;
+    const tipoComprobante = req.query.tipoComprobante || '';  // Recibe como string
     const fechaInicio = req.query.fechaInicio || null;
     const fechaFin = req.query.fechaFin || null;
     const idSucursal = req.query.idSucursal || null;
@@ -580,13 +849,12 @@ const obtenerRegistroVentas = async (req, res) => {
       queryParams.push(idSucursal);
     }
 
-    if (tipoComprobante) {
-      filters.push(`tc.nom_tipocomp = ?`);
-      queryParams.push(tipoComprobante);
+    // Procesar tipoComprobante (similiar a como lo haces en la segunda función)
+    const tipoComprobanteArray = tipoComprobante.split(',').map(tc => tc.trim()).filter(tc => tc !== '');
+    if (tipoComprobanteArray.length > 0) {
+      filters.push(`tc.nom_tipocomp IN (${tipoComprobanteArray.map(() => '?').join(', ')})`);
+      queryParams.push(...tipoComprobanteArray);
     }
-
-    // Excluir 'Nota de venta'
-    filters.push(`tc.nom_tipocomp != 'Nota de venta'`);
 
     filters.push(`v.estado_venta != 0`);
 
@@ -725,12 +993,13 @@ const obtenerRegistroVentas = async (req, res) => {
       message: "Error al obtener el registro de ventas",
       error: error.message, 
     });
-  }   finally {
+  } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
     }
-}
+  }
 };
+
 
 
 export const methods = {
@@ -742,5 +1011,6 @@ export const methods = {
   getCantidadVentasPorSubcategoria,
   getAnalisisGananciasSucursales,
   obtenerRegistroVentas,
-  exportarRegistroVentas
+  exportarRegistroVentas,
+  getSucursales
 };
