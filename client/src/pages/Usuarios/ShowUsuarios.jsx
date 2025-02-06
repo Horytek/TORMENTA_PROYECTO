@@ -23,7 +23,7 @@ export function ShowUsuarios({ searchTerm }) {
         getUsers();
     }, []);
 
-    const estado_token = localStorage.getItem("estado_token");
+    //const estado_token = localStorage.getItem("estado_token");
 
     // Obtener usuarios mediante API
     const getUsers = async () => {

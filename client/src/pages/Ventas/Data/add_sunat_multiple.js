@@ -58,7 +58,13 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 const enviarVentaASunat = async (data) => {
 
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
-  const token = import.meta.env.VITE_TOKEN_SUNAT || '';
+  const vender = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
+  var token;
+  if (vender == "vendedor_2"){
+    token = import.meta.env.VITE_TOKEN_SUNAT_1 || '';
+  } else if (vender == "vendedor_5") {
+    token = import.meta.env.VITE_TOKEN_SUNAT_2 || '';
+  }
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
   try {
@@ -129,6 +135,9 @@ export const handleSunatMultiple = (ventas) => {
         const offsetHours = -5; // Ajuste de zona horaria para -05:00
         const result = convertDateToDesiredFormat(isoDate, offsetHours);
 
+        const usuario = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
+        const sufijo = usuario === "vendedor_2" ? "1" : usuario === "vendedor_5" ? "2" : ""; // Ajusta según sea necesario
+
         const data = {
             ublVersion: "2.1",
             tipoOperacion: "0101",
@@ -154,16 +163,16 @@ export const handleSunatMultiple = (ventas) => {
                 }
             },
             company: {
-                ruc: 20610588981,
-                razonSocial: "TEXTILES CREANDO MODA S.A.C.",
-                nombreComercial: "TEXTILES CREANDO MODA S.A.C.",
-                address: {
-                    direccion: "CAL. SAN MARTIN NRO. 1573 URB. URRUNAGA SC. TRES LAMBAYEQUE CHICLAYO JOSE LEONARDO ORTIZ",
-                    provincia: "CHICLAYO",
-                    departamento: "LAMBAYEQUE",
-                    distrito: "JOSE LEONARDO ORTIZ",
-                    ubigueo: "140105"
-                }
+              ruc: import.meta.env[`VITE_ruc_${sufijo}`] || "",
+              razonSocial: import.meta.env[`VITE_razonSocial_${sufijo}`] || "",
+              nombreComercial: import.meta.env[`VITE_nombreComercial_${sufijo}`] || "",
+              address: {
+                direccion: import.meta.env[`VITE_direccion_${sufijo}`] || "",
+                provincia: import.meta.env[`VITE_provincia_${sufijo}`] || "",
+                departamento: import.meta.env[`VITE_departamento_${sufijo}`] || "",
+                distrito: import.meta.env[`VITE_distrito_${sufijo}`] || "",
+                ubigueo: import.meta.env[`VITE_ubigueo_${sufijo}`] || ""
+              }
             },
             mtoOperGravadas: totalGravada.toFixed(2),
             mtoIGV: mtoIGV.toFixed(2),

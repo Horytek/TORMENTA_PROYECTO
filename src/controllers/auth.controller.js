@@ -33,7 +33,7 @@ const login = async (req, res) => {
                 message: 'Usuario encontrado'
             });
             // Realizar el UPDATE para, por ejemplo, registrar el último inicio de sesión
-            await connection.query("UPDATE usuario SET token = ? , estado_token = ? WHERE id_usuario = ?", [token,1,userbd.id_usuario]);
+            await connection.query("UPDATE usuario SET  estado_token = ? WHERE id_usuario = ?", [1,userbd.id_usuario]);
         } else {
             res.status(400).json({ success: false, message: 'La contraseña ingresada no es correcta' });
         }
@@ -88,7 +88,7 @@ const logout = async (req, res) => {
 
         const userbd = userFound[0];
         // Actualizar el estado del token y limpiarlo
-        await connection.query("UPDATE usuario SET token = ?, estado_token = ? WHERE id_usuario = ?", ['', 0, userbd.id_usuario]);
+        await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
 
         // Aquí ya se puede eliminar la cookie
         res.cookie("token", "", {
@@ -120,7 +120,7 @@ const updateUsuarioName = async (req, res) => {
       }
   
       const userbd = userResult[0];
-      await connection.query("UPDATE usuario SET token = ?, estado_token = ? WHERE id_usuario = ?", ['', 0, userbd.id_usuario]);
+      await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
   
       res.json({ code: 1, message: "Usuario actualizado" });
     } catch (error) {
