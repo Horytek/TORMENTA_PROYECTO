@@ -4,7 +4,7 @@ const getUsuarios = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, token FROM usuario U
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol ORDER BY id_usuario desc`);
         res.json({ code: 1, data: result });
     } catch (error) {
@@ -22,7 +22,7 @@ const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, token FROM usuario U
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol WHERE U.id_usuario = ?`, id);
         
             if (result.length === 0) {
