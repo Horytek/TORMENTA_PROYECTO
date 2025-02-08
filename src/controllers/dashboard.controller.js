@@ -36,7 +36,8 @@ const getProductoMasVendido = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    let { tiempo, usuario: usuarioQuery, rol } = req.query;
+    // Se obtiene el parámetro adicional "sucursal" (opcional)
+    let { tiempo, usuario: usuarioQuery, rol, sucursal } = req.query;
     if (!tiempo) return res.status(400).json({ message: "Falta filtro de tiempo" });
     if (!usuarioQuery) return res.status(400).json({ message: "Falta el campo usuario" });
     if (!rol) {
@@ -70,7 +71,7 @@ const getProductoMasVendido = async (req, res) => {
 
     let query;
     let params;
-    // Si el rol es ADMIN, se consulta sin filtro de sucursal
+    // Si el rol es ADMIN, se consulta sin filtro de sucursal a menos que se envíe el parámetro "sucursal"
     if (rol.toLowerCase() === "admin") {
       query = `
         SELECT 
@@ -81,11 +82,17 @@ const getProductoMasVendido = async (req, res) => {
         JOIN producto p ON dv.id_producto = p.id_producto
         JOIN venta v ON dv.id_venta = v.id_venta
         WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
+      `;
+      params = [fechaInicioISO, fechaFinISO];
+      if(sucursal) {
+        query += " AND v.id_sucursal = ?";
+        params.push(sucursal);
+      }
+      query += `
         GROUP BY p.id_producto, p.descripcion
         ORDER BY total_vendido DESC
         LIMIT 1;
       `;
-      params = [fechaInicioISO, fechaFinISO];
     } else {
       const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
       query = `
@@ -120,8 +127,7 @@ const getTotalVentas = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    // Se obtienen los parámetros: tiempo, usuario y rol del query string
-    let { tiempo, usuario: usuarioQuery, rol } = req.query;
+    let { tiempo, usuario: usuarioQuery, rol, sucursal } = req.query;
     if (!tiempo) return res.status(400).json({ message: "Falta filtro de tiempo" });
     if (!usuarioQuery) return res.status(400).json({ message: "Falta el campo usuario" });
 
@@ -166,6 +172,10 @@ const getTotalVentas = async (req, res) => {
         WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
       `;
       params = [fechaInicioISO, fechaFinISO];
+      if(sucursal) {
+        query += " AND v.id_sucursal = ?";
+        params.push(sucursal);
+      }
     } else {
       const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
       query = `
@@ -190,7 +200,7 @@ const getTotalProductosVendidos = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    let { tiempo, usuario: usuarioQuery, rol } = req.query;
+    let { tiempo, usuario: usuarioQuery, rol, sucursal } = req.query;
     if (!tiempo) return res.status(400).json({ message: "Falta filtro de tiempo" });
     if (!usuarioQuery) return res.status(400).json({ message: "Falta el campo usuario" });
     if (!rol) {
@@ -231,13 +241,17 @@ const getTotalProductosVendidos = async (req, res) => {
         WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
       `;
       params = [fechaInicioISO, fechaFinISO];
+      if(sucursal) {
+        query += " AND v.id_sucursal = ?";
+        params.push(sucursal);
+      }
     } else {
       const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
       query = `
         SELECT SUM(dv.cantidad) AS total_productos_vendidos
         FROM detalle_venta dv
         JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.id_sucursal = ? AND v.estado_venta != 0
+        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_sucursal = ?
       `;
       params = [fechaInicioISO, fechaFinISO, id_sucursal];
     }
@@ -255,22 +269,28 @@ const getComparacionVentasPorRango = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    // Para este endpoint se reciben los parámetros vía body
-    let { fechaInicio, fechaFin, usuario: usuarioQuery, rol } = req.body;
+    // Se reciben los parámetros vía query (ya que se usa GET)
+    let { fechaInicio, fechaFin, usuario: usuarioQuery, rol, sucursal } = req.query;
     if (!fechaInicio || !fechaFin) {
       return res.status(400).json({ message: "Se requieren fecha de inicio y fecha fin" });
     }
-    // Si no se envía rol, se obtiene del usuario si es posible, de lo contrario se asume ADMIN
+    // Si no se envía rol, se obtiene del usuario o se asume "admin"
     if (!rol || rol.trim() === "") {
       if (usuarioQuery) {
-        rol = await getUsuarioRol(usuarioQuery, connection);
+        // Si se recibe sucursal desde la query, asumimos que se quiere filtrar manualmente.
+        // De lo contrario se obtiene el rol del usuario.
+        if (sucursal && sucursal.trim() !== "") {
+          rol = "admin";
+        } else {
+          rol = await getUsuarioRol(usuarioQuery, connection);
+        }
       } else {
         rol = "admin";
       }
     }
 
-    const fechaInicioFormatted = format(new Date(fechaInicio), 'yyyy-MM-dd HH:mm:ss');
-    const fechaFinFormatted = format(new Date(fechaFin), 'yyyy-MM-dd HH:mm:ss');
+    const fechaInicioFormatted = format(new Date(fechaInicio), "yyyy-MM-dd HH:mm:ss");
+    const fechaFinFormatted = format(new Date(fechaFin), "yyyy-MM-dd HH:mm:ss");
 
     let query = `
       SELECT MONTH(v.f_venta) AS mes, SUM(dv.total) AS total_ventas
@@ -280,16 +300,20 @@ const getComparacionVentasPorRango = async (req, res) => {
     `;
     let params = [fechaInicioFormatted, fechaFinFormatted];
 
-    if (rol.toLowerCase() !== "admin") {
-      if (!usuarioQuery) 
+    // Si se recibe un valor para sucursal, lo priorizamos y lo usamos en el filtro
+    if (sucursal && sucursal.trim() !== "") {
+      query += " AND v.id_sucursal = ?";
+      params.push(sucursal);
+    } else if (rol.toLowerCase() !== "admin") {
+      // Si el usuario no es admin y no se envió sucursal, se obtiene la sucursal por defecto del usuario
+      if (!usuarioQuery)
         return res.status(401).json({ message: "Usuario no autenticado" });
       const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
       query += " AND v.id_sucursal = ?";
       params.push(id_sucursal);
     }
 
-    query += `AND v.estado_venta != 0 `;
-
+    query += " AND v.estado_venta != 0 ";
     query += " GROUP BY mes ORDER BY mes;";
 
     const [result] = await connection.query(query, params);
@@ -298,18 +322,23 @@ const getComparacionVentasPorRango = async (req, res) => {
       total_ventas: 0,
     }));
 
-    result.forEach(row => {
+    result.forEach((row) => {
       const mesIndex = row.mes - 1;
       ventasPorMes[mesIndex].total_ventas = row.total_ventas;
     });
 
-    res.json({ code: 1, data: ventasPorMes, message: "Ventas por mes obtenidas correctamente" });
+    res.json({
+      code: 1,
+      data: ventasPorMes,
+      message: "Ventas por mes obtenidas correctamente",
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   } finally {
     if (connection) connection.release();
   }
 };
+
 
 export const methods = {
   getProductoMasVendido,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "@/api/axios";
 
-const useProductSell = (timePeriod) => {
+const useProductSell = (timePeriod, sucursal = "") => {
   const [totalProductsSold, setTotalProductsSold] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,12 +11,11 @@ const useProductSell = (timePeriod) => {
     const fetchTotalProductsSold = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/dashboard/product_sell', {
-          params: {
-            tiempo: timePeriod,
-            usuario, // se envía en la query para que el backend lo use
-          },
-        });
+        const params = { tiempo: timePeriod, usuario };
+        if (sucursal) {
+          params.sucursal = sucursal;
+        }
+        const response = await axios.get('/dashboard/product_sell', { params });
         setTotalProductsSold(response.data.totalProductosVendidos);
         setError(null);
       } catch (err) {
@@ -26,7 +25,7 @@ const useProductSell = (timePeriod) => {
       }
     };
     fetchTotalProductsSold();
-  }, [timePeriod]);
+  }, [timePeriod, sucursal]);
 
   return { totalProductsSold, loading, error };
 };

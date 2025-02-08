@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "@/api/axios";
 
-const useVentasTotal = (timePeriod) => {
+const useVentasTotal = (timePeriod, sucursal = "") => {
   const [ventasTotal, setVentasTotal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,12 +11,11 @@ const useVentasTotal = (timePeriod) => {
     const fetchVentasTotal = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("/dashboard/ventas_total", {
-          params: {
-            tiempo: timePeriod,
-            usuario, // se envía en la query para que el backend lo use
-          },
-        });
+        const params = { tiempo: timePeriod, usuario };
+        if (sucursal) {
+          params.sucursal = sucursal;
+        }
+        const response = await axios.get("/dashboard/ventas_total", { params });
         setVentasTotal(response.data.data);
         setError(null);
       } catch (err) {
@@ -26,7 +25,7 @@ const useVentasTotal = (timePeriod) => {
       }
     };
     fetchVentasTotal();
-  }, [timePeriod]);
+  }, [timePeriod, sucursal]);
 
   return { ventasTotal, loading, error };
 };
