@@ -7,12 +7,11 @@ const useProductTop = (timePeriod, sucursal = "") => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const usuario = localStorage.getItem("usuario");
+    const storedUser = localStorage.getItem("usuario");
     const fetchProductTop = async () => {
       try {
         setLoading(true);
-        // Solo se incluye sucursal en los parámetros si tiene un valor.
-        const params = { tiempo: timePeriod, usuario };
+        const params = { tiempo: timePeriod, usuario: storedUser };
         if (sucursal) {
           params.sucursal = sucursal;
         }
@@ -20,7 +19,12 @@ const useProductTop = (timePeriod, sucursal = "") => {
         setProductTop(response.data.data);
         setError(null);
       } catch (err) {
-        setError(err);
+        if (err.response && err.response.status === 404) {
+          setProductTop(null);
+          setError(null);
+        } else {
+          setError(err);
+        }
       } finally {
         setLoading(false);
       }
