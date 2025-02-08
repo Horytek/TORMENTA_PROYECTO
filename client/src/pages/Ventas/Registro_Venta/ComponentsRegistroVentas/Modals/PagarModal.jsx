@@ -1064,14 +1064,16 @@ isRequired
                                 </div>
                                 <div className="flex flex-col justify-end ml-4">
 
-                                    <button
+                                    <Button
 
                                         type="button"
+                                        color="success"
+                                        variant="shadow"
                                         className="btn-validar text-white px-5 flex py-2 rounded"
                                         style={{ height: "40px", marginTop: "10px" }} onClick={handleValidate}>
                                         <GrValidate className="mr-2" style={{ fontSize: '20px' }} />
                                         Validar
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -1103,20 +1105,20 @@ isRequired
 
 
                             <div className="flex justify-end">
-                                <button
+                                <Button
                                     type="button"
                                     className="btn-aceptar-cliente text-white px-4 py-2 rounded"
                                     onClick={handleGuardarClientes}
                                 >
                                     Guardar
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="button"
                                     className="btn-cerrar text-white px-4 py-2 rounded ml-4"
                                     onClick={() => setShowNuevoCliente(false)}
                                 >
                                     Cancelar
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     )}

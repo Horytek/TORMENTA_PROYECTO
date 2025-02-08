@@ -9,7 +9,7 @@ import {Button, ButtonGroup} from "@nextui-org/button";
 
 export function ButtonSave({ ...props }) {
   return (
-    <Button className="btn btn-save m-0" {...props}>
+    <Button className="btn btn-save m-0" {...props} variant="shadow">
       <FiSave style={{ fontSize: "25px" }} />
       Guardar
     </Button>
@@ -18,7 +18,7 @@ export function ButtonSave({ ...props }) {
 
 export function ButtonClose({ ...props }) {
   return (
-    <Button className="btn btn-close m-0" {...props}>
+    <Button className="btn btn-close m-0" {...props} variant="shadow">
       <RiCloseLargeLine style={{ fontSize: "25px" }} />
       Cerrar
     </Button>
@@ -27,15 +27,15 @@ export function ButtonClose({ ...props }) {
 
 export function ButtonNormal({ children, color, ...props }) {
   return (
-    <button className="btn m-0" style={{ backgroundColor: color }} {...props}>
+    <Button className="btn m-0" style={{ backgroundColor: color }} {...props} variant="shadow">
       {children}
-    </button>
+    </Button>
   );
 }
 
 export function ButtonIcon({ children, icon, color, ...props }) {
   return (
-    <Button className="btn m-0 " style={{ backgroundColor: color }} {...props}>
+    <Button className="btn m-0 " style={{ backgroundColor: color }} {...props} variant="shadow">
       {icon}
       {children}
     </Button>
@@ -44,33 +44,33 @@ export function ButtonIcon({ children, icon, color, ...props }) {
 
 export function ButtonSearch({ ...props }) {
   return (
-    <button className="btn btn-rvsecondary flex items-center" {...props}>
+    <Button className="btn btn-rvsecondary flex items-center" {...props} variant="shadow">
       <CiSearch className="h-5 w-5" style={{ color: "#f8f9fa" }} />
-    </button>
+    </Button>
   );
 }
 
 export function ButtonFilter({ ...props }) {
   return (
-    <button className="btn btn-rvsecondary flex items-center" {...props}>
+    <Button className="btn btn-rvsecondary flex items-center" {...props} variant="shadow">
       <CiFilter className="h-5 w-5" style={{ color: "#f8f9fa" }} />
-    </button>
+    </Button>
   );
 }
 
 export function ButtonDownload({ ...props }) {
   return (
-    <button className="btn btn-rvsecondary flex items-center" {...props}>
+    <Button className="btn btn-rvsecondary flex items-center" {...props} variant="shadow">
       <FiDownload className="h-5 w-5" style={{ color: "#f8f9fa" }} />
-    </button>
+    </Button>
   );
 }
 
 export function ButtonDesplegable({ ...props }) {
   return (
-    <button className="btn btn-masecondary flex items-center" {...props}>
+    <Button className="btn btn-masecondary flex items-center" {...props} variant="shadow">
       <IoIosArrowDropdownCircle className="h-5 w-5" style={{ color: "#f8f9fa" }} />
-    </button>
+    </Button>
   );
 }
 

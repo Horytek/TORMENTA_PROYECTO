@@ -8,11 +8,6 @@ const getVentas = async (req, res) => {
   try {
     connection = await getConnection();
 
-    // Obtener el número total de ventas
-    const [totalResult] = await connection.query(
-      "SELECT COUNT(*) as total FROM venta"
-    );
-    const totalVentas = totalResult[0].total;
     // Procesar nom_tipocomp para la cláusula IN
     const nomTipocompArray = nom_tipocomp.split(',').map(item => item.trim()).filter(item => item !== '');
     let inClause = '';
@@ -71,6 +66,27 @@ const getVentas = async (req, res) => {
         };
       })
     );
+
+    // Obtener el número total de ventas
+    const [totalResult] = await connection.query(
+      `
+      SELECT COUNT(*) as total 
+      FROM venta v
+      INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
+      INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
+      INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
+      INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
+      WHERE ${inClause} 
+        AND (cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ?) 
+        AND s.nombre_sucursal LIKE ?  
+        AND DATE_FORMAT(v.f_venta, '%Y-%m-%d') >= ? 
+        AND DATE_FORMAT(v.f_venta, '%Y-%m-%d') <= ? 
+        AND com.num_comprobante LIKE ?
+      `,
+      [...params, razon_social + '%', razon_social + '%', nombre_sucursal + '%', fecha_i, fecha_e, numC + '%']
+    );
+
+    const totalVentas = totalResult[0].total;
 
     res.json({ code: 1, data: ventas, totalVentas });
   } catch (error) {
