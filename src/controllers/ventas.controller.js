@@ -562,14 +562,15 @@ const addVenta = async (req, res) => {
 
       // Insertar bitacora 
     await connection.query(
-      "INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha) VALUES (? , ? , ? , ? , ? , ?)",
+      "INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta) VALUES (? , ? , ? , ? , ? , ? , ?)",
       [
         id_producto,
         id_almacen,
         cantidad,
         stockActual,
         stockNuevo,
-        fecha
+        fecha,
+        id_venta
       ]
     );
 
@@ -808,10 +809,10 @@ const updateVenta = async (req, res) => {
             // Insertar en bitacora_nota solo cuando se aumenta el stock (entra)
             await connection.query(
               `
-              INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha)
-              VALUES (?, ?, ?, ?, ?, ?)
+              INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
               `,
-              [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta]
+              [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta, id_venta]
             );
     }
 
