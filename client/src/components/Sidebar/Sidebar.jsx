@@ -67,6 +67,7 @@ function Sidebar() {
             },
             { icon: <FaCog className="text-xl" />, text: 'Configuración', subLinks: [
               { to: '/configuracion/usuarios', text: 'Usuarios' },
+              { to: '/configuracion/roles', text: 'Roles' },
               { to: '/configuracion/historial', text: 'Historial' },
             ]},
           ].map(({ to, icon, text, subLinks }) => (
