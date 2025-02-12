@@ -214,7 +214,7 @@ const getAlmacen = async (req, res) => {
                     INNER JOIN marca m ON p.id_marca = m.id_marca
                     WHERE c.num_comprobante = ?;
                 `;
-            } else if (letraInicial === 'N') {
+            } else if (letraInicial === 'N' || letraInicial === 'B' || letraInicial === 'F') {
                 queryProductos = `
                     SELECT 
                         dv.id_producto AS codigo,
@@ -226,7 +226,7 @@ const getAlmacen = async (req, res) => {
                     INNER JOIN comprobante c ON v.id_comprobante = c.id_comprobante
                     INNER JOIN producto p ON dv.id_producto = p.id_producto
                     INNER JOIN marca m ON p.id_marca = m.id_marca
-                    WHERE c.num_comprobante = ?;
+                    WHERE c.num_comprobante = ? ORDER BY c.id_comprobante DESC LIMIT 1;
                 `;
             }
 
@@ -243,8 +243,8 @@ const getAlmacen = async (req, res) => {
     } finally {
         if (connection) {
             connection.release(); // Liberar la conexión
-        }
-    }
+        }
+    }
 };
 
 

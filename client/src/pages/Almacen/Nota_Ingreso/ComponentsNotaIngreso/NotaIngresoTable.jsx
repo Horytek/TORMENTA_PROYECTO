@@ -5,7 +5,7 @@ import './NotaIngresoTable.css';
 import anularNota from '../data/anular_nota_ingreso';
 import Pagination from '@/components/Pagination/Pagination';
 import ReactToPrint from 'react-to-print';
-
+import { Toaster, toast } from "react-hot-toast";
 import img from '@/assets/icono.ico'; // Asegúrate de ajustar la ruta
 import html2pdf from 'html2pdf.js';
 import { jsPDF } from 'jspdf';
