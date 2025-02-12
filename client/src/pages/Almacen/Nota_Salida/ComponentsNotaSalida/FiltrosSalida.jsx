@@ -81,12 +81,12 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
 
 
     const handleConfirmImprimir = () => {
-        console.log('Nota de salida impresa.');
+        //console.log('Nota de salida impresa.');
         setIsModalOpenImprimir(false);
     };
 
     const handleConfirmPDF = () => {
-        console.log('Exportar a PDF.');
+        //console.log('Exportar a PDF.');
         setIsModalOpenPDF(false);
     };
 

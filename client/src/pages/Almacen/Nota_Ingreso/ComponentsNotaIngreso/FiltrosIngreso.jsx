@@ -80,7 +80,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
 
 
     const handleConfirmPDF = () => {
-        console.log('Exportar a PDF.');
+        //console.log('Exportar a PDF.');
         setIsModalOpenExcel(false);
     };
 

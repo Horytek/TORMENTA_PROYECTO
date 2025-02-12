@@ -158,19 +158,19 @@ const TablaIngresos = ({ ingresos }) => {
     if (notaIdToAnular) {
       const result = await anularNota(notaIdToAnular);
       if (result.success) {
-        console.log(result.message);
+        //console.log(result.message);
         toast.success('Nota anulada')
         window.location.reload();
       } else {
         toast.error('La nota ya está anulada.')
-        console.error(result.message);
+        //console.error(result.message);
       }
     }
     setIsModalOpenAnular(false);
   };
 
   const handleConfirmClonar = () => {
-    console.log('Nota clonada:', notaIdToAnular);
+    //console.log('Nota clonada:', notaIdToAnular);
     setIsModalOpenClonar(false);
   };
 
