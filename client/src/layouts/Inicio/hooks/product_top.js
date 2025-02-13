@@ -1,32 +1,36 @@
 import { useState, useEffect } from "react";
 import axios from "@/api/axios";
 
-const useProductTop = (timePeriod) => {
+const useProductTop = (timePeriod, sucursal = "") => {
   const [productTop, setProductTop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const usuario = localStorage.getItem("usuario"); // obtiene el usuario desde localStorage
+    const storedUser = localStorage.getItem("usuario");
     const fetchProductTop = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("/dashboard/product_top", {
-          params: {
-            tiempo: timePeriod,
-            usuario, // se envía en la query para que el backend lo use
-          },
-        });
+        const params = { tiempo: timePeriod, usuario: storedUser };
+        if (sucursal) {
+          params.sucursal = sucursal;
+        }
+        const response = await axios.get("/dashboard/product_top", { params });
         setProductTop(response.data.data);
         setError(null);
       } catch (err) {
-        setError(err);
+        if (err.response && err.response.status === 404) {
+          setProductTop(null);
+          setError(null);
+        } else {
+          setError(err);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchProductTop();
-  }, [timePeriod]);
+  }, [timePeriod, sucursal]);
 
   return { productTop, loading, error };
 };

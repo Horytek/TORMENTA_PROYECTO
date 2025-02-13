@@ -56,12 +56,12 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
     if (notaIdToAnular) {
       const result = await anularNota(notaIdToAnular);
       if (result.success) {
-        console.log(result.message);
+       //console.log(result.message);
         toast.success('Nota anulada')
         window.location.reload();
       } else {
         toast.error('La nota ya está anulada.')
-        console.error(result.message);
+        //console.error(result.message);
       }
     }
     setIsModalOpenAnular(false);
@@ -102,7 +102,7 @@ const TablaSalida = forwardRef(({ salidas }, ref)  => {
   };
 
   const handleDetailClick = (id) => {
-    console.log(almacen, 'sdsdsds')
+    //console.log(almacen, 'sdsdsds')
     if (almacen) {
       window.open(`/almacen/kardex/historico/${id}`, '_blank');
     } else {

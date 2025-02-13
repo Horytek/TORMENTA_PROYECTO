@@ -250,7 +250,7 @@ const Registro_Venta = () => {
           </div>
           <div className="flex justify-end mt-4">
             <div className='items-center flex ml-2'>
-              <Button className="btn btn-cotizar  flex items-center" onClick={() => handlePrint(true)} disabled={detalles.length === 0}>
+              <Button className="btn btn-cotizar  flex items-center" onClick={() => handlePrint(true)} disabled={detalles.length === 0} variant="shadow">
                 <GrDocumentPerformance style={{ fontSize: '22px' }} />
                 Cotizar</Button>
             </div>
@@ -258,7 +258,7 @@ const Registro_Venta = () => {
               <Comprobante ref={componentRef} datosVentaComprobante={datosVentaComprobante} />
             </div>
             <div className='items-center flex ml-2'>
-              <Button className="btn btn-cobrar mr-0 flex items-center" onClick={Comprobar_mayor_499}>
+              <Button className="btn btn-cobrar mr-0 flex items-center" onClick={Comprobar_mayor_499} variant="shadow">
                 <BsCashCoin style={{ fontSize: '22px' }} />
                 Cobrar
               </Button>

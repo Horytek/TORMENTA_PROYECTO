@@ -456,69 +456,120 @@ const id_nota = notaResult.insertId;
 
 
 const anularNota = async (req, res) => {
-  const { notaId } = req.body; // El número de la nota o ID de la nota
+  const { notaId } = req.body;
 
   if (!notaId) {
     return res.status(400).json({ message: "El ID de la nota es necesario." });
   }
-console.log(notaId);
+
   let connection;
   try {
     connection = await getConnection();
-
     await connection.beginTransaction();
 
-    // Obtener los detalles de la nota
+    // Obtener detalles de la nota
     const [notaResult] = await connection.query(
       "SELECT id_almacenO, id_almacenD, id_comprobante FROM nota WHERE id_nota = ? AND estado_nota = 0",
       [notaId]
     );
 
     if (notaResult.length === 0) {
+      connection.release();
       return res.status(404).json({ message: "Nota no encontrada o ya anulada." });
     }
 
-    const { id_almacenO, id_almacenD, id_comprobante } = notaResult[0];
+    const { id_almacenO, id_almacenD } = notaResult[0];
 
-    // Obtener los detalles de los productos de la nota
+    // Obtener productos de la nota
     const [detalleResult] = await connection.query(
       "SELECT id_producto, cantidad FROM detalle_nota WHERE id_nota = ?",
       [notaId]
     );
 
-    for (let i = 0; i < detalleResult.length; i++) {
-      const { id_producto, cantidad } = detalleResult[i];
+    // Procesar cada producto en paralelo
+    await Promise.all(
+      detalleResult.map(async ({ id_producto, cantidad }) => {
+        if (id_almacenD) {
+          // Verificar stock antes de actualizar
+          const [stockResult] = await connection.query(
+            "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
+            [id_producto, id_almacenD]
+          );
 
-      // Retirar stock del almacén de destino si existe
-      if (id_almacenD) {
-        await connection.query(
-          "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
-          [cantidad, id_producto, id_almacenD]
-        );
-      }
-    }
+          if (!stockResult.length || stockResult[0].stock < cantidad) {
+            throw new Error(`Stock insuficiente para producto ID ${id_producto}.`);
+          }
 
-    // Actualizar el estado de la nota a 1 (anulada)
+          // Actualizar stock
+          const stockAnterior = stockResult[0].stock;
+          await connection.query(
+            "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ? AND stock >= ?",
+            [cantidad, id_producto, id_almacenD, cantidad]
+          );
+
+          // Obtener detalle de venta asociado
+          const [detalleIdResult] = await connection.query(
+            "SELECT id_detalle_nota FROM detalle_nota WHERE id_nota = ? AND id_producto = ?",
+            [notaId, id_producto]
+          );
+
+          if (!detalleIdResult.length) {
+            throw new Error(`Detalle de venta no encontrado para producto ID ${id_producto}.`);
+          }
+
+          const detalleId = detalleIdResult[0].id_detalle_nota;
+
+          // Obtener la fecha de la nota
+          const [fechaResult] = await connection.query(
+            "SELECT fecha FROM nota WHERE id_nota = ?",
+            [notaId]
+          );
+
+          if (!fechaResult.length) {
+            throw new Error(`Fecha no encontrada para la nota ID ${notaId}.`);
+          }
+
+          const fechaNota = fechaResult[0].fecha;
+
+          // Insertar en bitácora
+          await connection.query(
+            "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [notaId, id_producto, id_almacenD, detalleId, cantidad, stockAnterior, stockAnterior - cantidad, fechaNota]
+          );
+        }
+      })
+    );
+
+    // Anular la nota
     await connection.query(
       "UPDATE nota SET estado_nota = 1 WHERE id_nota = ?",
       [notaId]
     );
 
     await connection.commit();
+    res.json({ code: 1, message: "Nota anulada correctamente" });
 
-    res.json({ code: 1, message: 'Nota anulada correctamente' });
   } catch (error) {
     console.error("Error en el backend:", error.message);
     if (connection) {
-      await connection.rollback();
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("Error al hacer rollback:", rollbackError.message);
+      }
     }
-    res.status(500).send({ code: 0, message: error.message });
+    res.status(500).json({ code: 0, message: error.message });
   } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      if (typeof connection.release === "function") {
+        connection.release();
+      } else if (typeof connection.end === "function") {
+        connection.end();
+      }
     }
-}
+  }
 };
+
 
 
   

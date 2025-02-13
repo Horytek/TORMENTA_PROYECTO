@@ -351,7 +351,6 @@ const insertNotaAndDetalle = async (req, res) => {
     }
 }
 };
-
 const anularNota = async (req, res) => {
   const { notaId } = req.body; // El número de la nota o ID de la nota
 
@@ -359,10 +358,10 @@ const anularNota = async (req, res) => {
     return res.status(400).json({ message: "El ID de la nota es necesario." });
   }
   console.log(notaId);
+
   let connection;
   try {
     connection = await getConnection();
-
     await connection.beginTransaction();
 
     // Obtener los detalles de la nota
@@ -386,19 +385,52 @@ const anularNota = async (req, res) => {
     for (let i = 0; i < detalleResult.length; i++) {
       const { id_producto, cantidad } = detalleResult[i];
 
-      // Restaurar stock en el almacén de origen
+      // Verificar stock antes de actualizar
+      const [stockResult] = await connection.query(
+        "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
+        [id_producto, id_almacenO]
+      );
+
+      if (!stockResult.length || stockResult[0].stock < cantidad) {
+        return res.status(400).json({ message: `Stock insuficiente para producto ID ${id_producto}.` });
+      }
+
+      // Actualizar stock en el almacén de origen
+      const stockAnterior = stockResult[0].stock;
       await connection.query(
         "UPDATE inventario SET stock = stock + ? WHERE id_producto = ? AND id_almacen = ?",
         [cantidad, id_producto, id_almacenO]
       );
 
-      // Retirar stock del almacén de destino si existe
-      /*if (id_almacenD) {
-          await connection.query(
-            "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ?",
-            [cantidad, id_producto, id_almacenD]
-          );
-        }*/
+      // Obtener el ID del detalle de la nota
+      const [detalleIdResult] = await connection.query(
+        "SELECT id_detalle_nota FROM detalle_nota WHERE id_nota = ? AND id_producto = ?",
+        [notaId, id_producto]
+      );
+
+      if (!detalleIdResult.length) {
+        throw new Error(`Detalle de venta no encontrado para producto ID ${id_producto}.`);
+      }
+
+      const detalleId = detalleIdResult[0].id_detalle_nota;
+
+      // Obtener la fecha de la nota
+      const [fechaResult] = await connection.query(
+        "SELECT fecha FROM nota WHERE id_nota = ?",
+        [notaId]
+      );
+
+      if (!fechaResult.length) {
+        throw new Error(`Fecha no encontrada para la nota ID ${notaId}.`);
+      }
+
+      const fechaNota = fechaResult[0].fecha;
+
+      // Insertar en bitácora (corrigiendo el cálculo del stock actual)
+      await connection.query(
+        "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [notaId, id_producto, id_almacenO, detalleId, cantidad, stockAnterior, stockAnterior + cantidad, fechaNota]
+      );
     }
 
     // Actualizar el estado de la nota a 1 (anulada)
@@ -409,19 +441,20 @@ const anularNota = async (req, res) => {
 
     await connection.commit();
 
-    res.json({ code: 1, message: 'Nota anulada correctamente' });
+    res.json({ code: 1, message: "Nota anulada correctamente" });
   } catch (error) {
     console.error("Error en el backend:", error.message);
     if (connection) {
       await connection.rollback();
     }
     res.status(500).send({ code: 0, message: error.message });
-  }  finally {
-    if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+  } finally {
+    if (connection && typeof connection.release === "function") {
+      connection.release(); // Liberar conexión solo si está definida
     }
-}
+  }
 };
+
 
 export const methods = {
   getSalidas,

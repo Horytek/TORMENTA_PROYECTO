@@ -16,7 +16,26 @@ const login = async (req, res) => {
             return res.status(400).json({ success: false, message: 'El usuario ingresado no existe' });
         }
 
-        const [userValid] = await connection.query("SELECT usu.id_usuario,usu.id_rol,usu.usua,usu.contra,usu.estado_usuario,su.nombre_sucursal FROM usuario usu INNER JOIN vendedor ven ON ven.id_usuario=usu.id_usuario INNER JOIN sucursal su ON su.dni=ven.dni WHERE usu.usua = ? AND usu.contra = ?", [user.usuario, user.password]);
+        let userValid;
+
+        if (usuario && usuario === 'desarrollador') {
+            const [rows] = await connection.query(
+                "SELECT * FROM usuario WHERE usua = ? AND contra = ?", 
+                [user.usuario, user.password]
+            );
+            userValid = rows;
+        } else {
+            const [rows] = await connection.query(
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal
+                FROM usuario usu
+                INNER JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
+                INNER JOIN sucursal su ON su.dni = ven.dni
+                WHERE usu.usua = ? AND usu.contra = ?`, 
+                [user.usuario, user.password]
+            );
+            userValid = rows;
+        }
+        
 
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });

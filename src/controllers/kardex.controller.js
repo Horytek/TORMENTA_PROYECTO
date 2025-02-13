@@ -155,51 +155,99 @@ const getAlmacen = async (req, res) => {
 
   const getDetalleKardex = async (req, res) => {
     let connection;
-    const { fechaInicio, fechaFin, idProducto, idAlmacen} = req.query;
+    const { fechaInicio, fechaFin, idProducto, idAlmacen } = req.query;
 
     try {
         connection = await getConnection();
 
+        // Consulta principal para obtener el detalle del Kardex
         const [detalleKardexResult] = await connection.query(
             `
-                       SELECT  
-                        bn.fecha AS fecha,
-								COALESCE( c.num_comprobante, 'Venta') AS documento, 
-                        COALESCE( n.nom_nota, 'Venta' ) AS nombre, 
-                        bn.entra AS entra,
-                        bn.sale AS sale,
-                        bn.stock_actual AS stock, 
-                        p.precio AS precio,
-                        COALESCE (n.glosa, 'VENTA DE PRODUCTOS' ) AS glosa   
-                    FROM 
-                        bitacora_nota bn
-                    INNER JOIN 
-                        producto p ON bn.id_producto = p.id_producto 
-                    LEFT JOIN 
-                    	   nota n ON bn.id_nota= n.id_nota
-                  	LEFT JOIN
-                  		comprobante c ON n.id_comprobante= c.id_comprobante
-                    WHERE 
-                        DATE_FORMAT(bn.fecha, '%Y-%m-%d') >= ?
-                        AND DATE_FORMAT(bn.fecha, '%Y-%m-%d') <= ?
-                        AND bn.id_producto = ?
-                        AND bn.id_almacen = ?
-                    ORDER BY 
-                        fecha;
-
+                SELECT  
+                    DATE_FORMAT(bn.fecha, '%d/%m/%Y') AS fecha,
+                    COALESCE(c.num_comprobante, 'Sin comprobante') AS documento, 
+                    COALESCE(n.nom_nota, 'Venta') AS nombre, 
+                    bn.entra AS entra,
+                    bn.sale AS sale,
+                    bn.stock_actual AS stock, 
+                    p.precio AS precio,
+                    COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa
+                FROM 
+                    bitacora_nota bn
+                INNER JOIN 
+                    producto p ON bn.id_producto = p.id_producto 
+                LEFT JOIN 
+                    nota n ON bn.id_nota = n.id_nota
+                LEFT JOIN 
+                    venta v ON bn.id_venta = v.id_venta
+                LEFT JOIN 
+                    comprobante c ON COALESCE(n.id_comprobante, v.id_comprobante) = c.id_comprobante 
+                WHERE 
+                    DATE_FORMAT(bn.fecha, '%Y-%m-%d') >= ?
+                    AND DATE_FORMAT(bn.fecha, '%Y-%m-%d') <= ?
+                    AND bn.id_producto = ?
+                    AND bn.id_almacen = ?
+                ORDER BY 
+                    bn.fecha;
             `,
             [fechaInicio, fechaFin, idProducto, idAlmacen]
         );
+
+        // Iterar sobre cada documento y agregar productos si corresponde
+        for (const detalle of detalleKardexResult) {
+            const documento = detalle.documento;
+            const letraInicial = documento.charAt(0);
+
+            let queryProductos;
+
+            if (letraInicial === 'I' || letraInicial === 'S') {
+                queryProductos = `
+                    SELECT 
+                        dn.id_producto AS codigo,
+                        p.descripcion AS descripcion,
+                        m.nom_marca AS marca,
+                        dn.cantidad AS cantidad
+                    FROM nota n 
+                    INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+                    INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+                    INNER JOIN producto p ON dn.id_producto = p.id_producto
+                    INNER JOIN marca m ON p.id_marca = m.id_marca
+                    WHERE c.num_comprobante = ?;
+                `;
+            } else if (letraInicial === 'N' || letraInicial === 'B' || letraInicial === 'F') {
+                queryProductos = `
+                    SELECT 
+                        dv.id_producto AS codigo,
+                        p.descripcion AS descripcion,
+                        m.nom_marca AS marca,
+                        dv.cantidad AS cantidad
+                    FROM venta v 
+                    INNER JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+                    INNER JOIN comprobante c ON v.id_comprobante = c.id_comprobante
+                    INNER JOIN producto p ON dv.id_producto = p.id_producto
+                    INNER JOIN marca m ON p.id_marca = m.id_marca
+                    WHERE c.num_comprobante = ? ORDER BY c.id_comprobante DESC LIMIT 1;
+                `;
+            }
+
+            // Ejecutar la consulta adicional si corresponde
+            if (queryProductos) {
+                const [productosResult] = await connection.query(queryProductos, [documento]);
+                detalle.productos = productosResult; // Agregar los productos al resultado actual
+            }
+        }
 
         res.json({ code: 1, data: detalleKardexResult });
     } catch (error) {
         res.status(500).send(error.message);
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
-        }
-    }
+            connection.release(); // Liberar la conexión
+        }
+    }
 };
+
+
 
 
 const getDetalleKardexAnteriores = async (req, res) => {

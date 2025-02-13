@@ -13,26 +13,39 @@ const getMonthName = (monthNumber) => {
   return date.toLocaleString('es', { month: 'long' });
 };
 
-export function LineChartComponent() {
+export function LineChartComponent({ sucursal }) {
   const [value, setValue] = useState(null);  
+  const [chartData, setChartData] = useState([]);
 
   const fechaInicio = value?.from ? value.from.toISOString().split('T')[0] : null;
   const fechaFin = value?.to ? value.to.toISOString().split('T')[0] : null;
 
-  const { comparacionVentas, loading, error } = useComparacionTotal(fechaInicio, fechaFin);
-
-  const [chartData, setChartData] = useState([]);
+  const { comparacionVentas, loading, error } = useComparacionTotal(
+    fechaInicio, 
+    fechaFin, 
+    sucursal
+  );
 
   useEffect(() => {
     if (comparacionVentas) {
       const data = Array.from({ length: 12 }, (_, index) => ({
         date: getMonthName(index + 1),
-        "Ventas Totales": comparacionVentas[index]?.total_ventas || 0,
-      }));
+        "Ventas Totales": Number(comparacionVentas[index]?.total_ventas) || 0,
+      })).sort((a, b) => {
+        // Ordenar por mes
+        const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return meses.indexOf(a.date) - meses.indexOf(b.date);
+      });
       setChartData(data);
     }
   }, [comparacionVentas]);
-  
+
+  // Calculamos maxVentas después de que chartData esté actualizado
+    const maxVentas =
+    chartData.length > 0
+      ? Math.max(...chartData.map((item) => Number(item["Ventas Totales"]))) * 1.2
+      : 3500;
 
   if (loading) return <p>Cargando datos...</p>;
   if (error) return <p>Error al cargar los datos: {error.message}</p>;
@@ -101,6 +114,10 @@ export function LineChartComponent() {
           categories={["Ventas Totales"]}
           colors={["indigo"]}
           valueFormatter={valueFormatter}
+          showAnimation={true}
+          curveType="monotone"
+          minValue={0}
+
         />
       </div>
     </>

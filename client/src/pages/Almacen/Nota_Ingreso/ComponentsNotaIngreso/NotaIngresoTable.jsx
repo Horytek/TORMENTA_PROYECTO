@@ -5,7 +5,7 @@ import './NotaIngresoTable.css';
 import anularNota from '../data/anular_nota_ingreso';
 import Pagination from '@/components/Pagination/Pagination';
 import ReactToPrint from 'react-to-print';
-
+import { Toaster, toast } from "react-hot-toast";
 import img from '@/assets/icono.ico'; // Asegúrate de ajustar la ruta
 import html2pdf from 'html2pdf.js';
 import { jsPDF } from 'jspdf';
@@ -158,19 +158,19 @@ const TablaIngresos = ({ ingresos }) => {
     if (notaIdToAnular) {
       const result = await anularNota(notaIdToAnular);
       if (result.success) {
-        console.log(result.message);
+        //console.log(result.message);
         toast.success('Nota anulada')
         window.location.reload();
       } else {
         toast.error('La nota ya está anulada.')
-        console.error(result.message);
+        //console.error(result.message);
       }
     }
     setIsModalOpenAnular(false);
   };
 
   const handleConfirmClonar = () => {
-    console.log('Nota clonada:', notaIdToAnular);
+    //console.log('Nota clonada:', notaIdToAnular);
     setIsModalOpenClonar(false);
   };
 
