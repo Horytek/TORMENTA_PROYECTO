@@ -65,6 +65,9 @@ function Sidebar() {
             { to: '/reportes', icon: <BiSolidReport className="text-xl" />, text: 'Reportes'
               
             },
+            { to: '/sucursal', icon: <FaBuilding className="text-xl" />, text: 'Sucursal'
+              
+            },
             { icon: <FaCog className="text-xl" />, text: 'Configuración', subLinks: [
               { to: '/configuracion/usuarios', text: 'Usuarios' },
               { to: '/configuracion/roles', text: 'Roles' },

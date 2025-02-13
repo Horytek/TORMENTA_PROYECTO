@@ -35,6 +35,7 @@ const Usuarios = lazy(() => import('@/pages/Usuarios/Usuarios'));
 const Historial = lazy(() => import('@/pages/Ventas/Historial_Venta/Historial'));
 const Roles = lazy(() => import('@/pages/Roles/Roles'));
 const Global = lazy(() => import('@/pages/Global/Global'));
+const Sucursal = lazy(() => import('@/pages/Sucursal/Sucursal'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
@@ -142,6 +143,11 @@ function Dashboard() {
                     <Route path="/reportes" element={
                       <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                         <ReporteVentas />
+                      </RouteProtectedRol>
+                    } />
+                    <Route path="/sucursal" element={
+                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+                        <Sucursal />
                       </RouteProtectedRol>
                     } />
                     <Route path="/configuracion/usuarios" element={
