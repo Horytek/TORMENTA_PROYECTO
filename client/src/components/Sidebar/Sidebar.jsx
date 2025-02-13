@@ -47,6 +47,8 @@ function Sidebar() {
               { to: '/productos/subcategorias', text: 'Subcategorias'},
 
             ]},
+            { to: '/almacenG', icon: <FaWarehouse className="text-xl" />, text: 'Almacénes' },
+
             
             { to: '/empleados', icon: <FaUsers className="text-xl" />, text: 'Empleados' },
             {

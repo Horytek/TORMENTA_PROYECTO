@@ -21,7 +21,7 @@ import reporteRoutes from "./routes/reporte.routes";
 import destinatarioRoutes from "./routes/destinatario.routes";
 import vendedoresRoutes from "./routes/vendedores.routes.js";
 import sucursalRoutes from "./routes/sucursal.routes";
-
+import almacenesRoutes from "./routes/almacen.routes.js";
 const app = express();
 
 // Settings
@@ -56,4 +56,5 @@ app.use("/api/categorias", categoriaRoutes);
 app.use("/api/subcategorias", subcategoriaRoutes);
 app.use("/api/vendedores", vendedoresRoutes);
 app.use("/api/sucursales", sucursalRoutes);
+app.use("/api/almacen", almacenesRoutes);
 export default app;
