@@ -5,7 +5,7 @@ const getUsuarios = async (req, res) => {
     try {
         connection = await getConnection();
         const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token FROM usuario U
-            INNER JOIN rol R ON U.id_rol = R.id_rol ORDER BY id_usuario desc`);
+            INNER JOIN rol R ON U.id_rol = R.id_rol WHERE R.id_rol!=10 ORDER BY id_usuario desc`);
         res.json({ code: 1, data: result });
     } catch (error) {
         res.status(500);

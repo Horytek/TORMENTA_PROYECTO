@@ -34,10 +34,13 @@ const ReporteVentas = lazy(() => import('@/pages/ReporteVentas/ReporteVentas'));
 const Usuarios = lazy(() => import('@/pages/Usuarios/Usuarios'));
 const Historial = lazy(() => import('@/pages/Ventas/Historial_Venta/Historial'));
 const Roles = lazy(() => import('@/pages/Roles/Roles'));
+const Global = lazy(() => import('@/pages/Global/Global'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
   const EMP_ROL = 3;
+  const DESARROLLO_ROL = 10;
+  
 
   return (
     <div className="flex min-h-screen">
@@ -154,6 +157,11 @@ function Dashboard() {
                     <Route path="/configuracion/historial" element={
                       <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
                         <Historial />
+                      </RouteProtectedRol>
+                    } />
+                      <Route path="/desarrollador" element={
+                      <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
+                        <Global />
                       </RouteProtectedRol>
                     } />
                   </Routes>

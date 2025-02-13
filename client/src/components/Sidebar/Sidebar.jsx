@@ -70,6 +70,9 @@ function Sidebar() {
               { to: '/configuracion/roles', text: 'Roles' },
               { to: '/configuracion/historial', text: 'Historial' },
             ]},
+            { to: '/desarrollador', icon: <FaCog className="text-xl" />, text: 'Desarrollador'
+              
+            },
           ].map(({ to, icon, text, subLinks }) => (
             <div key={to}>
               <li className={`flex items-center ${collapsed ? 'justify-center' : 'pl-4'} py-2 px-2 w-full`}>
