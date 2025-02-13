@@ -33,6 +33,7 @@ const RegistroGuia = lazy(() => import('@/pages/Almacen/Guia_Remision/Registro_G
 const ReporteVentas = lazy(() => import('@/pages/ReporteVentas/ReporteVentas'));
 const Usuarios = lazy(() => import('@/pages/Usuarios/Usuarios'));
 const Historial = lazy(() => import('@/pages/Ventas/Historial_Venta/Historial'));
+const Sucursal = lazy(() => import('@/pages/Sucursal/Sucursal'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
@@ -148,6 +149,11 @@ function Dashboard() {
                     <Route path="/configuracion/historial" element={
                       <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
                         <Historial />
+                      </RouteProtectedRol>
+                    } />
+                    <Route path="/sucursal" element={
+                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+                        <Sucursal />
                       </RouteProtectedRol>
                     } />
                   </Routes>

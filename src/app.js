@@ -19,6 +19,7 @@ import categoriaRoutes from "./routes/categoria.routes";
 import subcategoriaRoutes from "./routes/subcategoria.routes";
 import reporteRoutes from "./routes/reporte.routes";
 import destinatarioRoutes from "./routes/destinatario.routes";
+import sucursalRoutes from "./routes/sucursal.routes";
 
 const app = express();
 
@@ -28,19 +29,10 @@ app.set("port", port);
 
 // Middlewares
 app.use(morgan("dev"));
-const allowedOrigin = (origin, callback) => {
-    // Verifica si el origen está en el rango 192.168.194.0/24
-    if (origin && /^http:\/\/192\.168\.194\.\d{1,3}(:\d+)?$/.test(origin)) {
-        callback(null, true);  // Permite la solicitud si coincide con el rango
-    } else {
-        callback(new Error('Not allowed by CORS'));  // Rechaza si no coincide
-    }
-};
-
 app.use(cors({
-    origin: allowedOrigin,  // Usa la función personalizada para validar el origen
+    origin: [FRONTEND_URL, "http://localhost:3000"],
     methods: "GET,POST,PUT,DELETE,OPTIONS",
-    credentials: true  // Permite el uso de credenciales (cookies, tokens, etc.)
+    credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -61,5 +53,6 @@ app.use("/api/kardex", kardexRoutes);
 app.use("/api/guia_remision", guiasRoutes);
 app.use("/api/categorias", categoriaRoutes);
 app.use("/api/subcategorias", subcategoriaRoutes);
+app.use("/api/sucursales", sucursalRoutes);
 
 export default app;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaHome, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaHome, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp, FaBuilding } from 'react-icons/fa';
 import {BiSolidReport} from 'react-icons/bi';
 import { Link } from 'react-router-dom';
 import './sidebar.css';
@@ -69,6 +69,9 @@ function Sidebar() {
               { to: '/configuracion/usuarios', text: 'Usuarios' },
               { to: '/configuracion/historial', text: 'Historial' },
             ]},
+            { to: '/sucursal', icon: <FaBuilding className="text-xl" />, text: 'Sucursal'
+              
+            },
           ].map(({ to, icon, text, subLinks }) => (
             <div key={to}>
               <li className={`flex items-center ${collapsed ? 'justify-center' : 'pl-4'} py-2 px-2 w-full`}>
