@@ -1,10 +1,12 @@
 import ConfigurationSection from "./ConfigurationSection";
 import PlanFeatures from "./PlanFeatures";
 import PlanUsers from "./PlanUsers";
+import { Toaster } from "react-hot-toast";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <Toaster />
       <div className="container py-12 space-y-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-neutral-800">Configuración de Planes</h1>

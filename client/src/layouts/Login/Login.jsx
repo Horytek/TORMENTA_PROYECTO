@@ -30,7 +30,7 @@ function Login() {
     try {
       const user = { usuario, password };
       const response = await login(user);
-      if (response.success) {
+      if (response.success && response.data.estado_usuario === 1) {
         localStorage.setItem('usuario', usuario);
         localStorage.setItem('rol', response.data.rol);
         localStorage.setItem('sur', response.data.sucursal);

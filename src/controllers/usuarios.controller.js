@@ -4,7 +4,7 @@ const getUsuarios = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token FROM usuario U
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, plan_pago FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol WHERE R.id_rol!=10 ORDER BY id_usuario desc`);
         res.json({ code: 1, data: result });
     } catch (error) {
@@ -22,7 +22,7 @@ const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token FROM usuario U
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, plan_pago FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol WHERE U.id_usuario = ?`, id);
         
             if (result.length === 0) {
@@ -93,6 +93,35 @@ const updateUsuario = async (req, res) => {
     }
 }
 
+const updateUsuarioPlan = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        const { empresa, plan_pago} = req.body;
+
+        if (empresa === undefined || plan_pago === undefined) {
+            res.status(400).json({ message: "Bad Request. Please fill all field." });
+        }
+
+        const usuario = { empresa: empresa.trim(), plan_pago };
+        connection = await getConnection();
+        const [result] = await connection.query("UPDATE usuario SET ? WHERE id_usuario = ?", [usuario, id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({code: 0, message: "Usuario no encontrado"});
+        }
+
+        res.json({code: 1 ,message: "Usuario modificado"});
+    } catch (error) {
+        res.status(500);
+        res.send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        }
+    }
+}
+
 const deleteUsuario = async (req, res) => {
     let connection;
     try {
@@ -137,5 +166,6 @@ export const methods = {
     addUsuario,
     updateUsuario,
     updateUsuario,
-    deleteUsuario
+    deleteUsuario,
+    updateUsuarioPlan
 };

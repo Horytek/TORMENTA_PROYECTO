@@ -1,4 +1,4 @@
-import { getUsuariosRequest, getUsuarioRequest, addUsuarioRequest, updateUsuarioRequest, deleteUsuarioRequest } 
+import { getUsuariosRequest, getUsuarioRequest, addUsuarioRequest, updateUsuarioRequest,updateUsuarioPlanRequest, deleteUsuarioRequest } 
 from '@/api/api.usuario';
 import { toast } from "react-hot-toast";
 import { transformData } from '@/utils/usuario';
@@ -60,6 +60,21 @@ const updateUsuario = async (id, newFields) => {
   }
 };
 
+const updateUsuarioPlan = async (id, newFields) => {
+  try {
+    const response = await updateUsuarioPlanRequest(id, newFields);
+    if (response.data.code === 1) {
+      toast.success("Usuario actualizado con éxito");
+      return true;
+    } else {
+      toast.error("Ocurrió un error al actualizar el usuario");
+      return false;
+    }
+  } catch (error) {
+    toast.error("Error en el servidor interno");
+  }
+};
+
 const deleteUsuario = async (id) => {
   try {
     const response = await deleteUsuarioRequest(id);
@@ -77,4 +92,4 @@ const deleteUsuario = async (id) => {
   }
 };
 
-export { getUsuarios, getUsuario, addUsuario, updateUsuario, deleteUsuario };
+export { getUsuarios, getUsuario, addUsuario, updateUsuario, deleteUsuario, updateUsuarioPlan };

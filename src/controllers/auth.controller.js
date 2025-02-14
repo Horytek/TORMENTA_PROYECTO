@@ -10,10 +10,10 @@ const login = async (req, res) => {
         
         const user = { usuario: usuario.trim(), password: password.trim() };
         connection = await getConnection();
-        const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ?", user.usuario);
+        const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ? AND estado_usuario=1", user.usuario);
 
         if (userFound.length === 0) {
-            return res.status(400).json({ success: false, message: 'El usuario ingresado no existe' });
+            return res.status(400).json({ success: false, message: 'El usuario ingresado no existe o esta deshabilitado' });
         }
 
         let userValid;
@@ -78,7 +78,7 @@ const verifyToken = async (req, res) => {
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
-        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser);
+        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ? AND estado_usuario = 1", user.nameUser);
         if (userFound.length === 0) return res.sendStatus(401);
 
         const userbd = userFound[0];

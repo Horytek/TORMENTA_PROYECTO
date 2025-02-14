@@ -8,5 +8,5 @@ env.bak/
 venv.bak/
 node_modules/
 none_modules
-src/app.js
+app.js
 index.js
