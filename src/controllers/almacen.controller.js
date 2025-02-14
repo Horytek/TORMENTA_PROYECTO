@@ -2,11 +2,11 @@ import { getConnection } from "./../database/database";
 
 
 const getAlmacenes = async (req, res) => {
-  let connection;
-  try {
-      connection = await getConnection();
+    let connection;
+    try {
+        connection = await getConnection();
 
-      const query = `
+        const query = `
           SELECT 
               a.id_almacen, 
               a.nom_almacen, 
@@ -27,48 +27,61 @@ const getAlmacenes = async (req, res) => {
           ORDER BY a.id_almacen;
       `;
 
-      const [result] = await connection.query(query);
+        const [result] = await connection.query(query);
 
-    
-      res.json({ code: 1, data: result }); 
 
-  } catch (error) {
-      console.error("Error en getAlmacenes:", error); // 🔹 Imprime el error en la terminal
-      res.status(500).json({ message: "Error al obtener los almacenes con su sucursal", error });
-  } finally {
-      if (connection) {
-          connection.release(); // 🔹 Libera la conexión
-      }
-  }
+        res.json({ code: 1, data: result });
+
+    } catch (error) {
+        console.error("Error en getAlmacenes:", error); // 🔹 Imprime el error en la terminal
+        res.status(500).json({ message: "Error al obtener los almacenes con su sucursal", error });
+    } finally {
+        if (connection) {
+            connection.release(); // 🔹 Libera la conexión
+        }
+    }
 };
 
 
 const getSucursales = async (req, res) => {
-  let connection;
-  try {
-      connection = await getConnection();
+    let connection;
+    try {
+        connection = await getConnection();
 
-      const query = `
-          SELECT id_sucursal, nombre_sucursal FROM sucursal
-          ORDER BY id_sucursal;
+        const query = `
+                SELECT 
+                    s.id_sucursal,
+                    s.nombre_sucursal,
+                    CASE 
+                        WHEN sa.id_sucursal IS NULL THEN 1 
+                        ELSE 0  
+                    END AS disponible
+                FROM 
+                    sucursal s
+                LEFT JOIN 
+                    sucursal_almacen sa 
+                ON 
+                    s.id_sucursal = sa.id_sucursal
+                ORDER BY 
+                    s.id_sucursal;
       `;
 
-      const [result] = await connection.query(query);
+        const [result] = await connection.query(query);
 
-    
-      res.json({ code: 1, data: result }); 
 
-  } catch (error) {
-      console.error("Error en getSucursales:", error); // 🔹 Imprime el error en la terminal
-      res.status(500).json({ message: "Error al obtener los sucursales", error });
-  } finally {
-      if (connection) {
-          connection.release(); // 🔹 Libera la conexión
-      }
-  }
+        res.json({ code: 1, data: result });
+
+    } catch (error) {
+        console.error("Error en getSucursales:", error); // 🔹 Imprime el error en la terminal
+        res.status(500).json({ message: "Error al obtener los sucursales", error });
+    } finally {
+        if (connection) {
+            connection.release(); // 🔹 Libera la conexión
+        }
+    }
 };
 
-  const getAlmacen = async (req, res) => {
+const getAlmacen = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
@@ -122,49 +135,49 @@ const getSucursales = async (req, res) => {
 };
 
 
-  const addAlmacen = async (req, res) => {
-    const { nom_almacen, ubicacion = null, id_sucursal= null, estado_almacen } = req.body;
-  
+const addAlmacen = async (req, res) => {
+    const { nom_almacen, ubicacion = null, id_sucursal = null, estado_almacen } = req.body;
+
     console.log("Datos recibidos:", req.body);
-  
-  
+
+
     let connection;
     try {
-      connection = await getConnection();
-  
-      await connection.beginTransaction();
-  
-      // Insertar en almacen
-      const [almacenResult] = await connection.query(
-        `INSERT INTO almacen (nom_almacen, ubicacion, estado_almacen) VALUES (?, ?, ?);`,
-        [nom_almacen, ubicacion || '', estado_almacen]
-      );
-  
-      const id_almacen = almacenResult.insertId;
-  
-      if(id_sucursal && !isNaN(id_sucursal)){
-      await connection.query(
-        `INSERT INTO sucursal_almacen (id_sucursal, id_almacen) VALUES (?, ?);`,
-        [id_sucursal, id_almacen]
-      );
-  
-      }
-     
-      await connection.commit();
-  
-      res.json({ code: 1, message: "Almacén y sucursal insertados correctamente" });
-  
-    } catch (error) {
-      console.error("Error en el backend:", error); // Mostrar el error completo
-      if (connection) await connection.rollback();
-      res.status(500).json({ code: 0, message: "Internal Server Error" });
-    } finally {
-      if (connection) connection.release(); 
-    }
-  };
-  
+        connection = await getConnection();
 
-  const updateAlmacen = async (req, res) => {
+        await connection.beginTransaction();
+
+        // Insertar en almacen
+        const [almacenResult] = await connection.query(
+            `INSERT INTO almacen (nom_almacen, ubicacion, estado_almacen) VALUES (?, ?, ?);`,
+            [nom_almacen, ubicacion || '', estado_almacen]
+        );
+
+        const id_almacen = almacenResult.insertId;
+
+        if (id_sucursal && !isNaN(id_sucursal)) {
+            await connection.query(
+                `INSERT INTO sucursal_almacen (id_sucursal, id_almacen) VALUES (?, ?);`,
+                [id_sucursal, id_almacen]
+            );
+
+        }
+
+        await connection.commit();
+
+        res.json({ code: 1, message: "Almacén y sucursal insertados correctamente" });
+
+    } catch (error) {
+        console.error("Error en el backend:", error); // Mostrar el error completo
+        if (connection) await connection.rollback();
+        res.status(500).json({ code: 0, message: "Internal Server Error" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+
+const updateAlmacen = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
@@ -180,13 +193,13 @@ const getSucursales = async (req, res) => {
         };
 
         connection = await getConnection();
-        
+
         // Iniciar transacción
         await connection.beginTransaction();
 
         // Actualizar almacén
         const [resultAlmacen] = await connection.query(
-            "UPDATE almacen SET ? WHERE id_almacen = ?;", 
+            "UPDATE almacen SET ? WHERE id_almacen = ?;",
             [almacen, id]
         );
 
@@ -213,70 +226,70 @@ const getSucursales = async (req, res) => {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
-        if (connection) connection.release(); 
+        if (connection) connection.release();
     }
 };
 
 
 
 const deleteAlmacen = async (req, res) => {
-  let connection;
-  try {
-      const { id } = req.params;
+    let connection;
+    try {
+        const { id } = req.params;
 
-      // Validar que el ID sea un número válido
-      if (!id || isNaN(id)) {
-          return res.status(400).json({ code: 0, message: "ID de almacén inválido" });
-      }
+        // Validar que el ID sea un número válido
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ code: 0, message: "ID de almacén inválido" });
+        }
 
-      connection = await getConnection();
+        connection = await getConnection();
 
-      // Verificar si el almacén existe
-      const [verify] = await connection.query(
-          "SELECT 1 FROM almacen a LEFT JOIN sucursal_almacen sa ON a.id_almacen=sa.id_almacen WHERE sa.id_almacen = ? ", 
-          [id]
-      );
+        // Verificar si el almacén existe
+        const [verify] = await connection.query(
+            "SELECT 1 FROM almacen a LEFT JOIN sucursal_almacen sa ON a.id_almacen=sa.id_almacen WHERE sa.id_almacen = ? ",
+            [id]
+        );
 
-      const AlmacenUse = verify.length > 0
+        const AlmacenUse = verify.length > 0
 
-      if (AlmacenUse) {
-          const [updateResult] = await connection.query(
-              "UPDATE almacen SET estado_almacen = 0 WHERE id_almacen = ?;", 
-              [id]
-          );
+        if (AlmacenUse) {
+            const [updateResult] = await connection.query(
+                "UPDATE almacen SET estado_almacen = 0 WHERE id_almacen = ?;",
+                [id]
+            );
 
-          if (updateResult.affectedRows === 0) {
-              return res.status(404).json({ code: 0, message: "No se pudo dar de baja el almacén" });
-          }
+            if (updateResult.affectedRows === 0) {
+                return res.status(404).json({ code: 0, message: "No se pudo dar de baja el almacén" });
+            }
 
-          return res.json({ code: 2, message: "Almacén dado de baja correctamente" });
-      } else {
-          // Si ya está dado de baja, lo eliminamos
-          const [deleteResult] = await connection.query(
-              "DELETE FROM almacen WHERE id_almacen = ?;", 
-              [id]
-          );
+            return res.json({ code: 2, message: "Almacén dado de baja correctamente" });
+        } else {
+            // Si ya está dado de baja, lo eliminamos
+            const [deleteResult] = await connection.query(
+                "DELETE FROM almacen WHERE id_almacen = ?;",
+                [id]
+            );
 
-          if (deleteResult.affectedRows === 0) {
-              return res.status(404).json({ code: 0, message: "No se pudo eliminar el almacén" });
-          }
+            if (deleteResult.affectedRows === 0) {
+                return res.status(404).json({ code: 0, message: "No se pudo eliminar el almacén" });
+            }
 
-          return res.json({ code: 1, message: "Almacén eliminado correctamente" });
-      }
+            return res.json({ code: 1, message: "Almacén eliminado correctamente" });
+        }
 
-  } catch (error) {
-      console.error("Error en deleteAlmacen:", error);
-      if (!res.headersSent) {
-          res.status(500).json({ code: 0, message: "Error interno del servidor" });
-      }
-  } finally {
-      if (connection) connection.release(); // Liberar la conexión
-  }
+    } catch (error) {
+        console.error("Error en deleteAlmacen:", error);
+        if (!res.headersSent) {
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
+        }
+    } finally {
+        if (connection) connection.release(); // Liberar la conexión
+    }
 };
 
 
-  export const methods = {
-    getAlmacenes, 
+export const methods = {
+    getAlmacenes,
     getSucursales,
     getAlmacen,
     addAlmacen,

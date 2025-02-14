@@ -43,14 +43,9 @@ const AlmacenForm = ({ modalTitle, onClose, initialData }) => {
                 estado_almacen: parseInt(estado_almacen)
             };
 
-            console.log("Datos enviados al backend:", newAlmacen);
-            console.log("ID del almacén:", initialData?.id_almacen);
-
             let result;
             if (initialData) {
-                
                 result = await updateAlmacen(parseInt(initialData?.data?.id_almacen), newAlmacen);
-
             } else {
                 result = await addAlmacen(newAlmacen);
             }
@@ -65,7 +60,6 @@ const AlmacenForm = ({ modalTitle, onClose, initialData }) => {
             toast.error("Error al gestionar el almacén");
         }
     });
-
 
     return (
         <div>
@@ -96,13 +90,18 @@ const AlmacenForm = ({ modalTitle, onClose, initialData }) => {
                                         <select
                                             {...register('id_sucursal')}
                                             name='id_sucursal'
-                                            className={`w-full text-sm bg-gray-50 ${errors.id_sucursal ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
+                                            className={`w-full text-sm bg-gray-50 ${errors.id_sucursal ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}
+                                        >
                                             <option value="">Seleccione...</option>
                                             {sucursales.map((sucursal) => (
-                                                <option key={sucursal.id_sucursal} value={sucursal.id_sucursal}>{sucursal.nombre_sucursal}</option>
+                                                <option
+                                                    key={sucursal.id_sucursal}
+                                                    value={sucursal.id_sucursal}
+                                                >
+                                                    {sucursal.nombre_sucursal} {initialData?.data?.id_sucursal === sucursal.id_sucursal ? "- (En uso)" : ""} - {sucursal.disponible ? "✅" : "❌"}
+                                                </option>
                                             ))}
                                         </select>
-
                                     </div>
                                 </div>
 
