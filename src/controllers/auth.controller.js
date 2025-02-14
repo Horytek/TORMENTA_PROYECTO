@@ -30,7 +30,7 @@ const login = async (req, res) => {
                 FROM usuario usu
                 INNER JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
                 INNER JOIN sucursal su ON su.dni = ven.dni
-                WHERE usu.usua = ? AND usu.contra = ?`, 
+                WHERE usu.usua = ? AND usu.contra = ? AND usu.estado_usuario = 1`, 
                 [user.usuario, user.password]
             );
             userValid = rows;

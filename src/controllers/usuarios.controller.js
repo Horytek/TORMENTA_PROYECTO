@@ -4,8 +4,8 @@ const getUsuarios = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, plan_pago FROM usuario U
-            INNER JOIN rol R ON U.id_rol = R.id_rol WHERE R.id_rol!=10 ORDER BY id_usuario desc`);
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, pp.descripcion_plan AS plan_pago_1 FROM usuario U
+            INNER JOIN rol R ON U.id_rol = R.id_rol LEFT JOIN plan_pago pp ON pp.id_plan=U.plan_pago WHERE R.id_rol!=10 ORDER BY id_usuario desc`);
         res.json({ code: 1, data: result });
     } catch (error) {
         res.status(500);
@@ -22,8 +22,8 @@ const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, plan_pago FROM usuario U
-            INNER JOIN rol R ON U.id_rol = R.id_rol WHERE U.id_usuario = ?`, id);
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, pp.descripcion_plan as plan_pago_1 FROM usuario U
+            INNER JOIN rol R ON U.id_rol = R.id_rol LEFT JOIN plan_pago pp ON pp.id_plan=U.plan_pago WHERE U.id_usuario = ?`, id);
         
             if (result.length === 0) {
             return res.status(404).json({data: result, message: "Usuario no encontrado"});

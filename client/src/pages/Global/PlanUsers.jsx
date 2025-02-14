@@ -63,7 +63,7 @@ const PlanUsers = () => {
   const handleUpdateUserPlan = async (id) => {
     const user = users.find((user) => user.id_usuario === id);
     if (user) {
-      await updateUsuarioPlan(id, { empresa: user.empresa, plan_pago: user.plan_pago, estado_usuario: user.estado_usuario_1 });
+      await updateUsuarioPlan(id, { empresa: user.empresa, plan_pago: user.plan_pago === "enterprise" ? 1 : user.plan_pago === "pro" ? 2 : 3, estado_usuario: user.estado_usuario_1 });
       fetchUsers(); // Refrescar la lista de usuarios después de la actualización
     }
   };

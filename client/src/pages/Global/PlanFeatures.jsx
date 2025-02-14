@@ -5,6 +5,7 @@ import { FaPlus } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import {Checkbox} from "@nextui-org/checkbox";
+import { getFunciones, getFuncion, addFuncion, updateFuncion } from "@/services/funciones.services";
 
 const PlanFeatures = () => {
   const [features, setFeatures] = useState([
