@@ -3,13 +3,15 @@ import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
 import { Toaster, toast } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
+import { TiDelete } from "react-icons/ti";
+import { FaCheckCircle } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { getSucursales, addAlmacen, updateAlmacen } from '@/services/almacen.services';
 import '../Productos/ProductosForm.css';
 
 const AlmacenForm = ({ modalTitle, onClose, initialData }) => {
     const [sucursales, setSucursales] = useState([]);
-    const { register, handleSubmit, formState: { errors }, reset } = useForm({
+    const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
         defaultValues: initialData?.data || {
             nom_almacen: '',
             id_sucursal: '',
@@ -32,6 +34,9 @@ const AlmacenForm = ({ modalTitle, onClose, initialData }) => {
         const data = await getSucursales();
         setSucursales(data);
     };
+
+    const selectedSucursalId = watch('id_sucursal'); // Detecta cambios en el select
+    const selectedSucursal = sucursales.find(sucursal => sucursal.id_sucursal === parseInt(selectedSucursalId));
 
     const onSubmit = handleSubmit(async (data) => {
         try {
@@ -94,14 +99,24 @@ const AlmacenForm = ({ modalTitle, onClose, initialData }) => {
                                         >
                                             <option value="">Seleccione...</option>
                                             {sucursales.map((sucursal) => (
-                                                <option
-                                                    key={sucursal.id_sucursal}
-                                                    value={sucursal.id_sucursal}
-                                                >
-                                                    {sucursal.nombre_sucursal} {initialData?.data?.id_sucursal === sucursal.id_sucursal ? "- (En uso)" : ""} - {sucursal.disponible ? "✅" : "❌"}
+                                                <option key={sucursal.id_sucursal} value={sucursal.id_sucursal}>
+                                                    {sucursal.nombre_sucursal} {initialData?.data?.id_sucursal === sucursal.id_sucursal ? "- (En uso)" : ""}
                                                 </option>
                                             ))}
                                         </select>
+                                        {/* Icono de disponibilidad debajo del combobox */}
+                                        {selectedSucursal && (
+                                            <div className="flex items-center mt-2">
+                                                {selectedSucursal.disponible ? (
+                                                    <FaCheckCircle className="text-green-500 text-xl" />
+                                                ) : (
+                                                    <TiDelete className="text-red-500 text-xl" />
+                                                )}
+                                                <span className="ml-2 text-sm">
+                                                    {selectedSucursal.disponible ? "Disponible" : "No disponible"}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
