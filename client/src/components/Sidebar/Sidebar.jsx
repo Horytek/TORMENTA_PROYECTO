@@ -57,7 +57,7 @@ function Sidebar() {
                 { to: 'ventas/libro_ventas', text: 'Libro de Ventas' },
               ]
             },
-            { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén', subLinks: [
+            { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Kardex', subLinks: [
               { to: '/almacen/nota_ingreso', text: 'Nota de ingreso' },
               { to: '/almacen/guia_remision', text: 'Guia de remisión' },
               { to: '/almacen/nota_salida', text: 'Nota de salida' }

@@ -97,13 +97,13 @@ const updateUsuarioPlan = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { empresa, plan_pago} = req.body;
+        const { empresa, plan_pago, estado_usuario} = req.body;
 
-        if (empresa === undefined || plan_pago === undefined) {
+        if (empresa === undefined || plan_pago === undefined || estado_usuario === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const usuario = { empresa: empresa.trim(), plan_pago };
+        const usuario = { empresa: empresa.trim(), plan_pago, estado_usuario };
         connection = await getConnection();
         const [result] = await connection.query("UPDATE usuario SET ? WHERE id_usuario = ?", [usuario, id]);
 

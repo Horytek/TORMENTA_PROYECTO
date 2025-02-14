@@ -10,7 +10,7 @@ import {
 } from "@nextui-org/react";
 import { Button, Input, Select, SelectItem, Chip } from "@nextui-org/react";
 import { FaPlus, FaTrash, FaSyncAlt } from "react-icons/fa";
-import { getUsuarios, updateUsuarioPlan } from "@/services/usuario.services";
+import { getUsuarios, updateUsuarioPlan, deleteUsuario } from "@/services/usuario.services";
 import { Pagination } from "@nextui-org/pagination";
 import UsuariosForm from './UsuariosForm';
 
@@ -39,17 +39,9 @@ const PlanUsers = () => {
     setUsers(filteredUsuarios);
   };
 
-  const addUser = () => {
-    if (!newEmail.trim()) return;
-    setUsers([
-      ...users,
-      { id: users.length + 1, email: newEmail, plan_pago: selectedPlan, estado_usuario: "Pendiente" },
-    ]);
-    setNewEmail("");
-  };
-
-  const removeUser = (id) => {
-    setUsers(users.filter((user) => user.id_usuario !== id));
+  const removeUser = async (id) => {
+    await deleteUsuario(id);
+    fetchUsers(); // Refrescar la lista de usuarios después de la eliminación
   };
 
   const updateUserPlan = (id, plan) => {
@@ -64,10 +56,14 @@ const PlanUsers = () => {
     setUsers(users.map((user) => (user.id_usuario === id ? { ...user, empresa: value } : user)));
   };
 
+  const handleEstadoChange = (id, value) => {
+    setUsers(users.map((user) => (user.id_usuario === id ? { ...user, estado_usuario_1: value || "0" } : user)));
+  };
+
   const handleUpdateUserPlan = async (id) => {
     const user = users.find((user) => user.id_usuario === id);
     if (user) {
-      await updateUsuarioPlan(id, { empresa: user.empresa, plan_pago: user.plan_pago });
+      await updateUsuarioPlan(id, { empresa: user.empresa, plan_pago: user.plan_pago, estado_usuario: user.estado_usuario_1 });
       fetchUsers(); // Refrescar la lista de usuarios después de la actualización
     }
   };
@@ -170,11 +166,14 @@ const PlanUsers = () => {
                 </Select>
               </TableCell>
               <TableCell>
-                <Chip
-                  className={`px-2 py-1 rounded text-xs font-medium ${user.estado_usuario === "Activo" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                <Select
+                  label="Estado"
+                  selectedKeys={[user.estado_usuario_1.toString()]}
+                  onSelectionChange={(keys) => handleEstadoChange(user.id_usuario, keys.currentKey)}
                 >
-                  {user.estado_usuario === "Activo" ? "Activo" : "Pendiente"}
-                </Chip>
+                  <SelectItem key="1">Activo</SelectItem>
+                  <SelectItem key="0">Inactivo</SelectItem>
+                </Select>
               </TableCell>
               <TableCell>
                 <div className="flex items-center space-x-2">
