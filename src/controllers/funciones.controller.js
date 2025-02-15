@@ -63,67 +63,82 @@ const addFuncion = async (req, res) => {
 };
 
 const updateFuncion = async (req, res) => {
-  let connection;
-  try {
-    const { id } = req.params;
-    const { funcion, estado_funcion, plan, updatePlan } = req.body;
-
-    if (estado_funcion === undefined || (updatePlan && plan === undefined)) {
-      return res.status(400).json({ message: "Bad Request. Please fill all fields." });
-    }
-
-    connection = await getConnection();
-    await connection.beginTransaction();
-
-    if (!updatePlan) {
-      const usuario = { funcion: funcion.trim(), estado_funcion };
-      const [result] = await connection.query("UPDATE funciones SET ? WHERE id_funciones = ?", [usuario, id]);
-
-      if (result.affectedRows === 0) {
+    let connection;
+    try {
+      const { id } = req.params;
+      const { funcion, estado_funcion, plan, updatePlan } = req.body;
+  
+      if (estado_funcion === undefined || (updatePlan && plan === undefined)) {
+        return res.status(400).json({ message: "Bad Request. Please fill all fields." });
+      }
+  
+      connection = await getConnection();
+      await connection.beginTransaction();
+  
+      if (!updatePlan) {
+        const usuario = { funcion: funcion.trim(), estado_funcion };
+        const [result] = await connection.query("UPDATE funciones SET ? WHERE id_funciones = ?", [usuario, id]);
+  
+        if (result.affectedRows === 0) {
+          await connection.rollback();
+          return res.status(404).json({ code: 0, message: "Función no encontrada" });
+        }
+  
+        // Si el estado de la función es 0, eliminar el ID de la función de todos los planes de pago
+        if (estado_funcion === 0) {
+          const [planes] = await connection.query("SELECT id_plan, funciones FROM plan_pago");
+  
+          for (const plan of planes) {
+            const funcionesArray = plan.funciones ? plan.funciones.split(',').map(Number) : [];
+            const index = funcionesArray.indexOf(parseInt(id));
+  
+            if (index !== -1) {
+              funcionesArray.splice(index, 1);
+              const funcionesString = funcionesArray.join(',');
+              await connection.query("UPDATE plan_pago SET funciones = ? WHERE id_plan = ?", [funcionesString, plan.id_plan]);
+            }
+          }
+        }
+      }
+  
+      if (updatePlan && plan !== undefined) {
+        // Actualizar el campo funciones en la tabla plan_pago
+        const [planPagoResult] = await connection.query(
+          "SELECT funciones FROM plan_pago WHERE id_plan = ?",
+          [plan]
+        );
+  
+        if (planPagoResult.length === 0) {
+          await connection.rollback();
+          return res.status(404).json({ code: 0, message: "Plan de pago no encontrado" });
+        }
+  
+        const funcionesArray = planPagoResult[0].funciones ? planPagoResult[0].funciones.split(',').map(Number) : [];
+        const index = funcionesArray.indexOf(parseInt(id));
+  
+        if (estado_funcion && index === -1) {
+          funcionesArray.push(parseInt(id));
+        } else if (!estado_funcion && index !== -1) {
+          funcionesArray.splice(index, 1);
+        }
+  
+        const funcionesString = funcionesArray.join(',');
+        await connection.query("UPDATE plan_pago SET funciones = ? WHERE id_plan = ?", [funcionesString, plan]);
+      }
+  
+      await connection.commit();
+      res.json({ code: 1, message: "Función modificada y plan de pago actualizado" });
+    } catch (error) {
+      if (connection) {
         await connection.rollback();
-        return res.status(404).json({ code: 0, message: "Función no encontrada" });
+      }
+      res.status(500).send({ code: 0, message: error.message });
+    } finally {
+      if (connection) {
+        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
       }
     }
-
-    if (updatePlan && plan !== undefined) {
-      // Actualizar el campo funciones en la tabla plan_pago
-      const [planPagoResult] = await connection.query(
-        "SELECT funciones FROM plan_pago WHERE id_plan = ?",
-        [plan]
-      );
-
-      if (planPagoResult.length === 0) {
-        await connection.rollback();
-        return res.status(404).json({ code: 0, message: "Plan de pago no encontrado" });
-      }
-
-      const funcionesArray = planPagoResult[0].funciones ? planPagoResult[0].funciones.split(',').map(Number) : [];
-      const index = funcionesArray.indexOf(parseInt(id));
-
-      if (estado_funcion && index === -1) {
-        funcionesArray.push(parseInt(id));
-      } else if (!estado_funcion && index !== -1) {
-        funcionesArray.splice(index, 1);
-      }
-
-      const funcionesString = funcionesArray.join(',');
-      await connection.query("UPDATE plan_pago SET funciones = ? WHERE id_plan = ?", [funcionesString, plan]);
-    }
-
-    await connection.commit();
-    res.json({ code: 1, message: "Función modificada y plan de pago actualizado" });
-  } catch (error) {
-    if (connection) {
-      await connection.rollback();
-    }
-    res.status(500).send({ code: 0, message: error.message });
-  } finally {
-    if (connection) {
-      connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
-    }
-  }
-};
-
+  };
   
 export const methods = {
     getFunciones,
