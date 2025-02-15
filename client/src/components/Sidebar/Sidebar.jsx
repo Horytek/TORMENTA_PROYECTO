@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaHome, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaHome, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp, FaUserFriends } from 'react-icons/fa';
 import {BiSolidReport} from 'react-icons/bi';
 import { Link } from 'react-router-dom';
 import './sidebar.css';
@@ -47,7 +47,9 @@ function Sidebar() {
               { to: '/productos/subcategorias', text: 'Subcategorias'},
 
             ]},
-            
+            { to: '/clientes', icon: <FaUserFriends className="text-xl" />, text: 'Clientes' },
+
+
             { to: '/empleados', icon: <FaUsers className="text-xl" />, text: 'Empleados' },
             {
               to: '/ventas', icon: <FaChartLine className="text-xl" />, text: 'Ventas', subLinks: [

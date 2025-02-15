@@ -1,36 +1,57 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import axios from "@/api/axios";
 
-const useProductoTop = (idSucursal) => { 
+const useProductoTop = (idSucursal) => {
   const [productoTop, setProductoTop] = useState(null);
-  const [loading, setLoading] = useState(true); // Define the loading state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const fetchProductoTop = useCallback(async () => {
-    setLoading(true); 
-    try {
-      const response = await axios.get('/reporte/producto_top', {
-        params: {
-          id_sucursal: idSucursal, 
-        },
-      });
+  const fetchProductoTop = useCallback(() => {
+    const controller = new AbortController();
 
-      if (response.data.code === 1) {
-        setProductoTop(response.data.data);
-      } else {
-        console.error('Error en la solicitud: ' + response.data.message);
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await axios.get("/reporte/producto_top", {
+          params: { id_sucursal: idSucursal },
+          signal: controller.signal,
+        });
+
+        if (response.data.code === 1) {
+          setProductoTop(response.data.data);
+        } else {
+          const errMsg = "Error en la solicitud: " + response.data.message;
+          console.error(errMsg);
+          setError(new Error(errMsg));
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          if (err.response && err.response.status === 404) {
+            setProductoTop(null);
+            setError(null);
+          } else {
+            console.error("Error en la solicitud: " + err.message);
+            setError(err);
+          }
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error en la solicitud: ' + error.message);
-    } finally {
-      setLoading(false); 
-    }
-  }, [idSucursal]); 
+    };
+
+    loadData();
+
+    return () => controller.abort();
+  }, [idSucursal]);
 
   useEffect(() => {
-    fetchProductoTop();
+    const cancelRequest = fetchProductoTop();
+    return () => cancelRequest?.();
   }, [fetchProductoTop]);
 
-  return { productoTop, loading }; 
+  return { productoTop, loading, error };
 };
 
 export default useProductoTop;

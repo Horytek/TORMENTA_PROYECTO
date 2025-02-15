@@ -42,6 +42,11 @@ export default function Example({ idSucursal }) {
           <p className="text-center">Cargando...</p>
         ) : error ? (
           <p className="text-center text-red-500">Error: {error}</p>
+        ) : data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <p className="text-gray-500 text-lg">No hay datos disponibles</p>
+            <p className="text-gray-400 text-sm">No se encontraron registros de ventas por subcategoría</p>
+          </div>
         ) : (
           <>
             <DonutChart

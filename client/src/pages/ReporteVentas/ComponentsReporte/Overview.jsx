@@ -25,9 +25,14 @@ const BarChartHero = ({ idSucursal }) => {
       <div className="overflow-x-scroll custom-scrollbar" style={{ width: '700px' }}>
         <div style={{ width: '1000px' }}>
           {loading ? (
-            <p>Cargando...</p>
+            <p className="text-center py-4">Cargando...</p>
           ) : error ? (
-            <p>Error: {error}</p>
+            <p className="text-center text-red-500 py-4">Error: {error}</p>
+          ) : ventasPorProducto.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10">
+              <p className="text-gray-500 text-lg">No hay datos disponibles</p>
+              <p className="text-gray-400 text-sm">No se encontraron registros de ventas por producto</p>
+            </div>
           ) : (
             <BarChart
               data={chartdata}

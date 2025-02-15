@@ -18,13 +18,35 @@ const LineChartUsageExampleAxisLabel = () => {
 
   const currentYear = new Date().getFullYear().toString().slice(-2); // Obtiene los últimos 2 dígitos del año actual
 
+  // Mantener los nombres en inglés para la comparación con la API
   const months = [
-    `Jan ${currentYear}`, `Feb ${currentYear}`, `Mar ${currentYear}`, `Apr ${currentYear}`, `May ${currentYear}`, `Jun ${currentYear}`,
-    `Jul ${currentYear}`, `Aug ${currentYear}`, `Sep ${currentYear}`, `Oct ${currentYear}`, `Nov ${currentYear}`, `Dec ${currentYear}`
+    `Jan ${currentYear}`, `Feb ${currentYear}`, `Mar ${currentYear}`, 
+    `Apr ${currentYear}`, `May ${currentYear}`, `Jun ${currentYear}`,
+    `Jul ${currentYear}`, `Aug ${currentYear}`, `Sep ${currentYear}`, 
+    `Oct ${currentYear}`, `Nov ${currentYear}`, `Dec ${currentYear}`
   ];
 
+  // Objeto para traducir los meses
+  const monthTranslations = {
+    [`Jan ${currentYear}`]: `Ene'${currentYear}`,
+    [`Feb ${currentYear}`]: `Feb'${currentYear}`,
+    [`Mar ${currentYear}`]: `Mar'${currentYear}`,
+    [`Apr ${currentYear}`]: `Abr'${currentYear}`,
+    [`May ${currentYear}`]: `May'${currentYear}`,
+    [`Jun ${currentYear}`]: `Jun'${currentYear}`,
+    [`Jul ${currentYear}`]: `Jul'${currentYear}`,
+    [`Aug ${currentYear}`]: `Ago'${currentYear}`,
+    [`Sep ${currentYear}`]: `Sep'${currentYear}`,
+    [`Oct ${currentYear}`]: `Oct'${currentYear}`,
+    [`Nov ${currentYear}`]: `Nov'${currentYear}`,
+    [`Dec ${currentYear}`]: `Dic'${currentYear}`,
+  };
+
   const organizedData = months.map(month => {
-    const entry = { date: month };
+    const entry = { 
+      date: monthTranslations[month] || month, // Mostrar el mes traducido
+      originalDate: month // Mantener el mes original para comparaciones
+    };
     data.forEach(item => {
       if (item.mes === month) {
         entry[item.sucursal] = parseFloat(item.ganancias); 
