@@ -1,6 +1,7 @@
 // src/components/AlertModal/AlertModal.jsx
 
 import PropTypes from 'prop-types';
+import { Button} from '@nextui-org/react';
 import './AlertModal.css';
 
 const AlertModal = ({ message, onClose }) => {
@@ -9,7 +10,7 @@ const AlertModal = ({ message, onClose }) => {
       <div className="alert-modal">
         <h2 className="alert-modal-title">Error</h2>
         <p className="alert-modal-message">{message}</p>
-        <button className="alert-modal-button" onClick={onClose}>Cerrar</button>
+        <Button className="alert-modal-button" onClick={onClose}>Cerrar</Button>
       </div>
     </div>
   );

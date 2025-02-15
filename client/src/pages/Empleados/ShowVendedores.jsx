@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
-import Pagination from '@/components/Pagination/Pagination';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@nextui-org/react";
 import VendedoresForm from './VendedoresForm';
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { getVendedores, deactivateVendedor, getVendedor } from '@/services/vendedor.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
-import { Tooltip } from "@nextui-org/tooltip";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { VscDebugDisconnect } from "react-icons/vsc";
 import { PiPlugsConnected } from "react-icons/pi";
-import { Avatar, AvatarGroup, AvatarIcon } from "@nextui-org/avatar";
 
 export function ShowVendedores({ searchTerm }) {
     const [vendedores, setVendedores] = useState([]);
@@ -23,8 +20,6 @@ export function ShowVendedores({ searchTerm }) {
     useEffect(() => {
         getUsers();
     }, []);
-
-    //const estado_token = localStorage.getItem("estado_token");
 
     // Obtener usuarios mediante API
     const getUsers = async () => {
@@ -42,7 +37,6 @@ export function ShowVendedores({ searchTerm }) {
 
     const deleteHandler = async () => {
         const dni_ver = localStorage.getItem("dni");
-        //console.log("Enviando DNI a API:", dni_ver); // <-- Verifica el valor antes de llamar a la API
         if (!dni_ver) {
             console.error("Error: DNI no definido en deleteHandler.");
             return;
@@ -50,17 +44,13 @@ export function ShowVendedores({ searchTerm }) {
         await deactivateVendedor(dni_ver);
         getUsers();
     };
-    
-
 
     const handleOpenConfirmationModal = (row, dni) => {
         localStorage.setItem("dni", dni);
-        //console.log("DNI seleccionado para eliminación:", dni); // <-- Verifica que `dni` tenga un valor
         setSelectedRow(row);
         setSelectedDni(dni);
         setIsConfirmationModalOpen(true);
     };
-    
 
     const handleCloseConfirmationModal = () => {
         setIsConfirmationModalOpen(false);
@@ -68,7 +58,6 @@ export function ShowVendedores({ searchTerm }) {
     };
 
     const handleConfirmDelete = () => {
-        //console.log("DNI enviado para eliminación:", selectedDni); // <-- Verifica el valor antes de eliminar
         if (!selectedDni) {
             console.error("Error: No hay DNI seleccionado para eliminar.");
             return;
@@ -76,7 +65,6 @@ export function ShowVendedores({ searchTerm }) {
         deleteHandler();
         handleCloseConfirmationModal();
     };
-    
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [initialData, setInitialData] = useState(null);
@@ -84,22 +72,17 @@ export function ShowVendedores({ searchTerm }) {
     const handleEditModal = async (dni) => {
         localStorage.setItem("dni_r", dni);
         try {
-            const data = await getVendedor(dni); 
-    
-            console.log("Respuesta de getVendedor:", data); // Para depuración
-    
+            const data = await getVendedor(dni);
             if (!data || data.length === 0) {
                 console.error("Error: No se encontró el vendedor o la respuesta es inválida.");
                 return;
             }
-    
-            setInitialData(data[0]);  // Corregido: usar 'data[0]' en lugar de 'response.data[0]'
+            setInitialData(data[0]);
             setIsEditModalOpen(true);
         } catch (error) {
             console.error("Error al obtener vendedor:", error);
         }
     };
-    
 
     const handleCloseModal = () => {
         setIsEditModalOpen(false);
@@ -109,52 +92,51 @@ export function ShowVendedores({ searchTerm }) {
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <table className="w-full text-sm divide-gray-200 rounded-lg table-auto">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">DNI</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Usuario</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Nombre</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Teléfono</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Estado</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-gray-200">
+                <Table aria-label="Vendedores" className="min-w-full border-collapse">
+                    <TableHeader>
+                        <TableColumn>DNI</TableColumn>
+                        <TableColumn>Usuario</TableColumn>
+                        <TableColumn>Nombre</TableColumn>
+                        <TableColumn>Teléfono</TableColumn>
+                        <TableColumn>Estado</TableColumn>
+                        <TableColumn className="w-32 text-center">Acciones</TableColumn>
+                    </TableHeader>
+                    <TableBody>
                         {currentVendedores.map((vendedor) => (
-                            <tr className='hover:bg-gray-100' key={vendedor.dni}>
-                                <td className='py-2 text-center'>{vendedor.dni}</td>
-                                <td className='py-2 text-center'>{vendedor.usua}</td>
-                                <td className='py-2 text-center'>{vendedor.nombre}</td>
-                                <td className='py-2 text-center'>{vendedor.telefono}</td>
-                                <td className='py-2 text-center'>
-                                    <span className={
-                                        vendedor.estado_vendedor === 'Inactivo'
-                                            ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
-                                            : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-                                    }>
+                            <TableRow key={vendedor.dni}>
+                                <TableCell>{vendedor.dni}</TableCell>
+                                <TableCell>{vendedor.usua}</TableCell>
+                                <TableCell>{vendedor.nombre}</TableCell>
+                                <TableCell>{vendedor.telefono}</TableCell>
+                                <TableCell>
+                                    <Chip color={vendedor.estado_vendedor === 'Inactivo' ? "danger" : "success"} size="lg" variant="flat">
                                         {vendedor.estado_vendedor}
-                                    </span>
-                                </td>
-                                <td className='py-4 text-center'>
-                                    <div className="flex items-center justify-center">
-                                        <button className="px-2 py-1 text-xl text-yellow-400" onClick={() => handleEditModal(vendedor.dni)}>
-                                            <MdEdit />
-                                        </button>
-                                        <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(vendedor.nombre, vendedor.dni)}>
-                                            <FaTrash />
-                                        </button>
+                                    </Chip>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Tooltip content="Editar">
+                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleEditModal(vendedor.dni)}>
+                                                <MdEdit />
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip content="Eliminar">
+                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(vendedor.nombre, vendedor.dni)}>
+                                                <FaTrash />
+                                            </Button>
+                                        </Tooltip>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
 
             {/* Paginación */}
             <div className="flex justify-end mt-4">
                 <Pagination
+                    showControls
                     currentPage={currentPage}
                     totalPages={Math.ceil(filteredVendedores.length / vendedoresPerPage)}
                     onPageChange={setCurrentPage}
@@ -173,9 +155,9 @@ export function ShowVendedores({ searchTerm }) {
             {/* Modal de Edición */}
             {isEditModalOpen && (
                 <VendedoresForm
-                    modalTitle={'Editar Vendedor'} 
+                    modalTitle={'Editar Vendedor'}
                     onClose={handleCloseModal}
-                    initialData={initialData} 
+                    initialData={initialData}
                 />
             )}
         </div>

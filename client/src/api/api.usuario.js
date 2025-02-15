@@ -12,5 +12,8 @@ export const addUsuarioRequest = async (user) =>
 export const updateUsuarioRequest = async (id, newFields) =>
   await axios.put(`/usuario/${id}`, newFields); 
 
+export const updateUsuarioPlanRequest = async (id, newFields) =>
+  await axios.put(`/usuario/plan/${id}`, newFields); 
+
 export const deleteUsuarioRequest = async (id) =>
   await axios.delete(`/usuario/${id}`);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaHome, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp, FaUserFriends } from 'react-icons/fa';
+import { FaHome, FaUsers, FaChartLine, FaWarehouse, FaCog, FaArrowRight, FaArrowLeft, FaChevronDown, FaChevronUp, FaBuilding, FaUserFriends } from 'react-icons/fa';
 import {BiSolidReport} from 'react-icons/bi';
 import { Link } from 'react-router-dom';
 import './sidebar.css';
@@ -47,6 +47,9 @@ function Sidebar() {
               { to: '/productos/subcategorias', text: 'Subcategorias'},
 
             ]},
+            { to: '/almacenG', icon: <FaWarehouse className="text-xl" />, text: 'Almacénes' },
+
+            
             { to: '/clientes', icon: <FaUserFriends className="text-xl" />, text: 'Clientes' },
 
 
@@ -57,7 +60,7 @@ function Sidebar() {
                 { to: 'ventas/libro_ventas', text: 'Libro de Ventas' },
               ]
             },
-            { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Almacén', subLinks: [
+            { to: '/almacen', icon: <FaWarehouse className="text-xl" />, text: 'Kardex', subLinks: [
               { to: '/almacen/nota_ingreso', text: 'Nota de ingreso' },
               { to: '/almacen/guia_remision', text: 'Guia de remisión' },
               { to: '/almacen/nota_salida', text: 'Nota de salida' }
@@ -67,10 +70,17 @@ function Sidebar() {
             { to: '/reportes', icon: <BiSolidReport className="text-xl" />, text: 'Reportes'
               
             },
+            { to: '/sucursal', icon: <FaBuilding className="text-xl" />, text: 'Sucursal'
+              
+            },
             { icon: <FaCog className="text-xl" />, text: 'Configuración', subLinks: [
               { to: '/configuracion/usuarios', text: 'Usuarios' },
+              { to: '/configuracion/roles', text: 'Roles' },
               { to: '/configuracion/historial', text: 'Historial' },
             ]},
+            { to: '/desarrollador', icon: <FaCog className="text-xl" />, text: 'Desarrollador'
+              
+            },
           ].map(({ to, icon, text, subLinks }) => (
             <div key={to}>
               <li className={`flex items-center ${collapsed ? 'justify-center' : 'pl-4'} py-2 px-2 w-full`}>

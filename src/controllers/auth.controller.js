@@ -10,13 +10,32 @@ const login = async (req, res) => {
         
         const user = { usuario: usuario.trim(), password: password.trim() };
         connection = await getConnection();
-        const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ?", user.usuario);
+        const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ? AND estado_usuario=1", user.usuario);
 
         if (userFound.length === 0) {
-            return res.status(400).json({ success: false, message: 'El usuario ingresado no existe' });
+            return res.status(400).json({ success: false, message: 'El usuario ingresado no existe o esta deshabilitado' });
         }
 
-        const [userValid] = await connection.query("SELECT usu.id_usuario,usu.id_rol,usu.usua,usu.contra,usu.estado_usuario,su.nombre_sucursal FROM usuario usu INNER JOIN vendedor ven ON ven.id_usuario=usu.id_usuario INNER JOIN sucursal su ON su.dni=ven.dni WHERE usu.usua = ? AND usu.contra = ?", [user.usuario, user.password]);
+        let userValid;
+
+        if (usuario && usuario === 'desarrollador') {
+            const [rows] = await connection.query(
+                "SELECT * FROM usuario WHERE usua = ? AND contra = ?", 
+                [user.usuario, user.password]
+            );
+            userValid = rows;
+        } else {
+            const [rows] = await connection.query(
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal
+                FROM usuario usu
+                INNER JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
+                INNER JOIN sucursal su ON su.dni = ven.dni
+                WHERE usu.usua = ? AND usu.contra = ? AND usu.estado_usuario = 1`, 
+                [user.usuario, user.password]
+            );
+            userValid = rows;
+        }
+        
 
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
@@ -59,7 +78,7 @@ const verifyToken = async (req, res) => {
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
-        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser);
+        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ? AND estado_usuario = 1", user.nameUser);
         if (userFound.length === 0) return res.sendStatus(401);
 
         const userbd = userFound[0];

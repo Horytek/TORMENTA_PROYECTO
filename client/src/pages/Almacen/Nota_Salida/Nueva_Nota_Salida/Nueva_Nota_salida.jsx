@@ -22,7 +22,7 @@ const glosaOptions = [
   "TRASLADO ENTRE ALMACENES", "ITINERANTE", "CAMBIO MERCAD. PROV.",
   "MATERIA PRIMAR PRODUCCION", "DEVOLUCION PROOVEDOR",
   "AJUSTE INVENTARIO", "OTRAS SALIDAS", "RESERVADO",
-  "CONSUMO INTERNO", "EXTORNO DIFERIDO" , "TRANSFORMACION"
+  "CONSUMO INTERNO", "EXTORNO DIFERIDO", "TRANSFORMACION"
 ];
 function NuevaSalidas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,7 +82,7 @@ function NuevaSalidas() {
   });
   const { destinatarios } = useDestinatarioData();
 
-  
+
   const [usuario, setUsuario] = useState(() => {
     const savedUsuario = localStorage.getItem('usuario');
     return savedUsuario ? (savedUsuario) : '';

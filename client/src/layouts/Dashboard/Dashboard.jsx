@@ -19,6 +19,7 @@ const Registro_venta = lazy(() => import('@/pages/Ventas/Registro_Venta/Registro
 const LibroVentas = lazy(() => import('@/pages/Ventas/Reporte_Venta/Libro_Ventas'));
 const Empleados = lazy(() => import('@/pages/Empleados/Empleados'));
 const Productos = lazy(() => import('@/pages/Productos/Productos'));
+const Almacenes = lazy(() => import('@/pages/AlmacenG/AlmacenG'));
 const Marcas = lazy(() => import('@/pages/Marcas/Marcas'));
 const Categorias = lazy(() => import('@/pages/Categorias/Categorias'));
 const Subcategorias = lazy(() => import('@/pages/Subcategorias/Subcategorias'));
@@ -33,11 +34,16 @@ const RegistroGuia = lazy(() => import('@/pages/Almacen/Guia_Remision/Registro_G
 const ReporteVentas = lazy(() => import('@/pages/ReporteVentas/ReporteVentas'));
 const Usuarios = lazy(() => import('@/pages/Usuarios/Usuarios'));
 const Historial = lazy(() => import('@/pages/Ventas/Historial_Venta/Historial'));
+const Roles = lazy(() => import('@/pages/Roles/Roles'));
+const Global = lazy(() => import('@/pages/Global/Global'));
+const Sucursal = lazy(() => import('@/pages/Sucursal/Sucursal'));
 const Clientes = lazy(() => import('@/pages/Clientes/Clientes'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
   const EMP_ROL = 3;
+  const DESARROLLO_ROL = 10;
+  
 
   return (
     <div className="flex min-h-screen">
@@ -79,6 +85,11 @@ function Dashboard() {
                     <Route path="/productos" element={
                       <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                         <Productos />
+                      </RouteProtectedRol>
+                    } />
+                     <Route path="/almacenG" element={
+                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+                        <Almacenes />
                       </RouteProtectedRol>
                     } />
                     <Route path="/productos/marcas" element={
@@ -141,15 +152,30 @@ function Dashboard() {
                         <ReporteVentas />
                       </RouteProtectedRol>
                     } />
+                    <Route path="/sucursal" element={
+                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+                        <Sucursal />
+                      </RouteProtectedRol>
+                    } />
                     <Route path="/configuracion/usuarios" element={
                       <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                         <Usuarios />
+                      </RouteProtectedRol>
+                    } />
+                    <Route path="/configuracion/roles" element={
+                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+                        <Roles />
                       </RouteProtectedRol>
                     } />
                     
                     <Route path="/configuracion/historial" element={
                       <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
                         <Historial />
+                      </RouteProtectedRol>
+                    } />
+                      <Route path="/desarrollador" element={
+                      <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
+                        <Global />
                       </RouteProtectedRol>
                     } />
                     <Route path="/clientes" element={

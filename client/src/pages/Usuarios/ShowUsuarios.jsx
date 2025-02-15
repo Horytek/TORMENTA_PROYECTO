@@ -1,15 +1,23 @@
-import { useEffect, useState } from 'react';
-import Pagination from '@/components/Pagination/Pagination';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Tooltip,
+  Pagination,
+  Button,
+  Chip
+} from "@nextui-org/react";
 import UsuariosForm from './UsuariosForm';
 import { MdEdit } from "react-icons/md";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaEye, FaEyeSlash } from "react-icons/fa";
 import { getUsuarios, deleteUsuario, getUsuario } from '@/services/usuario.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { VscDebugDisconnect } from "react-icons/vsc";
 import { PiPlugsConnected } from "react-icons/pi";
-import {Tooltip} from "@nextui-org/tooltip";
-import {Avatar, AvatarGroup, AvatarIcon} from "@nextui-org/avatar";
 
 export function ShowUsuarios({ searchTerm }) {
   
@@ -23,8 +31,6 @@ export function ShowUsuarios({ searchTerm }) {
     useEffect(() => {
         getUsers();
     }, []);
-
-    //const estado_token = localStorage.getItem("estado_token");
 
     // Obtener usuarios mediante API
     const getUsers = async () => {
@@ -97,87 +103,98 @@ export function ShowUsuarios({ searchTerm }) {
         }));
     };
 
+    const renderCell = useCallback((usuario, columnKey) => {
+        switch (columnKey) {
+            case "rol":
+                return usuario.nom_rol;
+            case "usuario":
+                return (
+                    <Tooltip content={usuario.estado_token == 1 ? "Conectado" : "Desconectado"}>
+                        <div className="flex gap-x-2">
+                            <span className="font-medium text-gray-700">{usuario.usua}</span>
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 p-1 transition-all duration-200 ease-in-out 
+                                ${usuario.estado_token === 1 
+                                    ? 'border-success-300 bg-success-100' // Verde claro para conectado
+                                    : 'border-danger-300 bg-danger-100'   // Rojo claro para desconectado
+                                }`}>
+                                {usuario.estado_token === 1 
+                                    ? <PiPlugsConnected className="text-success-600 text-lg transition-all duration-300 ease-in-out transform hover:scale-105" />
+                                    : <VscDebugDisconnect className="text-danger-600 text-lg transition-all duration-300 ease-in-out transform hover:scale-105" />
+                                }
+                            </div>
+                        </div>
+                    </Tooltip>
+                );
+            case "contraseña":
+                return (
+                    <div className="flex">
+                        <button 
+                            className="flex justify-center items-center gap-x-1.5"
+                            onClick={() => togglePasswordVisibility(usuario.id_usuario)}
+                        >
+                            <span className="mr-2">
+                            {showPassword[usuario.id_usuario] ? usuario.contra : '••••••••'}
+                            </span>
+                            <span className='text-gray-500'>
+                                {showPassword[usuario.id_usuario] ?  <FaEyeSlash /> : <FaEye />}
+                            </span>
+                        </button>
+                    </div>
+                );
+            case "estado":
+                return (
+                    <Chip className="capitalize" color={usuario.estado_usuario === 'Inactivo' ? "danger" : "success"} size="lg" variant="flat">
+                        {usuario.estado_usuario}
+                    </Chip>
+                );
+            case "acciones":
+                return (
+                    <div className="flex items-center justify-center gap-2">
+                        <Tooltip content="Editar">
+                            <Button isIconOnly variant="light" color="warning" onClick={() => handleModalEdit(usuario.id_usuario)}>
+                                <MdEdit />
+                            </Button>
+                        </Tooltip>
+                        <Tooltip content="Eliminar">
+                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(usuario.usua, usuario.id_usuario)}>
+                                <FaTrash />
+                            </Button>
+                        </Tooltip>
+                    </div>
+                );
+            default:
+                return usuario[columnKey];
+        }
+    }, [showPassword]);
+
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <table className="w-full text-sm divide-gray-200 rounded-lg table-auto">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">ROL</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">USUARIO</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">CONTRASEÑA</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">ESTADO</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-gray-200">
+                <Table aria-label="Usuarios" className="min-w-full border-collapse">
+                    <TableHeader>
+                        <TableColumn>ROL</TableColumn>
+                        <TableColumn>USUARIO</TableColumn>
+                        <TableColumn>CONTRASEÑA</TableColumn>
+                        <TableColumn>ESTADO</TableColumn>
+                        <TableColumn className="w-32 text-center">ACCIONES</TableColumn>
+                    </TableHeader>
+                    <TableBody>
                         {currentUsuarios.map((usuario) => (
-                            <tr className='hover:bg-gray-100' key={usuario.id_usuario} data-product={usuario.id_usuario}>
-                                <td className='py-2 text-center'>{usuario.nom_rol}</td>
-                                <td className='py-2 text-center flex items-center justify-center gap-x-2'>
-    <Tooltip content={usuario.estado_token == 1  ? "Conectado" : "Desconectado"}>
-    <div className="flex items-center justify-center gap-x-2">
-            <span className="font-medium text-gray-700">{usuario.usua}</span>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 p-1 transition-all duration-200 ease-in-out 
-                ${usuario.estado_token === 1 
-                    ? 'border-success-300 bg-success-100' // Verde claro para conectado
-                    : 'border-danger-300 bg-danger-100'   // Rojo claro para desconectado
-                }`}>
-                {usuario.estado_token === 1 
-                    ? <PiPlugsConnected className="text-success-600 text-lg transition-all duration-300 ease-in-out transform hover:scale-105" />
-                    : <VscDebugDisconnect className="text-danger-600 text-lg transition-all duration-300 ease-in-out transform hover:scale-105" />
-                }
-            </div>
-        </div>
-    </Tooltip>
-</td>
-
-
-                                <td className='py-2 text-center'>
-                                    <div className="flex items-center justify-center">
-                                        
-                                        <button 
-                                            className="flex justify-center items-center gap-x-1.5"
-                                            onClick={() => togglePasswordVisibility(usuario.id_usuario)}
-                                        >
-                                            <span className="mr-2">
-                                            {showPassword[usuario.id_usuario] ? usuario.contra : '••••••••'}
-                                            </span>
-                                            <span className='text-gray-500'>
-                                                {showPassword[usuario.id_usuario] ?  <FaEyeSlash /> : <FaEye />}
-                                            </span>
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className='py-2 text-center'>
-                                    <span className={
-                                        usuario.estado_usuario === 'Inactivo'
-                                        ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
-                                        : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-                                    }>
-                                        {usuario.estado_usuario}
-                                    </span>
-                                </td>
-                                <td className='py-4 text-center'>
-                                    <div className="flex items-center justify-center">
-                                        <button className="px-2 py-1 text-xl text-yellow-400" onClick={() => handleModalEdit(usuario.id_usuario)}>
-                                            <MdEdit />
-                                        </button>
-                                        <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(usuario.usua, usuario.id_usuario)}>
-                                            <FaTrash />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <TableRow key={usuario.id_usuario}>
+                                {["rol", "usuario", "contraseña", "estado", "acciones"].map((columnKey) => (
+                                    <TableCell key={columnKey}>{renderCell(usuario, columnKey)}</TableCell>
+                                ))}
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
 
             {/* Paginación */}
             <div className="flex justify-end mt-4">
                 <div className="flex">
                     <Pagination
+                        showControls
                         currentPage={currentPage}
                         totalPages={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
                         onPageChange={setCurrentPage}

@@ -1,0 +1,42 @@
+.input-c {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+  }
+  
+  .cant-pag-c {
+    padding: 0.25rem 1rem;
+    background-color: #eaeaeae3;
+  }
+  
+  .estado-activo {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    color: #117B34;
+    background-color: #EEFDF3;
+  }
+  
+  .estado-inactivo {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    color: #E05858;
+    background-color: #FDF2F2;
+  }
+  
+  .table tr {
+    border-bottom: none !important;
+  }
+  
+  .table th, .table td {
+    border-bottom: none !important;
+  }

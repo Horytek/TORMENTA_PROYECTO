@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@nextui-org/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
-import Pagination from '@/components/Pagination/Pagination';
 import { getProductos, deleteProducto, getProducto } from '@/services/productos.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import ProductosForm from './ProductosForm';
@@ -104,32 +104,30 @@ export function ShowProductos({ searchTerm }) {
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <table className="w-full text-sm divide-gray-200 rounded-lg table-auto">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="w-1/3 px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">DESCRIPCIÓN</th>
-                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">LÍNEA</th>
-                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">SUB-LÍNEA</th>
-                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">UND. MED.</th>
-                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">PRECIO (S/.)</th>
-                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">COD. BARRAS</th>
-                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">ESTADO</th>
-                            <th className="px-6 py-3 text-xs font-bold text-center text-gray-500 uppercase">ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-gray-200">
+                <Table aria-label="Productos" className="min-w-full border-collapse">
+                    <TableHeader>
+                        <TableColumn>DESCRIPCIÓN</TableColumn>
+                        <TableColumn>LÍNEA</TableColumn>
+                        <TableColumn>SUB-LÍNEA</TableColumn>
+                        <TableColumn>UND. MED.</TableColumn>
+                        <TableColumn>PRECIO (S/.)</TableColumn>
+                        <TableColumn>COD. BARRAS</TableColumn>
+                        <TableColumn>ESTADO</TableColumn>
+                        <TableColumn className="w-32 text-center">ACCIONES</TableColumn>
+                    </TableHeader>
+                    <TableBody>
                         {currentProductos.map((producto) => (
-                            <tr className='hover:bg-gray-100' key={producto.id_producto} data-product={producto.id_producto}>
-                                <td className='max-w-xs px-2 py-2 whitespace-nowrap'>{producto.descripcion}</td>
-                                <td className='py-2 text-center'>{producto.nom_marca}</td>
-                                <td className='py-2 text-center'>{producto.nom_subcat}</td>
-                                <td className='py-2 text-center'>{producto.undm}</td>
-                                <td className='py-2 text-center'>{producto.precio}</td>
-                                <td className='py-2 text-center'>
+                            <TableRow key={producto.id_producto}>
+                                <TableCell>{producto.descripcion}</TableCell>
+                                <TableCell>{producto.nom_marca}</TableCell>
+                                <TableCell>{producto.nom_subcat}</TableCell>
+                                <TableCell>{producto.undm}</TableCell>
+                                <TableCell>{producto.precio}</TableCell>
+                                <TableCell>
                                     {producto.cod_barras === '-' ? '-' :
                                         <div
                                             id={`barcode-${producto.id_producto}`}
-                                            className="flex items-center justify-center cursor-pointer"
+                                            className="flex cursor-pointer"
                                             onClick={() => downloadBarcode(producto)}
                                         >
                                             <Barcode
@@ -138,41 +136,40 @@ export function ShowProductos({ searchTerm }) {
                                             />
                                         </div>
                                     }
-                                </td>
-                                <td className='py-2 text-center'>
-                                    <span className={
-                                        producto.estado_producto === 'Inactivo'
-                                        ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
-                                        : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-                                    }>
+                                </TableCell>
+                                <TableCell>
+                                    <Chip color={producto.estado_producto === 'Inactivo' ? "danger" : "success"} size="lg" variant="flat">
                                         {producto.estado_producto}
-                                    </span>
-                                </td>
-                                <td className='py-4 text-center'>
-                                    <div className="flex items-center justify-center">
-                                        <button className="px-2 py-1 text-xl text-yellow-400" onClick={() => handleModalEdit(producto.id_producto)}>
-                                            <MdEdit />
-                                        </button>
-                                        <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(producto.descripcion, producto.id_producto)}>
-                                            <FaTrash />
-                                        </button>
+                                    </Chip>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Tooltip content="Editar">
+                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleModalEdit(producto.id_producto)}>
+                                                <MdEdit />
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip content="Eliminar">
+                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(producto.descripcion, producto.id_producto)}>
+                                                <FaTrash />
+                                            </Button>
+                                        </Tooltip>
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
 
             {/* Paginación */}
             <div className="flex justify-end mt-4">
-                <div className="flex">
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(filteredProductos.length / productosPerPage)}
-                        onPageChange={setCurrentPage}
-                    />
-                </div>
+                <Pagination
+                    showControls
+                    page={currentPage}
+                    total={Math.ceil(filteredProductos.length / productosPerPage)}
+                    onChange={(page) => setCurrentPage(page)}
+                />
             </div>
 
             {/* Modal de Confirmación para eliminar Producto */}
