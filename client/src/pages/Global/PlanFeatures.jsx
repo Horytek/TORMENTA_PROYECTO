@@ -1,47 +1,101 @@
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
-import { Button } from "@nextui-org/react";
-import { Input } from "@nextui-org/react";
-import { FaPlus } from "react-icons/fa";
-import { FaTrash } from "react-icons/fa";
-import { useState } from "react";
-import {Checkbox} from "@nextui-org/checkbox";
+import { useEffect, useState } from "react";
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Checkbox,
+  Button,
+  Input,
+} from "@nextui-org/react";
+import { FaPlus, FaEdit } from "react-icons/fa";
 import { getFunciones, getFuncion, addFuncion, updateFuncion } from "@/services/funciones.services";
+import { getPlanes } from "@/services/planes.services";
+import { AddFeatureModal, EditFeatureModal } from "./FeatureModals";
 
 const PlanFeatures = () => {
-  const [features, setFeatures] = useState([
-    { id: 1, name: "Usuarios ilimitados", basic: false, pro: true, enterprise: true },
-    { id: 2, name: "Soporte 24/7", basic: false, pro: false, enterprise: true },
-  ]);
-  const [newFeature, setNewFeature] = useState("");
+  const [features, setFeatures] = useState([]);
+  const [plans, setPlans] = useState([]);
+  const [filter, setFilter] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState(null);
 
-  const addFeature = () => {
-    if (!newFeature.trim()) return;
-    setFeatures([
-      ...features,
-      { id: features.length + 1, name: newFeature, basic: false, pro: false, enterprise: false },
-    ]);
-    setNewFeature("");
+  const fetchFeatures = async () => {
+    const data = await getFunciones();
+    setFeatures(data);
   };
 
-  const toggleFeature = (id, plan) => {
-    setFeatures(
-      features.map((feature) =>
-        feature.id === id ? { ...feature, [plan]: !feature[plan] } : feature
-      )
-    );
+  const fetchPlans = async () => {
+    const data = await getPlanes();
+    setPlans(data);
   };
 
-  const removeFeature = (id) => {
-    setFeatures(features.filter((feature) => feature.id !== id));
+  useEffect(() => {
+    fetchFeatures();
+    fetchPlans();
+  }, []);
+
+  const handleAddFeature = async (data) => {
+    const result = await addFuncion(data);
+    if (result) {
+      fetchFeatures();
+      setIsAddModalOpen(false);
+    }
   };
+
+  const handleEditFeature = async (data) => {
+    const result = await updateFuncion(selectedFeature.id_funciones, data);
+    if (result) {
+      fetchFeatures();
+      fetchPlans();
+      setIsEditModalOpen(false);
+    }
+  };
+
+  const toggleFeature = async (featureId, planDescription) => {
+    const plan = plans.find(p => p.descripcion_plan.toLowerCase() === planDescription.toLowerCase());
+    if (!plan) return;
+
+    const funcionesArray = plan.funciones ? plan.funciones.split(',').map(Number) : [];
+    const index = funcionesArray.indexOf(featureId);
+
+    const estado_funcion = index === -1;
+    if (estado_funcion) {
+      funcionesArray.push(featureId);
+    } else {
+      funcionesArray.splice(index, 1);
+    }
+
+    await updateFuncion(featureId, { estado_funcion, plan: plan.id_plan, updatePlan: true });
+    fetchPlans();
+  };
+
+  const openEditModal = async (id) => {
+    const feature = await getFuncion(id);
+    setSelectedFeature(feature[0]);
+    setIsEditModalOpen(true);
+  };
+
+  const isFeatureInPlan = (featureId, planDescription) => {
+    const plan = plans.find(p => p.descripcion_plan.toLowerCase() === planDescription.toLowerCase());
+    if (!plan || !plan.funciones) return false;
+    return plan.funciones.split(',').map(Number).includes(featureId);
+  };
+
+  const filteredFeatures = features.filter((feature) =>
+    feature.funcion.toLowerCase().includes(filter.toLowerCase())
+  );
 
   return (
     <div className="space-y-4">
       <div className="flex gap-4">
         <Input
-          placeholder="Nueva característica..."
-          value={newFeature}
-          onChange={(e) => setNewFeature(e.target.value)}
+          placeholder="Filtrar por nombre de función..."
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
           className="flex-1"
           style={{
             border: "none",
@@ -49,7 +103,7 @@ const PlanFeatures = () => {
             outline: "none",
           }}
         />
-        <Button onClick={addFeature} color="primary" variant="shadow">
+        <Button onClick={() => setIsAddModalOpen(true)} color="primary" variant="shadow">
           <FaPlus className="w-4 h-4 mr-2" />
           Agregar
         </Button>
@@ -63,42 +117,59 @@ const PlanFeatures = () => {
           <TableColumn>Acciones</TableColumn>
         </TableHeader>
         <TableBody>
-          {features.map((feature) => (
-            <TableRow key={feature.id}>
-              <TableCell>{feature.name}</TableCell>
+          {filteredFeatures.map((feature) => (
+            <TableRow key={feature.id_funciones}>
+              <TableCell>{feature.funcion}</TableCell>
               <TableCell>
                 <Checkbox
-                  checked={feature.basic}
+                  isSelected={isFeatureInPlan(feature.id_funciones, 'basic')}
                   size="lg"
-                  onChange={() => toggleFeature(feature.id, "basic")}
+                  onChange={() => toggleFeature(feature.id_funciones, 'basic')}
                   className="w-4 h-4"
                 />
               </TableCell>
               <TableCell>
                 <Checkbox
-                  checked={feature.pro}
+                  isSelected={isFeatureInPlan(feature.id_funciones, 'pro')}
                   size="lg"
-                  onChange={() => toggleFeature(feature.id, "pro")}
+                  onChange={() => toggleFeature(feature.id_funciones, 'pro')}
                   className="w-4 h-4"
                 />
               </TableCell>
               <TableCell>
                 <Checkbox
-                  checked={feature.enterprise}
+                  isSelected={isFeatureInPlan(feature.id_funciones, 'enterprise')}
                   size="lg"
-                  onChange={() => toggleFeature(feature.id, "enterprise")}
+                  onChange={() => toggleFeature(feature.id_funciones, 'enterprise')}
                   className="w-4 h-4"
                 />
               </TableCell>
               <TableCell>
-                <Button isIconOnly variant="light" color="danger" onClick={() => removeFeature(feature.id)}>
-                  <FaTrash className="w-4 h-4" />
-                </Button>
+                <div className="flex space-x-2">
+                  <Button isIconOnly variant="light" color="primary" onClick={() => openEditModal(feature.id_funciones)}>
+                    <FaEdit className="w-4 h-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      <AddFeatureModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        handleAddFeature={handleAddFeature}
+      />
+
+      {selectedFeature && (
+        <EditFeatureModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          selectedFeature={selectedFeature}
+          handleEditFeature={handleEditFeature}
+        />
+      )}
     </div>
   );
 };
