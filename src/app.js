@@ -24,6 +24,8 @@ import sucursalRoutes from "./routes/sucursal.routes";
 import almacenesRoutes from "./routes/almacen.routes.js";
 import funcionesRoutes from "./routes/funciones.routes.js";
 import planesRoutes from "./routes/plan_pago.routes.js";
+import clienteRoutes from "./routes/cliente.routes.js";
+
 const app = express();
 
 // Settings
@@ -70,4 +72,5 @@ app.use("/api/sucursales", sucursalRoutes);
 app.use("/api/almacen", almacenesRoutes);
 app.use("/api/funciones", funcionesRoutes);
 app.use("/api/planes", planesRoutes);
+app.use("/api/clientes", clienteRoutes);
 export default app;
