@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Pagination from '@/components/Pagination/Pagination';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@nextui-org/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { getAlmacenes, deleteAlmacen } from '@/services/almacen.services';
@@ -64,7 +64,6 @@ export function ShowAlmacenes({ searchTerm }) {
         });
         setIsEditModalOpen(true);
     };
-    
 
     const handleCloseEditModal = () => {
         setIsEditModalOpen(false);
@@ -74,54 +73,55 @@ export function ShowAlmacenes({ searchTerm }) {
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <table className="w-full text-sm divide-gray-200 rounded-lg table-auto">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">ID</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Almacen</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Sucursal</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Ubicación</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Estado</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-gray-200">
+                <Table aria-label="Almacenes" className="min-w-full border-collapse">
+                    <TableHeader>
+                        <TableColumn>ID</TableColumn>
+                        <TableColumn>Almacen</TableColumn>
+                        <TableColumn>Sucursal</TableColumn>
+                        <TableColumn>Ubicación</TableColumn>
+                        <TableColumn>Estado</TableColumn>
+                        <TableColumn className="w-32 text-center">Acciones</TableColumn>
+                    </TableHeader>
+                    <TableBody>
                         {currentAlmacenes.map((almacen) => (
-                            <tr key={almacen.id_almacen} className='hover:bg-gray-100'>
-                                <td className='py-2 text-center'>{almacen.id_almacen}</td>
-                                <td className='py-2 text-center'>{almacen.nom_almacen}</td>
-                                <td className='py-2 text-center'>{almacen.nombre_sucursal}</td>
-                                <td className='py-2 text-center'>{almacen.ubicacion}</td>
-                                <td className='py-2 text-center'>
-                                    <span className={
-                                        almacen.estado_almacen === 'Inactivo'
-                                            ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
-                                            : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-                                    }>
+                            <TableRow key={almacen.id_almacen}>
+                                <TableCell>{almacen.id_almacen}</TableCell>
+                                <TableCell>{almacen.nom_almacen}</TableCell>
+                                <TableCell>{almacen.nombre_sucursal}</TableCell>
+                                <TableCell>{almacen.ubicacion}</TableCell>
+                                <TableCell>
+                                    <Chip color={almacen.estado_almacen === 'Inactivo' ? "danger" : "success"} size="lg" variant="flat">
                                         {almacen.estado_almacen}
-                                    </span>
-                                </td>
-                                <td className='py-2 text-center'>
-                                    <button className="px-2 py-1 text-xl text-yellow-400" onClick={() => handleModalEdit(almacen)}>
-                                        <MdEdit />
-                                    </button>
-                                    <button onClick={() => handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen)} className='text-red-500 hover:text-red-700'><FaTrash /></button>
-                                </td>
-                            </tr>
+                                    </Chip>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Tooltip content="Editar">
+                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleModalEdit(almacen)}>
+                                                <MdEdit />
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip content="Eliminar">
+                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen)}>
+                                                <FaTrash />
+                                            </Button>
+                                        </Tooltip>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
             <div className="flex justify-end mt-4">
-                <div className="flex">
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(filteredAlmacenes.length / almacenesPerPage)}
-                        onPageChange={setCurrentPage}
-                    />
-                </div>
+                <Pagination
+                    showControls
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(filteredAlmacenes.length / almacenesPerPage)}
+                    onPageChange={setCurrentPage}
+                />
             </div>
-            
+
             {/* Modal de Confirmación */}
             {isConfirmationModalOpen && (
                 <ConfirmationModal

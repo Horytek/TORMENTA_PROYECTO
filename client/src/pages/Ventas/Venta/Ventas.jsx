@@ -10,6 +10,7 @@ import useVentasData from '../Data/data_venta';
 import { Toaster } from "react-hot-toast";
 import { handleDelete } from '../Data/delete_venta';
 import {Pagination} from "@nextui-org/pagination";
+import { Select, SelectItem } from "@nextui-org/react";
 import { anularVentaEnSunatF,anularVentaEnSunatB } from '../Data/anular_sunat';
 const Ventas = () => {
   // Estado para manejar la lista de ventas
@@ -181,16 +182,17 @@ const Ventas = () => {
         <div className="flex">
           <Pagination showControls color="primary" page={currentPage} total={totalPages} onChange={setCurrentPage}/>
         </div>
-        <select
-          className="pr-8 border-gray-300 rounded-lg input-c cant-pag-c bg-gray-50"
-          value={ventasPerPage}
-          onChange={(e) => setVentasPerPage(Number(e.target.value))}
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={100000}>Todos</option>
-        </select>
+        <Select
+  aria-label="Ventas por página"
+  selectedKeys={[String(ventasPerPage)]}
+  onSelectionChange={(keys) => setVentasPerPage(Number(Array.from(keys)[0]))}
+  className="w-28"
+>
+  <SelectItem key="5" value={5}>5</SelectItem>
+  <SelectItem key="10" value={10}>10</SelectItem>
+  <SelectItem key="20" value={20}>20</SelectItem>
+  <SelectItem key="100000" value={100000}>Todos</SelectItem>
+</Select>
       </div>
     </div>
   );

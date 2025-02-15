@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button, Pagination, Tooltip, Select, SelectItem } from '@nextui-org/react';
 import { Toaster, toast } from "react-hot-toast";
 import EditarSucursal from './Modals/EditarSucursal';
-import { FaEdit } from "react-icons/fa";
+import { FaEdit} from "react-icons/fa";
+import { MdEdit } from "react-icons/md";
 import editarSucursal from '../data/edit_sucursal';
 import './SucursalTable.css';
 
@@ -69,8 +70,8 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
       </TableCell>
       <TableCell className="text-center">
         <Tooltip content="Editar">
-          <Button isIconOnly variant="light" color="primary" onClick={() => handleEditarClick(sucursal)}>
-                    <FaEdit className="w-4 h-4" />
+          <Button isIconOnly variant="light" color="warning" onClick={() => handleEditarClick(sucursal)}>
+                    <MdEdit  className="w-4 h-4" />
           </Button>
         </Tooltip>
       </TableCell>
