@@ -89,7 +89,7 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
   return (
     <div className="container-table-reg px-4 bg-white rounded-lg">
       <Toaster />
-      <Table aria-label="Sucursales" className="table w-full">
+      <Table isStriped aria-label="Sucursales" className="table w-full">
         <TableHeader>
           <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</TableColumn>
           <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NOMBRE</TableColumn>

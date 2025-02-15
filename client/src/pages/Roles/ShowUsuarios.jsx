@@ -149,6 +149,7 @@ export function ShowUsuarios({ searchTerm }) {
     return (
         <div>
 <Table
+isStriped
     aria-label="Usuarios"
     className="min-w-full border-collapse"
 >

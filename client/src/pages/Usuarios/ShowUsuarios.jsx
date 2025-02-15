@@ -170,7 +170,7 @@ export function ShowUsuarios({ searchTerm }) {
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <Table aria-label="Usuarios" className="min-w-full border-collapse">
+                <Table isStriped aria-label="Usuarios" className="min-w-full border-collapse">
                     <TableHeader>
                         <TableColumn>ROL</TableColumn>
                         <TableColumn>USUARIO</TableColumn>

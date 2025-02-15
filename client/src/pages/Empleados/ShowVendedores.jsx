@@ -92,7 +92,7 @@ export function ShowVendedores({ searchTerm }) {
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <Table aria-label="Vendedores" className="min-w-full border-collapse">
+                <Table isStriped aria-label="Vendedores" className="min-w-full border-collapse">
                     <TableHeader>
                         <TableColumn>DNI</TableColumn>
                         <TableColumn>Usuario</TableColumn>

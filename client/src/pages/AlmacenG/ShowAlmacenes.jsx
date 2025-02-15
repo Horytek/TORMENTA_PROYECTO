@@ -73,7 +73,7 @@ export function ShowAlmacenes({ searchTerm }) {
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <Table aria-label="Almacenes" className="min-w-full border-collapse">
+                <Table isStriped aria-label="Almacenes" className="min-w-full border-collapse">
                     <TableHeader>
                         <TableColumn>ID</TableColumn>
                         <TableColumn>Almacen</TableColumn>

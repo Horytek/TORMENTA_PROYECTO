@@ -104,7 +104,7 @@ export function ShowProductos({ searchTerm }) {
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <Table aria-label="Productos" className="min-w-full border-collapse">
+                <Table isStriped aria-label="Productos" className="min-w-full border-collapse">
                     <TableHeader>
                         <TableColumn>DESCRIPCIÓN</TableColumn>
                         <TableColumn>LÍNEA</TableColumn>

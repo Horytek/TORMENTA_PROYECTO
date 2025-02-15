@@ -4,7 +4,7 @@ const getRoles = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_rol, nom_rol, estado_rol FROM rol`);
+        const [result] = await connection.query(`SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol!=10`);
         res.json({ code: 1, data: result });
     } catch (error) {
         res.status(500);
