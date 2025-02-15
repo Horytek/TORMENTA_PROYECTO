@@ -1,15 +1,20 @@
-import { useEffect, useState } from 'react';
-import Pagination from '@/components/Pagination/Pagination';
-import UsuariosForm from './UsuariosForm';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Tooltip,
+  Pagination,
+  Button
+} from "@nextui-org/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { getRoles, deleteRol, getRol } from '@/services/rol.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { VscDebugDisconnect } from "react-icons/vsc";
-import { PiPlugsConnected } from "react-icons/pi";
-import {Tooltip} from "@nextui-org/tooltip";
-import {Avatar, AvatarGroup, AvatarIcon} from "@nextui-org/avatar";
+import UsuariosForm from './UsuariosForm';
 
 export function ShowUsuarios({ searchTerm }) {
   
@@ -23,8 +28,6 @@ export function ShowUsuarios({ searchTerm }) {
     useEffect(() => {
         getUsers();
     }, []);
-
-    //const estado_token = localStorage.getItem("estado_token");
 
     // Obtener usuarios mediante API
     const getUsers = async () => {
@@ -97,57 +100,84 @@ export function ShowUsuarios({ searchTerm }) {
         }));
     };
 
+    const renderCell = useCallback((usuario, columnKey) => {
+        switch (columnKey) {
+            case "id":
+                return usuario.id_rol;
+            case "rol":
+                return usuario.nom_rol;
+            case "estado":
+                return (
+                    <span className={
+                        usuario.estado_rol === 'Inactivo'
+                        ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
+                        : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
+                    }>
+                        {usuario.estado_rol}
+                    </span>
+                );
+                case "acciones":
+                    return (
+                        <div className="flex justify-center items-center gap-2">
+                            <Tooltip content="Editar">
+                                <Button
+                                    isIconOnly
+                                    variant="light"
+                                    color="warning"
+                                    onClick={() => handleModalEdit(usuario.id_rol)}
+                                >
+                                    <MdEdit />
+                                </Button>
+                            </Tooltip>
+                            <Tooltip content="Eliminar">
+                                <Button
+                                    isIconOnly
+                                    variant="light"
+                                    color="danger"
+                                    onClick={() => handleOpenConfirmationModal(usuario.nom_rol, usuario.id_rol)}
+                                >
+                                    <FaTrash />
+                                </Button>
+                            </Tooltip>
+                        </div>
+                    );
+                default:
+                    return usuario[columnKey];
+            }
+    }, []);
+
     return (
         <div>
-            <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <table className="w-full text-sm divide-gray-200 rounded-lg table-auto">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">ID</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">ROL</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">ESTADO</th>
-                            <th className="px-6 py-3 text-sm font-bold text-center text-gray-500 uppercase">ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-gray-200">
-                        {currentUsuarios.map((usuario) => (
-                            <tr className='hover:bg-gray-100' key={usuario.id_rol} data-product={usuario.id_rol}>
-                                <td className='py-2 text-center'>{usuario.id_rol}</td>
-                                <td className='py-2 text-center'>{usuario.nom_rol}</td>
-                                <td className='py-2 text-center'>
-                                    <span className={
-                                        usuario.estado_rol === 'Inactivo'
-                                        ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
-                                        : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-                                    }>
-                                        {usuario.estado_rol}
-                                    </span>
-                                </td>
-                                <td className='py-4 text-center'>
-                                    <div className="flex items-center justify-center">
-                                        <button className="px-2 py-1 text-xl text-yellow-400" onClick={() => handleModalEdit(usuario.id_rol)}>
-                                            <MdEdit />
-                                        </button>
-                                        <button className="px-2 py-1 text-red-500" onClick={() => handleOpenConfirmationModal(usuario.nom_rol, usuario.id_rol)}>
-                                            <FaTrash />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+<Table
+    aria-label="Usuarios"
+    className="min-w-full border-collapse"
+>
+
+                <TableHeader>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>ROL</TableColumn>
+                    <TableColumn>ESTADO</TableColumn>
+                    <TableColumn className="w-32 text-center">ACCIONES</TableColumn>
+                </TableHeader>
+                <TableBody>
+                    {currentUsuarios.map((usuario) => (
+                        <TableRow key={usuario.id_rol}>
+                            {["id", "rol", "estado", "acciones"].map((columnKey) => (
+                                <TableCell key={columnKey}>{renderCell(usuario, columnKey)}</TableCell>
+                            ))}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
 
             {/* Paginación */}
             <div className="flex justify-end mt-4">
-                <div className="flex">
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
-                        onPageChange={setCurrentPage}
-                    />
-                </div>
+                <Pagination
+                    showControls
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             {/* Modal de Confirmación para eliminar Producto */}

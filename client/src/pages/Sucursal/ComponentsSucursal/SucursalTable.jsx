@@ -1,9 +1,11 @@
 import React, { forwardRef, useImperativeHandle, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import Pagination from '@/components/Pagination/Pagination';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button, Pagination, Tooltip, Select, SelectItem } from '@nextui-org/react';
 import { Toaster, toast } from "react-hot-toast";
 import EditarSucursal from './Modals/EditarSucursal';
+import { FaEdit } from "react-icons/fa";
 import editarSucursal from '../data/edit_sucursal';
+import './SucursalTable.css';
 
 const TablaSucursal = forwardRef(({ sucursales }, ref) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,26 +53,28 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
   };
 
   const renderSucursalRow = (sucursal) => (
-    <React.Fragment key={sucursal.id}>
-      <tr className='tr-tabla-ingreso'>
-        <td className="text-center">{sucursal.nombre_vendedor}</td>
-        <td className="text-center">{sucursal.nombre_sucursal}</td>
-        <td className="text-center">{sucursal.ubicacion}</td>
-        <td className="text-center">
-          <p className={getEstadoClassName(sucursal.estado_sucursal)}>
-            {sucursal.estado_sucursal === 0 ? 'Inactivo' : 'Activo'}
-          </p>
-        </td>
-        <td className="text-center">
-          <button
-            onClick={() => handleEditarClick(sucursal)}
-            className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600"
-          >
-            Editar
-          </button>
-        </td>
-      </tr>
-    </React.Fragment>
+    <TableRow key={sucursal.id} className="border-none">
+      <TableCell className="text-center">{sucursal.nombre_vendedor}</TableCell>
+      <TableCell className="text-center">{sucursal.nombre_sucursal}</TableCell>
+      <TableCell className="text-center">{sucursal.ubicacion}</TableCell>
+      <TableCell className="text-center">
+      <span className={
+  sucursal.estado_sucursal === 0
+    ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
+    : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
+}>
+  {sucursal.estado_sucursal === 0 ? 'Inactivo' : 'Activo'}
+</span>
+
+      </TableCell>
+      <TableCell className="text-center">
+        <Tooltip content="Editar">
+          <Button isIconOnly variant="light" color="primary" onClick={() => handleEditarClick(sucursal)}>
+                    <FaEdit className="w-4 h-4" />
+          </Button>
+        </Tooltip>
+      </TableCell>
+    </TableRow>
   );
 
   const getCurrentPageItems = () => {
@@ -84,42 +88,41 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
   return (
     <div className="container-table-reg px-4 bg-white rounded-lg">
       <Toaster />
-      <table className="table w-full">
-        <thead>
-          <tr>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NOMBRE</th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DIRECCIÓN</th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">EDITAR</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table aria-label="Sucursales" className="table w-full">
+        <TableHeader>
+          <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</TableColumn>
+          <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NOMBRE</TableColumn>
+          <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DIRECCIÓN</TableColumn>
+          <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ESTADO</TableColumn>
+          <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">EDITAR</TableColumn>
+        </TableHeader>
+        <TableBody>
           {getCurrentPageItems().map(renderSucursalRow)}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
       <div className="flex justify-between mt-4">
-        <div className="flex">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={(page) => setCurrentPage(page)}
-          />
-        </div>
-        <select
-          id="itemsPerPage"
-          className="input-c cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg"
-          value={itemsPerPage}
-          onChange={(e) => {
-            setItemsPerPage(Number(e.target.value));
-            setCurrentPage(1);
-          }}
-        >
-          <option value={5}>05</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-        </select>
+        <Pagination
+          showControls
+          total={totalPages}
+          initialPage={currentPage}
+          onChange={(page) => setCurrentPage(page)}
+        />
+<Select
+  id="itemsPerPage"
+  aria-label="Items per page"
+  selectedKeys={[String(itemsPerPage)]}
+  onSelectionChange={(keys) => {
+    const value = Number(Array.from(keys)[0]);
+    setItemsPerPage(value);
+    setCurrentPage(1);
+  }}
+  className="w-20"
+>
+  <SelectItem key="5" value={5}>05</SelectItem>
+  <SelectItem key="10" value={10}>10</SelectItem>
+  <SelectItem key="20" value={20}>20</SelectItem>
+</Select>
       </div>
 
       {isEditModalOpen && (
