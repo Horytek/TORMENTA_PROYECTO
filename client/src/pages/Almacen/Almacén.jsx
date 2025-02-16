@@ -376,7 +376,7 @@ const Kardex = () => {
                 </div>
                 <div className="flex items-center gap-2">
                 <Select
-                        className="w-[120px]"
+                        className="w-[200px]"
                         onChange={handleSubCategoriaChange}
                         placeholder="Sub-línea"
                         classNames={{
