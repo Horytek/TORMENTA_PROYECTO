@@ -2,6 +2,7 @@ import { useState,useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
 import toast from 'react-hot-toast';
+import { Button } from "@nextui-org/react";
 import {  handleSunat } from '../../../Data/add_sunat';
 import {  handleSunatPDF } from '../../../Data/data_pdf';
 import {  handleUpdate } from '../../../Data/update_venta';
@@ -143,12 +144,12 @@ const handleAccept = () => {
           </div>
         </div>
         <div className="modal-actions flex justify-end">
-          <button className="btn btn-cancel" onClick={closeModal}>
+          <Button color="default" variant="shadow" onClick={closeModal} className="mr-2">
             Cancelar
-          </button>
-          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado===1)}>
+          </Button>
+          <Button color="success" variant="shadow" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado===1)}>
             Aceptar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
+import { Button } from "@nextui-org/react";
+
 
 
 const ConfirmationModal = ({ confirmDeleteModalOpen, handleDeleteVenta, setConfirmDeleteModalOpen }) => {
@@ -15,12 +17,12 @@ const ConfirmationModal = ({ confirmDeleteModalOpen, handleDeleteVenta, setConfi
         </h2>
         <p style={{ textAlign: "start" }}>¿Desea eliminar esta venta?</p>
         <div className="modal-actions flex justify-end">
-          <button className="btn btn-cancel" onClick={() => setConfirmDeleteModalOpen(false)}>
+          <Button color="default" variant="shadow" onClick={() => setConfirmDeleteModalOpen(false)} className="mr-2">
             Cancelar
-          </button>
-          <button className="btn btn-danger" onClick={handleDeleteVenta}>
+          </Button>
+          <Button color="danger" variant="shadow" onClick={handleDeleteVenta}>
             Eliminar
-          </button>
+          </Button>
         </div>
       </div>
     </div>
