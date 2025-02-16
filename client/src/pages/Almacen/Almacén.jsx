@@ -10,6 +10,8 @@ import useCategoriaData from './Kardex/data/data_categoria_kardex';
 import useSubCategoriaData from './Kardex/data/data_subcategoria_kardex';
 import downloadExcelReport from './Kardex/data/generateExcel';
 import downloadExcelReportByPeriod from './Kardex/data/generateExcelDates';
+import { Select, SelectItem } from "@nextui-org/react";
+import { Input } from "@nextui-org/input";
 import { Toaster, toast } from 'react-hot-toast';
 import html2pdf from 'html2pdf.js';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
@@ -278,21 +280,21 @@ const Kardex = () => {
     const handleWeeklyModalSubmit = async () => {
         const { start, end } = tempValue;
         const { almacen } = weeklyModalContent;
-    
+
         // Verificar si los campos están completos
         if (!start || !end || !almacen) {
             toast.error("Por favor selecciona un rango de fechas y un almacén.");
             return;
-        } else{
+        } else {
             const startDate = new Date(start).toISOString().split('T')[0];
             const endDate = new Date(end).toISOString().split('T')[0];
 
             downloadExcelReportByPeriod(startDate, endDate, almacen);
             handleCloseWeeklyModal();
         }
-       
+
     };
-    
+
 
     return (
         <div>
@@ -305,73 +307,106 @@ const Kardex = () => {
                     Kardex Movimientos
                 </h1>
             </div>
-            <div className="mt-5 mb-4">
+            <div className="flex items-center gap-2">
                 <label htmlFor="" className='mr-2 font-bold'>Kardex de Movimientos / Tienda: Almacén:</label>
-                <select
+                <Select
                     id="almacen"
-                    style={{ width: '250px' }}
-                    className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
-                    onChange={handleAlmacenChange} value={almacenSeleccionado.id}
-                >   <option value="">Seleccione...</option>
-
-                    {almacenes.map((almacen, index) => (
-                        <option key={index} value={almacen.id}>{almacen.almacen}</option>
+                    className="w-[250px]"
+                    onChange={handleAlmacenChange}
+                    selectedKeys={[almacenSeleccionado.id.toString()]}
+                    classNames={{
+                        trigger: "bg-white",
+                        value: "text-black",
+                    }}
+                >
+                    <SelectItem key="" value="">
+                        Seleccione...
+                    </SelectItem>
+                    {almacenes.map((almacen) => (
+                        <SelectItem key={almacen.id} value={almacen.id}>
+                            {almacen.almacen}
+                        </SelectItem>
                     ))}
-                </select>
+                </Select>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
                 <div className="flex items-center gap-2">
-                    <input
+                <Input
                         type="text"
-                        placeholder='CÓDIGO'
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
+                        placeholder='Código' 
+                        className="max-w-[150px]"
                         onChange={handleCodigoChange}
+                        style={{
+                            border: "none",
+                            boxShadow: "none",
+                            outline: "none",
+                            }}
                     />
                 </div>
                 <div className="flex items-center gap-2">
-                    <input
+                <Input
                         type="text"
-                        placeholder='DESCRIPCIÓN'
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
+                        placeholder='Descripción'
+                        className="max-w-[250px]"
                         onChange={handleDescripcionChange}
+                        style={{
+                            border: "none",
+                            boxShadow: "none",
+                            outline: "none",
+                            }}
                     />
                 </div>
                 <div className="flex items-center gap-2">
-                    <select
-                        style={{ width: '120px' }}
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
+                <Select
+                        className="w-[150px]"
                         onChange={handleCategoriaChange}
-                        value={categoriaSeleccionada}
+                        selectedKeys={[categoriaSeleccionada]}
+                        placeholder="Línea"
+                        classNames={{
+                            trigger: "bg-white ",
+                            value: "text-black",
+                        }}
                     >
-                        <option value="">LÍNEA</option>
-                        {categorias.map((categoria, index) => (
-                            <option key={index} value={categoria.id}>{categoria.categoria}</option>
+                        {categorias.map((categoria) => (
+                            <SelectItem key={categoria.id} value={categoria.id}>
+                                {categoria.categoria}
+                            </SelectItem>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <select
-                        style={{ width: '120px' }}
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
+                <Select
+                        className="w-[120px]"
                         onChange={handleSubCategoriaChange}
+                        placeholder="Sub-línea"
+                        classNames={{
+                            trigger: "bg-white ",
+                            value: "text-black",
+                        }}
                     >
-                        <option value="">SUB-LÍNEA</option>
-                        {subcategorias.map((subcategoria, index) => (
-                            <option key={index} value={subcategoria.id}>{subcategoria.sub_categoria}</option>
+                        {subcategorias.map((subcategoria) => (
+                            <SelectItem key={subcategoria.id} value={subcategoria.id}>
+                                {subcategoria.sub_categoria}
+                            </SelectItem>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <select
-                        style={{ width: '180px' }}
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5'
+                <Select
+                        className="w-[180px]"
                         onChange={handleMarcaChange}
+                        placeholder="Marca"
+                        classNames={{
+                            trigger: "bg-white",
+                            value: "text-black",
+                        }}
                     >
-                        <option value="">CUALQUIER MARCA</option>
-                        {marcas.map((marca, index) => (
-                            <option key={index} value={marca.id}>{marca.marca}</option>
+                        {marcas.map((marca) => (
+                            <SelectItem key={marca.id} value={marca.id}>
+                                {marca.marca}
+                            </SelectItem>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <Dropdown>
                     <DropdownTrigger className="bg-gray-100">
@@ -476,7 +511,7 @@ const Kardex = () => {
             )}
 
 
-{isWeeklyModalOpen && (
+            {isWeeklyModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-75">
                     <div className="bg-white p-6 rounded-md w-96">
                         <h2 className="text-xl font-bold mb-4">Seleccionar Rango Semanal</h2>
