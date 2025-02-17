@@ -4,7 +4,7 @@ import { IoMdOptions } from "react-icons/io";
 import { TiPrinter } from "react-icons/ti";
 import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
 import useBoucher from '../../Data/data_boucher';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@nextui-org/react";
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
@@ -126,110 +126,106 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   };
 
   const renderVentaRow = (venta) => (
-    <React.Fragment key={venta.id}>
-      <tr onClick={(e) => handleRowClick(e, venta)} className='tr-tabla-venta'>
-        <td className="font-bold text-center">
-          <div>{venta.serieNum}</div>
-          <div className="text-gray-500">{venta.num}</div>
-        </td>
-        <td className="text-center">
-          <span className={`px-4 py-2 rounded-full ${getTipoComprobanteClass(venta.tipoComprobante)} text-white`}>
-            {venta.tipoComprobante}
-          </span>
-        </td>
-        <td className="font-bold whitespace-normal">
-          <div className='whitespace-normal'>{venta.cliente}</div>
-          <div className="text-gray-500 whitespace-normal">{venta.ruc}</div>
-        </td>
-        <td className="text-center">{venta.fechaEmision}</td>
-        <td className="text-center">{venta.igv}</td>
-        <td className="text-center">{venta.total}</td>
-        <td className="font-bold">
-          <div className="whitespace-normal">{venta.cajero}</div>
-          <div className="text-gray-500 whitespace-normal">{venta.cajeroId}</div>
-        </td>
-        <td className="text-center" style={{ color: getEstadoColor(venta.estado), fontWeight: "400" }}>
-          <div className='ml-2 px-2.5 py-1.5 rounded-full' style={{ background: getEstadoBackground(venta.estado) }}>
-            <span>{venta.estado}</span>
-          </div>
-        </td>
-        <td>
-          <div className='flex justify-content-center'>
+    <TableRow key={venta.id} onClick={(e) => handleRowClick(e, venta)} className='tr-tabla-venta'>
+      <TableCell className="font-bold text-center">
+        <div>{venta.serieNum}</div>
+        <div className="text-gray-500">{venta.num}</div>
+      </TableCell>
+      <TableCell className="text-center">
+        <span className={`px-4 py-2 rounded-full ${getTipoComprobanteClass(venta.tipoComprobante)} text-white`}>
+          {venta.tipoComprobante}
+        </span>
+      </TableCell>
+      <TableCell className="font-bold whitespace-normal">
+        <div className='whitespace-normal'>{venta.cliente}</div>
+        <div className="text-gray-500 whitespace-normal">{venta.ruc}</div>
+      </TableCell>
+      <TableCell className="text-center">{venta.fechaEmision}</TableCell>
+      <TableCell className="text-center">{venta.igv}</TableCell>
+      <TableCell className="text-center">{venta.total}</TableCell>
+      <TableCell className="font-bold">
+        <div className="whitespace-normal">{venta.cajero}</div>
+        <div className="text-gray-500 whitespace-normal">{venta.cajeroId}</div>
+      </TableCell>
+      <TableCell className="text-center" style={{ color: getEstadoColor(venta.estado), fontWeight: "400" }}>
+        <div className='py-1.5 rounded-full' style={{ background: getEstadoBackground(venta.estado) }}>
+          <span>{venta.estado}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className='flex justify-content-center'>
+          <Tooltip content="Opciones">
             <IoMdOptions
               className={`ml-2 ml-5 mr-4 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' : 'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
               style={{ fontSize: '20px' }}
               onClick={() => openModal(venta.id, venta.estado)}
             />
+          </Tooltip>
+          <Tooltip content="Imprimir">
             <TiPrinter className='text-gray-500' onClick={onOpen} style={{ fontSize: '20px' }} />
-            <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
-              motionProps={{
-                variants: {
-                  enter: { y: 0, opacity: 1, transition: { duration: 0.2, ease: "easeOut" } },
-                  exit: { y: -20, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } },
-                }
-              }}
-              classNames={{ backdrop: "bg-[#27272A]/10 backdrop-opacity-4" }}
-            >
-              <ModalContent>
-                {(onClose) => (
-                  <>
-                    <ModalHeader className="flex flex-col gap-1">Opciones de impresión</ModalHeader>
-                    <ModalBody>
-                      <RadioGroup
-                        label="Selecciona la opción para el formato del boucher"
-                        value={printOption}
-                        onChange={(e) => setPrintOption(e.target.value)}
-                      >
-                        <Radio value="print">Descargar PDF</Radio>
-                        <Radio value="print-1">Imprimir boucher de la venta</Radio>
-                      </RadioGroup>
-                    </ModalBody>
-                    <ModalFooter>
-                      <Button color="danger" variant="shadow" onPress={onClose}>Cerrar</Button>
-                      <Button color="primary" variant="shadow" onPress={onClose} onClick={handlePrint}>Aceptar</Button>
-                    </ModalFooter>
-                  </>
-                )}
-              </ModalContent>
-            </Modal>
-          </div>
-        </td>
-      </tr>
-      {expandedRow === venta.id && renderVentaDetails(venta.detalles)}
-    </React.Fragment>
+          </Tooltip>
+          <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
+            motionProps={{
+              variants: {
+                enter: { y: 0, opacity: 1, transition: { duration: 0.2, ease: "easeOut" } },
+                exit: { y: -20, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } },
+              }
+            }}
+            classNames={{ backdrop: "bg-[#27272A]/10 backdrop-opacity-4" }}
+          >
+            <ModalContent>
+              {(onClose) => (
+                <>
+                  <ModalHeader className="flex flex-col gap-1">Opciones de impresión</ModalHeader>
+                  <ModalBody>
+                    <RadioGroup
+                      label="Selecciona la opción para el formato del boucher"
+                      value={printOption}
+                      onChange={(e) => setPrintOption(e.target.value)}
+                    >
+                      <Radio value="print">Descargar PDF</Radio>
+                      <Radio value="print-1">Imprimir boucher de la venta</Radio>
+                    </RadioGroup>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button color="danger" variant="shadow" onPress={onClose}>Cerrar</Button>
+                    <Button color="primary" variant="shadow" onPress={onClose} onClick={handlePrint}>Aceptar</Button>
+                  </ModalFooter>
+                </>
+              )}
+            </ModalContent>
+          </Modal>
+        </div>
+      </TableCell>
+    </TableRow>
   );
 
   const renderVentaDetails = (detalles) => (
-    <tr className="bg-gray-100">
-      <td colSpan="9">
-        <div className="container-table-details px-4">
-          <table className="table-details w-full">
-            <thead>
-              <tr>
-                <th className="w-1/12 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">CÓDIGO</th>
-                <th className="w-1/3 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">NOMBRE</th>
-                <th className="w-1/12 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
-                <th className="w-1/12 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">PRECIO</th>
-                <th className="w-1/12 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">DESCUENTO</th>
-                <th className="w-1/12 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">SUBTOTAL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detalles.map((detalle, index) => (
-                <tr key={index}>
-                  <td className="font-bold text-center">{detalle.codigo}</td>
-                  <td className="font-bold">{detalle.nombre}</td>
-                  <td className="text-center">{detalle.cantidad}</td>
-                  <td>{detalle.precio}</td>
-                  <td>{detalle.descuento}</td>
-                  <td>{detalle.subtotal}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </td>
-    </tr>
+    <Card className="mt-4 w-full shadow-lg rounded-2xl border border-gray-100 bg-white">
+      <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-2xl p-4">
+        <h4 className="text-xl font-semibold text-gray-700">Detalles de la Venta</h4>
+      </CardHeader>
+      <CardBody className="p-5 space-y-4">
+        {detalles.map((detalle, index) => (
+          <div key={index} className="p-4 bg-gray-50 rounded-lg shadow-sm">
+            <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-600">
+              <span className="font-medium">Código:</span>
+              <span className="text-gray-800 text-right">{detalle.codigo}</span>
+              <span className="font-medium">Nombre:</span>
+              <span className="text-gray-800 text-right">{detalle.nombre}</span>
+              <span className="font-medium">Cantidad:</span>
+              <span className="text-gray-800 text-right">{detalle.cantidad}</span>
+              <span className="font-medium">Precio:</span>
+              <span className="text-gray-800 text-right">{detalle.precio}</span>
+              <span className="font-medium">Descuento:</span>
+              <span className="text-gray-800 text-right">{detalle.descuento}</span>
+              <span className="font-medium">Subtotal:</span>
+              <span className="text-gray-800 text-right">{detalle.subtotal}</span>
+            </div>
+          </div>
+        ))}
+      </CardBody>
+    </Card>
   );
 
   const getTipoComprobanteClass = (tipoComprobante) => {
@@ -259,25 +255,30 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   };
 
   return (
-    <div className="container-table-venta px-4 bg-white rounded-lg shadow-md">
-      <table className="table w-full">
-        <thead>
-          <tr>
-            <th className="w-1/8 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">SERIE/NUM</th>
-            <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">TIPO.COMP</th>
-            <th className="w-1/6 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">CLIENTE</th>
-            <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">F. EMISIÓN</th>
-            <th className="w-1/8 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">IGV</th>
-            <th className="w-1/6 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">TOTAL</th>
-            <th className="w-1/4 text-start text-xs font-bold text-gray-500 uppercase tracking-wider">CAJERO</th>
-            <th className="w-1/4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">ESTADO</th>
-            <th className="W-1/6 tracking-wider"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {ventas.map(renderVentaRow)}
-        </tbody>
-      </table>
+    <div className="flex flex-col lg:flex-row">
+      <div className={`container-table-venta px-4 bg-white rounded-lg shadow-md ${expandedRow !== null ? 'lg:w-3/4' : 'w-full'}`}>
+        <Table aria-label="Tabla de Ventas">
+          <TableHeader>
+            <TableColumn className="text-center">SERIE/NUM</TableColumn>
+            <TableColumn className="text-center">TIPO.COMP</TableColumn>
+            <TableColumn>CLIENTE</TableColumn>
+            <TableColumn className="text-center">F. EMISIÓN</TableColumn>
+            <TableColumn className="text-center">IGV</TableColumn>
+            <TableColumn className="text-center">TOTAL</TableColumn>
+            <TableColumn>CAJERO</TableColumn>
+            <TableColumn className="text-center">ESTADO</TableColumn>
+            <TableColumn></TableColumn>
+          </TableHeader>
+          <TableBody>
+            {ventas.map(renderVentaRow)}
+          </TableBody>
+        </Table>
+      </div>
+      {expandedRow !== null && (
+        <div className="w-full lg:w-1/4 lg:ml-4 mt-4 lg:mt-0">
+          {renderVentaDetails(ventas.find(venta => venta.id === expandedRow).detalles)}
+        </div>
+      )}
     </div>
   );
 };
