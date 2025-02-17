@@ -18,6 +18,7 @@ const Ventas = lazy(() => import('@/pages/Ventas/Venta/Ventas'));
 const Registro_venta = lazy(() => import('@/pages/Ventas/Registro_Venta/Registro_venta'));
 const LibroVentas = lazy(() => import('@/pages/Ventas/Reporte_Venta/Libro_Ventas'));
 const Empleados = lazy(() => import('@/pages/Empleados/Empleados'));
+const Proveedores = lazy(() => import('@/pages/Proveedores/Proveedores'));
 const Productos = lazy(() => import('@/pages/Productos/Productos'));
 const Almacenes = lazy(() => import('@/pages/AlmacenG/AlmacenG'));
 const Marcas = lazy(() => import('@/pages/Marcas/Marcas'));
@@ -80,6 +81,11 @@ function Dashboard() {
                     <Route path="/empleados" element={
                       <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
                         <Empleados />
+                      </RouteProtectedRol>
+                    } />
+                    <Route path="/proveedores" element={
+                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+                        <Proveedores />
                       </RouteProtectedRol>
                     } />
                     <Route path="/productos" element={

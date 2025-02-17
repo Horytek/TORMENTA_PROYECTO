@@ -54,6 +54,7 @@ function Sidebar() {
 
 
             { to: '/empleados', icon: <FaUsers className="text-xl" />, text: 'Empleados' },
+            { to: '/proveedores', icon: <FaUsers className="text-xl" />, text: 'Proveedores' },
             {
               to: '/ventas', icon: <FaChartLine className="text-xl" />, text: 'Ventas', subLinks: [
                 { to: '/ventas/registro_venta', text: 'Nueva Venta' },

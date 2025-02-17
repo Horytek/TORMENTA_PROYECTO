@@ -20,11 +20,6 @@ import subcategoriaRoutes from "./routes/subcategoria.routes";
 import reporteRoutes from "./routes/reporte.routes";
 import destinatarioRoutes from "./routes/destinatario.routes";
 import vendedoresRoutes from "./routes/vendedores.routes.js";
-import sucursalRoutes from "./routes/sucursal.routes";
-import almacenesRoutes from "./routes/almacen.routes.js";
-import funcionesRoutes from "./routes/funciones.routes.js";
-import planesRoutes from "./routes/plan_pago.routes.js";
-import clienteRoutes from "./routes/clientes.routes.js";
 
 const app = express();
 
@@ -68,10 +63,5 @@ app.use("/api/guia_remision", guiasRoutes);
 app.use("/api/categorias", categoriaRoutes);
 app.use("/api/subcategorias", subcategoriaRoutes);
 app.use("/api/vendedores", vendedoresRoutes);
-app.use("/api/sucursales", sucursalRoutes);
-app.use("/api/almacen", almacenesRoutes);
-app.use("/api/funciones", funcionesRoutes);
-app.use("/api/planes", planesRoutes);
-app.use("/api/clientes", clienteRoutes);
 
 export default app;
