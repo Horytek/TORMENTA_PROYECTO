@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from "react-icons/io";
 import { TiPrinter } from "react-icons/ti";
@@ -7,11 +7,17 @@ import useBoucher from '../../Data/data_boucher';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@nextui-org/react";
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
+import './VentasTable.css'; // Asegúrate de importar el archivo CSS
 
-const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
+const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, currentPage }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [printOption, setPrintOption] = useState('');
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+
+  useEffect(() => {
+    // Ocultar el Card cuando se cambia de página
+    setExpandedRow(null);
+  }, [currentPage]);
 
   const toggleRow = (id, estado, venta) => {
     setExpandedRow(expandedRow === id ? null : id);
@@ -127,32 +133,32 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
 
   const renderVentaRow = (venta) => (
     <TableRow key={venta.id} onClick={(e) => handleRowClick(e, venta)} className='tr-tabla-venta'>
-      <TableCell className="font-bold text-center">
+      <TableCell className="font-bold text-center table-cell-small">
         <div>{venta.serieNum}</div>
         <div className="text-gray-500">{venta.num}</div>
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center table-cell-small">
         <span className={`px-4 py-2 rounded-full ${getTipoComprobanteClass(venta.tipoComprobante)} text-white`}>
           {venta.tipoComprobante}
         </span>
       </TableCell>
-      <TableCell className="font-bold whitespace-normal">
+      <TableCell className="font-bold whitespace-normal table-cell-small">
         <div className='whitespace-normal'>{venta.cliente}</div>
         <div className="text-gray-500 whitespace-normal">{venta.ruc}</div>
       </TableCell>
-      <TableCell className="text-center">{venta.fechaEmision}</TableCell>
-      <TableCell className="text-center">{venta.igv}</TableCell>
-      <TableCell className="text-center">{venta.total}</TableCell>
-      <TableCell className="font-bold">
+      <TableCell className="text-center table-cell-small">{venta.fechaEmision}</TableCell>
+      <TableCell className="text-center table-cell-small">{venta.igv}</TableCell>
+      <TableCell className="text-center table-cell-small">{venta.total}</TableCell>
+      <TableCell className="font-bold table-cell-small">
         <div className="whitespace-normal">{venta.cajero}</div>
         <div className="text-gray-500 whitespace-normal">{venta.cajeroId}</div>
       </TableCell>
-      <TableCell className="text-center" style={{ color: getEstadoColor(venta.estado), fontWeight: "400" }}>
+      <TableCell className="text-center table-cell-small" style={{ color: getEstadoColor(venta.estado), fontWeight: "400" }}>
         <div className='py-1.5 rounded-full' style={{ background: getEstadoBackground(venta.estado) }}>
           <span>{venta.estado}</span>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="table-cell-small">
         <div className='flex justify-content-center'>
           <Tooltip content="Opciones">
             <IoMdOptions
@@ -201,29 +207,33 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
   );
 
   const renderVentaDetails = (detalles) => (
-    <Card className="mt-4 w-full shadow-lg rounded-2xl border border-gray-100 bg-white">
+    <Card className="mt-4 w-full shadow-lg rounded-2xl border border-gray-100 bg-white card-animated card-scroll container-table-details">
       <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-2xl p-4">
         <h4 className="text-xl font-semibold text-gray-700">Detalles de la Venta</h4>
       </CardHeader>
-      <CardBody className="p-5 space-y-4">
-        {detalles.map((detalle, index) => (
-          <div key={index} className="p-4 bg-gray-50 rounded-lg shadow-sm">
-            <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-600">
-              <span className="font-medium">Código:</span>
-              <span className="text-gray-800 text-right">{detalle.codigo}</span>
-              <span className="font-medium">Nombre:</span>
-              <span className="text-gray-800 text-right">{detalle.nombre}</span>
-              <span className="font-medium">Cantidad:</span>
-              <span className="text-gray-800 text-right">{detalle.cantidad}</span>
-              <span className="font-medium">Precio:</span>
-              <span className="text-gray-800 text-right">{detalle.precio}</span>
-              <span className="font-medium">Descuento:</span>
-              <span className="text-gray-800 text-right">{detalle.descuento}</span>
-              <span className="font-medium">Subtotal:</span>
-              <span className="text-gray-800 text-right">{detalle.subtotal}</span>
-            </div>
-          </div>
-        ))}
+      <CardBody className="p-5">
+        <Table aria-label="Detalles de la Venta" className="table-details">
+          <TableHeader>
+            <TableColumn className="table-header-small">CÓDIGO</TableColumn>
+            <TableColumn className="table-header-small">NOMBRE</TableColumn>
+            <TableColumn className="table-header-small">CANTIDAD</TableColumn>
+            <TableColumn className="table-header-small">PRECIO</TableColumn>
+            <TableColumn className="table-header-small">DESCUENTO</TableColumn>
+            <TableColumn className="table-header-small">SUBTOTAL</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {detalles.map((detalle, index) => (
+              <TableRow key={index}>
+                <TableCell className="table-cell-small">{detalle.codigo}</TableCell>
+                <TableCell className="table-cell-small">{detalle.nombre}</TableCell>
+                <TableCell className="table-cell-small">{detalle.cantidad}</TableCell>
+                <TableCell className="table-cell-small">{detalle.precio}</TableCell>
+                <TableCell className="table-cell-small">{detalle.descuento}</TableCell>
+                <TableCell className="table-cell-small">{detalle.subtotal}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardBody>
     </Card>
   );
@@ -256,18 +266,18 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
 
   return (
     <div className="flex flex-col lg:flex-row">
-      <div className={`container-table-venta px-4 bg-white rounded-lg shadow-md ${expandedRow !== null ? 'lg:w-3/4' : 'w-full'}`}>
+      <div className={`container-table-venta px-4 bg-white rounded-lg shadow-md transition-all duration-500 ${expandedRow !== null ? 'lg:w-3/4' : 'w-full'}`}>
         <Table aria-label="Tabla de Ventas">
           <TableHeader>
-            <TableColumn className="text-center">SERIE/NUM</TableColumn>
-            <TableColumn className="text-center">TIPO.COMP</TableColumn>
-            <TableColumn>CLIENTE</TableColumn>
-            <TableColumn className="text-center">F. EMISIÓN</TableColumn>
-            <TableColumn className="text-center">IGV</TableColumn>
-            <TableColumn className="text-center">TOTAL</TableColumn>
-            <TableColumn>CAJERO</TableColumn>
-            <TableColumn className="text-center">ESTADO</TableColumn>
-            <TableColumn></TableColumn>
+            <TableColumn className="text-center table-header-small">SERIE/NUM</TableColumn>
+            <TableColumn className="text-center table-header-small">TIPO.COMP</TableColumn>
+            <TableColumn className="table-header-small">CLIENTE</TableColumn>
+            <TableColumn className="text-center table-header-small">F. EMISIÓN</TableColumn>
+            <TableColumn className="text-center table-header-small">IGV</TableColumn>
+            <TableColumn className="text-center table-header-small">TOTAL</TableColumn>
+            <TableColumn className="table-header-small">CAJERO</TableColumn>
+            <TableColumn className="text-center table-header-small">ESTADO</TableColumn>
+            <TableColumn className="table-header-small"></TableColumn>
           </TableHeader>
           <TableBody>
             {ventas.map(renderVentaRow)}
@@ -275,7 +285,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
         </Table>
       </div>
       {expandedRow !== null && (
-        <div className="w-full lg:w-1/4 lg:ml-4 mt-4 lg:mt-0">
+        <div className="w-full lg:w-full lg:ml-4 mt-4 lg:mt-0 container-table-details">
           {renderVentaDetails(ventas.find(venta => venta.id === expandedRow).detalles)}
         </div>
       )}
