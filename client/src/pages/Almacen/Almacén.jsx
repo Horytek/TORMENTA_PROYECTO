@@ -18,6 +18,7 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@
 import { CgOptions } from "react-icons/cg";
 import { FaRegFilePdf } from "react-icons/fa";
 import { FaFileExcel } from "react-icons/fa";
+import { IoIosSearch } from "react-icons/io";
 import 'jspdf-autotable';
 
 const Kardex = () => {
@@ -332,6 +333,7 @@ const Kardex = () => {
             <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
                 <div className="flex items-center gap-2">
                 <Input
+                        startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />} 
                         type="text"
                         placeholder='Código' 
                         className="max-w-[150px]"
@@ -345,6 +347,7 @@ const Kardex = () => {
                 </div>
                 <div className="flex items-center gap-2">
                 <Input
+                        startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />} 
                         type="text"
                         placeholder='Descripción'
                         className="max-w-[250px]"

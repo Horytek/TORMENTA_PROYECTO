@@ -7,10 +7,14 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import html2pdf from 'html2pdf.js';
-import { jsPDF } from 'jspdf';
+import { Select, SelectItem } from "@nextui-org/react";
+import { Input } from "@nextui-org/input";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
+import { CgOptions } from "react-icons/cg";
+import { FaFilePdf } from "react-icons/fa";
 import 'jspdf-autotable';
-const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ingresos , almacenSseleccionado}) => {
-    
+const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ingresos, almacenSseleccionado }) => {
+
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
         return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
@@ -26,10 +30,9 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
         }
     }, [almacenes]);
 
-    const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
     const [isModalOpenPDF, setIsModalOpenPDF] = useState(false);
-   // const today = new Date();
-   // const todayDate = parseDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+    // const today = new Date();
+    // const todayDate = parseDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
 
     const [value, setValue] = useState({
         start: parseDate("2024-04-01"),
@@ -43,20 +46,20 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     const applyFilters = useCallback(() => {
         const date_i = `${value.start.year}-${String(value.start.month).padStart(2, '0')}-${String(value.start.day).padStart(2, '0')}`;
         const date_e = `${value.end.year}-${String(value.end.month).padStart(2, '0')}-${String(value.end.day).padStart(2, '0')}`;
-      
+
         const filtros = {
-          fecha_i: date_i,
-          fecha_e: date_e,
-          razon_social: razon, // Asegúrate de que este valor se está incluyendo
-          almacen: almacenSeleccionado.id !== '%' ? almacenSeleccionado.id : '%',
-          usuario: usuario,
-          documento: documento,
-          estado: estado !== '%' ? estado : '%'
+            fecha_i: date_i,
+            fecha_e: date_e,
+            razon_social: razon, // Asegúrate de que este valor se está incluyendo
+            almacen: almacenSeleccionado.id !== '%' ? almacenSeleccionado.id : '%',
+            usuario: usuario,
+            documento: documento,
+            estado: estado !== '%' ? estado : '%'
         };
-      
+
         onFiltersChange(filtros);
-      }, [value, razon, almacenSeleccionado, usuario, documento, estado, onFiltersChange]);
-      
+    }, [value, razon, almacenSeleccionado, usuario, documento, estado, onFiltersChange]);
+
     useEffect(() => {
         applyFilters();
     }, [applyFilters]);
@@ -85,16 +88,14 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     };
 
 
-    const handleSelectChange = (event) => {
-        const value = event.target.value;
+    const handleSelectChange = (value) => {
         if (value === "pdf") {
             // Genera el PDF para todos los registros visibles en la tabla
-            generatePDFIngreso(ingresos, almacenSseleccionado); // Asegúrate de pasar los datos correctos
-        } 
-        event.target.value = '';
-      };
+            generatePDFIngreso(ingresos, almacenSseleccionado);
+        }
+    };
 
-      const currentDate = new Date().toLocaleDateString('es-ES');
+    const currentDate = new Date().toLocaleDateString('es-ES');
 
     const generatePDFIngreso = (ingresos) => {
 
@@ -163,61 +164,67 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
             </table>
         </div>
       `;
-    
-      const options = {
-        margin: [10, 10],
-        filename: `ingresos_general.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-    
-      html2pdf().from(htmlContent).set(options).save();
+
+        const options = {
+            margin: [10, 10],
+            filename: `ingresos_general.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().from(htmlContent).set(options).save();
     };
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
             <div className="flex items-center gap-2">
                 <h6 className='font-bold'>Almacén:</h6>
-                <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500' onChange={handleAlmacenChange} value={almacenSeleccionado.id}>
-                    <option value="%">Seleccione...</option>
-                    {almacenes.map((almacen, index) => (
-                        <option key={index} value={almacen.id}>{almacen.almacen}</option>
+                <Select
+                    id="almacen"
+                    selectedKeys={[almacenSeleccionado.id.toString()]}
+                    onChange={handleAlmacenChange}
+                    className='w-60'
+                    classNames={{
+                        trigger: "bg-white",
+                        value: "text-black",
+                    }}>
+                    <SelectItem key="%" value="%">Seleccione...</SelectItem>
+                    {almacenes.map((almacen) => (
+                        <SelectItem key={almacen.id} value={almacen.id}>{almacen.almacen}</SelectItem>
                     ))}
-                </select>
+                </Select>
             </div>
             <div className="flex items-center gap-2">
-                <div className='relative'>
-                    <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                        <IoIosSearch className='w-4 h-4 text-gray-500' />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder='Nombre o razón social'
-                        value={razon}
-                        onChange={(e) => setRazon(e.target.value)}
-                        className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
-                    />
-                </div>
+                <Input
+                    startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />}
+                    placeholder='Nombre o razón social'
+                    value={razon}
+                    onChange={(e) => setRazon(e.target.value)}
+                    className='w-60'
+                    style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    }}
+                />
             </div>
             <div className="flex items-center gap-2">
-                    <h6 className='font-bold'>Comprobante:</h6>
-                    <div className='relative'>
-                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                            <IoIosSearch className='w-4 h-4 text-gray-500' />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder='I400-00000000'
-                            value={documento}
-                            onChange={(e) => setDocumento(e.target.value)}
-                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-auto'
-                            style={{ width: '175px' }}
-                        />
-                    </div>
-                </div>
+                <Input
+                    startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />}
+                    placeholder='Documento'
+                    value={documento}
+                    onChange={(e) => setDocumento(e.target.value)}
+                    className='w-44'
+                    style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    }}
+                />
+            </div>
             <div className="flex items-center gap-2">
-            <h6 className='font-bold'>Fecha:&nbsp;&nbsp;&nbsp;&nbsp;</h6>
+                <h6 className='font-bold'>Fecha:&nbsp;&nbsp;&nbsp;&nbsp;</h6>
                 <DateRangePicker
                     className="w-xs"
                     classNames={{ inputWrapper: "bg-white" }}
@@ -226,40 +233,59 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                 />
             </div>
             <div className="flex items-center gap-2">
-                    <h6 className='font-bold'>Estado:</h6>
-                    <select id=""
-                        className='border border-gray-300 text-center text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500'
-                        onChange={(e) => setEstado(e.target.value)} value={estado}
-                        style={{ width: '110px' }}>
-                        <option value="%">...</option>
-                        <option value="0">Activo</option>
-                        <option value="1">Inactivo</option>
-                    </select>
-                </div>
-                <div className="flex items-center gap-2">
-                    <h6 className='font-bold'>Usuario:</h6>
-                    <div className='relative'>
-                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                            <IoIosSearch className='w-4 h-4 text-gray-500' />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder='Ej: tormenta'
-                            value={usuario}
-                            onChange={(e) => setUsuario(e.target.value)}
-                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
-                            style={{ width: '200px' }}
-                        />
-                    </div>
-                </div>
+                <Select
+                    placeholder="Estado"
+                    selectedKeys={[estado]}
+                    onChange={(e) => setEstado(e.target.value)}
+                    className='w-28'
+                    classNames={{
+                        trigger: "bg-white ",
+                        value: "text-black",
+                    }}>
+                    <SelectItem key="0" value="0">Activo</SelectItem>
+                    <SelectItem key="1" value="1">Inactivo</SelectItem>
+                </Select>
+            </div>
             <div className="flex items-center gap-2">
-                <div className='flex items-center gap-2'>
-                <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full'
-                            name="select" onChange={handleSelectChange} style={{ width: '100px' }}>
-                            <option value="">...</option>
-                            <option value="pdf">Guardar PDF</option>
-                        </select>
-                </div>
+                <Input
+                    startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />}
+                    placeholder='Usuario'
+                    value={usuario}
+                    onChange={(e) => setUsuario(e.target.value)}
+                    className='w-48'
+                    style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    }}
+                />
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+                <button className="mr-4">
+                    <Dropdown>
+                        <DropdownTrigger className="bg-gray-100">
+                            <Avatar
+                                isBordered
+                                as="button"
+                                className="transition-transform"
+                                icon={<CgOptions className="text-xl text-gray-600" />}
+                            />
+                        </DropdownTrigger>
+                        <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">
+                            <DropdownItem
+                                key="pdf"
+                                onClick={() => handleSelectChange("pdf")}
+                                startContent={<FaFilePdf
+                                    className="text-red-600 cursor-pointer"
+
+                                />}
+                            >
+                                Guardar PDF
+                            </DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>
+                </button>
+                
                 <Link to="/almacen/nota_ingreso/registro_ingreso">
                     <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
                         Nota de ingreso

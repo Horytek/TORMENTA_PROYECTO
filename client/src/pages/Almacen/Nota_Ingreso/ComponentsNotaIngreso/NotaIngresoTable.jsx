@@ -169,17 +169,6 @@ const TablaIngresos = ({ ingresos }) => {
   };
 
 
-  const getEstadoClassName = (estado) => {
-    switch (estado) {
-      case 1:
-        return 'estado-inactivo';
-      case 0:
-        return 'estado-activo';
-      default:
-        return '';
-    }
-  };
-
   const handleRowClick = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
@@ -203,7 +192,7 @@ const TablaIngresos = ({ ingresos }) => {
       <div className="flex">
         {/* Tabla Principal */}
         <div className={`transition-all ${expandedRow ? 'w-2/3' : 'w-full'}`}>
-          <Table aria-label="Tabla de ingresos">
+          <Table  aria-label="Tabla de ingresos">
             <TableHeader>
               <TableColumn>FECHA</TableColumn>
               <TableColumn>DOCUMENTO</TableColumn>
@@ -257,7 +246,7 @@ const TablaIngresos = ({ ingresos }) => {
         {expandedRow && (
           <div className="w-1/3 ml-4 border-l pl-4">
             <h3 className="font-bold text-lg">Detalles de Ingreso</h3>
-            <Table aria-label="Detalles de ingreso">
+            <Table aria-label="Detalles de ingreso" shadow={"md"} className="rounded-lg overflow-hidden">
               <TableHeader>
                 <TableColumn>CÓDIGO</TableColumn>
                 <TableColumn>MARCA</TableColumn>
@@ -306,7 +295,7 @@ const TablaIngresos = ({ ingresos }) => {
         />
         <select
           id="itemsPerPage"
-          className="input-c cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg"
+          className="input-c cant-pag-c pr-8 border-gray-300 bg-gray-50 rounded-lg w-20"
           value={itemsPerPage}
           onChange={(e) => {
             setItemsPerPage(Number(e.target.value));
