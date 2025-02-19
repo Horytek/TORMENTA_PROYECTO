@@ -4,7 +4,7 @@ const getUsuarios = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, pp.descripcion_plan AS plan_pago_1 FROM usuario U
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, pp.descripcion_plan AS plan_pago_1, U.fecha_pago AS fecha_pago FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol LEFT JOIN plan_pago pp ON pp.id_plan=U.plan_pago WHERE R.id_rol!=10 ORDER BY id_usuario desc`);
         res.json({ code: 1, data: result });
     } catch (error) {
@@ -22,7 +22,7 @@ const getUsuario = async (req, res) => {
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, pp.descripcion_plan as plan_pago_1 FROM usuario U
+        const [result] = await connection.query(`SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, empresa, pp.descripcion_plan as plan_pago_1, U.fecha_pago AS fecha_pago FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol LEFT JOIN plan_pago pp ON pp.id_plan=U.plan_pago WHERE U.id_usuario = ?`, id);
         
             if (result.length === 0) {
@@ -97,13 +97,13 @@ const updateUsuarioPlan = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { empresa, plan_pago, estado_usuario} = req.body;
+        const { empresa, plan_pago, estado_usuario, fecha_pago} = req.body;
 
-        if (empresa === undefined || plan_pago === undefined || estado_usuario === undefined) {
+        if (empresa === undefined || plan_pago === undefined || estado_usuario === undefined || fecha_pago === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const usuario = { empresa: empresa.trim(), plan_pago, estado_usuario };
+        const usuario = { empresa: empresa.trim(), plan_pago, estado_usuario, fecha_pago };
         connection = await getConnection();
         const [result] = await connection.query("UPDATE usuario SET ? WHERE id_usuario = ?", [usuario, id]);
 
