@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import useSucursalData from '../../data/data_sucursal_guia';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
+import { Select, SelectItem } from "@nextui-org/react";
+import { Input } from "@nextui-org/input";
 
 const FiltrosGuias = ({ onFiltersChange }) => {
     const { sucursales } = useSucursalData();
@@ -52,33 +54,52 @@ const FiltrosGuias = ({ onFiltersChange }) => {
         <div className="flex flex-wrap mb-4 justify-between">
             <div className="block ms:block md:flex lg:w-12/12 xl:8/12 items-center md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap justify-between">
                 <div className="input-wrapper flex">
-                    <input type="text" id="numGuia" className="input border border-gray-300 rounded-lg" placeholder="Número de guía"
-                        value={numGuia}
-                        onChange={handleNumGuiaChange} />
+                <Input
+                    placeholder="Número de guía"
+                    value={numGuia}
+                    onChange={handleNumGuiaChange}
+                    style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    }}
+                />
                 </div>
                 <div className="input-wrapper flex">
-                    <input type="text" id="documento" className="input border border-gray-300 rounded-lg" placeholder="Documento o RUC"
-                        value={documento}
-                        onChange={handleDocumentoChange} />
+                <Input
+                    placeholder="Documento o RUC"
+                    value={documento}
+                    onChange={handleDocumentoChange}
+                    style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    }}
+                />
                 </div>
                 <div className="input-wrapper flex gap-2">
                     <DateRangePicker 
                         className="w-xs"
                         classNames={{ inputWrapper: "bg-white" }}
                         value={value} onChange={setValue}
+                        
                     />
                 </div>
                 <div className="input-wrapper mb-2 md:mb-0">
-                    {/* <label htmlFor="campo" className="label">
-                        Campo
-                    </label> */}
-                    <select id="campo" className="border border-gray-300 rounded-lg" style={{width: "170px"}} value={sucursalSeleccionado}
-                                onChange={(e) => setSucursalSeleccionado(e.target.value)}>
-                        <option value="" selected>Sucursal</option>
-                        {sucursales.map((sucursal, index) => (
-                                        <option key={index} value={sucursal.nombre}>{sucursal.nombre}</option>
-                                    ))}
-                    </select>
+                <Select
+                    selectedKeys={[sucursalSeleccionado]}
+                    onChange={(e) => setSucursalSeleccionado(e.target.value)}
+                    className='w-40'
+                    classNames={{
+                        trigger: "bg-white",
+                        value: "text-black",
+                    }}
+                >
+                    <SelectItem key="">Sucursal</SelectItem>
+                    {sucursales.map((sucursal) => (
+                        <SelectItem key={sucursal.nombre}>{sucursal.nombre}</SelectItem>
+                    ))}
+                </Select>
                 </div>
             </div>
         </div>

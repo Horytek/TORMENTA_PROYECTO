@@ -67,7 +67,7 @@ const getGuias = async (req, res) => {
             ORDER BY c.num_comprobante DESC
             LIMIT ? OFFSET ?;
             `,
-            [`${num_guia}%`, `${documento}%`, `${documento}%`, fecha_i, fecha_e, `${nombre_sucursal}%`, parseInt(limit), parseInt(offset)]
+            [`%${num_guia}%`, `${documento}%`, `${documento}%`, fecha_i, fecha_e, `${nombre_sucursal}%`, parseInt(limit), parseInt(offset)]
         );
 
         const guias = await Promise.all(

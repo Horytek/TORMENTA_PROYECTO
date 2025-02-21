@@ -367,11 +367,11 @@ useImperativeHandle(ref, () => ({
             <TableBody>
               {detalleSeleccionado.detalles.map((detalle, index) => (
                 <TableRow key={index}  onClick={() => handleDetailClick(detalle.id_producto)} className="cursor-pointer hover:bg-gray-100">
-                  <TableCell>{detalle.codigo}</TableCell>
-                  <TableCell>{detalle.marca}</TableCell>
-                  <TableCell>{detalle.descripcion}</TableCell>
-                  <TableCell>{detalle.cantidad}</TableCell>
-                  <TableCell>{detalle.unidad}</TableCell>
+                  <TableCell className="text-xs">{detalle.codigo}</TableCell>
+                  <TableCell className="text-xs">{detalle.marca}</TableCell>
+                  <TableCell className="text-xs">{detalle.descripcion}</TableCell>
+                  <TableCell className="text-xs">{detalle.cantidad}</TableCell>
+                  <TableCell className="text-xs">{detalle.unidad}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -127,7 +127,7 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
                     placeholder='Nombre o razón social'
                     value={razon}
                     onChange={(e) => setRazon(e.target.value)}
-                    className="w-72"
+                    className="w-60"
                     style={{
                         border: "none",
                         boxShadow: "none",
