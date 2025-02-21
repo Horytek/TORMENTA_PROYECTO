@@ -57,7 +57,7 @@ const Salidas = () => {
     }
   };
   return (
-    <div className="relative min-h-screen pb-7">
+    <div >
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacén', href: '/almacen' }, { name: 'Nota de salida', href: '/almacen/nota_salida' }]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">

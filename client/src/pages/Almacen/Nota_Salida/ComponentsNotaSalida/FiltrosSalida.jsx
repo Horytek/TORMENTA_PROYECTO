@@ -6,6 +6,11 @@ import { Link } from 'react-router-dom';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+import { Select, SelectItem } from "@nextui-org/react";
+import { Input } from "@nextui-org/input";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
+import { CgOptions } from "react-icons/cg";
+import { FaFilePdf } from "react-icons/fa";
 
 const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDFOptionClick }) => {
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
@@ -90,63 +95,62 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
         setIsModalOpenPDF(false);
     };
 
-    const handleSelectChange = (event) => {
-        const value = event.target.value;
+    const handleSelectChange = (value) => {
         if (value === "pdf") {
             onPDFOptionClick();
         }
-        event.target.value = '';
     };
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
-            <div className="flex items-center justify-between gap-4 w-full" >
                 <div className="flex items-center gap-2">
                     <h6 className='font-bold'>Almacén:</h6>
-                    <select id="almacen" className='border border-gray-300 p-2 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-4 w-56' onChange={handleAlmacenChange} value={almacenSeleccionado.id}>
-                        <option value="%">Seleccione...</option>
-                        {almacenes.map((almacen, index) => (
-                            <option key={index} value={almacen.id}>{almacen.almacen}</option>
-                        ))}
-                    </select>
+                    <Select
+                    selectedKeys={[almacenSeleccionado.id.toString()]}
+                    onChange={handleAlmacenChange}
+                    className="w-60"
+                    classNames={{
+                        trigger: "bg-white",
+                        value: "text-black",
+                    }}
+                >
+                    <SelectItem key="%">Seleccione...</SelectItem>
+                    {almacenes.map((almacen) => (
+                        <SelectItem key={almacen.id}>{almacen.almacen}</SelectItem>
+                    ))}
+                </Select>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <h6 className='font-bold'>Nombre o razón social:</h6>
-                    <div className='relative'>
-                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                            <IoIosSearch className='w-4 h-4 text-gray-500' />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder='Ej: Juan Perez o Empresa SA'
-                            value={razon}
-                            onChange={(e) => setRazon(e.target.value)}
-                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
-                            style={{ width: '300px' }}
-                        />
-                    </div>
+                <Input
+                    startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />}
+                    placeholder='Nombre o razón social'
+                    value={razon}
+                    onChange={(e) => setRazon(e.target.value)}
+                    className="w-72"
+                    style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    }}
+                />
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <h6 className='font-bold'>Comprobante:</h6>
-                    <div className='relative'>
-                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                            <IoIosSearch className='w-4 h-4 text-gray-500' />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder='Ej: S400-00000000'
-                            value={documento}
-                            onChange={(e) => setDocumento(e.target.value)}
-                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-auto'
-                            style={{ width: '175px' }}
-                        />
-                    </div>
+                <Input
+                    placeholder='Documento'
+                    value={documento}
+                    onChange={(e) => setDocumento(e.target.value)}
+                    startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />}
+                    className="w-44"
+                    style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    }}
+                />
                 </div>
-            </div>
 
-            <div className="flex items-center justify-between gap-4 w-full" >
                 <div className="flex items-center gap-2">
                     <h6 className='font-bold'>Fecha:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h6>
                     <DateRangePicker
@@ -158,53 +162,69 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <h6 className='font-bold'>Estado:</h6>
-                    <select id=""
-                        className='border border-gray-300 text-center text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500'
-                        onChange={(e) => setEstado(e.target.value)} value={estado}
-                        style={{ width: '110px' }}>
-                        <option value="%">...</option>
-                        <option value="0">Activo</option>
-                        <option value="1">Inactivo</option>
-                    </select>
+                <Select
+                    selectedKeys={[estado]}
+                    onChange={(e) => setEstado(e.target.value)}
+                    className="w-28 text-center"
+                    placeholder='Estado'
+                    classNames={{
+                        trigger: "bg-white ",
+                        value: "text-black",
+                    }}
+                >
+                    <SelectItem key="0">Activo</SelectItem>
+                    <SelectItem key="1">Inactivo</SelectItem>
+                </Select>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <h6 className='font-bold'>Usuario:</h6>
-                    <div className='relative'>
-                        <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                            <IoIosSearch className='w-4 h-4 text-gray-500' />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder='Ej: tormenta'
-                            value={usuario}
-                            onChange={(e) => setUsuario(e.target.value)}
-                            className='border border-gray-300 text-gray-900 text-sm rounded-lg pl-10 p-2 w-30'
-                            style={{ width: '180px' }}
-                        />
-                    </div>
+                <Input
+                    placeholder='Usuario'
+                    value={usuario}
+                    onChange={(e) => setUsuario(e.target.value)}
+                    startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />}
+                    className="w-44"
+                    style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                    }}
+                />
                 </div>
+                <div className='flex items-center gap-2 ml-auto'>
+                <button className="mr-4">
+                    <Dropdown>
+                        <DropdownTrigger className="bg-gray-100">
+                            <Avatar
+                                isBordered
+                                as="button"
+                                className="transition-transform"
+                                icon={<CgOptions className="text-xl text-gray-600" />}
+                            />
+                        </DropdownTrigger>
+                        <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">
+                            <DropdownItem
+                                key="pdf"
+                                onClick={() => handleSelectChange("pdf")}
+                                startContent={<FaFilePdf
+                                    className="text-red-600 cursor-pointer"
 
+                                />}
+                            >
+                                Guardar PDF
+                            </DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>
+                </button>
 
-
-                <div className="flex items-center gap-2">
-                    <div className='flex items-center gap-2'>
-                        <select className='b text-center custom-select border border-gray-300 rounded-lg p-2.5 text-gray-900 text-sm w-full'
-                            name="select" onChange={handleSelectChange} style={{ width: '100px' }}>
-                            <option value="">...</option>
-                            <option value="pdf">PDF</option>
-                            {/* <option value="imprimir">Imprimir</option> */}
-                        </select>
-                    </div>
-
-                    <Link to="/almacen/nota_salida/nueva_nota_salida">
+                <Link to="/almacen/nota_salida/nueva_nota_salida">
                         <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '20px' }} />}>
                             Nota de salida
                         </ButtonIcon>
                     </Link>
                 </div>
-            </div>
+
+  
             {isModalOpenImprimir && (
                 <ConfirmationModal
                     message='¿Desea imprimir la nota de salida?'
