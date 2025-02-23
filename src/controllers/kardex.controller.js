@@ -163,32 +163,33 @@ const getAlmacen = async (req, res) => {
         // Consulta principal para obtener el detalle del Kardex
         const [detalleKardexResult] = await connection.query(
             `
-                SELECT  
-                    DATE_FORMAT(bn.fecha, '%d/%m/%Y') AS fecha,
-                    COALESCE(c.num_comprobante, 'Sin comprobante') AS documento, 
-                    COALESCE(n.nom_nota, 'Venta') AS nombre, 
-                    bn.entra AS entra,
-                    bn.sale AS sale,
-                    bn.stock_actual AS stock, 
-                    p.precio AS precio,
-                    COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa
-                FROM 
-                    bitacora_nota bn
-                INNER JOIN 
-                    producto p ON bn.id_producto = p.id_producto 
-                LEFT JOIN 
-                    nota n ON bn.id_nota = n.id_nota
-                LEFT JOIN 
-                    venta v ON bn.id_venta = v.id_venta
-                LEFT JOIN 
-                    comprobante c ON COALESCE(n.id_comprobante, v.id_comprobante) = c.id_comprobante 
-                WHERE 
-                    DATE_FORMAT(bn.fecha, '%Y-%m-%d') >= ?
-                    AND DATE_FORMAT(bn.fecha, '%Y-%m-%d') <= ?
-                    AND bn.id_producto = ?
-                    AND bn.id_almacen = ?
-                ORDER BY 
-                    bn.fecha;
+                    SELECT
+                        bn.id_bitacora AS id,	  
+                        DATE_FORMAT(bn.fecha, '%d/%m/%Y') AS fecha,
+                        COALESCE(c.num_comprobante, 'Sin comprobante') AS documento, 
+                        COALESCE(n.nom_nota, 'Venta') AS nombre, 
+                        bn.entra AS entra,
+                        bn.sale AS sale,
+                        bn.stock_actual AS stock, 
+                        p.precio AS precio,
+                        COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa
+                    FROM 
+                        bitacora_nota bn
+                    INNER JOIN 
+                        producto p ON bn.id_producto = p.id_producto 
+                    LEFT JOIN 
+                        nota n ON bn.id_nota = n.id_nota
+                    LEFT JOIN 
+                        venta v ON bn.id_venta = v.id_venta
+                    LEFT JOIN 
+                        comprobante c ON COALESCE(n.id_comprobante, v.id_comprobante) = c.id_comprobante 
+                    WHERE 
+                        DATE_FORMAT(bn.fecha, '%Y-%m-%d') >= ?
+                        AND DATE_FORMAT(bn.fecha, '%Y-%m-%d') <= ?
+                        AND bn.id_producto = ?
+                        AND bn.id_almacen = ?
+                    ORDER BY 
+                        bn.fecha;
             `,
             [fechaInicio, fechaFin, idProducto, idAlmacen]
         );

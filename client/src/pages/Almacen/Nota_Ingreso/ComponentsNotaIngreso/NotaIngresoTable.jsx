@@ -300,7 +300,7 @@ const TablaIngresos = ({ ingresos }) => {
           value={itemsPerPage}
           onChange={(e) => {
             setItemsPerPage(Number(e.target.value));
-            setCurrentPage(1); // Reset to page 1 when items per page is changed
+            setCurrentPage(1); 
           }}
         >
           <option value={5}>05</option>

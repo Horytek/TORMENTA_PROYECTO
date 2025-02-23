@@ -369,7 +369,7 @@ useImperativeHandle(ref, () => ({
                 <TableRow key={index}  onClick={() => handleDetailClick(detalle.id_producto)} className="cursor-pointer hover:bg-gray-100">
                   <TableCell className="text-xs">{detalle.codigo}</TableCell>
                   <TableCell className="text-xs">{detalle.marca}</TableCell>
-                  <TableCell className="text-xs">{detalle.descripcion}</TableCell>
+                  <TableCell className="text-xs truncate">{detalle.descripcion}</TableCell>
                   <TableCell className="text-xs">{detalle.cantidad}</TableCell>
                   <TableCell className="text-xs">{detalle.unidad}</TableCell>
                 </TableRow>
