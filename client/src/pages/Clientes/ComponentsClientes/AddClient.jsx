@@ -7,11 +7,11 @@ import {
   ModalBody,
   ModalFooter,
   Input,
-  RadioGroup,
-  Radio,
   Select,
   SelectItem,
-  useDisclosure
+  useDisclosure,
+  Tabs,
+  Tab,
 } from "@nextui-org/react";
 import { IoIosSearch } from "react-icons/io";
 import { useAddClient } from '../data/addCliente';
@@ -26,7 +26,7 @@ const inputStyles = {
 
 const token_cliente = import.meta.env.VITE_TOKEN_PROOVEDOR || '';
   
-export default function AddClientModal({ open, onClose, onClientCreated }) {
+export default function AddClientModal({ open, onClose, onClientCreated, refetch }) {
   const [clientType, setClientType] = useState("personal");
   const [documentType, setDocumentType] = useState("dni");
   const [documentNumber, setDocumentNumber] = useState("");
@@ -126,6 +126,7 @@ export default function AddClientModal({ open, onClose, onClientCreated }) {
 
     if (result.success) {
       toast.success('Cliente guardado exitosamente');
+      if (refetch) await refetch(); 
       if (onClientCreated) onClientCreated();
       handleClose();
     } else {
@@ -161,96 +162,147 @@ export default function AddClientModal({ open, onClose, onClientCreated }) {
                   Ingrese los datos del cliente. Los campos obligatorios están marcados con *.
                 </p>
 
-                <RadioGroup
-                  label="Tipo de Cliente"
-                  orientation="horizontal"
-                  value={clientType}
-                  onValueChange={setClientType}
+                <Tabs
+                  selectedKey={clientType}
+                  onSelectionChange={setClientType}
                   className="mt-2"
+                  aria-label="Tipo de Cliente"
                 >
-                  <Radio value="personal">Personal</Radio>
-                  <Radio value="business">Empresa</Radio>
-                </RadioGroup>
+                  <Tab key="personal" title="Personal">
+                    <div className="mt-4">
+                      <div className="flex flex-col gap-3">
+                        <Select
+                          label="Tipo de documento"
+                          selectedKeys={[documentType]}
+                          onChange={(e) => setDocumentType(e.target.value)}
+                          isRequired
+                          isDisabled
+                        >
+                          <SelectItem key="dni" value="dni">DNI</SelectItem>
+                        </Select>
 
-                <div className="flex flex-col gap-3 mt-2">
-                  <Select
-                    label="Tipo de documento"
-                    selectedKeys={[documentType]}
-                    onChange={(e) => setDocumentType(e.target.value)}
-                    className="max-w-xs"
-                    isRequired
-                    isDisabled
-                  >
-                    {clientType === "personal" ? (
-                      <SelectItem key="dni" value="dni">DNI</SelectItem>
-                    ) : (
-                      <SelectItem key="ruc" value="ruc">RUC</SelectItem>
-                    )}
-                  </Select>
+                        <div className="flex gap-2">
+                          <Input 
+                            label="Número de documento"
+                            placeholder="Ingrese DNI"
+                            value={documentNumber}
+                            onChange={(e) => setDocumentNumber(e.target.value)}
+                            isRequired
+                            classNames={inputStyles}
+                            style={{  border: "none",
+                              boxShadow: "none",
+                              outline: "none", }}
+                          />
+                          <Button
+                            isIconOnly
+                            color="primary"
+                            className="mt-1"
+                            onPress={handleValidate}
+                            title="Buscar DNI"
+                          >
+                            <div className="flex items-center gap-1">
+                              <IoIosSearch className="h-4 w-4" />
+                            </div>
+                          </Button>
+                        </div>
 
-                  <div className="flex gap-2">
-                    <Input
-                      label="Número de documento"
-                      placeholder={`Ingrese ${documentType.toUpperCase()}`}
-                      value={documentNumber}
-                      onChange={(e) => setDocumentNumber(e.target.value)}
-                      isRequired
-                      classNames={inputStyles}
-                    />
-                    <Button
-                      isIconOnly
-                      color="primary"
-                      className="mt-1"
-                      onPress={handleValidate}
-                      title={`Buscar ${documentType.toUpperCase()}`}
-                    >
-                      <div className="flex items-center gap-1">
-                        <IoIosSearch className="h-4 w-4" />
+                        <Input
+                          label="Nombres"
+                          value={clientName}
+                          onChange={(e) => setClientName(e.target.value)}
+                          isRequired
+                          isDisabled
+                          classNames={inputStyles}
+                          style={{  border: "none",
+                            boxShadow: "none",
+                            outline: "none", }}
+                          
+                        />
+                        <Input
+                          label="Apellidos"
+                          value={clientLastName}
+                          onChange={(e) => setClientLastName(e.target.value)}
+                          isRequired
+                          isDisabled
+                          classNames={inputStyles}
+                          style={{  border: "none",
+                            boxShadow: "none",
+                            outline: "none", }}
+                        />
+                        <Input
+                          label="Dirección"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          classNames={inputStyles}
+                          style={{  border: "none",
+                            boxShadow: "none",
+                            outline: "none", }}
+                        />
                       </div>
-                    </Button>
-                  </div>
+                    </div>
+                  </Tab>
+                  <Tab key="business" title="Empresa">
+                    <div className="mt-4">
+                      <div className="flex flex-col gap-3">
+                        <Select 
+                          label="Tipo de documento"
+                          selectedKeys={[documentType]}
+                          onChange={(e) => setDocumentType(e.target.value)}
+                          isRequired
+                          isDisabled
+                        >
+                          <SelectItem key="ruc" value="ruc">RUC</SelectItem>
+                        </Select>
 
-                  {clientType === "personal" ? (
-                    <>
-                      <Input
-                        label="Nombres"
-                        placeholder="Ingrese nombres"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        isRequired
-                        isDisabled
-                        classNames={inputStyles}
-                      />
-                      <Input
-                        label="Apellidos"
-                        placeholder="Ingrese apellidos"
-                        value={clientLastName}
-                        onChange={(e) => setClientLastName(e.target.value)}
-                        isRequired
-                        isDisabled
-                        classNames={inputStyles}
-                      />
-                    </>
-                  ) : (
-                    <Input
-                      label="Razón social"
-                      placeholder="Ingrese razón social"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      isRequired
-                      isDisabled
-                      classNames={inputStyles}
-                    />
-                  )}
+                        <div className="flex gap-2">
+                          <Input 
+                            label="Número de documento"
+                            placeholder="Ingrese RUC"
+                            value={documentNumber}
+                            onChange={(e) => setDocumentNumber(e.target.value)}
+                            isRequired
+                            classNames={inputStyles}
+                            style={{  border: "none",
+                              boxShadow: "none",
+                              outline: "none", }}
+                          />
+                          <Button
+                            isIconOnly
+                            color="primary"
+                            className="mt-1"
+                            onPress={handleValidate}
+                            title="Buscar RUC"
+                          >
+                            <div className="flex items-center gap-1">
+                              <IoIosSearch className="h-4 w-4" />
+                            </div>
+                          </Button>
+                        </div>
 
-                  <Input
-                    label="Dirección"
-                    placeholder="Ingrese dirección"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    classNames={inputStyles}
-                  />
-                </div>
+                        <Input
+                          label="Razón social"
+                          value={businessName}
+                          onChange={(e) => setBusinessName(e.target.value)}
+                          isRequired
+                          isDisabled
+                          classNames={inputStyles}
+                          style={{  border: "none",
+                            boxShadow: "none",
+                            outline: "none", }}
+                        />
+                        <Input
+                          label="Dirección"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          classNames={inputStyles}
+                          style={{  border: "none",
+                            boxShadow: "none",
+                            outline: "none", }}
+                        />
+                      </div>
+                    </div>
+                  </Tab>
+                </Tabs>
               </ModalBody>
               <ModalFooter>
                 <Button

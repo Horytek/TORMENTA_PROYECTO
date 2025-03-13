@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 // import ClientesForm from './ClientesForm';
 import { Toaster } from "react-hot-toast";
@@ -16,25 +16,52 @@ function Clientes() {
     setModalOpen(!activeAdd);
   };
 
-  // Input de búsqueda de clientes
   const [searchTerm, setSearchTerm] = useState('');
+  const searchTimeoutRef = useRef(null);
+
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setPage(1);
+      refetch(1, limit, docType, docNumber, value);
+    }, 500);
   };
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5); 
-  const { clientes, metadata, loading, error, refetch } = useGetClientes(page, limit);
+  const [docType, setDocType] = useState("");
+  const [docNumber, setDocNumber] = useState("");
+  
+  const { clientes, metadata, loading, error, refetch } = useGetClientes(
+    page, 
+    limit, 
+    docType,
+    docNumber
+  );
+
+  const handleFilterChange = (filterData) => {
+    const { docType: newDocType, docNumber: newDocNumber } = filterData;
+    setDocType(newDocType);
+    setDocNumber(newDocNumber);
+    setPage(1); // Reset to first page when filtering
+    refetch(1, limit, newDocType, newDocNumber);
+  };
 
   const changePage = (newPage) => {
     setPage(newPage);
-    refetch(newPage, limit);
+    refetch(newPage, limit, docType, docNumber);
   };
 
   const changeLimit = (newLimit) => {
     setLimit(newLimit);
     setPage(1);
-    refetch(1, newLimit);
+    refetch(1, newLimit, docType, docNumber);
   };
 
   return (
@@ -57,7 +84,7 @@ function Clientes() {
           </div>
           <input
             type="text"
-            placeholder="Ingrese un cliente"
+            placeholder="Ingrese nombres o razón social del cliente"
             className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full ps-10 p-2.5"
             value={searchTerm}
             onChange={handleSearchChange}
@@ -79,17 +106,25 @@ function Clientes() {
           totales={null}
           loading={loading}
           error={error}
+          docType={docType}
           metadata={metadata}
           page={page}
           limit={limit}
           changePage={changePage}
           changeLimit={changeLimit}
-          onDelete={() => refetch(page, limit)}
+          onDelete={() => refetch(page, limit, docType, docNumber)}
+          onEdit = {() => refetch(page, limit, docType, docNumber)}
+          onFilter={handleFilterChange}
+          
+
         />
       </div>
 
-      <AddClientModal open={activeAdd} onClose={handleModalAdd} />
-
+      <AddClientModal 
+        open={activeAdd} 
+        onClose={handleModalAdd}
+        refetch={() => refetch(page, limit, docType, docNumber)}
+      />
     </div>
   );
 }

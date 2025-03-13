@@ -1,31 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Select, SelectItem } from "@nextui-org/react";
 
-const FiltroCliente = ({ onFilter }) => {
-    const [documentType, setDocumentType] = useState("");
+const FiltroCliente = ({ docType = "", onFilter }) => {
+  const [selectedKeys, setSelectedKeys] = useState(new Set([docType]));
 
-    const handleChange = (value) => {
-        setDocumentType(value);
-        if (onFilter) {
-            onFilter({ type: value });
-        }
-    };
+  useEffect(() => {
+    setSelectedKeys(new Set([docType]));
+  }, [docType]);
 
-    return (
-        <Select
-            label="Tipo de documento"
-            value={documentType}
-            onChange={handleChange}
-            className="w-64"
-        >
-            <SelectItem key="dni" value="dni">
-                DNI
-            </SelectItem>
-            <SelectItem key="ruc" value="ruc">
-                RUC
-            </SelectItem>
-        </Select>
-    );
+  const handleSelectionChange = (keys) => {
+    setSelectedKeys(keys);
+    const newValue = Array.from(keys)[0] || "";
+    if (onFilter) {
+      onFilter({ docType: newValue });
+    }
+  };
+
+  return (
+    <div className="flex gap-4 items-end">
+      <Select
+        label="Tipo de documento"
+        selectedKeys={selectedKeys}
+        onSelectionChange={handleSelectionChange}
+        className="w-48"
+        selectionMode="single"
+      >
+        <SelectItem key="" value="">Todos</SelectItem>
+        <SelectItem key="dni" value="dni">DNI</SelectItem>
+        <SelectItem key="ruc" value="ruc">RUC</SelectItem>
+      </Select>
+    </div>
+  );
 };
 
 export default FiltroCliente;

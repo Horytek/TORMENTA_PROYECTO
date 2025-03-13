@@ -33,30 +33,40 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
     const [clientLastName, setClientLastName] = useState(client?.clientLastName || "");
     const [businessName, setBusinessName] = useState(client?.businessName || "");
     const [address, setAddress] = useState(client?.address || "");
-    const { updateClient, isLoading } = useUpdateClient();
+    const { updateClient, isLoading, getCliente, cliente: clientData } = useUpdateClient();
 
     useEffect(() => {
-        if (client) {
-            setClientType(client.clientType);
-            setDocumentType(client.documentType);
-            setDocumentNumber(client.documentNumber);
-            setClientName(client.clientName);
-            setClientLastName(client.clientLastName);
-            setBusinessName(client.businessName);
-            setAddress(client.address);
+        if (open && client?.id) {
+            getCliente(client.id);
         }
-    }, [client]);
+    }, [open, client]);
 
     useEffect(() => {
-        if (clientType === "personal") {
-            setDocumentType("dni");
-            setBusinessName("");
-        } else {
-            setDocumentType("ruc");
-            setClientName("");
-            setClientLastName("");
+        if (clientData) {
+            const isPersonal = !clientData.ruc;
+            setClientType(isPersonal ? "personal" : "business");
+            setDocumentType(clientData.dni ? "dni" : "ruc");
+            
+            setDocumentNumber(clientData.dni || clientData.ruc || "");
+            setClientName(clientData.nombres || "");
+            setClientLastName(clientData.apellidos || "");
+            setBusinessName(clientData.razon_social || "");
+            setAddress(clientData.direccion || "");
         }
-    }, [clientType]);
+    }, [clientData]);
+
+    useEffect(() => {
+        if (!client) { // Solo ejecutar si no hay cliente (nuevo registro)
+            if (clientType === "personal") {
+                setDocumentType("dni");
+                setBusinessName("");
+            } else {
+                setDocumentType("ruc");
+                setClientName("");
+                setClientLastName("");
+            }
+        }
+    }, [clientType, client]);
 
     const handleValidate = async () => {
         const cleanDocumentNumber = documentNumber.trim().replace(/\s+/g, '');
@@ -115,22 +125,30 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
         }
 
         const clientData = {
-            id: client.id, // Se requiere el id para actualizar
-            clientType,
-            documentNumber: documentNumber.trim(),
-            clientName,
-            clientLastName,
-            businessName,
-            address
+            id_cliente: client?.id,
+            dni: clientType === 'personal' ? documentNumber.trim() : null,
+            ruc: clientType === 'business' ? documentNumber.trim() : null,
+            nombres: clientType === 'personal' ? clientName : null,
+            apellidos: clientType === 'personal' ? clientLastName : null,
+            razon_social: clientType === 'business' ? businessName : null,
+            direccion: address || null,
+            estado: client?.estado ?? 0
         };
 
-        const result = await updateClient(clientData);
-        if (result.success) {
-            toast.success('Cliente actualizado exitosamente');
-            if (onClientUpdated) onClientUpdated();
-            handleClose();
-        } else {
-            toast.error('Error al actualizar el cliente: ' + result.error);
+        try {
+            const result = await updateClient(clientData);
+            if (result.success) {
+                toast.success('Cliente actualizado exitosamente');
+                if (onClientUpdated) onClientUpdated();
+                handleClose();
+            } else {
+                const errorMessage = typeof result.error === 'object' 
+                    ? 'Error al actualizar el cliente' 
+                    : result.error;
+                toast.error(errorMessage);
+            }
+        } catch (error) {
+            toast.error('Error al actualizar el cliente');
         }
     };
 
@@ -147,6 +165,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
         onClose();
     };
 
+    const isRadioDisabled = !!client?.id; 
     return (
         <>
             <Toaster />
@@ -172,6 +191,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                     value={clientType}
                                     onValueChange={setClientType}
                                     className="mt-2"
+                                    isDisabled={isRadioDisabled} // Add this line
                                 >
                                     <Radio value="personal">Personal</Radio>
                                     <Radio value="business">Empresa</Radio>
@@ -182,7 +202,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                         label="Tipo de documento"
                                         selectedKeys={[documentType]}
                                         isRequired
-                                        isDisabled
+                                        isDisabled={!!client} // Deshabilitar solo si hay un cliente
                                         className="max-w-xs"
                                     >
                                         {clientType === "personal" ? (
@@ -203,6 +223,9 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                             value={documentNumber}
                                             onChange={(e) => setDocumentNumber(e.target.value)}
                                             isRequired
+                                            style={{  border: "none",
+                                                boxShadow: "none",
+                                                outline: "none", }}
                                             classNames={inputStyles}
                                         />
                                         <Button
@@ -227,6 +250,9 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                                 onChange={(e) => setClientName(e.target.value)}
                                                 isRequired
                                                 classNames={inputStyles}
+                                                style={{  border: "none",
+                                                    boxShadow: "none",
+                                                    outline: "none", }}
                                             />
                                             <Input
                                                 label="Apellidos"
@@ -235,6 +261,9 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                                 onChange={(e) => setClientLastName(e.target.value)}
                                                 isRequired
                                                 classNames={inputStyles}
+                                                style={{  border: "none",
+                                                    boxShadow: "none",
+                                                    outline: "none", }}
                                             />
                                         </>
                                     ) : (
@@ -245,6 +274,9 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                             onChange={(e) => setBusinessName(e.target.value)}
                                             isRequired
                                             classNames={inputStyles}
+                                            style={{  border: "none",
+                                                boxShadow: "none",
+                                                outline: "none", }}
                                         />
                                     )}
 
@@ -254,6 +286,9 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                         value={address}
                                         onChange={(e) => setAddress(e.target.value)}
                                         classNames={inputStyles}
+                                        style={{  border: "none",
+                                            boxShadow: "none",
+                                            outline: "none", }}
                                     />
                                 </div>
                             </ModalBody>

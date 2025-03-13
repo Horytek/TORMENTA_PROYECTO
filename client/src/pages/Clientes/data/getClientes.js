@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import axios from "@/api/axios";
 
-const useGetClientes = (initialPage = 1, initialLimit = 10, initialDocType = "") => {
+const useGetClientes = (
+  initialPage = 1, 
+  initialLimit = 10, 
+  initialDocType = "",
+  initialDocNumber = "",
+  initialSearchTerm = ""
+) => {
   const [clientes, setClientes] = useState([]);
   const [metadata, setMetadata] = useState({
     page: initialPage,
@@ -12,10 +18,25 @@ const useGetClientes = (initialPage = 1, initialLimit = 10, initialDocType = "")
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchClientes = async (page = initialPage, limit = initialLimit, docType = initialDocType) => {
+  const fetchClientes = async (
+    page = initialPage, 
+    limit = initialLimit, 
+    docType = initialDocType,
+    docNumber = initialDocNumber,
+    searchTerm = initialSearchTerm
+  ) => {
     try {
       setLoading(true);
-      const response = await axios.get('/clientes/', { params: { page, limit, docType } });
+      const response = await axios.get('/clientes/', { 
+        params: { 
+          page, 
+          limit, 
+          docType,
+          docNumber,
+          searchTerm 
+        } 
+      });
+      
       if (response.data.code === 1) {
         const clientesConId = response.data.data.map(cliente => ({
           id: cliente.id_cliente,
@@ -37,7 +58,13 @@ const useGetClientes = (initialPage = 1, initialLimit = 10, initialDocType = "")
     fetchClientes();
   }, []);
 
-  return { clientes, metadata, loading, error, refetch: fetchClientes };
+  return { 
+    clientes, 
+    metadata, 
+    loading, 
+    error, 
+    refetch: fetchClientes 
+  };
 };
 
 export default useGetClientes;

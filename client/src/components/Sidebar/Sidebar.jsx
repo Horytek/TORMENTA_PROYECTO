@@ -75,7 +75,8 @@ function Sidebar() {
             },
             { icon: <FaCog className="text-xl" />, text: 'Configuración', subLinks: [
               { to: '/configuracion/usuarios', text: 'Usuarios' },
-              { to: '/configuracion/roles', text: 'Roles' },
+              { to: '/configuracion/roles', text: 'Roles y permisos' },
+              { to: '/configuracion/modulos', text: 'Modulos' },
               { to: '/configuracion/historial', text: 'Historial' },
             ]},
             { to: '/desarrollador', icon: <FaCog className="text-xl" />, text: 'Desarrollador'

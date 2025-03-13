@@ -11,7 +11,7 @@ const getRoles = async (req, res) => {
         res.send(error.message);
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();  
         }
     }
 };

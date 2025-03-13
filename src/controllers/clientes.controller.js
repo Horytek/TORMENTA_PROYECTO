@@ -1,60 +1,85 @@
 import { getConnection } from "./../database/database";
 
 const getClientes = async (req, res) => {
-    let connection;
-    try {
-        connection = await getConnection();
-        
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-        
-        const docType = req.query.docType;
+  let connection;
+  try {
+    connection = await getConnection();
 
-        let filterCondition = "";
-        const filterValues = [];
-        if(docType === "dni") {
-            filterCondition = "WHERE dni IS NOT NULL";
-        } else if(docType === "ruc") {
-            filterCondition = "WHERE ruc IS NOT NULL";
-        }
-        
-        const [countResult] = await connection.query(
-            `SELECT COUNT(*) as total FROM cliente ${filterCondition}`, 
-            filterValues
-        );
-        const totalRecords = countResult[0].total;
-        const totalPages = Math.ceil(totalRecords / limit);
-        
-        const [result] = await connection.query(`
-            SELECT 
-                id_cliente, 
-                CONCAT_WS(' ', dni, NULLIF(ruc, '')) AS dniRuc, 
-                nombres, 
-                apellidos, 
-                COALESCE(razon_social, '') AS razon_social, 
-                direccion, 
-                estado_cliente AS estado
-            FROM cliente 
-            ${filterCondition}
-            LIMIT ? OFFSET ?
-        `, [...filterValues, limit, offset]);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
-        res.json({ 
-            code: 1, 
-            data: result, 
-            metadata: { page, limit, totalPages, totalRecords },
-            message: "Clientes listados" 
-        });
-    } catch (error) {
-        if (!res.headersSent) {
-            res.status(500).send(error.message);
-        }
-    } finally {
-        if (connection) {
-            connection.release(); 
-        }
+    const docType = req.query.docType || "";
+    const docNumber = req.query.docNumber || "";
+    const searchTerm = req.query.searchTerm || "";
+
+    let filterCondition = "";
+    const filterValues = [];
+
+    if (docType === "dni") {
+      if (docNumber) {
+        filterCondition = "WHERE dni LIKE ?";
+        filterValues.push(`%${docNumber}%`);
+      } else {
+        filterCondition = "WHERE dni IS NOT NULL AND dni <> ''";
+      }
     }
+    else if (docType === "ruc") {
+      if (docNumber) {
+        filterCondition = "WHERE ruc LIKE ?";
+        filterValues.push(`%${docNumber}%`);
+      } else {
+        filterCondition = "WHERE ruc IS NOT NULL AND ruc <> ''";
+      }
+    }
+    else if (searchTerm) {
+      filterCondition = `WHERE 
+        nombres LIKE ? OR 
+        apellidos LIKE ? OR 
+        razon_social LIKE ?`;
+      filterValues.push(
+        `%${searchTerm}%`, 
+        `%${searchTerm}%`, 
+        `%${searchTerm}%`
+      );
+    }
+
+    const [countResult] = await connection.query(
+      `SELECT COUNT(*) as total FROM cliente ${filterCondition}`,
+      filterValues
+    );
+    const totalRecords = countResult[0].total;
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    // Obtenemos los registros según el filtro
+    const [result] = await connection.query(`
+      SELECT 
+        id_cliente, 
+        CONCAT_WS(' ', dni, NULLIF(ruc, '')) AS dniRuc, 
+        nombres, 
+        apellidos, 
+        COALESCE(razon_social, '') AS razon_social, 
+        direccion, 
+        estado_cliente AS estado,
+        f_creacion
+      FROM cliente 
+      ${filterCondition}
+      LIMIT ? OFFSET ?
+    `, [...filterValues, limit, offset]);
+
+    res.json({
+      code: 1,
+      data: result,
+      metadata: { page, limit, totalPages, totalRecords },
+      message: "Clientes listados"
+    });
+  } catch (error) {
+    if (!res.headersSent) {
+      res.status(500).send(error.message);
+    }
+  } finally {
+    if (connection) connection.release();
+  }
 };
 
 const addCliente = async (req, res) => {
@@ -147,6 +172,7 @@ const getCliente = async (req, res) => {
                 apellidos, 
                 razon_social, 
                 direccion, 
+                f_creacion,
                 estado_cliente AS estado
              FROM cliente
              WHERE id_cliente = ?`,
@@ -182,16 +208,17 @@ const updateCliente = async (req, res) => {
     let connection;
     try {
         const {
-            id, // id del cliente a actualizar
-            clientType,
-            documentNumber,
-            clientName,
-            clientLastName,
-            businessName,
-            address
+            id_cliente, // cambiado de id a id_cliente para coincidir con el frontend
+            dni,
+            ruc,
+            nombres,
+            apellidos,
+            razon_social,
+            direccion,
+            estado
         } = req.body;
 
-        if (!id) {
+        if (!id_cliente) {
             return res.status(400).json({
                 code: 0,
                 message: "El ID del cliente es obligatorio"
@@ -199,6 +226,20 @@ const updateCliente = async (req, res) => {
         }
 
         connection = await getConnection();
+
+        // Verificar si el cliente existe
+        const [existingClient] = await connection.query(
+            "SELECT id_cliente FROM cliente WHERE id_cliente = ?",
+            [id_cliente]
+        );
+
+        if (existingClient.length === 0) {
+            return res.status(404).json({
+                code: 0,
+                message: "Cliente no encontrado"
+            });
+        }
+
         const query = `
             UPDATE cliente SET
                 dni = ?,
@@ -206,24 +247,43 @@ const updateCliente = async (req, res) => {
                 nombres = ?,
                 apellidos = ?,
                 razon_social = ?,
-                direccion = ?
+                direccion = ?,
+                estado_cliente = ?
             WHERE id_cliente = ?
         `;
+        
         const values = [
-            clientType === "personal" ? documentNumber : null,
-            clientType === "business" ? documentNumber : null,
-            clientName || null,
-            clientLastName || null,
-            businessName || null,
-            address || null,
-            id
+            dni || null,
+            ruc || null,
+            nombres || null,
+            apellidos || null,
+            razon_social || null,
+            direccion || null,
+            estado,
+            id_cliente
         ];
 
         const [result] = await connection.query(query, values);
 
+        // Obtener el cliente actualizado
+        const [updatedClient] = await connection.query(
+            `SELECT 
+                id_cliente, 
+                dni, 
+                ruc, 
+                nombres, 
+                apellidos, 
+                razon_social, 
+                direccion, 
+                estado_cliente AS estado
+             FROM cliente
+             WHERE id_cliente = ?`,
+            [id_cliente]
+        );
+
         res.json({
             code: 1,
-            data: { affectedRows: result.affectedRows },
+            data: updatedClient[0],
             message: "Cliente actualizado exitosamente"
         });
 

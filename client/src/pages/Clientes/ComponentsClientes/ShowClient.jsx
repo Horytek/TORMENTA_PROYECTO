@@ -11,7 +11,6 @@ import {
 import { Modal, ModalContent, ModalHeader, ModalBody, Button, Avatar, Badge, Card, CardBody, CardHeader, Tabs, Tab } from "@nextui-org/react"
 import { useState } from "react"
 
-// Helper function to add at the top of the file
 const getDocumentType = (documentNumber) => {
   return documentNumber?.length === 11 ? 'RUC' : 'DNI';
 };

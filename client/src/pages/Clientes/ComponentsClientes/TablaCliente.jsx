@@ -14,8 +14,8 @@ import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { MdDoNotDisturbAlt } from "react-icons/md";
 import FiltroCliente from "./FiltroCliente";
 import EditClientModal from "./EditClient.jsx";
-import ConfirmationModal from "@/components/Modals/ConfirmationModal"; 
-import useCliente from "../data/useCliente"; 
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import useCliente from "../data/useCliente";
 import deactivateCliente from "../data/deactivateCliente.js";
 import { toast, Toaster } from "react-hot-toast";
 import ViewClientModal from "./ShowClient";
@@ -26,21 +26,23 @@ const TablaCliente = ({
     loading,
     error,
     metadata,
+    docType,
     page,
     limit,
     changePage,
     changeLimit,
+    onFilter, // Add this new prop
     onView = (id) => console.log("Ver:", id),
     onEdit = (id) => console.log("Editar:", id),
     onDelete = (id) => console.log("Dar de baja:", id),
 }) => {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
-    
+
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [actionType, setActionType] = useState(null);
     const [targetClient, setTargetClient] = useState(null);
-    
+
     const { deleteClient, deleteLoading } = useCliente();
     // Instanciamos el hook para desactivar clientes
     const deactivateClienteHook = deactivateCliente();
@@ -80,7 +82,7 @@ const TablaCliente = ({
                 const isInactive = cliente.estado === "0" || cliente.estado === 0;
                 return (
                     <div className="flex gap-1">
-                        <ViewClientModal 
+                        <ViewClientModal
                             client={{
                                 type: cliente.tipo_persona === "JURIDICA" ? "business" : "personal",
                                 documentType: cliente.tipo_documento?.toLowerCase() || "dni",
@@ -90,7 +92,7 @@ const TablaCliente = ({
                                 email: cliente.correo,
                                 phone: cliente.telefono,
                                 status: cliente.estado === "1" || cliente.estado === 1 ? "active" : "inactive",
-                                createdAt: cliente.created_at,
+                                createdAt: cliente.f_creacion,
                                 lastPurchase: cliente.ultima_compra
                             }}
                         />
@@ -101,25 +103,24 @@ const TablaCliente = ({
                             }}
                             className="px-1 py-0.5 text-xl text-yellow-400 cursor-pointer hover:text-yellow-500"
                         >
-                            <FaEdit className="h-6 w-4"  />
+                            <FaEdit className="h-6 w-4" />
                         </span>
                         <span
                             onClick={() => {
                                 if (isInactive) {
-                                    toast.error("El cliente ya se encuentra desactivado");
+                                    toast.error("El cliente ya se encuentra dado de baja");
                                     return;
                                 }
                                 setActionType("deactivate");
                                 setTargetClient(cliente);
                                 setOpenConfirmModal(true);
                             }}
-                            className={`px-1 py-0.5 text-xl ${
-                                isInactive 
-                                    ? "text-gray-400 cursor-not-allowed" 
+                            className={`px-1 py-0.5 text-xl ${isInactive
+                                    ? "text-gray-400 cursor-not-allowed"
                                     : "text-red-500 cursor-pointer hover:text-red-600"
-                            }`}
+                                }`}
                         >
-                            <MdDoNotDisturbAlt className="h-6 w-4"  />
+                            <MdDoNotDisturbAlt className="h-6 w-4" />
                         </span>
                         <span
                             onClick={() => {
@@ -130,7 +131,7 @@ const TablaCliente = ({
                             }}
                             className="px-1 py-0.5 text-xl text-red-500 cursor-pointer hover:text-red-600"
                         >
-                            <FaTrash className="h-6 w-4"  />
+                            <FaTrash className="h-6 w-4" />
                         </span>
                     </div>
                 );
@@ -150,18 +151,18 @@ const TablaCliente = ({
 
     const handleConfirmAction = async () => {
         if (!targetClient) return;
-        
+
         if (actionType === "deactivate") {
             if (targetClient.estado === "0" || targetClient.estado === 0) {
-                toast.error("El cliente ya se encuentra desactivado");
+                toast.error("El cliente ya se encuentra dado de baja");
                 setOpenConfirmModal(false);
                 setTargetClient(null);
                 return;
             }
-            
+
             const result = await darDeBajaCliente(targetClient.id);
             if (result.success) {
-                toast.success("Cliente desactivado exitosamente");
+                toast.success("Cliente dado de baja exitosamente");
                 onDelete(targetClient.id);
             } else {
                 toast.error("Error al desactivar: " + result.error);
@@ -182,15 +183,24 @@ const TablaCliente = ({
     };
 
     const loadingConfirm =
-        actionType === "delete" ? deleteLoading : 
-        actionType === "deactivate" ? deactivateLoading : false;
+        actionType === "delete" ? deleteLoading :
+            actionType === "deactivate" ? deactivateLoading : false;
+
+    // Update the filter handler
+    const handleFilter = (filterData) => {
+        if (onFilter) {
+            onFilter(filterData);
+        }
+    };
 
     return (
         <div className="space-y-4">
             <Toaster />
-            {/* Encabezado con título y filtro */}
+            {/* Update the FiltroCliente component usage */}
             <div className="mb-2">
-                <FiltroCliente onFilter={(filter) => console.log("Filtrar clientes:", filter)} />
+                <FiltroCliente
+                    docType={docType}
+                    onFilter={handleFilter} />
             </div>
             <Table
                 isStriped
@@ -200,7 +210,7 @@ const TablaCliente = ({
                         <Select
                             size="sm"
                             label="Filas por página"
-                            selectedKeys={[`${limit}`]} 
+                            selectedKeys={[`${limit}`]}
                             className="w-[150px]"
                             defaultSelectedKeys={["5"]}
                             onChange={(e) => {
@@ -265,6 +275,7 @@ const TablaCliente = ({
                     }}
                     client={selectedClient}
                     onClientUpdated={() => {
+                        onEdit(); 
                         setOpenEditModal(false);
                         setSelectedClient(null);
                     }}
@@ -274,8 +285,8 @@ const TablaCliente = ({
                 <ConfirmationModal
                     message={
                         actionType === "delete"
-                        ? "¿Estás seguro de eliminar este cliente?"
-                        : "¿Estás seguro de desactivar este cliente?"
+                            ? "¿Estás seguro de eliminar este cliente?"
+                            : "¿Estás seguro de dar de baja este cliente?"
                     }
                     onClose={() => {
                         setOpenConfirmModal(false);

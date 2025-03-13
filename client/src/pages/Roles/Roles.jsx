@@ -27,7 +27,7 @@ function Usuarios() {
       <Toaster />
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Roles', href: '/configuracion/roles' }]} />
       <hr className="mb-4" />
-      <h1 className='text-4xl font-extrabold'>Roles</h1>
+      <h1 className='text-4xl font-extrabold'>Roles y permisos</h1>
       <div className="flex items-center justify-between mt-5 mb-4">
         <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
         <h6 className='font-bold'>Lista de Roles</h6>
