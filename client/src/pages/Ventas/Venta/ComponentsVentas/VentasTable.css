@@ -1,0 +1,71 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shrinkExpand {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.card-animated {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.card-scroll {
+  max-height: 400px; /* Ajusta la altura máxima según tus necesidades */
+  overflow-y: auto;
+  scrollbar-width: thin; /* Para Firefox */
+  scrollbar-color: transparent transparent; /* Para Firefox */
+}
+
+.card-scroll::-webkit-scrollbar {
+  width: 6px; /* Ajusta el ancho del scroll */
+}
+
+.card-scroll::-webkit-scrollbar-track {
+  background: transparent; /* Fondo del track */
+}
+
+.card-scroll::-webkit-scrollbar-thumb {
+  background-color: transparent; /* Color del scroll */
+  border-radius: 10px; /* Bordes redondeados */
+}
+
+.table-details td {
+  font-size: 12px; /* Tamaño de letra más pequeño */
+}
+
+.container-table-venta {
+  animation: shrinkExpand 0.5s ease-in-out;
+}
+
+.table-header-small {
+  font-size: 12px; /* Tamaño de letra más pequeño */
+}
+
+.table-cell-small {
+  font-size: 10px; /* Tamaño de letra más pequeño */
+  padding: 4px; /* Ajusta el padding según tus necesidades */
+}
+
+.container-table-details {
+  box-shadow: 0 0 10px #171a1f33;
+  background-color: #171a1f09 !important;
+  border-radius: 10px;
+  animation: fadeIn 0.5s ease-in-out;
+  width: 100%; /* Ocupa todo el ancho disponible */
+}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import './Guia_Remision.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
-import Pagination from '@/components/Pagination/Pagination';
+import { Pagination } from "@nextui-org/react";
 import TablaGuias from './ComponentsGuias/GuiasTable';
 import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
 import { Link } from 'react-router-dom';
@@ -39,9 +39,9 @@ const Guias = () => {
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
           Guias de Remision
         </h1>
-        
+      
       </div>
-
+      <br />
       <div className="flex justify-between items-center mb-4">
         <FiltrosGuias onFiltersChange={handleFiltersChange} />
         <Link to="/almacen/guia_remision/registro_guia" className="btn btn-nueva-guia">
@@ -57,8 +57,8 @@ const Guias = () => {
       />
 
       <div className="flex justify-between mt-4">
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
-        <select className="input-d cant-pag-d pr-8" value={guiasPerPage} onChange={(e) => setGuiasPerPage(parseInt(e.target.value))}>
+        <Pagination  showControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        <select className="border border-gray-300 bg-gray-50 rounded-lg w-20 text-center" value={guiasPerPage} onChange={(e) => setGuiasPerPage(parseInt(e.target.value))}>
           <option value={5}>5</option>
           <option value={10}>10</option>
           <option value={20}>20</option>

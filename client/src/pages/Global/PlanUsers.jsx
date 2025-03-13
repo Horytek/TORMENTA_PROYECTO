@@ -60,10 +60,15 @@ const PlanUsers = () => {
     setUsers(users.map((user) => (user.id_usuario === id ? { ...user, estado_usuario_1: value || "0" } : user)));
   };
 
+  const handleFechaChange = (id, nuevaFecha) => {
+    setUsers(users.map((user) => (user.id_usuario === id ? { ...user, fecha_pago: nuevaFecha } : user)));
+  };
+  
+
   const handleUpdateUserPlan = async (id) => {
     const user = users.find((user) => user.id_usuario === id);
     if (user) {
-      await updateUsuarioPlan(id, { empresa: user.empresa, plan_pago: user.plan_pago === "enterprise" ? 1 : user.plan_pago === "pro" ? 2 : 3, estado_usuario: user.estado_usuario_1 });
+      await updateUsuarioPlan(id, { empresa: user.empresa, plan_pago: user.plan_pago === "enterprise" ? 1 : user.plan_pago === "pro" ? 2 : 3, estado_usuario: user.estado_usuario_1, fecha_pago: user.fecha_pago });
       fetchUsers(); // Refrescar la lista de usuarios después de la actualización
     }
   };
@@ -126,6 +131,7 @@ const PlanUsers = () => {
           <TableColumn>Usuario</TableColumn>
           <TableColumn>Plan</TableColumn>
           <TableColumn>Estado</TableColumn>
+          <TableColumn>Fecha de Pago</TableColumn>
           <TableColumn>Acciones</TableColumn>
         </TableHeader>
         <TableBody>
@@ -174,6 +180,17 @@ const PlanUsers = () => {
                   <SelectItem key="1">Activo</SelectItem>
                   <SelectItem key="0">Inactivo</SelectItem>
                 </Select>
+              </TableCell>
+              <TableCell>
+                {editableUsers[user.id_usuario] ? (
+                  <Input
+                    type="date"
+                    value={user.fecha_pago ? new Date(user.fecha_pago).toISOString().split("T")[0] : ""} 
+                    onChange={(e) => handleFechaChange(user.id_usuario, e.target.value)}
+                  />
+                ) : (
+                  <span>{new Date(user.fecha_pago).toLocaleDateString("es-ES")}</span>
+                )}
               </TableCell>
               <TableCell>
                 <div className="flex items-center space-x-2">

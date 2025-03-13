@@ -17,8 +17,8 @@ const TablaKardex = ({ kardex }) => {
     const totalPages = Math.ceil(kardex.length / itemsPerPage);
 
     return (
-        <div className="w-full">
-            <Table isStriped aria-label="Tabla de Kardex" shadow={"md"} className="rounded-lg overflow-hidden">
+        <div className="w-full ">
+            <Table  aria-label="Tabla de Kardex" shadow={"md"} className="rounded-lg overflow-hidden">
                 <TableHeader>
                     <TableColumn>CÓDIGO</TableColumn>
                     <TableColumn>DESCRIPCIÓN</TableColumn>

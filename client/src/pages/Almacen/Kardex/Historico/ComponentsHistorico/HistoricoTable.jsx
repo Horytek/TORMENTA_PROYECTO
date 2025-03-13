@@ -1,154 +1,145 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Card, CardHeader, Divider, CardBody, Pagination } from "@nextui-org/react";
 import "./HistoricoTable.css";
 
 function HistoricoTable({ transactions, previousTransactions }) {
-  const [expandedRow, setExpandedRow] = useState(null);
+  const [collapsedTransaction, setCollapsedTransaction] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const handleRowClick = (index) => {
-    setExpandedRow(expandedRow === index ? null : index);
+  const toggleRow = (transaction) => {
+    setCollapsedTransaction(collapsedTransaction === transaction ? null : transaction);
   };
 
-  const totalEntry = transactions.reduce(
-    (total, trans) => total + (trans.entra ? parseFloat(trans.entra) : 0),
-    0
+  const calculateTotal = (type) =>
+    transactions.reduce((total, trans) => total + (parseFloat(trans[type]) || 0), 0);
+
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const paginatedTransactions = transactions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
-  const totalSale = transactions.reduce(
-    (total, trans) => total + (trans.sale ? parseFloat(trans.sale) : 0),
-    0
-  );
-  const totalStock = totalEntry - totalSale;
 
   return (
-    <div className="container-table-reg px-4 bg-white rounded-lg">
-      <table className="table w-full">
-        <thead>
-          <tr>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Fecha
-            </th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Documento
-            </th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Nombre
-            </th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Entra
-            </th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Sale
-            </th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Stock
-            </th>
-            <th className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Precio
-            </th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Glosa
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Yellow Bar for previous transactions */}
-          {previousTransactions && previousTransactions.length > 0 && (
-            <tr style={{ backgroundColor: "#FFFF00" }}>
-              <td colSpan="3" className="text-center font-bold">
-                TRANSACCIONES ANTERIORES ({previousTransactions[0].numero} documentos)
-              </td>
-              <td className="text-center py-2 px-4 font-semibold">
-                {previousTransactions[0].entra}
-              </td>
-              <td className="text-center py-2 px-4 font-semibold">
-                {previousTransactions[0].sale}
-              </td>
-              <td className="text-center py-2 px-4 font-semibold">
-                {parseFloat(previousTransactions[0].entra) -
-                  parseFloat(previousTransactions[0].sale)}
-              </td>
-              <td colSpan="2"></td>
-            </tr>
-          )}
+    <div className="flex flex-col space-y-4 w-full">
+      {/* Contenedor de Cards en una fila */}
+      <div className="flex space-x-4">
+        {/* Card de transacciones anteriores */}
+        {previousTransactions?.length > 0 && (
+          <Card className="max-w-[400px]">
+            <CardHeader className="flex gap-3">
+              <div className="flex flex-col">
+                <p className="text-lg">Transacciones Anteriores</p>
+                <p className="text-gray-600 text-md">{previousTransactions[0].numero} documento(s)</p>
+              </div>
+            </CardHeader>
+            <Divider />
+            <CardBody>
+              <p className="font-semibold">Entra:{previousTransactions[0].entra}</p>
+              <p className="font-semibold">Sale: {previousTransactions[0].sale}</p>
+              <p className="font-semibold">Stock: {parseFloat(previousTransactions[0].entra) - parseFloat(previousTransactions[0].sale)}</p>
+            </CardBody>
+            <Divider />
+          </Card>
+        )}
 
-          {transactions.map((transaction, index) => (
-            <React.Fragment key={index}>
-              <HistoricoFilas
-                transaction={transaction}
-                isExpanded={expandedRow === index}
-                onClick={() => handleRowClick(index)}
-              />
-              {expandedRow === index && transaction.productos && (
-                <tr className="bg-gray-100">
-                  <td colSpan="8" className="p-4">
-                    <table className="table w-full">
-                      <thead>
-                        <tr>
-                          <th className="text-center">Código</th>
-                          <th className="text-center">Descripción</th>
-                          <th className="text-center">Marca</th>
-                          <th className="text-center">Cantidad</th>
-                        </tr>
-                      </thead>
+        {/* Card de totales */}
+        <Card className="max-w-[400px]">
+          <CardHeader className="flex gap-3">
+            <div className="flex flex-col">
+              <p className="text-lg">Stock actual del producto</p>
+              
+            </div>
+          </CardHeader>
+          <Divider />
+          <CardBody>
+            <p className="font-semibold">Entra:{calculateTotal("entra")}</p>
+            <p className="font-semibold">Sale: {calculateTotal("sale")}</p>
+            <p className="font-semibold">Stock: {calculateTotal("entra") - calculateTotal("sale")}</p>
+          </CardBody>
+          <Divider />
+        </Card>
+      </div>
 
-                      <tbody>
-                        {transaction.productos.map((producto, pIndex) => (
-                          <tr key={pIndex}>
-                            <td>{producto.codigo}</td>
-                            <td>{producto.descripcion}</td>
-                            <td>{producto.marca}</td>
-                            <td>{producto.cantidad}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
-          ))}
+      <div className="flex w-full">
+        {/* Tabla principal ocupando toda la pantalla */}
+        <div className={`container-table-reg px-4 bg-white rounded-lg transition-all ${collapsedTransaction ? 'w-2/3' : 'w-full'}`}>
+          <Table aria-label="Historico de Transacciones">
+            <TableHeader>
+              {["Fecha", "Documento", "Nombre", "Entra", "Sale", "Stock", "Precio", "Glosa"].map((header) => (
+                <TableColumn key={header}>{header}</TableColumn>
+              ))}
+            </TableHeader>
+            <TableBody emptyContent={"No hay transacciones registradas."}>
+              {paginatedTransactions.map((transaction, index) => (
+                <TableRow key={index} onClick={() => toggleRow(transaction)}>
+                  {["fecha", "documento", "nombre", "entra", "sale", "stock", "precio", "glosa"].map((field) => (
+                    <TableCell className="text-xs" key={field}>{transaction[field] || "0"}</TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
-          <tr className="tr-total">
-            <td colSpan="3" className="text-center py-2 px-4 font-semibold">
-              TOTAL
-            </td>
-            <td className="text-center py-2 px-4 font-semibold">{totalEntry}</td>
-            <td className="text-center py-2 px-4 font-semibold">{totalSale}</td>
-            <td className="text-center py-2 px-4 font-semibold">{totalStock}</td>
-            <td colSpan="2"></td>
-          </tr>
-        </tbody>
-      </table>
+          {/* Paginación */}
+          <div className="mt-4 flex justify-between">
+            <Pagination
+              showControls
+              color="primary"
+              page={currentPage}
+              total={totalPages}
+              onChange={setCurrentPage}
+            />
+
+            <select
+              id="itemsPerPage"
+              className="border border-gray-300 bg-gray-50 rounded-lg w-20 text-center"
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+            >
+              <option value={5}>05</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Tabla de productos a la derecha */}
+        {collapsedTransaction && (
+          <div className="w-1/3 ml-4 bg-white border-l border-gray-300 p-4 rounded-lg shadow-lg transition-all">
+            <h3 className="text-lg font-bold mb-2">Detalles de Productos</h3>
+            <Table aria-label="Detalles de Productos">
+              <TableHeader>
+                {["Código", "Descripción", "Marca", "Cantidad"].map((header) => (
+                  <TableColumn key={header}>{header}</TableColumn>
+                ))}
+              </TableHeader>
+              <TableBody emptyContent={"No se encontró detalles de la transacción."}>
+                {collapsedTransaction.productos && collapsedTransaction.productos.length > 0 ? (
+                  collapsedTransaction.productos.map((producto, idx) => (
+                    <TableRow key={idx}>
+                      {["codigo", "descripcion", "marca", "cantidad"].map((field) => (
+                        <TableCell className="text-xs" key={field}>{producto[field]}</TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 HistoricoTable.propTypes = {
   transactions: PropTypes.array.isRequired,
-  previousTransactions: PropTypes.array, // Optional prop for previous transactions data
-};
-
-function HistoricoFilas({ transaction, isExpanded, onClick }) {
-  return (
-    <tr onClick={onClick} className={`cursor-pointer ${isExpanded ? "bg-gray-200" : ""}`}>
-      <td className="text-center py-2 px-4">{transaction.fecha}</td>
-      <td className="text-center py-2 px-4">{transaction.documento}</td>
-      <td className="text-center py-2 px-4">{transaction.nombre}</td>
-      <td className="text-center py-2 px-4">{transaction.entra}</td>
-      <td className="text-center py-2 px-4">{transaction.sale}</td>
-      <td className="text-center py-2 px-4">{transaction.stock}</td>
-      <td className="text-center py-2 px-4">{transaction.precio}</td>
-      <td className="text-center py-2 px-4">
-        {transaction.glosa || "VENTA POR PRODUCTOS"}
-      </td>
-    </tr>
-  );
-}
-
-HistoricoFilas.propTypes = {
-  transaction: PropTypes.object.isRequired,
-  isExpanded: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired,
+  previousTransactions: PropTypes.array,
 };
 
 export default HistoricoTable;
