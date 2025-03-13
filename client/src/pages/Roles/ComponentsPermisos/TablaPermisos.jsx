@@ -231,15 +231,17 @@ export function TablaPermisos() {
                     )}
                   </div>
 
-                  <Checkbox
-                    color="primary"
-                    isSelected={rolePermisos[`modulo_${modulo.id}`] || false}
-                    onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'modulo', isChecked)}
-                    onClick={(e) => e.stopPropagation()}
-                    disableAnimation={true}
-                  >
-                    Ver
-                  </Checkbox>
+                  {modulo.id !== 9 && (
+                    <Checkbox
+                      color="primary"
+                      isSelected={rolePermisos[`modulo_${modulo.id}`] || false}
+                      onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'modulo', isChecked)}
+                      onClick={(e) => e.stopPropagation()}
+                      disableAnimation={true}
+                    >
+                      Ver
+                    </Checkbox>
+                  )}
                 </div>
 
                 {expandedModulos[modulo.id] && modulo.submodulos && modulo.submodulos.length > 0 && (

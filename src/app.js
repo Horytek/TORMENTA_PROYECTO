@@ -25,6 +25,10 @@ import almacenesRoutes from "./routes/almacen.routes.js";
 import funcionesRoutes from "./routes/funciones.routes.js";
 import planesRoutes from "./routes/plan_pago.routes.js";
 import clienteRoutes from "./routes/clientes.routes.js";
+import modulosRoutes from "./routes/modulos.routes.js";
+import permisosRoutes from "./routes/permisos.routes.js";
+import submodulosRoutes from "./routes/submodulos.routes.js";
+
 
 const app = express();
 
@@ -73,5 +77,9 @@ app.use("/api/almacen", almacenesRoutes);
 app.use("/api/funciones", funcionesRoutes);
 app.use("/api/planes", planesRoutes);
 app.use("/api/clientes", clienteRoutes);
+app.use("/api/modulos", modulosRoutes);
+app.use("/api/submodulos", submodulosRoutes);
+app.use("/api/permisos", permisosRoutes);
+
 
 export default app;

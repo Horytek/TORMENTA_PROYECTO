@@ -63,7 +63,7 @@ function Dashboard() {
                         <Inicio />
                       </RoutePermission>
                     } />
-                    
+
                     {/* VENTAS - Módulo 6 */}
                     <Route path="/ventas" element={
                       <RoutePermission idModulo={6}>
@@ -80,7 +80,7 @@ function Dashboard() {
                         <LibroVentas />
                       </RoutePermission>
                     } />
-                    
+
                     {/* EMPLEADOS - Módulo 5 */}
                     <Route path="/empleados" element={
                       <RoutePermission idModulo={5}>
@@ -88,11 +88,11 @@ function Dashboard() {
                       </RoutePermission>
                     } />
                     <Route path="/proveedores" element={
-                      <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
-                        <Proveedores />
-                      </RouteProtectedRol>
+                      <RoutePermission idModulo={11}>
+                      <Proveedores />
+                      </RoutePermission>
                     } />
-                    
+
                     {/* PRODUCTOS - Módulo 2 */}
                     <Route path="/productos" element={
                       <RoutePermission idModulo={2}>
@@ -114,14 +114,14 @@ function Dashboard() {
                         <Subcategorias />
                       </RoutePermission>
                     } />
-                    
+
                     {/* ALMACENES - Módulo 3 */}
                     <Route path="/almacenG" element={
                       <RoutePermission idModulo={3}>
                         <Almacenes />
                       </RoutePermission>
                     } />
-                    
+
                     {/* ALMACEN/KARDEX - Módulo 10 */}
                     <Route path="/almacen" element={
                       <RoutePermission idModulo={10}>
@@ -163,21 +163,21 @@ function Dashboard() {
                         <RegistroGuia />
                       </RoutePermission>
                     } />
-                    
+
                     {/* REPORTES - Módulo 7 */}
                     <Route path="/reportes" element={
                       <RoutePermission idModulo={7}>
                         <ReporteVentas />
                       </RoutePermission>
                     } />
-                    
+
                     {/* SUCURSALES - Módulo 8 */}
                     <Route path="/sucursal" element={
                       <RoutePermission idModulo={8}>
                         <Sucursal />
                       </RoutePermission>
                     } />
-                    
+
                     {/* CONFIGURACIÓN - Módulo 9 */}
                     <Route path="/configuracion/usuarios" element={
                       <RoutePermission idModulo={9} idSubmodulo={6}>
@@ -204,14 +204,14 @@ function Dashboard() {
                         <Historial />
                       </RoutePermission>
                     } />
-                    
+
                     {/* aqui se mantiene como antes */}
                     <Route path="/desarrollador" element={
                       <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
                         <Global />
                       </RouteProtectedRol>
                     } />
-                    
+
                     {/* CLIENTES - Módulo 4 */}
                     <Route path="/clientes" element={
                       <RoutePermission idModulo={4}>
