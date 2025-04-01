@@ -148,6 +148,7 @@ export function TablaPermisos() {
   const formatRoleName = (roleName) => {
     if (roleName === "ADMIN") return "Administrador";
     if (roleName === "EMPLEADOS") return "Empleado";
+    if (roleName === "SUPERVISOR") return "Supervisor";
     return roleName; 
   };
 

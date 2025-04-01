@@ -49,6 +49,16 @@ function Registro_Ingresos() {
   // Elimina el uso de localStorage para almacenOrigen
   const [almacenOrigen, setAlmacenOrigen] = useState('');
 
+  // Obtener la sucursal desde el localStorage
+  const sucursalSeleccionada = localStorage.getItem('sur');
+  const rolUsuario = localStorage.getItem('rol');
+
+  // Filtrar almacenes según la sucursal seleccionada si el rol es diferente de 1
+  const almacenesFiltrados =
+    rolUsuario !== '1'
+      ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
+      : almacenes;
+
   useEffect(() => {
     localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
   }, [productosSeleccionados]);
@@ -273,15 +283,14 @@ function Registro_Ingresos() {
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
                   Almacén destino:
                 </label>
-                <select 
-                  className='form-elementwaentrada'
-                  id="almacen_destino"
-                >
-                  <option value="">Seleccionar</option>
-                  {almacenes.map(almacen => (
-                    <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
-                  ))}
-                </select>
+                <select className="form-elementwaentrada" id="almacen_destino">
+          <option value="">Seleccionar</option>
+          {almacenesFiltrados.map((almacen) => (
+            <option key={almacen.id} value={almacen.id}>
+              {almacen.almacen}
+            </option>
+          ))}
+        </select>
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">

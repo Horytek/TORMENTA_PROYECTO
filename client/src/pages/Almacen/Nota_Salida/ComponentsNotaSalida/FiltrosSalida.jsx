@@ -40,20 +40,29 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
     const [usuario, setUsuario] = useState('');
     const [documento, setDocumento] = useState('');
 
+    const sucursalSeleccionada = localStorage.getItem('sur');
+    const rolUsuario = localStorage.getItem('rol');
+  
+    // Filtrar almacenes según la sucursal seleccionada si el rol es diferente de 1
+    const almacenesFiltrados =
+      rolUsuario !== '1'
+        ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
+        : almacenes;
+
     const applyFilters = useCallback(() => {
         const date_i = `${value.start.year}-${String(value.start.month).padStart(2, '0')}-${String(value.start.day).padStart(2, '0')}`;
         const date_e = `${value.end.year}-${String(value.end.month).padStart(2, '0')}-${String(value.end.day).padStart(2, '0')}`;
-
+    
         const filtros = {
             fecha_i: date_i,
             fecha_e: date_e,
             razon_social: razon,
-            almacen: almacenSeleccionado.id !== '%' ? almacenSeleccionado.id : '%',
+            almacen: almacenSeleccionado?.id !== '%' ? almacenSeleccionado?.id : undefined, // No incluir el filtro si es '%'
             usuario: usuario,
             documento: documento,
-            estado: estado !== '%' ? estado : '%'
+            estado: estado !== '%' ? estado : undefined, // No incluir el filtro si es '%'
         };
-
+    
         onFiltersChange(filtros);
     }, [value, razon, almacenSeleccionado, usuario, documento, estado, onFiltersChange]);
 
@@ -62,9 +71,11 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
     }, [applyFilters]);
 
     const handleAlmacenChange = (event) => {
-        const almacen = event.target.value === '%' ? { id: '%', sucursal: '' } : almacenes.find(a => a.id === parseInt(event.target.value));
+        const almacen = event.target.value === '%'
+            ? { id: '%', sucursal: '' }
+            : almacenes.find((a) => a.id === parseInt(event.target.value));
         setAlmacenSeleccionado(almacen);
-        localStorage.setItem('almacen', almacen.id);
+        localStorage.setItem('almacen', almacen.id === '%' ? '' : almacen.id); // Guarda vacío si es '%'
         onAlmacenChange(almacen);
     };
 
@@ -106,7 +117,8 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
                 <div className="flex items-center gap-2">
                     <h6 className='font-bold'>Almacén:</h6>
                     <Select
-                    selectedKeys={[almacenSeleccionado.id.toString()]}
+                    id="almacen"
+                    selectedKeys={[almacenSeleccionado?.id?.toString() || '%']}
                     onChange={handleAlmacenChange}
                     className="w-60"
                     classNames={{
@@ -114,9 +126,12 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
                         value: "text-black",
                     }}
                 >
-                    <SelectItem key="%">Seleccione...</SelectItem>
-                    {almacenes.map((almacen) => (
-                        <SelectItem key={almacen.id}>{almacen.almacen}</SelectItem>
+                    {/* Mostrar la opción "Seleccione..." solo si el rol es 1 */}
+                    {rolUsuario === '1' && <SelectItem key="%" value="%">Seleccione...</SelectItem>}
+                    {almacenesFiltrados.map((almacen) => (
+                        <SelectItem key={almacen.id} value={almacen.id}>
+                            {almacen.almacen}
+                        </SelectItem>
                     ))}
                 </Select>
                 </div>

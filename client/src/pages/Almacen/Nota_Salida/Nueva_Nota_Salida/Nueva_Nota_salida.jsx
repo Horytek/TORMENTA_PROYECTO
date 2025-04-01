@@ -87,6 +87,17 @@ function NuevaSalidas() {
     const savedUsuario = localStorage.getItem('usuario');
     return savedUsuario ? (savedUsuario) : '';
   });
+
+
+  const sucursalSeleccionada = localStorage.getItem('sur');
+  const rolUsuario = localStorage.getItem('rol');
+
+  // Filtrar almacenes según la sucursal seleccionada si el rol es diferente de 1
+  const almacenesFiltrados =
+    rolUsuario !== '1'
+      ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
+      : almacenes;
+
   useEffect(() => {
     localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
   }, [productosSeleccionados]);
@@ -288,9 +299,13 @@ function NuevaSalidas() {
                   Almacén origen:
                 </label>
                 <select className='form-elementnotasalida' id="almacen_origen" value={almacenOrigen} onChange={(e) => setalmacenOrigen(parseInt(e.target.value))} disabled={productosSeleccionados.length > 0}>
-                  <option value="">Seleccionar</option>
-                  {almacenes.map(almacen => (<option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>))}
-                </select>
+          <option value="">Seleccionar</option>
+          {almacenesFiltrados.map((almacen) => (
+            <option key={almacen.id} value={almacen.id}>
+              {almacen.almacen}
+            </option>
+          ))}
+        </select>
                 {productosSeleccionados.length > 0 && (
                   <p className="font-bold text-red-500 text-sm mt-1">
                     *Para cambiar vacíe los productos.

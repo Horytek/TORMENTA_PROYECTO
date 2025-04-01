@@ -18,9 +18,12 @@ const Ingresos = () => {
   });
 
   const fetchIngresos = useCallback(async () => {
-    const data = await getIngresosData(filters);
+    const data = await getIngresosData({
+      ...filters,
+      almacenId: filters.almacenId || undefined, // Si no hay almacén seleccionado, no envíes el filtro
+    });
     setIngresos(data.ingresos);
-  }, [filters]); 
+  }, [filters]);
 
   useEffect(() => {
     fetchIngresos();
@@ -48,7 +51,11 @@ const Ingresos = () => {
   const currentDate = new Date().toLocaleDateString('es-ES');
 
   const handleAlmacenChange = (almacen) => {
-    setAlmacenSeleccionado(almacen);
+    setAlmacenSeleccionado(almacen || null); // Si no hay selección, establece null
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      almacenId: almacen ? almacen.id : null, // Actualiza el filtro con el ID del almacén o null
+    }));
   };
 
   return (

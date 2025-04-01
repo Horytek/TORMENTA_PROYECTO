@@ -61,15 +61,33 @@ const PlanUsers = () => {
   };
 
   const handleFechaChange = (id, nuevaFecha) => {
-    setUsers(users.map((user) => (user.id_usuario === id ? { ...user, fecha_pago: nuevaFecha } : user)));
+    setUsers(users.map((user) =>
+      user.id_usuario === id
+        ? { ...user, fecha_pago: nuevaFecha || null } // Si la fecha es vacía, establecer como null
+        : user
+    ));
   };
   
 
   const handleUpdateUserPlan = async (id) => {
     const user = users.find((user) => user.id_usuario === id);
     if (user) {
-      await updateUsuarioPlan(id, { empresa: user.empresa, plan_pago: user.plan_pago === "enterprise" ? 1 : user.plan_pago === "pro" ? 2 : 3, estado_usuario: user.estado_usuario_1, fecha_pago: user.fecha_pago });
-      fetchUsers(); // Refrescar la lista de usuarios después de la actualización
+      // Validar y formatear fecha_pago
+      const formattedFechaPago = user.fecha_pago
+        ? new Date(user.fecha_pago).toISOString().split("T")[0] // Formato YYYY-MM-DD
+        : null;
+  
+      try {
+        await updateUsuarioPlan(id, {
+          empresa: user.empresa,
+          plan_pago: user.plan_pago === "enterprise" ? 1 : user.plan_pago === "pro" ? 2 : 3,
+          estado_usuario: user.estado_usuario_1,
+          fecha_pago: formattedFechaPago, // Usar la fecha formateada
+        });
+        fetchUsers(); // Refrescar la lista de usuarios después de la actualización
+      } catch (error) {
+        console.error("Error al actualizar el usuario:", error);
+      }
     }
   };
 

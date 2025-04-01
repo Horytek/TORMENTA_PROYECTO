@@ -68,7 +68,7 @@ const getRoles = async (req, res) => {
     try {
         const connection = await getConnection();
         const [roles] = await connection.query(`
-            SELECT id_rol, nom_rol FROM rol WHERE id_rol IN (1, 3)
+            SELECT id_rol, nom_rol FROM rol WHERE id_rol!=10
         `);
         
         res.json({

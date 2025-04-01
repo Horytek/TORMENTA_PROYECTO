@@ -15,6 +15,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
   const [vendedores, setVendedores] = useState([]);
+  localStorage.setItem("dni_r", initialData?.dni || '');
 
   const { register, handleSubmit, formState: { errors }, setValue } = useForm({
     defaultValues: {
