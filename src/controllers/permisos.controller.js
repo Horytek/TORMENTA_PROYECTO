@@ -184,7 +184,6 @@ const checkPermiso = async (req, res) => {
         });
       }
       
-      // Obtener el username desde el token JWT
       console.log("Token payload:", req.user); // Depuración
       const nameUser = req.user.nameUser;
       
@@ -213,18 +212,25 @@ const checkPermiso = async (req, res) => {
       }
       
       const [permisos] = await connection.query(
-        `SELECT ver FROM permisos 
+        `SELECT ver, crear, editar, eliminar FROM permisos 
          WHERE id_rol = ? AND id_modulo = ? AND (id_submodulo = ? OR (id_submodulo IS NULL AND ? IS NULL))`,
         [idRol, idModulo, idSubmodulo, idSubmodulo]
       );
       
       const hasPermission = permisos.length > 0 && permisos[0].ver === 1;
+      const hasCreatePermission = permisos.length > 0 && permisos[0].crear === 1;
+      const hasEditPermission = permisos.length > 0 && permisos[0].editar === 1;
+      const hasDeletePermission = permisos.length > 0 && permisos[0].eliminar === 1;
+
       
-      res.json({ hasPermission });
+      res.json({ hasPermission, hasCreatePermission, hasEditPermission, hasDeletePermission });
     } catch (error) {
       console.error("Error checking permission:", error);
       res.status(500).json({ 
         hasPermission: false,
+        hasCreatePermission: false,
+        hasEditPermission: false,
+        hasDeletePermission: false,
         message: error.message 
       });
     }

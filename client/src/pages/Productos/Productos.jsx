@@ -7,8 +7,12 @@ import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import {Button, ButtonGroup} from "@nextui-org/button";
+// Importar el hook de permisos
+import { usePermisos } from '@/routes';
 
 function Productos() {
+  // Obtener los permisos específicos para este módulo/submódulo
+  const { hasCreatePermission } = usePermisos();
   
   // Estado de Modal de Agregar Producto
   const [activeAdd, setModalOpen] = useState(false);
@@ -44,7 +48,13 @@ function Productos() {
           />
         </div>
         <div className="flex gap-5">
-          <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />} onClick={handleModalAdd}>
+          <ButtonIcon 
+            color={'#4069E4'} 
+            icon={<FaPlus style={{ fontSize: '25px' }} />} 
+            onClick={handleModalAdd}
+            disabled={!hasCreatePermission}
+            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+          >
             Agregar producto
           </ButtonIcon>
         </div>

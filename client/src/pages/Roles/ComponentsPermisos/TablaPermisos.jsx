@@ -61,17 +61,22 @@ export function TablaPermisos() {
   useEffect(() => {
     if (currentRoleId) {
       const rolePermisos = {};
-      
+
       if (permisos && permisos.length > 0) {
         permisos.forEach(permiso => {
           if (permiso.id_submodulo) {
-            rolePermisos[`submodulo_${permiso.id_submodulo}`] = !!permiso.ver;
-          } else {
-            rolePermisos[`modulo_${permiso.id_modulo}`] = !!permiso.ver;
+            rolePermisos[`submodulo_${permiso.id_submodulo}`] = { ver: !!permiso.ver };
+          } else if (permiso.id_modulo) {
+            rolePermisos[`modulo_${permiso.id_modulo}`] = {
+              ver: !!permiso.ver,
+              crear: !!permiso.crear,
+              editar: !!permiso.editar,
+              eliminar: !!permiso.eliminar
+            };
           }
         });
       }
-  
+
       setPermisosData(prev => ({
         ...prev,
         [currentRoleId]: rolePermisos
@@ -85,17 +90,27 @@ export function TablaPermisos() {
     }
   }, [selectedTab, roleMapping]);
 
-  const handlePermissionChange = (id, type, value) => {
+  const handlePermissionChange = (id, field, value, type = 'modulo') => {
     if (!currentRoleId) return;
-    
-    const isChecked = typeof value === 'boolean' ? value : 
-                      (value && typeof value === 'object' ? value.target?.checked : false);
-    
-    
+
+    const isChecked = typeof value === 'boolean'
+      ? value
+      : (value && typeof value === 'object' ? value.target?.checked : false);
+    const key = `${type}_${id}`;
+
     setPermisosData(prev => {
-      const currentRolePerms = {...(prev[currentRoleId] || {})};
-      currentRolePerms[`${type}_${id}`] = isChecked;
-      
+      const currentRolePerms = { ...(prev[currentRoleId] || {}) };
+      const currentPermission = {
+        ...(currentRolePerms[key] || {
+          ver: false,
+          crear: false,
+          editar: false,
+          eliminar: false
+        })
+      };
+      currentPermission[field] = isChecked;
+      currentRolePerms[key] = currentPermission;
+
       return {
         ...prev,
         [currentRoleId]: currentRolePerms
@@ -110,21 +125,31 @@ export function TablaPermisos() {
       const rolePermisos = permisosData[currentRoleId] || {};
       const permisosToSave = [];
 
-      modulosConSubmodulos.forEach(modulo => {
-        if (rolePermisos[`modulo_${modulo.id}`]) {
+      modulosConSubmodulos.forEach((modulo) => {
+        const moduloKey = `modulo_${modulo.id}`;
+        if (rolePermisos[moduloKey]) {
+          const { ver, crear, editar, eliminar } = rolePermisos[moduloKey];
           permisosToSave.push({
             id_modulo: modulo.id,
             id_submodulo: null,
-            ver: 1
+            ver: ver ? 1 : 0,
+            crear: crear ? 1 : 0,
+            editar: editar ? 1 : 0,
+            eliminar: eliminar ? 1 : 0
           });
         }
 
-        modulo.submodulos.forEach(submodulo => {
-          if (rolePermisos[`submodulo_${submodulo.id_submodulo}`]) {
+        modulo.submodulos.forEach((submodulo) => {
+          const subKey = `submodulo_${submodulo.id_submodulo}`;
+          if (rolePermisos[subKey]) {
+            const { ver } = rolePermisos[subKey];
             permisosToSave.push({
               id_modulo: modulo.id,
               id_submodulo: submodulo.id_submodulo,
-              ver: 1
+              ver: ver ? 1 : 0,
+              crear: 0,
+              editar: 0,
+              eliminar: 0
             });
           }
         });
@@ -134,7 +159,7 @@ export function TablaPermisos() {
 
       if (success) {
         toast.success("Permisos guardados correctamente");
-        refetchPermisos(); 
+        refetchPermisos();
       } else {
         toast.error("Error al guardar los permisos");
       }
@@ -144,12 +169,11 @@ export function TablaPermisos() {
     }
   };
 
-
   const formatRoleName = (roleName) => {
     if (roleName === "ADMIN") return "Administrador";
     if (roleName === "EMPLEADOS") return "Empleado";
     if (roleName === "SUPERVISOR") return "Supervisor";
-    return roleName; 
+    return roleName;
   };
 
   const renderModulosListing = () => {
@@ -233,17 +257,60 @@ export function TablaPermisos() {
                   </div>
 
                   {modulo.id !== 9 && (
-                    <Checkbox
-                      color="primary"
-                      isSelected={rolePermisos[`modulo_${modulo.id}`] || false}
-                      onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'modulo', isChecked)}
-                      onClick={(e) => e.stopPropagation()}
-                      disableAnimation={true}
-                    >
-                      Ver
-                    </Checkbox>
+                    <>
+                      <div className="flex gap-2 items-center">  {/* Contenedor común para los checkboxes */}
+                        <Checkbox
+                          color="primary"
+                          isSelected={rolePermisos[`modulo_${modulo.id}`]?.ver || false}
+                          onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'ver', isChecked, 'modulo')}
+                          onClick={(e) => e.stopPropagation()}
+                          disableAnimation={true}
+                        >
+                          Ver
+                        </Checkbox>
+                      {modulo.id !== 1 && (
+                        <Checkbox
+                          color="success"
+                          isSelected={rolePermisos[`modulo_${modulo.id}`]?.crear || false}
+                          onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'crear', isChecked, 'modulo')}
+                          onClick={(e) => e.stopPropagation()}
+                          disableAnimation={true}
+                        >
+                          Agregar
+                        </Checkbox>
+                      
+                      )}
+                        {modulo.id !== 1 && (
+                          <Checkbox
+                            color="warning"
+                            isSelected={rolePermisos[`modulo_${modulo.id}`]?.editar || false}
+                            onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'editar', isChecked, 'modulo')}
+                            onClick={(e) => e.stopPropagation()}
+                            disableAnimation={true}
+                          >
+                            Editar
+                          </Checkbox>
+                        )}
+                       
+                       {modulo.id !== 1 && (
+
+                        <Checkbox
+                          color="danger"
+                          isSelected={rolePermisos[`modulo_${modulo.id}`]?.eliminar || false}
+                          onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'eliminar', isChecked, 'modulo')}
+                          onClick={(e) => e.stopPropagation()}
+                          disableAnimation={true}
+                        >
+                          Eliminar
+                        </Checkbox>
+                       )}
+                        
+                      </div>
+                    </>
                   )}
                 </div>
+
+
 
                 {expandedModulos[modulo.id] && modulo.submodulos && modulo.submodulos.length > 0 && (
                   <>
@@ -263,10 +330,13 @@ export function TablaPermisos() {
 
                           <Checkbox
                             color="primary"
-                            isSelected={rolePermisos[`submodulo_${submodulo.id_submodulo}`] || false}
-                            onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, 'submodulo', isChecked)}
+                            isSelected={rolePermisos[`submodulo_${submodulo.id_submodulo}`]?.ver || false}
+                            onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, 'ver', isChecked, 'submodulo')}
                             disableAnimation={true}
+                            
                           />
+
+                          
                         </div>
                       ))}
                     </div>

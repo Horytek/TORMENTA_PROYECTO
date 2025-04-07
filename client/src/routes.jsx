@@ -2,9 +2,20 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./context/Auth/AuthProvider";
 import { toast } from "react-hot-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import debounce from 'lodash.debounce';
 import axios from "@/api/axios";
+
+// Crear un contexto de permisos
+export const PermisosContext = createContext({
+  hasPermission: false,
+  hasCreatePermission: false,
+  hasEditPermission: false,
+  hasDeletePermission: false
+});
+
+// Hook para usar los permisos
+export const usePermisos = () => useContext(PermisosContext);
 
 export const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -18,7 +29,6 @@ export function RouteProtectedRol({ children, allowedRoles }) {
   const [hasAccess, setHasAccess] = useState(false);
 
   const checkAccess = debounce(() => {
-    
     const access = allowedRoles.includes(user.rol);
     setHasAccess(access);
 
@@ -33,7 +43,7 @@ export function RouteProtectedRol({ children, allowedRoles }) {
         icon: '🚫',
       });
     }
-  }, 5); // Ajusta el tiempo según sea necesario
+  }, 5);
 
   useEffect(() => {
     checkAccess();
@@ -50,11 +60,22 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
   const { user, isAuthenticated } = useAuth();
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState({
+    hasPermission: false,
+    hasCreatePermission: false,
+    hasEditPermission: false,
+    hasDeletePermission: false
+  });
 
-  // Función para verificar permisos
   const checkPermission = debounce(async () => {
     if (!isAuthenticated || !user) {
       setHasAccess(false);
+      setPermissions({
+        hasPermission: false,
+        hasCreatePermission: false,
+        hasEditPermission: false,
+        hasDeletePermission: false
+      });
       setLoading(false);
       return;
     }
@@ -62,12 +83,17 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
     try {
       if (user.rol === 10) {
         setHasAccess(true);
+        setPermissions({
+          hasPermission: true,
+          hasCreatePermission: true,
+          hasEditPermission: true,
+          hasDeletePermission: true
+        });
         setLoading(false);
         return;
       }
       
       const token = sessionStorage.getItem('token');
-      
       
       if (!token) {
         console.error("No authentication token found in sessionStorage");
@@ -76,6 +102,12 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
           position: 'top-right',
         });
         setHasAccess(false);
+        setPermissions({
+          hasPermission: false,
+          hasCreatePermission: false,
+          hasEditPermission: false,
+          hasDeletePermission: false
+        });
         setLoading(false);
         return;
       }
@@ -91,9 +123,16 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
       
       console.log("Respuesta de verificación de permisos:", response.data);
       
-      setHasAccess(response.data.hasPermission);
+      const hasAccess = response.data.hasPermission;
+      setHasAccess(hasAccess);
+      setPermissions({
+        hasPermission: hasAccess,
+        hasCreatePermission: response.data.hasCreatePermission || false,
+        hasEditPermission: response.data.hasEditPermission || false,
+        hasDeletePermission: response.data.hasDeletePermission || false
+      });
       
-      if (!response.data.hasPermission) {
+      if (!hasAccess) {
         toast.error("No tienes permisos para acceder a esta página", {
           duration: 2000,
           position: 'top-right',
@@ -108,6 +147,12 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
       console.error("Error verificando permisos:", error);
       console.error("Detalles del error:", error.response?.data || error.message);
       setHasAccess(false);
+      setPermissions({
+        hasPermission: false,
+        hasCreatePermission: false,
+        hasEditPermission: false,
+        hasDeletePermission: false
+      });
       
       toast.error("Error al verificar permisos", {
         duration: 2000,
@@ -132,5 +177,9 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
     return null;
   }
 
-  return children;
+  return (
+    <PermisosContext.Provider value={permissions}>
+      {children}
+    </PermisosContext.Provider>
+  );
 }
