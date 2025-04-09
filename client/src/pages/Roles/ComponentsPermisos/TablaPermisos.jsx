@@ -65,7 +65,12 @@ export function TablaPermisos() {
       if (permisos && permisos.length > 0) {
         permisos.forEach(permiso => {
           if (permiso.id_submodulo) {
-            rolePermisos[`submodulo_${permiso.id_submodulo}`] = { ver: !!permiso.ver };
+            rolePermisos[`submodulo_${permiso.id_submodulo}`] = { 
+              ver: !!permiso.ver,
+              crear: !!permiso.crear,
+              editar: !!permiso.editar,
+              eliminar: !!permiso.eliminar
+            };
           } else if (permiso.id_modulo) {
             rolePermisos[`modulo_${permiso.id_modulo}`] = {
               ver: !!permiso.ver,
@@ -142,14 +147,14 @@ export function TablaPermisos() {
         modulo.submodulos.forEach((submodulo) => {
           const subKey = `submodulo_${submodulo.id_submodulo}`;
           if (rolePermisos[subKey]) {
-            const { ver } = rolePermisos[subKey];
+            const { ver, crear, editar, eliminar } = rolePermisos[subKey];
             permisosToSave.push({
               id_modulo: modulo.id,
               id_submodulo: submodulo.id_submodulo,
               ver: ver ? 1 : 0,
-              crear: 0,
-              editar: 0,
-              eliminar: 0
+              crear: crear ? 1 : 0,
+              editar: editar ? 1 : 0,
+              eliminar: eliminar ? 1 : 0
             });
           }
         });
@@ -250,7 +255,7 @@ export function TablaPermisos() {
                         <FaChevronRight className="text-gray-600" />
                     ) : <div className="w-4" />}
 
-                    <span className="font-medium text-gray-800">{modulo.nombre}</span>
+                    <span className="font-semibold text-gray-800 text-lg">{modulo.nombre}</span>
                     {modulo.ruta && (
                       <span className="text-xs text-gray-500 ml-2">({modulo.ruta})</span>
                     )}
@@ -258,7 +263,7 @@ export function TablaPermisos() {
 
                   {modulo.id !== 9 && (
                     <>
-                      <div className="flex gap-2 items-center">  {/* Contenedor común para los checkboxes */}
+                      <div className="flex gap-4 items-center">
                         <Checkbox
                           color="primary"
                           isSelected={rolePermisos[`modulo_${modulo.id}`]?.ver || false}
@@ -268,19 +273,18 @@ export function TablaPermisos() {
                         >
                           Ver
                         </Checkbox>
-                      {modulo.id !== 1 && (
-                        <Checkbox
-                          color="success"
-                          isSelected={rolePermisos[`modulo_${modulo.id}`]?.crear || false}
-                          onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'crear', isChecked, 'modulo')}
-                          onClick={(e) => e.stopPropagation()}
-                          disableAnimation={true}
-                        >
-                          Agregar
-                        </Checkbox>
-                      
-                      )}
-                        {modulo.id !== 1 && (
+                        {modulo.id !== 1 && modulo.id !== 7 && (
+                          <Checkbox
+                            color="success"
+                            isSelected={rolePermisos[`modulo_${modulo.id}`]?.crear || false}
+                            onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'crear', isChecked, 'modulo')}
+                            onClick={(e) => e.stopPropagation()}
+                            disableAnimation={true}
+                          >
+                            Agregar
+                          </Checkbox>
+                        )}
+                        {modulo.id !== 1 && modulo.id !== 7 && (
                           <Checkbox
                             color="warning"
                             isSelected={rolePermisos[`modulo_${modulo.id}`]?.editar || false}
@@ -291,35 +295,33 @@ export function TablaPermisos() {
                             Editar
                           </Checkbox>
                         )}
-                       
-                       {modulo.id !== 1 && (
-
-                        <Checkbox
-                          color="danger"
-                          isSelected={rolePermisos[`modulo_${modulo.id}`]?.eliminar || false}
-                          onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'eliminar', isChecked, 'modulo')}
-                          onClick={(e) => e.stopPropagation()}
-                          disableAnimation={true}
-                        >
-                          Eliminar
-                        </Checkbox>
-                       )}
-                        
+                        {modulo.id !== 1  &&  modulo.id !== 7 && (
+                          <Checkbox
+                            color="danger"
+                            isSelected={rolePermisos[`modulo_${modulo.id}`]?.eliminar || false}
+                            onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'eliminar', isChecked, 'modulo')}
+                            onClick={(e) => e.stopPropagation()}
+                            disableAnimation={true}
+                          >
+                            Eliminar
+                          </Checkbox>
+                        )}
                       </div>
                     </>
                   )}
                 </div>
 
-
-
                 {expandedModulos[modulo.id] && modulo.submodulos && modulo.submodulos.length > 0 && (
                   <>
                     <Divider />
+                    <div className="bg-gray-100 px-5 py-2">
+                      <span className="text-sm font-medium text-gray-600">Submodulos</span>
+                    </div>
                     <div className="bg-gray-50">
                       {modulo.submodulos.map((submodulo) => (
                         <div
                           key={submodulo.id_submodulo}
-                          className="flex items-center justify-between px-5 py-3 pl-12 border-t border-gray-200"
+                          className="flex items-center justify-between px-5 py-3 pl-14 border-t border-gray-200"
                         >
                           <div className="flex items-center gap-2">
                             <span className="text-gray-700">➤ {submodulo.nombre_sub}</span>
@@ -328,15 +330,44 @@ export function TablaPermisos() {
                             )}
                           </div>
 
-                          <Checkbox
-                            color="primary"
-                            isSelected={rolePermisos[`submodulo_${submodulo.id_submodulo}`]?.ver || false}
-                            onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, 'ver', isChecked, 'submodulo')}
-                            disableAnimation={true}
-                            
-                          />
-
-                          
+                          <div className="flex gap-3 items-center">
+                            <Checkbox
+                              size="sm"
+                              color="primary"
+                              isSelected={rolePermisos[`submodulo_${submodulo.id_submodulo}`]?.ver || false}
+                              onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, 'ver', isChecked, 'submodulo')}
+                              disableAnimation={true}
+                            >
+                              Ver
+                            </Checkbox>
+                            <Checkbox
+                              size="sm"
+                              color="success"
+                              isSelected={rolePermisos[`submodulo_${submodulo.id_submodulo}`]?.crear || false}
+                              onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, 'crear', isChecked, 'submodulo')}
+                              disableAnimation={true}
+                            >
+                              Agregar
+                            </Checkbox>
+                            <Checkbox
+                              size="sm"
+                              color="warning"
+                              isSelected={rolePermisos[`submodulo_${submodulo.id_submodulo}`]?.editar || false}
+                              onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, 'editar', isChecked, 'submodulo')}
+                              disableAnimation={true}
+                            >
+                              Editar
+                            </Checkbox>
+                            <Checkbox
+                              size="sm"
+                              color="danger"
+                              isSelected={rolePermisos[`submodulo_${submodulo.id_submodulo}`]?.eliminar || false}
+                              onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, 'eliminar', isChecked, 'submodulo')}
+                              disableAnimation={true}
+                            >
+                              Eliminar
+                            </Checkbox>
+                          </div>
                         </div>
                       ))}
                     </div>

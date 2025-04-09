@@ -6,6 +6,8 @@ import { Button } from "@nextui-org/button";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { ShowDestinatarios } from '@/pages/Proveedores/ShowDestinatarios';
+import { usePermisos } from '@/routes';
+
 
 function Proveedores() {
     // Estado de Modal de Agregar Proveedor
@@ -13,7 +15,10 @@ function Proveedores() {
     const handleModalAdd = () => {
       setModalOpen(!activeAdd);
     };
-  
+    
+    const { hasCreatePermission } = usePermisos();
+
+
     // Input de búsqueda de proveedores
     const [searchTerm, setSearchTerm] = useState('');
     const handleSearchChange = (e) => {
@@ -44,7 +49,10 @@ function Proveedores() {
             />
           </div>
           <div className="flex gap-5">
-            <Button color="primary" endContent={<FaPlus style={{ fontSize: '25px' }} />} onClick={handleModalAdd}>
+            <Button color="primary" endContent={<FaPlus style={{ fontSize: '25px' }} />} onClick={handleModalAdd}
+            disabled={!hasCreatePermission}
+            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+            >
               Agregar proveedor
             </Button>
           </div>

@@ -28,6 +28,7 @@ import clienteRoutes from "./routes/clientes.routes.js";
 import modulosRoutes from "./routes/modulos.routes.js";
 import permisosRoutes from "./routes/permisos.routes.js";
 import submodulosRoutes from "./routes/submodulos.routes.js";
+import rutasRoutes from "./routes/rutas.routes.js";
 
 
 const app = express();
@@ -80,6 +81,7 @@ app.use("/api/clientes", clienteRoutes);
 app.use("/api/modulos", modulosRoutes);
 app.use("/api/submodulos", submodulosRoutes);
 app.use("/api/permisos", permisosRoutes);
+app.use("/api/rutas", rutasRoutes);
 
 
 export default app;

@@ -6,12 +6,15 @@ import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import { ShowMarcas } from "./ShowMarcas";
+import { usePermisos } from '@/routes';
 
 function Marcas() {
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
   };
+
+  const { hasCreatePermission } = usePermisos();
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -55,10 +58,14 @@ function Marcas() {
           <div className="flex items-center gap-2">
             <ButtonIcon color={"#01BDD6"}>Filtrar</ButtonIcon>
           </div>
+
           <ButtonIcon
             color={"#4069E4"}
             icon={<FaPlus style={{ fontSize: "25px" }} />}
             onClick={handleModalAdd}
+            disabled={!hasCreatePermission}
+            className={!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}
+
           >
             Agregar Marca
           </ButtonIcon>

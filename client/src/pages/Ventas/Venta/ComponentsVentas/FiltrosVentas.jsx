@@ -16,6 +16,7 @@ import { handleUpdateMultiple } from "../../Data/update_venta_multiple";
 import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
 import PDFModal from "../hook/PDFModal"; 
+import { usePermisos } from '@/routes';
 
 const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const { comprobantes } = useComprobanteData();
@@ -37,6 +38,8 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
      setRazon(event.target.value);
    };
  
+   const { hasCreatePermission } = usePermisos();
+
     const handleChanger = (event) => {
      setNumC(event.target.value);
    };
@@ -147,11 +150,12 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
               value={numC}
               onChange={handleChanger}
               style={{
-              border: "none",
-              boxShadow: "none",
-              outline: "none",
+                border: "none",
+                boxShadow: "none",
+                outline: "none",
               }}
-              /></div>
+            />
+          </div>
           <div className="flex input-wrapper">
             <Input
               type="text"
@@ -238,26 +242,37 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
               </DropdownMenu>
             </Dropdown>
           </button>
-          <Link
-            to="/ventas/registro_venta"
-            className="mr-0 btn btn-nueva-venta"
-          >
-            <MdAddCircleOutline
-              className="inline-block mr-2"
-              style={{ fontSize: "25px" }}
-            />
-            Nueva venta
-          </Link>
+          {hasCreatePermission ? (
+            <Link
+              to="/ventas/registro_venta"
+              className="mr-0 btn btn-nueva-venta"
+            >
+              <MdAddCircleOutline
+                className="inline-block mr-2"
+                style={{ fontSize: "25px" }}
+              />
+              Nueva venta
+            </Link>
+          ) : (
+            <button
+              disabled
+              className="mr-0 btn btn-nueva-venta opacity-50 cursor-not-allowed"
+            >
+              <MdAddCircleOutline
+                className="inline-block mr-2"
+                style={{ fontSize: "25px" }}
+              />
+              Nueva venta
+            </button>
+          )}
         </div>
       </div>
 
       {/* Modal para confirmación de descarga de PDF */}
       <PDFModal
         isOpen={modalOpen}
-        //modalTitle={modalTitle}
         onClose={() => setModalOpen(false)}
         onConfirm={() => {
-          //console.log(`Descargando ${modalTitle}...`);
           setModalOpen(false);
         }}
       />

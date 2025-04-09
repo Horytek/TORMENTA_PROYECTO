@@ -6,12 +6,15 @@ import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import SubcategoriaForm from "./SubcategoriaForm";
 import ShowSubcategorias from "./ShowSubcategoria";
+import { usePermisos } from '@/routes';
 
 function Subcategorias() {
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
   };
+
+  const { hasCreatePermission } = usePermisos();
 
   const [searchTerm, setSearchTerm] = useState("");
   const handleSearchChange = (e) => {
@@ -59,6 +62,9 @@ function Subcategorias() {
             color={"#4069E4"}
             icon={<FaPlus style={{ fontSize: "25px" }} />}
             onClick={handleModalAdd}
+            disabled={!hasCreatePermission}
+            className={!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}
+
           >
             Agregar subcategoria
           </ButtonIcon>

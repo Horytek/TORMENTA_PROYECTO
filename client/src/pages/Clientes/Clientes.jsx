@@ -8,8 +8,13 @@ import { Button } from "@nextui-org/button";
 import TablaCliente from '@/pages/Clientes/ComponentsClientes/TablaCliente';
 import useGetClientes from './data/getClientes';
 import AddClientModal from './ComponentsClientes/AddClient';
+import { usePermisos } from '@/routes';
+
 
 function Clientes() {
+
+  const { hasCreatePermission } = usePermisos();
+
   // Estado de Modal de Agregar Cliente
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => {
@@ -95,6 +100,8 @@ function Clientes() {
             color="primary"
             endContent={<FaPlus style={{ fontSize: '25px' }} />}
             onClick={handleModalAdd}
+            disabled={!hasCreatePermission}
+            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
           >
             Agregar cliente
           </Button>

@@ -19,6 +19,8 @@ import useCliente from "../data/useCliente";
 import deactivateCliente from "../data/deactivateCliente.js";
 import { toast, Toaster } from "react-hot-toast";
 import ViewClientModal from "./ShowClient";
+import { usePermisos } from '@/routes';
+
 
 const TablaCliente = ({
     clientes,
@@ -42,6 +44,8 @@ const TablaCliente = ({
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [actionType, setActionType] = useState(null);
     const [targetClient, setTargetClient] = useState(null);
+
+    const { hasEditPermission, hasDeletePermission } = usePermisos();
 
     const { deleteClient, deleteLoading } = useCliente();
     // Instanciamos el hook para desactivar clientes
@@ -103,7 +107,8 @@ const TablaCliente = ({
                             }}
                             className="px-1 py-0.5 text-xl text-yellow-400 cursor-pointer hover:text-yellow-500"
                         >
-                            <FaEdit className="h-6 w-4" />
+                            <FaEdit className={`h-6 w-4 ${
+                                !hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}`} />
                         </span>
                         <span
                             onClick={() => {
@@ -131,7 +136,8 @@ const TablaCliente = ({
                             }}
                             className="px-1 py-0.5 text-xl text-red-500 cursor-pointer hover:text-red-600"
                         >
-                            <FaTrash className="h-6 w-4" />
+                            <FaTrash className={`h-6 w-4 ${
+                                !hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}`} />
                         </span>
                     </div>
                 );

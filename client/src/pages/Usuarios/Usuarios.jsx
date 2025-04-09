@@ -7,6 +7,7 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { ShowUsuarios } from '@/pages/Usuarios/ShowUsuarios';
 import {Button, ButtonGroup} from "@nextui-org/button";
+import { usePermisos } from '@/routes';
 
 function Usuarios() {
   
@@ -15,6 +16,7 @@ function Usuarios() {
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
   };
+  const { hasCreatePermission } = usePermisos();
 
   // Input de búsqueda de usuarios
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +46,9 @@ function Usuarios() {
           />
         </div>
         <div className="flex gap-5">
-          <Button color="primary" endContent={<FaPlus style={{ fontSize: '25px' }} />} onClick={handleModalAdd}>
+          <Button color="primary" endContent={<FaPlus style={{ fontSize: '25px' }} />} onClick={handleModalAdd}
+           disabled={!hasCreatePermission}
+           className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}>
           Agregar usuario
       </Button>
         </div>

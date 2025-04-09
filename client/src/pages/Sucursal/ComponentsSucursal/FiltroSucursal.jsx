@@ -3,6 +3,9 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { Button, Input, Select, SelectItem } from '@nextui-org/react';
 import AgregarSucursal from './Modals/AgregarSucursal';
+import { usePermisos } from '@/routes';
+
+
 
 const FiltrosSucursal = ({ onFiltersChange }) => {
     const [estado, setEstado] = useState('');
@@ -26,6 +29,9 @@ const FiltrosSucursal = ({ onFiltersChange }) => {
         setIsModalOpenSucursal(true);
     };
 
+    const { hasCreatePermission } = usePermisos();
+
+
     const closeModalSucursal = () => {
         setIsModalOpenSucursal(false);
     };
@@ -47,7 +53,7 @@ const FiltrosSucursal = ({ onFiltersChange }) => {
                                 border: "none",
                                 boxShadow: "none",
                                 outline: "none",
-                              }}
+                            }}
                         />
                     </div>
                 </div>
@@ -67,7 +73,11 @@ const FiltrosSucursal = ({ onFiltersChange }) => {
                     </Select>
                 </div>
 
-                <Button color="primary" onPress={openModalSucursal} className="flex items-center gap-2">
+                <Button color="primary"
+                    onPress={hasCreatePermission ? openModalSucursal : undefined}
+                    disabled={!hasCreatePermission}
+                    className={`flex items-center gap-2 ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
                     <FaPlus className="text-lg" /> Nueva sucursal
                 </Button>
             </div>

@@ -6,6 +6,7 @@ import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import { ShowCategorias } from "./ShowCategorias";
+import { usePermisos } from '@/routes';
 
 function Categorias() {
   const [activeAdd, setModalOpen] = useState(false);
@@ -17,6 +18,9 @@ function Categorias() {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
+
+  const { hasCreatePermission } = usePermisos();
+
   const handleClearSearch = () => {
     setSearchTerm(""); 
   };
@@ -57,6 +61,8 @@ function Categorias() {
             color={"#4069E4"}
             icon={<FaPlus style={{ fontSize: "25px" }} />}
             onClick={handleModalAdd}
+            disabled={!hasCreatePermission}
+            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
           >
             Crear categoría
           </ButtonIcon>
