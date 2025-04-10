@@ -108,7 +108,7 @@ function Dashboard() {
         key="desarrollador"
         path="/desarrollador" 
         element={
-          <RouteProtectedRol allowedRoles={[DESARROLLO_ROL, ADMIN_ROL]}>
+          <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
             <Global />
           </RouteProtectedRol>
         } 
