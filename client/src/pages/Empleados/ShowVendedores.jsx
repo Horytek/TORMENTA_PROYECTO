@@ -7,6 +7,7 @@ import { getVendedores, deactivateVendedor, getVendedor } from '@/services/vende
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import { VscDebugDisconnect } from "react-icons/vsc";
 import { PiPlugsConnected } from "react-icons/pi";
+import { usePermisos } from '@/routes';
 
 export function ShowVendedores({ searchTerm }) {
     const [vendedores, setVendedores] = useState([]);
@@ -16,6 +17,8 @@ export function ShowVendedores({ searchTerm }) {
     const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
     const [selectedRow, setSelectedRow] = useState(null);
     const [selectedDni, setSelectedDni] = useState(null);
+    const { hasDeletePermission } = usePermisos();
+    const { hasEditPermission } = usePermisos();
     
     useEffect(() => {
         getUsers();
@@ -116,12 +119,18 @@ export function ShowVendedores({ searchTerm }) {
                                 <TableCell>
                                     <div className="flex items-center justify-center gap-2">
                                         <Tooltip content="Editar">
-                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleEditModal(vendedor.dni)}>
+                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleEditModal(vendedor.dni)}
+                                                disabled={!hasEditPermission}
+                                                className={!hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}
+                                                >
                                                 <MdEdit />
                                             </Button>
                                         </Tooltip>
                                         <Tooltip content="Eliminar">
-                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(vendedor.nombre, vendedor.dni)}>
+                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(vendedor.nombre, vendedor.dni)}
+                                                disabled={!hasDeletePermission}
+                                                className={!hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}
+                                                >
                                                 <FaTrash />
                                             </Button>
                                         </Tooltip>

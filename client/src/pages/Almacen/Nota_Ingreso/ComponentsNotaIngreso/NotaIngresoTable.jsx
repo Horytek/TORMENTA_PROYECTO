@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip } from "@nextui-org/react";
@@ -12,6 +12,7 @@ import img from '@/assets/icono.ico'; // Asegúrate de ajustar la ruta
 import html2pdf from 'html2pdf.js';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import { usePermisos } from '@/routes';
 
 const TablaIngresos = ({ ingresos }) => {
 
@@ -109,7 +110,23 @@ const TablaIngresos = ({ ingresos }) => {
   };
 
 
+  const permissions = usePermisos();
 
+  useEffect(() => {
+    console.log("Permissions in TablaIngresos:", permissions);
+  }, [permissions]);
+
+  const { 
+    hasGeneratePermission = false, 
+    hasDeactivatePermission = false 
+  } = permissions || {};
+
+
+  // More focused debugging
+  console.log("Specific permissions:",  {
+    generate: permissions.hasGeneratePermission,
+    deactivate: permissions.hasDeactivatePermission
+  });
 
   const [expandedRow, setExpandedRow] = useState(null);
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
@@ -223,12 +240,14 @@ const TablaIngresos = ({ ingresos }) => {
                   <TableCell>
                     <div className="flex gap-2">
                       <FaFilePdf
-                        className="text-red-600 cursor-pointer"
-                        onClick={() => handleSelectChange2({ target: { value: 'imprimir2' } }, ingreso.id)}
+                        className={`${hasGeneratePermission ? "text-red-600 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
+                        onClick={() => hasGeneratePermission ? handleSelectChange2({ target: { value: 'imprimir2' } }, ingreso.id) : null}
+                        title={hasGeneratePermission ? "Generar PDF" : "No tiene permisos para generar PDFs"}
                       />
                       <TiDeleteOutline
-                        className="text-red-600 cursor-pointer"
-                        onClick={() => handleSelectChange2({ target: { value: 'anular' } }, ingreso.id)}
+                        className={`${hasDeactivatePermission ? "text-red-600 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
+                        onClick={() => hasDeactivatePermission ? handleSelectChange2({ target: { value: 'anular' } }, ingreso.id) : null}
+                        title={hasDeactivatePermission ? "Anular nota" : "No tiene permisos para anular notas"}
                       />
                     </div>
                   </TableCell>

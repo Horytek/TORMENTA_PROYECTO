@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
+import { Tooltip } from "@nextui-org/react";
+import { usePermisos } from "@/routes";
 import {
   getMarcas as fetchMarcas,
   getMarca,
@@ -20,6 +22,9 @@ export function ShowMarcas({ searchTerm }) {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const productosPerPage = 10;
+
+  // Importar los permisos necesarios
+  const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
 
   useEffect(() => {
     loadMarcas();
@@ -138,41 +143,31 @@ export function ShowMarcas({ searchTerm }) {
                   </td>
                   <td className="py-4 text-center">
                     <div className="flex justify-center items-center">
-                      <button
-                        className="px-2 py-1 text-yellow-400 text-xl"
-                        onClick={() =>
-                          handleOpenEditModal(
-                            marca.id_marca,
-                            marca.nom_marca,
-                            marca.estado_marca
-                          )
-                        }
-                      >
-                        <MdEdit />
-                      </button>
-                      <button
-                        className="px-2 py-1 text-red-500"
-                        onClick={() =>
-                          handleOpenConfirmationModal(
-                            marca.nom_marca,
-                            marca.id_marca
-                          )
-                        }
-                      >
-                        <FaTrash />
-                      </button>
-                      <button
-                        className="px-3 py-1 text-red-600"
-                        style={{ fontSize: "20px" }}
-                        onClick={() =>
-                          handleOpenDeactivationModal(
-                            marca.nom_marca,
-                            marca.id_marca
-                          )
-                        }
-                      >
-                        <MdDoNotDisturbAlt />
-                      </button>
+                      <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+                        <button
+                          className={`px-2 py-1 ${hasEditPermission ? "text-yellow-400" : "text-gray-400"} text-xl ${!hasEditPermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          onClick={() => hasEditPermission ? handleOpenEditModal(marca.id_marca, marca.nom_marca, marca.estado_marca) : null}
+                        >
+                          <MdEdit />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+                        <button
+                          className={`px-2 py-1 ${hasDeletePermission ? "text-red-500" : "text-gray-400"} ${!hasDeletePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          onClick={() => hasDeletePermission ? handleOpenConfirmationModal(marca.nom_marca, marca.id_marca) : null}
+                        >
+                          <FaTrash />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={hasDeactivatePermission ? "Desactivar" : "No tiene permisos para desactivar"}>
+                        <button
+                          className={`px-3 py-1 ${hasDeactivatePermission ? "text-red-600" : "text-gray-400"} ${!hasDeactivatePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          style={{ fontSize: "20px" }}
+                          onClick={() => hasDeactivatePermission ? handleOpenDeactivationModal(marca.nom_marca, marca.id_marca) : null}
+                        >
+                          <MdDoNotDisturbAlt />
+                        </button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>

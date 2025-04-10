@@ -5,6 +5,7 @@ import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'rea
 import ConfirmationModal from './Modals/ConfirmationModal';
 import anularNota from '../data/anular_nota_salida';
 import { Toaster, toast } from "react-hot-toast";
+import { usePermisos } from '@/routes';
 import html2pdf from 'html2pdf.js';
 const NotaSalidaTable = forwardRef(({ salidas }, ref)  => {
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
@@ -65,6 +66,8 @@ const NotaSalidaTable = forwardRef(({ salidas }, ref)  => {
   const handleDetailClick = (id) => {
     window.open(`/almacen/kardex/historico/${id}`, '_blank');
   };
+
+  const { hasGeneratePermission , hasDeactivatePermission } = usePermisos();
 
     const handleConfirmImprimir2 = () => {
       const notSeleccionada = salidas.find((salida) => salida.id === notaIdToAnular); // Encuentra la guía seleccionada por ID
@@ -319,9 +322,17 @@ useImperativeHandle(ref, () => ({
                 <TableCell>{salida.usuario}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <FaFilePdf className="text-red-600 cursor-pointer" onClick={() => handleImprimirClick(salida.id)} />
-                    <TiDeleteOutline className="text-red-600 cursor-pointer" onClick={() => handleAnularClick(salida.id)} />
-                  </div>
+                    <FaFilePdf 
+                      className={`${hasGeneratePermission ? "text-red-600 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`} 
+                      onClick={() => hasGeneratePermission ? handleImprimirClick(salida.id) : null}
+                      title={hasGeneratePermission ? "Generar PDF" : "No tiene permisos para generar PDFs"}
+                    />
+                    <TiDeleteOutline 
+                      className={`${hasDeactivatePermission ? "text-red-600 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`} 
+                      onClick={() => hasDeactivatePermission ? handleAnularClick(salida.id) : null}
+                      title={hasDeactivatePermission ? "Anular nota" : "No tiene permisos para anular notas"}
+                    />                  
+                    </div>
                 </TableCell>
               </TableRow>
             ))}

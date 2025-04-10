@@ -2,21 +2,21 @@ import { useState } from 'react';
 import './Guia_Remision.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
-import { Pagination } from "@nextui-org/react";
+import { Pagination, Tooltip } from "@nextui-org/react";
 import TablaGuias from './ComponentsGuias/GuiasTable';
 import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
-import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import useGuiasData from '../data/data_guia';
+import { usePermisos } from '@/routes';
 
 
 const Guias = () => {
   const [filters, setFilters] = useState({});
   const { guias, removeGuia, currentPage, setCurrentPage, totalPages, guiasPerPage, setGuiasPerPage } = useGuiasData(filters);
 
-
   const [selectedRowId, setSelectedRowId] = useState(null);
 
-
+  const navigate = useNavigate();
 
   const onPageChange = (page) => {
     setCurrentPage(page);
@@ -31,6 +31,8 @@ const Guias = () => {
     });
   };
 
+  const { hasCreatePermission } = usePermisos();
+
   return (
     <div>
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacen', href: '/almacen' }, { name: 'Guias de Remision', href: '/almacen/guia_remision' }]} />
@@ -44,10 +46,16 @@ const Guias = () => {
       <br />
       <div className="flex justify-between items-center mb-4">
         <FiltrosGuias onFiltersChange={handleFiltersChange} />
-        <Link to="/almacen/guia_remision/registro_guia" className="btn btn-nueva-guia">
-          <MdAddCircleOutline className="inline-block mr-2" style={{ fontSize: '25px' }} />
-          Nueva guia
-        </Link>
+        <Tooltip content={hasCreatePermission ? "Nueva guía" : "No tiene permisos para crear guías"}>
+          <button 
+            className={`btn btn-nueva-guia ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={() => hasCreatePermission ? navigate("/almacen/guia_remision/registro_guia") : null}
+            disabled={!hasCreatePermission}
+          >
+            <MdAddCircleOutline className="inline-block mr-2" style={{ fontSize: '25px' }} />
+            Nueva guía
+          </button>
+        </Tooltip>
       </div>
 
       <TablaGuias

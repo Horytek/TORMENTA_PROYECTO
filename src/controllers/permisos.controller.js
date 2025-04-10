@@ -129,6 +129,7 @@ const savePermisos = async (req, res) => {
         );
         
         if (permisos && permisos.length > 0) {
+            console.log("Permissions to save:", permisos);
             for (const p of permisos) {
                 await connection.query(`
                     INSERT INTO permisos
@@ -212,7 +213,7 @@ const checkPermiso = async (req, res) => {
       }
       
       const [permisos] = await connection.query(
-        `SELECT ver, crear, editar, eliminar FROM permisos 
+        `SELECT ver, crear, editar, eliminar, desactivar, generar FROM permisos 
          WHERE id_rol = ? AND id_modulo = ? AND (id_submodulo = ? OR (id_submodulo IS NULL AND ? IS NULL))`,
         [idRol, idModulo, idSubmodulo, idSubmodulo]
       );
@@ -221,9 +222,11 @@ const checkPermiso = async (req, res) => {
       const hasCreatePermission = permisos.length > 0 && permisos[0].crear === 1;
       const hasEditPermission = permisos.length > 0 && permisos[0].editar === 1;
       const hasDeletePermission = permisos.length > 0 && permisos[0].eliminar === 1;
+      const hasGeneratePermission = permisos.length > 0 && permisos[0].generar === 1;
+      const hasDeactivatePermission = permisos.length > 0 && permisos[0].desactivar === 1;
 
       
-      res.json({ hasPermission, hasCreatePermission, hasEditPermission, hasDeletePermission });
+      res.json({ hasPermission, hasCreatePermission, hasEditPermission, hasDeletePermission, hasGeneratePermission, hasDeactivatePermission });
     } catch (error) {
       console.error("Error checking permission:", error);
       res.status(500).json({ 

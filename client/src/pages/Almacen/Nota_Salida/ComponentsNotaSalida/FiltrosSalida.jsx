@@ -11,6 +11,8 @@ import { Input } from "@nextui-org/input";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
 import { CgOptions } from "react-icons/cg";
 import { FaFilePdf } from "react-icons/fa";
+import { usePermisos } from '@/routes';
+
 
 const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDFOptionClick }) => {
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
@@ -111,6 +113,8 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
             onPDFOptionClick();
         }
     };
+
+    const { hasCreatePermission } = usePermisos();
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">

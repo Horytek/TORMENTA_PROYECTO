@@ -18,6 +18,7 @@ import { getRoles, deleteRol, getRol } from '@/services/rol.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import UsuariosForm from './UsuariosForm';
 import Permisos from './Permisos';
+import { usePermisos } from '@/routes';
 
 export function ShowUsuarios({ searchTerm }) {
   // Add tab state
@@ -109,6 +110,8 @@ export function ShowUsuarios({ searchTerm }) {
     }));
   };
 
+  const { hasEditPermission, hasDeletePermission } = usePermisos();
+
   const renderCell = useCallback((usuario, columnKey) => {
     switch (columnKey) {
       case "id":
@@ -128,22 +131,24 @@ export function ShowUsuarios({ searchTerm }) {
       case "acciones":
         return (
           <div className="flex justify-center items-center gap-2">
-            <Tooltip content="Editar">
+            <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
               <Button
                 isIconOnly
                 variant="light"
-                color="warning"
-                onClick={() => handleModalEdit(usuario.id_rol)}
+                color={hasEditPermission ? "warning" : "default"}
+                onClick={() => hasEditPermission ? handleModalEdit(usuario.id_rol) : null}
+                className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
               >
                 <MdEdit />
               </Button>
             </Tooltip>
-            <Tooltip content="Eliminar">
+            <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
               <Button
                 isIconOnly
                 variant="light"
-                color="danger"
-                onClick={() => handleOpenConfirmationModal(usuario.nom_rol, usuario.id_rol)}
+                color={hasDeletePermission ? "danger" : "default"}
+                onClick={() => hasDeletePermission ? handleOpenConfirmationModal(usuario.nom_rol, usuario.id_rol) : null}
+                className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
               >
                 <FaTrash />
               </Button>

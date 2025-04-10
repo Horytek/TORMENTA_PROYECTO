@@ -7,6 +7,8 @@ import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { ShowUsuarios } from '@/pages/Roles/ShowUsuarios';
 import {Button, ButtonGroup} from "@nextui-org/button";
+import { usePermisos } from '@/routes';
+import { Tooltip } from "@nextui-org/tooltip";
 
 function Usuarios() {
   
@@ -21,6 +23,8 @@ function Usuarios() {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
+
+  const { hasCreatePermission } = usePermisos();
 
   return (
     <div>
@@ -44,9 +48,16 @@ function Usuarios() {
           />
         </div>
         <div className="flex gap-5">
-          <Button color="primary" endContent={<FaPlus style={{ fontSize: '25px' }} />} onClick={handleModalAdd}>
-          Agregar rol
-      </Button>
+          <Tooltip content={hasCreatePermission ? "Agregar rol" : "No tiene permisos para agregar roles"}>
+            <Button 
+              color={hasCreatePermission ? "primary" : "default"} 
+              endContent={<FaPlus style={{ fontSize: '25px' }} />} 
+              onClick={() => hasCreatePermission ? handleModalAdd() : null}
+              className={hasCreatePermission ? "" : "opacity-50 cursor-not-allowed"}
+            >
+              Agregar rol
+            </Button>
+          </Tooltip>
         </div>
       </div>
       <div>

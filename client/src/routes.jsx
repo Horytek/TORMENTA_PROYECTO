@@ -11,7 +11,9 @@ export const PermisosContext = createContext({
   hasPermission: false,
   hasCreatePermission: false,
   hasEditPermission: false,
-  hasDeletePermission: false
+  hasDeletePermission: false,
+  hasGeneratePermission: false,
+  hasDeactivatePermission: false,
 });
 
 // Hook para usar los permisos
@@ -64,7 +66,9 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
     hasPermission: false,
     hasCreatePermission: false,
     hasEditPermission: false,
-    hasDeletePermission: false
+    hasDeletePermission: false,
+    hasGeneratePermission: false,
+    hasDeactivatePermission: false,
   });
 
   const checkPermission = debounce(async () => {
@@ -74,7 +78,9 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
         hasPermission: false,
         hasCreatePermission: false,
         hasEditPermission: false,
-        hasDeletePermission: false
+        hasDeletePermission: false,
+        hasGeneratePermission: false,
+        hasDeactivatePermission: false,
       });
       setLoading(false);
       return;
@@ -87,7 +93,10 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
           hasPermission: true,
           hasCreatePermission: true,
           hasEditPermission: true,
-          hasDeletePermission: true
+          hasDeletePermission: true,
+          hasGeneratePermission: true,
+          hasDeactivatePermission: true,
+          
         });
         setLoading(false);
         return;
@@ -106,7 +115,9 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
           hasPermission: false,
           hasCreatePermission: false,
           hasEditPermission: false,
-          hasDeletePermission: false
+          hasDeletePermission: false,
+          hasGeneratePermission: false,
+          hasDeactivatePermission: false,
         });
         setLoading(false);
         return;
@@ -129,7 +140,10 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
         hasPermission: hasAccess,
         hasCreatePermission: response.data.hasCreatePermission || false,
         hasEditPermission: response.data.hasEditPermission || false,
-        hasDeletePermission: response.data.hasDeletePermission || false
+        hasDeletePermission: response.data.hasDeletePermission || false,
+        hasGeneratePermission: response.data.hasGeneratePermission || false,
+        hasDeactivatePermission: response.data.hasDeactivatePermission || false,
+        
       });
       
       if (!hasAccess) {
@@ -151,7 +165,9 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
         hasPermission: false,
         hasCreatePermission: false,
         hasEditPermission: false,
-        hasDeletePermission: false
+        hasDeletePermission: false,
+        hasGeneratePermission: false,
+        hasDeactivatePermission: false,
       });
       
       toast.error("Error al verificar permisos", {

@@ -5,6 +5,8 @@ import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { getDestinatarios, getDestinatario } from '@/services/destinatario.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
+import { usePermisos } from '@/routes';
+
 
 export function ShowDestinatarios({ searchTerm }) {
     const [destinatarios, setDestinatarios] = useState([]);
@@ -15,6 +17,8 @@ export function ShowDestinatarios({ searchTerm }) {
     const [selectedDoc, setSelectedDoc] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [initialData, setInitialData] = useState(null);
+    const { hasDeletePermission } = usePermisos();
+    const { hasEditPermission } = usePermisos();
 
     useEffect(() => {
         fetchDestinatarios();
@@ -106,12 +110,16 @@ export function ShowDestinatarios({ searchTerm }) {
                                 <TableCell>
                                     <div className="flex items-center justify-center gap-2">
                                         <Tooltip content="Editar">
-                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleEditModal(destinatario.documento)}>
+                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleEditModal(destinatario.documento)}
+                                                disabled={!hasEditPermission}
+                                                className={!hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}>
                                                 <MdEdit />
                                             </Button>
                                         </Tooltip>
                                         <Tooltip content="Eliminar">
-                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(destinatario.destinatario, destinatario.documento)}>
+                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(destinatario.destinatario, destinatario.documento)}
+                                                disabled={!hasDeletePermission}
+                                                className={!hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}>
                                                 <FaTrash />
                                             </Button>
                                         </Tooltip>

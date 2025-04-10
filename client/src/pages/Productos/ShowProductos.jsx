@@ -6,6 +6,7 @@ import { getProductos, deleteProducto, getProducto } from '@/services/productos.
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import ProductosForm from './ProductosForm';
 import Barcode from '../../components/Barcode/Barcode';
+import { usePermisos } from '@/routes';
 
 export function ShowProductos({ searchTerm }) {
   
@@ -101,6 +102,8 @@ export function ShowProductos({ searchTerm }) {
         document.body.removeChild(a);
     };
 
+    const { hasEditPermission, hasDeletePermission } = usePermisos();
+
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
@@ -144,13 +147,25 @@ export function ShowProductos({ searchTerm }) {
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center justify-center gap-2">
-                                        <Tooltip content="Editar">
-                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleModalEdit(producto.id_producto)}>
+                                        <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+                                            <Button 
+                                                isIconOnly 
+                                                variant="light" 
+                                                color={hasEditPermission ? "warning" : "default"}
+                                                onClick={() => hasEditPermission ? handleModalEdit(producto.id_producto) : null}
+                                                className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                                            >
                                                 <MdEdit />
                                             </Button>
                                         </Tooltip>
-                                        <Tooltip content="Eliminar">
-                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(producto.descripcion, producto.id_producto)}>
+                                        <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+                                            <Button 
+                                                isIconOnly 
+                                                variant="light" 
+                                                color={hasDeletePermission ? "danger" : "default"}
+                                                onClick={() => hasDeletePermission ? handleOpenConfirmationModal(producto.descripcion, producto.id_producto) : null}
+                                                className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                                            >
                                                 <FaTrash />
                                             </Button>
                                         </Tooltip>

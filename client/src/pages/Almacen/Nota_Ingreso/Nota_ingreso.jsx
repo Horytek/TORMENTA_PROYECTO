@@ -5,6 +5,7 @@ import getIngresosData from './data/data_ingreso';
 import useAlmacenData from './data/data_almacen_ingreso';
 import './Nota_ingreso.css';
 import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
+import { RoutePermission } from '@/routes';
 
 const Ingresos = () => {
   const [filters, setFilters] = useState({
@@ -78,17 +79,12 @@ const Ingresos = () => {
           </tbody>
         </table>
       </div>
-      <FiltrosIngresos almacenes={almacenes} onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange}  ingresos={ingresos} almacenSseleccionado={almacenSeleccionado} />
+      <FiltrosIngresos almacenes={almacenes} onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange} ingresos={ingresos} almacenSseleccionado={almacenSeleccionado} />
       <div>
-      <TablaIngresos ingresos={ingresos} />
+        <RoutePermission idModulo={10} idSubmodulo={10}>
+          <TablaIngresos ingresos={ingresos} />
+        </RoutePermission>
       </div>
-      
-
-      {/* <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
-        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>
-          {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL:'}
-        </h1>
-      </div> */}
     </div>
   );
 };

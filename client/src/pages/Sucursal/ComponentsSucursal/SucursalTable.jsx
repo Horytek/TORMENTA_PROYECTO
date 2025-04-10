@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button, Pagination, Tooltip, Select, SelectItem } from '@nextui-org/react';
 import { Toaster, toast } from "react-hot-toast";
 import EditarSucursal from './Modals/EditarSucursal';
-import { FaEdit} from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import editarSucursal from '../data/edit_sucursal';
 import './SucursalTable.css';
+import { usePermisos  } from '@/routes';
 
 const TablaSucursal = forwardRef(({ sucursales }, ref) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,6 +53,8 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
     }
   };
 
+  const { hasEditPermission } = usePermisos();
+
   const renderSucursalRow = (sucursal) => (
     <TableRow key={sucursal.id} className="border-none">
       <TableCell className="text-center">{sucursal.nombre_vendedor}</TableCell>
@@ -69,9 +71,15 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
 
       </TableCell>
       <TableCell className="text-center">
-        <Tooltip content="Editar">
-          <Button isIconOnly variant="light" color="warning" onClick={() => handleEditarClick(sucursal)}>
-                    <MdEdit  className="w-4 h-4" />
+        <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+          <Button 
+            isIconOnly 
+            variant="light" 
+            color={hasEditPermission ? "warning" : "default"}
+            onClick={() => hasEditPermission ? handleEditarClick(sucursal) : null}
+            className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+          >
+            <MdEdit className="w-4 h-4" />
           </Button>
         </Tooltip>
       </TableCell>

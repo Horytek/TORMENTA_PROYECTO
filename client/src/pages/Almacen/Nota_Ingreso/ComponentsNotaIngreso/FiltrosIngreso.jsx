@@ -12,8 +12,9 @@ import { Input } from "@nextui-org/input";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
 import { CgOptions } from "react-icons/cg";
 import { FaFilePdf } from "react-icons/fa";
-import { usePermisos } from '@/routes';
 import 'jspdf-autotable';
+import { usePermisos } from '@/routes';
+
 const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ingresos, almacenSseleccionado }) => {
 
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
@@ -31,6 +32,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
         }
     }, [almacenes]);
 
+
     const [isModalOpenPDF, setIsModalOpenPDF] = useState(false);
     // const today = new Date();
     // const todayDate = parseDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
@@ -44,19 +46,19 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     const [usuario, setUsuario] = useState('');
     const [documento, setDocumento] = useState('');
 
-        const sucursalSeleccionada = localStorage.getItem('sur');
-        const rolUsuario = localStorage.getItem('rol');
-      
-        // Filtrar almacenes según la sucursal seleccionada si el rol es diferente de 1
-        const almacenesFiltrados =
-          rolUsuario !== '1'
+    const sucursalSeleccionada = localStorage.getItem('sur');
+    const rolUsuario = localStorage.getItem('rol');
+
+    // Filtrar almacenes según la sucursal seleccionada si el rol es diferente de 1
+    const almacenesFiltrados =
+        rolUsuario !== '1'
             ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
             : almacenes;
 
     const applyFilters = useCallback(() => {
         const date_i = `${value.start.year}-${String(value.start.month).padStart(2, '0')}-${String(value.start.day).padStart(2, '0')}`;
         const date_e = `${value.end.year}-${String(value.end.month).padStart(2, '0')}-${String(value.end.day).padStart(2, '0')}`;
-    
+
         const filtros = {
             fecha_i: date_i,
             fecha_e: date_e,
@@ -66,7 +68,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
             documento: documento,
             estado: estado !== '%' ? estado : undefined, // No incluir el filtro si es '%'
         };
-    
+
         onFiltersChange(filtros);
     }, [value, razon, almacenSeleccionado, usuario, documento, estado, onFiltersChange]);
 
@@ -91,7 +93,6 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     const closeModalPDF = () => {
         setIsModalOpenPDF(false);
     };
-
 
 
     const handleConfirmPDF = () => {
@@ -188,11 +189,16 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
         html2pdf().from(htmlContent).set(options).save();
     };
 
+    
+    const { hasCreatePermission } = usePermisos();
+
+
+
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
             <div className="flex items-center gap-2">
                 <h6 className='font-bold'>Almacén:</h6>
-                    <Select
+                <Select
                     id="almacen"
                     selectedKeys={[almacenSeleccionado?.id?.toString() || '%']}
                     onChange={handleAlmacenChange}
@@ -301,9 +307,12 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                         </DropdownMenu>
                     </Dropdown>
                 </button>
-                
+
                 <Link to="/almacen/nota_ingreso/registro_ingreso">
-                    <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}>
+                    <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}
+                        disabled={!hasCreatePermission}
+                        className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}>
+
                         Nota de ingreso
                     </ButtonIcon>
                 </Link>

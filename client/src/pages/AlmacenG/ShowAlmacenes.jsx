@@ -5,6 +5,7 @@ import { FaTrash } from "react-icons/fa";
 import { getAlmacenes, deleteAlmacen } from '@/services/almacen.services';
 import AlmacenesForm from './AlmacenesForm';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
+import { usePermisos } from '@/routes';
 
 export function ShowAlmacenes({ searchTerm }) {
     const [almacenes, setAlmacenes] = useState([]);
@@ -70,6 +71,8 @@ export function ShowAlmacenes({ searchTerm }) {
         setSelectedAlmacen(null);
     };
 
+    const { hasEditPermission, hasDeletePermission } = usePermisos();
+
     return (
         <div>
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
@@ -96,13 +99,25 @@ export function ShowAlmacenes({ searchTerm }) {
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center justify-center gap-2">
-                                        <Tooltip content="Editar">
-                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleModalEdit(almacen)}>
+                                        <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+                                            <Button 
+                                                isIconOnly 
+                                                variant="light" 
+                                                color={hasEditPermission ? "warning" : "default"}
+                                                onClick={() => hasEditPermission ? handleModalEdit(almacen) : null}
+                                                className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                                            >
                                                 <MdEdit />
                                             </Button>
                                         </Tooltip>
-                                        <Tooltip content="Eliminar">
-                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen)}>
+                                        <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+                                            <Button 
+                                                isIconOnly 
+                                                variant="light" 
+                                                color={hasDeletePermission ? "danger" : "default"}
+                                                onClick={() => hasDeletePermission ? handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen) : null}
+                                                className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                                            >
                                                 <FaTrash />
                                             </Button>
                                         </Tooltip>

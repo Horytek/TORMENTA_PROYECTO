@@ -18,6 +18,7 @@ import { RouteProtectedRol, RoutePermission } from '../../routes';
 
 const Global = lazy(() => import('@/pages/Global/Global'));
 const Permisos = lazy(() => import('@/pages/Roles/Permisos'));
+const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
@@ -122,6 +123,20 @@ function Dashboard() {
           <RouteProtectedRol allowedRoles={[ADMIN_ROL, DESARROLLO_ROL]}>
             <Permisos />
           </RouteProtectedRol>
+        } 
+      />
+    );
+
+    dynamicRoutes.push(
+      <Route 
+        key="historico-with-id"
+        path="/almacen/kardex/historico/:id" 
+        element={
+          <RoutePermission idModulo={10} idSubmodulo={16}>
+            <Suspense fallback={<div>Cargando...</div>}>
+              <Historico />
+            </Suspense>
+          </RoutePermission>
         } 
       />
     );

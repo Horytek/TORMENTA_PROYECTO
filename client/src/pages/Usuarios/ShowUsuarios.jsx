@@ -18,6 +18,7 @@ import { getUsuarios, deleteUsuario, getUsuario } from '@/services/usuario.servi
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import { VscDebugDisconnect } from "react-icons/vsc";
 import { PiPlugsConnected } from "react-icons/pi";
+import { usePermisos } from '@/routes';
 
 export function ShowUsuarios({ searchTerm }) {
   
@@ -103,6 +104,8 @@ export function ShowUsuarios({ searchTerm }) {
         }));
     };
 
+    const { hasEditPermission, hasDeletePermission } = usePermisos();
+
     const renderCell = useCallback((usuario, columnKey) => {
         switch (columnKey) {
             case "rol":
@@ -150,13 +153,25 @@ export function ShowUsuarios({ searchTerm }) {
             case "acciones":
                 return (
                     <div className="flex items-center justify-center gap-2">
-                        <Tooltip content="Editar">
-                            <Button isIconOnly variant="light" color="warning" onClick={() => handleModalEdit(usuario.id_usuario)}>
+                        <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+                            <Button 
+                                isIconOnly 
+                                variant="light" 
+                                color={hasEditPermission ? "warning" : "default"}
+                                onClick={() => hasEditPermission ? handleModalEdit(usuario.id_usuario) : null}
+                                className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                            >
                                 <MdEdit />
                             </Button>
                         </Tooltip>
-                        <Tooltip content="Eliminar">
-                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(usuario.usua, usuario.id_usuario)}>
+                        <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+                            <Button 
+                                isIconOnly 
+                                variant="light" 
+                                color={hasDeletePermission ? "danger" : "default"}
+                                onClick={() => hasDeletePermission ? handleOpenConfirmationModal(usuario.usua, usuario.id_usuario) : null}
+                                className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                            >
                                 <FaTrash />
                             </Button>
                         </Tooltip>
@@ -165,7 +180,7 @@ export function ShowUsuarios({ searchTerm }) {
             default:
                 return usuario[columnKey];
         }
-    }, [showPassword]);
+    }, [showPassword, hasEditPermission, hasDeletePermission]);
 
     return (
         <div>

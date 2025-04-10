@@ -9,6 +9,7 @@ import {
     Pagination,
     Select,
     SelectItem,
+    Tooltip,
 } from "@nextui-org/react";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { MdDoNotDisturbAlt } from "react-icons/md";
@@ -45,7 +46,7 @@ const TablaCliente = ({
     const [actionType, setActionType] = useState(null);
     const [targetClient, setTargetClient] = useState(null);
 
-    const { hasEditPermission, hasDeletePermission } = usePermisos();
+    const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
 
     const { deleteClient, deleteLoading } = useCliente();
     // Instanciamos el hook para desactivar clientes
@@ -100,45 +101,59 @@ const TablaCliente = ({
                                 lastPurchase: cliente.ultima_compra
                             }}
                         />
-                        <span
-                            onClick={() => {
-                                setSelectedClient(cliente);
-                                setOpenEditModal(true);
-                            }}
-                            className="px-1 py-0.5 text-xl text-yellow-400 cursor-pointer hover:text-yellow-500"
-                        >
-                            <FaEdit className={`h-6 w-4 ${
-                                !hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}`} />
-                        </span>
-                        <span
-                            onClick={() => {
-                                if (isInactive) {
-                                    toast.error("El cliente ya se encuentra dado de baja");
-                                    return;
-                                }
-                                setActionType("deactivate");
-                                setTargetClient(cliente);
-                                setOpenConfirmModal(true);
-                            }}
-                            className={`px-1 py-0.5 text-xl ${isInactive
+                        <Tooltip content={hasEditPermission ? "Editar cliente" : "No tiene permisos para editar"}>
+                            <span
+                                onClick={() => {
+                                    if (!hasEditPermission) return;
+                                    setSelectedClient(cliente);
+                                    setOpenEditModal(true);
+                                }}
+                                className="px-1 py-0.5 text-xl text-yellow-400 cursor-pointer hover:text-yellow-500"
+                            >
+                                <FaEdit className={`h-6 w-4 ${!hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}`} />
+                            </span>
+                        </Tooltip>
+                        <Tooltip content={
+                            isInactive 
+                            ? "El cliente ya se encuentra dado de baja" 
+                            : hasDeactivatePermission 
+                                ? "Dar de baja al cliente" 
+                                : "No tiene permisos para dar de baja"
+                        }>
+                            <span
+                                onClick={() => {
+                                    if (!hasDeactivatePermission) return;
+                                    if (isInactive) {
+                                        toast.error("El cliente ya se encuentra dado de baja");
+                                        return;
+                                    }
+                                    setActionType("deactivate");
+                                    setTargetClient(cliente);
+                                    setOpenConfirmModal(true);
+                                }}
+                                className={`px-1 py-0.5 text-xl ${isInactive
                                     ? "text-gray-400 cursor-not-allowed"
-                                    : "text-red-500 cursor-pointer hover:text-red-600"
+                                    : hasDeactivatePermission
+                                        ? "text-red-500 cursor-pointer hover:text-red-600"
+                                        : "text-gray-400 opacity-50 cursor-not-allowed"
                                 }`}
-                        >
-                            <MdDoNotDisturbAlt className="h-6 w-4" />
-                        </span>
-                        <span
-                            onClick={() => {
-                                // Acción de eliminar cliente
-                                setActionType("delete");
-                                setTargetClient(cliente);
-                                setOpenConfirmModal(true);
-                            }}
-                            className="px-1 py-0.5 text-xl text-red-500 cursor-pointer hover:text-red-600"
-                        >
-                            <FaTrash className={`h-6 w-4 ${
-                                !hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}`} />
-                        </span>
+                            >
+                                <MdDoNotDisturbAlt className="h-6 w-4" />
+                            </span>
+                        </Tooltip>
+                        <Tooltip content={hasDeletePermission ? "Eliminar cliente" : "No tiene permisos para eliminar"}>
+                            <span
+                                onClick={() => {
+                                    if (!hasDeletePermission) return;
+                                    setActionType("delete");
+                                    setTargetClient(cliente);
+                                    setOpenConfirmModal(true);
+                                }}
+                                className="px-1 py-0.5 text-xl text-red-500 cursor-pointer hover:text-red-600"
+                            >
+                                <FaTrash className={`h-6 w-4 ${!hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}`} />
+                            </span>
+                        </Tooltip>
                     </div>
                 );
             default:

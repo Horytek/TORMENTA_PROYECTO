@@ -3,6 +3,8 @@ import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { Tooltip } from "@nextui-org/react";
+import { usePermisos } from "@/routes";
 import EditForm from "./EditSubcat";
 import { useSubcategoriasConCategoria } from './hooks/getSubcategory';
 import { useDeleteSubcategoria } from './hooks/deleteFunc';
@@ -16,6 +18,9 @@ export function ShowSubcategorias({ searchTerm }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); 
   const [selectedRow, setSelectedRow] = useState(null); 
   const productosPerPage = 10;
+
+  // Importar los permisos necesarios
+  const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
 
   const { deleteSubcategoria, success: deleteSuccess } = useDeleteSubcategoria();
   const { deactivateSubcategoria, success: deactivateSuccess } = useDeactivateSubcategoria();
@@ -158,44 +163,53 @@ export function ShowSubcategorias({ searchTerm }) {
                   </td>
                   <td className="py-4 text-center">
                     <div className="flex justify-center items-center">
-                      <button
-                        className="px-2 py-1 text-yellow-400 text-xl"
-                        onClick={() =>
-                          handleOpenEditModal(
-                            sub_categoria.id_subcategoria,
-                            sub_categoria.id_categoria,
-                            sub_categoria.nom_subcat,
-                            sub_categoria.estado_subcat,
-                            sub_categoria.nom_categoria,
-                            sub_categoria.estado_categoria
-                          )
-                        }
-                      >
-                        <MdEdit />
-                      </button>
-                      <button
-                        className="px-2 py-1 text-red-500"
-                        onClick={() =>
-                          handleOpenConfirmationModal(
-                            sub_categoria.id_subcategoria,
-                            sub_categoria.nom_subcat
-                          )
-                        }
-                      >
-                        <FaTrash />
-                      </button>
-                      <button
-                        className="px-3 py-1 text-red-600"
-                        style={{ fontSize: "20px" }}
-                        onClick={() =>
-                          handleOpenDeactivationModal(
-                            sub_categoria.id_subcategoria,
-                            sub_categoria.nom_subcat
-                          )
-                        }
-                      >
-                        <MdDoNotDisturbAlt />
-                      </button>
+                      <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+                        <button
+                          className={`px-2 py-1 ${hasEditPermission ? "text-yellow-400" : "text-gray-400"} text-xl ${!hasEditPermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          onClick={() => hasEditPermission 
+                            ? handleOpenEditModal(
+                                sub_categoria.id_subcategoria,
+                                sub_categoria.id_categoria,
+                                sub_categoria.nom_subcat,
+                                sub_categoria.estado_subcat,
+                                sub_categoria.nom_categoria,
+                                sub_categoria.estado_categoria
+                              ) 
+                            : null
+                          }
+                        >
+                          <MdEdit />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+                        <button
+                          className={`px-2 py-1 ${hasDeletePermission ? "text-red-500" : "text-gray-400"} ${!hasDeletePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          onClick={() => hasDeletePermission 
+                            ? handleOpenConfirmationModal(
+                                sub_categoria.id_subcategoria,
+                                sub_categoria.nom_subcat
+                              ) 
+                            : null
+                          }
+                        >
+                          <FaTrash />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={hasDeactivatePermission ? "Desactivar" : "No tiene permisos para desactivar"}>
+                        <button
+                          className={`px-3 py-1 ${hasDeactivatePermission ? "text-red-600" : "text-gray-400"} ${!hasDeactivatePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          style={{ fontSize: "20px" }}
+                          onClick={() => hasDeactivatePermission 
+                            ? handleOpenDeactivationModal(
+                                sub_categoria.id_subcategoria,
+                                sub_categoria.nom_subcat
+                              ) 
+                            : null
+                          }
+                        >
+                          <MdDoNotDisturbAlt />
+                        </button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>

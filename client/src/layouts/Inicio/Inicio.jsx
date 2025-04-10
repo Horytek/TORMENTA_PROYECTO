@@ -140,7 +140,7 @@ function Inicio() {
               onClick={() => setSelectedSucursal("")}
             >
               <MdDeleteForever style={{ fontSize: "20px" }} />
-              Borrar
+              Limpiar
             </Button>
           </div>
         )}
