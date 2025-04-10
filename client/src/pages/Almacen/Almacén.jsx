@@ -34,6 +34,25 @@ const Kardex = () => {
         return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '', sucursal: '' } : { id: '', sucursal: '' };
     });
 
+    const rolUsuario = localStorage.getItem('rol');
+    const sucursalSeleccionada = localStorage.getItem('sur');
+
+    // Filtrar almacenes según el rol y la sucursal seleccionada
+        const almacenesFiltrados =
+          rolUsuario !== '1'
+            ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
+            : almacenes;
+    
+    useEffect(() => {
+        const almacenIdGuardado = localStorage.getItem('almacen');
+        if (almacenIdGuardado && almacenes.length > 0) {
+            const almacen = almacenes.find(a => a.id === parseInt(almacenIdGuardado));
+            if (almacen) {
+                setAlmacenSeleccionado(almacen);
+            }
+        }
+    }, [almacenes]);
+
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 5; // Número total de páginas
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -183,7 +202,7 @@ const Kardex = () => {
     };
 
     const handleAlmacenChange = (event) => {
-        const almacen = event.target.value === '' ? { id: '', sucursal: '' } : almacenes.find(a => a.id === parseInt(event.target.value));
+        const almacen = almacenesFiltrados.find(a => a.id === parseInt(event.target.value)) || { id: '', sucursal: '' };
         setAlmacenSeleccionado(almacen);
         localStorage.setItem('almacen', almacen.id);
         handleFiltersChange({ almacen: event.target.value });
@@ -320,10 +339,8 @@ const Kardex = () => {
                         value: "text-black",
                     }}
                 >
-                    <SelectItem key="" value="">
-                        Seleccione...
-                    </SelectItem>
-                    {almacenes.map((almacen) => (
+                    {rolUsuario === '1' && <SelectItem key="%" value="%">Seleccione...</SelectItem>}
+                    {almacenesFiltrados.map((almacen) => (
                         <SelectItem key={almacen.id} value={almacen.id}>
                             {almacen.almacen}
                         </SelectItem>

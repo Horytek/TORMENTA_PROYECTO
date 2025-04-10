@@ -1,14 +1,16 @@
 import './Navbar.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaBars, FaTimes, FaUser } from 'react-icons/fa';
 import { IoIosSearch } from "react-icons/io";
 //import { Link } from 'react-router-dom';
+import { getRoles } from '@/services/rol.services';
 import {Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User} from "@nextui-org/react";
 import { Link} from "@nextui-org/react";
 // Auth Context
 import { useAuth } from '@/context/Auth/AuthProvider';
 
 function Navbar() {
+  const [roles, setRoles] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -17,6 +19,23 @@ function Navbar() {
 
   // Contexto de autenticación
   const { logout, user } = useAuth();
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const data = await getRoles();
+      setRoles(data);
+    };
+
+    fetchRoles();
+  }, []);
+
+  const formatRoleName = (roleName) => {
+    if (!roleName) return "Rol desconocido";
+    return roleName.charAt(0).toUpperCase() + roleName.slice(1).toLowerCase();
+  };
+
+  const userRoleName = formatRoleName(roles.find((role) => role.id_rol === user?.rol)?.nom_rol);
+
 
   return (
     <div className="bg-white p-4 pb-2 flex justify-between items-center relative">
@@ -67,7 +86,7 @@ function Navbar() {
                 size: 'sm',
               }}
               className="transition-transform"
-              description={user?.rol === 1 ? "Administrador" : user?.rol === 3 ? "Empleado" : "Rol desconocido"}
+                description={userRoleName}
               name={user?.usuario.toUpperCase()}
             />
           </DropdownTrigger>
