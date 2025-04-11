@@ -1,42 +1,56 @@
 import { getConnection } from "./../database/database";
 import ExcelJS from "exceljs";
 const getProductos = async (req, res) => {
-    const { descripcion = '', almacen = '', idProducto = '', marca = '', cat= '' , subcat = '' } = req.query;
+    const { descripcion = '', almacen = '', idProducto = '', marca = '', cat = '', subcat = '', stock = '' } = req.query;
     let connection;
-    console.log('Filtros recibidos:', { descripcion, almacen, idProducto, marca, cat, subcat  });
+    console.log('Filtros recibidos:', { descripcion, almacen, idProducto, marca, cat, subcat, stock });
     try {
         connection = await getConnection();
 
+        // Construir la condición del filtro de stock
+        let stockCondition = '';
+        if (stock === 'con_stock') {
+            stockCondition = 'AND i.stock > 0';
+        } else if (stock === 'sin_stock') {
+            stockCondition = 'AND i.stock = 0';
+        }
+
         const [productosResult] = await connection.query(
             `
-        SELECT 
-         p.id_producto as codigo, p.descripcion as descripcion, m.nom_marca as marca, COALESCE(i.stock, 0) AS stock, p.undm as um, 
-         CAST(p.precio AS DECIMAL(10, 2)) AS precio, p.cod_barras, p.estado_producto as estado
-        FROM producto p 
-        INNER JOIN marca m ON p.id_marca = m.id_marca 
-        INNER JOIN inventario i ON p.id_producto = i.id_producto 
-        INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
-        WHERE p.descripcion LIKE ?
-          AND i.id_almacen = ?
-          AND p.id_producto LIKE ?
-          AND m.id_marca LIKE ?
-          AND CA.id_categoria LIKE ?
-          AND CA.id_subcategoria LIKE ?
-        GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock
-        ORDER BY p.id_producto, p.descripcion
-        `,
+            SELECT 
+                p.id_producto as codigo, 
+                p.descripcion as descripcion, 
+                m.nom_marca as marca, 
+                COALESCE(i.stock, 0) AS stock, 
+                p.undm as um, 
+                CAST(p.precio AS DECIMAL(10, 2)) AS precio, 
+                p.cod_barras, 
+                p.estado_producto as estado
+            FROM producto p 
+            INNER JOIN marca m ON p.id_marca = m.id_marca 
+            INNER JOIN inventario i ON p.id_producto = i.id_producto 
+            INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
+            WHERE p.descripcion LIKE ?
+              AND i.id_almacen = ?
+              AND p.id_producto LIKE ?
+              AND m.id_marca LIKE ?
+              AND CA.id_categoria LIKE ?
+              AND CA.id_subcategoria LIKE ?
+              ${stockCondition} -- Agregar la condición del filtro de stock
+            GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock
+            ORDER BY p.id_producto, p.descripcion
+            `,
             [`%${descripcion}%`, almacen, `%${idProducto}`, `%${marca}`, `%${cat}`, `%${subcat}`]
         );
-
 
         console.log('Productos encontrados:', productosResult);
 
         res.json({ code: 1, data: productosResult });
     } catch (error) {
         res.status(500).send(error.message);
-    }   finally {
+    } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release(); // Liberar la conexión
         }
     }
 };

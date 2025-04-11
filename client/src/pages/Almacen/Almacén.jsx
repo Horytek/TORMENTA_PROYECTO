@@ -34,6 +34,8 @@ const Kardex = () => {
         return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '', sucursal: '' } : { id: '', sucursal: '' };
     });
 
+    const [stockFilter, setStockFilter] = useState(''); // Nuevo estado para el filtro de stock
+
     const rolUsuario = localStorage.getItem('rol');
     const sucursalSeleccionada = localStorage.getItem('sur');
 
@@ -101,6 +103,7 @@ const Kardex = () => {
         marca: '',
         cat: '',
         subcat: '',
+        stock: '', // Nuevo filtro de stock
     });
 
     const fetchKardex = useCallback(async () => {
@@ -121,6 +124,12 @@ const Kardex = () => {
             ...prevFilters,
             ...newFilters,
         }));
+    };
+
+    const handleStockFilterChange = (event) => {
+        const value = event.target.value;
+        setStockFilter(value);
+        handleFiltersChange({ stock: value });
     };
 
     const generatePDFKardex = (kardex, almacenSeleccionado) => {
@@ -426,6 +435,22 @@ const Kardex = () => {
                                 {marca.marca}
                             </SelectItem>
                         ))}
+                    </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Select
+                        className="w-[180px]"
+                        onChange={handleStockFilterChange}
+                        placeholder="Stock"
+                        value={stockFilter}
+                        classNames={{
+                            trigger: "bg-white",
+                            value: "text-black",
+                        }}
+                    >
+                        <SelectItem key="" value="">Todos</SelectItem>
+                        <SelectItem key="con_stock" value="con_stock">Con stock</SelectItem>
+                        <SelectItem key="sin_stock" value="sin_stock">Sin stock</SelectItem>
                     </Select>
                 </div>
                 <Dropdown>

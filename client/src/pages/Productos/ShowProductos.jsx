@@ -28,6 +28,8 @@ export function ShowProductos({ searchTerm }) {
     // Filtrar productos
     const filteredProductos = productos.filter(producto =>
         producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+    || producto.cod_barras.toLowerCase().includes(searchTerm.toLowerCase())
+    || producto.id_producto.toString().includes(searchTerm.toLowerCase())
     );
 
     // Productos a mostrar en la página actual

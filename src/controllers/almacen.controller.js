@@ -24,6 +24,7 @@ const getAlmacenes = async (req, res) => {
               sucursal s
           ON
               s.id_sucursal = sa.id_sucursal
+            WHERE a.estado_almacen != 0
           ORDER BY a.id_almacen;
       `;
 
@@ -49,21 +50,26 @@ const getSucursales = async (req, res) => {
         connection = await getConnection();
 
         const query = `
-                SELECT 
-                    s.id_sucursal,
-                    s.nombre_sucursal,
-                    CASE 
-                        WHEN sa.id_sucursal IS NULL THEN 1 
-                        ELSE 0  
-                    END AS disponible
-                FROM 
-                    sucursal s
-                LEFT JOIN 
-                    sucursal_almacen sa 
-                ON 
-                    s.id_sucursal = sa.id_sucursal
-                ORDER BY 
-                    s.id_sucursal;
+SELECT
+    s.id_sucursal,
+    s.nombre_sucursal,
+    CASE 
+        WHEN sa.id_sucursal IS NULL THEN 1 
+        ELSE 0  
+    END AS disponible
+FROM 
+    sucursal s
+LEFT JOIN 
+    sucursal_almacen sa ON s.id_sucursal = sa.id_sucursal
+WHERE 
+    s.estado_sucursal != 0
+    AND s.id_sucursal = (
+        SELECT MIN(s2.id_sucursal)
+        FROM sucursal s2
+        WHERE s2.nombre_sucursal = s.nombre_sucursal
+    )
+ORDER BY 
+    s.id_sucursal;
       `;
 
         const [result] = await connection.query(query);

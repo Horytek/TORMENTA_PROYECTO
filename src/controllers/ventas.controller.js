@@ -296,7 +296,14 @@ const getSucursal = async (req, res) => {
     const [result] = await connection.query(`SELECT su.id_sucursal AS id, su.nombre_sucursal AS nombre, su.ubicacion AS ubicacion, usu.usua As usuario, ro.nom_rol AS rol
 FROM sucursal su INNER JOIN vendedor ven ON ven.dni = su.dni
 INNER JOIN usuario usu ON usu.id_usuario = ven.id_usuario
-INNER JOIN rol ro ON ro.id_rol=usu.id_rol`);
+INNER JOIN rol ro ON ro.id_rol=usu.id_rol
+WHERE 
+    su.estado_sucursal != 0
+    AND su.id_sucursal = (
+        SELECT MIN(s2.id_sucursal)
+        FROM sucursal s2
+        WHERE s2.nombre_sucursal = su.nombre_sucursal
+    )`);
     res.json({ code: 1, data: result, message: "Sucursal listados" });
   } catch (error) {
     res.status(500);

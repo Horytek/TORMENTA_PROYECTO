@@ -190,7 +190,7 @@ const getDestinatario = async (req, res) => {
           FROM 
               destinatario
           WHERE 
-              id_destinatario = ?
+              COALESCE(NULLIF(dni, ''), ruc) = ?
           ORDER BY 
               (CASE 
                   WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 
