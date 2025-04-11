@@ -27,6 +27,7 @@ function Dashboard() {
   
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     const fetchRoutes = async () => {
@@ -165,11 +166,22 @@ function Dashboard() {
     return dynamicRoutes;
   };
 
+  const handleSidebarToggle = (collapsed) => {
+    setSidebarCollapsed(collapsed);
+  };
+
   return (
     <div className="flex min-h-screen">
       <Toaster position="top-center" reverseOrder={true} />
-      <Sidebar />
-      <div className="flex flex-col flex-1 ml-5">
+      
+      {/* Pasamos la función de callback al Sidebar */}
+      <Sidebar onToggle={handleSidebarToggle} />
+      
+      {/* Ajustamos el margen izquierdo según el estado del sidebar */}
+      <div 
+        className={`flex flex-col flex-1 transition-all duration-300`}
+        style={{ marginLeft: sidebarCollapsed ? '4rem' : '16rem' }} // 4rem = w-16, 16rem = w-64
+      >
         <Navbar />
         <div className="p-4 contenido-cambiante">
           <SubcategoriaContextProvider>
