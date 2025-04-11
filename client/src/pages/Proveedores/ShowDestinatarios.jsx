@@ -90,13 +90,13 @@ export function ShowDestinatarios({ searchTerm }) {
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
                 <Table isStriped aria-label="Destinatarios" className="min-w-full border-collapse">
                     <TableHeader>
-                        <TableColumn>Documento</TableColumn>
-                        <TableColumn>Nombre</TableColumn>
-                        <TableColumn>Ubicación</TableColumn>
-                        <TableColumn>Dirección</TableColumn>
-                        <TableColumn>Email</TableColumn>
-                        <TableColumn>Teléfono</TableColumn>
-                        <TableColumn className="w-32 text-center">Acciones</TableColumn>
+                        <TableColumn>DOCUMENTO</TableColumn>
+                        <TableColumn>RAZÓN SOCIAL</TableColumn>
+                        <TableColumn>UBICACIÓN</TableColumn>
+                        <TableColumn>DIRECCIÓN</TableColumn>
+                        <TableColumn>EMAIL</TableColumn>
+                        <TableColumn>TELÉFONO</TableColumn>
+                        <TableColumn className="w-32 text-center">ACCIONES</TableColumn>
                     </TableHeader>
                     <TableBody>
                         {currentDestinatarios.map((destinatario) => (
