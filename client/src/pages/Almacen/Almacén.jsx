@@ -329,7 +329,7 @@ const Kardex = () => {
         <div>
             <Toaster />
 
-            <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacén', href: '/almacen' }, { name: 'Kardex Movimientos', href: '/almacen/kardex' }]} />
+            <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Kardex Movimientos', href: '/almacen' }]} />
             <hr className="mb-4" />
             <div className="flex justify-between mt-5 mb-4">
                 <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>

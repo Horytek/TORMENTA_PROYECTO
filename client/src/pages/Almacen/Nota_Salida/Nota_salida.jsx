@@ -58,7 +58,7 @@ const Salidas = () => {
   };
   return (
     <div >
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacén', href: '/almacen' }, { name: 'Nota de salida', href: '/almacen/nota_salida' }]} />
+      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Kardex Movimientos', href: '/almacen' }, { name: 'Nota de salida', href: '/almacen/nota_salida' }]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>

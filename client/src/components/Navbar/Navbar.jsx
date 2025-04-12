@@ -51,7 +51,7 @@ function Navbar() {
             Venta
           </Link>
           <Link as={Link} color="primary" isBlock href="/almacen" className="block md:inline-block text-center text-gray-600 px-2 py-2">
-            Almacén
+            Kardex
           </Link>
           <Link as={Link} color="primary" isBlock href="/empleados" className="block md:inline-block text-gray-600 px-2 py-2 ">
             Empleados

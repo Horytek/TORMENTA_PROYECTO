@@ -59,6 +59,7 @@ const TablaKardex = ({ kardex }) => {
                     <option value={5}>05</option>
                     <option value={10}>10</option>
                     <option value={20}>20</option>
+                    <option value={100000}>Todo</option>
                 </select>
             </div>
         </div>
