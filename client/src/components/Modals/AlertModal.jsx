@@ -1,16 +1,22 @@
 // src/components/AlertModal/AlertModal.jsx
 
 import PropTypes from 'prop-types';
-import { Button} from '@nextui-org/react';
-import './AlertModal.css';
+import { Button } from '@nextui-org/react';
 
 const AlertModal = ({ message, onClose }) => {
   return (
-    <div className="alert-modal-overlay">
-      <div className="alert-modal">
-        <h2 className="alert-modal-title">Error</h2>
-        <p className="alert-modal-message">{message}</p>
-        <Button variant="shadow" color="danger" onClick={onClose}>Cerrar</Button>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[1000]">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-[90%] text-center relative animate-fadeIn">
+        <h2 className="text-2xl mb-4 text-red-600 font-bold">Error</h2>
+        <p className="text-lg mb-6 text-gray-700">{message}</p>
+        <Button
+          variant="shadow"
+          color="danger"
+          onClick={onClose}
+          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+        >
+          Cerrar
+        </Button>
       </div>
     </div>
   );
