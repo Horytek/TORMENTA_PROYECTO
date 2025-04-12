@@ -33,6 +33,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
     const [clientLastName, setClientLastName] = useState(client?.clientLastName || "");
     const [businessName, setBusinessName] = useState(client?.businessName || "");
     const [address, setAddress] = useState(client?.address || "");
+    const [estado, setEstado] = useState(client?.estado || 0);
     const { updateClient, isLoading, getCliente, cliente: clientData } = useUpdateClient();
 
     useEffect(() => {
@@ -46,12 +47,12 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
             const isPersonal = !clientData.ruc;
             setClientType(isPersonal ? "personal" : "business");
             setDocumentType(clientData.dni ? "dni" : "ruc");
-            
             setDocumentNumber(clientData.dni || clientData.ruc || "");
             setClientName(clientData.nombres || "");
             setClientLastName(clientData.apellidos || "");
             setBusinessName(clientData.razon_social || "");
             setAddress(clientData.direccion || "");
+            setEstado(clientData.estado || 0);
         }
     }, [clientData]);
 
@@ -74,11 +75,11 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
             toast.error('El número de documento es obligatorio');
             return;
         }
-      
+
         const url = documentType === 'dni'
             ? `https://dniruc.apisperu.com/api/v1/dni/${cleanDocumentNumber}?token=${token_cliente}`
             : `https://dniruc.apisperu.com/api/v1/ruc/${cleanDocumentNumber}?token=${token_cliente}`;
-      
+
         try {
             const response = await fetch(url);
             const data = await response.json();
@@ -132,7 +133,8 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
             apellidos: clientType === 'personal' ? clientLastName : null,
             razon_social: clientType === 'business' ? businessName : null,
             direccion: address || null,
-            estado: client?.estado ?? 0
+            estado: estado || 0,
+
         };
 
         try {
@@ -142,8 +144,8 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                 if (onClientUpdated) onClientUpdated();
                 handleClose();
             } else {
-                const errorMessage = typeof result.error === 'object' 
-                    ? 'Error al actualizar el cliente' 
+                const errorMessage = typeof result.error === 'object'
+                    ? 'Error al actualizar el cliente'
                     : result.error;
                 toast.error(errorMessage);
             }
@@ -165,7 +167,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
         onClose();
     };
 
-    const isRadioDisabled = !!client?.id; 
+    const isRadioDisabled = !!client?.id;
     return (
         <>
             <Toaster />
@@ -223,9 +225,11 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                             value={documentNumber}
                                             onChange={(e) => setDocumentNumber(e.target.value)}
                                             isRequired
-                                            style={{  border: "none",
+                                            style={{
+                                                border: "none",
                                                 boxShadow: "none",
-                                                outline: "none", }}
+                                                outline: "none",
+                                            }}
                                             classNames={inputStyles}
                                         />
                                         <Button
@@ -239,6 +243,10 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                                 <IoIosSearch className="h-4 w-4" />
                                             </div>
                                         </Button>
+
+
+
+
                                     </div>
 
                                     {clientType === "personal" ? (
@@ -250,9 +258,11 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                                 onChange={(e) => setClientName(e.target.value)}
                                                 isRequired
                                                 classNames={inputStyles}
-                                                style={{  border: "none",
+                                                style={{
+                                                    border: "none",
                                                     boxShadow: "none",
-                                                    outline: "none", }}
+                                                    outline: "none",
+                                                }}
                                             />
                                             <Input
                                                 label="Apellidos"
@@ -261,9 +271,11 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                                 onChange={(e) => setClientLastName(e.target.value)}
                                                 isRequired
                                                 classNames={inputStyles}
-                                                style={{  border: "none",
+                                                style={{
+                                                    border: "none",
                                                     boxShadow: "none",
-                                                    outline: "none", }}
+                                                    outline: "none",
+                                                }}
                                             />
                                         </>
                                     ) : (
@@ -274,9 +286,11 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                             onChange={(e) => setBusinessName(e.target.value)}
                                             isRequired
                                             classNames={inputStyles}
-                                            style={{  border: "none",
+                                            style={{
+                                                border: "none",
                                                 boxShadow: "none",
-                                                outline: "none", }}
+                                                outline: "none",
+                                            }}
                                         />
                                     )}
 
@@ -286,10 +300,35 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                         value={address}
                                         onChange={(e) => setAddress(e.target.value)}
                                         classNames={inputStyles}
-                                        style={{  border: "none",
+                                        style={{
+                                            border: "none",
                                             boxShadow: "none",
-                                            outline: "none", }}
+                                            outline: "none",
+                                        }}
                                     />
+                                    <Select
+                                        label="Estado"
+                                        selectedKeys={[estado.toString()]} 
+                                        onSelectionChange={(keys) => {
+                                            const selectedKey = keys.values().next().value; 
+                                            setEstado(Number(selectedKey)); 
+                                        }}
+                                        isRequired
+                                        style={{
+                                            border: "none",
+                                            boxShadow: "none",
+                                            outline: "none",
+                                        }}
+                                    >
+                                        <SelectItem key="1" value="1">
+                                            Activo
+                                        </SelectItem>
+                                        <SelectItem key="0" value="0">
+                                            Inactivo
+                                        </SelectItem>
+                                    </Select>
+
+
                                 </div>
                             </ModalBody>
                             <ModalFooter>
@@ -314,6 +353,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                             setClientLastName(client.clientLastName || "");
                                             setBusinessName(client.businessName || "");
                                             setAddress(client.address || "");
+
                                         }
                                     }}
                                 >
