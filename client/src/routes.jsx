@@ -132,7 +132,6 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
         }
       );
       
-      console.log("Respuesta de verificación de permisos:", response.data);
       
       const hasAccess = response.data.hasPermission;
       setHasAccess(hasAccess);
