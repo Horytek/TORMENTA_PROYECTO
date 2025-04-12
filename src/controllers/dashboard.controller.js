@@ -72,7 +72,7 @@ const getProductoMasVendido = async (req, res) => {
     let query;
     let params;
     // Si el rol es ADMIN, se consulta sin filtro de sucursal a menos que se envíe el parámetro "sucursal"
-    if (rol.toLowerCase() === "admin") {
+    if (rol.toLowerCase() === "administrador") {
       query = `
         SELECT 
           p.id_producto,
@@ -164,7 +164,7 @@ const getTotalVentas = async (req, res) => {
     let query;
     let params;
     // Si el rol es ADMIN (sin importar mayúsculas o minúsculas), se consulta sin filtro de sucursal
-    if (rol.toLowerCase() === "admin") {
+    if (rol.toLowerCase() === "administrador") {
       query = `
         SELECT SUM(dv.total) AS total_dinero_ventas
         FROM detalle_venta dv
@@ -233,7 +233,7 @@ const getTotalProductosVendidos = async (req, res) => {
     
     let query;
     let params;
-    if (rol.toLowerCase() === "admin") {
+    if (rol.toLowerCase() === "administrador") {
       query = `
         SELECT SUM(dv.cantidad) AS total_productos_vendidos
         FROM detalle_venta dv
@@ -280,12 +280,12 @@ const getComparacionVentasPorRango = async (req, res) => {
         // Si se recibe sucursal desde la query, asumimos que se quiere filtrar manualmente.
         // De lo contrario se obtiene el rol del usuario.
         if (sucursal && sucursal.trim() !== "") {
-          rol = "admin";
+          rol = "administrador";
         } else {
           rol = await getUsuarioRol(usuarioQuery, connection);
         }
       } else {
-        rol = "admin";
+        rol = "administrador";
       }
     }
 
@@ -304,7 +304,7 @@ const getComparacionVentasPorRango = async (req, res) => {
     if (sucursal && sucursal.trim() !== "") {
       query += " AND v.id_sucursal = ?";
       params.push(sucursal);
-    } else if (rol.toLowerCase() !== "admin") {
+    } else if (rol.toLowerCase() !== "administrador") {
       // Si el usuario no es admin y no se envió sucursal, se obtiene la sucursal por defecto del usuario
       if (!usuarioQuery)
         return res.status(401).json({ message: "Usuario no autenticado" });
