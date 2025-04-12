@@ -1,15 +1,18 @@
 import PropTypes from "prop-types";
-import "./Buttons.css";
 import { FiSave } from "react-icons/fi";
 import { FiDownload } from "react-icons/fi";
-import { CiSearch, CiFilter} from "react-icons/ci";
+import { CiSearch, CiFilter } from "react-icons/ci";
 import { RiCloseLargeLine } from "react-icons/ri";
 import { IoIosArrowDropdownCircle } from "react-icons/io";
-import {Button, ButtonGroup} from "@nextui-org/button";
+import { Button, ButtonGroup } from "@nextui-org/button";
 
 export function ButtonSave({ ...props }) {
   return (
-    <Button className="btn btn-save m-0" {...props} variant="shadow">
+    <Button
+      className="flex items-center gap-2 font-medium text-white bg-blue-500 hover:bg-blue-600 m-0"
+      {...props}
+      variant="shadow"
+    >
       <FiSave style={{ fontSize: "25px" }} />
       Guardar
     </Button>
@@ -18,7 +21,11 @@ export function ButtonSave({ ...props }) {
 
 export function ButtonClose({ ...props }) {
   return (
-    <Button className="btn btn-close m-0" {...props} variant="shadow">
+    <Button
+      className="flex items-center gap-2 font-medium text-white bg-gray-500 hover:bg-gray-600 m-0"
+      {...props}
+      variant="shadow"
+    >
       <RiCloseLargeLine style={{ fontSize: "25px" }} />
       Cerrar
     </Button>
@@ -27,7 +34,12 @@ export function ButtonClose({ ...props }) {
 
 export function ButtonNormal({ children, color, ...props }) {
   return (
-    <Button className="btn m-0" style={{ backgroundColor: color }} {...props} variant="shadow">
+    <Button
+      className={`flex items-center gap-2 font-medium text-white m-0`}
+      style={{ backgroundColor: color }}
+      {...props}
+      variant="shadow"
+    >
       {children}
     </Button>
   );
@@ -35,7 +47,12 @@ export function ButtonNormal({ children, color, ...props }) {
 
 export function ButtonIcon({ children, icon, color, ...props }) {
   return (
-    <Button className="btn m-0 " style={{ backgroundColor: color }} {...props} variant="shadow">
+    <Button
+      className={`flex items-center gap-2 font-medium text-white m-0`}
+      style={{ backgroundColor: color }}
+      {...props}
+      variant="shadow"
+    >
       {icon}
       {children}
     </Button>
@@ -44,32 +61,48 @@ export function ButtonIcon({ children, icon, color, ...props }) {
 
 export function ButtonSearch({ ...props }) {
   return (
-    <Button className="btn btn-rvsecondary flex items-center" {...props} variant="shadow">
-      <CiSearch className="h-5 w-5" style={{ color: "#f8f9fa" }} />
+    <Button
+      className="flex items-center gap-2 font-medium text-white bg-blue-400 hover:bg-blue-500 m-0"
+      {...props}
+      variant="shadow"
+    >
+      <CiSearch className="h-5 w-5" />
     </Button>
   );
 }
 
 export function ButtonFilter({ ...props }) {
   return (
-    <Button className="btn btn-rvsecondary flex items-center" {...props} variant="shadow">
-      <CiFilter className="h-5 w-5" style={{ color: "#f8f9fa" }} />
+    <Button
+      className="flex items-center gap-2 font-medium text-white bg-blue-400 hover:bg-blue-500 m-0"
+      {...props}
+      variant="shadow"
+    >
+      <CiFilter className="h-5 w-5" />
     </Button>
   );
 }
 
 export function ButtonDownload({ ...props }) {
   return (
-    <Button className="btn btn-rvsecondary flex items-center" {...props} variant="shadow">
-      <FiDownload className="h-5 w-5" style={{ color: "#f8f9fa" }} />
+    <Button
+      className="flex items-center gap-2 font-medium text-white bg-blue-400 hover:bg-blue-500 m-0"
+      {...props}
+      variant="shadow"
+    >
+      <FiDownload className="h-5 w-5" />
     </Button>
   );
 }
 
 export function ButtonDesplegable({ ...props }) {
   return (
-    <Button className="btn btn-masecondary flex items-center" {...props} variant="shadow">
-      <IoIosArrowDropdownCircle className="h-5 w-5" style={{ color: "#f8f9fa" }} />
+    <Button
+      className="flex items-center gap-2 font-medium text-white bg-teal-500 hover:bg-teal-600 m-0"
+      {...props}
+      variant="shadow"
+    >
+      <IoIosArrowDropdownCircle className="h-5 w-5" />
     </Button>
   );
 }

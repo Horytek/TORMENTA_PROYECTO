@@ -3,18 +3,20 @@ import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaSalida from './ComponentsNotaSalida/NotaSalidaTable';
 import getSalidasData from './data/data_salida';
 import useAlmacenData from './data/data_almacen_salida';
-import './Nota_salida.css';
 import FiltrosSalida from './ComponentsNotaSalida/FiltrosSalida';
 import ReactToPrint from 'react-to-print';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+
 const Salidas = () => {
   const [filters, setFilters] = useState({});
   const [salidas, setSalidas] = useState([]);
   const { almacenes } = useAlmacenData();
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
     const almacenIdGuardado = localStorage.getItem('almacen');
-    return almacenIdGuardado && almacenes ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) : null;
+    return almacenIdGuardado && almacenes
+      ? almacenes.find(a => a.id === parseInt(almacenIdGuardado))
+      : null;
   });
 
   const fetchSalidas = useCallback(async () => {
@@ -56,35 +58,60 @@ const Salidas = () => {
       tablaSalidaRef.current.generatePDFGeneral();
     }
   };
+
   return (
-    <div >
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Kardex Movimientos', href: '/almacen' }, { name: 'Nota de salida', href: '/almacen/nota_salida' }]} />
+    <div>
+      <Breadcrumb
+        paths={[
+          { name: 'Inicio', href: '/inicio' },
+          { name: 'Kardex Movimientos', href: '/almacen' },
+          { name: 'Nota de salida', href: '/almacen/nota_salida' },
+        ]}
+      />
       <hr className="mb-4" />
+
       <div className="flex justify-between mt-5 mb-4">
-        <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-          Nota de salida
-        </h1>
+        <h1 className="text-4xl font-bold">Nota de salida</h1>
       </div>
-      <div className='w-full mb-3 rounded-lg'>
-        <table className='w-full text-sm divide-gray-200 rounded-lg table-auto border-collapse'>
+
+      <div className="w-full mb-3 rounded-lg">
+        <table className="w-full text-sm divide-gray-200 rounded-lg table-auto border-collapse">
           <tbody className="bg-gray-50">
-            <tr className='text-center'>
-              <td className='border-r-2 border-t-0'> 
-                <strong>{almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL: Sin almacén seleccionado'}</strong> <span>{}</span> 
+            <tr className="text-center">
+              <td className="border-r-2 border-t-0">
+                <strong>
+                  {almacenSeleccionado
+                    ? `SUCURSAL: ${almacenSeleccionado.sucursal}`
+                    : 'SUCURSAL: Sin almacén seleccionado'}
+                </strong>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <FiltrosSalida almacenes={almacenes} onFiltersChange={handleFiltersChange} onAlmacenChange={handleAlmacenChange} onPDFOptionClick={handlePDFOption} />
-      <div >
-        <TablaSalida ref={tablaSalidaRef} salidas={salidas}  />
+
+      <FiltrosSalida
+        almacenes={almacenes}
+        onFiltersChange={handleFiltersChange}
+        onAlmacenChange={handleAlmacenChange}
+        onPDFOptionClick={handlePDFOption}
+      />
+
+      <div>
+        <TablaSalida ref={tablaSalidaRef} salidas={salidas} />
       </div>
-       {/* <div className='fixed bottom-0 border rounded-t-lg w-full p-2.5' style={{ backgroundColor: '#01BDD6' }}>
-        <h1 className="text-xl font-bold" style={{ fontSize: '22px', color: 'white' }}>
-          {almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL:'}
+
+      {/* Example of converting inline styles to Tailwind (kept commented) */}
+      {/*
+      <div className="fixed bottom-0 border rounded-t-lg w-full p-2.5 bg-[#01BDD6]">
+        <h1 className="text-2xl font-bold text-white">
+          {almacenSeleccionado
+            ? `SUCURSAL: ${almacenSeleccionado.sucursal}`
+            : 'SUCURSAL:'}
         </h1>
-      </div> */}
+      </div>
+      */}
+
     </div>
   );
 };

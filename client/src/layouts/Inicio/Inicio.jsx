@@ -1,4 +1,3 @@
-import "./Inicio.css";
 import { CardComponent } from "@/components/Cards/Card";
 import { LineChartComponent } from "./LineChart";
 import { RiShoppingBag4Line } from "@remixicon/react";
@@ -10,11 +9,9 @@ import useProductTop from "./hooks/product_top";
 import useProductSell from "./hooks/product_sell";
 import useVentasTotal from "./hooks/ventas_total";
 import { useState, useEffect } from "react";
-import axios from "@/api/axios";
 
 function Inicio() {
   const ADMIN_ROL = 1;
-  // Si además necesitas otros roles, puedes definirlos aquí.
   const EMP_ROL = 3;
 
   const [selectedTab, setSelectedTab] = useState("24h");
@@ -25,10 +22,6 @@ function Inicio() {
   useEffect(() => {
     const storedUser = localStorage.getItem("usuario");
     if (storedUser) {
-      // Si storedUser es simplemente un string (por ejemplo, un nombre),
-      // no lo parsees y maneja la lógica de rol de otra forma.
-      console.log("Usuario obtenido:", storedUser);
-      // Por ejemplo, si sabes que "tormenta" corresponde a un administrador, haz:
       if(storedUser === "tormenta"){
         setUserRol(1);
       } else {
@@ -37,22 +30,7 @@ function Inicio() {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchSucursales = async () => {
-      try {
-        const response = await axios.get("/reporte/sucursales");
-        if (response.data.code === 1) {
-          const filteredSucursales = response.data.data.filter(
-            (sucursal) => sucursal.id_sucursal !== 5
-          );
-          setSucursales(filteredSucursales || []);
-        }
-      } catch {
-        setSucursales([]);
-      }
-    };
-    fetchSucursales();
-  }, []);
+
 
   const renderTabContent = () => {
     const { productTop } = useProductTop(selectedTab, selectedSucursal);
@@ -99,7 +77,9 @@ function Inicio() {
     <div className="relative items-center justify-between bg-white">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-5xl font-bold tracking-wide text-gray-700 title-Inicio">
+          <h1
+            className="text-5xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-500 to-cyan-400 hover:text-black hover:scale-100 hover:shadow-lg transition-all duration-300 title-Inicio"
+          >
             DASHBOARD TORMENTA
           </h1>
           <p
