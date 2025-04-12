@@ -5,8 +5,7 @@ import { Toaster, toast } from "react-hot-toast";
 import EditarSucursal from './Modals/EditarSucursal';
 import { MdEdit } from "react-icons/md";
 import editarSucursal from '../data/edit_sucursal';
-import './SucursalTable.css';
-import { usePermisos  } from '@/routes';
+import { usePermisos } from '@/routes';
 
 const TablaSucursal = forwardRef(({ sucursales }, ref) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,17 +41,6 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
     }
   };
 
-  const getEstadoClassName = (estado) => {
-    switch (estado) {
-      case 1:
-        return 'estado-activo';
-      case 0:
-        return 'estado-inactivo';
-      default:
-        return '';
-    }
-  };
-
   const { hasEditPermission } = usePermisos();
 
   const renderSucursalRow = (sucursal) => (
@@ -61,20 +49,21 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
       <TableCell className="text-center">{sucursal.nombre_sucursal}</TableCell>
       <TableCell className="text-center">{sucursal.ubicacion}</TableCell>
       <TableCell className="text-center">
-      <span className={
-  sucursal.estado_sucursal === 0
-    ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
-    : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-}>
-  {sucursal.estado_sucursal === 0 ? 'Inactivo' : 'Activo'}
-</span>
-
+        <span
+          className={
+            sucursal.estado_sucursal === 0
+              ? "inline-flex justify-center items-center py-1 px-2 text-sm font-semibold rounded-full text-red-600 bg-red-100"
+              : "inline-flex justify-center items-center py-1 px-2 text-sm font-semibold rounded-full text-green-700 bg-green-200"
+          }
+        >
+          {sucursal.estado_sucursal === 0 ? 'Inactivo' : 'Activo'}
+        </span>
       </TableCell>
       <TableCell className="text-center">
         <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
-          <Button 
-            isIconOnly 
-            variant="light" 
+          <Button
+            isIconOnly
+            variant="light"
             color={hasEditPermission ? "warning" : "default"}
             onClick={() => hasEditPermission ? handleEditarClick(sucursal) : null}
             className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
@@ -95,9 +84,9 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
   const totalPages = Math.ceil(sucursales.length / itemsPerPage);
 
   return (
-    <div className="container-table-reg px-4 bg-white rounded-lg">
+    <div className="px-4 bg-white rounded-lg shadow">
       <Toaster />
-      <Table isStriped aria-label="Sucursales" className="table w-full">
+      <Table isStriped aria-label="Sucursales" className="w-full">
         <TableHeader>
           <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">VENDEDOR</TableColumn>
           <TableColumn className="w-1/12 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">NOMBRE</TableColumn>
@@ -117,21 +106,21 @@ const TablaSucursal = forwardRef(({ sucursales }, ref) => {
           initialPage={currentPage}
           onChange={(page) => setCurrentPage(page)}
         />
-<Select
-  id="itemsPerPage"
-  aria-label="Items per page"
-  selectedKeys={[String(itemsPerPage)]}
-  onSelectionChange={(keys) => {
-    const value = Number(Array.from(keys)[0]);
-    setItemsPerPage(value);
-    setCurrentPage(1);
-  }}
-  className="w-20"
->
-  <SelectItem key="5" value={5}>05</SelectItem>
-  <SelectItem key="10" value={10}>10</SelectItem>
-  <SelectItem key="20" value={20}>20</SelectItem>
-</Select>
+        <Select
+          id="itemsPerPage"
+          aria-label="Items per page"
+          selectedKeys={[String(itemsPerPage)]}
+          onSelectionChange={(keys) => {
+            const value = Number(Array.from(keys)[0]);
+            setItemsPerPage(value);
+            setCurrentPage(1);
+          }}
+          className="w-20"
+        >
+          <SelectItem key="5" value={5}>05</SelectItem>
+          <SelectItem key="10" value={10}>10</SelectItem>
+          <SelectItem key="20" value={20}>20</SelectItem>
+        </Select>
       </div>
 
       {isEditModalOpen && (

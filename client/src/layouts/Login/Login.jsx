@@ -44,61 +44,67 @@ function Login() {
     }
   };
 
-  // Renderiza un campo de entrada con o sin opción de mostrar/ocultar contraseña
-  const renderInputField = (type, value, setValue, placeholder, label, showToggle = false) => (
-    <div className="relative mb-4 input-container">
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg input-field focus:outline-none focus:border-gray-300 focus:ring-gray-300"
-        placeholder={placeholder}
-        autoComplete='current-password'
-      />
-      <label className={`input-label absolute left-4 transition-all pointer-events-none pt-1.5 ${value ? '-top-0' : 'top-0'}`}>
-        {label}
-      </label>
-      {showToggle && (
-        <div
-          className="absolute transform -translate-y-1/2 cursor-pointer right-4 top-1/2"
-          onClick={() => setShowPassword(!showPassword)}
-        >
-          {showPassword ? <FaEyeSlash /> : <FaEye />}
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <form onSubmit={handleLogin}>
       <div className="min-h-screen flex items-center justify-center bg-[#a07ce9]">
         {/* Fondos decorativos */}
-        <div className="absolute top-0 left-0 z-0 rounded-full bg-circle-top-left w-96 h-96"></div>
-        <div className="absolute top-0 right-0 z-0 w-40 h-40 rounded-full bg-circle-top-right"></div>
-  
+        <div className="absolute top-0 left-0 z-0 rounded-full bg-[#8353e2] transform translate-x-[-20%] translate-y-[75%] w-96 h-96"></div>
+        <div className="absolute top-0 right-0 z-0 w-40 h-40 rounded-full bg-[#8353e2] transform translate-x-[-50%] translate-y-[-50%] mt-[20vh] ml-[100vw]"></div>
+
         {/* Contenedor principal del formulario */}
         <div className="login-container rounded-lg z-10 grid grid-cols-1 lg:grid-cols-2 w-[70vw] h-[70vh]">
           {/* Panel izquierdo (formulario de inicio de sesión) */}
           <div className="flex flex-col justify-center p-20 bg-white login-form">
             <h1 className="text-3xl font-bold text-center pb-14">Iniciar Sesión</h1>
-  
-            {renderInputField("text", usuario, setUsuario, "Tormenta", "Usuario")}
-            {renderInputField(showPassword ? "text" : "password", password, setPassword, "*******", "Contraseña", true)}
-  
+
+            <div className="relative mb-4 input-container">
+              <input
+                type="text"
+                value={usuario}
+                onChange={(e) => setUsuario(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg pt-7 bg-gray-200/60 focus:outline-none focus:border-gray-300 focus:ring-gray-300"
+                placeholder="Tormenta"
+                autoComplete="username"
+              />
+              <label className={`absolute left-4 transition-all pointer-events-none pt-1.5 font-bold ${usuario ? '-top-0' : 'top-0'}`}>
+                Usuario
+              </label>
+            </div>
+
+            <div className="relative mb-4 input-container">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg pt-7 bg-gray-200/60 focus:outline-none focus:border-gray-300 focus:ring-gray-300"
+                placeholder="*******"
+                autoComplete="current-password"
+              />
+              <label className={`absolute left-4 transition-all pointer-events-none pt-1.5 font-bold ${password ? '-top-0' : 'top-0'}`}>
+                Contraseña
+              </label>
+              <div
+                className="absolute transform -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </div>
+            </div>
+
             <button
               type="submit"
-              className="login-button w-full text-white py-2 rounded focus:outline-none bg-[#00BDD6]"
+              className="w-full text-white py-2 rounded focus:outline-none bg-[#00BDD6]"
             >
               Iniciar sesión
             </button>
           </div>
-  
+
           {/* Panel derecho (imagen u otros contenidos relacionados) */}
-          <div className="login-image-container lg:flex lg:items-center lg:justify-center hidden bg-white border-l-2 border-[#e7e4e4]">
+          <div className="hidden lg:flex lg:items-center lg:justify-center bg-white border-l-2 border-[#e7e4e4]">
             <img src={loginImage} alt="Login Image" className="h-max" />
           </div>
         </div>
-  
+
         {showAlert && (
           <AlertModal
             message="Usuario o contraseña incorrectos"

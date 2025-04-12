@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaSucursal from './ComponentsSucursal/SucursalTable';
 import getSucursalesData from './data/data_sucursal';
-import './Sucursal.css';
 import FiltrosSucursal from './ComponentsSucursal/FiltroSucursal';
 
 import 'jspdf-autotable';
@@ -37,12 +36,45 @@ const Sucursales = () => {
       });
     };
 
+    // Estilos en línea
+    const styles = {
+        container: {
+            position: 'relative',
+            minHeight: '100vh',
+            paddingBottom: '1.75rem',
+        },
+        header: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginTop: '1.25rem',
+            marginBottom: '1rem',
+        },
+        title: {
+            fontSize: '36px',
+            fontWeight: 'bold',
+        },
+        hr: {
+            marginBottom: '1rem',
+        },
+        button: {
+            padding: '0.5rem 1rem',
+            borderRadius: '0.25rem',
+            backgroundColor: '#00bdd6ff',
+            color: 'white',
+            fontWeight: 500,
+            alignItems: 'center',
+        },
+        buttonHover: {
+            backgroundColor: 'rgb(3, 158, 179)',
+        },
+    };
+
     return (
-        <div className="relative min-h-screen pb-7">
+        <div style={styles.container}>
             <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Sucursal', href: '/sucursal' }]} />
-            <hr className="mb-4" />
-            <div className="flex justify-between mt-5 mb-4">
-                <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
+            <hr style={styles.hr} />
+            <div style={styles.header}>
+                <h1 style={styles.title}>
                     Sucursal
                 </h1>
             </div>
