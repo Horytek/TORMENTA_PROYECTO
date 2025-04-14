@@ -91,6 +91,7 @@ function Sidebar({ onToggle }) {
       ]
     },
     { to: '/reportes', icon: <BiSolidReport className="text-xl" />, text: 'Reportes' },
+    { to: '/sunat', icon: <BiSolidReport className="text-xl" />, text: 'Sunat' },
     { to: '/sucursal', icon: <FaBuilding className="text-xl" />, text: 'Sucursal' },
     {
       
