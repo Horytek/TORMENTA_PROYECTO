@@ -5,6 +5,7 @@ const Ventas = lazy(() => import('@/pages/Ventas/Venta/Ventas'));
 const Registro_venta = lazy(() => import('@/pages/Ventas/Registro_Venta/Registro_venta'));
 const LibroVentas = lazy(() => import('@/pages/Ventas/Reporte_Venta/Libro_Ventas'));
 const Empleados = lazy(() => import('@/pages/Empleados/Empleados'));
+const Sunat = lazy(() => import('@/pages/Sunat/Sunat'));
 const Proveedores = lazy(() => import('@/pages/Proveedores/Proveedores'));
 const Productos = lazy(() => import('@/pages/Productos/Productos'));
 const Almacenes = lazy(() => import('@/pages/AlmacenG/AlmacenG'));
@@ -42,6 +43,7 @@ const moduleComponentMap = {
   9: null, 
   10: Almacen,
   12: Proveedores,
+  13: Sunat
   // proximo mapeo de modulos
 };
 
