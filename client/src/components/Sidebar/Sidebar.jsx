@@ -93,7 +93,7 @@ function Sidebar({ onToggle }) {
     { to: '/reportes', icon: <BiSolidReport className="text-xl" />, text: 'Reportes' },
     { to: '/sucursal', icon: <FaBuilding className="text-xl" />, text: 'Sucursal' },
     {
-      to: '/configuracion',
+      
       icon: <FaCog className="text-xl" />,
       text: 'Configuración',
       subLinks: [
@@ -124,8 +124,8 @@ function Sidebar({ onToggle }) {
 
         <button
           onClick={toggleSidebar}
-          className="absolute -right-4 top-5 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-500 
-            border-2 border-white transition-all duration-200 transform hover:scale-110 z-40"
+          className="absolute -right-4 top-5 bg-blue-600 text-white p-2 rounded-lg shadow-lg hover:bg-blue-500 
+            border-2 shadow-blue-400/50 border-white transition-all duration-200 transform hover:scale-110 z-40"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <FaArrowRight size={16} /> : <FaArrowLeft size={16} />}
