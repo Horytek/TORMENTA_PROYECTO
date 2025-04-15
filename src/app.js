@@ -34,17 +34,20 @@ import rutasRoutes from "./routes/rutas.routes.js";
 const app = express();
 
 // Settings
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 4000 ;
 app.set("port", port);
 
 // Middlewares
 app.use(morgan("dev"));
 const allowedOrigin = (origin, callback) => {
-    // Verifica si el origen está en el rango 192.168.194.0/24
-    if (origin && /^http:\/\/192\.168\.194\.\d{1,3}(:\d+)?$/.test(origin)) {
-        callback(null, true);  // Permite la solicitud si coincide con el rango
+    // Permite localhost y el rango 192.168.194.0/24
+    if (
+        (origin && /^http:\/\/192\.168\.194\.\d{1,3}(:\d+)?$/.test(origin)) ||
+        (origin && /^http:\/\/localhost(:\d+)?$/.test(origin))
+    ) {
+        callback(null, true);  // Permite la solicitud si coincide
     } else {
-        callback(new Error('Not allowed by CORS'));  // Rechaza si no coincide
+        callback(new Error('Not allowed by CORS'));
     }
 };
 
