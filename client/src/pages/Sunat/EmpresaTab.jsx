@@ -1,16 +1,33 @@
 import React, { useState } from "react";
 import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Button,
+  Input,
   Card,
   CardHeader,
   CardBody,
-  Input,
-  Button,
-  Divider,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Pagination,
+  useDisclosure,
 } from "@nextui-org/react";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 
-const EmpresaTab = () => {
-  const [formData, setFormData] = useState({
+const initialEmpresas = [
+  {
     ruc: "20123456789",
     razonSocial: "EMPRESA DEMO S.A.C.",
     nombreComercial: "DEMO COMPANY",
@@ -21,140 +38,278 @@ const EmpresaTab = () => {
     codigoPostal: "15001",
     telefono: "01-1234567",
     email: "contacto@empresa-demo.com",
+  },
+];
+
+const EmpresasSunat = () => {
+  const [empresas, setEmpresas] = useState(initialEmpresas);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { isOpen: isModalOpen, onOpen: openModal, onOpenChange: onModalChange } = useDisclosure();
+  const { isOpen: isDeleteModalOpen, onOpen: openDeleteModal, onOpenChange: onDeleteModalChange } =
+    useDisclosure();
+  const [editingRuc, setEditingRuc] = useState(null);
+  const [formData, setFormData] = useState({
+    ruc: "",
+    razonSocial: "",
+    nombreComercial: "",
+    direccion: "",
+    distrito: "",
+    provincia: "",
+    departamento: "",
+    codigoPostal: "",
+    telefono: "",
+    email: "",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const filteredEmpresas = empresas.filter(
+    (e) =>
+      e.ruc.includes(searchTerm) ||
+      e.razonSocial.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const paginatedEmpresas = filteredEmpresas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleSaveEmpresa = () => {
+    if (editingRuc) {
+      setEmpresas((prev) =>
+        prev.map((e) => (e.ruc === editingRuc ? { ...formData } : e))
+      );
+      toast.success("Empresa actualizada correctamente");
+    } else {
+      setEmpresas((prev) => [...prev, formData]);
+      toast.success("Empresa agregada correctamente");
+    }
+    resetForm();
+    onModalChange(false);
   };
 
-  const handleSave = () => {
-    console.log("Datos guardados:", formData);
-    toast.success("Datos de la empresa guardados correctamente");
+  const handleEdit = (empresa) => {
+    setEditingRuc(empresa.ruc);
+    setFormData(empresa);
+    openModal();
   };
 
-  const inputStyle = {
-    border: "none",
-    boxShadow: "none",
-    outline: "none",
+  const handleDelete = (ruc) => {
+    setEditingRuc(ruc);
+    openDeleteModal();
+  };
+
+  const confirmDelete = () => {
+    setEmpresas((prev) => prev.filter((e) => e.ruc !== editingRuc));
+    toast.success("Empresa eliminada");
+    onDeleteModalChange(false);
+    setEditingRuc(null);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      ruc: "",
+      razonSocial: "",
+      nombreComercial: "",
+      direccion: "",
+      distrito: "",
+      provincia: "",
+      departamento: "",
+      codigoPostal: "",
+      telefono: "",
+      email: "",
+    });
+    setEditingRuc(null);
   };
 
   return (
-    <Card className="p-6 shadow-2xl rounded-2xl max-w-4xl mx-auto">
-      <CardHeader className="flex flex-col items-start gap-1">
-        <h2 className="text-3xl font-semibold text-neutral-800">Empresa</h2>
-        <p className="text-sm text-neutral-500">
-          Complete cuidadosamente los datos fiscales y de contacto.
-        </p>
-      </CardHeader>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">Empresas Registradas</h1>
+        <Button
+          color="primary"
+          startContent={<FaPlus />}
+          onPress={() => {
+            resetForm();
+            openModal();
+          }}
+          className="bg-blue-500 text-white"
+        >
+          Agregar Empresa
+        </Button>
+      </div>
 
-      <Divider className="my-2" />
-
-      <CardBody className="space-y-8">
-        {/* Información General */}
-        <section>
-          <h4 className="text-lg font-medium text-neutral-700 mb-4">Información General</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Input
-              label="RUC *"
-              name="ruc"
-              value={formData.ruc}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-            <Input
-              label="Razón Social *"
-              name="razonSocial"
-              value={formData.razonSocial}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-            <Input
-              label="Nombre Comercial"
-              name="nombreComercial"
-              value={formData.nombreComercial}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-            <Input
-              label="Email *"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-          </div>
-        </section>
-
-        {/* Dirección */}
-        <section>
-          <h4 className="text-lg font-medium text-neutral-700 mb-4">Dirección Fiscal</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Input
-              label="Dirección *"
-              name="direccion"
-              value={formData.direccion}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-            <Input
-              label="Distrito *"
-              name="distrito"
-              value={formData.distrito}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-            <Input
-              label="Provincia *"
-              name="provincia"
-              value={formData.provincia}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-            <Input
-              label="Departamento *"
-              name="departamento"
-              value={formData.departamento}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-            <Input
-              label="Código Postal"
-              name="codigoPostal"
-              value={formData.codigoPostal}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-          </div>
-        </section>
-
-        {/* Contacto */}
-        <section>
-          <h4 className="text-lg font-medium text-neutral-700 mb-4">Contacto</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Input
-              label="Teléfono"
-              name="telefono"
-              value={formData.telefono}
-              onChange={handleInputChange}
-              style={inputStyle}
-            />
-          </div>
-        </section>
-
-        {/* Botón de Acción */}
-        <div className="flex justify-end">
-          <Button
+      <Card>
+        <CardHeader className="flex justify-between px-4 py-2 border-b">
+          <h3 className="font-semibold text-gray-700">Lista de Empresas</h3>
+          <Input
+            isClearable
+            placeholder="Buscar por RUC o razón social..."
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            className="w-full max-w-xs"
+            size="sm"
+            style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+            }}
+          />
+        </CardHeader>
+        <CardBody>
+          <Table isStriped aria-label="Tabla de empresas SUNAT">
+            <TableHeader>
+              <TableColumn>RUC</TableColumn>
+              <TableColumn>Razón Social</TableColumn>
+              <TableColumn>Nombre Comercial</TableColumn>
+              <TableColumn>Dirección</TableColumn>
+              <TableColumn>Distrito</TableColumn>
+              <TableColumn>Provincia</TableColumn>
+              <TableColumn>Departamento</TableColumn>
+              <TableColumn>Código Postal</TableColumn>
+              <TableColumn>Teléfono</TableColumn>
+              <TableColumn>Email</TableColumn>
+              <TableColumn>Acciones</TableColumn>
+            </TableHeader>
+            <TableBody>
+              {paginatedEmpresas.map((empresa) => (
+                <TableRow key={empresa.ruc}>
+                  <TableCell>{empresa.ruc}</TableCell>
+                  <TableCell>{empresa.razonSocial}</TableCell>
+                  <TableCell>{empresa.nombreComercial}</TableCell>
+                  <TableCell>{empresa.direccion}</TableCell>
+                  <TableCell>{empresa.distrito}</TableCell>
+                  <TableCell>{empresa.provincia}</TableCell>
+                  <TableCell>{empresa.departamento}</TableCell>
+                  <TableCell>{empresa.codigoPostal}</TableCell>
+                  <TableCell>{empresa.telefono}</TableCell>
+                  <TableCell>{empresa.email}</TableCell>
+                  <TableCell>
+                    <Dropdown>
+                      <DropdownTrigger>
+                        <Button
+                          isIconOnly
+                          variant="light"
+                          color="primary"
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          <FaEdit />
+                        </Button>
+                      </DropdownTrigger>
+                      <DropdownMenu>
+                        <DropdownItem onClick={() => handleEdit(empresa)}>
+                          Editar
+                        </DropdownItem>
+                        <DropdownItem
+                          color="danger"
+                          onClick={() => handleDelete(empresa.ruc)}
+                        >
+                          Eliminar
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardBody>
+        <div className="flex justify-between items-center p-4">
+          <Pagination
+            total={Math.ceil(filteredEmpresas.length / itemsPerPage)}
+            initialPage={currentPage}
+            onChange={(page) => setCurrentPage(page)}
+            showControls
             color="primary"
-            className="px-6 py-2 text-sm font-medium"
-            onClick={handleSave}
-          >
-            Guardar Datos
-          </Button>
+          />
         </div>
-      </CardBody>
-    </Card>
+      </Card>
+
+      {/* Modal para agregar/editar empresa */}
+      <Modal isOpen={isModalOpen} onOpenChange={onModalChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>{editingRuc ? "Editar Empresa" : "Agregar Empresa"}</ModalHeader>
+              <ModalBody className="space-y-3">
+                {[
+                  { label: "RUC", key: "ruc" },
+                  { label: "Razón Social", key: "razonSocial" },
+                  { label: "Nombre Comercial", key: "nombreComercial" },
+                  { label: "Dirección", key: "direccion" },
+                  { label: "Distrito", key: "distrito" },
+                  { label: "Provincia", key: "provincia" },
+                  { label: "Departamento", key: "departamento" },
+                  { label: "Código Postal", key: "codigoPostal" },
+                  { label: "Teléfono", key: "telefono" },
+                  { label: "Email", key: "email" },
+                ].map(({ label, key }) => (
+                  <Input
+                    key={key}
+                    label={label}
+                    value={formData[key]}
+                    style={{
+                      border: "none",
+                      boxShadow: "none",
+                      outline: "none",
+                    }}
+                    onChange={(e) =>
+                      setFormData({ ...formData, [key]: e.target.value })
+                    }
+                    placeholder={`Ingrese ${label.toLowerCase()}`}
+                  />
+                ))}
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={onClose}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={handleSaveEmpresa}
+                >
+                  {editingRuc ? "Actualizar Empresa" : "Guardar Empresa"}
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Modal de confirmación para eliminar */}
+      <Modal isOpen={isDeleteModalOpen} onOpenChange={onDeleteModalChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Confirmar Eliminación</ModalHeader>
+              <ModalBody>
+                <p>¿Estás seguro de que deseas eliminar esta empresa?</p>
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={onClose}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={confirmDelete}
+                >
+                  Eliminar
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </div>
   );
 };
 
-export default EmpresaTab;
+export default EmpresasSunat;
