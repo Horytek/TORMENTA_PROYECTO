@@ -17,10 +17,12 @@ import {
   DropdownItem,
   Badge,
   Modal,
+  ModalContent,
   ModalHeader,
   ModalBody,
   ModalFooter,
   Textarea,
+  Pagination,
 } from "@nextui-org/react";
 import { FaEye, FaEyeSlash, FaCopy, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { toast } from "react-hot-toast";
@@ -58,11 +60,18 @@ const ApiSunat = () => {
     value: "",
     expiresAt: "",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const filteredKeys = keys.filter(
     (key) =>
       key.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       key.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const paginatedKeys = filteredKeys.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const handleSaveKey = () => {
@@ -105,8 +114,9 @@ const ApiSunat = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Gestión de Claves</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Gestión de Claves</h1>
         <Button
           color="primary"
           startContent={<FaPlus />}
@@ -115,23 +125,31 @@ const ApiSunat = () => {
             setFormData({ name: "", type: "", value: "", expiresAt: "" });
             setEditingKey(null);
           }}
+          className="bg-blue-500 hover:bg-blue-600 text-white"
         >
           Agregar Clave
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-bold">Lista de Claves</h3>
-            <Input
-              placeholder="Buscar claves..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-64"
-            />
-          </div>
-        </CardHeader>
+      {/* Table Card */}
+      <Card className="shadow-md rounded-lg">
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-b">
+  <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Lista de Claves</h3>
+  <Input
+    isClearable
+    placeholder="Buscar claves..."
+    value={searchTerm}
+    onValueChange={setSearchTerm}
+    onClear/*={() => console.log("input cleared")}*/
+    className="w-full sm:max-w-xs"
+    size="sm"
+    style={{
+      border: "none",
+      boxShadow: "none",
+      outline: "none",
+   }}
+  />
+</CardHeader>
         <CardBody>
           <Table>
             <TableHeader>
@@ -145,7 +163,7 @@ const ApiSunat = () => {
               <TableColumn>Acciones</TableColumn>
             </TableHeader>
             <TableBody>
-              {filteredKeys.map((key) => (
+              {paginatedKeys.map((key) => (
                 <TableRow key={key.id}>
                   <TableCell>{key.id}</TableCell>
                   <TableCell>{key.name}</TableCell>
@@ -159,6 +177,7 @@ const ApiSunat = () => {
                         isIconOnly
                         variant="light"
                         onClick={() => toggleKeyVisibility(key.id)}
+                        className="ml-2 text-blue-500 hover:text-blue-700"
                       >
                         {showKey[key.id] ? <FaEyeSlash /> : <FaEye />}
                       </Button>
@@ -169,6 +188,7 @@ const ApiSunat = () => {
                           navigator.clipboard.writeText(key.value);
                           toast.success("Clave copiada al portapapeles");
                         }}
+                        className="ml-2 text-green-500 hover:text-green-700"
                       >
                         <FaCopy />
                       </Button>
@@ -177,14 +197,27 @@ const ApiSunat = () => {
                   <TableCell>{key.createdAt}</TableCell>
                   <TableCell>{key.expiresAt}</TableCell>
                   <TableCell>
-                    <Badge color={key.status === "active" ? "success" : "warning"}>
-                      {key.status === "active" ? "Activa" : "Por vencer"}
-                    </Badge>
-                  </TableCell>
+  <div
+    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
+      ${key.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+  >
+    <span
+      className={`w-2 h-2 rounded-full 
+        ${key.status === "active" ? "bg-green-500" : "bg-yellow-500"}`}
+    ></span>
+    {key.status === "active" ? "Activa" : "Por vencer"}
+  </div>
+</TableCell>
+
                   <TableCell>
                     <Dropdown>
                       <DropdownTrigger>
-                        <Button isIconOnly variant="light">
+                        <Button
+                          isIconOnly
+                          variant="light"
+                          color="primary"
+                          className="text-blue-500 hover:text-blue-700"
+                        >
                           <FaEdit />
                         </Button>
                       </DropdownTrigger>
@@ -206,43 +239,101 @@ const ApiSunat = () => {
             </TableBody>
           </Table>
         </CardBody>
+        <div className="flex justify-between items-center p-4">
+          <Pagination
+            total={Math.ceil(filteredKeys.length / itemsPerPage)}
+            initialPage={currentPage}
+            onChange={(page) => setCurrentPage(page)}
+            showControls
+            color="primary"
+          />
+        </div>
       </Card>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <ModalHeader>
+      {/* Modal */}
+      <Modal isOpen={isModalOpen} onOpenChange={setIsModalOpen}>
+  <ModalContent>
+    {(onClose) => (
+      <>
+        <ModalHeader className="text-lg font-semibold text-gray-800">
           {editingKey ? "Editar Clave" : "Agregar Nueva Clave"}
         </ModalHeader>
-        <ModalBody>
+        <ModalBody className="space-y-4">
           <Input
             label="Nombre"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+           }}
+            onChange={(e) =>
+              setFormData({ ...formData, name: e.target.value })
+            }
+            placeholder="Ingrese el nombre de la clave"
+            className="border-gray-300 rounded-lg"
           />
           <Input
             label="Tipo"
             value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+           }}
+            onChange={(e) =>
+              setFormData({ ...formData, type: e.target.value })
+            }
+            placeholder="Producción, Desarrollo, etc."
+            className="border-gray-300 rounded-lg"
           />
-          <Textarea
+          <Input
             label="Valor"
             value={formData.value}
-            onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+            style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+           }}
+            onChange={(e) =>
+              setFormData({ ...formData, value: e.target.value })
+            }
+            placeholder="Ingrese el valor de la clave"
+            className="border-gray-300 rounded-lg"
           />
           <Input
             label="Fecha de Expiración"
             type="date"
             value={formData.expiresAt}
+            style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+           }}
             onChange={(e) =>
               setFormData({ ...formData, expiresAt: e.target.value })
             }
+            className="border-gray-300 rounded-lg"
           />
         </ModalBody>
         <ModalFooter>
-          <Button onClick={handleSaveKey}>
-            {editingKey ? "Actualizar Clave" : "Guardar Clave"}
+          <Button color="danger" variant="light" onPress={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            color="primary"
+            onPress={() => {
+              handleSaveKey();
+              onClose(); // cerrar el modal
+            }}
+          >
+            {editingKey ? "Actualizar" : "Guardar"}
           </Button>
         </ModalFooter>
-      </Modal>
+      </>
+    )}
+  </ModalContent>
+</Modal>
     </div>
   );
 };
