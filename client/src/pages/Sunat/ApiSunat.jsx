@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -15,7 +15,6 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Badge,
   Modal,
   ModalContent,
   ModalHeader,
@@ -23,50 +22,56 @@ import {
   ModalFooter,
   Textarea,
   Pagination,
+  useDisclosure,
+  Select,
+  SelectItem,
+  Badge,
+  Chip,
 } from "@nextui-org/react";
-import { FaEye, FaEyeSlash, FaCopy, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import { Autocomplete, AutocompleteItem } from "@nextui-org/react";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { toast } from "react-hot-toast";
-
-const initialKeys = [
-  {
-    id: "K001",
-    name: "Facturación Electrónica API",
-    type: "Producción",
-    createdAt: "2025-04-01",
-    expiresAt: "2026-04-01",
-    status: "active",
-    value: "x509-cert-SUNAT2025abcdef12345",
-  },
-  {
-    id: "K002",
-    name: "Consulta RUC API",
-    type: "Producción",
-    createdAt: "2025-03-15",
-    expiresAt: "2026-03-15",
-    status: "active",
-    value: "api-key-SUNAT-ruc-123456789",
-  },
-];
+import { getClaves, addClave, updateClave, deleteClave } from "@/services/clave.services";
+import { getEmpresas } from "@/services/empresa.services";
 
 const ApiSunat = () => {
-  const [keys, setKeys] = useState(initialKeys);
+  const [keys, setKeys] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showKey, setShowKey] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isOpen: isModalOpen, onOpen: openModal, onOpenChange: onModalChange } = useDisclosure();
+  const { isOpen: isDeleteModalOpen, onOpen: openDeleteModal, onOpenChange: onDeleteModalChange } =
+    useDisclosure();
   const [editingKey, setEditingKey] = useState(null);
   const [formData, setFormData] = useState({
-    name: "",
-    type: "",
-    value: "",
-    expiresAt: "",
+    id_empresa: "",
+    tipo: "",
+    valor: "",
+    estado_clave: "1", // Por defecto, activo
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Obtener claves desde la API
+  const fetchClaves = async () => {
+    const data = await getClaves();
+    if (data) setKeys(data);
+  };
+
+  // Obtener empresas desde la API
+  const fetchEmpresas = async () => {
+    const data = await getEmpresas();
+    if (data) setEmpresas(data);
+  };
+
+  useEffect(() => {
+    fetchClaves();
+    fetchEmpresas();
+  }, []);
+
   const filteredKeys = keys.filter(
     (key) =>
-      key.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      key.id.toLowerCase().includes(searchTerm.toLowerCase())
+      key.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      key.valor.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const paginatedKeys = filteredKeys.slice(
@@ -74,141 +79,117 @@ const ApiSunat = () => {
     currentPage * itemsPerPage
   );
 
-  const handleSaveKey = () => {
+  const handleSaveKey = async () => {
     if (editingKey) {
-      setKeys((prevKeys) =>
-        prevKeys.map((key) =>
-          key.id === editingKey ? { ...key, ...formData } : key
-        )
-      );
-      toast.success("Clave actualizada correctamente");
+      const success = await updateClave(editingKey, formData);
+      if (success) {
+        toast.success("Clave actualizada correctamente");
+        fetchClaves();
+      }
     } else {
-      const newKey = {
-        id: `K${String(keys.length + 1).padStart(3, "0")}`,
-        ...formData,
-        createdAt: new Date().toISOString().split("T")[0],
-        status: "active",
-      };
-      setKeys((prevKeys) => [...prevKeys, newKey]);
-      toast.success("Nueva clave agregada correctamente");
+      const success = await addClave(formData);
+      if (success) {
+        toast.success("Clave agregada correctamente");
+        fetchClaves();
+      }
     }
-    setIsModalOpen(false);
-    setFormData({ name: "", type: "", value: "", expiresAt: "" });
-    setEditingKey(null);
+    resetForm();
+    onModalChange(false);
   };
 
   const handleEdit = (key) => {
-    setEditingKey(key.id);
-    setFormData(key);
-    setIsModalOpen(true);
+    setEditingKey(key.id_clave);
+    setFormData({
+      ...key,
+      estado_clave: key.estado_clave?.toString() ?? "1",
+    });
+    openModal();
   };
 
   const handleDelete = (id) => {
-    setKeys((prevKeys) => prevKeys.filter((key) => key.id !== id));
-    toast.success("Clave eliminada correctamente");
+    setEditingKey(id);
+    openDeleteModal();
   };
 
-  const toggleKeyVisibility = (id) => {
-    setShowKey((prev) => ({ ...prev, [id]: !prev[id] }));
+  const confirmDelete = async () => {
+    const success = await deleteClave(editingKey);
+    if (success) {
+      toast.success("Clave eliminada");
+      fetchClaves();
+    }
+    onDeleteModalChange(false);
+    setEditingKey(null);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      id_empresa: "",
+      tipo: "",
+      valor: "",
+      estado_clave: "1",
+    });
+    setEditingKey(null);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">Gestión de Claves</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">Gestión de Claves</h1>
         <Button
           color="primary"
           startContent={<FaPlus />}
-          onClick={() => {
-            setIsModalOpen(true);
-            setFormData({ name: "", type: "", value: "", expiresAt: "" });
-            setEditingKey(null);
+          onPress={() => {
+            resetForm();
+            openModal();
           }}
-          className="bg-blue-500 hover:bg-blue-600 text-white"
+          className="bg-blue-500 text-white"
         >
           Agregar Clave
         </Button>
       </div>
 
-      {/* Table Card */}
-      <Card className="shadow-md rounded-lg">
-      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-b">
-  <h3 className="text-xl font-semibold text-gray-900 tracking-tight">Lista de Claves</h3>
-  <Input
-    isClearable
-    placeholder="Buscar claves..."
-    value={searchTerm}
-    onValueChange={setSearchTerm}
-    onClear/*={() => console.log("input cleared")}*/
-    className="w-full sm:max-w-xs"
-    size="sm"
-    style={{
-      border: "none",
-      boxShadow: "none",
-      outline: "none",
-   }}
-  />
-</CardHeader>
+      <Card>
+        <CardHeader className="flex justify-between px-4 py-2 border-b">
+          <h3 className="font-semibold text-gray-700">Lista de Claves</h3>
+          <Input
+            isClearable
+            placeholder="Buscar por tipo o valor..."
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            className="w-full max-w-xs"
+            size="sm"
+            style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+            }}
+          />
+        </CardHeader>
         <CardBody>
-          <Table>
+          <Table isStriped aria-label="Tabla de claves">
             <TableHeader>
               <TableColumn>ID</TableColumn>
-              <TableColumn>Nombre</TableColumn>
+              <TableColumn>Empresa</TableColumn>
               <TableColumn>Tipo</TableColumn>
               <TableColumn>Valor</TableColumn>
-              <TableColumn>Creación</TableColumn>
-              <TableColumn>Expiración</TableColumn>
               <TableColumn>Estado</TableColumn>
               <TableColumn>Acciones</TableColumn>
             </TableHeader>
             <TableBody>
               {paginatedKeys.map((key) => (
-                <TableRow key={key.id}>
-                  <TableCell>{key.id}</TableCell>
-                  <TableCell>{key.name}</TableCell>
-                  <TableCell>{key.type}</TableCell>
+                <TableRow key={key.id_clave}>
+                  <TableCell>{key.id_clave}</TableCell>
+                  <TableCell>{key.razonSocial}</TableCell>
+                  <TableCell>{key.tipo}</TableCell>
+                  <TableCell>{key.valor}</TableCell>
                   <TableCell>
-                    <div className="flex items-center">
-                      <span className="truncate">
-                        {showKey[key.id] ? key.value : "••••••••••••"}
-                      </span>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        onClick={() => toggleKeyVisibility(key.id)}
-                        className="ml-2 text-blue-500 hover:text-blue-700"
-                      >
-                        {showKey[key.id] ? <FaEyeSlash /> : <FaEye />}
-                      </Button>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        onClick={() => {
-                          navigator.clipboard.writeText(key.value);
-                          toast.success("Clave copiada al portapapeles");
-                        }}
-                        className="ml-2 text-green-500 hover:text-green-700"
-                      >
-                        <FaCopy />
-                      </Button>
-                    </div>
+                    <Chip
+                      color={key.estado_clave === 1 ? "success" : "danger"}
+                      variant="flat"
+                    >
+                      {key.estado_clave === 1 ? "Activo" : "Inactivo"}
+                    </Chip>
                   </TableCell>
-                  <TableCell>{key.createdAt}</TableCell>
-                  <TableCell>{key.expiresAt}</TableCell>
-                  <TableCell>
-  <div
-    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
-      ${key.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
-  >
-    <span
-      className={`w-2 h-2 rounded-full 
-        ${key.status === "active" ? "bg-green-500" : "bg-yellow-500"}`}
-    ></span>
-    {key.status === "active" ? "Activa" : "Por vencer"}
-  </div>
-</TableCell>
-
                   <TableCell>
                     <Dropdown>
                       <DropdownTrigger>
@@ -227,7 +208,7 @@ const ApiSunat = () => {
                         </DropdownItem>
                         <DropdownItem
                           color="danger"
-                          onClick={() => handleDelete(key.id)}
+                          onClick={() => handleDelete(key.id_clave)}
                         >
                           Eliminar
                         </DropdownItem>
@@ -250,90 +231,119 @@ const ApiSunat = () => {
         </div>
       </Card>
 
-      {/* Modal */}
-      <Modal isOpen={isModalOpen} onOpenChange={setIsModalOpen}>
-  <ModalContent>
-    {(onClose) => (
-      <>
-        <ModalHeader className="text-lg font-semibold text-gray-800">
-          {editingKey ? "Editar Clave" : "Agregar Nueva Clave"}
-        </ModalHeader>
-        <ModalBody className="space-y-4">
-          <Input
-            label="Nombre"
-            value={formData.name}
-            style={{
-              border: "none",
-              boxShadow: "none",
-              outline: "none",
-           }}
-            onChange={(e) =>
-              setFormData({ ...formData, name: e.target.value })
-            }
-            placeholder="Ingrese el nombre de la clave"
-            className="border-gray-300 rounded-lg"
-          />
-          <Input
-            label="Tipo"
-            value={formData.type}
-            style={{
-              border: "none",
-              boxShadow: "none",
-              outline: "none",
-           }}
-            onChange={(e) =>
-              setFormData({ ...formData, type: e.target.value })
-            }
-            placeholder="Producción, Desarrollo, etc."
-            className="border-gray-300 rounded-lg"
-          />
-          <Input
-            label="Valor"
-            value={formData.value}
-            style={{
-              border: "none",
-              boxShadow: "none",
-              outline: "none",
-           }}
-            onChange={(e) =>
-              setFormData({ ...formData, value: e.target.value })
-            }
-            placeholder="Ingrese el valor de la clave"
-            className="border-gray-300 rounded-lg"
-          />
-          <Input
-            label="Fecha de Expiración"
-            type="date"
-            value={formData.expiresAt}
-            style={{
-              border: "none",
-              boxShadow: "none",
-              outline: "none",
-           }}
-            onChange={(e) =>
-              setFormData({ ...formData, expiresAt: e.target.value })
-            }
-            className="border-gray-300 rounded-lg"
-          />
-        </ModalBody>
-        <ModalFooter>
-          <Button color="danger" variant="light" onPress={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            color="primary"
-            onPress={() => {
-              handleSaveKey();
-              onClose(); // cerrar el modal
-            }}
-          >
-            {editingKey ? "Actualizar" : "Guardar"}
-          </Button>
-        </ModalFooter>
-      </>
-    )}
-  </ModalContent>
-</Modal>
+      {/* Modal para agregar/editar clave */}
+      <Modal isOpen={isModalOpen} onOpenChange={onModalChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>{editingKey ? "Editar Clave" : "Agregar Clave"}</ModalHeader>
+              <ModalBody className="space-y-3">
+              <Autocomplete
+  className="max-w-xs"
+  label="Empresa"
+  style={{
+    border: "none",
+    boxShadow: "none",
+    outline: "none",
+  }}
+  selectedKey={formData.id_empresa?.toString()} // Asegúrate que sea string
+  onSelectionChange={(selected) =>
+    setFormData({ ...formData, id_empresa: selected })
+  }
+>
+  {empresas.map((empresa) => (
+    <AutocompleteItem key={empresa.id_empresa.toString()}>
+      {empresa.razonSocial}
+    </AutocompleteItem>
+  ))}
+</Autocomplete>
+
+                <Input
+                  label="Tipo"
+                  value={formData.tipo}
+                  onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                  placeholder="Ingrese el tipo"
+                  style={{
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                  }}
+                />
+                <Textarea
+                  label="Valor"
+                  value={formData.valor}
+                  onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                  placeholder="Ingrese el valor"
+                  style={{
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                  }}
+                />
+                <Select
+                  label="Estado"
+                  selectedKeys={formData.estado_clave !== undefined ? [formData.estado_clave.toString()] : []}
+                  onSelectionChange={(selected) =>
+                    setFormData({ ...formData, estado_clave: Array.from(selected)[0] })
+                  }
+                  className="max-w-xs"
+                >
+                  <SelectItem key="1" value="1">
+                    Activo
+                  </SelectItem>
+                  <SelectItem key="0" value="0">
+                    Inactivo
+                  </SelectItem>
+                </Select>
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={onClose}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={handleSaveKey}
+                >
+                  {editingKey ? "Actualizar Clave" : "Guardar Clave"}
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Modal de confirmación para eliminar */}
+      <Modal isOpen={isDeleteModalOpen} onOpenChange={onDeleteModalChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Confirmar Eliminación</ModalHeader>
+              <ModalBody>
+                <p>¿Estás seguro de que deseas eliminar esta clave?</p>
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={onClose}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={confirmDelete}
+                >
+                  Eliminar
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 };

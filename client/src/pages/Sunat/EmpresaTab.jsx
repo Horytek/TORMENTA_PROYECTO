@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableHeader,
@@ -25,29 +25,15 @@ import {
 } from "@nextui-org/react";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { toast } from "react-hot-toast";
-
-const initialEmpresas = [
-  {
-    ruc: "20123456789",
-    razonSocial: "EMPRESA DEMO S.A.C.",
-    nombreComercial: "DEMO COMPANY",
-    direccion: "AV. PRINCIPAL 123",
-    distrito: "SAN ISIDRO",
-    provincia: "LIMA",
-    departamento: "LIMA",
-    codigoPostal: "15001",
-    telefono: "01-1234567",
-    email: "contacto@empresa-demo.com",
-  },
-];
+import { getEmpresas, addEmpresa, updateEmpresa, deleteEmpresa } from "@/services/empresa.services";
 
 const EmpresasSunat = () => {
-  const [empresas, setEmpresas] = useState(initialEmpresas);
+  const [empresas, setEmpresas] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const { isOpen: isModalOpen, onOpen: openModal, onOpenChange: onModalChange } = useDisclosure();
   const { isOpen: isDeleteModalOpen, onOpen: openDeleteModal, onOpenChange: onDeleteModalChange } =
     useDisclosure();
-  const [editingRuc, setEditingRuc] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     ruc: "",
     razonSocial: "",
@@ -63,6 +49,16 @@ const EmpresasSunat = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Obtener empresas desde la API
+  const fetchEmpresas = async () => {
+    const data = await getEmpresas();
+    if (data) setEmpresas(data);
+  };
+
+  useEffect(() => {
+    fetchEmpresas();
+  }, []);
+
   const filteredEmpresas = empresas.filter(
     (e) =>
       e.ruc.includes(searchTerm) ||
@@ -74,36 +70,43 @@ const EmpresasSunat = () => {
     currentPage * itemsPerPage
   );
 
-  const handleSaveEmpresa = () => {
-    if (editingRuc) {
-      setEmpresas((prev) =>
-        prev.map((e) => (e.ruc === editingRuc ? { ...formData } : e))
-      );
-      toast.success("Empresa actualizada correctamente");
+  const handleSaveEmpresa = async () => {
+    if (editingId) {
+      const success = await updateEmpresa(editingId, formData);
+      if (success) {
+        toast.success("Empresa actualizada correctamente");
+        fetchEmpresas();
+      }
     } else {
-      setEmpresas((prev) => [...prev, formData]);
-      toast.success("Empresa agregada correctamente");
+      const success = await addEmpresa(formData);
+      if (success) {
+        toast.success("Empresa agregada correctamente");
+        fetchEmpresas();
+      }
     }
     resetForm();
     onModalChange(false);
   };
 
   const handleEdit = (empresa) => {
-    setEditingRuc(empresa.ruc);
+    setEditingId(empresa.id_empresa);
     setFormData(empresa);
     openModal();
   };
 
-  const handleDelete = (ruc) => {
-    setEditingRuc(ruc);
+  const handleDelete = (id) => {
+    setEditingId(id);
     openDeleteModal();
   };
 
-  const confirmDelete = () => {
-    setEmpresas((prev) => prev.filter((e) => e.ruc !== editingRuc));
-    toast.success("Empresa eliminada");
+  const confirmDelete = async () => {
+    const success = await deleteEmpresa(editingId);
+    if (success) {
+      toast.success("Empresa eliminada");
+      fetchEmpresas();
+    }
     onDeleteModalChange(false);
-    setEditingRuc(null);
+    setEditingId(null);
   };
 
   const resetForm = () => {
@@ -119,7 +122,7 @@ const EmpresasSunat = () => {
       telefono: "",
       email: "",
     });
-    setEditingRuc(null);
+    setEditingId(null);
   };
 
   return (
@@ -173,7 +176,7 @@ const EmpresasSunat = () => {
             </TableHeader>
             <TableBody>
               {paginatedEmpresas.map((empresa) => (
-                <TableRow key={empresa.ruc}>
+                <TableRow key={empresa.id_empresa}>
                   <TableCell>{empresa.ruc}</TableCell>
                   <TableCell>{empresa.razonSocial}</TableCell>
                   <TableCell>{empresa.nombreComercial}</TableCell>
@@ -202,7 +205,7 @@ const EmpresasSunat = () => {
                         </DropdownItem>
                         <DropdownItem
                           color="danger"
-                          onClick={() => handleDelete(empresa.ruc)}
+                          onClick={() => handleDelete(empresa.id_empresa)}
                         >
                           Eliminar
                         </DropdownItem>
@@ -230,7 +233,7 @@ const EmpresasSunat = () => {
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader>{editingRuc ? "Editar Empresa" : "Agregar Empresa"}</ModalHeader>
+              <ModalHeader>{editingId ? "Editar Empresa" : "Agregar Empresa"}</ModalHeader>
               <ModalBody className="space-y-3">
                 {[
                   { label: "RUC", key: "ruc" },
@@ -272,7 +275,7 @@ const EmpresasSunat = () => {
                   color="primary"
                   onPress={handleSaveEmpresa}
                 >
-                  {editingRuc ? "Actualizar Empresa" : "Guardar Empresa"}
+                  {editingId ? "Actualizar Empresa" : "Guardar Empresa"}
                 </Button>
               </ModalFooter>
             </>
