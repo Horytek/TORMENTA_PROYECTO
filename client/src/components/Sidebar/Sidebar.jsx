@@ -116,8 +116,8 @@ function Sidebar({ onToggle }) {
       <div className="flex items-center justify-between p-4 border-b border-blue-600 relative">
         {!collapsed ? (
           <div className="flex items-center">
-            <img src={img} alt="Logo" className="w-8 h-8 mr-2" />
-            <h2 className="font-bold text-lg">TORMENTA</h2>
+            <img src={img} alt="Logo" className="w-10 h-10 mr-2" />
+            <h2 className="font-bold text-lg">HORYTEK</h2>
           </div>
         ) : (
           <img src={img} alt="Logo" className="w-8 h-8 mx-auto" />
@@ -205,7 +205,7 @@ function Sidebar({ onToggle }) {
 
       {/* Footer */}
       <div className="p-3 text-center border-t border-blue-600 mt-auto">
-        {!collapsed && <p className="text-xs text-blue-300">TORMENTA ERP v1.0</p>}
+        {!collapsed && <p className="text-xs text-blue-300">HORYTEK ERP v1.0</p>}
       </div>
     </div>
   );

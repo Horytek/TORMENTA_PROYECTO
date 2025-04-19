@@ -24,6 +24,8 @@ export function TablaPermisos() {
     expandedModulos,
     toggleExpand,
     expandAll,
+    addAll,
+    deleteAll,
     collapseAll
   } = useGetRutas();
 
@@ -186,6 +188,52 @@ export function TablaPermisos() {
     }
   };
 
+  const handleAddAllPermissions = () => {
+    if (!currentRoleId) return;
+    
+    const allPermissions = {};
+    
+    modulosConSubmodulos.forEach(modulo => {
+      // Add all permissions for the module
+      allPermissions[`modulo_${modulo.id}`] = {
+        ver: true,
+        crear: true,
+        editar: true,
+        eliminar: true,
+        desactivar: true,
+        generar: true
+      };
+      
+      // Add all permissions for submodules
+      if (modulo.submodulos && modulo.submodulos.length > 0) {
+        modulo.submodulos.forEach(submodulo => {
+          allPermissions[`submodulo_${submodulo.id_submodulo}`] = {
+            ver: true,
+            crear: true,
+            editar: true,
+            eliminar: true,
+            desactivar: true,
+            generar: true
+          };
+        });
+      }
+    });
+    
+    setPermisosData(prev => ({
+      ...prev,
+      [currentRoleId]: allPermissions
+    }));
+  };
+
+  const handleDeleteAllPermissions = () => {
+    if (!currentRoleId) return;
+    
+    setPermisosData(prev => ({
+      ...prev,
+      [currentRoleId]: {}
+    }));
+  };
+
   const formatRoleName = (roleName) => {
     if (roleName === "ADMIN") return "Administrador";
     if (roleName === "EMPLEADOS") return "Empleado";
@@ -228,6 +276,24 @@ export function TablaPermisos() {
             {modulosConSubmodulos.length} módulos disponibles
           </div>
           <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="flat"
+              color="success"
+              onPress={handleAddAllPermissions}
+              style={{ fontWeight: "bold" }}
+            >
+              Agregar todos los permisos
+            </Button>
+            <Button
+              size="sm"
+              variant="flat"
+              color="danger"
+              onPress={handleDeleteAllPermissions}
+              style={{ fontWeight: "bold" }}
+            >
+              Quitar todos los permisos
+            </Button>
             <Button
               size="sm"
               variant="flat"

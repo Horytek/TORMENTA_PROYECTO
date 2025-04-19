@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { FaBars, FaTimes, FaUser } from 'react-icons/fa';
-import { IoIosSearch } from "react-icons/io";
 import { getRoles } from '@/services/rol.services';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, User } from "@nextui-org/react";
 import { Link } from "@nextui-org/react";
 import { useAuth } from '@/context/Auth/AuthProvider';
+import BarraSearch from "@/components/Search/Search";
 
 function Navbar() {
   const [roles, setRoles] = useState([]);
@@ -34,16 +34,14 @@ function Navbar() {
 
   return (
     <div className="bg-white p-4 pb-2 flex justify-between items-center relative">
+      {/* Menú desplegable */}
       <div className="flex items-center space-x-4 mr-3">
-        {/* Botón de menú desplegable */}
         <button className="md:hidden" onClick={toggleMenu}>
           {menuOpen ? <FaTimes className="text-gray-700" /> : <FaBars className="text-gray-700" />}
         </button>
-        {/* Menú desplegable */}
         <div
-          className={`${
-            menuOpen ? 'block shadow-md' : 'hidden'
-          } bg-white max-w-max rounded-lg absolute top-12 left-0 md:flex md:items-center md:static md:block`}
+          className={`${menuOpen ? "block shadow-md" : "hidden"
+            } bg-white max-w-max rounded-lg absolute top-12 left-0 md:flex md:items-center md:static md:block`}
         >
           <Link
             href="/ventas"
@@ -85,17 +83,13 @@ function Navbar() {
       </div>
 
       <div className="flex items-center space-x-4">
-        {/* Barra de búsqueda */}
-        <div className="relative">
-          <IoIosSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            className="border pl-10 pr-2 py-1 border-gray-300 text-gray-900 text-sm rounded-lg"
-          />
-        </div>
+        <BarraSearch
+          placeholder="Buscar..."
+          isClearable
+          className="h-9 text-sm"  
+        />
 
-        {/* Iconos de notificaciones, carrito y usuario */}
+        {/* Iconos de usuario */}
         <div className="flex items-center gap-4">
           <Dropdown placement="bottom-end">
             <DropdownTrigger>

@@ -6,6 +6,7 @@ const useGetRutas = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [expandedModulos, setExpandedModulos] = useState({});
+    const [selectedRutas, setSelectedRutas] = useState({}); 
 
     const fetchRutas = useCallback(async () => {
         setLoading(true);
@@ -29,7 +30,6 @@ const useGetRutas = () => {
         }
     }, []);
 
-    // Toggle expansion state for a specific module
     const toggleExpand = useCallback((moduleId) => {
         setExpandedModulos(prev => ({
             ...prev,
@@ -37,7 +37,6 @@ const useGetRutas = () => {
         }));
     }, []);
 
-    // Expand all modules
     const expandAll = useCallback(() => {
         const allExpanded = {};
         modulosConSubmodulos.forEach(modulo => {
@@ -48,15 +47,44 @@ const useGetRutas = () => {
         setExpandedModulos(allExpanded);
     }, [modulosConSubmodulos]);
 
-    // Collapse all modules
     const collapseAll = useCallback(() => {
         setExpandedModulos({});
     }, []);
 
-    // Check if a module is expanded
+    const addAll = useCallback(() => {
+        const allSelected = {};
+        
+        modulosConSubmodulos.forEach(modulo => {
+            allSelected[modulo.id] = true;
+            
+            if (modulo.submodulos && Array.isArray(modulo.submodulos)) {
+                modulo.submodulos.forEach(submodulo => {
+                    allSelected[submodulo.id] = true;
+                });
+            }
+        });
+        
+        setSelectedRutas(allSelected);
+    }, [modulosConSubmodulos]);
+
+    const deleteAll = useCallback(() => {
+        setSelectedRutas({});
+    }, []);
+
     const isExpanded = useCallback((moduleId) => {
         return !!expandedModulos[moduleId];
     }, [expandedModulos]);
+    
+    const isSelected = useCallback((rutaId) => {
+        return !!selectedRutas[rutaId];
+    }, [selectedRutas]);
+    
+    const toggleSelection = useCallback((rutaId) => {
+        setSelectedRutas(prev => ({
+            ...prev,
+            [rutaId]: !prev[rutaId]
+        }));
+    }, []);
 
     useEffect(() => {
         fetchRutas();
@@ -69,8 +97,13 @@ const useGetRutas = () => {
         expandedModulos,
         toggleExpand,
         expandAll,
+        addAll,
+        deleteAll,
         collapseAll,
         isExpanded,
+        isSelected,          
+        toggleSelection,    
+        selectedRutas,       
         refreshRutas: fetchRutas
     };
 };

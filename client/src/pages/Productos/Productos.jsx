@@ -3,17 +3,16 @@ import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ProductosForm from './ProductosForm';
 import { Toaster } from "react-hot-toast";
 import { ShowProductos } from './ShowProductos';
-import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
-import {Button, ButtonGroup} from "@nextui-org/button";
+import { Button, ButtonGroup } from "@nextui-org/button";
 // Importar el hook de permisos
 import { usePermisos } from '@/routes';
 
 function Productos() {
   // Obtener los permisos específicos para este módulo/submódulo
   const { hasCreatePermission } = usePermisos();
-  
+
   // Estado de Modal de Agregar Producto
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => {
@@ -39,24 +38,24 @@ function Productos() {
           <div className='absolute inset-y-0 start-0 top-0 flex items-center ps-3.5 pointer-events-none'>
             <IoIosSearch className='w-4 h-4 text-gray-500' />
           </div>
-          <input 
-            type="text" 
-            placeholder='Ingrese un producto' 
-            className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full ps-10 p-2.5' 
+          <input
+            type="text"
+            placeholder='Ingrese un producto'
+            className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full ps-10 p-2.5'
             value={searchTerm}
             onChange={handleSearchChange}
           />
         </div>
         <div className="flex gap-5">
-          <ButtonIcon 
-            color={'#4069E4'} 
-            icon={<FaPlus style={{ fontSize: '25px' }} />} 
+          <Button
+            color="primary"
+            endContent={<FaPlus style={{ fontSize: '25px' }} />}
             onClick={handleModalAdd}
             disabled={!hasCreatePermission}
-            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+            className={`${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Agregar producto
-          </ButtonIcon>
+          </Button>
         </div>
       </div>
       <div>
@@ -67,7 +66,7 @@ function Productos() {
       {activeAdd && (
         <ProductosForm modalTitle={'Nuevo Producto'} onClose={handleModalAdd} />
       )}
-      
+
     </div>
   );
 }

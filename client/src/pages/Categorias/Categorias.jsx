@@ -2,11 +2,11 @@ import { useState } from "react";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import CategoriasForm from "./CategoriasForm";
 import { Toaster } from "react-hot-toast";
-import { ButtonIcon } from "@/components/Buttons/Buttons";
 import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import { ShowCategorias } from "./ShowCategorias";
 import { usePermisos } from '@/routes';
+import { Button } from "@nextui-org/button";
 
 function Categorias() {
   const [activeAdd, setModalOpen] = useState(false);
@@ -54,18 +54,16 @@ function Categorias() {
               onClear={handleClearSearch}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <ButtonIcon color={"#01BDD6"}>Filtrar</ButtonIcon>
-          </div>
-          <ButtonIcon
-            color={"#4069E4"}
-            icon={<FaPlus style={{ fontSize: "25px" }} />}
+         
+          <Button
+            color="primary"
+            endContent={<FaPlus style={{ fontSize: '25px' }} />}
             onClick={handleModalAdd}
             disabled={!hasCreatePermission}
-            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+            className={`${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Crear categoría
-          </ButtonIcon>
+            Agregar categoria
+          </Button>
         </div>
       </div>
       <div>

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
-import { ButtonIcon } from '@/components/Buttons/Buttons';
-import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import { Button } from "@nextui-org/button";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
@@ -16,6 +16,8 @@ import 'jspdf-autotable';
 import { usePermisos } from '@/routes';
 
 const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ingresos, almacenSseleccionado }) => {
+
+    const navigate = useNavigate();
 
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
         const almacenIdGuardado = localStorage.getItem('almacen');
@@ -192,7 +194,9 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     
     const { hasCreatePermission } = usePermisos();
 
-
+    const handleNavigation = () => {
+        navigate("/almacen/nota_ingreso/registro_ingreso");
+    };
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
@@ -308,14 +312,26 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                     </Dropdown>
                 </button>
 
-                <Link to="/almacen/nota_ingreso/registro_ingreso">
-                    <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '25px' }} />}
+                {hasCreatePermission ? (
+                    <Button
+                        color="primary"
+                        endContent={<FaPlus style={{ fontSize: '25px' }} />}
+                        onClick={handleNavigation}
                         disabled={!hasCreatePermission}
-                        className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}>
-
+                        className={`${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
                         Nota de ingreso
-                    </ButtonIcon>
-                </Link>
+                    </Button>
+                ) : (
+                    <Button
+                        color="primary"
+                        endContent={<FaPlus style={{ fontSize: '25px' }} />}
+                        disabled
+                        className="opacity-50 cursor-not-allowed"
+                    >
+                        Nota de ingreso
+                    </Button>
+                )}
             </div>
 
             {isModalOpenPDF && (

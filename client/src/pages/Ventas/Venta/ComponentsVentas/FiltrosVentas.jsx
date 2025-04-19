@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { MdAddCircleOutline, MdOutlineRealEstateAgent } from "react-icons/md";
 import { DateRangePicker } from "@nextui-org/date-picker";
@@ -9,7 +9,6 @@ import { parseDate } from "@internationalized/date";
 import { Select, SelectItem } from "@nextui-org/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
 import { CgOptions } from "react-icons/cg";
-//import { FaRegFilePdf } from "react-icons/fa";
 import { Input } from "@nextui-org/input";
 import { handleSunatMultiple } from "../../Data/add_sunat_multiple";
 import { handleUpdateMultiple } from "../../Data/update_venta_multiple";
@@ -17,6 +16,8 @@ import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
 import PDFModal from "../hook/PDFModal"; 
 import { usePermisos } from '@/routes';
+import { Button } from "@nextui-org/button";
+
 
 const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const { comprobantes } = useComprobanteData();
@@ -32,13 +33,13 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const [razon, setRazon] = useState("");
    const [numC, setNumC] = useState("");
    const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
-   //const [modalTitle, setModalTitle] = useState(""); // Estado para el título del modal
  
    const handleChange = (event) => {
      setRazon(event.target.value);
    };
  
    const { hasCreatePermission } = usePermisos();
+   const navigate = useNavigate();
 
     const handleChanger = (event) => {
      setNumC(event.target.value);
@@ -130,11 +131,9 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     }
   }, [isDeleted, refetchVentas]);
 
-  /*
-  const handleOpenPDFModal = (title) => {
-    setModalTitle(title);
-    setModalOpen(true);
-  };*/
+  const handleNavigation = () => {
+    navigate("/ventas/registro_venta");
+  };
 
   return (
     <>
@@ -242,28 +241,25 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
               </DropdownMenu>
             </Dropdown>
           </button>
+          
           {hasCreatePermission ? (
-            <Link
-              to="/ventas/registro_venta"
-              className="mr-0 btn btn-nueva-venta"
+            <Button
+              color="primary"
+              endContent={<MdAddCircleOutline style={{ fontSize: '25px' }} />}
+              onClick={handleNavigation}
+              className="mr-0"
             >
-              <MdAddCircleOutline
-                className="inline-block mr-2"
-                style={{ fontSize: "25px" }}
-              />
               Nueva venta
-            </Link>
+            </Button>
           ) : (
-            <button
+            <Button
+              color="primary"
+              endContent={<MdAddCircleOutline style={{ fontSize: '25px' }} />}
               disabled
-              className="mr-0 btn btn-nueva-venta opacity-50 cursor-not-allowed"
+              className="mr-0 opacity-50 cursor-not-allowed"
             >
-              <MdAddCircleOutline
-                className="inline-block mr-2"
-                style={{ fontSize: "25px" }}
-              />
               Nueva venta
-            </button>
+            </Button>
           )}
         </div>
       </div>

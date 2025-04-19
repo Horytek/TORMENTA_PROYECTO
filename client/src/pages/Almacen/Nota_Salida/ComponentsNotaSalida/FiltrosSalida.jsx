@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
-import { ButtonIcon } from '@/components/Buttons/Buttons';
-import { Link } from 'react-router-dom';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
@@ -12,7 +10,8 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@
 import { CgOptions } from "react-icons/cg";
 import { FaFilePdf } from "react-icons/fa";
 import { usePermisos } from '@/routes';
-
+import { Button } from "@nextui-org/button";
+import { useNavigate } from 'react-router-dom';
 
 const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDFOptionClick }) => {
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
@@ -115,6 +114,11 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
     };
 
     const { hasCreatePermission } = usePermisos();
+    const navigate = useNavigate();
+
+    const handleNavigation = () => {
+        navigate("/almacen/nota_salida/nueva_nota_salida");
+    };
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
@@ -236,11 +240,24 @@ const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDF
                     </Dropdown>
                 </button>
 
-                <Link to="/almacen/nota_salida/nueva_nota_salida">
-                        <ButtonIcon color={'#4069E4'} icon={<FaPlus style={{ fontSize: '20px' }} />}>
-                            Nota de salida
-                        </ButtonIcon>
-                    </Link>
+                {hasCreatePermission ? (
+                    <Button
+                        color="primary"
+                        endContent={<FaPlus style={{ fontSize: '20px' }} />}
+                        onClick={handleNavigation}
+                    >
+                        Nota de salida
+                    </Button>
+                ) : (
+                    <Button
+                        color="primary"
+                        endContent={<FaPlus style={{ fontSize: '20px' }} />}
+                        disabled
+                        className="opacity-50 cursor-not-allowed"
+                    >
+                        Nota de salida
+                    </Button>
+                )}
                 </div>
 
   

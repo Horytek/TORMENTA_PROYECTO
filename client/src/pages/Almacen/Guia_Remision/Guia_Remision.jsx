@@ -7,6 +7,7 @@ import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
 import { useNavigate } from "react-router-dom";
 import useGuiasData from '../data/data_guia';
 import { usePermisos } from '@/routes';
+import { Button } from "@nextui-org/button";
 
 const Guias = () => {
   const [filters, setFilters] = useState({});
@@ -61,29 +62,19 @@ const Guias = () => {
         <Tooltip
           content={
             hasCreatePermission
-              ? 'Nueva guía'
+              ? 'Crear nueva guía de remisión'
               : 'No tiene permisos para crear guías'
           }
         >
-          <button
-            className={`
-              px-4 py-2 rounded 
-              ${
-                hasCreatePermission
-                  ? 'bg-[#00bdd6] text-white font-medium hover:bg-[rgb(3,158,179)]'
-                  : 'bg-[#00bdd6] text-white font-medium opacity-50 cursor-not-allowed'
-              }
-            `}
-            onClick={() =>
-              hasCreatePermission
-                ? navigate('/almacen/guia_remision/registro_guia')
-                : null
-            }
+          <Button
+            color="primary"
+            endContent={<MdAddCircleOutline style={{ fontSize: '25px' }} />}
+            onClick={() => hasCreatePermission ? navigate('/almacen/guia_remision/registro_guia') : null}
             disabled={!hasCreatePermission}
+            className={`${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <MdAddCircleOutline className="inline-block mr-2 text-2xl" />
             Nueva guía
-          </button>
+          </Button>
         </Tooltip>
       </div>
 

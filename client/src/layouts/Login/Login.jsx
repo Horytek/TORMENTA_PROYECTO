@@ -1,17 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import loginImage from '@/assets/img-login.png';
-import AlertModal from '@/components/Modals/AlertModal';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
-// Auth Context
-import { useAuth } from '@/context/Auth/AuthProvider';
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  Input,
+  Button,
+} from "@nextui-org/react";
+
+import { useAuth } from "@/context/Auth/AuthProvider";
+import AlertModal from "@/components/Modals/AlertModal";
 
 function Login() {
-  const [usuario, setUsuario] = useState('');
-  const [password, setPassword] = useState('');
+  const [usuario, setUsuario] = useState("");
+  const [password, setPassword] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const navigate = useNavigate();
 
   // Contexto de autenticación
@@ -19,99 +27,161 @@ function Login() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/Inicio');
+      navigate("/Inicio");
     }
+    setLoaded(true);
   }, [isAuthenticated, navigate]);
 
   // Maneja el evento de inicio de sesión
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    if (!usuario || !password) {
+      setShowAlert(true);
+      return;
+    }
+    
     try {
       const user = { usuario, password };
       const response = await login(user);
       if (response.success) {
-        localStorage.setItem('usuario', usuario);
-        localStorage.setItem('rol', response.data.rol);
-        localStorage.setItem('sur', response.data.sucursal);
-        navigate('/Inicio');
+        localStorage.setItem("usuario", usuario);
+        localStorage.setItem("rol", response.data.rol);
+        localStorage.setItem("sur", response.data.sucursal);
+        navigate("/Inicio");
       } else {
         setShowAlert(true);
       }
     } catch (error) {
-      console.error('Error logging in:', error);
+      console.error("Error logging in:", error);
       setShowAlert(true);
     }
   };
 
   return (
-    <form onSubmit={handleLogin}>
-      <div className="min-h-screen flex items-center justify-center bg-[#a07ce9]">
-        {/* Fondos decorativos */}
-        <div className="absolute top-0 left-0 z-0 rounded-full bg-[#8353e2] transform translate-x-[-20%] translate-y-[75%] w-96 h-96"></div>
-        <div className="absolute top-0 right-0 z-0 w-40 h-40 rounded-full bg-[#8353e2] transform translate-x-[-50%] translate-y-[-50%] mt-[20vh] ml-[100vw]"></div>
-
-        {/* Contenedor principal del formulario */}
-        <div className="login-container rounded-lg z-10 grid grid-cols-1 lg:grid-cols-2 w-[70vw] h-[70vh]">
-          {/* Panel izquierdo (formulario de inicio de sesión) */}
-          <div className="flex flex-col justify-center p-20 bg-white login-form">
-            <h1 className="text-3xl font-bold text-center pb-14">Iniciar Sesión</h1>
-
-            <div className="relative mb-4 input-container">
-              <input
-                type="text"
-                value={usuario}
-                onChange={(e) => setUsuario(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg pt-7 bg-gray-200/60 focus:outline-none focus:border-gray-300 focus:ring-gray-300"
-                placeholder="Tormenta"
-                autoComplete="username"
-              />
-              <label className={`absolute left-4 transition-all pointer-events-none pt-1.5 font-bold ${usuario ? '-top-0' : 'top-0'}`}>
-                Usuario
-              </label>
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      {/* Lado izquierdo (Branding) */}
+      <div className={`hidden md:flex items-center justify-center w-1/2 bg-gradient-to-br from-primary to-secondary transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="p-12 text-center text-white">
+          <h2 className="text-3xl font-bold mb-6">Una plataforma para administrar todo su negocio</h2>
+          <div className="grid grid-cols-2 gap-6 mt-10">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">
+              <h3 className="text-lg font-semibold mb-2">Adaptable</h3>
+              <p className="text-white/80 text-sm">Personalizable para cualquier industria o tamaño de negocio</p>
             </div>
-
-            <div className="relative mb-4 input-container">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg pt-7 bg-gray-200/60 focus:outline-none focus:border-gray-300 focus:ring-gray-300"
-                placeholder="*******"
-                autoComplete="current-password"
-              />
-              <label className={`absolute left-4 transition-all pointer-events-none pt-1.5 font-bold ${password ? '-top-0' : 'top-0'}`}>
-                Contraseña
-              </label>
-              <div
-                className="absolute transform -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">
+              <h3 className="text-lg font-semibold mb-2">Completo</h3>
+              <p className="text-white/80 text-sm">Gestión integral de ventas, compras, inventario y contabilidad</p>
             </div>
-
-            <button
-              type="submit"
-              className="w-full text-white py-2 rounded focus:outline-none bg-[#00BDD6]"
-            >
-              Iniciar sesión
-            </button>
-          </div>
-
-          {/* Panel derecho (imagen u otros contenidos relacionados) */}
-          <div className="hidden lg:flex lg:items-center lg:justify-center bg-white border-l-2 border-[#e7e4e4]">
-            <img src={loginImage} alt="Login Image" className="h-max" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">
+              <h3 className="text-lg font-semibold mb-2">Seguro</h3>
+              <p className="text-white/80 text-sm">Arquitectura multi-tenancy con aislamiento total de datos</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">
+              <h3 className="text-lg font-semibold mb-2">Escalable</h3>
+              <p className="text-white/80 text-sm">Crece con su negocio sin comprometer el rendimiento</p>
+            </div>
           </div>
         </div>
-
-        {showAlert && (
-          <AlertModal
-            message="Usuario o contraseña incorrectos"
-            onClose={() => setShowAlert(false)}
-          />
-        )}
       </div>
-    </form>
+
+      {/* Login Form Side */}
+      <div className={`flex items-center justify-center w-full md:w-1/2 p-6 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold text-gray-800">HORYTEK NEGOCIOS</h1>
+            <p className="text-gray-600 mt-2">Acceda a su cuenta para continuar</p>
+          </div>
+          
+          <Card className="w-full max-w-md shadow-lg">
+            <CardHeader className="flex flex-col items-center space-y-1">
+              <div className="p-2 bg-primary-100 rounded-full">
+                <div className="h-8 w-8 text-primary flex items-center justify-center">
+                  <FaEye className="h-5 w-5" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-semibold text-center">Iniciar Sesión</h2>
+              <p className="text-center text-gray-500 text-sm">
+                Ingrese sus credenciales
+              </p>
+            </CardHeader>
+            
+            <CardBody className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
+                {/* Campo de usuario */}
+                <div className="space-y-2">
+                  <label htmlFor="usuario" className="text-sm font-semibold block">
+                    Usuario
+                  </label>
+                  <Input
+                    id="usuario"
+                    type="text"
+                    placeholder="usuario"
+                    value={usuario}
+                    onChange={(e) => setUsuario(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md"
+                    aria-label="Usuario"
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+
+                {/* Campo de contraseña */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label htmlFor="password" className="text-sm font-semibold">
+                      Contraseña
+                    </label>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="********"
+                      className="w-full border border-gray-300 rounded-md pr-10"
+                      aria-label="Contraseña"
+                      required
+                      autoComplete="current-password"
+                    />
+                    <div
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label="Mostrar/ocultar contraseña"
+                    >
+                      {showPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary text-white hover:bg-primary-dark"
+                  aria-label="Iniciar sesión"
+                >
+                  Iniciar sesión
+                </Button>
+              </form>
+            </CardBody>
+            
+            <CardFooter className="flex flex-col space-y-2">
+              <p className="text-xs text-center text-gray-500 w-full">
+                ¿No tiene cuenta? Contacte con su administrador
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+
+      {/* Modal de alerta en caso de error */}
+      {showAlert && (
+        <AlertModal
+          message="Usuario o contraseña incorrectos"
+          onClose={() => setShowAlert(false)}
+        />
+      )}
+    </div>
   );
 }
 
