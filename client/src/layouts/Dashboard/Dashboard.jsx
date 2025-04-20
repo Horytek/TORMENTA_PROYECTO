@@ -17,6 +17,8 @@ import { MarcaContextProvider } from '@/context/Marca/MarcaProvider';
 import { RouteProtectedRol, RoutePermission } from '../../routes';
 
 const Global = lazy(() => import('@/pages/Global/Global'));
+const Sunat = lazy(() => import('@/pages/Sunat/Sunat'));
+const Modulo = lazy(() => import('@/pages/MOdulos/Modulos'));
 const Permisos = lazy(() => import('@/pages/Roles/Permisos'));
 const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
 
@@ -111,6 +113,30 @@ function Dashboard() {
         element={
           <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
             <Global />
+          </RouteProtectedRol>
+        } 
+      />
+    );
+
+    dynamicRoutes.push(
+      <Route  
+        key="sunat"
+        path="/sunat" 
+        element={
+          <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
+            <Sunat />
+          </RouteProtectedRol>
+        } 
+      />
+    );
+
+    dynamicRoutes.push(
+      <Route  
+        key="modulos"
+        path="/modulos" 
+        element={
+          <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
+            <Modulo />
           </RouteProtectedRol>
         } 
       />

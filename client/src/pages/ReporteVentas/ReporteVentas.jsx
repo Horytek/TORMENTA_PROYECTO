@@ -39,7 +39,7 @@ const ReporteVentas = () => {
         paths={[
           { name: "Inicio", href: "/inicio" },
           { name: "Ventas", href: "/ventas" },
-          { name: "Reporte", href: "/ventas/reporte_venta" },
+          { name: "Reporte", href: "/reportes" },
         ]}
       />
 

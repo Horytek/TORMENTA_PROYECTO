@@ -44,7 +44,7 @@ const LibroVentas = () => {
 
     return (
         <div>
-            <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/Ventas' }, { name: 'Reporte de ventas', href: '/ventas' }]} />
+            <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/Ventas' }, { name: 'Reporte de ventas', href: '/ventas/libro_ventas' }]} />
             <hr className="mb-4" />
             <div className="flex justify-between mt-5 mb-4">
                 <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>

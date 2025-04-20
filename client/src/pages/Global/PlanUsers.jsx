@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -7,15 +7,23 @@ import {
   TableRow,
   TableCell,
   Checkbox,
+  Button,
+  Select,
+  SelectItem,
+  Chip,
+  Pagination,
+  Autocomplete,
+  AutocompleteItem,
+  Input,
 } from "@nextui-org/react";
-import { Button, Input, Select, SelectItem, Chip } from "@nextui-org/react";
 import { FaPlus, FaTrash, FaSyncAlt } from "react-icons/fa";
 import { getUsuarios, updateUsuarioPlan, deleteUsuario } from "@/services/usuario.services";
-import { Pagination } from "@nextui-org/pagination";
-import UsuariosForm from './UsuariosForm';
+import { getEmpresas } from "@/services/empresa.services";
+import UsuariosForm from "./UsuariosForm";
 
 const PlanUsers = () => {
   const [users, setUsers] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [newEmail, setNewEmail] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("");
   const [searchUser, setSearchUser] = useState("");
@@ -31,12 +39,18 @@ const PlanUsers = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchEmpresas();
   }, []);
 
   const fetchUsers = async () => {
     const data = await getUsuarios();
     const filteredUsuarios = data.filter((usuario) => usuario.id_rol === 1);
     setUsers(filteredUsuarios);
+  };
+
+  const fetchEmpresas = async () => {
+    const data = await getEmpresas();
+    setEmpresas(data);
   };
 
   const removeUser = async (id) => {
@@ -53,7 +67,7 @@ const PlanUsers = () => {
   };
 
   const handleEmpresaChange = (id, value) => {
-    setUsers(users.map((user) => (user.id_usuario === id ? { ...user, empresa: value } : user)));
+    setUsers(users.map((user) => (user.id_usuario === id ? { ...user, id_empresa: value } : user)));
   };
 
   const handleEstadoChange = (id, value) => {
@@ -67,24 +81,22 @@ const PlanUsers = () => {
         : user
     ));
   };
-  
 
   const handleUpdateUserPlan = async (id) => {
     const user = users.find((user) => user.id_usuario === id);
     if (user) {
-      // Validar y formatear fecha_pago
       const formattedFechaPago = user.fecha_pago
-        ? new Date(user.fecha_pago).toISOString().split("T")[0] // Formato YYYY-MM-DD
+        ? new Date(user.fecha_pago).toISOString().split("T")[0]
         : null;
-  
+
       try {
         await updateUsuarioPlan(id, {
-          empresa: user.empresa,
+          id_empresa: user.id_empresa, // Ahora se pasa el id_empresa
           plan_pago: user.plan_pago === "enterprise" ? 1 : user.plan_pago === "pro" ? 2 : 3,
           estado_usuario: user.estado_usuario_1,
-          fecha_pago: formattedFechaPago, // Usar la fecha formateada
+          fecha_pago: formattedFechaPago,
         });
-        fetchUsers(); // Refrescar la lista de usuarios después de la actualización
+        fetchUsers();
       } catch (error) {
         console.error("Error al actualizar el usuario:", error);
       }
@@ -94,7 +106,7 @@ const PlanUsers = () => {
   const filteredUsers = users.filter(
     (user) =>
       (user.usua?.toLowerCase() || "").includes(searchUser.toLowerCase()) &&
-      (user.empresa?.toLowerCase() || "").includes(searchEmpresa.toLowerCase()) &&
+      (empresas.find((empresa) => empresa.id_empresa === user.id_empresa)?.razonSocial.toLowerCase() || "").includes(searchEmpresa.toLowerCase()) &&
       (selectedPlan ? user.plan_pago === selectedPlan : true)
   );
 
@@ -153,84 +165,108 @@ const PlanUsers = () => {
           <TableColumn>Acciones</TableColumn>
         </TableHeader>
         <TableBody>
-          {currentUsers.map((user) => (
-            <TableRow key={user.id_usuario}>
-              <TableCell>
-                <div className="flex items-center">
-                  <Checkbox
-                    isSelected={editableUsers[user.id_usuario] || false}
-                    onChange={() => toggleEditable(user.id_usuario)}
-                  />
-                  {editableUsers[user.id_usuario] ? (
-                    <Input
-                      value={user.empresa}
-                      onChange={(e) => handleEmpresaChange(user.id_usuario, e.target.value)}
-                      className="ml-2"
-                      style={{
-                        border: "none",
-                        boxShadow: "none",
-                        outline: "none",
-                      }}
-                    />
-                  ) : (
-                    <span className="ml-2">{user.empresa}</span>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>{user.usua}</TableCell>
-              <TableCell>
-                <Select
-                  label="Plan"
-                  selectedKeys={[user.plan_pago]}
-                  onSelectionChange={(keys) => updateUserPlan(user.id_usuario, keys.currentKey)}
-                >
-                  <SelectItem key="basic">Plan Básico</SelectItem>
-                  <SelectItem key="pro">Plan Pro</SelectItem>
-                  <SelectItem key="enterprise">Plan Enterprise</SelectItem>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Select
-                  label="Estado"
-                  selectedKeys={[user.estado_usuario_1.toString()]}
-                  onSelectionChange={(keys) => handleEstadoChange(user.id_usuario, keys.currentKey)}
-                >
-                  <SelectItem key="1">Activo</SelectItem>
-                  <SelectItem key="0">Inactivo</SelectItem>
-                </Select>
-              </TableCell>
-              <TableCell>
-                {editableUsers[user.id_usuario] ? (
-                  <Input
-                    type="date"
-                    value={user.fecha_pago ? new Date(user.fecha_pago).toISOString().split("T")[0] : ""} 
-                    onChange={(e) => handleFechaChange(user.id_usuario, e.target.value)}
-                  />
-                ) : (
-                  <span>{new Date(user.fecha_pago).toLocaleDateString("es-ES")}</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    isIconOnly
-                    variant="light" color="danger"
-                    onClick={() => removeUser(user.id_usuario)}
-                  >
-                    <FaTrash />
-                  </Button>
-                  <Button
-                    isIconOnly
-                    variant="light" color="primary"
-                    onClick={() => handleUpdateUserPlan(user.id_usuario)}
-                  >
-                    <FaSyncAlt />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+  {currentUsers.map((user) => (
+    <TableRow key={user.id_usuario}>
+      <TableCell>
+        <div className="flex items-center">
+          <Checkbox
+            isSelected={editableUsers[user.id_usuario] || false}
+            onChange={() => {
+              toggleEditable(user.id_usuario);
+              // Asegurarse de que el Autocomplete tenga el valor seleccionado
+              if (!editableUsers[user.id_usuario]) {
+                handleEmpresaChange(user.id_usuario, user.id_empresa);
+              }
+            }}
+          />
+{editableUsers[user.id_usuario] ? (
+  <Autocomplete
+    className="ml-2 max-w-xs"
+    label="Empresa"
+    style={{
+      border: "none",
+      boxShadow: "none",
+      outline: "none",
+    }}
+    selectedKey={user.id_empresa?.toString()} // Asegúrate de que sea string
+    onSelectionChange={(selected) =>
+      handleEmpresaChange(user.id_usuario, selected)
+    }
+  >
+    {empresas.map((empresa) => (
+      <AutocompleteItem key={empresa.id_empresa.toString()}>
+        {empresa.razonSocial}
+      </AutocompleteItem>
+    ))}
+  </Autocomplete>
+) : (
+  <span className="ml-2">
+    {empresas.find((empresa) => empresa.id_empresa === user.id_empresa)?.razonSocial || "Sin asignar"}
+  </span>
+)}
+        </div>
+      </TableCell>
+      <TableCell>{user.usua}</TableCell>
+      <TableCell>
+        <Select
+          label="Plan"
+          selectedKeys={[user.plan_pago]}
+          onSelectionChange={(keys) => updateUserPlan(user.id_usuario, keys.currentKey)}
+        >
+          <SelectItem key="basic">Plan Básico</SelectItem>
+          <SelectItem key="pro">Plan Pro</SelectItem>
+          <SelectItem key="enterprise">Plan Enterprise</SelectItem>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <Select
+          label="Estado"
+          selectedKeys={[user.estado_usuario_1.toString()]}
+          onSelectionChange={(keys) => handleEstadoChange(user.id_usuario, keys.currentKey)}
+        >
+          <SelectItem key="1">Activo</SelectItem>
+          <SelectItem key="0">Inactivo</SelectItem>
+        </Select>
+      </TableCell>
+      <TableCell>
+        {editableUsers[user.id_usuario] ? (
+          <Input
+            type="date"
+            style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+            }}
+            value={user.fecha_pago ? new Date(user.fecha_pago).toISOString().split("T")[0] : ""}
+            onChange={(e) => handleFechaChange(user.id_usuario, e.target.value)}
+          />
+        ) : (
+          <span>{user.fecha_pago ? new Date(user.fecha_pago).toLocaleDateString("es-ES") : "Sin fecha"}</span>
+        )}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Button
+            isIconOnly
+            variant="light"
+            color="danger"
+            onClick={() => removeUser(user.id_usuario)}
+          >
+            <FaTrash />
+          </Button>
+          <Button
+            isIconOnly
+            variant="light"
+            color="primary"
+            onClick={() => handleUpdateUserPlan(user.id_usuario)}
+          >
+            <FaSyncAlt />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
       </Table>
       <div className="flex justify-center mt-4">
         <Pagination
@@ -242,7 +278,7 @@ const PlanUsers = () => {
         />
       </div>
       {activeAdd && (
-        <UsuariosForm modalTitle={'Nuevo Usuario'} onClose={handleModalAdd} />
+        <UsuariosForm modalTitle={"Nuevo Usuario"} onClose={handleModalAdd} />
       )}
     </div>
   );

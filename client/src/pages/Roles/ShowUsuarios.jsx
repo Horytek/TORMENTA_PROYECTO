@@ -41,8 +41,10 @@ export function ShowUsuarios({ searchTerm }) {
 
   // Obtener usuarios mediante API
   const getUsers = async () => {
-    const data = await getRoles();
-    setUsuarios(data);
+const data = await getRoles();
+        // Excluir el rol "administrador"
+        const filteredRoles = data.filter((rol) => rol.nom_rol.toLowerCase() !== "administrador");
+        setUsuarios(filteredRoles);
   };
 
   // Filtrar usuarios
