@@ -78,7 +78,7 @@ function Inicio() {
       <header className="flex items-center justify-between">
         <div>
           <h1
-            className="text-5xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-500 to-cyan-400 transition-all duration-300 title-Inicio"
+            className="text-5xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-500 to-cyan-400 transform-gpu title-Inicio"
           >
             ERP Dashboard
           </h1>

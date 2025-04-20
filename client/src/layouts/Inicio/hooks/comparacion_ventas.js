@@ -20,7 +20,6 @@ const useComparacionTotal = (fechaInicio, fechaFin, sucursal) => {
         if (sucursal) {
           params.sucursal = sucursal.trim();
         }
-        console.log("ComparacionVentas params:", params);
         const response = await axios.get("/dashboard/comparacion_ventas", { params });
         setComparacionVentas(response.data.data);
         setError(null);

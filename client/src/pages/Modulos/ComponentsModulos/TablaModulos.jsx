@@ -6,9 +6,6 @@ import {
     TableBody,
     TableRow,
     TableCell,
-    Pagination,
-    Select,
-    SelectItem,
 } from "@nextui-org/react";
 import { FaEdit, FaTrash, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast, Toaster } from "react-hot-toast";
@@ -25,13 +22,11 @@ const TablaModulos = ({
     submodulos, 
     loading, 
     error, 
-    searchTerm, 
+    
     getSubmodulosByModuloId, 
     refreshModulos 
 }) => {
-    // Remove the hook usage since we're getting everything as props
-    // const { modulos, submodulos, loading, error, getSubmodulosByModuloId, refreshModulos } = useGetModulos();
-    
+   
     const [openEditModal, setOpenEditModal] = useState(false);
     const [openAddSubModal, setOpenAddSubModal] = useState(false);
     const [selectedModulo, setSelectedModulo] = useState(null);

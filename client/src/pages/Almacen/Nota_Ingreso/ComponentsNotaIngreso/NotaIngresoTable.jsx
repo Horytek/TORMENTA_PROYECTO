@@ -6,11 +6,8 @@ import { FaFilePdf } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import './NotaIngresoTable.css';
 import anularNota from '../data/anular_nota_ingreso';
-import ReactToPrint from 'react-to-print';
-import { Toaster, toast } from "react-hot-toast";
-import img from '@/assets/icono.ico'; // Asegúrate de ajustar la ruta
+import { toast } from "react-hot-toast";
 import html2pdf from 'html2pdf.js';
-import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { usePermisos } from '@/routes';
 

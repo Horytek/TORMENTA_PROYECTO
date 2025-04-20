@@ -23,7 +23,7 @@ import {
   Pagination,
   useDisclosure,
 } from "@nextui-org/react";
-import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import { FaEdit, FaPlus } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { getEmpresas, addEmpresa, updateEmpresa, deleteEmpresa } from "@/services/empresa.services";
 

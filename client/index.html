@@ -4,16 +4,26 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./src/assets/icono.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">    
+
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    </noscript>
+
     <title>Tormenta</title>
+    
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     
     <script type="module" src="./src/main.jsx"></script>
-    
     <script src="plugin_impresora_termica.js" defer></script>
-
   </body>
 </html>

@@ -35,12 +35,12 @@ function Login() {
   // Maneja el evento de inicio de sesión
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     if (!usuario || !password) {
       setShowAlert(true);
       return;
     }
-    
+
     try {
       const user = { usuario, password };
       const response = await login(user);
@@ -92,8 +92,13 @@ function Login() {
             <h1 className="text-3xl font-bold text-gray-800">HORYTEK NEGOCIOS</h1>
             <p className="text-gray-600 mt-2">Acceda a su cuenta para continuar</p>
           </div>
-          
-          <Card className="w-full max-w-md shadow-lg">
+
+          <Card
+            className="w-full max-w-md"
+            style={{
+              boxShadow: '0 10px 20px hsl(0,0%,.15), 20 15px 10px hsl(0,0%,.10)',
+            }}
+          >
             <CardHeader className="flex flex-col items-center space-y-1">
               <div className="p-2 bg-primary-100 rounded-full">
                 <div className="h-8 w-8 text-primary flex items-center justify-center">
@@ -105,7 +110,7 @@ function Login() {
                 Ingrese sus credenciales
               </p>
             </CardHeader>
-            
+
             <CardBody className="space-y-4">
               <form onSubmit={handleLogin} className="space-y-4">
                 {/* Campo de usuario */}
@@ -155,8 +160,8 @@ function Login() {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-primary text-white hover:bg-primary-dark"
                   aria-label="Iniciar sesión"
                 >
@@ -164,7 +169,7 @@ function Login() {
                 </Button>
               </form>
             </CardBody>
-            
+
             <CardFooter className="flex flex-col space-y-2">
               <p className="text-xs text-center text-gray-500 w-full">
                 ¿No tiene cuenta? Contacte con su administrador

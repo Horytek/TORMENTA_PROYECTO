@@ -13,7 +13,7 @@ import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons
 import { useState, useEffect } from "react";
 import useGetRutas from "../data/getRutas";
 import { useRoles, usePermisosByRol, useSavePermisos } from "../data/rolPermisos";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 export function TablaPermisos() {
   const [selectedTab, setSelectedTab] = useState("administrador");

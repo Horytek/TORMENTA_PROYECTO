@@ -4,13 +4,11 @@ import ProductosForm from './ProductosForm';
 import { Toaster } from "react-hot-toast";
 import { ShowProductos } from './ShowProductos';
 import { FaPlus } from "react-icons/fa";
-import { IoIosSearch } from "react-icons/io";
-import { Button, ButtonGroup } from "@nextui-org/button";
-// Importar el hook de permisos
+import { Button } from "@nextui-org/button";
 import { usePermisos } from '@/routes';
+import BarraSearch from "@/components/Search/Search";
 
 function Productos() {
-  // Obtener los permisos específicos para este módulo/submódulo
   const { hasCreatePermission } = usePermisos();
 
   // Estado de Modal de Agregar Producto
@@ -33,19 +31,14 @@ function Productos() {
       <h1 className='font-extrabold text-4xl'>Productos</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
         <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
-        <h6 className='font-bold'>Lista de Productos</h6>
-        <div className='relative w-2/4'>
-          <div className='absolute inset-y-0 start-0 top-0 flex items-center ps-3.5 pointer-events-none'>
-            <IoIosSearch className='w-4 h-4 text-gray-500' />
-          </div>
-          <input
-            type="text"
-            placeholder='Ingrese un producto'
-            className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full ps-10 p-2.5'
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
-        </div>
+        <h6 className="font-bold">Lista de Productos</h6>
+        <BarraSearch
+          placeholder="Ingrese un producto"
+          isClearable={true}
+          className="h-9 text-sm w-2/4"
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
         <div className="flex gap-5">
           <Button
             color="primary"

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import '../ModalGuias.css';
 import { IoMdClose } from "react-icons/io";

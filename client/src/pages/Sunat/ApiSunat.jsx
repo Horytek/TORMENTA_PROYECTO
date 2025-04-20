@@ -25,11 +25,10 @@ import {
   useDisclosure,
   Select,
   SelectItem,
-  Badge,
   Chip,
 } from "@nextui-org/react";
 import { Autocomplete, AutocompleteItem } from "@nextui-org/react";
-import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import { FaEdit, FaPlus } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { getClaves, addClave, updateClave, deleteClave } from "@/services/clave.services";
 import { getEmpresas } from "@/services/empresa.services";

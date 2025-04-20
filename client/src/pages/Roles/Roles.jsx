@@ -2,13 +2,12 @@ import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import UsuariosForm from './UsuariosForm';
 import { Toaster } from "react-hot-toast";
-import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
-import { IoIosSearch } from "react-icons/io";
 import { ShowUsuarios } from '@/pages/Roles/ShowUsuarios';
-import {Button, ButtonGroup} from "@nextui-org/button";
+import {Button} from "@nextui-org/button";
 import { usePermisos } from '@/routes';
 import { Tooltip } from "@nextui-org/tooltip";
+import BarraSearch from "@/components/Search/Search";
 
 function Usuarios() {
   
@@ -34,24 +33,19 @@ function Usuarios() {
       <h1 className='text-4xl font-extrabold'>Roles y permisos</h1>
       <div className="flex items-center justify-between mt-5 mb-4">
         <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
-        <h6 className='font-bold'>Lista de Roles</h6>
-        <div className='relative w-2/4'>
-          <div className='absolute inset-y-0 start-0 top-0 flex items-center ps-3.5 pointer-events-none'>
-            <IoIosSearch className='w-4 h-4 text-gray-500' />
-          </div>
-          <input 
-            type="text" 
-            placeholder='Ingrese un rol' 
-            className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full ps-10 p-2.5' 
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
-        </div>
+        <h6 className="font-bold">Lista de Roles</h6>
+        <BarraSearch
+          placeholder="Ingrese un rol"
+          isClearable={true}
+          className="h-9 text-sm w-2/4"
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
         <div className="flex gap-5">
           <Tooltip content={hasCreatePermission ? "Agregar rol" : "No tiene permisos para agregar roles"}>
-            <Button 
-              color={hasCreatePermission ? "primary" : "default"} 
-              endContent={<FaPlus style={{ fontSize: '25px' }} />} 
+            <Button
+              color={hasCreatePermission ? "primary" : "default"}
+              endContent={<FaPlus style={{ fontSize: '25px' }} />}
               onClick={() => hasCreatePermission ? handleModalAdd() : null}
               className={hasCreatePermission ? "" : "opacity-50 cursor-not-allowed"}
             >
