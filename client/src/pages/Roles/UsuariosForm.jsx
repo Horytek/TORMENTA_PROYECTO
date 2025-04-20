@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
 import { Toaster, toast } from "react-hot-toast";
@@ -8,12 +8,14 @@ import { addRol, updateRol } from '@/services/rol.services';
 import '../Productos/ProductosForm.css';
 
 const ProductosForm = ({ modalTitle, onClose, initialData }) => {
-    const { register, handleSubmit, formState: { errors }, reset } = useForm({
+    const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
         defaultValues: initialData?.data || {
             nom_rol: '',
             estado_rol: '',
         }
     });
+
+    const [isSaveDisabled, setIsSaveDisabled] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -21,14 +23,50 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
         }
     }, [initialData, reset]);
 
+// Utilidad para normalizar texto (eliminar acentos, espacios extra, etc.)
+const normalize = (text) =>
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // elimina acentos
+      .replace(/\s+/g, " ") // reemplaza múltiples espacios por uno
+      .trim()
+      .toLowerCase();
+  
+  const forbiddenPatterns = [
+    /admin\b/i,
+    /\badministrador\b/i,
+    /\badministration\b/i,
+    /admin.*?/i,
+    /.*?admin/i
+  ];
+  
+  const watchNomRol = watch('nom_rol', '');
+  const toastShownRef = useRef(false);
+  
+  useEffect(() => {
+    const normalized = normalize(watchNomRol);
+    const isForbidden = forbiddenPatterns.some((regex) => regex.test(normalized));
+  
+    if (isForbidden) {
+      setIsSaveDisabled(true);
+      if (!toastShownRef.current) {
+        toast.error("El nombre del rol no puede contener palabras como 'administrador', 'admin', etc.");
+        toastShownRef.current = true;
+      }
+    } else {
+      setIsSaveDisabled(false);
+      toastShownRef.current = false;
+    }
+  }, [watchNomRol]);
+
     const onSubmit = handleSubmit(async (data) => {
         try {
-            const {nom_rol, estado_rol } = data;
+            const { nom_rol, estado_rol } = data;
             const newUser = {
                 nom_rol,
                 estado_rol: parseInt(estado_rol)
             };
-            
+
             let result;
             if (initialData) {
                 result = await updateRol(initialData?.id_rol, newUser); 
@@ -65,10 +103,10 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                                     <div className='w-full relative group mb-5 text-start'>
                                         <label className='text-sm font-bold text-black'>Rol:</label>
                                         <input 
-                                                {...register('nom_rol', { required: true })}
-                                                type="text"
-                                                name='nom_rol'
-                                                className={`w-full bg-gray-50 ${errors.nom_rol ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
+                                            {...register('nom_rol', { required: true })}
+                                            type="text"
+                                            name='nom_rol'
+                                            className={`w-full bg-gray-50 ${errors.nom_rol ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
                                     </div>
                                     <div className='w-full relative group mb-5 text-start'>
                                         <label className='text-sm font-bold text-black'>Estado:</label>
@@ -84,7 +122,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                                 </div>
                                 <div className='modal-buttons'>
                                     <ButtonClose onClick={onClose}/>
-                                    <ButtonSave type="submit"/>
+                                    <ButtonSave type="submit" disabled={isSaveDisabled} />
                                 </div>
                             </div>
                         </div>

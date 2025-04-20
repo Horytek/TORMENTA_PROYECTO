@@ -116,7 +116,7 @@ const Ventas = () => {
     <div>
       <Toaster />
       {/* Componente de migas de pan */}
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/ventas' }]} />
+      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Historial', href: '/configuracion/historial' }]} />
 
       <hr className="mb-4" />
       {/* Encabezado principal */}

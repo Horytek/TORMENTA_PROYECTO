@@ -74,7 +74,7 @@ function Clientes() {
       <Breadcrumb
         paths={[
           { name: 'Inicio', href: '/inicio' },
-          { name: 'Clientes', href: '/configuracion/clientes' },
+          { name: 'Clientes', href: '/clientes' },
         ]}
       />
       <hr className="mb-4" />

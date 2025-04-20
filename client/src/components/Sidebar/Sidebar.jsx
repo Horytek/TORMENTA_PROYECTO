@@ -91,7 +91,6 @@ function Sidebar({ onToggle }) {
       ]
     },
     { to: '/reportes', icon: <BiSolidReport className="text-xl" />, text: 'Reportes' },
-    { to: '/sunat', icon: <BiSolidReport className="text-xl" />, text: 'Sunat' },
     { to: '/sucursal', icon: <FaBuilding className="text-xl" />, text: 'Sucursal' },
     {
       
@@ -100,11 +99,12 @@ function Sidebar({ onToggle }) {
       subLinks: [
         { to: '/configuracion/usuarios', text: 'Usuarios' },
         { to: '/configuracion/roles', text: 'Roles y permisos' },
-        { to: '/configuracion/modulos', text: 'Modulos' },
         { to: '/configuracion/historial', text: 'Historial' },
       ]
     },
     { to: '/desarrollador', icon: <FaCog className="text-xl" />, text: 'Desarrollador' },
+    { to: '/sunat', icon: <BiSolidReport className="text-xl" />, text: 'Sunat' },
+    { to: '/modulos', icon: <FaCog className="text-xl" />, text: 'Modulos' },
   ];
 
   return (
