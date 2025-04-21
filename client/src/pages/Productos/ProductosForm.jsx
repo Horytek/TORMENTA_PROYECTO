@@ -1,26 +1,37 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { IoMdClose } from "react-icons/io";
-import { FaRegPlusSquare } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { Toaster, toast } from "react-hot-toast";
-import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { ModalMarca } from './ModalForms/ModalMarca';
 import { ModalCategoria } from './ModalForms/ModalCategoria';
 import { ModalSubCategoria } from './ModalForms/ModalSubCategoria';
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useCategorias } from '@/context/Categoria/CategoriaProvider';
 import { useMarcas } from '@/context/Marca/MarcaProvider';
 import { useSubcategorias } from '@/context/Subcategoria/SubcategoriaProvider';
 import { addProducto, updateProducto, getLastIdProducto } from '@/services/productos.services'; 
-import './ProductosForm.css';
+import { 
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter,
+  Textarea,
+  Input,
+  Select,
+  SelectItem,
+  Button,
+  ButtonGroup
+} from "@nextui-org/react";
 
-const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
-
+const ProductosForm = ({ modalTitle, onClose, initialData }) => {
     // Consumir context de categorias, subcategorias y marcas
     const { categorias, loadCategorias } = useCategorias();
     const { marcas, loadMarcas } = useMarcas();
     const { subcategorias, loadSubcategorias } = useSubcategorias();
+    const [isOpen, setIsOpen] = useState(true);
+    
     useEffect(() => {
       loadCategorias();
       loadMarcas();
@@ -31,7 +42,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
     const [filteredSubcategorias, setFilteredSubcategorias] = useState([]);
 
     // Registro de producto
-    const { register, handleSubmit, setValue, getValues, watch, reset, formState: {errors} } = useForm({
+    const { control, handleSubmit, setValue, getValues, watch, reset, formState: { errors } } = useForm({
       defaultValues: initialData?.data || {
         descripcion: '',
         id_marca: '',
@@ -79,7 +90,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
       generateBarcode();
     }, [initialData, setValue]);
 
-    const onSubmit = handleSubmit(async (data) => {
+    const onSubmit = async (data) => {
       try {
         const { descripcion, id_marca, id_subcategoria, precio, cod_barras, undm, estado_producto } = data;
         const newProduct = {
@@ -94,14 +105,15 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
 
         let result;
         if (initialData) {
-          result = await updateProducto(initialData?.id_producto,newProduct); // Llamada a la API para añadir el producto
+          result = await updateProducto(initialData?.id_producto, newProduct); 
         } else {
-          result = await addProducto(newProduct); // Llamada a la API para añadir el producto
+          result = await addProducto(newProduct);
         }
         
         // Cerrar modal y recargar la página
         if (result) {
-          onClose();
+          toast.success(initialData ? "Producto actualizado correctamente" : "Producto creado correctamente");
+          handleCloseModal();
           setTimeout(() => {
             window.location.reload();
           }, 1000);
@@ -110,7 +122,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
       } catch (error) {
         toast.error("Error al realizar la gestión del producto");
       }
-    })
+    };
 
     const [isModalOpenMarca, setIsModalOpenMarca] = useState(false);
     const [isModalOpenCategoria, setIsModalOpenCategoria] = useState(false);
@@ -145,185 +157,267 @@ const ProductosForm = ({ modalTitle, onClose, initialData  }) => {
       }
     }
 
+    const handleCloseModal = () => {
+      setIsOpen(false);
+      setTimeout(() => {
+        onClose();
+      }, 300);
+    };
+
   return (
     <div>
-      <form onSubmit={onSubmit}>
-        <Toaster />
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className='content-modal'>
-              <div className="modal-header">
-                <h3 className="modal-title">{modalTitle}</h3>
-                <button className="modal-close" onClick={onClose}>
-                  <IoMdClose className='text-3xl'/>
-                </button>
-              </div>
-              <div className='modal-body'>
-                  
-                  {/* Primera Fila */}
-      
-                  <div className='w-full text-start mb-5'>
-                    <label htmlFor="descripcion" className='text-sm font-bold text-black'>Descripción:</label>
-                    <textarea 
-                    {...register('descripcion', 
-                      { required: true }
-                    )}
-                    name="descripcion" 
-                    rows={4} 
-                    className={`block w-full text-sm border rounded-lg resize-none ${errors.descripcion ? 'border-red-600 focus:border-red-600 focus:ring-red-600' : 'border-gray-300'} bg-gray-50 text-gray-900`}
-                    ></textarea>
-                  </div>
-      
-                  {/* Segunda Fila */}
-      
-                  <div className='grid grid-cols-2 gap-6'>
-                    <div className='w-full relative group mb-5 text-start'>
-                      <label htmlFor="linea" className='text-sm font-bold text-black'>Categoría:</label>
-                      <div className='flex justify-center items-center gap-2'>
-                        <select 
-                        {...register('id_categoria', 
-                          { required: true }
+      <Toaster />
+      <Modal 
+        isOpen={isOpen} 
+        onClose={handleCloseModal}
+        size="3xl"
+        scrollBehavior="inside"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                {modalTitle}
+              </ModalHeader>
+              <ModalBody>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <div className="space-y-5">
+                    {/* Descripción */}
+                    <div className="w-full">
+                      <Controller
+                        name="descripcion"
+                        control={control}
+                        rules={{ required: "La descripción es requerida" }}
+                        render={({ field }) => (
+                          <Textarea
+                            {...field}
+                            label="Descripción"
+                            placeholder="Ingrese la descripción del producto"
+                            variant="bordered"
+                            color={errors.descripcion ? "danger" : "default"}
+                            errorMessage={errors.descripcion?.message}
+                            isRequired
+                            rows={4}
+                          />
                         )}
-                        name='id_categoria'
-                        className={`w-full text-sm bg-gray-50 ${errors.id_categoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                          <option value="">Seleccione...</option>
-                          {categorias.length > 0 && categorias.map((categoria, index) => (
-                            <option key={index} value={categoria.id_categoria}>
-                              {categoria.nom_categoria.toUpperCase()}
-                            </option>
-                          ))}
-                        </select>
-                        <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalCategoria} />
-                      </div>
-                      
+                      />
                     </div>
-                    <div className='w-full relative group mb-5 text-start'>
-                      <label htmlFor="Sub-Línea" className='text-sm font-bold text-black'>Sub-Categoría:</label>
-                      <div className='flex justify-center items-center gap-2'>
-                        <select 
-                        {...register('id_subcategoria', 
-                          { required: true }
-                        )}
-                        name='id_subcategoria'
-                        className={`w-full text-sm bg-gray-50 ${errors.id_subcategoria ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                          <option value="">Seleccione...</option>
-                          {filteredSubcategorias.length > 0 && filteredSubcategorias.map((subcategoria, index) => (
-                            <option key={index} value={subcategoria.id_subcategoria}>
-                              {subcategoria.nom_subcat.toUpperCase()}
-                            </option>
-                          ))}
-                        </select>
-                        <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalSubCategoria} />
-                      </div>
-                    </div>
-                  </div>
-      
-                  {/* Tercera Fila */}
-      
-                  <div className='grid grid-cols-2 gap-6'>
-                    <div className='w-full relative group mb-5 text-start'>
-                      <label htmlFor="Sub-Línea" className='text-sm font-bold text-black'>Marca:</label>
-                        <div className='flex justify-center items-center gap-2'>
-                          <select 
-                          {...register('id_marca', 
-                            { required: true }
-                          )}
-                          name='id_marca'
-                          className={`w-full text-sm bg-gray-50 ${errors.id_marca ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                            <option value="">Seleccione...</option>
-                            {marcas.length > 0 && marcas.map((marca, index) => (
-                              <option key={index} value={marca.id_marca}>
-                                {marca.nom_marca.toUpperCase()}
-                              </option>
-                            ))}
-                          </select>
-                          <FaRegPlusSquare className='text-2xl cursor-pointer text-gray-500' onClick={handleModalMarca} />
+
+                    {/* Categoría y Subcategoría */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Controller
+                            name="id_categoria"
+                            control={control}
+                            rules={{ required: "La categoría es requerida" }}
+                            render={({ field }) => (
+                              <Select
+                                {...field}
+                                label="Categoría"
+                                placeholder="Seleccione una categoría"
+                                variant="bordered"
+                                color={errors.id_categoria ? "danger" : "default"}
+                                errorMessage={errors.id_categoria?.message}
+                                isRequired
+                                className="flex-1"
+                                selectedKeys={field.value ? [field.value.toString()] : []}
+                                onChange={(e) => field.onChange(e.target.value)}
+                              >
+                                {categorias.map((categoria) => (
+                                  <SelectItem key={categoria.id_categoria.toString()} value={categoria.id_categoria.toString()}>
+                                    {categoria.nom_categoria.toUpperCase()}
+                                  </SelectItem>
+                                ))}
+                              </Select>
+                            )}
+                          />
+                          <Button isIconOnly variant="light" onPress={handleModalCategoria} aria-label="Agregar categoría">
+                            <FaPlus className="text-gray-500" />
+                          </Button>
                         </div>
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Controller
+                            name="id_subcategoria"
+                            control={control}
+                            rules={{ required: "La subcategoría es requerida" }}
+                            render={({ field }) => (
+                              <Select
+                                {...field}
+                                label="Subcategoría"
+                                placeholder="Seleccione una subcategoría"
+                                variant="bordered"
+                                color={errors.id_subcategoria ? "danger" : "default"}
+                                errorMessage={errors.id_subcategoria?.message}
+                                isRequired
+                                className="flex-1"
+                                selectedKeys={field.value ? [field.value.toString()] : []}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                isDisabled={!idCategoria}
+                              >
+                                {filteredSubcategorias.map((subcategoria) => (
+                                  <SelectItem key={subcategoria.id_subcategoria.toString()} value={subcategoria.id_subcategoria.toString()}>
+                                    {subcategoria.nom_subcat.toUpperCase()}
+                                  </SelectItem>
+                                ))}
+                              </Select>
+                            )}
+                          />
+                          <Button isIconOnly variant="light" onPress={handleModalSubCategoria} aria-label="Agregar subcategoría">
+                            <FaPlus className="text-gray-500" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div className='w-full relative group mb-5 text-start'>
-                      <label htmlFor="precio" className='text-sm font-bold text-black'>Precio:</label>
-                      <input 
-                      {...register('precio', 
-                        { required: true }
-                      )}
-                      type="number"
-                      onChange={handlePrice}
-                      onBlur={changePrice}
-                      min={0}
-                      step={0.01}
-                      name='precio'
-                      placeholder='89.99'
-                      className={`w-full bg-gray-50 ${errors.precio ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
+
+                    {/* Marca y Precio */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Controller
+                            name="id_marca"
+                            control={control}
+                            rules={{ required: "La marca es requerida" }}
+                            render={({ field }) => (
+                              <Select
+                                {...field}
+                                label="Marca"
+                                placeholder="Seleccione una marca"
+                                variant="bordered"
+                                color={errors.id_marca ? "danger" : "default"}
+                                errorMessage={errors.id_marca?.message}
+                                isRequired
+                                className="flex-1"
+                                selectedKeys={field.value ? [field.value.toString()] : []}
+                                onChange={(e) => field.onChange(e.target.value)}
+                              >
+                                {marcas.map((marca) => (
+                                  <SelectItem key={marca.id_marca.toString()} value={marca.id_marca.toString()}>
+                                    {marca.nom_marca.toUpperCase()}
+                                  </SelectItem>
+                                ))}
+                              </Select>
+                            )}
+                          />
+                          <Button isIconOnly variant="light" onPress={handleModalMarca} aria-label="Agregar marca">
+                            <FaPlus className="text-gray-500" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <Controller
+                          name="precio"
+                          control={control}
+                          rules={{ required: "El precio es requerido" }}
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              label="Precio"
+                              placeholder="Ingrese el precio del producto"
+                              variant="bordered"
+                              color={errors.precio ? "danger" : "default"}
+                              errorMessage={errors.precio?.message}
+                              isRequired
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              onChange={(e) => {
+                                handlePrice(e);
+                                field.onChange(e.target.value);
+                              }}
+                              onBlur={changePrice}
+                            />
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Unidad de Medida y Estado */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col space-y-2">
+                        <Controller
+                          name="undm"
+                          control={control}
+                          rules={{ required: "La unidad de medida es requerida" }}
+                          render={({ field }) => (
+                            <Select
+                              {...field}
+                              label="Unidad de Medida"
+                              placeholder="Seleccione una unidad de medida"
+                              variant="bordered"
+                              color={errors.undm ? "danger" : "default"}
+                              errorMessage={errors.undm?.message}
+                              isRequired
+                              selectedKeys={field.value ? [field.value.toString()] : []}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            >
+                              <SelectItem value="KGM">KGM</SelectItem>
+                              <SelectItem value="NIU">NIU</SelectItem>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <Controller
+                          name="estado_producto"
+                          control={control}
+                          rules={{ required: "El estado es requerido" }}
+                          render={({ field }) => (
+                            <Select
+                              {...field}
+                              label="Estado"
+                              placeholder="Seleccione el estado del producto"
+                              variant="bordered"
+                              color={errors.estado_producto ? "danger" : "default"}
+                              errorMessage={errors.estado_producto?.message}
+                              isRequired
+                              selectedKeys={field.value ? [field.value.toString()] : []}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            >
+                              <SelectItem value="1">Activo</SelectItem>
+                              <SelectItem value="0">Inactivo</SelectItem>
+                            </Select>
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
-      
-                  {/* Cuarta Fila */}
-      
-                  <div className='grid grid-cols-2 gap-6'>
-                    <div className='w-full relative group mb-5 text-start'>
-                      <label htmlFor="unidadMedida" className='text-sm font-bold text-black'>Und. Medida:</label>
-                      <select 
-                      {...register('undm', 
-                        { required: true }
-                      )}
-                      name='undm'
-                      className={`w-full text-sm bg-gray-50 ${errors.undm ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                          <option value="">Seleccione...</option>
-                          <option value="KGM">KGM</option>
-                          <option value="NIU">NIU</option>
-                      </select>
-                    </div>
-                    <div className='w-full relative group mb-5 text-start'>
-                      <label htmlFor="estado" className='text-sm font-bold text-black'>Estado:</label>
-                      <select 
-                      {...register('estado_producto', 
-                        { required: true }
-                      )}
-                      name='estado_producto'
-                      className={`w-full text-sm bg-gray-50 ${errors.estado_producto ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                        <option value="">Seleccione...</option>
-                        <option value={1} >Activo</option>
-                        <option value={0} >Inactivo</option>
-                      </select>
-                    </div>
-                  </div>
-      
-                  {/* Final de Fila */}
-  
-                  <div>
-                    <input
-                    {...register('cod_barras', 
-                      { required: false }
-                    )}
+                  <input
                     type="text"
                     name="cod_barras"
+                    hidden
                     disabled
-                    hidden />
-                  </div>
-      
-                  <div className='modal-buttons'>
-                    <ButtonClose onClick={onClose}/>
-                    <ButtonSave type="submit"/>
-                  </div>
-              </div>
-            </div>
-          </div> 
-        </div>
-      </form>
-          {/* Modal de Nueva Marca */}
-          {isModalOpenMarca && (
-            <ModalMarca modalTitle={'Marca'} closeModel={handleModalMarca} />
+                  />
+                  <ModalFooter>
+                    <ButtonGroup>
+                      <Button variant="light" onPress={handleCloseModal}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit" color="primary">
+                        Guardar
+                      </Button>
+                    </ButtonGroup>
+                  </ModalFooter>
+                </form>
+              </ModalBody>
+            </>
           )}
-    
-          {/* Modal de Nueva Linea */}
-          {isModalOpenCategoria && (
-            <ModalCategoria modalTitle={'Categoría'} closeModel={handleModalCategoria} />
-          )}
-    
-          {/* Modal de Nueva SubLinea */}
-          {isModalOpenSubCategoria && (
-            <ModalSubCategoria modalTitle={'Sub-Categoría'} closeModel={handleModalSubCategoria} />
-          )}
+        </ModalContent>
+      </Modal>
+      {/* Modal de Nueva Marca */}
+      {isModalOpenMarca && (
+        <ModalMarca modalTitle={'Marca'} closeModel={handleModalMarca} />
+      )}
+      {/* Modal de Nueva Categoría */}
+      {isModalOpenCategoria && (
+        <ModalCategoria modalTitle={'Categoría'} closeModel={handleModalCategoria} />
+      )}
+      {/* Modal de Nueva SubCategoría */}
+      {isModalOpenSubCategoria && (
+        <ModalSubCategoria modalTitle={'Sub-Categoría'} closeModel={handleModalSubCategoria} />
+      )}
     </div>
   );
 };

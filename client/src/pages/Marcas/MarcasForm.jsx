@@ -1,14 +1,24 @@
+import { useState } from 'react';
 import PropTypes from "prop-types";
-import { IoMdClose } from "react-icons/io";
-import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useMarcas } from "@/context/Marca/MarcaProvider";
+import { Toaster, toast } from "react-hot-toast";
+import { 
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter,
+  Input,
+  Button
+} from "@nextui-org/react";
 
 const MarcasForm = ({ modalTitle, onClose }) => {
-  const { createMarca} = useMarcas();
+  const { createMarca } = useMarcas();
+  const [isOpen, setIsOpen] = useState(true);
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm({
@@ -17,7 +27,14 @@ const MarcasForm = ({ modalTitle, onClose }) => {
     },
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const handleCloseModal = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+
+  const onSubmit = async (data) => {
     try {
       const { nom_marca } = data;
       const newMarca = {
@@ -28,70 +45,70 @@ const MarcasForm = ({ modalTitle, onClose }) => {
       const result = await createMarca(newMarca);
 
       if (result) {
-        onClose();
+        toast.success("Marca creada correctamente");
+        handleCloseModal();
         setTimeout(() => {
           window.location.reload();
         }, 550);
       }
-    
     } catch (error) {
+      toast.error("Error al crear la marca");
     }
-  });
+  };
 
   return (
-    <div>
-      <form onSubmit={onSubmit}>
-        <div
-          className="modal-overlay"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-          }}
-        >
-          <div className="modal" style={{ width: "400px" }}>
-            <div className="content-modal">
-              <div className="modal-header">
-                <h3 className="modal-title">{modalTitle}</h3>
-                <button className="modal-close" onClick={onClose}>
-                  <IoMdClose className="text-3xl" />
-                </button>
-              </div>
-              <div className="modal-body">
-                <div className="w-full text-start mb-5">
-                  <label
-                    htmlFor="nom_marca"
-                    className="text-sm font-bold text-black mb-3"
-                    style={{ display: "block", marginBottom: "10px" }}
-                  >
-                    Nombre de marca:
-                  </label>
-                  <input
-                    {...register("nom_marca", { required: true })}
-                    name="nom_marca"
-                    className={`block w-full text-sm border rounded-lg ${
-                      errors.nom_marca
-                        ? "border-red-600 focus:border-red-600 focus:ring-red-600"
-                        : "border-gray-300"
-                    } bg-gray-50 text-gray-900`}
-                    placeholder="Ingrese el nombre de la marca"
-                  />
-                </div>
-
-                <div
-                  className="modal-buttons"
-                  style={{ gap: "30px", marginTop: "30px" }}
+    <>
+      <Toaster />
+      <Modal 
+        isOpen={isOpen} 
+        onClose={handleCloseModal}
+        size="md"
+        
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                {modalTitle}
+              </ModalHeader>
+              <ModalBody>
+                <Controller
+                  name="nom_marca"
+                  control={control}
+                  rules={{ required: "El nombre de la marca es requerido" }}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="Nombre de marca"
+                      variant="bordered"
+                      placeholder="Ingrese el nombre de la marca"
+                      color={errors.nom_marca ? "danger" : "default"}
+                      errorMessage={errors.nom_marca?.message}
+                      isRequired
+                    />
+                  )}
+                />
+              </ModalBody>
+              <ModalFooter>
+                <Button 
+                  color="danger" 
+                  variant="light" 
+                  onPress={handleCloseModal}
                 >
-                  <ButtonClose onClick={onClose} />
-                  <ButtonSave type="submit" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
+                  Cancelar
+                </Button>
+                <Button 
+                  color="primary" 
+                  onPress={handleSubmit(onSubmit)}
+                >
+                  Guardar
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 };
 

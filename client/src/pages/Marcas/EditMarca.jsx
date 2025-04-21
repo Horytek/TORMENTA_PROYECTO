@@ -1,31 +1,56 @@
-import React, { useEffect } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { IoMdClose } from "react-icons/io";
-import { useForm } from "react-hook-form";
-import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
+import { useForm, Controller } from "react-hook-form";
 import { useMarcas } from "@/context/Marca/MarcaProvider";
-import { toast } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import useEditMarca from "./hook/editFunc";
+import { 
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter,
+  Input,
+  Select,
+  SelectItem,
+  Button,
+  Spinner
+} from "@nextui-org/react";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
   const { editMarca, loading } = useEditMarca();
   const { loadMarcas } = useMarcas();
+  const [isModalOpen, setIsModalOpen] = useState(isOpen);
+  
   const {
-    register,
+    control,
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      nom_marca: "",
+      estado_marca: "1"
+    }
+  });
 
   useEffect(() => {
     if (initialData) {
       setValue("nom_marca", initialData.nom_marca);
-      setValue("estado_marca", initialData.estado_marca);
+      setValue("estado_marca", initialData.estado_marca.toString());
     }
     if (!initialData) {
       loadMarcas();
     }
-  }, [initialData, setValue]);
+    setIsModalOpen(isOpen);
+  }, [initialData, setValue, isOpen, loadMarcas]);
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -35,89 +60,94 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
         estado_marca: parseInt(data.estado_marca, 10),
       };
       await editMarca(updatedData);
-      onClose();
+      handleCloseModal();
       toast.success("Marca actualizada con éxito");
       setTimeout(() => {
         window.location.reload();
-      }
-      , 420);
+      }, 420);
     } catch (error) {
       toast.error("Error al actualizar la marca");
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="modal-overlay">
-        <div className="modal w-96 h-auto">
-          <div className="content-modal">
-            <div className="modal-header">
-              <h3 className="modal-title">{modalTitle}</h3>
-              <button type="button" className="modal-close" onClick={onClose}>
-                <IoMdClose className="text-3xl" />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="w-full text-start mb-5">
-                <label
-                  htmlFor="nom_marca"
-                  className="text-sm font-bold text-black mt-4 block"
-                >
-                  Marca:
-                </label>
-                <input
-                  {...register("nom_marca", { required: true })}
-                  type="text"
-                  id="nom_marca"
-                  className={`w-full bg-gray-50 ${
-                    errors.nom_marca
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500"
-                      : "border-gray-300"
-                  } text-gray-900 rounded-lg border p-2 text-sm`}
-                  placeholder="Nombre de marca"
-                />
-                {errors.nom_marca && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Ingrese una marca.
-                  </p>
-                )}
+    <>
+      <Toaster />
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={handleCloseModal}
+        size="md"
+        
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                {modalTitle}
+              </ModalHeader>
+              <ModalBody>
+                <div className="space-y-4">
+                  <Controller
+                    name="nom_marca"
+                    control={control}
+                    rules={{ required: "Ingrese una marca" }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="Marca"
+                        variant="bordered"
+                        placeholder="Nombre de marca"
+                        color={errors.nom_marca ? "danger" : "default"}
+                        errorMessage={errors.nom_marca?.message}
+                        isRequired
+                      />
+                    )}
+                  />
 
-                <label
-                  htmlFor="estado_marca"
-                  className="text-sm font-bold text-black mt-4 block"
+                  <Controller
+                    name="estado_marca"
+                    control={control}
+                    rules={{ required: "Selecciona un estado" }}
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        label="Estado de la marca"
+                        variant="bordered"
+                        placeholder="Seleccione un estado"
+                        selectedKeys={field.value ? [field.value.toString()] : []}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        color={errors.estado_marca ? "danger" : "default"}
+                        errorMessage={errors.estado_marca?.message}
+                        isRequired
+                      >
+                        <SelectItem key="1" value="1">Activo</SelectItem>
+                        <SelectItem key="0" value="0">Inactivo</SelectItem>
+                      </Select>
+                    )}
+                  />
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button 
+                  color="danger" 
+                  variant="light" 
+                  onPress={handleCloseModal}
                 >
-                  Estado de la marca:
-                </label>
-                <select
-                  {...register("estado_marca", { required: true })}
-                  id="estado_marca"
-                  className={`w-full text-sm bg-gray-50 ${
-                    errors.estado_marca
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500"
-                      : "border-gray-300"
-                  } text-gray-900 rounded-lg border p-2`}
+                  Cancelar
+                </Button>
+                <Button 
+                  color="primary" 
+                  onPress={handleSubmit(onSubmit)}
+                  isLoading={loading}
                 >
-                  <option value={1}>Activo</option>
-                  <option value={0}>Inactivo</option>
-                </select>
-                {errors.estado_subcat && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Selecciona un estado.
-                  </p>
-                )}
-              </div>
-
-              <div className="modal-buttons flex justify-between">
-                <ButtonClose onClick={onClose} />
-                <ButtonSave loading={loading} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
+                  {loading ? 'Guardando...' : 'Guardar'}
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 };
 

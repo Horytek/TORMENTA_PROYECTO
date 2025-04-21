@@ -1,202 +1,271 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { IoMdClose, IoMdEye, IoMdEyeOff } from "react-icons/io";
+import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { Toaster, toast } from "react-hot-toast";
-import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { addVendedor, updateVendedor } from '@/services/vendedor.services';
-import { Button } from "@nextui-org/button";
 import { getUsuarios } from '@/services/usuario.services';
-import { Select, SelectItem } from "@nextui-org/react";
-import { getVendedores} from '@/services/vendedor.services';
-import '../Productos/ProductosForm.css';
+import { getVendedores } from '@/services/vendedor.services';
+import { 
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter,
+  Input,
+  Button,
+  Select,
+  SelectItem
+} from "@nextui-org/react";
 
 const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
   const [vendedores, setVendedores] = useState([]);
+  const [isOpen, setIsOpen] = useState(true);
+  
   localStorage.setItem("dni_r", initialData?.dni || '');
 
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm({
+  const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm({
     defaultValues: {
-      dni: '',
-      id_usuario: '',
-      nombres: '',
-      apellidos: '',
-      telefono: '',
-      estado_vendedor: ''
+      dni: initialData?.dni || '',
+      id_usuario: initialData?.id_usuario || '',
+      nombres: initialData?.nombres || '',
+      apellidos: initialData?.apellidos || '',
+      telefono: initialData?.telefono || '',
+      estado_vendedor: initialData?.estado_vendedor?.toString() || ''
     }
   });
 
   useEffect(() => {
-    if (initialData) {
-      // Usar setValue para asegurarse de que los valores del formulario sean correctamente establecidos
-      setValue('dni', initialData.dni);
-      setValue('id_usuario', initialData.id_usuario);
-      setValue('nombres', initialData.nombres);
-      setValue('apellidos', initialData.apellidos);
-      setValue('telefono', initialData.telefono);
-      setValue('estado_vendedor', initialData.estado_vendedor);
-    }
-  }, [initialData, setValue]);
-
-  useEffect(() => {
-    const fetchUsuarios = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getUsuarios();
-        setUsuarios(response);
+        const usuariosData = await getUsuarios();
+        setUsuarios(usuariosData);
 
-        const data = await getVendedores();
-        setVendedores(data);
-
+        const vendedoresData = await getVendedores();
+        setVendedores(vendedoresData);
       } catch (error) {
-        toast.error("Error al cargar los usuarios");
+        toast.error("Error al cargar los datos");
       }
     };
-    fetchUsuarios();
+    fetchData();
   }, []);
 
-  /*    const getUsers = async () => {
-        const data = await getVendedores();
-        setVendedores(data);
-    };*/
-
-    const onSubmit = handleSubmit(async (data) => {
-      try {
-        const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor } = data;
-        const dni_ver = localStorage.getItem("dni_r");
-    
-        // Asegúrate de que se pase el nuevo dni si se cambia
-        const newVendedor = {
-          dni: dni_ver || dni, // Usa el dni actual si no hay un nuevo dni
-          nuevo_dni: dni_ver !== dni ? dni : undefined, // Si el dni cambia, pasamos nuevo_dni
-          id_usuario,
-          nombres,
-          apellidos,
-          telefono,
-          estado_vendedor
-        };
-    
-        let result;
-        if (initialData) {
-          result = await updateVendedor(initialData.dni, newVendedor); 
-        } else {
-          result = await addVendedor(newVendedor); 
-        }
-    
-        if (result) {
-          onClose();
-          setTimeout(() => {
-            window.location.reload(); // O considera actualizar solo el estado sin recargar
-          }, 1000);
-        }
-    
-      } catch (error) {
-        toast.error("Error al realizar la gestión del vendedor");
+  const onSubmit = async (data) => {
+    try {
+      const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor } = data;
+      const dni_ver = localStorage.getItem("dni_r");
+  
+      const newVendedor = {
+        dni: dni_ver || dni,
+        nuevo_dni: dni_ver !== dni ? dni : undefined,
+        id_usuario,
+        nombres,
+        apellidos,
+        telefono,
+        estado_vendedor
+      };
+  
+      let result;
+      if (initialData) {
+        result = await updateVendedor(initialData.dni, newVendedor); 
+      } else {
+        result = await addVendedor(newVendedor); 
       }
-    });
-    
+  
+      if (result) {
+        toast.success(initialData ? "Vendedor actualizado correctamente" : "Vendedor creado correctamente");
+        handleCloseModal();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+  
+    } catch (error) {
+      toast.error("Error al realizar la gestión del vendedor");
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
 
   return (
-    <div>
-      <form onSubmit={onSubmit}>
-        <Toaster />
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className='content-modal'>
-              <div className="modal-header">
-                <h3 className="modal-title">{modalTitle}</h3>
-                <button className="modal-close" onClick={onClose}>
-                  <IoMdClose className='text-3xl'/>
-                </button>
-              </div>
-              <div className='modal-body'>
-                <div className='grid grid-cols-2 gap-6'>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label className='text-sm font-bold text-black'>DNI:</label>
-                    <input 
-                      {...register('dni', { required: true })}
-                      type="text"
-                      name='dni'
-                      className={`w-full bg-gray-50 ${errors.dni ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
+    <>
+      <Toaster />
+      <Modal 
+        isOpen={isOpen} 
+        onClose={handleCloseModal}
+        size="2xl"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                {modalTitle}
+              </ModalHeader>
+              <ModalBody>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-1">
+                    <Controller
+                      name="dni"
+                      control={control}
+                      rules={{ required: "El DNI es requerido" }}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          label="DNI"
+                          variant="bordered"
+                          color={errors.dni ? "danger" : "default"}
+                          errorMessage={errors.dni?.message}
+                          isRequired
+                        />
+                      )}
+                    />
                   </div>
 
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label className='text-sm font-bold text-black'>Usuario:</label>
-                    <Select 
-                        {...register('id_usuario', { required: true })}
-                        onChange={(e) => setValue('id_usuario', e.target.value)}
-                        className="w-full bg-gray-50 rounded-lg"
-                      >
-                        {usuarios.map((usuario) => (
-                          <SelectItem 
-                            key={usuario.id_usuario} 
-                            value={usuario.id_usuario} 
-                            isDisabled={vendedores.some((vendedor) => vendedor.id_usuario === usuario.id_usuario) && initialData?.id_usuario !== usuario.id_usuario}
-                          >
-                            {usuario.usua}
-                          </SelectItem>
-                        ))}
-                      </Select>
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-2 gap-6'>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label className='text-sm font-bold text-black'>Nombre:</label>
-                    <input 
-                      {...register('nombres', { required: true })}
-                      type="text"
-                      name='nombres'
-                      className={`w-full bg-gray-50 ${errors.nombres ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
-                  </div>
-
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label className='text-sm font-bold text-black'>Apellidos:</label>
-                    <input 
-                      {...register('apellidos', { required: true })}
-                      type="text"
-                      name='apellidos'
-                      className={`w-full bg-gray-50 ${errors.apellidos ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-2 gap-6'>
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label className='text-sm font-bold text-black'>Estado:</label>
-                    <select 
-                      {...register('estado_vendedor', { required: true })}
-                      name='estado_vendedor'
-                      className={`w-full text-sm bg-gray-50 ${errors.estado_vendedor ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                      <option value="">Seleccione...</option>
-                      <option value={1}>Activo</option>
-                      <option value={0}>Inactivo</option>
-                    </select>
-                  </div>
-
-                  <div className='w-full relative group mb-5 text-start'>
-                    <label className='text-sm font-bold text-black'>Teléfono:</label>
-                    <input 
-                      {...register('telefono', { required: true })}
-                      type="text"
-                      name='telefono'
-                      className={`w-full bg-gray-50 ${errors.telefono ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
+                  <div className="col-span-1">
+                    <Controller
+                      name="id_usuario"
+                      control={control}
+                      rules={{ required: "El usuario es requerido" }}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          label="Usuario"
+                          variant="bordered"
+                          placeholder="Seleccione un usuario"
+                          selectedKeys={field.value ? [field.value.toString()] : []}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          isRequired
+                          color={errors.id_usuario ? "danger" : "default"}
+                          errorMessage={errors.id_usuario?.message}
+                        >
+                          {usuarios.map((usuario) => (
+                            <SelectItem
+                              key={usuario.id_usuario.toString()}
+                              value={usuario.id_usuario.toString()}
+                              isDisabled={vendedores.some((vendedor) => 
+                                vendedor.id_usuario === usuario.id_usuario) && 
+                                initialData?.id_usuario !== usuario.id_usuario}
+                            >
+                              {usuario.usua}
+                            </SelectItem>
+                          ))}
+                        </Select>
+                      )}
+                    />
                   </div>
                 </div>
 
-                <div className='modal-buttons'>
-                  <ButtonClose onClick={onClose}/>
-                  <ButtonSave type="submit"/>
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div className="col-span-1">
+                    <Controller
+                      name="nombres"
+                      control={control}
+                      rules={{ required: "El nombre es requerido" }}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          label="Nombre"
+                          variant="bordered"
+                          color={errors.nombres ? "danger" : "default"}
+                          errorMessage={errors.nombres?.message}
+                          isRequired
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div className="col-span-1">
+                    <Controller
+                      name="apellidos"
+                      control={control}
+                      rules={{ required: "Los apellidos son requeridos" }}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          label="Apellidos"
+                          variant="bordered"
+                          color={errors.apellidos ? "danger" : "default"}
+                          errorMessage={errors.apellidos?.message}
+                          isRequired
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div> 
-        </div>
-      </form>
-    </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div className="col-span-1">
+                    <Controller
+                      name="estado_vendedor"
+                      control={control}
+                      rules={{ required: "El estado es requerido" }}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          label="Estado"
+                          variant="bordered"
+                          placeholder="Seleccione un estado"
+                          selectedKeys={field.value ? [field.value.toString()] : []}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          isRequired
+                          color={errors.estado_vendedor ? "danger" : "default"}
+                          errorMessage={errors.estado_vendedor?.message}
+                        >
+                          <SelectItem key="1" value="1">Activo</SelectItem>
+                          <SelectItem key="0" value="0">Inactivo</SelectItem>
+                        </Select>
+                      )}
+                    />
+                  </div>
+
+                  <div className="col-span-1">
+                    <Controller
+                      name="telefono"
+                      control={control}
+                      rules={{ required: "El teléfono es requerido" }}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          label="Teléfono"
+                          variant="bordered"
+                          color={errors.telefono ? "danger" : "default"}
+                          errorMessage={errors.telefono?.message}
+                          isRequired
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button 
+                  color="danger" 
+                  variant="light" 
+                  onPress={handleCloseModal}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  color="primary" 
+                  onPress={handleSubmit(onSubmit)}
+                >
+                  Guardar
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 };
-
 
 VendedoresForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,

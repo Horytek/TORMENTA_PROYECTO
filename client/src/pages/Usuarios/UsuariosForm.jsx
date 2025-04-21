@@ -1,20 +1,29 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { IoMdClose, IoMdEye, IoMdEyeOff } from "react-icons/io";
+import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { Toaster, toast } from "react-hot-toast";
-import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { addUsuario, updateUsuario, getUsuarios } from '@/services/usuario.services';
 import { getRoles } from '@/services/rol.services';
-import { Button, ButtonGroup } from "@nextui-org/button";
-import '../Productos/ProductosForm.css';
+import { 
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter,
+  Input,
+  Select,
+  SelectItem,
+  Button
+} from "@nextui-org/react";
 
 const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
     const [roles, setRoles] = useState([]);
     const [usuarios, setUsuarios] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
+    const [isOpen, setIsOpen] = useState(true);
 
-    const { register, handleSubmit, formState: { errors }, reset } = useForm({
+    const { control, handleSubmit, formState: { errors }, reset } = useForm({
         defaultValues: initialData?.data || {
             id_rol: '',
             usua: '',
@@ -46,7 +55,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
         setUsuarios(data);
     };
 
-    const onSubmit = handleSubmit(async (data) => {
+    const onSubmit = async (data) => {
         try {
             const { id_rol, usua, contra, estado_usuario } = data;
 
@@ -74,7 +83,8 @@ const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
             }
 
             if (result) {
-                onClose();
+                toast.success(initialData ? "Usuario actualizado correctamente" : "Usuario creado correctamente");
+                handleCloseModal();
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
@@ -82,87 +92,156 @@ const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
         } catch (error) {
             toast.error("Error al realizar la gestión del usuario");
         }
-    });
+    };
+
+    const handleCloseModal = () => {
+        setIsOpen(false);
+        setTimeout(() => {
+            onClose();
+        }, 300);
+    };
 
     return (
-        <div>
-            <form onSubmit={onSubmit}>
-                <Toaster />
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <div className='content-modal'>
-                            <div className="modal-header">
-                                <h3 className="modal-title">{modalTitle}</h3>
-                                <button className="modal-close" onClick={onClose}>
-                                    <IoMdClose className='text-3xl' />
-                                </button>
-                            </div>
-                            <div className='modal-body'>
-                                <div className='grid grid-cols-2 gap-6'>
-                                    <div className='w-full relative group mb-5 text-start'>
-                                        <label className='text-sm font-bold text-black'>Rol:</label>
-                                        <select
-                                            {...register('id_rol', { required: true })}
-                                            name='id_rol'
-                                            className={`w-full text-sm bg-gray-50 ${errors.id_rol ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                                            <option value="">Seleccione...</option>
-                                            {roles.map((rol) => (
-                                                <option key={rol.id_rol} value={rol.id_rol}>{rol.nom_rol}</option>
-                                            ))}
-                                        </select>
+        <>
+            <Toaster />
+            <Modal 
+                isOpen={isOpen} 
+                onClose={handleCloseModal}
+                size="2xl"
+                
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">
+                                {modalTitle}
+                            </ModalHeader>
+                            <ModalBody>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-1">
+                                        <Controller
+                                            name="id_rol"
+                                            control={control}
+                                            rules={{ required: "El rol es requerido" }}
+                                            render={({ field }) => (
+                                                <Select
+                                                    {...field}
+                                                    label="Rol"
+                                                    variant="bordered"
+                                                    placeholder="Seleccione un rol"
+                                                    selectedKeys={field.value ? [field.value.toString()] : []}
+                                                    onChange={(e) => field.onChange(e.target.value)}
+                                                    isRequired
+                                                    color={errors.id_rol ? "danger" : "default"}
+                                                    errorMessage={errors.id_rol?.message}
+                                                >
+                                                    {roles.map((rol) => (
+                                                        <SelectItem key={rol.id_rol.toString()} value={rol.id_rol.toString()}>
+                                                            {rol.nom_rol}
+                                                        </SelectItem>
+                                                    ))}
+                                                </Select>
+                                            )}
+                                        />
                                     </div>
 
-                                    <div className='w-full relative group mb-5 text-start'>
-                                        <label className='text-sm font-bold text-black'>Usuario:</label>
-                                        <input
-                                            {...register('usua', { required: true })}
-                                            type="text"
-                                            name='usua'
-                                            className={`w-full bg-gray-50 ${errors.usua ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
+                                    <div className="col-span-1">
+                                        <Controller
+                                            name="usua"
+                                            control={control}
+                                            rules={{ required: "El usuario es requerido" }}
+                                            render={({ field }) => (
+                                                <Input
+                                                    {...field}
+                                                    label="Usuario"
+                                                    variant="bordered"
+                                                    color={errors.usua ? "danger" : "default"}
+                                                    errorMessage={errors.usua?.message}
+                                                    isRequired
+                                                />
+                                            )}
+                                        />
                                     </div>
                                 </div>
 
-                                <div className='grid grid-cols-2 gap-6'>
-                                    <div className='w-full relative group mb-5 text-start'>
-                                        <label className='text-sm font-bold text-black'>Contraseña:</label>
-                                        <div className="relative">
-                                            <input
-                                                {...register('contra', { required: true })}
-                                                type={showPassword ? "text" : "password"}
-                                                name='contra'
-                                                className={`w-full bg-gray-50 ${errors.contra ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-1.5`} />
-                                            <button
-                                                type="button"
-                                                className="absolute inset-y-0 right-0 flex items-center pr-3"
-                                                onClick={() => setShowPassword(prev => !prev)}
-                                            >
-                                                {showPassword ? <IoMdEyeOff className='text-gray-600' /> : <IoMdEye className='text-gray-600' />}
-                                            </button>
-                                        </div>
+                                <div className="grid grid-cols-2 gap-4 mt-4">
+                                    <div className="col-span-1">
+                                        <Controller
+                                            name="contra"
+                                            control={control}
+                                            rules={{ required: "La contraseña es requerida" }}
+                                            render={({ field }) => (
+                                                <Input
+                                                    {...field}
+                                                    type={showPassword ? "text" : "password"}
+                                                    label="Contraseña"
+                                                    variant="bordered"
+                                                    color={errors.contra ? "danger" : "default"}
+                                                    errorMessage={errors.contra?.message}
+                                                    isRequired
+                                                    endContent={
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                            className="focus:outline-none"
+                                                        >
+                                                            {showPassword ? (
+                                                                <IoMdEyeOff className="text-xl text-gray-400" />
+                                                            ) : (
+                                                                <IoMdEye className="text-xl text-gray-400" />
+                                                            )}
+                                                        </button>
+                                                    }
+                                                />
+                                            )}
+                                        />
                                     </div>
-                                    <div className='w-full relative group mb-5 text-start'>
-                                        <label className='text-sm font-bold text-black'>Estado:</label>
-                                        <select
-                                            {...register('estado_usuario', { required: true })}
-                                            name='estado_usuario'
-                                            className={`w-full text-sm bg-gray-50 ${errors.estado_usuario ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2`}>
-                                            <option value="">Seleccione...</option>
-                                            <option value={1}>Activo</option>
-                                            <option value={0}>Inactivo</option>
-                                        </select>
-                                    </div>
-                                </div>
 
-                                <div className='modal-buttons'>
-                                    <ButtonClose onClick={onClose} />
-                                    <ButtonSave type="submit" />
+                                    <div className="col-span-1">
+                                        <Controller
+                                            name="estado_usuario"
+                                            control={control}
+                                            rules={{ required: "El estado es requerido" }}
+                                            render={({ field }) => (
+                                                <Select
+                                                    {...field}
+                                                    label="Estado"
+                                                    variant="bordered"
+                                                    placeholder="Seleccione un estado"
+                                                    selectedKeys={field.value ? [field.value.toString()] : []}
+                                                    onChange={(e) => field.onChange(e.target.value)}
+                                                    isRequired
+                                                    color={errors.estado_usuario ? "danger" : "default"}
+                                                    errorMessage={errors.estado_usuario?.message}
+                                                >
+                                                    <SelectItem key="1" value="1">Activo</SelectItem>
+                                                    <SelectItem key="0" value="0">Inactivo</SelectItem>
+                                                </Select>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button 
+                                    color="danger" 
+                                    variant="light" 
+                                    onPress={handleCloseModal}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button 
+                                    color="primary" 
+                                    onPress={handleSubmit(onSubmit)}
+                                >
+                                    Guardar
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
+        </>
     );
 };
 

@@ -1,81 +1,111 @@
-// import { useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import '../ProductosForm.css';
-import { IoMdClose } from "react-icons/io";
 import { useMarcas } from '@/context/Marca/MarcaProvider';
 import { Toaster, toast } from "react-hot-toast";
-import { useForm } from "react-hook-form";
-import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
+import { useForm, Controller } from "react-hook-form";
+import { 
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter,
+  Input,
+  Button
+} from "@nextui-org/react";
 
 export const ModalMarca = ({ modalTitle, closeModel }) => {
+  const [isOpen, setIsOpen] = useState(true);
+  // Consumir context de marca
+  const { createMarca } = useMarcas();
 
-    // Consumir context de marca
-    const { createMarca } = useMarcas();
+  // Registro de marca
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: {
+      nom_marca: '',
+    }
+  });
 
-    // Registro de marca
-    const { register, handleSubmit, formState: {errors} } = useForm({
-        defaultValues: {
-          nom_marca: '',
-        }
-    });
+  const handleCloseModal = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      closeModel();
+    }, 300);
+  };
 
-    const onSubmit = handleSubmit( async (data) => {
-        try {
-          const { nom_marca } = data;
-          const newMarca = {
-            nom_marca: nom_marca.toUpperCase().trim(),
-            estado_marca: 1
-          };
-  
-          const result = await createMarca(newMarca); // Llamada a la API para añadir la marca
-          if (result) {
-            closeModel(); // Cerrar modal
-          }
-          
-        } catch (error) {
-          toast.error("Error al realizar la gestión de la marca");
-        }
-      });
+  const onSubmit = async (data) => {
+    try {
+      const { nom_marca } = data;
+      const newMarca = {
+        nom_marca: nom_marca.toUpperCase().trim(),
+        estado_marca: 1
+      };
 
-    return (
-        <form onSubmit={onSubmit}>
-            <Toaster />
-            <div className="modal-overlay">
-                <div className="modal">
-                    <div className='content-modal'>
-                        <div className="modal-header">
-                            <h3 className="modal-title">{modalTitle}</h3>
-                            <button className="modal-close" onClick={closeModel}>
-                                <IoMdClose className='text-3xl' />
-                            </button>
-                        </div>
-                        <div className='modal-body'>
-        
-                            <div className='w-full text-start mb-5'>
-                                <label htmlFor="nom_marca" className='text-sm font-bold text-black'>Marca:</label>
-                                <input 
-                                {...register('nom_marca', 
-                                    { required: true }
-                                )}
-                                type="text" 
-                                name='nom_marca' 
-                                className={`w-full bg-gray-50 ${errors.nom_marca ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2 text-sm`}
-                                placeholder='Nombre de Marca' />
-                            </div>
-        
-                            <div className='modal-buttons flex justify-between'>
-                                <ButtonClose onClick={closeModel} />
-                                <ButtonSave type="submit"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-    );
+      const result = await createMarca(newMarca); // Llamada a la API para añadir la marca
+      if (result) {
+        toast.success("Marca creada correctamente");
+        handleCloseModal(); // Cerrar modal
+      }
+    } catch (error) {
+      toast.error("Error al realizar la gestión de la marca");
+    }
+  };
+
+  return (
+    <>
+      <Toaster />
+      <Modal 
+        isOpen={isOpen} 
+        onClose={handleCloseModal}
+        size="md"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                {modalTitle}
+              </ModalHeader>
+              <ModalBody>
+                <Controller
+                  name="nom_marca"
+                  control={control}
+                  rules={{ required: "El nombre de la marca es requerido" }}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      label="Marca"
+                      variant="bordered"
+                      placeholder="Nombre de Marca"
+                      color={errors.nom_marca ? "danger" : "default"}
+                      errorMessage={errors.nom_marca?.message}
+                      isRequired
+                    />
+                  )}
+                />
+              </ModalBody>
+              <ModalFooter>
+                <Button 
+                  color="danger" 
+                  variant="light" 
+                  onPress={handleCloseModal}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  color="primary" 
+                  onPress={handleSubmit(onSubmit)}
+                >
+                  Guardar
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
+  );
 };
 
 ModalMarca.propTypes = {
-    modalTitle: PropTypes.string.isRequired,
-    closeModel: PropTypes.func.isRequired,
+  modalTitle: PropTypes.string.isRequired,
+  closeModel: PropTypes.func.isRequired,
 };
