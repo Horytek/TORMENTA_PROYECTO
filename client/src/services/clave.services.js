@@ -1,5 +1,6 @@
 import { getClavesRequest, getClaveRequest, addClaveRequest, updateClaveRequest, deleteClaveRequest } 
 from '@/api/api.clave';
+import { getUsuario } from "@/services/usuario.services";
 import { toast } from "react-hot-toast";
 
 const getClaves = async () => {
@@ -75,4 +76,33 @@ const deleteClave = async (id) => {
   }
 };
 
-export { getClaves, getClave, addClave, updateClave, deleteClave };
+const getClaveSunatByUser = async () => {
+  try {
+      // Obtener el nombre del usuario desde localStorage
+      const usuario = localStorage.getItem("usuario");
+      if (!usuario) {
+          throw new Error("No se encontró el usuario en localStorage.");
+      }
+
+      // Obtener los datos del usuario desde la API
+      const usuarioData = await getUsuario(usuario);
+      if (!usuarioData || !usuarioData.id_empresa) {
+          throw new Error("No se encontró el id_empresa para el usuario actual.");
+      }
+
+      const id_empresa = usuarioData.id_empresa;
+
+      // Obtener la clave relacionada con el tipo "Sunat"
+      const claveData = await getClave({ id_empresa, tipo: "Sunat" });
+      if (!claveData) {
+          throw new Error("No se encontró la clave para el tipo 'Sunat'.");
+      }
+
+      return claveData.valor; // Retornar solo el valor de la clave
+  } catch (error) {
+      console.error("Error al obtener la clave de Sunat:", error.message);
+      throw error;
+  }
+};
+
+export { getClaves, getClave, addClave, updateClave, deleteClave, getClaveSunatByUser };

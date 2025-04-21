@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
 /*
 // Función para obtener la última venta del mismo tipo de comprobante y calcular el correlativo
@@ -56,8 +58,8 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 // Función para enviar los datos a SUNAT
 const generarPDF = async (data) => {
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/pdf';
-  const token = import.meta.env.VITE_TOKEN_SUNAT_1 || '';
-  
+  const token = await getClaveSunatByUser();
+    
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
   try {
@@ -92,11 +94,13 @@ const generarPDF = async (data) => {
 };
 
 // Función principal para manejar la aceptación de la venta
-export const handleSunatPDF = (venta,detalles) => {
+export const handleSunatPDF = async (venta,detalles) => {
     //const loadingToastId = toast.loading('Enviando ventas a la Sunat...');
 
     // Iterar sobre cada venta y enviarla a SUNAT
         // Obtener los detalles de la venta
+            // Obtener los datos de la empresa
+    const empresaData = await getEmpresaDataByUser();
 
         // Calcular el monto total considerando que los precios ya incluyen IGV
         const totalGravada = detalles.reduce((acc, detalle) => {
@@ -157,16 +161,16 @@ export const handleSunatPDF = (venta,detalles) => {
                 }
             },
             company: {
-                ruc: 20610588981,
-                razonSocial: "TEXTILES CREANDO MODA S.A.C.",
-                nombreComercial: "TEXTILES CREANDO MODA S.A.C.",
-                address: {
-                    direccion: "CAL. SAN MARTIN NRO. 1573 URB. URRUNAGA SC. TRES LAMBAYEQUE CHICLAYO JOSE LEONARDO ORTIZ",
-                    provincia: "CHICLAYO",
-                    departamento: "LAMBAYEQUE",
-                    distrito: "JOSE LEONARDO ORTIZ",
-                    ubigueo: "140105"
-                }
+              ruc: empresaData.ruc,
+              razonSocial: empresaData.razonSocial,
+              nombreComercial: empresaData.nombreComercial,
+              address: {
+                direccion: empresaData.direccion,
+                provincia: empresaData.provincia,
+                departamento: empresaData.departamento,
+                distrito: empresaData.distrito,
+                ubigueo: empresaData.ubigueo,
+              },
             },
             mtoOperGravadas: totalGravada.toFixed(2),
             mtoIGV: mtoIGV.toFixed(2),

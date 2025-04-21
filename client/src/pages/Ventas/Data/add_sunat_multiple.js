@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
 /*
 // Función para obtener la última venta del mismo tipo de comprobante y calcular el correlativo
@@ -58,13 +60,7 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 const enviarVentaASunat = async (data) => {
 
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
-  const vender = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
-  var token;
-  if (vender == "vendedor_2"){
-    token = import.meta.env.VITE_TOKEN_SUNAT_1 || '';
-  } else if (vender == "vendedor_5") {
-    token = import.meta.env.VITE_TOKEN_SUNAT_2 || '';
-  }
+  const token = await getClaveSunatByUser();
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
   try {
@@ -93,9 +89,10 @@ const enviarVentaASunat = async (data) => {
 };
 
 // Función principal para manejar la aceptación de múltiples ventas
-export const handleSunatMultiple = (ventas) => {
+export const handleSunatMultiple = async (ventas) => {
     //const loadingToastId = toast.loading('Enviando ventas a la Sunat...');
-
+    // Obtener los datos de la empresa
+    const empresaData = await getEmpresaDataByUser();
     // Iterar sobre cada venta y enviarla a SUNAT
     ventas.forEach((venta) => {
         // Obtener los detalles de la venta
@@ -135,8 +132,8 @@ export const handleSunatMultiple = (ventas) => {
         const offsetHours = -5; // Ajuste de zona horaria para -05:00
         const result = convertDateToDesiredFormat(isoDate, offsetHours);
 
-        const usuario = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
-        const sufijo = usuario === "vendedor_2" ? "1" : usuario === "vendedor_5" ? "2" : ""; // Ajusta según sea necesario
+        //const usuario = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
+        //const sufijo = usuario === "vendedor_2" ? "1" : usuario === "vendedor_5" ? "2" : ""; // Ajusta según sea necesario
 
         const data = {
             ublVersion: "2.1",
@@ -163,16 +160,16 @@ export const handleSunatMultiple = (ventas) => {
                 }
             },
             company: {
-              ruc: import.meta.env[`VITE_ruc_${sufijo}`] || "",
-              razonSocial: import.meta.env[`VITE_razonSocial_${sufijo}`] || "",
-              nombreComercial: import.meta.env[`VITE_nombreComercial_${sufijo}`] || "",
+              ruc: empresaData.ruc,
+              razonSocial: empresaData.razonSocial,
+              nombreComercial: empresaData.nombreComercial,
               address: {
-                direccion: import.meta.env[`VITE_direccion_${sufijo}`] || "",
-                provincia: import.meta.env[`VITE_provincia_${sufijo}`] || "",
-                departamento: import.meta.env[`VITE_departamento_${sufijo}`] || "",
-                distrito: import.meta.env[`VITE_distrito_${sufijo}`] || "",
-                ubigueo: import.meta.env[`VITE_ubigueo_${sufijo}`] || ""
-              }
+                direccion: empresaData.direccion,
+                provincia: empresaData.provincia,
+                departamento: empresaData.departamento,
+                distrito: empresaData.distrito,
+                ubigueo: empresaData.ubigueo,
+              },
             },
             mtoOperGravadas: totalGravada.toFixed(2),
             mtoIGV: mtoIGV.toFixed(2),

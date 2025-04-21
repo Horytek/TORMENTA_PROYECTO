@@ -28,7 +28,7 @@ import {
   Chip,
 } from "@nextui-org/react";
 import { Autocomplete, AutocompleteItem } from "@nextui-org/react";
-import { FaEdit, FaPlus } from "react-icons/fa";
+import { FaEdit, FaPlus, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { getClaves, addClave, updateClave, deleteClave } from "@/services/clave.services";
 import { getEmpresas } from "@/services/empresa.services";
@@ -49,6 +49,8 @@ const ApiSunat = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [showKeys, setShowKeys] = useState({}); // Estado para controlar la visibilidad de las claves
+
 
   // Obtener claves desde la API
   const fetchClaves = async () => {
@@ -77,6 +79,10 @@ const ApiSunat = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const toggleShowKey = (id) => {
+    setShowKeys((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const handleSaveKey = async () => {
     if (editingKey) {
@@ -180,7 +186,19 @@ const ApiSunat = () => {
                   <TableCell>{key.id_clave}</TableCell>
                   <TableCell>{key.razonSocial}</TableCell>
                   <TableCell>{key.tipo}</TableCell>
-                  <TableCell>{key.valor}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      {showKeys[key.id_clave] ? key.valor : "••••••••"}
+                      <Button
+                        isIconOnly
+                        variant="light"
+                        onClick={() => toggleShowKey(key.id_clave)}
+                        className="ml-2"
+                      >
+                        {showKeys[key.id_clave] ? <FaEyeSlash /> : <FaEye />}
+                      </Button>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Chip
                       color={key.estado_clave === 1 ? "success" : "danger"}

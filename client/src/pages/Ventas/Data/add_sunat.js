@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
 /*
 // Función para obtener la última venta del mismo tipo de comprobante y calcular el correlativo
@@ -57,13 +59,7 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 // Función para enviar los datos a SUNAT
 const enviarVentaASunat = async (data) => {
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
-  const vender = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
-  var token;
-  if (vender == "vendedor_2"){
-    token = import.meta.env.VITE_TOKEN_SUNAT_1 || '';
-  } else if (vender == "vendedor_5") {
-    token = import.meta.env.VITE_TOKEN_SUNAT_2 || '';
-  }
+  const token = await getClaveSunatByUser();
   
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
@@ -93,132 +89,131 @@ const enviarVentaASunat = async (data) => {
 };
 
 // Función principal para manejar la aceptación de la venta
-export const handleSunat = (cliente, detalles, productos) => {
-  // Calcular el monto total considerando que los precios ya incluyen IGV
-  const totalGravada = detalles.reduce((acc, detalle) => {
-    const precioUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', ''));
-    const precioSinIgv = precioUnitarioConIgv / 1.18; // Eliminar el IGV para obtener el valor base
-    return acc + (precioSinIgv * detalle.cantidad);
-  }, 0);
+// Función principal para manejar la aceptación de la venta
+export const handleSunat = async (cliente, detalles, productos) => {
+  try {
+    // Obtener los datos de la empresa
+    const empresaData = await getEmpresaDataByUser();
 
-  const mtoIGV = totalGravada * 0.18; // IGV calculado como el 18% del total gravado
-  const subTotal = totalGravada + mtoIGV;
+    // Calcular el monto total considerando que los precios ya incluyen IGV
+    const totalGravada = detalles.reduce((acc, detalle) => {
+      const precioUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', ''));
+      const precioSinIgv = precioUnitarioConIgv / 1.18; // Eliminar el IGV para obtener el valor base
+      return acc + (precioSinIgv * detalle.cantidad);
+    }, 0);
 
-  const comprobante = JSON.parse(localStorage.getItem('ventas'));
+    const mtoIGV = totalGravada * 0.18; // IGV calculado como el 18% del total gravado
+    const subTotal = totalGravada + mtoIGV;
 
-  const tipoDocMapping = {
-    "Boleta": "03",
-    "Factura": "01",
-  };
+    const comprobante = JSON.parse(localStorage.getItem('ventas'));
 
-  const tipoDoc = tipoDocMapping[comprobante.tipoComprobante] || "03";
+    const tipoDocMapping = {
+      "Boleta": "03",
+      "Factura": "01",
+    };
 
-  // Obtener el nuevo correlativo
-  const ultimaSerie = comprobante.serieNum;
-  //const nuevoCorrelativo = parseInt(comprobante.num, 10);
+    const tipoDoc = tipoDocMapping[comprobante.tipoComprobante] || "03";
 
-  const tipoDocMapping1 = {
-    "Boleta": "B",
-    "Factura": "F",
-  };
+    // Obtener el nuevo correlativo
+    const ultimaSerie = comprobante.serieNum;
 
-  const ultimaSerie_n = tipoDocMapping1[comprobante.tipoComprobante] || "B";
-  const nuevaSerie_t = ultimaSerie_n + ultimaSerie;
+    const tipoDocMapping1 = {
+      "Boleta": "B",
+      "Factura": "F",
+    };
 
-  // Determinar el tipo de documento basado en el documento del cliente
-  const tipoDocCliente = cliente?.documento?.length === 11 ? "6" : "1";
-  const isoDate = cliente.fechaEmision;
-  const offsetHours = -5; // Ajuste de zona horaria para -05:00
-  const result = convertDateToDesiredFormat(isoDate, offsetHours);
+    const ultimaSerie_n = tipoDocMapping1[comprobante.tipoComprobante] || "B";
+    const nuevaSerie_t = ultimaSerie_n + ultimaSerie;
 
-  const usuario = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
-  const sufijo = usuario === "vendedor_2" ? "1" : usuario === "vendedor_5" ? "2" : ""; // Ajusta según sea necesario
+    // Determinar el tipo de documento basado en el documento del cliente
+    const tipoDocCliente = cliente?.documento?.length === 11 ? "6" : "1";
+    const isoDate = cliente.fechaEmision;
+    const offsetHours = -5; // Ajuste de zona horaria para -05:00
+    const result = convertDateToDesiredFormat(isoDate, offsetHours);
 
-  const data = {
-    ublVersion: "2.1",
-    tipoOperacion: "0101",
-    tipoDoc: tipoDoc,
-    serie: nuevaSerie_t.toString(),
-    correlativo: comprobante.num.toString(),
-    fechaEmision: result,
-    formaPago: {
-      moneda: "PEN",
-      tipo: "Contado"
-    },
-    tipoMoneda: "PEN",
-    client: {
-      tipoDoc: tipoDocCliente,
-      numDoc: cliente?.documento || '',
-      rznSocial: cliente?.nombre || '',
-      address: {
-        direccion: "",
-        provincia: "",
-        departamento: "",
-        distrito: "",
-        ubigueo: ""
-      }
-    },
-    company: {
-      ruc: import.meta.env[`VITE_ruc_${sufijo}`] || "",
-      razonSocial: import.meta.env[`VITE_razonSocial_${sufijo}`] || "",
-      nombreComercial: import.meta.env[`VITE_nombreComercial_${sufijo}`] || "",
-      address: {
-        direccion: import.meta.env[`VITE_direccion_${sufijo}`] || "",
-        provincia: import.meta.env[`VITE_provincia_${sufijo}`] || "",
-        departamento: import.meta.env[`VITE_departamento_${sufijo}`] || "",
-        distrito: import.meta.env[`VITE_distrito_${sufijo}`] || "",
-        ubigueo: import.meta.env[`VITE_ubigueo_${sufijo}`] || ""
-      }
-    },
-    mtoOperGravadas: totalGravada.toFixed(2),
-    mtoIGV: mtoIGV.toFixed(2),
-    valorVenta: totalGravada.toFixed(2),
-    totalImpuestos: mtoIGV.toFixed(2),
-    subTotal: subTotal.toFixed(2),
-    mtoImpVenta: subTotal.toFixed(2),
-    details: detalles.map(detalle => {
-      const producto = productos.find(prod => prod.codigo === detalle.codigo);
-      const cantidad = parseInt(detalle.cantidad);
-      const mtoValorUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', '')).toFixed(2);
-      const mtoValorUnitarioSinIgv = (mtoValorUnitarioConIgv / 1.18).toFixed(2);
-      const mtoValorVenta = (cantidad * mtoValorUnitarioSinIgv).toFixed(2);
-      const mtoBaseIgv = mtoValorVenta;
-      const igv = (parseFloat(mtoBaseIgv) * 0.18).toFixed(2);
-      const totalImpuestos = igv;
-      const mtoPrecioUnitario = mtoValorUnitarioConIgv;
+    const data = {
+      ublVersion: "2.1",
+      tipoOperacion: "0101",
+      tipoDoc: tipoDoc,
+      serie: nuevaSerie_t.toString(),
+      correlativo: comprobante.num.toString(),
+      fechaEmision: result,
+      formaPago: {
+        moneda: "PEN",
+        tipo: "Contado"
+      },
+      tipoMoneda: "PEN",
+      client: {
+        tipoDoc: tipoDocCliente,
+        numDoc: cliente?.documento || '',
+        rznSocial: cliente?.nombre || '',
+        address: {
+          direccion: "",
+          provincia: "",
+          departamento: "",
+          distrito: "",
+          ubigueo: ""
+        }
+      },
+      company: {
+        ruc: empresaData.ruc,
+        razonSocial: empresaData.razonSocial,
+        nombreComercial: empresaData.nombreComercial,
+        address: {
+          direccion: empresaData.direccion,
+          provincia: empresaData.provincia,
+          departamento: empresaData.departamento,
+          distrito: empresaData.distrito,
+          ubigueo: empresaData.ubigueo,
+        },
+      },
+      mtoOperGravadas: totalGravada.toFixed(2),
+      mtoIGV: mtoIGV.toFixed(2),
+      valorVenta: totalGravada.toFixed(2),
+      totalImpuestos: mtoIGV.toFixed(2),
+      subTotal: subTotal.toFixed(2),
+      mtoImpVenta: subTotal.toFixed(2),
+      details: detalles.map(detalle => {
+        const producto = productos.find(prod => prod.codigo === detalle.codigo);
+        const cantidad = parseInt(detalle.cantidad);
+        const mtoValorUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', '')).toFixed(2);
+        const mtoValorUnitarioSinIgv = (mtoValorUnitarioConIgv / 1.18).toFixed(2);
+        const mtoValorVenta = (cantidad * mtoValorUnitarioSinIgv).toFixed(2);
+        const mtoBaseIgv = mtoValorVenta;
+        const igv = (parseFloat(mtoBaseIgv) * 0.18).toFixed(2);
+        const totalImpuestos = igv;
+        const mtoPrecioUnitario = mtoValorUnitarioConIgv;
 
-      return {
-        codProducto: detalle.codigo,
-        unidad: producto?.undm || 'ZZ',
-        descripcion: detalle.nombre,
-        cantidad: cantidad,
-        mtoValorUnitario: mtoValorUnitarioSinIgv,
-        mtoValorVenta: mtoValorVenta,
-        mtoBaseIgv: mtoBaseIgv,
-        porcentajeIgv: 18,
-        igv: igv,
-        tipAfeIgv: 10,
-        totalImpuestos: totalImpuestos,
-        mtoPrecioUnitario: mtoPrecioUnitario
-      };
-    }),
-    legends: [
-      {
-        code: "1000",
-        value: `SON ${subTotal.toFixed(2)} CON 00/100 SOLES`
-      }
-    ]
-  };
+        return {
+          codProducto: detalle.codigo,
+          unidad: producto?.undm || 'ZZ',
+          descripcion: detalle.nombre,
+          cantidad: cantidad,
+          mtoValorUnitario: mtoValorUnitarioSinIgv,
+          mtoValorVenta: mtoValorVenta,
+          mtoBaseIgv: mtoBaseIgv,
+          porcentajeIgv: 18,
+          igv: igv,
+          tipAfeIgv: 10,
+          totalImpuestos: totalImpuestos,
+          mtoPrecioUnitario: mtoPrecioUnitario
+        };
+      }),
+      legends: [
+        {
+          code: "1000",
+          value: `SON ${subTotal.toFixed(2)} CON 00/100 SOLES`
+        }
+      ]
+    };
 
-  const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
-  //console.log('Datos de la venta:', data);
-  enviarVentaASunat(data)
-    .then(() => {
-      toast.dismiss(loadingToastId);
-    })
-    .catch(() => {
-      toast.dismiss(loadingToastId);
-    });
+    const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
+    await enviarVentaASunat(data);
+    toast.dismiss(loadingToastId);
+  } catch (error) {
+    console.error('Error en handleSunat:', error.message);
+    toast.error('Error al procesar la venta. Por favor, inténtelo de nuevo.');
+  }
 };
 
 

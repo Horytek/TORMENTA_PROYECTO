@@ -1,4 +1,6 @@
 import axios from "@/api/axios";
+import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
 
 function convertDateToDesiredFormat(dateString, offsetHours) {
@@ -24,7 +26,7 @@ function convertDateToDesiredFormat(dateString, offsetHours) {
 
 const enviarGuiaRemisionASunat = async (data) => {
   const url = 'https://facturacion.apisperu.com/api/v1/despatch/send';
-  const token = import.meta.env.VITE_TOKEN_SUNAT || '';
+  const token = await getClaveSunatByUser();
     
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Verificar los datos enviados
 
@@ -53,7 +55,9 @@ const enviarGuiaRemisionASunat = async (data) => {
   }
 };
 
-export const handleGuiaRemisionSunat = (guia, destinata, transportista, detalles) => {
+export const handleGuiaRemisionSunat = async (guia, destinata, transportista, detalles) => {
+      // Obtener los datos de la empresa
+      const empresaData = await getEmpresaDataByUser();
   const tipoDoc = "05";
   const guialetra = "T";
   const guiaserie = guia.serieNum;
@@ -70,16 +74,16 @@ export const handleGuiaRemisionSunat = (guia, destinata, transportista, detalles
     correlativo: guia.num,
     fechaEmision: result,
     company: {
-      ruc: 20610588981,
-      razonSocial: "TEXTILES CREANDO MODA S.A.C.",
-      nombreComercial: "TEXTILES CREANDO MODA S.A.C.",
+      ruc: empresaData.ruc,
+      razonSocial: empresaData.razonSocial,
+      nombreComercial: empresaData.nombreComercial,
       address: {
-        direccion: "CAL. SAN MARTIN NRO. 1573 URB. URRUNAGA SC. TRES LAMBAYEQUE CHICLAYO JOSE LEONARDO ORTIZ",
-        provincia: "CHICLAYO",
-        departamento: "LAMBAYEQUE",
-        distrito: "JOSE LEONARDO ORTIZ",
-        ubigueo: "140105"
-      }
+        direccion: empresaData.direccion,
+        provincia: empresaData.provincia,
+        departamento: empresaData.departamento,
+        distrito: empresaData.distrito,
+        ubigueo: empresaData.ubigueo,
+      },
     },
     destinatario: {
       numDoc: destinata.documento,

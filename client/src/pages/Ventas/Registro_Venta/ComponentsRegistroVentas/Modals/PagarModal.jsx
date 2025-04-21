@@ -21,7 +21,7 @@ import generateComprobanteNumber from '../../../Data/generate_comprobante';
 import {Autocomplete, AutocompleteItem} from "@nextui-org/autocomplete";
 import {Textarea} from "@nextui-org/input";
 import {Select, SelectItem} from "@nextui-org/select";
-import {Button} from "@nextui-org/react";
+import {Button, Checkbox} from "@nextui-org/react";
 //
 import {ScrollShadow} from "@nextui-org/scroll-shadow";
 import {Input} from "@nextui-org/input";
@@ -633,11 +633,12 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                     <hr className="mb-5" />
                     <div className="flex mb-4">
 {/* Total a pagar */}
-<InputField
+<Input
   label="Total a pagar"
-  symbol="S/."
-  value={totalImporte}
+  labelPlacement="outside"
+  value={`S/. ${totalImporte}`}
   readOnly
+  className="input-c w-40 ml-2"
   style={{
     height: "40px",
     border: "1px solid #ccc", // Borde más suave
@@ -650,19 +651,16 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     boxShadow: "inset 0 0 5px rgba(0, 0, 0, 0.1)", // Sombra interna suave
     transition: "box-shadow 0.3s ease", // Transición suave en el enfoque
   }}
-  className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 />
 
 
 {/* Método de pago */}
 <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
-<label className="block text-gray-800 mb-2 font-semibold">
-  Método de pago
-</label>
-
 <Select
-isRequired
-  placeholder="Método de pago"
+        isRequired
+      label="Método de pago"
+      labelPlacement="outside"
+      placeholder="Método de pago"
   className={"input-c h-10 pr-8"}
   classNamediv={"flex items-center mt-2"}
   value={metodo_pago}
@@ -680,13 +678,15 @@ isRequired
 </div>
 </div>
                     <div className="flex">
-                    <InputField
+                    <Input
   label="Monto recibido"
-  symbol="S/."
+  labelPlacement="outside"
+  placeholder="S/."
   value={montoRecibido}
   onChange={(e) => setMontoRecibido(e.target.value)}
   pattern="[0-9]*[.]?[0-9]{0,2}"
   onKeyDown={validateDecimalInput}
+  className="input-c w-40 ml-2"
   style={{
     height: "40px",
     border: "1px solid #ddd",
@@ -697,100 +697,86 @@ isRequired
     outline: "none",
     transition: "border-color 0.3s ease, box-shadow 0.3s ease",
   }}
-  className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
 />
 
-                        <div className='mb-4' style={{ marginLeft: "45px" }}>
-                            <label className="text-gray-800 font-semibold">Aplicar descuento</label>
-                            <div className='flex items-center h-50' >
-                                <span className='mt-2'>S/.</span>
-                                <input
-  type="checkbox"
-  className="ml-2 custom-checkbox relative mt-2 w-5 h-5 cursor-pointer transition-all duration-300"
-  onChange={(e) => setDescuentoActivado(e.target.checked)}
-  style={{
-    appearance: 'none', // Eliminar el estilo predeterminado del navegador
-    width: '20px', // Tamaño del checkbox
-    height: '20px', // Tamaño del checkbox
-    borderRadius: '5px', // Bordes redondeados
-    border: '2px solid #ccc', // Borde suave
-    backgroundColor: '#fff', // Fondo blanco por defecto
-    position: 'relative', // Posición para el ícono dentro
-    transition: 'background-color 0.3s, border-color 0.3s', // Transición suave para los cambios
-  }}
-  checked={descuentoActivado} // Estado de marcado/desmarcado
-/>
+<div className="mb-4 ml-[45px]">
+  <div className="flex items-center mt-2 space-x-3">
+    <Checkbox
+      isSelected={descuentoActivado}
+      onValueChange={setDescuentoActivado}
+      className="mt-1"
+    >
+      <span className="text-sm font-medium text-gray-700">S/.</span>
+    </Checkbox>
 
-                                <InputField
-                                label=""
-                                symbol=""
-                                value={montoDescuento}
-                                onChange={(e) => {
-                                    const { value } = e.target;
-                                    if (/^\d*\.?\d{0,2}$/.test(value)) {
-                                    setMontoDescuento(value);
-                                    } else if (value === '' || value === '.') {
-                                    setMontoDescuento(value);
-                                    }
-                                }}
-                                disabled={!descuentoActivado}
-                                onKeyDown={validateDecimalInput}
-                                style={{
-                                    height: "40px",
-                                    width: "8.5rem",
-                                    border: "1px solid #ccc", // Borde más suave
-                                    borderRadius: "8px", // Bordes redondeados
-                                    backgroundColor: descuentoActivado ? "#fff" : "#f5f5f5", // Fondo gris cuando está deshabilitado
-                                    padding: "0 12px", // Relleno para separar el texto de los bordes
-                                    fontSize: "16px", // Tamaño de fuente ajustado
-                                    color: "#333", // Color de texto
-                                    outline: "none", // Eliminar borde de enfoque predeterminado
-                                    boxShadow: descuentoActivado ? "0 0 5px rgba(0, 0, 0, 0.1)" : "none", // Sombra sutil cuando está habilitado
-                                    transition: "border-color 0.3s ease, box-shadow 0.3s ease", // Transiciones suaves
-                                }}
-                                className={`input-c ml-2 ${descuentoActivado ? 'focus:border-blue-500 focus:ring-2 focus:ring-blue-500' : ''}`}
-                                />
-                            </div>
-                        </div>
+    <Input
+      type="text"
+      value={montoDescuento}
+      label="Aplicar descuento"
+      labelPlacement="outside"
+      placeholder="0.00"
+      isDisabled={!descuentoActivado}
+      onChange={(e) => {
+        const { value } = e.target;
+        if (/^\d*\.?\d{0,2}$/.test(value)) {
+          setMontoDescuento(value);
+        } else if (value === '' || value === '.') {
+          setMontoDescuento(value);
+        }
+      }}
+      onKeyDown={validateDecimalInput}
+      className="w-[8.5rem]"
+      classNames={{
+        inputWrapper: descuentoActivado
+          ? "bg-white"
+          : "bg-gray-100",
+        input: "text-base text-gray-700",
+      }}
+    />
+  </div>
+</div>
                     </div>
                     <div className="flex  mb-4">
                         <div>
-                            <InputField
-                                label="Cambio"
-                                symbol="S/."
-                                value={cambio >= 0 ? cambio.toFixed(2) : ''}
-                                readOnly
-                                style={{
-                                    height: "40px",
-                                    border: "1px solid #ddd",
-                                    borderRadius: "8px",
-                                    padding: "0 12px",
-                                    fontSize: "16px",
-                                    color: "#333",
-                                    outline: "none",
-                                    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                  }}
-                                  className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                            />
+{/* Cambio */}
+<Input
+  label="Cambio"
+  labelPlacement="outside"
+  placeholder="S/."
+  value={cambio >= 0 ? cambio.toFixed(2) : ""}
+  readOnly
+  className="input-c w-40 ml-2"
+  style={{
+    height: "40px",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    padding: "0 12px",
+    fontSize: "16px",
+    color: "#333",
+    outline: "none",
+    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+  }}
+/>
                         </div>
                         <div className='ml-12 w-60'>
-                            <InputField
-                                label="Faltante"
-                                symbol="S/."
-                                value={faltante >= 0 ? faltante.toFixed(2) : ''}
-                                readOnly
-                                style={{
-                                    height: "40px",
-                                    border: "1px solid #ddd",
-                                    borderRadius: "8px",
-                                    padding: "0 12px",
-                                    fontSize: "16px",
-                                    color: "#333",
-                                    outline: "none",
-                                    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                  }}
-                                  className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                            />
+                        <Input
+  label="Faltante"
+  labelPlacement="outside"
+  placeholder="S/."
+  value={faltante >= 0 ? faltante.toFixed(2) : ""}
+  readOnly
+  className="input-c w-40 ml-2"
+  style={{
+    height: "40px",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    padding: "0 12px",
+    fontSize: "16px",
+    color: "#333",
+    outline: "none",
+    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+  }}
+/>
                         </div>
                     </div>
                     <hr className="mb-5" />
@@ -819,33 +805,32 @@ isRequired
 
                             </div>
                             <div className="flex mb-4">
-                                <InputField
+                                <Input
                                     label="N°2 || Monto recibido"
-                                    symbol="S/."
-                                    placeholder={faltante.toFixed(2)}
+                                    labelPlacement="outside"
+                                    placeholder="S/."
                                     value={montoRecibido2}
                                     onChange={(e) => setMontoRecibido2(e.target.value)}
                                     pattern="[0-9]*[.]?[0-9]{0,2}"
                                     onKeyDown={validateDecimalInput}
+                                    className="input-c w-40 ml-2"
                                     style={{
-                                        height: "40px",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "8px",
-                                        padding: "0 12px",
-                                        fontSize: "16px",
-                                        color: "#333",
-                                        outline: "none",
-                                        transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                      }}
-                                      className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                    />
+                                      height: "40px",
+                                      border: "1px solid #ddd",
+                                      borderRadius: "8px",
+                                      padding: "0 12px",
+                                      fontSize: "16px",
+                                      color: "#333",
+                                      outline: "none",
+                                      transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                    }}
+                                  />
                                   <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
-<label className="block text-gray-800 mb-2 font-semibold">
-  Método de pago
-</label>
-<Select
-isRequired
-  placeholder="Método de pago"
+                                  <Select
+        isRequired
+      label="Método de pago"
+      labelPlacement="outside"
+      placeholder="Método de pago"
   className={"input-c h-10 pr-8"}
   classNamediv={"flex items-center mt-2"}
   value={metodo_pago2}
@@ -863,41 +848,43 @@ isRequired
 </div>
                             </div>
                             <div className="flex mb-4">
-                                <InputField
+                                <Input
                                     label="Cambio"
-                                    symbol="S/."
+                                    labelPlacement="outside"
+                                    placeholder="S/." 
                                     value={cambio2 >= 0 ? cambio2.toFixed(2) : ''}
                                     readOnly
+                                    className="input-c w-40 ml-2"
                                     style={{
-                                        height: "40px",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "8px",
-                                        padding: "0 12px",
-                                        fontSize: "16px",
-                                        color: "#333",
-                                        outline: "none",
-                                        transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                      }}
-                                      className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                    />
+                                      height: "40px",
+                                      border: "1px solid #ddd",
+                                      borderRadius: "8px",
+                                      padding: "0 12px",
+                                      fontSize: "16px",
+                                      color: "#333",
+                                      outline: "none",
+                                      transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                    }}
+                                  />
                                 <div className='ml-12 w-60'>
-                                    <InputField
+                                <Input
                                         label="Faltante"
-                                        symbol="S/."
+                                        labelPlacement="outside"
+                                        placeholder="S/."
                                         value={faltante2 >= 0 ? faltante2.toFixed(2) : ''}
                                         readOnly
+                                        className="input-c w-40 ml-2"
                                         style={{
-                                            height: "40px",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "8px",
-                                            padding: "0 12px",
-                                            fontSize: "16px",
-                                            color: "#333",
-                                            outline: "none",
-                                            transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                          }}
-                                          className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                        />
+                                          height: "40px",
+                                          border: "1px solid #ddd",
+                                          borderRadius: "8px",
+                                          padding: "0 12px",
+                                          fontSize: "16px",
+                                          color: "#333",
+                                          outline: "none",
+                                          transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                        }}
+                                      />
                                 </div>
                             </div>
                             <hr className='mb-5' />
@@ -929,33 +916,31 @@ isRequired
 
                                 </div>
                                 <div className="flex mb-4">
-                                    <InputField
-                                        placeholder={faltante2.toFixed(2)}
-
-                                        label="N°3 || Monto recibido"
-                                        symbol="S/."
+                                <Input
+                                        label="Monto recibido"
+                                        labelPlacement="outside"
+                                        placeholder="S/."
                                         value={montoRecibido3}
                                         onChange={(e) => setMontoRecibido3(e.target.value)}
                                         pattern="[0-9]*[.]?[0-9]{0,2}"
                                         onKeyDown={validateDecimalInput}
+                                        className="input-c w-40 ml-2"
                                         style={{
-                                            height: "40px",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "8px",
-                                            padding: "0 12px",
-                                            fontSize: "16px",
-                                            color: "#333",
-                                            outline: "none",
-                                            transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                          }}
-                                          className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                        />
+                                          height: "40px",
+                                          border: "1px solid #ddd",
+                                          borderRadius: "8px",
+                                          padding: "0 12px",
+                                          fontSize: "16px",
+                                          color: "#333",
+                                          outline: "none",
+                                          transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                        }}
+                                      />
   <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
-    <label className="block text-gray-800 mb-2 font-semibold">
-      Método de pago
-    </label>
     <Select
         isRequired
+      label="Método de pago"
+      labelPlacement="outside"
       placeholder="Método de pago"
       className={"input-c h-10 pr-8"}
       classNamediv={"flex items-center mt-2"}
@@ -974,41 +959,43 @@ isRequired
   </div>
                                 </div>
                                 <div className="flex justify-between mb-4">
-                                    <InputField
+                                <Input
                                         label="Cambio"
-                                        symbol="S/."
+                                        labelPlacement="outside"
+                                        placeholder="S/."
                                         value={cambio3 >= 0 ? cambio3.toFixed(2) : ''}
                                         readOnly
+                                        className="input-c w-40 ml-2"
                                         style={{
-                                            height: "40px",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "8px",
-                                            padding: "0 12px",
-                                            fontSize: "16px",
-                                            color: "#333",
-                                            outline: "none",
-                                            transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                          }}
-                                          className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                        />
+                                          height: "40px",
+                                          border: "1px solid #ddd",
+                                          borderRadius: "8px",
+                                          padding: "0 12px",
+                                          fontSize: "16px",
+                                          color: "#333",
+                                          outline: "none",
+                                          transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                        }}
+                                      />
                                     <div className='ml-12 w-60'>
-                                        <InputField
+                                    <Input
                                             label="Faltante"
-                                            symbol="S/."
+                                            labelPlacement="outside"
+                                            placeholder="S/."
                                             value={faltante3 >= 0 ? faltante3.toFixed(2) : ''}
                                             readOnly
+                                            className="input-c w-40 ml-2"
                                             style={{
-                                                height: "40px",
-                                                border: "1px solid #ddd",
-                                                borderRadius: "8px",
-                                                padding: "0 12px",
-                                                fontSize: "16px",
-                                                color: "#333",
-                                                outline: "none",
-                                                transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                              }}
-                                              className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                            />
+                                              height: "40px",
+                                              border: "1px solid #ddd",
+                                              borderRadius: "8px",
+                                              padding: "0 12px",
+                                              fontSize: "16px",
+                                              color: "#333",
+                                              outline: "none",
+                                              transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                                            }}
+                                          />
                                     </div>
                                 </div>
                                 <hr className='mb-5' />

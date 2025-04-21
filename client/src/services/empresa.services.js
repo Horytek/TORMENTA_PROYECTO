@@ -1,5 +1,6 @@
 import { getEmpresasRequest, getEmpresaRequest, addEmpresaRequest, updateEmpresaRequest, deleteEmpresaRequest } 
 from '@/api/api.empresa';
+import { getUsuario } from "@/services/usuario.services";
 import { toast } from "react-hot-toast";
 
 const getEmpresas = async () => {
@@ -75,4 +76,33 @@ const deleteEmpresa = async (id) => {
   }
 };
 
-export { getEmpresas, getEmpresa, addEmpresa, updateEmpresa, deleteEmpresa };
+const getEmpresaDataByUser = async () => {
+  try {
+    // Obtener el nombre del usuario desde localStorage
+    const usuario = localStorage.getItem("usuario");
+    if (!usuario) {
+      throw new Error("No se encontró el usuario en localStorage.");
+    }
+
+    // Obtener los datos del usuario desde la API
+    const usuarioData = await getUsuario(usuario);
+    if (!usuarioData || !usuarioData.id_empresa) {
+      throw new Error("No se encontró el id_empresa para el usuario actual.");
+    }
+
+    const id_empresa = usuarioData.id_empresa;
+
+    // Obtener los datos de la empresa desde la API
+    const empresaData = await getEmpresa(id_empresa);
+    if (!empresaData) {
+      throw new Error("No se encontraron datos para la empresa.");
+    }
+
+    return empresaData;
+  } catch (error) {
+    console.error("Error al obtener los datos de la empresa:", error.message);
+    throw error;
+  }
+};
+
+export { getEmpresas, getEmpresa, addEmpresa, updateEmpresa, deleteEmpresa, getEmpresaDataByUser };

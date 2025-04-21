@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
 
 function convertDateToDesiredFormat(dateString, offsetHours) {
@@ -25,7 +27,7 @@ function convertDateToDesiredFormat(dateString, offsetHours) {
 // Función para anular los datos de una venta en la SUNAT
 export const anularVentaEnSunatF = async (ventaData) => {
   const url = 'https://facturacion.apisperu.com/api/v1/voided/send';
-  const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VybmFtZSI6IkRhdmlzdEVkdUJ1c3RhbWFudGUxMjMiLCJjb21wYW55IjoiMjA2MTA1ODg5ODEiLCJpYXQiOjE3MjIyMTIxODMsImV4cCI6ODAyOTQxMjE4M30.jTISqfzQh-HAa8XLPjJDipnCunA8aisPDmlOH3-Gqy4t3jRJUUSS1XElkimQj2qpiWJbS4bu-ySqC6WTy9kbbojo6_IgWvgtbs55EG3OMCDRTPrsFjADMf8OjLQ0geKUFqn981cDZkAamIVB9UTa5V8tU2anyUams4zr2JZf_qydBwa5ScaGiWRyPoCOi8Z7akdzNL5nfOKtYYtlg8qzGA2Za3bEMp7uxAVr2O-m9D-j_3zsU0TgSnnNiD4_sm6_R0YdZl-WfHlvxCrTHakLFxC_lC2UGTx-Q4zw0NXrybcq2nqESEuQZn-Su777yCc-oTGTm5zwO220NOBiEHXCm0imFW1NtptWtxE0jWatHM2s-TvTRSHndcMuunbIb9DWdkQ1PlQgx3o17LZDEDjnmQPG3b-z7h-wgtmW6OvJiEfQwvycGuOu0j_OkZaGZsXQcVAkItSLjZhPX5Yor0COwnccdBdbmd5mxNy5qiOT8E-Ssu1ua-iyT308saytvAGq36HP1CQHVIFAF0lciBR--AGl4ha24_7H4WhH3MUBljLc5xwxLq2659XSFmMe_x7QWa8rycQi1ZjeAIxv9fFr5JlSm-APz4Yw8v3nxu9gm7dCUUm2fYDyHDuAjlh5Lnt2RGtkmmZSa22e3PpBPshUgtEqQMrT-zBlJlsXwyU1uRc';  // Token de acceso a la API
+  const token = await getClaveSunatByUser();  
   const isoDate = ventaData.fechaEmision;
   const today = new Date();
   today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -33,7 +35,8 @@ export const anularVentaEnSunatF = async (ventaData) => {
   const offsetHours = -5; // Ajuste de zona horaria para -05:00
   const result = convertDateToDesiredFormat(isoDate, offsetHours);
   const result1 = convertDateToDesiredFormat(localDate, offsetHours);
-
+    // Obtener los datos de la empresa
+    const empresaData = await getEmpresaDataByUser();
 
     // Obtener el nuevo correlativo
     const ultimaSerie = ventaData.serieNum;
@@ -52,17 +55,17 @@ export const anularVentaEnSunatF = async (ventaData) => {
     fecGeneracion: result,
     fecComunicacion: result1,
     company: {
-        ruc: 20610588981,
-        razonSocial: "TEXTILES CREANDO MODA S.A.C.",
-        nombreComercial: "TEXTILES CREANDO MODA S.A.C.",
-        address: {
-          direccion: "CAL. SAN MARTIN NRO. 1573 URB. URRUNAGA SC. TRES LAMBAYEQUE CHICLAYO JOSE LEONARDO ORTIZ",
-          provincia: "CHICLAYO",
-          departamento: "LAMBAYEQUE",
-          distrito: "JOSE LEONARDO ORTIZ",
-          ubigueo: "140105"
-        }
+      ruc: empresaData.ruc,
+      razonSocial: empresaData.razonSocial,
+      nombreComercial: empresaData.nombreComercial,
+      address: {
+        direccion: empresaData.direccion,
+        provincia: empresaData.provincia,
+        departamento: empresaData.departamento,
+        distrito: empresaData.distrito,
+        ubigueo: empresaData.ubigueo,
       },
+    },
     details:[
         {
       tipoDoc: "01",
@@ -104,7 +107,7 @@ export const anularVentaEnSunatF = async (ventaData) => {
 // Función para anular los datos de una venta en la SUNAT
 export const anularVentaEnSunatB = async (ventaData,detalles) => {
     const url = 'https://facturacion.apisperu.com/api/v1/summary/send';
-    const token = import.meta.env.VITE_TOKEN_SUNAT || '';  // Token de acceso a la API
+    const token = await getClaveSunatByUser();
     const isoDate = ventaData.fechaEmision;
     const today = new Date();
     today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -112,7 +115,8 @@ export const anularVentaEnSunatB = async (ventaData,detalles) => {
     const offsetHours = -5; // Ajuste de zona horaria para -05:00
     const result = convertDateToDesiredFormat(isoDate, offsetHours);
     const result1 = convertDateToDesiredFormat(localDate, offsetHours);
-    
+        // Obtener los datos de la empresa
+        const empresaData = await getEmpresaDataByUser();
       // Calcular el monto total considerando que los precios ya incluyen IGV
     const totalGravada = detalles.reduce((acc, detalle) => {
         const precioUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', ''));
@@ -144,17 +148,17 @@ export const anularVentaEnSunatB = async (ventaData,detalles) => {
       correlativo: ventaData.anular_b,
       moneda: "PEN",
       company: {
-          ruc: 20610588981,
-          razonSocial: "TEXTILES CREANDO MODA S.A.C.",
-          nombreComercial: "TEXTILES CREANDO MODA S.A.C.",
-          address: {
-            direccion: "CAL. SAN MARTIN NRO. 1573 URB. URRUNAGA SC. TRES LAMBAYEQUE CHICLAYO JOSE LEONARDO ORTIZ",
-            provincia: "CHICLAYO",
-            departamento: "LAMBAYEQUE",
-            distrito: "JOSE LEONARDO ORTIZ",
-            ubigueo: "140105"
-          }
+        ruc: empresaData.ruc,
+        razonSocial: empresaData.razonSocial,
+        nombreComercial: empresaData.nombreComercial,
+        address: {
+          direccion: empresaData.direccion,
+          provincia: empresaData.provincia,
+          departamento: empresaData.departamento,
+          distrito: empresaData.distrito,
+          ubigueo: empresaData.ubigueo,
         },
+      },
       details:[
           {
         tipoDoc: "03",
