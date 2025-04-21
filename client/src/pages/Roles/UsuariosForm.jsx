@@ -5,7 +5,6 @@ import { Toaster, toast } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { useForm } from "react-hook-form";
 import { addRol, updateRol } from '@/services/rol.services';
-import '../Productos/ProductosForm.css';
 
 const ProductosForm = ({ modalTitle, onClose, initialData }) => {
     const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({

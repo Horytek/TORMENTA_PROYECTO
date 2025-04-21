@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// import './AgregarProovedor.css'; // Eliminado, solo Tailwind
 import { IoMdClose } from "react-icons/io";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { toast, Toaster } from 'react-hot-toast';

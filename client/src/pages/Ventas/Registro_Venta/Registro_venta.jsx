@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';// Importa QuaggaJS
+import { useState, useRef } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
@@ -8,14 +8,13 @@ import { BsCashCoin } from "react-icons/bs";
 import { GrDocumentPerformance } from "react-icons/gr";
 import AlertModal from '../../../components/Modals/AlertModal';
 import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';
-import './Registro_Venta.css';
 import useClientesData from '../Data/data_cliente_venta';
 import { useReactToPrint } from 'react-to-print';
-import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes/CotizacionPDF/CotizacionPDF';  // Asegúrate de ajustar la ruta según sea necesario
+import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes/CotizacionPDF/CotizacionPDF';
 import PropTypes from 'prop-types';
-import {Toaster} from "react-hot-toast";
-import {toast} from "react-hot-toast";
-import {Button} from "@nextui-org/react";
+import { Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
+import { Button } from "@nextui-org/react";
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
@@ -28,7 +27,6 @@ const Registro_Venta = () => {
   const [detalleMode, setDetalleMode] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const componentRef = useRef();
-  //const [barcode, setBarcode] = useState('');
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -63,14 +61,12 @@ const Registro_Venta = () => {
   };
 
   const totalImporte = detalles.reduce((acc, item) => {
-    const subtotalNumber = parseFloat(item.subtotal.replace(/[^\d.-]/g, '')); // Elimina todo menos números y puntos
+    const subtotalNumber = parseFloat(item.subtotal.replace(/[^\d.-]/g, ''));
     return acc + subtotalNumber / 1.18;
-}, 0).toFixed(2);
-
+  }, 0).toFixed(2);
 
   const igv_t = (totalImporte * 0.18).toFixed(2);
   const total_t = Math.round(parseFloat(totalImporte) + parseFloat(igv_t));
-
 
   const datos_precio = {
     igv_t: igv_t,
@@ -145,33 +141,25 @@ const Registro_Venta = () => {
   const { clientes } = useClientesData();
   const cliente = clientes.find(cliente => cliente.id === 1);
 
-
   const datosVentaComprobante = {
-
     fecha: new Date().toISOString().slice(0, 10),
     nombre_cliente: cliente ? cliente.nombre : '',
     documento_cliente: cliente ? cliente.documento : '',
     direccion_cliente: cliente ? cliente.direccion : '',
-  // Calcular el total importe sin IGV
-  totalImporte_venta: detalles.reduce((acc, detalle) => {
-    const precioSinIGV = parseFloat(detalle.precio) / 1.18; // Dividir el precio por 1.18 para obtener el valor sin IGV
-    return acc + (precioSinIGV * detalle.cantidad);
-  }, 0).toFixed(2),
-
-  // Calcular el IGV basado en el total importe sin IGV
-  igv: detalles.reduce((acc, detalle) => {
-    const precioSinIGV = parseFloat(detalle.precio) / 1.18;
-    const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad; // Calcular el IGV del detalle
-    return acc + igvDetalle;
-  }, 0).toFixed(2),
-
-  // Calcular el total sumando el total importe sin IGV y el IGV
-  total_t: detalles.reduce((acc, detalle) => {
-    const precioSinIGV = parseFloat(detalle.precio) / 1.18;
-    const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad;
-    return acc + (precioSinIGV + igvDetalle) * detalle.cantidad;
-  }, 0).toFixed(2),
-  
+    totalImporte_venta: detalles.reduce((acc, detalle) => {
+      const precioSinIGV = parseFloat(detalle.precio) / 1.18;
+      return acc + (precioSinIGV * detalle.cantidad);
+    }, 0).toFixed(2),
+    igv: detalles.reduce((acc, detalle) => {
+      const precioSinIGV = parseFloat(detalle.precio) / 1.18;
+      const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad;
+      return acc + igvDetalle;
+    }, 0).toFixed(2),
+    total_t: detalles.reduce((acc, detalle) => {
+      const precioSinIGV = parseFloat(detalle.precio) / 1.18;
+      const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad;
+      return acc + (precioSinIGV + igvDetalle) * detalle.cantidad;
+    }, 0).toFixed(2),
     descuento_venta: parseFloat(detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0).toFixed(2)),
     detalles: detalles.map(detalle => {
       const producto = productos.find(producto => producto.codigo === detalle.codigo);
@@ -187,7 +175,6 @@ const Registro_Venta = () => {
       };
     }).filter(detalle => detalle !== null),
   };
-
 
   const Comprobar_mayor_499 = () => {
     if (total_t > 499) {
@@ -208,15 +195,15 @@ const Registro_Venta = () => {
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/ventas' }, { name: 'Registrar', href: '/ventas/registro_venta' }]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
-        <h1 className="text-xl font-bold mb-5" style={{ fontSize: '36px' }}> Registrar Venta </h1>
+        <h1 className="text-xl font-bold mb-5 text-[36px]"> Registrar Venta </h1>
       </div>
       <div className="flex flex-col lg:flex-row gap-4">
-        <div className="container-registro-detalle-venta w-full p-4" style={{ height: "max-content" }}>
+        <div className="w-full p-4 rounded-[10px] bg-[#171a1f09] shadow-[0_0_10px_#171a1f33]" style={{ height: "max-content" }}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold">Detalle de venta</h2>
             <div className="flex items-center space-x-2">
               <label htmlFor="switchDetalles" className="flex items-center cursor-pointer">
-                <div className={`relative w-12 h-6 transition-colors duration-200 ease-in-out rounded-full ${detalleMode ? 'bg-custom-blue' : 'bg-gray-200'}`}>
+                <div className={`relative w-12 h-6 transition-colors duration-200 ease-in-out rounded-full ${detalleMode ? 'bg-blue-600' : 'bg-gray-200'}`}>
                   <input id="switchDetalles" type="checkbox" className="sr-only" checked={detalleMode} onChange={toggleDetalleMode} />
                   <div className={`block w-6 h-6 rounded-full shadow-md transform duration-200 ease-in-out ${detalleMode ? 'translate-x-6 bg-white' : 'translate-x-0 bg-gray-300'}`}></div>
                 </div>
@@ -225,40 +212,54 @@ const Registro_Venta = () => {
             </div>
           </div>
           <div className="flex items-center mb-4">
-            <input type="text" className={` mr-2 form-input py-2 px-4 w-full text-gray-700 placeholder-gray-400 rounded border-none focus:outline-none ${!detalleMode ? 'cursor-not-allowed bg-gray-200' : ''}`}
-              placeholder="Buscar producto en el detalle" style={{ boxShadow: '0 0 10px #171a1f33' }} value={searchTerm2} onChange={(e) => setSearchTerm2(e.target.value)} disabled={!detalleMode} />
-            <Button className="btn ml-2 btn-producto px-6 py-2" variant="shadow" onClick={() => setIsModalOpen(true)}>Producto</Button>
-             
+            <input
+              type="text"
+              className={`mr-2 py-2 px-4 w-full text-gray-700 placeholder-gray-400 rounded border-none focus:outline-none shadow-[0_0_10px_#171a1f33] ${!detalleMode ? 'cursor-not-allowed bg-gray-200' : ''}`}
+              placeholder="Buscar producto en el detalle"
+              value={searchTerm2}
+              onChange={(e) => setSearchTerm2(e.target.value)}
+              disabled={!detalleMode}
+            />
+            <Button className="ml-2 px-6 py-2 bg-[#4069e5] hover:bg-[#2655e1] text-white font-medium flex items-center" variant="shadow" onClick={() => setIsModalOpen(true)}>
+              Producto
+            </Button>
           </div>
-          <TablaDetallesVenta detalles={detalles} handleProductRemove={handleProductRemove} handleQuantityChange={handleQuantityChange} handleDiscountChange={handleDiscountChange} handlePrecieChange={handlePrecieChange} />
+          <TablaDetallesVenta
+            detalles={detalles}
+            handleProductRemove={handleProductRemove}
+            handleQuantityChange={handleQuantityChange}
+            handleDiscountChange={handleDiscountChange}
+            handlePrecieChange={handlePrecieChange}
+          />
 
           <div className="flex justify-end mt-4">
             <div className="flex flex-col w-100">
               <div className="flex justify-between my-1 items-center">
-                <span className='font-bold flex justify-end span-title mr-3'>IMPORTE:</span>
-                <span className='inputs-montos'>S/ {totalImporte}</span>
+                <span className='font-bold flex justify-end mr-3 w-[7rem]'>IMPORTE:</span>
+                <span className='bg-white py-1.5 px-4 border-2 border-[#a2a2a2] rounded w-[8.5rem]'>S/ {totalImporte}</span>
               </div>
               <div className="flex justify-between my-1 items-center">
-                <span className='font-bold flex justify-end span-title'>IGV:</span>
-                <span className='inputs-montos'>S/ {igv_t}</span>
+                <span className='font-bold flex justify-end w-[7rem]'>IGV:</span>
+                <span className='bg-white py-1.5 px-4 border-2 border-[#a2a2a2] rounded w-[8.5rem]'>S/ {igv_t}</span>
               </div>
               <div className="flex justify-between my-1 items-center">
-                <span className='font-bold flex justify-end span-title'>TOTAL:</span>
-                <span className='inputs-montos'>S/ {total_t}</span>
+                <span className='font-bold flex justify-end w-[7rem]'>TOTAL:</span>
+                <span className='bg-white py-1.5 px-4 border-2 border-[#a2a2a2] rounded w-[8.5rem]'>S/ {total_t}</span>
               </div>
             </div>
           </div>
           <div className="flex justify-end mt-4">
             <div className='items-center flex ml-2'>
-              <Button className="btn btn-cotizar  flex items-center" onClick={() => handlePrint(true)} disabled={detalles.length === 0} variant="shadow">
+              <Button className="flex items-center bg-green-600/80 hover:bg-green-600 text-white font-medium px-4 py-2 rounded shadow" onClick={() => handlePrint(true)} disabled={detalles.length === 0} variant="shadow">
                 <GrDocumentPerformance style={{ fontSize: '22px' }} />
-                Cotizar</Button>
+                Cotizar
+              </Button>
             </div>
             <div style={{ display: 'none' }}>
               <Comprobante ref={componentRef} datosVentaComprobante={datosVentaComprobante} />
             </div>
             <div className='items-center flex ml-2'>
-              <Button className="btn btn-cobrar mr-0 flex items-center" onClick={Comprobar_mayor_499} variant="shadow">
+              <Button className="flex items-center bg-[#379AE6] hover:bg-[#1f7db9] text-white font-medium px-4 py-2 rounded shadow" onClick={Comprobar_mayor_499} variant="shadow">
                 <BsCashCoin style={{ fontSize: '22px' }} />
                 Cobrar
               </Button>
@@ -293,8 +294,7 @@ Registro_Venta.propTypes = {
 };
 
 Registro_Venta.defaultProps = {
-  clienteSeleccionado: '', // Valor por defecto si no se pasa ninguna prop
+  clienteSeleccionado: '',
 };
-
 
 export default Registro_Venta;
