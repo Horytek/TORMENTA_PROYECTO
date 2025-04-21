@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Card, CardHeader, Divider, CardBody, Pagination } from "@nextui-org/react";
-import "./HistoricoTable.css";
 
 function HistoricoTable({ transactions, previousTransactions }) {
   const [collapsedTransaction, setCollapsedTransaction] = useState(null);
@@ -49,7 +48,6 @@ function HistoricoTable({ transactions, previousTransactions }) {
           <CardHeader className="flex gap-3">
             <div className="flex flex-col">
               <p className="text-lg">Stock actual del producto</p>
-              
             </div>
           </CardHeader>
           <Divider />
@@ -64,7 +62,7 @@ function HistoricoTable({ transactions, previousTransactions }) {
 
       <div className="flex w-full">
         {/* Tabla principal ocupando toda la pantalla */}
-        <div className={`container-table-reg px-4 bg-white rounded-lg transition-all ${collapsedTransaction ? 'w-2/3' : 'w-full'}`}>
+        <div className={`px-4 bg-white rounded-lg transition-all ${collapsedTransaction ? 'w-2/3' : 'w-full'}`}>
           <Table aria-label="Historico de Transacciones">
             <TableHeader>
               {["Fecha", "Documento", "Nombre", "Entra", "Sale", "Stock", "Precio", "Glosa"].map((header) => (

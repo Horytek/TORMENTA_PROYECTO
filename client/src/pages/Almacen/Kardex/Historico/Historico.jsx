@@ -41,7 +41,7 @@ function Historico() {
   }, []);
 
   return (
-    <div className="Historico">
+    <div className="w-full">
       <HeaderHistorico productId={id} productoData={productoData} onDateChange={handleDateChange}  transactions={kardexData} previousTransactions={previousTransactions} dateRange={dateRange}/>
       <br />
       <HistoricoTable transactions={kardexData} previousTransactions={previousTransactions} />
