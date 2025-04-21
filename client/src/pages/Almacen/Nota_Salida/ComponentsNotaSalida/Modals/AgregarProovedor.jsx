@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './AgregarProovedor.css';
+// import './AgregarProovedor.css'; // Eliminado, solo Tailwind
 import { IoMdClose } from "react-icons/io";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { toast, Toaster } from 'react-hot-toast';
@@ -20,6 +20,7 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
         phone: false,
         email: false,
     });
+
     const handleGuardarAction = async () => {
         const provider = document.getElementById('provider').value;
         const DNIruc = document.getElementById('ruc-dni').value;
@@ -32,25 +33,25 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
             dni: tipoCliente === 'Natural' ? DNIruc : null,
             nombres: tipoCliente === 'Natural' ? provider.split(' ').slice(0, -2).join(' ') : null,
             apellidos: tipoCliente === 'Natural' ? provider.split(' ').slice(-2).join(' ') : null,
-            razon_social: tipoCliente === 'Juridico' ?  provider : null,
+            razon_social: tipoCliente === 'Juridico' ? provider : null,
             ubicacion: address !== '' ? address : null,
             telefono: phone !== '' ? phone : null,
             correo: email !== '' ? email : null,
         };
-    console.log(data);
         const result = await insertDestinatario(data);
-    
+
         if (result.success) {
-          toast.success('Destinatario insertado correctamente.');
-          handleClear();
-          onClose();
-          setTimeout(() => {
-            window.location.reload();
-        }, 100); // 100 milisegundos de retraso
+            toast.success('Destinatario insertado correctamente.');
+            handleClear();
+            onClose();
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
         } else {
-          toast.error('Asegurese que los campos sean correctos o que el destinario no esté registrado.');
+            toast.error('Asegurese que los campos sean correctos o que el destinario no esté registrado.');
         }
-      };
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             if (dniOrRuc.length === 8 || dniOrRuc.length === 11) {
@@ -63,9 +64,7 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
                 try {
                     const response = await fetch(url);
                     const data = await response.json();
-                    console.log(data);
-                    if (data.success === true || data.ruc ){
-
+                    if (data.success === true || data.ruc) {
                         if (tipoCliente === 'Natural') {
                             setFormData({
                                 provider: `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`,
@@ -82,10 +81,9 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
                             });
                         }
                     } else {
-                        toast.error('DNI/RUC no válido');    
+                        toast.error('DNI/RUC no válido');
                     }
                 } catch (error) {
-                    console.error('Error fetching data:', error);
                     toast.error('DNI/RUC no válido');
                 }
             }
@@ -97,12 +95,10 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
     const handleInputChange = (event) => {
         const { id, value } = event.target;
         if (id === 'ruc-dni') {
-            // Filtra los caracteres permitidos para DNI/RUC
-            const filteredValue = value.replace(/[^\d]/g, '').slice(0, 11);;
+            const filteredValue = value.replace(/[^\d]/g, '').slice(0, 11);
             setDniOrRuc(filteredValue);
             setTipoCliente(filteredValue.length === 8 ? 'Natural' : filteredValue.length === 11 ? 'Juridico' : '');
         } else if (id === 'phone') {
-            // Filtra los caracteres permitidos para teléfono
             const filteredValue = value.replace(/[^0-9-]/g, '');
             setFormData(prevState => ({ ...prevState, phone: filteredValue }));
         } else if (id === 'email') {
@@ -117,7 +113,7 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
             newErrors.dniOrRuc = true;
             toast.error('DNI/RUC no válido');
         }
-        
+
         if (!/^(\d|-)*$/.test(formData.phone)) {
             newErrors.phone = true;
         }
@@ -141,6 +137,7 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
             handleGuardarAction();
         }
     };
+
     const handleClear = () => {
         setDniOrRuc('');
         setFormData({
@@ -155,22 +152,22 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
             email: false,
         });
     };
+
     return (
-        <div className="modal-overlay-proovedor">
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
             <Toaster />
-            <div className="modal-proovedor">
-                <div className="modal-header-proovedor">
-                    <h2 className='modal-title-proovedor'>Agregar {titulo}</h2>
-                    <button className="" onClick={onClose}>
-                        <IoMdClose className='text-3xl' />
+            <div className="bg-white rounded-lg shadow-lg max-w-lg w-full mx-auto max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b px-6 py-4">
+                    <h2 className="text-xl font-bold">Agregar {titulo}</h2>
+                    <button className="text-gray-500 hover:text-red-500" onClick={onClose}>
+                        <IoMdClose className="text-3xl" />
                     </button>
                 </div>
-                <br />
-                <div className="modal-body-proovedor">
+                <div className="px-6 py-4">
                     <form onSubmit={handleSubmit}>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label className='text-sm font-bold text-black' htmlFor="ruc-dni">RUC/DNI:</label>
+                        <div className="flex gap-2 mb-4">
+                            <div className="flex-1">
+                                <label className="text-sm font-bold text-black" htmlFor="ruc-dni">RUC/DNI:</label>
                                 <input
                                     className={`w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border ${errors.dniOrRuc ? 'border-red-500' : ''}`}
                                     type="text"
@@ -180,8 +177,7 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
                                     onChange={handleInputChange}
                                 />
                             </div>
-
-                            <div className="items-center justify-center pt-1">
+                            <div className="flex items-center justify-center pt-1">
                                 <button
                                     type="button"
                                     className="sunat-button_proovedor rounded-lg border text-center items-center justify-center"
@@ -190,21 +186,21 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
                                     SUNAT
                                 </button>
                             </div>
-                            <div className="items-center justify-center pt-1">
+                            <div className="flex items-center justify-center pt-1">
                                 <button
                                     type="button"
                                     className="sunat-button_proovedor rounded-lg border text-center items-center justify-center"
                                     onClick={handleClear}
-                                    style={{backgroundColor:'blue'}}
+                                    style={{ backgroundColor: 'blue' }}
                                 >
                                     Limpiar
                                 </button>
                             </div>
                         </div>
-                        <div className="form-group">
-                            <label className='text-sm font-bold text-black' htmlFor="provider">Proveedor:</label>
+                        <div className="form-group mb-4">
+                            <label className="text-sm font-bold text-black" htmlFor="provider">Proveedor:</label>
                             <input
-                                className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border'
+                                className="w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border"
                                 type="text"
                                 id="provider"
                                 placeholder="Ej: Jorge Saldarriaga Vignolo"
@@ -212,10 +208,10 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
                                 onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
                             />
                         </div>
-                        <div className="form-group">
-                            <label className='text-sm font-bold text-black' htmlFor="address">Dirección:</label>
+                        <div className="form-group mb-4">
+                            <label className="text-sm font-bold text-black" htmlFor="address">Dirección:</label>
                             <input
-                                className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border'
+                                className="w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border"
                                 type="text"
                                 id="address"
                                 placeholder="Ej: Los amautas"
@@ -223,9 +219,9 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                             />
                         </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label className='text-sm font-bold text-black' htmlFor="phone">Teléfono:</label>
+                        <div className="flex gap-2 mb-4">
+                            <div className="flex-1">
+                                <label className="text-sm font-bold text-black" htmlFor="phone">Teléfono:</label>
                                 <input
                                     className={`w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border ${errors.phone ? 'border-red-500' : ''}`}
                                     type="text"
@@ -235,8 +231,8 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
                                     onChange={handleInputChange}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className='text-sm font-bold text-black' htmlFor="email">Email:</label>
+                            <div className="flex-1">
+                                <label className="text-sm font-bold text-black" htmlFor="email">Email:</label>
                                 <input
                                     className={`w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border ${errors.email ? 'border-red-500' : ''}`}
                                     type="email"
@@ -247,7 +243,7 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
                                 />
                             </div>
                         </div>
-                        <div className='modal-buttons mt-4'>
+                        <div className="flex justify-end gap-2">
                             <ButtonClose onClick={onClose} />
                             <ButtonSave />
                         </div>

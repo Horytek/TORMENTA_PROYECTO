@@ -1,7 +1,6 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RiCloseLargeLine } from "react-icons/ri";
-import { IoMdClose } from "react-icons/io";
-import { IoMdAdd } from "react-icons/io";
+import { IoMdClose, IoMdAdd } from "react-icons/io";
 import ProductosForm from '../../../../Productos/ProductosForm';
 import { toast } from "react-hot-toast";
 
@@ -15,7 +14,6 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
 
   useEffect(() => {
     if (isOpen) {
-      // Establece todos los valores iniciales a '1' cuando se abre el modal
       const initialCantidades = productos.reduce((acc, producto) => {
         acc[producto.codigo] = '1';
         return acc;
@@ -28,14 +26,12 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
     onBuscar();
   }, [searchInputValue, codigoBarrasValue]);
 
-  const handleModalAdd = () => {
-    setModalOpen(!activeAdd);
-  };
+  const handleModalAdd = () => setModalOpen(!activeAdd);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && e.target.value.trim() !== '') {
       setCodigoBarras(e.target.value);
-      onBuscar();  // Lógica que se ejecuta después de escanear
+      onBuscar();
     }
   };
 
@@ -49,7 +45,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
   };
 
   const handleBlur = (codigo) => {
-    if (cantidades[codigo] === '') { // Si está vacío, establece 1
+    if (cantidades[codigo] === '') {
       setCantidades({
         ...cantidades,
         [codigo]: '1',
@@ -67,42 +63,42 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="content-modal max-w-4xl mx-auto" style={{ maxHeight: '90%', overflowY: 'auto' }}>
-        <div className="modal-header">
-          <h2 className="modal-title">Buscar producto</h2>
-          <button className="modal-close" onClick={onClose}>
-            <IoMdClose className='text-3xl' />
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <h2 className="text-xl font-bold">Buscar producto</h2>
+          <button className="text-gray-500 hover:text-red-500" onClick={onClose}>
+            <IoMdClose className="text-3xl" />
           </button>
         </div>
-        <div className="modal-body">
+        <div className="px-6 py-4">
           <div className="flex mb-4">
-            <input 
-              type="text" 
-              placeholder="Buscar producto" 
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow" 
+            <input
+              type="text"
+              placeholder="Buscar producto"
+              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
               value={searchInputValue}
               onChange={(e) => {
                 setSearchInputValue(e.target.value);
-                setSearchInput(e.target.value); // Actualiza el valor del input
+                setSearchInput(e.target.value);
               }}
             />
-              <input
+            <input
               type="text"
               placeholder="Buscar por código de barras"
               className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 ml-2"
               value={codigoBarrasValue}
               onChange={(e) => {
                 setCodigoBarrasValue(e.target.value);
-                setCodigoBarras(e.target.value); // Actualiza el valor del input
+                setCodigoBarras(e.target.value);
               }}
-              onKeyDown={handleKeyDown} 
+              onKeyDown={handleKeyDown}
             />
             <button
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
               onClick={handleModalAdd}
             >
-              <IoMdAdd className='w-4 h-4 mr-1' />
+              <IoMdAdd className="w-4 h-4 mr-1" />
               Nuevo
             </button>
           </div>
@@ -156,12 +152,12 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
             </table>
           </div>
         </div>
-        <div className="modal-buttons flex justify-end mt-4">
-          <button 
+        <div className="flex justify-end px-6 py-4 border-t">
+          <button
             className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center"
             onClick={onClose}
           >
-            <RiCloseLargeLine style={{ fontSize: '20px', marginRight: '8px' }} />
+            <RiCloseLargeLine className="text-lg mr-2" />
             Cerrar
           </button>
         </div>

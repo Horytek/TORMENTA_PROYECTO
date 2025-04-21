@@ -14,9 +14,8 @@ import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIn
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
 import useProductosData from './data/data_buscar_producto';
 import useSinStockProductosData from './data/data_buscar_producto_s';
-import insertNotaAndDetalle from '../data/add_nota'; // Importa la función de inserción
-import './Registro_ingreso.css'; // Asegúrate de importar el mismo archivo de estilos
-import { Toaster, toast } from "react-hot-toast"; // Importa el mismo paquete de validaciones
+import insertNotaAndDetalle from '../data/add_nota';
+import { Toaster, toast } from "react-hot-toast";
 import ConfirmationModal from '../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
 const glosaOptions = [
@@ -36,7 +35,7 @@ function Registro_Ingresos() {
   const [searchInput, setSearchInput] = useState('');
   const [codigoBarras, setCodigoBarras] = useState('');
   const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
-  const [confirmationMessage, setConfirmationMessage] = useState(''); // Nuevo estado para el mensaje de confirmación
+  const [confirmationMessage, setConfirmationMessage] = useState('');
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
     const saved = localStorage.getItem('productosSeleccionados');
     return saved ? JSON.parse(saved) : [];
@@ -46,14 +45,11 @@ function Registro_Ingresos() {
   const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
 
-  // Elimina el uso de localStorage para almacenOrigen
   const [almacenOrigen, setAlmacenOrigen] = useState('');
 
-  // Obtener la sucursal desde el localStorage
   const sucursalSeleccionada = localStorage.getItem('sur');
   const rolUsuario = localStorage.getItem('rol');
 
-  // Filtrar almacenes según la sucursal seleccionada si el rol es diferente de 1
   const almacenesFiltrados =
     rolUsuario !== '1'
       ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
@@ -70,14 +66,8 @@ function Registro_Ingresos() {
   }, [isModalOpen, almacenOrigen]);
 
   const openModalBuscarProducto = async () => {
-    /*if (almacenOrigen === '') {
-      const result = await useSinStockProductosData();
-      setProductos(result.productos);
-      setIsModalOpen(true); 
-    } else {*/
-      await handleBuscarProducto();
-      setIsModalOpen(true); 
-   /* }*/
+    await handleBuscarProducto();
+    setIsModalOpen(true); 
   };
 
   const closeModalBuscarProducto = () => setIsModalOpen(false);
@@ -98,7 +88,7 @@ function Registro_Ingresos() {
 
   const handleConfirmGuardar = async () => {
     closeModalOpenGuardar();
-    await handleGuardarAction(); // Llamar a la función de guardado
+    await handleGuardarAction();
   };
 
   const handleGuardarAction = async () => {
@@ -148,7 +138,7 @@ function Registro_Ingresos() {
       }
     } catch (error) {
       console.error('Error en handleGuardarAction:', error);
-      toast.error`(Error inesperado: ${error.message})`;
+      toast.error(`Error inesperado: ${error.message}`);
     }
   };
 
@@ -182,9 +172,9 @@ function Registro_Ingresos() {
       if (cantidadTotal > producto.stock) {
         const maxCantidad = producto.stock - cantidadExistente;
         if (maxCantidad > 0) {
-          toast.error`(No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Solo puedes agregar ${maxCantidad})`;
+          toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Solo puedes agregar ${maxCantidad}`);
         }
-        toast.error`(No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.)`;
+        toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
         return prevProductos;
       }
 
@@ -208,7 +198,6 @@ function Registro_Ingresos() {
     const fecha = document.getElementById('fechaDocu').value;
     const nota = document.getElementById('nomnota').value;
     const numComprobante = document.getElementById('numero').value;
-
 
     if (!almacenD || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
       toast.error('Por favor complete todos los campos.');
@@ -249,11 +238,11 @@ function Registro_Ingresos() {
       ]} />
       <hr className="mb-4" />
       <div className="flex justify-between mt-5 mb-4">
-        <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
+        <h1 className="text-3xl font-bold">
           Nota de ingreso
         </h1>
       </div>
-      <div className="container-registro-detalle-venta" style={{ backgroundColor: 'lightgray', padding: 20 }}>
+      <div className="bg-gray-200 p-5 rounded-lg">
         <form className="flex rounded-lg">
           <Toaster />
           <div className="flex flex-col w-1/2">
@@ -263,7 +252,7 @@ function Registro_Ingresos() {
                   Almacén origen:
                 </label>
                 <select 
-                  className='form-elementwaentrada'
+                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 w-full'
                   id="almacen_origen"
                   onChange={(e) => setAlmacenOrigen(e.target.value)}  
                   disabled={productosSeleccionados.length > 0}
@@ -283,21 +272,21 @@ function Registro_Ingresos() {
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
                   Almacén destino:
                 </label>
-                <select className="form-elementwaentrada" id="almacen_destino">
-          <option value="">Seleccionar</option>
-          {almacenesFiltrados.map((almacen) => (
-            <option key={almacen.id} value={almacen.id}>
-              {almacen.almacen}
-            </option>
-          ))}
-        </select>
+                <select className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 w-full" id="almacen_destino">
+                  <option value="">Seleccionar</option>
+                  {almacenesFiltrados.map((almacen) => (
+                    <option key={almacen.id} value={almacen.id}>
+                      {almacen.almacen}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
                   Proveedor:
                 </label>
                 <select 
-                  className='form-elementwaentrada'
+                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 w-full'
                   id="destinatario"
                   onChange={(e) => {
                     const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
@@ -315,7 +304,7 @@ function Registro_Ingresos() {
                   RUC:
                 </label>
                 <input 
-                  className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' 
+                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full' 
                   id="ruc" 
                   type="text" 
                   readOnly
@@ -326,19 +315,18 @@ function Registro_Ingresos() {
                   Nombre de nota:
                 </label>
                 <input 
-                  className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3' 
+                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full' 
                   id="nomnota" 
                   type="text" 
                 />
               </div>
-              
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
                   Fecha Docu:
                 </label>
                 <input 
                   type="date" 
-                  className="form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3"
+                  className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full"
                   id="fechaDocu" 
                   defaultValue={formattedDate}
                 />
@@ -370,23 +358,23 @@ function Registro_Ingresos() {
             </div>
           </div>
           <div className="ml-4 flex flex-col w-1/2">
-          <div className="mb-8">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
-                  Número:
-                </label>
-                <input 
-                  className='form-elementwaentrada border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full' 
-                  id="numero" 
-                  type="text" 
-                  value={currentDocumento} 
-                  readOnly
-                />
-              </div>
+            <div className="mb-8">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
+                Número:
+              </label>
+              <input 
+                className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full' 
+                id="numero" 
+                type="text" 
+                value={currentDocumento} 
+                readOnly
+              />
+            </div>
             <div className="mb-8">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
                 Glosa:
               </label>
-              <select className="form-elementwaentrada w-full" id="glosa">
+              <select className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 w-full" id="glosa">
                 {glosaOptions.map(option => (
                   <option key={option} value={option}>{option}</option>
                 ))}
