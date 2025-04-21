@@ -1,16 +1,12 @@
 // Comprobante.jsx
 import React, { useState, useEffect } from 'react';
 import img from '@/assets/icono.ico';
-import './CotizacionPDF.css';
 import QRCode from 'qrcode.react';
 import PropTypes from 'prop-types';
 import NumeroALetras from '../../../../../../utils/ConvertidorDeNumALetras';
 
-// Uso en el componente React
-
 const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
-
-    const { detalles, fecha, total_t, igv, /*totalImporte_venta,*/ descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
+    const { detalles, fecha, total_t, igv, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
     const [currentDate, setCurrentDate] = useState('');
     const [pdfUrl, setPdfUrl] = useState(null);
 
@@ -29,9 +25,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
 
     useEffect(() => {
         const today = new Date();
-
         setCurrentDate(formatHpurs(today));
-
         generatePDF();
     }, []);
 
@@ -39,8 +33,8 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
         <div ref={ref} className="p-5 text-sm leading-6 font-sans w-[800px]">
             <div className="flex justify-between items-center mb-3">
                 <div className='flex'>
-                    <div className="Logo-compro">
-                        <img src={img} alt="Logo-comprobante" />
+                    <div className="w-[120px] h-[120px]">
+                        <img src={img} alt="Logo-comprobante" className="w-full h-full object-contain" />
                     </div>
                     <div className="text-start ml-8">
                         <h1 className="text-xl font-extrabold leading-snug text-blue-800">TORMENTA JEANS</h1>
@@ -50,9 +44,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                         <p className="leading-snug text-gray-600"><span className="font-bold text-gray-800">TELF:</span> 918378590</p>
                         <p className="leading-snug text-gray-600"><span className="font-bold text-gray-800">EMAIL:</span> textiles.creando.moda.sac@gmail.com</p>
                     </div>
-
                 </div>
-
                 <div className="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
                     <h2 className="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC 20610588981</h2>
                     <div className="bg-blue-200">
@@ -61,7 +53,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                 </div>
             </div>
 
-            <div className="container-datos-compro bg-white rounded-lg mb-6 ">
+            <div className="mt-8 bg-white rounded-lg mb-6">
                 <div className="grid grid-cols-2 gap-6 mb-6">
                     <div className="space-y-2">
                         <p className="text-sm font-semibold text-gray-800">
@@ -81,7 +73,6 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                         <p className="text-sm font-semibold text-gray-800">
                             <span className="font-bold text-gray-900">FECHA VCTO:</span> <span className="font-semibold text-gray-600">{fecha}</span>
                         </p>
-
                     </div>
                 </div>
                 <div className="grid grid-cols-3 gap-6">
@@ -140,11 +131,10 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                             SON: <NumeroALetras num={total_t} />
                         </p>
                     </div>
-
                 </div>
 
                 <div className="flex flex-wrap justify-between mb-6">
-                    <div className='flex items-center justify-center bg-gray-100 rounded border' style={{ width: "170px" }}>
+                    <div className='flex items-center justify-center bg-gray-100 rounded border w-[170px]'>
                         {pdfUrl && (
                             <QRCode value={pdfUrl} size={128} />
                         )}
@@ -152,9 +142,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
 
                     <div className="flex-1 mr-6 py-6 pl-6 pr-0">
                         <p className="text-md font-bold text-gray-900 mb-2">ORDEN DE COMPRA:</p>
-
                         <a href="#" className="text-blue-500 hover:underline text-md mb-2 block">Regrese Pronto...!</a>
-
                         <div className="space-y-1">
                             <p className="text-sm text-gray-700">Representación impresa de una COTIZACIÓN</p>
                             <p className="text-sm font-semibold text-gray-900">Generado el: {fecha} {currentDate}</p>
@@ -162,7 +150,6 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                             <p className="text-sm text-gray-700">Un Producto de TORMENTA S.A.C</p>
                         </div>
                     </div>
-
 
                     <div className="flex flex-col items-center bg-gray-100 p-4 rounded border shadow-inner">
                         <div className="w-full mb-4">
@@ -176,12 +163,9 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                             <hr className='border-black' />
                             <p className="text-lg font-bold text-gray-900 mt-2">Total S/ : <span className="text-xl"> {total_t} </span></p>
                         </div>
-
                     </div>
                 </div>
             </div>
-
-
         </div>
     );
 });
@@ -208,8 +192,6 @@ Comprobante.propTypes = {
             descuento: PropTypes.number.isRequired,
             sub_total: PropTypes.number.isRequired,
         })).isRequired,
-
     }).isRequired,
-
 };
 export default Comprobante;

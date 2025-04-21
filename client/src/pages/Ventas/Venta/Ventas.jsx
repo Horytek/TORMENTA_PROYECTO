@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import './Ventas.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 //import Pagination from '@/components/Pagination/Pagination';
 import TablaVentas from './ComponentsVentas/VentasTable';
@@ -9,12 +8,12 @@ import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import useVentasData from '../Data/data_venta';
 import { Toaster } from "react-hot-toast";
 import { handleDelete } from '../Data/delete_venta';
-import {Pagination} from "@nextui-org/pagination";
+import { Pagination } from "@nextui-org/pagination";
 import { Select, SelectItem } from "@nextui-org/react";
-import { anularVentaEnSunatF,anularVentaEnSunatB } from '../Data/anular_sunat';
+import { anularVentaEnSunatF, anularVentaEnSunatB } from '../Data/anular_sunat';
+
 const Ventas = () => {
   // Estado para manejar la lista de ventas
-  
   const [filters, setFilters] = useState({
     comprobanteSeleccionado: '',
     sucursalSeleccionado: '',
@@ -23,8 +22,7 @@ const Ventas = () => {
     razon: ''
   });
 
-
-  const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado, refetchVentas,totalEfectivo,totalPagoElectronico } = useVentasData(filters);
+  const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado, refetchVentas, totalEfectivo, totalPagoElectronico } = useVentasData(filters);
 
   // Estado para el manejo del modal y opciones de eliminación
   const [SelectedRowId, setSelectedRowId] = useState(null);
@@ -32,7 +30,6 @@ const Ventas = () => {
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
-  //const [page, setPage] = useState(1);
 
   const loadDetallesFromLocalStorage = () => {
     const savedDetalles = localStorage.getItem('ventas');
@@ -53,6 +50,7 @@ const Ventas = () => {
   const detalles = loadDetallesFromLocalStorage1();
 
   saveDetallesToLocalStorage();
+
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id, estado) => {
     setSelectedRowId(id);
@@ -81,9 +79,9 @@ const Ventas = () => {
   const handleDeleteVenta = () => {
     SelectedRowId;
     handleDelete(d_ventas);
-    if(d_ventas.tipoComprobante ==='Boleta' && d_ventas.estado_sunat===1){
-      anularVentaEnSunatB(d_ventas,detalles);
-    } else if(d_ventas.tipoComprobante ==='Factura' && d_ventas.estado_sunat===1){
+    if (d_ventas.tipoComprobante === 'Boleta' && d_ventas.estado_sunat === 1) {
+      anularVentaEnSunatB(d_ventas, detalles);
+    } else if (d_ventas.tipoComprobante === 'Factura' && d_ventas.estado_sunat === 1) {
       anularVentaEnSunatF(d_ventas);
     }
     closeModal();
@@ -98,20 +96,10 @@ const Ventas = () => {
     }
   }, [isDeleted, refetchVentas]);
 
-  // Función para cambiar de página en la paginación
-  /*const onPageChange = (page) => {
-    setCurrentPage(page);
-  };*/
-
-  /*const changePage = (newPage) => {
-    setCurrentPage(newPage);
-  };*/
-
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setCurrentPage(1); // Resetear la página actual al cambiar filtros
   }, [setCurrentPage]);
-
 
   return (
     <div>
@@ -122,26 +110,26 @@ const Ventas = () => {
       <hr className="mb-4" />
       {/* Encabezado principal */}
       <div className="flex justify-between mt-5 mb-4">
-        <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
+        <h1 className="text-xl font-bold text-[36px]">
           Ventas
         </h1>
       </div>
 
       <div className='w-full mb-3 rounded-lg'>
-        <table className='w-full text-sm divide-gray-200 rounded-lg table-auto border-collapse'>
+        <table className='w-full text-sm divide-gray-200 rounded-lg table-auto border-collapse shadow-[0_0_10px_#171a1f0e] bg-[#171a1f0e]'>
           <tbody className="bg-gray-50">
             <tr className='text-center'>
-              <td className='border-r-2 border-t-0'> 
-                <strong>Cant. Ventas:</strong> <span>{ventas.length}</span> 
+              <td className='border-r-2 border-t-0 py-2 px-4'>
+                <strong>Cant. Ventas:</strong> <span>{ventas.length}</span>
               </td>
-              <td className='border-l-2 border-r-2 border-t-0'>
-                <strong>Total Efectivo: S/.</strong> <span>{totalEfectivo}</span> 
+              <td className='border-l-2 border-r-2 border-t-0 py-2 px-4'>
+                <strong>Total Efectivo: S/.</strong> <span>{totalEfectivo}</span>
               </td>
-              <td className='border-l-2 border-r-2 border-t-0'>
-                <strong>Total Pago Electr: S/.</strong> <span>{totalPagoElectronico}</span> 
+              <td className='border-l-2 border-r-2 border-t-0 py-2 px-4'>
+                <strong>Total Pago Electr: S/.</strong> <span>{totalPagoElectronico}</span>
               </td>
-              <td className='border-l border-t-0'>
-                <strong>Total General: S/.</strong> {totalRecaudado}<span></span> 
+              <td className='border-l border-t-0 py-2 px-4'>
+                <strong>Total General: S/.</strong> {totalRecaudado}<span></span>
               </td>
             </tr>
           </tbody>
@@ -157,7 +145,7 @@ const Ventas = () => {
         modalOpen={modalOpen}
         deleteOptionSelected={deleteOptionSelected}
         openModal={openModal}
-        currentPage={currentPage} 
+        currentPage={currentPage}
       />
 
       {/* Modal para opciones */}
@@ -180,19 +168,19 @@ const Ventas = () => {
       {/* Contenedor para paginación */}
       <div className="flex justify-between mt-4">
         <div className="flex">
-          <Pagination showControls color="primary" page={currentPage} total={totalPages} onChange={setCurrentPage}/>
+          <Pagination showControls color="primary" page={currentPage} total={totalPages} onChange={setCurrentPage} />
         </div>
         <Select
-  aria-label="Ventas por página"
-  selectedKeys={[String(ventasPerPage)]}
-  onSelectionChange={(keys) => setVentasPerPage(Number(Array.from(keys)[0]))}
-  className="w-28"
->
-  <SelectItem key="5" value={5}>5</SelectItem>
-  <SelectItem key="10" value={10}>10</SelectItem>
-  <SelectItem key="20" value={20}>20</SelectItem>
-  <SelectItem key="100000" value={100000}>Todos</SelectItem>
-</Select>
+          aria-label="Ventas por página"
+          selectedKeys={[String(ventasPerPage)]}
+          onSelectionChange={(keys) => setVentasPerPage(Number(Array.from(keys)[0]))}
+          className="w-28"
+        >
+          <SelectItem key="5" value={5}>5</SelectItem>
+          <SelectItem key="10" value={10}>10</SelectItem>
+          <SelectItem key="20" value={20}>20</SelectItem>
+          <SelectItem key="100000" value={100000}>Todos</SelectItem>
+        </Select>
       </div>
     </div>
   );

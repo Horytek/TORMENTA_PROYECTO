@@ -7,7 +7,6 @@ import useBoucher from '../../Data/data_boucher';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@nextui-org/react";
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
-import './VentasTable.css'; // Asegúrate de importar el archivo CSS
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, currentPage }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -15,7 +14,6 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   useEffect(() => {
-    // Ocultar el Card cuando se cambia de página
     setExpandedRow(null);
   }, [currentPage]);
 
@@ -132,34 +130,34 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
   };
 
   const renderVentaRow = (venta) => (
-    <TableRow key={venta.id} onClick={(e) => handleRowClick(e, venta)} className='tr-tabla-venta'>
-      <TableCell className="font-bold text-center table-cell-small">
+    <TableRow key={venta.id} onClick={(e) => handleRowClick(e, venta)} className='cursor-pointer hover:bg-gray-100 transition-colors'>
+      <TableCell className="font-bold text-center text-[12px] p-1">
         <div>{venta.serieNum}</div>
         <div className="text-gray-500">{venta.num}</div>
       </TableCell>
-      <TableCell className="text-center table-cell-small">
+      <TableCell className="text-center text-[12px] p-1">
         <span className={`px-4 py-2 rounded-full ${getTipoComprobanteClass(venta.tipoComprobante)} text-white`}>
           {venta.tipoComprobante}
         </span>
       </TableCell>
-      <TableCell className="font-bold whitespace-normal table-cell-small">
+      <TableCell className="font-bold whitespace-normal text-[12px] p-1">
         <div className='whitespace-normal'>{venta.cliente}</div>
         <div className="text-gray-500 whitespace-normal">{venta.ruc}</div>
       </TableCell>
-      <TableCell className="text-center table-cell-small">{venta.fechaEmision}</TableCell>
-      <TableCell className="text-center table-cell-small">{venta.igv}</TableCell>
-      <TableCell className="text-center table-cell-small">{venta.total}</TableCell>
-      <TableCell className="font-bold table-cell-small">
+      <TableCell className="text-center text-[12px] p-1">{venta.fechaEmision}</TableCell>
+      <TableCell className="text-center text-[12px] p-1">{venta.igv}</TableCell>
+      <TableCell className="text-center text-[12px] p-1">{venta.total}</TableCell>
+      <TableCell className="font-bold text-[12px] p-1">
         <div className="whitespace-normal">{venta.cajero}</div>
         <div className="text-gray-500 whitespace-normal">{venta.cajeroId}</div>
       </TableCell>
-      <TableCell className="text-center table-cell-small" style={{ color: getEstadoColor(venta.estado), fontWeight: "400" }}>
+      <TableCell className="text-center text-[12px] p-1" style={{ color: getEstadoColor(venta.estado), fontWeight: "400" }}>
         <div className='py-1.5 rounded-full' style={{ background: getEstadoBackground(venta.estado) }}>
           <span>{venta.estado}</span>
         </div>
       </TableCell>
-      <TableCell className="table-cell-small">
-        <div className='flex justify-content-center'>
+      <TableCell className="text-[12px] p-1">
+        <div className='flex justify-center items-center'>
           <Tooltip content="Opciones">
             <IoMdOptions
               className={`ml-2 ml-5 mr-4 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' : 'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
@@ -168,7 +166,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
             />
           </Tooltip>
           <Tooltip content="Imprimir">
-            <TiPrinter className='text-gray-500' onClick={onOpen} style={{ fontSize: '20px' }} />
+            <TiPrinter className='text-gray-500 cursor-pointer' onClick={onOpen} style={{ fontSize: '20px' }} />
           </Tooltip>
           <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
             motionProps={{
@@ -207,29 +205,29 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
   );
 
   const renderVentaDetails = (detalles) => (
-    <Card className="mt-4 w-full shadow-lg rounded-2xl border border-gray-100 bg-white card-animated card-scroll container-table-details">
+    <Card className="mt-4 w-full shadow-[0_0_10px_#171a1f33] bg-[#171a1f09] rounded-[10px] animate-fade-in max-h-[400px] overflow-y-auto">
       <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-2xl p-4">
         <h4 className="text-xl font-semibold text-gray-700">Detalles de la Venta</h4>
       </CardHeader>
       <CardBody className="p-5">
-        <Table aria-label="Detalles de la Venta" className="table-details">
+        <Table aria-label="Detalles de la Venta">
           <TableHeader>
-            <TableColumn className="table-header-small">CÓDIGO</TableColumn>
-            <TableColumn className="table-header-small">NOMBRE</TableColumn>
-            <TableColumn className="table-header-small">CANTIDAD</TableColumn>
-            <TableColumn className="table-header-small">PRECIO</TableColumn>
-            <TableColumn className="table-header-small">DESCUENTO</TableColumn>
-            <TableColumn className="table-header-small">SUBTOTAL</TableColumn>
+            <TableColumn className="text-[12px]">CÓDIGO</TableColumn>
+            <TableColumn className="text-[12px]">NOMBRE</TableColumn>
+            <TableColumn className="text-[12px]">CANTIDAD</TableColumn>
+            <TableColumn className="text-[12px]">PRECIO</TableColumn>
+            <TableColumn className="text-[12px]">DESCUENTO</TableColumn>
+            <TableColumn className="text-[12px]">SUBTOTAL</TableColumn>
           </TableHeader>
           <TableBody>
             {detalles.map((detalle, index) => (
               <TableRow key={index}>
-                <TableCell className="table-cell-small">{detalle.codigo}</TableCell>
-                <TableCell className="table-cell-small">{detalle.nombre}</TableCell>
-                <TableCell className="table-cell-small">{detalle.cantidad}</TableCell>
-                <TableCell className="table-cell-small">{detalle.precio}</TableCell>
-                <TableCell className="table-cell-small">{detalle.descuento}</TableCell>
-                <TableCell className="table-cell-small">{detalle.subtotal}</TableCell>
+                <TableCell className="text-[10px] p-1">{detalle.codigo}</TableCell>
+                <TableCell className="text-[10px] p-1">{detalle.nombre}</TableCell>
+                <TableCell className="text-[10px] p-1">{detalle.cantidad}</TableCell>
+                <TableCell className="text-[10px] p-1">{detalle.precio}</TableCell>
+                <TableCell className="text-[10px] p-1">{detalle.descuento}</TableCell>
+                <TableCell className="text-[10px] p-1">{detalle.subtotal}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -266,18 +264,18 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
 
   return (
     <div className="flex flex-col lg:flex-row">
-      <div className={`container-table-venta px-4 bg-white rounded-lg shadow-md transition-all duration-500 ${expandedRow !== null ? 'lg:w-3/4' : 'w-full'}`}>
+      <div className={`px-4 bg-white rounded-lg shadow-md transition-all duration-500 ${expandedRow !== null ? 'lg:w-3/4' : 'w-full'} animate-[shrinkExpand_0.5s_ease-in-out]`}>
         <Table aria-label="Tabla de Ventas">
           <TableHeader>
-            <TableColumn className="text-center table-header-small">SERIE/NUM</TableColumn>
-            <TableColumn className="text-center table-header-small">TIPO.COMP</TableColumn>
-            <TableColumn className="table-header-small">CLIENTE</TableColumn>
-            <TableColumn className="text-center table-header-small">F. EMISIÓN</TableColumn>
-            <TableColumn className="text-center table-header-small">IGV</TableColumn>
-            <TableColumn className="text-center table-header-small">TOTAL</TableColumn>
-            <TableColumn className="table-header-small">CAJERO</TableColumn>
-            <TableColumn className="text-center table-header-small">ESTADO</TableColumn>
-            <TableColumn className="table-header-small"></TableColumn>
+            <TableColumn className="text-center text-[12px]">SERIE/NUM</TableColumn>
+            <TableColumn className="text-center text-[12px]">TIPO.COMP</TableColumn>
+            <TableColumn className="text-[12px]">CLIENTE</TableColumn>
+            <TableColumn className="text-center text-[12px]">F. EMISIÓN</TableColumn>
+            <TableColumn className="text-center text-[12px]">IGV</TableColumn>
+            <TableColumn className="text-center text-[12px]">TOTAL</TableColumn>
+            <TableColumn className="text-[12px]">CAJERO</TableColumn>
+            <TableColumn className="text-center text-[12px]">ESTADO</TableColumn>
+            <TableColumn className="text-[12px]"></TableColumn>
           </TableHeader>
           <TableBody>
             {ventas.map(renderVentaRow)}
@@ -285,7 +283,7 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
         </Table>
       </div>
       {expandedRow !== null && (
-        <div className="w-full lg:w-full lg:ml-4 mt-4 lg:mt-0 container-table-details">
+        <div className="w-full lg:w-full lg:ml-4 mt-4 lg:mt-0">
           {renderVentaDetails(ventas.find(venta => venta.id === expandedRow).detalles)}
         </div>
       )}
