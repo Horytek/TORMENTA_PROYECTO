@@ -45,6 +45,7 @@ const EmpresasSunat = () => {
     codigoPostal: "",
     telefono: "",
     email: "",
+    logotipo: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -121,6 +122,7 @@ const EmpresasSunat = () => {
       codigoPostal: "",
       telefono: "",
       email: "",
+      logotipo: "",
     });
     setEditingId(null);
   };
@@ -172,6 +174,7 @@ const EmpresasSunat = () => {
               <TableColumn>Código Postal</TableColumn>
               <TableColumn>Teléfono</TableColumn>
               <TableColumn>Email</TableColumn>
+              <TableColumn>Logotipo</TableColumn>
               <TableColumn>Acciones</TableColumn>
             </TableHeader>
             <TableBody>
@@ -187,6 +190,17 @@ const EmpresasSunat = () => {
                   <TableCell>{empresa.codigoPostal}</TableCell>
                   <TableCell>{empresa.telefono}</TableCell>
                   <TableCell>{empresa.email}</TableCell>
+                  <TableCell>
+        {empresa.logotipo ? (
+          <img
+            src={empresa.logotipo}
+            alt="Logotipo"
+            className="w-16 h-16 object-contain rounded-md"
+          />
+        ) : (
+          <span className="text-gray-500 italic">Sin logotipo</span>
+        )}
+      </TableCell>
                   <TableCell>
                     <Dropdown>
                       <DropdownTrigger>
@@ -246,6 +260,7 @@ const EmpresasSunat = () => {
                   { label: "Código Postal", key: "codigoPostal" },
                   { label: "Teléfono", key: "telefono" },
                   { label: "Email", key: "email" },
+                  { label: "Logotipo", key: "logotipo" },
                 ].map(({ label, key }) => (
                   <Input
                     key={key}

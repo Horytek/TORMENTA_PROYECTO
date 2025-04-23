@@ -6,10 +6,8 @@ export const getClavesRequest = async () =>
 export const getClaveRequest = async (id) =>
   await axios.get(`/clave/${id}`);
 
-export const getClaveByEmpresaAndTipoRequest = async (id_empresa, tipo) =>
-  await axios.get(`/clave/empresa-tipo`, {
-    params: { id_empresa, tipo },
-  });
+export const getClaveByEmpresaAndTipoRequest = async (id) =>
+  await axios.get(`/valor/${id}`);
 
 export const addClaveRequest = async (producto) =>
   await axios.post("/clave", producto);

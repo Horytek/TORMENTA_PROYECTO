@@ -35,11 +35,11 @@ const getEmpresa = async (req, res) => {
 const addEmpresa = async (req, res) => {
     let connection;
     try {
-        const { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email } = req.body;
+        const { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email, logotipo } = req.body;
 
         if (!ruc) return res.status(400).json({ message: "El campo RUC es obligatorio." });
 
-        const empresa = { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email };
+        const empresa = { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email, logotipo };
         connection = await getConnection();
         await connection.query("INSERT INTO empresa SET ?", empresa);
 
@@ -55,9 +55,9 @@ const updateEmpresa = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email } = req.body;
+        const { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email, logotipo } = req.body;
 
-        const empresa = { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email };
+        const empresa = { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email, logotipo };
         connection = await getConnection();
         const [result] = await connection.query("UPDATE empresa SET ? WHERE id_empresa = ?", [empresa, id]);
 

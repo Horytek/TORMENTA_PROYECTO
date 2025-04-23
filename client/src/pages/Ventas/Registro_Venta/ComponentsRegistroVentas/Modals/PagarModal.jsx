@@ -30,6 +30,7 @@ import {toast} from "react-hot-toast";
 import useSucursalData from '../../../Data/data_sucursal_venta';
 import QRCode from 'qrcode';
 import { useLastData } from '../../../Data/getLastVenta';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
 /*import { handleSunatMultiple } from "../../../Data/add_sunat_multiple";
 import {  handleUpdate } from '../../../Data/update_venta';*/
 
@@ -377,8 +378,11 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         // Verifica si las opciones de tamaño están en el formato correcto
         const imgOptions = { width: 50, height: 50 };
         const qrOptions = { width: 300, height: 300 };
+
+        const empresaData = await getEmpresaDataByUser();
+        const logotipo = empresaData.logotipo; // Obtener el logotipo de la empresa
     
-        conector.img_url("https://i.ibb.co/k2hnMfCc/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg", imgOptions);
+        conector.img_url(logotipo , imgOptions);
         content.split('\n').forEach(line => {
             conector.text(line);
         });

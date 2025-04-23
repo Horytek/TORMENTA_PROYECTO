@@ -1,6 +1,6 @@
-import { getClavesRequest, getClaveRequest, addClaveRequest, updateClaveRequest, deleteClaveRequest } 
+import { getClavesRequest, getClaveRequest, getClaveByEmpresaAndTipoRequest, addClaveRequest, updateClaveRequest, deleteClaveRequest } 
 from '@/api/api.clave';
-import { getUsuario } from "@/services/usuario.services";
+import { getUsuario_1 } from "@/services/usuario.services";
 import { toast } from "react-hot-toast";
 
 const getClaves = async () => {
@@ -19,6 +19,19 @@ const getClaves = async () => {
 const getClave = async (id) => {
   try {
     const response = await getClaveRequest(id);
+    if (response.data.code === 1) {
+      return response.data.data;
+    } else {
+      console.error('Error en la solicitud: ', response.data.message);
+    }
+  } catch (error) {
+    console.error('Error en la solicitud: ', error.message);
+  }
+};
+
+const getClaveByEmpresaAndTipo = async (id) => {
+  try {
+    const response = await getClaveByEmpresaAndTipoRequest(id);
     if (response.data.code === 1) {
       return response.data.data;
     } else {
@@ -78,31 +91,46 @@ const deleteClave = async (id) => {
 
 const getClaveSunatByUser = async () => {
   try {
-      // Obtener el nombre del usuario desde localStorage
-      const usuario = localStorage.getItem("usuario");
-      if (!usuario) {
-          throw new Error("No se encontró el usuario en localStorage.");
-      }
+    const usuario = localStorage.getItem("usuario");
+    //console.log("👤 Usuario desde localStorage:", usuario);
 
-      // Obtener los datos del usuario desde la API
-      const usuarioData = await getUsuario(usuario);
-      if (!usuarioData || !usuarioData.id_empresa) {
-          throw new Error("No se encontró el id_empresa para el usuario actual.");
-      }
+    if (!usuario) {
+      throw new Error("No se encontró el usuario en localStorage.");
+    }
 
-      const id_empresa = usuarioData.id_empresa;
+    const usuarioDataArray = await getUsuario_1(usuario);
+    //console.log("📦 Respuesta de getUsuario_1:", usuarioDataArray);
 
-      // Obtener la clave relacionada con el tipo "Sunat"
-      const claveData = await getClave({ id_empresa, tipo: "Sunat" });
-      if (!claveData) {
-          throw new Error("No se encontró la clave para el tipo 'Sunat'.");
-      }
+    if (!Array.isArray(usuarioDataArray) || usuarioDataArray.length === 0) {
+      throw new Error("No se encontraron datos para el usuario actual.");
+    }
 
-      return claveData.valor; // Retornar solo el valor de la clave
+    const usuarioData = usuarioDataArray[0];
+    //console.log("✅ Usuario obtenido clave:", usuarioData);
+
+    if (!usuarioData.id_empresa) {
+      throw new Error("No se encontró el id_empresa para el usuario actual.");
+    }
+
+    const id_empresa = usuarioData.id_empresa;
+    //console.log("🏢 ID de la empresa para la clave:", id_empresa);
+
+    const claveData = await getClaveByEmpresaAndTipo(id_empresa);
+    //console.log("🔐 Datos de la clave desde la API:", claveData);
+
+    if (!claveData || !claveData.valor) {
+      throw new Error("No se encontró la clave para el tipo 'Sunat'.");
+    }
+
+    const claveDesencriptada = claveData.valor;
+    //console.log("🔑 Token desencriptado:", claveDesencriptada);
+
+    return claveDesencriptada;
   } catch (error) {
-      console.error("Error al obtener la clave de Sunat:", error.message);
-      throw error;
+    console.error("Error al obtener la clave de Sunat:", error.message);
+    throw error;
   }
 };
+
 
 export { getClaves, getClave, addClave, updateClave, deleteClave, getClaveSunatByUser };

@@ -126,32 +126,29 @@ const deleteClave = async (req, res) => {
 const getClaveByEmpresaAndTipo = async (req, res) => {
   let connection;
   try {
-      const { id_empresa, tipo } = req.query;
+    const { id } = req.params;
+    connection = await getConnection();
+    const [result] = await connection.query(`
+        SELECT CL.*, EM.razonSocial 
+        FROM clave CL
+        INNER JOIN empresa EM ON CL.id_empresa = EM.id_empresa
+        WHERE CL.id_empresa = ? AND CL.tipo = 'Sunat'
+      `, id);
 
-      if (!id_empresa || !tipo) {
-          return res.status(400).json({ message: "Los parámetros id_empresa y tipo son obligatorios." });
-      }
+    if (result.length === 0) {
+      return res.status(404).json({ code: 0, message: "Clave no encontrada" });
+    }
 
-      connection = await getConnection();
-      const [result] = await connection.query(
-          "SELECT * FROM clave WHERE id_empresa = ? AND tipo = ?",
-          [id_empresa, tipo]
-      );
+    const clave = {
+      ...result[0],
+      valor: decrypt(result[0].valor), // 👈 desencriptar
+    };
 
-      if (result.length === 0) {
-          return res.status(404).json({ message: "Clave no encontrada." });
-      }
-
-      const clave = {
-          ...result[0],
-          valor: decrypt(result[0].valor), // Desencriptar la clave antes de enviarla
-      };
-
-      res.json({ code: 1, data: clave, message: "Clave encontrada." });
+    res.json({ code: 1, data: clave, message: "Clave encontrada" });
   } catch (error) {
-      res.status(500).send({ error: error.message });
+    res.status(500).send({ error: error.message });
   } finally {
-      if (connection) connection.release();
+    if (connection) connection.release();
   }
 };
 
