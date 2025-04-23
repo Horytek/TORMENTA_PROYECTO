@@ -56,46 +56,42 @@ const handleCheckboxChange = (option) => {
 
 const handleAccept = () => {
   if (sendToSunat) {
-    if (sendToSunat && d_venta.tipoComprobante === 'Nota'){
+    if (sendToSunat && d_venta.tipoComprobante === 'Nota') {
       toast.error('Error, no se puede usar esta opción');
-    } else{
+    } else {
       closeModal();
       handleSunat(datos_precio, detalles, detalles);
       handleUpdate(d_venta);
-      setTimeout(() => {
-        setIsDeleted(true);
-      }, 3000);
+      setIsDeleted(true); // Actualizamos el estado directamente
     }
   } else if (deleteOptionSelected) {
     handleDeleteVenta();
     setConfirmDeleteModalOpen(true);
-    setTimeout(() => {
-      setIsDeleted1(true);
-    }, 1000);
+    setIsDeleted1(true); // Actualizamos el estado directamente
   } else if (generatePdfSelected) {
-    if (generatePdfSelected && d_venta.tipoComprobante === 'Nota'){
+    if (generatePdfSelected && d_venta.tipoComprobante === 'Nota') {
       toast.error('Error, no se puede usar esta opción');
     } else {
-      handleSunatPDF(d_venta,detalles);
+      handleSunatPDF(d_venta, detalles);
     }
   }
 };
 
-  useEffect(() => {
-    if (isDeleted) {
-      refetchVentas();
-      setIsDeleted(false);
-    }
+useEffect(() => {
+  if (isDeleted) {
+    refetchVentas(); // Refrescamos las ventas
+    setIsDeleted(false); // Reseteamos el estado
+  }
 
-    if (isDeleted1) {
-      refetchVentas();
-      setIsDeleted1(false);
-    }
-  }, [isDeleted,isDeleted1, refetchVentas]);
+  if (isDeleted1) {
+    refetchVentas(); // Refrescamos las ventas
+    setIsDeleted1(false); // Reseteamos el estado
+  }
+}, [isDeleted, isDeleted1, refetchVentas]);
 
   const handleDeleteVenta = () => {
     // Agrega aquí la lógica para eliminar la venta
-    console.log('Eliminando la venta...');
+    //console.log('Eliminando la venta...');
   };
 
   if (!modalOpen) return null;

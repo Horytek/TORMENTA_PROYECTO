@@ -98,7 +98,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const handleAccept = () => {
     const d_ventas = loadDetallesFromLocalStorage();
     const ventas_new = d_ventas.filter(
-      (venta) => venta.estado === "En proceso" && venta.tipoComprobante != "Nota"
+      (venta) => venta.estado === "En proceso" && venta.tipoComprobante !== "Nota"
     );
     localStorage.setItem("d_new", JSON.stringify(ventas_new));
 
@@ -116,18 +116,16 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     handleSunatMultiple(ventas_new);
     handleUpdateMultiple(ventas_new);
 
-    setTimeout(() => {
-      setIsDeleted(true);
-      toast.dismiss(loadingToastId);
-      toast.success("Los datos se han enviado con éxito!");
-    }, 3000);
+    // Actualizamos el estado para que React maneje los cambios
+    setIsDeleted(true);
+    toast.dismiss(loadingToastId);
+    toast.success("Los datos se han enviado con éxito!");
   };
-
 
   useEffect(() => {
     if (isDeleted) {
-      refetchVentas();
-      setIsDeleted(false);
+      refetchVentas(); // Refrescamos las ventas
+      setIsDeleted(false); // Reseteamos el estado
     }
   }, [isDeleted, refetchVentas]);
 

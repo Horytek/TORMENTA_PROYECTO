@@ -6,6 +6,9 @@ export const getUsuariosRequest = async () =>
 export const getUsuarioRequest = async (id) =>
   await axios.get(`/usuario/${id}`);
 
+export const getUsuarioRequest_1 = async (id) =>
+  await axios.get(`/logotipo/${id}`);
+
 export const addUsuarioRequest = async (user) =>
   await axios.post("/usuario", user);
 

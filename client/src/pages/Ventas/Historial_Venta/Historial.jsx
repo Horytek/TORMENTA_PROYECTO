@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import './Historial.css';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 //import Pagination from '@/components/Pagination/Pagination';
 import TablaVentas from './ComponentsVentas/HistorialTable';

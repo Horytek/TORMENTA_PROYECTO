@@ -31,6 +31,8 @@ import submodulosRoutes from "./routes/submodulos.routes.js";
 import rutasRoutes from "./routes/rutas.routes.js";
 import empresaRoutes from "./routes/empresa.routes";
 import claveRoutes from "./routes/clave.routes";
+import logotipoRoutes from "./routes/logotipo.routes.js";
+import valorRoutes from "./routes/valor.routes.js";
 
 const app = express();
 
@@ -88,5 +90,7 @@ app.use("/api/permisos", permisosRoutes);
 app.use("/api/rutas", rutasRoutes);
 app.use("/api/empresa", empresaRoutes);
 app.use("/api/clave", claveRoutes);
+app.use("/api/logotipo", logotipoRoutes);
+app.use("/api/valor", valorRoutes);
 
 export default app;

@@ -1,4 +1,4 @@
-import { getUsuariosRequest, getUsuarioRequest, addUsuarioRequest, updateUsuarioRequest,updateUsuarioPlanRequest, deleteUsuarioRequest } 
+import { getUsuariosRequest, getUsuarioRequest, getUsuarioRequest_1, addUsuarioRequest, updateUsuarioRequest,updateUsuarioPlanRequest, deleteUsuarioRequest } 
 from '@/api/api.usuario';
 import { toast } from "react-hot-toast";
 import { transformData } from '@/utils/usuario';
@@ -21,6 +21,20 @@ const getUsuario = async (id) => {
     const response = await getUsuarioRequest(id);
     if (response.data.code === 1) {
       return response.data.data;
+    } else {
+      console.error('Error en la solicitud: ', response.data.message);
+    }
+  } catch (error) {
+    console.error('Error en la solicitud: ', error.message);
+  }
+};
+
+const getUsuario_1 = async (id) => {
+  try {
+    const response = await getUsuarioRequest_1(id);
+    console.log("Respuesta completa de la API:", response.data); // Depuración
+    if (response.data.code === 1) {
+      return response.data.data; // Esto debería ser un array
     } else {
       console.error('Error en la solicitud: ', response.data.message);
     }
@@ -92,4 +106,4 @@ const deleteUsuario = async (id) => {
   }
 };
 
-export { getUsuarios, getUsuario, addUsuario, updateUsuario, deleteUsuario, updateUsuarioPlan };
+export { getUsuarios, getUsuario, addUsuario, updateUsuario, deleteUsuario, updateUsuarioPlan, getUsuario_1 };

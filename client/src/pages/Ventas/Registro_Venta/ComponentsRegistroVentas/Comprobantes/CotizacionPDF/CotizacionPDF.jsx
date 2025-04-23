@@ -4,18 +4,22 @@ import img from '@/assets/icono.ico';
 import QRCode from 'qrcode.react';
 import PropTypes from 'prop-types';
 import NumeroALetras from '../../../../../../utils/ConvertidorDeNumALetras';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
 
 const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     const { detalles, fecha, total_t, igv, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
     const [currentDate, setCurrentDate] = useState('');
     const [pdfUrl, setPdfUrl] = useState(null);
+    const [empresaData, setEmpresaData] = useState(null); // Estado para almacenar los datos de la empresa
 
     const generatePDF = async () => {
         const publicPdfUrl = "https://www.facebook.com/profile.php?id=100055385846115";
         setPdfUrl(publicPdfUrl);
     };
 
-    const formatHpurs = () => {
+    const sur = localStorage.getItem('sur');
+
+    const formatHours = () => {
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -24,9 +28,19 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     };
 
     useEffect(() => {
+        const fetchEmpresaData = async () => {
+            try {
+                const data = await getEmpresaDataByUser();
+                setEmpresaData(data); // Establecer los datos de la empresa en el estado
+            } catch (error) {
+                console.error("Error al obtener los datos de la empresa:", error);
+            }
+        };
+
         const today = new Date();
-        setCurrentDate(formatHpurs(today));
+        setCurrentDate(formatHours(today));
         generatePDF();
+        fetchEmpresaData(); // Llamar a la función para obtener los datos de la empresa
     }, []);
 
     return (
@@ -34,15 +48,24 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
             <div className="flex justify-between items-center mb-3">
                 <div className='flex'>
                     <div className="w-[120px] h-[120px]">
-                        <img src={img} alt="Logo-comprobante" className="w-full h-full object-contain" />
+                        <img src={empresaData?.logotipo} alt="Logo-comprobante" className="w-full h-full object-contain" />
                     </div>
                     <div className="text-start ml-8">
-                        <h1 className="text-xl font-extrabold leading-snug text-blue-800">TORMENTA JEANS</h1>
-                        <p className="font-semibold leading-snug text-gray-700">TEXTILES CREANDO MODA S.A.C.</p>
-                        <p className="leading-snug text-gray-600"><span className="font-bold text-gray-800">Central:</span> Cal San Martin 1573 Urb Urrunaga SC Tres</p>
-                        <p className="leading-snug text-gray-600">Chiclayo - Chiclayo - Lambayeque</p>
-                        <p className="leading-snug text-gray-600"><span className="font-bold text-gray-800">TELF:</span> 918378590</p>
-                        <p className="leading-snug text-gray-600"><span className="font-bold text-gray-800">EMAIL:</span> textiles.creando.moda.sac@gmail.com</p>
+                        {/* Mostrar los datos de la empresa */}
+                        <h1 className="text-xl font-extrabold leading-snug text-blue-800">{empresaData?.nombreComercial || "Nombre Comercial"}</h1>
+                        <p className="font-semibold leading-snug text-gray-700">{empresaData?.razonSocial || "Razón Social"}</p>
+                        <p className="leading-snug text-gray-600">
+                            <span className="font-bold text-gray-800">Dirección:</span> {empresaData?.direccion || "Dirección no disponible"}
+                        </p>
+                        <p className="leading-snug text-gray-600">
+                            {empresaData?.distrito}, {empresaData?.provincia}, {empresaData?.departamento}
+                        </p>
+                        <p className="leading-snug text-gray-600">
+                            <span className="font-bold text-gray-800">TELF:</span> {empresaData?.telefono || "Teléfono no disponible"}
+                        </p>
+                        <p className="leading-snug text-gray-600">
+                            <span className="font-bold text-gray-800">EMAIL:</span> {empresaData?.email || "Email no disponible"}
+                        </p>
                     </div>
                 </div>
                 <div className="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
@@ -57,13 +80,13 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                 <div className="grid grid-cols-2 gap-6 mb-6">
                     <div className="space-y-2">
                         <p className="text-sm font-semibold text-gray-800">
-                            <span className="font-bold text-gray-900">NRO. DOCU.:</span> <span className="font-semibold text-gray-600"> {documento_cliente} </span>
+                            <span className="font-bold text-gray-900">NRO. DOCU.:</span> <span className="font-semibold text-gray-600"> --- </span>
                         </p>
                         <p className="text-sm font-semibold text-gray-800">
-                            <span className="font-bold text-gray-900">CLIENTE:</span> <span className="font-semibold text-gray-600"> {nombre_cliente} </span>
+                            <span className="font-bold text-gray-900">CLIENTE:</span> <span className="font-semibold text-gray-600"> Cliente Varios </span>
                         </p>
                         <p className="text-sm font-semibold text-gray-800">
-                            <span className="font-bold text-gray-900">DIRECCIÓN:</span><span className="font-semibold text-gray-600"> {direccion_cliente} </span>
+                            <span className="font-bold text-gray-900">DIRECCIÓN:</span><span className="font-semibold text-gray-600"> --- </span>
                         </p>
                     </div>
                     <div className="space-y-2 text-right">
@@ -78,7 +101,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                 <div className="grid grid-cols-3 gap-6">
                     <div className="space-y-2">
                         <p className="text-sm font-semibold text-gray-800">
-                            <span className="font-bold text-gray-900">SUCURSAL:</span> <span className="font-semibold text-gray-600">CENTRAL 22</span>
+                            <span className="font-bold text-gray-900">SUCURSAL:</span> <span className="font-semibold text-gray-600">{sur}</span>
                         </p>
                     </div>
                     <div className="space-y-2 text-right">
@@ -146,8 +169,8 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                         <div className="space-y-1">
                             <p className="text-sm text-gray-700">Representación impresa de una COTIZACIÓN</p>
                             <p className="text-sm font-semibold text-gray-900">Generado el: {fecha} {currentDate}</p>
-                            <p className="text-sm text-gray-700">Generado desde el Sistema de Tormenta S.A.C</p>
-                            <p className="text-sm text-gray-700">Un Producto de TORMENTA S.A.C</p>
+                            <p className="text-sm text-gray-700">Generado desde el Sistema de Horytek</p>
+                            <p className="text-sm text-gray-700">Un Producto de {empresaData?.razonSocial}</p>
                         </div>
                     </div>
 
