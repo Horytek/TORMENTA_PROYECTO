@@ -56,7 +56,7 @@ const ReporteVentas = () => {
                 userSelect: "none",
               }}
             >
-              Reporte de sucursales Tormenta
+              Reporte de ventas en sucursales
             </h3>
           </div>
         </div>

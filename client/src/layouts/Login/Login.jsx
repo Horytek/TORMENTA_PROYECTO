@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaRegBuilding , FaEyeSlash } from "react-icons/fa";
 
 import {
   Card,
@@ -89,8 +89,8 @@ function Login() {
       <div className={`flex items-center justify-center w-full md:w-1/2 p-6 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-800">HORYTEK NEGOCIOS</h1>
-            <p className="text-gray-600 mt-2">Acceda a su cuenta para continuar</p>
+            <h1 className="text-3xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-500 to-cyan-400 transform-gpu">HORYTEK NEGOCIOS</h1>
+
           </div>
 
           <Card
@@ -99,15 +99,14 @@ function Login() {
               boxShadow: '0 10px 20px hsl(0,0%,.15), 20 15px 10px hsl(0,0%,.10)',
             }}
           >
-            <CardHeader className="flex flex-col items-center space-y-1">
-              <div className="p-2 bg-primary-100 rounded-full">
-                <div className="h-8 w-8 text-primary flex items-center justify-center">
-                  <FaEye className="h-5 w-5" />
-                </div>
-              </div>
-              <h2 className="text-2xl font-semibold text-center">Iniciar Sesión</h2>
-              <p className="text-center text-gray-500 text-sm">
-                Ingrese sus credenciales
+            <CardHeader className="flex flex-col items-center space-y-1 mt-2 mb-2 ">
+            
+              <h2 className="text-2xl font-semibold text-center">Iniciar sesión</h2>
+              <p
+                className="text-small text-default-400"
+                style={{ fontSize: "14px", userSelect: "none", marginTop: "2px" }}
+              >
+                Ingrese sus credenciales para continuar
               </p>
             </CardHeader>
 
@@ -121,7 +120,7 @@ function Login() {
                   <Input
                     id="usuario"
                     type="text"
-                    placeholder="usuario"
+                    placeholder="Ingrese su usuario"
                     value={usuario}
                     onChange={(e) => setUsuario(e.target.value)}
                     className="w-full border border-gray-300 rounded-md"
