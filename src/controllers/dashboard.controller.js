@@ -1,6 +1,7 @@
 import { getConnection } from "./../database/database";
 import { subDays, subWeeks, subMonths, subYears, format } from "date-fns";
 
+
 // Función auxiliar para obtener el id_sucursal usando el nombre de usuario
 const getSucursalIdForUser = async (usuario, connection) => {
   const [result] = await connection.query(
@@ -17,6 +18,39 @@ const getSucursalIdForUser = async (usuario, connection) => {
   return result[0].id_sucursal;
 };
 
+
+const getSucursalInicio = async (req, res) => {
+  let connection;
+  const { nombre = '' } = req.query; 
+
+  try {
+      connection = await getConnection();
+      if (!connection) throw new Error("Error en la conexión con la base de datos.");
+
+      // Consulta SQL para obtener solo el nombre de las sucursales
+      const query = `
+          SELECT 
+              s.id_sucursal AS id,
+              s.nombre_sucursal AS nombre
+          FROM sucursal s
+          WHERE s.nombre_sucursal LIKE ?
+      `;
+
+      const params = [`%${nombre}%`];
+
+      const [result] = await connection.query(query, params);
+
+      // Enviar la respuesta con los resultados
+      res.json({ code: 1, data: result, message: "Sucursales listadas" });
+
+  } catch (error) {
+      console.error("Error al obtener sucursales:", error);
+      res.status(500).json({ code: 0, message: error.message });
+  } finally {
+      if (connection) connection.release(); 
+  }
+};
+
 // Función auxiliar para obtener el rol del usuario si no se envía en la petición
 const getUsuarioRol = async (usuario, connection) => {
   const [result] = await connection.query(
@@ -30,6 +64,37 @@ const getUsuarioRol = async (usuario, connection) => {
     throw new Error("No se encontró rol para el usuario");
   }
   return result[0].nom_rol;
+};
+
+const getUserRolController = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const { usuario } = req.query;
+    
+    if (!usuario) {
+      return res.status(400).json({ message: "Falta el parámetro usuario" });
+    }
+    
+    // Consulta para obtener el id_rol
+    const [rolResult] = await connection.query(
+      `SELECT u.id_rol as rol_id 
+       FROM usuario u 
+       WHERE u.usua = ?`,
+      [usuario]
+    );
+    
+    if (rolResult.length === 0) {
+      return res.status(404).json({ message: "No se encontró el usuario" });
+    }
+    
+    res.json({ code: 1, rol_id: rolResult[0].rol_id, message: "Rol obtenido correctamente" });
+  } catch (error) {
+    console.error("Error al obtener rol de usuario:", error);
+    res.status(500).json({ message: error.message });
+  } finally {
+    if (connection) connection.release();
+  }
 };
 
 const getProductoMasVendido = async (req, res) => {
@@ -343,6 +408,9 @@ const getComparacionVentasPorRango = async (req, res) => {
 export const methods = {
   getProductoMasVendido,
   getTotalVentas,
+  getSucursalInicio,
   getTotalProductosVendidos,
-  getComparacionVentasPorRango
+  getComparacionVentasPorRango,
+  getUsuarioRol,
+  getUserRolController,
 };

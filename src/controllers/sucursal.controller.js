@@ -1,5 +1,39 @@
 import { getConnection } from "../database/database";
 
+
+
+const getSucursalInicio = async (req, res) => {
+    let connection;
+    const { nombre = '' } = req.query; 
+
+    try {
+        connection = await getConnection();
+        if (!connection) throw new Error("Error en la conexión con la base de datos.");
+
+        // Consulta SQL para obtener solo el nombre de las sucursales
+        const query = `
+            SELECT 
+                s.id_sucursal AS id,
+                s.nombre_sucursal AS nombre
+            FROM sucursal s
+            WHERE s.nombre_sucursal LIKE ?
+        `;
+
+        const params = [`%${nombre}%`];
+
+        const [result] = await connection.query(query, params);
+
+        // Enviar la respuesta con los resultados
+        res.json({ code: 1, data: result, message: "Sucursales listadas" });
+
+    } catch (error) {
+        console.error("Error al obtener sucursales:", error);
+        res.status(500).json({ code: 0, message: error.message });
+    } finally {
+        if (connection) connection.release(); 
+    }
+};
+
 const getSucursales = async (req, res) => {
     let connection;
     const { nombre = '', estado = '%' } = req.query;
@@ -154,6 +188,7 @@ const getVendedores = async (req, res) => {
     }
 };
 export const methods = {
+    getSucursalInicio,
     getSucursales,
     getVendedores,
     insertSucursal,

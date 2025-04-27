@@ -3,10 +3,12 @@ import { methods as dashboardController } from "./../controllers/dashboard.contr
 
 const router = Router();
 
+router.get("/sucursales", dashboardController.getSucursalInicio);
 router.get("/product_top", dashboardController.getProductoMasVendido);
 router.get("/product_sell", dashboardController.getTotalProductosVendidos);
 router.get("/ventas_total", dashboardController.getTotalVentas);
 router.get("/comparacion_ventas", dashboardController.getComparacionVentasPorRango);
+router.get("/usuarioRol", dashboardController.getUserRolController);
 
 
 export default router;

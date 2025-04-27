@@ -3,6 +3,7 @@ import { methods as sucursalController } from "./../controllers/sucursal.control
 
 const router = Router();
 
+router.get("/inicio", sucursalController.getSucursalInicio);
 router.get("/", sucursalController.getSucursales);
 router.get("/vendedores", sucursalController.getVendedores);
 router.post("/addsucursal", sucursalController.insertSucursal);

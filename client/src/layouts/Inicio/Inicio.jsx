@@ -9,6 +9,8 @@ import useProductTop from "./hooks/product_top";
 import useProductSell from "./hooks/product_sell";
 import useVentasTotal from "./hooks/ventas_total";
 import { useState, useEffect } from "react";
+import axios from "@/api/axios";
+
 
 function Inicio() {
   const ADMIN_ROL = 1;
@@ -20,16 +22,39 @@ function Inicio() {
   const [userRol, setUserRol] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("usuario");
-    if (storedUser) {
-      if (storedUser === "tormenta") {
-        setUserRol(1);
-      } else {
-        setUserRol(3);
+    const fetchUserRol = async () => {
+      const storedUser = localStorage.getItem("usuario");
+      if (storedUser) {
+        try {
+          const response = await axios.get("/dashboard/usuarioRol", {
+            params: { usuario: storedUser }
+          });
+          if (response.data && response.data.rol_id) {
+            setUserRol(response.data.rol_id);
+          }
+        } catch (error) {
+          console.error("Error al obtener rol de usuario:", error);
+        }
       }
-    }
+    };
+    
+    fetchUserRol();
   }, []);
 
+
+  useEffect(() => {
+    const fetchSucursales = async () => {
+      try {
+        const response = await axios.get("/dashboard/sucursales");
+        if (response.data && response.data.data) {
+          setSucursales(response.data.data);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchSucursales();
+  }, []);
 
 
   const renderTabContent = () => {
@@ -89,11 +114,11 @@ function Inicio() {
             Visualiza el dashboard general de ventas por periodos de tiempo.
           </p>
         </div>
+        <div className="flex items-center gap-2">
         {userRol === ADMIN_ROL && (
-          <div className="flex items-center gap-2">
+          <>
             <Select
               className="w-64"
-              // Use selectedKeys for a controlled multi-select, pero aquí es de un solo valor
               selectedKeys={new Set([selectedSucursal])}
               onSelectionChange={(keys) => {
                 const firstKey = keys.values().next().value || "";
@@ -106,8 +131,8 @@ function Inicio() {
             >
               {sucursales.map((sucursal) => (
                 <SelectItem
-                  key={sucursal.id_sucursal.toString()}
-                  value={sucursal.id_sucursal.toString()}
+                  key={sucursal.id.toString()}
+                  value={sucursal.id.toString()}
                 >
                   {sucursal.nombre}
                 </SelectItem>
@@ -122,8 +147,9 @@ function Inicio() {
               <MdDeleteForever style={{ fontSize: "20px" }} />
               Limpiar
             </Button>
-          </div>
+          </>
         )}
+        </div>
       </header>
       <div className="max-w-md">
         <Divider className="my-3" />
