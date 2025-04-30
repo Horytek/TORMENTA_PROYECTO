@@ -27,7 +27,7 @@ const Roles = lazy(() => import('@/pages/Roles/Roles'));
 const Global = lazy(() => import('@/pages/Global/Global'));
 const Sucursal = lazy(() => import('@/pages/Sucursal/Sucursal'));
 const Clientes = lazy(() => import('@/pages/Clientes/Clientes'));
-const Permisos = lazy(() => import('@/pages/Roles/Permisos'));
+const Permisos = lazy(() => import('@/pages/Roles/Roles'));
 const Modulos = lazy(() => import('@/pages/Modulos/Modulos'));
 
 

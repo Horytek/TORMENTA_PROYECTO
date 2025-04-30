@@ -9,20 +9,16 @@ import {
   Tooltip,
   Pagination,
   Button,
-  Tabs,
-  Tab
 } from "@nextui-org/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { getRoles, deleteRol, getRol } from '@/services/rol.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import UsuariosForm from './UsuariosForm';
-import Permisos from './Permisos';
 import { usePermisos } from '@/routes';
 
 export function ShowUsuarios({ searchTerm }) {
   // Add tab state
-  const [selectedTab, setSelectedTab] = useState("roles");
 
   // Estados de listado de usuarios
   const [usuarios, setUsuarios] = useState([]);
@@ -30,10 +26,7 @@ export function ShowUsuarios({ searchTerm }) {
   const [showPassword, setShowPassword] = useState({}); // Estado para manejar la visibilidad de contraseñas
   const usuariosPerPage = 10;
 
-  // Estados para Permisos
-  const [permisos, setPermisos] = useState([]);
-  const [currentPagePermisos, setCurrentPagePermisos] = useState(1);
-  const permisosPerPage = 10;
+
 
   useEffect(() => {
     getUsers();
@@ -66,6 +59,7 @@ const data = await getRoles();
   // Estado de Modal de Edición de Producto
   const [activeEdit, setActiveEdit] = useState(false);
   const [initialData, setInitialData] = useState(null); // Datos iniciales del usuario a editar
+  
 
   const handleModalEdit = async (id_usuario) => {
     const data = await getRol(id_usuario);
@@ -162,11 +156,31 @@ const data = await getRoles();
     }
   }, []);
 
-  const RolesContent = () => (
-    <div>
+
+
+  return (
+    <div className="w-full">
+      {/* Modals */}
+      {isConfirmationModalOpen && (
+        <ConfirmationModal
+          message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
+          onClose={handleCloseConfirmationModal}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
+
+      {activeEdit && (
+        <UsuariosForm
+          modalTitle={'Editar Rol'}
+          onClose={handleCloseModal}
+          initialData={initialData}
+        />
+      )}
+
+      {/* Tabla de roles */}
       <Table
         isStriped
-        aria-label="Usuarios"
+        aria-label="Tabla de roles"
         className="min-w-full border-collapse"
       >
         <TableHeader>
@@ -185,42 +199,14 @@ const data = await getRoles();
           ))}
         </TableBody>
       </Table>
-
-      {/* Paginación */}
       <div className="flex justify-end mt-4">
         <Pagination
           showControls
-          currentPage={currentPage}
-          totalPages={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
-          onPageChange={setCurrentPage}
+          page={currentPage}
+          total={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
+          onChange={setCurrentPage}
         />
       </div>
-    </div>
-  );
-
-  const PermisosContent = () => (
-    <Permisos searchTerm={searchTerm} />
-  );
-
-  return (
-    <div className="w-full">
-      
-      {/* Modals */}
-      {isConfirmationModalOpen && (
-        <ConfirmationModal
-          message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
-          onClose={handleCloseConfirmationModal}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
-
-      {activeEdit && (
-        <UsuariosForm
-          modalTitle={'Editar Rol'}
-          onClose={handleCloseModal}
-          initialData={initialData}
-        />
-      )}
     </div>
   );
 }

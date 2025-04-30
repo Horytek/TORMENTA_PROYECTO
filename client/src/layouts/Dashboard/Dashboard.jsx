@@ -18,8 +18,8 @@ import { RouteProtectedRol, RoutePermission } from '../../routes';
 
 const Global = lazy(() => import('@/pages/Global/Global'));
 const Sunat = lazy(() => import('@/pages/Sunat/Sunat'));
-const Modulo = lazy(() => import('@/pages/MOdulos/Modulos'));
-const Permisos = lazy(() => import('@/pages/Roles/Permisos'));
+const Modulo = lazy(() => import('@/pages/Modulos/Modulos'));
+const Permisos = lazy(() => import('@/pages/Roles/Roles'));
 const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
 
 function Dashboard() {
@@ -145,7 +145,7 @@ function Dashboard() {
     dynamicRoutes.push(
       <Route 
         key="permisos"
-        path="/configuracion/permisos" 
+        path="/configuracion/roles" 
         element={
           <RouteProtectedRol allowedRoles={[ADMIN_ROL, DESARROLLO_ROL]}>
             <Permisos />
