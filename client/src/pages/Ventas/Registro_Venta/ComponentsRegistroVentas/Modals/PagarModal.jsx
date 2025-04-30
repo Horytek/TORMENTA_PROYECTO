@@ -31,107 +31,66 @@ import useSucursalData from '../../../Data/data_sucursal_venta';
 import QRCode from 'qrcode';
 import { useLastData } from '../../../Data/getLastVenta';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+import PagoDetalles from './PagoDetalles';
+import PagoFaltante from './PagoFaltante';
+import PagoFaltante2 from './PagoFaltante_2';
+import AgregarClienteForm from './AgregarClienteForm';
+import useCobrarModalState from './useCobrarModalState';
 /*import { handleSunatMultiple } from "../../../Data/add_sunat_multiple";
 import {  handleUpdate } from '../../../Data/update_venta';*/
 
 const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
-    const { productos } = useProductosData();
-    const {sucursales} = useSucursalData();
-    const { last } = useLastData();
-    const [montoRecibido, setMontoRecibido] = useState('');
-    const [observacion,setObservacion] = useState('');
-    const [descuentoActivado, setDescuentoActivado] = useState(false);
-    const [montoDescuento, setMontoDescuento] = useState(0);
-    const [montoRecibido2, setMontoRecibido2] = useState('');
-    const [comprobante_pago, setcomprobante_pago] = useState('Boleta');
-    const [metodo_pago, setmetodo_pago] = useState('');
-    const [metodo_pago2, setmetodo_pago2] = useState('');
-    const [montoRecibido3, setMontoRecibido3] = useState('');
-    const [metodo_pago3, setmetodo_pago3] = useState('');
-    const [showConfirmacion, setShowConfirmacion] = useState(false);
-    const [showNuevoCliente, setShowNuevoCliente] = useState(false);
-    const [tipo_cliente, settipo_cliente] = useState('Natural');
-    const { clientes, addCliente } = useClientesData();
-    const [serie, SetSerie] = useState('');
-    const [nu,SetNum] = useState('');
-    // Llama al hook personalizado para obtener los clientes
-    const [clienteSeleccionado, setClienteSeleccionado] = useState('');
-    const loadDetallesFromLocalStorage = () => {
-        const savedDetalles = localStorage.getItem('detalles');
-        return savedDetalles ? JSON.parse(savedDetalles) : [];
-    };
-    const detalles = loadDetallesFromLocalStorage();
-
-    const options = [
-        { key: 'EFECTIVO', value: 'EFECTIVO', label: 'EFECTIVO' },
-        { key: 'PLIN', value: 'PLIN', label: 'PLIN' },
-        { key: 'YAPE', value: 'YAPE', label: 'YAPE' },
-        { key: 'VISA', value: 'VISA', label: 'VISA' },
-        { key: 'AMERICAN EXPRESS', value: 'AMERICAN EXPRESS', label: 'AMERICAN EXPRESS' },
-        { key: 'DEPOSITO BBVA', value: 'DEPOSITO BBVA', label: 'DEPOSITO BBVA' },
-        { key: 'DEPOSITO BCP', value: 'DEPOSITO BCP', label: 'DEPOSITO BCP' },
-        { key: 'DEPOSITO CAJA PIURA', value: 'DEPOSITO CAJA PIURA', label: 'DEPOSITO CAJA PIURA' },
-        { key: 'DEPOSITO INTERBANK', value: 'DEPOSITO INTERBANK', label: 'DEPOSITO INTERBANK' },
-        { key: 'MASTER CARD', value: 'MASTER CARD', label: 'MASTER CARD' },
-      ];
-    
-    var disabledKeys1 = []
-  // Obtener las claves de los elementos deshabilitados para cada Select
-    if (comprobante_pago != 'Nota de venta'){
-        disabledKeys1 = options
-        .filter(({ value }) => value === metodo_pago2 || value === metodo_pago3)
-        .map(({ key }) => key);
-    } else {
-        disabledKeys1 = options
-        .filter(({ value }) => value != 'EFECTIVO')
-        .map(({ key }) => key);
-    }
-
-  const disabledKeys2 = options
-    .filter(({ value }) => value === metodo_pago || value === metodo_pago3)
-    .map(({ key }) => key);
-
-    const disabledKeys3 = options
-    .filter(({ value }) => value === metodo_pago || value === metodo_pago2)
-    .map(({ key }) => key);
-    
-
-    const comprobante_pago1 = JSON.parse(localStorage.getItem('comprobante')) || {};
-    const comp = comprobante_pago1.comprobante_pago;
-    useEffect(() => {
-        const fetchComprobanteNumber = async () => {
-            try {
-                const comprobante_pago = JSON.parse(localStorage.getItem('comprobante')) || {};
-                const comp = comprobante_pago.comprobante_pago;
-
-                // Asegúrate de que comp es válido y está definido
-                if (!comp) {
-                    console.warn('El valor de comp no es válido:', comp);
-                    return;
-                }
-
-                const nuevoNumComprobante = await generateComprobanteNumber(comp);
-
-                SetSerie(nuevoNumComprobante.substring(1, nuevoNumComprobante.indexOf('-')));
-                SetNum(nuevoNumComprobante.substring(nuevoNumComprobante.indexOf('-') + 1));
-                //console.log('Nuevo número de comprobante:', nuevoNumComprobante);
-
-                // Almacena el número de comprobante en el localStorage
-                localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante }));
-
-                // Verifica si el almacenamiento local se actualizó correctamente
-                //console.log('Contenido actualizado de localStorage:', localStorage.getItem('comprobante1'));
-            } catch (error) {
-                console.error('Error al obtener el número de comprobante:', error);
-            }
-        };
-
-        fetchComprobanteNumber();
-    }, [comp]);
-
-    const [dniOrRuc, setDni] = useState('');
-    const [nombreCliente, setNombreCliente] = useState('');
-    const [direccionCliente, setDireccionCliente] = useState('');
+  const {
+    productos,
+    sucursales,
+    last,
+    clientes,
+    addCliente,
+    montoRecibido,
+    setMontoRecibido,
+    observacion,
+    setObservacion,
+    descuentoActivado,
+    setDescuentoActivado,
+    montoDescuento,
+    setMontoDescuento,
+    montoRecibido2,
+    setMontoRecibido2,
+    comprobante_pago,
+    setcomprobante_pago,
+    metodo_pago,
+    setmetodo_pago,
+    metodo_pago2,
+    setmetodo_pago2,
+    montoRecibido3,
+    setMontoRecibido3,
+    metodo_pago3,
+    setmetodo_pago3,
+    showConfirmacion,
+    setShowConfirmacion,
+    showNuevoCliente,
+    setShowNuevoCliente,
+    tipo_cliente,
+    settipo_cliente,
+    serie,
+    SetSerie,
+    nu,
+    SetNum,
+    clienteSeleccionado,
+    setClienteSeleccionado,
+    dniOrRuc,
+    setDni,
+    nombreCliente,
+    setNombreCliente,
+    direccionCliente,
+    setDireccionCliente,
+    detalles,
+    options,
+    disabledKeys1,
+    disabledKeys2,
+    disabledKeys3,
+  } = useCobrarModalState();
+  
     {/* Este handlePrint es para el voucher con preview */ }
     // const VoucherRef = useRef();
 
@@ -635,376 +594,52 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
                         </div>
                         </div>
                     <hr className="mb-5" />
-                    <div className="flex mb-4">
-{/* Total a pagar */}
-<Input
-  label="Total a pagar"
-  labelPlacement="outside"
-  value={`S/. ${totalImporte}`}
-  readOnly
-  className="input-c w-40 ml-2"
-  style={{
-    height: "40px",
-    border: "1px solid #ccc", // Borde más suave
-    backgroundColor: "#f5f5f5", // Fondo gris claro
-    borderRadius: "8px", // Bordes redondeados
-    padding: "0 12px", // Relleno horizontal
-    fontSize: "16px", // Tamaño de fuente optimizado
-    color: "#333", // Color de texto más oscuro
-    outline: "none", // Elimina el borde de enfoque predeterminado
-    boxShadow: "inset 0 0 5px rgba(0, 0, 0, 0.1)", // Sombra interna suave
-    transition: "box-shadow 0.3s ease", // Transición suave en el enfoque
-  }}
-/>
-
-
-{/* Método de pago */}
-<div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
-<Select
-        isRequired
-      label="Método de pago"
-      labelPlacement="outside"
-      placeholder="Método de pago"
-  className={"input-c h-10 pr-8"}
-  classNamediv={"flex items-center mt-2"}
-  value={metodo_pago}
-  style={{ width: '13rem' }}
-  onChange={(e) => setmetodo_pago(e.target.value)}
-  containerStyle={{ marginLeft: "5px" }}
-  disabledKeys={disabledKeys1}  // Ajusta el margen aquí si es necesario
->
-        {options.map(({ key, value, label }) => (
-      <SelectItem key={key} value={value}>
-        {label}
-      </SelectItem>
-    ))}
-</Select>
-</div>
-</div>
-                    <div className="flex">
-                    <Input
-  label="Monto recibido"
-  labelPlacement="outside"
-  placeholder="S/."
-  value={montoRecibido}
-  onChange={(e) => setMontoRecibido(e.target.value)}
-  pattern="[0-9]*[.]?[0-9]{0,2}"
-  onKeyDown={validateDecimalInput}
-  className="input-c w-40 ml-2"
-  style={{
-    height: "40px",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    padding: "0 12px",
-    fontSize: "16px",
-    color: "#333",
-    outline: "none",
-    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-  }}
-/>
-
-<div className="mb-4 ml-[45px]">
-  <div className="flex items-center mt-2 space-x-3">
-    <Checkbox
-      isSelected={descuentoActivado}
-      onValueChange={setDescuentoActivado}
-      className="mt-1"
-    >
-      <span className="text-sm font-medium text-gray-700">S/.</span>
-    </Checkbox>
-
-    <Input
-      type="text"
-      value={montoDescuento}
-      label="Aplicar descuento"
-      labelPlacement="outside"
-      placeholder="0.00"
-      isDisabled={!descuentoActivado}
-      onChange={(e) => {
-        const { value } = e.target;
-        if (/^\d*\.?\d{0,2}$/.test(value)) {
-          setMontoDescuento(value);
-        } else if (value === '' || value === '.') {
-          setMontoDescuento(value);
-        }
-      }}
-      onKeyDown={validateDecimalInput}
-      className="w-[8.5rem]"
-      classNames={{
-        inputWrapper: descuentoActivado
-          ? "bg-white"
-          : "bg-gray-100",
-        input: "text-base text-gray-700",
-      }}
-    />
-  </div>
-</div>
-                    </div>
-                    <div className="flex  mb-4">
-                        <div>
-{/* Cambio */}
-<Input
-  label="Cambio"
-  labelPlacement="outside"
-  placeholder="S/."
-  value={cambio >= 0 ? cambio.toFixed(2) : ""}
-  readOnly
-  className="input-c w-40 ml-2"
-  style={{
-    height: "40px",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    padding: "0 12px",
-    fontSize: "16px",
-    color: "#333",
-    outline: "none",
-    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-  }}
-/>
-                        </div>
-                        <div className='ml-12 w-60'>
-                        <Input
-  label="Faltante"
-  labelPlacement="outside"
-  placeholder="S/."
-  value={faltante >= 0 ? faltante.toFixed(2) : ""}
-  readOnly
-  className="input-c w-40 ml-2"
-  style={{
-    height: "40px",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    padding: "0 12px",
-    fontSize: "16px",
-    color: "#333",
-    outline: "none",
-    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-  }}
-/>
-                        </div>
-                    </div>
+           
+            {/* Otros componentes */}
+            <PagoDetalles
+              totalImporte={totalImporte}
+              metodo_pago={metodo_pago}
+              setmetodo_pago={setmetodo_pago}
+              disabledKeys1={disabledKeys1}
+              options={options}
+              montoRecibido={montoRecibido}
+              setMontoRecibido={setMontoRecibido}
+              validateDecimalInput={validateDecimalInput}
+              descuentoActivado={descuentoActivado}
+              setDescuentoActivado={setDescuentoActivado}
+              montoDescuento={montoDescuento}
+              setMontoDescuento={setMontoDescuento}
+              cambio={cambio}
+              faltante={faltante}
+            />
                     <hr className="mb-5" />
                     {faltante > 0 && comprobante_pago !='Nota de venta' && (
-                        <div>
-                            <div className="flex justify-center text-center mb-4">
-                                <InputField
-                                    label="Total a pagar"
-                                    symbol="S/."
-                                    value={faltante.toFixed(2)}
-                                    readOnly
-                                    style={{
-                                        height: "40px",
-                                        border: "1px solid #ccc", // Borde más suave
-                                        backgroundColor: "#f5f5f5", // Fondo gris claro
-                                        borderRadius: "8px", // Bordes redondeados
-                                        padding: "0 12px", // Relleno horizontal
-                                        fontSize: "16px", // Tamaño de fuente optimizado
-                                        color: "#333", // Color de texto más oscuro
-                                        outline: "none", // Elimina el borde de enfoque predeterminado
-                                        boxShadow: "inset 0 0 5px rgba(0, 0, 0, 0.1)", // Sombra interna suave
-                                        transition: "box-shadow 0.3s ease", // Transición suave en el enfoque
-                                      }}
-                                      className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                    />
-
-                            </div>
-                            <div className="flex mb-4">
-                                <Input
-                                    label="N°2 || Monto recibido"
-                                    labelPlacement="outside"
-                                    placeholder="S/."
-                                    value={montoRecibido2}
-                                    onChange={(e) => setMontoRecibido2(e.target.value)}
-                                    pattern="[0-9]*[.]?[0-9]{0,2}"
-                                    onKeyDown={validateDecimalInput}
-                                    className="input-c w-40 ml-2"
-                                    style={{
-                                      height: "40px",
-                                      border: "1px solid #ddd",
-                                      borderRadius: "8px",
-                                      padding: "0 12px",
-                                      fontSize: "16px",
-                                      color: "#333",
-                                      outline: "none",
-                                      transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                    }}
-                                  />
-                                  <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
-                                  <Select
-        isRequired
-      label="Método de pago"
-      labelPlacement="outside"
-      placeholder="Método de pago"
-  className={"input-c h-10 pr-8"}
-  classNamediv={"flex items-center mt-2"}
-  value={metodo_pago2}
-  style={{ width: '13rem' }}
-  onChange={(e) => setmetodo_pago2(e.target.value)}
-  containerStyle={{ marginLeft: "5px" }}
-  disabledKeys={disabledKeys2} // Ajusta el margen aquí si es necesario
->
-        {options.map(({ key, value, label }) => (
-      <SelectItem key={key} value={value}>
-        {label}
-      </SelectItem>
-    ))}
-</Select>
-</div>
-                            </div>
-                            <div className="flex mb-4">
-                                <Input
-                                    label="Cambio"
-                                    labelPlacement="outside"
-                                    placeholder="S/." 
-                                    value={cambio2 >= 0 ? cambio2.toFixed(2) : ''}
-                                    readOnly
-                                    className="input-c w-40 ml-2"
-                                    style={{
-                                      height: "40px",
-                                      border: "1px solid #ddd",
-                                      borderRadius: "8px",
-                                      padding: "0 12px",
-                                      fontSize: "16px",
-                                      color: "#333",
-                                      outline: "none",
-                                      transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                    }}
-                                  />
-                                <div className='ml-12 w-60'>
-                                <Input
-                                        label="Faltante"
-                                        labelPlacement="outside"
-                                        placeholder="S/."
-                                        value={faltante2 >= 0 ? faltante2.toFixed(2) : ''}
-                                        readOnly
-                                        className="input-c w-40 ml-2"
-                                        style={{
-                                          height: "40px",
-                                          border: "1px solid #ddd",
-                                          borderRadius: "8px",
-                                          padding: "0 12px",
-                                          fontSize: "16px",
-                                          color: "#333",
-                                          outline: "none",
-                                          transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                        }}
-                                      />
-                                </div>
-                            </div>
-                            <hr className='mb-5' />
-
-                        </div>
+              <PagoFaltante
+              faltante={faltante}
+              montoRecibido2={montoRecibido2}
+              setMontoRecibido2={setMontoRecibido2}
+              validateDecimalInput={validateDecimalInput}
+              metodo_pago2={metodo_pago2}
+              setmetodo_pago2={setmetodo_pago2}
+              disabledKeys2={disabledKeys2}
+              options={options}
+              cambio2={cambio2}
+              faltante2={faltante2}
+            />
                     )}
                         {faltante2 > 0 && (
-                            <div>
-                                <div className="flex justify-center text-center mb-4">
-                                    <InputField
-                                        label="Total a pagar"
-                                        symbol="S/."
-                                        value={faltante2.toFixed(2)}
-                                        readOnly
-                                        style={{
-                                            height: "40px",
-                                            border: "1px solid #ccc", // Borde más suave
-                                            backgroundColor: "#f5f5f5", // Fondo gris claro
-                                            borderRadius: "8px", // Bordes redondeados
-                                            padding: "0 12px", // Relleno horizontal
-                                            fontSize: "16px", // Tamaño de fuente optimizado
-                                            color: "#333", // Color de texto más oscuro
-                                            outline: "none", // Elimina el borde de enfoque predeterminado
-                                            boxShadow: "inset 0 0 5px rgba(0, 0, 0, 0.1)", // Sombra interna suave
-                                            transition: "box-shadow 0.3s ease", // Transición suave en el enfoque
-                                          }}
-                                          className="input-c w-40 ml-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                          <PagoFaltante
+                                          faltante={faltante2}
+                                          montoRecibido2={montoRecibido3}
+                                          setMontoRecibido2={setMontoRecibido3}
+                                          validateDecimalInput={validateDecimalInput}
+                                          metodo_pago2={metodo_pago3}
+                                          setmetodo_pago2={setmetodo_pago3}
+                                          disabledKeys2={disabledKeys3}
+                                          options={options}
+                                          cambio2={cambio3}
+                                          faltante2={faltante3}
                                         />
-
-                                </div>
-                                <div className="flex mb-4">
-                                <Input
-                                        label="Monto recibido"
-                                        labelPlacement="outside"
-                                        placeholder="S/."
-                                        value={montoRecibido3}
-                                        onChange={(e) => setMontoRecibido3(e.target.value)}
-                                        pattern="[0-9]*[.]?[0-9]{0,2}"
-                                        onKeyDown={validateDecimalInput}
-                                        className="input-c w-40 ml-2"
-                                        style={{
-                                          height: "40px",
-                                          border: "1px solid #ddd",
-                                          borderRadius: "8px",
-                                          padding: "0 12px",
-                                          fontSize: "16px",
-                                          color: "#333",
-                                          outline: "none",
-                                          transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                        }}
-                                      />
-  <div style={{ marginLeft: "20px" }}> {/* Aumenta el margen izquierdo aquí */}
-    <Select
-        isRequired
-      label="Método de pago"
-      labelPlacement="outside"
-      placeholder="Método de pago"
-      className={"input-c h-10 pr-8"}
-      classNamediv={"flex items-center mt-2"}
-      value={metodo_pago3}
-      style={{ width: '13rem' }}
-      onChange={(e) => setmetodo_pago3(e.target.value)}
-      containerStyle={{ marginLeft: "5px" }}
-      disabledKeys={disabledKeys3} // Ajusta el margen aquí si es necesario
-    >
-            {options.map(({ key, value, label }) => (
-          <SelectItem key={key} value={value}>
-            {label}
-          </SelectItem>
-        ))}
-    </Select>
-  </div>
-                                </div>
-                                <div className="flex justify-between mb-4">
-                                <Input
-                                        label="Cambio"
-                                        labelPlacement="outside"
-                                        placeholder="S/."
-                                        value={cambio3 >= 0 ? cambio3.toFixed(2) : ''}
-                                        readOnly
-                                        className="input-c w-40 ml-2"
-                                        style={{
-                                          height: "40px",
-                                          border: "1px solid #ddd",
-                                          borderRadius: "8px",
-                                          padding: "0 12px",
-                                          fontSize: "16px",
-                                          color: "#333",
-                                          outline: "none",
-                                          transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                        }}
-                                      />
-                                    <div className='ml-12 w-60'>
-                                    <Input
-                                            label="Faltante"
-                                            labelPlacement="outside"
-                                            placeholder="S/."
-                                            value={faltante3 >= 0 ? faltante3.toFixed(2) : ''}
-                                            readOnly
-                                            className="input-c w-40 ml-2"
-                                            style={{
-                                              height: "40px",
-                                              border: "1px solid #ddd",
-                                              borderRadius: "8px",
-                                              padding: "0 12px",
-                                              fontSize: "16px",
-                                              color: "#333",
-                                              outline: "none",
-                                              transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-                                            }}
-                                          />
-                                    </div>
-                                </div>
-                                <hr className='mb-5' />
-
-                            </div>
                         )}
 
                         {/* Este div es solo para el voucher con preview */}
@@ -1024,94 +659,17 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
 
                     </form>
                     {showNuevoCliente && (
-                        <div className="pt-0 py-4 pl-4 rounded-lg">
-                            <h3 className="text-lg font-semibold mb-4 flex">
-                                <IoPersonAddSharp className="mr-2" style={{ fontSize: '25px' }} />
-
-                                Agregar Cliente</h3>
-                            <div className="flexflex-col mb-4">
-                                <div className="w-full">
-                                    <SelectField
-                                        label="Tipo de cliente"
-                                        options={['Natural', 'Jurídico']}
-                                        value={tipo_cliente}
-                                        onChange={(e) => settipo_cliente(e.target.value)}
-                                        className={"input-c w-full h-10 border border-gray-300 pr-8"}
-                                        classNamediv={"flex items-center mt-2 "}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between mb-4 ml-2">
-                                <div className="w-full">
-                                    <InputField
-                                        placeholder="EJEM: 78541236"
-                                        label="DNI/RUC: *"
-                                        className="input-c "
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28", width: '11rem' }}
-                                        value={dniOrRuc}
-                                        onChange={(e) => setDni(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex flex-col justify-end ml-4">
-
-                                    <Button
-
-                                        type="button"
-                                        color="success"
-                                        variant="shadow"
-                                        className="btn-validar text-white px-5 flex py-2 rounded"
-                                        style={{ height: "40px", marginTop: "10px" }} onClick={handleValidate}>
-                                        <GrValidate className="mr-2" style={{ fontSize: '20px' }} />
-                                        Validar
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between mb-4 ml-2 ">
-                                <div className="w-full">
-                                    <InputField
-                                        placeholder="EJEM: Juan Perez"
-                                        label="Nombre del cliente / Razón social * "
-                                        className="input-c w-full"
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        value={nombreCliente}
-                                        readOnly
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex justify-between mb-4 ml-2 ">
-                                <div className="w-full">
-                                    <InputField
-                                        type="address"
-                                        placeholder="EJEM: Balta y Leguia"
-                                        label="Dirección"
-                                        className="input-c w-full"
-                                        style={{ height: "40px", border: "solid 0.1rem #171a1f28" }}
-                                        value={direccionCliente}
-                                        readOnly
-                                    />
-                                </div>
-                            </div>
-
-
-                            <div className="flex justify-end">
-                                <Button
-                                    type="button"
-                                    className="btn-aceptar-cliente text-white px-4 py-2 rounded"
-                                    onClick={handleGuardarClientes}
-                                >
-                                    Guardar
-                                </Button>
-                                <Button
-                                    type="button"
-                                    className="btn-cerrar text-white px-4 py-2 rounded ml-4"
-                                    onClick={() => setShowNuevoCliente(false)}
-                                >
-                                    Cancelar
-                                </Button>
-                            </div>
-                        </div>
+                <AgregarClienteForm
+                tipo_cliente={tipo_cliente}
+                settipo_cliente={settipo_cliente}
+                dniOrRuc={dniOrRuc}
+                setDni={setDni}
+                nombreCliente={nombreCliente}
+                direccionCliente={direccionCliente}
+                handleValidate={handleValidate}
+                handleGuardarClientes={handleGuardarClientes}
+                setShowNuevoCliente={setShowNuevoCliente}
+              />
                     )}
                 
                 </div>
