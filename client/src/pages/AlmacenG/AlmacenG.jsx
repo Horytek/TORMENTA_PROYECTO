@@ -34,7 +34,7 @@ function Almacenes() {
       <Toaster />
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacenes', href: '/almacenG' }]} />
       <hr className="mb-4" />
-      <h1 className='text-4xl font-extrabold'>Almacenes</h1>
+      <h1 className='text-4xl font-extrabold'>Gestión de almacenes</h1>
       <div className="flex items-center justify-between mt-5 mb-4">
         <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
         <h6 className="font-bold">Lista de Almacenes</h6>

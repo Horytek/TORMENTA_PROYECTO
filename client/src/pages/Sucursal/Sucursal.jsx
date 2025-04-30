@@ -75,7 +75,7 @@ const Sucursales = () => {
             <hr style={styles.hr} />
             <div style={styles.header}>
                 <h1 style={styles.title}>
-                    Sucursal
+                    Gestión de sucursales
                 </h1>
             </div>
             <FiltrosSucursal onFiltersChange={handleFiltersChange} />

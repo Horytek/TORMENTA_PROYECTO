@@ -139,7 +139,7 @@ const ApiSunat = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Gestión de Claves</h1>
+        <h1 className="text-4xl font-extrabold">Gestión de claves</h1>
         <Button
           color="primary"
           startContent={<FaPlus />}
@@ -255,25 +255,25 @@ const ApiSunat = () => {
             <>
               <ModalHeader>{editingKey ? "Editar Clave" : "Agregar Clave"}</ModalHeader>
               <ModalBody className="space-y-3">
-              <Autocomplete
-  className="max-w-xs"
-  label="Empresa"
-  style={{
-    border: "none",
-    boxShadow: "none",
-    outline: "none",
-  }}
-  selectedKey={formData.id_empresa?.toString()} // Asegúrate que sea string
-  onSelectionChange={(selected) =>
-    setFormData({ ...formData, id_empresa: selected })
-  }
->
-  {empresas.map((empresa) => (
-    <AutocompleteItem key={empresa.id_empresa.toString()}>
-      {empresa.razonSocial}
-    </AutocompleteItem>
-  ))}
-</Autocomplete>
+                <Autocomplete
+                  className="max-w-xs"
+                  label="Empresa"
+                  style={{
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                  }}
+                  selectedKey={formData.id_empresa?.toString()} // Asegúrate que sea string
+                  onSelectionChange={(selected) =>
+                    setFormData({ ...formData, id_empresa: selected })
+                  }
+                >
+                  {empresas.map((empresa) => (
+                    <AutocompleteItem key={empresa.id_empresa.toString()}>
+                      {empresa.razonSocial}
+                    </AutocompleteItem>
+                  ))}
+                </Autocomplete>
 
                 <Input
                   label="Tipo"

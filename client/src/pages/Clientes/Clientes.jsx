@@ -78,7 +78,7 @@ function Clientes() {
         ]}
       />
       <hr className="mb-4" />
-      <h1 className="text-4xl font-extrabold">Clientes</h1>
+      <h1 className="text-4xl font-extrabold">Gestión de clientes</h1>
       <div className="flex items-center justify-between mt-5 mb-4">
         <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
         <h6 className="font-bold">Lista de Clientes</h6>

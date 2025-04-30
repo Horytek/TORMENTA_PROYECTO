@@ -1,4 +1,3 @@
-import './Historico.css';
 import HeaderHistorico from './ComponentsHistorico/HeaderHistorico';
 import HistoricoTable from './ComponentsHistorico/HistoricoTable';
 import { useParams } from 'react-router-dom';

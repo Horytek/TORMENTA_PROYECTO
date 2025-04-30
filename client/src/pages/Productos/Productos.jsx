@@ -28,7 +28,7 @@ function Productos() {
       <Toaster />
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Productos', href: '/productos' }]} />
       <hr className="mb-4" />
-      <h1 className='font-extrabold text-4xl'>Productos</h1>
+      <h1 className='font-extrabold text-4xl'>Gestión de productos</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
         <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
         <h6 className="font-bold">Lista de Productos</h6>

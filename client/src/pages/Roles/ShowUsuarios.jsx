@@ -204,19 +204,7 @@ const data = await getRoles();
 
   return (
     <div className="w-full">
-      <Tabs
-        selectedKey={selectedTab}
-        onSelectionChange={setSelectedTab}
-        className="mb-4"
-      >
-        <Tab key="roles" title="Roles">
-          <RolesContent />
-        </Tab>
-        <Tab key="permisos" title="Permisos">
-          <PermisosContent />
-        </Tab>
-      </Tabs>
-
+      
       {/* Modals */}
       {isConfirmationModalOpen && (
         <ConfirmationModal

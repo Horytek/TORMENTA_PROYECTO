@@ -75,10 +75,11 @@ const FiltrosSucursal = ({ onFiltersChange }) => {
 
                 <Button color="primary"
                     onPress={hasCreatePermission ? openModalSucursal : undefined}
+                    endContent={<FaPlus style={{ fontSize: '25px' }} />}
                     disabled={!hasCreatePermission}
                     className={`flex items-center gap-2 ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                    <FaPlus className="text-lg" /> Nueva sucursal
+                     Agregar sucursal 
                 </Button>
             </div>
             <AgregarSucursal isOpen={isModalOpenSucursal} onClose={closeModalSucursal} titulo={'Agregar'} />

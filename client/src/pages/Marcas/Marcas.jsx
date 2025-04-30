@@ -38,7 +38,7 @@ function Marcas() {
         ]}
       />
       <hr className="mb-4" />
-      <h1 className="font-extrabold text-4xl">Marcas</h1>
+      <h1 className="font-extrabold text-4xl">Gestión de marcas</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
         <div
           id="barcode-scanner"

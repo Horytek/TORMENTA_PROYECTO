@@ -36,7 +36,7 @@ function Categorias() {
         ]}
       />
       <hr className="mb-4" />
-      <h1 className="font-extrabold text-4xl">Categorias</h1>
+      <h1 className="font-extrabold text-4xl">Gestión de categorias</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
         <div
           id="barcode-scanner"

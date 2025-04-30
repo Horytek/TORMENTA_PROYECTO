@@ -34,7 +34,7 @@ function Proveedores() {
         <Toaster />
         <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Proveedores', href: '/proveedores' }]} />
         <hr className="mb-4" />
-        <h1 className='text-4xl font-extrabold'>Proveedores</h1>
+        <h1 className='text-4xl font-extrabold'>Gestión de proveedores</h1>
         <div className="flex items-center justify-between mt-5 mb-4">
           <h6 className="font-bold">Lista de Proveedores</h6>
           <BarraSearch

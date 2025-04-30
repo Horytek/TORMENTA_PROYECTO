@@ -497,7 +497,7 @@ export function TablaPermisos() {
   return (
     <>
       <div className="flex flex-col mb-4">
-        <h1 className="text-3xl font-bold">Gestión de Permisos</h1>
+        <h1 className="text-4xl font-bold">Gestión de permisos</h1>
         <p
           className="text-small text-default-400"
           style={{ fontSize: "16px", userSelect: "none", marginTop: "10px" }}
@@ -509,7 +509,7 @@ export function TablaPermisos() {
         <CardHeader>
         </CardHeader>
         <CardBody>
-          <Tabs
+        <Tabs
             aria-label="Roles"
             selectedKey={selectedTab}
             onSelectionChange={setSelectedTab}

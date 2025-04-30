@@ -130,7 +130,7 @@ const EmpresasSunat = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Empresas Registradas</h1>
+        <h1 className="text-4xl font-extrabold">Gestión de empresas</h1>
         <Button
           color="primary"
           startContent={<FaPlus />}
@@ -191,16 +191,16 @@ const EmpresasSunat = () => {
                   <TableCell>{empresa.telefono}</TableCell>
                   <TableCell>{empresa.email}</TableCell>
                   <TableCell>
-        {empresa.logotipo ? (
-          <img
-            src={empresa.logotipo}
-            alt="Logotipo"
-            className="w-16 h-16 object-contain rounded-md"
-          />
-        ) : (
-          <span className="text-gray-500 italic">Sin logotipo</span>
-        )}
-      </TableCell>
+                    {empresa.logotipo ? (
+                      <img
+                        src={empresa.logotipo}
+                        alt="Logotipo"
+                        className="w-16 h-16 object-contain rounded-md"
+                      />
+                    ) : (
+                      <span className="text-gray-500 italic">Sin logotipo</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Dropdown>
                       <DropdownTrigger>

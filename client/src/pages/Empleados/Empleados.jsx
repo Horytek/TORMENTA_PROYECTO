@@ -32,7 +32,7 @@ function Vendedores() {
       <Toaster />
       <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Empleados', href: '/empleados' }]} />
       <hr className="mb-4" />
-      <h1 className='text-4xl font-extrabold'>Empleados</h1>
+      <h1 className='text-4xl font-extrabold'>Gestión de empleados</h1>
       <div className="flex items-center justify-between mt-5 mb-4">
         <h6 className="font-bold">Lista de Empleados</h6>
         <BarraSearch
