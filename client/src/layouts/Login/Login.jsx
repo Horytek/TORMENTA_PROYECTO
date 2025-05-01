@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaRegBuilding , FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaRegBuilding, FaEyeSlash } from "react-icons/fa";
 
 import {
   Card,
@@ -48,7 +48,9 @@ function Login() {
         localStorage.setItem("usuario", usuario);
         localStorage.setItem("rol", response.data.rol);
         localStorage.setItem("sur", response.data.sucursal);
-        navigate("/Inicio");
+
+        const redirectPage = response.data.defaultPage || "/Inicio";
+        navigate(redirectPage);
       } else {
         setShowAlert(true);
       }
@@ -100,7 +102,7 @@ function Login() {
             }}
           >
             <CardHeader className="flex flex-col items-center space-y-1 mt-2 mb-2 ">
-            
+
               <h2 className="text-2xl font-semibold text-center">Iniciar sesión</h2>
               <p
                 className="text-small text-default-400"

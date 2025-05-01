@@ -5,6 +5,7 @@ const router = Router();
 
 router.get("/", rolController.getRoles);
 router.get("/:id", rolController.getRol);
+router.get("/pagina-defecto/:id", rolController.getPaginaDefecto)
 router.post("/", rolController.addRol);
 router.put("/:id", rolController.updateRol);
 router.put("/pagina-inicio/:id", rolController.guardarPaginaPorDefecto);

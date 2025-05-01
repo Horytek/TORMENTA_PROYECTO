@@ -16,10 +16,42 @@ const getRoles = async (req, res) => {
     }
 };
 
+
+const getPaginaDefecto = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        
+        connection = await getConnection();
+        
+        const [result] = await connection.query(`
+            SELECT id_modulo, id_submodulo 
+            FROM rol 
+            WHERE id_rol = ?
+        `, [id]);
+
+        if (result.length === 0) {
+            return res.status(404).json({ code: 0, message: "Rol no encontrado" });
+        }
+
+        res.json({ code: 1, data: result[0] });
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ code: 0, message: error.message });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+
 const guardarPaginaPorDefecto = async (req, res) => {
     let connection;
     try {
-        const { id_rol, id_modulo, id_submodulo } = req.body;
+        const { id_modulo, id_submodulo } = req.body;
+        const id_rol = req.params.id;
 
         if (!id_rol || !id_modulo) {
             return res.status(400).json({ code: 0, message: "Se requiere 'id_rol' y 'id_modulo'" });
@@ -173,5 +205,6 @@ export const methods = {
     addRol,
     updateRol,
     deleteRol,
-    guardarPaginaPorDefecto
+    guardarPaginaPorDefecto,
+    getPaginaDefecto
 };

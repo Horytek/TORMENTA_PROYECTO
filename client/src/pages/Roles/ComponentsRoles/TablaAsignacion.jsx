@@ -12,8 +12,9 @@ import {
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import useGetRutas from "../data/getRutas";
-import { useRoles, usePermisosByRol, useSavePermisos } from "../data/rolPermisos";
+import { useRoles } from "../data/rolPermisos";
 import { toast } from "react-hot-toast";
+import axios from "@/api/axios";
 
 export function TablaAsignacion() {
     const [selectedTab, setSelectedTab] = useState("administrador");
@@ -24,18 +25,50 @@ export function TablaAsignacion() {
         expandedModulos,
         toggleExpand,
         expandAll,
-        addAll,
-        deleteAll,
         collapseAll
     } = useGetRutas();
 
     const { roles, loading: rolesLoading, error: rolesError } = useRoles();
     const [roleMapping, setRoleMapping] = useState({});
     const [currentRoleId, setCurrentRoleId] = useState(null);
-    const { permisos, loading: permisosLoading, refetchPermisos } = usePermisosByRol(currentRoleId);
-    const { savePermisos, saving: savingPermisos } = useSavePermisos();
+    const [saving, setSaving] = useState(false);
+    const [defaultPages, setDefaultPages] = useState({});
+    const [loading, setLoading] = useState(true);
 
-    const [permisosData, setPermisosData] = useState({});
+    // Fetch default pages for all roles
+    useEffect(() => {
+        async function fetchDefaultPages() {
+            if (!roles.length) return;
+            
+            try {
+                setLoading(true);
+                const defaultPagesData = {};
+                
+                for (const role of roles) {
+                    try {
+                        const response = await axios.get(`/rol/pagina-defecto/${role.id_rol}`);
+                        if (response.data.code === 1) {
+                            defaultPagesData[role.id_rol] = {
+                                id_modulo: response.data.data.id_modulo,
+                                id_submodulo: response.data.data.id_submodulo
+                            };
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching default page for role ${role.id_rol}:`, error);
+                    }
+                }
+                
+                setDefaultPages(defaultPagesData);
+            } catch (error) {
+                console.error("Error fetching default pages:", error);
+                toast.error("Error al cargar las páginas por defecto");
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        fetchDefaultPages();
+    }, [roles]);
 
     useEffect(() => {
         if (roles.length > 0) {
@@ -61,113 +94,66 @@ export function TablaAsignacion() {
     }, [roles, selectedTab]);
 
     useEffect(() => {
-        if (currentRoleId) {
-            const rolePermisos = {};
-
-            if (permisos && permisos.length > 0) {
-                permisos.forEach(permiso => {
-                    if (permiso.id_submodulo) {
-                        rolePermisos[`submodulo_${permiso.id_submodulo}`] = {
-                            ver: !!permiso.ver,
-                            crear: !!permiso.crear,
-                            editar: !!permiso.editar,
-                            eliminar: !!permiso.eliminar,
-                            desactivar: !!permiso.desactivar,
-                            generar: !!permiso.generar
-                        };
-                    } else if (permiso.id_modulo) {
-                        rolePermisos[`modulo_${permiso.id_modulo}`] = {
-                            ver: !!permiso.ver,
-                            crear: !!permiso.crear,
-                            editar: !!permiso.editar,
-                            eliminar: !!permiso.eliminar,
-                            desactivar: !!permiso.desactivar,
-                            generar: !!permiso.generar
-
-                        };
-                    }
-                });
-            }
-
-            setPermisosData(prev => ({
-                ...prev,
-                [currentRoleId]: rolePermisos
-            }));
-        }
-    }, [permisos, currentRoleId]);
-
-    useEffect(() => {
         if (selectedTab && roleMapping[selectedTab]) {
             setCurrentRoleId(roleMapping[selectedTab]);
         }
     }, [selectedTab, roleMapping]);
 
-
-
-    const handleSavePermissions = async () => {
+    const handleSaveDefaultPage = async () => {
         if (!currentRoleId) return;
 
+        const defaultPage = defaultPages[currentRoleId];
+        if (!defaultPage || !defaultPage.id_modulo) {
+            toast.error("Por favor selecciona una página por defecto");
+            return;
+        }
+
         try {
-            const rolePermisos = permisosData[currentRoleId] || {};
-            const permisosToSave = [];
-
-            modulosConSubmodulos.forEach((modulo) => {
-                const moduloKey = `modulo_${modulo.id}`;
-                if (rolePermisos[moduloKey]) {
-                    const { ver, crear, editar, eliminar, desactivar, generar } = rolePermisos[moduloKey];
-                    permisosToSave.push({
-                        id_modulo: modulo.id,
-                        id_submodulo: null,
-                        ver: ver ? 1 : 0,
-                        crear: crear ? 1 : 0,
-                        editar: editar ? 1 : 0,
-                        eliminar: eliminar ? 1 : 0,
-                        desactivar: desactivar ? 1 : 0,
-                        generar: generar ? 1 : 0
-                    });
-                }
-
-                modulo.submodulos.forEach((submodulo) => {
-                    const subKey = `submodulo_${submodulo.id_submodulo}`;
-                    if (rolePermisos[subKey]) {
-                        const { ver, crear, editar, eliminar, desactivar, generar } = rolePermisos[subKey];
-                        permisosToSave.push({
-                            id_modulo: modulo.id,
-                            id_submodulo: submodulo.id_submodulo,
-                            ver: ver ? 1 : 0,
-                            crear: crear ? 1 : 0,
-                            editar: editar ? 1 : 0,
-                            eliminar: eliminar ? 1 : 0,
-                            desactivar: desactivar ? 1 : 0,
-                            generar: generar ? 1 : 0,
-                        });
-                    }
-                });
+            setSaving(true);
+            const response = await axios.put(`/rol/pagina-inicio/${currentRoleId}`, {
+                id_modulo: defaultPage.id_modulo,
+                id_submodulo: defaultPage.id_submodulo || null
             });
-
-            const success = await savePermisos(currentRoleId, permisosToSave);
-
-            if (success) {
-                toast.success("Permisos guardados correctamente");
-                refetchPermisos();
+            
+            if (response.data.code === 1) {
+                toast.success("Página por defecto guardada correctamente");
             } else {
-                toast.error("Error al guardar los permisos");
+                toast.error(response.data.message || "Error al guardar la página por defecto");
             }
         } catch (error) {
-            console.error("Error saving permissions:", error);
-            toast.error("Error al guardar los permisos");
+            console.error("Error saving default page:", error);
+            toast.error("Error al guardar la página por defecto");
+        } finally {
+            setSaving(false);
         }
     };
 
-
-
-    const handleDeleteAllPermissions = () => {
+    const handleDefaultPageChange = (type, id) => {
         if (!currentRoleId) return;
 
-        setPermisosData(prev => ({
-            ...prev,
-            [currentRoleId]: {}
-        }));
+        if (type === 'modulo') {
+            setDefaultPages(prev => ({
+                ...prev,
+                [currentRoleId]: {
+                    id_modulo: id,
+                    id_submodulo: null
+                }
+            }));
+        } else if (type === 'submodulo') {
+            const parentModule = modulosConSubmodulos.find(modulo => 
+                modulo.submodulos.some(sub => sub.id_submodulo === id)
+            );
+            
+            if (parentModule) {
+                setDefaultPages(prev => ({
+                    ...prev,
+                    [currentRoleId]: {
+                        id_modulo: parentModule.id,
+                        id_submodulo: id
+                    }
+                }));
+            }
+        }
     };
 
     const formatRoleName = (roleName) => {
@@ -178,7 +164,7 @@ export function TablaAsignacion() {
     };
 
     const renderModulosListing = () => {
-        if (rutasLoading || rolesLoading || permisosLoading) {
+        if (rutasLoading || rolesLoading || loading) {
             return (
                 <div className="flex justify-center items-center h-64">
                     <Spinner label="Cargando..." color="primary" size="lg" />
@@ -203,7 +189,9 @@ export function TablaAsignacion() {
             );
         }
 
-        const rolePermisos = permisosData[currentRoleId] || {};
+        const currentDefault = defaultPages[currentRoleId] || {};
+        const currentModuleId = currentDefault.id_modulo;
+        const currentSubmoduleId = currentDefault.id_submodulo;
 
         return (
             <>
@@ -212,16 +200,6 @@ export function TablaAsignacion() {
                         Selecciona la página principal para este rol.
                     </div>
                     <div className="flex gap-2">
-
-                        <Button
-                            size="sm"
-                            variant="flat"
-                            color="danger"
-                            onPress={handleDeleteAllPermissions}
-                            style={{ fontWeight: "bold" }}
-                        >
-                            Borrar la configuración
-                        </Button>
                         <Button
                             size="sm"
                             variant="flat"
@@ -267,19 +245,17 @@ export function TablaAsignacion() {
                                         )}
                                     </div>
 
-                                    <>
-                                        <div className="flex gap-4 items-center">
-                                            <Checkbox
-                                                color="primary"
-                                                isSelected={rolePermisos[`modulo_${modulo.id}`]?.ver || false}
-                                                onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'asignar', isChecked, 'modulo')}
-                                                onClick={(e) => e.stopPropagation()}
-                                                disableAnimation={true}
-                                            >
-                                                Asignar
-                                            </Checkbox>
-                                        </div>
-                                    </>                  </div>
+                                    <div className="flex gap-4 items-center">
+                                        <Checkbox
+                                            color="primary"
+                                            isSelected={currentModuleId === modulo.id && !currentSubmoduleId}
+                                            onChange={() => handleDefaultPageChange('modulo', modulo.id)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            Establecer como inicio
+                                        </Checkbox>
+                                    </div>
+                                </div>
 
                                 {expandedModulos[modulo.id] && modulo.submodulos && modulo.submodulos.length > 0 && (
                                     <>
@@ -306,13 +282,11 @@ export function TablaAsignacion() {
                                                             <Checkbox
                                                                 size="sm"
                                                                 color="primary"
-                                                                isSelected={rolePermisos[`submodulo_${submodulo.id_submodulo}`]?.ver || false}
-                                                                onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, 'ver', isChecked, 'submodulo')}
-                                                                disableAnimation={true}
+                                                                isSelected={currentSubmoduleId === submodulo.id_submodulo}
+                                                                onChange={() => handleDefaultPageChange('submodulo', submodulo.id_submodulo)}
                                                             >
-                                                                Asignar
+                                                                Establecer como inicio
                                                             </Checkbox>
-
                                                         </div>
                                                     </div>
                                                 ))}
@@ -370,16 +344,16 @@ export function TablaAsignacion() {
                                     <div className="p-4">
                                         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                             {isAdmin ? <FaUserShield /> : <FaUser />}
-                                            Configurando:  {formatRoleName(role.nom_rol)}
+                                            Configurando página inicial para:  {formatRoleName(role.nom_rol)}
                                         </h3>
                                         {renderModulosListing()}
                                         <div className="mt-6 flex justify-end">
                                             <Button
                                                 color="primary"
-                                                isLoading={savingPermisos}
-                                                onPress={handleSavePermissions}
+                                                isLoading={saving}
+                                                onPress={handleSaveDefaultPage}
                                             >
-                                                {savingPermisos ? "Guardando..." : "Guardar cambios"}
+                                                {saving ? "Guardando..." : "Guardar cambios"}
                                             </Button>
                                         </div>
                                     </div>

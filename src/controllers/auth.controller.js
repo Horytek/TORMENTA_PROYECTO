@@ -40,19 +40,55 @@ const login = async (req, res) => {
         if (userValid.length > 0) {
             const token = await createAccessToken({ nameUser: user.usuario });
             const userbd = userValid[0];
+            
+            // Obtener la página por defecto para el rol del usuario
+            let defaultRedirect = '/inicio'; // URL por defecto si no hay configuración
+            
+            // Consultar la página por defecto configurada para el rol
+            const [rolData] = await connection.query(
+                "SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ?",
+                [userbd.id_rol]
+            );
+            
+            if (rolData.length > 0 && rolData[0].id_modulo) {
+                // Obtener la ruta del módulo
+                const [moduleData] = await connection.query(
+                    "SELECT ruta FROM modulo WHERE id_modulo = ?",
+                    [rolData[0].id_modulo]
+                );
+                
+                if (moduleData.length > 0 && moduleData[0].ruta) {
+                    defaultRedirect = moduleData[0].ruta;
+                    
+                    // Si también hay un submódulo, obtener su ruta
+                    if (rolData[0].id_submodulo) {
+                        const [submoduleData] = await connection.query(
+                            "SELECT ruta_submodulo FROM submodulo WHERE id_submodulo = ?",
+                            [rolData[0].id_submodulo]
+                        );
+                        
+                        if (submoduleData.length > 0 && submoduleData[0].ruta_submodulo) {
+                            defaultRedirect = submoduleData[0].ruta_submodulo;
+                        }
+                    }
+                }
+            }
+            
             res.json({
                 success: true,
                 data: {
                     id: userbd.id_usuario,
                     rol: userbd.id_rol,
                     usuario: userbd.usua,
-                    sucursal:userbd.nombre_sucursal
+                    sucursal: userbd.nombre_sucursal,
+                    defaultPage: defaultRedirect // Añadir la URL de redirección por defecto
                 },
-                token, // Devuelve el token en la respuesta JSON
+                token,
                 message: 'Usuario encontrado'
             });
+            
             // Realizar el UPDATE para, por ejemplo, registrar el último inicio de sesión
-            await connection.query("UPDATE usuario SET  estado_token = ? WHERE id_usuario = ?", [1,userbd.id_usuario]);
+            await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [1, userbd.id_usuario]);
         } else {
             res.status(400).json({ success: false, message: 'La contraseña ingresada no es correcta' });
         }
@@ -60,9 +96,9 @@ const login = async (req, res) => {
     } catch (error) {
         res.status(500);
         res.send(error.message);
-    }   finally {
+    } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };

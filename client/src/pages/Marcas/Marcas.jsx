@@ -27,6 +27,7 @@ function Marcas() {
     setSearchTerm("");
   };
 
+
   return (
     <div>
       <Toaster />
@@ -73,9 +74,11 @@ function Marcas() {
       <div>
         <ShowMarcas searchTerm={searchTerm} />
       </div>
-      {activeAdd && (
-        <MarcasForm modalTitle={'Nueva marca'} onClose={handleModalAdd} />
-      )}
+      <MarcasForm 
+        modalTitle={'Nueva marca'} 
+        isVisible={activeAdd}
+        onClose={handleModalAdd}
+      />
     </div>
   );
 }
