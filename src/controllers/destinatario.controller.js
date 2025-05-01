@@ -7,10 +7,10 @@ const insertDestinatario = async (req, res) => {
     ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, telefono, email
   } = req.body;
 
-  console.log("Datos recibidos:", req.body);
-  console.log("Datos recibidos:", {
+  //console.log("Datos recibidos:", req.body);
+  /*console.log("Datos recibidos:", {
     ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, telefono, email
-  });
+  });*/
   if (
     !ubicacion
   ) {
@@ -29,7 +29,7 @@ const insertDestinatario = async (req, res) => {
       "INSERT INTO destinatario (ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email, telefono) VALUES (?, ?, ?, ?, ?, ?, ?,?,?)",
       [ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email, telefono]
     );
-    console.log(result);
+    //console.log(result);
     res.json({ code: 1, message: 'Destinatario insertado correctamente', id: result.insertId });
   } catch (error) {
     console.error("Error en el backend:", error.message);
@@ -155,7 +155,7 @@ ORDER BY
   destinatario;
           `);
           const dataTransformada = result;
-          console.log("Datos después de la transformación:", dataTransformada);
+          //console.log("Datos después de la transformación:", dataTransformada);
       res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
       res.status(500);
@@ -171,7 +171,7 @@ const getDestinatario = async (req, res) => {
   let connection;
   try {
       const { id } = req.params;
-      console.log("ID recibido en backend:", id);
+      //console.log("ID recibido en backend:", id);
 
       if (!id) {
           return res.status(400).json({ message: "Debe proporcionar un ID" });
@@ -219,7 +219,7 @@ const deleteDestinatario = async (req, res) => {
   let connection;
   try {
       const { id } = req.params;
-      console.log("ID recibido en backend para eliminación:", id);
+      //console.log("ID recibido en backend para eliminación:", id);
 
       connection = await getConnection();
       const [result] = await connection.query("DELETE FROM destinatario WHERE id_destinatario = ?", [id]);

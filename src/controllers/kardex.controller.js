@@ -3,7 +3,7 @@ import ExcelJS from "exceljs";
 const getProductos = async (req, res) => {
     const { descripcion = '', almacen = '', idProducto = '', marca = '', cat = '', subcat = '', stock = '' } = req.query;
     let connection;
-    console.log('Filtros recibidos:', { descripcion, almacen, idProducto, marca, cat, subcat, stock });
+    //console.log('Filtros recibidos:', { descripcion, almacen, idProducto, marca, cat, subcat, stock });
     try {
         connection = await getConnection();
 
@@ -43,7 +43,7 @@ const getProductos = async (req, res) => {
             [`%${descripcion}%`, almacen, `%${idProducto}`, `%${marca}`, `%${cat}`, `%${subcat}`]
         );
 
-        console.log('Productos encontrados:', productosResult);
+        //console.log('Productos encontrados:', productosResult);
 
         res.json({ code: 1, data: productosResult });
     } catch (error) {
@@ -128,7 +128,7 @@ const getAlmacen = async (req, res) => {
     let connection;
     const { cat= '' } = req.query;
 
-    console.log('Filtros recibidos:', { cat });
+    //console.log('Filtros recibidos:', { cat });
     try {
       connection = await getConnection();
       const [result] = await connection.query(`
