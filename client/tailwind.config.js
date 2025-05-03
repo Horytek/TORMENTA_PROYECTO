@@ -1,5 +1,5 @@
 import colors from 'tailwindcss/colors';
-import { nextui }  from "@nextui-org/react";
+import { nextui } from "@nextui-org/react";
 import forms from '@tailwindcss/forms';
 
 export default {
@@ -12,9 +12,8 @@ export default {
   theme: {
     transparent: 'transparent',
     current: 'currentColor',
-    extend: { 
+    extend: {
       colors: {
-        // light mode
         tremor: {
           brand: {
             faint: colors.blue[50],
@@ -44,7 +43,6 @@ export default {
             inverted: colors.white,
           },
         },
-        // dark mode
         'dark-tremor': {
           brand: {
             faint: '#0B1229',
@@ -74,22 +72,15 @@ export default {
             inverted: colors.gray[950],
           },
         },
-        // custom colors
         'custom-blue': '#00bdd6',
       },
       boxShadow: {
-        // light
         'tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-        'tremor-card':
-          '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-        'tremor-dropdown':
-          '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-        // dark
+        'tremor-card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        'tremor-dropdown': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
         'dark-tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-        'dark-tremor-card':
-          '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-        'dark-tremor-dropdown':
-          '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        'dark-tremor-card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        'dark-tremor-dropdown': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
       },
       borderRadius: {
         'tremor-small': '0.375rem',
@@ -97,23 +88,49 @@ export default {
         'tremor-full': '9999px',
       },
       fontSize: {
-        'tremor-label': ['0.75rem', { lineHeight: '1rem' }],
-        'tremor-default': ['0.875rem', { lineHeight: '1.25rem' }],
-        'tremor-title': ['1.125rem', { lineHeight: '1.75rem' }],
-        'tremor-metric': ['1.875rem', { lineHeight: '2.25rem' }],
+        'tremor-label': [
+          '0.75rem',
+          {
+            lineHeight: '1rem',
+          },
+        ],
+        'tremor-default': [
+          '0.875rem',
+          {
+            lineHeight: '1.25rem',
+          },
+        ],
+        'tremor-title': [
+          '1.125rem',
+          {
+            lineHeight: '1.75rem',
+          },
+        ],
+        'tremor-metric': [
+          '1.875rem',
+          {
+            lineHeight: '2.25rem',
+          },
+        ],
       },
       animation: {
         fadeIn: 'fadeIn 0.3s ease-in-out',
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0', transform: 'scale(0.9)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
+          '0%': {
+            opacity: '0',
+            transform: 'scale(0.9)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'scale(1)',
+          },
         },
       },
     },
   },
-  darkMode: "class",
+  darkMode: ["class", "class"],
   safelist: [
     {
       pattern:
@@ -146,5 +163,6 @@ export default {
   plugins: [
     forms,
     nextui(),
+    require("tailwindcss-animate"),
   ],
-}
+};
