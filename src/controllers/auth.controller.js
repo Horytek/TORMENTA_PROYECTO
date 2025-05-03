@@ -63,7 +63,7 @@ const login = async (req, res) => {
                     // Si también hay un submódulo, obtener su ruta
                     if (rolData[0].id_submodulo) {
                         const [submoduleData] = await connection.query(
-                            "SELECT ruta_submodulo FROM submodulo WHERE id_submodulo = ?",
+                            "SELECT ruta FROM submodulos WHERE id_submodulo = ?",
                             [rolData[0].id_submodulo]
                         );
                         
