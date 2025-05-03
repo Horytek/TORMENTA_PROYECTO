@@ -23,7 +23,7 @@ import {
   SelectItem,
   Button,
   ButtonGroup
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 const ProductosForm = ({ modalTitle, onClose, initialData }) => {
     // Consumir context de categorias, subcategorias y marcas

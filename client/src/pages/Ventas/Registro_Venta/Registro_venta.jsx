@@ -14,7 +14,7 @@ import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes
 import PropTypes from 'prop-types';
 import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
-import { Button } from "@nextui-org/react";
+import { Button } from "@heroui/react";
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();

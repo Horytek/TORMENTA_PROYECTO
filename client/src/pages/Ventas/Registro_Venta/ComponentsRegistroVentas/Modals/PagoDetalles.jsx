@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Input, Checkbox, Select, SelectItem } from "@nextui-org/react";
+import { Input, Checkbox, Select, SelectItem } from "@heroui/react";
 
 const PagoDetalles = ({
   totalImporte,

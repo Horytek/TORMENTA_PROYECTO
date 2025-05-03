@@ -6,7 +6,7 @@ import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import { ShowCategorias } from "./ShowCategorias";
 import { usePermisos } from '@/routes';
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 function Categorias() {
   const [activeAdd, setModalOpen] = useState(false);

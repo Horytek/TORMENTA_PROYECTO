@@ -4,7 +4,7 @@ import { IoMdClose } from "react-icons/io";
 import { Toaster, toast } from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { addRol, updateRol } from '@/services/rol.services';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Select, SelectItem } from '@nextui-org/react';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Select, SelectItem } from '@heroui/react';
 
 const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
     const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({

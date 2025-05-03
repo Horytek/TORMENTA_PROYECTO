@@ -8,7 +8,7 @@ import {
     Checkbox,
     Button,
     Divider
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import useGetRutas from "../data/getRutas";

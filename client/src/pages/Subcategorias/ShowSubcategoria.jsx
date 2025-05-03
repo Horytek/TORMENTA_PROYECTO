@@ -3,7 +3,7 @@ import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/react";
 import { usePermisos } from "@/routes";
 import EditForm from "./EditSubcat";
 import { useSubcategoriasConCategoria } from './hooks/getSubcategory';

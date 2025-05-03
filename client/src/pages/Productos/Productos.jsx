@@ -4,7 +4,7 @@ import ProductosForm from './ProductosForm';
 import { Toaster } from "react-hot-toast";
 import { ShowProductos } from './ShowProductos';
 import { FaPlus } from "react-icons/fa";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import { usePermisos } from '@/routes';
 import BarraSearch from "@/components/Search/Search";
 

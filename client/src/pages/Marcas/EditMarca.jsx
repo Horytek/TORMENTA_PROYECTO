@@ -15,7 +15,7 @@ import {
   SelectItem,
   Button,
   Spinner
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
   const { editMarca, loading } = useEditMarca();

@@ -6,7 +6,7 @@ import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { ShowVendedores } from '@/pages/Empleados/ShowVendedores';
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import { usePermisos } from '@/routes';
 import BarraSearch from "@/components/Search/Search";
 

@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { IoPersonAddSharp } from 'react-icons/io5';
 import { GrValidate } from 'react-icons/gr';
-import { Button } from '@nextui-org/react';
+import { Button } from '@heroui/react';
 import InputField from '../Inputs/PagarInputs';
 import SelectField from '../Inputs/PagarSelectField';
 

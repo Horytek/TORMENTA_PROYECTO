@@ -1,4 +1,4 @@
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip } from "@nextui-org/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip } from "@heroui/react";
 import { FaFilePdf } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';

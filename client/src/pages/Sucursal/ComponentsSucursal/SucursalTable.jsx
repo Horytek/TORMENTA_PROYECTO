@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button, Pagination, Tooltip, Select, SelectItem } from '@nextui-org/react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button, Pagination, Tooltip, Select, SelectItem } from '@heroui/react';
 import { Toaster, toast } from "react-hot-toast";
 import EditarSucursal from './Modals/EditarSucursal';
 import { MdEdit } from "react-icons/md";

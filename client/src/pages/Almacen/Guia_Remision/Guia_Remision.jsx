@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
-import { Pagination, Tooltip } from "@nextui-org/react";
+import { Pagination, Tooltip } from "@heroui/react";
 import TablaGuias from './ComponentsGuias/GuiasTable';
 import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
 import { useNavigate } from "react-router-dom";
 import useGuiasData from '../data/data_guia';
 import { usePermisos } from '@/routes';
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 const Guias = () => {
   const [filters, setFilters] = useState({});

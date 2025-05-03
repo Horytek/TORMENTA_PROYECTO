@@ -6,7 +6,7 @@ import BarraSearch from "@/components/Search/Search";
 import SubcategoriaForm from "./SubcategoriaForm";
 import ShowSubcategorias from "./ShowSubcategoria";
 import { usePermisos } from '@/routes';
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 function Subcategorias() {
   const [activeAdd, setModalOpen] = useState(false);

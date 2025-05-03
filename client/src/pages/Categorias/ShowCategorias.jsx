@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/react";
 import { usePermisos } from "@/routes";
 import {
   getCategorias as fetchCategorias,

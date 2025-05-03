@@ -9,7 +9,7 @@ import {
   Tooltip,
   Pagination,
   Button,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { getRoles, deleteRol, getRol } from '@/services/rol.services';

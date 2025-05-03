@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { MdOutlineLocalPrintshop } from "react-icons/md";
 import { ButtonNormal } from "@/components/Buttons/Buttons";
 import { DateRangePicker } from "@nextui-org/date-picker";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
 import useAlmacenData from "../../data/data_almacen_kardex";
 import { parseDate } from "@internationalized/date";
 import html2pdf from "html2pdf.js";

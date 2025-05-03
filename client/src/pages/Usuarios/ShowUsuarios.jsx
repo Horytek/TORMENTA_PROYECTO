@@ -10,7 +10,7 @@ import {
   Pagination,
   Button,
   Chip
-} from "@nextui-org/react";
+} from "@heroui/react";
 import UsuariosForm from './UsuariosForm';
 import { MdEdit } from "react-icons/md";
 import { FaTrash, FaEye, FaEyeSlash } from "react-icons/fa";

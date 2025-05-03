@@ -15,7 +15,7 @@ import {
   Select,
   SelectItem,
   Button
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
     const [roles, setRoles] = useState([]);

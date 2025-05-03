@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FaSearch, FaTshirt } from 'react-icons/fa';
 import { IoCloseSharp, IoSearchOutline, IoHome } from 'react-icons/io5';
-import { ScrollShadow } from "@nextui-org/react";
+import { ScrollShadow } from "@heroui/react";
 import { GiUnderwearShorts, GiArmoredPants, GiAmpleDress, GiShorts, GiPoloShirt, GiMonclerJacket, GiPassport, GiSkirt, GiShirt, GiTankTop } from 'react-icons/gi';
 
 const categoryButtons = [

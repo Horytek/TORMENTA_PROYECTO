@@ -6,7 +6,7 @@ import {
     TableBody,
     TableRow,
     TableCell,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FaEdit, FaTrash, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast, Toaster } from "react-hot-toast";
 import { MdOutlineAddCircleOutline } from "react-icons/md";

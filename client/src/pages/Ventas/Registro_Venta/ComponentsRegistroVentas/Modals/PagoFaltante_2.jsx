@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Input } from "@nextui-org/input";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
 import InputField from '../Inputs/PagarInputs';
 
 const PagoFaltante = ({

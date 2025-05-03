@@ -2,21 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { MdAddCircleOutline, MdOutlineRealEstateAgent } from "react-icons/md";
-import { DateRangePicker } from "@nextui-org/date-picker";
+import {DateRangePicker} from "@nextui-org/date-picker";
 import useComprobanteData from "../../Data/data_comprobante_venta";
 import useSucursalData from "../../Data/data_sucursal_venta";
 import { parseDate } from "@internationalized/date";
-import { Select, SelectItem } from "@nextui-org/react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";
 import { CgOptions } from "react-icons/cg";
-import { Input } from "@nextui-org/input";
+import { Input } from "@heroui/input";
 import { handleSunatMultiple } from "../../Data/add_sunat_multiple";
 import { handleUpdateMultiple } from "../../Data/update_venta_multiple";
 import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
 import PDFModal from "../hook/PDFModal"; 
 import { usePermisos } from '@/routes';
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 
 const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {

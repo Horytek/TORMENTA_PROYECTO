@@ -5,7 +5,8 @@ import { TiPrinter } from "react-icons/ti";
 import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
 import useBoucher from '../../Data/data_boucher'; // Asegúrate de que la ruta sea correcta
 //import useSucursalData from '../../Data/data_sucursal_venta';
-import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@nextui-org/react";
+import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, 
+  Radio, Card, CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 

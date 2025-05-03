@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { IoMdClose } from "react-icons/io";
 import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import { useForm } from "react-hook-form";
-import { Input, Checkbox } from "@nextui-org/react";
+import { Input, Checkbox } from "@heroui/react";
 
 export const AddFeatureModal = ({ isOpen, onClose, handleAddFeature }) => {
   const { register, handleSubmit, formState: { errors }, reset } = useForm({

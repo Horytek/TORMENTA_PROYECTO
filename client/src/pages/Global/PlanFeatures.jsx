@@ -9,7 +9,7 @@ import {
   Checkbox,
   Button,
   Input,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FaPlus, FaEdit } from "react-icons/fa";
 import { getFunciones, getFuncion, addFuncion, updateFuncion } from "@/services/funciones.services";
 import { getPlanes } from "@/services/planes.services";

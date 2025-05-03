@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
 
 const FiltroCliente = ({ docType = "", onFilter }) => {
   const [selectedKeys, setSelectedKeys] = useState(new Set([docType]));

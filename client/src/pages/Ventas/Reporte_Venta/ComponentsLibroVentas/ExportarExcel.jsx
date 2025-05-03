@@ -11,7 +11,7 @@ import {
   Select,
   SelectItem,
   useDisclosure,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FaFileExcel } from "react-icons/fa";
 
 const ExcelIcon = ({ size = 20, color = "green", ...props }) => {

@@ -8,8 +8,8 @@ import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import useVentasData from '../Data/data_venta';
 import { Toaster } from "react-hot-toast";
 import { handleDelete } from '../Data/delete_venta';
-import { Pagination } from "@nextui-org/pagination";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Pagination } from "@heroui/pagination";
+import { Select, SelectItem } from "@heroui/react";
 import { anularVentaEnSunatF, anularVentaEnSunatB } from '../Data/anular_sunat';
 
 const Ventas = () => {

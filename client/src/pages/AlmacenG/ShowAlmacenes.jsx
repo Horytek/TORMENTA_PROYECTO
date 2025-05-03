@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@nextui-org/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import { getAlmacenes, deleteAlmacen } from '@/services/almacen.services';

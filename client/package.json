@@ -12,6 +12,7 @@
   "dependencies": {
     "@headlessui/react": "^2.1.2",
     "@headlessui/tailwindcss": "^0.2.1",
+    "@heroui/react": "^2.7.8",
     "@nextui-org/react": "^2.4.6",
     "@radix-ui/react-progress": "^1.1.4",
     "@react-pdf/renderer": "^3.4.4",
@@ -25,6 +26,7 @@
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.12",
     "exceljs": "^4.4.0",
+    "framer-motion": "^12.9.4",
     "html2pdf.js": "^0.10.2",
     "input-otp": "^1.4.2",
     "js-cookie": "^3.0.5",

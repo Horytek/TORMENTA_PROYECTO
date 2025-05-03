@@ -5,7 +5,7 @@ import { Toaster } from "react-hot-toast";
 import TablaRoles from './ComponentsRoles/TablaRoles';
 import TablaPermisos from './ComponentsRoles/TablaPermisos';
 import TablaAsignacion from './ComponentsRoles/TablaAsignacion';
-import { Tabs, Tab } from "@nextui-org/react";
+import { Tabs, Tab } from "@heroui/react";
 
 function Usuarios() {
   const [activeAdd, setModalOpen] = useState(false);

@@ -11,7 +11,7 @@ import {
   ModalFooter,
   Input,
   Button
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 export const MarcasForm = ({ modalTitle, onClose, isVisible }) => {
   // control internal animation state by mirroring parent prop

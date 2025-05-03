@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
-import { Button, Input, Select, SelectItem } from '@nextui-org/react';
+import { Button, Input, Select, SelectItem } from '@heroui/react';
 import AgregarSucursal from './Modals/AgregarSucursal';
 import { usePermisos } from '@/routes';
 

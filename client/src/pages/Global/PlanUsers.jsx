@@ -15,7 +15,7 @@ import {
   Autocomplete,
   AutocompleteItem,
   Input,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FaPlus, FaTrash, FaSyncAlt } from "react-icons/fa";
 import { getUsuarios, updateUsuarioPlan, deleteUsuario } from "@/services/usuario.services";
 import { getEmpresas } from "@/services/empresa.services";

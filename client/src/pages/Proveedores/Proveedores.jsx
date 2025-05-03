@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import DestinatariosForm from './DestinatariosForm';
 import { Toaster } from "react-hot-toast";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { ShowDestinatarios } from '@/pages/Proveedores/ShowDestinatarios';

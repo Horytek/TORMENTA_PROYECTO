@@ -12,7 +12,7 @@ import {
   useDisclosure,
   Tabs,
   Tab,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { IoIosSearch } from "react-icons/io";
 import { useAddClient } from '../data/addCliente';
 import { toast, Toaster } from "react-hot-toast"; // Updated import

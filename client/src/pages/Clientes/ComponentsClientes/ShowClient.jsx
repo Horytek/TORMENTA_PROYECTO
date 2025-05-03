@@ -8,7 +8,7 @@ import {
   FaFileAlt, 
   FaClock 
 } from "react-icons/fa"
-import { Modal, ModalContent, ModalHeader, ModalBody, Button, Avatar, Badge, Card, CardBody, CardHeader, Tabs, Tab } from "@nextui-org/react"
+import { Modal, ModalContent, ModalHeader, ModalBody, Button, Avatar, Badge, Card, CardBody, CardHeader, Tabs, Tab } from "@heroui/react"
 import { useState } from "react"
 
 const getDocumentType = (documentNumber) => {

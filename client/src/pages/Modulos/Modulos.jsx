@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import TablaModulos from '@/pages/Modulos/ComponentsModulos/TablaModulos';
 import AddModuloModal from './ComponentsModulos/AddModulo';
 import useGetModulos from "./data/getModulos";

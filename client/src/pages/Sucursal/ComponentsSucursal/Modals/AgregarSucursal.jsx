@@ -14,7 +14,7 @@ import {
   Button,
   Autocomplete,
   AutocompleteItem
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 const AgregarSucursal = ({ isOpen, onClose, titulo }) => {
   const { vendedores } = useVendedoresData();

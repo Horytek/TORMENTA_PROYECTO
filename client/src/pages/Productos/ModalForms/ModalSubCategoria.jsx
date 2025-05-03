@@ -15,7 +15,7 @@ import {
   Select,
   SelectItem,
   Button
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 export const ModalSubCategoria = ({ modalTitle, closeModel }) => {
   const [isOpen, setIsOpen] = useState(true);

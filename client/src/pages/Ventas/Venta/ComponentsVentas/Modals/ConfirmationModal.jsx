@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
-import { Button } from "@nextui-org/react";
+import { Button } from "@heroui/react";
 
 
 

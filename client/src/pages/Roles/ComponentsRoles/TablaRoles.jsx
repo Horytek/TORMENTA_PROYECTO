@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import BarraSearch from "@/components/Search/Search";
-import { Tooltip } from "@nextui-org/tooltip";
-import { Button } from "@nextui-org/button";
+import { Tooltip } from "@heroui/tooltip";
+import { Button } from "@heroui/button";
 import { FaPlus } from "react-icons/fa";
 import ShowUsuarios from '@/pages/Roles/ShowUsuarios';
 import { usePermisos } from '@/routes';

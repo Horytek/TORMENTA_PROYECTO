@@ -13,7 +13,7 @@ import {
   Button,
   Autocomplete,
   AutocompleteItem
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 const EditarSucursal = ({ isOpen, onClose, titulo, sucursal, onGuardar }) => {
   const { vendedores } = useVendedoresData();

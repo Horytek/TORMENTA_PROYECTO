@@ -8,7 +8,7 @@ import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import useVentasData from '../Data/data_venta';
 import { Toaster } from "react-hot-toast";
 import { handleDelete } from '../Data/delete_venta';
-import {Pagination} from "@nextui-org/pagination";
+import {Pagination} from "@heroui/pagination";
 import { anularVentaEnSunatF,anularVentaEnSunatB } from '../Data/anular_sunat';
 const Ventas = () => {
   // Estado para manejar la lista de ventas

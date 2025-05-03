@@ -7,7 +7,7 @@ import {
     ModalBody,
     ModalFooter,
     Input,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { useAddModulo } from "../data/addModulo";
 import { toast, Toaster } from "react-hot-toast";
 

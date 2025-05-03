@@ -22,7 +22,7 @@ import {
   ModalFooter,
   Pagination,
   useDisclosure,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FaEdit, FaPlus } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { getEmpresas, addEmpresa, updateEmpresa, deleteEmpresa } from "@/services/empresa.services";

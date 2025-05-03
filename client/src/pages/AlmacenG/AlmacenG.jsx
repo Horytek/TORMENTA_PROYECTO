@@ -6,9 +6,9 @@ import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import AlmacenesForm from './AlmacenesForm';
-import { Button, ButtonGroup } from "@nextui-org/button";
+import { Button, ButtonGroup } from "@heroui/button";
 import { usePermisos } from '@/routes';
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/react";
 import BarraSearch from "@/components/Search/Search";
 
 function Almacenes() {

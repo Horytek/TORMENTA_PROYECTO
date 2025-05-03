@@ -11,7 +11,7 @@ import {
   ModalFooter,
   Input,
   Button
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
   const [isOpen, setIsOpen] = useState(true);

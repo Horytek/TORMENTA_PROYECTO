@@ -12,21 +12,22 @@ import { AuthProvider } from "@/context/Auth/AuthProvider";
 // Protected Route
 import { ProtectedRoute } from "./routes";
 
-import { NextUIProvider } from '@nextui-org/react';
+import { HeroUIProvider } from "@heroui/react";
+
 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Router>
       <AuthProvider>
-        <NextUIProvider > 
+        <HeroUIProvider > 
           <Routes>
             <Route path="/" element={<Login />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/*" element={<Dashboard />} />
             </Route>
           </Routes>
-        </NextUIProvider>
+        </HeroUIProvider>
       </AuthProvider>
     </Router>
   </React.StrictMode>,

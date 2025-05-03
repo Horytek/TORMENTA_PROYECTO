@@ -10,7 +10,7 @@ import {
     Select,
     SelectItem,
     Tooltip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { MdDoNotDisturbAlt } from "react-icons/md";
 import FiltroCliente from "./FiltroCliente";

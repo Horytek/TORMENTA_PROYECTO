@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button } from "@nextui-org/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button } from "@heroui/react";
 import DestinatariosForm from './DestinatariosForm';
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";

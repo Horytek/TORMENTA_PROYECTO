@@ -11,7 +11,7 @@ import {
   ModalFooter,
   Input,
   Button
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 export const ModalCategoria = ({ modalTitle, closeModel }) => {
   const [isOpen, setIsOpen] = useState(true);

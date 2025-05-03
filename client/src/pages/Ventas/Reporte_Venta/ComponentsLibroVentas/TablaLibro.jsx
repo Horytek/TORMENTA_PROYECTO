@@ -9,7 +9,7 @@ import {
   Pagination,
   Select,
   SelectItem
-} from "@nextui-org/react";
+} from "@heroui/react";
 import useLibroVentasSunatData from "../Data/getLibroVenta";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "@/api/axios";
 import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
-import { Divider, Tabs, Tab, Spinner } from "@nextui-org/react";
+import { Divider, Tabs, Tab, Spinner } from "@heroui/react";
 import TablaGanancias from "./ComponentsReporte/Overview";
 import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
 import KPIS from "./ComponentsReporte/KPIS";
