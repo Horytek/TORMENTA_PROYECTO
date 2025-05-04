@@ -39,11 +39,11 @@ export function TablaAsignacion() {
     useEffect(() => {
         async function fetchDefaultPages() {
             if (!roles.length) return;
-            
+
             try {
                 setLoading(true);
                 const defaultPagesData = {};
-                
+
                 for (const role of roles) {
                     try {
                         const response = await axios.get(`/rol/pagina-defecto/${role.id_rol}`);
@@ -57,7 +57,7 @@ export function TablaAsignacion() {
                         console.error(`Error fetching default page for role ${role.id_rol}:`, error);
                     }
                 }
-                
+
                 setDefaultPages(defaultPagesData);
             } catch (error) {
                 console.error("Error fetching default pages:", error);
@@ -66,7 +66,7 @@ export function TablaAsignacion() {
                 setLoading(false);
             }
         }
-        
+
         fetchDefaultPages();
     }, [roles]);
 
@@ -103,10 +103,12 @@ export function TablaAsignacion() {
         if (!currentRoleId) return;
 
         const defaultPage = defaultPages[currentRoleId];
+
         if (!defaultPage || !defaultPage.id_modulo) {
             toast.error("Por favor selecciona una página por defecto");
             return;
         }
+
 
         try {
             setSaving(true);
@@ -114,7 +116,7 @@ export function TablaAsignacion() {
                 id_modulo: defaultPage.id_modulo,
                 id_submodulo: defaultPage.id_submodulo || null
             });
-            
+
             if (response.data.code === 1) {
                 toast.success("Página por defecto guardada correctamente");
             } else {
@@ -126,6 +128,15 @@ export function TablaAsignacion() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleDeleteConfig = () => {
+        if (!currentRoleId) return;
+
+        setDefaultPages(prev => ({
+            ...prev,
+            [currentRoleId]: {}
+        }));
     };
 
     const handleDefaultPageChange = (type, id) => {
@@ -140,10 +151,10 @@ export function TablaAsignacion() {
                 }
             }));
         } else if (type === 'submodulo') {
-            const parentModule = modulosConSubmodulos.find(modulo => 
+            const parentModule = modulosConSubmodulos.find(modulo =>
                 modulo.submodulos.some(sub => sub.id_submodulo === id)
             );
-            
+
             if (parentModule) {
                 setDefaultPages(prev => ({
                     ...prev,
@@ -200,6 +211,29 @@ export function TablaAsignacion() {
                         Selecciona la página principal para este rol.
                     </div>
                     <div className="flex gap-2">
+
+                        <Button
+                            size="sm"
+                            variant="flat"
+                            color="success"
+                            onPress={handleDeleteConfig}
+                            tooltip="Restaurar página por defecto"
+                            style={{ fontWeight: "bold" }}
+
+                        >
+                            Restaurar página por defecto
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="flat"
+                            color="danger"
+                            onPress={handleDeleteConfig}
+                            style={{ fontWeight: "bold" }}
+
+                        >
+                            Borrar página inicial   
+                        </Button>
                         <Button
                             size="sm"
                             variant="flat"
@@ -212,8 +246,10 @@ export function TablaAsignacion() {
                         <Button
                             size="sm"
                             variant="flat"
-                            color="default"
+                            color="secondary"
                             onPress={collapseAll}
+                            style={{ fontWeight: "bold" }}
+
                         >
                             Colapsar todo
                         </Button>

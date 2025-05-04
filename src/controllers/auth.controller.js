@@ -67,8 +67,8 @@ const login = async (req, res) => {
                             [rolData[0].id_submodulo]
                         );
                         
-                        if (submoduleData.length > 0 && submoduleData[0].ruta_submodulo) {
-                            defaultRedirect = submoduleData[0].ruta_submodulo;
+                        if (submoduleData.length > 0 && submoduleData[0].ruta) {
+                            defaultRedirect = submoduleData[0].ruta;
                         }
                     }
                 }

@@ -306,8 +306,10 @@ export function TablaPermisos() {
             <Button
               size="sm"
               variant="flat"
-              color="default"
+              color="secondary"
               onPress={collapseAll}
+              style={{ fontWeight: "bold" }}
+
             >
               Colapsar todo
             </Button>
