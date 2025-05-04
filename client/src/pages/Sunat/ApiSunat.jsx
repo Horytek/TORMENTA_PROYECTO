@@ -106,6 +106,7 @@ const ApiSunat = () => {
     setEditingKey(key.id_clave);
     setFormData({
       ...key,
+      valor: getRepresentedValue(key.valor), // Muestra el valor representativo
       estado_clave: key.estado_clave?.toString() ?? "1",
     });
     openModal();
@@ -134,6 +135,11 @@ const ApiSunat = () => {
       estado_clave: "1",
     });
     setEditingKey(null);
+  };
+
+  const getRepresentedValue = (value) => {
+    if (!value) return "••••••••";
+    return value.slice(0, 4) + "••••••••" + value.slice(-2);
   };
 
   return (
@@ -188,15 +194,7 @@ const ApiSunat = () => {
                   <TableCell>{key.tipo}</TableCell>
                   <TableCell>
                     <div className="flex items-center">
-                      {showKeys[key.id_clave] ? key.valor : "••••••••"}
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        onClick={() => toggleShowKey(key.id_clave)}
-                        className="ml-2"
-                      >
-                        {showKeys[key.id_clave] ? <FaEyeSlash /> : <FaEye />}
-                      </Button>
+                      {showKeys[key.id_clave] ? key.valor : getRepresentedValue(key.valor)}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -286,18 +284,21 @@ const ApiSunat = () => {
                     outline: "none",
                   }}
                 />
-                <Textarea
-                  label="Valor"
-                  value={formData.valor}
-                  onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                  placeholder="Ingrese el valor"
-                  style={{
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                  }}
-                />
-                <Select
+                    <Textarea
+                      label="Valor"
+                      value={formData.valor}
+                      onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                      placeholder="Ingrese el valor"
+                      style={{
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none",
+                      }}
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      * Este valor es solo una representación. El valor real está protegido.
+                    </p>              
+                  <Select
                   label="Estado"
                   selectedKeys={formData.estado_clave !== undefined ? [formData.estado_clave.toString()] : []}
                   onSelectionChange={(selected) =>

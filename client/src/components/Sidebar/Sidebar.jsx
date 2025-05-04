@@ -103,7 +103,7 @@ function Sidebar({ onToggle }) {
       ]
     },
     { to: '/desarrollador', icon: <FaCog className="text-xl" />, text: 'Desarrollador' },
-    { to: '/sunat', icon: <BiSolidReport className="text-xl" />, text: 'Sunat' },
+    { to: '/sunat', icon: <BiSolidReport className="text-xl" />, text: 'Inf. Empresas' },
     { to: '/modulos', icon: <FaCog className="text-xl" />, text: 'Modulos' },
   ];
 

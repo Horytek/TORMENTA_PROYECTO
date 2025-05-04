@@ -8,8 +8,9 @@ const getSucursalIdForUser = async (usuario, connection) => {
     `SELECT s.id_sucursal 
      FROM sucursal s 
      INNER JOIN vendedor v ON v.dni = s.dni 
-     INNER JOIN usuario u ON u.id_usuario = v.id_usuario 
-     WHERE u.usua = ?`,
+     INNER JOIN usuario u ON u.id_usuario = v.id_usuario
+     INNER JOIN sucursal_almacen sa ON sa.id_sucursal=s.id_sucursal 
+     WHERE u.usua = ? AND s.estado_sucursal != 0`,
     [usuario]
   );
   if (result.length === 0) {
@@ -33,7 +34,8 @@ const getSucursalInicio = async (req, res) => {
               s.id_sucursal AS id,
               s.nombre_sucursal AS nombre
           FROM sucursal s
-          WHERE s.nombre_sucursal LIKE ?
+          INNER JOIN sucursal_almacen sa ON sa.id_sucursal=s.id_sucursal 
+          WHERE s.nombre_sucursal LIKE ? AND s.estado_sucursal != 0
       `;
 
       const params = [`%${nombre}%`];
