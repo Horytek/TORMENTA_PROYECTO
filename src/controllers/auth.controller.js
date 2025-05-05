@@ -42,35 +42,30 @@ const login = async (req, res) => {
             const userbd = userValid[0];
             
             // Obtener la página por defecto para el rol del usuario
-            let defaultRedirect = '/inicio'; // URL por defecto si no hay configuración
+            let defaultRedirect = '/inicio'; 
             
-            // Consultar la página por defecto configurada para el rol
             const [rolData] = await connection.query(
                 "SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ?",
                 [userbd.id_rol]
             );
             
-            if (rolData.length > 0 && rolData[0].id_modulo) {
-                // Obtener la ruta del módulo
+            if (rolData[0].id_submodulo) {
+                const [submoduleData] = await connection.query(
+                    "SELECT ruta FROM submodulos WHERE id_submodulo = ?",
+                    [rolData[0].id_submodulo]
+                );
+                if (submoduleData.length > 0 && submoduleData[0].ruta) {
+                    defaultRedirect = submoduleData[0].ruta;
+                }
+            }
+
+            if (defaultRedirect === '/inicio' && rolData[0].id_modulo) {
                 const [moduleData] = await connection.query(
                     "SELECT ruta FROM modulo WHERE id_modulo = ?",
                     [rolData[0].id_modulo]
                 );
-                
                 if (moduleData.length > 0 && moduleData[0].ruta) {
                     defaultRedirect = moduleData[0].ruta;
-                    
-                    // Si también hay un submódulo, obtener su ruta
-                    if (rolData[0].id_submodulo) {
-                        const [submoduleData] = await connection.query(
-                            "SELECT ruta FROM submodulos WHERE id_submodulo = ?",
-                            [rolData[0].id_submodulo]
-                        );
-                        
-                        if (submoduleData.length > 0 && submoduleData[0].ruta) {
-                            defaultRedirect = submoduleData[0].ruta;
-                        }
-                    }
                 }
             }
             

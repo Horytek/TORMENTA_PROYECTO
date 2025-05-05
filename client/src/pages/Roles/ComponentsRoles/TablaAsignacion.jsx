@@ -9,7 +9,8 @@ import {
     Button,
     Divider
 } from "@heroui/react";
-import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons/fa";
+
+import { FaUserShield, FaUser, FaChevronDown, FaChevronRight, FaHouseUser } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import useGetRutas from "../data/getRutas";
 import { useRoles } from "../data/rolPermisos";
@@ -139,6 +140,22 @@ export function TablaAsignacion() {
         }));
     };
 
+    const handleRestoreDefaultPage = () => {
+        if (!currentRoleId) return;
+
+        const defaultPage = modulosConSubmodulos.find(modulo => modulo.id === 1);
+
+        if (defaultPage) {
+            setDefaultPages(prev => ({
+                ...prev,
+                [currentRoleId]: {
+                    id_modulo: defaultPage.id,
+                    id_submodulo: null
+                }
+            }));
+        }
+    };
+
     const handleDefaultPageChange = (type, id) => {
         if (!currentRoleId) return;
 
@@ -204,19 +221,35 @@ export function TablaAsignacion() {
         const currentModuleId = currentDefault.id_modulo;
         const currentSubmoduleId = currentDefault.id_submodulo;
 
+        let currentRoute = "";
+        if (currentSubmoduleId) {
+            const parent = modulosConSubmodulos.find(m =>
+                m.submodulos.some(s => s.id_submodulo === currentSubmoduleId)
+            );
+            const sub = parent?.submodulos.find(s => s.id_submodulo === currentSubmoduleId);
+            currentRoute = sub?.ruta_submodulo || "";
+        } else if (currentModuleId) {
+            const mod = modulosConSubmodulos.find(m => m.id === currentModuleId);
+            currentRoute = mod?.ruta || "";
+        }
+
         return (
             <>
                 <div className="flex justify-between items-center mb-4">
+
                     <div className="text-sm text-gray-500">
                         Selecciona la página principal para este rol.
+
                     </div>
+
+
                     <div className="flex gap-2">
 
                         <Button
                             size="sm"
                             variant="flat"
                             color="success"
-                            onPress={handleDeleteConfig}
+                            onPress={handleRestoreDefaultPage}
                             tooltip="Restaurar página por defecto"
                             style={{ fontWeight: "bold" }}
 
@@ -224,7 +257,7 @@ export function TablaAsignacion() {
                             Restaurar página por defecto
                         </Button>
 
-                        <Button
+                        {/* <Button
                             size="sm"
                             variant="flat"
                             color="danger"
@@ -232,8 +265,8 @@ export function TablaAsignacion() {
                             style={{ fontWeight: "bold" }}
 
                         >
-                            Borrar página inicial   
-                        </Button>
+                            Desmarcar página seleccionada
+                        </Button> */}
                         <Button
                             size="sm"
                             variant="flat"
@@ -256,6 +289,13 @@ export function TablaAsignacion() {
                     </div>
                 </div>
 
+                <Divider className="mb-4" />
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="text-blue-600 font-bold">Página actual de inicio:</span>
+                    <FaHouseUser className="text-green-600" />
+                    <span className="text-gray-700 font-semibold">({currentRoute})</span>
+                </div>
+
                 <div className="space-y-5">
                     {modulosConSubmodulos.map((modulo) => (
                         <Card
@@ -274,8 +314,12 @@ export function TablaAsignacion() {
                                                 <FaChevronDown className="text-gray-600" /> :
                                                 <FaChevronRight className="text-gray-600" />
                                         ) : <div className="w-4" />}
-
-                                        <span className="font-semibold text-gray-800 text-lg">{modulo.nombre}</span>
+                                        <span className="font-semibold text-gray-800 text-lg">
+                                            {modulo.nombre}
+                                            {modulo.id === 1 && (
+                                                <span className="ml-2 text-primary-600  text-xs font-extrabold">(Página por defecto)</span>
+                                            )}
+                                        </span>
                                         {modulo.ruta && (
                                             <span className="text-xs text-gray-500 ml-2">({modulo.ruta})</span>
                                         )}

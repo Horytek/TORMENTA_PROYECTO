@@ -61,22 +61,13 @@ const guardarPaginaPorDefecto = async (req, res) => {
 
         const [result] = await connection.query(`
             UPDATE rol 
-            SET id_modulo = ?
+            SET id_modulo = ? , 
+            id_submodulo = ? 
             WHERE id_rol = ?
         `, [id_modulo, id_submodulo || null, id_rol]);
 
-        const [resultSubmodulo] = await connection.query(`
-            UPDATE rol
-            SET id_submodulo = ?
-            WHERE id_rol = ?
-        `, [id_submodulo || null, id_rol]);
-
-
+        
         if (result.affectedRows === 0) {
-            return res.status(404).json({ code: 0, message: "No se encontró el rol o no se actualizó" });
-        }
-
-        if (resultSubmodulo.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "No se encontró el rol o no se actualizó" });
         }
 
@@ -91,6 +82,8 @@ const guardarPaginaPorDefecto = async (req, res) => {
         }
     }
 };
+
+
 
 
 
