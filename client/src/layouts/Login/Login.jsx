@@ -64,7 +64,7 @@ function Login() {
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Lado izquierdo (Branding) */}
       <div className={`hidden md:flex items-center justify-center w-1/2 bg-gradient-to-br from-primary to-secondary transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="p-12 text-center text-wahite">
+        <div className="p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-6">Una plataforma para administrar todo su negocio</h2>
           <div className="grid grid-cols-2 gap-6 mt-10">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">

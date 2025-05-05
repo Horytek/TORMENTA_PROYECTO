@@ -9,6 +9,8 @@ import {
   Button,
   Divider
 } from "@heroui/react";
+import { MdPlaylistRemove } from "react-icons/md";
+import { RiCollapseDiagonal2Line, RiExpandDiagonalLine, RiPlayListAddFill } from "react-icons/ri";
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import useGetRutas from "../data/getRutas";
@@ -67,7 +69,7 @@ export function TablaPermisos() {
       if (permisos && permisos.length > 0) {
         permisos.forEach(permiso => {
           if (permiso.id_submodulo) {
-            rolePermisos[`submodulo_${permiso.id_submodulo}`] = { 
+            rolePermisos[`submodulo_${permiso.id_submodulo}`] = {
               ver: !!permiso.ver,
               crear: !!permiso.crear,
               editar: !!permiso.editar,
@@ -190,9 +192,9 @@ export function TablaPermisos() {
 
   const handleAddAllPermissions = () => {
     if (!currentRoleId) return;
-    
+
     const allPermissions = {};
-    
+
     modulosConSubmodulos.forEach(modulo => {
       // Add all permissions for the module
       allPermissions[`modulo_${modulo.id}`] = {
@@ -203,7 +205,7 @@ export function TablaPermisos() {
         desactivar: true,
         generar: true
       };
-      
+
       // Add all permissions for submodules
       if (modulo.submodulos && modulo.submodulos.length > 0) {
         modulo.submodulos.forEach(submodulo => {
@@ -218,7 +220,7 @@ export function TablaPermisos() {
         });
       }
     });
-    
+
     setPermisosData(prev => ({
       ...prev,
       [currentRoleId]: allPermissions
@@ -227,7 +229,7 @@ export function TablaPermisos() {
 
   const handleDeleteAllPermissions = () => {
     if (!currentRoleId) return;
-    
+
     setPermisosData(prev => ({
       ...prev,
       [currentRoleId]: {}
@@ -272,8 +274,11 @@ export function TablaPermisos() {
     return (
       <>
         <div className="flex justify-between items-center mb-4">
-          <div className="text-sm text-gray-500">
-            {modulosConSubmodulos.length} módulos disponibles
+          <div>
+            <div className="text-sm text-gray-500">
+              {modulosConSubmodulos.length} módulos disponibles
+            </div>
+
           </div>
           <div className="flex gap-2">
             <Button
@@ -281,8 +286,9 @@ export function TablaPermisos() {
               variant="flat"
               color="success"
               onPress={handleAddAllPermissions}
-              style={{ fontWeight: "bold" }}
             >
+              <RiPlayListAddFill className="text-green-700" size={20} />
+
               Agregar todos los permisos
             </Button>
             <Button
@@ -290,8 +296,9 @@ export function TablaPermisos() {
               variant="flat"
               color="danger"
               onPress={handleDeleteAllPermissions}
-              style={{ fontWeight: "bold" }}
             >
+              <MdPlaylistRemove className="text-red-700" size={20} />
+
               Quitar todos los permisos
             </Button>
             <Button
@@ -299,8 +306,8 @@ export function TablaPermisos() {
               variant="flat"
               color="primary"
               onPress={expandAll}
-              style={{ fontWeight: "bold" }}
             >
+              <RiExpandDiagonalLine className="text-blue-700" size={20} />
               Expandir todo
             </Button>
             <Button
@@ -308,12 +315,17 @@ export function TablaPermisos() {
               variant="flat"
               color="secondary"
               onPress={collapseAll}
-              style={{ fontWeight: "bold" }}
 
             >
+              <RiCollapseDiagonal2Line className="text-purple-700" size={20} />
               Colapsar todo
             </Button>
           </div>
+        </div>
+
+        <Divider className="mb-3" />
+        <div className="text-sm text-gray-400 mb-6">
+          Recuerda guardar los cambios después de modificar los permisos.
         </div>
 
         <div className="space-y-5">
@@ -511,7 +523,7 @@ export function TablaPermisos() {
         <CardHeader>
         </CardHeader>
         <CardBody>
-        <Tabs
+          <Tabs
             aria-label="Roles"
             selectedKey={selectedTab}
             onSelectionChange={setSelectedTab}

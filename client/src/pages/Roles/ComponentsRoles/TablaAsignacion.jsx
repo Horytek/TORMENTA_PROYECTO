@@ -10,6 +10,8 @@ import {
     Divider
 } from "@heroui/react";
 
+import { MdOutlineRestore } from "react-icons/md";
+import { RiCollapseDiagonal2Line, RiExpandDiagonalLine } from "react-icons/ri";
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight, FaHouseUser } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import useGetRutas from "../data/getRutas";
@@ -251,9 +253,10 @@ export function TablaAsignacion() {
                             color="success"
                             onPress={handleRestoreDefaultPage}
                             tooltip="Restaurar página por defecto"
-                            style={{ fontWeight: "bold" }}
 
                         >
+                            <MdOutlineRestore className="text-green-700" size={20} />
+
                             Restaurar página por defecto
                         </Button>
 
@@ -272,8 +275,9 @@ export function TablaAsignacion() {
                             variant="flat"
                             color="primary"
                             onPress={expandAll}
-                            style={{ fontWeight: "bold" }}
                         >
+                            <RiExpandDiagonalLine className="text-blue-700" size={20} />
+
                             Expandir todo
                         </Button>
                         <Button
@@ -281,9 +285,10 @@ export function TablaAsignacion() {
                             variant="flat"
                             color="secondary"
                             onPress={collapseAll}
-                            style={{ fontWeight: "bold" }}
 
                         >
+                            <RiCollapseDiagonal2Line className="text-purple-700" size={20} />
+
                             Colapsar todo
                         </Button>
                     </div>

@@ -14,7 +14,7 @@ import {
 } from "@heroui/react";
 import { FaFileExcel } from "react-icons/fa";
 
-const ExcelIcon = ({ size = 20, color = "green", ...props }) => {
+const ExcelIcon = ({ size = 20, color = "white", ...props }) => {
   return <FaFileExcel size={size} color={color} {...props} />;
 };
 
@@ -108,8 +108,9 @@ const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
     <>
       <Button
         color="success"
-        startContent={<ExcelIcon />}
+        endContent={<ExcelIcon />}
         onPress={onOpen}
+        className="text-white"
         {...props}
       >
         {buttonText}
