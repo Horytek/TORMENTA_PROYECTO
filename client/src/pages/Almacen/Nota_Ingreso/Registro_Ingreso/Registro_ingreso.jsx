@@ -17,6 +17,8 @@ import useSinStockProductosData from './data/data_buscar_producto_s';
 import insertNotaAndDetalle from '../data/add_nota';
 import { Toaster, toast } from "react-hot-toast";
 import ConfirmationModal from '../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+import { Button, Input, Select, SelectItem, Textarea } from "@heroui/react";
+
 
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
@@ -229,186 +231,178 @@ function Registro_Ingresos() {
   const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
   
   return (
-    <div>
-      <Breadcrumb paths={[
-        { name: 'Inicio', href: '/inicio' },
-        { name: 'Almacén', href: '/almacen' },
-        { name: 'Nota de ingreso', href: '/almacen/nota_ingreso' },
-        { name: 'Nueva nota de ingreso', href: '/almacen/nota_ingreso/registro_ingreso' }
-      ]} />
+    <div className="space-y-6">
+      <Breadcrumb
+        paths={[
+          { name: 'Inicio', href: '/inicio' },
+          { name: 'Almacén', href: '/almacen' },
+          { name: 'Nota de ingreso', href: '/almacen/nota_ingreso' },
+          { name: 'Nueva nota de ingreso', href: '/almacen/nota_ingreso/registro_ingreso' },
+        ]}
+      />
       <hr className="mb-4" />
-      <div className="flex justify-between mt-5 mb-4">
-        <h1 className="text-3xl font-bold">
-          Nota de ingreso
-        </h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Nota de ingreso</h1>
       </div>
-      <div className="bg-gray-200 p-5 rounded-lg">
-        <form className="flex rounded-lg">
+      <div className="bg-gray-200 p-6 rounded-lg shadow-md">
+        <form className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Toaster />
-          <div className="flex flex-col w-1/2">
+          {/* Columna izquierda */}
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_origen">
-                  Almacén origen:
-                </label>
-                <select 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 w-full'
-                  id="almacen_origen"
-                  onChange={(e) => setAlmacenOrigen(e.target.value)}  
-                  disabled={productosSeleccionados.length > 0}
-                >
-                  <option value="">Seleccionar</option>
-                  {almacenes.map(almacen => (
-                    <option key={almacen.id} value={almacen.id}>{almacen.almacen}</option>
-                  ))}
-                </select>
-                {productosSeleccionados.length > 0 && (
-                  <p className="font-bold text-red-500 text-sm mt-1">
-                    *Para cambiar vacíe los productos.
-                  </p>
-                )}
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="almacen_destino">
-                  Almacén destino:
-                </label>
-                <select className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 w-full" id="almacen_destino">
-                  <option value="">Seleccionar</option>
-                  {almacenesFiltrados.map((almacen) => (
-                    <option key={almacen.id} value={almacen.id}>
-                      {almacen.almacen}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destinatario">
-                  Proveedor:
-                </label>
-                <select 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 w-full'
-                  id="destinatario"
-                  onChange={(e) => {
-                    const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
-                    document.getElementById('ruc').value = selected ? selected.documento : '';
-                  }}
-                >
-                  <option value="">Seleccionar</option>
-                  {destinatarios.map(destinatario => (
-                    <option key={destinatario.id} value={destinatario.id}>{destinatario.destinatario}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="ruc">
-                  RUC:
-                </label>
-                <input 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full' 
-                  id="ruc" 
-                  type="text" 
-                  readOnly
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="nomnota">
-                  Nombre de nota:
-                </label>
-                <input 
-                  className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full' 
-                  id="nomnota" 
-                  type="text" 
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="fechaDocu">
-                  Fecha Docu:
-                </label>
-                <input 
-                  type="date" 
-                  className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full"
-                  id="fechaDocu" 
-                  defaultValue={formattedDate}
-                />
-              </div>
-            </div>
-            <div className="flex justify-start mt-4 space-x-2">
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={openModalProovedor}>
-                <MdPersonAdd className="inline-block mr-2 text-lg" /> Nuevo destinatario
-              </button>
-              <button 
-                className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" 
-                type="button" 
-                onClick={openModalBuscarProducto}
+              <Select
+                label="Almacén origen"
+                placeholder="Seleccionar"
+                id="almacen_origen"
+                isDisabled={productosSeleccionados.length > 0}
+                onChange={(e) => setAlmacenOrigen(e.target.value)}
               >
-                <FaBarcode className="inline-block mr-2" /> Buscar producto
-              </button>
-              <Link to="/almacen/nota_ingreso">
-                <button 
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" 
-                  type="button" 
-                  onClick={handleCancel}
-                >
-                  <MdCancelPresentation className="inline-block mr-2"  /> Cancelar
-                </button>
-              </Link>
-              <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={handleGuardar}>
-                <FiSave className="inline-block mr-2 text-lg" /> Guardar
-              </button>
-            </div>
-          </div>
-          <div className="ml-4 flex flex-col w-1/2">
-            <div className="mb-8">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numero">
-                Número:
-              </label>
-              <input 
-                className='border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-5 p-3 w-full' 
-                id="numero" 
-                type="text" 
-                value={currentDocumento} 
-                readOnly
-              />
-            </div>
-            <div className="mb-8">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="glosa">
-                Glosa:
-              </label>
-              <select className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 w-full" id="glosa">
-                {glosaOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
+                {almacenes.map((almacen) => (
+                  <SelectItem key={almacen.id} value={almacen.id}>
+                    {almacen.almacen}
+                  </SelectItem>
                 ))}
-              </select>
+              </Select>
+              <Select
+                label="Almacén destino"
+                placeholder="Seleccionar"
+                id="almacen_destino"
+              >
+                {almacenesFiltrados.map((almacen) => (
+                  <SelectItem key={almacen.id} value={almacen.id}>
+                    {almacen.almacen}
+                  </SelectItem>
+                ))}
+              </Select>
             </div>
-            <div className="flex-1">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="observacion">
-                Observación:
-              </label>
-              <textarea className="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full h-full" id="observacion"></textarea>
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="Proveedor"
+                placeholder="Seleccionar"
+                id="destinatario"
+                onChange={(e) => {
+                  const selected = destinatarios.find(
+                    (d) => d.id === parseInt(e.target.value)
+                  );
+                  document.getElementById('ruc').value = selected
+                    ? selected.documento
+                    : '';
+                }}
+              >
+                {destinatarios.map((destinatario) => (
+                  <SelectItem key={destinatario.id} value={destinatario.id}>
+                    {destinatario.destinatario}
+                  </SelectItem>
+                ))}
+              </Select>
+              <Input label="RUC" id="ruc" isReadOnly />
             </div>
+            <Input label="Nombre de nota" id="nomnota" />
+          </div>
+  
+          {/* Columna derecha */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <Input
+                label="Fecha Documento"
+                id="fechaDocu"
+                type="date"
+                defaultValue={formattedDate}
+                style={{
+                  border: "none",
+                  boxShadow: "none",
+                  outline: "none",
+                }}
+              />
+              <Input
+                label="Número"
+                id="numero"
+                value={currentDocumento}
+                isReadOnly
+              />
+              <Select label="Glosa" id="glosa">
+                {glosaOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </Select>
+            </div>
+            <Textarea
+              label="Observación"
+              id="observacion"
+              style={{
+                border: "none",
+                boxShadow: "none",
+                outline: "none",
+                padding: "0.8rem",
+              }}
+            />
           </div>
         </form>
-        <div>
-          <br />
-          <br />
-          <RegistroTablaIngreso ingresos={productosSeleccionados} setProductosSeleccionados={setProductosSeleccionados} />
+  
+        {/* Botones de acción */}
+        <div className="flex justify-start mt-6 space-x-4">
+          <Button
+            color="primary"
+            onPress={openModalProovedor}
+            startContent={<MdPersonAdd />}
+          >
+            Nuevo destinatario
+          </Button>
+          <Button
+            color="warning"
+            onPress={openModalBuscarProducto}
+            startContent={<FaBarcode />}
+          >
+            Buscar producto
+          </Button>
+          <Link to="/almacen/nota_ingreso">
+            <Button
+              color="danger"
+              onPress={handleCancel}
+              startContent={<MdCancelPresentation />}
+            >
+              Cancelar
+            </Button>
+          </Link>
+          <Button
+            color="success"
+            onPress={handleGuardar}
+            startContent={<FiSave />}
+          >
+            Guardar
+          </Button>
         </div>
       </div>
-      <ModalBuscarProducto 
-        isOpen={isModalOpen} 
-        onClose={closeModalBuscarProducto} 
-        onBuscar={handleBuscarProducto} 
+  
+      {/* Tabla de productos seleccionados */}
+      <div className="mt-6">
+        <RegistroTablaIngreso
+          ingresos={productosSeleccionados}
+          setProductosSeleccionados={setProductosSeleccionados}
+        />
+      </div>
+  
+      {/* Modales */}
+      <ModalBuscarProducto
+        isOpen={isModalOpen}
+        onClose={closeModalBuscarProducto}
+        onBuscar={handleBuscarProducto}
         setSearchInput={setSearchInput}
         productos={productos}
         agregarProducto={agregarProducto}
         setCodigoBarras={setCodigoBarras}
-        hideStock={!almacenOrigen} 
+        hideStock={!almacenOrigen}
       />
-
       {isModalOpenProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
       )}
-      <AgregarProovedor isOpen={isModalOpenProovedor} onClose={closeModalProovedor} titulo={'proovedor'} />
+      <AgregarProovedor
+        isOpen={isModalOpenProovedor}
+        onClose={closeModalProovedor}
+        titulo={'proovedor'}
+      />
       {isModalOpenGuardar && (
         <ConfirmationModal
           message={confirmationMessage}

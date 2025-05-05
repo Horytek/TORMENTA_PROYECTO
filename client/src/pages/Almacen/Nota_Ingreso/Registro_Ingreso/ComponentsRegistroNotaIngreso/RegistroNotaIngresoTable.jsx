@@ -2,6 +2,8 @@ import React from 'react';
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaTrash } from 'react-icons/fa';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, 
+  CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 const RegistroTablaIngreso = ({ ingresos, setProductosSeleccionados }) => {
   const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
@@ -41,25 +43,40 @@ const RegistroTablaIngreso = ({ ingresos, setProductosSeleccionados }) => {
   );
 
   return (
-    <div className="container-table-reg px-4 bg-white rounded-lg">
-      <table className="table w-full">
-        <thead>
-          <tr>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CÓDIGO</th>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">MARCA</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ingresos.map(renderEntradaRow)}
-        </tbody>
-      </table>
+    <div className="container-table-reg px-4 bg-white rounded-lg shadow-md">
+      <Table aria-label="Tabla de ingresos" className="w-full">
+        <TableHeader>
+          <TableColumn className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CÓDIGO</TableColumn>
+          <TableColumn className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</TableColumn>
+          <TableColumn className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">MARCA</TableColumn>
+          <TableColumn className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</TableColumn>
+          <TableColumn className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {ingresos.map((ingreso) => (
+            <TableRow key={ingreso.codigo}>
+              <TableCell className="text-center">{ingreso.codigo}</TableCell>
+              <TableCell className="text-center">{ingreso.descripcion}</TableCell>
+              <TableCell className="text-center">{ingreso.marca}</TableCell>
+              <TableCell className="text-center">{ingreso.cantidad}</TableCell>
+              <TableCell className="text-center">
+                <Button
+                  isIconOnly
+                  variant="light"
+                  color="danger"
+                  onPress={() => openModalEliminar(ingreso)}
+                >
+                  <FaTrash className="w-4 h-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
       {isModalOpenEliminar && (
-        <ConfirmationModal 
-          message='¿Desea eliminar este producto?' 
-          onClose={closeModalEliminar} 
+        <ConfirmationModal
+          message="¿Desea eliminar este producto?"
+          onClose={closeModalEliminar}
           isOpen={isModalOpenEliminar}
           onConfirm={handleConfirmEliminar}
         />
