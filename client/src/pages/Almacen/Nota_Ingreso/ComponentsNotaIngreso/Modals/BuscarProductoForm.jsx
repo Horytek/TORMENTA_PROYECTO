@@ -71,9 +71,6 @@ const ModalBuscarProducto = ({
         <ModalHeader>
           <div className="flex justify-between items-center w-full">
             <h2 className="text-xl font-bold">Buscar producto</h2>
-            <Button isIconOnly variant="light" color="danger" onPress={onClose}>
-              <RiCloseLargeLine className="text-2xl" />
-            </Button>
           </div>
         </ModalHeader>
 

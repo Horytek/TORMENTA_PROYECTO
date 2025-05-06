@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaTrash } from 'react-icons/fa6';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button } from '@heroui/react';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+
 const NuevaTablaSalida = ({ salidas, setProductosSeleccionados }) => {
   const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
-  
+
   const openModalEliminar = (producto) => {
     setProductoAEliminar(producto);
     setIsModalOpenEliminar(true);
@@ -25,40 +27,41 @@ const NuevaTablaSalida = ({ salidas, setProductosSeleccionados }) => {
     closeModalEliminar();
   };
 
-  const renderEntradaRow = (salida) => (
-    <tr key={salida.codigo} className='tr-tabla-nuevoingreso'>
-      <td className="text-center">{salida.codigo}</td>
-      <td className="text-center">{salida.descripcion}</td>
-      <td className="text-center">{salida.marca}</td>
-      <td className="text-center">{salida.cantidad}</td>
-      <td className="text-center">
-        <button onClick={() => openModalEliminar(salida)}>
-          <FaTrash className="w-4 h-4 text-red-500" />
-        </button>
-      </td>
-    </tr>
-  );
-
   return (
-    <div className="container-table-reg px-4 bg-white rounded-lg">
-      <table className="table w-full">
-        <thead>
-          <tr>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CÓDIGO</th>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">DESCRIPCIÓN</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">MARCA</th>
-            <th className="w-1/6 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CANTIDAD</th>
-            <th className="w-1/1 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">ACCIÓN</th>
-          </tr>
-        </thead>
-        <tbody>
-          {salidas.map(renderEntradaRow)}
-        </tbody>
-      </table>
+    <div className="p-4 bg-white rounded-lg shadow-md">
+      <Table aria-label="Tabla de productos seleccionados" className="w-full">
+        <TableHeader>
+          <TableColumn className="text-center">CÓDIGO</TableColumn>
+          <TableColumn className="text-center">DESCRIPCIÓN</TableColumn>
+          <TableColumn className="text-center">MARCA</TableColumn>
+          <TableColumn className="text-center">CANTIDAD</TableColumn>
+          <TableColumn className="text-center">ACCIÓN</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {salidas.map((salida) => (
+            <TableRow key={salida.codigo}>
+              <TableCell className="text-center">{salida.codigo}</TableCell>
+              <TableCell className="text-center">{salida.descripcion}</TableCell>
+              <TableCell className="text-center">{salida.marca}</TableCell>
+              <TableCell className="text-center">{salida.cantidad}</TableCell>
+              <TableCell className="text-center">
+                <Button
+                  color="danger"
+                  isIconOnly
+                  size="sm"
+                  onPress={() => openModalEliminar(salida)}
+                >
+                  <FaTrash />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
       {isModalOpenEliminar && (
-        <ConfirmationModal 
-          message='¿Desea eliminar este producto?' 
-          onClose={closeModalEliminar} 
+        <ConfirmationModal
+          message="¿Desea eliminar este producto?"
+          onClose={closeModalEliminar}
           isOpen={isModalOpenEliminar}
           onConfirm={handleConfirmEliminar}
         />

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ModalBuscarProducto from './ComponentsNuevaNotaSalida/BuscarProductoForm';
-import { MdPersonAdd } from "react-icons/md";
-import { Toaster, toast } from "react-hot-toast";
+import ProductosModal from '@/pages/Productos/ProductosForm';
 import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
-import { MdCancelPresentation } from "react-icons/md";
-import ProductosModal from '@/pages/Productos/ProductosForm';
+import { MdPersonAdd, MdCancelPresentation } from "react-icons/md";
 import AgregarProovedor from '../ComponentsNotaSalida/Modals/AgregarProovedor';
 import NuevaTablaSalida from './ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
 import useProductosData from './data/data_buscar_producto';
@@ -16,6 +14,8 @@ import useDocumentoData from '../data/data_documento_salida';
 import useAlmacenData from '../data/data_almacen_salida';
 import ConfirmationModal from './../ComponentsNotaSalida/Modals/ConfirmationModal';
 import insertNotaAndDetalle from '../data/insert_nota_salida';
+import { Toaster, toast } from "react-hot-toast";
+import { Button, Input, Select, SelectItem, Textarea } from "@heroui/react";
 
 const glosaOptions = [
   "VENTA DE PRODUCTOS", "VENTA AL EXTERIOR", "CONSIGNACION CLIENTE",
@@ -40,154 +40,16 @@ function NuevaSalidas() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  useEffect(() => {
-    let barcodeInput = '';
-    const handleGlobalKeyPress = (e) => {
-      if (e.key === 'Enter' && e.target.value.trim() !== '') {
-        barcodeInput += e.key;
-        if (e.key === 'Enter') {
-          setCodigoBarras(barcodeInput.trim());
-          barcodeInput = '';
-        }
-      } else {
-        barcodeInput = '';
-      }
-    };
-    document.addEventListener('keydown', handleGlobalKeyPress);
-    return () => {
-      document.removeEventListener('keydown', handleGlobalKeyPress);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (codigoBarras !== '') {
-      handleBuscarProducto();
-    }
-  }, [codigoBarras]);
-
   const { almacenes } = useAlmacenData();
-  const { documentos } = useDocumentoData();
-  const [currentDocumento, setCurrentDocumento] = useState('');
-  const [almacenOrigen, setalmacenOrigen] = useState(() => {
-    const savedAlmacen = localStorage.getItem('almacen');
-    return savedAlmacen ? parseInt(savedAlmacen) : '';
-  });
   const { destinatarios } = useDestinatarioData();
+  const { documentos } = useDocumentoData();
 
-  const [usuario, setUsuario] = useState(() => {
-    const savedUsuario = localStorage.getItem('usuario');
-    return savedUsuario ? savedUsuario : '';
-  });
-
-  const sucursalSeleccionada = localStorage.getItem('sur');
-  const rolUsuario = localStorage.getItem('rol');
-
-  // Filtrar almacenes según la sucursal seleccionada si el rol es diferente de 1
-  const almacenesFiltrados =
-    rolUsuario !== '1'
-      ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
-      : almacenes;
-
-  useEffect(() => {
-    localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
-  }, [productosSeleccionados]);
-
-  useEffect(() => {
-    if (almacenOrigen !== '') {
-      localStorage.setItem('almacen', almacenOrigen.toString());
-    }
-  }, [almacenOrigen]);
-
-  useEffect(() => {
-    if (documentos.length > 0) {
-      setCurrentDocumento(documentos[0].nota);
-    }
-  }, [documentos]);
-
-  useEffect(() => {
-    if (isModalOpen && almacenOrigen) {
-      handleBuscarProducto();
-    }
-  }, [isModalOpen, almacenOrigen]);
-
-  const openModalBuscarProducto = () => {
-    if (almacenOrigen) {
-      setIsModalOpen(true);
-      handleBuscarProducto();
-    } else {
-      toast.error('Por favor seleccione un almacén de origen primero.');
-    }
-  };
-  const closeModalBuscarProducto = () => setIsModalOpen(false);
-
-  const openModalOpenGuardar = () => {
-    const almacenDestino = document.getElementById('almacen_destino').value;
-    if (almacenDestino) {
-      setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
-    } else {
-      setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
-    }
-    setisModalOpenGuardar(true);
-  };
-
-  const closeModalOpenGuardar = () => {
-    setisModalOpenGuardar(false);
-  };
-  const closeModalProducto = () => {
-    setIsModalOpenProducto(false);
-  };
-
-  const handleConfirmGuardar = async () => {
-    closeModalOpenGuardar();
-    await handleGuardarAction();
-  };
-
-  const handleGuardarAction = async () => {
-    const almacenO = document.getElementById('almacen_origen').value;
-    const almacenD = document.getElementById('almacen_destino').value || null;
-    const destinatario = document.getElementById('destinatario').value;
-    const glosa = document.getElementById('glosa').value;
-    const fecha = document.getElementById('fechaDocu').value;
-    const nota = document.getElementById('nomnota').value;
-    const numComprobante = document.getElementById('numero').value;
-    const observacion = document.getElementById('observacion').value;
-    const nom_usuario = usuario;
-    const productos = productosSeleccionados.map(producto => ({
-      id: producto.codigo,
-      cantidad: producto.cantidad
-    }));
-    const data = {
-      almacenO,
-      almacenD,
-      destinatario,
-      glosa,
-      nota,
-      fecha,
-      producto: productos.map(p => p.id),
-      numComprobante,
-      cantidad: productos.map(p => p.cantidad),
-      observacion,
-      nom_usuario
-    };
-    const result = await insertNotaAndDetalle(data);
-    if (result.success) {
-      toast.success('Nota y detalle insertados correctamente.');
-      handleCancel();
-      window.location.reload();
-    } else {
-      toast.error('Error inesperado, intente nuevamente.');
-    }
-  };
-
-  const openModalProovedor = () => {
-    setIsModalOpenProovedor(true);
-  };
-  const closeModalProovedor = () => {
-    setIsModalOpenProovedor(false);
-  };
+  const [almacenOrigen, setAlmacenOrigen] = useState('');
+  const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
+  const currentDate = new Date().toISOString().split('T')[0];
 
   const handleBuscarProducto = async () => {
-    const almacenId = almacenOrigen || 1;
+    const almacenId = almacenOrigen || '';
     const filters = {
       descripcion: searchInput,
       almacen: almacenId,
@@ -197,350 +59,285 @@ function NuevaSalidas() {
     setProductos(result.productos);
   };
 
-  const handleCancel = () => {
-    localStorage.removeItem('productosSeleccionados');
-    setProductosSeleccionados([]);
-  };
+  const handleGuardarAction = async () => {
+    try {
+      const almacenO = document.getElementById('almacen_origen').value || "";
+      const almacenD = document.getElementById('almacen_destino').value;
+      const destinatario = document.getElementById('destinatario').value;
+      const glosa = document.getElementById('glosa').value;
+      const fecha = document.getElementById('fechaDocu').value;
+      const nota = document.getElementById('nomnota').value;
+      const numComprobante = document.getElementById('numero').value;
+      const observacion = document.getElementById('observacion').value;
+      const usuario = localStorage.getItem('usuario');
 
-  const agregarProducto = (producto, cantidad) => {
-    setProductosSeleccionados((prevProductos) => {
-      const cantidadExistente = prevProductos
-        .filter(p => p.codigo === producto.codigo)
-        .reduce((total, p) => total + p.cantidad, 0);
-      const cantidadTotal = cantidadExistente + cantidad;
-      if (cantidadTotal > producto.stock) {
-        const maxCantidad = producto.stock - cantidadExistente;
-        if (maxCantidad > 0) {
-          toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Se puedes poner ${maxCantidad}`);
-        }
-        toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
-        return prevProductos;
+      if (!usuario) {
+        toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
+        return;
       }
-      const productoExistente = prevProductos.find(p => p.codigo === producto.codigo);
-      if (productoExistente) {
-        return prevProductos.map(p =>
-          p.codigo === producto.codigo ? { ...p, cantidad: p.cantidad + cantidad } : p
-        );
+
+      const productos = productosSeleccionados.map(producto => ({
+        id: producto.codigo,
+        cantidad: producto.cantidad
+      }));
+
+      const data = {
+        almacenO,
+        almacenD,
+        destinatario,
+        glosa,
+        nota,
+        fecha,
+        producto: productos.map(p => p.id),
+        numComprobante,
+        cantidad: productos.map(p => p.cantidad),
+        observacion,
+        usuario
+      };
+
+      const result = await insertNotaAndDetalle(data);
+
+      if (result.success) {
+        toast.success('Nota y detalle insertados correctamente.');
+        handleCancel();
+        window.location.reload();
       } else {
-        return [...prevProductos, { ...producto, cantidad }];
+        throw new Error('Error inesperado en la inserción de la nota.');
       }
-    });
-    closeModalBuscarProducto();
+    } catch (error) {
+      console.error('Error en handleGuardarAction:', error);
+      toast.error(`Error inesperado: ${error.message}`);
+    }
   };
 
   const handleGuardar = async () => {
-    const almacenO = document.getElementById('almacen_origen').value;
-    const almacenD = document.getElementById('almacen_destino').value || null;
+    const almacenD = document.getElementById('almacen_destino').value;
     const destinatario = document.getElementById('destinatario').value;
     const glosa = document.getElementById('glosa').value;
     const fecha = document.getElementById('fechaDocu').value;
     const nota = document.getElementById('nomnota').value;
     const numComprobante = document.getElementById('numero').value;
 
-    if (almacenO == almacenD) {
-      toast.error('El almacen de origen y de destino no pueden ser el mismo.');
-      return;
-    }
-    if (!almacenO || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
+    if (!almacenD || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
       toast.error('Por favor complete todos los campos.');
       return;
     }
+
     if (productosSeleccionados.length === 0) {
       toast.error('Debe agregar al menos un producto.');
       return;
     }
+
     let stockExcedido = false;
     productosSeleccionados.forEach(producto => {
       if (producto.cantidad > producto.stock) {
         stockExcedido = true;
       }
     });
+
     if (stockExcedido) {
       toast.error('La cantidad de algunos productos excede el stock disponible.');
       return;
     }
-    const almacenDestino = document.getElementById('almacen_destino').value;
-    if (almacenDestino) {
-      setConfirmationMessage('¿Desea guardar esta nueva nota de ingreso?');
-    } else {
-      setConfirmationMessage('No hay un almacén de destino, ¿Desea guardar de todas formas?');
-    }
-    openModalOpenGuardar();
+
+    setConfirmationMessage('¿Desea guardar esta nueva nota de salida?');
+    setisModalOpenGuardar(true);
   };
 
-  const currentDate = new Date().toISOString().split('T')[0];
+  const handleCancel = () => {
+    localStorage.removeItem('productosSeleccionados');
+    setProductosSeleccionados([]);
+  };
 
   return (
-    <div>
+    <div className="space-y-6">
       <Breadcrumb
         paths={[
           { name: 'Inicio', href: '/inicio' },
           { name: 'Almacén', href: '/almacen' },
           { name: 'Nota de salida', href: '/almacen/nota_salida' },
-          { name: 'Nueva nota de salida', href: '/almacen/nota_salida/nueva_nota_salida' }
+          { name: 'Nueva nota de salida', href: '/almacen/nota_salida/nueva_nota_salida' },
         ]}
       />
       <hr className="mb-4" />
-
-      <div className="flex justify-between mt-5 mb-4">
-        <h1 className="text-4xl font-bold">Nota de salida</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Nota de salida</h1>
       </div>
-
-      <div className="bg-gray-200 p-5 rounded-lg">
-        <form className="flex rounded-lg">
+      <div className="bg-gray-200 p-6 rounded-lg shadow-md">
+        <form className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Toaster />
-
-          <div className="flex flex-col w-1/2">
+          {/* Columna izquierda */}
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="almacen_origen"
-                >
-                  Almacén origen:
-                </label>
-                <select
-                  id="almacen_origen"
-                  className="border border-gray-300 text-gray-900 text-sm rounded-lg
-                             focus:ring-blue-500 focus:border-blue-500 px-4 py-2 w-full
-                             disabled:opacity-75"
-                  value={almacenOrigen}
-                  onChange={(e) => setalmacenOrigen(parseInt(e.target.value))}
-                  disabled={productosSeleccionados.length > 0}
-                >
-                  <option value="">Seleccionar</option>
-                  {almacenesFiltrados.map((almacen) => (
-                    <option key={almacen.id} value={almacen.id}>
-                      {almacen.almacen}
-                    </option>
-                  ))}
-                </select>
-                {productosSeleccionados.length > 0 && (
-                  <p className="font-bold text-red-500 text-sm mt-1">
-                    *Para cambiar vacíe los productos.
-                  </p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="almacen_destino"
-                >
-                  Almacén destino:
-                </label>
-                <select
-                  id="almacen_destino"
-                  className="border border-gray-300 text-gray-900 text-sm rounded-lg
-                             focus:ring-blue-500 focus:border-blue-500 px-4 py-2 w-full"
-                >
-                  <option value="">Seleccionar</option>
-                  {almacenes.map(almacen => (
-                    <option key={almacen.id} value={almacen.id}>
-                      {almacen.almacen}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="destinatario"
-                >
-                  Proveedor:
-                </label>
-                <select
-                  id="destinatario"
-                  className="border border-gray-300 text-gray-900 text-sm rounded-lg
-                             focus:ring-blue-500 focus:border-blue-500 px-4 py-2 w-full"
-                  onChange={(e) => {
-                    const selected = destinatarios.find(d => d.id === parseInt(e.target.value));
-                    document.getElementById('ruc').value = selected ? selected.documento : '';
-                  }}
-                >
-                  <option value="">Seleccionar</option>
-                  {destinatarios.map(destinatario => (
-                    <option key={destinatario.id} value={destinatario.id}>
-                      {destinatario.destinatario}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="ruc"
-                >
-                  RUC:
-                </label>
-                <input
-                  id="ruc"
-                  type="text"
-                  className="border border-gray-300 text-gray-900 text-sm
-                             rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 w-full"
-                  readOnly
-                />
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="nomnota"
-                >
-                  Nombre de nota:
-                </label>
-                <input
-                  id="nomnota"
-                  type="text"
-                  className="border border-gray-300 text-gray-900 text-sm
-                             rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 w-full"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
-                  htmlFor="fechaDocu"
-                >
-                  Fecha Docu:
-                </label>
-                <input
-                  type="date"
-                  id="fechaDocu"
-                  defaultValue={currentDate}
-                  className="border border-gray-300 text-gray-900 text-sm
-                             rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 w-full"
-                />
-              </div>
+              <Select
+                label="Almacén origen"
+                placeholder="Seleccionar"
+                id="almacen_origen"
+                isDisabled={productosSeleccionados.length > 0}
+                onChange={(e) => setAlmacenOrigen(e.target.value)}
+              >
+                {almacenes.map((almacen) => (
+                  <SelectItem key={almacen.id} value={almacen.id}>
+                    {almacen.almacen}
+                  </SelectItem>
+                ))}
+              </Select>
+              <Select
+                label="Almacén destino"
+                placeholder="Seleccionar"
+                id="almacen_destino"
+              >
+                {almacenes.map((almacen) => (
+                  <SelectItem key={almacen.id} value={almacen.id}>
+                    {almacen.almacen}
+                  </SelectItem>
+                ))}
+              </Select>
             </div>
-
-            <div className="flex justify-start mt-4 space-x-2">
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded
-                           focus:outline-none flex items-center"
-                type="button"
-                onClick={openModalProovedor}
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="Proveedor"
+                placeholder="Seleccionar"
+                id="destinatario"
+                onChange={(e) => {
+                  const selected = destinatarios.find(
+                    (d) => d.id === parseInt(e.target.value)
+                  );
+                  document.getElementById('ruc').value = selected
+                    ? selected.documento
+                    : '';
+                }}
               >
-                <MdPersonAdd className="mr-2 text-lg" /> Nuevo destinatario
-              </button>
-              <button
-                className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded
-                           flex items-center"
-                type="button"
-                onClick={openModalBuscarProducto}
-              >
-                <FaBarcode className="mr-2" /> Buscar producto
-              </button>
-              <Link to="/almacen/nota_salida">
-                <button
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded
-                             focus:outline-none flex items-center"
-                  type="button"
-                  onClick={handleCancel}
-                >
-                  <MdCancelPresentation className="mr-2" /> Cancelar
-                </button>
-              </Link>
-              <button
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded
-                           focus:outline-none flex items-center"
-                type="button"
-                onClick={handleGuardar}
-              >
-                <FiSave className="mr-2 text-lg" /> Guardar
-              </button>
+                {destinatarios.map((destinatario) => (
+                  <SelectItem key={destinatario.id} value={destinatario.id}>
+                    {destinatario.destinatario}
+                  </SelectItem>
+                ))}
+              </Select>
+              <Input label="RUC" id="ruc" isReadOnly />
             </div>
+            <Input label="Nombre de nota" id="nomnota" />
           </div>
 
-          <div className="ml-4 flex flex-col w-1/2">
-            <div className="mb-8">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="numero"
-              >
-                Número:
-              </label>
-              <input
+          {/* Columna derecha */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <Input
+                label="Fecha Documento"
+                id="fechaDocu"
+                type="date"
+                defaultValue={currentDate}
+                style={{
+                  border: "none",
+                  boxShadow: "none",
+                  outline: "none",
+                }}
+              />
+              <Input
+                label="Número"
                 id="numero"
-                type="text"
                 value={currentDocumento}
-                readOnly
-                className="border border-gray-300 text-gray-900 text-sm
-                          rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 w-full"
+                isReadOnly
               />
-            </div>
-
-            <div className="mb-8">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="glosa"
-              >
-                Glosa:
-              </label>
-              <select
-                id="glosa"
-                className="border border-gray-300 text-gray-900 text-sm
-                           rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 w-full"
-              >
-                {glosaOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
+              <Select label="Glosa" id="glosa">
+                {glosaOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
                 ))}
-              </select>
+              </Select>
             </div>
-
-            <div className="flex-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="observacion"
-              >
-                Observación:
-              </label>
-              <textarea
-                id="observacion"
-                className="border border-gray-300 text-gray-900 text-sm
-                           rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5
-                           w-full h-full resize-none"
-              />
-            </div>
+            <Textarea
+              label="Observación"
+              id="observacion"
+              style={{
+                border: "none",
+                boxShadow: "none",
+                outline: "none",
+                padding: "0.8rem",
+              }}
+            />
           </div>
         </form>
 
-        <div className="mt-8">
-          <NuevaTablaSalida
-            salidas={productosSeleccionados}
-            setProductosSeleccionados={setProductosSeleccionados}
-          />
+        {/* Botones de acción */}
+        <div className="flex justify-start mt-6 space-x-4">
+          <Button
+            color="primary"
+            onPress={() => setIsModalOpenProovedor(true)}
+            startContent={<MdPersonAdd />}
+          >
+            Nuevo destinatario
+          </Button>
+          <Button
+            color="warning"
+            onPress={() => setIsModalOpen(true)}
+            startContent={<FaBarcode />}
+          >
+            Buscar producto
+          </Button>
+          <Link to="/almacen/nota_salida">
+            <Button
+              color="danger"
+              onPress={handleCancel}
+              startContent={<MdCancelPresentation />}
+            >
+              Cancelar
+            </Button>
+          </Link>
+          <Button
+            color="success"
+            onPress={handleGuardar}
+            startContent={<FiSave />}
+          >
+            Guardar
+          </Button>
         </div>
       </div>
 
+      {/* Tabla de productos seleccionados */}
+      <div className="mt-6">
+        <NuevaTablaSalida
+          salidas={productosSeleccionados}
+          setProductosSeleccionados={setProductosSeleccionados}
+        />
+      </div>
+
+      {/* Modales */}
       <ModalBuscarProducto
         isOpen={isModalOpen}
-        onClose={closeModalBuscarProducto}
+        onClose={() => setIsModalOpen(false)}
         onBuscar={handleBuscarProducto}
         setSearchInput={setSearchInput}
         productos={productos}
-        agregarProducto={agregarProducto}
+        agregarProducto={(producto, cantidad) => {
+          setProductosSeleccionados((prevProductos) => {
+            const productoExistente = prevProductos.find(p => p.codigo === producto.codigo);
+            if (productoExistente) {
+              return prevProductos.map(p =>
+                p.codigo === producto.codigo ? { ...p, cantidad: p.cantidad + cantidad } : p
+              );
+            } else {
+              return [...prevProductos, { ...producto, cantidad }];
+            }
+          });
+        }}
         setCodigoBarras={setCodigoBarras}
       />
       {isModalOpenProducto && (
-        <ProductosModal
-          modalTitle={modalTitle}
-          onClose={closeModalProducto}
-        />
+        <ProductosModal modalTitle={modalTitle} onClose={() => setIsModalOpenProducto(false)} />
       )}
       <AgregarProovedor
         isOpen={isModalOpenProovedor}
-        onClose={closeModalProovedor}
+        onClose={() => setIsModalOpenProovedor(false)}
         titulo="destinatario"
       />
       {isModalOpenGuardar && (
         <ConfirmationModal
           message={confirmationMessage}
-          onClose={closeModalOpenGuardar}
+          onClose={() => setisModalOpenGuardar(false)}
           isOpen={isModalOpenGuardar}
-          onConfirm={handleConfirmGuardar}
+          onConfirm={handleGuardarAction}
         />
       )}
     </div>
