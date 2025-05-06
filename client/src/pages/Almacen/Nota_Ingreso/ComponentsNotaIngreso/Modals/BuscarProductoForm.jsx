@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Button,
+  NumberInput,
+} from '@heroui/react';
 import { RiCloseLargeLine } from "react-icons/ri";
-import { IoMdClose, IoMdAdd } from "react-icons/io";
+import { ScrollShadow } from '@nextui-org/react';
+import { IoMdAdd } from "react-icons/io";
 import ProductosForm from '../../../../Productos/ProductosForm';
 import { toast } from "react-hot-toast";
 
-const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, productos, agregarProducto, setCodigoBarras, hideStock }) => {
-  if (!isOpen) return null;
-
+const ModalBuscarProducto = ({
+  isOpen,
+  onClose,
+  onBuscar,
+  setSearchInput,
+  productos,
+  agregarProducto,
+  setCodigoBarras,
+  hideStock
+}) => {
   const [cantidades, setCantidades] = useState({});
   const [activeAdd, setModalOpen] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState('');
@@ -15,7 +33,7 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
   useEffect(() => {
     if (isOpen) {
       const initialCantidades = productos.reduce((acc, producto) => {
-        acc[producto.codigo] = '1';
+        acc[producto.codigo] = 1;
         return acc;
       }, {});
       setCantidades(initialCantidades);
@@ -28,15 +46,9 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
 
   const handleModalAdd = () => setModalOpen(!activeAdd);
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && e.target.value.trim() !== '') {
-      setCodigoBarras(e.target.value);
-      onBuscar();
-    }
-  };
-
-  const handleCantidadChange = (codigo, cantidad) => {
-    if (/^\d*$/g.test(cantidad) && (cantidad === '' || !/^0[0-9]/.test(cantidad))) {
+  const handleCantidadChange = (codigo, value) => {
+    const cantidad = parseInt(value, 10);
+    if (!isNaN(cantidad) && cantidad > 0) {
       setCantidades({
         ...cantidades,
         [codigo]: cantidad,
@@ -44,17 +56,8 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
     }
   };
 
-  const handleBlur = (codigo) => {
-    if (cantidades[codigo] === '') {
-      setCantidades({
-        ...cantidades,
-        [codigo]: '1',
-      });
-    }
-  };
-
   const handleAgregarProducto = (producto) => {
-    const cantidadSolicitada = parseInt(cantidades[producto.codigo] || '1', 10);
+    const cantidadSolicitada = cantidades[producto.codigo] || 1;
     if (cantidadSolicitada > producto.stock) {
       toast.error(`La cantidad solicitada (${cantidadSolicitada}) excede el stock disponible (${producto.stock}).`);
     } else {
@@ -63,109 +66,105 @@ const ModalBuscarProducto = ({ isOpen, onClose, onBuscar, setSearchInput, produc
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-xl font-bold">Buscar producto</h2>
-          <button className="text-gray-500 hover:text-red-500" onClick={onClose}>
-            <IoMdClose className="text-3xl" />
-          </button>
-        </div>
-        <div className="px-6 py-4">
-          <div className="flex mb-4">
-            <input
-              type="text"
-              placeholder="Buscar producto"
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
-              value={searchInputValue}
-              onChange={(e) => {
-                setSearchInputValue(e.target.value);
-                setSearchInput(e.target.value);
-              }}
+    <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+      <ModalContent>
+        <ModalHeader>
+          <div className="flex justify-between items-center w-full">
+            <h2 className="text-xl font-bold">Buscar producto</h2>
+            <Button isIconOnly variant="light" color="danger" onPress={onClose}>
+              <RiCloseLargeLine className="text-2xl" />
+            </Button>
+          </div>
+        </ModalHeader>
+
+        <ModalBody>
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_auto] gap-4 mb-4 items-center">
+  <Input
+    placeholder="Buscar producto"
+    value={searchInputValue}
+    onChange={(e) => {
+      setSearchInputValue(e.target.value);
+      setSearchInput(e.target.value);
+    }}
+  />
+  <Input
+    placeholder="Código de barras"
+    value={codigoBarrasValue}
+    onChange={(e) => {
+      setCodigoBarrasValue(e.target.value);
+      setCodigoBarras(e.target.value);
+    }}
+  />
+  <Button
+    color="success"
+    onPress={handleModalAdd}
+    startContent={<IoMdAdd />}
+    className="w-full md:w-auto whitespace-nowrap"
+  >
+    Nuevo
+  </Button>
+</div>
+
+
+  <ScrollShadow hideScrollBar className="max-h-[400px] overflow-y-auto rounded-lg shadow-sm">
+  <table className="min-w-full bg-white border-separate border-spacing-y-2">
+    <thead className="bg-gray-50 sticky top-0 z-10 text-gray-600 text-sm">
+      <tr>
+        <th className="py-3 px-4 text-left">Código</th>
+        <th className="py-3 px-4 text-left">Descripción</th>
+        <th className="py-3 px-4 text-left">Marca</th>
+        {!hideStock && <th className="py-3 px-4 text-left">Stock</th>}
+        <th className="py-3 px-4 text-left">Cantidad</th>
+        <th className="py-3 px-4 text-left">Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      {productos.map((producto) => (
+        <tr
+          key={producto.codigo}
+          className="bg-white hover:bg-gray-50 rounded-md shadow-sm"
+        >
+          <td className="py-2 px-4">{producto.codigo}</td>
+          <td className="py-2 px-4">{producto.descripcion}</td>
+          <td className="py-2 px-4">{producto.marca}</td>
+          {!hideStock && <td className="py-2 px-4">{producto.stock}</td>}
+          <td className="py-2 px-4">
+            <NumberInput
+              min={1}
+              value={cantidades[producto.codigo]}
+              onValueChange={(value) => handleCantidadChange(producto.codigo, value)}
+              className="max-w-xs"
             />
-            <input
-              type="text"
-              placeholder="Buscar por código de barras"
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 ml-2"
-              value={codigoBarrasValue}
-              onChange={(e) => {
-                setCodigoBarrasValue(e.target.value);
-                setCodigoBarras(e.target.value);
-              }}
-              onKeyDown={handleKeyDown}
-            />
-            <button
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
-              onClick={handleModalAdd}
+          </td>
+          <td className="py-2 px-4">
+            <Button
+              color="success"
+              isIconOnly
+              size="sm"
+              onPress={() => handleAgregarProducto(producto)}
             >
-              <IoMdAdd className="w-4 h-4 mr-1" />
-              Nuevo
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr>
-                  <th className="py-2 px-4 border-b">Código</th>
-                  <th className="py-2 px-4 border-b w-96">Descripción</th>
-                  <th className="py-2 px-4 border-b">Marca</th>
-                  {!hideStock && <th className="py-2 px-4 border-b">Stock</th>}
-                  <th className="py-2 px-4 border-b">Cantidad</th>
-                  <th className="py-2 px-4 border-b">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {productos.map((producto) => (
-                  <tr key={producto.codigo}>
-                    <td className="py-2 px-4 border-b text-center">{producto.codigo}</td>
-                    <td className="py-2 px-4 border-b text-center">{producto.descripcion}</td>
-                    <td className="py-2 px-4 border-b text-center">{producto.marca}</td>
-                    {!hideStock && (
-                      <td className="py-2 px-4 border-b text-center">{producto.stock}</td>
-                    )}
-                    <td className="py-2 px-4 border-b text-center">
-                      <input
-                        type="number"
-                        className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2 text-center w-16 mx-auto"
-                        value={cantidades[producto.codigo] || ''}
-                        min="1"
-                        onKeyDown={(e) => {
-                          if (e.key === '.' || e.key === '-' || e.key === 'e' || e.key === '+') {
-                            e.preventDefault();
-                          }
-                        }}
-                        onChange={(e) => handleCantidadChange(producto.codigo, e.target.value)}
-                        onBlur={() => handleBlur(producto.codigo)}
-                      />
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      <button
-                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                        onClick={() => handleAgregarProducto(producto)}
-                      >
-                        <IoMdAdd />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="flex justify-end px-6 py-4 border-t">
-          <button
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center"
-            onClick={onClose}
-          >
-            <RiCloseLargeLine className="text-lg mr-2" />
+              <IoMdAdd />
+            </Button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</ScrollShadow>
+</ModalBody>
+
+
+        <ModalFooter>
+          <Button color="default" onPress={onClose}>
             Cerrar
-          </button>
-        </div>
-      </div>
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+
       {activeAdd && (
-        <ProductosForm modalTitle={'Nuevo Producto'} onClose={handleModalAdd} />
+        <ProductosForm modalTitle="Nuevo Producto" onClose={handleModalAdd} />
       )}
-    </div>
+    </Modal>
   );
 };
 
