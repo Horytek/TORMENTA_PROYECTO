@@ -1,150 +1,167 @@
 import React, { useState, useEffect } from 'react';
-import { RiCloseLargeLine } from "react-icons/ri";
-import { IoMdClose } from "react-icons/io";
-import { IoMdAdd } from "react-icons/io";
+import PropTypes from 'prop-types';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Button,
+  NumberInput,
+} from '@heroui/react';
+import { IoMdClose, IoMdAdd } from "react-icons/io";
+import { ScrollShadow } from '@nextui-org/react';
 import ProductosForm from '../../../../Productos/ProductosForm';
+import { toast } from "react-hot-toast";
 
-const ModalBuscarProducto = ({ isOpen, onClose, setSearchInput, productos, agregarProducto }) => {
-  if (!isOpen) return null;
-
+const ModalBuscarProducto = ({ isOpen, onClose, productos, agregarProducto }) => {
   const [cantidades, setCantidades] = useState({});
   const [activeAdd, setModalOpen] = useState(false);
-  const [searchInput, setSearchInputState] = useState('');
-  const [filteredProductos, setFilteredProductos] = useState(productos);
-  const [barcode, setBarcode] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [codigoBarras, setCodigoBarras] = useState('');
+  const [filteredProductos, setFilteredProductos] = useState([]);
 
+  // Inicializar cantidades y productos filtrados cuando se abre el modal
   useEffect(() => {
-    // Filtrar productos por descripción o código de barras
-    setFilteredProductos(
-      productos.filter((producto) =>
-        producto.descripcion.toLowerCase().includes(searchInput.toLowerCase()) ||
-        producto.codbarras?.toLowerCase().includes(searchInput.toLowerCase())
-      )
-    );
-  }, [searchInput, productos]);
+    if (isOpen) {
+      const initialCantidades = productos.reduce((acc, producto) => {
+        acc[producto.codigo] = 1;
+        return acc;
+      }, {});
+      setCantidades(initialCantidades);
+      setFilteredProductos(productos); // Mostrar todos los productos inicialmente
+    }
+  }, [isOpen, productos]);
 
+  // Actualizar productos filtrados al cambiar los valores de búsqueda
   useEffect(() => {
-    const handleKeyPress = (event) => {
-      if (event.key === 'Enter') {
-        // Al presionar Enter, se supone que el escáner ha terminado de enviar el código
-        const productoEscaneado = productos.find(p => p.codbarras === barcode);
-        if (productoEscaneado) {
-          setFilteredProductos([productoEscaneado]); // Filtra automáticamente por el producto escaneado
-        } else {
-          console.warn('Producto no encontrado');
-        }
-        setBarcode(''); // Limpia el código de barras después de procesar
-      } else {
-        // Concatenar caracteres ingresados
-        setBarcode(prev => prev + event.key);
-      }
-    };
-
-    window.addEventListener('keypress', handleKeyPress);
-
-    return () => {
-      window.removeEventListener('keypress', handleKeyPress);
-    };
-  }, [barcode, productos]);
-
-  const handleModalAdd = () => {
-    setModalOpen(!activeAdd);
-  };
-
-  const handleCantidadChange = (codigo, cantidad) => {
-    setCantidades({
-      ...cantidades,
-      [codigo]: parseInt(cantidad, 10),
+    const filtered = productos.filter((producto) => {
+      const matchesDescripcion = producto.descripcion.toLowerCase().includes(searchInput.toLowerCase());
+      const matchesCodigoBarras = producto.codbarras?.toLowerCase().includes(codigoBarras.toLowerCase());
+      return matchesDescripcion && (!codigoBarras || matchesCodigoBarras);
     });
+    setFilteredProductos(filtered);
+  }, [searchInput, codigoBarras, productos]);
+
+  const handleModalAdd = () => setModalOpen(!activeAdd);
+
+  const handleCantidadChange = (codigo, value) => {
+    const cantidad = parseInt(value, 10);
+    if (!isNaN(cantidad) && cantidad > 0) {
+      setCantidades((prev) => ({
+        ...prev,
+        [codigo]: cantidad,
+      }));
+    }
   };
 
   const handleAgregarProducto = (producto) => {
     const cantidadSolicitada = cantidades[producto.codigo] || 1;
-    agregarProducto(producto, cantidadSolicitada);
+    if (cantidadSolicitada > producto.stock) {
+      toast.error(`La cantidad solicitada (${cantidadSolicitada}) excede el stock disponible (${producto.stock}).`);
+    } else {
+      agregarProducto(producto, cantidadSolicitada);
+    }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="content-modal max-w-7xl mx-auto" style={{ maxHeight: '90%', overflowY: 'auto' }}>
-        <div className="modal-header">
-          <h2 className="modal-title">Buscar producto</h2>
-          <button className="modal-close" onClick={onClose}>
-            <IoMdClose className='text-3xl' />
-          </button>
-        </div>
-        <div className="modal-body">
-          <div className="flex mb-4">
-            <input
-              type="text"
-              placeholder="Buscar producto"
-              className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 flex-grow"
-              value={searchInput}
-              onChange={(e) => setSearchInputState(e.target.value)}
-            />
-            
-            <button
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2 flex items-center"
-              onClick={handleModalAdd}
-            >
-              <IoMdAdd className='w-4 h-4 mr-1' />
-              Nuevo
-            </button>
+    <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+      <ModalContent>
+        <ModalHeader>
+          <div className="flex justify-between items-center w-full">
+            <h2 className="text-xl font-bold">Buscar producto</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead>
+        </ModalHeader>
+
+        <ModalBody>
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_auto] gap-4 mb-4 items-center">
+            <Input
+              placeholder="Buscar por descripción"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <Input
+              placeholder="Buscar por código de barras"
+              value={codigoBarras}
+              onChange={(e) => setCodigoBarras(e.target.value)}
+            />
+            <Button
+              color="success"
+              onPress={handleModalAdd}
+              startContent={<IoMdAdd />}
+              className="w-full md:w-auto whitespace-nowrap"
+            >
+              Nuevo
+            </Button>
+          </div>
+
+          <ScrollShadow hideScrollBar className="max-h-[400px] overflow-y-auto rounded-lg shadow-sm">
+            <table className="min-w-full bg-white border-separate border-spacing-y-2">
+              <thead className="bg-gray-50 sticky top-0 z-10 text-gray-600 text-sm">
                 <tr>
-                  <th className="py-2 px-4 border-b">Código</th>
-                  <th className="py-2 px-4 border-b w-96">Descripción</th>
-                  <th className="py-2 px-4 border-b">Marca</th>
-                  <th className="py-2 px-4 border-b">Cantidad</th>
-                  <th className="py-2 px-4 border-b">Acción</th>
+                  <th className="py-3 px-4 text-left">Código</th>
+                  <th className="py-3 px-4 text-left">Descripción</th>
+                  <th className="py-3 px-4 text-left">Marca</th>
+                  <th className="py-3 px-4 text-left">Stock</th>
+                  <th className="py-3 px-4 text-left">Cantidad</th>
+                  <th className="py-3 px-4 text-left">Acción</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredProductos.map((producto) => (
-                  <tr key={producto.codigo}>
-                    <td className="py-2 px-4 border-b text-center">{producto.codigo}</td>
-                    <td className="py-2 px-4 border-b text-center">{producto.descripcion}</td>
-                    <td className="py-2 px-4 border-b text-center">{producto.marca}</td>
-                    <td className="py-2 px-4 border-b text-center">
-                      <input
-                        type="number"
-                        className="border border-gray-300 text-gray-900 text-sm rounded-lg p-2 text-center w-16 mx-auto"
-                        value={cantidades[producto.codigo] || 1}
-                        min="1"
-                        onChange={(e) => handleCantidadChange(producto.codigo, e.target.value)}
+                  <tr
+                    key={producto.codigo}
+                    className="bg-white hover:bg-gray-50 rounded-md shadow-sm"
+                  >
+                    <td className="py-2 px-4">{producto.codigo}</td>
+                    <td className="py-2 px-4">{producto.descripcion}</td>
+                    <td className="py-2 px-4">{producto.marca}</td>
+                    <td className="py-2 px-4">{producto.stock}</td>
+                    <td className="py-2 px-4">
+                      <NumberInput
+                        min={1}
+                        value={cantidades[producto.codigo]}
+                        onValueChange={(value) => handleCantidadChange(producto.codigo, value)}
+                        className="max-w-xs"
                       />
                     </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      <button
-                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                        onClick={() => handleAgregarProducto(producto)}
+                    <td className="py-2 px-4">
+                      <Button
+                        color="success"
+                        isIconOnly
+                        size="sm"
+                        onPress={() => handleAgregarProducto(producto)}
                       >
                         <IoMdAdd />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-        <div className="modal-buttons flex justify-end mt-4">
-          <button
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center"
-            onClick={onClose}
-          >
-            <RiCloseLargeLine style={{ fontSize: '20px', marginRight: '8px' }} />
+          </ScrollShadow>
+        </ModalBody>
+
+        <ModalFooter>
+          <Button color="default" onPress={onClose}>
             Cerrar
-          </button>
-        </div>
-      </div>
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+
       {activeAdd && (
-        <ProductosForm modalTitle={'Nuevo Producto'} onClose={handleModalAdd} />
+        <ProductosForm modalTitle="Nuevo Producto" onClose={handleModalAdd} />
       )}
-    </div>
+    </Modal>
   );
+};
+
+ModalBuscarProducto.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  productos: PropTypes.array.isRequired,
+  agregarProducto: PropTypes.func.isRequired,
 };
 
 export default ModalBuscarProducto;

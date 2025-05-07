@@ -282,7 +282,7 @@ function RegistroGuia() {
   />
   <hr className="mb-4" />
   <h1 className="text-3xl font-bold">Nueva Guía de Remisión</h1>
-  <div className="bg-gray-100 p-6 rounded-lg shadow-md">
+  <div className="bg-gray-200 p-6 rounded-lg shadow-md">
     <form className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Columna izquierda */}
       <div className="space-y-4">
@@ -318,21 +318,23 @@ function RegistroGuia() {
         </Select>
         <Input label="RUC/DNI" id="documento" isReadOnly />
         <Select
-          label="Vendedor"
-          placeholder="Seleccione..."
-          onChange={(e) => {
-            const selectedId = e.target.value;
-            setSelectedSucursalId(selectedId);
-            const selected = sucursales.find(sucursal => sucursal.id === selectedId);
-            document.getElementById('dirpart').value = selected?.direccion || '';
-          }}
-        >
-          {sucursales.map(sucursal => (
-            <SelectItem key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </SelectItem>
-          ))}
-        </Select>
+  label="Vendedor"
+  placeholder="Seleccione..."
+  className="w-full pb-4" // <- añade espacio debajo
+  onChange={(e) => {
+    const selectedId = e.target.value;
+    setSelectedSucursalId(selectedId);
+    const selected = sucursales.find(sucursal => sucursal.id === selectedId);
+    document.getElementById('dirpart').value = selected?.direccion || '';
+  }}
+>
+  {sucursales.map(sucursal => (
+    <SelectItem key={sucursal.id} value={sucursal.id}>
+      {sucursal.nombre}
+    </SelectItem>
+  ))}
+</Select>
+
       </div>
 
       {/* Columna central */}

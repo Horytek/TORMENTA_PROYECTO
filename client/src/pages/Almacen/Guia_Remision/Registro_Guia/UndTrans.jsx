@@ -1,319 +1,207 @@
-// TransporteForm.js
-
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Button,
+  RadioGroup,
+  Radio,
+  Select,
+  SelectItem,
+} from '@heroui/react';
 import { IoMdClose } from "react-icons/io";
 import { FaPlus } from "react-icons/fa";
-import './ModalGuias.css';
-import { ButtonSave } from '@/components/Buttons/Buttons';
+import { Toaster, toast } from 'react-hot-toast';
 import { ModalTransporte } from './ModalGuias/ModalTransporte';
 import { ModalTransportista } from './ModalGuias/ModalTransportista';
 import useTransPubData from '../../data/data_transpub';
 import useTransPrivData from '../../data/data_transpriv';
-import { Toaster, toast } from 'react-hot-toast';
 
 const TransporteForm = ({ modalTitle, onClose, onSave }) => {
   const [transportePublico, setTransportePublico] = useState(true);
   const [isModalOpenTransporte, setIsModalOpenTransporte] = useState(false);
   const [isModalOpenTransportista, setIsModalOpenTransportista] = useState(false);
-  const { transpublicos, setTranspublicos } = useTransPubData(); // Añade setTranspublicos
+  const { transpublicos } = useTransPubData();
   const { transprivados } = useTransPrivData();
-  const [id, setID] = useState('');
   const [selectedEmpresa, setSelectedEmpresa] = useState('');
+  const [selectedConductor, setSelectedConductor] = useState('');
   const [ruc, setRuc] = useState('');
   const [placa, setPlaca] = useState('');
-  const [telefonopub, setTelefPub] = useState('');
-  const [vehiculopub, setVehiculoPub] = useState('');
-  const [idpriv, setIDPriv] = useState('');
-  const [selectedConductor, setSelectedConductor] = useState('');
+  const [vehiculo, setVehiculo] = useState('');
+  const [telefono, setTelefono] = useState('');
   const [dni, setDni] = useState('');
-  const [placapriv, setPlacaPriv] = useState('');
-  const [telefonopriv, setTelefPriv] = useState('');
-  const [vehiculopriv, setVehiculoPriv] = useState('');
 
-  const openModalTransporte = () => {
-    setIsModalOpenTransporte(true);
-  };
+  const openModalTransporte = () => setIsModalOpenTransporte(true);
+  const closeModalTransporte = () => setIsModalOpenTransporte(false);
 
-  const closeModalTransporte = () => {
-    setIsModalOpenTransporte(false);
-  };
-
-  const openModalTransportista = () => {
-    setIsModalOpenTransportista(true);
-  };
-
-  const closeModalTransportista = () => {
-    setIsModalOpenTransportista(false);
-  };
+  const openModalTransportista = () => setIsModalOpenTransportista(true);
+  const closeModalTransportista = () => setIsModalOpenTransportista(false);
 
   const handleTransporteToggle = (value) => {
-    setTransportePublico(value);
-    if (value) {
-      setSelectedConductor('');
-      setDni('');
-      setPlacaPriv('');
-      setTelefPriv('');
-      setVehiculoPriv('');
-    } else {
-      setSelectedEmpresa('');
-      setRuc('');
-      setPlaca('');
-      setTelefPub('');
-      setVehiculoPub('');
-    }
+    setTransportePublico(value === 'publico');
+    resetFields();
   };
 
-  const handleEmpresaChange = (e) => {
-    const empresa = e.target.value;
-    setSelectedEmpresa(empresa);
+  const resetFields = () => {
+    setSelectedEmpresa('');
+    setSelectedConductor('');
+    setRuc('');
+    setPlaca('');
+    setVehiculo('');
+    setTelefono('');
+    setDni('');
+  };
 
-    const selectedTrans = transpublicos.find(trans => trans.razonsocial === empresa);
+  const handleEmpresaChange = (value) => {
+    setSelectedEmpresa(value);
+    const selectedTrans = transpublicos.find(trans => trans.razonsocial === value);
     if (selectedTrans) {
-      setID(selectedTrans.id);
       setRuc(selectedTrans.ruc);
       setPlaca(selectedTrans.placa);
-      setTelefPub(selectedTrans.telefonopub);
-      setVehiculoPub(selectedTrans.vehiculopub);
+      setVehiculo(selectedTrans.vehiculopub);
+      setTelefono(selectedTrans.telefonopub);
     } else {
-      setRuc('');
-      setPlaca('');
-      setTelefPub('');
-      setVehiculoPub('');
+      resetFields();
     }
   };
 
-  const handleConductorChange = (e) => {
-    const conductor = e.target.value;
-    setSelectedConductor(conductor);
-
-    const selectedTransPriv = transprivados.find(transp => transp.transportista === conductor);
+  const handleConductorChange = (value) => {
+    setSelectedConductor(value);
+    const selectedTransPriv = transprivados.find(trans => trans.transportista === value);
     if (selectedTransPriv) {
-      setID(selectedTransPriv.id);
       setDni(selectedTransPriv.dni);
-      setPlacaPriv(selectedTransPriv.placa);
-      setTelefPriv(selectedTransPriv.telefonopriv);
-      setVehiculoPriv(selectedTransPriv.vehiculopriv);
+      setPlaca(selectedTransPriv.placa);
+      setVehiculo(selectedTransPriv.vehiculopriv);
+      setTelefono(selectedTransPriv.telefonopriv);
     } else {
-      setDni('');
-      setPlacaPriv('');
-      setTelefPriv('');
-      setVehiculoPriv('');
+      resetFields();
     }
   };
 
   const handleSave = () => {
-    if (transportePublico) {
-      if (!selectedEmpresa) {
-        toast.error('Por favor, selecciona una Transporte Público.');
-        return;
-      }
-    } else {
-      if (!selectedConductor) {
-        toast.error('Por favor, selecciona una Transporte Privado.');
-        return;
-      }
+    if (transportePublico && !selectedEmpresa) {
+      toast.error('Por favor, selecciona una empresa de transporte público.');
+      return;
+    }
+    if (!transportePublico && !selectedConductor) {
+      toast.error('Por favor, selecciona un conductor de transporte privado.');
+      return;
     }
 
     const selectedTransporte = transportePublico
-      ? {
-          id:id,
-          empresa: selectedEmpresa,
-          ruc,
-          placa,
-          telefonopub,
-          vehiculopub,
-        }
-      : {
-          id:id,
-          conductor: selectedConductor,
-          dni,
-          placa: placapriv,
-          telefonopriv,
-          vehiculopriv,
-        };
+      ? { tipo: 'publico', empresa: selectedEmpresa, ruc, placa, vehiculo, telefono }
+      : { tipo: 'privado', conductor: selectedConductor, dni, placa, vehiculo, telefono };
 
     onSave(selectedTransporte);
     onClose();
   };
 
-  const handleTransportistaAdded = () => {
-    // Recargar los datos de transporte público
-    useTransPubData().fetchTransPublicos(); // Suponiendo que fetchTransPublicos es el método para actualizar los datos
-  };
-
   return (
-    <div className="modal1-overlay">
+    <Modal isOpen={true} onClose={onClose} size="lg">
       <Toaster />
-      <div className="modal1">
-        <div className="content-modal1">
-          <div className="modal-header">
-            <h3 className="modal-title">{modalTitle}</h3>
-            <button className="modal-close" onClick={onClose}>
-              <IoMdClose className='text-3xl' />
-            </button>
+      <ModalContent>
+        <ModalHeader>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold">{modalTitle}</h2>
           </div>
-          <div className='modal-body'>
-            {/* Transporte Público */}
-            <div className='datos-transporte'>
-              <div className='header'>
-                <div className='toggle'>
-                  <input
-                    type="radio"
-                    checked={transportePublico}
-                    onChange={() => handleTransporteToggle(true)}
-                  />
-                  <label>Transporte Público</label>
-                </div>
-                <button className='nuevo-transporte' onClick={openModalTransportista} disabled={!transportePublico}>
-                  <FaPlus />N. Transporte
-                </button>
-              </div>
-              <div className='form-row'>
-                <div className='form-group'>
-                  <label htmlFor="empresa">Empresa:</label>
-                  <select
-                    id="empresa"
-                    value={selectedEmpresa}
-                    onChange={handleEmpresaChange}
-                    disabled={!transportePublico}
-                    className={!transportePublico ? 'bg-gray-300' : ''}
-                  >
-                    <option value="">Seleccione una Empresa</option>
-                    {transpublicos.map(trans => (
-                      <option key={trans.id} value={trans.razonsocial}>{trans.razonsocial}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className='form-group'>
-                  <label htmlFor="ruc">RUC:</label>
-                  <input
-                    type="text"
-                    id="ruc"
-                    value={ruc}
-                    disabled
-                    className="form-input disabled:bg-gray-300"
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor="vehiculopub">Vehículo:</label>
-                  <input
-                    type="text"
-                    id="vehiculopub"
-                    value={selectedEmpresa && !vehiculopub ? "No presenta" : vehiculopub}
-                    disabled
-                    className="form-input disabled:bg-gray-300"
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor="placa">Placa:</label>
-                  <input
-                    type="text"
-                    id="placa"
-                    value={selectedEmpresa && !placa ? "No presenta" : placa}
-                    disabled
-                    className="form-input disabled:bg-gray-300"
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor="telefonopub">Telefono:</label>
-                  <input
-                    type="text"
-                    id="telefonopub"
-                    value={telefonopub}
-                    disabled
-                    className="form-input disabled:bg-gray-300"
-                  />
-                </div>
-              </div>
-            </div>
+        </ModalHeader>
 
-            {/* Transporte Privado */}
-            <div className='datos-transporte'>
-              <div className='header'>
-                <div className='toggle'>
-                  <input
-                    type="radio"
-                    checked={!transportePublico}
-                    onChange={() => handleTransporteToggle(false)}
-                  />
-                  <label>Transporte Privado</label>
-                </div>
-                <button className='nuevo-transportista' onClick={openModalTransporte} disabled={transportePublico}>
-                  <FaPlus />N. Transporte
-                </button>
-              </div>
-              <div className='form-row'>
-                <div className='form-group'>
-                  <label htmlFor="transportista">Conductor:</label>
-                  <select
-                    id="transportista"
-                    value={selectedConductor}
-                    onChange={handleConductorChange}
-                    disabled={transportePublico}
-                    className={transportePublico ? 'bg-gray-300' : ''}
-                  >
-                    <option value="">Seleccione un Conductor</option>
-                    {transprivados.map(transp => (
-                      <option key={transp.id} value={transp.transportista}>{transp.transportista}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className='form-group'>
-                  <label htmlFor="dni">DNI:</label>
-                  <input
-                    type="text"
-                    id="dni"
-                    value={dni}
-                    disabled
-                    className={transportePublico ? 'bg-gray-300' : ''}
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor="vehiculo">Vehiculo:</label>
-                  <input
-                    type="text"
-                    id="vehiculo"
-                    value={selectedConductor && !vehiculopriv ? "No presenta" : vehiculopriv}
-                    disabled
-                    className={transportePublico ? 'bg-gray-300' : ''}
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor="placa-privada">Placa:</label>
-                  <input
-                    type="text"
-                    id="placa-privada"
-                    value={selectedConductor && !placapriv ? "No presenta" : placapriv}
-                    disabled
-                    className={transportePublico ? 'bg-gray-300' : ''}
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor="telefono">Telefono:</label>
-                  <input
-                    type="text"
-                    id="telefono"
-                    value={telefonopriv}
-                    disabled
-                    className={transportePublico ? 'bg-gray-300' : ''}
-                  />
-                </div>
-              </div>
+        <ModalBody>
+          <RadioGroup
+            label="Tipo de Transporte"
+            value={transportePublico ? 'publico' : 'privado'}
+            onValueChange={(value) => handleTransporteToggle(value)}
+            orientation="horizontal"
+            className="mb-4"
+          >
+            <Radio value="publico">Transporte Público</Radio>
+            <Radio value="privado">Transporte Privado</Radio>
+          </RadioGroup>
+
+          {transportePublico ? (
+            <div className="space-y-4">
+              <Select
+                label="Empresa"
+                placeholder="Seleccione una empresa"
+                selectedKeys={[selectedEmpresa]}
+                onSelectionChange={(keys) => handleEmpresaChange(keys.values().next().value)}
+              >
+                {transpublicos.map(trans => (
+                  <SelectItem key={trans.razonsocial} value={trans.razonsocial}>
+                    {trans.razonsocial}
+                  </SelectItem>
+                ))}
+              </Select>
+              <Input label="RUC" value={ruc} isReadOnly />
+              <Input label="Vehículo" value={vehiculo || 'No presenta'} isReadOnly />
+              <Input label="Placa" value={placa || 'No presenta'} isReadOnly />
+              <Input label="Teléfono" value={telefono} isReadOnly />
+              <Button
+                variant="light"
+                onPress={openModalTransportista}
+                startContent={<FaPlus />}
+                className="w-full"
+              >
+                Nuevo Transporte Público
+              </Button>
             </div>
-          </div>
-          <div className="modal-buttons">
-            <ButtonSave onClick={handleSave} />
-          </div>
-        </div>
-      </div>
+          ) : (
+            <div className="space-y-4">
+              <Select
+                label="Conductor"
+                placeholder="Seleccione un conductor"
+                selectedKeys={[selectedConductor]}
+                onSelectionChange={(keys) => handleConductorChange(keys.values().next().value)}
+              >
+                {transprivados.map(trans => (
+                  <SelectItem key={trans.transportista} value={trans.transportista}>
+                    {trans.transportista}
+                  </SelectItem>
+                ))}
+              </Select>
+              <Input label="DNI" value={dni} isReadOnly />
+              <Input label="Vehículo" value={vehiculo || 'No presenta'} isReadOnly />
+              <Input label="Placa" value={placa || 'No presenta'} isReadOnly />
+              <Input label="Teléfono" value={telefono} isReadOnly />
+              <Button
+                variant="light"
+                onPress={openModalTransporte}
+                startContent={<FaPlus />}
+                className="w-full"
+              >
+                Nuevo Transporte Privado
+              </Button>
+            </div>
+          )}
+        </ModalBody>
+
+        <ModalFooter>
+          <Button variant="light" onPress={onClose}>
+            Cancelar
+          </Button>
+          <Button color="primary" onPress={handleSave}>
+            Guardar
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+
       {isModalOpenTransportista && (
-        <ModalTransportista modalTitle={'Registrar Transporte'} closeModel={closeModalTransportista} onTransportistaAdded={handleTransportistaAdded} />
+        <ModalTransportista
+          modalTitle="Registrar Transporte Público"
+          closeModel={closeModalTransportista}
+        />
       )}
       {isModalOpenTransporte && (
-        <ModalTransporte modalTitle={'Registrar Transportista'} closeModel={closeModalTransporte} />
+        <ModalTransporte
+          modalTitle="Registrar Transporte Privado"
+          closeModel={closeModalTransporte}
+        />
       )}
-    </div>
+    </Modal>
   );
 };
 

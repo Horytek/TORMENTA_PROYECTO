@@ -271,10 +271,10 @@ const addTransportistaPublico = async (req, res) => {
     let connection;
     const { id, placa, ruc, razon_social, ubicacion, telefono } = req.body;
 
-    console.log("Datos recibidos:", req.body);
-    console.log("Datos recibidos:", {
+    //console.log("Datos recibidos:", req.body);
+    /*console.log("Datos recibidos:", {
         id, placa, ruc, razon_social, ubicacion, telefono,
-    });
+    });*/
     if (!id || !ruc || !razon_social || !ubicacion) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
     }
@@ -300,10 +300,10 @@ const addTransportistaPublico = async (req, res) => {
 const addTransportistaPrivado = async (req, res) => {
     let connection;
     const { id, placa, dni, nombres, apellidos, ubicacion, telefono } = req.body;
-    console.log("Datos recibidos:", req.body);
-    console.log("Datos recibidos:", {
+    //console.log("Datos recibidos:", req.body);
+    /*console.log("Datos recibidos:", {
         id, placa, dni, nombres, apellidos, ubicacion, telefono,
-    });
+    });*/
 
     if (!id || !dni || !nombres || !apellidos || !ubicacion) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -378,7 +378,7 @@ const getProductos = async (req, res) => {
     let connection;
     const { descripcion = '', codbarras = '' } = req.query;
 
-    console.log('Filtros recibidos:', { descripcion, codbarras });
+    //console.log('Filtros recibidos:', { descripcion, codbarras });
 
     try {
         connection = await getConnection();
@@ -401,7 +401,7 @@ const getProductos = async (req, res) => {
             [`%${descripcion}%`, `%${codbarras}%`]
         );
 
-        console.log('Productos encontrados:', productosResult);
+        //console.log('Productos encontrados:', productosResult);
 
         res.json({ code: 1, data: productosResult });
     } catch (error) {
@@ -520,17 +520,17 @@ const anularGuia = async (req, res) => {
         id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, canti, peso, observacion, f_generacion, h_generacion, total, producto, num_comprobante, cantidad,
     } = req.body;
 
-    console.log("Datos recibidos:", req.body);
-    console.log("Datos recibidos:", {
+    //console.log("Datos recibidos:", req.body);
+    /*console.log("Datos recibidos:", {
         id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, canti, peso, observacion, f_generacion, h_generacion, producto, num_comprobante, cantidad, 
-    });
+    });*/
 
     if (
         !id_sucursal || !id_ubigeo_o || !id_destinatario || !id_transportista || !glosa || !f_generacion ||!h_generacion || !id_ubigeo_d || !producto || !num_comprobante || !cantidad
     ) {
-        console.log("Error en los datos:", {
+        /*console.log("Error en los datos:", {
             id_sucursal, id_ubigeo_o, id_destinatario, id_transportista, glosa, f_generacion, h_generacion, id_ubigeo_d, producto, num_comprobante, cantidad, canti, peso
-        });
+        });*/
         return res
             .status(400)
             .json({ message: "Bad Request. Please fill all fields correctly." });
@@ -593,13 +593,13 @@ const anularGuia = async (req, res) => {
             const id_producto = producto[i];
             const cantidadProducto = cantidad[i];
 
-            console.log(`Intentando insertar detalle con id_producto: ${id_producto}, cantidad: ${cantidadProducto}`);
+            //console.log(`Intentando insertar detalle con id_producto: ${id_producto}, cantidad: ${cantidadProducto}`);
 
             const [detalleEnvioResult] = await connection.query(
                 "INSERT INTO detalle_envio (id_guiaremision, id_producto, cantidad, undm) VALUES (?, ?, ?, 'KGM')",
                 [id_guiaremision, id_producto, cantidadProducto]
             );
-            console.log("Resultado de la inserción:", detalleEnvioResult);
+            //console.log("Resultado de la inserción:", detalleEnvioResult);
 
             if (detalleEnvioResult.affectedRows === 0) {
                 throw new Error(`Error al insertar el detalle del envío con producto: ${id_producto}, guia: ${id_guiaremision}, cantidad: ${cantidadProducto}`);

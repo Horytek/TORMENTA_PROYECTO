@@ -1,11 +1,22 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { Toaster, toast } from 'react-hot-toast';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Button,
+  Tabs,
+  Tab,
+  Card,
+  CardBody
+} from '@heroui/react';
 import { IoMdClose } from "react-icons/io";
-import './ModalGuias.css';
-import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import useDestNatural from '../../data/add_dest_natural';
 import useDestJuridica from '../../data/add_dest_juridico';
-import { Toaster, toast } from 'react-hot-toast';
 
 function ClienteForm({ modalTitle, onClose }) {
   const [tab, setTab] = useState('registro');
@@ -24,18 +35,16 @@ function ClienteForm({ modalTitle, onClose }) {
           : `https://dniruc.apisperu.com/api/v1/ruc/${dniOrRuc}?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImJ1c3RhbWFudGU3NzdhQGdtYWlsLmNvbSJ9.0tadscJV_zWQqZeRMDM4XEQ9_t0f7yph4WJWNoyDHyw`;
 
         try {
-          console.log(`Consultando RUC: ${dniOrRuc}`);
           const response = await fetch(url);
           const data = await response.json();
-          console.log(data);
 
           if (data.success === true) {
             if (tipoCliente === 'Natural') {
               setNombres(data.nombres || '');
               setApellidos(`${data.apellidoPaterno} ${data.apellidoMaterno}` || '');
               setDireccion(data.direccion || '');
-            } else if (tipoCliente === 'Juridico') { // Add this check
-              setRazonSocial(data.razonSocial || ''); // Set provider to razonSocial
+            } else if (tipoCliente === 'Juridico') {
+              setRazonSocial(data.razonSocial || '');
               setDireccion(data.direccion || '');
             }
           } else {
@@ -103,131 +112,103 @@ function ClienteForm({ modalTitle, onClose }) {
   };
 
   return (
-    <div className="modal3-overlay">
+    <Modal isOpen={true} onClose={onClose} size="lg">
       <Toaster />
-      <div className="modal3">
-        <div className='content-modal3'>
-          <div className="modal3-header">
-            <h2 className="modal3-title">{modalTitle}</h2>
-            <button className="close-button" onClick={onClose}>
-              <IoMdClose className='text-3xl' />
-            </button>
+      <ModalContent>
+        <ModalHeader>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold">{modalTitle}</h2>
+            <Button isIconOnly variant="light" onPress={onClose}>
+              <IoMdClose className="text-xl" />
+            </Button>
           </div>
-          <div className="modal-bodywa">
-            <div className="tabs flex justify-center mt-2">
-              <div className='w-full'>
-                <button 
-                  className={`p-4 ${tab === 'registro' ? 'active' : ''} w-full`}
-                  onClick={() => setTab('registro')}
-                >
-                  Persona Natural
-                </button>
-              </div>
-              <div className='w-full'>
-                <button 
-                  className={`p-4 ${tab === 'otros' ? 'active' : ''} w-full`}
-                  onClick={() => setTab('otros')}
-                >
-                  Persona Jurídica
-                </button>
-              </div>
-            </div>
-            <form onSubmit={handleSave}>
-              {tab === 'registro' && (
-                <div className='modal2-content'>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className='text-sm font-bold text-black' htmlFor="ruc-dni">DNI:</label>
-                      <input
-                        className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5 wider2-input'
-                        type="text"
-                        id="ruc-dni"
-                        value={dniOrRuc}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className='text-sm font-bold text-black' htmlFor="nombres">Nombres:</label>
-                    <input
-                      className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                      type="text"
-                      id="nombre"
+        </ModalHeader>
+        <ModalBody>
+          <Tabs aria-label="Tipo de Cliente" selectedKey={tab} onSelectionChange={setTab}>
+            <Tab key="registro" title="Persona Natural">
+              <Card>
+                <CardBody>
+                  <form onSubmit={handleSave} className="space-y-4">
+                    <Input
+                      label="DNI"
+                      id="ruc-dni"
+                      value={dniOrRuc}
+                      onChange={handleInputChange}
+                      placeholder="Ingrese el DNI"
+                      isRequired
+                    />
+                    <Input
+                      label="Nombres"
+                      id="nombres"
                       value={nombres}
                       onChange={(e) => setNombres(e.target.value)}
+                      placeholder="Ingrese los nombres"
+                      isRequired
                     />
-                  </div>
-                  <div className="form-group">
-                    <label className='text-sm font-bold text-black' htmlFor="apellidos">Apellidos:</label>
-                    <input
-                      className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                      type="text"
+                    <Input
+                      label="Apellidos"
                       id="apellidos"
                       value={apellidos}
                       onChange={(e) => setApellidos(e.target.value)}
+                      placeholder="Ingrese los apellidos"
+                      isRequired
                     />
-                  </div>
-                  <div className="w-full text-start mb-5">
-                    <label className='text-sm font-bold text-black' htmlFor="direccion">Dirección:</label>
-                    <div className="flex items-center">
-                      <input
-                        className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                        type="text"
-                        id="direccion"
-                        value={direccion}
-                        onChange={(e) => setDireccion(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-              {tab === 'otros' && (
-                <div className='modal2-content'>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className='text-sm font-bold text-black' htmlFor="ruc">RUC:</label>
-                      <input
-                        className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5 wider2-input'
-                        type="text"
-                        id="ruc-dni"
-                        value={dniOrRuc}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className='text-sm font-bold text-black' htmlFor="razonsocial">Razón Social:</label>
-                    <input
-                      className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                      type="text"
-                      id="razonsocial"
+                    <Input
+                      label="Dirección"
+                      id="direccion"
+                      value={direccion}
+                      onChange={(e) => setDireccion(e.target.value)}
+                      placeholder="Ingrese la dirección"
+                      isRequired
+                    />
+                  </form>
+                </CardBody>
+              </Card>
+            </Tab>
+            <Tab key="otros" title="Persona Jurídica">
+              <Card>
+                <CardBody>
+                  <form onSubmit={handleSave} className="space-y-4">
+                    <Input
+                      label="RUC"
+                      id="ruc-dni"
+                      value={dniOrRuc}
+                      onChange={handleInputChange}
+                      placeholder="Ingrese el RUC"
+                      isRequired
+                    />
+                    <Input
+                      label="Razón Social"
+                      id="razonSocial"
                       value={razonSocial}
                       onChange={(e) => setRazonSocial(e.target.value)}
+                      placeholder="Ingrese la razón social"
+                      isRequired
                     />
-                  </div>
-                  <div className="w-full text-start mb-5">
-                    <label className='text-sm font-bold text-black' htmlFor="direccion">Dirección:</label>
-                    <div className="flex items-center">
-                      <input
-                        className='w-full bg-gray-50 border-gray-300 text-gray-900 rounded-lg border p-1.5'
-                        type="text"
-                        id="direccion"
-                        value={direccion}
-                        onChange={(e) => setDireccion(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="modal-buttons">
-                <ButtonClose onClick={onClose} />
-                <ButtonSave type="submit" />
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
+                    <Input
+                      label="Dirección"
+                      id="direccion"
+                      value={direccion}
+                      onChange={(e) => setDireccion(e.target.value)}
+                      placeholder="Ingrese la dirección"
+                      isRequired
+                    />
+                  </form>
+                </CardBody>
+              </Card>
+            </Tab>
+          </Tabs>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="light" onPress={onClose}>
+            Cancelar
+          </Button>
+          <Button color="primary" onPress={handleSave}>
+            Guardar
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }
 
