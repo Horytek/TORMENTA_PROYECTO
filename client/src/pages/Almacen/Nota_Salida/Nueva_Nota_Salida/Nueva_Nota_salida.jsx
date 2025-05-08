@@ -33,6 +33,7 @@ function NuevaSalidas() {
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [codigoBarras, setCodigoBarras] = useState('');
+    const [selectedRuc, setSelectedRuc] = useState('');
   const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
@@ -109,6 +110,13 @@ function NuevaSalidas() {
       toast.error(`Error inesperado: ${error.message}`);
     }
   };
+
+    const handleProveedorChange = (e) => {
+      const selected = destinatarios.find(
+        (d) => d.id === parseInt(e.target.value)
+      );
+      setSelectedRuc(selected?.documento || '');
+    };
 
   const handleGuardar = async () => {
     const almacenD = document.getElementById('almacen_destino').value;
@@ -195,27 +203,20 @@ function NuevaSalidas() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Proveedor"
-                placeholder="Seleccionar"
-                id="destinatario"
-                onChange={(e) => {
-                  const selected = destinatarios.find(
-                    (d) => d.id === parseInt(e.target.value)
-                  );
-                  document.getElementById('ruc').value = selected
-                    ? selected.documento
-                    : '';
-                }}
-              >
-                {destinatarios.map((destinatario) => (
-                  <SelectItem key={destinatario.id} value={destinatario.id}>
-                    {destinatario.destinatario}
-                  </SelectItem>
-                ))}
-              </Select>
-              <Input label="RUC" id="ruc" isReadOnly />
-            </div>
+      <Select
+        label="Proveedor"
+        placeholder="Seleccionar"
+        onChange={handleProveedorChange}
+      >
+        {destinatarios.map((destinatario) => (
+          <SelectItem key={destinatario.id} value={destinatario.id}>
+            {destinatario.destinatario}
+          </SelectItem>
+        ))}
+      </Select>
+
+      <Input label="RUC" value={selectedRuc} isReadOnly />
+    </div>
             <Input label="Nombre de nota" id="nomnota" />
           </div>
 
