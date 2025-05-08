@@ -5,17 +5,17 @@ import { Toaster, toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
 import { addUsuario, updateUsuario, getUsuarios } from '@/services/usuario.services';
 import { getRoles } from '@/services/rol.services';
-import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter,
+import {
   Input,
-  Button
+  Button,
 } from "@heroui/react";
 
 import {
+    Modal, 
+    ModalContent, 
+    ModalHeader, 
+    ModalBody, 
+    ModalFooter, 
     Select,
     SelectItem
   } from "@nextui-org/react";
@@ -207,19 +207,19 @@ const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
                                             rules={{ required: "El estado es requerido" }}
                                             render={({ field }) => (
                                                 <Select
-                                                {...field}
-                                                label="Estado"
-                                                variant="faded"
-                                                placeholder="Seleccione un estado"
-                                                selectedKeys={field.value ? [field.value.toString()] : []}
-                                                onChange={(e) => field.onChange(e.target.value)}
-                                                isRequired
-                                                color={errors.estado_vendedor ? "danger" : "default"}
-                                                errorMessage={errors.estado_vendedor?.message}
-                                              >
-                                                <SelectItem key="1" value="1">Activo</SelectItem>
-                                                <SelectItem key="0" value="0">Inactivo</SelectItem>
-                                              </Select>
+                                                    {...field}
+                                                    label="Estado"
+                                                    variant="faded"
+                                                    placeholder="Seleccione un estado"
+                                                    selectedKeys={field.value ? [field.value.toString()] : []}
+                                                    onChange={(e) => field.onChange(e.target.value)}
+                                                    isRequired
+                                                    color={errors.estado_usuario ? "danger" : "default"}
+                                                    errorMessage={errors.estado_usuario?.message}
+                                                >
+                                                    <SelectItem key="1" value="1">Activo</SelectItem>
+                                                    <SelectItem key="0" value="0">Inactivo</SelectItem>
+                                                </Select>
                                             )}
                                         />
                                     </div>

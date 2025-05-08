@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from "react";
 import {
   Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Input,
-  Select,
-  SelectItem,
   useDisclosure,
   Tabs,
   Tab,
 } from "@heroui/react";
+
+import {
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  Select,
+  SelectItem
+} from "@nextui-org/react";
 import { IoIosSearch } from "react-icons/io";
 import { useAddClient } from '../data/addCliente';
 import { toast, Toaster } from "react-hot-toast"; // Updated import

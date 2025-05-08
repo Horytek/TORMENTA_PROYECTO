@@ -3,18 +3,18 @@ import PropTypes from "prop-types";
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Input,
   Button,
 } from "@heroui/react";
 import {
-    Select,
-    SelectItem
-  } from "@nextui-org/react";
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  Select,
+  SelectItem
+} from "@nextui-org/react";
 import { IoMdClose } from "react-icons/io";
 import useEditSubCategoria from "./hooks/editFunc";
 import { useCategorias } from "@/context/Categoria/CategoriaProvider";

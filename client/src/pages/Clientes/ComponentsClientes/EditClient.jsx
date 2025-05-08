@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
 import {
     Button,
-    Modal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
     Input,
     RadioGroup,
     Radio,
+} from "@heroui/react";
+import {
+    Modal, 
+    ModalContent, 
+    ModalHeader, 
+    ModalBody, 
+    ModalFooter, 
     Select,
     SelectItem
-} from "@heroui/react";
+  } from "@nextui-org/react";
 import { IoIosSearch } from "react-icons/io";
 import { toast, Toaster } from "react-hot-toast";
 import useUpdateClient from "../data/updateCliente";

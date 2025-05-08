@@ -15,18 +15,20 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Textarea,
   Pagination,
   useDisclosure,
-  Select,
-  SelectItem,
   Chip,
 } from "@heroui/react";
+import {
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  Select,
+  SelectItem
+} from "@nextui-org/react";
 import { Autocomplete, AutocompleteItem } from "@heroui/react";
 import { FaEdit, FaPlus, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-hot-toast";

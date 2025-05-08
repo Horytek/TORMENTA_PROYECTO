@@ -12,11 +12,6 @@ import { useMarcas } from '@/context/Marca/MarcaProvider';
 import { useSubcategorias } from '@/context/Subcategoria/SubcategoriaProvider';
 import { addProducto, updateProducto, getLastIdProducto } from '@/services/productos.services'; 
 import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter,
   Textarea,
   Input,
   Button,
@@ -24,6 +19,11 @@ import {
 } from "@heroui/react";
 
 import {
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
   Select,
   SelectItem
 } from "@nextui-org/react";

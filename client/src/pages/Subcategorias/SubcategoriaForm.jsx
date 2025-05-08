@@ -6,18 +6,18 @@ import { useCategorias } from "@/context/Categoria/CategoriaProvider";
 import { Toaster, toast } from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Input,
   Button,
 } from "@heroui/react";
 import {
-    Select,
-    SelectItem
-  } from "@nextui-org/react";
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  Select,
+  SelectItem
+} from "@nextui-org/react";
 const SubcategoriaForm = ({ modalTitle, closeModal }) => {
   const { createSubcategoria } = useSubcategorias();
   const { categorias, loadCategorias } = useCategorias();

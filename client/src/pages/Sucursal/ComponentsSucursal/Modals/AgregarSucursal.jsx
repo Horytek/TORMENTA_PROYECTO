@@ -3,18 +3,20 @@ import { toast, Toaster } from 'react-hot-toast';
 import insertSucursal from '../../data/add_sucursal';
 import useVendedoresData from '../../data/data_vendedores';
 import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter,
   Input,
-  Select,
-  SelectItem,
   Button,
   Autocomplete,
   AutocompleteItem
 } from "@heroui/react";
+import {
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  Select,
+  SelectItem
+} from "@nextui-org/react";
 
 const AgregarSucursal = ({ isOpen, onClose, titulo }) => {
   const { vendedores } = useVendedoresData();

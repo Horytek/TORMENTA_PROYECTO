@@ -6,17 +6,20 @@ import { FaCheckCircle } from "react-icons/fa";
 import { useForm, Controller } from "react-hook-form";
 import { getSucursales, addAlmacen, updateAlmacen } from '@/services/almacen.services';
 import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter,
   Input,
-  Select,
-  SelectItem,
   Button,
   Chip
 } from "@heroui/react";
+
+import {
+    Modal, 
+    ModalContent, 
+    ModalHeader, 
+    ModalBody, 
+    ModalFooter, 
+    Select,
+    SelectItem
+  } from "@nextui-org/react";
 
 const AlmacenForm = ({ modalTitle, onClose, initialData }) => {
     const [sucursales, setSucursales] = useState([]);

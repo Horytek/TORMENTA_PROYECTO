@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import useVendedoresData from '../../data/data_vendedores';
 import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter,
   Input,
-  Select,
-  SelectItem,
   Button,
   Autocomplete,
   AutocompleteItem
 } from "@heroui/react";
+import {
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  Select,
+  SelectItem
+} from "@nextui-org/react";
 
 const EditarSucursal = ({ isOpen, onClose, titulo, sucursal, onGuardar }) => {
   const { vendedores } = useVendedoresData();

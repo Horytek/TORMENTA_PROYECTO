@@ -7,19 +7,19 @@ import { addVendedor, updateVendedor } from '@/services/vendedor.services';
 import { getUsuarios } from '@/services/usuario.services';
 import { getVendedores } from '@/services/vendedor.services';
 import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter,
   Input,
   Button
 } from "@heroui/react";
 
 import {
-  Select,
-  SelectItem
-} from "@nextui-org/react";
+    Modal, 
+    ModalContent, 
+    ModalHeader, 
+    ModalBody, 
+    ModalFooter, 
+    Select,
+    SelectItem
+  } from "@nextui-org/react";
 
 const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
   const [showPassword, setShowPassword] = useState(false);

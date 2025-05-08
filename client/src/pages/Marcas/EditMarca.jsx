@@ -5,17 +5,20 @@ import { useMarcas } from "@/context/Marca/MarcaProvider";
 import { Toaster, toast } from "react-hot-toast";
 import useEditMarca from "./hook/editFunc";
 import { 
+  Input,
+  Button,
+  Spinner
+} from "@heroui/react";
+
+import {
   Modal, 
   ModalContent, 
   ModalHeader, 
   ModalBody, 
-  ModalFooter,
-  Input,
+  ModalFooter, 
   Select,
-  SelectItem,
-  Button,
-  Spinner
-} from "@heroui/react";
+  SelectItem
+} from "@nextui-org/react";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
   const { editMarca, loading } = useEditMarca();
