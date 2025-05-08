@@ -113,13 +113,13 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
         </ModalHeader>
         
         <ModalBody className="py-4">
-          <div className="space-y-4">
+          <div className="grid space-y-4">
             <Checkbox
               isSelected={sendToSunat}
               onValueChange={() => handleCheckboxChange('sendToSunat')}
               isDisabled={d_venta.estado === 1 || d_venta.tipoComprobante === 'Nota'}
             >
-              Enviar los datos a la Sunat
+              Enviar datos a la Sunat
             </Checkbox>
             
             <Checkbox

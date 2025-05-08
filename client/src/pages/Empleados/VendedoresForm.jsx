@@ -13,7 +13,10 @@ import {
   ModalBody, 
   ModalFooter,
   Input,
-  Button,
+  Button
+} from "@heroui/react";
+
+import {
   Select,
   SelectItem
 } from "@nextui-org/react";
@@ -210,7 +213,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
                         <Select
                           {...field}
                           label="Estado"
-                          variant="bordered"
+                          variant="faded"
                           placeholder="Seleccione un estado"
                           selectedKeys={field.value ? [field.value.toString()] : []}
                           onChange={(e) => field.onChange(e.target.value)}

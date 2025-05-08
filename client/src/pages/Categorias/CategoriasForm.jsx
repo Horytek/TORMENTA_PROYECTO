@@ -1,8 +1,16 @@
 import PropTypes from "prop-types";
 import { IoMdClose } from "react-icons/io";
-import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import { useForm } from "react-hook-form";
 import { useCategorias } from "@/context/Categoria/CategoriaProvider";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Button,
+} from "@heroui/react";
 
 const CategoriasForm = ({ modalTitle, onClose }) => {
   const { createCategoria } = useCategorias();
@@ -39,64 +47,41 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
   });
 
   return (
-    <div>
-      <form onSubmit={onSubmit}>
-        <div
-          className="modal-overlay"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-          }}
-        >
-          <div className="modal" style={{ width: "400px" }}>
-            <div className="content-modal">
-              <div className="modal-header">
-                <h3 className="modal-title">{modalTitle}</h3>
-                <button className="modal-close" onClick={onClose}>
-                  <IoMdClose className="text-3xl" />
-                </button>
-              </div>
-              <div className="modal-body">
-                <div className="w-full text-start mb-5">
-                  <label
-                    htmlFor="nom_categoria"
-                    className="text-sm font-bold text-black mb-3"
-                    style={{ display: "block", marginBottom: "10px" }}
-                  >
-                    Nombre de Categoría:
-                  </label>
-                  <input
-                    {...register("nom_categoria", { required: true })}
-                    name="nom_categoria"
-                    className={`block w-full text-sm border rounded-lg ${
-                      errors.nom_categoria
-                        ? "border-red-600 focus:border-red-600 focus:ring-red-600"
-                        : "border-gray-300"
-                    } bg-gray-50 text-gray-900`}
-                    placeholder="Ingrese el nombre de la categoría"
-                  />
-                  {errors.nom_categoria && (
-                    <span className="text-xs text-red-600">
-                      Este campo es obligatorio
-                    </span>
-                  )}
-                </div>
-
-                <div
-                  className="modal-buttons"
-                  style={{ gap: "30px", marginTop: "30px" }}
-                >
-                  <ButtonClose onClick={onClose} />
-                  <ButtonSave type="submit" />
-                </div>
-              </div>
+    <Modal isOpen={true} onClose={onClose} size="sm">
+      <ModalContent>
+        <ModalHeader>
+          <h3 className="text-lg font-bold">{modalTitle}</h3>
+        </ModalHeader>
+        <ModalBody>
+          <form onSubmit={onSubmit}>
+            <div className="w-full mb-5">
+              <Input
+                {...register("nom_categoria", { required: true })}
+                label="Nombre de Categoría"
+                color={errors.nom_categoria ? "danger" : "default"}
+                errorMessage={
+                  errors.nom_categoria && "Este campo es obligatorio"
+                }
+                isRequired
+              />
             </div>
-          </div>
-        </div>
-      </form>
-    </div>
+            <ModalFooter>
+              <Button
+                color="danger"
+                variant="light"
+                onPress={onClose}
+                className="mr-2"
+              >
+                Cancelar
+              </Button>
+              <Button color="primary" type="submit">
+                Guardar
+              </Button>
+            </ModalFooter>
+          </form>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
   );
 };
 

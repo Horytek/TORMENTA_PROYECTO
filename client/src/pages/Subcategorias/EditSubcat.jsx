@@ -1,11 +1,23 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
-import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
-import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
-import { useCategorias } from "@/context/Categoria/CategoriaProvider";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Button,
+} from "@heroui/react";
+import {
+    Select,
+    SelectItem
+  } from "@nextui-org/react";
+import { IoMdClose } from "react-icons/io";
 import useEditSubCategoria from "./hooks/editFunc";
+import { useCategorias } from "@/context/Categoria/CategoriaProvider";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
   const { editSubCategoria, loading } = useEditSubCategoria();
@@ -27,14 +39,12 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
         (categoria) => categoria.nom_categoria === initialData.nom_categoria
       );
       if (selectedCategoria) {
-        setValue("id_categoria", selectedCategoria.id_categoria); // Set id_categoria
+        setValue("id_categoria", selectedCategoria.id_categoria);
       }
-      setValue("nom_categoria", initialData.nom_categoria);
       setValue("nom_subcat", initialData.nom_subcat);
-      setValue("estado_subcat", initialData.estado_subcat);
+      setValue("estado_subcat", initialData.estado_subcat?.toString());
     }
   }, [initialData, categorias, setValue]);
-  
 
   const onSubmit = async (data) => {
     try {
@@ -45,122 +55,91 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
       };
       await editSubCategoria(updatedData);
       toast.success("Subcategoría actualizada con éxito");
-      // setTimeout(() => { 
-      //   window.location.reload();
-      // }, 420);
       onClose();
     } catch (error) {
       toast.error("Error al actualizar la subcategoría");
     }
   };
-  
-
-  if (!isOpen) return null;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Toaster />
-      <div className="modal-overlay">
-        <div className="modal w-96 h-auto">
-          <div className="content-modal">
-            <div className="modal-header">
-              <h3 className="modal-title">{modalTitle}</h3>
-              <button type="button" className="modal-close" onClick={onClose}>
-                <IoMdClose className="text-3xl" />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="w-full text-start mb-5">
-                <label
-                  htmlFor="nom_categoria"
-                  className="text-sm font-bold text-black"
-                >
-                  Categoría:
-                </label>
-                <select
-                  {...register("id_categoria", { required: true })}
-                  id="id_categoria"
-                  className={`w-full text-sm bg-gray-50 ${
-                    errors.id_categoria
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500"
-                      : "border-gray-300"
-                  } text-gray-900 rounded-lg border p-2`}
-                >
-                  <option value="">Seleccione...</option>
-                  {categorias.length > 0 &&
-                    categorias.map((categoria) => (
-                      <option
-                        key={categoria.id_categoria}
-                        value={categoria.id_categoria} // Use id_categoria as the value
-                      >
-                        {categoria.nom_categoria.toUpperCase()}
-                      </option>
-                    ))}
-                </select>
+    <Modal isOpen={isOpen} onClose={onClose} size="sm">
+      <ModalContent>
+        <ModalHeader>
+          <h3 className="text-lg font-bold">{modalTitle}</h3>
+          <button
+            type="button"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+            onClick={onClose}
+          >
+            <IoMdClose className="text-2xl" />
+          </button>
+        </ModalHeader>
+        <ModalBody>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Categoría */}
+            <Select
+              {...register("id_categoria", { required: "Seleccione una categoría" })}
+              label="Categoría"
+              placeholder="Seleccione una categoría"
+              color={errors.id_categoria ? "danger" : "default"}
+              errorMessage={errors.id_categoria?.message}
+              isRequired
+            >
+              {categorias.map((categoria) => (
+                <SelectItem key={categoria.id_categoria} value={categoria.id_categoria}>
+                  {categoria.nom_categoria.toUpperCase()}
+                </SelectItem>
+              ))}
+            </Select>
 
-                {errors.nom_categoria && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Selecciona una categoría.
-                  </p>
-                )}
+            {/* Subcategoría */}
+            <Input
+              {...register("nom_subcat", { required: "Ingrese una subcategoría" })}
+              label="Subcategoría"
+              placeholder="Nombre de la subcategoría"
+              defaultValue={initialData?.nom_subcat || ""}
+              color={errors.nom_subcat ? "danger" : "default"}
+              errorMessage={errors.nom_subcat?.message}
+              isRequired
+            />
 
-                <label
-                  htmlFor="nom_subcat"
-                  className="text-sm font-bold text-black mt-4 block"
-                >
-                  Subcategoría:
-                </label>
-                <input
-                  {...register("nom_subcat", { required: true })}
-                  type="text"
-                  id="nom_subcat"
-                  className={`w-full bg-gray-50 ${
-                    errors.nom_subcat
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500"
-                      : "border-gray-300"
-                  } text-gray-900 rounded-lg border p-2 text-sm`}
-                  placeholder="Nombre de Subcategoría"
-                />
-                {errors.nom_subcat && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Ingrese una subcategoría.
-                  </p>
-                )}
-
-                <label
-                  htmlFor="estado_subcat"
-                  className="text-sm font-bold text-black mt-4 block"
-                >
-                  Estado de la Subcategoría:
-                </label>
-                <select
-                  {...register("estado_subcat", { required: true })}
-                  id="estado_subcat"
-                  className={`w-full text-sm bg-gray-50 ${
-                    errors.estado_subcat
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500"
-                      : "border-gray-300"
-                  } text-gray-900 rounded-lg border p-2`}
-                >
-                  <option value={1}>Activo</option>
-                  <option value={0}>Inactivo</option>
-                </select>
-                {errors.estado_subcat && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Selecciona un estado.
-                  </p>
-                )}
-              </div>
-
-              <div className="modal-buttons flex justify-between">
-                <ButtonClose onClick={onClose} />
-                <ButtonSave loading={loading} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
+            {/* Estado */}
+            <Select
+              {...register("estado_subcat", { required: "Seleccione un estado" })}
+              label="Estado de la Subcategoría"
+              placeholder="Seleccione un estado"
+              color={errors.estado_subcat ? "danger" : "default"}
+              errorMessage={errors.estado_subcat?.message}
+              isRequired
+            >
+              <SelectItem key="1" value="1">
+                Activo
+              </SelectItem>
+              <SelectItem key="0" value="0">
+                Inactivo
+              </SelectItem>
+            </Select>
+          </form>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            color="danger"
+            variant="light"
+            onPress={onClose}
+            className="mr-2"
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="primary"
+            onPress={handleSubmit(onSubmit)}
+            isLoading={loading}
+          >
+            Guardar
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };
 

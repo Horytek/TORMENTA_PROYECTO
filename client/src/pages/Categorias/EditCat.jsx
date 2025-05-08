@@ -1,11 +1,20 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
-import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
-import { useCategorias } from "@/context/Categoria/CategoriaProvider";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Button,
+} from "@heroui/react";
+import { Select, SelectItem } from "@nextui-org/react";
+import { IoMdClose } from "react-icons/io";
 import useEditCat from "./hook/editFunc";
+import { useCategorias } from "@/context/Categoria/CategoriaProvider";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
   const { editCat, loading } = useEditCat();
@@ -19,13 +28,13 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
 
   useEffect(() => {
     if (initialData) {
-      setValue("nom_categoria", initialData.nom_categoria);
-      setValue("estado_categoria", initialData.estado_categoria);
-    }
-    if (!initialData) {
+      // Configurar valores iniciales en el formulario
+      setValue("nom_categoria", initialData.nom_categoria || "");
+      setValue("estado_categoria", initialData.estado_categoria?.toString() || "1");
+    } else {
       loadCategorias();
     }
-  }, [initialData, setValue]);
+  }, [initialData, setValue, loadCategorias]);
 
   const onSubmit = async (data) => {
     try {
@@ -41,82 +50,68 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
       }, 420);
       onClose();
     } catch (error) {
-      // console.error("Error al actualizar la subcategoría");
+      toast.error("Error al actualizar la categoría");
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="modal-overlay">
-        <div className="modal w-96 h-auto">
-          <div className="content-modal">
-            <div className="modal-header">
-              <h3 className="modal-title">{modalTitle}</h3>
-              <button type="button" className="modal-close" onClick={onClose}>
-                <IoMdClose className="text-3xl" />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="w-full text-start mb-5">
-                <label
-                  htmlFor="nom_categoria"
-                  className="text-sm font-bold text-black mt-4 block"
-                >
-                  Categoría:
-                </label>
-                <input
-                  {...register("nom_categoria", { required: true })}
-                  type="text"
-                  id="nom_categoria"
-                  className={`w-full bg-gray-50 ${
-                    errors.nom_categoria
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500"
-                      : "border-gray-300"
-                  } text-gray-900 rounded-lg border p-2 text-sm`}
-                  placeholder="Nombre de Subcategoría"
-                />
-                {errors.nom_categoria && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Ingrese una categoria.
-                  </p>
-                )}
+    <Modal isOpen={isOpen} onClose={onClose} size="sm">
+      <ModalContent>
+        <ModalHeader>
+          <h3 className="text-lg font-bold">{modalTitle}</h3>
+        </ModalHeader>
+        <ModalBody>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-4">
+              {/* Nombre de la categoría */}
+              <Input
+                {...register("nom_categoria", { required: true })}
+                label="Nombre de la categoría"
+                defaultValue={initialData?.nom_categoria || ""}
+                color={errors.nom_categoria ? "danger" : "default"}
+                errorMessage={
+                  errors.nom_categoria && "Este campo es obligatorio"
+                }
+                isRequired
+              />
 
-                <label
-                  htmlFor="estado_categoria"
-                  className="text-sm font-bold text-black mt-4 block"
-                >
-                  Estado de la categoria:
-                </label>
-                <select
-                  {...register("estado_categoria", { required: true })}
-                  id="estado_categoria"
-                  className={`w-full text-sm bg-gray-50 ${
-                    errors.estado_categoria
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500"
-                      : "border-gray-300"
-                  } text-gray-900 rounded-lg border p-2`}
-                >
-                  <option value={1}>Activo</option>
-                  <option value={0}>Inactivo</option>
-                </select>
-                {errors.estado_categoria && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Selecciona un estado.
-                  </p>
-                )}
-              </div>
-
-              <div className="modal-buttons flex justify-between">
-                <ButtonClose onClick={onClose} />
-                <ButtonSave loading={loading} />
-              </div>
+              {/* Estado de la categoría */}
+              <Select
+                {...register("estado_categoria", { required: true })}
+                label="Estado de la categoría"
+                placeholder="Seleccione un estado"
+                defaultValue={initialData?.estado_categoria?.toString() || "1"}
+                color={errors.estado_categoria ? "danger" : "default"}
+                errorMessage={
+                  errors.estado_categoria && "Seleccione un estado"
+                }
+                isRequired
+              >
+                <SelectItem key="1" value="1">
+                  Activo
+                </SelectItem>
+                <SelectItem key="0" value="0">
+                  Inactivo
+                </SelectItem>
+              </Select>
             </div>
-          </div>
-        </div>
-      </div>
-    </form>
+            <ModalFooter>
+              <Button
+                color="danger"
+                variant="light"
+                onPress={onClose}
+                className="mr-2"
+              >
+                Cancelar
+              </Button>
+              <Button color="primary" type="submit" isLoading={loading}>
+                Guardar
+              </Button>
+            </ModalFooter>
+          </form>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
   );
 };
 

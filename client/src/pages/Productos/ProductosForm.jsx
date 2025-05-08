@@ -19,11 +19,14 @@ import {
   ModalFooter,
   Textarea,
   Input,
-  Select,
-  SelectItem,
   Button,
   ButtonGroup
 } from "@heroui/react";
+
+import {
+  Select,
+  SelectItem
+} from "@nextui-org/react";
 
 const ProductosForm = ({ modalTitle, onClose, initialData }) => {
     // Consumir context de categorias, subcategorias y marcas
@@ -193,11 +196,16 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                             {...field}
                             label="Descripción"
                             placeholder="Ingrese la descripción del producto"
-                            variant="bordered"
+                                                           variant="faded"
                             color={errors.descripcion ? "danger" : "default"}
                             errorMessage={errors.descripcion?.message}
                             isRequired
                             rows={4}
+                            style={{
+                              border: "none",
+                              boxShadow: "none",
+                              outline: "none",
+                            }}
                           />
                         )}
                       />
@@ -216,10 +224,11 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                                 {...field}
                                 label="Categoría"
                                 placeholder="Seleccione una categoría"
-                                variant="bordered"
+                                                                variant="faded"
                                 color={errors.id_categoria ? "danger" : "default"}
                                 errorMessage={errors.id_categoria?.message}
                                 isRequired
+
                                 className="flex-1"
                                 selectedKeys={field.value ? [field.value.toString()] : []}
                                 onChange={(e) => field.onChange(e.target.value)}
@@ -232,7 +241,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                               </Select>
                             )}
                           />
-                          <Button isIconOnly variant="light" onPress={handleModalCategoria} aria-label="Agregar categoría">
+                          <Button isIconOnly variant="flat" onPress={handleModalCategoria} aria-label="Agregar categoría">
                             <FaPlus className="text-gray-500" />
                           </Button>
                         </div>
@@ -248,7 +257,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                                 {...field}
                                 label="Subcategoría"
                                 placeholder="Seleccione una subcategoría"
-                                variant="bordered"
+                                                      variant="faded"
                                 color={errors.id_subcategoria ? "danger" : "default"}
                                 errorMessage={errors.id_subcategoria?.message}
                                 isRequired
@@ -265,7 +274,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                               </Select>
                             )}
                           />
-                          <Button isIconOnly variant="light" onPress={handleModalSubCategoria} aria-label="Agregar subcategoría">
+                          <Button isIconOnly variant="flat" onPress={handleModalSubCategoria} aria-label="Agregar subcategoría">
                             <FaPlus className="text-gray-500" />
                           </Button>
                         </div>
@@ -285,7 +294,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                                 {...field}
                                 label="Marca"
                                 placeholder="Seleccione una marca"
-                                variant="bordered"
+                                variant="faded"
                                 color={errors.id_marca ? "danger" : "default"}
                                 errorMessage={errors.id_marca?.message}
                                 isRequired
@@ -301,7 +310,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                               </Select>
                             )}
                           />
-                          <Button isIconOnly variant="light" onPress={handleModalMarca} aria-label="Agregar marca">
+                          <Button isIconOnly variant="flat" onPress={handleModalMarca} aria-label="Agregar marca">
                             <FaPlus className="text-gray-500" />
                           </Button>
                         </div>
@@ -316,13 +325,18 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                               {...field}
                               label="Precio"
                               placeholder="Ingrese el precio del producto"
-                              variant="bordered"
                               color={errors.precio ? "danger" : "default"}
                               errorMessage={errors.precio?.message}
                               isRequired
                               type="number"
                               min={0}
+                                                              variant="faded"
                               step={0.01}
+                              style={{
+                                border: "none",
+                                boxShadow: "none",
+                                outline: "none",
+                              }}
                               onChange={(e) => {
                                 handlePrice(e);
                                 field.onChange(e.target.value);
@@ -346,15 +360,15 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                               {...field}
                               label="Unidad de Medida"
                               placeholder="Seleccione una unidad de medida"
-                              variant="bordered"
+                                                variant="faded"
                               color={errors.undm ? "danger" : "default"}
                               errorMessage={errors.undm?.message}
                               isRequired
                               selectedKeys={field.value ? [field.value.toString()] : []}
                               onChange={(e) => field.onChange(e.target.value)}
                             >
-                              <SelectItem value="KGM">KGM</SelectItem>
-                              <SelectItem value="NIU">NIU</SelectItem>
+                              <SelectItem key="KGM" value="KGM">KGM</SelectItem>
+                              <SelectItem key="NIU" value="NIU">NIU</SelectItem>
                             </Select>
                           )}
                         />
@@ -369,15 +383,15 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                               {...field}
                               label="Estado"
                               placeholder="Seleccione el estado del producto"
-                              variant="bordered"
+                                                variant="faded"
                               color={errors.estado_producto ? "danger" : "default"}
                               errorMessage={errors.estado_producto?.message}
                               isRequired
                               selectedKeys={field.value ? [field.value.toString()] : []}
                               onChange={(e) => field.onChange(e.target.value)}
                             >
-                              <SelectItem value="1">Activo</SelectItem>
-                              <SelectItem value="0">Inactivo</SelectItem>
+                              <SelectItem key="1" value="1">Activo</SelectItem>
+                              <SelectItem key="0" value="0">Inactivo</SelectItem>
                             </Select>
                           )}
                         />
