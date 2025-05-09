@@ -3,7 +3,7 @@ import { getConnection } from "../database/database";
 
 
 const getIngresos = async (req, res) => {
-  const { fecha_i = '2022-01-01', fecha_e = '2027-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
+  const { fecha_i = '2022-01-01', fecha_e = '2038-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
   let connection;
   try {
       connection = await getConnection();
@@ -20,7 +20,8 @@ const getIngresos = async (req, res) => {
             n.glosa AS concepto,
             n.estado_nota AS estado,
             ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
-            COALESCE(u.usua, '') as usuario
+            COALESCE(u.usua, '') as usuario,
+            n.observacion AS observacion
         FROM 
             nota n
         LEFT JOIN 
@@ -116,7 +117,7 @@ const getProductos = async (req, res) => {
   let connection;
   const { descripcion = '', almacen = 1, cod_barras = '' } = req.query;
 
-  console.log('Filtros recibidos:', { descripcion, almacen, cod_barras });
+  //console.log('Filtros recibidos:', { descripcion, almacen, cod_barras });
 
   try {
     connection = await getConnection();
@@ -168,7 +169,7 @@ const getProductos = async (req, res) => {
 
     const [productosResult] = await connection.query(query, queryParams);
 
-    console.log('Productos encontrados:', productosResult);
+    //console.log('Productos encontrados:', productosResult);
 
     res.json({ code: 1, data: productosResult });
   } catch (error) {
@@ -186,7 +187,7 @@ const getProductos_SinStock = async (req, res) => {
   let connection;
   const { descripcion = '', codbarras = '' } = req.query;
 
-  console.log('Filtros recibidos:', { descripcion, codbarras });
+  //console.log('Filtros recibidos:', { descripcion, codbarras });
 
   try {
       connection = await getConnection();
@@ -209,7 +210,7 @@ const getProductos_SinStock = async (req, res) => {
           [`%${descripcion}%`, `%${codbarras}%`]
       );
 
-      console.log('Productos encontrados:', productosResult);
+      //console.log('Productos encontrados:', productosResult);
 
       res.json({ code: 1, data: productosResult });
   } catch (error) {
@@ -278,7 +279,7 @@ const insertNotaAndDetalle = async (req, res) => {
     usuario,
   } = req.body;
 
-  console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
+  //console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
 
   // Validar los datos recibidos (almacenO y almacenD ya no son obligatorios)
   if (
@@ -292,7 +293,7 @@ const insertNotaAndDetalle = async (req, res) => {
     !cantidad ||
     !usuario
   ) {
-    console.log("Error en los datos:", {
+    /*console.log("Error en los datos:", {
       almacenO,
       almacenD,
       destinatario,
@@ -302,7 +303,7 @@ const insertNotaAndDetalle = async (req, res) => {
       producto,
       numComprobante,
       cantidad,
-    }); // Log para verificar los datos faltantes
+    });*/ // Log para verificar los datos faltantes
     return res
       .status(400)
       .json({ message: "Bad Request. Please fill all fields correctly." });

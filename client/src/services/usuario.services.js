@@ -32,7 +32,7 @@ const getUsuario = async (id) => {
 const getUsuario_1 = async (id) => {
   try {
     const response = await getUsuarioRequest_1(id);
-    console.log("Respuesta completa de la API:", response.data); // Depuración
+    //console.log("Respuesta completa de la API:", response.data); // Depuración
     if (response.data.code === 1) {
       return response.data.data; // Esto debería ser un array
     } else {
