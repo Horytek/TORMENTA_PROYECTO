@@ -1,20 +1,34 @@
-import React, { useState, /*useEffect*/ } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from "react-icons/io";
 import { TiPrinter } from "react-icons/ti";
 import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
-import useBoucher from '../../Data/data_boucher'; // Asegúrate de que la ruta sea correcta
-//import useSucursalData from '../../Data/data_sucursal_venta';
-import {Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, 
-  Radio, Card, CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
+import useBoucher from '../../Data/data_boucher';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, 
+  CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   //const {sucursales} = useSucursalData();
   const [printOption, setPrintOption] = useState(''); 
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
+  const [empresaData, setEmpresaData] = useState(null); 
+
+    useEffect(() => {
+      const fetchEmpresaData = async () => {
+                  try {
+                      const data = await getEmpresaDataByUser();
+                      setEmpresaData(data); // Establecer los datos de la empresa en el estado
+                  } catch (error) {
+                      console.error("Error al obtener los datos de la empresa:", error);
+                  }
+              };
+              fetchEmpresaData(); // Llamar a la función para obtener los datos de la empresa
+    }, []);
+
   const toggleRow = (id,estado,venta) => {
     setExpandedRow(expandedRow === id ? null : id);
 
@@ -97,152 +111,78 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal }) => 
       return savedDetalles ? JSON.parse(savedDetalles) : [];
   };
 
-  const ventas_VB = loadDetallesFromLocalStorage();
-
-  
-
-
-  //console.log(ventas_VB);
-
-  const {venta_B} = useBoucher(ventas_VB.id_venta_boucher);
-  //const isoDate = venta_B.fecha.toISOString().slice(0, 10);
-  const nuevoNumComprobante = { nuevoNumComprobante: venta_B.num_comprobante }
-  localStorage.setItem('comprobante1', JSON.stringify(nuevoNumComprobante));
-  const observacion = { observacion: ventas_VB.observacion}
-  localStorage.setItem('observacion', JSON.stringify(observacion));
-  //console.log(venta_B);
-  //console.log(new Date(venta_B.fecha).toISOString().slice(0, 10));
-  //const sucursal_v = sucursales.find(sucursal => sucursal.usuario === ventas_VB.usua_vendedor)
-  //console.log(sucursal_v);
-  //console.log(surB);
-
-    const handlePrint = async () => {
-      if (printOption === 'print') {
-        /*let nombreImpresora = "BASIC 230 STYLE";
-        let api_key = "90f5550c-f913-4a28-8c70-2790ade1c3ac";
-    
-        // eslint-disable-next-line no-undef
-        const conector = new connetor_plugin();
-        const content = generateReceiptContent(venta_B, ventas_VB);
-    
-        conector.textaling("center");
-    
-        // Verifica si las opciones de tamaño están en el formato correcto
-        const imgOptions = { width: 50, height: 50 };
-        const qrOptions = { width: 300, height: 300 };
-    
-        conector.img_url("https://i.postimg.cc/YShpCLxD/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg", imgOptions);
-        content.split('\n').forEach(line => {
-            conector.text(line);
-        });
-    
-        conector.qr("https://www.facebook.com/profile.php?id=100055385846115", qrOptions);
-        conector.feed(5);
-        conector.cut("0");
-    
-        const resp = await conector.imprimir(nombreImpresora, api_key);
-        if (resp === true) {
-            console.log("Impresión exitosa");
-        } else {
-            console.log("Problema al imprimir: " + resp);
-        }*/
-            const content = generateReceiptContent(venta_B, ventas_VB);
-            const imgUrl = 'https://i.ibb.co/k2hnMfCc/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
-            
-            // Crear una instancia de jsPDF
-            const doc = new jsPDF({
-              orientation: 'portrait',
-              unit: 'mm',
-              format: [75, 284] // Tamaño en milímetros (72mm x 297mm)
-            });
-            
-            // Generar QR dinámicamente
-            QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
-              if (!err) {
-                // Agregar la imagen del logo
-                doc.addImage(imgUrl, 'JPEG', 10, 10, 50, 50); // Ajustar la posición y tamaño de la imagen del logo
-            
-                // Agregar el contenido
-                doc.setFont('Courier'); // Cambiar la fuente a Courier
-                doc.setFontSize(8); // Reducir el tamaño de la fuente
-                doc.text(content, 3, 55); // Ajustar la posición del texto
-            
-                // Agregar el código QR
-                doc.addImage(qrUrl, 'PNG', 16, 230, 43, 43); // Ajustar la posición y tamaño del QR
-            
-                // Guardar el PDF
-                doc.save('recibo.pdf');
-              } else {
-                console.error('Error generando el código QR:', err);
-              }
-            });
-  
-            
-            
-      } else if (printOption === 'print-1') {
-        const content = generateReceiptContent(venta_B, ventas_VB);
-        const imgUrl = 'https://i.ibb.co/k2hnMfCc/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
-  
-        const printWindow = window.open('', '', 'height=600,width=800');
-        // Generar QR dinámicamente
-        QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, function (err, qrUrl) {
-          if (!err) {
-            printWindow.document.write(`
-              <html>
-                <head>
-                  <title>Recibo</title>
-                  <style>
-                    @page {
-                      size: 72mm 297mm; /* Tamaño de papel en milímetros */
-                      margin: 10px; /* Ajusta los márgenes según sea necesario */
-                    }
-                    body {
-                      margin: 0;
-                      padding: 0;
-                      font-family: Courier, monospace; /* Cambiar la fuente a Courier */
-                      font-size: 10pt; /* Reducir el tamaño de la fuente */
-                      width: 100%; /* Asegurar que el contenido utilice todo el ancho disponible */
-                    }
-                    pre {
-                      margin: 0;
-                      font-size: 10pt; /* Asegurar que el texto del preformateado sea más pequeño */
-                      white-space: pre-wrap; /* Permitir el ajuste del texto en lugar de cortar palabras */
-                    }
-                    .center {
-                      text-align: center;
-                    }
-                    .qr {
-                      display: block;
-                      margin: 10px auto;
-                    }
-                    .image-container {
-                      display: flex;
-                      justify-content: center;
-                    }
-                  </style>
-                </head>
-                <body>
-                  <div class="image-container">
-                    <img src="${imgUrl}" alt="Logo" style="width: 140px; height: 140px;" /> <!-- Ajustar tamaño de la imagen -->
-                  </div>
-                  <pre>${content}</pre>
-                  <div class="image-container">
-                    <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" /> <!-- Ajustar tamaño del QR -->
-                  </div>
-                </body>
-              </html>
-            `);
-        
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print(); // Abre el diálogo de impresión
-          } else {
-            console.error('Error generando el código QR:', err);
-          }
-        });
-      }
-  };
-
+ const ventas_VB = loadDetallesFromLocalStorage();
+   const { venta_B } = useBoucher(ventas_VB.id_venta_boucher);
+ 
+   localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante: venta_B.num_comprobante }));
+   localStorage.setItem('observacion', JSON.stringify({ observacion: ventas_VB.observacion }));
+ 
+ const handlePrint = async () => {
+   try {
+     const content = await generateReceiptContent(venta_B, ventas_VB); // Asegúrate de que `generateReceiptContent` sea asíncrono
+     const imgUrl = empresaData?.logotipo || '';
+ 
+     if (printOption === 'print') {
+       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [75, 284] });
+ 
+       // Asegúrate de que el texto del QR sea una cadena válida
+       const qrText = 'https://www.facebook.com/profile.php?id=100055385846115';
+       QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {
+         if (!err) {
+           if (imgUrl) {
+             doc.addImage(imgUrl, 'JPEG', 10, 10, 50, 50);
+           }
+           doc.setFont('Courier');
+           doc.setFontSize(8);
+           doc.text(content, 3, 55);
+           doc.addImage(qrUrl, 'PNG', 16, 230, 43, 43);
+           doc.save('recibo.pdf');
+         } else {
+           console.error('Error generando el código QR:', err);
+         }
+       });
+     } else if (printOption === 'print-1') {
+       const printWindow = window.open('', '', 'height=600,width=800');
+       const qrText = 'https://www.facebook.com/profile.php?id=100055385846115';
+       QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {
+         if (!err) {
+           printWindow.document.write(`
+             <html>
+               <head>
+                 <title>Recibo</title>
+                 <style>
+                   @page { size: 72mm 297mm; margin: 10px; }
+                   body { margin: 0; padding: 0; font-family: Courier, monospace; font-size: 10pt; width: 100%; }
+                   pre { margin: 0; font-size: 10pt; white-space: pre-wrap; }
+                   .center { text-align: center; }
+                   .qr { display: block; margin: 10px auto; }
+                   .image-container { display: flex; justify-content: center; }
+                 </style>
+               </head>
+               <body>
+                 <div class="image-container">
+                   <img src="${imgUrl}" alt="Logo" style="width: 140px; height: 140px;" />
+                 </div>
+                 <pre>${content}</pre>
+                 <div class="image-container">
+                   <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" />
+                 </div>
+               </body>
+             </html>
+           `);
+           printWindow.document.close();
+           printWindow.focus();
+           printWindow.print();
+         } else {
+           console.error('Error generando el código QR:', err);
+         }
+       });
+     }
+   } catch (error) {
+     console.error('Error al generar el PDF:', error);
+   }
+ };
+ 
   const renderVentaRow = (venta) => (
     <TableRow key={venta.id} onClick={(e) => handleRowClick(e, venta)} className="tr-tabla-venta">
       <TableCell className="font-bold text-center table-cell-small">

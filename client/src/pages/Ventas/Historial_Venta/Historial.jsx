@@ -121,7 +121,7 @@ const Ventas = () => {
       {/* Encabezado principal */}
       <div className="flex justify-between mt-5 mb-4">
         <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-          Ventas
+          Historial
         </h1>
       </div>
 

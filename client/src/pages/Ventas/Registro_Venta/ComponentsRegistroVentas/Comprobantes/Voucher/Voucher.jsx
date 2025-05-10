@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
 
 function centerText(text, lineWidth) {
     const wrapText = (text, maxWidth) => {
@@ -17,42 +19,41 @@ function centerText(text, lineWidth) {
         return ' '.repeat(spaces) + line;
     };
 
-    // Dividir el texto en líneas si excede el ancho máximo
     const lines = wrapText(text, lineWidth);
     return lines.map(line => centerLine(line, lineWidth)).join('\n');
 }
 
 function leftAlignText(text, lineWidth) {
-    // Función auxiliar para dividir el texto en líneas de ancho fijo
-    function wrapText(text, maxWidth) {
+    const wrapText = (text, maxWidth) => {
         let lines = [];
         while (text.length > maxWidth) {
             let cutIndex = text.substring(0, maxWidth).lastIndexOf(' ');
-            if (cutIndex === -1) cutIndex = maxWidth; // Si no hay espacio, corta en el ancho máximo
+            if (cutIndex === -1) cutIndex = maxWidth;
             lines.push(text.substring(0, cutIndex).trim());
             text = text.substring(cutIndex).trim();
         }
-        lines.push(text); // Agregar el resto del texto
+        lines.push(text);
         return lines;
-    }
+    };
 
-    // Divide el texto en líneas
     const lines = wrapText(text, lineWidth);
-
-    // Alinea el texto a la izquierda y rellena con espacios a la derecha
     return lines.map(line => line.padEnd(lineWidth, ' ')).join('\n');
 }
 
 function wrapText(text, maxWidth) {
-    let lines = [];
-    while (text.length > maxWidth) {
-        let cutIndex = text.substring(0, maxWidth).lastIndexOf(' ');
-        if (cutIndex === -1) cutIndex = maxWidth; // Si no hay espacio, corta en el ancho máximo
-        lines.push(text.substring(0, cutIndex).trim());
-        text = text.substring(cutIndex).trim();
-    }
-    lines.push(text); // Agregar el resto del texto
-    return lines;
+  if (!text || typeof text !== 'string') {
+    console.warn('wrapText recibió un valor no válido:', text); // Agrega un mensaje de advertencia para depuración
+    return ['']; // Si el texto es null, undefined o no es una cadena, retorna una línea vacía
+  }
+  let lines = [];
+  while (text.length > maxWidth) {
+    let cutIndex = text.substring(0, maxWidth).lastIndexOf(' ');
+    if (cutIndex === -1) cutIndex = maxWidth; // Si no hay espacio, corta en el ancho máximo
+    lines.push(text.substring(0, cutIndex).trim());
+    text = text.substring(cutIndex).trim();
+  }
+  lines.push(text); // Agregar el resto del texto
+  return lines;
 }
 
 function formatDetail(nombre, cantidad, precio, subTotal) {
@@ -133,95 +134,106 @@ function numeroALetras(numero) {
     return letras;
 }
 
-export const generateReceiptContent = (datosVentaComprobante, datosVenta) => {
-    let content = '';
-    const appendContent = (text) => {
-        content += `${text}\n`;
-    };
+export const generateReceiptContent = async (datosVentaComprobante, datosVenta) => {
+  let content = '';
+  const appendContent = (text) => {
+    content += `${text}\n`;
+  };
 
-    // Convertir a números para asegurar que toFixed funcione
-    //const totalImporteVenta = Number(datosVentaComprobante.totalImporte_venta);
-    const descuentoVenta = Number(datosVentaComprobante.descuento_venta);
-    const totalT = Number(datosVentaComprobante.total_t);
-    const igv = Number(datosVentaComprobante.igv);
-    const recibido = Number(datosVentaComprobante.recibido);
-    const vuelto = Number(datosVentaComprobante.vuelto);
+  const descuentoVenta = Number(datosVentaComprobante.descuento_venta || 0);
+  const totalT = Number(datosVentaComprobante.total_t || 0);
+  const igv = Number(datosVentaComprobante.igv || 0);
+  const recibido = Number(datosVentaComprobante.recibido || 0);
+  const vuelto = Number(datosVentaComprobante.vuelto || 0);
 
-    const totalEnLetras = numeroALetras(totalT);
+  const totalEnLetras = numeroALetras(totalT);
 
-    const loadDetallesFromLocalStorage = () => {
-        const savedDetalles = localStorage.getItem('comprobante1');
-        return savedDetalles ? JSON.parse(savedDetalles) : [];
-    };
+  const loadDetallesFromLocalStorage = () => {
+    const savedDetalles = localStorage.getItem('comprobante1');
+    return savedDetalles ? JSON.parse(savedDetalles) : [];
+  };
 
-    const detail = loadDetallesFromLocalStorage();
+  const detail = loadDetallesFromLocalStorage();
 
+  const loadDetallesFromLocalStorage1 = () => {
+    const savedDetalles = localStorage.getItem('observacion');
+    return savedDetalles ? JSON.parse(savedDetalles) : { observacion: '' };
+  };
 
-       const loadDetallesFromLocalStorage1 = () => {
-        const savedDetalles = localStorage.getItem('observacion');
-        return savedDetalles ? JSON.parse(savedDetalles) : [];
-    };
+  const empresaData = await getEmpresaDataByUser();
+  if (!empresaData) {
+    console.error('No se pudieron obtener los datos de la empresa.');
+    return '';
+  }
+  const observaciones = loadDetallesFromLocalStorage1();
 
-    const observaciones = loadDetallesFromLocalStorage1();
+  appendContent(centerText(empresaData?.nombreComercial || "Nombre Comercial", 34));
+  appendContent(centerText(empresaData?.razonSocial || "Razón Social", 34));
+  appendContent(centerText("Dirección: " + (empresaData?.direccion || "Dirección no disponible"), 34));
+  appendContent(centerText(`${empresaData?.distrito || ''}, ${empresaData?.provincia || ''}, ${empresaData?.departamento || ''}`, 34));
+  appendContent(centerText("RUC: " + (empresaData?.ruc || "20610588981"), 34));
+  appendContent(centerText("Tel: " + (empresaData?.telefono || "Teléfono no disponible"), 34));
+  appendContent(centerText(datosVentaComprobante.comprobante_pago + ": " + (detail?.nuevoNumComprobante || 'N/A')));
+  appendContent("==================================");
+  appendContent("Fecha de Emisión: " + (datosVentaComprobante.fecha || 'N/A'));
+  appendContent("Dirección: " + (datosVenta.direccion || 'N/A'));
+  appendContent(leftAlignText("Sucursal: " + (datosVenta.sucursal || 'N/A')));
+  appendContent("==================================");
+  appendContent(leftAlignText("CLIENTE: " + (datosVentaComprobante.nombre_cliente || 'N/A')));
+  appendContent("RUC/DNI: " + (datosVentaComprobante.documento_cliente || 'N/A'));
+  appendContent(leftAlignText(datosVentaComprobante.direccion_cliente || 'N/A'));
+  appendContent("==================================");
+  appendContent(leftAlignText("Observacion: " + (observaciones.observacion || 'Ninguna')));
+  appendContent("==================================");
+  appendContent("Descrip      Cant   P.Unit   TOTAL");
+  appendContent("==================================");
 
-    appendContent(centerText("TEXTILES CREANDO MODA S.A.C."));
-    appendContent(centerText("Calle San Martin 1573 Urb"));
-    appendContent(centerText("Urrunaga SC Tres"));
-    appendContent(centerText("Chiclayo - Chiclayo - Lambayeque"));
-    appendContent(centerText("RUC: 20610588981"));
-    appendContent(centerText("Tel: 918378590"));
-    appendContent(centerText(datosVentaComprobante.comprobante_pago + ": " + detail.nuevoNumComprobante));
-    appendContent("==================================");
-    appendContent("Fecha de Emisión: " + datosVentaComprobante.fecha);
-    appendContent("Dirección: " + datosVenta.direccion);
-    appendContent(leftAlignText("Sucursal: " + datosVenta.sucursal));
-    appendContent("==================================");
-    appendContent(leftAlignText("CLIENTE: " + datosVentaComprobante.nombre_cliente));
-    appendContent("RUC/DNI: " + datosVentaComprobante.documento_cliente);
-    appendContent(leftAlignText(datosVentaComprobante.direccion_cliente));
-    appendContent("==================================");
-    appendContent(leftAlignText("Observacion: " + observaciones.observacion));
-    appendContent("==================================");
-    appendContent("Descrip      Cant   P.Unit   TOTAL");
-    appendContent("==================================");
+  datosVentaComprobante.detalles.forEach(detalle => {
+    appendContent(formatDetail(detalle.nombre || 'N/A', detalle.cantidad || 0, detalle.precio || 0, detalle.sub_total || 0));
+  });
 
-    datosVentaComprobante.detalles.forEach(detalle => {
-        appendContent(formatDetail(detalle.nombre, detalle.cantidad, detalle.precio, detalle.sub_total));
-    });
+  appendContent("==================================");
+  appendContent(rightAlignText("Total Original S/: " + totalT.toFixed(2)));
+  appendContent(rightAlignText("DESCUENTO S/: " + descuentoVenta.toFixed(2)));
+  appendContent(rightAlignText("OP.GRAVADA S/: " + (totalT - igv).toFixed(2)));
+  appendContent(rightAlignText("Exonerado S/: 0.00"));
+  appendContent(rightAlignText("IGV. 18.00% S/: " + igv.toFixed(2)));
+  appendContent(rightAlignText("ICBPER S/: 0.00"));
+  appendContent(rightAlignText("Importe Total S/: " + totalT.toFixed(2)));
+  appendContent("\n");
+  appendContent(centerText("SON: " + totalEnLetras));
+  appendContent(centerText("Cond. de Venta: Contado"));
+  appendContent(centerText("Forma Pago: " + (datosVentaComprobante.formadepago || 'N/A')));
+  appendContent(centerText("Recibido: S/" + recibido.toFixed(2)));
+  appendContent(centerText("Vuelto: S/" + vuelto.toFixed(2)));
+  appendContent(centerText("Peso: Kg 0.00"));
+  appendContent("\n");
+  appendContent(centerText("Fec.Regist: " + (datosVentaComprobante.fecha || 'N/A')));
+  appendContent("\n");
+  appendContent(centerText("Gracias por su preferencia"));
+  appendContent(centerText("¡Vuelva Pronto!"));
+  appendContent(centerText("No se aceptan devoluciones"));
+  appendContent("==================================");
+  appendContent(centerText("Generado desde el Sistema"));
+  appendContent(centerText("de Horytek Negocios"));
+  appendContent(centerText("Un Producto de " + (empresaData?.razonSocial || 'N/A')));
+  appendContent("==================================");
 
-    appendContent("==================================");
-    appendContent(rightAlignText("Total Original S/: " + totalT.toFixed(2)));
-    appendContent(rightAlignText("DESCUENTO S/: " + descuentoVenta.toFixed(2)));
-    appendContent(rightAlignText("OP.GRAVADA S/: " + (totalT - igv).toFixed(2)));
-    appendContent(rightAlignText("Exonerado S/: 0.00"));
-    appendContent(rightAlignText("IGV. 18.00% S/: " + (igv).toFixed(2)));
-    appendContent(rightAlignText("ICBPER S/: 0.00"));
-    appendContent(rightAlignText("Importe Total S/: " + totalT.toFixed(2)));
-    appendContent("\n");
-    appendContent(centerText("SON: " + totalEnLetras));
-    appendContent(centerText("Cond. de Venta: Contado"));
-    appendContent(centerText("Forma Pago: " + datosVentaComprobante.formadepago));
-    appendContent(centerText("Recibido: S/" + recibido.toFixed(2)));
-    appendContent(centerText("Vuelto: S/" + vuelto.toFixed(2)));
-    appendContent(centerText("Peso: Kg 0.00"));
-    appendContent("\n");
-    appendContent(centerText("Fec.Regist: " + datosVentaComprobante.fecha));
-    appendContent("\n");
-    appendContent(centerText("Gracias por su preferencia"));
-    appendContent(centerText("¡Vuelva Pronto!"));
-    appendContent(centerText("No se aceptan devoluciones"));
-    appendContent("==================================");
-    appendContent(centerText("Generado desde el Sistema"));
-    appendContent(centerText("de Tormenta S.A.C"));
-    appendContent(centerText("Un Producto de TORMENTA S.A.C"));
-    appendContent("==================================");
-
-    return content;
+  return content;
 };
 
 
 const Voucher = ({ datosVentaComprobante, datosVenta }) => {
-    const content = generateReceiptContent(datosVentaComprobante, datosVenta);
+    const [content, setContent] = useState('');
+
+    useEffect(() => {
+        const fetchContent = async () => {
+            const generatedContent = await generateReceiptContent(datosVentaComprobante, datosVenta);
+            setContent(generatedContent);
+        };
+        fetchContent();
+    }, [datosVentaComprobante, datosVenta]);
+
     return <pre>{content}</pre>;
 };
 

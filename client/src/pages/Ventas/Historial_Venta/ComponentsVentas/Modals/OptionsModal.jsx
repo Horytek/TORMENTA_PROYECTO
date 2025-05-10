@@ -1,10 +1,11 @@
-import { useState,useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
 import toast from 'react-hot-toast';
-import {  handleSunat } from '../../../Data/add_sunat';
-import {  handleSunatPDF } from '../../../Data/data_pdf';
-import {  handleUpdate } from '../../../Data/update_venta';
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Checkbox } from "@heroui/react";
+import { handleSunat } from '../../../Data/add_sunat';
+import { handleSunatPDF } from '../../../Data/data_pdf';
+import { handleUpdate } from '../../../Data/update_venta';
 
 const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetchVentas }) => {
   const [sendToSunat, setSendToSunat] = useState(false);
@@ -101,36 +102,46 @@ const handleAccept = () => {
 
 
 
-  return (
-    <div className="modal-container">
-      <div className="modal-content-c">
-        <h2 style={{ textAlign: "start" }}>
-          <IoMdOptions className="inline-block mr-2" style={{ fontSize: '20px' }} />
-          Opciones
-        </h2>
-        <div style={{ textAlign: "start" }}>
-          <div className="flex mt-4" style={{ alignItems: "center" }}>
-            <input
-              type="checkbox"
-              id="eliminar"
-              className="custom-checkbox mr-2 relative"
-              onChange={() => handleCheckboxChange('generatePdf')}
-              checked={generatePdfSelected}
-              disabled={d_venta.tipoComprobante === 'Nota'}
-            />{' '}
-            <p>Generar PDF</p>
+ return (
+    <Modal 
+      isOpen={modalOpen} 
+      onClose={closeModal}
+      placement="center"
+      
+    >
+      <ModalContent className="bg-white rounded-lg">
+        <ModalHeader className="flex items-center gap-2 border-b pb-2">
+          <IoMdOptions className="text-xl" />
+          <span>Opciones</span>
+        </ModalHeader>
+        
+        <ModalBody className="py-4">
+          <div className="grid space-y-4">
+            <Checkbox
+              isSelected={generatePdfSelected}
+              onValueChange={() => handleCheckboxChange('generatePdf')}
+              isDisabled={d_venta.tipoComprobante === 'Nota'}
+            >
+              Generar PDF
+            </Checkbox>
           </div>
-        </div>
-        <div className="modal-actions flex justify-end">
-          <button className="btn btn-cancel" onClick={closeModal}>
+        </ModalBody>
+        
+        <ModalFooter>
+          <Button color="default" variant="light" onPress={closeModal} className="mr-2">
             Cancelar
-          </button>
-          <button className="btn btn-aceptar" onClick={handleAccept} disabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado===1)}>
+          </Button>
+          <Button 
+            color="success" 
+            variant="shadow" 
+            onPress={handleAccept} 
+            isDisabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado === 1)}
+          >
             Aceptar
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };
 

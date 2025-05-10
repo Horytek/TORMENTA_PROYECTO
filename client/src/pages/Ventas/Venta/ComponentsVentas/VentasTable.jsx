@@ -8,14 +8,33 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDi
   CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
+import { getEmpresaDataByUser } from "@/services/empresa.services";
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, currentPage }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [printOption, setPrintOption] = useState('');
+  const [empresaData, setEmpresaData] = useState(null); // Estado para almacenar los datos de la empresa
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+
+      const formatHours = () => {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    };
 
   useEffect(() => {
     setExpandedRow(null);
+    const fetchEmpresaData = async () => {
+                try {
+                    const data = await getEmpresaDataByUser();
+                    setEmpresaData(data); // Establecer los datos de la empresa en el estado
+                } catch (error) {
+                    console.error("Error al obtener los datos de la empresa:", error);
+                }
+            };
+            fetchEmpresaData(); // Llamar a la función para obtener los datos de la empresa
   }, [currentPage]);
 
   const toggleRow = (id, estado, venta) => {
@@ -74,15 +93,21 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
   localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante: venta_B.num_comprobante }));
   localStorage.setItem('observacion', JSON.stringify({ observacion: ventas_VB.observacion }));
 
-  const handlePrint = async () => {
-    const content = generateReceiptContent(venta_B, ventas_VB);
-    const imgUrl = 'https://i.ibb.co/k2hnMfCc/Whats-App-Image-2024-08-22-at-12-07-38-AM.jpg';
+const handlePrint = async () => {
+  try {
+    const content = await generateReceiptContent(venta_B, ventas_VB); // Asegúrate de que `generateReceiptContent` sea asíncrono
+    const imgUrl = empresaData?.logotipo || '';
 
     if (printOption === 'print') {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [75, 284] });
-      QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, (err, qrUrl) => {
+
+      // Asegúrate de que el texto del QR sea una cadena válida
+      const qrText = 'https://www.facebook.com/profile.php?id=100055385846115';
+      QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {
         if (!err) {
-          doc.addImage(imgUrl, 'JPEG', 10, 10, 50, 50);
+          if (imgUrl) {
+            doc.addImage(imgUrl, 'JPEG', 10, 10, 50, 50);
+          }
           doc.setFont('Courier');
           doc.setFontSize(8);
           doc.text(content, 3, 55);
@@ -94,7 +119,8 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
       });
     } else if (printOption === 'print-1') {
       const printWindow = window.open('', '', 'height=600,width=800');
-      QRCode.toDataURL('https://www.facebook.com/profile.php?id=100055385846115', { width: 100, height: 100 }, (err, qrUrl) => {
+      const qrText = 'https://www.facebook.com/profile.php?id=100055385846115';
+      QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {
         if (!err) {
           printWindow.document.write(`
             <html>
@@ -128,7 +154,10 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
         }
       });
     }
-  };
+  } catch (error) {
+    console.error('Error al generar el PDF:', error);
+  }
+};
 
   const renderVentaRow = (venta) => (
     <TableRow key={venta.id} onClick={(e) => handleRowClick(e, venta)} className='cursor-pointer hover:bg-gray-100 transition-colors'>
