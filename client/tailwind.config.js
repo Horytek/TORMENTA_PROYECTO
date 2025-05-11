@@ -73,6 +73,15 @@ export default {
           },
         },
         'custom-blue': '#00bdd6',
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar-background))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          primary: 'hsl(var(--sidebar-primary))',
+          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+          accent: 'hsl(var(--sidebar-accent))',
+          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+        },
       },
       boxShadow: {
         'tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',

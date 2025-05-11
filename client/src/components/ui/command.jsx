@@ -6,20 +6,13 @@ import {
   Settings,
   Smile,
   User,
-  Search,
 } from "lucide-react"
-import { Input } from "@heroui/react"
-import { ScrollShadow } from "@heroui/react"; // Asegúrate de importar ScrollShadow
-
 
 const CommandContext = createContext()
 
 export function Command({ className = "", children, ...props }) {
   return (
-    <div
-      className={`bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-lg overflow-hidden ${className}`}
-      {...props}
-    >
+    <div className={`command ${className}`} {...props}>
       <CommandContext.Provider value={{}}>
         {children}
       </CommandContext.Provider>
@@ -27,54 +20,33 @@ export function Command({ className = "", children, ...props }) {
   )
 }
 
-// 👇 Aquí usamos Input de NextUI con ícono
 export function CommandInput({ className = "", ...props }) {
   return (
-    <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-transparent">
-      <Input
-        isClearable
-        radius="full"
-        size="lg"
-        placeholder="Buscar comandos o elementos..."
-        startContent={<Search className="text-default-400 h-5 w-5" />}
-        classNames={{
-          input: "text-base text-zinc-700 dark:text-zinc-200",
-          innerWrapper: "bg-transparent",
-          inputWrapper:
-            "bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-full px-4 py-2",
-        }}
-        {...props}
-      />
-    </div>
+    <input
+      className={`w-full px-3 py-2 border-b outline-none ${className}`}
+      {...props}
+    />
   )
 }
 
 export function CommandList({ className = "", children, ...props }) {
   return (
-    <ScrollShadow
-      hideScrollBar
-      className={`py-3 max-h-[350px] overflow-y-auto rounded-lg shadow-sm ${className}`}
-      {...props}
-    >
+    <div className={`py-2 ${className}`} {...props}>
       {children}
-    </ScrollShadow>
-  );
+    </div>
+  )
 }
 
 export function CommandEmpty({ children }) {
   return (
-    <div className="text-center text-zinc-400 py-6 text-base">{children}</div>
+    <div className="text-center text-gray-400 py-4">{children}</div>
   )
 }
 
 export function CommandGroup({ heading, children }) {
   return (
-    <div className="mb-4">
-      {heading && (
-        <div className="px-5 py-2 text-sm font-bold text-zinc-500 uppercase tracking-wide">
-          {heading}
-        </div>
-      )}
+    <div className="mb-2">
+      {heading && <div className="px-3 py-1 text-xs font-semibold text-gray-500">{heading}</div>}
       <div>{children}</div>
     </div>
   )
@@ -83,11 +55,7 @@ export function CommandGroup({ heading, children }) {
 export function CommandItem({ disabled, className = "", children, ...props }) {
   return (
     <button
-      className={`flex items-center gap-3 w-full px-5 py-3 text-base text-left rounded-xl transition-colors ${
-        disabled
-          ? "text-zinc-400 cursor-not-allowed"
-          : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
-      } ${className}`}
+      className={`flex items-center gap-2 w-full px-3 py-2 text-left rounded hover:bg-gray-100 disabled:opacity-50 ${className}`}
       disabled={disabled}
       {...props}
     >
@@ -97,50 +65,50 @@ export function CommandItem({ disabled, className = "", children, ...props }) {
 }
 
 export function CommandSeparator() {
-  return <hr className="my-3 border-t border-zinc-200 dark:border-zinc-700" />
+  return <hr className="my-2 border-gray-200" />
 }
 
 export function CommandShortcut({ children }) {
   return (
-    <span className="ml-auto text-sm text-zinc-400">{children}</span>
+    <span className="ml-auto text-xs text-gray-400">{children}</span>
   )
 }
 
 function CommandDemo() {
   return (
-    <Command className="w-full max-w-xl mx-auto mt-12">
-      <CommandInput />
+    <Command className="rounded-lg border shadow-md md:min-w-[450px]">
+      <CommandInput placeholder="Type a command or search..." />
       <CommandList>
-        <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-        <CommandGroup heading="Enlaces">
+        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup heading="Links">
           <CommandItem>
-            <Calendar className="h-5 w-5 text-blue-500" />
-            <span>Calendario</span>
+            <Calendar />
+            <span>Calendar</span>
           </CommandItem>
           <CommandItem>
-            <Smile className="h-5 w-5 text-yellow-500" />
-            <span>Buscar Emoji</span>
+            <Smile />
+            <span>Search Emoji</span>
           </CommandItem>
           <CommandItem disabled>
-            <Calculator className="h-5 w-5" />
-            <span>Calculadora</span>
+            <Calculator />
+            <span>Calculator</span>
           </CommandItem>
         </CommandGroup>
         <CommandSeparator />
-        <CommandGroup heading="Configuración">
+        <CommandGroup heading="Settings">
           <CommandItem>
-            <User className="h-5 w-5 text-purple-500" />
-            <span>Perfil</span>
+            <User />
+            <span>Profile</span>
             <CommandShortcut>⌘P</CommandShortcut>
           </CommandItem>
           <CommandItem>
-            <CreditCard className="h-5 w-5 text-green-500" />
-            <span>Facturación</span>
+            <CreditCard />
+            <span>Billing</span>
             <CommandShortcut>⌘B</CommandShortcut>
           </CommandItem>
           <CommandItem>
-            <Settings className="h-5 w-5 text-gray-500" />
-            <span>Ajustes</span>
+            <Settings />
+            <span>Settings</span>
             <CommandShortcut>⌘S</CommandShortcut>
           </CommandItem>
         </CommandGroup>
