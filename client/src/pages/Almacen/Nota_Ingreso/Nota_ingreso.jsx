@@ -68,9 +68,13 @@ const Ingresos = () => {
       <div className='w-full mb-3 rounded-lg'>
         <table className='w-full text-sm rounded-lg table-auto border-collapse'>
           <tbody className="bg-gray-50">
-            <tr className='text-center'>
-              <td className='border-r-2 border-t-0'>
-                <strong>{almacenSeleccionado ? `SUCURSAL: ${almacenSeleccionado.sucursal}` : 'SUCURSAL: Sin almacén seleccionado'}</strong> <span>{}</span>
+            <tr className="text-center">
+              <td className="border-r-2 border-t-0 p-4">
+                <strong className="block text-lg font-semibold font-sans text-gray-800 tracking-wide">
+                  {almacenSeleccionado
+                    ? `SUCURSAL: ${almacenSeleccionado.sucursal}`
+                    : 'SUCURSAL: Sin almacén seleccionado'}
+                </strong>
               </td>
             </tr>
           </tbody>

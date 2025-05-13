@@ -129,7 +129,7 @@ const Ventas = () => {
         <table className='w-full text-sm divide-gray-200 rounded-lg table-auto border-collapse'>
           <tbody className="bg-gray-50">
             <tr className='text-center'>
-              <td className='border-r-2 border-t-0'> 
+              <td className='border-r-2 border-t-0 py-2 px-4'>
                 <strong>Cant. Ventas:</strong> <span>{ventas.length}</span> 
               </td>
               <td className='border-l-2 border-r-2 border-t-0'>
