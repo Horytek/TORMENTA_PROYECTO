@@ -84,7 +84,6 @@ const data = {
       items: [
         { title: "Usuarios", url: "/configuracion/usuarios" },
         { title: "Roles y Permisos", url: "/configuracion/roles" },
-        { title: "Historial", url: "/configuracion/historial" },
       ],
     },
     { title: "Desarrollador", url: "/desarrollador", icon: FaCog, items: [] },
