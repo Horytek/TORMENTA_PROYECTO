@@ -113,7 +113,7 @@ const data = {
   desarrollador: [
     { title: "Desarrollo", url: "/desarrollador", icon: Bot, items: [] },
     { title: "Módulos", url: "/modulos", icon: SquareTerminal, items: [] },
-    { title: "Empresas SUNAT", url: "/sunat", icon: BookOpen, items: [] },
+    { title: "Inf. empresas", url: "/sunat", icon: BookOpen, items: [] },
   ],
 
   projects: [

@@ -9,6 +9,7 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDi
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { format } from 'date-fns'
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, currentPage }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -174,7 +175,54 @@ const handlePrint = async () => {
         <div className='whitespace-normal'>{venta.cliente}</div>
         <div className="text-gray-500 whitespace-normal">{venta.ruc}</div>
       </TableCell>
-      <TableCell className="text-center text-[12px] p-1">{venta.fechaEmision}</TableCell>
+      <TableCell className="text-center text-[12px] p-1">
+        <Tooltip
+          content={
+            <div className="text-sm text-gray-800">
+              <p>
+                <strong>Hora de creación:</strong>{" "}
+                {venta.hora_creacion
+                  ? new Date(`1970-01-01T${venta.hora_creacion}`).toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true, // Formato de 12 horas
+                    })
+                  : "N/A"}
+              </p>
+              <p>
+                <strong>Fecha y hora de anulación:</strong>{" "}
+                {venta.fecha_anulacion
+                  ? new Date(venta.fecha_anulacion).toLocaleString("es-ES", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true, // Formato de 12 horas
+                    })
+                  : "N/A"}
+              </p>
+            </div>
+          }
+          placement="top"
+          className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
+        >
+          <div className="flex justify-center items-center gap-1">
+            <span>
+              {venta.fechaEmision
+                ? new Date(venta.fechaEmision).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })
+                : "N/A"}
+            </span>
+            <i className="fas fa-calendar-alt text-blue-500 cursor-pointer"></i>
+          </div>
+        </Tooltip>
+      </TableCell>
       <TableCell className="text-center text-[12px] p-1">{venta.igv}</TableCell>
       <TableCell className="text-center text-[12px] p-1">{venta.total}</TableCell>
       <TableCell className="font-bold text-[12px] p-1">
@@ -182,9 +230,12 @@ const handlePrint = async () => {
         <div className="text-gray-500 whitespace-normal">{venta.cajeroId}</div>
       </TableCell>
       <TableCell className="text-center text-[12px] p-1" style={{ color: getEstadoColor(venta.estado), fontWeight: "400" }}>
-        <div className='py-1.5 rounded-full' style={{ background: getEstadoBackground(venta.estado) }}>
-          <span>{venta.estado}</span>
-        </div>
+        <Tooltip content={venta.estado === 'Anulada' ? `Usuario que dio de baja: ${venta.u_modifica || 'N/A'}` : `Estado: ${venta.estado}`}>
+          <div className="flex justify-center items-center gap-1 py-1.5 rounded-full" style={{ background: getEstadoBackground(venta.estado) }}>
+            <span>{venta.estado}</span>
+            <i className={`fas ${venta.estado === 'Anulada' ? 'fa-user text-red-500' : 'fa-info-circle text-gray-500'} cursor-pointer`}></i>
+          </div>
+        </Tooltip>
       </TableCell>
       <TableCell className="text-[12px] p-1">
         <div className='flex justify-center items-center'>

@@ -33,7 +33,8 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const [razon, setRazon] = useState("");
    const [numC, setNumC] = useState("");
    const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
- 
+   const ver_rol = localStorage.getItem('rol');
+
    const handleChange = (event) => {
      setRazon(event.target.value);
    };
@@ -193,6 +194,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
               style={{ width: "170px" }}
               value={sucursalSeleccionado}
               onChange={(e) => setSucursalSeleccionado(e.target.value)}
+              defaultSelectedKeys={[ver_rol != 1 ? localStorage.getItem('sur') : sucursalSeleccionado]}
             >
               {sucursales.map((sucursal) => (
                 <SelectItem key={sucursal.nombre} value={sucursal.nombre}>

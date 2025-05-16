@@ -13,6 +13,7 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
   const [isDeleted, setIsDeleted] = useState(false);
   const [isDeleted1, setIsDeleted1] = useState(false);
   const [generatePdfSelected, setGeneratePdfSelected] = useState(false);
+  const ver_rol = localStorage.getItem('rol');
   
   const loadDetallesFromLocalStorage2 = () => {
     const savedDetalles = localStorage.getItem('ventas');
@@ -117,7 +118,7 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
             <Checkbox
               isSelected={sendToSunat}
               onValueChange={() => handleCheckboxChange('sendToSunat')}
-              isDisabled={d_venta.estado === 1 || d_venta.tipoComprobante === 'Nota'}
+              isDisabled={d_venta.estado === 1 || d_venta.tipoComprobante === 'Nota' || ver_rol != 1}
             >
               Enviar datos a la Sunat
             </Checkbox>
@@ -125,6 +126,7 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
             <Checkbox
               isSelected={deleteOptionSelected}
               onValueChange={() => handleCheckboxChange('deleteOption')}
+              isDisabled={ver_rol != 1}
             >
               Eliminar la Venta
             </Checkbox>
