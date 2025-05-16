@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 //import Pagination from '@/components/Pagination/Pagination';
 import TablaVentas from './ComponentsVentas/VentasTable';
 import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
@@ -104,12 +103,9 @@ const Ventas = () => {
   return (
     <div>
       <Toaster />
-      {/* Componente de migas de pan */}
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/ventas' }]} />
 
-      <hr className="mb-4" />
       {/* Encabezado principal */}
-      <div className="flex justify-between mt-5 mb-4">
+      <div className="flex justify-between mb-4">
         <h1 className="text-xl font-bold text-[36px]">
           Ventas
         </h1>

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 //import Pagination from '@/components/Pagination/Pagination';
 import TablaVentas from './ComponentsVentas/HistorialTable';
 import FiltrosVentas from './ComponentsVentas/FiltrosHistorial';
@@ -115,7 +114,7 @@ const Ventas = () => {
     <div>
       <Toaster />
       {/* Componente de migas de pan */}
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Historial', href: '/configuracion/historial' }]} />
+      {/* <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Historial', href: '/configuracion/historial' }]} /> */}
 
       <hr className="mb-4" />
       {/* Encabezado principal */}

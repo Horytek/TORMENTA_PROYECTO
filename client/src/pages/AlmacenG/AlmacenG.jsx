@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { ShowAlmacenes } from '@/pages/AlmacenG/ShowAlmacenes';
 import { Toaster } from "react-hot-toast";
-import { ButtonIcon } from '@/components/Buttons/Buttons';
 import { FaPlus } from "react-icons/fa";
-import { IoIosSearch } from "react-icons/io";
 import AlmacenesForm from './AlmacenesForm';
-import { Button, ButtonGroup } from "@heroui/button";
+import { Button } from "@heroui/button";
 import { usePermisos } from '@/routes';
 import { Tooltip } from "@heroui/react";
 import BarraSearch from "@/components/Search/Search";
@@ -32,7 +29,7 @@ function Almacenes() {
   return (
     <div>
       <Toaster />
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacenes', href: '/almacenG' }]} />
+      {/* <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Almacenes', href: '/almacenG' }]} /> */}
       <hr className="mb-4" />
       <h1 className='text-4xl font-extrabold'>Gestión de almacenes</h1>
       <div className="flex items-center justify-between mt-5 mb-4">

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaSucursal from './ComponentsSucursal/SucursalTable';
 import getSucursalesData from './data/data_sucursal';
 import FiltrosSucursal from './ComponentsSucursal/FiltroSucursal';
@@ -71,7 +70,6 @@ const Sucursales = () => {
 
     return (
         <div style={styles.container}>
-            <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Sucursal', href: '/sucursal' }]} />
             <hr style={styles.hr} />
             <div style={styles.header}>
                 <h1 style={styles.title}>

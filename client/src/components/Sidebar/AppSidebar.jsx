@@ -12,13 +12,27 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
+  Home,
+  Tags,
+  Warehouse,
+  Users,
+  User,
+  LineChart,
+  Building2,
+  FileBarChart2,
+  UserCog,
+  UserRound,
 } from "lucide-react";
-import { FaHome, FaTags, FaWarehouse, FaUserFriends, FaUsers, FaChartLine, FaBuilding, FaCog } from "react-icons/fa";
-import { BiSolidReport } from "react-icons/bi";
 
 import { NavMain } from "@/components/ui/nav-main";
 import { NavProjects } from "@/components/ui/nav-projects";
+import { NavReports } from "@/components/ui/nav-reports";
 import { NavUser } from "@/components/ui/nav-user";
+import { NavLogistica } from "@/components/ui/nav-logistica";
+import { NavTerceros } from "@/components/ui/nav-terceros";
+import { NavConfig } from "@/components/ui/nav-config";
+import { NavDesarrollador } from "@/components/ui/nav-dev";
+
 import { TeamSwitcher } from "@/components/ui/team-switcher";
 import {
   Sidebar,
@@ -41,56 +55,67 @@ const data = {
     { name: "Evil Corp.", logo: Command, plan: "Free" },
   ],
   navMain: [
-    { title: "Inicio", url: "/inicio", icon: FaHome, items: [] },
+    { title: "Dashboard", url: "/inicio", icon: Home, items: [] },
     {
       title: "Productos",
       url: "/productos",
-      icon: FaTags,
+      icon: Tags,
       items: [
         { title: "Marcas", url: "/productos/marcas" },
         { title: "Categorías", url: "/productos/categorias" },
         { title: "Subcategorías", url: "/productos/subcategorias" },
       ],
     },
-    { title: "Almacenes", url: "/almacenG", icon: FaWarehouse, items: [] },
-    { title: "Clientes", url: "/clientes", icon: FaUserFriends, items: [] },
-    { title: "Empleados", url: "/empleados", icon: FaUsers, items: [] },
-    { title: "Proveedores", url: "/proveedores", icon: FaUsers, items: [] },
+
     {
       title: "Ventas",
       url: "/ventas",
-      icon: FaChartLine,
+      icon: LineChart,
       items: [
-        { title: "Nueva Venta", url: "/ventas/registro_venta" },
-        { title: "Libro Ventas", url: "/ventas/libro_ventas" },
+        { title: "Nueva venta", url: "/ventas/registro_venta" },
+        // { title: "Libro Ventas", url: "/ventas/libro_ventas" },
       ],
     },
+
+  ],
+
+  reportes: [
+    { title: "Análisis de ventas", url: "/reportes", icon: FileBarChart2, items: [] },
+    { title: "Libro de ventas", url: "/ventas/libro_ventas", icon: FileBarChart2, items: [] },
+  ],
+
+  terceros: [
+    { title: "Clientes", url: "/clientes", icon: User, items: [] },
+    { title: "Empleados", url: "/empleados", icon: Users, items: [] },
+    { title: "Proveedores", url: "/proveedores", icon: Users, items: [] },
+  ],
+
+  logistica: [
     {
       title: "Kárdex",
       url: "/almacen",
-      icon: FaWarehouse,
+      icon: Warehouse,
       items: [
         { title: "Nota Ingreso", url: "/almacen/nota_ingreso" },
         { title: "Guía Remisión", url: "/almacen/guia_remision" },
         { title: "Nota Salida", url: "/almacen/nota_salida" },
       ],
     },
-    { title: "Reportes", url: "/reportes", icon: BiSolidReport, items: [] },
-    { title: "Sucursal", url: "/sucursal", icon: FaBuilding, items: [] },
-    {
-      title: "Configuración",
-      url: "#",
-      icon: FaCog,
-      items: [
-        { title: "Usuarios", url: "/configuracion/usuarios" },
-        { title: "Roles y Permisos", url: "/configuracion/roles" },
-        { title: "Historial", url: "/configuracion/historial" },
-      ],
-    },
-    { title: "Desarrollador", url: "/desarrollador", icon: FaCog, items: [] },
-    { title: "Inf. Empresas", url: "/sunat", icon: BiSolidReport, items: [] },
-    { title: "Módulos", url: "/modulos", icon: FaCog, items: [] },
+    { title: "Almacenes", url: "/almacenG", icon: Warehouse, items: [] },
+    { title: "Sucursal", url: "/sucursal", icon: Building2, items: [] },
   ],
+
+  configuracion: [
+    { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, items: [] },
+    { title: "Roles y permisos", url: "/configuracion/roles", icon: Users, items: [] },
+  ],
+
+  desarrollador: [
+    { title: "Desarrollo", url: "/desarrollador", icon: Bot, items: [] },
+    { title: "Módulos", url: "/modulos", icon: SquareTerminal, items: [] },
+    { title: "Empresas SUNAT", url: "/sunat", icon: BookOpen, items: [] },
+  ],
+
   projects: [
     { name: "Design Engineering", url: "#", icon: Frame },
     { name: "Sales & Marketing", url: "#", icon: PieChart },
@@ -105,11 +130,16 @@ export function AppSidebar(props) {
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />  
+        <NavMain items={data.navMain} />
+        <NavReports items={data.reportes} />
+        <NavTerceros items={data.terceros} />
+        <NavLogistica items={data.logistica} />
+        <NavConfig items={data.configuracion} />
+        <NavDesarrollador items={data.desarrollador} />
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import UsuariosForm from './UsuariosForm';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
@@ -26,7 +25,7 @@ function Usuarios() {
   return (
     <div>
       <Toaster />
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Usuarios', href: '/configuracion/usuarios' }]} />
+      {/* <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Usuarios', href: '/configuracion/usuarios' }]} /> */}
       <hr className="mb-4" />
       <h1 className='text-4xl font-extrabold'>Usuarios</h1>
       <div className="flex items-center justify-between mt-5 mb-4">

@@ -504,6 +504,7 @@ export const SidebarMenuButton = forwardRef(
           side="right"
           align="center"
           hidden={state !== "collapsed" || isMobile}
+          className="bg-gray-900 text-white rounded px-2 py-1 shadow-lg" // <-- añade esta clase
           {...tooltipProps}
         />
       </Tooltip>

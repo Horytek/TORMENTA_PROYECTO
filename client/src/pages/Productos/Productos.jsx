@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import ProductosForm from './ProductosForm';
 import { Toaster } from "react-hot-toast";
 import { ShowProductos } from './ShowProductos';
@@ -26,8 +25,6 @@ function Productos() {
   return (
     <div>
       <Toaster />
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Productos', href: '/productos' }]} />
-      <hr className="mb-4" />
       <h1 className='font-extrabold text-4xl'>Gestión de productos</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
         <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>

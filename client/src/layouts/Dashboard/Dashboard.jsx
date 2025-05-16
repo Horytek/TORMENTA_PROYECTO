@@ -194,7 +194,7 @@ function Dashboard() {
     <div className="flex flex-col h-screen w-full">
       <Toaster position="top-center" reverseOrder={true} />
       <div className="flex flex-col transition-all duration-300">
-        <Navbar />
+        <Navbar routes={routes} />
         <div className="p-4 contenido-cambiante">
           <SubcategoriaContextProvider>
             <CategoriaContextProvider>

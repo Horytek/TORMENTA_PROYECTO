@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { MdAddCircleOutline } from 'react-icons/md';
 import { Pagination, Tooltip } from "@heroui/react";
 import TablaGuias from './ComponentsGuias/GuiasTable';
@@ -42,16 +41,10 @@ const Guias = () => {
 
   return (
     <div>
-      <Breadcrumb
-        paths={[
-          { name: 'Inicio', href: '/inicio' },
-          { name: 'Almacen', href: '/almacen' },
-          { name: 'Guias de Remision', href: '/almacen/guia_remision' },
-        ]}
-      />
-      <hr className="mb-4" />
+      
+      <hr className="mb-2" />
 
-      <div className="flex justify-between mt-5 mb-4">
+      <div className="flex justify-between">
         <h1 className="text-[36px] font-bold">Guias de Remision</h1>
       </div>
 

@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 // import ClientesForm from './ClientesForm';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
@@ -71,13 +70,7 @@ function Clientes() {
   return (
     <div>
       <Toaster />
-      <Breadcrumb
-        paths={[
-          { name: 'Inicio', href: '/inicio' },
-          { name: 'Clientes', href: '/clientes' },
-        ]}
-      />
-      <hr className="mb-4" />
+     
       <h1 className="text-4xl font-extrabold">Gestión de clientes</h1>
       <div className="flex items-center justify-between mt-5 mb-4">
         <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>

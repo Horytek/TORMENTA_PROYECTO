@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import MarcasForm from "./MarcasForm";
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
@@ -31,14 +30,7 @@ function Marcas() {
   return (
     <div>
       <Toaster />
-      <Breadcrumb
-        paths={[
-          { name: "Inicio", href: "/inicio" },
-          { name: "Productos", href: "/productos" },
-          { name: "Marcas", href: "/productos/marcas" },
-        ]}
-      />
-      <hr className="mb-4" />
+      
       <h1 className="font-extrabold text-4xl">Gestión de marcas</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
         <div

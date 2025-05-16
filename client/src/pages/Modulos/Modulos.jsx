@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import { Button } from "@heroui/button";
@@ -26,13 +25,8 @@ function Modulos() {
     return (
         <div>
             <Toaster />
-            <Breadcrumb
-                paths={[
-                    { name: 'Inicio', href: '/inicio' },
-                    { name: 'Módulos', href: '/configuracion/modulos' },
-                ]}
-            />
-            <hr className="mb-4" />
+            
+            <hr className="mb-3" />
             <h1 className="text-4xl font-extrabold">Módulos y submódulos</h1>
             <div className="flex items-center justify-between mt-5 mb-4">
                 <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>

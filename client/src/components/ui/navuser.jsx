@@ -1,35 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from "lucide-react";
-
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { LogOut, ChevronsUpDown } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/Auth/AuthProvider";
 import { getRoles } from "@/services/rol.services";
 
@@ -46,7 +29,10 @@ export function NavUser() {
     fetchRoles();
   }, []);
 
-  if (!user) return null;
+  if (!user) {
+    // Usuario no cargado aún
+    return null;
+  }
 
   const formatRoleName = (name) => {
     if (!name) return "Rol desconocido";
@@ -54,16 +40,16 @@ export function NavUser() {
   };
 
   const userRole = formatRoleName(
-    roles.find((role) => String(role.id_rol) === String(user.rol))?.nom_rol
+    roles.find((role) => role.id_rol === user.rol)?.nom_rol
   );
 
-  const displayName = user.usuario || user.name || "Usuario";
-  const initials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = user.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+    : "?";
 
   return (
     <SidebarMenu>
@@ -76,13 +62,13 @@ export function NavUser() {
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 {user.avatar ? (
-                  <AvatarImage src={user.avatar} alt={displayName} />
+                  <AvatarImage src={user.avatar} alt={user.name} />
                 ) : (
                   <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 )}
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{displayName}</span>
+                <span className="truncate font-semibold">{user.name}</span>
                 <span className="truncate text-xs">{userRole}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -99,39 +85,24 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   {user.avatar ? (
-                    <AvatarImage src={user.avatar} alt={displayName} />
+                    <AvatarImage src={user.avatar} alt={user.name} />
                   ) : (
                     <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                   )}
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{displayName}</span>
+                  <span className="truncate font-semibold">{user.name}</span>
                   <span className="truncate text-xs">{userRole}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
-
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck className="mr-2" />
-                Cuenta
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard className="mr-2" />
-                Facturación
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell className="mr-2" />
-                Notificaciones
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 " />
+                Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuItem
-              onClick={logout}
-              className="cursor-pointer text-red-600 hover:bg-red-50 active:bg-red-100"
-            >
-              <LogOut className="mr-2" />
-              Cerrar sesión
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

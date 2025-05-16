@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaLibro from './ComponentsLibroVentas/TablaLibro';
 import ExportarExcel from './ComponentsLibroVentas/ExportarExcel';
 import FiltroLibro from './ComponentsLibroVentas/FiltroLibro';
@@ -44,9 +43,7 @@ const LibroVentas = () => {
 
     return (
         <div>
-            <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/Ventas' }, { name: 'Reporte de ventas', href: '/ventas/libro_ventas' }]} />
-            <hr className="mb-4" />
-            <div className="flex justify-between mt-5 mb-4">
+            <div className="flex justify-between mt-2 mb-2">
                 <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
                     Libro Registro de Ventas
                 </h1>

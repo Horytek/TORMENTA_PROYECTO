@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import DestinatariosForm from './DestinatariosForm';
 import { Toaster } from "react-hot-toast";
 import { Button } from "@heroui/button";
@@ -32,8 +31,7 @@ function Proveedores() {
     return (
       <div>
         <Toaster />
-        <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Proveedores', href: '/proveedores' }]} />
-        <hr className="mb-4" />
+     
         <h1 className='text-4xl font-extrabold'>Gestión de proveedores</h1>
         <div className="flex items-center justify-between mt-5 mb-4">
           <h6 className="font-bold">Lista de Proveedores</h6>

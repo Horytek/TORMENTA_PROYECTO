@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Breadcrumb from "@/components/Breadcrumb/Breadcrumb";
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
@@ -28,14 +27,7 @@ function Subcategorias() {
   return (
     <div>
       <Toaster />
-      <Breadcrumb
-        paths={[
-          { name: "Inicio", href: "/inicio" },
-          { name: "Productos", href: "/productos" },
-          { name: "Subcategorias", href: "/productos/subcategorias" },
-        ]}
-      />
-      <hr className="mb-4" />
+      
       <h1 className="font-extrabold text-4xl">Gestión de subcategorias</h1>
       <div className="flex justify-between mt-5 mb-4 items-center">
         <div

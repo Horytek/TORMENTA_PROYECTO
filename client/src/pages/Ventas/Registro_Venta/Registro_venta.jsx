@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
 import useVentasData from '../Data/data_venta';
@@ -192,9 +191,8 @@ const Registro_Venta = () => {
     <>
       <Toaster />
 
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Ventas', href: '/ventas' }, { name: 'Registrar', href: '/ventas/registro_venta' }]} />
-      <hr className="mb-4" />
-      <div className="flex justify-between mt-5 mb-4">
+
+      <div className="flex justify-between mb-4">
         <h1 className="text-xl font-bold mb-5 text-[36px]"> Registrar Venta </h1>
       </div>
       <div className="flex flex-col lg:flex-row gap-4">

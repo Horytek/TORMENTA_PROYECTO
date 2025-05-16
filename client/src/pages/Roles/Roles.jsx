@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import UsuariosForm from './UsuariosForm';
 import { Toaster } from "react-hot-toast";
 import TablaRoles from './ComponentsRoles/TablaRoles';
@@ -15,7 +14,7 @@ function Usuarios() {
   return (
     <div>
       <Toaster />
-      <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Roles', href: '/configuracion/roles' }]} />
+      {/* <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Roles', href: '/configuracion/roles' }]} /> */}
       <hr className="mb-4" />
       <Tabs
         selectedKey={selectedTab}

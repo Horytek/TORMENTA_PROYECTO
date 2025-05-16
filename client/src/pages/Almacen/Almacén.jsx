@@ -1,4 +1,3 @@
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import React, { useState, useEffect, useCallback } from 'react';
 import { parseDate } from "@internationalized/date";
 import { DateRangePicker } from "@heroui/date-picker";
@@ -329,9 +328,8 @@ const Kardex = () => {
         <div>
             <Toaster />
 
-            <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Kardex Movimientos', href: '/almacen' }]} />
-            <hr className="mb-4" />
-            <div className="flex justify-between mt-5 mb-4">
+         
+            <div className="flex justify-between mt-2 mb-4">
                 <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
                     Kardex Movimientos
                 </h1>

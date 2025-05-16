@@ -16,10 +16,10 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 
-export function NavMain({ items }) {
+export function NavLogistica({ items }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>General</SidebarGroupLabel>
+      <SidebarGroupLabel>Logistica</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) =>
           item.items && item.items.length > 0 ? (
