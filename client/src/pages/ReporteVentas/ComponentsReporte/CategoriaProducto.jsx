@@ -34,63 +34,65 @@ export default function Example({ idSucursal }) {
 
   return (
     <>
-      <Card className="sm:mx-auto sm:max-w-lg">
-        <h3 className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
-          Cantidad de ventas por SubCategoría
-        </h3>
-        {loading ? (
-          <p className="text-center">Cargando...</p>
-        ) : error ? (
-          <p className="text-center text-red-500">Error: {error}</p>
-        ) : data.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10">
-            <p className="text-gray-500 text-lg">No hay datos disponibles</p>
-            <p className="text-gray-400 text-sm">No se encontraron registros de ventas por subcategoría</p>
-          </div>
-        ) : (
-          <>
-            <DonutChart
-              className="mt-8"
-              data={salesData}
-              category="amount"
-              index="name"
-              valueFormatter={currencyFormatter}
-              showTooltip={false}
-              colors={['cyan', 'blue', 'indigo', 'violet', 'fuchsia']} 
-            />
-            <p className="mt-8 flex items-center justify-between text-tremor-label text-tremor-content dark:text-dark-tremor-content">
-              <span>SubCategoría</span>
-              <span>Cantidad / Porcentaje</span>
-            </p>
-            <List className="mt-2">
-              {salesData.map((item) => (
-                <ListItem key={item.name} className="space-x-6">
-                  <div className="flex items-center space-x-2.5 truncate">
-                    <span
-                      className={classNames(
-                        item.color,
-                        'size-2.5 shrink-0 rounded-sm',
-                      )}
-                      aria-hidden={true}
-                    />
-                    <span className="truncate dark:text-dark-tremor-content-emphasis">
-                      {item.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium tabular-nums text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                      {currencyFormatter(item.amount)}
-                    </span>
-                    <span className="rounded-tremor-small bg-tremor-background-subtle px-1.5 py-0.5 text-tremor-label font-medium tabular-nums text-tremor-content-emphasis dark:bg-dark-tremor-background-subtle dark:text-dark-tremor-content-emphasis">
-                      {item.share}
-                    </span>
-                  </div>
-                </ListItem>
-              ))}
-            </List>
-          </>
-        )}
-      </Card>
+<Card className="sm:mx-auto sm:max-w-lg p-6 bg-white rounded-lg shadow-md">
+  <h3 className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong text-center">
+    Cantidad de ventas por SubCategoría
+  </h3>
+  {loading ? (
+    <p className="text-center mt-4">Cargando...</p>
+  ) : error ? (
+    <p className="text-center text-red-500 mt-4">Error: {error}</p>
+  ) : data.length === 0 ? (
+    <div className="flex flex-col items-center justify-center py-10">
+      <p className="text-gray-500 text-lg">No hay datos disponibles</p>
+      <p className="text-gray-400 text-sm">No se encontraron registros de ventas por subcategoría</p>
+    </div>
+  ) : (
+    <>
+      <div className="flex justify-center items-center mt-6">
+        <DonutChart
+          className="w-64 h-64"
+          data={salesData}
+          category="amount"
+          index="name"
+          valueFormatter={currencyFormatter}
+          showTooltip={false}
+          colors={['cyan', 'blue', 'indigo', 'violet', 'fuchsia']}
+        />
+      </div>
+      <p className="mt-8 flex items-center justify-between text-tremor-label text-tremor-content dark:text-dark-tremor-content">
+        <span>SubCategoría</span>
+        <span>Cantidad / Porcentaje</span>
+      </p>
+      <List className="mt-2">
+        {salesData.map((item) => (
+          <ListItem key={item.name} className="space-x-6">
+            <div className="flex items-center space-x-2.5 truncate">
+              <span
+                className={classNames(
+                  item.color,
+                  'size-2.5 shrink-0 rounded-sm',
+                )}
+                aria-hidden={true}
+              />
+              <span className="truncate dark:text-dark-tremor-content-emphasis">
+                {item.name}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="font-medium tabular-nums text-tremor-content-strong dark:text-dark-tremor-content-strong">
+                {currencyFormatter(item.amount)}
+              </span>
+              <span className="rounded-tremor-small bg-tremor-background-subtle px-1.5 py-0.5 text-tremor-label font-medium tabular-nums text-tremor-content-emphasis dark:bg-dark-tremor-background-subtle dark:text-dark-tremor-content-emphasis">
+                {item.share}
+              </span>
+            </div>
+          </ListItem>
+        ))}
+      </List>
+    </>
+  )}
+</Card>
     </>
   );
 }

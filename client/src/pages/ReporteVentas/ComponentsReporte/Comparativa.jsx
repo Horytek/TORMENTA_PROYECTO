@@ -12,13 +12,8 @@ const valueFormatter = (number) => {
 const LineChartUsageExampleAxisLabel = () => {
   const { data, loading, error } = useAnalisisGananciasSucursales();
 
-  useEffect(() => {
-    // console.log('Raw data:', data); 
-  }, [data]);
+  const currentYear = new Date().getFullYear().toString().slice(-2);
 
-  const currentYear = new Date().getFullYear().toString().slice(-2); // Obtiene los últimos 2 dígitos del año actual
-
-  // Mantener los nombres en inglés para la comparación con la API
   const months = [
     `Jan ${currentYear}`, `Feb ${currentYear}`, `Mar ${currentYear}`, 
     `Apr ${currentYear}`, `May ${currentYear}`, `Jun ${currentYear}`,
@@ -26,7 +21,6 @@ const LineChartUsageExampleAxisLabel = () => {
     `Oct ${currentYear}`, `Nov ${currentYear}`, `Dec ${currentYear}`
   ];
 
-  // Objeto para traducir los meses
   const monthTranslations = {
     [`Jan ${currentYear}`]: `Ene'${currentYear}`,
     [`Feb ${currentYear}`]: `Feb'${currentYear}`,
@@ -44,8 +38,7 @@ const LineChartUsageExampleAxisLabel = () => {
 
   const organizedData = months.map(month => {
     const entry = { 
-      date: monthTranslations[month] || month, // Mostrar el mes traducido
-      originalDate: month // Mantener el mes original para comparaciones
+      date: monthTranslations[month] || month,
     };
     data.forEach(item => {
       if (item.mes === month) {
@@ -54,10 +47,6 @@ const LineChartUsageExampleAxisLabel = () => {
     });
     return entry;
   });
-
-  useEffect(() => {
-    // console.log('Organized data:', organizedData); 
-  }, [organizedData]);
 
   const categories = [...new Set(data.map(item => item.sucursal))];
 
@@ -69,24 +58,37 @@ const LineChartUsageExampleAxisLabel = () => {
       <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
         Representación de las ganancias generadas por las sucursales (12 meses)
       </p>
+
       {loading ? (
         <p className="text-center">Cargando...</p>
       ) : error ? (
         <p className="text-center text-red-500">Error: {error}</p>
       ) : (
-        <LineChart
-          className="mt-4 h-80"
-          data={organizedData}
-          index="date"
-          yAxisWidth={65}
-          categories={categories}
-          colors={['indigo', 'cyan', 'red', 'green', 'orange']}
-          valueFormatter={valueFormatter}
-          xAxisLabel="Meses del año"
-          yAxisLabel="Ventas (Soles)"
-          
-        />
-        
+        <div>
+          <LineChart
+            className="mt-6 h-[450px]"
+            data={organizedData}
+            index="date"
+            yAxisWidth={80}
+            categories={categories}
+            colors={['indigo', 'cyan', 'red', 'green', 'orange']}
+            valueFormatter={valueFormatter}
+            xAxisLabel="Meses del año"
+            yAxisLabel="Ganancias (S/.)"
+            showAnimation={true}
+            showLegend={false} // lo moveremos manualmente abajo
+            curveType="linear"
+            connectNulls={true}
+            showDots={true}
+          />
+          <div className="mt-4">
+            <Legend
+              categories={categories}
+              colors={['indigo', 'cyan', 'red', 'green', 'orange']}
+              className="flex-wrap"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

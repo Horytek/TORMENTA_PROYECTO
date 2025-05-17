@@ -1,73 +1,239 @@
 import { getConnection } from "./../database/database";
+import { startOfWeek, endOfWeek, subWeeks, subMonths, format } from "date-fns";
+
 
 const getTotalProductosVendidos = async (req, res) => {
   let connection;
-  const { id_sucursal } = req.query;
+  const { id_sucursal, year, month, week } = req.query;
 
   try {
     connection = await getConnection();
 
-    let query = `
+    // Fechas para filtro
+    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+    const now = new Date();
+    const y = year ? parseInt(year) : now.getFullYear();
+    const m = month ? parseInt(month) - 1 : now.getMonth();
+
+    if (week && week !== "all") {
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
+      const firstDayOfMonth = new Date(y, m, 1);
+      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+      fechaInicioActual = new Date(firstWeekStart);
+      fechaInicioActual.setDate(fechaInicioActual.getDate() + (weekNumber - 1) * 7);
+      fechaFinActual = new Date(fechaInicioActual);
+      fechaFinActual.setDate(fechaFinActual.getDate() + 6);
+
+      // Semana anterior
+      fechaInicioAnterior = new Date(fechaInicioActual);
+      fechaInicioAnterior.setDate(fechaInicioAnterior.getDate() - 7);
+      fechaFinAnterior = new Date(fechaFinActual);
+      fechaFinAnterior.setDate(fechaFinAnterior.getDate() - 7);
+    } else if (month) {
+      fechaInicioActual = new Date(y, m, 1);
+      fechaFinActual = new Date(y, m + 1, 0);
+      // Mes anterior
+      const prevMonth = subMonths(fechaInicioActual, 1);
+      fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
+      fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
+    } else {
+      fechaInicioActual = new Date(y, 0, 1);
+      fechaFinActual = new Date(y, 11, 31);
+      // Año anterior
+      fechaInicioAnterior = new Date(y - 1, 0, 1);
+      fechaFinAnterior = new Date(y - 1, 11, 31);
+    }
+
+    const f = (d) => format(d, "yyyy-MM-dd");
+
+    // Query base para total productos vendidos
+    let baseQuery = `
       SELECT SUM(dv.cantidad) AS total_productos_vendidos
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
     `;
-
-    const params = [];
+    let paramsActual = [];
+    let paramsAnterior = [];
 
     if (id_sucursal) {
-      query += ` WHERE v.id_sucursal = ?`;
-      params.push(id_sucursal);
+      baseQuery += ` AND v.id_sucursal = ?`;
+      paramsActual.push(id_sucursal);
+      paramsAnterior.push(id_sucursal);
     }
 
-    query += `AND v.estado_venta != 0`;
+    // Filtro de fechas actual
+    baseQuery += ` AND v.f_venta BETWEEN ? AND ?`;
+    paramsActual.push(f(fechaInicioActual), f(fechaFinActual));
+    paramsAnterior.push(f(fechaInicioAnterior), f(fechaFinAnterior));
 
-    const [result] = await connection.query(query, params);
-    const totalProductosVendidos = result[0].total_productos_vendidos || 0;
+    // Actual
+    const [actualResult] = await connection.query(baseQuery, paramsActual);
+    const actual = Number(actualResult[0].total_productos_vendidos) || 0;
 
-    res.json({ code: 1, totalProductosVendidos, message: "Total de productos vendidos obtenido correctamente" });
+    // Anterior
+    const [anteriorResult] = await connection.query(baseQuery, paramsAnterior);
+    const anterior = Number(anteriorResult[0].total_productos_vendidos) || 0;
+
+    // Porcentaje
+    let porcentaje = 0;
+    if (anterior > 0) {
+      porcentaje = ((actual - anterior) / anterior) * 100;
+    }
+
+    // Desglose por subcategoría (actual)
+    let subcatQuery = `
+      SELECT 
+        sc.nom_subcat AS subcategoria,
+        SUM(dv.cantidad) AS cantidad_vendida
+      FROM detalle_venta dv
+      JOIN producto p ON dv.id_producto = p.id_producto
+      JOIN sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
+      JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
+    `;
+    const subcatParams = [f(fechaInicioActual), f(fechaFinActual)];
+    if (id_sucursal) {
+      subcatQuery += ` AND v.id_sucursal = ?`;
+      subcatParams.push(id_sucursal);
+    }
+    subcatQuery += `
+      GROUP BY sc.nom_subcat
+      ORDER BY cantidad_vendida DESC
+    `;
+    const [subcatResult] = await connection.query(subcatQuery, subcatParams);
+
+    // Mapear a objeto { Shorts: 64, Pantalón: 55, Otros: 72 }
+    const subcategorias = {};
+    subcatResult.forEach((row) => {
+      // Puedes personalizar los nombres según tus subcategorías reales
+      if (row.subcategoria.toLowerCase().includes("short")) {
+        subcategorias.Shorts = Number(row.cantidad_vendida);
+      } else if (row.subcategoria.toLowerCase().includes("pantal")) {
+        subcategorias.Pantalon = Number(row.cantidad_vendida);
+      } else {
+        subcategorias.Otros = (subcategorias.Otros || 0) + Number(row.cantidad_vendida);
+      }
+    });
+
+    res.json({
+      code: 1,
+      totalProductosVendidos: actual,
+      totalAnterior: anterior,
+      porcentaje,
+      subcategorias,
+      message: "Total de productos vendidos obtenido correctamente"
+    });
   } catch (error) {
     res.status(500).send(error.message);
-  }  finally {
+  } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
-}
+  }
 };
 
 
 const getTotalSalesRevenue = async (req, res) => {
-  let connection;
-  const { id_sucursal } = req.query;
+    let connection;
+  const { id_sucursal, year, month, week } = req.query;
 
   try {
     connection = await getConnection();
 
-    let query = `
+    // Fechas para filtro
+    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+
+    const now = new Date();
+    const y = year ? parseInt(year) : now.getFullYear();
+    const m = month ? parseInt(month) - 1 : now.getMonth();
+
+    if (week && week !== "all") {
+      // Filtro por semana
+      const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
+      // Calcular fecha de inicio y fin de la semana seleccionada
+      const firstDayOfMonth = new Date(y, m, 1);
+      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+      fechaInicioActual = new Date(firstWeekStart);
+      fechaInicioActual.setDate(fechaInicioActual.getDate() + (weekNumber - 1) * 7);
+      fechaFinActual = new Date(fechaInicioActual);
+      fechaFinActual.setDate(fechaFinActual.getDate() + 6);
+
+      // Semana anterior
+      fechaInicioAnterior = new Date(fechaInicioActual);
+      fechaInicioAnterior.setDate(fechaInicioAnterior.getDate() - 7);
+      fechaFinAnterior = new Date(fechaFinActual);
+      fechaFinAnterior.setDate(fechaFinAnterior.getDate() - 7);
+    } else if (month) {
+      // Filtro por mes
+      fechaInicioActual = new Date(y, m, 1);
+      fechaFinActual = new Date(y, m + 1, 0);
+      // Mes anterior
+      const prevMonth = subMonths(fechaInicioActual, 1);
+      fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
+      fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
+    } else {
+      // Solo año (todo el año)
+      fechaInicioActual = new Date(y, 0, 1);
+      fechaFinActual = new Date(y, 11, 31);
+      // Año anterior
+      fechaInicioAnterior = new Date(y - 1, 0, 1);
+      fechaFinAnterior = new Date(y - 1, 11, 31);
+    }
+
+    // Formatear fechas a 'YYYY-MM-DD'
+    const f = (d) => format(d, "yyyy-MM-dd");
+
+    // Query base
+    let baseQuery = `
       SELECT SUM(dv.total) AS totalRevenue 
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
     `;
-
-    const params = [];
+    let paramsActual = [];
+    let paramsAnterior = [];
 
     if (id_sucursal) {
-      query += ` WHERE v.id_sucursal = ?`;
-      params.push(id_sucursal);
+      baseQuery += ` AND v.id_sucursal = ?`;
+      paramsActual.push(id_sucursal);
+      paramsAnterior.push(id_sucursal);
     }
 
-    query += `AND v.estado_venta != 0`;
+    // Filtro de fechas actual
+    baseQuery += ` AND v.f_venta BETWEEN ? AND ?`;
+    paramsActual.push(f(fechaInicioActual), f(fechaFinActual));
+    paramsAnterior.push(f(fechaInicioAnterior), f(fechaFinAnterior));
 
-    const [result] = await connection.query(query, params);
-    res.status(200).json({ totalRevenue: result[0].totalRevenue || 0 });
+    // Actual
+    const [actualResult] = await connection.query(baseQuery, paramsActual);
+    const actual = Number(actualResult[0].totalRevenue) || 0;
+
+    // Anterior
+    const [anteriorResult] = await connection.query(baseQuery, paramsAnterior);
+    const anterior = Number(anteriorResult[0].totalRevenue) || 0;
+
+    // Porcentaje
+    let porcentaje = 0;
+    if (anterior > 0) {
+      porcentaje = ((actual - anterior) / anterior) * 100;
+    }
+
+    res.json({
+      code: 1,
+      totalRevenue: actual,
+      totalAnterior: anterior,
+      porcentaje,
+      message: "Total de ventas obtenidas correctamente"
+    });
   } catch (error) {
-    console.error('Error en el servidor:', error.message);
-    res.status(500).json({ message: "Error al obtener el total de ventas", error: error.message });
-  }   finally {
+    res.status(500).send(error.message);
+  } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
-}
+  }
 };
 
 
@@ -111,58 +277,269 @@ const getSucursales = async (req, res) => {
 
 const getProductoMasVendido = async (req, res) => {
   let connection;
-  const { id_sucursal } = req.query;
+  const { id_sucursal, year, month, week } = req.query;
 
   try {
     connection = await getConnection();
 
+    // Calcular fechas según filtros
+    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+    const now = new Date();
+    const y = year ? parseInt(year) : now.getFullYear();
+    const m = month ? parseInt(month) - 1 : now.getMonth();
+
+    if (week && week !== "all") {
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
+      const firstDayOfMonth = new Date(y, m, 1);
+      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+      fechaInicioActual = new Date(firstWeekStart);
+      fechaInicioActual.setDate(fechaInicioActual.getDate() + (weekNumber - 1) * 7);
+      fechaFinActual = new Date(fechaInicioActual);
+      fechaFinActual.setDate(fechaFinActual.getDate() + 6);
+
+      // Semana anterior
+      fechaInicioAnterior = new Date(fechaInicioActual);
+      fechaInicioAnterior.setDate(fechaInicioAnterior.getDate() - 7);
+      fechaFinAnterior = new Date(fechaFinActual);
+      fechaFinAnterior.setDate(fechaFinAnterior.getDate() - 7);
+    } else if (month) {
+      fechaInicioActual = new Date(y, m, 1);
+      fechaFinActual = new Date(y, m + 1, 0);
+      // Mes anterior
+      const prevMonth = subMonths(fechaInicioActual, 1);
+      fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
+      fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
+    } else {
+      fechaInicioActual = new Date(y, 0, 1);
+      fechaFinActual = new Date(y, 11, 31);
+      // Año anterior
+      fechaInicioAnterior = new Date(y - 1, 0, 1);
+      fechaFinAnterior = new Date(y - 1, 11, 31);
+    }
+
+    const f = (d) => format(d, "yyyy-MM-dd");
+
+    // Producto más vendido actual
     let query = `
       SELECT 
         p.id_producto,
         p.descripcion,
-        SUM(dv.cantidad) AS total_vendido
-      FROM 
-        detalle_venta dv
-      JOIN 
-        producto p ON dv.id_producto = p.id_producto
-      JOIN 
-        venta v ON dv.id_venta = v.id_venta
+        SUM(dv.cantidad) AS unidades,
+        SUM(dv.total) AS ingresos
+      FROM detalle_venta dv
+      JOIN producto p ON dv.id_producto = p.id_producto
+      JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
     `;
-
-    const params = [];
-
+    const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
-      query += ` WHERE v.id_sucursal = ?`;
+      query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
     }
-
-    query += `AND v.estado_venta != 0 `;
-
     query += `
-      GROUP BY 
-        p.id_producto, p.descripcion
-      ORDER BY 
-        total_vendido DESC
+      GROUP BY p.id_producto, p.descripcion
+      ORDER BY unidades DESC
       LIMIT 1
     `;
 
     const [result] = await connection.query(query, params);
-
     if (result.length === 0) {
       return res.status(404).json({ message: "No se encontraron productos vendidos." });
     }
+    const producto = result[0];
 
-    const productoMasVendido = result[0];
-    res.json({ code: 1, data: productoMasVendido, message: "Producto más vendido obtenido correctamente" });
+    // Total de unidades vendidas en el periodo actual (para porcentaje)
+    let totalQuery = `
+      SELECT SUM(dv.cantidad) AS total_unidades
+      FROM detalle_venta dv
+      JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
+    `;
+    const totalParams = [f(fechaInicioActual), f(fechaFinActual)];
+    if (id_sucursal) {
+      totalQuery += ` AND v.id_sucursal = ?`;
+      totalParams.push(id_sucursal);
+    }
+    const [totalResult] = await connection.query(totalQuery, totalParams);
+    const totalUnidades = Number(totalResult[0].total_unidades) || 0;
+    const porcentajeSobreTotal = totalUnidades > 0 ? (producto.unidades / totalUnidades) * 100 : 0;
+
+    // Producto más vendido periodo anterior
+    let queryAnterior = `
+      SELECT 
+        p.id_producto,
+        p.descripcion,
+        SUM(dv.cantidad) AS unidades,
+        SUM(dv.total) AS ingresos
+      FROM detalle_venta dv
+      JOIN producto p ON dv.id_producto = p.id_producto
+      JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
+    `;
+    const paramsAnterior = [f(fechaInicioAnterior), f(fechaFinAnterior)];
+    if (id_sucursal) {
+      queryAnterior += ` AND v.id_sucursal = ?`;
+      paramsAnterior.push(id_sucursal);
+    }
+    queryAnterior += `
+      GROUP BY p.id_producto, p.descripcion
+      ORDER BY unidades DESC
+      LIMIT 1
+    `;
+    const [resultAnterior] = await connection.query(queryAnterior, paramsAnterior);
+    const productoAnterior = resultAnterior[0];
+
+    // Porcentaje de incremento/decremento respecto al periodo anterior
+    let porcentajeCrecimiento = 0;
+    if (productoAnterior && productoAnterior.unidades > 0) {
+      porcentajeCrecimiento = ((producto.unidades - productoAnterior.unidades) / productoAnterior.unidades) * 100;
+    }
+
+    res.json({
+      code: 1,
+      data: {
+        descripcion: producto.descripcion,
+        unidades: producto.unidades,
+        ingresos: producto.ingresos,
+        porcentajeSobreTotal: porcentajeSobreTotal.toFixed(2),
+        porcentajeCrecimiento: porcentajeCrecimiento.toFixed(2),
+      },
+      message: "Producto más vendido obtenido correctamente"
+    });
   } catch (error) {
     res.status(500).send(error.message);
-  }  finally {
+  } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
-}
+  }
 };
 
+const getSucursalMayorRendimiento = async (req, res) => {
+  let connection;
+  const { year, month, week } = req.query;
+
+  try {
+    connection = await getConnection();
+
+    // Calcular fechas según filtros
+    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+    const now = new Date();
+    const y = year ? parseInt(year) : now.getFullYear();
+    const m = month ? parseInt(month) - 1 : now.getMonth();
+
+    if (week && week !== "all") {
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
+      const firstDayOfMonth = new Date(y, m, 1);
+      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+      fechaInicioActual = new Date(firstWeekStart);
+      fechaInicioActual.setDate(fechaInicioActual.getDate() + (weekNumber - 1) * 7);
+      fechaFinActual = new Date(fechaInicioActual);
+      fechaFinActual.setDate(fechaFinActual.getDate() + 6);
+
+      // Semana anterior
+      fechaInicioAnterior = new Date(fechaInicioActual);
+      fechaInicioAnterior.setDate(fechaInicioAnterior.getDate() - 7);
+      fechaFinAnterior = new Date(fechaFinActual);
+      fechaFinAnterior.setDate(fechaFinAnterior.getDate() - 7);
+    } else if (month) {
+      fechaInicioActual = new Date(y, m, 1);
+      fechaFinActual = new Date(y, m + 1, 0);
+      // Mes anterior
+      const prevMonth = subMonths(fechaInicioActual, 1);
+      fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
+      fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
+    } else {
+      fechaInicioActual = new Date(y, 0, 1);
+      fechaFinActual = new Date(y, 11, 31);
+      // Año anterior
+      fechaInicioAnterior = new Date(y - 1, 0, 1);
+      fechaFinAnterior = new Date(y - 1, 11, 31);
+    }
+
+    const f = (d) => format(d, "yyyy-MM-dd");
+
+    // Sucursal con mayor ventas actual
+    const query = `
+      SELECT 
+        s.id_sucursal,
+        s.nombre_sucursal,
+        SUM(dv.total) AS total_ventas
+      FROM sucursal s
+      JOIN venta v ON s.id_sucursal = v.id_sucursal
+      JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
+      GROUP BY s.id_sucursal, s.nombre_sucursal
+      ORDER BY total_ventas DESC
+      LIMIT 1
+    `;
+    const params = [f(fechaInicioActual), f(fechaFinActual)];
+    const [result] = await connection.query(query, params);
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "No se encontraron ventas para ninguna sucursal." });
+    }
+    const sucursal = result[0];
+
+    // Total ventas de todas las sucursales en el periodo actual
+    const totalQuery = `
+      SELECT SUM(dv.total) AS total_ventas
+      FROM venta v
+      JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
+    `;
+    const [totalResult] = await connection.query(totalQuery, [f(fechaInicioActual), f(fechaFinActual)]);
+    const totalVentas = Number(totalResult[0].total_ventas) || 0;
+    const porcentajeSobreTotal = totalVentas > 0 ? (sucursal.total_ventas / totalVentas) * 100 : 0;
+
+    // Sucursal con mayor ventas periodo anterior
+    const queryAnterior = `
+      SELECT 
+        s.id_sucursal,
+        s.nombre_sucursal,
+        SUM(dv.total) AS total_ventas
+      FROM sucursal s
+      JOIN venta v ON s.id_sucursal = v.id_sucursal
+      JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
+      GROUP BY s.id_sucursal, s.nombre_sucursal
+      ORDER BY total_ventas DESC
+      LIMIT 1
+    `;
+    const paramsAnterior = [f(fechaInicioAnterior), f(fechaFinAnterior)];
+    const [resultAnterior] = await connection.query(queryAnterior, paramsAnterior);
+    const sucursalAnterior = resultAnterior[0];
+
+    // Porcentaje de incremento/decremento respecto al periodo anterior
+    let porcentajeCrecimiento = 0;
+    if (sucursalAnterior && sucursalAnterior.total_ventas > 0) {
+      porcentajeCrecimiento = ((sucursal.total_ventas - sucursalAnterior.total_ventas) / sucursalAnterior.total_ventas) * 100;
+    }
+
+    res.json({
+      code: 1,
+      data: {
+        nombre: sucursal.nombre_sucursal,
+        totalVentas: sucursal.total_ventas,
+        porcentajeSobreTotal: porcentajeSobreTotal.toFixed(2),
+        porcentajeCrecimiento: porcentajeCrecimiento.toFixed(2),
+      },
+      message: "Sucursal con mayor rendimiento obtenida correctamente"
+    });
+  } catch (error) {
+    res.status(500).send(error.message);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
 
 const getCantidadVentasPorSubcategoria = async (req, res) => {
   let connection;
@@ -805,6 +1182,7 @@ export const methods = {
   getTotalProductosVendidos,
   getVentasPDF,
   getProductoMasVendido,
+  getSucursalMayorRendimiento,
   getCantidadVentasPorProducto,
   getCantidadVentasPorSubcategoria,
   getAnalisisGananciasSucursales,

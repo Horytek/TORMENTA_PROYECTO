@@ -24,6 +24,8 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { ScrollShadow } from "@heroui/react";
+
 import { NavMain } from "@/components/ui/nav-main";
 import { NavProjects } from "@/components/ui/nav-projects";
 import { NavReports } from "@/components/ui/nav-reports";
@@ -32,8 +34,8 @@ import { NavLogistica } from "@/components/ui/nav-logistica";
 import { NavTerceros } from "@/components/ui/nav-terceros";
 import { NavConfig } from "@/components/ui/nav-config";
 import { NavDesarrollador } from "@/components/ui/nav-dev";
-
 import { TeamSwitcher } from "@/components/ui/team-switcher";
+
 import {
   Sidebar,
   SidebarContent,
@@ -42,7 +44,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-// Sample data with your routes and icons
 const data = {
   user: {
     name: "shadcn",
@@ -50,9 +51,9 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   teams: [
-    { name: "Acme Inc", logo: GalleryVerticalEnd, plan: "Enterprise" },
-    { name: "Acme Corp.", logo: AudioWaveform, plan: "Startup" },
-    { name: "Evil Corp.", logo: Command, plan: "Free" },
+    { name: "Hyrotek Inc", logo: GalleryVerticalEnd, plan: "Enterprise" },
+    { name: "Hyrotek Corp.", logo: AudioWaveform, plan: "Startup" },
+    { name: "Misterius Corp.", logo: Command, plan: "Free" },
   ],
   navMain: [
     { title: "Dashboard", url: "/inicio", icon: Home, items: [] },
@@ -66,30 +67,24 @@ const data = {
         { title: "Subcategorías", url: "/productos/subcategorias" },
       ],
     },
-
     {
       title: "Ventas",
       url: "/ventas",
       icon: LineChart,
       items: [
         { title: "Nueva venta", url: "/ventas/registro_venta" },
-        // { title: "Libro Ventas", url: "/ventas/libro_ventas" },
       ],
     },
-
   ],
-
   reportes: [
     { title: "Análisis de ventas", url: "/reportes", icon: FileBarChart2, items: [] },
     { title: "Libro de ventas", url: "/ventas/libro_ventas", icon: FileBarChart2, items: [] },
   ],
-
   terceros: [
     { title: "Clientes", url: "/clientes", icon: User, items: [] },
     { title: "Empleados", url: "/empleados", icon: Users, items: [] },
     { title: "Proveedores", url: "/proveedores", icon: Users, items: [] },
   ],
-
   logistica: [
     {
       title: "Kárdex",
@@ -104,18 +99,15 @@ const data = {
     { title: "Almacenes", url: "/almacenG", icon: Warehouse, items: [] },
     { title: "Sucursal", url: "/sucursal", icon: Building2, items: [] },
   ],
-
   configuracion: [
     { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, items: [] },
     { title: "Roles y permisos", url: "/configuracion/roles", icon: Users, items: [] },
   ],
-
   desarrollador: [
     { title: "Desarrollo", url: "/desarrollador", icon: Bot, items: [] },
     { title: "Módulos", url: "/modulos", icon: SquareTerminal, items: [] },
     { title: "Inf. empresas", url: "/sunat", icon: BookOpen, items: [] },
   ],
-
   projects: [
     { name: "Design Engineering", url: "#", icon: Frame },
     { name: "Sales & Marketing", url: "#", icon: PieChart },
@@ -129,18 +121,23 @@ export function AppSidebar(props) {
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
+
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavReports items={data.reportes} />
-        <NavTerceros items={data.terceros} />
-        <NavLogistica items={data.logistica} />
-        <NavConfig items={data.configuracion} />
-        <NavDesarrollador items={data.desarrollador} />
-        <NavProjects projects={data.projects} />
+        <ScrollShadow hideScrollBar className="h-full px-1">
+          <NavMain items={data.navMain} />
+          <NavReports items={data.reportes} />
+          <NavTerceros items={data.terceros} />
+          <NavLogistica items={data.logistica} />
+          <NavConfig items={data.configuracion} />
+          <NavDesarrollador items={data.desarrollador} />
+          <NavProjects projects={data.projects} />
+        </ScrollShadow>
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );

@@ -1,26 +1,29 @@
-import { Card, Icon } from '@tremor/react';
+import { Card, Icon } from "@tremor/react";
 
-export function CardComponent ({titleCard,tooltip, contentCard, color, icon}) {
+export function CardComponent({ titleCard, tooltip, contentCard, color, icon, className }) {
   return (
     <Card
-      className="mx-auto max-w-sm"
+      className={`w-full ${className || ""}`} // Se usa el ancho completo y se permite custom styling
       decoration="left"
       decorationColor={color}
     >
-        <div className="flex items-start space-x-6">
-            <Icon
-            icon={icon}
-            color={color}
-            tooltip={tooltip}
-            variant="solid"
-            size="lg"
-            />
-            <div>
-                <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">{titleCard}</p>
-                <p className="text-3xl text-tremor-content-strong dark:text-dark-tremor-content-strong font-semibold">{contentCard}</p>
-            </div>
+      <div className="flex items-center space-x-4"> {/* Ajuste de alineación y espacio */}
+        <Icon
+          icon={icon}
+          color={color}
+          tooltip={tooltip}
+          variant="solid"
+          size="lg"
+        />
+        <div className="flex flex-col justify-center">
+          <p className="text-sm text-tremor-content dark:text-dark-tremor-content">
+            {titleCard}
+          </p>
+          <p className="text-2xl font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
+            {contentCard}
+          </p>
         </div>
-      
+      </div>
     </Card>
   );
 }

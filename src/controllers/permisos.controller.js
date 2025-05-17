@@ -129,7 +129,7 @@ const savePermisos = async (req, res) => {
         );
         
         if (permisos && permisos.length > 0) {
-            console.log("Permissions to save:", permisos);
+            //console.log("Permissions to save:", permisos);
             for (const p of permisos) {
                 await connection.query(`
                     INSERT INTO permisos
@@ -185,7 +185,7 @@ const checkPermiso = async (req, res) => {
         });
       }
       
-      console.log("Token payload:", req.user); // Depuración
+      //console.log("Token payload:", req.user); // Depuración
       const nameUser = req.user.nameUser;
       
       if (!nameUser) {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "@/api/axios";
 
-const useProductoTop = (idSucursal) => {
+const useProductoTop = (idSucursal, year, month, week) => {
   const [productoTop, setProductoTop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,7 +15,7 @@ const useProductoTop = (idSucursal) => {
 
       try {
         const response = await axios.get("/reporte/producto_top", {
-          params: { id_sucursal: idSucursal },
+          params: { id_sucursal: idSucursal, year, month, week },
           signal: controller.signal,
         });
 
@@ -44,7 +44,7 @@ const useProductoTop = (idSucursal) => {
     loadData();
 
     return () => controller.abort();
-  }, [idSucursal]);
+  }, [idSucursal, year, month, week]);
 
   useEffect(() => {
     const cancelRequest = fetchProductoTop();
