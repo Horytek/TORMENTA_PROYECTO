@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from "@/api/axios";
 
-const useCantidadVentasPorProducto = (idSucursal) => { 
+const useCantidadVentasPorProducto = (idSucursal, year, month, week) => { 
   const [ventasPorProducto, setVentasPorProducto] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,11 +11,18 @@ const useCantidadVentasPorProducto = (idSucursal) => {
     setError(null);
 
     try {
-      const response = await axios.get('/reporte/cantidad_por_producto', {
-        params: {
-          id_sucursal: idSucursal, 
-        },
+      const params = {
+        id_sucursal: idSucursal,
+        year,
+        month,
+        week,
+      };
+      // Elimina los filtros vacíos o undefined
+      Object.keys(params).forEach(key => {
+        if (params[key] === undefined || params[key] === "") delete params[key];
       });
+
+      const response = await axios.get('/reporte/cantidad_por_producto', { params });
       
       if (response.data.code === 1) {
         setVentasPorProducto(response.data.data);
@@ -27,7 +34,7 @@ const useCantidadVentasPorProducto = (idSucursal) => {
     } finally {
       setLoading(false);
     }
-  }, [idSucursal]); 
+  }, [idSucursal, year, month, week]); 
 
   useEffect(() => {
     fetchCantidadVentasPorProducto();

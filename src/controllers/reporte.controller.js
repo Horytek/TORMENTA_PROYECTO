@@ -543,10 +543,34 @@ const getSucursalMayorRendimiento = async (req, res) => {
 
 const getCantidadVentasPorSubcategoria = async (req, res) => {
   let connection;
-  const { id_sucursal } = req.query;
+  const { id_sucursal, year, month, week } = req.query;
 
   try {
     connection = await getConnection();
+
+    // Calcular fechas según filtros
+    let fechaInicio, fechaFin;
+    const now = new Date();
+    const y = year ? parseInt(year) : now.getFullYear();
+    const m = month ? parseInt(month) - 1 : now.getMonth();
+
+    if (week && week !== "all") {
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
+      const firstDayOfMonth = new Date(y, m, 1);
+      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+      fechaInicio = new Date(firstWeekStart);
+      fechaInicio.setDate(fechaInicio.getDate() + (weekNumber - 1) * 7);
+      fechaFin = new Date(fechaInicio);
+      fechaFin.setDate(fechaFin.getDate() + 6);
+    } else if (month) {
+      fechaInicio = new Date(y, m, 1);
+      fechaFin = new Date(y, m + 1, 0);
+    } else {
+      fechaInicio = new Date(y, 0, 1);
+      fechaFin = new Date(y, 11, 31);
+    }
+
+    const f = (d) => format(d, "yyyy-MM-dd");
 
     let query = `
       SELECT 
@@ -560,22 +584,20 @@ const getCantidadVentasPorSubcategoria = async (req, res) => {
         sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
       JOIN 
         venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
     `;
 
-    const params = [];
+    const params = [f(fechaInicio), f(fechaFin)];
 
     if (id_sucursal) {
-      query += ` WHERE v.id_sucursal = ?`;
+      query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
     }
 
-    query += `AND v.estado_venta != 0 `;
-
     query += `
-      GROUP BY 
-        sc.nom_subcat
-      ORDER BY 
-        cantidad_vendida DESC
+      GROUP BY sc.nom_subcat
+      ORDER BY cantidad_vendida DESC
     `;
 
     const [result] = await connection.query(query, params);
@@ -584,18 +606,43 @@ const getCantidadVentasPorSubcategoria = async (req, res) => {
     res.status(500).send(error.message);
   }  finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        connection.release();
     }
-}
+  }
 };
+
 
 
 const getCantidadVentasPorProducto = async (req, res) => {
   let connection;
-  const { id_sucursal } = req.query;
+  const { id_sucursal, year, month, week } = req.query;
 
   try {
     connection = await getConnection();
+
+    // Calcular fechas según filtros
+    let fechaInicio, fechaFin;
+    const now = new Date();
+    const y = year ? parseInt(year) : now.getFullYear();
+    const m = month ? parseInt(month) - 1 : now.getMonth();
+
+    if (week && week !== "all") {
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
+      const firstDayOfMonth = new Date(y, m, 1);
+      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+      fechaInicio = new Date(firstWeekStart);
+      fechaInicio.setDate(fechaInicio.getDate() + (weekNumber - 1) * 7);
+      fechaFin = new Date(fechaInicio);
+      fechaFin.setDate(fechaFin.getDate() + 6);
+    } else if (month) {
+      fechaInicio = new Date(y, m, 1);
+      fechaFin = new Date(y, m + 1, 0);
+    } else {
+      fechaInicio = new Date(y, 0, 1);
+      fechaFin = new Date(y, 11, 31);
+    }
+
+    const f = (d) => format(d, "yyyy-MM-dd");
 
     let query = `
       SELECT 
@@ -609,22 +656,20 @@ const getCantidadVentasPorProducto = async (req, res) => {
         producto p ON dv.id_producto = p.id_producto
       JOIN 
         venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
     `;
 
-    const params = [];
+    const params = [f(fechaInicio), f(fechaFin)];
 
     if (id_sucursal) {
-      query += ` WHERE v.id_sucursal = ?`;
+      query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
     }
 
-    query += `AND v.estado_venta != 0 `;
-
     query += `
-      GROUP BY 
-        p.id_producto, p.descripcion
-      ORDER BY 
-        cantidad_vendida DESC
+      GROUP BY p.id_producto, p.descripcion
+      ORDER BY cantidad_vendida DESC
     `;
 
     const [result] = await connection.query(query, params);
@@ -633,9 +678,9 @@ const getCantidadVentasPorProducto = async (req, res) => {
     res.status(500).send(error.message);
   }  finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        connection.release();
     }
-}
+  }
 };
 
 
@@ -1175,6 +1220,135 @@ const obtenerRegistroVentas = async (req, res) => {
   }
 };
 
+// Tendencia de ventas (por día en el rango filtrado)
+const getTendenciaVentas = async (req, res) => {
+  let connection;
+  const { id_sucursal, year, month, week } = req.query;
+
+  try {
+    connection = await getConnection();
+
+    // Calcular fechas según filtros
+    let fechaInicio, fechaFin;
+    const now = new Date();
+    const y = year ? parseInt(year) : now.getFullYear();
+    const m = month ? parseInt(month) - 1 : now.getMonth();
+
+    if (week && week !== "all") {
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
+      const firstDayOfMonth = new Date(y, m, 1);
+      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+      fechaInicio = new Date(firstWeekStart);
+      fechaInicio.setDate(fechaInicio.getDate() + (weekNumber - 1) * 7);
+      fechaFin = new Date(fechaInicio);
+      fechaFin.setDate(fechaFin.getDate() + 6);
+    } else if (month) {
+      fechaInicio = new Date(y, m, 1);
+      fechaFin = new Date(y, m + 1, 0);
+    } else {
+      fechaInicio = new Date(y, 0, 1);
+      fechaFin = new Date(y, 11, 31);
+    }
+
+    const f = (d) => format(d, "yyyy-MM-dd");
+
+    let query = `
+      SELECT 
+        DATE(v.f_venta) AS fecha,
+        SUM(dv.total) AS total_ventas
+      FROM venta v
+      JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
+    `;
+    const params = [f(fechaInicio), f(fechaFin)];
+    if (id_sucursal) {
+      query += ` AND v.id_sucursal = ?`;
+      params.push(id_sucursal);
+    }
+    query += `
+      GROUP BY fecha
+      ORDER BY fecha ASC
+    `;
+
+    const [result] = await connection.query(query, params);
+    res.json({ code: 1, data: result, message: "Tendencia de ventas obtenida correctamente" });
+  } catch (error) {
+    res.status(500).send("Tendencia de ventas no obtenida correctamente");
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+// Top productos por margen de ganancia
+const getTopProductosMargen = async (req, res) => {
+  let connection;
+  const { id_sucursal, year, month, week, limit = 5 } = req.query;
+
+  try {
+    connection = await getConnection();
+
+    // Calcular fechas según filtros
+    let fechaInicio, fechaFin;
+    const now = new Date();
+    const y = year ? parseInt(year) : now.getFullYear();
+    const m = month ? parseInt(month) - 1 : now.getMonth();
+
+    if (week && week !== "all") {
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
+      const firstDayOfMonth = new Date(y, m, 1);
+      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
+      fechaInicio = new Date(firstWeekStart);
+      fechaInicio.setDate(fechaInicio.getDate() + (weekNumber - 1) * 7);
+      fechaFin = new Date(fechaInicio);
+      fechaFin.setDate(fechaFin.getDate() + 6);
+    } else if (month) {
+      fechaInicio = new Date(y, m, 1);
+      fechaFin = new Date(y, m + 1, 0);
+    } else {
+      fechaInicio = new Date(y, 0, 1);
+      fechaFin = new Date(y, 11, 31);
+    }
+
+    const f = (d) => format(d, "yyyy-MM-dd");
+
+    let query = `
+      SELECT 
+        p.descripcion AS nombre,
+        ROUND(AVG((dv.precio - p.precio) / NULLIF(dv.precio,0) * 100), 2) AS margen,
+        SUM(dv.total) AS ventas
+      FROM detalle_venta dv
+      JOIN producto p ON dv.id_producto = p.id_producto
+      JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.estado_venta != 0
+        AND v.f_venta BETWEEN ? AND ?
+    `;
+    const params = [f(fechaInicio), f(fechaFin)];
+    if (id_sucursal) {
+      query += ` AND v.id_sucursal = ?`;
+      params.push(id_sucursal);
+    }
+    query += `
+      GROUP BY p.id_producto, p.descripcion
+      ORDER BY margen DESC, ventas DESC
+      LIMIT ?
+    `;
+    params.push(Number(limit));
+
+    const [result] = await connection.query(query, params);
+    // Formatear ventas a string moneda
+    result.forEach(r => {
+      r.ventas = `S/. ${Number(r.ventas).toFixed(2)}`;
+    });
+
+    res.json({ code: 1, data: result, message: "Top productos por margen obtenidos correctamente" });
+  } catch (error) {
+    res.status(500).send("Top productos por margen no obtenidos correctamente");
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 
 
 export const methods = {
@@ -1188,5 +1362,7 @@ export const methods = {
   getAnalisisGananciasSucursales,
   obtenerRegistroVentas,
   exportarRegistroVentas,
-  getSucursales
+  getSucursales,
+  getTendenciaVentas,
+  getTopProductosMargen,
 };

@@ -1,6 +1,8 @@
-import React, { useEffect } from "react";
-import { Card, DonutChart, List, ListItem } from '@tremor/react';
+import React from "react";
+import { Card, CardHeader, CardBody, CardFooter, Chip, Tooltip, Divider, Badge } from "@heroui/react";
+import { DonutChart } from '@tremor/react';
 import useCantidadVentasPorSubcategoria from '../data/data_venta_subcat';
+import { Tag } from "lucide-react";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
@@ -10,12 +12,8 @@ const currencyFormatter = (number) => {
   return Intl.NumberFormat('us').format(number).toString();
 };
 
-export default function Example({ idSucursal }) { 
-  const { data, loading, error } = useCantidadVentasPorSubcategoria(idSucursal); 
-
-  useEffect(() => {
-    // console.log('Data from hook:', data);
-  }, [data]);
+export default function CategoriaProducto({ idSucursal, year, month, week }) {
+  const { data, loading, error } = useCantidadVentasPorSubcategoria(idSucursal, year, month, week);
 
   const colors = [
     "bg-cyan-500",
@@ -25,74 +23,103 @@ export default function Example({ idSucursal }) {
     "bg-fuchsia-500",
   ];
 
+  const donutColors = ['cyan', 'blue', 'indigo', 'violet', 'fuchsia'];
+
+  const total = data.reduce((sum, item) => sum + Number(item.cantidad_vendida), 0);
+
   const salesData = data.map((subcat, index) => ({
     name: subcat.subcategoria,
     amount: Number(subcat.cantidad_vendida),
-    share: ((Number(subcat.cantidad_vendida) / data.reduce((sum, item) => sum + Number(item.cantidad_vendida), 0)) * 100).toFixed(1) + '%',
-    color: colors[index % colors.length], // Asigna un color según el índice
+    share: total ? ((Number(subcat.cantidad_vendida) / total) * 100).toFixed(1) + '%' : '0%',
+    color: colors[index % colors.length],
   }));
 
   return (
-    <>
-<Card className="sm:mx-auto sm:max-w-lg p-6 bg-white rounded-lg shadow-md">
-  <h3 className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong text-center">
-    Cantidad de ventas por SubCategoría
-  </h3>
-  {loading ? (
-    <p className="text-center mt-4">Cargando...</p>
-  ) : error ? (
-    <p className="text-center text-red-500 mt-4">Error: {error}</p>
-  ) : data.length === 0 ? (
-    <div className="flex flex-col items-center justify-center py-10">
-      <p className="text-gray-500 text-lg">No hay datos disponibles</p>
-      <p className="text-gray-400 text-sm">No se encontraron registros de ventas por subcategoría</p>
-    </div>
-  ) : (
-    <>
-      <div className="flex justify-center items-center mt-6">
-        <DonutChart
-          className="w-64 h-64"
-          data={salesData}
-          category="amount"
-          index="name"
-          valueFormatter={currencyFormatter}
-          showTooltip={false}
-          colors={['cyan', 'blue', 'indigo', 'violet', 'fuchsia']}
-        />
-      </div>
-      <p className="mt-8 flex items-center justify-between text-tremor-label text-tremor-content dark:text-dark-tremor-content">
-        <span>SubCategoría</span>
-        <span>Cantidad / Porcentaje</span>
-      </p>
-      <List className="mt-2">
-        {salesData.map((item) => (
-          <ListItem key={item.name} className="space-x-6">
-            <div className="flex items-center space-x-2.5 truncate">
-              <span
-                className={classNames(
-                  item.color,
-                  'size-2.5 shrink-0 rounded-sm',
-                )}
-                aria-hidden={true}
+    <Card className="sm:mx-auto sm:max-w-[410px] p-6 bg-white rounded-lg shadow-md">
+      <CardHeader className="flex flex-col items-start gap-2">
+        <div className="flex items-center gap-2">
+          <Tag className="text-blue-500" size={22} />
+          <h3 className="text-lg font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
+            Ventas por SubCategoría
+          </h3>
+          <Tooltip content="Total de productos vendidos en todas las subcategorías">
+            <Chip color="primary" variant="flat">
+              Total: {currencyFormatter(total)}
+            </Chip>
+          </Tooltip>
+        </div>
+        <p className="text-sm text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+          Distribución de ventas por subcategoría en el periodo seleccionado
+        </p>
+      </CardHeader>
+      <Divider />
+      <CardBody>
+        {loading ? (
+          <p className="text-center mt-4">Cargando...</p>
+        ) : error ? (
+          <p className="text-center text-red-500 mt-4">Error: {error}</p>
+        ) : data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <p className="text-gray-500 text-lg">No hay datos disponibles</p>
+            <p className="text-gray-400 text-sm">No se encontraron registros de ventas por subcategoría</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-center items-center mt-4 mb-2">
+              <DonutChart
+                className="w-52 h-52 sm:w-60 sm:h-60"
+                data={salesData}
+                category="amount"
+                index="name"
+                valueFormatter={currencyFormatter}
+                showTooltip={true}
+                colors={donutColors}
               />
-              <span className="truncate dark:text-dark-tremor-content-emphasis">
-                {item.name}
-              </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="font-medium tabular-nums text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                {currencyFormatter(item.amount)}
-              </span>
-              <span className="rounded-tremor-small bg-tremor-background-subtle px-1.5 py-0.5 text-tremor-label font-medium tabular-nums text-tremor-content-emphasis dark:bg-dark-tremor-background-subtle dark:text-dark-tremor-content-emphasis">
-                {item.share}
-              </span>
+            <Divider />
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-tremor-content dark:text-dark-tremor-content tracking-wide uppercase">
+                  SubCategoría
+                </span>
+                <span className="text-xs font-semibold text-tremor-content dark:text-dark-tremor-content tracking-wide uppercase">
+                  Cantidad / %
+                </span>
+              </div>
+              <div className="space-y-2">
+                {salesData.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-tremor-background-muted dark:bg-dark-tremor-background-muted shadow-sm"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={classNames(item.color, 'w-3 h-3 rounded-sm')}
+                        aria-hidden={true}
+                      />
+                      <span className="truncate font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong text-sm tracking-tight">
+                        {item.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-blue-700 dark:text-blue-300 text-sm">
+                        {currencyFormatter(item.amount)}
+                      </span>
+                      <span className="rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 text-xs font-semibold">
+                        {item.share}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </ListItem>
-        ))}
-      </List>
-    </>
-  )}
-</Card>
-    </>
+          </>
+        )}
+      </CardBody>
+      <Divider />
+      <CardFooter>
+        <p className="text-sm text-default-500">Datos actualizados diariamente.</p>
+      </CardFooter>
+    </Card>
   );
 }

@@ -7,8 +7,8 @@ import useCantidadVentasPorProducto from "../data/data_prod_venta";
 const dataFormatter = (number) => ` ${Intl.NumberFormat("us").format(number).toString()}`;
 const currencyFormatter = (number) => `S/ ${Intl.NumberFormat("us").format(number).toString()}`;
 
-const BarChartHero = ({ idSucursal }) => {
-  const { ventasPorProducto, loading, error } = useCantidadVentasPorProducto(idSucursal);
+const BarChartHero = ({ idSucursal, year, month, week }) => {
+  const { ventasPorProducto, loading, error } = useCantidadVentasPorProducto(idSucursal, year, month, week);
 
   const barListData = ventasPorProducto.map((producto) => ({
     name: producto.descripcion,
@@ -36,7 +36,7 @@ const BarChartHero = ({ idSucursal }) => {
     Representación de la cantidad de ventas por producto y dinero generado
   </p>
 
-  <div className="mt-4 min-h-[300px] max-h-[530px] overflow-auto">
+  <div className="mt-4 min-h-[300px] max-h-[720px] overflow-auto">
     {loading ? (
       <p className="text-center py-4 text-sm">Cargando...</p>
     ) : error ? (

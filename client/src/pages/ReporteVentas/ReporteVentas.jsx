@@ -224,22 +224,34 @@ const ReporteVentas = () => {
     <TablaGanancias
       idSucursal={selectedTab !== "todas" ? selectedTab : null}
       className="p-6 bg-white rounded-xl shadow-sm h-full"
+        year={selectedYear || undefined}
+  month={selectedMonth || undefined}
+  week={selectedWeek && selectedWeek !== "all" ? selectedWeek : undefined}
     />
   </div>
   <div className="h-full">
     <CategoriaProducto
       idSucursal={selectedTab !== "todas" ? selectedTab : null}
       className="p-6 bg-white rounded-xl shadow-sm h-full"
+        year={selectedYear || undefined}
+  month={selectedMonth || undefined}
+  week={selectedWeek && selectedWeek !== "all" ? selectedWeek : undefined}
     />
   </div>
 
   {/* Parte inferior: TendenciaVentas y TopProductosMargen */}
   <div className="col-span-full grid grid-cols-[3fr_1fr] gap-6">
     <div className="rounded-xl p-1 h-full">
-      <TendenciaVentas />
+      <TendenciaVentas 
+              year={selectedYear || undefined}
+  month={selectedMonth || undefined}
+  week={selectedWeek && selectedWeek !== "all" ? selectedWeek : undefined}/>
     </div>
     <div className="rounded-xl p-1 h-full">
-      <TopProductosMargen />
+      <TopProductosMargen 
+              year={selectedYear || undefined}
+  month={selectedMonth || undefined}
+  week={selectedWeek && selectedWeek !== "all" ? selectedWeek : undefined}/>
     </div>
   </div>
 </div>

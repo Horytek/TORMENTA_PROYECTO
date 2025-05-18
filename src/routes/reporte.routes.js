@@ -14,5 +14,8 @@ router.get("/libro_ventas_sunat", reporteController.obtenerRegistroVentas);
 router.get("/registro_ventas_sunat", reporteController.exportarRegistroVentas);
 router.get("/sucursales", reporteController.getSucursales);
 router.get("/ventas_sucursal", reporteController.getSucursalMayorRendimiento);
+router.get("/tendencia_ventas", reporteController.getTendenciaVentas);
+router.get("/top_productos_margen", reporteController.getTopProductosMargen);
+
 
 export default router;

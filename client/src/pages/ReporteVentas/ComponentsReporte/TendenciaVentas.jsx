@@ -1,119 +1,174 @@
 import React from "react";
-import { Card, CardHeader, CardBody, CardFooter, Divider } from "@heroui/react";
-import { LineChart, List, ListItem } from "@tremor/react";
-
-const data = [
-  { date: "Aug 01", price: 21.2 },
-  { date: "Aug 02", price: 29.0 },
-  { date: "Aug 03", price: 48.5 },
-  { date: "Aug 04", price: 53.8 },
-  { date: "Aug 05", price: 57.7 },
-  { date: "Aug 06", price: 59.9 },
-  { date: "Aug 07", price: 41.4 },
-  { date: "Aug 08", price: 60.2 },
-  { date: "Aug 09", price: 62.8 },
-  { date: "Aug 10", price: 62.5 },
-  { date: "Aug 11", price: 63.6 },
-  { date: "Aug 12", price: 64.4 },
-  { date: "Aug 13", price: 65.1 },
-  { date: "Aug 14", price: 66.4 },
-  { date: "Aug 15", price: 71.6 },
-  { date: "Aug 16", price: 79.5 },
-  { date: "Aug 17", price: 102.8 },
-  { date: "Aug 18", price: 103.2 },
-  { date: "Aug 19", price: 105.4 },
-  { date: "Aug 20", price: 110.9 },
-  { date: "Aug 21", price: 67.7 },
-  { date: "Aug 22", price: 69.8 },
-  { date: "Aug 23", price: 79.5 },
-  { date: "Aug 24", price: 90.0 },
-  { date: "Aug 25", price: 91.2 },
-  { date: "Aug 26", price: 95.1 },
-  { date: "Aug 27", price: 99.8 },
-  { date: "Aug 28", price: 100.6 },
-  { date: "Aug 29", price: 102.8 },
-  { date: "Aug 30", price: 100.5 },
-  { date: "Aug 31", price: 111.6 },
-  { date: "Sep 01", price: 123.2 },
-  { date: "Sep 02", price: 125.8 },
-  { date: "Sep 03", price: 120.4 },
-  { date: "Sep 04", price: 121.9 },
-  { date: "Sep 05", price: 124.5 },
-  { date: "Sep 06", price: 127.7 },
-  { date: "Sep 07", price: 129.2 },
-  { date: "Sep 08", price: 130.8 },
-  { date: "Sep 09", price: 134.4 },
-  { date: "Sep 10", price: 136.0 },
-  { date: "Sep 11", price: 137.5 },
-  { date: "Sep 12", price: 131.1 },
-  { date: "Sep 13", price: 128.6 },
-  { date: "Sep 14", price: 124.2 },
-  { date: "Sep 15", price: 120.8 },
-  { date: "Sep 16", price: 118.3 },
-  { date: "Sep 17", price: 101.9 },
-  { date: "Sep 18", price: 121.5 },
-  { date: "Sep 19", price: 129.1 },
-  { date: "Sep 20", price: 131.6 },
-  { date: "Sep 21", price: 141.2 },
-  { date: "Sep 22", price: 142.8 },
-  { date: "Sep 23", price: 143.3 },
-  { date: "Sep 24", price: 149.9 },
-  { date: "Sep 25", price: 159.5 },
-  { date: "Sep 26", price: 173.3 },
-];
-
-const summary = [
-  { name: "Open", value: "S/. 153.56" },
-  { name: "High", value: "S/. 154.78" },
-  { name: "Volume", value: "48,14M" },
-  { name: "Low", value: "S/. 179.12" },
-  { name: "Close", value: "S/. 173.34" },
-  { name: "Market Cap", value: "S/. 1,58B" },
-];
+import { Card, CardHeader, CardBody, CardFooter, Divider, Badge, Chip, Tooltip } from "@heroui/react";
+import { LineChart } from "@tremor/react";
+import { BarChart2, TrendingUp, Calendar } from "lucide-react";
+import useTendenciaVentas from "../data/data_tendencia_ventas";
 
 const valueFormatter = (number) => `S/. ${Intl.NumberFormat("es-PE").format(number)}`;
+const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
-export default function TendenciaVentas() {
+function getMesesCompletos(year) {
+  return Array.from({ length: 12 }, (_, i) => ({
+    mes: meses[i],
+    mesIdx: i,
+    year,
+    ventas: 0,
+  }));
+}
+
+export default function TendenciaVentas({ idSucursal, year, month, week }) {
+  const { data, loading, error } = useTendenciaVentas(idSucursal, year, month, week);
+
+  let chartData = [];
+  let xAxisLabel = "";
+  let indexKey = "mes";
+  let total = 0;
+  let promedio = 0;
+  let periodoLabel = "";
+
+  if (year && month && week && week !== "all") {
+    chartData = diasSemana.map((dia, idx) => {
+      const found = data?.find(item => diasSemana[new Date(item.fecha).getDay()] === dia);
+      return {
+        dia,
+        ventas: found ? Number(found.total_ventas) : 0,
+      };
+    });
+    indexKey = "dia";
+    xAxisLabel = "Día de la semana";
+    total = chartData.reduce((acc, cur) => acc + cur.ventas, 0);
+    promedio = chartData.length ? (total / chartData.length) : 0;
+    periodoLabel = `Semana ${week} de ${meses[month - 1]} ${year}`;
+  } else if (year && month) {
+    const diasEnMes = new Date(year, month, 0).getDate();
+    chartData = Array.from({ length: diasEnMes }, (_, i) => {
+      const found = data?.find(item => new Date(item.fecha).getDate() === i + 1);
+      return {
+        dia: (i + 1).toString(),
+        ventas: found ? Number(found.total_ventas) : 0,
+      };
+    });
+    indexKey = "dia";
+    xAxisLabel = "Día del mes";
+    total = chartData.reduce((acc, cur) => acc + cur.ventas, 0);
+    promedio = chartData.length ? (total / chartData.length) : 0;
+    periodoLabel = `${meses[month - 1]} ${year}`;
+  } else {
+    const selectedYear = year ? parseInt(year) : new Date().getFullYear();
+    const mesesCompletos = getMesesCompletos(selectedYear);
+    (data || []).forEach(item => {
+      const date = new Date(item.fecha);
+      if (date.getFullYear() === selectedYear) {
+        const mesIdx = date.getMonth();
+        mesesCompletos[mesIdx].ventas += Number(item.total_ventas);
+      }
+    });
+    chartData = mesesCompletos.map(({ mes, ventas }) => ({ mes, ventas }));
+    indexKey = "mes";
+    xAxisLabel = "Mes";
+    total = chartData.reduce((acc, cur) => acc + cur.ventas, 0);
+    promedio = chartData.length ? (total / chartData.length) : 0;
+    periodoLabel = `${selectedYear}`;
+  }
+
   return (
-    <Card className="max-w-full">
-      <CardHeader className="flex flex-col items-start">
-        <h3 className="text-lg font-semibold">Tendencia de Ventas</h3>
-        <p className="text-sm text-default-500">Evolución de ventas en los últimos 30 días</p>
+    <Card className="lg:col-span-2">
+      <CardHeader className="flex flex-col items-start gap-2">
+        <div className="flex flex-wrap gap-4 items-center w-full">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="text-blue-500" size={22} />
+            <h3 className="text-lg font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
+              Tendencia de Ventas
+            </h3>
+            <Tooltip content="Periodo seleccionado">
+              <Chip color="primary" variant="flat" startContent={<Calendar className="w-4 h-4" />}>
+                {periodoLabel}
+              </Chip>
+            </Tooltip>
+          </div>
+          <div className="flex flex-wrap gap-2 ml-auto">
+            <Tooltip content="Suma total de ventas">
+              <Chip color="success" variant="flat" startContent={<TrendingUp className="w-4 h-4" />}>
+                Total: {valueFormatter(total)}
+              </Chip>
+            </Tooltip>
+            <Tooltip content="Promedio por punto del eje X">
+              <Chip color="violet" variant="flat">
+                Promedio: {valueFormatter(promedio)}
+              </Chip>
+            </Tooltip>
+          </div>
+        </div>
+        <p className="text-sm text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+          Evolución de ventas en el periodo seleccionado
+        </p>
       </CardHeader>
       <Divider />
       <CardBody>
-        <div className="h-[200px] w-full">
-          <LineChart
-            data={data}
-            index="date"
-            categories={["price"]}
-            valueFormatter={valueFormatter}
-            showLegend={false}
-            showYAxis={false}
-            className="mt-6 h-48"
-          />
-        </div>
-        <div className="mt-4 flex items-center gap-6">
-          <List className="truncate">
-            {summary.slice(0, 3).map((item) => (
-              <ListItem key={item.name}>
-                <span className="truncate">{item.name}</span>
-                <span className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                  {item.value}
-                </span>
-              </ListItem>
-            ))}
-          </List>
-          <List className="truncate">
-            {summary.slice(3, 6).map((item) => (
-              <ListItem key={item.name}>
-                <span className="truncate">{item.name}</span>
-                <span className="font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">
-                  {item.value}
-                </span>
-              </ListItem>
-            ))}
-          </List>
+        <div className="h-[250px] w-full">
+          {loading ? (
+            <p className="text-center py-8">Cargando...</p>
+          ) : error ? (
+            <p className="text-center text-red-500 py-8">{error}</p>
+          ) : (
+            <>
+              <LineChart
+                data={chartData}
+                index={indexKey}
+                categories={["ventas"]}
+                colors={["blue"]}
+                valueFormatter={valueFormatter}
+                yAxisWidth={65}
+                showLegend={false}
+                showAnimation={true}
+                showYAxis={true}
+                xAxisLabel={xAxisLabel}
+                customTooltip={({ payload }) =>
+                  payload?.length ? (
+                    <div className="p-2 bg-white rounded shadow text-xs">
+                      <div>
+                        <strong>
+                          {indexKey === "mes"
+                            ? payload[0].payload.mes
+                            : payload[0].payload.dia}
+                        </strong>
+                      </div>
+                      <div>Ventas: {valueFormatter(payload[0].payload.ventas)}</div>
+                    </div>
+                  ) : null
+                }
+                className="hidden h-56 sm:block"
+              />
+              <LineChart
+                data={chartData}
+                index={indexKey}
+                categories={["ventas"]}
+                colors={["blue"]}
+                valueFormatter={valueFormatter}
+                showYAxis={true}
+                showLegend={false}
+                startEndOnly={true}
+                showAnimation={true}
+                xAxisLabel={xAxisLabel}
+                customTooltip={({ payload }) =>
+                  payload?.length ? (
+                    <div className="p-2 bg-white rounded shadow text-xs">
+                      <div>
+                        <strong>
+                          {indexKey === "mes"
+                            ? payload[0].payload.mes
+                            : payload[0].payload.dia}
+                        </strong>
+                      </div>
+                      <div>Ventas: {valueFormatter(payload[0].payload.ventas)}</div>
+                    </div>
+                  ) : null
+                }
+                className="h-56 sm:hidden"
+              />
+            </>
+          )}
         </div>
       </CardBody>
       <Divider />
