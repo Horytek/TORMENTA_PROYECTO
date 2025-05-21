@@ -36,7 +36,8 @@ const BarChartHero = ({ idSucursal, year, month, week }) => {
     Representación de la cantidad de ventas por producto y dinero generado
   </p>
 
-  <div className="mt-4 min-h-[300px] max-h-[720px] overflow-auto">
+<div className="mt-4 min-h-[300px] max-h-[720px]">
+
     {loading ? (
       <p className="text-center py-4 text-sm">Cargando...</p>
     ) : error ? (
@@ -46,7 +47,8 @@ const BarChartHero = ({ idSucursal, year, month, week }) => {
         <p className="text-gray-500 text-sm">No hay datos disponibles</p>
       </div>
     ) : (
-      <ScrollShadow className="h-full px-4 pb-4">
+<ScrollShadow hideScrollBar className="max-h-[720px] overflow-y-auto">
+
         <div className="space-y-4">
           {barListData.map((item) => (
             <div
@@ -99,7 +101,7 @@ const BarChartHero = ({ idSucursal, year, month, week }) => {
               onValueChange={setSearchQuery}
             />
           </div>
-          <ScrollShadow className="h-72 px-4 pt-4">
+         <ScrollShadow hideScrollBar className="h-[calc(100vh-40px)] w-full">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => (
                 <div

@@ -10,25 +10,29 @@ const getTotalProductosVendidos = async (req, res) => {
     connection = await getConnection();
 
     // Fechas para filtro
-    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+   let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
-    if (week && week !== "all") {
-      const weekNumber = parseInt(week.replace(/\D/g, ""));
-      const firstDayOfMonth = new Date(y, m, 1);
-      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
-      fechaInicioActual = new Date(firstWeekStart);
-      fechaInicioActual.setDate(fechaInicioActual.getDate() + (weekNumber - 1) * 7);
-      fechaFinActual = new Date(fechaInicioActual);
-      fechaFinActual.setDate(fechaFinActual.getDate() + 6);
+    if (week && week !== "all" && month) {
+      // Ajuste: la semana empieza el día 1 del mes y termina el último día del mes
+      const diasEnMes = new Date(y, m + 1, 0).getDate();
+      const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = Math.min(weekNumber * 7, diasEnMes);
 
-      // Semana anterior
-      fechaInicioAnterior = new Date(fechaInicioActual);
-      fechaInicioAnterior.setDate(fechaInicioAnterior.getDate() - 7);
-      fechaFinAnterior = new Date(fechaFinActual);
-      fechaFinAnterior.setDate(fechaFinAnterior.getDate() - 7);
+      fechaInicioActual = new Date(y, m, startDay);
+      fechaFinActual = new Date(y, m, endDay);
+
+      // Semana anterior (dentro del mismo mes anterior)
+      const prevMonth = subMonths(fechaInicioActual, 1);
+      const diasEnMesAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
+      const prevStartDay = (weekNumber - 1) * 7 + 1;
+      const prevEndDay = Math.min(weekNumber * 7, diasEnMesAnterior);
+
+      fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevStartDay);
+      fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevEndDay);
     } else if (month) {
       fechaInicioActual = new Date(y, m, 1);
       fechaFinActual = new Date(y, m + 1, 0);
@@ -143,30 +147,30 @@ const getTotalSalesRevenue = async (req, res) => {
     connection = await getConnection();
 
     // Fechas para filtro
-    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
-
+       let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
-    if (week && week !== "all") {
-      // Filtro por semana
+    if (week && week !== "all" && month) {
+      // Ajuste: la semana empieza el día 1 del mes y termina el último día del mes
+      const diasEnMes = new Date(y, m + 1, 0).getDate();
       const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
-      // Calcular fecha de inicio y fin de la semana seleccionada
-      const firstDayOfMonth = new Date(y, m, 1);
-      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
-      fechaInicioActual = new Date(firstWeekStart);
-      fechaInicioActual.setDate(fechaInicioActual.getDate() + (weekNumber - 1) * 7);
-      fechaFinActual = new Date(fechaInicioActual);
-      fechaFinActual.setDate(fechaFinActual.getDate() + 6);
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = Math.min(weekNumber * 7, diasEnMes);
 
-      // Semana anterior
-      fechaInicioAnterior = new Date(fechaInicioActual);
-      fechaInicioAnterior.setDate(fechaInicioAnterior.getDate() - 7);
-      fechaFinAnterior = new Date(fechaFinActual);
-      fechaFinAnterior.setDate(fechaFinAnterior.getDate() - 7);
+      fechaInicioActual = new Date(y, m, startDay);
+      fechaFinActual = new Date(y, m, endDay);
+
+      // Semana anterior (dentro del mismo mes anterior)
+      const prevMonth = subMonths(fechaInicioActual, 1);
+      const diasEnMesAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
+      const prevStartDay = (weekNumber - 1) * 7 + 1;
+      const prevEndDay = Math.min(weekNumber * 7, diasEnMesAnterior);
+
+      fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevStartDay);
+      fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevEndDay);
     } else if (month) {
-      // Filtro por mes
       fechaInicioActual = new Date(y, m, 1);
       fechaFinActual = new Date(y, m + 1, 0);
       // Mes anterior
@@ -174,7 +178,6 @@ const getTotalSalesRevenue = async (req, res) => {
       fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
       fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
     } else {
-      // Solo año (todo el año)
       fechaInicioActual = new Date(y, 0, 1);
       fechaFinActual = new Date(y, 11, 31);
       // Año anterior
@@ -283,25 +286,29 @@ const getProductoMasVendido = async (req, res) => {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+      let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
-    if (week && week !== "all") {
-      const weekNumber = parseInt(week.replace(/\D/g, ""));
-      const firstDayOfMonth = new Date(y, m, 1);
-      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
-      fechaInicioActual = new Date(firstWeekStart);
-      fechaInicioActual.setDate(fechaInicioActual.getDate() + (weekNumber - 1) * 7);
-      fechaFinActual = new Date(fechaInicioActual);
-      fechaFinActual.setDate(fechaFinActual.getDate() + 6);
+    if (week && week !== "all" && month) {
+      // Ajuste: la semana empieza el día 1 del mes y termina el último día del mes
+      const diasEnMes = new Date(y, m + 1, 0).getDate();
+      const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = Math.min(weekNumber * 7, diasEnMes);
 
-      // Semana anterior
-      fechaInicioAnterior = new Date(fechaInicioActual);
-      fechaInicioAnterior.setDate(fechaInicioAnterior.getDate() - 7);
-      fechaFinAnterior = new Date(fechaFinActual);
-      fechaFinAnterior.setDate(fechaFinAnterior.getDate() - 7);
+      fechaInicioActual = new Date(y, m, startDay);
+      fechaFinActual = new Date(y, m, endDay);
+
+      // Semana anterior (dentro del mismo mes anterior)
+      const prevMonth = subMonths(fechaInicioActual, 1);
+      const diasEnMesAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
+      const prevStartDay = (weekNumber - 1) * 7 + 1;
+      const prevEndDay = Math.min(weekNumber * 7, diasEnMesAnterior);
+
+      fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevStartDay);
+      fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevEndDay);
     } else if (month) {
       fechaInicioActual = new Date(y, m, 1);
       fechaFinActual = new Date(y, m + 1, 0);
@@ -426,25 +433,29 @@ const getSucursalMayorRendimiento = async (req, res) => {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+       let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
-    if (week && week !== "all") {
-      const weekNumber = parseInt(week.replace(/\D/g, ""));
-      const firstDayOfMonth = new Date(y, m, 1);
-      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
-      fechaInicioActual = new Date(firstWeekStart);
-      fechaInicioActual.setDate(fechaInicioActual.getDate() + (weekNumber - 1) * 7);
-      fechaFinActual = new Date(fechaInicioActual);
-      fechaFinActual.setDate(fechaFinActual.getDate() + 6);
+    if (week && week !== "all" && month) {
+      // Ajuste: la semana empieza el día 1 del mes y termina el último día del mes
+      const diasEnMes = new Date(y, m + 1, 0).getDate();
+      const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = Math.min(weekNumber * 7, diasEnMes);
 
-      // Semana anterior
-      fechaInicioAnterior = new Date(fechaInicioActual);
-      fechaInicioAnterior.setDate(fechaInicioAnterior.getDate() - 7);
-      fechaFinAnterior = new Date(fechaFinActual);
-      fechaFinAnterior.setDate(fechaFinAnterior.getDate() - 7);
+      fechaInicioActual = new Date(y, m, startDay);
+      fechaFinActual = new Date(y, m, endDay);
+
+      // Semana anterior (dentro del mismo mes anterior)
+      const prevMonth = subMonths(fechaInicioActual, 1);
+      const diasEnMesAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
+      const prevStartDay = (weekNumber - 1) * 7 + 1;
+      const prevEndDay = Math.min(weekNumber * 7, diasEnMesAnterior);
+
+      fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevStartDay);
+      fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevEndDay);
     } else if (month) {
       fechaInicioActual = new Date(y, m, 1);
       fechaFinActual = new Date(y, m + 1, 0);
@@ -549,25 +560,26 @@ const getCantidadVentasPorSubcategoria = async (req, res) => {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-    let fechaInicio, fechaFin;
+let fechaInicioActual, fechaFinActual;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
-    if (week && week !== "all") {
+    if (week && week !== "all" && month) {
+      // Semana empieza el día 1 y termina el último día del mes
+      const diasEnMes = new Date(y, m + 1, 0).getDate();
       const weekNumber = parseInt(week.replace(/\D/g, ""));
-      const firstDayOfMonth = new Date(y, m, 1);
-      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
-      fechaInicio = new Date(firstWeekStart);
-      fechaInicio.setDate(fechaInicio.getDate() + (weekNumber - 1) * 7);
-      fechaFin = new Date(fechaInicio);
-      fechaFin.setDate(fechaFin.getDate() + 6);
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = Math.min(weekNumber * 7, diasEnMes);
+
+      fechaInicioActual = new Date(y, m, startDay);
+      fechaFinActual = new Date(y, m, endDay);
     } else if (month) {
-      fechaInicio = new Date(y, m, 1);
-      fechaFin = new Date(y, m + 1, 0);
+      fechaInicioActual = new Date(y, m, 1);
+      fechaFinActual = new Date(y, m + 1, 0);
     } else {
-      fechaInicio = new Date(y, 0, 1);
-      fechaFin = new Date(y, 11, 31);
+      fechaInicioActual = new Date(y, 0, 1);
+      fechaFinActual = new Date(y, 11, 31);
     }
 
     const f = (d) => format(d, "yyyy-MM-dd");
@@ -588,7 +600,7 @@ const getCantidadVentasPorSubcategoria = async (req, res) => {
         AND v.f_venta BETWEEN ? AND ?
     `;
 
-    const params = [f(fechaInicio), f(fechaFin)];
+   const params = [f(fechaInicioActual), f(fechaFinActual)];
 
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
@@ -621,25 +633,26 @@ const getCantidadVentasPorProducto = async (req, res) => {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-    let fechaInicio, fechaFin;
+let fechaInicioActual, fechaFinActual;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
-    if (week && week !== "all") {
+    if (week && week !== "all" && month) {
+      // Semana empieza el día 1 y termina el último día del mes
+      const diasEnMes = new Date(y, m + 1, 0).getDate();
       const weekNumber = parseInt(week.replace(/\D/g, ""));
-      const firstDayOfMonth = new Date(y, m, 1);
-      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
-      fechaInicio = new Date(firstWeekStart);
-      fechaInicio.setDate(fechaInicio.getDate() + (weekNumber - 1) * 7);
-      fechaFin = new Date(fechaInicio);
-      fechaFin.setDate(fechaFin.getDate() + 6);
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = Math.min(weekNumber * 7, diasEnMes);
+
+      fechaInicioActual = new Date(y, m, startDay);
+      fechaFinActual = new Date(y, m, endDay);
     } else if (month) {
-      fechaInicio = new Date(y, m, 1);
-      fechaFin = new Date(y, m + 1, 0);
+      fechaInicioActual = new Date(y, m, 1);
+      fechaFinActual = new Date(y, m + 1, 0);
     } else {
-      fechaInicio = new Date(y, 0, 1);
-      fechaFin = new Date(y, 11, 31);
+      fechaInicioActual = new Date(y, 0, 1);
+      fechaFinActual = new Date(y, 11, 31);
     }
 
     const f = (d) => format(d, "yyyy-MM-dd");
@@ -660,7 +673,7 @@ const getCantidadVentasPorProducto = async (req, res) => {
         AND v.f_venta BETWEEN ? AND ?
     `;
 
-    const params = [f(fechaInicio), f(fechaFin)];
+const params = [f(fechaInicioActual), f(fechaFinActual)];
 
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
@@ -1229,25 +1242,26 @@ const getTendenciaVentas = async (req, res) => {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-    let fechaInicio, fechaFin;
+let fechaInicioActual, fechaFinActual;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
-    if (week && week !== "all") {
+    if (week && week !== "all" && month) {
+      // Semana empieza el día 1 y termina el último día del mes
+      const diasEnMes = new Date(y, m + 1, 0).getDate();
       const weekNumber = parseInt(week.replace(/\D/g, ""));
-      const firstDayOfMonth = new Date(y, m, 1);
-      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
-      fechaInicio = new Date(firstWeekStart);
-      fechaInicio.setDate(fechaInicio.getDate() + (weekNumber - 1) * 7);
-      fechaFin = new Date(fechaInicio);
-      fechaFin.setDate(fechaFin.getDate() + 6);
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = Math.min(weekNumber * 7, diasEnMes);
+
+      fechaInicioActual = new Date(y, m, startDay);
+      fechaFinActual = new Date(y, m, endDay);
     } else if (month) {
-      fechaInicio = new Date(y, m, 1);
-      fechaFin = new Date(y, m + 1, 0);
+      fechaInicioActual = new Date(y, m, 1);
+      fechaFinActual = new Date(y, m + 1, 0);
     } else {
-      fechaInicio = new Date(y, 0, 1);
-      fechaFin = new Date(y, 11, 31);
+      fechaInicioActual = new Date(y, 0, 1);
+      fechaFinActual = new Date(y, 11, 31);
     }
 
     const f = (d) => format(d, "yyyy-MM-dd");
@@ -1261,7 +1275,7 @@ const getTendenciaVentas = async (req, res) => {
       WHERE v.estado_venta != 0
         AND v.f_venta BETWEEN ? AND ?
     `;
-    const params = [f(fechaInicio), f(fechaFin)];
+const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
@@ -1289,25 +1303,26 @@ const getTopProductosMargen = async (req, res) => {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-    let fechaInicio, fechaFin;
+let fechaInicioActual, fechaFinActual;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
-    if (week && week !== "all") {
+    if (week && week !== "all" && month) {
+      // Semana empieza el día 1 y termina el último día del mes
+      const diasEnMes = new Date(y, m + 1, 0).getDate();
       const weekNumber = parseInt(week.replace(/\D/g, ""));
-      const firstDayOfMonth = new Date(y, m, 1);
-      const firstWeekStart = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
-      fechaInicio = new Date(firstWeekStart);
-      fechaInicio.setDate(fechaInicio.getDate() + (weekNumber - 1) * 7);
-      fechaFin = new Date(fechaInicio);
-      fechaFin.setDate(fechaFin.getDate() + 6);
+      const startDay = (weekNumber - 1) * 7 + 1;
+      const endDay = Math.min(weekNumber * 7, diasEnMes);
+
+      fechaInicioActual = new Date(y, m, startDay);
+      fechaFinActual = new Date(y, m, endDay);
     } else if (month) {
-      fechaInicio = new Date(y, m, 1);
-      fechaFin = new Date(y, m + 1, 0);
+      fechaInicioActual = new Date(y, m, 1);
+      fechaFinActual = new Date(y, m + 1, 0);
     } else {
-      fechaInicio = new Date(y, 0, 1);
-      fechaFin = new Date(y, 11, 31);
+      fechaInicioActual = new Date(y, 0, 1);
+      fechaFinActual = new Date(y, 11, 31);
     }
 
     const f = (d) => format(d, "yyyy-MM-dd");
@@ -1323,7 +1338,7 @@ const getTopProductosMargen = async (req, res) => {
       WHERE v.estado_venta != 0
         AND v.f_venta BETWEEN ? AND ?
     `;
-    const params = [f(fechaInicio), f(fechaFin)];
+const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);

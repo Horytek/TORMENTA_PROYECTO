@@ -66,24 +66,45 @@ const SalesCard = ({
             </Chip>
             <p className="text-xs text-muted-foreground">{periodoTexto}</p>
           </div>
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span>Meta mensual: S/. 8,000</span>
-              <span className="font-medium">
-                {totalRecaudado && 8000
-                  ? `${Math.min(((totalRecaudado / 8000) * 100).toFixed(0), 100)}%`
-                  : "0%"}
-              </span>
-            </div>
-            <Progress
-              value={
-                totalRecaudado && 8000
-                  ? Math.min((totalRecaudado / 8000) * 100, 100)
-                  : 0
-              }
-              className="h-1.5"
-            />
-          </div>
+<div className="mt-3">
+  {(() => {
+    let meta = 0;
+    let metaLabel = "";
+    const diasMes = month && year ? new Date(year, month, 0).getDate() : 30;
+if (week && week !== "all") {
+  metaLabel = "Meta semanal";
+  meta = totalGananciasAnterior && totalGananciasAnterior > 0 && diasMes
+    ? Math.round((totalGananciasAnterior / diasMes) * 7)
+    : 6000;
+} else if (month) {
+  metaLabel = "Meta mensual";
+  meta = totalGananciasAnterior && totalGananciasAnterior > 0
+    ? totalGananciasAnterior
+    : 18000;
+} else {
+  metaLabel = "Meta anual";
+  meta = totalGananciasAnterior && totalGananciasAnterior > 0
+    ? totalGananciasAnterior
+    : 1000000;
+}
+    const porcentajeMeta = meta > 0 ? Math.min((totalRecaudado / meta) * 100, 100) : 0;
+    return (
+      <>
+        <div className="flex items-center justify-between text-xs mb-1">
+          <span>{metaLabel}: S/. {meta}</span>
+          <span className="font-medium">
+            {porcentajeMeta.toFixed(0)}%
+          </span>
+        </div>
+        <Progress
+          value={porcentajeMeta}
+          className="h-1.5"
+          color="primary"
+        />
+      </>
+    );
+  })()}
+</div>
         </CardBody>
       </Card>
 
@@ -111,17 +132,50 @@ const SalesCard = ({
             </Chip>
             <p className="text-xs text-muted-foreground">{periodoTexto}</p>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Chip className="text-xs bg-muted text-center px-3 py-1">
-              Shorts: <span className="font-semibold ml-1">{subcategorias?.Shorts || 0}</span>
-            </Chip>
-            <Chip className="text-xs bg-muted text-center px-3 py-1">
-              Pantalón: <span className="font-semibold ml-1">{subcategorias?.Pantalon || 0}</span>
-            </Chip>
-            <Chip className="text-xs bg-muted text-center px-3 py-1">
-              Otros: <span className="font-semibold ml-1">{subcategorias?.Otros || 0}</span>
-            </Chip>
-          </div>
+           <div className="mt-3">
+      {/* Predicción dinámica de meta */}
+      {(() => {
+        // Predicción de meta según filtro
+        let meta = 0;
+        let metaLabel = "";
+        const diasMes = month && year ? new Date(year, month, 0).getDate() : 30;
+        if (week && week !== "all") {
+          // Meta semanal: promedio diario del mes anterior * 7
+          metaLabel = "Meta semanal";
+          meta = totalProductosAnterior && diasMes
+            ? Math.round((totalProductosAnterior / diasMes) * 7)
+            : 400;
+        } else if (month) {
+          // Meta mensual: igual al mes anterior o promedio diario * días del mes actual
+          metaLabel = "Meta mensual";
+          meta = totalProductosAnterior
+            ? totalProductosAnterior
+            : 1700;
+        } else {
+          // Meta anual: igual al año anterior
+          metaLabel = "Meta anual";
+          meta = totalProductosAnterior
+            ? totalProductosAnterior
+            : 50000;
+        }
+        const porcentajeMeta = meta > 0 ? Math.min((totalProductosVendidos / meta) * 100, 100) : 0;
+        return (
+          <>
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span>{metaLabel}: {meta}</span>
+              <span className="font-medium">
+                {porcentajeMeta.toFixed(0)}%
+              </span>
+            </div>
+            <Progress
+              value={porcentajeMeta}
+              className="h-1.5"
+              color="primary"
+            />
+          </>
+        );
+      })()}
+    </div>
         </CardBody>
       </Card>
 

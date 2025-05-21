@@ -1,11 +1,11 @@
 import React from "react";
-import { Card, CardHeader, CardBody, CardFooter, Divider, Badge, Chip, Tooltip } from "@heroui/react";
+import { Card, CardHeader, CardBody, CardFooter, Divider, Chip, Tooltip } from "@heroui/react";
 import { LineChart } from "@tremor/react";
 import { BarChart2, TrendingUp, Calendar } from "lucide-react";
 import useTendenciaVentas from "../data/data_tendencia_ventas";
 
 const valueFormatter = (number) => `S/. ${Intl.NumberFormat("es-PE").format(number)}`;
-const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
 function getMesesCompletos(year) {
@@ -28,8 +28,15 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
   let periodoLabel = "";
 
   if (year && month && week && week !== "all") {
+    // Adaptación: mostrar días de la semana en orden (Lun-Dom)
     chartData = diasSemana.map((dia, idx) => {
-      const found = data?.find(item => diasSemana[new Date(item.fecha).getDay()] === dia);
+      // Buscar el primer elemento de data que coincida con el día de la semana (Lun=1, ..., Dom=0)
+      const found = data?.find(item => {
+        const jsDay = new Date(item.fecha).getDay(); // 0=Dom, 1=Lun, ..., 6=Sáb
+        // Mapear jsDay a nuestro array diasSemana (Lun=0, ..., Dom=6)
+        const diaIdx = jsDay === 0 ? 6 : jsDay - 1;
+        return diaIdx === idx;
+      });
       return {
         dia,
         ventas: found ? Number(found.total_ventas) : 0,
