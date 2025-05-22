@@ -28,25 +28,49 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
   let periodoLabel = "";
 
   if (year && month && week && week !== "all") {
-    // Adaptación: mostrar días de la semana en orden (Lun-Dom)
-    chartData = diasSemana.map((dia, idx) => {
-      // Buscar el primer elemento de data que coincida con el día de la semana (Lun=1, ..., Dom=0)
+    // Calcular rango de días de la semana seleccionada
+    const y = parseInt(year);
+    const m = parseInt(month) - 1;
+    const weekNumber = parseInt(week.replace(/\D/g, ""));
+    const startDay = (weekNumber - 1) * 7 + 1;
+    const diasEnMes = new Date(y, m + 1, 0).getDate();
+    const endDay = Math.min(weekNumber * 7, diasEnMes);
+
+    // Generar los días de la semana con su número y abreviación
+    const diasSemanaConNumero = [];
+    for (let d = startDay; d <= endDay; d++) {
+      const fecha = new Date(y, m, d);
+      const diaSemanaIdx = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1; // Lunes=0, ..., Domingo=6
+      diasSemanaConNumero.push({
+        label: `${d} ${diasSemana[diaSemanaIdx]}`,
+        dia: diasSemana[diaSemanaIdx],
+        diaNumero: d,
+        fecha: fecha,
+        diaSemanaIdx,
+      });
+    }
+
+    chartData = diasSemanaConNumero.map(({ label, diaNumero, diaSemanaIdx, fecha }) => {
+      // Buscar el elemento de data que coincida con el día exacto
       const found = data?.find(item => {
-        const jsDay = new Date(item.fecha).getDay(); // 0=Dom, 1=Lun, ..., 6=Sáb
-        // Mapear jsDay a nuestro array diasSemana (Lun=0, ..., Dom=6)
-        const diaIdx = jsDay === 0 ? 6 : jsDay - 1;
-        return diaIdx === idx;
+        const itemDate = new Date(item.fecha);
+        return (
+          itemDate.getDate() === diaNumero &&
+          itemDate.getMonth() === m &&
+          itemDate.getFullYear() === y
+        );
       });
       return {
-        dia,
+        dia: label,
         ventas: found ? Number(found.total_ventas) : 0,
       };
     });
+
     indexKey = "dia";
     xAxisLabel = "Día de la semana";
     total = chartData.reduce((acc, cur) => acc + cur.ventas, 0);
     promedio = chartData.length ? (total / chartData.length) : 0;
-    periodoLabel = `Semana ${week} de ${meses[month - 1]} ${year}`;
+    periodoLabel = `Semana ${week} de ${meses[m]} ${year}`;
   } else if (year && month) {
     const diasEnMes = new Date(year, month, 0).getDate();
     chartData = Array.from({ length: diasEnMes }, (_, i) => {
