@@ -137,67 +137,82 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
       </CardHeader>
       <Divider />
       <CardBody>
-        <div className="h-[250px] w-full">
+        <div className="h-[250px] w-full flex flex-col">
           {loading ? (
             <p className="text-center py-8">Cargando...</p>
           ) : error ? (
             <p className="text-center text-red-500 py-8">{error}</p>
           ) : (
             <>
-              <LineChart
-                data={chartData}
-                index={indexKey}
-                categories={["ventas"]}
-                colors={["blue"]}
-                valueFormatter={valueFormatter}
-                yAxisWidth={65}
-                showLegend={false}
-                showAnimation={true}
-                showYAxis={true}
-                xAxisLabel={xAxisLabel}
-                customTooltip={({ payload }) =>
-                  payload?.length ? (
-                    <div className="p-2 bg-white rounded shadow text-xs">
-                      <div>
-                        <strong>
-                          {indexKey === "mes"
-                            ? payload[0].payload.mes
-                            : payload[0].payload.dia}
-                        </strong>
-                      </div>
-                      <div>Ventas: {valueFormatter(payload[0].payload.ventas)}</div>
-                    </div>
-                  ) : null
-                }
-                className="hidden h-56 sm:block"
-              />
-              <LineChart
-                data={chartData}
-                index={indexKey}
-                categories={["ventas"]}
-                colors={["blue"]}
-                valueFormatter={valueFormatter}
-                showYAxis={true}
-                showLegend={false}
-                startEndOnly={true}
-                showAnimation={true}
-                xAxisLabel={xAxisLabel}
-                customTooltip={({ payload }) =>
-                  payload?.length ? (
-                    <div className="p-2 bg-white rounded shadow text-xs">
-                      <div>
-                        <strong>
-                          {indexKey === "mes"
-                            ? payload[0].payload.mes
-                            : payload[0].payload.dia}
-                        </strong>
-                      </div>
-                      <div>Ventas: {valueFormatter(payload[0].payload.ventas)}</div>
-                    </div>
-                  ) : null
-                }
-                className="h-56 sm:hidden"
-              />
+              {/* Leyenda mejorada y espacio para el eje Y */}
+              <div className="mb-4 flex justify-end">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span>
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300 truncate max-w-[120px]">
+                    Ventas
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-1 w-full">
+                {/* Espacio extra para el eje Y */}
+                <div className="w-[10px] flex-shrink-0"></div>
+                <div className="flex-1">
+                  <LineChart
+                    data={chartData}
+                    index={indexKey}
+                    categories={["ventas"]}
+                    colors={["blue"]}
+                    valueFormatter={valueFormatter}
+                    yAxisWidth={80}
+                    showLegend={false}
+                    showAnimation={true}
+                    showYAxis={true}
+                    xAxisLabel={xAxisLabel}
+                    customTooltip={({ payload }) =>
+                      payload?.length ? (
+                        <div className="p-2 bg-white rounded shadow text-xs">
+                          <div>
+                            <strong>
+                              {indexKey === "mes"
+                                ? payload[0].payload.mes
+                                : payload[0].payload.dia}
+                            </strong>
+                          </div>
+                          <div>Ventas: {valueFormatter(payload[0].payload.ventas)}</div>
+                        </div>
+                      ) : null
+                    }
+                    className="hidden h-56 sm:block"
+                  />
+                  <LineChart
+                    data={chartData}
+                    index={indexKey}
+                    categories={["ventas"]}
+                    colors={["blue"]}
+                    valueFormatter={valueFormatter}
+                    showYAxis={true}
+                    showLegend={false}
+                    startEndOnly={true}
+                    showAnimation={true}
+                    xAxisLabel={xAxisLabel}
+                    customTooltip={({ payload }) =>
+                      payload?.length ? (
+                        <div className="p-2 bg-white rounded shadow text-xs">
+                          <div>
+                            <strong>
+                              {indexKey === "mes"
+                                ? payload[0].payload.mes
+                                : payload[0].payload.dia}
+                            </strong>
+                          </div>
+                          <div>Ventas: {valueFormatter(payload[0].payload.ventas)}</div>
+                        </div>
+                      ) : null
+                    }
+                    className="h-56 sm:hidden"
+                  />
+                </div>
+              </div>
             </>
           )}
         </div>
