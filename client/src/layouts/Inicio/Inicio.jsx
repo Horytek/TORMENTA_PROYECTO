@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody, Avatar, Button, Divider, Chip, Tooltip } from "@heroui/react";
+import { Card, CardHeader, CardBody, Avatar, Button, Divider, Chip, Tooltip, ScrollShadow } from "@heroui/react";
 import { ArrowUp, ShoppingBag, LayoutGrid, Package, Users, TrendingUp, AlertTriangle } from "lucide-react";
 import { RiShoppingBag4Line } from "@remixicon/react";
 import { LuShirt } from "react-icons/lu";
@@ -8,6 +8,7 @@ import { Tabs, Tab, Select, SelectItem } from "@heroui/react";
 import useProductTop from "./hooks/product_top";
 import useProductSell from "./hooks/product_sell";
 import useVentasTotal from "./hooks/ventas_total";
+import getProductosMenorStock from "./hooks/product_stock";
 import { useState, useEffect } from "react";
 import axios from "@/api/axios";
 import { LineChartComponent } from "./LineChart";
@@ -15,7 +16,7 @@ import { LineChartComponent } from "./LineChart";
 // Card para productos con menor stock
 function StockCard({ productos }) {
   return (
-    <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 transition-all">
+    <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 transition-all flex flex-col h-full min-h-[340px]">
       {/* Fondo decorativo más sutil */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-rose-100/60 to-pink-200/40 rounded-full blur-2xl"></div>
@@ -32,49 +33,54 @@ function StockCard({ productos }) {
           </p>
         </div>
       </CardHeader>
-      <CardBody className="py-3 px-4">
-        {productos.length > 0 ? (
-          <ul className="divide-y divide-rose-50 dark:divide-rose-900">
-            {productos.map((prod, idx) => {
-              const urgencyLevel = 6 - Number.parseInt(prod.stock);
-              const urgencyColor =
-                urgencyLevel > 4
-                  ? "bg-red-500/70"
-                  : urgencyLevel > 2
-                  ? "bg-orange-400/70"
-                  : "bg-yellow-400/70";
-              const chipColor =
-                urgencyLevel > 4
-                  ? "danger"
-                  : urgencyLevel > 2
-                  ? "warning"
-                  : "success";
-              return (
-                <li key={prod.nombre} className="py-2 flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{prod.nombre}</span>
-                      <Chip color={chipColor} variant="flat" className="font-bold text-xs px-2 py-0.5">
-                        {prod.stock} und.
-                      </Chip>
+      <CardBody className="py-3 px-4 flex-1 flex flex-col">
+        <span className="text-[11px] text-rose-500 mb-2 font-medium">
+          * Se actualiza en tiempo real (solo filtra por sucursal)
+        </span>
+        <ScrollShadow hideScrollBar className="flex-1 min-h-[120px] max-h-[220px]">
+          {productos.length > 0 ? (
+            <ul className="divide-y divide-rose-50 dark:divide-rose-900">
+              {productos.map((prod, idx) => {
+                const urgencyLevel = 6 - Number.parseInt(prod.stock);
+                const urgencyColor =
+                  urgencyLevel > 4
+                    ? "bg-red-500/70"
+                    : urgencyLevel > 2
+                    ? "bg-orange-400/70"
+                    : "bg-yellow-400/70";
+                const chipColor =
+                  urgencyLevel > 4
+                    ? "danger"
+                    : urgencyLevel > 2
+                    ? "warning"
+                    : "success";
+                return (
+                  <li key={prod.nombre} className="py-2 flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{prod.nombre}</span>
+                        <Chip color={chipColor} variant="flat" className="font-bold text-xs px-2 py-0.5">
+                          {prod.stock} und.
+                        </Chip>
+                      </div>
+                      {/* Indicador de stock simple */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`inline-block w-2 h-2 rounded-full ${urgencyColor}`}></span>
+                        <span className="text-xs text-zinc-400">{Number(prod.stock) <= 3 ? "Muy bajo" : Number(prod.stock) <= 5 ? "Bajo" : "Moderado"}</span>
+                      </div>
                     </div>
-                    {/* Indicador de stock simple */}
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`inline-block w-2 h-2 rounded-full ${urgencyColor}`}></span>
-                      <span className="text-xs text-zinc-400">{Number(prod.stock) <= 3 ? "Muy bajo" : Number(prod.stock) <= 5 ? "Bajo" : "Moderado"}</span>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/60 rounded-xl">
-            <p className="text-zinc-500 dark:text-zinc-400">
-              No hay productos con stock crítico en esta sucursal
-            </p>
-          </div>
-        )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/60 rounded-xl">
+              <p className="text-zinc-500 dark:text-zinc-400">
+                No hay productos con stock crítico en esta sucursal
+              </p>
+            </div>
+          )}
+        </ScrollShadow>
       </CardBody>
     </Card>
   );
@@ -88,7 +94,7 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
     "from-emerald-500 via-green-600 to-teal-600",
   ];
   return (
-    <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 transition-all">
+    <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 transition-all flex flex-col h-full min-h-[340px]">
       {/* Fondo decorativo elegante y sutil */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-6 -left-6 w-28 h-28 bg-gradient-to-br from-blue-400/30 to-indigo-600/20 rounded-full blur-2xl"></div>
@@ -105,43 +111,48 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
           </p>
         </div>
       </CardHeader>
-      <CardBody className="py-3 px-4">
-        {sucursales.length > 0 ? (
-          <ul className="divide-y divide-blue-50 dark:divide-blue-900">
-            {sucursales.map((branch, index) => {
-              const salesValue = branch.ventas || branch.sales || 0;
-              const maxSales = 15000;
-              const percentage = (Number(salesValue) / maxSales) * 100;
-              return (
-                <li key={branch.nombre || branch.name} className="py-2 flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-2.5 h-2.5 rounded-full bg-gradient-to-r ${gradients[index % gradients.length]} shadow`}
-                        ></span>
-                        <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                          {branch.nombre || branch.name}
-                        </span>
+      <CardBody className="py-3 px-4 flex-1 flex flex-col">
+        <span className="text-[11px] text-blue-600 mb-2 font-medium">
+          * Se actualiza en tiempo real (solo filtra por sucursal)
+        </span>
+        <ScrollShadow hideScrollBar className="flex-1 min-h-[120px] max-h-[220px]">
+          {sucursales.length > 0 ? (
+            <ul className="divide-y divide-blue-50 dark:divide-blue-900">
+              {sucursales.map((branch, index) => {
+                const salesValue = branch.ventas || branch.sales || 0;
+                const maxSales = 15000;
+                const percentage = (Number(salesValue) / maxSales) * 100;
+                return (
+                  <li key={branch.nombre || branch.name} className="py-2 flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2.5 h-2.5 rounded-full bg-gradient-to-r ${gradients[index % gradients.length]} shadow`}
+                          ></span>
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                            {branch.nombre || branch.name}
+                          </span>
+                        </div>
+                        <Chip color="primary" variant="flat" className="font-bold text-xs px-2 py-0.5">
+                          S/. {(branch.ventas || branch.sales || 0).toLocaleString()}
+                        </Chip>
                       </div>
-                      <Chip color="primary" variant="flat" className="font-bold text-xs px-2 py-0.5">
-                        S/. {(branch.ventas || branch.sales || 0).toLocaleString()}
-                      </Chip>
+                      {/* Indicador de rendimiento simple */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-zinc-400">{Math.round(percentage)}% del objetivo</span>
+                      </div>
                     </div>
-                    {/* Indicador de rendimiento simple */}
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-zinc-400">{Math.round(percentage)}% del objetivo</span>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/60 rounded-xl">
-            <p className="text-zinc-500 dark:text-zinc-400">No hay datos disponibles para esta sucursal</p>
-          </div>
-        )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/60 rounded-xl">
+              <p className="text-zinc-500 dark:text-zinc-400">No hay datos disponibles para esta sucursal</p>
+            </div>
+          )}
+        </ScrollShadow>
         <div className="flex items-center justify-between mt-5 p-2 rounded-xl bg-gradient-to-r from-zinc-100/80 to-zinc-50/80 dark:from-zinc-800/80 dark:to-zinc-700/80 backdrop-blur-sm border border-white/40 dark:border-zinc-600/40">
           <span className="font-semibold text-zinc-900 dark:text-zinc-100">Promedio general</span>
           <Chip color="success" variant="flat" className="font-bold text-xs px-3 py-1">
@@ -153,16 +164,33 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
   );
 }
 
-function useProductosMenorStock(selectedSucursal, selectedTab) {
-  // Simulación de datos:
-  const productos = [
-    { nombre: "Polo Básico", stock: 2 },
-    { nombre: "Pantalón Jean", stock: 3 },
-    { nombre: "Camisa Manga Larga", stock: 4 },
-    { nombre: "Short Deportivo", stock: 5 },
-    { nombre: "Casaca Invierno", stock: 6 },
-  ];
-  return { productos };
+function useProductosMenorStock(selectedSucursal) {
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProductos = async () => {
+      setLoading(true);
+      try {
+        const params = {
+          sucursal: selectedSucursal,
+        };
+        // Elimina filtros vacíos
+        Object.keys(params).forEach(key => {
+          if (!params[key]) delete params[key];
+        });
+        const { productos: productosApi } = await getProductosMenorStock(params);
+        setProductos(productosApi || []);
+      } catch (error) {
+        setProductos([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProductos();
+  }, [selectedSucursal]);
+
+  return { productos, loading };
 }
 
 function useDesempenoSucursales(selectedTab, selectedSucursal) {

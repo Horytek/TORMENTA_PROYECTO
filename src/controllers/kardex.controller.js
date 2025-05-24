@@ -1,5 +1,8 @@
 import { getConnection } from "./../database/database";
 import ExcelJS from "exceljs";
+
+const { subDays, subWeeks, subMonths, subYears, format } = require("date-fns");
+
 const getProductos = async (req, res) => {
     const { descripcion = '', almacen = '', idProducto = '', marca = '', cat = '', subcat = '', stock = '' } = req.query;
     let connection;
@@ -55,7 +58,50 @@ const getProductos = async (req, res) => {
     }
 };
 
+const getProductosMenorStock = async (req, res) => {
+    const { sucursal = '' } = req.query;
+    let connection;
+    try {
+        connection = await getConnection();
 
+        // Construir condiciones dinámicas
+        let whereClauses = ['i.stock < 10'];
+        let params = [];
+
+        // Filtro por sucursal (opcional)
+        if (sucursal) {
+            whereClauses.push('sa.id_sucursal LIKE ?');
+            params.push(sucursal);
+        }
+
+        const where = `WHERE ${whereClauses.join(' AND ')}`;
+
+        const [result] = await connection.query(
+            `
+            SELECT 
+                p.id_producto AS codigo,
+                p.descripcion AS nombre,
+                m.nom_marca AS marca,
+                COALESCE(i.stock, 0) AS stock
+            FROM producto p
+            INNER JOIN marca m ON p.id_marca = m.id_marca
+            INNER JOIN inventario i ON p.id_producto = i.id_producto
+            LEFT JOIN sucursal_almacen sa ON i.id_almacen = sa.id_almacen
+            ${where}
+            ORDER BY i.stock ASC, p.descripcion ASC
+            `,
+            params
+        );
+
+        res.json({ code: 1, data: result });
+    } catch (error) {
+        res.status(500).send(error.message);
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
 
 const getMovimientosProducto = async (req, res) => {
     let connection;
@@ -669,5 +715,6 @@ export const methods = {
     getDetalleKardexAnteriores,
     getInfProducto,
     generateExcelReport,
-    generateExcelReportByDateRange
+    generateExcelReportByDateRange,
+    getProductosMenorStock
 };
