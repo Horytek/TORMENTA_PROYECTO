@@ -194,30 +194,39 @@ const getTotalVentas = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    let { tiempo, usuario: usuarioQuery, rol, sucursal } = req.query;
-    if (!tiempo) return res.status(400).json({ message: "Falta filtro de tiempo" });
-    if (!usuarioQuery) return res.status(400).json({ message: "Falta el campo usuario" });
+    let { tiempo, usuario: usuarioQuery, rol, sucursal, comparacion } = req.query;
 
-    // Si no se envía rol, se intenta obtenerlo de la BD
+    if (!tiempo || !usuarioQuery) {
+      return res.status(400).json({ message: "Falta filtro de tiempo o usuario" });
+    }
+
     if (!rol) {
       rol = await getUsuarioRol(usuarioQuery, connection);
     }
-    
-    let fechaInicio;
+
     const fechaFin = new Date();
+    let fechaInicio, fechaInicioAnterior, fechaFinAnterior;
 
     switch (tiempo) {
       case '24h':
         fechaInicio = subDays(fechaFin, 1);
+        fechaInicioAnterior = subDays(fechaInicio, 1);
+        fechaFinAnterior = subDays(fechaFin, 1);
         break;
       case 'semana':
         fechaInicio = subWeeks(fechaFin, 1);
+        fechaInicioAnterior = subWeeks(fechaInicio, 1);
+        fechaFinAnterior = subWeeks(fechaFin, 1);
         break;
       case 'mes':
         fechaInicio = subMonths(fechaFin, 1);
+        fechaInicioAnterior = subMonths(fechaInicio, 1);
+        fechaFinAnterior = subMonths(fechaFin, 1);
         break;
       case 'anio':
         fechaInicio = subYears(fechaFin, 1);
+        fechaInicioAnterior = subYears(fechaInicio, 1);
+        fechaFinAnterior = subYears(fechaFin, 1);
         break;
       default:
         return res.status(400).json({ message: "Filtro de tiempo no válido" });
@@ -225,37 +234,59 @@ const getTotalVentas = async (req, res) => {
 
     fechaInicio.setHours(0, 0, 0, 0);
     fechaFin.setHours(23, 59, 59, 999);
+    fechaInicioAnterior.setHours(0, 0, 0, 0);
+    fechaFinAnterior.setHours(23, 59, 59, 999);
+
     const fechaInicioISO = format(fechaInicio, 'yyyy-MM-dd HH:mm:ss');
     const fechaFinISO = format(fechaFin, 'yyyy-MM-dd HH:mm:ss');
+    const fechaInicioAnteriorISO = format(fechaInicioAnterior, 'yyyy-MM-dd HH:mm:ss');
+    const fechaFinAnteriorISO = format(fechaFinAnterior, 'yyyy-MM-dd HH:mm:ss');
 
-    let query;
-    let params;
-    // Si el rol es ADMIN (sin importar mayúsculas o minúsculas), se consulta sin filtro de sucursal
+    const queryBase = `
+      SELECT SUM(dv.total) AS total
+      FROM detalle_venta dv
+      JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
+    `;
+
+    const extraSucursal = " AND v.id_sucursal LIKE ?";
+    let actual, anterior;
+    const paramsActual = [fechaInicioISO, fechaFinISO];
+    const paramsAnterior = [fechaInicioAnteriorISO, fechaFinAnteriorISO];
+
     if (rol.toLowerCase() === "administrador") {
-      query = `
-        SELECT SUM(dv.total) AS total_dinero_ventas
-        FROM detalle_venta dv
-        JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
-      `;
-      params = [fechaInicioISO, fechaFinISO];
-      if(sucursal) {
-        query += " AND v.id_sucursal = ?";
-        params.push(sucursal);
+      if (sucursal) {
+        paramsActual.push(sucursal);
+        paramsAnterior.push(sucursal);
+        actual = await connection.query(queryBase + extraSucursal, paramsActual);
+        anterior = await connection.query(queryBase + extraSucursal, paramsAnterior);
+      } else {
+        actual = await connection.query(queryBase, paramsActual);
+        anterior = await connection.query(queryBase, paramsAnterior);
       }
     } else {
       const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
-      query = `
-        SELECT SUM(dv.total) AS total_dinero_ventas
-        FROM detalle_venta dv
-        JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_sucursal = ?
-      `;
-      params = [fechaInicioISO, fechaFinISO, id_sucursal];
+      paramsActual.push(id_sucursal);
+      paramsAnterior.push(id_sucursal);
+      actual = await connection.query(queryBase + extraSucursal, paramsActual);
+      anterior = await connection.query(queryBase + extraSucursal, paramsAnterior);
     }
-    const [result] = await connection.query(query, params);
-    const totalVentas = result[0].total_dinero_ventas || 0;
-    res.json({ code: 1, data: totalVentas, message: "Total de ventas obtenido correctamente" });
+
+    const valorActual = actual[0][0].total || 0;
+    const valorAnterior = anterior[0][0].total || 0;
+
+    const porcentajeCambio = valorAnterior > 0
+      ? ((valorActual - valorAnterior) / valorAnterior) * 100
+      : (valorActual > 0 ? 100 : 0);
+
+res.json({
+  code: 1,
+  data: valorActual,
+  anterior: valorAnterior,
+  cambio: porcentajeCambio, // <-- solo el número
+  message: "Total de ventas y cambio calculado"
+});
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   } finally {
@@ -270,67 +301,107 @@ const getTotalProductosVendidos = async (req, res) => {
     let { tiempo, usuario: usuarioQuery, rol, sucursal } = req.query;
     if (!tiempo) return res.status(400).json({ message: "Falta filtro de tiempo" });
     if (!usuarioQuery) return res.status(400).json({ message: "Falta el campo usuario" });
+
     if (!rol) {
       rol = await getUsuarioRol(usuarioQuery, connection);
     }
-    
-    let fechaInicio;
+
     const fechaFin = new Date();
+    let fechaInicio;
+    let fechaComparacionInicio;
+    let fechaComparacionFin;
+
+    // Establecer rangos de fechas para actual y comparación
     switch (tiempo) {
       case '24h':
         fechaInicio = subDays(fechaFin, 1);
+        fechaComparacionInicio = subDays(fechaInicio, 1);
+        fechaComparacionFin = new Date(fechaInicio);
         break;
       case 'semana':
         fechaInicio = subWeeks(fechaFin, 1);
+        fechaComparacionInicio = subWeeks(fechaInicio, 1);
+        fechaComparacionFin = new Date(fechaInicio);
         break;
       case 'mes':
         fechaInicio = subMonths(fechaFin, 1);
+        fechaComparacionInicio = subMonths(fechaInicio, 1);
+        fechaComparacionFin = new Date(fechaInicio);
         break;
       case 'anio':
         fechaInicio = subYears(fechaFin, 1);
+        fechaComparacionInicio = subYears(fechaInicio, 1);
+        fechaComparacionFin = new Date(fechaInicio);
         break;
       default:
         return res.status(400).json({ message: "Filtro de tiempo no válido" });
     }
+
     fechaInicio.setHours(0, 0, 0, 0);
     fechaFin.setHours(23, 59, 59, 999);
-    
+    fechaComparacionInicio.setHours(0, 0, 0, 0);
+    fechaComparacionFin.setHours(23, 59, 59, 999);
+
     const fechaInicioISO = format(fechaInicio, 'yyyy-MM-dd HH:mm:ss');
     const fechaFinISO = format(fechaFin, 'yyyy-MM-dd HH:mm:ss');
-    
-    let query;
-    let params;
-    if (rol.toLowerCase() === "administrador") {
-      query = `
-        SELECT SUM(dv.cantidad) AS total_productos_vendidos
-        FROM detalle_venta dv
-        JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
-      `;
-      params = [fechaInicioISO, fechaFinISO];
-      if(sucursal) {
-        query += " AND v.id_sucursal = ?";
-        params.push(sucursal);
+    const fechaComparacionInicioISO = format(fechaComparacionInicio, 'yyyy-MM-dd HH:mm:ss');
+    const fechaComparacionFinISO = format(fechaComparacionFin, 'yyyy-MM-dd HH:mm:ss');
+
+    let baseQuery = `
+      SELECT SUM(dv.cantidad) AS total_productos_vendidos
+      FROM detalle_venta dv
+      JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
+    `;
+
+    const isAdmin = rol.toLowerCase() === "administrador";
+    const id_sucursal = !isAdmin ? await getSucursalIdForUser(usuarioQuery, connection) : null;
+
+    // Construir consultas
+    const buildQuery = (inicio, fin) => {
+      let query = baseQuery;
+      const params = [inicio, fin];
+      if (isAdmin) {
+        if (sucursal) {
+          query += " AND v.id_sucursal = ?";
+          params.push(sucursal);
+        }
+      } else {
+        query += " AND v.id_sucursal LIKE ?";
+        params.push(id_sucursal);
       }
+      return { query, params };
+    };
+
+    const { query: actualQuery, params: actualParams } = buildQuery(fechaInicioISO, fechaFinISO);
+    const { query: anteriorQuery, params: anteriorParams } = buildQuery(fechaComparacionInicioISO, fechaComparacionFinISO);
+
+    const [[actualResult]] = await connection.query(actualQuery, actualParams);
+    const [[anteriorResult]] = await connection.query(anteriorQuery, anteriorParams);
+
+    const actual = actualResult.total_productos_vendidos || 0;
+    const anterior = anteriorResult.total_productos_vendidos || 0;
+
+    let porcentajeCambio = null;
+    if (anterior === 0) {
+      porcentajeCambio = actual === 0 ? 0 : 100;
     } else {
-      const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
-      query = `
-        SELECT SUM(dv.cantidad) AS total_productos_vendidos
-        FROM detalle_venta dv
-        JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_sucursal = ?
-      `;
-      params = [fechaInicioISO, fechaFinISO, id_sucursal];
+      porcentajeCambio = ((actual - anterior) / anterior) * 100;
     }
-    const [result] = await connection.query(query, params);
-    const totalProductosVendidos = result[0].total_productos_vendidos || 0;
-    res.json({ code: 1, totalProductosVendidos, message: "Total de productos vendidos obtenido correctamente" });
+
+    res.json({
+      code: 1,
+      totalProductosVendidos: actual,
+      cambio: porcentajeCambio.toFixed(2), // string con 2 decimales
+      message: "Total de productos vendidos obtenido correctamente",
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   } finally {
     if (connection) connection.release();
   }
 };
+
 
 const getComparacionVentasPorRango = async (req, res) => {
   let connection;

@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardBody, Avatar, Button, Divider, Chip, Tooltip, ScrollShadow } from "@heroui/react";
-import { ArrowUp, ShoppingBag, LayoutGrid, Package, Users, TrendingUp, AlertTriangle } from "lucide-react";
+import { ArrowUp,ArrowDown, ShoppingBag, LayoutGrid, Package, Users, TrendingUp, AlertTriangle } from "lucide-react";
 import { RiShoppingBag4Line } from "@remixicon/react";
 import { LuShirt } from "react-icons/lu";
 import { MdDeleteForever } from "react-icons/md";
@@ -86,6 +86,22 @@ function StockCard({ productos }) {
     </Card>
   );
 }
+
+function getPeriodoLabel(tabKey) {
+  switch (tabKey) {
+    case "24h":
+      return "desde ayer";
+    case "semana":
+      return "vs. semana anterior";
+    case "mes":
+      return "vs. mes anterior";
+    case "anio":
+      return "vs. año anterior";
+    default:
+      return "";
+  }
+}
+
 
 // Card para desempeño de sucursales
 function PerformanceCard({ sucursales, promedioGeneral }) {
@@ -194,22 +210,11 @@ function useProductosMenorStock(selectedSucursal) {
   return { productos, loading };
 }
 
-/*function useDesempenoSucursales(selectedTab, selectedSucursal) {
-  // Simulación de datos:
-  const sucursales = [
-    { nombre: "Sucursal Arica", ventas: 12000, promedio: 8000 },
-    { nombre: "Sucursal Balta", ventas: 9000, promedio: 8000 },
-    { nombre: "Sucursal Piura", ventas: 7000, promedio: 8000 },
-  ];
-  const filtradas = selectedSucursal
-    ? sucursales.filter(s => s.nombre.includes(selectedSucursal))
-    : sucursales;
-  const promedioGeneral =
-    sucursales.reduce((acc, s) => acc + s.ventas, 0) / sucursales.length;
-  return { sucursales: filtradas, promedioGeneral };
-}*/
+function MetricCard({ icon, title, value, change, gradient, iconColor, borderColor, periodoLabel }) {
+  const isPositive = typeof change === "string"
+    ? change.replace("%", "").replace("+", "").trim() !== "" && !change.startsWith("-")
+    : change >= 0;
 
-function MetricCard({ icon, title, value, change, gradient, iconColor, borderColor }) {
   return (
     <Card
       className={`overflow-hidden border ${borderColor} bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm`}
@@ -219,9 +224,14 @@ function MetricCard({ icon, title, value, change, gradient, iconColor, borderCol
         <div className="relative">
           <div className="flex items-center justify-between mb-4">
             <div className={`p-3 rounded-xl ${iconColor} shadow-lg`}>{icon}</div>
-            <div className="flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-white/80 dark:bg-zinc-800/80 px-2 py-1 rounded-full backdrop-blur-sm">
-              <ArrowUp className="h-3 w-3 mr-1" />
-              {change} <span className="text-zinc-500 dark:text-zinc-400 ml-1">desde ayer</span>
+            <div className={`flex items-center text-xs font-medium ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} bg-white/80 dark:bg-zinc-800/80 px-2 py-1 rounded-full backdrop-blur-sm`}>
+              {isPositive ? (
+                <ArrowUp className="h-3 w-3 mr-1" />
+              ) : (
+                <ArrowDown className="h-3 w-3 mr-1" />
+              )}
+              {change}
+              <span className="text-zinc-500 dark:text-zinc-400 ml-1">{periodoLabel}</span>
             </div>
           </div>
           <div className="space-y-1">
@@ -278,8 +288,9 @@ function Inicio() {
   }, []);
 
   const { productTop } = useProductTop(selectedTab, selectedSucursal);
-  const { totalProductsSold } = useProductSell(selectedTab, selectedSucursal);
-  const { ventasTotal } = useVentasTotal(selectedTab, selectedSucursal);
+  const periodoLabel = getPeriodoLabel(selectedTab);
+  const { totalProductsSold, percentageChange: percentageChangeProducts } = useProductSell(selectedTab, selectedSucursal);
+  const { ventasTotal, percentageChange: percentageChangeVentas } = useVentasTotal(selectedTab, selectedSucursal);
 
   // Simulación de datos para ejemplo visual
   const totalOrders = 300;
@@ -351,12 +362,13 @@ function Inicio() {
             <Tab key="anio" title="Ult. año" />
           </Tabs>
           <div className="mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <MetricCard
                 icon={<ShoppingBag className="h-6 w-6" />}
                 title="Total Ventas"
                 value={`S/. ${ventasTotal}`}
-                change="+8%"
+                change={`${percentageChangeVentas > 0 ? "+" : ""}${percentageChangeVentas.toFixed(1)}%`}
+                periodoLabel={periodoLabel}
                 gradient="from-rose-500/20 via-pink-500/10 to-transparent"
                 iconColor="bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"
                 borderColor="border-rose-200/50 dark:border-rose-800/50"
@@ -364,8 +376,9 @@ function Inicio() {
               <MetricCard
                 icon={<LayoutGrid className="h-6 w-6" />}
                 title="Total Órdenes"
-                value={totalOrders}
+                value={300}
                 change="+5%"
+                periodoLabel={periodoLabel}
                 gradient="from-amber-500/20 via-yellow-500/10 to-transparent"
                 iconColor="bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400"
                 borderColor="border-amber-200/50 dark:border-amber-800/50"
@@ -374,7 +387,8 @@ function Inicio() {
                 icon={<Package className="h-6 w-6" />}
                 title="Productos Vendidos"
                 value={totalProductsSold}
-                change="+1.2%"
+                change={`${percentageChangeProducts > 0 ? "+" : ""}${percentageChangeProducts.toFixed(1)}%`}
+                periodoLabel={periodoLabel}
                 gradient="from-emerald-500/20 via-green-500/10 to-transparent"
                 iconColor="bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
                 borderColor="border-emerald-200/50 dark:border-emerald-800/50"
@@ -382,8 +396,9 @@ function Inicio() {
               <MetricCard
                 icon={<Users className="h-6 w-6" />}
                 title="Nuevos Clientes"
-                value={newCustomers}
+                value={8}
                 change="+0.5%"
+                periodoLabel={periodoLabel}
                 gradient="from-violet-500/20 via-purple-500/10 to-transparent"
                 iconColor="bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400"
                 borderColor="border-violet-200/50 dark:border-violet-800/50"
