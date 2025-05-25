@@ -9,6 +9,6 @@ router.get("/product_sell", dashboardController.getTotalProductosVendidos);
 router.get("/ventas_total", dashboardController.getTotalVentas);
 router.get("/comparacion_ventas", dashboardController.getComparacionVentasPorRango);
 router.get("/usuarioRol", dashboardController.getUserRolController);
-
+router.get("/ventas_por_sucursal", dashboardController.getVentasPorSucursalPeriodo);
 
 export default router;

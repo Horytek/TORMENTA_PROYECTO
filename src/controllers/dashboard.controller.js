@@ -406,6 +406,82 @@ const getComparacionVentasPorRango = async (req, res) => {
   }
 };
 
+const getVentasPorSucursalPeriodo = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const { tiempo = "24h", sucursal } = req.query;
+
+    // Calcular fechas según filtro de tiempo
+    const fechaFin = new Date();
+    let fechaInicio;
+    switch (tiempo) {
+      case "24h":
+        fechaInicio = subDays(fechaFin, 1);
+        break;
+      case "semana":
+        fechaInicio = subWeeks(fechaFin, 1);
+        break;
+      case "mes":
+        fechaInicio = subMonths(fechaFin, 1);
+        break;
+      case "anio":
+        fechaInicio = subYears(fechaFin, 1);
+        break;
+      default:
+        return res.status(400).json({ code: 0, message: "Filtro de tiempo no válido" });
+    }
+    fechaInicio.setHours(0, 0, 0, 0);
+    fechaFin.setHours(23, 59, 59, 999);
+
+    const f = (d) => format(d, "yyyy-MM-dd HH:mm:ss");
+
+    // Filtro por sucursal (opcional)
+    let where = `WHERE v.estado_venta != 0 AND v.f_venta BETWEEN ? AND ?`;
+    let params = [f(fechaInicio), f(fechaFin)];
+    if (sucursal) {
+      where += " AND v.id_sucursal = ?";
+      params.push(sucursal);
+    }
+
+    // Ventas por sucursal
+    const [result] = await connection.query(
+      `
+      SELECT 
+        s.id_sucursal,
+        s.nombre_sucursal AS nombre,
+        SUM(dv.total) AS ventas
+      FROM sucursal s
+      JOIN venta v ON s.id_sucursal = v.id_sucursal
+      JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+      ${where}
+      GROUP BY s.id_sucursal, s.nombre_sucursal
+      ORDER BY ventas DESC
+      `
+      , params
+    );
+
+    // Promedio general de ventas entre sucursales
+    const promedioGeneral =
+      result.length > 0
+        ? result.reduce((acc, s) => acc + Number(s.ventas), 0) / result.length
+        : 0;
+
+    res.json({
+      code: 1,
+      data: {
+        sucursales: result,
+        promedioGeneral,
+      },
+      message: "Ventas por sucursal obtenidas correctamente"
+    });
+  } catch (error) {
+    res.status(500).json({ code: 0, message: error.message });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 
 export const methods = {
   getProductoMasVendido,
@@ -415,4 +491,5 @@ export const methods = {
   getComparacionVentasPorRango,
   getUsuarioRol,
   getUserRolController,
+  getVentasPorSucursalPeriodo,
 };

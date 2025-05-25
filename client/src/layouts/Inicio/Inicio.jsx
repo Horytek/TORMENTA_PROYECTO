@@ -8,6 +8,7 @@ import { Tabs, Tab, Select, SelectItem } from "@heroui/react";
 import useProductTop from "./hooks/product_top";
 import useProductSell from "./hooks/product_sell";
 import useVentasTotal from "./hooks/ventas_total";
+import useDesempenoSucursales from "./hooks/desempeno_sucursal";
 import getProductosMenorStock from "./hooks/product_stock";
 import { useState, useEffect } from "react";
 import axios from "@/api/axios";
@@ -113,7 +114,7 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
       </CardHeader>
       <CardBody className="py-3 px-4 flex-1 flex flex-col">
         <span className="text-[11px] text-blue-600 mb-2 font-medium">
-          * Se actualiza en tiempo real (solo filtra por sucursal)
+          * Se actualiza en tiempo real (solo filtra por sucursal y tiempo)
         </span>
         <ScrollShadow hideScrollBar className="flex-1 min-h-[120px] max-h-[220px]">
           {sucursales.length > 0 ? (
@@ -193,7 +194,7 @@ function useProductosMenorStock(selectedSucursal) {
   return { productos, loading };
 }
 
-function useDesempenoSucursales(selectedTab, selectedSucursal) {
+/*function useDesempenoSucursales(selectedTab, selectedSucursal) {
   // Simulación de datos:
   const sucursales = [
     { nombre: "Sucursal Arica", ventas: 12000, promedio: 8000 },
@@ -206,7 +207,7 @@ function useDesempenoSucursales(selectedTab, selectedSucursal) {
   const promedioGeneral =
     sucursales.reduce((acc, s) => acc + s.ventas, 0) / sucursales.length;
   return { sucursales: filtradas, promedioGeneral };
-}
+}*/
 
 function MetricCard({ icon, title, value, change, gradient, iconColor, borderColor }) {
   return (
