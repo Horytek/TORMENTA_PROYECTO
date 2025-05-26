@@ -30,11 +30,12 @@ const getSucursalInicio = async (req, res) => {
 
       // Consulta SQL para obtener solo el nombre de las sucursales
       const query = `
-          SELECT 
+                SELECT 
               s.id_sucursal AS id,
-              s.nombre_sucursal AS nombre
+              s.nombre_sucursal AS nombre,
+              sa.id_almacen AS almace_n
           FROM sucursal s
-          INNER JOIN sucursal_almacen sa ON sa.id_sucursal=s.id_sucursal 
+          INNER JOIN sucursal_almacen sa ON sa.id_sucursal=s.id_sucursal
           WHERE s.nombre_sucursal LIKE ? AND s.estado_sucursal != 0
       `;
 
@@ -243,7 +244,7 @@ const getTotalVentas = async (req, res) => {
     const fechaFinAnteriorISO = format(fechaFinAnterior, 'yyyy-MM-dd HH:mm:ss');
 
     const queryBase = `
-      SELECT SUM(dv.total) AS total
+      SELECT SUM(dv.total) AS total, COUNT(v.id_venta) AS totalClientes
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
       WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
@@ -274,6 +275,7 @@ const getTotalVentas = async (req, res) => {
 
     const valorActual = actual[0][0].total || 0;
     const valorAnterior = anterior[0][0].total || 0;
+    const totalClientesActual = actual[0][0].totalClientes || 0;
 
     const porcentajeCambio = valorAnterior > 0
       ? ((valorActual - valorAnterior) / valorAnterior) * 100
@@ -284,6 +286,7 @@ res.json({
   data: valorActual,
   anterior: valorAnterior,
   cambio: porcentajeCambio, // <-- solo el número
+  totalRegistros: totalClientesActual,
   message: "Total de ventas y cambio calculado"
 });
 
@@ -553,6 +556,82 @@ const getVentasPorSucursalPeriodo = async (req, res) => {
   }
 };
 
+export const getNotasPendientes = async (req, res) => {
+  const { id_sucursal } = req.query;
+  let connection;
+  try {
+    connection = await getConnection();
+
+    let almacenIds = [];
+    if (id_sucursal) {
+      // 1. Obtener almacenes asociados a la sucursal
+      const [almacenes] = await connection.query(
+        `SELECT a.id_almacen
+         FROM almacen a
+         INNER JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
+         WHERE sa.id_sucursal = ?`,
+        [id_sucursal]
+      );
+      almacenIds = almacenes.map(a => a.id_almacen);
+      if (almacenIds.length === 0) {
+        return res.json({ code: 1, data: [], message: "No hay almacenes para la sucursal" });
+      }
+    } else {
+      // Si no hay sucursal, obtener todos los almacenes activos
+      const [almacenes] = await connection.query(
+        `SELECT id_almacen FROM almacen WHERE estado_almacen = 1`
+      );
+      almacenIds = almacenes.map(a => a.id_almacen);
+      if (almacenIds.length === 0) {
+        return res.json({ code: 1, data: [], message: "No hay almacenes registrados" });
+      }
+    }
+
+    // 2. Obtener notas de ingreso y salida de esos almacenes
+    const [ingresos] = await connection.query(
+      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto
+       FROM nota n
+       INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+       WHERE n.id_tiponota = 1 AND n.id_almacenD IN (?) AND n.estado_nota = 0`,
+      [almacenIds]
+    );
+    const [salidas] = await connection.query(
+      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto
+       FROM nota n
+       INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+       WHERE n.id_tiponota = 2 AND n.id_almacenO IN (?) AND n.estado_nota = 0`,
+      [almacenIds]
+    );
+
+    // 3. Buscar ingresos sin salida y salidas sin ingreso (por documento y almacenes)
+    const pendientesIngreso = ingresos.filter(ing =>
+      !salidas.some(sal =>
+        sal.id_almacenO === ing.id_almacenO &&
+        sal.id_almacenD === ing.id_almacenD &&
+        sal.documento === ing.documento
+      )
+    );
+    const pendientesSalida = salidas.filter(sal =>
+      !ingresos.some(ing =>
+        ing.id_almacenO === sal.id_almacenO &&
+        ing.id_almacenD === sal.id_almacenD &&
+        ing.documento === sal.documento
+      )
+    );
+
+    // 4. Unir ambos resultados
+    const pendientes = [
+      ...pendientesIngreso.map(n => ({ ...n, tipo: "Falta salida" })),
+      ...pendientesSalida.map(n => ({ ...n, tipo: "Falta ingreso" })),
+    ];
+
+    res.json({ code: 1, data: pendientes, message: "Notas pendientes obtenidas correctamente" });
+  } catch (error) {
+    res.status(500).json({ code: 0, message: error.message });
+  } finally {
+    if (connection) connection.release();
+  }
+};
 
 export const methods = {
   getProductoMasVendido,
@@ -563,4 +642,5 @@ export const methods = {
   getUsuarioRol,
   getUserRolController,
   getVentasPorSucursalPeriodo,
+  getNotasPendientes
 };

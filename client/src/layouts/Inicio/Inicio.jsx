@@ -1,11 +1,10 @@
-import { Card, CardHeader, CardBody, Avatar, Button, Divider, Chip, Tooltip, ScrollShadow } from "@heroui/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, Card, CardHeader, CardBody, Avatar, Button, Divider, Chip, Tooltip, ScrollShadow } from "@heroui/react";
 import { ArrowUp,ArrowDown, ShoppingBag, LayoutGrid, Package, Users, TrendingUp, AlertTriangle } from "lucide-react";
 import { RiShoppingBag4Line } from "@remixicon/react";
 import { LuShirt } from "react-icons/lu";
 import { MdDeleteForever } from "react-icons/md";
 import { TiStarburstOutline } from "react-icons/ti";
 import { Tabs, Tab, Select, SelectItem } from "@heroui/react";
-import useProductTop from "./hooks/product_top";
 import useProductSell from "./hooks/product_sell";
 import useVentasTotal from "./hooks/ventas_total";
 import useDesempenoSucursales from "./hooks/desempeno_sucursal";
@@ -13,6 +12,8 @@ import getProductosMenorStock from "./hooks/product_stock";
 import { useState, useEffect } from "react";
 import axios from "@/api/axios";
 import { LineChartComponent } from "./LineChart";
+import useNotasPendientes from "./hooks/notas_pendientes";
+
 
 // Card para productos con menor stock
 function StockCard({ productos }) {
@@ -181,6 +182,91 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
   );
 }
 
+function NotasPendientesModal({ open, onClose, notas }) {
+  // Separar las notas por tipo
+  const notasFaltaSalida = notas.filter(n => n.tipo === "Falta salida");
+  const notasFaltaIngreso = notas.filter(n => n.tipo === "Falta ingreso");
+
+  return (
+    <Modal isOpen={open} onClose={onClose} size="md">
+      <ModalContent>
+        <ModalHeader className="flex items-center gap-2">
+          <AlertTriangle className="text-rose-500" />
+          Notas pendientes
+        </ModalHeader>
+        <ModalBody>
+          <Tabs aria-label="Notas pendientes" variant="underlined" className="mb-2">
+            <Tab key="falta-salida" title="Falta Nota de Salida">
+              {notasFaltaSalida.length === 0 ? (
+                <div className="p-6 text-center text-zinc-500">
+                  No hay notas de ingreso pendientes de salida.
+                </div>
+              ) : (
+                <ScrollShadow hideScrollBar className="max-h-[320px]">
+                  <ul className="divide-y divide-rose-50 dark:divide-rose-900">
+                    {notasFaltaSalida.map((nota) => (
+                      <li key={nota.id_nota} className="py-3 flex items-center gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                              {nota.documento || "Sin documento"}
+                            </span>
+                            <span className="text-xs text-zinc-400">{nota.fecha}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-zinc-500">
+                              Origen: <b>{nota.id_almacenO}</b> &rarr; Destino: <b>{nota.id_almacenD}</b>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-zinc-400">{nota.concepto}</span>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollShadow>
+              )}
+            </Tab>
+            <Tab key="falta-ingreso" title="Falta Nota de Ingreso">
+              {notasFaltaIngreso.length === 0 ? (
+                <div className="p-6 text-center text-zinc-500">
+                  No hay notas de salida pendientes de ingreso.
+                </div>
+              ) : (
+                <ScrollShadow hideScrollBar className="max-h-[320px]">
+                  <ul className="divide-y divide-rose-50 dark:divide-rose-900">
+                    {notasFaltaIngreso.map((nota) => (
+                      <li key={nota.id_nota} className="py-3 flex items-center gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                              {nota.documento || "Sin documento"}
+                            </span>
+                            <span className="text-xs text-zinc-400">{nota.fecha}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-zinc-500">
+                              Origen: <b>{nota.id_almacenO}</b> &rarr; Destino: <b>{nota.id_almacenD}</b>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-zinc-400">{nota.concepto}</span>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollShadow>
+              )}
+            </Tab>
+          </Tabs>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
+}
+
 function useProductosMenorStock(selectedSucursal) {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -215,6 +301,8 @@ function MetricCard({ icon, title, value, change, gradient, iconColor, borderCol
     ? change.replace("%", "").replace("+", "").trim() !== "" && !change.startsWith("-")
     : change >= 0;
 
+  const esNotasPendientes = title === "Notas Pendientes";
+
   return (
     <Card
       className={`overflow-hidden border ${borderColor} bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm`}
@@ -224,15 +312,22 @@ function MetricCard({ icon, title, value, change, gradient, iconColor, borderCol
         <div className="relative">
           <div className="flex items-center justify-between mb-4">
             <div className={`p-3 rounded-xl ${iconColor} shadow-lg`}>{icon}</div>
-            <div className={`flex items-center text-xs font-medium ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} bg-white/80 dark:bg-zinc-800/80 px-2 py-1 rounded-full backdrop-blur-sm`}>
-              {isPositive ? (
-                <ArrowUp className="h-3 w-3 mr-1" />
-              ) : (
-                <ArrowDown className="h-3 w-3 mr-1" />
-              )}
-              {change}
-              <span className="text-zinc-500 dark:text-zinc-400 ml-1">{periodoLabel}</span>
-            </div>
+            {!esNotasPendientes && (
+              <div className={`flex items-center text-xs font-medium ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} bg-white/80 dark:bg-zinc-800/80 px-2 py-1 rounded-full backdrop-blur-sm`}>
+                {isPositive ? (
+                  <ArrowUp className="h-3 w-3 mr-1" />
+                ) : (
+                  <ArrowDown className="h-3 w-3 mr-1" />
+                )}
+                {change}
+                <span className="text-zinc-500 dark:text-zinc-400 ml-1">{periodoLabel}</span>
+              </div>
+            )}
+            {esNotasPendientes && change && (
+              <div className={`flex items-center text-xs font-medium ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} bg-white/80 dark:bg-zinc-800/80 px-2 py-1 rounded-full backdrop-blur-sm`}>
+                {change}
+              </div>
+            )}
           </div>
           <div className="space-y-1">
             <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{value}</p>
@@ -250,6 +345,7 @@ function Inicio() {
   const [selectedSucursal, setSelectedSucursal] = useState("");
   const [sucursales, setSucursales] = useState([]);
   const [userRol, setUserRol] = useState(null);
+  const [modalNotasOpen, setModalNotasOpen] = useState(false);
 
   const { productos: productosMenorStock } = useProductosMenorStock(selectedSucursal, selectedTab);
   const { sucursales: sucursalesDesempeno, promedioGeneral } = useDesempenoSucursales(selectedTab, selectedSucursal);
@@ -287,15 +383,54 @@ function Inicio() {
     fetchSucursales();
   }, []);
 
-  const { productTop } = useProductTop(selectedTab, selectedSucursal);
   const periodoLabel = getPeriodoLabel(selectedTab);
   const { totalProductsSold, percentageChange: percentageChangeProducts } = useProductSell(selectedTab, selectedSucursal);
-  const { ventasTotal, percentageChange: percentageChangeVentas } = useVentasTotal(selectedTab, selectedSucursal);
+  const { ventasTotal, ventasAnterior, percentageChange, totalRegistros } = useVentasTotal(selectedTab, selectedSucursal);
+  const cambioNuevosClientes = ventasAnterior > 0
+    ? ((totalRegistros - ventasAnterior) / ventasAnterior) * 100
+    : (totalRegistros > 0 ? 100 : 0);
 
   // Simulación de datos para ejemplo visual
   const totalOrders = 300;
   const newCustomers = 8;
 
+
+
+  const today = new Date();
+  let fechaInicio = `${today.getFullYear()}-01-01`;
+  let fechaFin = today.toISOString().slice(0, 10);
+  if (selectedTab === "24h") {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    fechaInicio = d.toISOString().slice(0, 10);
+  } else if (selectedTab === "semana") {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    fechaInicio = d.toISOString().slice(0, 10);
+  } else if (selectedTab === "mes") {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    fechaInicio = d.toISOString().slice(0, 10);
+  } else if (selectedTab === "anio") {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 1);
+    fechaInicio = d.toISOString().slice(0, 10);
+  }
+
+// Busca el id de almacén correspondiente a la sucursal seleccionada
+const almacenId = sucursales.find(s => s.id.toString() === selectedSucursal)?.almacen_n || "%";
+
+const { cantidadPendientes, totalNotas, notasPendientes, loading: loadingPendientes } = useNotasPendientes({
+  almacen: almacenId,
+});
+
+// Calcula el porcentaje de notas pendientes respecto al total de ingresos
+const porcentajePendientes =
+  totalNotas && totalNotas > 0
+    ? (cantidadPendientes / totalNotas) * 100
+    : 0;
+
+  
   return (
     <div className="relative items-center justify-between bg-white">
       <header className="flex items-center justify-between">
@@ -367,21 +502,21 @@ function Inicio() {
                 icon={<ShoppingBag className="h-6 w-6" />}
                 title="Total Ventas"
                 value={`S/. ${ventasTotal}`}
-                change={`${percentageChangeVentas > 0 ? "+" : ""}${percentageChangeVentas.toFixed(1)}%`}
+                change={`${percentageChange > 0 ? "+" : ""}${percentageChange.toFixed(1)}%`}
                 periodoLabel={periodoLabel}
                 gradient="from-rose-500/20 via-pink-500/10 to-transparent"
                 iconColor="bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"
                 borderColor="border-rose-200/50 dark:border-rose-800/50"
               />
               <MetricCard
-                icon={<LayoutGrid className="h-6 w-6" />}
-                title="Total Órdenes"
-                value={300}
-                change="+5%"
+                icon={<Users className="h-6 w-6" />}
+                title="Nuevos Clientes"
+                value={totalRegistros}
+                change={`${cambioNuevosClientes > 0 ? "+" : ""}${cambioNuevosClientes.toFixed(1)}%`}
                 periodoLabel={periodoLabel}
-                gradient="from-amber-500/20 via-yellow-500/10 to-transparent"
-                iconColor="bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400"
-                borderColor="border-amber-200/50 dark:border-amber-800/50"
+                gradient="from-violet-500/20 via-purple-500/10 to-transparent"
+                iconColor="bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400"
+                borderColor="border-violet-200/50 dark:border-violet-800/50"
               />
               <MetricCard
                 icon={<Package className="h-6 w-6" />}
@@ -394,15 +529,46 @@ function Inicio() {
                 borderColor="border-emerald-200/50 dark:border-emerald-800/50"
               />
               <MetricCard
-                icon={<Users className="h-6 w-6" />}
-                title="Nuevos Clientes"
-                value={8}
-                change="+0.5%"
-                periodoLabel={periodoLabel}
-                gradient="from-violet-500/20 via-purple-500/10 to-transparent"
-                iconColor="bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400"
-                borderColor="border-violet-200/50 dark:border-violet-800/50"
-              />
+                    icon={
+                    <Tooltip content={cantidadPendientes === 0 ? "No hay notas pendientes" : "Ver notas pendientes"}>
+                      <span
+                        className="cursor-pointer"
+                        onClick={() => {
+                          if (cantidadPendientes > 0) setModalNotasOpen(true);
+                        }}
+                      >
+                        <LayoutGrid className="h-6 w-6" />
+                      </span>
+                    </Tooltip>
+                    }
+                    title="Notas Pendientes"
+                    value={cantidadPendientes === 0 ? "Sin pendientes" : cantidadPendientes}
+                    change={
+                      cantidadPendientes === 0
+                        ? ""
+                        : `${porcentajePendientes.toFixed(1)}% pendientes`
+                    }
+                    gradient={
+                      cantidadPendientes === 0
+                        ? "from-emerald-400/20 via-green-400/10 to-transparent"
+                        : "from-rose-500/20 via-pink-500/10 to-transparent"
+                    }
+                    iconColor={
+                      cantidadPendientes === 0
+                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+                        : "bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"
+                    }
+                    borderColor={
+                      cantidadPendientes === 0
+                        ? "border-emerald-200/50 dark:border-emerald-800/50"
+                        : "border-rose-200/50 dark:border-rose-800/50"
+                    }
+                  />
+                  <NotasPendientesModal
+                    open={modalNotasOpen}
+                    onClose={() => setModalNotasOpen(false)}
+                    notas={notasPendientes}
+                  />
             </div>
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <StockCard productos={productosMenorStock} />

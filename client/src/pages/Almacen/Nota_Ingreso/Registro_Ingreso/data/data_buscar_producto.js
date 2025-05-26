@@ -7,7 +7,7 @@ const useProductosData = async (filters) => {
       params: filters,
     });
 
-    console.log('Respuesta del servidor:', response);
+    //console.log('Respuesta del servidor:', response);
 
     if (response.data.code === 1) {
       return { productos: response.data.data };

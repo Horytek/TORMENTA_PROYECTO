@@ -39,6 +39,19 @@ function Registro_Ingresos() {
   const [selectedRuc, setSelectedRuc] = useState('');
   const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
+  const [almacenDestino, setAlmacenDestino] = useState('');
+  const [destinatario, setDestinatario] = useState('');
+  const [glosa, setGlosa] = useState('');
+  const [nota, setNota] = useState('');
+  const currentDate = new Date();
+  const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
+  const { documentos } = useDocumentoData();
+  const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
+  const [fecha, setFecha] = useState(formattedDate);
+  const [numComprobante, setNumComprobante] = useState(currentDocumento);
+  const [observacion, setObservacion] = useState('');
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
     const saved = localStorage.getItem('productosSeleccionados');
     return saved ? JSON.parse(saved) : [];
@@ -46,7 +59,6 @@ function Registro_Ingresos() {
 
   const { almacenes } = useAlmacenData();
   const { destinatarios } = useDestinatarioData();
-  const { documentos } = useDocumentoData();
 
   const [almacenOrigen, setAlmacenOrigen] = useState('');
 
@@ -101,56 +113,52 @@ function Registro_Ingresos() {
     setSelectedRuc(selected?.documento || '');
   };
 
-  const handleGuardarAction = async () => {
-    try {
-      const almacenO = document.getElementById('almacen_origen').value || "";
-      const almacenD = document.getElementById('almacen_destino').value ;
-      const destinatario = document.getElementById('destinatario').value;
-      const glosa = document.getElementById('glosa').value;
-      const fecha = document.getElementById('fechaDocu').value;
-      const nota = document.getElementById('nomnota').value;
-      const numComprobante = document.getElementById('numero').value;
-      const observacion = document.getElementById('observacion').value;
-      const usuario = localStorage.getItem('usuario');
-  
-      if (!usuario) {
-        toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
-        return;
-      }
-  
-      const productos = productosSeleccionados.map(producto => ({
-        id: producto.codigo,
-        cantidad: producto.cantidad
-      }));
-  
-      const data = {
-        almacenO,
-        almacenD,
-        destinatario,
-        glosa,
-        nota,
-        fecha,
-        producto: productos.map(p => p.id),
-        numComprobante,
-        cantidad: productos.map(p => p.cantidad),
-        observacion,
-        usuario
-      };
-  
-      const result = await insertNotaAndDetalle(data);
-  
-      if (result.success) {
-        toast.success('Nota y detalle insertados correctamente.');
-        handleCancel();
-        window.location.reload();
-      } else {
-        throw new Error('Error inesperado en la inserción de la nota.');
-      }
-    } catch (error) {
-      console.error('Error en handleGuardarAction:', error);
-      toast.error(`Error inesperado: ${error.message}`);
+const handleGuardarAction = async () => {
+  try {
+    const usuario = localStorage.getItem('usuario');
+    if (!usuario) {
+      toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
+      return;
     }
-  };
+
+    // Usa los estados controlados en vez de document.getElementById
+    const almacenO = almacenOrigen;
+    const almacenD = almacenDestino;
+    // destinatario, glosa, nota, fecha, numComprobante, observacion ya están en estado
+
+    const productos = productosSeleccionados.map(producto => ({
+      id: producto.codigo,
+      cantidad: producto.cantidad
+    }));
+
+    const data = {
+      almacenO,
+      almacenD,
+      destinatario,
+      glosa,
+      nota,
+      fecha,
+      producto: productos.map(p => p.id),
+      numComprobante: currentDocumento,
+      cantidad: productos.map(p => p.cantidad),
+      observacion,
+      usuario
+    };
+
+    const result = await insertNotaAndDetalle(data);
+
+    if (result.success) {
+      toast.success('Nota y detalle insertados correctamente.');
+      handleCancel();
+      window.location.reload();
+    } else {
+      throw new Error('Error inesperado en la inserción de la nota.');
+    }
+  } catch (error) {
+    console.error('Error en handleGuardarAction:', error);
+    toast.error(`Error inesperado: ${error.message}`);
+  }
+};
 
   const openModalProovedor = () => setIsModalOpenProovedor(true);
   const closeModalProovedor = () => setIsModalOpenProovedor(false);
@@ -202,14 +210,14 @@ function Registro_Ingresos() {
   };
 
   const handleGuardar = async () => {
-    const almacenD = document.getElementById('almacen_destino').value;
-    const destinatario = document.getElementById('destinatario').value;
-    const glosa = document.getElementById('glosa').value;
-    const fecha = document.getElementById('fechaDocu').value;
-    const nota = document.getElementById('nomnota').value;
-    const numComprobante = document.getElementById('numero').value;
-
-    if (!almacenD || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
+    if (
+      !almacenDestino ||
+      !destinatario ||
+      !glosa ||
+      !fecha ||
+      !nota ||
+      !currentDocumento
+    ) {
       toast.error('Por favor complete todos los campos.');
       return;
     }
@@ -233,22 +241,9 @@ function Registro_Ingresos() {
 
     openModalOpenGuardar();
   };
-
-  const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
-  const currentDate = new Date();
-  const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
   
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        paths={[
-          { name: 'Inicio', href: '/inicio' },
-          { name: 'Almacén', href: '/almacen' },
-          { name: 'Nota de ingreso', href: '/almacen/nota_ingreso' },
-          { name: 'Nueva nota de ingreso', href: '/almacen/nota_ingreso/registro_ingreso' },
-        ]}
-      />
-      <hr className="mb-4" />
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Nota de ingreso</h1>
       </div>
@@ -275,6 +270,8 @@ function Registro_Ingresos() {
                 label="Almacén destino"
                 placeholder="Seleccionar"
                 id="almacen_destino"
+                value={almacenDestino}
+                onChange={e => setAlmacenDestino(e.target.value)}
               >
                 {almacenesFiltrados.map((almacen) => (
                   <SelectItem key={almacen.id} value={almacen.id}>
@@ -284,21 +281,31 @@ function Registro_Ingresos() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
-      <Select
-        label="Proveedor"
-        placeholder="Seleccionar"
-        onChange={handleProveedorChange}
-      >
-        {destinatarios.map((destinatario) => (
-          <SelectItem key={destinatario.id} value={destinatario.id}>
-            {destinatario.destinatario}
-          </SelectItem>
-        ))}
-      </Select>
+            <Select
+              label="Proveedor"
+              placeholder="Seleccionar"
+              id="destinatario"
+              value={destinatario}
+              onChange={e => {
+                setDestinatario(e.target.value);
+                handleProveedorChange(e);
+              }}
+            >
+              {destinatarios.map((destinatario) => (
+                <SelectItem key={destinatario.id} value={destinatario.id}>
+                  {destinatario.destinatario}
+                </SelectItem>
+              ))}
+            </Select>
 
       <Input label="RUC" value={selectedRuc} isReadOnly />
     </div>
-            <Input label="Nombre de nota" id="nomnota" />
+              <Input
+                label="Nombre de nota"
+                id="nomnota"
+                value={nota}
+                onChange={e => setNota(e.target.value)}
+              />
           </div>
   
           {/* Columna derecha */}
@@ -308,6 +315,8 @@ function Registro_Ingresos() {
                 label="Fecha Documento"
                 id="fechaDocu"
                 type="date"
+                value={fecha}
+                onChange={e => setFecha(e.target.value)}
                 defaultValue={formattedDate}
                 style={{
                   border: "none",
@@ -321,7 +330,12 @@ function Registro_Ingresos() {
                 value={currentDocumento}
                 isReadOnly
               />
-              <Select label="Glosa" id="glosa">
+              <Select
+                label="Glosa"
+                id="glosa"
+                value={glosa}
+                onChange={e => setGlosa(e.target.value)}
+              >
                 {glosaOptions.map((option) => (
                   <SelectItem key={option} value={option}>
                     {option}
@@ -332,6 +346,8 @@ function Registro_Ingresos() {
             <Textarea
               label="Observación"
               id="observacion"
+              value={observacion}
+              onChange={e => setObservacion(e.target.value)}
               style={{
                 border: "none",
                 boxShadow: "none",

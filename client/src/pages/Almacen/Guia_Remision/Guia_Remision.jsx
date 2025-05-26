@@ -41,15 +41,10 @@ const Guias = () => {
 
   return (
     <div>
-      
-      <hr className="mb-2" />
-
       <div className="flex justify-between">
         <h1 className="text-[36px] font-bold">Guias de Remision</h1>
       </div>
-
       <br />
-
       <div className="flex justify-between items-center mb-4">
         <FiltrosGuias onFiltersChange={handleFiltersChange} />
         <Tooltip

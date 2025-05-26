@@ -3,7 +3,9 @@ import axios from "@/api/axios";
 
 const useVentasTotal = (timePeriod, sucursal = "") => {
   const [ventasTotal, setVentasTotal] = useState(0);
+  const [ventasAnterior, setVentasAnterior] = useState(0);
   const [percentageChange, setPercentageChange] = useState(0);
+  const [totalRegistros, setTotalRegistros] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -16,13 +18,17 @@ const useVentasTotal = (timePeriod, sucursal = "") => {
         if (sucursal) params.sucursal = sucursal;
 
         const response = await axios.get("/dashboard/ventas_total", { params });
-        const { data, cambio } = response.data;
+        const { data, anterior, cambio, totalRegistros: totalClientes } = response.data;
 
         setVentasTotal(data);
-        setPercentageChange(parseFloat(cambio));
+        setVentasAnterior(anterior || 0);
+        setPercentageChange(Number(cambio) || 0);
+        setTotalRegistros(totalClientes || 0);
         setError(null);
       } catch (err) {
         setError(err);
+        setVentasAnterior(0);
+        setTotalRegistros(0);
       } finally {
         setLoading(false);
       }
@@ -31,7 +37,7 @@ const useVentasTotal = (timePeriod, sucursal = "") => {
     fetchVentasTotal();
   }, [timePeriod, sucursal]);
 
-  return { ventasTotal, percentageChange, loading, error };
+  return { ventasTotal, ventasAnterior, percentageChange, totalRegistros, loading, error };
 };
 
 export default useVentasTotal;
