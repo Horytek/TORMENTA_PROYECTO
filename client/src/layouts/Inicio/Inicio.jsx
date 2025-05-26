@@ -13,6 +13,8 @@ import { useState, useEffect } from "react";
 import axios from "@/api/axios";
 import { LineChartComponent } from "./LineChart";
 import useNotasPendientes from "./hooks/notas_pendientes";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 
 // Card para productos con menor stock
@@ -187,6 +189,20 @@ function NotasPendientesModal({ open, onClose, notas }) {
   const notasFaltaSalida = notas.filter(n => n.tipo === "Falta salida");
   const notasFaltaIngreso = notas.filter(n => n.tipo === "Falta ingreso");
 
+  // Función para formatear la fecha
+  const formatFecha = (fecha) => {
+    if (!fecha) return "";
+    try {
+      // Intenta parsear la fecha como ISO o yyyy-MM-dd
+      const dateObj = new Date(fecha);
+      if (isNaN(dateObj)) return fecha;
+      return format(dateObj, "dd/MM/yyyy", { locale: es });
+    } catch {
+      return fecha;
+    }
+  };
+
+
   return (
     <Modal isOpen={open} onClose={onClose} size="md">
       <ModalContent>
@@ -211,7 +227,7 @@ function NotasPendientesModal({ open, onClose, notas }) {
                             <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
                               {nota.documento || "Sin documento"}
                             </span>
-                            <span className="text-xs text-zinc-400">{nota.fecha}</span>
+                            <span className="text-xs text-zinc-400">{formatFecha(nota.fecha)}</span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-zinc-500">
@@ -243,7 +259,7 @@ function NotasPendientesModal({ open, onClose, notas }) {
                             <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
                               {nota.documento || "Sin documento"}
                             </span>
-                            <span className="text-xs text-zinc-400">{nota.fecha}</span>
+                            <span className="text-xs text-zinc-400">{formatFecha(nota.fecha)}</span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-zinc-500">

@@ -12,7 +12,7 @@ import {
   Radio,
   Select,
   SelectItem,
-} from '@heroui/react';
+} from '@nextui-org/react';
 import { IoMdClose } from "react-icons/io";
 import { FaPlus } from "react-icons/fa";
 import { Toaster, toast } from 'react-hot-toast';
@@ -82,23 +82,44 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
     }
   };
 
-  const handleSave = () => {
-    if (transportePublico && !selectedEmpresa) {
-      toast.error('Por favor, selecciona una empresa de transporte público.');
-      return;
-    }
-    if (!transportePublico && !selectedConductor) {
-      toast.error('Por favor, selecciona un conductor de transporte privado.');
-      return;
-    }
+const handleSave = () => {
+  if (transportePublico && !selectedEmpresa) {
+    toast.error('Por favor, selecciona una empresa de transporte público.');
+    return;
+  }
+  if (!transportePublico && !selectedConductor) {
+    toast.error('Por favor, selecciona un conductor de transporte privado.');
+    return;
+  }
 
-    const selectedTransporte = transportePublico
-      ? { tipo: 'publico', empresa: selectedEmpresa, ruc, placa, vehiculo, telefono }
-      : { tipo: 'privado', conductor: selectedConductor, dni, placa, vehiculo, telefono };
+  let selectedTransporte;
+  if (transportePublico) {
+    const trans = transpublicos.find(t => t.razonsocial === selectedEmpresa);
+    selectedTransporte = {
+      tipo: 'publico',
+      empresa: selectedEmpresa,
+      ruc,
+      placa,
+      vehiculo,
+      telefono,
+      id: trans ? trans.id : '', // <-- Aquí se agrega el id
+    };
+  } else {
+    const trans = transprivados.find(t => t.transportista === selectedConductor);
+    selectedTransporte = {
+      tipo: 'privado',
+      conductor: selectedConductor,
+      dni,
+      placa,
+      vehiculo,
+      telefono,
+      id: trans ? trans.id : '', // <-- Aquí se agrega el id
+    };
+  }
 
-    onSave(selectedTransporte);
-    onClose();
-  };
+  onSave(selectedTransporte);
+  onClose();
+};
 
   return (
     <Modal isOpen={true} onClose={onClose} size="lg">

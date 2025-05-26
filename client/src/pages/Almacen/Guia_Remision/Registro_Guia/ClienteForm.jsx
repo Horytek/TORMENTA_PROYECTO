@@ -118,9 +118,6 @@ function ClienteForm({ modalTitle, onClose }) {
         <ModalHeader>
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold">{modalTitle}</h2>
-            <Button isIconOnly variant="light" onPress={onClose}>
-              <IoMdClose className="text-xl" />
-            </Button>
           </div>
         </ModalHeader>
         <ModalBody>

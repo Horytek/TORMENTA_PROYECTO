@@ -564,7 +564,6 @@ export const getNotasPendientes = async (req, res) => {
 
     let almacenIds = [];
     if (id_sucursal) {
-      // 1. Obtener almacenes asociados a la sucursal
       const [almacenes] = await connection.query(
         `SELECT a.id_almacen
          FROM almacen a
@@ -577,7 +576,6 @@ export const getNotasPendientes = async (req, res) => {
         return res.json({ code: 1, data: [], message: "No hay almacenes para la sucursal" });
       }
     } else {
-      // Si no hay sucursal, obtener todos los almacenes activos
       const [almacenes] = await connection.query(
         `SELECT id_almacen FROM almacen WHERE estado_almacen = 1`
       );
@@ -587,35 +585,46 @@ export const getNotasPendientes = async (req, res) => {
       }
     }
 
-    // 2. Obtener notas de ingreso y salida de esos almacenes
+    // 1. Obtener notas de ingreso y salida con sus detalles
     const [ingresos] = await connection.query(
-      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto
+      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
+              dn.id_producto, dn.cantidad
        FROM nota n
        INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+       INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
        WHERE n.id_tiponota = 1 AND n.id_almacenD IN (?) AND n.estado_nota = 0`,
       [almacenIds]
     );
     const [salidas] = await connection.query(
-      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto
+      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
+              dn.id_producto, dn.cantidad
        FROM nota n
        INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+       INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
        WHERE n.id_tiponota = 2 AND n.id_almacenO IN (?) AND n.estado_nota = 0`,
       [almacenIds]
     );
 
-    // 3. Buscar ingresos sin salida y salidas sin ingreso (por documento y almacenes)
+    // 2. Buscar ingresos sin salida (por producto y cantidad)
     const pendientesIngreso = ingresos.filter(ing =>
+      // Si el almacen de origen es null o 0, no es pendiente
+      (ing.id_almacenO !== null && ing.id_almacenO !== 0) &&
       !salidas.some(sal =>
         sal.id_almacenO === ing.id_almacenO &&
         sal.id_almacenD === ing.id_almacenD &&
-        sal.documento === ing.documento
+        sal.documento === ing.documento &&
+        sal.id_producto === ing.id_producto &&
+        Number(sal.cantidad) === Number(ing.cantidad)
       )
     );
+    // 3. Buscar salidas sin ingreso (por producto y cantidad)
     const pendientesSalida = salidas.filter(sal =>
       !ingresos.some(ing =>
         ing.id_almacenO === sal.id_almacenO &&
         ing.id_almacenD === sal.id_almacenD &&
-        ing.documento === sal.documento
+        ing.documento === sal.documento &&
+        ing.id_producto === sal.id_producto &&
+        Number(ing.cantidad) === Number(sal.cantidad)
       )
     );
 

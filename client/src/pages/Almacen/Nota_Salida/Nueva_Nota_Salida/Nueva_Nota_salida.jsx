@@ -33,7 +33,7 @@ function NuevaSalidas() {
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [codigoBarras, setCodigoBarras] = useState('');
-    const [selectedRuc, setSelectedRuc] = useState('');
+  const [selectedRuc, setSelectedRuc] = useState('');
   const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
@@ -41,13 +41,32 @@ function NuevaSalidas() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Estados para los campos del formulario
+  const [almacenOrigen, setAlmacenOrigen] = useState('');
+  const [almacenDestino, setAlmacenDestino] = useState('');
+  const [destinatario, setDestinatario] = useState('');
+  const [glosa, setGlosa] = useState('');
+  const [fechaDocu, setFechaDocu] = useState(() => new Date().toISOString().split('T')[0]);
+  const [nomNota, setNomNota] = useState('');
+  const [numComprobante, setNumComprobante] = useState('');
+  const [observacion, setObservacion] = useState('');
+
   const { almacenes } = useAlmacenData();
   const { destinatarios } = useDestinatarioData();
   const { documentos } = useDocumentoData();
-
-  const [almacenOrigen, setAlmacenOrigen] = useState('');
   const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
-  const currentDate = new Date().toISOString().split('T')[0];
+  // Actualiza el número de comprobante cuando cambia la lista de documentos
+  useEffect(() => {
+    if (documentos.length > 0) {
+      setNumComprobante(documentos[0].nota);
+    }
+  }, [documentos]);
+
+  // Actualiza el RUC cuando cambia el destinatario
+  useEffect(() => {
+    const selected = destinatarios.find((d) => d.id === parseInt(destinatario));
+    setSelectedRuc(selected?.documento || '');
+  }, [destinatario, destinatarios]);
 
   const handleBuscarProducto = async () => {
     const almacenId = almacenOrigen || '';
@@ -61,72 +80,58 @@ function NuevaSalidas() {
   };
 
   const handleGuardarAction = async () => {
-    try {
-      const almacenO = document.getElementById('almacen_origen').value || "";
-      const almacenD = document.getElementById('almacen_destino').value;
-      const destinatario = document.getElementById('destinatario').value;
-      const glosa = document.getElementById('glosa').value;
-      const fecha = document.getElementById('fechaDocu').value;
-      const nota = document.getElementById('nomnota').value;
-      const numComprobante = document.getElementById('numero').value;
-      const observacion = document.getElementById('observacion').value;
-      const usuario = localStorage.getItem('usuario');
-
-      if (!usuario) {
-        toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
-        return;
-      }
-
-      const productos = productosSeleccionados.map(producto => ({
-        id: producto.codigo,
-        cantidad: producto.cantidad
-      }));
-
-      const data = {
-        almacenO,
-        almacenD,
-        destinatario,
-        glosa,
-        nota,
-        fecha,
-        producto: productos.map(p => p.id),
-        numComprobante,
-        cantidad: productos.map(p => p.cantidad),
-        observacion,
-        usuario
-      };
-
-      const result = await insertNotaAndDetalle(data);
-
-      if (result.success) {
-        toast.success('Nota y detalle insertados correctamente.');
-        handleCancel();
-        window.location.reload();
-      } else {
-        throw new Error('Error inesperado en la inserción de la nota.');
-      }
-    } catch (error) {
-      console.error('Error en handleGuardarAction:', error);
-      toast.error(`Error inesperado: ${error.message}`);
+  try {
+    const usuario = localStorage.getItem('usuario');
+    if (!usuario) {
+      toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
+      return;
     }
-  };
 
-    const handleProveedorChange = (e) => {
-      const selected = destinatarios.find(
-        (d) => d.id === parseInt(e.target.value)
-      );
-      setSelectedRuc(selected?.documento || '');
+    const productosData = productosSeleccionados.map(producto => ({
+      id: producto.codigo,
+      cantidad: producto.cantidad
+    }));
+
+    // Ajustar la fecha con la zona horaria local
+    const localDate = new Date(fechaDocu);
+    const tzOffset = localDate.getTimezoneOffset() * 60000;
+    const fechaISO = new Date(localDate.getTime() - tzOffset).toISOString().slice(0, 19).replace('T', ' ');
+
+    const data = {
+      almacenO: almacenOrigen,
+      almacenD: almacenDestino,
+      destinatario,
+      glosa,
+      nota: nomNota,
+      fecha: fechaISO, // Usar fecha ajustada
+      producto: productosData.map(p => p.id),
+      numComprobante: currentDocumento,
+      cantidad: productosData.map(p => p.cantidad),
+      observacion,
+      nom_usuario: usuario
     };
 
-  const handleGuardar = async () => {
-    const almacenD = document.getElementById('almacen_destino').value;
-    const destinatario = document.getElementById('destinatario').value;
-    const glosa = document.getElementById('glosa').value;
-    const fecha = document.getElementById('fechaDocu').value;
-    const nota = document.getElementById('nomnota').value;
-    const numComprobante = document.getElementById('numero').value;
+    const result = await insertNotaAndDetalle(data);
 
-    if (!almacenD || !destinatario || !glosa || !fecha || !nota || !numComprobante) {
+    if (result.success) {
+      toast.success('Nota y detalle insertados correctamente.');
+      handleCancel();
+      window.location.reload();
+    } else {
+      throw new Error('Error inesperado en la inserción de la nota.');
+    }
+  } catch (error) {
+    console.error('Error en handleGuardarAction:', error);
+    toast.error(`Error inesperado: ${error.message}`);
+  }
+};
+
+  const handleProveedorChange = (e) => {
+    setDestinatario(e.target.value);
+  };
+
+  const handleGuardar = async () => {
+    if (!almacenDestino || !destinatario || !glosa || !fechaDocu || !nomNota || !numComprobante) {
       toast.error('Por favor complete todos los campos.');
       return;
     }
@@ -159,15 +164,6 @@ function NuevaSalidas() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        paths={[
-          { name: 'Inicio', href: '/inicio' },
-          { name: 'Almacén', href: '/almacen' },
-          { name: 'Nota de salida', href: '/almacen/nota_salida' },
-          { name: 'Nueva nota de salida', href: '/almacen/nota_salida/nueva_nota_salida' },
-        ]}
-      />
-      <hr className="mb-4" />
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Nota de salida</h1>
       </div>
@@ -182,6 +178,7 @@ function NuevaSalidas() {
                 placeholder="Seleccionar"
                 id="almacen_origen"
                 isDisabled={productosSeleccionados.length > 0}
+                value={almacenOrigen}
                 onChange={(e) => setAlmacenOrigen(e.target.value)}
               >
                 {almacenes.map((almacen) => (
@@ -194,6 +191,8 @@ function NuevaSalidas() {
                 label="Almacén destino"
                 placeholder="Seleccionar"
                 id="almacen_destino"
+                value={almacenDestino}
+                onChange={(e) => setAlmacenDestino(e.target.value)}
               >
                 {almacenes.map((almacen) => (
                   <SelectItem key={almacen.id} value={almacen.id}>
@@ -203,21 +202,26 @@ function NuevaSalidas() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
-      <Select
-        label="Proveedor"
-        placeholder="Seleccionar"
-        onChange={handleProveedorChange}
-      >
-        {destinatarios.map((destinatario) => (
-          <SelectItem key={destinatario.id} value={destinatario.id}>
-            {destinatario.destinatario}
-          </SelectItem>
-        ))}
-      </Select>
-
-      <Input label="RUC" value={selectedRuc} isReadOnly />
-    </div>
-            <Input label="Nombre de nota" id="nomnota" />
+              <Select
+                label="Proveedor"
+                placeholder="Seleccionar"
+                value={destinatario}
+                onChange={handleProveedorChange}
+              >
+                {destinatarios.map((destinatario) => (
+                  <SelectItem key={destinatario.id} value={destinatario.id}>
+                    {destinatario.destinatario}
+                  </SelectItem>
+                ))}
+              </Select>
+              <Input label="RUC" value={selectedRuc} isReadOnly />
+            </div>
+            <Input
+              label="Nombre de nota"
+              id="nomnota"
+              value={nomNota}
+              onChange={e => setNomNota(e.target.value)}
+            />
           </div>
 
           {/* Columna derecha */}
@@ -227,7 +231,8 @@ function NuevaSalidas() {
                 label="Fecha Documento"
                 id="fechaDocu"
                 type="date"
-                defaultValue={currentDate}
+                value={fechaDocu}
+                onChange={e => setFechaDocu(e.target.value)}
                 style={{
                   border: "none",
                   boxShadow: "none",
@@ -240,7 +245,12 @@ function NuevaSalidas() {
                 value={currentDocumento}
                 isReadOnly
               />
-              <Select label="Glosa" id="glosa">
+              <Select
+                label="Glosa"
+                id="glosa"
+                value={glosa}
+                onChange={e => setGlosa(e.target.value)}
+              >
                 {glosaOptions.map((option) => (
                   <SelectItem key={option} value={option}>
                     {option}
@@ -251,6 +261,8 @@ function NuevaSalidas() {
             <Textarea
               label="Observación"
               id="observacion"
+              value={observacion}
+              onChange={e => setObservacion(e.target.value)}
               style={{
                 border: "none",
                 boxShadow: "none",

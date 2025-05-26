@@ -21,7 +21,8 @@ const getSalidas = async (req, res) => {
               n.glosa AS concepto,
               n.estado_nota AS estado,
               # ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
-              COALESCE(u.usua, '') as usuario
+              COALESCE(u.usua, '') as usuario,
+              n.observacion AS observacion
           FROM 
               nota n
           LEFT JOIN 

@@ -48,15 +48,15 @@ export const ModalTransportista = ({ modalTitle, closeModel, onTransportistaAdde
       telefono,
     };
 
-    const result = await addTransportistaPublico(data, closeModel);
-
-    if (result.success) {
-      toast.success('Transportista guardado con éxito');
-      onTransportistaAdded();
-    } else {
-      toast.error(`Error al guardar el transportista: ${result.message}`);
-    }
-  };
+    const result = await addTransportistaPublico(data);
+  if (result.success) {
+    toast.success('Transportista guardado con éxito');
+    if (onTransportistaAdded) onTransportistaAdded(); // Solo actualiza datos, no cierra modal
+    closeModel(); // Solo aquí se cierra el modal
+  } else {
+    toast.error(`Error al guardar el transportista: ${result.message}`);
+  }
+};
 
   return (
     <Modal isOpen={true} onClose={closeModel} size="lg">
