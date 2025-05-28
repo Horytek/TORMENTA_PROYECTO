@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@heroui/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Tooltip } from "@heroui/react";
 import { FaFilePdf, FaEye } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import anularNota from '../data/anular_nota_ingreso';
@@ -328,20 +328,73 @@ const TablaIngresos = ({ ingresos }) => {
             <TableBody>
               {getCurrentPageItems().map((ingreso) => (
                 <TableRow key={ingreso.id} onClick={() => handleRowClick(ingreso.id)} className="cursor-pointer hover:bg-gray-100" >
-                  <TableCell>{ingreso.fecha}</TableCell>
+                        <TableCell>
+        <Tooltip
+          content={
+            <div className="text-sm text-gray-800">
+              <p>
+                <strong>Hora de creación:</strong>{" "}
+                {ingreso.hora_creacion
+                  ? new Date(`1970-01-01T${ingreso.hora_creacion}`).toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true,
+                    })
+                  : "N/A"}
+              </p>
+              <p>
+                <strong>Fecha y hora de anulación:</strong>{" "}
+                {ingreso.fecha_anulacion
+                  ? new Date(ingreso.fecha_anulacion).toLocaleString("es-ES", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true,
+                    })
+                  : "N/A"}
+              </p>
+            </div>
+          }
+          placement="top"
+          className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
+        >
+          <span>{ingreso.fecha}</span>
+        </Tooltip>
+      </TableCell>
                   <TableCell>{ingreso.documento}</TableCell>
                   <TableCell>{ingreso.proveedor}</TableCell>
                   <TableCell>{ingreso.concepto}</TableCell>
                   <TableCell>{ingreso.almacen_D}</TableCell>
-                  <TableCell>
-                    <Chip
-                      color={ingreso.estado === 0 ? "success" : "danger"}
-                      size="lg"
-                      variant="flat"
-                    >
-                      {ingreso.estado === 0 ? 'Activo' : 'Inactivo'}
-                    </Chip>
-                  </TableCell>
+                <TableCell>
+                  <Tooltip
+                    content={
+                      ingreso.estado === 1
+                        ? (
+                          <span>
+                            <strong>Anulado por:</strong>{" "}
+                            {ingreso.u_modifica ? ingreso.u_modifica : "N/A"}
+                          </span>
+                        )
+                        : (
+                          <span>
+                            <strong>Estado:</strong> Activo
+                          </span>
+                        )
+                    }
+                    placement="top"
+                    className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
+                  >
+                    <span>
+                      <Chip color={ingreso.estado === 0 ? "success" : "danger"} size="lg" variant="flat">
+                        {ingreso.estado === 0 ? 'Activo' : 'Inactivo'}
+                      </Chip>
+                    </span>
+                  </Tooltip>
+                </TableCell>
                   <TableCell>{ingreso.usuario}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">

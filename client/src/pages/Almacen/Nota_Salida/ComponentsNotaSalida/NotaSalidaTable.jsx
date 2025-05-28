@@ -1,5 +1,5 @@
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip } from "@heroui/react";
-import { FaFilePdf } from "react-icons/fa";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip, Tooltip } from "@heroui/react";
+import { FaFilePdf, FaEye } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import ConfirmationModal from './Modals/ConfirmationModal';
@@ -18,6 +18,9 @@ const NotaSalidaTable = forwardRef(({ salidas }, ref)  => {
     const savedAlmacen = localStorage.getItem('almacen');
     return savedAlmacen ? parseInt(savedAlmacen) : '';
   });
+   const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
+  const [selectedObservation, setSelectedObservation] = useState("");
+
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -40,6 +43,11 @@ const NotaSalidaTable = forwardRef(({ salidas }, ref)  => {
   const handleImprimirClick = (id) => {
     setNotaIdToAnular(id);
     setIsModalOpenImprimir2(true);
+  };
+
+    const handleObservationClick = (observacion) => {
+    setSelectedObservation(observacion);
+    setIsObservationModalOpen(true);
   };
 
   const handleAnularClick = (id) => {
@@ -310,34 +318,114 @@ useImperativeHandle(ref, () => ({
           <TableBody>
             {salidas.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((salida) => (
               <TableRow key={salida.id} onClick={() => handleRowClick(salida)} className="cursor-pointer hover:bg-gray-100">
-                <TableCell>{salida.fecha}</TableCell>
+                      <TableCell>
+        <Tooltip
+          content={
+            <div className="text-sm text-gray-800">
+              <p>
+                <strong>Hora de creación:</strong>{" "}
+                {salida.hora_creacion
+                  ? new Date(`1970-01-01T${salida.hora_creacion}`).toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true,
+                    })
+                  : "N/A"}
+              </p>
+              <p>
+                <strong>Fecha y hora de anulación:</strong>{" "}
+                {salida.fecha_anulacion
+                  ? new Date(salida.fecha_anulacion).toLocaleString("es-ES", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true,
+                    })
+                  : "N/A"}
+              </p>
+            </div>
+          }
+          placement="top"
+          className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
+        >
+          <span>{salida.fecha}</span>
+        </Tooltip>
+      </TableCell>
                 <TableCell>{salida.documento}</TableCell>
                 <TableCell>{salida.proveedor}</TableCell>
                 <TableCell>{salida.concepto}</TableCell>
                 <TableCell>
-                  <Chip color={salida.estado === 0 ? "success" : "danger"} size="lg" variant="flat">
-                    {salida.estado === 0 ? 'Activo' : 'Inactivo'}
-                  </Chip>
+                  <Tooltip
+                    content={
+                      salida.estado === 1
+                        ? (
+                          <span>
+                            <strong>Anulado por:</strong>{" "}
+                            {salida.u_modifica ? salida.u_modifica : "N/A"}
+                          </span>
+                        )
+                        : (
+                          <span>
+                            <strong>Estado:</strong> Activo
+                          </span>
+                        )
+                    }
+                    placement="top"
+                    className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
+                  >
+                    <span>
+                      <Chip color={salida.estado === 0 ? "success" : "danger"} size="lg" variant="flat">
+                        {salida.estado === 0 ? 'Activo' : 'Inactivo'}
+                      </Chip>
+                    </span>
+                  </Tooltip>
                 </TableCell>
                 <TableCell>{salida.usuario}</TableCell>
-                <TableCell>
+              <TableCell>
                   <div className="flex gap-2">
+                    <FaEye
+                    className="text-blue-600 cursor-pointer"
+                    onClick={() => handleObservationClick(salida.observacion)}
+                    title="Ver Observación"
+                  />
                     <FaFilePdf 
                       className={`${hasGeneratePermission ? "text-red-600 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`} 
-                      onClick={() => hasGeneratePermission ? handleImprimirClick(salida.id) : null}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (hasGeneratePermission) handleImprimirClick(salida.id);
+                      }}
                       title={hasGeneratePermission ? "Generar PDF" : "No tiene permisos para generar PDFs"}
                     />
                     <TiDeleteOutline 
                       className={`${hasDeactivatePermission ? "text-red-600 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`} 
-                      onClick={() => hasDeactivatePermission ? handleAnularClick(salida.id) : null}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (hasDeactivatePermission) handleAnularClick(salida.id);
+                      }}
                       title={hasDeactivatePermission ? "Anular nota" : "No tiene permisos para anular notas"}
                     />                  
-                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+
+                    <Modal isOpen={isObservationModalOpen} onClose={() => setIsObservationModalOpen(false)}>
+        <ModalContent>
+          <ModalHeader>Observación</ModalHeader>
+          <ModalBody>
+            <p>{selectedObservation || "Sin observación"}</p>
+          </ModalBody>
+          <ModalFooter>
+            <Button onPress={() => setIsObservationModalOpen(false)}>Cerrar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
         <div className="mt-4 flex justify-between">
           <Pagination
@@ -350,7 +438,7 @@ useImperativeHandle(ref, () => ({
 
           <select
             id="itemsPerPage"
-            className="border border-gray-300 bg-gray-50 rounded-lg w-20 text-center"
+            className="border border-gray-300 bg-gray-50 rounded-lg w-23"
             value={itemsPerPage}
             onChange={(e) => {
               setItemsPerPage(Number(e.target.value));
@@ -360,6 +448,7 @@ useImperativeHandle(ref, () => ({
             <option value={5}>05</option>
             <option value={10}>10</option>
             <option value={20}>20</option>
+            <option value={100000}>Todos</option>
           </select>
         </div>
       </div>
@@ -389,6 +478,7 @@ useImperativeHandle(ref, () => ({
           </Table>
         </div>
       )}
+
 
 {isModalOpenImprimir2 && (
         <ConfirmationModal

@@ -21,7 +21,10 @@ const getIngresos = async (req, res) => {
             n.estado_nota AS estado,
             ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
             COALESCE(u.usua, '') as usuario,
-            n.observacion AS observacion
+            n.observacion AS observacion,
+            n.hora_creacion,
+            n.fecha_anulacion,
+            n.u_modifica AS u_modifica
         FROM 
             nota n
         LEFT JOIN 
@@ -457,7 +460,7 @@ const id_nota = notaResult.insertId;
 
 
 const anularNota = async (req, res) => {
-  const { notaId } = req.body;
+  const { notaId, usuario } = req.body; // Recibe usuario
 
   if (!notaId) {
     return res.status(400).json({ message: "El ID de la nota es necesario." });
@@ -543,9 +546,10 @@ const anularNota = async (req, res) => {
 
     // Anular la nota
     await connection.query(
-      "UPDATE nota SET estado_nota = 1 WHERE id_nota = ?",
-      [notaId]
+      "UPDATE nota SET estado_nota = 1, u_modifica = ? WHERE id_nota = ?",
+      [usuario, notaId]
     );
+
 
     await connection.commit();
     res.json({ code: 1, message: "Nota anulada correctamente" });
