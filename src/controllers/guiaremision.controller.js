@@ -27,6 +27,9 @@ const getGuias = async (req, res) => {
             SELECT
                 gr.id_guiaremision AS id,
                 DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') AS fecha,
+                gr.h_generacion,
+                gr.f_anulacion,
+                gr.u_modifica,
                 c.num_comprobante AS num_guia,
                 CASE 
                     WHEN d.dni IS NOT NULL THEN CONCAT(d.nombres, ' ', d.apellidos)
@@ -470,7 +473,7 @@ const addDestinatarioJuridico = async (req, res) => {
 //ANULAR GUIA
 const anularGuia = async (req, res) => {
     
-    const { guiaId } = req.body; // El número de la guía o ID de la guía
+    const { guiaId, usuario } = req.body; // Recibe usuario
   
     if (!guiaId) {
       return res.status(400).json({ message: "El ID de la guía es necesario." });
@@ -493,10 +496,10 @@ const anularGuia = async (req, res) => {
       }
   
       // Anular la guía de remisión (estado_guia = 0)
-      await connection.query(
-        "UPDATE guia_remision SET estado_guia = 0 WHERE id_guiaremision = ?",
-        [guiaId]
-      );
+        await connection.query(
+        "UPDATE guia_remision SET estado_guia = 0, u_modifica = ? WHERE id_guiaremision = ?",
+        [usuario, guiaId]
+        );
   
       await connection.commit();
   

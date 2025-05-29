@@ -42,6 +42,9 @@ const useGuiasData = (filters) => {
           docpriv: guia.docpriv,
           canti: guia.canti,
           peso: guia.peso,
+          h_generacion: guia.h_generacion,
+          f_anulacion: guia.f_anulacion,
+          u_modifica: guia.u_modifica,
           transpub: guia.transportistapub,
           transpriv: guia.transportistapriv,
           estado: guia.estado === 0 ? 'Inactivo' :
