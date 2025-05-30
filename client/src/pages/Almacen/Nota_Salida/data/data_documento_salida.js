@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from "@/api/axios";
 
-const useDocumentoData = () => {
+const useDocumentoData_S = () => {
     const [documentos, setDocumentos] = useState([]);
 
     useEffect(() => {
@@ -29,4 +29,4 @@ const useDocumentoData = () => {
     return { documentos, setDocumentos };
 };
 
-export default useDocumentoData;
+export default useDocumentoData_S;

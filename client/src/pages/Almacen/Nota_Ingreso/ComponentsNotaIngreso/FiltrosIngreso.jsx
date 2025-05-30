@@ -379,7 +379,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                         disabled={!hasCreatePermission}
                         className={`${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        Nota de inventario
+                        Nota de almacen
                     </Button>
                 ) : (
                     <Button
@@ -388,7 +388,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                         disabled
                         className="opacity-50 cursor-not-allowed"
                     >
-                        Nota de inventario
+                        Nota de almacen
                     </Button>
                 )}
             </div>

@@ -8,6 +8,7 @@ import { FaBarcode } from "react-icons/fa6";
 import { MdPersonAdd, MdCancelPresentation } from "react-icons/md";
 import useDestinatarioData from '../data/data_destinatario_ingreso';
 import useDocumentoData from '../data/data_documento_ingreso';
+import useDocumentoData_S from '../../Nota_Salida/data/data_documento_salida';
 import useAlmacenData from '../data/data_almacen_ingreso';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
@@ -53,10 +54,12 @@ function Registro_Ingresos() {
   const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1)
     .toString()
     .padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
-  const { documentos } = useDocumentoData();
-  const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
+  const { documentos: documentosIngreso } = useDocumentoData();
+  const { documentos: documentosSalida } = useDocumentoData_S();
+ const currentDocumentoIngreso = documentosIngreso.length > 0 ? documentosIngreso[0].nota : '';
+  const currentDocumentoSalida = documentosSalida.length > 0 ? documentosSalida[0].nota : '';
   const [fecha, setFecha] = useState(formattedDate);
-  const [numComprobante, setNumComprobante] = useState(currentDocumento);
+  //const [numComprobante, setNumComprobante] = useState(currentDocumento);
   const [observacion, setObservacion] = useState('');
   const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
     const saved = localStorage.getItem('productosSeleccionados');
@@ -120,7 +123,7 @@ function Registro_Ingresos() {
   };
 
   // Unificación de guardado
-  const handleGuardarAction = async () => {
+   const handleGuardarAction = async () => {
     try {
       const usuario = localStorage.getItem('usuario');
       if (!usuario) {
@@ -135,7 +138,8 @@ function Registro_Ingresos() {
         !glosa ||
         !fecha ||
         !nota ||
-        !currentDocumento
+        ((tipoNota === 'ingreso' || tipoNota === 'conjunto') && !currentDocumentoIngreso) ||
+        ((tipoNota === 'salida' || tipoNota === 'conjunto') && !currentDocumentoSalida)
       ) {
         toast.error('Por favor complete todos los campos.');
         return;
@@ -178,7 +182,7 @@ function Registro_Ingresos() {
         nota,
         fecha: fechaISO,
         producto: productos.map(p => p.id),
-        numComprobante: currentDocumento,
+        numComprobante: currentDocumentoIngreso,
         cantidad: productos.map(p => p.cantidad),
         observacion,
         usuario
@@ -193,7 +197,7 @@ function Registro_Ingresos() {
         nota,
         fecha: fechaISO,
         producto: productos.map(p => p.id),
-        numComprobante: currentDocumento,
+        numComprobante: currentDocumentoSalida,
         cantidad: productos.map(p => p.cantidad),
         observacion,
         nom_usuario: usuario
@@ -203,7 +207,6 @@ function Registro_Ingresos() {
       let resultSalida = { success: false };
 
       if (tipoNota === 'conjunto') {
-        // Ejecutar ambas APIs en paralelo
         [resultIngreso, resultSalida] = await Promise.all([
           insertNotaAndDetalleIngreso(dataIngreso),
           insertNotaAndDetalleSalida(dataSalida)
@@ -231,6 +234,7 @@ function Registro_Ingresos() {
       toast.error(`Error inesperado: ${error.message}`);
     }
   };
+
 
   const openModalProovedor = () => setIsModalOpenProovedor(true);
   const closeModalProovedor = () => setIsModalOpenProovedor(false);
@@ -280,26 +284,27 @@ function Registro_Ingresos() {
     closeModalBuscarProducto();
   };
 
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Nota de almacén</h1>
       </div>
-<div className="mb-4">
-  <Tabs
-    aria-label="Tipo de nota"
-    selectedKey={tipoNota}
-    onSelectionChange={setTipoNota}
-    color="primary"
-    variant="bordered"
-    isDisabled={rolUsuario !== '1'}
-    className="w-full"
-  >
-    {tipoNotaOptions.map(option => (
-      <Tab key={option.value} title={option.label} />
-    ))}
-  </Tabs>
-</div>
+      <div className="mb-4">
+        <Tabs
+          aria-label="Tipo de nota"
+          selectedKey={tipoNota}
+          onSelectionChange={setTipoNota}
+          color="primary"
+          variant="bordered"
+          isDisabled={rolUsuario !== '1'}
+          className="w-full"
+        >
+          {tipoNotaOptions.map(option => (
+            <Tab key={option.value} title={option.label} />
+          ))}
+        </Tabs>
+      </div>
       <div className="bg-gray-200 p-6 rounded-lg shadow-md">
         <form className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Toaster />
@@ -380,7 +385,13 @@ function Registro_Ingresos() {
               <Input
                 label="Número"
                 id="numero"
-                value={currentDocumento}
+                value={
+                  tipoNota === 'ingreso'
+                    ? currentDocumentoIngreso
+                    : tipoNota === 'salida'
+                      ? currentDocumentoSalida
+                      : `I: ${currentDocumentoIngreso} / S: ${currentDocumentoSalida}`
+                }
                 isReadOnly
               />
               <Select

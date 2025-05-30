@@ -91,9 +91,8 @@ const data = {
       url: "/almacen",
       icon: Warehouse,
       items: [
-        { title: "Nota Ingreso", url: "/almacen/nota_ingreso" },
+        { title: "Nota de Almacen", url: "/almacen/nota_ingreso" },
         { title: "Guía Remisión", url: "/almacen/guia_remision" },
-        { title: "Nota Salida", url: "/almacen/nota_salida" },
       ],
     },
     { title: "Almacenes", url: "/almacenG", icon: Warehouse, items: [] },
