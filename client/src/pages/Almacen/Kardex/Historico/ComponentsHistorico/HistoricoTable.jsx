@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Card, CardHeader, Divider, CardBody, Pagination } from "@heroui/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Card, CardHeader, Divider, CardBody, Pagination, Chip } from "@heroui/react";
 
 function HistoricoTable({ transactions, previousTransactions }) {
   const [collapsedTransaction, setCollapsedTransaction] = useState(null);
@@ -23,46 +23,70 @@ function HistoricoTable({ transactions, previousTransactions }) {
   return (
     <div className="flex flex-col space-y-4 w-full">
       {/* Contenedor de Cards en una fila */}
-      <div className="flex space-x-4">
+      <div className="flex flex-wrap gap-4">
         {/* Card de transacciones anteriores */}
         {previousTransactions?.length > 0 && (
-          <Card className="max-w-[400px]">
-            <CardHeader className="flex gap-3">
+          <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 min-w-[320px] max-w-[400px] flex-1">
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-100/60 to-blue-200/40 rounded-full blur-2xl"></div>
+              <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-blue-100/40 to-cyan-100/30 rounded-full blur-xl"></div>
+            </div>
+            <CardHeader className="flex gap-3 z-10">
               <div className="flex flex-col">
-                <p className="text-lg">Transacciones Anteriores</p>
+                <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Histórico</span>
+                <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Transacciones Anteriores</p>
                 <p className="text-gray-600 text-md">{previousTransactions[0].numero} documento(s)</p>
               </div>
             </CardHeader>
             <Divider />
-            <CardBody>
-              <p className="font-semibold">Entra:{previousTransactions[0].entra}</p>
-              <p className="font-semibold">Sale: {previousTransactions[0].sale}</p>
-              <p className="font-semibold">Stock: {parseFloat(previousTransactions[0].entra) - parseFloat(previousTransactions[0].sale)}</p>
+            <CardBody className="z-10">
+              <div className="flex flex-col gap-1">
+                <Chip color="primary" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
+                  Entra: {previousTransactions[0].entra}
+                </Chip>
+                <Chip color="danger" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
+                  Sale: {previousTransactions[0].sale}
+                </Chip>
+                <Chip color="default" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
+                  Stock: {parseFloat(previousTransactions[0].entra) - parseFloat(previousTransactions[0].sale)}
+                </Chip>
+              </div>
             </CardBody>
-            <Divider />
           </Card>
         )}
 
         {/* Card de totales */}
-        <Card className="max-w-[400px]">
-          <CardHeader className="flex gap-3">
+        <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 min-w-[320px] max-w-[400px] flex-1">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-100/60 to-cyan-200/40 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-cyan-100/40 to-indigo-100/30 rounded-full blur-xl"></div>
+          </div>
+          <CardHeader className="flex gap-3 z-10">
             <div className="flex flex-col">
-              <p className="text-lg">Stock actual del producto</p>
+              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">Actual</span>
+              <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Stock actual del producto</p>
             </div>
           </CardHeader>
           <Divider />
-          <CardBody>
-            <p className="font-semibold">Entra:{calculateTotal("entra")}</p>
-            <p className="font-semibold">Sale: {calculateTotal("sale")}</p>
-            <p className="font-semibold">Stock: {calculateTotal("entra") - calculateTotal("sale")}</p>
+          <CardBody className="z-10">
+            <div className="flex flex-col gap-1">
+              <Chip color="primary" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
+                Entra: {calculateTotal("entra")}
+              </Chip>
+              <Chip color="danger" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
+                Sale: {calculateTotal("sale")}
+              </Chip>
+              <Chip color="default" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
+                Stock: {calculateTotal("entra") - calculateTotal("sale")}
+              </Chip>
+            </div>
           </CardBody>
-          <Divider />
         </Card>
       </div>
 
       <div className="flex w-full">
         {/* Tabla principal ocupando toda la pantalla */}
-        <div className={`px-4 bg-white rounded-lg transition-all ${collapsedTransaction ? 'w-2/3' : 'w-full'}`}>
+        <div className={`px-4 bg-white rounded-lg shadow-md transition-all ${collapsedTransaction ? 'w-2/3' : 'w-full'}`}>
           <Table aria-label="Historico de Transacciones">
             <TableHeader>
               {["Fecha", "Documento", "Nombre", "Entra", "Sale", "Stock", "Precio", "Glosa"].map((header) => (
@@ -71,7 +95,7 @@ function HistoricoTable({ transactions, previousTransactions }) {
             </TableHeader>
             <TableBody emptyContent={"No hay transacciones registradas."}>
               {paginatedTransactions.map((transaction, index) => (
-                <TableRow key={index} onClick={() => toggleRow(transaction)}>
+                <TableRow key={index} onClick={() => toggleRow(transaction)} className="cursor-pointer hover:bg-blue-50 transition-colors">
                   {["fecha", "documento", "nombre", "entra", "sale", "stock", "precio", "glosa"].map((field) => (
                     <TableCell className="text-xs" key={field}>{transaction[field] || "0"}</TableCell>
                   ))}
