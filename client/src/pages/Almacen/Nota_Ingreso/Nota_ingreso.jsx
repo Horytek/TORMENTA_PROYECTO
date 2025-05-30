@@ -1,31 +1,50 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import TablaIngresos from './ComponentsNotaIngreso/NotaIngresoTable';
+import TablaNotasAlmacen from './ComponentsNotaIngreso/NotaIngresoTable'; // Unificada
 import getIngresosData from './data/data_ingreso';
+import getSalidasData from '../Nota_Salida/data/data_salida';
 import useAlmacenData from './data/data_almacen_ingreso';
 import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
+import FiltrosSalida from '../Nota_Salida/ComponentsNotaSalida/FiltrosSalida';
+import { Tabs, Tab } from "@heroui/react";
 import { RoutePermission } from '@/routes';
 
-const Ingresos = () => {
-  const [filters, setFilters] = useState({});
+const NotasAlmacen = () => {
+  const [filtersIngreso, setFiltersIngreso] = useState({});
+  const [filtersSalida, setFiltersSalida] = useState({});
   const [ingresos, setIngresos] = useState([]);
+  const [salidas, setSalidas] = useState([]);
   const { almacenes } = useAlmacenData();
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
     const almacenIdGuardado = localStorage.getItem('almacen');
     return almacenIdGuardado && almacenes ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) : null;
   });
+  const [tabActiva, setTabActiva] = useState("ingreso");
+  // Referencia para PDF de salidas
+  const tablaSalidaRef = useRef(null);
 
+  // Fetch ingresos
   const fetchIngresos = useCallback(async () => {
     const data = await getIngresosData({
-      ...filters,
-      almacenId: filters.almacenId || undefined,
+      ...filtersIngreso,
+      almacenId: filtersIngreso.almacenId || undefined,
     });
     setIngresos(data.ingresos);
-  }, [filters]);
+  }, [filtersIngreso]);
+
+  // Fetch salidas
+  const fetchSalidas = useCallback(async () => {
+    const data = await getSalidasData(filtersSalida);
+    setSalidas(data.salida);
+  }, [filtersSalida]);
 
   useEffect(() => {
     fetchIngresos();
-  }, [fetchIngresos]); 
+  }, [fetchIngresos]);
+
+  useEffect(() => {
+    fetchSalidas();
+  }, [fetchSalidas]);
 
   useEffect(() => {
     const almacenIdGuardado = localStorage.getItem('almacen');
@@ -38,30 +57,47 @@ const Ingresos = () => {
   }, [almacenes]);
 
   const handleFiltersChange = (newFilters) => {
-    setFilters(prevFilters => {
-      if (JSON.stringify(prevFilters) !== JSON.stringify(newFilters)) {
-        return newFilters;
-      }
-      return prevFilters;
-    });
+    if (tabActiva === "ingreso") {
+      setFiltersIngreso(prevFilters => {
+        if (JSON.stringify(prevFilters) !== JSON.stringify(newFilters)) {
+          return newFilters;
+        }
+        return prevFilters;
+      });
+    } else {
+      setFiltersSalida(prevFilters => {
+        if (JSON.stringify(prevFilters) !== JSON.stringify(newFilters)) {
+          return newFilters;
+        }
+        return prevFilters;
+      });
+    }
   };
 
-  const currentDate = new Date().toLocaleDateString('es-ES');
-
+  // Cambio de almacén sincronizado para ambos
   const handleAlmacenChange = (almacen) => {
     setAlmacenSeleccionado(almacen || null);
-    setFilters((prevFilters) => ({
-      ...prevFilters,
+    setFiltersIngreso((prev) => ({
+      ...prev,
       almacenId: almacen ? almacen.id : null,
     }));
+    setFiltersSalida((prev) => ({
+      ...prev,
+      almacen: almacen ? almacen.id : null,
+    }));
+  };
+
+  // PDF Salida
+  const handlePDFOption = () => {
+    if (tablaSalidaRef.current) {
+      tablaSalidaRef.current.generatePDFGeneral();
+    }
   };
 
   return (
     <div>
       <div className="flex justify-between mt-5 mb-4">
-        <h1 className="text-3xl font-bold">
-          Nota de ingreso
-        </h1>
+        <h1 className="text-3xl font-bold">Notas de almacén</h1>
       </div>
       <div className='w-full mb-3 rounded-lg'>
         <table className='w-full text-sm rounded-lg table-auto border-collapse'>
@@ -78,20 +114,43 @@ const Ingresos = () => {
           </tbody>
         </table>
       </div>
-      <FiltrosIngresos
-        almacenes={almacenes}
-        onFiltersChange={handleFiltersChange}
-        onAlmacenChange={handleAlmacenChange}
-        ingresos={ingresos}
-        almacenSseleccionado={almacenSeleccionado}
-      />
-      <div>
-        <RoutePermission idModulo={10} idSubmodulo={10}>
-          <TablaIngresos ingresos={ingresos} />
-        </RoutePermission>
-      </div>
+      <Tabs
+        aria-label="Notas de almacén"
+        color="primary"
+        selectedKey={tabActiva}
+        onSelectionChange={setTabActiva}
+      >
+        <Tab key="ingreso" title="Notas de ingreso">
+          <FiltrosIngresos
+            almacenes={almacenes}
+            onFiltersChange={handleFiltersChange}
+            onAlmacenChange={handleAlmacenChange}
+            ingresos={ingresos}
+            almacenSseleccionado={almacenSeleccionado}
+            tipo="ingreso"
+          />
+          <div>
+            <RoutePermission idModulo={10} idSubmodulo={10}>
+              <TablaNotasAlmacen registros={Array.isArray(ingresos) ? ingresos : []} tipo="ingreso" />
+            </RoutePermission>
+          </div>
+        </Tab>
+        <Tab key="salida" title="Notas de salida">
+          <FiltrosIngresos
+            almacenes={almacenes}
+            onFiltersChange={handleFiltersChange}
+            onAlmacenChange={handleAlmacenChange}
+            ingresos={salidas}
+            almacenSseleccionado={almacenSeleccionado}
+            tipo="salida"
+          />
+          <div>
+            <TablaNotasAlmacen ref={tablaSalidaRef} registros={Array.isArray(salidas) ? salidas : []} tipo="salida" />
+          </div>
+        </Tab>
+      </Tabs>
     </div>
   );
 };
 
-export default Ingresos;
+export default NotasAlmacen;
