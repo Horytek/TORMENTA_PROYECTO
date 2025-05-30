@@ -23,7 +23,7 @@ const getSalidas = async (req, res) => {
               # ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
               COALESCE(u.usua, '') as usuario,
               n.observacion AS observacion,
-              n.hora_creacion, n.fecha_anulacion, n.u_modifica AS u_modifica
+              n.hora_creacion, n.fecha_anulacion, n.u_modifica AS u_modifica,n.nom_nota
           FROM 
               nota n
           LEFT JOIN 
@@ -173,25 +173,43 @@ const getNuevoDocumento = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    const [result] = await connection.query(`
-      SELECT 
-        IFNULL(
-          CONCAT('S400-', LPAD(SUBSTRING(MAX(num_comprobante), 6) + 1, 8, '0')),
-          'S400-00000001'
-        ) AS nuevo_numero_de_nota
-      FROM comprobante
-      WHERE id_tipocomprobante = 7 ;
 
-        `);
-    res.json({ code: 1, data: result, message: "Nuevo numero de nota" });
+    // Buscar el último comprobante de nota de salida (id_tipocomprobante = 7)
+    const [ultimoComprobanteResult] = await connection.query(`
+      SELECT num_comprobante 
+      FROM comprobante 
+      WHERE id_tipocomprobante = 7 
+      ORDER BY num_comprobante DESC 
+      LIMIT 1
+    `);
+
+    let nuevoNumComprobante;
+    if (ultimoComprobanteResult.length > 0) {
+      const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
+      const partes = ultimoNumComprobante.split("-");
+      const serie = partes[0].substring(1); // Quita la "S"
+      const numero = parseInt(partes[1], 10) + 1;
+
+      if (numero > 99999999) {
+        // Si se pasa el límite, aumenta la serie
+        const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
+        nuevoNumComprobante = `S${nuevaSerie}-00000001`;
+      } else {
+        nuevoNumComprobante = `S${serie}-${numero.toString().padStart(8, "0")}`;
+      }
+    } else {
+      // Si no hay comprobantes previos
+      nuevoNumComprobante = "S400-00000001";
+    }
+
+    res.json({ code: 1, data: [{ nuevo_numero_de_nota: nuevoNumComprobante }], message: "Nuevo numero de nota" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    res.status(500).send(error.message);
   } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
-}
+  }
 };
 
 const getDestinatario = async (req, res) => {
@@ -255,8 +273,8 @@ const insertNotaAndDetalle = async (req, res) => {
     // Insertar la nota
     const [notaResult] = await connection.query(
       `INSERT INTO nota 
-      (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario) 
-      VALUES (?, ?, 2, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera) 
+      VALUES (?, ?, 2, ?, ?, ?, ?, ?, 0, ?, ?, 0)`,
       [almacenO, almacenD || null, destinatario, id_comprobante, glosa, fecha, nota, observacion, id_usuario]
     );
 

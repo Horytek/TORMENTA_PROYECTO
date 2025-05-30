@@ -1,4 +1,4 @@
-import { Modal, ModalContent, ModalHeader, ModalBody, Card, CardHeader, CardBody, Avatar, Button, Divider, Chip, Tooltip, ScrollShadow } from "@heroui/react";
+import { Modal, ModalContent, ModalHeader, ModalFooter, ModalBody, Card, CardHeader, CardBody, Avatar, Button, Divider, Chip, Tooltip, ScrollShadow } from "@heroui/react";
 import { ArrowUp,ArrowDown, ShoppingBag, LayoutGrid, Package, Users, TrendingUp, AlertTriangle } from "lucide-react";
 import { RiShoppingBag4Line } from "@remixicon/react";
 import { LuShirt } from "react-icons/lu";
@@ -15,7 +15,13 @@ import { LineChartComponent } from "./LineChart";
 import useNotasPendientes from "./hooks/notas_pendientes";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-
+import { FaExchangeAlt, FaTrashAlt, FaPlusCircle } from "react-icons/fa";
+  // Importa las funciones de registro y anulación
+  // (Asegúrate de que las rutas sean correctas en tu proyecto)
+import { useNavigate } from "react-router-dom";
+import { Info } from "lucide-react";
+import { Toaster, toast } from "react-hot-toast";
+import NotasPendientesModal from "./NotasPendientesModal";
 
 // Card para productos con menor stock
 function StockCard({ productos }) {
@@ -45,6 +51,7 @@ function StockCard({ productos }) {
           {productos.length > 0 ? (
             <ul className="divide-y divide-rose-50 dark:divide-rose-900">
               {productos.map((prod, idx) => {
+                const key = prod.id ? prod.id : `${prod.nombre}-${idx}`;
                 const urgencyLevel = 6 - Number.parseInt(prod.stock);
                 const urgencyColor =
                   urgencyLevel > 4
@@ -59,7 +66,7 @@ function StockCard({ productos }) {
                     ? "warning"
                     : "success";
                 return (
-                  <li key={prod.nombre} className="py-2 flex items-center gap-3">
+                 <li key={key} className="py-2 flex items-center gap-3">
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{prod.nombre}</span>
@@ -184,105 +191,6 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
   );
 }
 
-function NotasPendientesModal({ open, onClose, notas }) {
-  // Separar las notas por tipo
-  const notasFaltaSalida = notas.filter(n => n.tipo === "Falta salida");
-  const notasFaltaIngreso = notas.filter(n => n.tipo === "Falta ingreso");
-
-  // Función para formatear la fecha
-  const formatFecha = (fecha) => {
-    if (!fecha) return "";
-    try {
-      // Intenta parsear la fecha como ISO o yyyy-MM-dd
-      const dateObj = new Date(fecha);
-      if (isNaN(dateObj)) return fecha;
-      return format(dateObj, "dd/MM/yyyy", { locale: es });
-    } catch {
-      return fecha;
-    }
-  };
-
-
-  return (
-    <Modal isOpen={open} onClose={onClose} size="md">
-      <ModalContent>
-        <ModalHeader className="flex items-center gap-2">
-          <AlertTriangle className="text-rose-500" />
-          Notas pendientes
-        </ModalHeader>
-        <ModalBody>
-          <Tabs aria-label="Notas pendientes" variant="underlined" className="mb-2">
-            <Tab key="falta-salida" title="Falta Nota de Salida">
-              {notasFaltaSalida.length === 0 ? (
-                <div className="p-6 text-center text-zinc-500">
-                  No hay notas de ingreso pendientes de salida.
-                </div>
-              ) : (
-                <ScrollShadow hideScrollBar className="max-h-[320px]">
-                  <ul className="divide-y divide-rose-50 dark:divide-rose-900">
-                    {notasFaltaSalida.map((nota) => (
-                      <li key={nota.id_nota} className="py-3 flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                              {nota.documento || "Sin documento"}
-                            </span>
-                            <span className="text-xs text-zinc-400">{formatFecha(nota.fecha)}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-zinc-500">
-                              Origen: <b>{nota.id_almacenO}</b> &rarr; Destino: <b>{nota.id_almacenD}</b>
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-zinc-400">{nota.concepto}</span>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </ScrollShadow>
-              )}
-            </Tab>
-            <Tab key="falta-ingreso" title="Falta Nota de Ingreso">
-              {notasFaltaIngreso.length === 0 ? (
-                <div className="p-6 text-center text-zinc-500">
-                  No hay notas de salida pendientes de ingreso.
-                </div>
-              ) : (
-                <ScrollShadow hideScrollBar className="max-h-[320px]">
-                  <ul className="divide-y divide-rose-50 dark:divide-rose-900">
-                    {notasFaltaIngreso.map((nota) => (
-                      <li key={nota.id_nota} className="py-3 flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                              {nota.documento || "Sin documento"}
-                            </span>
-                            <span className="text-xs text-zinc-400">{formatFecha(nota.fecha)}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-zinc-500">
-                              Origen: <b>{nota.id_almacenO}</b> &rarr; Destino: <b>{nota.id_almacenD}</b>
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-zinc-400">{nota.concepto}</span>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </ScrollShadow>
-              )}
-            </Tab>
-          </Tabs>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
-  );
-}
-
 function useProductosMenorStock(selectedSucursal) {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -362,7 +270,7 @@ function Inicio() {
   const [sucursales, setSucursales] = useState([]);
   const [userRol, setUserRol] = useState(null);
   const [modalNotasOpen, setModalNotasOpen] = useState(false);
-
+  const [isProcessing, setIsProcessing] = useState(false);
   const { productos: productosMenorStock } = useProductosMenorStock(selectedSucursal, selectedTab);
   const { sucursales: sucursalesDesempeno, promedioGeneral } = useDesempenoSucursales(selectedTab, selectedSucursal);
 
@@ -436,9 +344,7 @@ function Inicio() {
 // Busca el id de almacén correspondiente a la sucursal seleccionada
 const almacenId = sucursales.find(s => s.id.toString() === selectedSucursal)?.almacen_n || "%";
 
-const { cantidadPendientes, totalNotas, notasPendientes, loading: loadingPendientes } = useNotasPendientes({
-  almacen: almacenId,
-});
+const { cantidadPendientes, totalNotas, notasPendientes, loading, refetchNotasPendientes } = useNotasPendientes({ almacen: almacenId });
 
 // Calcula el porcentaje de notas pendientes respecto al total de ingresos
 const porcentajePendientes =
@@ -580,11 +486,12 @@ const porcentajePendientes =
                         : "border-rose-200/50 dark:border-rose-800/50"
                     }
                   />
-                  <NotasPendientesModal
-                    open={modalNotasOpen}
-                    onClose={() => setModalNotasOpen(false)}
-                    notas={notasPendientes}
-                  />
+                <NotasPendientesModal
+                  open={modalNotasOpen}
+                  onClose={() => setModalNotasOpen(false)}
+                  notas={notasPendientes}
+                  refetchNotas={refetchNotasPendientes}
+                />
             </div>
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <StockCard productos={productosMenorStock} />

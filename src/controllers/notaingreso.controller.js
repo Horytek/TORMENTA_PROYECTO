@@ -24,7 +24,8 @@ const getIngresos = async (req, res) => {
             n.observacion AS observacion,
             n.hora_creacion,
             n.fecha_anulacion,
-            n.u_modifica AS u_modifica
+            n.u_modifica AS u_modifica,
+            n.nom_nota
         FROM 
             nota n
         LEFT JOIN 
@@ -227,23 +228,46 @@ const getProductos_SinStock = async (req, res) => {
 
 
 
-  const getNuevoDocumento = async (req, res) => {
-    let connection;
-    try {
-        connection = await getConnection();
-        const [result] = await connection.query(`
-            SELECT CONCAT('I400-', LPAD(COALESCE(SUBSTRING(MAX(num_comprobante), 6) + 1, 1), 8, '0')) AS nuevo_numero_de_nota
-            FROM comprobante
-            WHERE id_tipocomprobante = 6;
-        `);
-        res.json({ code: 1, data: result, message: "Nuevo numero de nota" });
-    } catch (error) {
-        res.status(500);
-        res.send(error.message);
-    } finally {
-      if (connection) {
-          connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+const getNuevoDocumento = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+
+    // Buscar el último comprobante de nota de ingreso (id_tipocomprobante = 6)
+    const [ultimoComprobanteResult] = await connection.query(`
+      SELECT num_comprobante 
+      FROM comprobante 
+      WHERE id_tipocomprobante = 6 
+      ORDER BY num_comprobante DESC 
+      LIMIT 1
+    `);
+
+    let nuevoNumComprobante;
+    if (ultimoComprobanteResult.length > 0) {
+      const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
+      const partes = ultimoNumComprobante.split("-");
+      const serie = partes[0].substring(1); // Quita la "I"
+      const numero = parseInt(partes[1], 10) + 1;
+
+      if (numero > 99999999) {
+        // Si se pasa el límite, aumenta la serie
+        const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
+        nuevoNumComprobante = `I${nuevaSerie}-00000001`;
+      } else {
+        nuevoNumComprobante = `I${serie}-${numero.toString().padStart(8, "0")}`;
       }
+    } else {
+      // Si no hay comprobantes previos
+      nuevoNumComprobante = "I400-00000001";
+    }
+
+    res.json({ code: 1, data: [{ nuevo_numero_de_nota: nuevoNumComprobante }], message: "Nuevo numero de nota" });
+  } catch (error) {
+    res.status(500).send(error.message);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
@@ -337,8 +361,8 @@ const insertNotaAndDetalle = async (req, res) => {
 if (almacenO) {
   [notaResult] = await connection.query(
     `INSERT INTO nota 
-    (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario) 
-    VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ? , ?)`,
+    (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera) 
+    VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ? , ?, 0)`,
     [
       almacenO,
       almacenD,
@@ -354,8 +378,8 @@ if (almacenO) {
 } else {
   [notaResult] = await connection.query(
     `INSERT INTO nota 
-    (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario) 
-    VALUES (null, ?, 1, ?, ?, ?, ?, ?, 0, ?, ?)`,
+    (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera) 
+    VALUES (null, ?, 1, ?, ?, ?, ?, ?, 0, ?, ?, 0)`,
     [
       almacenD,
       destinatario,

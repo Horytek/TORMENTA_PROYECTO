@@ -1,6 +1,6 @@
 import axios from "@/api/axios";
 
-const anularNota = async (notaId) => {
+const anularNotaSalida = async (notaId) => {
   const usuario = localStorage.getItem('usuario'); // Obtiene el usuario actual
 
   try {
@@ -21,4 +21,4 @@ const anularNota = async (notaId) => {
   }
 };
 
-export default anularNota;
+export default anularNotaSalida;

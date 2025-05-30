@@ -11,5 +11,5 @@ router.get("/comparacion_ventas", dashboardController.getComparacionVentasPorRan
 router.get("/usuarioRol", dashboardController.getUserRolController);
 router.get("/ventas_por_sucursal", dashboardController.getVentasPorSucursalPeriodo);
 router.get("/notas_pendientes", dashboardController.getNotasPendientes);
-
+router.post("/actualizar_espera", dashboardController.actualizarEstadoEspera);
 export default router;

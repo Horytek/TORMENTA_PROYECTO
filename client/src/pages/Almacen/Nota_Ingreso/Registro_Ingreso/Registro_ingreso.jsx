@@ -169,9 +169,8 @@ function Registro_Ingresos() {
       }));
 
       // Ajustar la fecha con la zona horaria local
-      const localDate = new Date(fecha);
-      const tzOffset = localDate.getTimezoneOffset() * 60000;
-      const fechaISO = new Date(localDate.getTime() - tzOffset).toISOString().slice(0, 19).replace('T', ' ');
+          const now = new Date();
+          const fechaISO = now.toISOString().slice(0, 19).replace('T', ' ');
 
       // Datos para ingreso
       const dataIngreso = {

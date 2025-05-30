@@ -16,6 +16,7 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo }, ref) => {
   const [empresaData, setEmpresaData] = useState(null);
   const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
   const [selectedObservation, setSelectedObservation] = useState("");
+  const [selectedNota, setSelectedNota] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
@@ -222,30 +223,57 @@ const handleRowClick = (id) => {
     window.open(`/almacen/kardex/historico/${id}`, '_blank');
   };
 
-  const handleObservationClick = (observacion) => {
-    setSelectedObservation(observacion);
-    setIsObservationModalOpen(true);
-  };
+const handleObservationClick = (nota) => {
+  setSelectedNota(nota);
+  setIsObservationModalOpen(true);
+};
 
-  const getCurrentPageItems = () => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return registros.slice(startIndex, endIndex);
-  };
+const getCurrentPageItems = () => {
+  // Ordenar por fecha (desc), hora_creacion (desc), y documento (desc)
+  const registrosOrdenados = [...registros].sort((a, b) => {
+    // Fecha descendente
+    if (a.fecha !== b.fecha) {
+      return new Date(b.fecha) - new Date(a.fecha);
+    }
+    // Hora descendente
+    if (a.hora_creacion !== b.hora_creacion) {
+      if (!a.hora_creacion) return 1;
+      if (!b.hora_creacion) return -1;
+      return b.hora_creacion.localeCompare(a.hora_creacion);
+    }
+    // Número de comprobante descendente (asumiendo formato tipo "I400-00000001")
+    if (a.documento && b.documento) {
+      return b.documento.localeCompare(a.documento, undefined, { numeric: true });
+    }
+    return 0;
+  });
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return registrosOrdenados.slice(startIndex, endIndex);
+};
 
   const totalPages = Math.ceil(registros.length / itemsPerPage);
 
-  // Columnas
-const columns = [
-  { key: 'fecha', label: 'FECHA' },
-  { key: 'documento', label: 'DOCUMENTO' },
-  { key: 'proveedor', label: tipo === 'ingreso' ? 'PROVEEDOR' : 'DESTINATARIO' },
-  { key: 'concepto', label: 'CONCEPTO' },
-  ...(tipo === 'ingreso' ? [{ key: 'almacen_D', label: 'ALMACÉN DESTINO' }] : []),
-  { key: 'estado', label: 'ESTADO' },
-  { key: 'usuario', label: 'USUARIO' },
-  { key: 'acciones', label: 'ACCIONES' }
-];
+  // Columnas dinámicas según tipo
+  const columns = [
+    { key: 'fecha', label: 'FECHA' },
+    { key: 'documento', label: 'DOCUMENTO' },
+    { key: 'proveedor', label: tipo === 'ingreso' ? 'PROVEEDOR' : 'DESTINATARIO' },
+    { key: 'concepto', label: 'CONCEPTO' },
+    ...(tipo === 'ingreso'
+      ? [
+          { key: 'almacen_O', label: 'ALMACÉN ORIGEN' },
+          { key: 'almacen_D', label: 'ALMACÉN DESTINO' }
+        ]
+      : [
+          { key: 'almacen_O', label: 'ALMACÉN ORIGEN' },
+          { key: 'almacen_D', label: 'ALMACÉN DESTINO' }
+        ]),
+    { key: 'estado', label: 'ESTADO' },
+    { key: 'usuario', label: 'USUARIO' },
+    { key: 'acciones', label: 'ACCIONES' }
+  ];
 
   return (
 <div className="flex flex-col bg-white rounded-lg p-4">
@@ -275,11 +303,11 @@ const columns = [
             return (
               <TableCell>
                 <div className="flex gap-2">
-                  <FaEye
-                    className="text-blue-600 cursor-pointer"
-                    onClick={() => handleObservationClick(nota.observacion)}
-                    title="Ver Observación"
-                  />
+                <FaEye
+                  className="text-blue-600 cursor-pointer"
+                  onClick={() => handleObservationClick(nota)}
+                  title="Ver Observación"
+                />
                   <FaFilePdf
                     className={`${hasGeneratePermission ? "text-red-600 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
                     onClick={(e) => {
@@ -373,6 +401,13 @@ const columns = [
               </TableCell>
             );
           }
+            // Almacenes
+                    if (columnKey === "almacen_O") {
+                      return <TableCell>{nota.almacen_O || "-"}</TableCell>;
+                    }
+                    if (columnKey === "almacen_D") {
+                      return <TableCell>{nota.almacen_D || "-"}</TableCell>;
+                    }
           // Para columnas normales
           return <TableCell>{getKeyValue(nota, columnKey)}</TableCell>;
         }}
@@ -380,17 +415,26 @@ const columns = [
     )}
   </TableBody>
 </Table>
-          <Modal isOpen={isObservationModalOpen} onClose={() => setIsObservationModalOpen(false)}>
-            <ModalContent>
-              <ModalHeader>Observación</ModalHeader>
-              <ModalBody>
-                <p>{selectedObservation || "Sin observación"}</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button onPress={() => setIsObservationModalOpen(false)}>Cerrar</Button>
-              </ModalFooter>
-            </ModalContent>
-          </Modal>
+<Modal isOpen={isObservationModalOpen} onClose={() => setIsObservationModalOpen(false)}>
+  <ModalContent>
+    <ModalHeader>Observación</ModalHeader>
+    <ModalBody>
+      <div>
+        <div className="mb-2">
+          <span className="font-semibold text-gray-700">Nombre de nota: </span>
+          <span className="text-blue-700 font-semibold">{selectedNota?.nom_nota || "Sin nombre"}</span>
+        </div>
+        <div>
+          <span className="font-semibold text-gray-700">Observación: </span>
+          <span>{selectedNota?.observacion || "Sin observación"}</span>
+        </div>
+      </div>
+    </ModalBody>
+    <ModalFooter>
+      <Button onPress={() => setIsObservationModalOpen(false)}>Cerrar</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
         </div>
 {expandedRow && (
   <div

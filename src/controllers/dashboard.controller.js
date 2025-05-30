@@ -588,7 +588,7 @@ export const getNotasPendientes = async (req, res) => {
     // 1. Obtener notas de ingreso y salida con sus detalles
     const [ingresos] = await connection.query(
       `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
-              dn.id_producto, dn.cantidad
+              dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
        FROM nota n
        INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
        INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
@@ -597,7 +597,7 @@ export const getNotasPendientes = async (req, res) => {
     );
     const [salidas] = await connection.query(
       `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
-              dn.id_producto, dn.cantidad
+              dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
        FROM nota n
        INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
        INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
@@ -605,9 +605,26 @@ export const getNotasPendientes = async (req, res) => {
       [almacenIds]
     );
 
+    // Obtener detalles para todos los id_nota involucrados
+    const allNotasIds = [
+      ...new Set([...ingresos.map(n => n.id_nota), ...salidas.map(n => n.id_nota)])
+    ];
+    let detallesNotas = [];
+    if (allNotasIds.length > 0) {
+      const [detalles] = await connection.query(
+        `SELECT id_nota, id_producto, cantidad FROM detalle_nota WHERE id_nota IN (?)`,
+        [allNotasIds]
+      );
+      detallesNotas = detalles;
+    }
+
+    // Helper para obtener detalles por id_nota
+    const getDetalles = (id_nota) =>
+      detallesNotas.filter(d => d.id_nota === id_nota);
+
     // 2. Buscar ingresos sin salida (por producto y cantidad)
     const pendientesIngreso = ingresos.filter(ing =>
-      // Si el almacen de origen es null o 0, no es pendiente
+      ing.estado_espera === 0 && // <-- Solo estado_espera 0
       (ing.id_almacenO !== null && ing.id_almacenO !== 0) &&
       !salidas.some(sal =>
         sal.id_almacenO === ing.id_almacenO &&
@@ -619,6 +636,7 @@ export const getNotasPendientes = async (req, res) => {
     );
     // 3. Buscar salidas sin ingreso (por producto y cantidad)
     const pendientesSalida = salidas.filter(sal =>
+      sal.estado_espera === 0 && // <-- Solo estado_espera 0
       !ingresos.some(ing =>
         ing.id_almacenO === sal.id_almacenO &&
         ing.id_almacenD === sal.id_almacenD &&
@@ -630,11 +648,39 @@ export const getNotasPendientes = async (req, res) => {
 
     // 4. Unir ambos resultados
     const pendientes = [
-      ...pendientesIngreso.map(n => ({ ...n, tipo: "Falta salida" })),
-      ...pendientesSalida.map(n => ({ ...n, tipo: "Falta ingreso" })),
+      ...pendientesIngreso.map(n => ({
+        ...n,
+        tipo: "Falta salida",
+        detalles: getDetalles(n.id_nota)
+      })),
+      ...pendientesSalida.map(n => ({
+        ...n,
+        tipo: "Falta ingreso",
+        detalles: getDetalles(n.id_nota)
+      })),
     ];
 
     res.json({ code: 1, data: pendientes, message: "Notas pendientes obtenidas correctamente" });
+  } catch (error) {
+    res.status(500).json({ code: 0, message: error.message });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const actualizarEstadoEspera = async (req, res) => {
+  const { num_comprobante } = req.body;
+  if (!num_comprobante) {
+    return res.status(400).json({ code: 0, message: "Falta el num_comprobante" });
+  }
+  let connection;
+  try {
+    connection = await getConnection();
+    await connection.query(
+      "UPDATE nota n INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante SET n.estado_espera = 1 WHERE c.num_comprobante = ?",
+      [num_comprobante]
+    );
+    res.json({ code: 1, message: "estado_espera actualizado correctamente" });
   } catch (error) {
     res.status(500).json({ code: 0, message: error.message });
   } finally {
@@ -651,5 +697,6 @@ export const methods = {
   getUsuarioRol,
   getUserRolController,
   getVentasPorSucursalPeriodo,
-  getNotasPendientes
+  getNotasPendientes,
+  actualizarEstadoEspera
 };

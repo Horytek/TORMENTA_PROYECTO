@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "@/api/axios";
 
 /**
@@ -11,37 +11,37 @@ function useNotasPendientes({ idSucursal = null }) {
   const [notasPendientes, setNotasPendientes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchNotasPendientes = async () => {
-      setLoading(true);
-      try {
-        const params = {};
-        if (idSucursal) params.id_sucursal = idSucursal;
+  const fetchNotasPendientes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (idSucursal) params.id_sucursal = idSucursal;
 
-        const response = await axios.get("/dashboard/notas_pendientes", { params });
-        if (response.data.code === 1) {
-          const pendientes = response.data.data || [];
-          setNotasPendientes(pendientes);
-          setCantidadPendientes(pendientes.length);
-          setTotalNotas(pendientes.length); // Puedes cambiar esto si quieres mostrar el total de ingresos/salidas
-        } else {
-          setNotasPendientes([]);
-          setCantidadPendientes(0);
-          setTotalNotas(0);
-        }
-      } catch (error) {
+      const response = await axios.get("/dashboard/notas_pendientes", { params });
+      if (response.data.code === 1) {
+        const pendientes = response.data.data || [];
+        setNotasPendientes(pendientes);
+        setCantidadPendientes(pendientes.length);
+        setTotalNotas(pendientes.length); // Puedes cambiar esto si quieres mostrar el total de ingresos/salidas
+      } else {
         setNotasPendientes([]);
         setCantidadPendientes(0);
         setTotalNotas(0);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchNotasPendientes();
+    } catch (error) {
+      setNotasPendientes([]);
+      setCantidadPendientes(0);
+      setTotalNotas(0);
+    } finally {
+      setLoading(false);
+    }
   }, [idSucursal]);
 
-  return { cantidadPendientes, totalNotas, notasPendientes, loading };
+  useEffect(() => {
+    fetchNotasPendientes();
+  }, [fetchNotasPendientes]);
+
+  return { cantidadPendientes, totalNotas, notasPendientes, loading, refetchNotasPendientes: fetchNotasPendientes };
 }
 
 export default useNotasPendientes;
