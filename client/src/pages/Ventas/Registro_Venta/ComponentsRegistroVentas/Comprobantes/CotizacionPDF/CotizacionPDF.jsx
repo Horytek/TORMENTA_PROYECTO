@@ -5,6 +5,7 @@ import QRCode from 'qrcode.react';
 import PropTypes from 'prop-types';
 import NumeroALetras from '../../../../../../utils/ConvertidorDeNumALetras';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { useUserStore } from "@/store/useStore";
 
 const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     const { detalles, fecha, total_t, igv, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
@@ -16,8 +17,8 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
         const publicPdfUrl = "https://www.facebook.com/profile.php?id=100055385846115";
         setPdfUrl(publicPdfUrl);
     };
-
-    const sur = localStorage.getItem('sur');
+    const nombre = useUserStore((state) => state.nombre);
+    const sur = useUserStore((state) => state.sur);
 
     const formatHours = () => {
         const now = new Date();
@@ -30,7 +31,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     useEffect(() => {
         const fetchEmpresaData = async () => {
             try {
-                const data = await getEmpresaDataByUser();
+                const data = await getEmpresaDataByUser(nombre);
                 setEmpresaData(data); // Establecer los datos de la empresa en el estado
             } catch (error) {
                 console.error("Error al obtener los datos de la empresa:", error);
@@ -41,7 +42,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
         setCurrentDate(formatHours(today));
         generatePDF();
         fetchEmpresaData(); // Llamar a la función para obtener los datos de la empresa
-    }, []);
+    }, [nombre]);
 
     return (
         <div ref={ref} className="p-5 text-sm leading-6 font-sans w-[800px]">

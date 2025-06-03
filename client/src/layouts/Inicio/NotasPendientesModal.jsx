@@ -15,11 +15,14 @@ import { Tabs, Tab, Select, SelectItem } from "@heroui/react";
 import useDocumentoData from '@/pages/Almacen/Nota_Ingreso/data/data_documento_ingreso';
 import useDocumentoData_S from '@/pages/Almacen/Nota_Salida/data/data_documento_salida';
 import useActualizarEspera from './hooks/actualizar_espera';
+import { useUserStore } from "@/store/useStore";
 
 function NotasPendientesModal({ open, onClose, notas, refetchNotas }) {
   // Separar las notas por tipo
   const notasFaltaSalida = notas.filter(n => n.tipo === "Falta salida");
   const notasFaltaIngreso = notas.filter(n => n.tipo === "Falta ingreso");
+
+  const nombre = useUserStore((state) => state.nombre);
 
   // Obtener nuevo número de comprobante y fecha actual
   const { documentos: documentosIngreso } = useDocumentoData();
@@ -59,7 +62,7 @@ const handleRegistrarContraparte = async (nota) => {
     let result;
     const productos = nota.detalles?.map(d => d.id_producto) || [nota.id_producto];
     const cantidades = nota.detalles?.map(d => d.cantidad) || [nota.cantidad];
-    const nombre_u = localStorage.getItem("usuario");
+    const nombre_u = nombre;
 
     if (!nota.id_destinatario) {
       toast.error("La nota no tiene destinatario asignado. No se puede registrar la contraparte.");
@@ -135,7 +138,7 @@ const handleRegistrarTodasContrapartes = async (notasFiltradas) => {
     let result = null;
     const productos = nota.detalles?.map(d => d.id_producto) || [nota.id_producto];
     const cantidades = nota.detalles?.map(d => d.cantidad) || [nota.cantidad];
-    const nombre_u = localStorage.getItem("usuario");
+    const nombre_u = nombre;
 
     if (!nota.id_destinatario || !productos.length || !cantidades.length) {
       toast.error("Datos incompletos en una nota. Se omite.");

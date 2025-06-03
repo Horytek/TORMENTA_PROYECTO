@@ -6,6 +6,8 @@ import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Check
 import { handleSunat } from '../../../Data/add_sunat';
 import { handleSunatPDF } from '../../../Data/data_pdf';
 import { handleUpdate } from '../../../Data/update_venta';
+import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
+import { useUserStore } from "@/store/useStore";
 
 const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetchVentas }) => {
   const [sendToSunat, setSendToSunat] = useState(false);
@@ -13,33 +15,19 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
   const [isDeleted, setIsDeleted] = useState(false);
   const [isDeleted1, setIsDeleted1] = useState(false);
   const [generatePdfSelected, setGeneratePdfSelected] = useState(false);
-  const ver_rol = localStorage.getItem('rol');
-  
-  const loadDetallesFromLocalStorage2 = () => {
-    const savedDetalles = localStorage.getItem('ventas');
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
-  };
 
-  const d_venta = loadDetallesFromLocalStorage2();
+  // Zustand: obtener datos seleccionados
+  const d_venta = useVentaSeleccionadaStore((state) => state.venta) || {};
+  const detalles = useVentaSeleccionadaStore((state) => state.detalles) || [];
+  const datos_precio = useVentaSeleccionadaStore((state) => state.venta) || {};
 
-  const loadDetallesFromLocalStorage = () => {
-    const savedDetalles = localStorage.getItem('new_detalle');
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
-  };
-  const detalles = loadDetallesFromLocalStorage();
-
-  const loadDetallesFromLocalStorage1 = () => {
-    const savedDetalles = localStorage.getItem('ventas');
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
-  };
-  const datos_precio = loadDetallesFromLocalStorage1();
+  // Rol desde Zustand
+  const ver_rol = useUserStore((state) => state.rol);
 
   const handleCheckboxChange = (option) => {
     if (option === 'sendToSunat') {
-      // Toggle the current option state
       const newState = !sendToSunat;
       setSendToSunat(newState);
-      // Only reset others if this one is being turned on
       if (newState) {
         setDeleteOptionSelected(false);
         setGeneratePdfSelected(false);
@@ -97,7 +85,7 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
   }, [isDeleted, isDeleted1, refetchVentas]);
 
   const handleDeleteVenta = () => {
-    // Lógica para eliminar la venta
+    // Lógica para eliminar la venta (puedes implementarla aquí o recibirla por props)
   };
 
   return (
@@ -105,7 +93,6 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
       isOpen={modalOpen} 
       onClose={closeModal}
       placement="center"
-      
     >
       <ModalContent className="bg-white rounded-lg">
         <ModalHeader className="flex items-center gap-2 border-b pb-2">

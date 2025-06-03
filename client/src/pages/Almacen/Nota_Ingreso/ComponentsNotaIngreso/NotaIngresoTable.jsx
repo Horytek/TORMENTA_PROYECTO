@@ -11,6 +11,7 @@ import html2pdf from 'html2pdf.js';
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";
+import { useUserStore } from "@/store/useStore";
 
 const TablaNotasAlmacen = forwardRef(({ registros = [], tipo }, ref) => {
   const [empresaData, setEmpresaData] = useState(null);
@@ -23,11 +24,12 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo }, ref) => {
   const [notaIdToAccion, setNotaIdToAccion] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+   const nombre = useUserStore((state) => state.nombre); // Obtiene el nombre del usuario actual
 
   useEffect(() => {
     const fetchEmpresaData = async () => {
       try {
-        const data = await getEmpresaDataByUser();
+        const data = await getEmpresaDataByUser(nombre);
         setEmpresaData(data);
       } catch (error) {
         setEmpresaData(null);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import TablaLibro from './ComponentsLibroVentas/TablaLibro';
 import ExportarExcel from './ComponentsLibroVentas/ExportarExcel';
 import FiltroLibro from './ComponentsLibroVentas/FiltroLibro';
@@ -8,18 +8,9 @@ const LibroVentas = () => {
     const [filters, setFilters] = useState({
         startDate: null,
         endDate: null,
-        tipoComprobante: null,
+        tipoComprobante: [],
         idSucursal: null,
     });
-
-    useEffect(() => {
-        // Recuperar los filtros desde localStorage cuando el componente se monta
-        const savedFilters = JSON.parse(localStorage.getItem("filters"));
-        if (savedFilters) {
-            setFilters(savedFilters);
-        }
-    }, []);
-    
 
     const {
         ventas,
@@ -32,13 +23,12 @@ const LibroVentas = () => {
         changePage,
         changeLimit,
         refetch,
-    } = useLibroVentasSunatData(filters); // Pasamos filters al hook
+    } = useLibroVentasSunatData(filters);
 
     // Método para manejar los filtros aplicados
     const handleFilter = (newFilters) => {
-        setFilters(newFilters); // Actualizamos el estado de los filtros
-        localStorage.setItem("filters", JSON.stringify(newFilters)); // Guardamos los filtros en localStorage
-        refetch(1, limit, newFilters); // Recargamos los datos con los nuevos filtros
+        setFilters(newFilters);
+        refetch(1, limit, newFilters);
     };
 
     return (
@@ -65,7 +55,7 @@ const LibroVentas = () => {
                 <ExportarExcel />
             </div>
             <div className="border-t border-default-200 mb-4" style={{ marginTop: "20px" }}>
-                <FiltroLibro onFilter={handleFilter} filters={filters} />  {/* Pasamos los filtros como props */}
+                <FiltroLibro onFilter={handleFilter} filters={filters} />
             </div>
             <TablaLibro
                 ventas={ventas}
@@ -81,7 +71,5 @@ const LibroVentas = () => {
         </div>
     );
 };
-
-
 
 export default LibroVentas;

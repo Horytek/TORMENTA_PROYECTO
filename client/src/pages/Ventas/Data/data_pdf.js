@@ -2,6 +2,7 @@ import axios from 'axios';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
+import { useUserStore } from "@/store/useStore";
 /*
 // Función para obtener la última venta del mismo tipo de comprobante y calcular el correlativo
 const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
@@ -100,7 +101,8 @@ export const handleSunatPDF = async (venta,detalles) => {
     // Iterar sobre cada venta y enviarla a SUNAT
         // Obtener los detalles de la venta
             // Obtener los datos de la empresa
-    const empresaData = await getEmpresaDataByUser();
+    const nombre = useUserStore((state) => state.nombre);
+    const empresaData = await getEmpresaDataByUser(nombre);
 
         // Calcular el monto total considerando que los precios ya incluyen IGV
         const totalGravada = detalles.reduce((acc, detalle) => {

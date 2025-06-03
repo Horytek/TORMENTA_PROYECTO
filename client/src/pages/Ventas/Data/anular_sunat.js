@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
-
+import { useUserStore } from "@/store/useStore";
 // ==========================
 // Función para formatear fechas
 // ==========================
@@ -27,8 +27,9 @@ function convertDateToDesiredFormat(dateString, offsetHours) {
 export const anularVentaEnSunatF = async (ventaData) => {
   try {
     const url = 'https://facturacion.apisperu.com/api/v1/voided/send';
-    const token = await getClaveSunatByUser();
-    const empresaData = await getEmpresaDataByUser();
+    const nombre = useUserStore((state) => state.nombre);
+    const token = await getClaveSunatByUser(nombre);
+    const empresaData = await getEmpresaDataByUser(nombre);
 
     const isoDate = ventaData.fechaEmision;
     const localDate = new Date().toISOString().slice(0, 10);
@@ -94,8 +95,9 @@ export const anularVentaEnSunatF = async (ventaData) => {
 export const anularVentaEnSunatB = async (ventaData, detalles) => {
   try {
     const url = 'https://facturacion.apisperu.com/api/v1/summary/send';
-    const token = await getClaveSunatByUser();
-    const empresaData = await getEmpresaDataByUser();
+    const nombre = useUserStore((state) => state.nombre);
+    const token = await getClaveSunatByUser(nombre);
+    const empresaData = await getEmpresaDataByUser(nombre);
 
     const isoDate = ventaData.fechaEmision;
     const localDate = new Date().toISOString().slice(0, 10);

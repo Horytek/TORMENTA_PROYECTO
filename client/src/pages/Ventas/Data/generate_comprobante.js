@@ -1,10 +1,13 @@
 //import axios from 'axios';
 import axios from "../../../api/axios";
+import { useUserStore } from "@/store/useStore";
+
 const generateComprobanteNumber = async (id_comprobante) => {
   try {
     // Hacer la solicitud GET
+    const nombre = useUserStore((state) => state.nombre);
     const response = await axios.get('/ventas/numero_comprobante', {
-          params: { id_comprobante, usuario: localStorage.getItem('usuario') }
+          params: { id_comprobante, usuario: nombre }
         });
     // Suponiendo que la respuesta es un objeto con un campo 'nuevoNumComprobante'
     const nuevoNumComprobante = response.data.nuevoNumComprobante;

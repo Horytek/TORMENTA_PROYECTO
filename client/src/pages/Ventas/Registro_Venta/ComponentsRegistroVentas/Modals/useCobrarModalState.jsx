@@ -4,6 +4,7 @@ import useProductosData from '../../../Data/data_producto_venta';
 import useSucursalData from '../../../Data/data_sucursal_venta';
 import { useLastData } from '../../../Data/getLastVenta';
 import generateComprobanteNumber from '../../../Data/generate_comprobante';
+import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 
 const useCobrarModalState = () => {
   const { productos } = useProductosData();
@@ -31,11 +32,9 @@ const useCobrarModalState = () => {
   const [nombreCliente, setNombreCliente] = useState('');
   const [direccionCliente, setDireccionCliente] = useState('');
 
-  const loadDetallesFromLocalStorage = () => {
-    const savedDetalles = localStorage.getItem('detalles');
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
-  };
-  const detalles = loadDetallesFromLocalStorage();
+  // Zustand: detalles y comprobante globales
+  const detalles = useVentaSeleccionadaStore((state) => state.detalles);
+  const setComprobante1 = useVentaSeleccionadaStore((state) => state.setComprobante1);
 
   const options = [
     { key: 'EFECTIVO', value: 'EFECTIVO', label: 'EFECTIVO' },
@@ -59,18 +58,15 @@ const useCobrarModalState = () => {
 
   const fetchComprobanteNumber = async () => {
     try {
-      const comprobante_pago = JSON.parse(localStorage.getItem('comprobante')) || {};
-      const comp = comprobante_pago.comprobante_pago;
-
+      const comp = comprobante_pago;
       if (!comp) {
         console.warn('El valor de comp no es válido:', comp);
         return;
       }
-
       const nuevoNumComprobante = await generateComprobanteNumber(comp);
       SetSerie(nuevoNumComprobante.substring(1, nuevoNumComprobante.indexOf('-')));
       SetNum(nuevoNumComprobante.substring(nuevoNumComprobante.indexOf('-') + 1));
-      localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante }));
+      setComprobante1({ nuevoNumComprobante }); // Guardar en Zustand
     } catch (error) {
       console.error('Error al obtener el número de comprobante:', error);
     }

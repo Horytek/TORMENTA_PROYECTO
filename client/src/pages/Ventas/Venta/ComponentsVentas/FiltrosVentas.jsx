@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { MdAddCircleOutline, MdOutlineRealEstateAgent } from "react-icons/md";
-import {DateRangePicker} from "@nextui-org/date-picker";
+import { DateRangePicker } from "@nextui-org/date-picker";
 import useComprobanteData from "../../Data/data_comprobante_venta";
 import useSucursalData from "../../Data/data_sucursal_venta";
 import { parseDate } from "@internationalized/date";
@@ -14,10 +14,11 @@ import { handleSunatMultiple } from "../../Data/add_sunat_multiple";
 import { handleUpdateMultiple } from "../../Data/update_venta_multiple";
 import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
-import PDFModal from "../hook/PDFModal"; 
+import PDFModal from "../hook/PDFModal";
 import { usePermisos } from '@/routes';
 import { Button } from "@heroui/button";
-
+import { useUserStore } from "@/store/useStore";
+import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 
 const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const { comprobantes } = useComprobanteData();
@@ -31,78 +32,82 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   });
   const [tempValue, setTempValue] = useState(value);
   const [razon, setRazon] = useState("");
-   const [numC, setNumC] = useState("");
-   const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
-   const ver_rol = localStorage.getItem('rol');
+  const [numC, setNumC] = useState("");
+  const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
 
-   const handleChange = (event) => {
-     setRazon(event.target.value);
-   };
- 
-   const { hasCreatePermission } = usePermisos();
-   const navigate = useNavigate();
+  // Zustand
+  const rol = useUserStore((state) => state.rol);
+  const sur = useUserStore((state) => state.sur);
+  const total_ventas = useVentaSeleccionadaStore((state) => state.total_ventas);
+  const setTotalVentas = useVentaSeleccionadaStore((state) => state.setTotalVentas);
 
-    const handleChanger = (event) => {
-     setNumC(event.target.value);
-   };
- 
-   const handleDateChange = (newValue) => {
-     if (newValue.start && newValue.end) {
-       setValue(newValue);
-       setTempValue(newValue);
-     } else {
-       setTempValue(newValue);
-     }
-   };
- 
-   useEffect(() => {
-     const date_i = new Date(
-       value.start.year,
-       value.start.month - 1,
-       value.start.day
-     );
-     const fecha_i = `${date_i.getFullYear()}-${String(
-       date_i.getMonth() + 1
-     ).padStart(2, "0")}-${String(date_i.getDate()).padStart(2, "0")}`;
- 
-     const date_e = new Date(value.end.year, value.end.month - 1, value.end.day);
-     const fecha_e = `${date_e.getFullYear()}-${String(
-       date_e.getMonth() + 1
-     ).padStart(2, "0")}-${String(date_e.getDate()).padStart(2, "0")}`;
- 
-     const filtros = {
-       comprobanteSeleccionado,
-       sucursalSeleccionado,
-       fecha_i,
-       fecha_e,
-       razon,
-       numC,
-     };
- 
-     onFiltersChange(filtros);
-     localStorage.setItem("filtros", JSON.stringify(filtros));
-   }, [
-     comprobanteSeleccionado,
-     sucursalSeleccionado,
-     value,
-     razon,
-     numC,
-     onFiltersChange,
-   ]);
- 
+  const handleChange = (event) => {
+    setRazon(event.target.value);
+  };
 
-  const loadDetallesFromLocalStorage = () => {
-    const savedDetalles = localStorage.getItem("total_ventas");
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
+  const { hasCreatePermission } = usePermisos();
+  const navigate = useNavigate();
+
+  const handleChanger = (event) => {
+    setNumC(event.target.value);
+  };
+
+  const handleDateChange = (newValue) => {
+    if (newValue.start && newValue.end) {
+      setValue(newValue);
+      setTempValue(newValue);
+    } else {
+      setTempValue(newValue);
+    }
+  };
+
+  useEffect(() => {
+    const date_i = new Date(
+      value.start.year,
+      value.start.month - 1,
+      value.start.day
+    );
+    const fecha_i = `${date_i.getFullYear()}-${String(
+      date_i.getMonth() + 1
+    ).padStart(2, "0")}-${String(date_i.getDate()).padStart(2, "0")}`;
+
+    const date_e = new Date(value.end.year, value.end.month - 1, value.end.day);
+    const fecha_e = `${date_e.getFullYear()}-${String(
+      date_e.getMonth() + 1
+    ).padStart(2, "0")}-${String(date_e.getDate()).padStart(2, "0")}`;
+
+    const filtros = {
+      comprobanteSeleccionado,
+      sucursalSeleccionado,
+      fecha_i,
+      fecha_e,
+      razon,
+      numC,
+    };
+
+    onFiltersChange(filtros);
+    // No uses localStorage.setItem("filtros", ...)
+    // Si necesitas persistencia entre sesiones, usa Zustand persist o Context persist
+  }, [
+    comprobanteSeleccionado,
+    sucursalSeleccionado,
+    value,
+    razon,
+    numC,
+    onFiltersChange,
+  ]);
+
+  // Reemplaza loadDetallesFromLocalStorage por Zustand
+  const loadDetallesFromStore = () => {
+    return total_ventas || [];
   };
 
   const handleAccept = () => {
-    const d_ventas = loadDetallesFromLocalStorage();
+    const d_ventas = loadDetallesFromStore();
     const ventas_new = d_ventas.filter(
       (venta) => venta.estado === "En proceso" && venta.tipoComprobante !== "Nota"
     );
-    localStorage.setItem("d_new", JSON.stringify(ventas_new));
-
+    // No uses localStorage.setItem("d_new", ...)
     if (ventas_new.length === 0) {
       toast.error(
         "Todas las ventas de esta paginación ya han sido enviadas a la Sunat."
@@ -117,7 +122,6 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     handleSunatMultiple(ventas_new);
     handleUpdateMultiple(ventas_new);
 
-    // Actualizamos el estado para que React maneje los cambios
     setIsDeleted(true);
     toast.dismiss(loadingToastId);
     toast.success("Los datos se han enviado con éxito!");
@@ -194,7 +198,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
               style={{ width: "170px" }}
               value={sucursalSeleccionado}
               onChange={(e) => setSucursalSeleccionado(e.target.value)}
-              defaultSelectedKeys={[ver_rol != 1 ? localStorage.getItem('sur') : sucursalSeleccionado]}
+              defaultSelectedKeys={[rol !== 1 ? sur : sucursalSeleccionado]}
             >
               {sucursales.map((sucursal) => (
                 <SelectItem key={sucursal.nombre} value={sucursal.nombre}>
@@ -241,7 +245,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
               </DropdownMenu>
             </Dropdown>
           </button>
-          
+
           {hasCreatePermission ? (
             <Button
               color="primary"

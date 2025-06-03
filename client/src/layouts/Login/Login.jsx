@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaRegBuilding, FaEyeSlash } from "react-icons/fa";
-
+import { useUserStore } from "@/store/useStore";
 import {
   Card,
   CardHeader,
@@ -21,6 +21,9 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const navigate = useNavigate();
+  const setNombre = useUserStore((state) => state.setNombre);
+  const setIdRol = useUserStore((state) => state.setIdRol);
+  const setSur = useUserStore((state) => state.setSur);
 
   // Contexto de autenticación
   const { login, isAuthenticated } = useAuth();
@@ -45,9 +48,13 @@ function Login() {
       const user = { usuario, password };
       const response = await login(user);
       if (response.success) {
-        localStorage.setItem("usuario", usuario);
+        //localStorage.setItem("usuario", usuario);
         localStorage.setItem("rol", response.data.rol);
         localStorage.setItem("sur", response.data.sucursal);
+
+        setNombre(response.data.usuario); // o el campo correcto de tu respuesta
+        setIdRol(response.data.rol);      // o el campo correcto de tu respuesta
+        setSur(response.data.sucursal);   // o el campo correcto de tu respuesta
 
         const redirectPage = response.data.defaultPage || "/inicio";
         navigate(redirectPage);

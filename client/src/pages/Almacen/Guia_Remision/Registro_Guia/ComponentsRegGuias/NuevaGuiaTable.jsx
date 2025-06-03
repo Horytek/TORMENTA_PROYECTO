@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaTrash } from 'react-icons/fa6';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+
 const NuevaTablaGuia = ({ guias, setProductosSeleccionados }) => {
   const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
-  
+
   const openModalEliminar = (producto) => {
     setProductoAEliminar(producto);
     setIsModalOpenEliminar(true);
@@ -20,7 +21,6 @@ const NuevaTablaGuia = ({ guias, setProductosSeleccionados }) => {
     if (productoAEliminar) {
       const nuevosProductosSeleccionados = guias.filter(p => p.codigo !== productoAEliminar.codigo);
       setProductosSeleccionados(nuevosProductosSeleccionados);
-      localStorage.setItem('productosSeleccionados', JSON.stringify(nuevosProductosSeleccionados));
     }
     closeModalEliminar();
   };

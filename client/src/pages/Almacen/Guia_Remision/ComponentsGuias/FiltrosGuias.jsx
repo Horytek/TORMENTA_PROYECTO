@@ -43,7 +43,6 @@ const FiltrosGuias = ({ onFiltersChange }) => {
         };
 
         onFiltersChange(filtrosG);
-        localStorage.setItem('filtrosGuia', JSON.stringify(filtrosG));
     }, [sucursalSeleccionado, value, numGuia, documento, onFiltersChange]);
 
     useEffect(() => {
@@ -82,13 +81,12 @@ const FiltrosGuias = ({ onFiltersChange }) => {
                         className="w-xs"
                         classNames={{ inputWrapper: "bg-white" }}
                         value={value} onChange={setValue}
-                        
                     />
                 </div>
                 <div className="input-wrapper mb-2 md:mb-0">
                 <Select
                     selectedKeys={[sucursalSeleccionado]}
-                    onChange={(e) => setSucursalSeleccionado(e.target.value)}
+                    onChange={handleSucursalChange}
                     className='w-40'
                     classNames={{
                         trigger: "bg-white",

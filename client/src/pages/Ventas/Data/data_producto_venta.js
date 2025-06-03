@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 //import axios from 'axios';
 import axios from "../../../api/axios";
+import { useUserStore } from "@/store/useStore";
+
 
 const useProductosData = () => {
   const [productos, setProductos] = useState([]);
-
+  const nombre = useUserStore((state) => state.nombre);
   useEffect(() => {
     const fetchProductos = async () => {
       try {
         const response = await axios.get('/ventas/producto_venta', {
           params: {
-            id_sucursal: localStorage.getItem('usuario'),
+            id_sucursal: nombre,
           }
         });
         

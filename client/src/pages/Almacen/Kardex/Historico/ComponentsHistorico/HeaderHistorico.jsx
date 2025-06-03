@@ -7,10 +7,14 @@ import { parseDate } from "@internationalized/date";
 import html2pdf from "html2pdf.js";
 import "jspdf-autotable";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { useUserStore } from "@/store/useStore";
 
 function HeaderHistorico({ productoData, onDateChange, transactions, previousTransactions, dateRange }) {
   const { almacenes } = useAlmacenData();
-  const [selectedAlmacen, setSelectedAlmacen] = useState("");
+  const almacenGlobal = useUserStore((state) => state.almacen);
+  const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);
+
+  const [selectedAlmacen, setSelectedAlmacen] = useState(almacenGlobal || "");
   const [selectedDates, setSelectedDates] = useState({
     startDate: new Date("2024-04-01"),
     endDate: new Date("2028-04-08"),
@@ -47,28 +51,28 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
   }, []);
 
   useEffect(() => {
-    const storedAlmacenId = localStorage.getItem("almacen");
-    if (storedAlmacenId) {
-      setSelectedAlmacen(storedAlmacenId);
+    if (almacenGlobal) {
+      setSelectedAlmacen(almacenGlobal);
     }
     const formattedStartDate = selectedDates.startDate.toISOString().split("T")[0];
     const formattedEndDate = selectedDates.endDate.toISOString().split("T")[0];
-    onDateChange(formattedStartDate, formattedEndDate, storedAlmacenId || "");
-  }, [onDateChange, selectedDates.startDate, selectedDates.endDate]);
+    onDateChange(formattedStartDate, formattedEndDate, almacenGlobal || "");
+  }, [onDateChange, selectedDates.startDate, selectedDates.endDate, almacenGlobal]);
 
   useEffect(() => {
     if (selectedAlmacen && selectedDates.startDate && selectedDates.endDate) {
       const formattedStartDate = selectedDates.startDate.toISOString().split("T")[0];
       const formattedEndDate = selectedDates.endDate.toISOString().split("T")[0];
       onDateChange(formattedStartDate, formattedEndDate, selectedAlmacen);
+      setAlmacenGlobal(selectedAlmacen); // Actualiza el almacén global en Zustand
     }
-  }, [selectedAlmacen, selectedDates.startDate, selectedDates.endDate, onDateChange]);
+  }, [selectedAlmacen, selectedDates.startDate, selectedDates.endDate, onDateChange, setAlmacenGlobal]);
 
   const handleAlmacenChange = useCallback((selectedId) => {
     setSelectedAlmacen(selectedId);
-    localStorage.setItem("almacen", selectedId);
-  }, []);
-
+    setAlmacenGlobal(selectedId); // Actualiza el almacén global en Zustand
+  }, [setAlmacenGlobal]);
+  
   // ADAPTADO: Usa datos de empresa dinámicos
   const generatePDFKardex = (productoData, transactions, previousTransactions, dateRange) => {
     const empresaNombre = empresaData?.nombreComercial || 'TORMENTA JEANS';

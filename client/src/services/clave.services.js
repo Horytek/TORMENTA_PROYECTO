@@ -2,6 +2,7 @@ import { getClavesRequest, getClaveRequest, getClaveByEmpresaAndTipoRequest, add
 from '@/api/api.clave';
 import { getUsuario_1 } from "@/services/usuario.services";
 import { toast } from "react-hot-toast";
+import { useUserStore } from "@/store/useStore";
 
 const getClaves = async () => {
   try {
@@ -89,48 +90,37 @@ const deleteClave = async (id) => {
   }
 };
 
-const getClaveSunatByUser = async () => {
+const getClaveSunatByUser = async (nombre) => {
   try {
-    const usuario = localStorage.getItem("usuario");
-    //console.log("👤 Usuario desde localStorage:", usuario);
-
-    if (!usuario) {
-      throw new Error("No se encontró el usuario en localStorage.");
+    if (!nombre) {
+      throw new Error("No se encontró el usuario");
     }
 
-    const usuarioDataArray = await getUsuario_1(usuario);
-    //console.log("📦 Respuesta de getUsuario_1:", usuarioDataArray);
+    const usuarioDataArray = await getUsuario_1(nombre);
 
     if (!Array.isArray(usuarioDataArray) || usuarioDataArray.length === 0) {
       throw new Error("No se encontraron datos para el usuario actual.");
     }
 
     const usuarioData = usuarioDataArray[0];
-    //console.log("✅ Usuario obtenido clave:", usuarioData);
 
     if (!usuarioData.id_empresa) {
       throw new Error("No se encontró el id_empresa para el usuario actual.");
     }
 
     const id_empresa = usuarioData.id_empresa;
-    //console.log("🏢 ID de la empresa para la clave:", id_empresa);
 
     const claveData = await getClaveByEmpresaAndTipo(id_empresa);
-    //console.log("🔐 Datos de la clave desde la API:", claveData);
 
     if (!claveData || !claveData.valor) {
       throw new Error("No se encontró la clave para el tipo 'Sunat'.");
     }
 
-    const claveDesencriptada = claveData.valor;
-    //console.log("🔑 Token desencriptado:", claveDesencriptada);
-
-    return claveDesencriptada;
+    return claveData.valor;
   } catch (error) {
     console.error("Error al obtener la clave de Sunat:", error.message);
     throw error;
   }
 };
-
 
 export { getClaves, getClave, addClave, updateClave, deleteClave, getClaveSunatByUser };

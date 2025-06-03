@@ -1,14 +1,13 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaTrash } from 'react-icons/fa';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, 
-  CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button } from "@heroui/react";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+
 const RegistroTablaIngreso = ({ ingresos, setProductosSeleccionados }) => {
   const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
-  
+
   const openModalEliminar = (producto) => {
     setProductoAEliminar(producto);
     setIsModalOpenEliminar(true);
@@ -23,10 +22,10 @@ const RegistroTablaIngreso = ({ ingresos, setProductosSeleccionados }) => {
     if (productoAEliminar) {
       const nuevosProductosSeleccionados = ingresos.filter(p => p.codigo !== productoAEliminar.codigo);
       setProductosSeleccionados(nuevosProductosSeleccionados);
-      localStorage.setItem('productosSeleccionados', JSON.stringify(nuevosProductosSeleccionados));
     }
     closeModalEliminar();
   };
+
 
   const renderEntradaRow = (ingreso) => (
     <tr key={ingreso.codigo} className='tr-tabla-nuevoingreso'>

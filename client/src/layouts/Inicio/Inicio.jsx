@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { Info } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import NotasPendientesModal from "./NotasPendientesModal";
-
+import { useUserStore } from "@/store/useStore";
 // Card para productos con menor stock
 function StockCard({ productos }) {
   return (
@@ -273,16 +273,17 @@ function Inicio() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { productos: productosMenorStock } = useProductosMenorStock(selectedSucursal, selectedTab);
   const { sucursales: sucursalesDesempeno, promedioGeneral } = useDesempenoSucursales(selectedTab, selectedSucursal);
+  const nombre = useUserStore((state) => state.nombre);
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchUserRol = async () => {
-      const storedUser = localStorage.getItem("usuario");
-      if (storedUser) {
+      if (nombre) {
         try {
           const response = await axios.get("/dashboard/usuarioRol", {
-            params: { usuario: storedUser }
+            params: { usuario: nombre },
           });
-          if (response.data && response.data.rol_id) {
+
+          if (response.data?.rol_id) {
             setUserRol(response.data.rol_id);
           }
         } catch (error) {
@@ -290,8 +291,9 @@ function Inicio() {
         }
       }
     };
+
     fetchUserRol();
-  }, []);
+  }, [nombre]); // se ejecuta cuando 'nombre' cambia
 
   useEffect(() => {
     const fetchSucursales = async () => {

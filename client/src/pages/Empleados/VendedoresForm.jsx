@@ -26,8 +26,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
   const [usuarios, setUsuarios] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [isOpen, setIsOpen] = useState(true);
-  
-  localStorage.setItem("dni_r", initialData?.dni || '');
+
 
   const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm({
     defaultValues: {
@@ -55,28 +54,27 @@ const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
     fetchData();
   }, []);
 
-  const onSubmit = async (data) => {
+    const onSubmit = async (data) => {
     try {
       const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor } = data;
-      const dni_ver = localStorage.getItem("dni_r");
-  
+
       const newVendedor = {
-        dni: dni_ver || dni,
-        nuevo_dni: dni_ver !== dni ? dni : undefined,
+        dni,
+        nuevo_dni: initialData?.dni && initialData.dni !== dni ? dni : undefined,
         id_usuario,
         nombres,
         apellidos,
         telefono,
         estado_vendedor
       };
-  
+
       let result;
       if (initialData) {
         result = await updateVendedor(initialData.dni, newVendedor); 
       } else {
         result = await addVendedor(newVendedor); 
       }
-  
+
       if (result) {
         toast.success(initialData ? "Vendedor actualizado correctamente" : "Vendedor creado correctamente");
         handleCloseModal();
@@ -84,7 +82,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
           window.location.reload();
         }, 1000);
       }
-  
+
     } catch (error) {
       toast.error("Error al realizar la gestión del vendedor");
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from "@/api/axios";
 import { toast } from "react-hot-toast";
 
@@ -6,13 +6,6 @@ export const useDeleteSubcategoria = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    if (localStorage.getItem('subcategoriaDeleted')) {
-      toast.success("Subcategoría eliminada con éxito");
-      localStorage.removeItem('subcategoriaDeleted');
-    }
-  }, []);
 
   const deleteSubcategoria = async (id) => {
     setLoading(true);
@@ -22,8 +15,9 @@ export const useDeleteSubcategoria = () => {
     try {
       const response = await axios.delete(`/subcategorias/${id}`);
       if (response.data.code === 1) {
-        localStorage.setItem('subcategoriaDeleted', 'true');
-        window.location.reload();
+        setSuccess(true);
+        toast.success("Subcategoría eliminada con éxito");
+        // Aquí puedes llamar a un callback para refrescar la lista en el componente padre
       } else {
         toast.error("Error al eliminar la subcategoría");
       }
@@ -35,5 +29,5 @@ export const useDeleteSubcategoria = () => {
     }
   };
 
-  return { deleteSubcategoria, loading, error, success };
+  return { deleteSubcategoria, loading, error, success, setSuccess };
 };

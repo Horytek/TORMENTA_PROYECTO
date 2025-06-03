@@ -15,22 +15,25 @@ import { FaFilePdf } from "react-icons/fa";
 import 'jspdf-autotable';
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { useUserStore } from "@/store/useStore";
 
 const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ingresos, almacenSseleccionado }) => {
 
     const [empresaData, setEmpresaData] = useState(null);
+    const nombre = useUserStore((state) => state.nombre); // Obtiene el nombre del usuario actual
+
 
     useEffect(() => {
         const fetchEmpresaData = async () => {
             try {
-                const data = await getEmpresaDataByUser();
+                const data = await getEmpresaDataByUser(nombre);
                 setEmpresaData(data);
             } catch (error) {
                 setEmpresaData(null);
             }
         };
         fetchEmpresaData();
-    }, []);
+    }, [nombre]);
 
     const navigate = useNavigate();
 

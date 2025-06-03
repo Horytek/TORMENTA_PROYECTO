@@ -36,6 +36,8 @@ import PagoFaltante from './PagoFaltante';
 import PagoFaltante2 from './PagoFaltante_2';
 import AgregarClienteForm from './AgregarClienteForm';
 import useCobrarModalState from './useCobrarModalState';
+import { useUserStore } from "@/store/useStore";
+import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 /*import { handleSunatMultiple } from "../../../Data/add_sunat_multiple";
 import {  handleUpdate } from '../../../Data/update_venta';*/
 
@@ -90,6 +92,10 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     disabledKeys2,
     disabledKeys3,
   } = useCobrarModalState();
+
+  const nombre = useUserStore((state) => state.nombre);
+  const setComprobante = useVentaSeleccionadaStore((state) => state.setComprobante);
+  const setObservacion1 = useVentaSeleccionadaStore((state) => state.setObservacion);
   
     {/* Este handlePrint es para el voucher con preview */ }
     // const VoucherRef = useRef();
@@ -110,14 +116,14 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
     const faltante2 = Math.max(faltante - parseFloat(montoRecibido2), 0);
     const cambio3 = parseFloat(montoRecibido3) - faltante2;
     const faltante3 = Math.max(faltante2 - parseFloat(montoRecibido3), 0);
-    const sucursal_v = sucursales.find(sucursal => sucursal.usuario === localStorage.getItem('usuario'))
+    const sucursal_v = sucursales.find(sucursal => sucursal.usuario === nombre)
     const today = new Date();
     today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
     const localDate = today.toISOString().slice(0, 10);
     const cliente = clientes.find(cliente => cliente.nombre === clienteSeleccionado);
 
     const datosVenta = {
-        usuario: localStorage.getItem('usuario'),
+        usuario: nombre,
         id_comprobante: comprobante_pago,
         id_cliente: clienteSeleccionado,
         estado_venta: 2,
@@ -220,15 +226,10 @@ const CobrarModal = ({ isOpen, onClose, totalImporte,total_I }) => {
         nombre: nombreCliente,
     };
 
-    const saveDetallesToLocalStorage = () => {
-        localStorage.setItem('comprobante', JSON.stringify({ comprobante_pago }));
-        localStorage.setItem('cliente_d', JSON.stringify({ clienteSeleccionado }));
-        localStorage.setItem('observacion', JSON.stringify({observacion}));
-        localStorage.setItem('last', JSON.stringify(ven)); 
-        localStorage.setItem('vent', JSON.stringify([datosVenta_1]));
-    };
-
-    saveDetallesToLocalStorage();
+ useEffect(() => {
+    setComprobante({ comprobante_pago });
+    setObservacion1({ observacion });
+  }, [comprobante_pago, observacion, setComprobante, setObservacion1]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

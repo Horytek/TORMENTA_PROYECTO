@@ -19,6 +19,7 @@ import insertNotaAndDetalleSalida from '../../Nota_Salida/data/insert_nota_salid
 import { Toaster, toast } from "react-hot-toast";
 import ConfirmationModal from '../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Button, Input, Select, SelectItem, Textarea, Tabs, Tab } from "@heroui/react";
+import { useUserStore } from "@/store/useStore";
 
 const glosaOptions = [
   "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
@@ -56,33 +57,27 @@ function Registro_Ingresos() {
     .padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
   const { documentos: documentosIngreso } = useDocumentoData();
   const { documentos: documentosSalida } = useDocumentoData_S();
- const currentDocumentoIngreso = documentosIngreso.length > 0 ? documentosIngreso[0].nota : '';
+  const currentDocumentoIngreso = documentosIngreso.length > 0 ? documentosIngreso[0].nota : '';
   const currentDocumentoSalida = documentosSalida.length > 0 ? documentosSalida[0].nota : '';
   const [fecha, setFecha] = useState(formattedDate);
-  //const [numComprobante, setNumComprobante] = useState(currentDocumento);
   const [observacion, setObservacion] = useState('');
-  const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
-    const saved = localStorage.getItem('productosSeleccionados');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [productosSeleccionados, setProductosSeleccionados] = useState([]); // Solo en memoria
 
   const { almacenes } = useAlmacenData();
   const { destinatarios } = useDestinatarioData();
 
-  const sucursalSeleccionada = localStorage.getItem('sur');
-  const rolUsuario = localStorage.getItem('rol');
+  // Zustand: datos globales de usuario
+  const sucursalSeleccionada = useUserStore((state) => state.sur);
+  const rolUsuario = useUserStore((state) => state.rol);
+  const usuario = useUserStore((state) => state.nombre);
 
   const almacenesFiltrados =
-    rolUsuario !== '1'
+    rolUsuario != 1
       ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
       : almacenes;
 
   // Nuevo: tipo de nota (ingreso, salida, conjunto)
   const [tipoNota, setTipoNota] = useState('ingreso');
-
-  useEffect(() => {
-    localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
-  }, [productosSeleccionados]);
 
   useEffect(() => {
     if (isModalOpen && almacenOrigen) {
@@ -123,9 +118,8 @@ function Registro_Ingresos() {
   };
 
   // Unificación de guardado
-   const handleGuardarAction = async () => {
+  const handleGuardarAction = async () => {
     try {
-      const usuario = localStorage.getItem('usuario');
       if (!usuario) {
         toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
         return;
@@ -169,8 +163,8 @@ function Registro_Ingresos() {
       }));
 
       // Ajustar la fecha con la zona horaria local
-          const now = new Date();
-          const fechaISO = now.toISOString().slice(0, 19).replace('T', ' ');
+      const now = new Date();
+      const fechaISO = now.toISOString().slice(0, 19).replace('T', ' ');
 
       // Datos para ingreso
       const dataIngreso = {
@@ -234,7 +228,6 @@ function Registro_Ingresos() {
     }
   };
 
-
   const openModalProovedor = () => setIsModalOpenProovedor(true);
   const closeModalProovedor = () => setIsModalOpenProovedor(false);
 
@@ -250,7 +243,6 @@ function Registro_Ingresos() {
   };
 
   const handleCancel = () => {
-    localStorage.removeItem('productosSeleccionados');
     setProductosSeleccionados([]);
   };
 
@@ -283,7 +275,6 @@ function Registro_Ingresos() {
     closeModalBuscarProducto();
   };
 
-  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -296,7 +287,7 @@ function Registro_Ingresos() {
           onSelectionChange={setTipoNota}
           color="primary"
           variant="bordered"
-          isDisabled={rolUsuario !== '1'}
+          isDisabled={rolUsuario !== 1}
           className="w-full"
         >
           {tipoNotaOptions.map(option => (

@@ -10,12 +10,16 @@ import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { format } from 'date-fns'
+import { useUserStore } from "@/store/useStore";
+import { useVentaSeleccionadaStore } from "@/store/useVentaTable"; // <-- Importa tu store
+
 
 const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, currentPage }) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [printOption, setPrintOption] = useState('');
   const [empresaData, setEmpresaData] = useState(null); // Estado para almacenar los datos de la empresa
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const nombre = useUserStore((state) => state.nombre);
 
       const formatHours = () => {
         const now = new Date();
@@ -29,14 +33,21 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
     setExpandedRow(null);
     const fetchEmpresaData = async () => {
                 try {
-                    const data = await getEmpresaDataByUser();
+                    const data = await getEmpresaDataByUser(nombre);
                     setEmpresaData(data); // Establecer los datos de la empresa en el estado
                 } catch (error) {
                     console.error("Error al obtener los datos de la empresa:", error);
                 }
             };
             fetchEmpresaData(); // Llamar a la función para obtener los datos de la empresa
-  }, [currentPage]);
+  }, [currentPage,nombre]);
+
+  // Zustand: setter y selectores
+  const setVentaSeleccionada = useVentaSeleccionadaStore((state) => state.setVentaSeleccionada);
+  const ventaSeleccionada = useVentaSeleccionadaStore((state) => state.venta);
+  const detallesSeleccionados = useVentaSeleccionadaStore((state) => state.detalles);
+  const setComprobante1 = useVentaSeleccionadaStore((state) => state.setComprobante1);
+  const setObservacion = useVentaSeleccionadaStore((state) => state.setObservacion);
 
   const toggleRow = (id, estado, venta) => {
     setExpandedRow(expandedRow === id ? null : id);
@@ -67,14 +78,11 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
       direccion: venta.ubicacion,
       usua_vendedor: venta.usua_vendedor,
       observacion: venta.observacion || '',
-      usua_usuario: localStorage.getItem('usuario')
+      usua_usuario: nombre
     };
 
-    localStorage.setItem('ventas', JSON.stringify(datos_venta));
-    localStorage.setItem('boucher', JSON.stringify(datos_venta.id_venta_boucher));
-    localStorage.setItem('new_detalle', JSON.stringify(venta.detalles));
-    localStorage.setItem('datosClientes', JSON.stringify({ nombre: venta.cliente, documento: venta.ruc }));
-    localStorage.setItem('surB', JSON.stringify({ sucursal: venta.nombre_sucursal, direccion: venta.ubicacion }));
+
+    setVentaSeleccionada(datos_venta, venta.detalles);
   };
 
   const handleRowClick = (e, venta) => {
@@ -83,20 +91,21 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
     }
   };
 
-  const loadDetallesFromLocalStorage = () => {
-    const savedDetalles = localStorage.getItem('ventas');
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
-  };
+// Usa los datos seleccionados desde Zustand
+  const { venta_B } = useBoucher(ventaSeleccionada?.id_venta_boucher);
 
-  const ventas_VB = loadDetallesFromLocalStorage();
-  const { venta_B } = useBoucher(ventas_VB.id_venta_boucher);
-
-  localStorage.setItem('comprobante1', JSON.stringify({ nuevoNumComprobante: venta_B.num_comprobante }));
-  localStorage.setItem('observacion', JSON.stringify({ observacion: ventas_VB.observacion }));
+useEffect(() => {
+  if (venta_B?.num_comprobante) {
+    setComprobante1({ nuevoNumComprobante: venta_B.num_comprobante });
+  }
+  if (ventaSeleccionada?.observacion) {
+    setObservacion({ observacion: ventaSeleccionada.observacion });
+  }
+}, [venta_B?.num_comprobante, ventaSeleccionada?.observacion, setComprobante1, setObservacion]);
 
 const handlePrint = async () => {
   try {
-    const content = await generateReceiptContent(venta_B, ventas_VB); // Asegúrate de que `generateReceiptContent` sea asíncrono
+    const content = await generateReceiptContent(venta_B, ventaSeleccionada);
     const imgUrl = empresaData?.logotipo || '';
 
     if (printOption === 'print') {

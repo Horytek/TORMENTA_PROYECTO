@@ -2,6 +2,7 @@ import axios from "@/api/axios";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
+import { useUserStore } from "@/store/useStore";
 
 function convertDateToDesiredFormat(dateString, offsetHours) {
   // Crear una instancia de la fecha en UTC
@@ -26,7 +27,8 @@ function convertDateToDesiredFormat(dateString, offsetHours) {
 
 const enviarGuiaRemisionASunat = async (data) => {
   const url = 'https://facturacion.apisperu.com/api/v1/despatch/send';
-  const token = await getClaveSunatByUser();
+  const nombre = useUserStore((state) => state.nombre);
+  const token = await getClaveSunatByUser(nombre);
     
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Verificar los datos enviados
 
@@ -57,7 +59,8 @@ const enviarGuiaRemisionASunat = async (data) => {
 
 export const handleGuiaRemisionSunat = async (guia, destinata, transportista, detalles) => {
       // Obtener los datos de la empresa
-      const empresaData = await getEmpresaDataByUser();
+      const nombre = useUserStore((state) => state.nombre);
+      const empresaData = await getEmpresaDataByUser(nombre);
   const tipoDoc = "05";
   const guialetra = "T";
   const guiaserie = guia.serieNum;

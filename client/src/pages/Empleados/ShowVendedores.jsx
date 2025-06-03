@@ -38,18 +38,17 @@ export function ShowVendedores({ searchTerm }) {
     const indexOfFirstVendedor = indexOfLastVendedor - vendedoresPerPage;
     const currentVendedores = filteredVendedores.slice(indexOfFirstVendedor, indexOfLastVendedor);
 
+    // Eliminar vendedor
     const deleteHandler = async () => {
-        const dni_ver = localStorage.getItem("dni");
-        if (!dni_ver) {
+        if (!selectedDni) {
             console.error("Error: DNI no definido en deleteHandler.");
             return;
         }
-        await deactivateVendedor(dni_ver);
+        await deactivateVendedor(selectedDni);
         getUsers();
     };
 
     const handleOpenConfirmationModal = (row, dni) => {
-        localStorage.setItem("dni", dni);
         setSelectedRow(row);
         setSelectedDni(dni);
         setIsConfirmationModalOpen(true);
@@ -73,7 +72,6 @@ export function ShowVendedores({ searchTerm }) {
     const [initialData, setInitialData] = useState(null);
 
     const handleEditModal = async (dni) => {
-        localStorage.setItem("dni_r", dni);
         try {
             const data = await getVendedor(dni);
             if (!data || data.length === 0) {

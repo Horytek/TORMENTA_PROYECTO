@@ -3,7 +3,7 @@ import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { IoMdPin, IoMdCar } from 'react-icons/io';
 import { MdPersonAdd } from "react-icons/md";
 import ModalBuscarProducto from './ComponentsRegGuias/BuscarProdGuiaForm';
-import NuevaTablaGuia from '../../Nota_Salida/Nueva_Nota_Salida/ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
+import NuevaTablaGuia from './ComponentsRegGuias/NuevaGuiaTable';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 import UbigeoForm from './UbigeoForm';
@@ -56,10 +56,7 @@ function RegistroGuia() {
   const [peso, setPeso] = useState('');
   const [glosa, setGlosa] = useState('');
   const [observacion, setObservacion] = useState('');
-  const [productosSeleccionados, setProductosSeleccionados] = useState(() => {
-    const saved = localStorage.getItem('productosSeleccionados');
-    return saved ? JSON.parse(saved) : [];
-  });
+const [productosSeleccionados, setProductosSeleccionados] = useState([]);
 
   // Hooks de datos
   const { clientes } = useClienteData();
@@ -78,11 +75,6 @@ function RegistroGuia() {
   }, []);
 
   const currentDocumento = documentos.length > 0 ? documentos[0].guia : '';
-
-  // Sincronizar productos seleccionados con localStorage
-  useEffect(() => {
-    localStorage.setItem('productosSeleccionados', JSON.stringify(productosSeleccionados));
-  }, [productosSeleccionados]);
 
   // Actualiza datos del cliente seleccionado (DNI/RUC y dirección)
 useEffect(() => {
@@ -215,7 +207,6 @@ useEffect(() => {
 
   // Cancelar y limpiar productos seleccionados
   const handleCancel = () => {
-    localStorage.removeItem('productosSeleccionados');
     setProductosSeleccionados([]);
   };
 

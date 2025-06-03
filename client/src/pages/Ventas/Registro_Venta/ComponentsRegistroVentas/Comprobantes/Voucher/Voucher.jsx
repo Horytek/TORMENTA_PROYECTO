@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
+import { useUserStore } from "@/store/useStore";
 
 function centerText(text, lineWidth) {
     const wrapText = (text, maxWidth) => {
@@ -134,7 +136,7 @@ function numeroALetras(numero) {
     return letras;
 }
 
-export const generateReceiptContent = async (datosVentaComprobante, datosVenta) => {
+export const generateReceiptContent = async (datosVentaComprobante, datosVenta, comprobante1, observacion) => {
   let content = '';
   const appendContent = (text) => {
     content += `${text}\n`;
@@ -147,25 +149,12 @@ export const generateReceiptContent = async (datosVentaComprobante, datosVenta) 
   const vuelto = Number(datosVentaComprobante.vuelto || 0);
 
   const totalEnLetras = numeroALetras(totalT);
-
-  const loadDetallesFromLocalStorage = () => {
-    const savedDetalles = localStorage.getItem('comprobante1');
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
-  };
-
-  const detail = loadDetallesFromLocalStorage();
-
-  const loadDetallesFromLocalStorage1 = () => {
-    const savedDetalles = localStorage.getItem('observacion');
-    return savedDetalles ? JSON.parse(savedDetalles) : { observacion: '' };
-  };
-
-  const empresaData = await getEmpresaDataByUser();
+  const nombre = useUserStore((state) => state.nombre);
+  const empresaData = await getEmpresaDataByUser(nombre);
   if (!empresaData) {
     console.error('No se pudieron obtener los datos de la empresa.');
     return '';
   }
-  const observaciones = loadDetallesFromLocalStorage1();
 
   appendContent(centerText(empresaData?.nombreComercial || "Nombre Comercial", 34));
   appendContent(centerText(empresaData?.razonSocial || "Razón Social", 34));
@@ -173,7 +162,7 @@ export const generateReceiptContent = async (datosVentaComprobante, datosVenta) 
   appendContent(centerText(`${empresaData?.distrito || ''}, ${empresaData?.provincia || ''}, ${empresaData?.departamento || ''}`, 34));
   appendContent(centerText("RUC: " + (empresaData?.ruc || "20610588981"), 34));
   appendContent(centerText("Tel: " + (empresaData?.telefono || "Teléfono no disponible"), 34));
-  appendContent(centerText(datosVentaComprobante.comprobante_pago + ": " + (detail?.nuevoNumComprobante || 'N/A')));
+  appendContent(centerText(datosVentaComprobante.comprobante_pago + ": " + (comprobante1?.nuevoNumComprobante || 'N/A')));
   appendContent("==================================");
   appendContent("Fecha de Emisión: " + (datosVentaComprobante.fecha || 'N/A'));
   appendContent("Dirección: " + (datosVenta.direccion || 'N/A'));
@@ -183,7 +172,7 @@ export const generateReceiptContent = async (datosVentaComprobante, datosVenta) 
   appendContent("RUC/DNI: " + (datosVentaComprobante.documento_cliente || 'N/A'));
   appendContent(leftAlignText(datosVentaComprobante.direccion_cliente || 'N/A'));
   appendContent("==================================");
-  appendContent(leftAlignText("Observacion: " + (observaciones.observacion || 'Ninguna')));
+  appendContent(leftAlignText("Observacion: " + (observacion?.observacion || 'Ninguna')));
   appendContent("==================================");
   appendContent("Descrip      Cant   P.Unit   TOTAL");
   appendContent("==================================");
@@ -222,17 +211,18 @@ export const generateReceiptContent = async (datosVentaComprobante, datosVenta) 
   return content;
 };
 
-
 const Voucher = ({ datosVentaComprobante, datosVenta }) => {
+    const comprobante1 = useVentaSeleccionadaStore(state => state.comprobante1);
+    const observacion = useVentaSeleccionadaStore(state => state.observacion);
     const [content, setContent] = useState('');
 
     useEffect(() => {
         const fetchContent = async () => {
-            const generatedContent = await generateReceiptContent(datosVentaComprobante, datosVenta);
+            const generatedContent = await generateReceiptContent(datosVentaComprobante, datosVenta, comprobante1, observacion);
             setContent(generatedContent);
         };
         fetchContent();
-    }, [datosVentaComprobante, datosVenta]);
+    }, [datosVentaComprobante, datosVenta, comprobante1, observacion]);
 
     return <pre>{content}</pre>;
 };

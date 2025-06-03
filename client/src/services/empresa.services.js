@@ -2,6 +2,7 @@ import { getEmpresasRequest, getEmpresaRequest, addEmpresaRequest, updateEmpresa
 from '@/api/api.empresa';
 import { getUsuario_1 } from "@/services/usuario.services";
 import { toast } from "react-hot-toast";
+import { useUserStore } from "@/store/useStore";
 
 const getEmpresas = async () => {
   try {
@@ -76,41 +77,23 @@ const deleteEmpresa = async (id) => {
   }
 };
 
-const getEmpresaDataByUser = async () => {
+const getEmpresaDataByUser = async (nombre) => {
   try {
-    // Obtener el usuario desde localStorage
-    const usuario = localStorage.getItem("usuario");
-    //console.log("👤 Usuario desde localStorage:", usuario);
-
-    if (!usuario) {
-      throw new Error("No se encontró el usuario en localStorage.");
+    if (!nombre) {
+      throw new Error("No se encontró el usuario");
     }
-
-    // Obtener los datos del usuario
-    const usuarioDataArray = await getUsuario_1(usuario);
-    //console.log("📦 Respuesta de getUsuario_1:", usuarioDataArray);
-
+    const usuarioDataArray = await getUsuario_1(nombre);
     if (!Array.isArray(usuarioDataArray) || usuarioDataArray.length === 0) {
       throw new Error("No se encontraron datos para el usuario actual.");
     }
-
     const usuarioData = usuarioDataArray[0];
-    //console.log("✅ Usuario obtenido:", usuarioData);
-
     if (!usuarioData.id_empresa) {
       throw new Error("No se encontró el id_empresa para el usuario actual.");
     }
-
     const id_empresa = usuarioData.id_empresa;
-    //console.log("🏢 ID de la empresa:", id_empresa);
-
-    // Obtener los datos completos de la empresa usando el id_empresa
     const empresaData = await getEmpresa(id_empresa);
-    //console.log("🏢 Datos de la empresa:", empresaData[0]);
-
     return empresaData[0];
   } catch (error) {
-    //console.error("❌ Error al obtener los datos de la empresa:", error.message);
     throw error;
   }
 };

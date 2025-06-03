@@ -8,6 +8,7 @@ import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
 import FiltrosSalida from '../Nota_Salida/ComponentsNotaSalida/FiltrosSalida';
 import { Tabs, Tab } from "@heroui/react";
 import { RoutePermission } from '@/routes';
+import { useUserStore } from "@/store/useStore";
 
 const NotasAlmacen = () => {
   const [filtersIngreso, setFiltersIngreso] = useState({});
@@ -15,8 +16,9 @@ const NotasAlmacen = () => {
   const [ingresos, setIngresos] = useState([]);
   const [salidas, setSalidas] = useState([]);
   const { almacenes } = useAlmacenData();
+  const almacenGlobal = useUserStore((state) => state.almacen);
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
-    const almacenIdGuardado = localStorage.getItem('almacen');
+    const almacenIdGuardado = almacenGlobal;
     return almacenIdGuardado && almacenes ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) : null;
   });
   const [tabActiva, setTabActiva] = useState("ingreso");
@@ -47,7 +49,7 @@ const NotasAlmacen = () => {
   }, [fetchSalidas]);
 
   useEffect(() => {
-    const almacenIdGuardado = localStorage.getItem('almacen');
+    const almacenIdGuardado = almacenGlobal;
     if (almacenIdGuardado && almacenes.length > 0) {
       const almacen = almacenes.find(a => a.id === parseInt(almacenIdGuardado));
       if (almacen) {

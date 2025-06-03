@@ -1,12 +1,13 @@
 import axios from "@/api/axios";
+import { useUserStore } from "@/store/useStore";
 
 const anularGuia = async (guiaId) => {
-  const usuario = localStorage.getItem('usuario'); // Obtiene el usuario actual
+  const nombre = useUserStore((state) => state.nombre);
 
   try {
     const response = await axios.post('/guia_remision/anularguia', {
       guiaId,
-      usuario, // Envía el usuario al backend
+      usuario: nombre, // Envía el usuario al backend
     });
     if (response.data.code === 1) {
       console.log('Guía de remisión anulada correctamente');

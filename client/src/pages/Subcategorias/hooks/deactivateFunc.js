@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from "@/api/axios";
 import { toast } from "react-hot-toast";
 
@@ -6,13 +6,6 @@ export const useDeactivateSubcategoria = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    if (localStorage.getItem('subcategoriaDeactivated')) {
-      toast.success("Subcategoría dada de baja con éxito");
-      localStorage.removeItem('subcategoriaDeactivated');
-    }
-  }, []);
 
   const deactivateSubcategoria = async (id) => {
     setLoading(true);
@@ -22,8 +15,9 @@ export const useDeactivateSubcategoria = () => {
     try {
       const response = await axios.put(`/subcategorias/deactivate/${id}`);
       if (response.data.message === "Subcategoría dada de baja con éxito") {
-        localStorage.setItem('subcategoriaDeactivated', 'true');
-        window.location.reload();
+        setSuccess(true);
+        toast.success("Subcategoría dada de baja con éxito");
+        // Aquí puedes llamar a un callback para refrescar la lista en el componente padre
       } else {
         toast.error("Error al desactivar la subcategoría");
       }
@@ -35,5 +29,5 @@ export const useDeactivateSubcategoria = () => {
     }
   };
 
-  return { deactivateSubcategoria, loading, error, success };
+  return { deactivateSubcategoria, loading, error, success, setSuccess };
 };

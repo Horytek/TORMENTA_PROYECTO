@@ -1,28 +1,13 @@
 import { DateRangePicker, Select, SelectItem, Button } from "@nextui-org/react";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { format, isValid } from "date-fns";
 import useSucursalData from "../../Data/data_sucursal_venta";
 
 const FiltroLibro = ({ onFilter, filters }) => {
     const { sucursales } = useSucursalData();
     const [dateRange, setDateRange] = useState(filters.startDate ? { start: filters.startDate, end: filters.endDate } : null);
-    const [tipoComprobante, setTipoComprobante] = useState(
-        localStorage.getItem("tipoComprobante_r") ? new Set(localStorage.getItem("tipoComprobante_r").split(',')) : new Set()
-    );
+    const [tipoComprobante, setTipoComprobante] = useState(new Set(filters.tipoComprobante || []));
     const [sucursal1, setSucursal] = useState(new Set(filters.idSucursal ? [filters.idSucursal] : []));
-
-    useEffect(() => {
-        // Al cambiar los filtros, los almacenamos en localStorage
-        localStorage.setItem("filters", JSON.stringify({ startDate: filters.startDate, endDate: filters.endDate, tipoComprobante: Array.from(tipoComprobante), idSucursal: filters.idSucursal }));
-    }, [filters, tipoComprobante]);
-
-    const sucursales1 = [
-        { id: 1, nombre: "Tienda Arica-3" },
-        { id: 2, nombre: "Tienda Arica-2" },
-        { id: 3, nombre: "Tienda Arica-1" },
-        { id: 4, nombre: "Tienda Balta" },
-        { id: 5, nombre: "Oficina" }
-    ];
 
     const comprobantes = [
         { label: "Boleta", value: "Boleta" },
@@ -53,7 +38,7 @@ const FiltroLibro = ({ onFilter, filters }) => {
             tipoComprobante: selectedComprobante,
             idSucursal: selectedSucursal
         });
-    }, []);
+    }, [onFilter, formatDateSafely]);
 
     const handleDateChange = (value) => {
         setDateRange(value);
@@ -75,12 +60,6 @@ const FiltroLibro = ({ onFilter, filters }) => {
         setTipoComprobante(new Set([]));
         setSucursal(new Set([]));
         applyFilters(null, new Set([]), new Set([]));
-    };
-
-    const handleChange = (e) => {
-        const value = e.target.value;
-        setTipoComprobante(new Set([value]));
-        localStorage.setItem("tipoComprobante_r", value);
     };
 
     return (

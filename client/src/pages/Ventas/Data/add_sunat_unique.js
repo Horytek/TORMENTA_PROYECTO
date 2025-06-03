@@ -2,6 +2,7 @@ import axios from 'axios';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
+import { useUserStore } from "@/store/useStore";
 /*
 // Función para obtener la última venta del mismo tipo de comprobante y calcular el correlativo
 const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
@@ -61,7 +62,8 @@ const enviarVentaASunat = async (data) => {
 
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
   //const token = import.meta.env.VITE_TOKEN_SUNAT || '';
-  const token = await getClaveSunatByUser();
+    const nombre = useUserStore((state) => state.nombre);
+    const token = await getClaveSunatByUser(nombre);
 
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
@@ -94,7 +96,8 @@ const enviarVentaASunat = async (data) => {
 export const handleSunatUnique = async (venta) => {
     //const loadingToastId = toast.loading('Enviando ventas a la Sunat...');
     // Obtener los datos de la empresa
-    const empresaData = await getEmpresaDataByUser();
+    const nombre = useUserStore((state) => state.nombre);
+    const empresaData = await getEmpresaDataByUser(nombre);
     // Iterar sobre cada venta y enviarla a SUNAT
         // Obtener los detalles de la venta
         const detalles = venta.detalles;

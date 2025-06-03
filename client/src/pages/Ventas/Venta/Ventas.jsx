@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-//import Pagination from '@/components/Pagination/Pagination';
 import TablaVentas from './ComponentsVentas/VentasTable';
 import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
@@ -10,6 +9,7 @@ import { handleDelete } from '../Data/delete_venta';
 import { Pagination } from "@heroui/pagination";
 import { Select, SelectItem } from "@heroui/react";
 import { anularVentaEnSunatF, anularVentaEnSunatB } from '../Data/anular_sunat';
+import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
@@ -21,7 +21,24 @@ const Ventas = () => {
     razon: ''
   });
 
-  const { ventas, currentPage, setCurrentPage, totalPages, ventasPerPage, setVentasPerPage, totalRecaudado, refetchVentas, totalEfectivo, totalPagoElectronico } = useVentasData(filters);
+  const {
+    ventas,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    ventasPerPage,
+    setVentasPerPage,
+    totalRecaudado,
+    refetchVentas,
+    totalEfectivo,
+    totalPagoElectronico
+  } = useVentasData(filters);
+
+  // Zustand: obtener y setear datos globales
+  const setTotalVentas = useVentaSeleccionadaStore((state) => state.setTotalVentas);
+  const setVentaSeleccionada = useVentaSeleccionadaStore((state) => state.setVentaSeleccionada);
+  const ventaSeleccionada = useVentaSeleccionadaStore((state) => state.venta);
+  const detallesSeleccionados = useVentaSeleccionadaStore((state) => state.detalles);
 
   // Estado para el manejo del modal y opciones de eliminación
   const [SelectedRowId, setSelectedRowId] = useState(null);
@@ -30,40 +47,28 @@ const Ventas = () => {
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
 
-  const loadDetallesFromLocalStorage = () => {
-    const savedDetalles = localStorage.getItem('ventas');
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
-  };
-
-  const d_ventas = loadDetallesFromLocalStorage();
-
-  const saveDetallesToLocalStorage = () => {
-    localStorage.setItem('total_ventas', JSON.stringify(ventas));
-  };
-
-  const loadDetallesFromLocalStorage1 = () => {
-    const savedDetalles = localStorage.getItem('new_detalle');
-    return savedDetalles ? JSON.parse(savedDetalles) : [];
-  };
-
-  const detalles = loadDetallesFromLocalStorage1();
-
-  saveDetallesToLocalStorage();
+  // Guarda el total de ventas en Zustand cada vez que cambian
+  useEffect(() => {
+    setTotalVentas(ventas);
+  }, [ventas, setTotalVentas]);
 
   // Funciones para abrir y cerrar el modal de opciones
   const openModal = (id, estado) => {
     setSelectedRowId(id);
     setModalOpen(true);
 
-    if (estado == 'En proceso') {
-      estado = 2;
-    } else if (estado == 'Anulada') {
-      estado = 0;
-    } else if (estado == 'Aceptada') {
-      estado = 1;
+    // Busca la venta seleccionada y sus detalles
+    const venta = ventas.find(v => v.id === id);
+    if (venta) {
+      setVentaSeleccionada(venta, venta.detalles);
     }
 
-    if (estado == 0) {
+    let estadoNum = estado;
+    if (estado === 'En proceso') estadoNum = 2;
+    else if (estado === 'Anulada') estadoNum = 0;
+    else if (estado === 'Aceptada') estadoNum = 1;
+
+    if (estadoNum === 0) {
       setModalOpen(false);
     }
   };
@@ -76,12 +81,12 @@ const Ventas = () => {
 
   // Función para eliminar una venta
   const handleDeleteVenta = () => {
-    SelectedRowId;
-    handleDelete(d_ventas);
-    if (d_ventas.tipoComprobante === 'Boleta' && d_ventas.estado_sunat === 1) {
-      anularVentaEnSunatB(d_ventas, detalles);
-    } else if (d_ventas.tipoComprobante === 'Factura' && d_ventas.estado_sunat === 1) {
-      anularVentaEnSunatF(d_ventas);
+    // Usa la venta seleccionada desde Zustand
+    handleDelete(ventaSeleccionada);
+    if (ventaSeleccionada?.tipoComprobante === 'Boleta' && ventaSeleccionada?.estado_sunat === 1) {
+      anularVentaEnSunatB(ventaSeleccionada, detallesSeleccionados);
+    } else if (ventaSeleccionada?.tipoComprobante === 'Factura' && ventaSeleccionada?.estado_sunat === 1) {
+      anularVentaEnSunatF(ventaSeleccionada);
     }
     closeModal();
     setConfirmDeleteModalOpen(false);

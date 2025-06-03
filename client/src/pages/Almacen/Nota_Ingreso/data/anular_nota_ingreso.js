@@ -1,12 +1,13 @@
 import axios from "@/api/axios";
+import { useUserStore } from "@/store/useStore";
 
 const anularNota = async (notaId) => {
-  const usuario = localStorage.getItem('usuario'); // Obtiene el usuario actual
+  const nombre = useUserStore((state) => state.nombre); // Obtiene el nombre del usuario actual
 
   try {
     const response = await axios.post('/nota_ingreso/anular', {
       notaId,
-      usuario, // Envía el usuario
+      usuario: nombre, // Envía el usuario
     });
     if (response.data.code === 1) {
       console.log('Nota y detalle anulados correctamente');
