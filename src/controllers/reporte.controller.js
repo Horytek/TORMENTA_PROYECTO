@@ -835,7 +835,7 @@ const parseMetodoPago = (metodoPago) => {
 const exportarRegistroVentas = async (req, res) => {
   let connection;
   try {
-    console.log("Iniciando exportarRegistroVentas...");
+    //console.log("Iniciando exportarRegistroVentas...");
 
     connection = await getConnection();
     const { mes, ano, idSucursal, tipoComprobante } = req.query;

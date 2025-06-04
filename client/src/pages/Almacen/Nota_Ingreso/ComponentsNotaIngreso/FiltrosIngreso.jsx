@@ -20,8 +20,11 @@ import { useUserStore } from "@/store/useStore";
 const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ingresos, almacenSseleccionado }) => {
 
     const [empresaData, setEmpresaData] = useState(null);
-    const nombre = useUserStore((state) => state.nombre); // Obtiene el nombre del usuario actual
-
+    const nombre = useUserStore((state) => state.nombre);
+    const rolUsuario = useUserStore((state) => state.rol);
+    const sucursalSeleccionada = useUserStore((state) => state.sur);
+    const almacenGlobal = useUserStore((state) => state.almacen);
+    const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);
 
     useEffect(() => {
         const fetchEmpresaData = async () => {
@@ -38,20 +41,21 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     const navigate = useNavigate();
 
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
-        const almacenIdGuardado = localStorage.getItem('almacen');
-        return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '%', sucursal: '' } : { id: '%', sucursal: '' };
+        if (almacenGlobal && almacenes.length > 0) {
+            return almacenes.find(a => a.id === parseInt(almacenGlobal)) || { id: '%', sucursal: '' };
+        }
+        return { id: '%', sucursal: '' };
     });
     const [estado, setEstado] = useState('');
+
     useEffect(() => {
-        const almacenIdGuardado = localStorage.getItem('almacen');
-        if (almacenIdGuardado && almacenes.length > 0) {
-            const almacen = almacenes.find(a => a.id === parseInt(almacenIdGuardado));
+        if (almacenGlobal && almacenes.length > 0) {
+            const almacen = almacenes.find(a => a.id === parseInt(almacenGlobal));
             if (almacen) {
                 setAlmacenSeleccionado(almacen);
             }
         }
-    }, [almacenes]);
-
+    }, [almacenGlobal, almacenes]);
 
     const [isModalOpenPDF, setIsModalOpenPDF] = useState(false);
     // const today = new Date();
@@ -66,12 +70,9 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     const [usuario, setUsuario] = useState('');
     const [documento, setDocumento] = useState('');
 
-    const sucursalSeleccionada = localStorage.getItem('sur');
-    const rolUsuario = localStorage.getItem('rol');
-
     // Filtrar almacenes según la sucursal seleccionada si el rol es diferente de 1
     const almacenesFiltrados =
-        rolUsuario !== '1'
+        rolUsuario !== 1
             ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
             : almacenes;
 
@@ -101,7 +102,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
             ? { id: '%', sucursal: '' }
             : almacenes.find((a) => a.id === parseInt(event.target.value));
         setAlmacenSeleccionado(almacen);
-        localStorage.setItem('almacen', almacen.id === '%' ? '' : almacen.id); // Guarda vacío si es '%'
+        setAlmacenGlobal(almacen.id === '%' ? '' : almacen.id); // Zustand global
         onAlmacenChange(almacen);
     };
 
@@ -275,7 +276,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                     }}
                 >
                     {/* Mostrar la opción "Seleccione..." solo si el rol es 1 */}
-                    {rolUsuario === '1' && <SelectItem key="%" value="%">Seleccione...</SelectItem>}
+                    {rolUsuario === 1 && <SelectItem key="%" value="%">Seleccione...</SelectItem>}
                     {almacenesFiltrados.map((almacen) => (
                         <SelectItem key={almacen.id} value={almacen.id}>
                             {almacen.almacen}

@@ -44,7 +44,7 @@ const getUsuario_1 = async (req, res) => {
     let connection;
     try {
       const { id } = req.params;
-      console.log("ID recibido:", id); // Depuración
+      //console.log("ID recibido:", id); // Depuración
       connection = await getConnection();
       const [result] = await connection.query(
         `SELECT id_usuario, id_rol, usua, contra, estado_usuario, estado_token, id_empresa
@@ -52,7 +52,7 @@ const getUsuario_1 = async (req, res) => {
          WHERE usua = ?`,
         [id]
       );
-      console.log("Resultado de la consulta:", result); // Depuración
+      //console.log("Resultado de la consulta:", result); // Depuración
   
       if (result.length === 0) {
         return res.status(404).json({ code: 0, message: "Usuario no encontrado" });

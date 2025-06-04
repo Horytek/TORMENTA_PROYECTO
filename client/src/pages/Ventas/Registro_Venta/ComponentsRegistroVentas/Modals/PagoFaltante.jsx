@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/react";
 import InputField from '../Inputs/PagarInputs';
+import { Checkbox } from "@heroui/react";
 
 const PagoFaltante = ({
   faltante,
@@ -15,9 +16,20 @@ const PagoFaltante = ({
   options,
   cambio2,
   faltante2,
+  activarPagoDividido3,
+  setActivarPagoDividido3,
 }) => {
   return (
     <div>
+        <div className="flex items-center mb-2">
+          <Checkbox
+            isSelected={activarPagoDividido3}
+            onValueChange={setActivarPagoDividido3}
+            className="mr-2"
+          >
+            Activar tercer pago dividido
+          </Checkbox>
+        </div>
       <div className="flex justify-center text-center mb-4">
         <InputField
           label="Total a pagar"
@@ -40,26 +52,27 @@ const PagoFaltante = ({
         />
       </div>
       <div className="flex mb-4">
-        <Input
-          label="N°2 || Monto recibido"
-          labelPlacement="outside"
-          placeholder="S/."
-          value={montoRecibido2}
-          onChange={(e) => setMontoRecibido2(e.target.value)}
-          pattern="[0-9]*[.]?[0-9]{0,2}"
-          onKeyDown={validateDecimalInput}
-          className="input-c w-40 ml-2"
-          style={{
-            height: "40px",
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            padding: "0 12px",
-            fontSize: "16px",
-            color: "#333",
-            outline: "none",
-            transition: "border-color 0.3s ease, box-shadow 0.3s ease",
-          }}
-        />
+      <Input
+        label="N°2 || Monto recibido"
+        labelPlacement="outside"
+        placeholder="S/."
+        value={montoRecibido2}
+        onChange={(e) => setMontoRecibido2(e.target.value)}
+        pattern="[0-9]*[.]?[0-9]{0,2}"
+        onKeyDown={validateDecimalInput}
+        className="input-c w-40 ml-2"
+        style={{
+          height: "40px",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          padding: "0 12px",
+          fontSize: "16px",
+          color: "#333",
+          outline: "none",
+          transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+        }}
+        readOnly={activarPagoDividido3 === false}
+      />
         <div style={{ marginLeft: "20px" }}>
           <Select
             isRequired
@@ -138,6 +151,8 @@ PagoFaltante.propTypes = {
   options: PropTypes.array.isRequired,
   cambio2: PropTypes.number.isRequired,
   faltante2: PropTypes.number.isRequired,
+  activarPagoDividido3: PropTypes.bool,
+  setActivarPagoDividido3: PropTypes.func,
 };
 
 export default PagoFaltante;

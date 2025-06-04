@@ -73,7 +73,6 @@ const deleteVendedor = async (id) => {
 const updateVendedor = async (id, vendedor) => {
   try {
     const response = await updateVendedorRequest(id, vendedor);
-    console.log(response); // Log para ver lo que está devolviendo el servidor
     if (response.status === 200) {
       toast.success("Vendedor actualizado con éxito");
       return true;

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
 import useVentasData from '../Data/data_venta';
@@ -14,6 +14,7 @@ import PropTypes from 'prop-types';
 import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
 import { Button } from "@heroui/react";
+import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 
 const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
@@ -26,6 +27,11 @@ const Registro_Venta = () => {
   const [detalleMode, setDetalleMode] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const componentRef = useRef();
+
+  // Si quieres persistencia global temporal, puedes usar Zustand:
+  useEffect(() => {
+    useVentaSeleccionadaStore.getState().setTotalVentas(detalles);
+  }, [detalles]);
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -67,16 +73,8 @@ const Registro_Venta = () => {
   const igv_t = (totalImporte * 0.18).toFixed(2);
   const total_t = Math.round(parseFloat(totalImporte) + parseFloat(igv_t));
 
-  const datos_precio = {
-    igv_t: igv_t,
-    total_t: total_t,
-  }
-
-  const saveDetallesToLocalStorage_1 = () => {
-    localStorage.setItem('datos_precio', JSON.stringify(datos_precio));
-  };
-
-  saveDetallesToLocalStorage_1();
+  // Si necesitas los totales en Zustand para otros componentes:
+  useVentaSeleccionadaStore.getState().setTotalVentas(detalles);
 
   const filteredProductos = productos.filter(producto =>
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -130,12 +128,6 @@ const Registro_Venta = () => {
     updatedDetalles[index] = detalle;
     updateDetalle(updatedDetalles);
   }
-
-  const saveDetallesToLocalStorage = () => {
-    localStorage.setItem('detalles', JSON.stringify(detalles));
-  };
-
-  saveDetallesToLocalStorage();
 
   const { clientes } = useClientesData();
   const cliente = clientes.find(cliente => cliente.id === 1);
@@ -282,7 +274,12 @@ const Registro_Venta = () => {
         filteredProductos={filteredProductos}
         searchTerm2={searchTerm2}
       />
-      <CobrarModal isOpen={isCobrarModalOpen} onClose={() => setIsCobrarModalOpen(false)} totalImporte={` ${total_t}`} total_I={` ${totalImporte}`} />
+      <CobrarModal
+  isOpen={isCobrarModalOpen}
+  onClose={() => setIsCobrarModalOpen(false)}
+  totalImporte={Number(total_t)}
+  total_I={Number(totalImporte)}
+/>
     </>
   );
 };

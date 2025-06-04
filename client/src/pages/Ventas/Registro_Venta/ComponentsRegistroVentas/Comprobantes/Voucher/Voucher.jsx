@@ -136,7 +136,14 @@ function numeroALetras(numero) {
     return letras;
 }
 
-export const generateReceiptContent = async (datosVentaComprobante, datosVenta, comprobante1, observacion) => {
+export const generateReceiptContent = async (
+  datosVentaComprobante,
+  datosVenta,
+  comprobante1,
+  observacion,
+  nombre,
+  empresaData
+) => {
   let content = '';
   const appendContent = (text) => {
     content += `${text}\n`;
@@ -149,8 +156,8 @@ export const generateReceiptContent = async (datosVentaComprobante, datosVenta, 
   const vuelto = Number(datosVentaComprobante.vuelto || 0);
 
   const totalEnLetras = numeroALetras(totalT);
-  const nombre = useUserStore((state) => state.nombre);
-  const empresaData = await getEmpresaDataByUser(nombre);
+
+  // empresaData y nombre ahora vienen como argumento
   if (!empresaData) {
     console.error('No se pudieron obtener los datos de la empresa.');
     return '';
@@ -211,20 +218,30 @@ export const generateReceiptContent = async (datosVentaComprobante, datosVenta, 
   return content;
 };
 
+// Componente Voucher optimizado
 const Voucher = ({ datosVentaComprobante, datosVenta }) => {
-    const comprobante1 = useVentaSeleccionadaStore(state => state.comprobante1);
-    const observacion = useVentaSeleccionadaStore(state => state.observacion);
-    const [content, setContent] = useState('');
+  const comprobante1 = useVentaSeleccionadaStore(state => state.comprobante1);
+  const observacion = useVentaSeleccionadaStore(state => state.observacion);
+  const nombre = useUserStore((state) => state.nombre);
+  const [content, setContent] = useState('');
 
-    useEffect(() => {
-        const fetchContent = async () => {
-            const generatedContent = await generateReceiptContent(datosVentaComprobante, datosVenta, comprobante1, observacion);
-            setContent(generatedContent);
-        };
-        fetchContent();
-    }, [datosVentaComprobante, datosVenta, comprobante1, observacion]);
+  useEffect(() => {
+    const fetchContent = async () => {
+      const empresaData = await getEmpresaDataByUser(nombre);
+      const generatedContent = await generateReceiptContent(
+        datosVentaComprobante,
+        datosVenta,
+        comprobante1,
+        observacion,
+        nombre,
+        empresaData
+      );
+      setContent(generatedContent);
+    };
+    fetchContent();
+  }, [datosVentaComprobante, datosVenta, comprobante1, observacion, nombre]);
 
-    return <pre>{content}</pre>;
+  return <pre>{content}</pre>;
 };
 
 export default Voucher;

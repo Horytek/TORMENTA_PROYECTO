@@ -112,7 +112,7 @@ const [sucursalResult] = await connection.query(
   [usuario]
 );
 
-console.log("Resultado de sucursal:", sucursalResult);
+//console.log("Resultado de sucursal:", sucursalResult);
 
 if (sucursalResult.length === 0) {
   throw new Error("Sucursal not found for the given user.");
@@ -126,7 +126,7 @@ const [comprobanteResult] = await connection.query(
   [id_comprobante]
 );
 
-console.log("Resultado de comprobante:", comprobanteResult);
+//console.log("Resultado de comprobante:", comprobanteResult);
 
 if (comprobanteResult.length === 0) {
   throw new Error("Comprobante type not found.");
@@ -155,7 +155,7 @@ if (ultimaVentaResult.length > 0) {
       [id_comprobante, `${prefijoBase}${id_sucursal}%`]
     );
 
-    console.log("Resultado del último comprobante:", ultimoComprobanteResult);
+    //console.log("Resultado del último comprobante:", ultimoComprobanteResult);
 
     if (ultimoComprobanteResult.length > 0) {
       const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
@@ -177,7 +177,7 @@ if (ultimaVentaResult.length > 0) {
   nuevoNumComprobante = `${prefijoBase}${id_sucursal}00-00000001`;
 }
 
-console.log("Nuevo número de comprobante:", nuevoNumComprobante);
+//console.log("Nuevo número de comprobante:", nuevoNumComprobante);
 
     res.json({ nuevoNumComprobante });
   } catch (error) {
@@ -229,7 +229,7 @@ const getEstado = async (req, res) => {
       id_venta,
     } = req.body;
 
-    console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
+    //console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
     await connection.beginTransaction();
 
     // Obtener id_sucursal basado en el usuario
@@ -380,7 +380,7 @@ const addVenta = async (req, res) => {
       observacion
     } = req.body;
 
-    console.log("Datos recibidos:", req.body);
+    //console.log("Datos recibidos:", req.body);
 
     if (
       usuario === undefined ||
@@ -392,7 +392,7 @@ const addVenta = async (req, res) => {
       !Array.isArray(detalles) ||
       detalles.length === 0
     ) {
-      console.log("Error en los datos:", {
+      /*console.log("Error en los datos:", {
         usuario,
         id_comprobante,
         id_cliente,
@@ -400,7 +400,7 @@ const addVenta = async (req, res) => {
         f_venta,
         igv,
         detalles,
-      });
+      });*/
       return res
         .status(400)
         .json({ message: "Bad Request. Please fill all fields correctly." });
@@ -431,7 +431,7 @@ const addVenta = async (req, res) => {
 
     const id_almacen = almacenResult[0].id_almacen;
     //console.log("Resultado de almacen:", id_almacen);
-    // 
+    
 
 
     // Obtener id_tipocomprobante y nom_tipocomp basado en el nombre del comprobante
@@ -440,7 +440,7 @@ const addVenta = async (req, res) => {
       [id_comprobante]
     );
 
-    console.log("Resultado de comprobante:", comprobanteResult);
+    //console.log("Resultado de comprobante:", comprobanteResult);
 
     if (comprobanteResult.length === 0) {
       throw new Error("Comprobante type not found.");
@@ -469,7 +469,7 @@ const addVenta = async (req, res) => {
           [id_comprobante, `${prefijoBase}${id_sucursal}%`]
         );
 
-        console.log("Resultado del último comprobante:", ultimoComprobanteResult);
+        //console.log("Resultado del último comprobante:", ultimoComprobanteResult);
 
         if (ultimoComprobanteResult.length > 0) {
           const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
@@ -491,7 +491,7 @@ const addVenta = async (req, res) => {
       nuevoNumComprobante = `${prefijoBase}${id_sucursal}00-00000001`;
     }
 
-    console.log("Nuevo número de comprobante:", nuevoNumComprobante);
+    //console.log("Nuevo número de comprobante:", nuevoNumComprobante);
 
     // Insertar el nuevo comprobante y obtener su id_comprobante
     const [nuevoComprobanteResult] = await connection.query(
@@ -499,7 +499,7 @@ const addVenta = async (req, res) => {
       [id_tipocomprobante, nuevoNumComprobante]
     );
 
-    console.log("Resultado de nuevo comprobante:", nuevoComprobanteResult);
+    //console.log("Resultado de nuevo comprobante:", nuevoComprobanteResult);
 
     const id_comprobante_final = nuevoComprobanteResult.insertId;
 
@@ -509,7 +509,7 @@ const addVenta = async (req, res) => {
       [id_cliente, id_cliente]
     );
 
-    console.log("Resultado del cliente:", clienteResult);
+    //console.log("Resultado del cliente:", clienteResult);
 
     if (clienteResult.length === 0) {
       throw new Error("Cliente not found.");
@@ -525,7 +525,7 @@ const addVenta = async (req, res) => {
       [id_comprobante_final, id_cliente_final, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago,id_anular,id_anular_b,observacion]
     );
 
-    console.log("Resultado de inserción de venta:", ventaResult);
+    //console.log("Resultado de inserción de venta:", ventaResult);
 
     const id_venta = ventaResult.insertId;
 
@@ -539,7 +539,7 @@ const addVenta = async (req, res) => {
         [id_producto, id_sucursal]
       );
 
-      console.log("Resultado del inventario para producto ID", id_producto, ":", inventarioResult);
+      //console.log("Resultado del inventario para producto ID", id_producto, ":", inventarioResult);
 
       if (inventarioResult.length === 0) {
         throw new Error(`No stock found for product ID ${id_producto} in the current store.`);
@@ -559,7 +559,7 @@ const addVenta = async (req, res) => {
         [stockNuevo, id_producto, id_sucursal]
       );
 
-      console.log("Resultado de actualización de stock:", updateResult);
+      //console.log("Resultado de actualización de stock:", updateResult);
 
       // Insertar detalle de la venta
       await connection.query(
@@ -592,7 +592,7 @@ const addVenta = async (req, res) => {
     );
 
     const id_venta_boucher = ventaResult_b.insertId; // Obtener el ID de la venta recién insertada
-    console.log("ID de la venta:", id_venta_boucher);
+    //console.log("ID de la venta:", id_venta_boucher);
 
     await connection.query(
       `
@@ -635,7 +635,7 @@ const addCliente = async (req, res) => {
      connection = await getConnection();
     const { dniOrRuc, tipo_cliente, nombreCompleto, direccion } = req.body;
 
-    console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
+    //console.log("Datos recibidos:", req.body); // Log para verificar los datos recibidos
 
     if (
       !dniOrRuc ||

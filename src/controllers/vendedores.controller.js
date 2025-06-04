@@ -22,7 +22,7 @@ const getVendedor = async (req, res) => {
     let connection;
     try {
         const { dni } = req.params;
-        console.log("DNI recibido en backend:", dni); // ✅ Verificar que el backend recibe el dni correctamente
+        //console.log("DNI recibido en backend:", dni); // ✅ Verificar que el backend recibe el dni correctamente
 
         connection = await getConnection();
         const [result] = await connection.query(`
@@ -137,7 +137,7 @@ const deactivateVendedor = async (req, res) => {
             "SELECT COUNT(*) AS count FROM sucursal WHERE dni = ?",
             [dni]
         );
-        console.log("Resultado de verificación de relación con sucursal:", relatedCheck);
+        //console.log("Resultado de verificación de relación con sucursal:", relatedCheck);
 
         if (relatedCheck.length === 0 || relatedCheck[0].count === undefined) {
             //console.error("Error: Respuesta inesperada al verificar relación con sucursal");
@@ -145,7 +145,7 @@ const deactivateVendedor = async (req, res) => {
         }
 
         if (relatedCheck[0].count > 0) {
-            console.log("El vendedor está asociado a una sucursal, actualizando estado...");
+            //console.log("El vendedor está asociado a una sucursal, actualizando estado...");
             const [updateResult] = await connection.query(
                 "UPDATE vendedor SET estado_vendedor = 0 WHERE dni = ?",
                 [dni]
@@ -158,7 +158,7 @@ const deactivateVendedor = async (req, res) => {
 
             return res.json({ message: "Vendedor dado de baja con éxito (solo estado cambiado)" });
         } else {
-            console.log("El vendedor NO está asociado a una sucursal, procediendo a eliminar...");
+            //console.log("El vendedor NO está asociado a una sucursal, procediendo a eliminar...");
             const [deleteResult] = await connection.query(
                 "DELETE FROM vendedor WHERE dni = ?",
                 [dni]

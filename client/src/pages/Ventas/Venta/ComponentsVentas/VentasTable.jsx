@@ -219,15 +219,15 @@ const handlePrint = async () => {
           className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
         >
           <div className="flex justify-center items-center gap-1">
-            <span>
-              {venta.fechaEmision
-                ? new Date(venta.fechaEmision).toLocaleDateString("es-ES", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })
-                : "N/A"}
-            </span>
+          <span>
+            {venta.fechaEmision
+              ? new Date(venta.fechaEmision + "T12:00:00").toLocaleDateString("es-ES", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })
+              : "N/A"}
+          </span>
             <i className="fas fa-calendar-alt text-blue-500 cursor-pointer"></i>
           </div>
         </Tooltip>

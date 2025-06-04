@@ -32,7 +32,6 @@ const getRol = async (id) => {
 const addRol = async (user) => {
   try {
     const response = await addRolRequest(user);
-    //console.log("Respuesta del servidor (addRol):", response.data);
     if (response.data.code === 1) {
       toast.success("Rol añadido con éxito");
       return true;

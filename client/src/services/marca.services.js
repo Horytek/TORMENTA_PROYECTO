@@ -77,7 +77,6 @@ const updateMarca = async (id, marca) => {
 const deactivateMarca = async (id) => {
     try {
         const response = await deactivateMarcaRequest(id);
-        console.log('Response:', response); 
         if (response.data.message === 'Marca dada de baja con éxito') {
             toast.success("Marca desactivada con éxito");
             return true;

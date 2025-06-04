@@ -5,6 +5,7 @@ import useSucursalData from '../../../Data/data_sucursal_venta';
 import { useLastData } from '../../../Data/getLastVenta';
 import generateComprobanteNumber from '../../../Data/generate_comprobante';
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
+import { useUserStore } from "@/store/useStore";
 
 const useCobrarModalState = () => {
   const { productos } = useProductosData();
@@ -31,9 +32,10 @@ const useCobrarModalState = () => {
   const [dniOrRuc, setDni] = useState('');
   const [nombreCliente, setNombreCliente] = useState('');
   const [direccionCliente, setDireccionCliente] = useState('');
+  const usuario = useUserStore(state => state.nombre);
 
   // Zustand: detalles y comprobante globales
-  const detalles = useVentaSeleccionadaStore((state) => state.detalles);
+  const detalles = useVentaSeleccionadaStore((state) => state.total_ventas);
   const setComprobante1 = useVentaSeleccionadaStore((state) => state.setComprobante1);
 
   const options = [
@@ -63,7 +65,7 @@ const useCobrarModalState = () => {
         console.warn('El valor de comp no es válido:', comp);
         return;
       }
-      const nuevoNumComprobante = await generateComprobanteNumber(comp);
+      const nuevoNumComprobante = await generateComprobanteNumber(comp, usuario);
       SetSerie(nuevoNumComprobante.substring(1, nuevoNumComprobante.indexOf('-')));
       SetNum(nuevoNumComprobante.substring(nuevoNumComprobante.indexOf('-') + 1));
       setComprobante1({ nuevoNumComprobante }); // Guardar en Zustand

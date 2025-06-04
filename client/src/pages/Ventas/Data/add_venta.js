@@ -29,7 +29,7 @@ export const handleCobrar = async (datosVenta, setShowConfirmacion,datosVenta_1,
             }
         });
 
-        if(datosVenta_1.tipoComprobante != "Nota de venta"){
+        if(datosVenta_1.comprobante_pago != "Nota de venta"){
             handleSunatUnique(datosVenta_1);
             handleUpdate(ven);
         }

@@ -26,7 +26,7 @@ const getDestinatarios = async () => {
 // Función para obtener un destinatario por ID
 const getDestinatario = async (id) => {
   try {
-    console.log("Documento enviado a getDestinatario:", id);
+    //console.log("Documento enviado a getDestinatario:", id);
     const response = await getDestinatarioRequest(id);
     if (response.data.code === 1) {
       return response.data.data;

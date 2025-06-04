@@ -86,7 +86,6 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     };
 
     onFiltersChange(filtros);
-    // No uses localStorage.setItem("filtros", ...)
     // Si necesitas persistencia entre sesiones, usa Zustand persist o Context persist
   }, [
     comprobanteSeleccionado,
@@ -97,7 +96,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     onFiltersChange,
   ]);
 
-  // Reemplaza loadDetallesFromLocalStorage por Zustand
+
   const loadDetallesFromStore = () => {
     return total_ventas || [];
   };
@@ -107,7 +106,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     const ventas_new = d_ventas.filter(
       (venta) => venta.estado === "En proceso" && venta.tipoComprobante !== "Nota"
     );
-    // No uses localStorage.setItem("d_new", ...)
+
     if (ventas_new.length === 0) {
       toast.error(
         "Todas las ventas de esta paginación ya han sido enviadas a la Sunat."

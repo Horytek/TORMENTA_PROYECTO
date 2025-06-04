@@ -91,7 +91,7 @@ const getAlmacen = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        console.log("ID recibido en la API:", id);
+        //console.log("ID recibido en la API:", id);
 
 
         if (!id || isNaN(id)) {
@@ -144,7 +144,7 @@ const getAlmacen = async (req, res) => {
 const addAlmacen = async (req, res) => {
     const { nom_almacen, ubicacion = null, id_sucursal = null, estado_almacen } = req.body;
 
-    console.log("Datos recibidos:", req.body);
+    //console.log("Datos recibidos:", req.body);
 
 
     let connection;

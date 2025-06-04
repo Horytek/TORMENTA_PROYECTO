@@ -6,19 +6,21 @@ import PropTypes from 'prop-types';
 import NumeroALetras from '../../../../../../utils/ConvertidorDeNumALetras';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
+import useSucursalData from '../../../../Data/data_sucursal_venta';
 
 const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     const { detalles, fecha, total_t, igv, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
     const [currentDate, setCurrentDate] = useState('');
     const [pdfUrl, setPdfUrl] = useState(null);
     const [empresaData, setEmpresaData] = useState(null); // Estado para almacenar los datos de la empresa
-
+    const [sucursalData, setSucursalData] = useState(null);
+    
     const generatePDF = async () => {
         const publicPdfUrl = "https://www.facebook.com/profile.php?id=100055385846115";
         setPdfUrl(publicPdfUrl);
     };
     const nombre = useUserStore((state) => state.nombre);
-    const sur = useUserStore((state) => state.sur);
+    const { sucursales } = useSucursalData();
 
     const formatHours = () => {
         const now = new Date();
@@ -43,6 +45,14 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
         generatePDF();
         fetchEmpresaData(); // Llamar a la función para obtener los datos de la empresa
     }, [nombre]);
+
+    useEffect(() => {
+        // Busca la sucursal del usuario actual
+        if (sucursales && nombre) {
+            const sucursal = sucursales.find(s => s.usuario === nombre);
+            setSucursalData(sucursal || null);
+        }
+    }, [sucursales, nombre]);
 
     return (
         <div ref={ref} className="p-5 text-sm leading-6 font-sans w-[800px]">
@@ -87,7 +97,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                             <span className="font-bold text-gray-900">CLIENTE:</span> <span className="font-semibold text-gray-600"> Cliente Varios </span>
                         </p>
                         <p className="text-sm font-semibold text-gray-800">
-                            <span className="font-bold text-gray-900">DIRECCIÓN:</span><span className="font-semibold text-gray-600"> --- </span>
+                            <span className="font-bold text-gray-900">DIRECCIÓN:</span><span className="font-semibold text-gray-600"> {sucursalData?.ubicacion || "Dirección no disponible"} </span>
                         </p>
                     </div>
                     <div className="space-y-2 text-right">
@@ -102,7 +112,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                 <div className="grid grid-cols-3 gap-6">
                     <div className="space-y-2">
                         <p className="text-sm font-semibold text-gray-800">
-                            <span className="font-bold text-gray-900">SUCURSAL:</span> <span className="font-semibold text-gray-600">{sur}</span>
+                            <span className="font-bold text-gray-900">SUCURSAL:</span> <span className="font-semibold text-gray-600">{sucursalData?.nombre || "Sucursal no encontrada"}</span>
                         </p>
                     </div>
                     <div className="space-y-2 text-right">

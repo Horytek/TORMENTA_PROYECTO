@@ -6,7 +6,6 @@ import { transformData } from '@/utils/almacen';
 const getAlmacenes = async () => {
     try {
       const response = await getAlmacenesRequest();
-      console.log("Respuesta API:", response); // 🔹 Muestra toda la respuesta
       if (response.data.code === 1) {
         return transformData(response.data.data);
       } else {
@@ -20,7 +19,6 @@ const getAlmacenes = async () => {
   const getSucursales = async () => {
     try {
       const response = await getSucursalesRequest();
-      console.log("Respuesta API:", response); // 🔹 Muestra toda la respuesta
       if (response.data.code === 1) {
         return transformData(response.data.data);
       } else {
@@ -32,9 +30,6 @@ const getAlmacenes = async () => {
   };
 
   const getAlmacen = async (id) => {
-    console.log("Tipo de ID recibido:", typeof id);
-    console.log("Valor del ID recibido:", id);
-
     try {
         const response = await getAlmacenRequest(id);
         if (response.data.code === 1) {
@@ -52,7 +47,6 @@ const getAlmacenes = async () => {
 const addAlmacen= async (almacen) => {
   try {
     const response = await addAlmacenRequest(almacen);
-    console.log(almacen)
     if (response.data.code === 1) {
       toast.success("Almacén añadido con éxito");
       return true;

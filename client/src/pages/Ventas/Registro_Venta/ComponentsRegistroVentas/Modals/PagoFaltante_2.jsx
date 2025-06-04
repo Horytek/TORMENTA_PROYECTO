@@ -41,7 +41,7 @@ const PagoFaltante = ({
       </div>
       <div className="flex mb-4">
         <Input
-          label="N°2 || Monto recibido"
+          label="N°3 || Monto recibido"
           labelPlacement="outside"
           placeholder="S/."
           value={montoRecibido2}

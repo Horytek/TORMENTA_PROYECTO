@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
   // Zustand setters
   const setNombre = useUserStore((state) => state.setNombre);
   const setIdRol = useUserStore((state) => state.setIdRol);
+  const setSur = useUserStore((state) => state.setSur);
   const clearUser = useUserStore((state) => state.clearUser);
 
   const login = async (user) => {
@@ -30,6 +31,7 @@ export const AuthProvider = ({ children }) => {
       // Actualiza Zustand
       setNombre(res.data.data.name || res.data.data.usuario || "");
       setIdRol(res.data.data.rol || res.data.data.idRol || null);
+      setSur(res.data.data.sucursal || res.data.data.idSucursal || null);
 
       return res.data;
     } catch (error) {
@@ -75,6 +77,11 @@ export const AuthProvider = ({ children }) => {
         setUser(res.data);
         setNombre(res.data.name || res.data.usuario || "");
         setIdRol(res.data.rol || res.data.idRol || null);
+      if (res.data.data) {
+        setSur(res.data.data.sucursal || res.data.data.idSucursal || null);
+      } else {
+        setSur(null);
+      }
         setLoading(false);
       } catch (error) {
         setIsAuthenticated(false);
@@ -83,7 +90,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
     checkLogin();
-  }, [setNombre, setIdRol, clearUser]);
+  }, [setNombre, setIdRol, setSur, clearUser]);
 
   return (
     <AuthContext.Provider value={{
