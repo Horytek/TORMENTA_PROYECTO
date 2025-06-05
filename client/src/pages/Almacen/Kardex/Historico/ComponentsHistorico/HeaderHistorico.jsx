@@ -11,6 +11,7 @@ import { useUserStore } from "@/store/useStore";
 
 function HeaderHistorico({ productoData, onDateChange, transactions, previousTransactions, dateRange }) {
   const { almacenes } = useAlmacenData();
+  const nombre = useUserStore(state => state.nombre);
   const almacenGlobal = useUserStore((state) => state.almacen);
   const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);
 
@@ -31,7 +32,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
   useEffect(() => {
     const fetchEmpresa = async () => {
       try {
-        const data = await getEmpresaDataByUser();
+        const data = await getEmpresaDataByUser(nombre);
         setEmpresaData(data);
         if (data?.logotipo && !data.logotipo.startsWith('data:image')) {
           const response = await fetch(data.logotipo);

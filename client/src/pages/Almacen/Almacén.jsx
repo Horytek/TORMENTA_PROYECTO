@@ -19,6 +19,7 @@ import { FaRegFilePdf } from "react-icons/fa";
 import { FaFileExcel } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import 'jspdf-autotable';
+import { useUserStore } from "@/store/useStore";
 
 const Kardex = () => {
 
@@ -28,34 +29,45 @@ const Kardex = () => {
     const { categorias } = useCategoriaData();
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
     const { subcategorias } = useSubCategoriaData(categoriaSeleccionada);
+
+    // Obtener estado global de Zustand
+    const rolUsuario = useUserStore(state => state.rol);
+    const sucursalSeleccionada = useUserStore(state => state.sur);
+    const almacenGlobal = useUserStore(state => state.almacen);
+    const setAlmacenGlobal = useUserStore(state => state.setAlmacen);
+
+    // Inicializar almacenSeleccionado con estado global
     const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
-        const almacenIdGuardado = localStorage.getItem('almacen');
-        return almacenIdGuardado ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) || { id: '', sucursal: '' } : { id: '', sucursal: '' };
+        if (almacenGlobal && almacenes.length > 0) {
+            return almacenes.find(a => a.id === parseInt(almacenGlobal)) || { id: '', sucursal: '' };
+        }
+        return { id: '', sucursal: '' };
     });
 
-    const [stockFilter, setStockFilter] = useState(''); // Nuevo estado para el filtro de stock
+    const [stockFilter, setStockFilter] = useState(''); // filtro stock
 
-    const rolUsuario = localStorage.getItem('rol');
-    const sucursalSeleccionada = localStorage.getItem('sur');
+    // Filtrar almacenes según rol y sucursal
+    const almacenesFiltrados =
+      rolUsuario !== 1
+        ? almacenes.filter(almacen => almacen.sucursal === sucursalSeleccionada)
+        : almacenes;
 
-    // Filtrar almacenes según el rol y la sucursal seleccionada
-        const almacenesFiltrados =
-          rolUsuario !== '1'
-            ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
-            : almacenes;
-    
+    // Cuando cambian almacenes o almacenGlobal, actualizar almacenSeleccionado
     useEffect(() => {
-        const almacenIdGuardado = localStorage.getItem('almacen');
-        if (almacenIdGuardado && almacenes.length > 0) {
-            const almacen = almacenes.find(a => a.id === parseInt(almacenIdGuardado));
+        if (almacenGlobal && almacenes.length > 0) {
+            const almacen = almacenes.find(a => a.id === parseInt(almacenGlobal));
             if (almacen) {
                 setAlmacenSeleccionado(almacen);
             }
+        } else if (almacenes.length > 0 && !almacenGlobal) {
+            // Si no hay almacen global, toma el primero disponible
+            setAlmacenSeleccionado(almacenes[0]);
+            setAlmacenGlobal(almacenes[0].id.toString());
         }
-    }, [almacenes]);
+    }, [almacenGlobal, almacenes, setAlmacenGlobal]);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = 5; // Número total de páginas
+    const totalPages = 5; // total páginas
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState({ mes: "", almacen: "", year: "" });
     const hoy = new Date();
@@ -74,27 +86,7 @@ const Kardex = () => {
         almacen: "",
     });
 
-
-    useEffect(() => {
-        const almacenIdGuardado = localStorage.getItem('almacen');
-        if (almacenIdGuardado && almacenes.length > 0) {
-            const almacen = almacenes.find(a => a.id === parseInt(almacenIdGuardado));
-            if (almacen) {
-                setAlmacenSeleccionado(almacen);
-            }
-        }
-    }, [almacenes]);
-
-    useEffect(() => {
-        if (almacenes.length > 0 && !almacenSeleccionado.id) {
-            const defaultAlmacen = almacenes[0];
-            setAlmacenSeleccionado(defaultAlmacen);
-            setFilters(f => ({ ...f, almacen: defaultAlmacen.id }));
-        }
-    }, [almacenes]);
-
-
-
+    // Filtros combinados
     const [filters, setFilters] = useState({
         descripcion: '',
         almacen: almacenSeleccionado.id !== '' ? almacenSeleccionado.id : '',
@@ -102,8 +94,16 @@ const Kardex = () => {
         marca: '',
         cat: '',
         subcat: '',
-        stock: '', // Nuevo filtro de stock
+        stock: '',
     });
+
+    // Actualiza filters cuando cambia almacenSeleccionado local
+    useEffect(() => {
+        setFilters(f => ({
+            ...f,
+            almacen: almacenSeleccionado.id || '',
+        }));
+    }, [almacenSeleccionado]);
 
     const fetchKardex = useCallback(async () => {
         const data = await getSalidaData(filters);
@@ -129,6 +129,13 @@ const Kardex = () => {
         const value = event.target.value;
         setStockFilter(value);
         handleFiltersChange({ stock: value });
+    };
+
+    // Cuando se cambia almacen en UI
+    const handleAlmacenChange = (event) => {
+        const nuevoAlmacen = almacenes.find(a => a.id === parseInt(event.target.value)) || { id: '', sucursal: '' };
+        setAlmacenSeleccionado(nuevoAlmacen);
+        setAlmacenGlobal(nuevoAlmacen.id.toString());
     };
 
     const generatePDFKardex = (kardex, almacenSeleccionado) => {
@@ -207,13 +214,6 @@ const Kardex = () => {
     };
     const handleGeneratePDF = () => {
         generatePDFKardex(kardex, almacenSeleccionado);
-    };
-
-    const handleAlmacenChange = (event) => {
-        const almacen = almacenesFiltrados.find(a => a.id === parseInt(event.target.value)) || { id: '', sucursal: '' };
-        setAlmacenSeleccionado(almacen);
-        localStorage.setItem('almacen', almacen.id);
-        handleFiltersChange({ almacen: event.target.value });
     };
 
     const handleCategoriaChange = (event) => {
