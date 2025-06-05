@@ -87,6 +87,8 @@ const CobrarModal = ({ isOpen, onClose, totalImporte, total_I }) => {
 
 // --- AUTOCOMPLETADO DE PAGOS DIVIDIDOS ---
 useEffect(() => {
+  // --- AUTOCOMPLETADO DE PAGOS DIVIDIDOS ---
+
   // Si el comprobante es "Nota de venta"
   if (comprobante_pago === 'Nota de venta') {
     // Autocompletar monto recibido con el total a pagar con descuento
@@ -109,34 +111,35 @@ useEffect(() => {
   if (comprobante_pago === 'Boleta' || comprobante_pago === 'Factura') {
     // Si el primer método de pago es EFECTIVO
     if (metodo_pago === 'EFECTIVO') {
-      // Si el tercer pago dividido NO está activo, el segundo pago es autocompletado y bloqueado
+
+      // --- SEGUNDO PAGO DIVIDIDO ---
       if (!activarPagoDividido3 && faltante > 0) {
+        // Autocompletar segundo pago si no está activado el tercero
         if (parseFloat(montoRecibido2) !== parseFloat(faltante.toFixed(2))) {
           setMontoRecibido2(faltante.toFixed(2));
         }
-        // Siempre limpia el tercer pago si no está activo
+        // Limpiar tercer pago si no está activado
         if (montoRecibido3 !== '') setMontoRecibido3('');
         if (metodo_pago3 !== '') setmetodo_pago3('');
       }
-      // Si el tercer pago dividido está activo, el usuario puede editar el segundo pago
+
+      // --- TERCER PAGO DIVIDIDO ---
       if (activarPagoDividido3) {
-        // Solo autocompleta el tercer pago si hay faltante2 y el campo está vacío o incorrecto
+        // Si hay un faltante2, autocompletar el tercer pago si está vacío o incorrecto
         if (faltante2 > 0) {
           if (!montoRecibido3 || parseFloat(montoRecibido3) !== parseFloat(faltante2.toFixed(2))) {
             setMontoRecibido3(faltante2.toFixed(2));
           }
         }
       }
-    }
-    // Si el primer método de pago es electrónico y el monto recibido es menor al total
-    else if (
+
+    } else if (
       metodo_pago &&
       metodo_pago !== 'EFECTIVO' &&
       (parseFloat(montoRecibido) || 0) < totalAPagarConDescuento
     ) {
-      // Autocompletar el monto recibido con el total a pagar
+      // Si método principal no es efectivo y no cubre el total, autocompletar y limpiar adicionales
       setMontoRecibido(totalAPagarConDescuento.toFixed(2));
-      // Limpiar pagos divididos
       if (montoRecibido2 !== '') setMontoRecibido2('');
       if (montoRecibido3 !== '') setMontoRecibido3('');
       if (metodo_pago2 !== '') setmetodo_pago2('');
@@ -144,8 +147,21 @@ useEffect(() => {
     }
   }
   // eslint-disable-next-line
-}, [comprobante_pago, metodo_pago, faltante, faltante2, totalAPagarConDescuento, activarPagoDividido3, montoRecibido2, montoRecibido3, metodo_pago2, metodo_pago3, montoRecibido]);
-  // Datos de venta
+}, [
+  comprobante_pago,
+  metodo_pago,
+  faltante,
+  faltante2,
+  totalAPagarConDescuento,
+  activarPagoDividido3,
+  montoRecibido2,
+  montoRecibido3,
+  metodo_pago2,
+  metodo_pago3,
+  montoRecibido
+]);
+
+// Datos de venta
   const datosVenta = useMemo(() => ({
     usuario: nombre,
     id_comprobante: comprobante_pago,

@@ -49,6 +49,7 @@ const PagoFaltante = ({
           pattern="[0-9]*[.]?[0-9]{0,2}"
           onKeyDown={validateDecimalInput}
           className="input-c w-40 ml-2"
+          readOnly
           style={{
             height: "40px",
             border: "1px solid #ddd",
