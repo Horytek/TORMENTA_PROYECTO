@@ -26,6 +26,10 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     const almacenGlobal = useUserStore((state) => state.almacen);
     const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);
 
+                          localStorage.setItem("usuario", nombre);
+        localStorage.setItem("rol", rolUsuario);
+        localStorage.setItem("sur", sucursalSeleccionada);
+
     useEffect(() => {
         const fetchEmpresaData = async () => {
             try {

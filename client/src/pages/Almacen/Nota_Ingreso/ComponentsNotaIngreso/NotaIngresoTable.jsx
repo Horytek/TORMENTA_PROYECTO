@@ -203,9 +203,9 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo }, ref) => {
     if (notaIdToAccion) {
       let result;
       if (tipo === "ingreso") {
-        result = await anularNotaIngreso(notaIdToAccion);
+        result = await anularNotaIngreso(notaIdToAccion,nombre);
       } else {
-        result = await anularNotaSalida(notaIdToAccion);
+        result = await anularNotaSalida(notaIdToAccion,nombre);
       }
       if (result.success) {
         toast.success('Nota anulada');

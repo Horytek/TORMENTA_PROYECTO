@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import TablaSucursal from './ComponentsSucursal/SucursalTable';
-import getSucursalesData from './data/data_sucursal';
+import getSucursalData from './data/data_sucursal';
 import FiltrosSucursal from './ComponentsSucursal/FiltroSucursal';
 
 import 'jspdf-autotable';
@@ -14,7 +14,7 @@ const Sucursales = () => {
     const [sucursales, setSucursales] = useState([]);
 
     const fetchSucursales = async (filters) => {
-        const data = await getSucursalesData(filters);
+        const data = await getSucursalData(filters);
         setSucursales(data.sucursales);
     };
 

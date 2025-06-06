@@ -77,11 +77,7 @@ export const AuthProvider = ({ children }) => {
         setUser(res.data);
         setNombre(res.data.name || res.data.usuario || "");
         setIdRol(res.data.rol || res.data.idRol || null);
-      if (res.data.data) {
-        setSur(res.data.data.sucursal || res.data.data.idSucursal || null);
-      } else {
-        setSur(null);
-      }
+        setSur(res.data.sucursal || res.data.idSucursal || null);
         setLoading(false);
       } catch (error) {
         setIsAuthenticated(false);

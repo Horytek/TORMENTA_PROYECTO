@@ -15,6 +15,7 @@ const useAlmacenData = () => {
                         id: item.id,
                         almacen: item.almacen,
                         sucursal: item.sucursal,
+                        usuario: item.usuario,
                     }));
                     setAlmacenes(almacenes);
                 } else {

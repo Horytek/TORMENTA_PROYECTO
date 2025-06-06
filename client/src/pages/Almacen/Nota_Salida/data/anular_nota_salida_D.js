@@ -1,8 +1,6 @@
 import axios from "@/api/axios";
 
-const anularNotaSalida = async (notaId) => {
-  const usuario = localStorage.getItem('usuario'); // Obtiene el usuario actual
-
+const anularNotaSalida = async (notaId, usuario) => {
   try {
     const response = await axios.post('/nota_salida/anular', {
       notaId,

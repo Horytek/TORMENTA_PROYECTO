@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import axios from "@/api/axios";
+import { useUserStore } from "@/store/useStore";
 
 const useComparacionTotal = (fechaInicio, fechaFin, sucursal) => {
   const [comparacionVentas, setComparacionVentas] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const nombre = useUserStore(state => state.nombre);
 
   useEffect(() => {
-    const usuario = localStorage.getItem("usuario");
+    const usuario = nombre;
     const fetchComparacionVentas = async () => {
       try {
         setLoading(true);

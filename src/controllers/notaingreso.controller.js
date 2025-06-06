@@ -99,10 +99,12 @@ const getAlmacen = async (req, res) => {
     try {
         connection = await getConnection();
         const [result] = await connection.query(`
-            SELECT a.id_almacen AS id, a.nom_almacen AS almacen, COALESCE(s.nombre_sucursal,'Sin Sucursal') AS sucursal 
+            SELECT a.id_almacen AS id, a.nom_almacen AS almacen, COALESCE(s.nombre_sucursal,'Sin Sucursal') AS sucursal, usa.usua AS usuario
             FROM almacen a 
             LEFT JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
             LEFT JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
+            INNER JOIN vendedor ve ON ve.dni=s.dni
+            INNER JOIN usuario usa ON usa.id_usuario=ve.id_usuario
             WHERE a.estado_almacen = 1;
         `);
         res.json({ code: 1, data: result, message: "Almacenes listados" });

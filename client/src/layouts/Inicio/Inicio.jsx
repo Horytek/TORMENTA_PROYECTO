@@ -344,9 +344,9 @@ function Inicio() {
   }
 
 // Busca el id de almacén correspondiente a la sucursal seleccionada
-const almacenId = sucursales.find(s => s.id.toString() === selectedSucursal)?.almacen_n || "%";
+//const almacenId = sucursales.find(s => s.id.toString() === selectedSucursal)?.almacen_n || "%";
 
-const { cantidadPendientes, totalNotas, notasPendientes, loading, refetchNotasPendientes } = useNotasPendientes({ almacen: almacenId });
+const { cantidadPendientes, totalNotas, notasPendientes, loading, refetchNotasPendientes } = useNotasPendientes({ idSucursal: selectedSucursal });
 
 // Calcula el porcentaje de notas pendientes respecto al total de ingresos
 const porcentajePendientes =

@@ -77,8 +77,8 @@ const handleRegistrarContraparte = async (nota) => {
     if (nota.tipo === "Falta ingreso") {
       nuevoNumComprobante = documentosIngreso[0]?.nota || "-";
       result = await insertNotaAndDetalleIngreso({
-        almacenO: nota.id_almacenD,
-        almacenD: nota.id_almacenO,
+        almacenO: nota.id_almacenO,
+        almacenD: nota.id_almacenD,
         destinatario: nota.id_destinatario,
         glosa: nota.concepto || "-",
         nota: "INGRESO",
@@ -92,8 +92,8 @@ const handleRegistrarContraparte = async (nota) => {
     } else {
       nuevoNumComprobante = documentosSalida[0]?.nota || "-";
       result = await insertNotaAndDetalleSalida({
-        almacenO: nota.id_almacenD,
-        almacenD: nota.id_almacenO,
+        almacenO: nota.id_almacenO,
+        almacenD: nota.id_almacenD,
         destinatario: nota.id_destinatario,
         glosa: nota.concepto || "-",
         nota: "SALIDA",
@@ -148,8 +148,8 @@ const handleRegistrarTodasContrapartes = async (notasFiltradas) => {
     if (nota.tipo === "Falta ingreso") {
       nuevoNumComprobante = await getNuevoNumeroNotaIngreso();
       result = await insertNotaAndDetalleIngreso({
-        almacenO: nota.id_almacenD,
-        almacenD: nota.id_almacenO,
+        almacenO: nota.id_almacenO,
+        almacenD: nota.id_almacenD,
         destinatario: nota.id_destinatario,
         glosa: nota.concepto || "-",
         nota: "INGRESO",
@@ -163,8 +163,8 @@ const handleRegistrarTodasContrapartes = async (notasFiltradas) => {
     } else {
       nuevoNumComprobante = await getNuevoNumeroNotaSalida();
       result = await insertNotaAndDetalleSalida({
-        almacenO: nota.id_almacenD,
-        almacenD: nota.id_almacenO,
+        almacenO: nota.id_almacenO,
+        almacenD: nota.id_almacenD,
         destinatario: nota.id_destinatario,
         glosa: nota.concepto || "-",
         nota: "SALIDA",
@@ -201,9 +201,9 @@ const handleRegistrarTodasContrapartes = async (notasFiltradas) => {
           try {
             let result;
             if (nota.tipo === "Falta ingreso") {
-              result = await anularNotaSalida(nota.id_nota);
+              result = await anularNotaSalida(nota.id_nota,nombre);
             } else {
-              result = await anularNotaIngreso(nota.id_nota);
+              result = await anularNotaIngreso(nota.id_nota,nombre);
             }
             if (result && result.success) {
               toast.success("Nota anulada correctamente.");

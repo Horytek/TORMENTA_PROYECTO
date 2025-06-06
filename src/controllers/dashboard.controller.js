@@ -586,24 +586,50 @@ export const getNotasPendientes = async (req, res) => {
     }
 
     // 1. Obtener notas de ingreso y salida con sus detalles
-    const [ingresos] = await connection.query(
-      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
-              dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
-       FROM nota n
-       INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-       INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
-       WHERE n.id_tiponota = 1 AND n.id_almacenD IN (?) AND n.estado_nota = 0`,
-      [almacenIds]
-    );
-    const [salidas] = await connection.query(
-      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
-              dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
-       FROM nota n
-       INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-       INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
-       WHERE n.id_tiponota = 2 AND n.id_almacenO IN (?) AND n.estado_nota = 0`,
-      [almacenIds]
-    );
+const [ingresos] = await connection.query(
+  `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
+          dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
+   FROM nota n
+   INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+   INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+   WHERE n.id_tiponota = 1
+     AND n.id_almacenD IN (?)
+     AND n.estado_nota = 0
+     AND NOT EXISTS (
+       SELECT 1 FROM nota s
+       WHERE s.id_tiponota = 2
+         AND s.fecha = n.fecha
+         AND s.hora_creacion = n.hora_creacion
+         AND s.id_almacenO = n.id_almacenO
+         AND s.id_almacenD = n.id_almacenD
+         AND s.estado_nota = 0
+     )
+  `,
+  [almacenIds]
+);
+
+const [salidas] = await connection.query(
+  `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
+          dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
+   FROM nota n
+   INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+   INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+   WHERE n.id_tiponota = 2
+     AND n.id_almacenO IN (?)
+     AND n.estado_nota = 0
+     AND NOT EXISTS (
+       SELECT 1 FROM nota i
+       WHERE i.id_tiponota = 1
+         AND i.fecha = n.fecha
+         AND i.hora_creacion = n.hora_creacion
+         AND i.id_almacenO = n.id_almacenO
+         AND i.id_almacenD = n.id_almacenD
+         AND i.estado_nota = 0
+     )
+  `,
+  [almacenIds]
+);
+
 
     // Obtener detalles para todos los id_nota involucrados
     const allNotasIds = [

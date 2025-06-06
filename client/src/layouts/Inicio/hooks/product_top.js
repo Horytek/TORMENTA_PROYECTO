@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import axios from "@/api/axios";
+import { useUserStore } from "@/store/useStore";
 
 const useProductTop = (timePeriod, sucursal = "") => {
   const [productTop, setProductTop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const nombre = useUserStore(state => state.nombre);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("usuario");
+    const storedUser = nombre;
     const fetchProductTop = async () => {
       try {
         setLoading(true);

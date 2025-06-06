@@ -71,13 +71,23 @@ function Registro_Ingresos() {
   const rolUsuario = useUserStore((state) => state.rol);
   const usuario = useUserStore((state) => state.nombre);
 
-  const almacenesFiltrados =
-    rolUsuario != 1
-      ? almacenes.filter((almacen) => almacen.sucursal === sucursalSeleccionada)
-      : almacenes;
-
-  // Nuevo: tipo de nota (ingreso, salida, conjunto)
+    // Nuevo: tipo de nota (ingreso, salida, conjunto)
   const [tipoNota, setTipoNota] = useState('ingreso');
+
+const almacenesOrigenFiltrados = 
+  rolUsuario !== 1
+    ? almacenes.filter((almacen) => 
+        tipoNota === 'salida' ? almacen.sucursal === sucursalSeleccionada : true
+      )
+    : almacenes;
+
+const almacenesDestinoFiltrados = 
+  rolUsuario !== 1
+    ? almacenes.filter((almacen) => 
+        tipoNota === 'ingreso' ? almacen.sucursal === sucursalSeleccionada : true
+      )
+    : almacenes;
+
 
   useEffect(() => {
     if (isModalOpen && almacenOrigen) {
@@ -297,11 +307,14 @@ function Registro_Ingresos() {
           onSelectionChange={setTipoNota}
           color="primary"
           variant="bordered"
-          isDisabled={rolUsuario !== 1}
           className="w-full"
         >
           {tipoNotaOptions.map(option => (
-            <Tab key={option.value} title={option.label} />
+            <Tab
+              key={option.value}
+              title={option.label}
+              isDisabled={option.value === "conjunto" && rolUsuario !== 1}
+            />
           ))}
         </Tabs>
       </div>
@@ -319,7 +332,7 @@ function Registro_Ingresos() {
                 value={almacenOrigen}
                 onChange={(e) => setAlmacenOrigen(e.target.value)}
               >
-                {almacenes.map((almacen) => (
+                {almacenesOrigenFiltrados.map((almacen) => (
                   <SelectItem key={almacen.id} value={almacen.id}>
                     {almacen.almacen}
                   </SelectItem>
@@ -332,7 +345,7 @@ function Registro_Ingresos() {
                 value={almacenDestino}
                 onChange={e => setAlmacenDestino(e.target.value)}
               >
-                {almacenesFiltrados.map((almacen) => (
+                {almacenesDestinoFiltrados.map((almacen) => (
                   <SelectItem key={almacen.id} value={almacen.id}>
                     {almacen.almacen}
                   </SelectItem>

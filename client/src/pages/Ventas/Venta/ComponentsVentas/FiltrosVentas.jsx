@@ -200,7 +200,11 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
               defaultSelectedKeys={[rol !== 1 ? sur : sucursalSeleccionado]}
             >
               {sucursales.map((sucursal) => (
-                <SelectItem key={sucursal.nombre} value={sucursal.nombre}>
+                <SelectItem
+                  key={sucursal.nombre}
+                  value={sucursal.nombre}
+                  isDisabled={rol !== 1 && sucursal.nombre !== sur}
+                >
                   {sucursal.nombre}
                 </SelectItem>
               ))}

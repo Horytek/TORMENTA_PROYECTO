@@ -109,7 +109,11 @@ const verifyToken = async (req, res) => {
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
-        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ? AND estado_usuario = 1", user.nameUser);
+        const [userFound] = await connection.query(`SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal
+                FROM usuario usu
+                INNER JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
+                INNER JOIN sucursal su ON su.dni = ven.dni
+                WHERE usu.usua = ? AND usu.estado_usuario = 1`, user.nameUser);
         if (userFound.length === 0) return res.sendStatus(401);
 
         const userbd = userFound[0];
@@ -117,7 +121,8 @@ const verifyToken = async (req, res) => {
         return res.json({
             id: userbd.id_usuario,
             rol: userbd.id_rol,
-            usuario: userbd.usua
+            usuario: userbd.usua,
+            sucursal: userbd.nombre_sucursal,
         });
     });
 };
