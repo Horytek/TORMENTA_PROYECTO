@@ -161,10 +161,9 @@ const savePermisos = async (req, res) => {
         });
     } catch (error) {
         await connection.rollback();
-        console.error('Error saving permissions:', error);
         res.status(500).json({ 
             success: false, 
-            message: `Error al guardar permisos: ${error.message}` 
+            message: `Error al guardar permisos` 
         });
     } finally {
         connection.release();
@@ -228,13 +227,12 @@ const checkPermiso = async (req, res) => {
       
       res.json({ hasPermission, hasCreatePermission, hasEditPermission, hasDeletePermission, hasGeneratePermission, hasDeactivatePermission });
     } catch (error) {
-      console.error("Error checking permission:", error);
       res.status(500).json({ 
         hasPermission: false,
         hasCreatePermission: false,
         hasEditPermission: false,
         hasDeletePermission: false,
-        message: error.message 
+        message: "Error interno del servidor" 
       });
     }
 };

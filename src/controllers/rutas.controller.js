@@ -8,7 +8,7 @@ const getModulos = async (req, res) => {
     );
     res.json(result);
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }
 };
 
@@ -20,7 +20,7 @@ const getSubmodulos = async (req, res) => {
     );
     res.json(result);
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }
 };
 
@@ -56,8 +56,7 @@ const getModulosConSubmodulos = async (req, res) => {
     
     res.json(modulosConSubmodulos);
   } catch (error) {
-    console.error("Error al obtener módulos y submódulos:", error.message);
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }
 };
 

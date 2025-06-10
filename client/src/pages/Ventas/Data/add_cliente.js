@@ -4,7 +4,7 @@ import axios from "../../../api/axios";
 export const  handleGuardarCliente = async (datosCliente,setShowNuevoCliente) => {
 
     try {
-        console.log('Datos del cliente:', datosCliente);
+        //console.log('Datos del cliente:', datosCliente);
         const response = await axios.post('/ventas/cliente', datosCliente, {// Reemplaza con la URL de tu API
             headers: {
                 'Content-Type': 'application/json',

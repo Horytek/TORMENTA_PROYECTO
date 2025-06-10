@@ -8,8 +8,7 @@ const getUsuarios = async (req, res) => {
             INNER JOIN rol R ON U.id_rol = R.id_rol LEFT JOIN plan_pago pp ON pp.id_plan=U.plan_pago WHERE R.id_rol!=10 ORDER BY id_usuario desc`);
         res.json({ code: 1, data: result });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -31,8 +30,7 @@ const getUsuario = async (req, res) => {
     
         res.json({code: 1 ,data: result, message: "Usuario encontrado"});
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -60,8 +58,7 @@ const getUsuario_1 = async (req, res) => {
   
       res.json({ code: 1, data: result, message: "Usuario encontrado" });
     } catch (error) {
-      console.error("Error en getUsuario_1:", error.message);
-      res.status(500).send({ error: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
       if (connection) connection.release();
     }
@@ -82,8 +79,7 @@ const addUsuario = async (req, res) => {
 
         res.json({code: 1, message: "Usuario añadido" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -111,8 +107,7 @@ const updateUsuario = async (req, res) => {
 
         res.json({code: 1 ,message: "Usuario modificado"});
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -140,8 +135,7 @@ const updateUsuarioPlan = async (req, res) => {
 
         res.json({code: 1 ,message: "Usuario modificado"});
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -178,8 +172,7 @@ const deleteUsuario = async (req, res) => {
         }
         
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones

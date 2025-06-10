@@ -34,8 +34,8 @@ const getAlmacenes = async (req, res) => {
         res.json({ code: 1, data: result });
 
     } catch (error) {
-        console.error("Error en getAlmacenes:", error); // 🔹 Imprime el error en la terminal
-        res.status(500).json({ message: "Error al obtener los almacenes con su sucursal", error });
+        //console.error("Error en getAlmacenes:", error); // 🔹 Imprime el error en la terminal
+        res.status(500).json({ message: "Error al obtener los almacenes con su sucursal"});
     } finally {
         if (connection) {
             connection.release(); // 🔹 Libera la conexión
@@ -78,7 +78,7 @@ ORDER BY
         res.json({ code: 1, data: result });
 
     } catch (error) {
-        console.error("Error en getSucursales:", error); // 🔹 Imprime el error en la terminal
+        //console.error("Error en getSucursales:", error); // 🔹 Imprime el error en la terminal
         res.status(500).json({ message: "Error al obtener los sucursales", error });
     } finally {
         if (connection) {
@@ -131,7 +131,7 @@ const getAlmacen = async (req, res) => {
         res.json({ code: 1, data: result, message: "Almacén encontrado" });
 
     } catch (error) {
-        console.error("Error en getAlmacen:", error);
+        //console.error("Error en getAlmacen:", error);
         if (!res.headersSent) {
             res.status(500).json({ message: "Error interno del servidor" });
         }
@@ -174,9 +174,9 @@ const addAlmacen = async (req, res) => {
         res.json({ code: 1, message: "Almacén y sucursal insertados correctamente" });
 
     } catch (error) {
-        console.error("Error en el backend:", error); // Mostrar el error completo
+        //console.error("Error en el backend:", error); // Mostrar el error completo
         if (connection) await connection.rollback();
-        res.status(500).json({ code: 0, message: "Internal Server Error" });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release();
     }
@@ -226,7 +226,7 @@ const updateAlmacen = async (req, res) => {
         res.json({ code: 1, message: "Almacén y sucursal actualizados con éxito" });
 
     } catch (error) {
-        console.error("Error en updateAlmacen:", error);
+        //console.error("Error en updateAlmacen:", error);
         if (connection) await connection.rollback();
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -284,7 +284,7 @@ const deleteAlmacen = async (req, res) => {
         }
 
     } catch (error) {
-        console.error("Error en deleteAlmacen:", error);
+        //console.error("Error en deleteAlmacen:", error);
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }

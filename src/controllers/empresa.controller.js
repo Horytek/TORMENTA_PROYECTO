@@ -7,7 +7,7 @@ const getEmpresas = async (req, res) => {
         const [result] = await connection.query("SELECT * FROM empresa ORDER BY id_empresa DESC");
         res.json({ code: 1, data: result, message: "Empresas listadas" });
     } catch (error) {
-        res.status(500).send({ error: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release();
     }
@@ -26,7 +26,7 @@ const getEmpresa = async (req, res) => {
 
         res.json({ code: 1, data: result, message: "Empresa encontrada" });
     } catch (error) {
-        res.status(500).send({ error: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release();
     }
@@ -45,7 +45,7 @@ const addEmpresa = async (req, res) => {
 
         res.json({ code: 1, message: "Empresa añadida" });
     } catch (error) {
-        res.status(500).send({ error: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release();
     }
@@ -67,7 +67,7 @@ const updateEmpresa = async (req, res) => {
 
         res.json({ code: 1, message: "Empresa modificada" });
     } catch (error) {
-        res.status(500).send({ error: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release();
     }
@@ -86,7 +86,7 @@ const deleteEmpresa = async (req, res) => {
 
         res.json({ code: 1, message: "Empresa eliminada" });
     } catch (error) {
-        res.status(500).send({ error: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release();
     }

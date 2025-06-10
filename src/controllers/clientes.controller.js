@@ -75,7 +75,7 @@ const getClientes = async (req, res) => {
     });
   } catch (error) {
     if (!res.headersSent) {
-      res.status(500).send(error.message);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }
   } finally {
     if (connection) connection.release();
@@ -138,11 +138,10 @@ const addCliente = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        //console.error(error);
         res.status(500).json({
             code: 0,
-            message: "Error al crear el cliente",
-            error: error.message
+            message: "Error al crear el cliente"
         });
     } finally {
         if (connection) connection.release();
@@ -193,12 +192,12 @@ const getCliente = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        //console.error(error);
         res.status(500).json({
             code: 0,
-            message: "Error al obtener el cliente",
-            error: error.message
+            message: "Error al obtener el cliente"
         });
+        
     } finally {
         if (connection) connection.release();
     }
@@ -288,11 +287,10 @@ const updateCliente = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        //console.error(error);
         res.status(500).json({
             code: 0,
-            message: "Error al actualizar el cliente",
-            error: error.message
+            message: "Error al actualizar el cliente"
         });
     } finally {
         if (connection) connection.release();
@@ -314,7 +312,7 @@ const deleteCliente = async (req, res) => {
         res.json({ code: 1, message: "Cliente eliminado" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }     finally {
         if (connection) {
@@ -338,7 +336,7 @@ const deactivateCliente = async (req, res) => {
         res.json({ message: "Cliente dado de baja con éxito" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }    finally {
         if (connection) {

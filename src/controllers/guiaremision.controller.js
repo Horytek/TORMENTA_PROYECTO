@@ -104,8 +104,8 @@ const getGuias = async (req, res) => {
         res.json({ code: 1, data: guias, totalGuias });
 
     } catch (error) {
-        console.error("Error obteniendo las guías de remisión:", error.message);
-        res.status(500).send(error.message);
+        //console.error("Error obteniendo las guías de remisión:", error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -121,8 +121,7 @@ const getSucursal = async (req, res) => {
         const [result] = await connection.query(`SELECT id_sucursal AS id, nombre_sucursal AS nombre, ubicacion AS direccion FROM sucursal;`);
         res.json({ code: 1, data: result, message: "Sucursal listados" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -138,8 +137,7 @@ const getUbigeoGuia = async (req, res) => {
         const [result] = await connection.query(`SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, departamento AS departamento, provincia AS provincia, distrito AS distrito FROM ubigeo`);
         res.json({ code: 1, data: result, message: "Ubigeo listados" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -160,8 +158,7 @@ const generarCodigoGuia = async (req, res) => {
         `);
         res.json({ code: 1, data: result, message: "Nuevo numero de guía de remisión" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -195,8 +192,7 @@ ORDER BY
             `);
         res.json({ code: 1, data: result, message: "Productos listados" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -217,8 +213,7 @@ const getTransportePublicoGuia = async (req, res) => {
         const [result] = await connection.query(sql, []);
         res.json({ code: 1, data: result, message: "Transportes Públicos listados" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -239,8 +234,7 @@ const getTransportePrivadoGuia = async (req, res) => {
         const [result] = await connection.query(sql, []);
         res.json({ code: 1, data: result, message: "Transportes Privados listados" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -260,7 +254,7 @@ const generarCodigoTrans = async (req, res) => {
         `);
         res.json({ code: 1, data: result, message: "Nuevo código de transportista" });
     } catch (error) {
-        res.status(500).send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -290,8 +284,8 @@ const addTransportistaPublico = async (req, res) => {
         );
         res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
     } catch (error) {
-        console.error("Error en el backend:", error.message);
-        res.status(500).send({ code: 0, message: error.message });
+        //console.error("Error en el backend:", error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -320,8 +314,8 @@ const addTransportistaPrivado = async (req, res) => {
         );
         res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
     } catch (error) {
-        console.error("Error en el backend:", error.message);
-        res.status(500).send({ code: 0, message: error.message });
+        //console.error("Error en el backend:", error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -343,7 +337,7 @@ const getVehiculos = async (req, res) => {
         res.json({ code: 1, data: result, message: "Vehículos listados" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }  finally {
         if (connection) {
@@ -368,7 +362,7 @@ const addVehiculo = async (req, res) => {
         );
         res.json({ code: 1, data: result, message: "Vehículo añadido exitosamente" });
     } catch (error) {
-        res.status(500).send({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -408,7 +402,7 @@ const getProductos = async (req, res) => {
 
         res.json({ code: 1, data: productosResult });
     } catch (error) {
-        res.status(500).send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -435,7 +429,7 @@ const addDestinatarioNatural = async (req, res) => {
         );
         res.json({ code: 1, data: result, message: "Destinatario natural añadido exitosamente" });
     } catch (error) {
-        res.status(500).send({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -462,7 +456,7 @@ const addDestinatarioJuridico = async (req, res) => {
         );
         res.json({ code: 1, data: result, message: "Destinatario jurídico añadido exitosamente" });
     } catch (error) {
-        res.status(500).send({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -505,11 +499,11 @@ const anularGuia = async (req, res) => {
   
       res.json({ code: 1, message: 'Guía de remisión anulada correctamente' });
     } catch (error) {
-      console.error("Error en el backend:", error.message);
+      //console.error("Error en el backend:", error.message);
       if (connection) {
         await connection.rollback();
       }
-      res.status(500).send({ code: 0, message: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -612,11 +606,11 @@ const anularGuia = async (req, res) => {
         await connection.commit();
         res.json({ code: 1, message: 'Guía de remisión y detalles insertados correctamente' });
     } catch (error) {
-        console.error("Error en el backend:", error.message);
+        //console.error("Error en el backend:", error.message);
         if (connection) {
             await connection.rollback();
         }
-        res.status(500).send({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones

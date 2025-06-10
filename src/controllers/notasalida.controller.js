@@ -86,7 +86,7 @@ const getSalidas = async (req, res) => {
 
     res.json({ code: 1, data: salidas });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -108,8 +108,7 @@ const getAlmacen = async (req, res) => {
         `);
     res.json({ code: 1, data: result, message: "Almacenes listados" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -159,7 +158,7 @@ const getProductos = async (req, res) => {
 
     res.json({ code: 1, data: productosResult });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -204,7 +203,7 @@ const getNuevoDocumento = async (req, res) => {
 
     res.json({ code: 1, data: [{ nuevo_numero_de_nota: nuevoNumComprobante }], message: "Nuevo numero de nota" });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
       connection.release();
@@ -360,11 +359,10 @@ const insertNotaAndDetalle = async (req, res) => {
 
     res.json({ code: 1, message: 'Nota y detalle insertados correctamente' });
   } catch (error) {
-    console.error("Error en el backend:", error.message);
     if (connection) {
       await connection.rollback();
     }
-    res.status(500).send({ code: 0, message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -463,11 +461,10 @@ const anularNota = async (req, res) => {
 
     res.json({ code: 1, message: "Nota anulada correctamente" });
   } catch (error) {
-    console.error("Error en el backend:", error.message);
     if (connection) {
       await connection.rollback();
     }
-    res.status(500).send({ code: 0, message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection && typeof connection.release === "function") {
       connection.release(); // Liberar conexión solo si está definida

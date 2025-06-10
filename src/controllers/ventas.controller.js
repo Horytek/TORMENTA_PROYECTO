@@ -90,7 +90,7 @@ const getVentas = async (req, res) => {
 
     res.json({ code: 1, data: ventas, totalVentas });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -181,8 +181,7 @@ if (ultimaVentaResult.length > 0) {
 
     res.json({ nuevoNumComprobante });
   } catch (error) {
-    console.error('Error en la función generarComprobante:', error.message); // Log para depuración
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -212,8 +211,7 @@ const getProductosVentas = async (req, res) => {
             `, [id_sucursal]);
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -241,8 +239,7 @@ const getEstado = async (req, res) => {
     await connection.commit();
     res.json({ message: "Ventas actualizada correctamente" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -261,8 +258,7 @@ const getComprobante = async (req, res) => {
             `);
     res.json({ code: 1, data: result, message: "Comprobante listados" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -279,8 +275,7 @@ const getLastVenta = async (req, res) => {
             `);
     res.json({ code: 1, data: result, message: "Comprobante listados" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -306,8 +301,7 @@ WHERE
     )`);
     res.json({ code: 1, data: result, message: "Sucursal listados" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -340,8 +334,7 @@ ORDER BY
           `);
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }   finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -618,9 +611,8 @@ const addVenta = async (req, res) => {
 
     res.json({ message: "Venta y detalles añadidos" });
   } catch (error) {
-    console.error("Error en el backend:", error.message);
     await connection.rollback();
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }   finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -679,8 +671,7 @@ const addCliente = async (req, res) => {
 
     res.json({ message: "Cliente añadido correctamente" });
   } catch (error) {
-    console.error("Error en el backend:", error.message); // Log para verificar errores
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }   finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -854,9 +845,8 @@ const updateVenta = async (req, res) => {
 
     res.json({ message: "Venta estado actualizado y stock restaurado." });
   } catch (error) {
-    console.error("Error en el backend:", error.message); // Log para verificar errores
     await connection.rollback();
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }   finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -930,8 +920,7 @@ vb.descuento_venta,vb.vuelto,vb.recibido,vb.formadepago, com.num_comprobante
 
     res.json({ code: 1, data: datosVentaComprobante, message: "Datos comprobante listados" });
   } catch (error) {
-    console.error("Error al obtener los datos de la venta:", error.message);
-    res.status(500).send("Error al obtener los datos de la venta: " + error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones

@@ -7,8 +7,7 @@ const getFunciones = async (req, res) => {
         const [result] = await connection.query(`SELECT id_funciones, funcion, estado_funcion FROM funciones`);
         res.json({ code: 1, data: result });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -29,8 +28,7 @@ const getFuncion = async (req, res) => {
     
         res.json({ code: 1, data: result, message: "Función encontrada" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -53,8 +51,7 @@ const addFuncion = async (req, res) => {
 
         res.json({ code: 1, message: "Función añadida" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -132,7 +129,7 @@ const updateFuncion = async (req, res) => {
       if (connection) {
         await connection.rollback();
       }
-      res.status(500).send({ code: 0, message: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
       if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones

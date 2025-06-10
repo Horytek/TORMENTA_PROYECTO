@@ -11,7 +11,7 @@ const getSubCategorias = async (req, res) => {
         res.json({ code: 1, data: result, message: "Subcategorías listadas" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }  finally {
         if (connection) {
@@ -38,7 +38,7 @@ const getSubcategoriesForCategory = async (req, res) => {
         res.json({ code: 1, data: result, message: "Subcategorías de categoría listadas" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }   finally {
         if (connection) {
@@ -64,7 +64,7 @@ const getSubCategoria = async (req, res) => {
         res.json({ data: result, message: "Subcategoría encontrada" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }    finally {
         if (connection) {
@@ -95,7 +95,7 @@ const addSubCategoria = async (req, res) => {
         res.status(201).json({code:1, message: "Subcategoría añadida con éxito", id: idAdd[0].id_subcategoria });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }    finally {
         if (connection) {
@@ -133,7 +133,7 @@ const updateSubCategoria = async (req, res) => {
         res.json({ message: "Subcategoría y categoría actualizadas con éxito" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }     finally {
         if (connection) {
@@ -161,7 +161,7 @@ const deactivateSubCategoria = async (req, res) => {
         res.json({ code: 1, message: "Subcategoría dada de baja con éxito" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).json({ code: 0, message: "Error al dar de baja la subcategoría", error: error.message });
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }     finally {
         if (connection) {
@@ -188,7 +188,7 @@ const deleteSubCategoria = async (req, res) => {
         res.json({ code: 1, message: "Subcategoría eliminada con éxito" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).json({ code: 0, message: "Error al eliminar la subcategoría", error: error.message });
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }      finally {
         if (connection) {
@@ -222,7 +222,8 @@ const getSubcategoriasConCategoria = async (req, res) => {
       const [result] = await connection.query(query);
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Error al obtener las subcategorías con sus categorías", error });
+      res.status(500).json({ message: "Error al obtener las subcategorías con sus categorías"
+       });
     }      finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones

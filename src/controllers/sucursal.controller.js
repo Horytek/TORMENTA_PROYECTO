@@ -27,8 +27,7 @@ const getSucursalInicio = async (req, res) => {
         res.json({ code: 1, data: result, message: "Sucursales listadas" });
 
     } catch (error) {
-        console.error("Error al obtener sucursales:", error);
-        res.status(500).json({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release(); 
     }
@@ -69,7 +68,7 @@ const getSucursales = async (req, res) => {
         res.json({ code: 1, data: result, message: "Sucursales listadas" });
 
     } catch (error) {
-        res.status(500).json({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release(); 
     }
@@ -101,7 +100,7 @@ const insertSucursal = async (req, res) => {
         if (connection) {
             await connection.rollback();
         }
-        res.status(500).send({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();
@@ -148,7 +147,7 @@ const updateSucursal = async (req, res) => {
         if (connection) {
             await connection.rollback();
         }
-        res.status(500).send({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();
@@ -180,7 +179,6 @@ const getVendedores = async (req, res) => {
         res.json({ code: 1, data: vendedores, message: "Vendedores listados correctamente" });
 
     } catch (error) {
-        console.error('Error al obtener vendedores:', error);
         res.status(500).json({ code: 0, message: "Error al obtener la lista de vendedores" });
     } finally {
         // Liberar la conexión a la base de datos

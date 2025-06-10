@@ -11,7 +11,7 @@ const getMarcas = async (req, res) => {
         res.json({ code: 1, data: result, message: "Marcas listadas" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }   finally {
         if (connection) {
@@ -37,7 +37,7 @@ const getMarca = async (req, res) => {
         res.json({ data: result, message: "Marca encontrada" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }   finally {
         if (connection) {
@@ -64,7 +64,7 @@ const addMarca = async (req, res) => {
         res.status(201).json({ code: 1, message: "Marca añadida con éxito", id: idAdd[0].id_marca });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }   finally {
         if (connection) {
@@ -92,7 +92,7 @@ const updateMarca = async (req, res) => {
         res.json({ message: "Marca actualizada con éxito" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }    finally {
         if (connection) {
@@ -119,7 +119,7 @@ const deactivateMarca = async (req, res) => {
         res.json({ message: "Marca dada de baja con éxito" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }    finally {
         if (connection) {
@@ -143,7 +143,7 @@ const deleteMarca = async (req, res) => {
         res.json({ code: 1, message: "Marca eliminada" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     }     finally {
         if (connection) {

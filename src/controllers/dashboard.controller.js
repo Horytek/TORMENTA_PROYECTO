@@ -47,8 +47,8 @@ const getSucursalInicio = async (req, res) => {
       res.json({ code: 1, data: result, message: "Sucursales listadas" });
 
   } catch (error) {
-      console.error("Error al obtener sucursales:", error);
-      res.status(500).json({ code: 0, message: error.message });
+      //console.error("Error al obtener sucursales:", error);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
       if (connection) connection.release(); 
   }
@@ -93,8 +93,8 @@ const getUserRolController = async (req, res) => {
     
     res.json({ code: 1, rol_id: rolResult[0].rol_id, message: "Rol obtenido correctamente" });
   } catch (error) {
-    console.error("Error al obtener rol de usuario:", error);
-    res.status(500).json({ message: error.message });
+    //console.error("Error al obtener rol de usuario:", error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }
@@ -185,7 +185,7 @@ const getProductoMasVendido = async (req, res) => {
     }
     res.json({ code: 1, data: result[0], message: "Producto más vendido obtenido correctamente" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }
@@ -291,7 +291,7 @@ res.json({
 });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }
@@ -399,7 +399,7 @@ const getTotalProductosVendidos = async (req, res) => {
       message: "Total de productos vendidos obtenido correctamente",
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }
@@ -474,7 +474,7 @@ const getComparacionVentasPorRango = async (req, res) => {
       message: "Ventas por mes obtenidas correctamente",
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }
@@ -550,7 +550,7 @@ const getVentasPorSucursalPeriodo = async (req, res) => {
       message: "Ventas por sucursal obtenidas correctamente"
     });
   } catch (error) {
-    res.status(500).json({ code: 0, message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }
@@ -688,7 +688,7 @@ const [salidas] = await connection.query(
 
     res.json({ code: 1, data: pendientes, message: "Notas pendientes obtenidas correctamente" });
   } catch (error) {
-    res.status(500).json({ code: 0, message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }
@@ -708,7 +708,7 @@ export const actualizarEstadoEspera = async (req, res) => {
     );
     res.json({ code: 1, message: "estado_espera actualizado correctamente" });
   } catch (error) {
-    res.status(500).json({ code: 0, message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }

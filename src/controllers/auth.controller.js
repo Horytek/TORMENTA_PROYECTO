@@ -89,8 +89,7 @@ const login = async (req, res) => {
         }
 
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+      res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
     } finally {
         if (connection) {
             connection.release();
@@ -179,7 +178,7 @@ const updateUsuarioName = async (req, res) => {
   
       res.json({ code: 1, message: "Usuario actualizado" });
     } catch (error) {
-      console.error("Error en updateUsuarioName:", error);
+      //console.error("Error en updateUsuarioName:", error);
       res.status(500).send("Error interno del servidor");
     } finally {
       if (connection) {

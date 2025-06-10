@@ -33,7 +33,7 @@ const addModulo = async (req, res) => {
         res.status(500).json({
             success: false,
             code: 0,
-            message: error.message
+            message: "Error interno en el servidor"
         });
     }
 };
@@ -65,7 +65,7 @@ const getModulos = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: "Error interno en el servidor" });
     }
 };
 
@@ -112,7 +112,7 @@ const addSubmodulo = async (req, res) => {
         res.status(500).json({
             success: false,
             code: 0,
-            message: error.message
+            message: "Error interno del servidor"
         });
     }
 };
@@ -172,7 +172,7 @@ const updateModulo = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).json({
                 code: 0,
-                message: error.message
+                message: "Error interno en el servidor"
             });
         }
     } finally {
@@ -202,7 +202,7 @@ const deleteModulo = async (req, res) => {
         res.json({ code: 1, message: "Modulo eliminado", data: recordToDelete });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
         if (connection) {

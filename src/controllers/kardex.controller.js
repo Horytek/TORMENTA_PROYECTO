@@ -50,7 +50,7 @@ const getProductos = async (req, res) => {
 
         res.json({ code: 1, data: productosResult });
     } catch (error) {
-        res.status(500).send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release(); // Liberar la conexión
@@ -95,7 +95,7 @@ const getProductosMenorStock = async (req, res) => {
 
         res.json({ code: 1, data: result });
     } catch (error) {
-        res.status(500).send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();
@@ -120,8 +120,7 @@ const getMovimientosProducto = async (req, res) => {
 
         res.json({ code: 1, data: result, message: "Producto encontrado" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -142,8 +141,7 @@ const getAlmacen = async (req, res) => {
           `);
       res.json({ code: 1, data: result, message: "Almacenes listados" });
     } catch (error) {
-      res.status(500);
-      res.send(error.message);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -161,8 +159,7 @@ const getAlmacen = async (req, res) => {
           `);
       res.json({ code: 1, data: result, message: "Marcas listadas" });
     } catch (error) {
-      res.status(500);
-      res.send(error.message);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -185,8 +182,7 @@ const getAlmacen = async (req, res) => {
           [cat]);
       res.json({ code: 1, data: result, message: "Sub categorias listadas" });
     } catch (error) {
-      res.status(500);
-      res.send(error.message);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -204,8 +200,7 @@ const getAlmacen = async (req, res) => {
           `);
       res.json({ code: 1, data: result, message: "Categorias listadas" });
     } catch (error) {
-      res.status(500);
-      res.send(error.message);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -300,7 +295,7 @@ const getAlmacen = async (req, res) => {
 
         res.json({ code: 1, data: detalleKardexResult });
     } catch (error) {
-        res.status(500).send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release(); // Liberar la conexión
@@ -336,7 +331,7 @@ const getDetalleKardexAnteriores = async (req, res) => {
 
         res.json({ code: 1, data: detalleKardexAnterioresResult });
     } catch (error) {
-        res.status(500).send(error.message);
+       res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -366,7 +361,7 @@ const getInfProducto = async (req, res) => {
 
         res.json({ code: 1, data: infProductoResult });
     } catch (error) {
-        res.status(500).send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -544,7 +539,6 @@ const generateExcelReport = async (req, res) => {
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {
-        console.error("Error al generar el reporte Excel:", error);
         res.status(500).send("Error al generar el reporte Excel.");
     } finally {
         if (connection) {
@@ -694,7 +688,7 @@ const generateExcelReportByDateRange = async (req, res) => {
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {
-        res.status(500).send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones

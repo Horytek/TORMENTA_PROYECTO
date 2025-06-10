@@ -66,10 +66,7 @@ const updateSubModulo = async (req, res) => {
         });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).json({
-                code: 0,
-                message: error.message
-            });
+res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
         if (connection) {
@@ -98,7 +95,7 @@ const deleteSubModulo = async (req, res) => {
         res.json({ code: 1, message: "Submodulo eliminado", data: recordToDelete });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
         if (connection) {

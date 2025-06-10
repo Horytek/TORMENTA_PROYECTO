@@ -7,16 +7,9 @@ const insertDestinatario = async (req, res) => {
     ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, telefono, email
   } = req.body;
 
-  //console.log("Datos recibidos:", req.body);
-  /*console.log("Datos recibidos:", {
-    ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, telefono, email
-  });*/
   if (
     !ubicacion
   ) {
-    console.log("Error en los datos:", {
-      ubicacion,
-    });
     return res
       .status(400)
       .json({ message: "Bad Request. Please fill all fields correctly." });
@@ -32,8 +25,8 @@ const insertDestinatario = async (req, res) => {
     //console.log(result);
     res.json({ code: 1, message: 'Destinatario insertado correctamente', id: result.insertId });
   } catch (error) {
-    console.error("Error en el backend:", error.message);
-    res.status(500).send({ code: 0, message: error.message });
+    //console.error("Error en el backend:", error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
       connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -59,7 +52,7 @@ const addDestinatarioNatural = async (req, res) => {
     );
     res.json({ code: 1, data: result, message: "Destinatario natural añadido exitosamente" });
   } catch (error) {
-    res.status(500).send({ code: 0, message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
       connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -86,7 +79,7 @@ const addDestinatarioJuridico = async (req, res) => {
     );
     res.json({ code: 1, data: result, message: "Destinatario jurídico añadido exitosamente" });
   } catch (error) {
-    res.status(500).send({ code: 0, message: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
       connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -121,7 +114,7 @@ const updateDestinatario = async (req, res) => {
       }
       res.json({ message: "Destinatario actualizado con éxito" });
   } catch (error) {
-      res.status(500).json({ message: "Error interno del servidor", error: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
       if (connection) connection.release();
   }
@@ -158,8 +151,7 @@ ORDER BY
           //console.log("Datos después de la transformación:", dataTransformada);
       res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
-      res.status(500);
-      res.send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
       if (connection) {
           connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -206,9 +198,9 @@ const getDestinatario = async (req, res) => {
 
       res.json({ code: 1, data: result, message: "Destinatario encontrado" });
   } catch (error) {
-      console.error("Error en getDestinatario:", error);
+      //console.error("Error en getDestinatario:", error);
       if (!res.headersSent) {
-          res.status(500).json({ message: "Error interno del servidor", error: error.message });
+          res.status(500).json({ code: 0, message: "Error interno del servidor" });
       }
   } finally {
       if (connection) connection.release();
@@ -231,7 +223,7 @@ const deleteDestinatario = async (req, res) => {
       res.json({ code: 1, message: "Destinatario eliminado" });
   } catch (error) {
       if (!res.headersSent) {
-          res.status(500).send(error.message);
+          res.status(500).json({ code: 0, message: "Error interno del servidor" });
       }
   } finally {
       if (connection) connection.release();

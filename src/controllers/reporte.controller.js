@@ -130,7 +130,7 @@ const getTotalProductosVendidos = async (req, res) => {
       message: "Total de productos vendidos obtenido correctamente"
     });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
       connection.release();
@@ -231,7 +231,7 @@ const getTotalSalesRevenue = async (req, res) => {
       message: "Total de ventas obtenidas correctamente"
     });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
       connection.release();
@@ -266,11 +266,9 @@ const getSucursales = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error al obtener sucursales:', error);
     res.status(500).json({ 
       code: 0,
-      message: "Error al obtener las sucursales",
-      error: error.message 
+      message: "Error al obtener las sucursales"
     });
   } finally {
     if (connection) connection.release();
@@ -417,7 +415,7 @@ const getProductoMasVendido = async (req, res) => {
       message: "Producto más vendido obtenido correctamente"
     });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
       connection.release();
@@ -544,7 +542,7 @@ const getSucursalMayorRendimiento = async (req, res) => {
       message: "Sucursal con mayor rendimiento obtenida correctamente"
     });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
       connection.release();
@@ -615,7 +613,7 @@ let fechaInicioActual, fechaFinActual;
     const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Cantidad de ventas por subcategoría obtenida correctamente" });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();
@@ -688,7 +686,7 @@ const params = [f(fechaInicioActual), f(fechaFinActual)];
     const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Cantidad de ventas por producto obtenida correctamente" });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
         connection.release();
@@ -722,7 +720,7 @@ const getAnalisisGananciasSucursales = async (req, res) => {
     res.json({ code: 1, data: result, message: "Análisis de ganancias por sucursal obtenido correctamente" });
   } catch (error) {
     if (!res.headersSent) {
-      res.status(500).send(error.message);
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }
   }   finally {
     if (connection) {
@@ -793,7 +791,6 @@ const getVentasPDF = async (req, res) => {
     res.json({ code: 1, data: result, message: "Reporte de ventas" });
 
   } catch (error) {
-    console.error('Error al obtener los datos de ventas:', error);
     res.status(500).json({ message: 'Error al obtener los datos de ventas' });
   }   finally {
     if (connection) {
@@ -841,7 +838,6 @@ const exportarRegistroVentas = async (req, res) => {
     const { mes, ano, idSucursal, tipoComprobante } = req.query;
 
     if (!mes || !ano) {
-      console.error("No se proporcionaron mes y año.");
       return res.status(400).json({ message: "Debe proporcionar mes y año." });
     }
 
@@ -917,7 +913,6 @@ const exportarRegistroVentas = async (req, res) => {
     const templatePath = path.join(projectRoot, "client", "src", "assets", "FormatoVentaSUNAT.xlsx");
 
     if (!fs.existsSync(templatePath)) {
-      console.error("No se encontró la plantilla en la ruta:", templatePath);
       return res.status(500).json({ message: "No se encontró la plantilla." });
     }
 
@@ -926,7 +921,6 @@ const exportarRegistroVentas = async (req, res) => {
 
     const worksheet = workbook.getWorksheet("Plantilla");
     if (!worksheet) {
-      console.error("No se pudo encontrar la hoja 'Plantilla' en el workbook.");
       return res.status(500).json({ message: "No se encontró la hoja requerida en la plantilla." });
     }
 
@@ -1046,7 +1040,6 @@ const exportarRegistroVentas = async (req, res) => {
     res.send(buffer);
 
   } catch (error) {
-    console.error("Error al exportar registro de ventas:", error);
     res.status(500).json({ message: "Error al exportar el archivo Excel." });
   }    finally {
     if (connection) {
@@ -1221,10 +1214,8 @@ const obtenerRegistroVentas = async (req, res) => {
       message: "Registro de ventas obtenido correctamente",
     });
   } catch (error) {
-    console.error("Error al obtener el registro de ventas:", error.message);
     res.status(500).json({
-      message: "Error al obtener el registro de ventas",
-      error: error.message, 
+      message: "Error al obtener el registro de ventas"
     });
   } finally {
     if (connection) {

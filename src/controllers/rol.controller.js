@@ -7,8 +7,7 @@ const getRoles = async (req, res) => {
         const [result] = await connection.query(`SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol!=10`);
         res.json({ code: 1, data: result });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();
@@ -37,8 +36,7 @@ const getPaginaDefecto = async (req, res) => {
         res.json({ code: 1, data: result[0] });
         
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();
@@ -74,8 +72,7 @@ const guardarPaginaPorDefecto = async (req, res) => {
         res.json({ code: 1, message: "Página por defecto guardada correctamente" });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ code: 0, message: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();
@@ -101,8 +98,7 @@ const getRol = async (req, res) => {
 
         res.json({ code: 1, data: result, message: "Rol encontrado" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -126,8 +122,7 @@ const addRol = async (req, res) => {
 
         res.json({ code: 1, message: "Rol añadido" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -155,8 +150,7 @@ const updateRol = async (req, res) => {
 
         res.json({ code: 1, message: "Rol modificado" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -194,8 +188,7 @@ const deleteRol = async (req, res) => {
         }
 
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones

@@ -11,7 +11,7 @@ const getVendedores = async (req, res) => {
         res.json({ code: 1, data: result, message: "Vendedores listados" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
         if (connection) connection.release();
@@ -38,9 +38,8 @@ const getVendedor = async (req, res) => {
 
         res.json({code: 1 , data: result, message: "Vendedor encontrado" });
     } catch (error) {
-        console.error("Error en getVendedor:", error);
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
         if (connection) connection.release();
@@ -64,7 +63,7 @@ const addVendedor = async (req, res) => {
         res.status(201).json({ code: 1, message: "Vendedor añadido con éxito" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
         if (connection) connection.release();
@@ -127,7 +126,6 @@ const deactivateVendedor = async (req, res) => {
 
         connection = await getConnection();
         if (!connection) {
-            //console.error("Error: No se pudo establecer conexión con la base de datos");
             return res.status(500).json({ message: "Error interno del servidor: conexión fallida" });
         }
 
@@ -199,7 +197,7 @@ const deleteVendedor = async (req, res) => {
         res.json({ code: 1, message: "Vendedor eliminado" });
     } catch (error) {
         if (!res.headersSent) {
-            res.status(500).send(error.message);
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
         if (connection) connection.release();

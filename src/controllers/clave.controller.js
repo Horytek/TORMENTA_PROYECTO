@@ -19,7 +19,7 @@ const getClaves = async (req, res) => {
   
       res.json({ code: 1, data: clavesDesencriptadas, message: "Claves listadas" });
     } catch (error) {
-      res.status(500).send({ error: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
       if (connection) connection.release();
     }
@@ -43,7 +43,7 @@ const getClaves = async (req, res) => {
   
       res.json({ code: 1, data: clave, message: "Clave encontrada" });
     } catch (error) {
-      res.status(500).send({ error: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
       if (connection) connection.release();
     }
@@ -69,7 +69,7 @@ const addClave = async (req, res) => {
   
       res.json({ code: 1, message: "Clave añadida" });
     } catch (error) {
-      res.status(500).send({ error: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
       if (connection) connection.release();
     }
@@ -97,7 +97,7 @@ const addClave = async (req, res) => {
   
       res.json({ code: 1, message: "Clave actualizada" });
     } catch (error) {
-      res.status(500).send({ error: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
       if (connection) connection.release();
     }
@@ -117,7 +117,7 @@ const deleteClave = async (req, res) => {
 
         res.json({ code: 1, message: "Clave eliminada" });
     } catch (error) {
-        res.status(500).send({ error: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release();
     }
@@ -146,7 +146,7 @@ const getClaveByEmpresaAndTipo = async (req, res) => {
 
     res.json({ code: 1, data: clave, message: "Clave encontrada" });
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }

@@ -19,7 +19,7 @@ const getProductos = async (req, res) => {
 
         res.json({ code: 1, data: result, message: "Productos listados" });
     } catch (error) {
-        res.status(500).send({ error: error.message });
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -36,8 +36,7 @@ const getUltimoIdProducto = async (req, res) => {
             `);
         res.json({code:1, data: result});
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -62,8 +61,7 @@ const getProducto = async (req, res) => {
 
         res.json({code: 1 ,data: result, message: "Producto encontrado"});
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -86,8 +84,7 @@ const addProducto = async (req, res) => {
 
         res.json({code: 1, message: "Producto añadido" });
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -115,8 +112,7 @@ const updateProducto = async (req, res) => {
 
         res.json({code: 1 ,message: "Producto modificado"});
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
@@ -155,8 +151,7 @@ const deleteProducto = async (req, res) => {
         }
         
     } catch (error) {
-        res.status(500);
-        res.send(error.message);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
