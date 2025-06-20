@@ -2,9 +2,11 @@ import {
     getDestinatariosRequest, 
     getDestinatarioRequest, 
     insertDestinatarioRequest, 
+    insertDestinatarioNaturalRequest,
+    insertDestinatarioJuridicoRequest,
     deleteDestinatarioRequest, 
-    updateDestinatarioRequest
-    
+  updateDestinatarioNaturalRequest,
+  updateDestinatarioJuridicoRequest,
 } from '@/api/api.destinatario';
 import { toast } from "react-hot-toast";
 import { transformData } from '@/utils/destinatario';
@@ -26,7 +28,6 @@ const getDestinatarios = async () => {
 // Función para obtener un destinatario por ID
 const getDestinatario = async (id) => {
   try {
-    //console.log("Documento enviado a getDestinatario:", id);
     const response = await getDestinatarioRequest(id);
     if (response.data.code === 1) {
       return response.data.data;
@@ -38,7 +39,7 @@ const getDestinatario = async (id) => {
   }
 };
 
-// Función para añadir un nuevo destinatario
+// Función para añadir un nuevo destinatario (general)
 const insertDestinatario = async (destinatario) => {
   try {
     const response = await insertDestinatarioRequest(destinatario);
@@ -47,6 +48,38 @@ const insertDestinatario = async (destinatario) => {
       return [true, response.data.id];
     } else {
       toast.error("Ocurrió un error al guardar el destinatario");
+      return [false];
+    }
+  } catch (error) {
+    toast.error("Error en el servidor interno");
+  }
+};
+
+// Función para añadir destinatario natural
+const insertDestinatarioNatural = async (destinatario) => {
+  try {
+    const response = await insertDestinatarioNaturalRequest(destinatario);
+    if (response.data.code === 1) {
+      toast.success("Destinatario natural añadido con éxito");
+      return [true, response.data.id];
+    } else {
+      toast.error("Ocurrió un error al guardar el destinatario natural");
+      return [false];
+    }
+  } catch (error) {
+    toast.error("Error en el servidor interno");
+  }
+};
+
+// Función para añadir destinatario jurídico
+const insertDestinatarioJuridico = async (destinatario) => {
+  try {
+    const response = await insertDestinatarioJuridicoRequest(destinatario);
+    if (response.data.code === 1) {
+      toast.success("Destinatario jurídico añadido con éxito");
+      return [true, response.data.id];
+    } else {
+      toast.error("Ocurrió un error al guardar el destinatario jurídico");
       return [false];
     }
   } catch (error) {
@@ -70,13 +103,12 @@ const deleteDestinatario = async (id) => {
   }
 };
 
-// Función para actualizar un destinatario
-const updateDestinatario = async (id, destinatario) => {
+const updateDestinatarioNatural = async (id, destinatario) => {
   try {
-    const response = await updateDestinatarioRequest(id, destinatario);
+    const response = await updateDestinatarioNaturalRequest(id, destinatario);
     if (response.status === 200) {
-      toast.success("Destinatario actualizado con éxito");
-        return true;
+      toast.success("Destinatario natural actualizado con éxito");
+      return true;
     } else {
       toast.error(response.data?.message || "Ocurrió un error al actualizar el destinatario");
       return false;
@@ -87,6 +119,29 @@ const updateDestinatario = async (id, destinatario) => {
   }
 };
 
+const updateDestinatarioJuridico = async (id, destinatario) => {
+  try {
+    const response = await updateDestinatarioJuridicoRequest(id, destinatario);
+    if (response.status === 200) {
+      toast.success("Destinatario jurídico actualizado con éxito");
+      return true;
+    } else {
+      toast.error(response.data?.message || "Ocurrió un error al actualizar el destinatario");
+      return false;
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Error en el servidor interno");
+    return false;
+  }
+};
 
-
-export { getDestinatarios, getDestinatario, insertDestinatario, deleteDestinatario, updateDestinatario };
+export { 
+  getDestinatarios, 
+  getDestinatario, 
+  insertDestinatario, 
+  insertDestinatarioNatural,
+  insertDestinatarioJuridico,
+  deleteDestinatario, 
+  updateDestinatarioNatural,
+  updateDestinatarioJuridico,
+};

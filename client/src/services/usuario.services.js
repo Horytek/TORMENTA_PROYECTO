@@ -46,10 +46,10 @@ const addUsuario= async (user) => {
   try {
     const response = await addUsuarioRequest(user);
     if (response.data.code === 1) {
-      toast.success("Usuario añadido con éxito");
+      //toast.success("Usuario añadido con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al guardar el usuario");
+      //toast.error("Ocurrió un error al guardar el usuario");
       return false;
     }
   } catch (error) {
@@ -61,7 +61,7 @@ const updateUsuario = async (id, newFields) => {
   try {
     const response = await updateUsuarioRequest(id, newFields);
     if (response.data.code === 1) {
-      toast.success("Usuario actualizado con éxito");
+      //toast.success("Usuario actualizado con éxito");
       return true;
     } else {
       toast.error("Ocurrió un error al actualizar el usuario");

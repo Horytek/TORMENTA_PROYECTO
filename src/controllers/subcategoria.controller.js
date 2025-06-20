@@ -81,9 +81,19 @@ const getSubCategoria = async (req, res) => {
 const addSubCategoria = async (req, res) => {
     let connection;
     try {
-        const { id_categoria, nom_subcat, estado_subcat } = req.body;
+        let { id_categoria, nom_subcat, estado_subcat } = req.body;
 
-        if (typeof id_categoria !== 'number' || typeof nom_subcat !== 'string' || nom_subcat.trim() === '' || typeof estado_subcat !== 'number') {
+        // Casteo seguro de los valores que pueden llegar como string
+        id_categoria = Number(id_categoria);
+        estado_subcat = Number(estado_subcat);
+
+        // Validación robusta
+        if (
+            isNaN(id_categoria) ||
+            typeof nom_subcat !== 'string' ||
+            nom_subcat.trim() === '' ||
+            isNaN(estado_subcat)
+        ) {
             return res.status(400).json({ message: "Bad Request. Please fill all fields correctly." });
         }
 
@@ -92,12 +102,12 @@ const addSubCategoria = async (req, res) => {
         await connection.query("INSERT INTO sub_categoria SET ? ", subcategoria);
         const [idAdd] = await connection.query("SELECT id_subcategoria FROM sub_categoria WHERE nom_subcat = ?", nom_subcat);
 
-        res.status(201).json({code:1, message: "Subcategoría añadida con éxito", id: idAdd[0].id_subcategoria });
+        res.status(201).json({ code: 1, message: "Subcategoría añadida con éxito", id: idAdd[0].id_subcategoria });
     } catch (error) {
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
-    }    finally {
+    } finally {
         if (connection) {
             connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
         }

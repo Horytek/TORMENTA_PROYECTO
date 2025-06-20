@@ -17,3 +17,6 @@ export const updateAlmacenRequest = async (id, newFields) =>
 
 export const deleteAlmacenRequest = async (id) =>
   await axios.delete(`/almacen/${id}`);
+
+export const getAlmacenesRequest_A = async () =>
+  await axios.get("/almacen/alternativo");

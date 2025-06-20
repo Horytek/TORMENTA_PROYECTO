@@ -9,6 +9,9 @@ export function transformData(productos) {
         precio: parseFloat(producto.precio).toFixed(2),    
         cod_barras: producto.cod_barras || "-",
         estado_producto: parseInt(producto.estado) === 0 ? "Inactivo" : "Activo",
+        id_marca: producto.id_marca,
+        id_subcategoria: producto.id_subcategoria,
+        id_categoria: producto.id_categoria
     }));
   
     return productosTransformados;

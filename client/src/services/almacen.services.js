@@ -1,4 +1,4 @@
-import { getAlmacenesRequest, getSucursalesRequest ,getAlmacenRequest, addAlmacenRequest, updateAlmacenRequest, deleteAlmacenRequest } 
+import { getAlmacenesRequest,getAlmacenesRequest_A, getSucursalesRequest ,getAlmacenRequest, addAlmacenRequest, updateAlmacenRequest, deleteAlmacenRequest } 
 from '@/api/api.almacen';
 import { toast } from "react-hot-toast";
 import { transformData } from '@/utils/almacen';
@@ -6,6 +6,20 @@ import { transformData } from '@/utils/almacen';
 const getAlmacenes = async () => {
     try {
       const response = await getAlmacenesRequest();
+      if (response.data.code === 1) {
+        return transformData(response.data.data);
+      } else {
+        console.error('Error en la solicitud: ', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error en la solicitud:', error.response ? error.response.data : error.message);
+    }
+  };
+
+
+  const getAlmacenes_A = async () => {
+    try {
+      const response = await getAlmacenesRequest_A();
       if (response.data.code === 1) {
         return transformData(response.data.data);
       } else {
@@ -44,18 +58,19 @@ const getAlmacenes = async () => {
 
   
 
-const addAlmacen= async (almacen) => {
+const addAlmacen = async (almacen) => {
   try {
     const response = await addAlmacenRequest(almacen);
     if (response.data.code === 1) {
       toast.success("Almacén añadido con éxito");
-      return true;
+      return { id_almacen: response.data.id_almacen }; // <-- retorna el id
     } else {
       toast.error("Ocurrió un error al guardar el almacén");
       return false;
     }
   } catch (error) {
     toast.error("Error en el servidor interno");
+    return false;
   }
 };
 
@@ -79,16 +94,20 @@ const deleteAlmacen = async (id) => {
     const response = await deleteAlmacenRequest(id);
     if (response.data.code === 2) {
       toast.success("Almacén dado de baja con éxito");
+      return 2;
     }
     if (response.data.code === 1) {
       toast.success("Almacén eliminado con éxito");
+      return 1;
     }
     if (response.status === 404) {
       toast.error("Ocurrió un error al eliminar el almacén");
+      return 0;
     }
   } catch (error) {
     toast.error("Error en el servidor interno");
+    return 0;
   }
 };
 
-export { getAlmacenes, getSucursales ,getAlmacen, addAlmacen, updateAlmacen, deleteAlmacen };
+export { getAlmacenes,getAlmacenes_A, getSucursales ,getAlmacen, addAlmacen, updateAlmacen, deleteAlmacen };

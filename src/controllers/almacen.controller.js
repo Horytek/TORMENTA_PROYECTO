@@ -43,6 +43,47 @@ const getAlmacenes = async (req, res) => {
     }
 };
 
+const getAlmacenes_A = async (req, res) => {
+    let connection;
+    try {
+        connection = await getConnection();
+
+        const query = `
+          SELECT 
+              a.id_almacen, 
+              a.nom_almacen, 
+              a.ubicacion,
+              a.estado_almacen,
+              s.id_sucursal,
+              s.nombre_sucursal
+          FROM 
+              almacen a
+          LEFT JOIN 
+              sucursal_almacen sa 
+          ON 
+              a.id_almacen = sa.id_almacen
+          LEFT JOIN
+              sucursal s
+          ON
+              s.id_sucursal = sa.id_sucursal
+          ORDER BY a.id_almacen;
+      `;
+
+        const [result] = await connection.query(query);
+
+
+        res.json({ code: 1, data: result });
+
+    } catch (error) {
+        //console.error("Error en getAlmacenes:", error); // 🔹 Imprime el error en la terminal
+        res.status(500).json({ message: "Error al obtener los almacenes con su sucursal"});
+    } finally {
+        if (connection) {
+            connection.release(); // 🔹 Libera la conexión
+        }
+    }
+};
+
 
 const getSucursales = async (req, res) => {
     let connection;
@@ -171,7 +212,8 @@ const addAlmacen = async (req, res) => {
 
         await connection.commit();
 
-        res.json({ code: 1, message: "Almacén y sucursal insertados correctamente" });
+        // En src/controllers/almacen.controller.js, en addAlmacen:
+        res.json({ code: 1, message: "Almacén y sucursal insertados correctamente", id_almacen });
 
     } catch (error) {
         //console.error("Error en el backend:", error); // Mostrar el error completo
@@ -243,22 +285,26 @@ const deleteAlmacen = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Validar que el ID sea un número válido
         if (!id || isNaN(id)) {
             return res.status(400).json({ code: 0, message: "ID de almacén inválido" });
         }
 
         connection = await getConnection();
 
-        // Verificar si el almacén existe
-        const [verify] = await connection.query(
-            "SELECT 1 FROM almacen a LEFT JOIN sucursal_almacen sa ON a.id_almacen=sa.id_almacen WHERE sa.id_almacen = ? ",
+        // Verificar si el almacén está en uso en nota o inventario
+        const [notaUso] = await connection.query(
+            "SELECT 1 FROM nota WHERE id_almacenO = ? OR id_almacenD = ? LIMIT 1",
+            [id, id]
+        );
+        const [inventarioUso] = await connection.query(
+            "SELECT 1 FROM inventario WHERE id_almacen = ? LIMIT 1",
             [id]
         );
 
-        const AlmacenUse = verify.length > 0
+        const estaEnUso = notaUso.length > 0 || inventarioUso.length > 0;
 
-        if (AlmacenUse) {
+        if (estaEnUso) {
+            // Dar de baja (actualizar estado)
             const [updateResult] = await connection.query(
                 "UPDATE almacen SET estado_almacen = 0 WHERE id_almacen = ?;",
                 [id]
@@ -270,26 +316,35 @@ const deleteAlmacen = async (req, res) => {
 
             return res.json({ code: 2, message: "Almacén dado de baja correctamente" });
         } else {
-            // Si ya está dado de baja, lo eliminamos
+            // Eliminar relación en sucursal_almacen antes de eliminar el almacén
+            await connection.beginTransaction();
+
+            await connection.query(
+                "DELETE FROM sucursal_almacen WHERE id_almacen = ?;",
+                [id]
+            );
+
             const [deleteResult] = await connection.query(
                 "DELETE FROM almacen WHERE id_almacen = ?;",
                 [id]
             );
 
             if (deleteResult.affectedRows === 0) {
+                await connection.rollback();
                 return res.status(404).json({ code: 0, message: "No se pudo eliminar el almacén" });
             }
 
+            await connection.commit();
             return res.json({ code: 1, message: "Almacén eliminado correctamente" });
         }
 
     } catch (error) {
-        //console.error("Error en deleteAlmacen:", error);
+        if (connection) await connection.rollback();
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
     } finally {
-        if (connection) connection.release(); // Liberar la conexión
+        if (connection) connection.release();
     }
 };
 
@@ -300,5 +355,6 @@ export const methods = {
     getAlmacen,
     addAlmacen,
     updateAlmacen,
-    deleteAlmacen
+    deleteAlmacen,
+    getAlmacenes_A,
 };

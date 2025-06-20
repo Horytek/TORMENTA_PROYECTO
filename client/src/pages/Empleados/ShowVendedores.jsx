@@ -1,16 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@nextui-org/react";
 import VendedoresForm from './VendedoresForm';
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
-import { getVendedores, deactivateVendedor, getVendedor } from '@/services/vendedor.services';
+import { deactivateVendedor, getVendedor } from '@/services/vendedor.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
-import { VscDebugDisconnect } from "react-icons/vsc";
-import { PiPlugsConnected } from "react-icons/pi";
 import { usePermisos } from '@/routes';
 
-export function ShowVendedores({ searchTerm }) {
-    const [vendedores, setVendedores] = useState([]);
+export function ShowVendedores({ searchTerm, vendedores, addVendedor, updateVendedorLocal, removeVendedor }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [showPassword, setShowPassword] = useState({});
     const vendedoresPerPage = 10;
@@ -20,32 +17,21 @@ export function ShowVendedores({ searchTerm }) {
     const { hasDeletePermission } = usePermisos();
     const { hasEditPermission } = usePermisos();
     
-    useEffect(() => {
-        getUsers();
-    }, []);
-
-    // Obtener usuarios mediante API
-    const getUsers = async () => {
-        const data = await getVendedores();
-        setVendedores(data);
-    };
-
     const filteredVendedores = vendedores.filter(vendedor =>
-        vendedor.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    (vendedor.nombre || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const indexOfLastVendedor = currentPage * vendedoresPerPage;
     const indexOfFirstVendedor = indexOfLastVendedor - vendedoresPerPage;
     const currentVendedores = filteredVendedores.slice(indexOfFirstVendedor, indexOfLastVendedor);
 
-    // Eliminar vendedor
     const deleteHandler = async () => {
         if (!selectedDni) {
             console.error("Error: DNI no definido en deleteHandler.");
             return;
         }
         await deactivateVendedor(selectedDni);
-        getUsers();
+        removeVendedor(selectedDni);
     };
 
     const handleOpenConfirmationModal = (row, dni) => {
@@ -88,6 +74,15 @@ export function ShowVendedores({ searchTerm }) {
     const handleCloseModal = () => {
         setIsEditModalOpen(false);
         setInitialData(null);
+    };
+
+    const handleSuccess = (dni, updatedData) => {
+        if (initialData) {
+            updateVendedorLocal(dni, updatedData);
+        } else {
+            addVendedor(updatedData);
+        }
+        handleCloseModal();
     };
 
     return (
@@ -165,6 +160,7 @@ export function ShowVendedores({ searchTerm }) {
                     modalTitle={'Editar Vendedor'}
                     onClose={handleCloseModal}
                     initialData={initialData}
+                    onSuccess={handleSuccess}
                 />
             )}
         </div>

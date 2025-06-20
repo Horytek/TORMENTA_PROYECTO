@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Toaster, toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
-import { insertDestinatario, updateDestinatario } from '@/services/destinatario.services';
+import {
+  insertDestinatarioNatural,
+  insertDestinatarioJuridico,
+  updateDestinatarioNatural,
+  updateDestinatarioJuridico
+} from '@/services/destinatario.services';
 import {
   Modal,
   ModalContent,
@@ -13,7 +18,7 @@ import {
   Button
 } from "@heroui/react";
 
-const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
+const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [documento, setDocumento] = useState(initialData?.documento || '');
   const [isDNI, setIsDNI] = useState(documento?.length === 8);
@@ -24,6 +29,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
     if (!initialData) return {};
 
     const result = {
+      id: initialData.id,
       documento: initialData.documento,
       ubicacion: initialData.ubicacion || '',
       direccion: initialData.direccion || '',
@@ -33,13 +39,10 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
 
     if (initialData.documento?.length === 8) {
       const nameParts = initialData.destinatario?.split(' ') || [];
-      if (nameParts.length > 0) {
-        result.nombre = nameParts[0];
-        result.apellidos = nameParts.slice(1).join(' ');
-      }
+      result.nombre = nameParts[0] || '';
+      result.apellidos = nameParts.slice(1).join(' ') || '';
     } else if (initialData.documento?.length === 11) {
-      // For RUC, use destinatario as razonsocial
-      result.razonsocial = initialData.destinatario;
+      result.razonsocial = initialData.destinatario || '';
     }
 
     return result;
@@ -49,7 +52,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
 
   const handleDocumentoChange = (e) => {
     const value = e.target.value;
-    if (/^\d{0,11}$/.test(value)) { // Permitir solo números y máximo 11 dígitos
+    if (/^\d{0,11}$/.test(value)) {
       setDocumento(value);
       setIsDNI(value.length === 8);
       setIsRUC(value.length === 11);
@@ -57,7 +60,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
     }
   };
 
-  const { control, handleSubmit, formState: { errors }, setValue } = useForm({
+  const { control, handleSubmit, formState: { errors }, setValue, reset } = useForm({
     defaultValues: {
       documento: parsedInitialData.documento || '',
       nombre: parsedInitialData.nombre || '',
@@ -70,29 +73,12 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
     }
   });
 
-  // Helper function to check if a field is null/empty in edit mode
-  const isFieldEmpty = (fieldName) => {
-    if (!isEditMode) return false; // Not in edit mode, field should be editable
-
-    const value = initialData[fieldName];
-    return value === null || value === undefined || value === '';
-  };
-
   useEffect(() => {
     if (initialData) {
-      console.log("initialData recibida:", initialData);
       const parsedData = parseInitialData();
-
-      setValue('documento', parsedData.documento || '');
-      setValue('nombre', parsedData.nombre || '');
-      setValue('apellidos', parsedData.apellidos || '');
-      setValue('razonsocial', parsedData.razonsocial || '');
-      setValue('ubicacion', parsedData.ubicacion || '');
-      setValue('direccion', parsedData.direccion || '');
-      setValue('email', parsedData.email || '');
-      setValue('telefono', parsedData.telefono || '');
+      reset(parsedData);
     }
-  }, [initialData, setValue]);
+  }, [initialData, reset]);
 
   const onSubmit = async (data) => {
     try {
@@ -107,41 +93,117 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
         telefono
       } = data;
 
-      // Determine document type
-      const tipo_doc = documento.length === 8 ? "DNI" : documento.length === 11 ? "RUC" : "Desconocido";
-      const isDocumentoDNI = documento.length === 8;
-
-      // Build backend-compatible object
-      const destinatarioData = {
-        // Use the appropriate fields based on document type
-        dni: isDocumentoDNI ? documento : '',
-        ruc: !isDocumentoDNI ? documento : '',
-        nombres: isDocumentoDNI ? nombre : '',
-        apellidos: isDocumentoDNI ? apellidos : '',
-        razon_social: !isDocumentoDNI ? razonsocial : '',
-        ubicacion,
-        direccion,
-        telefono,
-        email
-      };
-
       let result;
-      if (initialData) {
-        result = await updateDestinatario(initialData.id, destinatarioData);
+      let destinatarioResult = null;
+
+      if (isEditMode) {
+        if (documento.length === 8) {
+          // Actualizar natural
+          const destinatarioData = {
+            dni: documento,
+            nombres: nombre,
+            apellidos,
+            ubicacion,
+            direccion,
+            telefono,
+            email
+          };
+          result = await updateDestinatarioNatural(initialData.id, destinatarioData);
+          if (result) {
+            destinatarioResult = {
+              id: initialData.id,
+              documento,
+              destinatario: `${nombre} ${apellidos}`,
+              ubicacion,
+              direccion,
+              telefono,
+              email
+            };
+          }
+        } else if (documento.length === 11) {
+          // Actualizar jurídico
+          const destinatarioData = {
+            ruc: documento,
+            razon_social: razonsocial,
+            ubicacion,
+            direccion,
+            telefono,
+            email
+          };
+          result = await updateDestinatarioJuridico(initialData.id, destinatarioData);
+          if (result) {
+            destinatarioResult = {
+              id: initialData.id,
+              documento,
+              destinatario: razonsocial,
+              ubicacion,
+              direccion,
+              telefono,
+              email
+            };
+          }
+        } else {
+          toast.error("Documento inválido. Debe ser DNI (8 dígitos) o RUC (11 dígitos).");
+          return;
+        }
       } else {
-        result = await insertDestinatario(destinatarioData);
+        // Registro
+        if (documento.length === 8) {
+          const destinatarioData = {
+            dni: documento,
+            nombres: nombre,
+            apellidos,
+            ubicacion,
+            direccion,
+            telefono,
+            email
+          };
+          result = await insertDestinatarioNatural(destinatarioData);
+          if (result && result[0]) {
+            destinatarioResult = {
+              id: result[1],
+              documento,
+              destinatario: `${nombre} ${apellidos}`,
+              ubicacion,
+              direccion,
+              telefono,
+              email
+            };
+          }
+        } else if (documento.length === 11) {
+          const destinatarioData = {
+            ruc: documento,
+            razon_social: razonsocial,
+            ubicacion,
+            direccion,
+            telefono,
+            email
+          };
+          result = await insertDestinatarioJuridico(destinatarioData);
+          if (result && result[0]) {
+            destinatarioResult = {
+              id: result[1],
+              documento,
+              destinatario: razonsocial,
+              ubicacion,
+              direccion,
+              telefono,
+              email
+            };
+          }
+        } else {
+          toast.error("Documento inválido. Debe ser DNI (8 dígitos) o RUC (11 dígitos).");
+          return;
+        }
       }
 
-      if (result) {
+      if (destinatarioResult && (isEditMode ? result : result && result[0])) {
         toast.success("Destinatario guardado correctamente");
+        if (onSuccess) onSuccess(destinatarioResult);
         handleCloseModal();
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
       }
     } catch (error) {
       toast.error("Error al gestionar el destinatario");
-      console.error(error);
     }
   };
 
@@ -159,7 +221,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
         isOpen={isOpen}
         onClose={handleCloseModal}
         size="2xl"
-        
       >
         <ModalContent>
           {(onClose) => (
@@ -197,8 +258,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
                           {...field}
                           label="Nombre"
                           variant="bordered"
-                          isDisabled={isEditMode && !parsedInitialData.nombre}
-                          placeholder={isEditMode && !parsedInitialData.nombre ? "No hay datos disponibles" : ""}
                           color={errors.nombre ? "danger" : "default"}
                           errorMessage={errors.nombre?.message}
                           isRequired={isDNI}
@@ -215,8 +274,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
                           {...field}
                           label="Apellidos"
                           variant="bordered"
-                          isDisabled={isEditMode && !parsedInitialData.apellidos}
-                          placeholder={isEditMode && !parsedInitialData.apellidos ? "No hay datos disponibles" : ""}
                           color={errors.apellidos ? "danger" : "default"}
                           errorMessage={errors.apellidos?.message}
                           isRequired={isDNI}
@@ -236,8 +293,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
                         {...field}
                         label="Razón Social"
                         variant="bordered"
-                        isDisabled={isEditMode && !parsedInitialData.razonsocial}
-                        placeholder={isEditMode && !parsedInitialData.razonsocial ? "No hay datos disponibles" : ""}
                         color={errors.razonsocial ? "danger" : "default"}
                         errorMessage={errors.razonsocial?.message}
                         className="mt-2"
@@ -256,8 +311,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
                         {...field}
                         label="Teléfono"
                         variant="bordered"
-                        isDisabled={isEditMode && !initialData.telefono}
-                        placeholder={isEditMode && !initialData.telefono ? "No hay datos disponibles" : ""}
                         color={errors.telefono ? "danger" : "default"}
                         errorMessage={errors.telefono?.message}
                       />
@@ -273,8 +326,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
                         {...field}
                         label="Ubicación"
                         variant="bordered"
-                        isDisabled={isEditMode && !initialData.ubicacion}
-                        placeholder={isEditMode && !initialData.ubicacion ? "No hay datos disponibles" : ""}
                         color={errors.ubicacion ? "danger" : "default"}
                         errorMessage={errors.ubicacion?.message}
                         isRequired
@@ -291,8 +342,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
                       {...field}
                       label="Dirección"
                       variant="bordered"
-                      isDisabled={isEditMode && !initialData.direccion}
-                      placeholder={isEditMode && !initialData.direccion ? "No hay datos disponibles" : ""}
                       color={errors.direccion ? "danger" : "default"}
                       errorMessage={errors.direccion?.message}
                       className="mt-2"
@@ -309,8 +358,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
                       label="Email"
                       type="email"
                       variant="bordered"
-                      isDisabled={isEditMode && !initialData.email}
-                      placeholder={isEditMode && !initialData.email ? "No hay datos disponibles" : ""}
                       color={errors.email ? "danger" : "default"}
                       errorMessage={errors.email?.message}
                       className="mt-2"
@@ -344,7 +391,8 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData }) => {
 DestinatariosForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
-  initialData: PropTypes.object
+  initialData: PropTypes.object,
+  onSuccess: PropTypes.func
 };
 
 export default DestinatariosForm;

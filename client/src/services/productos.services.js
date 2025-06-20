@@ -45,13 +45,15 @@ const addProducto = async (producto) => {
     const response = await addProductosRequest(producto);
     if (response.data.code === 1) {
       toast.success("Producto añadido con éxito");
-      return true;
+      // Devuelve el id insertado
+      return { success: true, id_producto: response.data.id_producto };
     } else {
       toast.error("Ocurrió un error al guardar el producto");
-      return false;
+      return { success: false };
     }
   } catch (error) {
     toast.error("Error en el servidor interno");
+    return { success: false };
   }
 };
 

@@ -1,88 +1,99 @@
-import { useState, useEffect } from 'react';
-import TablaSucursal from './ComponentsSucursal/SucursalTable';
-import getSucursalData from './data/data_sucursal';
-import FiltrosSucursal from './ComponentsSucursal/FiltroSucursal';
+import { useEffect, useState } from 'react';
+import SucursalForm from './SucursalForm';
+import { Toaster } from "react-hot-toast";
+import { FaPlus } from "react-icons/fa";
+import ShowSucursales from './ShowSucursales';
+import { Button } from "@heroui/react";
+import { usePermisos } from '@/routes';
+import BarraSearch from "@/components/Search/Search";
+import { getSucursalData, insertSucursal, editSucursal, removeSucursal } from '@/services/sucursal.services';
 
-import 'jspdf-autotable';
+function Sucursal() {
+  const [sucursales, setSucursales] = useState([]);
+  const [activeAdd, setModalOpen] = useState(false);
+  const { hasCreatePermission } = usePermisos();
 
-const Sucursales = () => {
-    const [filters, setFilters] = useState({
-        nombre: '',    
-        estado: '%',   
-    });
+  // Input de búsqueda de sucursales
+  const [searchTerm, setSearchTerm] = useState('');
+  const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
-    const [sucursales, setSucursales] = useState([]);
-
-    const fetchSucursales = async (filters) => {
-        const data = await getSucursalData(filters);
-        setSucursales(data.sucursales);
+  // Cargar sucursales solo una vez
+  useEffect(() => {
+    const fetchSucursales = async () => {
+      const { sucursales } = await getSucursalData({});
+      setSucursales(sucursales || []);
     };
+    fetchSucursales();
+  }, []);
 
-    useEffect(() => {
-        fetchSucursales(filters); 
-    }, []); 
+  // Agregar sucursal (API + local)
+  const addSucursal = async (nuevaSucursal) => {
+    const ok = await insertSucursal(nuevaSucursal);
+    if (ok) setSucursales(prev => [nuevaSucursal, ...prev]);
+  };
 
-    useEffect(() => {
-        fetchSucursales(filters); 
-    }, [filters]); 
+  // Editar sucursal (API + local)
+  const updateSucursalLocal = async (id, updatedData) => {
+    const ok = await editSucursal({ id, ...updatedData });
+    if (ok) setSucursales(prev => prev.map(s => s.id === id ? { ...s, ...updatedData } : s));
+  };
 
-    const handleFiltersChange = (newFilters) => {
-      setFilters(prevFilters => {
-        if (JSON.stringify(prevFilters) !== JSON.stringify(newFilters)) {
-          return newFilters;
-        }
-        return prevFilters;
-      });
-    };
+  // Eliminar sucursal (API + local)
+  const removeSucursalLocal = async (id) => {
+    const ok = await removeSucursal(id);
+    if (ok) setSucursales(prev => prev.filter(s => s.id !== id));
+  };
 
-    // Estilos en línea
-    const styles = {
-        container: {
-            position: 'relative',
-            minHeight: '100vh',
-            paddingBottom: '1.75rem',
-        },
-        header: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: '1.25rem',
-            marginBottom: '1rem',
-        },
-        title: {
-            fontSize: '36px',
-            fontWeight: 'bold',
-        },
-        hr: {
-            marginBottom: '1rem',
-        },
-        button: {
-            padding: '0.5rem 1rem',
-            borderRadius: '0.25rem',
-            backgroundColor: '#00bdd6ff',
-            color: 'white',
-            fontWeight: 500,
-            alignItems: 'center',
-        },
-        buttonHover: {
-            backgroundColor: 'rgb(3, 158, 179)',
-        },
-    };
+  // Filtro visual
+  const sucursalesFiltradas = sucursales.filter(s =>
+    (s.nombre_sucursal || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    return (
-        <div style={styles.container}>
-            <hr style={styles.hr} />
-            <div style={styles.header}>
-                <h1 style={styles.title}>
-                    Gestión de sucursales
-                </h1>
-            </div>
-            <FiltrosSucursal onFiltersChange={handleFiltersChange} />
-
-            <div>
-                <TablaSucursal sucursales={sucursales} />
-            </div>
+  return (
+    <div>
+      <Toaster />
+      <hr className="mb-4" />
+      <h1 className='text-4xl font-extrabold'>Sucursales</h1>
+      <div className="flex items-center justify-between mt-5 mb-4">
+        <h6 className="font-bold">Lista de Sucursales</h6>
+        <BarraSearch
+          placeholder="Ingrese una sucursal"
+          isClearable={true}
+          className="h-9 text-sm w-2/4"
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
+        <div className="flex gap-5">
+          <Button
+            color="primary"
+            endContent={<FaPlus style={{ fontSize: '25px' }} />}
+            onClick={() => setModalOpen(true)}
+            disabled={!hasCreatePermission}
+            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+          >
+            Agregar sucursal
+          </Button>
         </div>
-    );
-};
+      </div>
+      <div>
+        <ShowSucursales
+          searchTerm={searchTerm}
+          sucursales={sucursalesFiltradas}
+          addSucursal={addSucursal}
+          updateSucursalLocal={updateSucursalLocal}
+          removeSucursal={removeSucursalLocal}
+        />
+      </div>
+      {/* Modal de Agregar Sucursal */}
+      {activeAdd && (
+        <SucursalForm
+          modalTitle="Nueva Sucursal"
+          onClose={() => setModalOpen(false)}
+          onSuccess={addSucursal}
+        />
+      )}
+    </div>
+  );
+}
 
-export default Sucursales;
+export default Sucursal;

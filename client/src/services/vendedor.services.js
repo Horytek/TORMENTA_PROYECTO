@@ -42,14 +42,12 @@ const addVendedor = async (vendedor) => {
   try {
     const response = await addVendedorRequest(vendedor);
     if (response.data.code === 1) {
-      toast.success("Vendedor añadido con éxito");
       return [true, response.data.id];
     } else {
-      toast.error("Ocurrió un error al guardar el vendedor");
-      return [false];
+      return [false, response.data.message || "Error al guardar"];
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    return [false, "Error en el servidor interno"];
   }
 };
 
@@ -73,16 +71,13 @@ const deleteVendedor = async (id) => {
 const updateVendedor = async (id, vendedor) => {
   try {
     const response = await updateVendedorRequest(id, vendedor);
-    if (response.status === 200) {
-      toast.success("Vendedor actualizado con éxito");
-      return true;
+    if (response.data.code === 1) {
+      return [true];
     } else {
-      toast.error(response.data?.message || "Ocurrió un error al actualizar el vendedor");
-      return false;
+      return [false, response.data.message || "Error al actualizar"];
     }
   } catch (error) {
-    toast.error(error.response?.data?.message || "Error en el servidor interno");
-    return false;
+    return [false, "Error en el servidor interno"];
   }
 };
 

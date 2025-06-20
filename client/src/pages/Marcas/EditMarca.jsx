@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useForm, Controller } from "react-hook-form";
-import { useMarcas } from "@/context/Marca/MarcaProvider";
 import { Toaster, toast } from "react-hot-toast";
-import useEditMarca from "./hook/editFunc";
 import { 
   Input,
   Button,
@@ -19,10 +17,12 @@ import {
   Select,
   SelectItem
 } from "@nextui-org/react";
+import {
+  updateMarca
+} from "@/services/marca.services";
 
-const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
-  const { editMarca, loading } = useEditMarca();
-  const { loadMarcas } = useMarcas();
+const EditForm = ({ isOpen, onClose, initialData, modalTitle, onMarcaEdit }) => {
+  const { editMarca, loading } = updateMarca();
   const [isModalOpen, setIsModalOpen] = useState(isOpen);
   
   const {
@@ -40,38 +40,38 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
   useEffect(() => {
     if (initialData) {
       setValue("nom_marca", initialData.nom_marca);
-      setValue("estado_marca", initialData.estado_marca.toString());
-    }
-    if (!initialData) {
-      loadMarcas();
+      setValue("estado_marca", initialData.estado_marca?.toString() || "1");
     }
     setIsModalOpen(isOpen);
-  }, [initialData, setValue, isOpen, loadMarcas]);
-
+  }, [initialData, setValue, isOpen]);
+  
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setTimeout(() => {
       onClose();
-    }, 300);
+    }, 200);
   };
 
-  const onSubmit = async (data) => {
-    try {
-      const updatedData = {
-        ...data,
-        id_marca: initialData.id_marca,
-        estado_marca: parseInt(data.estado_marca, 10),
-      };
-      await editMarca(updatedData);
-      handleCloseModal();
+const onSubmit = async (data) => {
+  try {
+    const updatedData = {
+      ...data,
+      id_marca: initialData.id_marca,
+      estado_marca: parseInt(data.estado_marca, 10),
+    };
+    const success = await editMarca(updatedData);
+    if (success) {
+      if (onMarcaEdit) onMarcaEdit(updatedData); 
       toast.success("Marca actualizada con éxito");
-      setTimeout(() => {
-        window.location.reload();
-      }, 420);
-    } catch (error) {
-      toast.error("Error al actualizar la marca");
+      handleCloseModal();
+    } else {
+      toast.error("Ocurrió un error al actualizar la marca");
     }
-  };
+  } catch (error) {
+    toast.error("Error al actualizar la marca");
+  }
+};
+
 
   return (
     <>
@@ -159,6 +159,7 @@ EditForm.propTypes = {
   onClose: PropTypes.func.isRequired,
   initialData: PropTypes.object,
   modalTitle: PropTypes.string.isRequired,
+  onMarcaEdit: PropTypes.func,
 };
 
 export default EditForm;

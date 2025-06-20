@@ -15,13 +15,10 @@ import {
   Select,
   SelectItem
 } from "@nextui-org/react";
-import { IoMdClose } from "react-icons/io";
-import useEditCat from "./hook/editFunc";
-import { useCategorias } from "@/context/Categoria/CategoriaProvider";
+import {useEditCat} from '@/services/categoria.services';
 
-const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
+const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
   const { editCat, loading } = useEditCat();
-  const { loadCategorias } = useCategorias();
   const {
     register,
     handleSubmit,
@@ -31,13 +28,10 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
 
   useEffect(() => {
     if (initialData) {
-      // Configurar valores iniciales en el formulario
       setValue("nom_categoria", initialData.nom_categoria || "");
       setValue("estado_categoria", initialData.estado_categoria?.toString() || "1");
-    } else {
-      loadCategorias();
     }
-  }, [initialData, setValue, loadCategorias]);
+  }, [initialData, setValue]);
 
   const onSubmit = async (data) => {
     try {
@@ -48,9 +42,7 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
       };
       await editCat(updatedData);
       toast.success("Categoría actualizada con éxito");
-      setTimeout(() => {
-        window.location.reload();
-      }, 420);
+      if (onSuccess) onSuccess(updatedData);
       onClose();
     } catch (error) {
       toast.error("Error al actualizar la categoría");
@@ -66,7 +58,6 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
         <ModalBody>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
-              {/* Nombre de la categoría */}
               <Input
                 {...register("nom_categoria", { required: true })}
                 label="Nombre de la categoría"
@@ -77,8 +68,6 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle }) => {
                 }
                 isRequired
               />
-
-              {/* Estado de la categoría */}
               <Select
                 {...register("estado_categoria", { required: true })}
                 label="Estado de la categoría"
@@ -123,6 +112,7 @@ EditForm.propTypes = {
   onClose: PropTypes.func.isRequired,
   initialData: PropTypes.object,
   modalTitle: PropTypes.string.isRequired,
+  onSuccess: PropTypes.func,
 };
 
 export default EditForm;

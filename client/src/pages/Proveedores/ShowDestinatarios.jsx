@@ -1,33 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button } from "@heroui/react";
 import DestinatariosForm from './DestinatariosForm';
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
-import { getDestinatarios, getDestinatario } from '@/services/destinatario.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import { usePermisos } from '@/routes';
+import { deleteDestinatario } from '@/services/destinatario.services';
 
-
-export function ShowDestinatarios({ searchTerm }) {
-    const [destinatarios, setDestinatarios] = useState([]);
+export function ShowDestinatarios({
+    searchTerm,
+    destinatarios,
+    updateDestinatarioLocal,
+    removeDestinatario,
+    onEdit
+}) {
     const [currentPage, setCurrentPage] = useState(1);
     const destinatariosPerPage = 10;
     const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
     const [selectedRow, setSelectedRow] = useState(null);
-    const [selectedDoc, setSelectedDoc] = useState(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [initialData, setInitialData] = useState(null);
-    const { hasDeletePermission } = usePermisos();
-    const { hasEditPermission } = usePermisos();
-
-    useEffect(() => {
-        fetchDestinatarios();
-    }, []);
-
-    const fetchDestinatarios = async () => {
-        const data = await getDestinatarios();
-        setDestinatarios(data);
-    };
+    const [selectedId, setSelectedId] = useState(null);
+    const { hasDeletePermission, hasEditPermission } = usePermisos();
 
     const filteredDestinatarios = destinatarios.filter(destinatario =>
         destinatario.destinatario.toLowerCase().includes(searchTerm.toLowerCase())
@@ -38,17 +30,14 @@ export function ShowDestinatarios({ searchTerm }) {
     const currentDestinatarios = filteredDestinatarios.slice(indexOfFirstDestinatario, indexOfLastDestinatario);
 
     const deleteHandler = async () => {
-        if (!selectedDoc) {
-            console.error("Error: Documento no definido en deleteHandler.");
-            return;
-        }
-        await deactivateDestinatario(selectedDoc);
-        fetchDestinatarios();
+        if (!selectedId) return;
+        await deleteDestinatario(selectedId);
+        removeDestinatario(selectedId);
     };
 
-    const handleOpenConfirmationModal = (row, doc) => {
+    const handleOpenConfirmationModal = (row, id) => {
         setSelectedRow(row);
-        setSelectedDoc(doc);
+        setSelectedId(id);
         setIsConfirmationModalOpen(true);
     };
 
@@ -58,31 +47,9 @@ export function ShowDestinatarios({ searchTerm }) {
     };
 
     const handleConfirmDelete = () => {
-        if (!selectedDoc) {
-            console.error("Error: No hay documento seleccionado para eliminar.");
-            return;
-        }
+        if (!selectedId) return;
         deleteHandler();
         handleCloseConfirmationModal();
-    };
-
-    const handleEditModal = async (doc) => {
-        try {
-            const data = await getDestinatario(doc);
-            if (!data || Object.keys(data).length === 0) {
-                console.error("Error: No se encontró el destinatario o la respuesta es inválida.");
-                return;
-            }
-            setInitialData(data[0]);
-            setIsEditModalOpen(true);
-        } catch (error) {
-            console.error("Error al obtener destinatario:", error);
-        }
-    };
-
-    const handleCloseModal = () => {
-        setIsEditModalOpen(false);
-        setInitialData(null);
     };
 
     return (
@@ -100,7 +67,7 @@ export function ShowDestinatarios({ searchTerm }) {
                     </TableHeader>
                     <TableBody>
                         {currentDestinatarios.map((destinatario) => (
-                            <TableRow key={destinatario.documento}>
+                            <TableRow key={destinatario.id}>
                                 <TableCell>{destinatario.documento}</TableCell>
                                 <TableCell>{destinatario.destinatario}</TableCell>
                                 <TableCell>{destinatario.ubicacion}</TableCell>
@@ -110,14 +77,16 @@ export function ShowDestinatarios({ searchTerm }) {
                                 <TableCell>
                                     <div className="flex items-center justify-center gap-2">
                                         <Tooltip content="Editar">
-                                            <Button isIconOnly variant="light" color="warning" onClick={() => handleEditModal(destinatario.documento)}
+                                            <Button isIconOnly variant="light" color="warning"
+                                                onClick={() => onEdit(destinatario)}
                                                 disabled={!hasEditPermission}
                                                 className={!hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}>
                                                 <MdEdit />
                                             </Button>
                                         </Tooltip>
                                         <Tooltip content="Eliminar">
-                                            <Button isIconOnly variant="light" color="danger" onClick={() => handleOpenConfirmationModal(destinatario.destinatario, destinatario.documento)}
+                                            <Button isIconOnly variant="light" color="danger"
+                                                onClick={() => handleOpenConfirmationModal(destinatario.destinatario, destinatario.id)}
                                                 disabled={!hasDeletePermission}
                                                 className={!hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}>
                                                 <FaTrash />
@@ -147,15 +116,6 @@ export function ShowDestinatarios({ searchTerm }) {
                     message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
                     onClose={handleCloseConfirmationModal}
                     onConfirm={handleConfirmDelete}
-                />
-            )}
-
-            {/* Modal de Edición */}
-            {isEditModalOpen && (
-                <DestinatariosForm
-                    modalTitle={'Editar Destinatario'}
-                    onClose={handleCloseModal}
-                    initialData={initialData}
                 />
             )}
         </div>

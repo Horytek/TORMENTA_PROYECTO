@@ -1,5 +1,4 @@
 import PropTypes from "prop-types";
-import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
 import { useCategorias } from "@/context/Categoria/CategoriaProvider";
 import {
@@ -12,7 +11,7 @@ import {
   Button,
 } from "@heroui/react";
 
-const CategoriasForm = ({ modalTitle, onClose }) => {
+const CategoriasForm = ({ modalTitle, onClose, onSuccess }) => {
   const { createCategoria } = useCategorias();
 
   const {
@@ -35,14 +34,12 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
 
       const result = await createCategoria(newCategory);
 
-      if (result) {
+      if (result && result.id_categoria) {
+        if (onSuccess) onSuccess({ ...newCategory, id_categoria: result.id_categoria });
         onClose();
-        setTimeout(() => {
-          window.location.reload();
-        }, 550);
       }
     } catch (error) {
-      // console.error("Error al realizar la gestión de la categoría");
+      // Manejo de error opcional
     }
   });
 
@@ -88,6 +85,7 @@ const CategoriasForm = ({ modalTitle, onClose }) => {
 CategoriasForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func,
 };
 
 export default CategoriasForm;

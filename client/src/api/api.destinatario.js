@@ -6,8 +6,15 @@ export const getDestinatarioRequest = async (id) => await axios.get(`/destinatar
 
 export const insertDestinatarioRequest = async (destinatario) => await axios.post("/destinatario", destinatario);
 
+export const insertDestinatarioNaturalRequest = async (destinatario) => await axios.post("/destinatario/natural", destinatario);
+
+export const insertDestinatarioJuridicoRequest = async (destinatario) => await axios.post("/destinatario/juridico", destinatario);
+
 export const deleteDestinatarioRequest = async (id) => await axios.delete(`/destinatario/${id}`);
 
-export const updateDestinatarioRequest = async (id, destinatario) => await axios.put(`/destinatario/update/${id}`, destinatario);
+export const updateDestinatarioNaturalRequest = async (id, destinatario) =>
+  await axios.put(`/destinatario/update/natural/${id}`, destinatario);
 
+export const updateDestinatarioJuridicoRequest = async (id, destinatario) =>
+  await axios.put(`/destinatario/update/juridico/${id}`, destinatario);
 //export const deactivateDestinatarioRequest = async (id) => await axios.put(`/destinatario/deactivate/${id}`);

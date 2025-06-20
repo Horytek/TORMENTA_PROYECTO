@@ -6,10 +6,11 @@ const getProductos = async (req, res) => {
         connection = await getConnection();
         const [result] = await connection.query(`
             SELECT PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, 
-            CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras, PR.estado_producto as estado
+            CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras, PR.estado_producto as estado, PR.id_marca, PR.id_subcategoria, cat.id_categoria
             FROM producto PR
             INNER JOIN marca MA ON MA.id_marca = PR.id_marca
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
+            INNER JOIN categoria cat ON cat.id_categoria = CA.id_categoria
             ORDER BY PR.id_producto DESC
         `);
 
@@ -80,9 +81,10 @@ const addProducto = async (req, res) => {
 
         const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
         connection = await getConnection();
-        await connection.query("INSERT INTO producto SET ? ", producto);
+        const [result] = await connection.query("INSERT INTO producto SET ? ", producto);
 
-        res.json({code: 1, message: "Producto añadido" });
+
+        res.json({code: 1, id_producto: result.insertId, message: "Producto añadido" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {

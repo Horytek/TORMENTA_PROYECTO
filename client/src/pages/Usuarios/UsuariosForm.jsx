@@ -20,24 +20,24 @@ import {
     SelectItem
   } from "@nextui-org/react";
 
-const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
-    const [roles, setRoles] = useState([]);
-    const [usuarios, setUsuarios] = useState([]);
-    const [showPassword, setShowPassword] = useState(false);
-    const [isOpen, setIsOpen] = useState(true);
+const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios }) => {
 
-    const { control, handleSubmit, formState: { errors }, reset } = useForm({
-        defaultValues: initialData?.data || {
-            id_rol: '',
-            usua: '',
-            contra: '',
-            estado_usuario: '',
-        }
-    });
+
+  const [roles, setRoles] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+
+  const { control, handleSubmit, formState: { errors }, reset } = useForm({
+    defaultValues: initialData?.data || {
+      id_rol: '',
+      usua: '',
+      contra: '',
+      estado_usuario: '',
+    }
+  });
 
     useEffect(() => {
         getRols();
-        fetchUsuarios();
     }, []);
 
     useEffect(() => {
@@ -53,49 +53,45 @@ const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
         setRoles(filteredRoles);
     };
 
-    const fetchUsuarios = async () => {
-        const data = await getUsuarios();
-        setUsuarios(data);
-    };
+     const onSubmit = async (data) => {
+    try {
+      const { id_rol, usua, contra, estado_usuario } = data;
 
-    const onSubmit = async (data) => {
-        try {
-            const { id_rol, usua, contra, estado_usuario } = data;
+      // Obtener el usuario con el rol "administrador" del prop usuarios
+      const adminUser = usuarios.find((usuario) => usuario.nom_rol && usuario.nom_rol.toLowerCase() === "administrador");
 
-            // Obtener el usuario con el rol "administrador"
-            const adminUser = usuarios.find((usuario) => usuario.nom_rol.toLowerCase() === "administrador");
+      if (!adminUser) {
+        toast.error("No se encontró un usuario con el rol de administrador.");
+        return;
+      }
 
-            if (!adminUser) {
-                toast.error("No se encontró un usuario con el rol de administrador.");
-                return;
-            }
+      const newUser = {
+        id_rol: parseInt(id_rol),
+        usua,
+        contra,
+        estado_usuario: parseInt(estado_usuario),
+        id_empresa: adminUser.id_empresa, // Asignar el id_empresa del administrador
+      };
 
-            const newUser = {
-                id_rol: parseInt(id_rol),
-                usua,
-                contra,
-                estado_usuario: parseInt(estado_usuario),
-                id_empresa: adminUser.id_empresa, // Asignar el id_empresa del administrador
-            };
-
-            let result;
-            if (initialData) {
-                result = await updateUsuario(initialData?.id_usuario, newUser);
-            } else {
-                result = await addUsuario(newUser);
-            }
-
-            if (result) {
-                toast.success(initialData ? "Usuario actualizado correctamente" : "Usuario creado correctamente");
-                handleCloseModal();
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            }
-        } catch (error) {
-            toast.error("Error al realizar la gestión del usuario");
+      let result;
+      if (initialData) {
+        result = await updateUsuario(initialData?.id_usuario, newUser);
+        if (result) {
+          toast.success("Usuario actualizado correctamente");
+          onSuccess(initialData.id_usuario, newUser); // Actualiza localmente
         }
-    };
+      } else {
+        result = await addUsuario(newUser);
+        if (result) {
+          toast.success("Usuario creado correctamente");
+          onSuccess({ ...newUser, id_usuario: result.id_usuario }); // Agrega localmente
+        }
+      }
+      handleCloseModal();
+    } catch (error) {
+      toast.error("Error al realizar la gestión del usuario");
+    }
+  };
 
     const handleCloseModal = () => {
         setIsOpen(false);
@@ -249,9 +245,11 @@ const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
 };
 
 UsuariosForm.propTypes = {
-    modalTitle: PropTypes.string.isRequired,
-    onClose: PropTypes.func.isRequired,
-    initialData: PropTypes.object
+  modalTitle: PropTypes.string.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired,
+  initialData: PropTypes.object,
+  usuarios: PropTypes.array.isRequired,
 };
 
 export default UsuariosForm;

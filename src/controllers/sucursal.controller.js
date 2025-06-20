@@ -185,10 +185,45 @@ const getVendedores = async (req, res) => {
         if (connection) connection.release();
     }
 };
+
+
+const deleteSucursal = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ message: "El ID de la sucursal es obligatorio." });
+    }
+
+    let connection;
+    try {
+        connection = await getConnection();
+
+        await connection.beginTransaction();
+
+        const query = `DELETE FROM sucursal WHERE id_sucursal = ?`;
+        const [result] = await connection.query(query, [id]);
+
+        await connection.commit();
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ code: 0, message: "Sucursal no encontrada." });
+        }
+
+        res.json({ code: 1, message: "Sucursal eliminada correctamente" });
+    } catch (error) {
+        if (connection) await connection.rollback();
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+
 export const methods = {
     getSucursalInicio,
     getSucursales,
     getVendedores,
     insertSucursal,
     updateSucursal,
+    deleteSucursal,
 };

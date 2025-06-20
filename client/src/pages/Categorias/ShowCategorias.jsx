@@ -1,20 +1,25 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
 import { Tooltip } from "@heroui/react";
 import { usePermisos } from "@/routes";
 import {
-  getCategorias as fetchCategorias,
-  getCategoria,
   deleteCategoria,
   deactivateCategoria as apiDeactivateCategoria,
+  updateCategoria as apiEditCategoria,
 } from "@/services/categoria.services";
 import EditCat from "./EditCat";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
-export function ShowCategorias({ searchTerm }) {
-  const [categorias, setCategorias] = useState([]);
+export function ShowCategorias({
+  searchTerm,
+  categorias,
+  onAdd,
+  onEdit,
+  onDelete,
+  onDeactivate,
+}) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
@@ -23,17 +28,7 @@ export function ShowCategorias({ searchTerm }) {
   const [selectedId, setSelectedId] = useState(null);
   const productosPerPage = 10;
 
-  // Importar los permisos necesarios
   const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
-
-  useEffect(() => {
-    loadCategorias();
-  }, []);
-
-  const loadCategorias = async () => {
-    const data = await fetchCategorias();
-    setCategorias(data);
-  };
 
   const filteredProductos = categorias.filter((categoria) =>
     categoria.nom_categoria.toLowerCase().includes(searchTerm.toLowerCase())
@@ -46,21 +41,27 @@ export function ShowCategorias({ searchTerm }) {
     indexOfLastProducto
   );
 
+  // Eliminar categoría (API + local)
   const deleteProduct = async (id) => {
     await deleteCategoria(id);
-    loadCategorias();
+    onDelete(id);
   };
 
+  // Desactivar categoría (API + local)
   const deactivateCategoria = async (id) => {
     await apiDeactivateCategoria(id);
-    loadCategorias();
+    onDeactivate(id);
   };
 
-  const handleOpenEditModal = (
-    id_categoria,
-    nom_categoria,
-    estado_categoria
-  ) => {
+  // Editar categoría (API + local)
+  const handleEditCategoria = async (updatedData) => {
+    await apiEditCategoria(updatedData);
+    onEdit(updatedData.id_categoria, updatedData);
+    setIsEditModalOpen(false);
+    setSelectedRow(null);
+  };
+
+  const handleOpenEditModal = (id_categoria, nom_categoria, estado_categoria) => {
     setSelectedRow({ id_categoria, nom_categoria, estado_categoria });
     setIsEditModalOpen(true);
   };
@@ -203,8 +204,6 @@ export function ShowCategorias({ searchTerm }) {
           </tbody>
         </table>
       </div>
-
-      {/* Paginación */}
       <div className="flex justify-end mt-4">
         <div className="flex">
           <Pagination
@@ -214,7 +213,6 @@ export function ShowCategorias({ searchTerm }) {
           />
         </div>
       </div>
-
       {isConfirmationModalOpen && (
         <ConfirmationModal
           message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
@@ -222,16 +220,15 @@ export function ShowCategorias({ searchTerm }) {
           onConfirm={handleConfirmDelete}
         />
       )}
-
       {isEditModalOpen && selectedRow && (
         <EditCat
           isOpen={isEditModalOpen}
           modalTitle={"Editar categoria"}
           onClose={handleCloseEditModal}
           initialData={selectedRow}
+          onSuccess={handleEditCategoria}
         />
       )}
-
       {deactivateCat && (
         <ConfirmationModal
           message={`¿Estás seguro que deseas dar de baja a "${selectedRow}"?`}

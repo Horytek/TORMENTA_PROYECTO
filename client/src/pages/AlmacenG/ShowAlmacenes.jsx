@@ -1,25 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
-import { getAlmacenes, deleteAlmacen } from '@/services/almacen.services';
-import AlmacenesForm from './AlmacenesForm';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
+import AlmacenesForm from './AlmacenesForm';
 import { usePermisos } from '@/routes';
 
-export function ShowAlmacenes({ searchTerm }) {
-    const [almacenes, setAlmacenes] = useState([]);
+export function ShowAlmacenes({ searchTerm, almacenes, onEdit, onDelete }) {
     const [currentPage, setCurrentPage] = useState(1);
     const almacenesPerPage = 10;
-
-    useEffect(() => {
-        fetchAlmacenes();
-    }, []);
-
-    const fetchAlmacenes = async () => {
-        const data = await getAlmacenes();
-        setAlmacenes(data);
-    };
 
     const filteredAlmacenes = almacenes.filter(almacen =>
         almacen.nom_almacen.toLowerCase().includes(searchTerm.toLowerCase())
@@ -29,12 +18,10 @@ export function ShowAlmacenes({ searchTerm }) {
     const indexOfFirstAlmacen = indexOfLastAlmacen - almacenesPerPage;
     const currentAlmacenes = filteredAlmacenes.slice(indexOfFirstAlmacen, indexOfLastAlmacen);
 
-    // Estado para el modal de confirmación
     const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
     const [selectedRow, setSelectedRow] = useState(null);
     const [selectedId, setSelectedId] = useState(null);
 
-    // Estado para el modal de edición
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAlmacen, setSelectedAlmacen] = useState(null);
 
@@ -49,19 +36,17 @@ export function ShowAlmacenes({ searchTerm }) {
         setSelectedRow(null);
     };
 
-    const handleConfirmDelete = async () => {
-        await deleteAlmacen(selectedId);
-        fetchAlmacenes();
-        handleCloseConfirmationModal();
-    };
+const handleConfirmDelete = async () => {
+    // Quita esta línea: await deleteAlmacen(selectedId);
+    await onDelete(selectedId); // El padre maneja la lógica y la petición
+    handleCloseConfirmationModal();
+};
 
-    // Función para abrir el formulario de edición con los datos del almacén seleccionado
     const handleModalEdit = (almacen) => {
-        console.log("Datos enviados al modal:", almacen);
         setSelectedAlmacen({
             ...almacen,
-            id_sucursal: almacen.id_sucursal || almacen.nombre_sucursal || null, // Intenta obtener el valor correcto// Asegura que no sea undefined
-            estado_almacen: almacen.estado_almacen === "Activo" ? 1 : 0, // Convierte el estado a número
+            id_sucursal: almacen.id_sucursal || almacen.nombre_sucursal || null,
+            estado_almacen: almacen.estado_almacen === "Activo" ? 1 : 0,
         });
         setIsEditModalOpen(true);
     };
@@ -69,6 +54,11 @@ export function ShowAlmacenes({ searchTerm }) {
     const handleCloseEditModal = () => {
         setIsEditModalOpen(false);
         setSelectedAlmacen(null);
+    };
+
+    const handleEditSuccess = (updatedAlmacen) => {
+        onEdit(updatedAlmacen.id_almacen, updatedAlmacen);
+        handleCloseEditModal();
     };
 
     const { hasEditPermission, hasDeletePermission } = usePermisos();
@@ -152,6 +142,7 @@ export function ShowAlmacenes({ searchTerm }) {
                     modalTitle="Editar Almacén"
                     onClose={handleCloseEditModal}
                     initialData={{ id_almacen: selectedAlmacen.id_almacen, data: selectedAlmacen }}
+                    onSuccess={handleEditSuccess}
                 />
             )}
         </div>

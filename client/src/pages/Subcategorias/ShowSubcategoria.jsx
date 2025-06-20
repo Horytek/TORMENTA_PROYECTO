@@ -1,72 +1,42 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { Tooltip } from "@heroui/react";
 import { usePermisos } from "@/routes";
-import EditForm from "./EditSubcat";
-import { useSubcategoriasConCategoria } from './hooks/getSubcategory';
-import { useDeleteSubcategoria } from './hooks/deleteFunc';
-import { useDeactivateSubcategoria } from './hooks/deactivateFunc';
 
-export function ShowSubcategorias({ searchTerm }) {
-  const { subcategorias, setSubcategorias, loading, error } = useSubcategoriasConCategoria();  
+export function ShowSubcategorias({
+  searchTerm,
+  subcategorias,
+  onEdit,
+  onDelete,
+  onDeactivate,
+}) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeactivationModalOpen, setIsDeactivationModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); 
-  const [selectedRow, setSelectedRow] = useState(null); 
+  const [selectedRow, setSelectedRow] = useState(null);
   const productosPerPage = 10;
 
-  // Importar los permisos necesarios
   const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
 
-  const { deleteSubcategoria, success: deleteSuccess } = useDeleteSubcategoria();
-  const { deactivateSubcategoria, success: deactivateSuccess } = useDeactivateSubcategoria();
-
-  useEffect(() => {
-    if (deleteSuccess) {
-      setSubcategorias((prev) =>
-        prev.filter((sub_categoria) => sub_categoria.id_subcategoria !== selectedRow.id)
-      );
-    }
-  }, [deleteSuccess, selectedRow, setSubcategorias]);
-
-  useEffect(() => {
-    if (deactivateSuccess) {
-      setSubcategorias((prev) =>
-        prev.map((sub_categoria) =>
-          sub_categoria.id_subcategoria === selectedRow.id
-            ? { ...sub_categoria, estado_subcat: 0 }
-            : sub_categoria
-        )
-      );
-    }
-  }, [deactivateSuccess, selectedRow, setSubcategorias]);
-
-  const handleOpenEditModal = (id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria) => {
-    setSelectedRow({ id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria });
-    setIsEditModalOpen(true);
+  const handleOpenEditModal = (subcat) => {
+    onEdit(subcat);
   };
 
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setSelectedRow(null);
-  };
-
-  const handleOpenConfirmationModal = (id, nombre) => {
-    setSelectedRow({ id, nombre });
+  const handleOpenConfirmationModal = (subcat) => {
+    setSelectedRow(subcat);
     setIsConfirmationModalOpen(true);
   };
 
   const handleCloseConfirmationModal = () => {
     setIsConfirmationModalOpen(false);
-    setSelectedRow(null); 
+    setSelectedRow(null);
   };
 
-  const handleOpenDeactivationModal = (id, nombre) => { 
-    setSelectedRow({ id, nombre });
+  const handleOpenDeactivationModal = (subcat) => {
+    setSelectedRow(subcat);
     setIsDeactivationModalOpen(true);
   };
 
@@ -75,19 +45,19 @@ export function ShowSubcategorias({ searchTerm }) {
     setSelectedRow(null);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedRow?.id) {
-      deleteSubcategoria(selectedRow.id);
-      handleCloseConfirmationModal();
-    }
-  };
+const handleConfirmDelete = async () => {
+  if (selectedRow?.id_subcategoria) {
+    await onDelete(selectedRow.id_subcategoria);
+    handleCloseConfirmationModal();
+  }
+};
 
-  const handleConfirmDeactivate = () => {
-    if (selectedRow?.id) {
-      deactivateSubcategoria(selectedRow.id);
-      handleCloseDeactivationModal();
-    }
-  };
+const handleConfirmDeactivate = async () => {
+  if (selectedRow?.id_subcategoria) {
+    await onDeactivate(selectedRow.id_subcategoria);
+    handleCloseDeactivationModal();
+  }
+};
 
   const filteredSubcategorias = subcategorias.filter((sub_categoria) =>
     sub_categoria.nom_subcat.toLowerCase().includes(searchTerm.toLowerCase())
@@ -99,14 +69,6 @@ export function ShowSubcategorias({ searchTerm }) {
     indexOfFirstSubcategoria,
     indexOfLastSubcategoria
   );
-
-  if (loading) {
-    return <div>Cargando subcategorías...</div>;
-  }
-
-  if (error) {
-    return <div>Error al cargar las subcategorías: {error.message}</div>;
-  }
 
   return (
     <div>
@@ -144,7 +106,6 @@ export function ShowSubcategorias({ searchTerm }) {
                   <td className="py-2 text-center">
                     {sub_categoria.nom_categoria || "Sin categoría"}
                   </td>
-
                   <td className="py-2 text-center">
                     {sub_categoria.nom_subcat}
                   </td>
@@ -166,17 +127,7 @@ export function ShowSubcategorias({ searchTerm }) {
                       <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
                         <button
                           className={`px-2 py-1 ${hasEditPermission ? "text-yellow-400" : "text-gray-400"} text-xl ${!hasEditPermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          onClick={() => hasEditPermission 
-                            ? handleOpenEditModal(
-                                sub_categoria.id_subcategoria,
-                                sub_categoria.id_categoria,
-                                sub_categoria.nom_subcat,
-                                sub_categoria.estado_subcat,
-                                sub_categoria.nom_categoria,
-                                sub_categoria.estado_categoria
-                              ) 
-                            : null
-                          }
+                          onClick={() => hasEditPermission ? handleOpenEditModal(sub_categoria) : null}
                         >
                           <MdEdit />
                         </button>
@@ -184,13 +135,7 @@ export function ShowSubcategorias({ searchTerm }) {
                       <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
                         <button
                           className={`px-2 py-1 ${hasDeletePermission ? "text-red-500" : "text-gray-400"} ${!hasDeletePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          onClick={() => hasDeletePermission 
-                            ? handleOpenConfirmationModal(
-                                sub_categoria.id_subcategoria,
-                                sub_categoria.nom_subcat
-                              ) 
-                            : null
-                          }
+                          onClick={() => hasDeletePermission ? handleOpenConfirmationModal(sub_categoria) : null}
                         >
                           <FaTrash />
                         </button>
@@ -199,13 +144,7 @@ export function ShowSubcategorias({ searchTerm }) {
                         <button
                           className={`px-3 py-1 ${hasDeactivatePermission ? "text-red-600" : "text-gray-400"} ${!hasDeactivatePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                           style={{ fontSize: "20px" }}
-                          onClick={() => hasDeactivatePermission 
-                            ? handleOpenDeactivationModal(
-                                sub_categoria.id_subcategoria,
-                                sub_categoria.nom_subcat
-                              ) 
-                            : null
-                          }
+                          onClick={() => hasDeactivatePermission ? handleOpenDeactivationModal(sub_categoria) : null}
                         >
                           <MdDoNotDisturbAlt />
                         </button>
@@ -235,24 +174,16 @@ export function ShowSubcategorias({ searchTerm }) {
       </div>
       {isConfirmationModalOpen && selectedRow && (
         <ConfirmationModal
-          message={`¿Estás seguro que deseas eliminar "${selectedRow.nombre}"?`}
+          message={`¿Estás seguro que deseas eliminar "${selectedRow.nom_subcat}"?`}
           onClose={handleCloseConfirmationModal}
           onConfirm={handleConfirmDelete}
         />
       )}
       {isDeactivationModalOpen && selectedRow && (
         <ConfirmationModal
-          message={`¿Estas seguro que deseas dar de baja a "${selectedRow.nombre}"?`}
+          message={`¿Estas seguro que deseas dar de baja a "${selectedRow.nom_subcat}"?`}
           onClose={handleCloseDeactivationModal}
           onConfirm={handleConfirmDeactivate}
-        />
-      )}
-      {isEditModalOpen && selectedRow && (
-        <EditForm
-          isOpen={isEditModalOpen}
-          modalTitle={"Editar Subcategoria"}
-          onClose={handleCloseEditModal}
-          initialData={selectedRow}
         />
       )}
     </div>

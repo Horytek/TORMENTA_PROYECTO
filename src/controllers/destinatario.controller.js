@@ -37,7 +37,15 @@ const insertDestinatario = async (req, res) => {
 // INSERTAR DESTINATARIO NATURAL
 const addDestinatarioNatural = async (req, res) => {
   let connection;
-  const { dni, nombres, apellidos, ubicacion } = req.body;
+  const {
+    dni,
+    nombres,
+    apellidos,
+    ubicacion,
+    direccion = "",
+    email = "",
+    telefono = ""
+  } = req.body;
 
   if (!dni || !nombres || !apellidos || !ubicacion) {
     return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -46,9 +54,9 @@ const addDestinatarioNatural = async (req, res) => {
   try {
     connection = await getConnection();
     const result = await connection.query(
-      `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion) 
-           VALUES (?, ?, ?, ?)`,
-      [dni, nombres, apellidos, ubicacion]
+      `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion, direccion, email, telefono) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [dni, nombres, apellidos, ubicacion, direccion || "", email || "", telefono || ""]
     );
     res.json({ code: 1, data: result, message: "Destinatario natural añadido exitosamente" });
   } catch (error) {
@@ -64,7 +72,14 @@ const addDestinatarioNatural = async (req, res) => {
 // INSERTAR DESTINATARIO JURÍDICO
 const addDestinatarioJuridico = async (req, res) => {
   let connection;
-  const { ruc, razon_social, ubicacion } = req.body;
+  const {
+    ruc,
+    razon_social,
+    ubicacion,
+    direccion = "",
+    email = "",
+    telefono = ""
+  } = req.body;
 
   if (!ruc || !razon_social || !ubicacion) {
     return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -73,9 +88,9 @@ const addDestinatarioJuridico = async (req, res) => {
   try {
     connection = await getConnection();
     const result = await connection.query(
-      `INSERT INTO destinatario (ruc, razon_social, ubicacion) 
-           VALUES (?, ?, ?)`,
-      [ruc, razon_social, ubicacion]
+      `INSERT INTO destinatario (ruc, razon_social, ubicacion, direccion, email, telefono) 
+           VALUES (?, ?, ?, ?, ?, ?)`,
+      [ruc, razon_social, ubicacion, direccion || "", email || "", telefono || ""]
     );
     res.json({ code: 1, data: result, message: "Destinatario jurídico añadido exitosamente" });
   } catch (error) {
@@ -89,34 +104,76 @@ const addDestinatarioJuridico = async (req, res) => {
 
 
 
-
-const updateDestinatario = async (req, res) => {
+const updateDestinatarioNatural = async (req, res) => {
   let connection;
   try {
-      const { id } = req.params;
-      const { dni, ruc, nombres, apellidos, telefono, razon_social, direccion, ubicacion, email } = req.body;
+    const { id } = req.params;
+    const {
+      dni = "",
+      nombres = "",
+      apellidos = "",
+      telefono = "",
+      direccion = "",
+      ubicacion = "",
+      email = ""
+    } = req.body;
 
-      connection = await getConnection();
-      const [rows] = await connection.query("SELECT * FROM destinatario WHERE id_destinatario = ?", [id]);
-      if (rows.length === 0) {
-          return res.status(404).json({ message: "Destinatario no encontrado" });
-      }
+    if (!dni || !nombres || !apellidos || !ubicacion) {
+      return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
+    }
 
-      const [result] = await connection.query(
-          `UPDATE destinatario
-          SET dni = ?, ruc = ?, nombres = ?, apellidos = ?, telefono = ?, razon_social = ?, direccion = ?, ubicacion = ?, email = ?
-          WHERE id_destinatario = ?`,
-          [dni, ruc, nombres, apellidos, telefono, razon_social, direccion, ubicacion, email, id]
-      );
+    connection = await getConnection();
+    const [result] = await connection.query(
+      `UPDATE destinatario
+       SET dni = ?, nombres = ?, apellidos = ?, telefono = ?, direccion = ?, ubicacion = ?, email = ?
+       WHERE id_destinatario = ?`,
+      [dni, nombres, apellidos, telefono, direccion, ubicacion, email, id]
+    );
 
-      if (result.affectedRows === 0) {
-          return res.status(400).json({ message: "No se realizó ninguna actualización" });
-      }
-      res.json({ message: "Destinatario actualizado con éxito" });
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ message: "No se realizó ninguna actualización" });
+    }
+    res.json({ message: "Destinatario natural actualizado con éxito" });
   } catch (error) {
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
-      if (connection) connection.release();
+    if (connection) connection.release();
+  }
+};
+
+const updateDestinatarioJuridico = async (req, res) => {
+  let connection;
+  try {
+    const { id } = req.params;
+    const {
+      ruc = "",
+      razon_social = "",
+      telefono = "",
+      direccion = "",
+      ubicacion = "",
+      email = ""
+    } = req.body;
+
+    if (!ruc || !razon_social || !ubicacion) {
+      return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
+    }
+
+    connection = await getConnection();
+    const [result] = await connection.query(
+      `UPDATE destinatario
+       SET ruc = ?, razon_social = ?, ubicacion = ?, direccion = ?, email = ?, telefono = ?
+       WHERE id_destinatario = ?`,
+      [ruc, razon_social, ubicacion, direccion, email, telefono, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ message: "No se realizó ninguna actualización" });
+    }
+    res.json({ message: "Destinatario jurídico actualizado con éxito" });
+  } catch (error) {
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -207,13 +264,15 @@ const getDestinatario = async (req, res) => {
   }
 };
 
+// src/controllers/destinatario.controller.js
 const deleteDestinatario = async (req, res) => {
   let connection;
   try {
       const { id } = req.params;
-      //console.log("ID recibido en backend para eliminación:", id);
 
       connection = await getConnection();
+
+      // Eliminar por id_destinatario (id numérico)
       const [result] = await connection.query("DELETE FROM destinatario WHERE id_destinatario = ?", [id]);
 
       if (result.affectedRows === 0) {
@@ -233,14 +292,13 @@ const deleteDestinatario = async (req, res) => {
 
 
 
-
 export const methods = {
   insertDestinatario,
   addDestinatarioNatural,
   addDestinatarioJuridico,
   deleteDestinatario,
-  updateDestinatario,
   getDestinatarios,
-  getDestinatario
-
+  getDestinatario,
+  updateDestinatarioNatural,
+  updateDestinatarioJuridico
 };

@@ -104,9 +104,9 @@ const updateVendedor = async (req, res) => {
         return res.status(400).json({ message: "No se realizó ninguna actualización" });
       }
   
-      res.json({ message: "Vendedor actualizado con éxito" });
+      res.json({ code: 1, message: "Vendedor actualizado con éxito" });
     } catch (error) {
-      res.status(500).json({ message: "Error interno del servidor", error: error.message });
+      res.status(500).json({ code: 0, message: "Error interno del servidor", error: error.message });
     } finally {
       if (connection) connection.release();
     }
@@ -154,7 +154,7 @@ const deactivateVendedor = async (req, res) => {
                 return res.status(404).json({ message: "Vendedor no encontrado o ya dado de baja" });
             }
 
-            return res.json({ message: "Vendedor dado de baja con éxito (solo estado cambiado)" });
+            return res.json({ code: 1, message: "Vendedor dado de baja con éxito (solo estado cambiado)" });
         } else {
             //console.log("El vendedor NO está asociado a una sucursal, procediendo a eliminar...");
             const [deleteResult] = await connection.query(

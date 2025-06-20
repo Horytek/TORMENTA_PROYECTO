@@ -13,7 +13,7 @@ import {
   Button
 } from "@heroui/react";
 
-export const MarcasForm = ({ modalTitle, onClose, isVisible }) => {
+export const MarcasForm = ({ modalTitle, onClose, isVisible, onAddMarca }) => {
   // control internal animation state by mirroring parent prop
   const [isOpen, setIsOpen] = useState(isVisible);
 
@@ -37,7 +37,10 @@ export const MarcasForm = ({ modalTitle, onClose, isVisible }) => {
         estado_marca: 1
       };
       const result = await createMarca(newMarca);
-      if (result) {
+      if (result && result[0]) {
+        // result[1] es el id generado por la BD
+        const marcaConId = { ...newMarca, id_marca: result[1] };
+        if (onAddMarca) onAddMarca(marcaConId);
         handleCloseModal();
       }
     } catch {
@@ -95,6 +98,7 @@ MarcasForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose:    PropTypes.func.isRequired,
   isVisible:  PropTypes.bool.isRequired,
+  onAddMarca: PropTypes.func,
 };
 
 export default MarcasForm;

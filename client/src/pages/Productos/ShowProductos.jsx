@@ -1,62 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
-import { getProductos, deleteProducto, getProducto } from '@/services/productos.services';
+import { deleteProducto } from '@/services/productos.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
-import ProductosForm from './ProductosForm';
 import Barcode from '../../components/Barcode/Barcode';
 import { usePermisos } from '@/routes';
 
-export function ShowProductos({ searchTerm }) {
-  
-    // Estados de listado de productos
-    const [productos, setProductos] = useState([]);
+export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
     const [currentPage, setCurrentPage] = useState(1);
     const productosPerPage = 10;
-
-    useEffect(() => {
-        getProducts();
-    }, []);
-
-    // Obtener productos mediante API
-    const getProducts = async () => {
-        const data = await getProductos();
-        setProductos(data);
-    };
 
     // Filtrar productos
     const filteredProductos = productos.filter(producto =>
         producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
-    || producto.cod_barras.toLowerCase().includes(searchTerm.toLowerCase())
-    || producto.id_producto.toString().includes(searchTerm.toLowerCase())
+        || producto.cod_barras.toLowerCase().includes(searchTerm.toLowerCase())
+        || producto.id_producto.toString().includes(searchTerm.toLowerCase())
     );
 
     // Productos a mostrar en la página actual
     const indexOfLastProducto = currentPage * productosPerPage;
     const indexOfFirstProducto = indexOfLastProducto - productosPerPage;
     const currentProductos = filteredProductos.slice(indexOfFirstProducto, indexOfLastProducto);
-
-    // Eliminar producto mediante API
-    const deleteProduct = async (id) => {
-        await deleteProducto(id);
-        getProducts();
-    };
-
-    // Estado de Modal de Edición de Producto
-    const [activeEdit, setActiveEdit] = useState(false);
-    const [initialData, setInitialData] = useState(null); // Datos iniciales del producto a editar
-
-    const handleModalEdit = async (id_producto) => {
-        const data = await getProducto(id_producto);
-        if (data && data[0]) {
-            setInitialData({
-                id_producto: id_producto,
-                data: data[0]
-            });
-            setActiveEdit(true); // Abre el modal solo si los datos están disponibles
-        }
-    };
 
     // Estados de modal de eliminación de producto
     const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
@@ -74,25 +39,19 @@ export function ShowProductos({ searchTerm }) {
     };
 
     // Función para manejar la acción de confirmación de eliminación de producto
-    const handleConfirmDelete = () => {
-        deleteProduct(selectedId); // Eliminación de producto mediante api
+    const handleConfirmDelete = async () => {
+        await deleteProducto(selectedId);
+        onDelete(selectedId);
         handleCloseConfirmationModal();
-    };
-
-    const handleCloseModal = () => {
-        setActiveEdit(false);
-        setInitialData(null);
     };
 
     // Función para descargar código de barras
     const downloadBarcode = (producto) => {
-        // Seleccionar el elemento SVG
         const svg = document.querySelector(`#barcode-${producto.id_producto} svg`);
         if (!svg) {
             console.error('SVG element not found');
             return;
         }
-
         const serializer = new XMLSerializer();
         const source = serializer.serializeToString(svg);
         const dataUri = 'data:image/svg+xml;base64,' + btoa(source);
@@ -150,20 +109,20 @@ export function ShowProductos({ searchTerm }) {
                                 <TableCell>
                                     <div className="flex items-center justify-center gap-2">
                                         <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
-                                            <Button 
-                                                isIconOnly 
-                                                variant="light" 
+                                            <Button
+                                                isIconOnly
+                                                variant="light"
                                                 color={hasEditPermission ? "warning" : "default"}
-                                                onClick={() => hasEditPermission ? handleModalEdit(producto.id_producto) : null}
+                                                onClick={() => hasEditPermission ? onEdit(producto) : null}
                                                 className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
                                             >
                                                 <MdEdit />
                                             </Button>
                                         </Tooltip>
                                         <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
-                                            <Button 
-                                                isIconOnly 
-                                                variant="light" 
+                                            <Button
+                                                isIconOnly
+                                                variant="light"
                                                 color={hasDeletePermission ? "danger" : "default"}
                                                 onClick={() => hasDeletePermission ? handleOpenConfirmationModal(producto.descripcion, producto.id_producto) : null}
                                                 className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
@@ -195,15 +154,6 @@ export function ShowProductos({ searchTerm }) {
                     message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
                     onClose={handleCloseConfirmationModal}
                     onConfirm={handleConfirmDelete}
-                />
-            )}
-
-            {/* Modal de Editar Producto */}
-            {activeEdit && (
-                <ProductosForm 
-                    modalTitle={'Editar Producto'} 
-                    onClose={handleCloseModal}
-                    initialData={initialData} 
                 />
             )}
         </div>

@@ -1,20 +1,17 @@
 import { useEffect, useState } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
+import { Tooltip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button } from "@heroui/react";
 import Pagination from "@/components/Pagination/Pagination";
-import { Tooltip } from "@heroui/react";
 import { usePermisos } from "@/routes";
 import {
-  getMarcas as fetchMarcas,
-  getMarca,
   deleteMarca,
   deactivateMarca as apiDeactivateMarca,
 } from "@/services/marca.services";
 import EditForm from "./EditMarca";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
-export function ShowMarcas({ searchTerm }) {
-  const [marcas, setMarcas] = useState([]);
+export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
@@ -23,17 +20,7 @@ export function ShowMarcas({ searchTerm }) {
   const [selectedId, setSelectedId] = useState(null);
   const productosPerPage = 10;
 
-  // Importar los permisos necesarios
   const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
-
-  useEffect(() => {
-    loadMarcas();
-  }, []);
-
-  const loadMarcas = async () => {
-    const data = await fetchMarcas();
-    setMarcas(data);
-  };
 
   const filteredProductos = marcas.filter((marca) =>
     marca.nom_marca.toLowerCase().includes(searchTerm.toLowerCase())
@@ -41,10 +28,7 @@ export function ShowMarcas({ searchTerm }) {
 
   const indexOfLastProducto = currentPage * productosPerPage;
   const indexOfFirstProducto = indexOfLastProducto - productosPerPage;
-  const currentProductos = filteredProductos.slice(
-    indexOfFirstProducto,
-    indexOfLastProducto
-  );
+  const currentProductos = filteredProductos.slice(indexOfFirstProducto, indexOfLastProducto);
 
   const handleOpenEditModal = (id_marca, nom_marca, estado_marca) => {
     setSelectedRow({ id_marca, nom_marca, estado_marca });
@@ -56,21 +40,40 @@ export function ShowMarcas({ searchTerm }) {
     setSelectedRow(null);
   };
 
-  const deleteProduct = async (id) => {
-    await deleteMarca(id);
-    loadMarcas();
-  };
+// Supongamos que tienes setMarcas en tu componente padre
 
-  const deactivateM = async (id) => {
-    await apiDeactivateMarca(id);
-    loadMarcas();
-  };
+const deleteProduct = async (id) => {
+  const success = await deleteMarca(id);
+  if (success) {
+    setMarcas((prev) => prev.filter((marca) => marca.id_marca !== id));
+  }
+};
+
+const deactivateM = async (id) => {
+  const success = await apiDeactivateMarca(id);
+  if (success) {
+    setMarcas((prev) =>
+      prev.map((marca) =>
+        marca.id_marca === id ? { ...marca, estado_marca: 0 } : marca
+      )
+    );
+  }
+};
+
+  const handleMarcaEdit = (updatedMarca) => {
+  setMarcas((prevMarcas) =>
+    prevMarcas.map((marca) =>
+      marca.id_marca === updatedMarca.id_marca ? { ...marca, ...updatedMarca } : marca
+    )
+  );
+};
 
   const handleOpenConfirmationModal = (row, id_marca) => {
     setSelectedRow(row);
     setSelectedId(id_marca);
     setIsConfirmationModalOpen(true);
   };
+
   const handleCloseConfirmationModal = () => {
     setIsConfirmationModalOpen(false);
     setSelectedRow(null);
@@ -86,114 +89,109 @@ export function ShowMarcas({ searchTerm }) {
     setSelectedId(id_marca);
     setDeactivateBrand(true);
   };
+
   const handleCloseDeactivationModal = () => {
     setDeactivateBrand(false);
     setSelectedRow(null);
   };
+
   const handleConfirmDeactivate = () => {
     deactivateM(selectedId);
     handleCloseDeactivationModal();
   };
 
-  const handleCloseModal = () => {
-    setActiveEdit(false);
-    setInitialData(null);
-  };
-
   return (
     <div>
-      <div className="overflow-x-auto shadow-md sm:rounded-lg">
-        <table className="w-full text-sm table-auto divide-gray-200 rounded-lg">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">
-                CODIGO
-              </th>
-              <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">
-                NOMBRE
-              </th>
-              <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">
-                ESTADO
-              </th>
-              <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">
-                ACCIONES
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-gray-200">
-            {currentProductos.length > 0 ? (
-              currentProductos.map((marca) => (
-                <tr
-                  className="hover:bg-gray-100"
-                  key={marca.id_marca}
-                  data-product={marca.id_marca}
+      <Table isStriped aria-label="Tabla de Marcas">
+        <TableHeader>
+          <TableColumn className="text-center">CÓDIGO</TableColumn>
+          <TableColumn className="text-center">NOMBRE</TableColumn>
+          <TableColumn className="text-center">ESTADO</TableColumn>
+          <TableColumn className="text-center">ACCIONES</TableColumn>
+        </TableHeader>
+
+        <TableBody emptyContent={"No hay marcas correspondientes/existentes."}>
+          {currentProductos.map((marca) => (
+            <TableRow key={marca.id_marca}>
+              <TableCell className="text-center">{marca.id_marca}</TableCell>
+              <TableCell className="text-center">{marca.nom_marca}</TableCell>
+              <TableCell className="text-center">
+                <span
+                  className={
+                    marca.estado_marca === 1
+                      ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full bg-green-200 text-green-700 text-sm font-medium"
+                      : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full bg-red-100 text-red-600 text-sm font-medium"
+                  }
                 >
-                  <td className="py-2 text-center">{marca.id_marca}</td>
-                  <td className="py-2 text-center">{marca.nom_marca}</td>
-                  <td className="py-2 text-center">
-                    <span
-                      className={
-                        marca.estado_marca === 1
-                          ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-                          : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
+                  {marca.estado_marca === 1 ? "Activo" : "Inactivo"}
+                </span>
+              </TableCell>
+              <TableCell className="text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <Tooltip content={hasEditPermission ? "Editar" : "Sin permiso"}>
+                    <Button
+                                                    isIconOnly 
+                                variant="light" 
+                                color={hasEditPermission ? "warning" : "default"}
+                      className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                      disabled={!hasEditPermission}
+                      onClick={() =>
+                        hasEditPermission &&
+                        handleOpenEditModal(marca.id_marca, marca.nom_marca, marca.estado_marca)
                       }
                     >
-                      {marca.estado_marca === 1 ? "Activo" : "Inactivo"}
-                    </span>
-                  </td>
-                  <td className="py-4 text-center">
-                    <div className="flex justify-center items-center">
-                      <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
-                        <button
-                          className={`px-2 py-1 ${hasEditPermission ? "text-yellow-400" : "text-gray-400"} text-xl ${!hasEditPermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          onClick={() => hasEditPermission ? handleOpenEditModal(marca.id_marca, marca.nom_marca, marca.estado_marca) : null}
-                        >
-                          <MdEdit />
-                        </button>
-                      </Tooltip>
-                      <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
-                        <button
-                          className={`px-2 py-1 ${hasDeletePermission ? "text-red-500" : "text-gray-400"} ${!hasDeletePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          onClick={() => hasDeletePermission ? handleOpenConfirmationModal(marca.nom_marca, marca.id_marca) : null}
-                        >
-                          <FaTrash />
-                        </button>
-                      </Tooltip>
-                      <Tooltip content={hasDeactivatePermission ? "Desactivar" : "No tiene permisos para desactivar"}>
-                        <button
-                          className={`px-3 py-1 ${hasDeactivatePermission ? "text-red-600" : "text-gray-400"} ${!hasDeactivatePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          style={{ fontSize: "20px" }}
-                          onClick={() => hasDeactivatePermission ? handleOpenDeactivationModal(marca.nom_marca, marca.id_marca) : null}
-                        >
-                          <MdDoNotDisturbAlt />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="py-4 text-center">
-                  No hay marcas correspondientes/existentes.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                      <MdEdit />
+                    </Button>
+                  </Tooltip>
+
+                  <Tooltip content={hasDeletePermission ? "Eliminar" : "Sin permiso"}>
+                    <Button
+                                                    isIconOnly 
+                                variant="light" 
+                                color={hasDeletePermission ? "danger" : "default"}
+                      className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                      disabled={!hasDeletePermission}
+                      onClick={() =>
+                        hasDeletePermission &&
+                        handleOpenConfirmationModal(marca.nom_marca, marca.id_marca)
+                      }
+                    >
+                      <FaTrash />
+                    </Button>
+                  </Tooltip>
+
+                  <Tooltip content={hasDeactivatePermission ? "Desactivar" : "Sin permiso"}>
+                    <Button
+                                           isIconOnly 
+                                variant="light" 
+                                color={hasDeactivatePermission ? "danger" : "default"}
+                      className={hasDeactivatePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                      disabled={!hasDeactivatePermission}
+                      onClick={() =>
+                        hasDeactivatePermission &&
+                        handleOpenDeactivationModal(marca.nom_marca, marca.id_marca)
+                      }
+                    >
+                      <MdDoNotDisturbAlt />
+                    </Button>
+                  </Tooltip>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       {/* Paginación */}
       <div className="flex justify-end mt-4">
-        <div className="flex">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={Math.ceil(filteredProductos.length / productosPerPage)}
-            onPageChange={setCurrentPage}
-          />
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(filteredProductos.length / productosPerPage)}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
+      {/* Modales */}
       {isConfirmationModalOpen && (
         <ConfirmationModal
           message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
@@ -202,14 +200,15 @@ export function ShowMarcas({ searchTerm }) {
         />
       )}
 
-      {isEditModalOpen && selectedRow && (
-        <EditForm
-          isOpen={isEditModalOpen}
-          modalTitle={"Editar marca"}
-          onClose={handleCloseEditModal}
-          initialData={selectedRow}
-        />
-      )}
+{isEditModalOpen && selectedRow && (
+  <EditForm
+    isOpen={isEditModalOpen}
+    modalTitle={"Editar marca"}
+    onClose={handleCloseEditModal}
+    initialData={selectedRow}
+    onMarcaEdit={handleMarcaEdit}
+  />
+)}
 
       {deactivateBrand && (
         <ConfirmationModal

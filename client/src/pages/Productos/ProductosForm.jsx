@@ -28,7 +28,8 @@ import {
   SelectItem
 } from "@nextui-org/react";
 
-const ProductosForm = ({ modalTitle, onClose, initialData }) => {
+const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
+
     // Consumir context de categorias, subcategorias y marcas
     const { categorias, loadCategorias } = useCategorias();
     const { marcas, loadMarcas } = useMarcas();
@@ -44,19 +45,40 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
     // Estado para subcategorías filtradas
     const [filteredSubcategorias, setFilteredSubcategorias] = useState([]);
 
-    // Registro de producto
-    const { control, handleSubmit, setValue, getValues, watch, reset, formState: { errors } } = useForm({
-      defaultValues: initialData?.data || {
-        descripcion: '',
-        id_marca: '',
-        id_categoria: '',
-        id_subcategoria: '',
-        precio: '',
-        cod_barras: '',
-        undm: '',
-        estado_producto: ''
-      }
-    });
+  // Adaptar initialData para selects (convertir a string)
+const adaptInitialData = (data) => {
+  if (!data) return undefined;
+  // Adaptar estado_producto a "1" o "0" siempre
+  let estadoAdaptado = "";
+  if (data.estado_producto === 1 || data.estado_producto === "1" || data.estado_producto === "Activo") {
+    estadoAdaptado = "1";
+  } else if (data.estado_producto === 0 || data.estado_producto === "0" || data.estado_producto === "Inactivo") {
+    estadoAdaptado = "0";
+  } else {
+    estadoAdaptado = ""; // Por si acaso
+  }
+  return {
+    ...data,
+    id_categoria: data.id_categoria ? String(data.id_categoria) : '',
+    id_subcategoria: data.id_subcategoria ? String(data.id_subcategoria) : '',
+    id_marca: data.id_marca ? String(data.id_marca) : '',
+    estado_producto: estadoAdaptado,
+  };
+};
+
+  // Registro de producto
+  const { control, handleSubmit, setValue, getValues, watch, reset, formState: { errors } } = useForm({
+    defaultValues: adaptInitialData(initialData) || {
+      descripcion: '',
+      id_marca: '',
+      id_categoria: '',
+      id_subcategoria: '',
+      precio: '',
+      cod_barras: '',
+      undm: '',
+      estado_producto: ''
+    }
+  });
 
     // Cargar subcategorias al seleccionar una categoría
     const idCategoria = watch('id_categoria');
@@ -71,11 +93,11 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
       }
     }, [idCategoria, subcategorias]);
 
-    useEffect(() => {
-      if (initialData && categorias.length > 0 && marcas.length > 0 && subcategorias.length > 0) {
-        reset(initialData.data);
-      }
-    }, [initialData, marcas, categorias, subcategorias, reset]);
+  useEffect(() => {
+    if (initialData && categorias.length > 0 && marcas.length > 0 && subcategorias.length > 0) {
+      reset(adaptInitialData(initialData)); // Usa los valores como string
+    }
+  }, [initialData, marcas, categorias, subcategorias, reset]);
 
     // Generar barcode de productos
     useEffect(() => {
@@ -106,26 +128,43 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
           estado_producto: parseInt(estado_producto)
         };
 
-        let result;
-        if (initialData) {
-          result = await updateProducto(initialData?.id_producto, newProduct); 
-        } else {
-          result = await addProducto(newProduct);
-        }
-        
-        // Cerrar modal y recargar la página
+      let result;
+      let productoResult = null;
+      if (initialData) {
+        result = await updateProducto(initialData.id_producto, newProduct);
         if (result) {
-          toast.success(initialData ? "Producto actualizado correctamente" : "Producto creado correctamente");
-          handleCloseModal();
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
+          productoResult = {
+            ...initialData,
+            ...newProduct,
+            id_producto: initialData.id_producto
+          };
         }
-
-      } catch (error) {
-        toast.error("Error al realizar la gestión del producto");
+      } else {
+        result = await addProducto(newProduct);
+        if (result && result.success) {
+          // Busca los nombres para mostrar en la tabla
+          const marca = marcas.find(m => m.id_marca === parseInt(id_marca));
+          const subcat = subcategorias.find(s => s.id_subcategoria === parseInt(id_subcategoria));
+          const categoria = categorias.find(c => c.id_categoria === (subcat ? subcat.id_categoria : null));
+          productoResult = {
+            ...newProduct,
+            id_producto: result[1],
+            nom_marca: marca ? marca.nom_marca : '',
+            nom_subcat: subcat ? subcat.nom_subcat : '',
+            id_categoria: categoria ? categoria.id_categoria : '',
+            estado_producto: estado_producto === "1" ? "Activo" : "Inactivo"
+          };
+        }
       }
-    };
+      if (productoResult && result) {
+        toast.success(initialData ? "Producto actualizado correctamente" : "Producto creado correctamente");
+        if (onSuccess) onSuccess(productoResult);
+        handleCloseModal();
+      }
+    } catch (error) {
+      toast.error("Error al realizar la gestión del producto");
+    }
+  };
 
     const [isModalOpenMarca, setIsModalOpenMarca] = useState(false);
     const [isModalOpenCategoria, setIsModalOpenCategoria] = useState(false);
@@ -230,7 +269,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                                 isRequired
 
                                 className="flex-1"
-                                selectedKeys={field.value ? [field.value.toString()] : []}
+                                selectedKeys={field.value ? [field.value] : []}
                                 onChange={(e) => field.onChange(e.target.value)}
                               >
                                 {categorias.map((categoria) => (
@@ -406,7 +445,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
                   />
                   <ModalFooter>
                     <ButtonGroup>
-                      <Button variant="light" onPress={handleCloseModal}>
+                      <Button color="danger" variant="flat" onPress={handleCloseModal}>
                         Cancelar
                       </Button>
                       <Button type="submit" color="primary">
@@ -439,7 +478,8 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
 ProductosForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
-  initialData: PropTypes.object
+  initialData: PropTypes.object,
+  onSuccess: PropTypes.func
 };
 
 export default ProductosForm;

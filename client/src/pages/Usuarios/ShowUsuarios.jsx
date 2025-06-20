@@ -20,16 +20,17 @@ import { VscDebugDisconnect } from "react-icons/vsc";
 import { PiPlugsConnected } from "react-icons/pi";
 import { usePermisos } from '@/routes';
 
-export function ShowUsuarios({ searchTerm }) {
+export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLocal, removeUsuario }) {
+
   
     // Estados de listado de usuarios
-    const [usuarios, setUsuarios] = useState([]);
+    //const [usuarios, setUsuarios] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [showPassword, setShowPassword] = useState({}); // Estado para manejar la visibilidad de contraseñas
     const usuariosPerPage = 10;
     
 
-    useEffect(() => {
+   /* useEffect(() => {
         getUsers();
     }, []);
 
@@ -37,12 +38,12 @@ export function ShowUsuarios({ searchTerm }) {
     const getUsers = async () => {
         const data = await getUsuarios();
         setUsuarios(data);
-    };
+    };*/
 
-    // Filtrar usuarios
-    const filteredUsuarios = usuarios.filter(usuario =>
-        usuario.usua.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  // Filtrar usuarios localmente
+  const filteredUsuarios = usuarios.filter(usuario =>
+    usuario.usua.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
     // Usuarios a mostrar en la página actual
     const indexOfLastUsuario = currentPage * usuariosPerPage;
@@ -50,10 +51,16 @@ export function ShowUsuarios({ searchTerm }) {
     const currentUsuarios = filteredUsuarios.slice(indexOfFirstUsuario, indexOfLastUsuario);
 
     // Eliminar usuario mediante API
-    const deleteUser = async (id) => {
+    /*const deleteUser = async (id) => {
         await deleteUsuario(id);
         getUsers();
-    };
+    };*/
+
+  // Eliminar usuario solo en el array local
+  const deleteUser = async (id) => {
+    await deleteUsuario(id); // Solo llama a la API para eliminar en backend
+    removeUsuario(id);       // Elimina en el array local
+  };
 
     // Estado de Modal de Edición de Producto
     const [activeEdit, setActiveEdit] = useState(false);
@@ -95,6 +102,27 @@ export function ShowUsuarios({ searchTerm }) {
         setActiveEdit(false);
         setInitialData(null);
     };
+
+  const handleSuccess = () => {
+    reloadUsuarios();
+    setActiveEdit(false);
+    setInitialData(null);
+  };
+
+    // Editar usuario (abre modal y luego actualiza localmente)
+  const handleSuccessEdit = (id_usuario, updatedData) => {
+    updateUsuarioLocal(id_usuario, updatedData);
+    setActiveEdit(false);
+    setInitialData(null);
+  };
+
+  // Agregar usuario (desde el modal)
+  const handleSuccessAdd = (nuevoUsuario) => {
+    addUsuario(nuevoUsuario);
+    setActiveEdit(false);
+    setInitialData(null);
+  };
+
 
     // Función para alternar la visibilidad de la contraseña
     const togglePasswordVisibility = (id_usuario) => {
@@ -227,13 +255,15 @@ export function ShowUsuarios({ searchTerm }) {
             )}
 
             {/* Modal de Editar Producto */}
-            {activeEdit && (
-                <UsuariosForm 
-                    modalTitle={'Editar Usuario'} 
-                    onClose={handleCloseModal}
-                    initialData={initialData} 
-                />
-            )}
+      {activeEdit && (
+<UsuariosForm
+  modalTitle="Editar Usuario"
+  onClose={() => setActiveEdit(false)}
+  initialData={initialData}
+  onSuccess={handleSuccessEdit}
+  usuarios={usuarios}
+/>
+      )}
         </div>
     );
 }

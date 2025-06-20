@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   getCategoriasRequest, 
   getCategoriaRequest,
@@ -86,6 +87,37 @@ const updateCategoria = async (id, categoria) => {
     toast.error("Error en el servidor");
     return false;
   }
+}
+
+const useEditCat = () => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const editCat = async ({ id_categoria, nom_categoria , estado_categoria }) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await updateCategoriaRequest(id_categoria, {
+                id_categoria, 
+                nom_categoria, 
+                estado_categoria 
+            });
+
+            if (response.data && response.data.message) {
+               // toast.success(response.data.message);
+            } else {
+              //  toast.success("Categoría actualizada con éxito");
+            }
+        } catch (err) {
+            setError(err);
+           // toast.error("Error al actualizar la categoria");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { editCat, loading, error };
 };
 
 export {
@@ -94,5 +126,6 @@ export {
   addCategoria,
   deleteCategoria,
   deactivateCategoria,
-  updateCategoria,
+  useEditCat,
+  updateCategoria
 };

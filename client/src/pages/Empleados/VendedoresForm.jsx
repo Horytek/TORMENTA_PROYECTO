@@ -21,21 +21,20 @@ import {
     SelectItem
   } from "@nextui-org/react";
 
-const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
+const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [isOpen, setIsOpen] = useState(true);
 
-
-  const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm({
+  const { control, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: {
-      dni: initialData?.dni || '',
-      id_usuario: initialData?.id_usuario || '',
-      nombres: initialData?.nombres || '',
-      apellidos: initialData?.apellidos || '',
-      telefono: initialData?.telefono || '',
-      estado_vendedor: initialData?.estado_vendedor?.toString() || ''
+      dni: '',
+      id_usuario: '',
+      nombres: '',
+      apellidos: '',
+      telefono: '',
+      estado_vendedor: ''
     }
   });
 
@@ -54,37 +53,51 @@ const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
     fetchData();
   }, []);
 
-    const onSubmit = async (data) => {
-    try {
-      const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor } = data;
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        dni: initialData.dni || '',
+        id_usuario: initialData.id_usuario || '',
+        nombres: initialData.nombres || '',
+        apellidos: initialData.apellidos || '',
+        telefono: initialData.telefono || '',
+        estado_vendedor: initialData.estado_vendedor?.toString() || ''
+      });
+    }
+  }, [initialData, reset]);
 
-      const newVendedor = {
-        dni,
-        nuevo_dni: initialData?.dni && initialData.dni !== dni ? dni : undefined,
-        id_usuario,
-        nombres,
-        apellidos,
-        telefono,
-        estado_vendedor
-      };
+  const onSubmit = async (data) => {
+    const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor } = data;
 
-      let result;
+    const newVendedor = {
+      dni,
+      nuevo_dni: initialData?.dni && initialData.dni !== dni ? dni : undefined,
+      id_usuario,
+      nombres,
+      apellidos,
+      telefono,
+      estado_vendedor
+    };
+
+    let result;
+    if (initialData) {
+      result = await updateVendedor(initialData.dni, newVendedor);
+    } else {
+      result = await addVendedor(newVendedor);
+    }
+
+    const [success, errorMessage] = result;
+
+    if (success) {
+      toast.success(initialData ? "Vendedor actualizado correctamente" : "Vendedor creado correctamente");
+      handleCloseModal();
       if (initialData) {
-        result = await updateVendedor(initialData.dni, newVendedor); 
+        onSuccess(initialData.dni, { ...newVendedor, usua: usuarios.find(u => u.id_usuario === parseInt(id_usuario))?.usua });
       } else {
-        result = await addVendedor(newVendedor); 
+        onSuccess({ ...newVendedor, usua: usuarios.find(u => u.id_usuario === parseInt(id_usuario))?.usua });
       }
-
-      if (result) {
-        toast.success(initialData ? "Vendedor actualizado correctamente" : "Vendedor creado correctamente");
-        handleCloseModal();
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      }
-
-    } catch (error) {
-      toast.error("Error al realizar la gestión del vendedor");
+    } else {
+      toast.error(errorMessage || "Error inesperado al gestionar el vendedor");
     }
   };
 
@@ -271,6 +284,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData }) => {
 VendedoresForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired,
   initialData: PropTypes.object
 };
 

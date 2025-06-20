@@ -1,10 +1,7 @@
 import PropTypes from "prop-types";
-import { useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
-import { useSubcategorias } from "@/context/Subcategoria/SubcategoriaProvider";
-import { useCategorias } from "@/context/Categoria/CategoriaProvider";
 import { Toaster, toast } from "react-hot-toast";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import {
   Input,
   Button,
@@ -18,18 +15,13 @@ import {
   Select,
   SelectItem
 } from "@nextui-org/react";
-const SubcategoriaForm = ({ modalTitle, closeModal }) => {
-  const { createSubcategoria } = useSubcategorias();
-  const { categorias, loadCategorias } = useCategorias();
 
-  useEffect(() => {
-    loadCategorias();
-  }, [loadCategorias]);
-
+const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }) => {
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
+    reset
   } = useForm({
     defaultValues: {
       id_categoria: "",
@@ -37,7 +29,7 @@ const SubcategoriaForm = ({ modalTitle, closeModal }) => {
     },
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data) => {
     try {
       const { id_categoria, nom_subcat } = data;
       const newSubcategoria = {
@@ -46,15 +38,16 @@ const SubcategoriaForm = ({ modalTitle, closeModal }) => {
         estado_subcat: 1,
       };
 
-      const result = await createSubcategoria(newSubcategoria);
-      if (result) {
+      const ok = await onSuccess(newSubcategoria);
+      if (ok) {
         toast.success("Subcategoría creada con éxito");
+        reset();
         closeModal();
       }
     } catch (error) {
       toast.error("Error al realizar la gestión de la subcategoría");
     }
-  });
+  };
 
   return (
     <Modal isOpen={true} onClose={closeModal} size="sm">
@@ -70,31 +63,51 @@ const SubcategoriaForm = ({ modalTitle, closeModal }) => {
           </button>
         </ModalHeader>
         <ModalBody>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Categoría */}
-            <Select
-              {...register("id_categoria", { required: "Seleccione una categoría" })}
-              label="Categoría"
-              placeholder="Seleccione una categoría"
-              color={errors.id_categoria ? "danger" : "default"}
-              errorMessage={errors.id_categoria?.message}
-              isRequired
-            >
-              {categorias.map((categoria) => (
-                <SelectItem key={categoria.id_categoria} value={categoria.id_categoria}>
-                  {categoria.nom_categoria.toUpperCase()}
-                </SelectItem>
-              ))}
-            </Select>
+            {categorias.length === 0 ? (
+              <div className="text-red-500 text-sm">No hay categorías disponibles.</div>
+            ) : (
+              <Controller
+                name="id_categoria"
+                control={control}
+                rules={{ required: "Seleccione una categoría" }}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    label="Categoría"
+                    placeholder="Seleccione una categoría"
+                    color={errors.id_categoria ? "danger" : "default"}
+                    errorMessage={errors.id_categoria?.message}
+                    isRequired
+                    selectedKeys={field.value ? [String(field.value)] : []}
+                    onChange={e => field.onChange(e.target.value)}
+                  >
+                    {categorias.map((categoria) => (
+                      <SelectItem key={categoria.id_categoria} value={categoria.id_categoria}>
+                        {categoria.nom_categoria.toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                )}
+              />
+            )}
 
             {/* Subcategoría */}
-            <Input
-              {...register("nom_subcat", { required: "Ingrese una subcategoría" })}
-              label="Subcategoría"
-              placeholder="Nombre de la subcategoría"
-              color={errors.nom_subcat ? "danger" : "default"}
-              errorMessage={errors.nom_subcat?.message}
-              isRequired
+            <Controller
+              name="nom_subcat"
+              control={control}
+              rules={{ required: "Ingrese una subcategoría" }}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label="Subcategoría"
+                  placeholder="Nombre de la subcategoría"
+                  color={errors.nom_subcat ? "danger" : "default"}
+                  errorMessage={errors.nom_subcat?.message}
+                  isRequired
+                />
+              )}
             />
           </form>
         </ModalBody>
@@ -122,6 +135,8 @@ const SubcategoriaForm = ({ modalTitle, closeModal }) => {
 SubcategoriaForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   closeModal: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired,
+  categorias: PropTypes.array.isRequired,
 };
 
 export default SubcategoriaForm;
