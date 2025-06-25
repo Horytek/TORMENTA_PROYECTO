@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import TablaDetallesVenta from './ComponentsRegistroVentas/RegistroVentaTable';
 import ModalProducto from './ComponentsRegistroVentas/Modals/ProductoModal';
-import useVentasData from '../Data/data_venta';
-import useProductosData from '../Data/data_producto_venta';
+import useVentasData from '@/services/Data/data_venta';
+import useProductosData from '@/services/Data/data_producto_venta';
 import { BsCashCoin } from "react-icons/bs";
 import { GrDocumentPerformance } from "react-icons/gr";
 import AlertModal from '../../../components/Modals/AlertModal';
 import CobrarModal from './ComponentsRegistroVentas/Modals/PagarModal';
-import useClientesData from '../Data/data_cliente_venta';
+import useClientesData from '@/services/Data/data_cliente_venta';
 import { useReactToPrint } from 'react-to-print';
 import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes/CotizacionPDF/CotizacionPDF';
 import PropTypes from 'prop-types';

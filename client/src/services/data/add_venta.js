@@ -1,5 +1,5 @@
 //import axios from 'axios';
-import axios from "../../../api/axios";
+import axios from "@/api/axios";
 import { handleSunatUnique } from "../Data/add_sunat_unique";
 import {  handleUpdate } from '../Data/update_venta';
 // Valida el formato decimal

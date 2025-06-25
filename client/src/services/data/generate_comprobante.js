@@ -1,5 +1,8 @@
 //import axios from 'axios';
-import axios from "../../../api/axios";
+import axios from "@/api/axios";
+import {
+  getNumeroComprobanteRequest
+} from "@/api/api.ventas";
 
 /**
  * Genera el número de comprobante para un usuario y tipo de comprobante.
@@ -10,9 +13,8 @@ import axios from "../../../api/axios";
 const generateComprobanteNumber = async (id_comprobante, nombre) => {
   try {
     // Hacer la solicitud GET
-    const response = await axios.get('/ventas/numero_comprobante', {
-      params: { id_comprobante, usuario: nombre }
-    });
+    const response = await getNumeroComprobanteRequest({ id_comprobante, usuario: nombre });
+
     // Suponiendo que la respuesta es un objeto con un campo 'nuevoNumComprobante'
     const nuevoNumComprobante = response.data.nuevoNumComprobante;
 

@@ -36,7 +36,7 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
   
     return { nuevaSerie: ultimaSerie_n+ultimaSerie, nuevoCorrelativo };
   };*/
-  function convertDateToDesiredFormat(dateString, offsetHours) {
+  function convertDateToDesiredFormat2(dateString, offsetHours) {
     // Crear una instancia de la fecha en UTC
     const date = new Date(dateString);
 
@@ -134,7 +134,7 @@ export const handleSunat = async (cliente, detalles, productos) => {
     const tipoDocCliente = cliente?.documento?.length === 11 ? "6" : "1";
     const isoDate = cliente.fechaEmision;
     const offsetHours = -5; // Ajuste de zona horaria para -05:00
-    const result = convertDateToDesiredFormat(isoDate, offsetHours);
+    const result = convertDateToDesiredFormat2(isoDate, offsetHours);
 
     const data = {
       ublVersion: "2.1",

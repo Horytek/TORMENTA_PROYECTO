@@ -1,31 +1,32 @@
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
-import { Button } from "@heroui/react";
-
-
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@heroui/react";
 
 const ConfirmationModal = ({ confirmDeleteModalOpen, handleDeleteVenta, setConfirmDeleteModalOpen }) => {
-
-  if (!confirmDeleteModalOpen) return null;
-
   return (
-    <div className="modal-container">
-      <div className="modal-content-c">
-        <h2 style={{ textAlign: "start" }}>
-          <IoMdOptions className="inline-block mr-2" style={{ fontSize: '20px' }} />
-          Opciones
-        </h2>
-        <p style={{ textAlign: "start" }}>¿Desea eliminar esta venta?</p>
-        <div className="modal-actions flex justify-end">
-          <Button color="default" variant="shadow" onClick={() => setConfirmDeleteModalOpen(false)} className="mr-2">
+    <Modal
+      isOpen={confirmDeleteModalOpen}
+      onClose={() => setConfirmDeleteModalOpen(false)}
+      placement="center"
+    >
+      <ModalContent className="bg-white rounded-lg">
+        <ModalHeader className="flex items-center gap-2 border-b pb-2">
+          <IoMdOptions className="text-xl" />
+          <span>Confirmación</span>
+        </ModalHeader>
+        <ModalBody className="py-4">
+          <p className="text-gray-700">¿Desea eliminar esta venta?</p>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="default" variant="light" onPress={() => setConfirmDeleteModalOpen(false)} className="mr-2">
             Cancelar
           </Button>
-          <Button color="danger" variant="shadow" onClick={handleDeleteVenta}>
+          <Button color="danger" variant="shadow" onPress={handleDeleteVenta}>
             Eliminar
           </Button>
-        </div>
-      </div>
-    </div>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };
 
@@ -33,7 +34,6 @@ ConfirmationModal.propTypes = {
   confirmDeleteModalOpen: PropTypes.bool.isRequired,
   handleDeleteVenta: PropTypes.func.isRequired,
   setConfirmDeleteModalOpen: PropTypes.func.isRequired,
-  closeModal: PropTypes.func.isRequired,
 };
 
 export default ConfirmationModal;

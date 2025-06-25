@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import NumeroALetras from '../../../../../../utils/ConvertidorDeNumALetras';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
-import useSucursalData from '../../../../Data/data_sucursal_venta';
+import useSucursalData from '@/services/Data/data_sucursal_venta';
 
 const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     const { detalles, fecha, total_t, igv, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;

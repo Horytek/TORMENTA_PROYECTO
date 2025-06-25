@@ -1,12 +1,14 @@
 //import axios from 'axios';
 import {toast} from "react-hot-toast";
-import axios from "../../../api/axios";
+import axios from "@/api/axios";
+import {
+  deleteVentaRequest
+} from "@/api/api.ventas";
 
 // Maneja la solicitud de cobro
 export const handleDelete = async (datosVenta) => {
     try {
-        console.log('Datos de venta:', datosVenta);
-        const response = await axios.post('/ventas/eliminar_venta', {
+        const response = await deleteVentaRequest({
             id_venta: datosVenta.id,
             comprobante: datosVenta.tipoComprobante,
             estado_sunat: datosVenta.estado_sunat,

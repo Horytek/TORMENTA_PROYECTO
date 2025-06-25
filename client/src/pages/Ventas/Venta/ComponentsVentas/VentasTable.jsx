@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { IoMdOptions } from "react-icons/io";
 import { TiPrinter } from "react-icons/ti";
 import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
-import useBoucher from '../../Data/data_boucher';
+import useBoucher from '@/services/Data/data_boucher';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, 
   CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
 import jsPDF from 'jspdf';
@@ -48,6 +48,8 @@ const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, curre
   const detallesSeleccionados = useVentaSeleccionadaStore((state) => state.detalles);
   const setComprobante1 = useVentaSeleccionadaStore((state) => state.setComprobante1);
   const setObservacion = useVentaSeleccionadaStore((state) => state.setObservacion);
+  const comprobante1 = useVentaSeleccionadaStore(state => state.comprobante1);
+  const observacion = useVentaSeleccionadaStore(state => state.observacion);
 
   const toggleRow = (id, estado, venta) => {
     setExpandedRow(expandedRow === id ? null : id);
@@ -105,7 +107,12 @@ useEffect(() => {
 
 const handlePrint = async () => {
   try {
-    const content = await generateReceiptContent(venta_B, ventaSeleccionada);
+    const content = await generateReceiptContent(      venta_B, // datosVentaComprobante
+      ventaSeleccionada, // datosVenta
+      comprobante1,
+      observacion,
+      nombre,
+      empresaData);
     const imgUrl = empresaData?.logotipo || '';
 
     if (printOption === 'print') {

@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 //import axios from 'axios';
-import axios from "../../../api/axios";
+import axios from "@/api/axios";
 import { useUserStore } from "@/store/useStore";
+import {
+  getProductosVentasRequest
+} from "@/api/api.ventas";
 
 
 const useProductosData = () => {
@@ -10,10 +13,8 @@ const useProductosData = () => {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const response = await axios.get('/ventas/producto_venta', {
-          params: {
+        const response = await getProductosVentasRequest({
             id_sucursal: nombre,
-          }
         });
         
         if (response.data.code === 1) {

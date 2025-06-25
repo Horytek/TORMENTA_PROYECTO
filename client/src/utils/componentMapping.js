@@ -22,7 +22,6 @@ const Guia_Remision = lazy(() => import('@/pages/Almacen/Guia_Remision/Guia_Remi
 const RegistroGuia = lazy(() => import('@/pages/Almacen/Guia_Remision/Registro_Guia/Registro_Guia'));
 const ReporteVentas = lazy(() => import('@/pages/ReporteVentas/ReporteVentas'));
 const Usuarios = lazy(() => import('@/pages/Usuarios/Usuarios'));
-const Historial = lazy(() => import('@/pages/Ventas/Historial_Venta/Historial'));
 const Roles = lazy(() => import('@/pages/Roles/Roles'));
 const Global = lazy(() => import('@/pages/Global/Global'));
 const Sucursal = lazy(() => import('@/pages/Sucursal/Sucursal'));
@@ -56,7 +55,6 @@ const submoduleComponentMap = {
   6: Usuarios,
   7: Roles,
   8: Modulos,
-  9: Historial,
   10: Nota_Ingreso,
   11: Nota_Salida,
   12: Nueva_Nota_Salida,

@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 //import axios from 'axios';
-import axios from "../../../api/axios";
+import axios from "@/api/axios";
+import {
+  getVentasRequest
+} from "@/api/api.ventas";
 
 // Función para obtener ventas
 const useVentasData = (filters) => {
@@ -11,18 +14,16 @@ const useVentasData = (filters) => {
 
   const fetchVentas = useCallback(async () => {
     try {
-      const response = await axios.get('/ventas', {
-        params: {
-          page: currentPage - 1,
-          limit: ventasPerPage,
-          nom_tipocomp: filters.comprobanteSeleccionado,
-          razon_social: filters.razon,
-          nombre_sucursal: filters.sucursalSeleccionado,
-          fecha_i: filters.fecha_i,
-          fecha_e: filters.fecha_e,
-          numC: filters.numC,
-        }
-      });
+        const response = await getVentasRequest({
+        page: currentPage - 1,
+        limit: ventasPerPage,
+        nom_tipocomp: filters.comprobanteSeleccionado,
+        razon_social: filters.razon,
+        nombre_sucursal: filters.sucursalSeleccionado,
+        fecha_i: filters.fecha_i,
+        fecha_e: filters.fecha_e,
+        numC: filters.numC,
+        });
       if (response.data.code === 1) {
         const ventas = response.data.data.map(venta => ({
           id: venta.id,

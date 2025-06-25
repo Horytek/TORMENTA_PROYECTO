@@ -1,17 +1,14 @@
 //import axios from 'axios';
-import axios from "../../../api/axios";
+import axios from "@/api/axios";
+import {
+  updateVentaEstadoRequest
+} from "@/api/api.ventas";
 // Maneja la solicitud de actualización para múltiples ventas
 export const handleUpdateMultiple = async (ventas) => {
     try {
         // Crear un arreglo de promesas para todas las solicitudes de actualización
-        const updatePromises = ventas.map(venta => 
-            axios.post('/ventas/actualizar_venta', {
-                id_venta: venta.id
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
+        const updatePromises = ventas.map(venta =>
+        updateVentaEstadoRequest({ id_venta: venta.id })
         );
 
         // Ejecutar todas las promesas en paralelo

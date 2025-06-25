@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 //import axios from 'axios';
-import axios from "../../../api/axios";
+import axios from "@/api/axios";
+import {
+  getClienteVentasRequest
+} from "@/api/api.ventas";
 
 const useClientesData = () => {
   const [clientes, setClientes] = useState([]);
@@ -8,7 +11,7 @@ const useClientesData = () => {
   useEffect(() => {
     const fetchClientes = async () => {
       try {
-        const response = await axios.get('/ventas/cliente_venta');
+        const response = await getClienteVentasRequest();
         
         if (response.data.code === 1) {
           const clientes = response.data.data.map(item => ({

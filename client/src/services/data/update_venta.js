@@ -1,12 +1,14 @@
 //import axios from 'axios';
 //import {toast} from "react-hot-toast";
-import axios from "../../../api/axios";
+import axios from "@/api/axios";
+import {
+  updateVentaEstadoRequest,
+} from "@/api/api.ventas";
 
 // Maneja la solicitud de cobro
 export const handleUpdate = async (datosVenta) => {
     try {
-        console.log('Datos de venta:', datosVenta);
-        const response = await axios.post('/ventas/actualizar_venta', {
+        const response = await updateVentaEstadoRequest( {
             id_venta: datosVenta.id
           });
 

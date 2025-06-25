@@ -1,15 +1,13 @@
 //import axios from 'axios';
-import axios from "../../../api/axios";
+import {
+  addClienteRequest
+} from "@/api/api.ventas";
 
 export const  handleGuardarCliente = async (datosCliente,setShowNuevoCliente) => {
 
     try {
         //console.log('Datos del cliente:', datosCliente);
-        const response = await axios.post('/ventas/cliente', datosCliente, {// Reemplaza con la URL de tu API
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
+        const response = await addClienteRequest(datosCliente);
 
         if (response.status === 200) {
             setShowNuevoCliente(false); // Cierra el modal de nuevo cliente

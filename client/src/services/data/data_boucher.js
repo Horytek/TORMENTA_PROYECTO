@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 //import axios from 'axios';
-import axios from "../../../api/axios";
+import {
+  getVentaByIdRequest
+} from "@/api/api.ventas";
+import axios from "@/api/axios";
 
 const useBoucher = (id_venta_boucher) => {
   const [venta_B, setVenta] = useState([]);
@@ -10,9 +13,7 @@ const useBoucher = (id_venta_boucher) => {
   useEffect(() => {
     const fetchBoucher = async () => {
       try {
-        const response = await axios.get('/ventas/venta_boucher', {
-          params: { id_venta_boucher }
-        });
+        const response = await getVentaByIdRequest({ id_venta_boucher });
 
         if (response.data.code === 1) {
           const ventaData = {

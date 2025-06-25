@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import useClientesData from '../../../Data/data_cliente_venta';
-import useProductosData from '../../../Data/data_producto_venta';
-import useSucursalData from '../../../Data/data_sucursal_venta';
-import { useLastData } from '../../../Data/getLastVenta';
-import generateComprobanteNumber from '../../../Data/generate_comprobante';
+import useClientesData from '@/services/Data/data_cliente_venta';
+import useProductosData from '@/services/Data/data_producto_venta';
+import useSucursalData from '@/services/Data/data_sucursal_venta';
+import { useLastData } from '@/services/Data/getLastVenta';
+import generateComprobanteNumber from '@/services/Data/generate_comprobante';
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { useUserStore } from "@/store/useStore";
 

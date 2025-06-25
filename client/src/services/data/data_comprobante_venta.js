@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
 //import axios from 'axios';
-import axios from "../../../api/axios";
-export const useLastData = () => {
-  const [last, setLast] = useState([]);
+import axios from "@/api/axios";
+import {
+  getComprobanteRequest
+} from "@/api/api.ventas";
+
+const useComprobanteData = () => {
+  const [comprobantes, setComprobante] = useState([]);
 
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const response = await axios.get('/ventas/last_venta');
+        const response = await getComprobanteRequest();
         
         if (response.data.code === 1) {
-          const ultimos = response.data.data.map(item => ({
+          const comprobantes = response.data.data.map(item => ({
             id: item.id,
+            nombre: item.nombre,
           }));
-          setLast(ultimos);
+          setComprobante(comprobantes);
         } else {
           console.error('Error en la solicitud: ', response.data.message);
         }
@@ -25,5 +30,7 @@ export const useLastData = () => {
     fetchProductos();
   }, []);
 
-  return {last, setLast};
+  return {comprobantes, setComprobante};
 };
+
+export default useComprobanteData;

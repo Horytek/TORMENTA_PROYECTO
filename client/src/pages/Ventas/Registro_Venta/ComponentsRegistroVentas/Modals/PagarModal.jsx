@@ -18,8 +18,8 @@ import AgregarClienteForm from './AgregarClienteForm';
 import VentaExitosaModal from './VentaExitosaModal';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { generateReceiptContent } from '../Comprobantes/Voucher/Voucher';
-import { validateDecimalInput, handleCobrar } from '../../../Data/add_venta';
-import { handleGuardarCliente } from '../../../Data/add_cliente';
+import { validateDecimalInput, handleCobrar } from '@/services/Data/add_venta';
+import { handleGuardarCliente } from '@/services/Data/add_cliente';
 
 const CobrarModal = ({ isOpen, onClose, totalImporte, total_I }) => {
   const {

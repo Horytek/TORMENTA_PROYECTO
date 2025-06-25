@@ -35,7 +35,7 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
   
     return { nuevaSerie: ultimaSerie_n+ultimaSerie, nuevoCorrelativo };
   };*/
-  function convertDateToDesiredFormat(dateString, offsetHours) {
+  function convertDateToDesiredFormat4(dateString, offsetHours) {
     // Crear una instancia de la fecha en UTC
     const date = new Date(dateString);
 
@@ -61,10 +61,8 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 const enviarVentaASunat = async (data) => {
 
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
-  //const token = import.meta.env.VITE_TOKEN_SUNAT || '';
     const nombre = useUserStore((state) => state.nombre);
     const token = await getClaveSunatByUser(nombre);
-
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
   try {
@@ -78,7 +76,7 @@ const enviarVentaASunat = async (data) => {
     console.log('Respuesta de la API:', response.data);
 
     if (response.status === 200) {
-      toast.success(`Los datos se han enviado con éxito a la Sunat.`);
+      //toast.success(`Los datos se han enviado con éxito a la Sunat.`);
     } else {
       toast.error('Error al enviar los datos a la Sunat. Por favor, inténtelo de nuevo.');
     }
@@ -93,18 +91,19 @@ const enviarVentaASunat = async (data) => {
 };
 
 // Función principal para manejar la aceptación de múltiples ventas
-export const handleSunatUnique = async (venta) => {
+export const handleSunatMultiple = async (ventas) => {
     //const loadingToastId = toast.loading('Enviando ventas a la Sunat...');
     // Obtener los datos de la empresa
     const nombre = useUserStore((state) => state.nombre);
     const empresaData = await getEmpresaDataByUser(nombre);
     // Iterar sobre cada venta y enviarla a SUNAT
+    ventas.forEach((venta) => {
         // Obtener los detalles de la venta
         const detalles = venta.detalles;
 
         // Calcular el monto total considerando que los precios ya incluyen IGV
         const totalGravada = detalles.reduce((acc, detalle) => {
-            const precioUnitarioConIgv = parseFloat(detalle.precio);
+            const precioUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', ''));
             const precioSinIgv = precioUnitarioConIgv / 1.18; // Eliminar el IGV para obtener el valor base
             return acc + (precioSinIgv * detalle.cantidad);
         }, 0);
@@ -134,11 +133,10 @@ export const handleSunatUnique = async (venta) => {
         const tipoDocCliente = venta.ruc.length === 11 ? "6" : "1";
         const isoDate = venta.fecha_iso;
         const offsetHours = -5; // Ajuste de zona horaria para -05:00
-        const result = convertDateToDesiredFormat(isoDate, offsetHours);
+        const result = convertDateToDesiredFormat4(isoDate, offsetHours);
 
-       // const usuario = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
-       // const sufijo = usuario === "vendedor_2" ? "1" : usuario === "vendedor_5" ? "2" : ""; // Ajusta según sea necesario
-
+        //const usuario = localStorage.getItem("usuario"); // Ejemplo: "vendedor_2"
+        //const sufijo = usuario === "vendedor_2" ? "1" : usuario === "vendedor_5" ? "2" : ""; // Ajusta según sea necesario
 
         const data = {
             ublVersion: "2.1",
@@ -184,7 +182,7 @@ export const handleSunatUnique = async (venta) => {
             mtoImpVenta: subTotal.toFixed(2),
             details: detalles.map(detalle => {
                 const cantidad = parseInt(detalle.cantidad);
-                const mtoValorUnitarioConIgv = parseFloat(detalle.precio).toFixed(2);
+                const mtoValorUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', '')).toFixed(2);
                 const mtoValorUnitarioSinIgv = (mtoValorUnitarioConIgv / 1.18).toFixed(2);
                 const mtoValorVenta = (cantidad * mtoValorUnitarioSinIgv).toFixed(2);
                 const mtoBaseIgv = mtoValorVenta;
@@ -222,6 +220,7 @@ export const handleSunatUnique = async (venta) => {
             .catch((error) => {
                 console.error(`Error al enviar la venta ${nuevaSerie_t}-${nuevoCorrelativo}:`, error);
             });
+    });
 
     //toast.dismiss(loadingToastId);
 };

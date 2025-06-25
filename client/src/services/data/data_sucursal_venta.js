@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'react';
 //import axios from 'axios';
-import axios from "../../../api/axios";
-
-const useComprobanteData = () => {
-  const [comprobantes, setComprobante] = useState([]);
+import axios from "@/api/axios";
+import {
+  getSucursalRequest
+} from "@/api/api.ventas";
+const useSucursalData = () => {
+  const [sucursales, setSucursal] = useState([]);
 
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const response = await axios.get('/ventas/comprobante');
+        const response = await getSucursalRequest();
         
         if (response.data.code === 1) {
-          const comprobantes = response.data.data.map(item => ({
+          const sucursales = response.data.data.map(item => ({
             id: item.id,
             nombre: item.nombre,
+            ubicacion: item.ubicacion,
+            usuario: item.usuario,
+            rol: item.rol,
           }));
-          setComprobante(comprobantes);
+          setSucursal(sucursales);
         } else {
           console.error('Error en la solicitud: ', response.data.message);
         }
@@ -27,7 +32,7 @@ const useComprobanteData = () => {
     fetchProductos();
   }, []);
 
-  return {comprobantes, setComprobante};
+  return {sucursales, setSucursal};
 };
 
-export default useComprobanteData;
+export default useSucursalData;
