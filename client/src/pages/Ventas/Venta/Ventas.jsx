@@ -29,9 +29,10 @@ const Ventas = () => {
     ventasPerPage,
     setVentasPerPage,
     totalRecaudado,
-    refetchVentas,
     totalEfectivo,
-    totalPagoElectronico
+    totalPagoElectronico,
+    removeVenta, // <-- Añade esta función del hook
+    updateVenta, // <-- Si necesitas actualizar ventas localmente
   } = useVentasData(filters);
 
   // Zustand: obtener y setear datos globales
@@ -45,7 +46,6 @@ const Ventas = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
-  const [isDeleted, setIsDeleted] = useState(false);
 
   // Guarda el total de ventas en Zustand cada vez que cambian
   useEffect(() => {
@@ -79,10 +79,11 @@ const Ventas = () => {
     setDeleteOptionSelected(false);
   };
 
-  // Función para eliminar una venta
+  // Función para eliminar una venta (solo actualiza el estado local)
   const handleDeleteVenta = () => {
-    // Usa la venta seleccionada desde Zustand
-    handleDelete(ventaSeleccionada);
+    if (!ventaSeleccionada) return;
+    handleDelete(ventaSeleccionada); // Lógica de backend si aplica
+    removeVenta(ventaSeleccionada.id); // Elimina del estado local
     if (ventaSeleccionada?.tipoComprobante === 'Boleta' && ventaSeleccionada?.estado_sunat === 1) {
       anularVentaEnSunatB(ventaSeleccionada, detallesSeleccionados);
     } else if (ventaSeleccionada?.tipoComprobante === 'Factura' && ventaSeleccionada?.estado_sunat === 1) {
@@ -90,15 +91,7 @@ const Ventas = () => {
     }
     closeModal();
     setConfirmDeleteModalOpen(false);
-    setIsDeleted(true); // Activa el efecto para actualizar las ventas
   };
-
-  useEffect(() => {
-    if (isDeleted) {
-      refetchVentas();
-      setIsDeleted(false);
-    }
-  }, [isDeleted, refetchVentas]);
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -138,7 +131,7 @@ const Ventas = () => {
       </div>
 
       {/* Componente de filtros */}
-      <FiltrosVentas onFiltersChange={handleFilterChange} refetchVentas={refetchVentas} />
+      <FiltrosVentas onFiltersChange={handleFilterChange} />
 
       {/* Componente de tabla de ventas */}
       <TablaVentas
@@ -155,7 +148,7 @@ const Ventas = () => {
         closeModal={closeModal}
         setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
         deleteOptionSelected={deleteOptionSelected}
-        refetchVentas={refetchVentas}
+        onDeleteVenta={handleDeleteVenta}
       />
 
       {/* Modal de confirmación de eliminación */}

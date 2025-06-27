@@ -20,12 +20,11 @@ import { Button } from "@heroui/button";
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 
-const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
+const FiltrosVentas = ({ onFiltersChange }) => {
   const { comprobantes } = useComprobanteData();
   const { sucursales } = useSucursalData();
   const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState("");
   const [sucursalSeleccionado, setSucursalSeleccionado] = useState("");
-  const [isDeleted, setIsDeleted] = useState(false);
   const [value, setValue] = React.useState({
     start: parseDate("2024-04-01"),
     end: parseDate("2028-04-08"),
@@ -33,13 +32,12 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
   const [tempValue, setTempValue] = useState(value);
   const [razon, setRazon] = useState("");
   const [numC, setNumC] = useState("");
-  const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Zustand
   const rol = useUserStore((state) => state.rol);
   const sur = useUserStore((state) => state.sur);
   const total_ventas = useVentaSeleccionadaStore((state) => state.total_ventas);
-  const setTotalVentas = useVentaSeleccionadaStore((state) => state.setTotalVentas);
 
   const handleChange = (event) => {
     setRazon(event.target.value);
@@ -86,7 +84,6 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     };
 
     onFiltersChange(filtros);
-    // Si necesitas persistencia entre sesiones, usa Zustand persist o Context persist
   }, [
     comprobanteSeleccionado,
     sucursalSeleccionado,
@@ -95,7 +92,6 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     numC,
     onFiltersChange,
   ]);
-
 
   const loadDetallesFromStore = () => {
     return total_ventas || [];
@@ -121,17 +117,10 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
     handleSunatMultiple(ventas_new);
     handleUpdateMultiple(ventas_new);
 
-    setIsDeleted(true);
     toast.dismiss(loadingToastId);
     toast.success("Los datos se han enviado con éxito!");
+    // Si necesitas actualizar el estado local, hazlo aquí usando Zustand o una función del padre
   };
-
-  useEffect(() => {
-    if (isDeleted) {
-      refetchVentas(); // Refrescamos las ventas
-      setIsDeleted(false); // Reseteamos el estado
-    }
-  }, [isDeleted, refetchVentas]);
 
   const handleNavigation = () => {
     navigate("/ventas/registro_venta");
@@ -284,7 +273,7 @@ const FiltrosVentas = ({ onFiltersChange, refetchVentas }) => {
 };
 
 FiltrosVentas.propTypes = {
-  refetchVentas: PropTypes.func.isRequired,
+  onFiltersChange: PropTypes.func.isRequired,
 };
 
 export default FiltrosVentas;

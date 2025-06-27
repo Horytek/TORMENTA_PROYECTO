@@ -27,7 +27,7 @@ function convertDateToDesiredFormat(dateString, offsetHours) {
 export const anularVentaEnSunatF = async (ventaData) => {
   try {
     const url = 'https://facturacion.apisperu.com/api/v1/voided/send';
-    const nombre = useUserStore((state) => state.nombre);
+    const nombre = useUserStore.getState().nombre; // ✅ Esto es válido fuera de componentes
     const token = await getClaveSunatByUser(nombre);
     const empresaData = await getEmpresaDataByUser(nombre);
 
@@ -95,7 +95,7 @@ export const anularVentaEnSunatF = async (ventaData) => {
 export const anularVentaEnSunatB = async (ventaData, detalles) => {
   try {
     const url = 'https://facturacion.apisperu.com/api/v1/summary/send';
-    const nombre = useUserStore((state) => state.nombre);
+    const nombre = useUserStore.getState().nombre; // ✅ Esto es válido fuera de componentes
     const token = await getClaveSunatByUser(nombre);
     const empresaData = await getEmpresaDataByUser(nombre);
 

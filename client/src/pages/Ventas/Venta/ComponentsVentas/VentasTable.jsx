@@ -381,7 +381,7 @@ const handlePrint = async () => {
       </div>
       {expandedRow !== null && (
         <div className="w-full lg:w-full lg:ml-4 mt-4 lg:mt-0">
-          {renderVentaDetails(ventas.find(venta => venta.id === expandedRow).detalles)}
+          {ventas.find(venta => venta.id === expandedRow) && renderVentaDetails(ventas.find(venta => venta.id === expandedRow).detalles)}
         </div>
       )}
     </div>

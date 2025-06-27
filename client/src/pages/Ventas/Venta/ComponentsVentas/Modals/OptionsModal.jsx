@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
 import toast from 'react-hot-toast';
@@ -9,11 +9,14 @@ import { handleUpdate } from '@/services/Data/update_venta';
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { useUserStore } from "@/store/useStore";
 
-const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetchVentas }) => {
+const OptionsModal = ({
+  modalOpen,
+  closeModal,
+  setConfirmDeleteModalOpen,
+  deleteOptionSelected,
+  onDeleteVenta // Nueva prop para eliminar venta
+}) => {
   const [sendToSunat, setSendToSunat] = useState(false);
-  const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
-  const [isDeleted, setIsDeleted] = useState(false);
-  const [isDeleted1, setIsDeleted1] = useState(false);
   const [generatePdfSelected, setGeneratePdfSelected] = useState(false);
 
   // Zustand: obtener datos seleccionados
@@ -29,63 +32,38 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
       const newState = !sendToSunat;
       setSendToSunat(newState);
       if (newState) {
-        setDeleteOptionSelected(false);
         setGeneratePdfSelected(false);
       }
     } else if (option === 'deleteOption') {
-      const newState = !deleteOptionSelected;
-      setDeleteOptionSelected(newState);
-      if (newState) {
-        setSendToSunat(false);
-        setGeneratePdfSelected(false);
-      }
+      // El control de deleteOptionSelected lo lleva el padre
+      setConfirmDeleteModalOpen(true);
+      closeModal();
     } else if (option === 'generatePdf') {
       const newState = !generatePdfSelected;
       setGeneratePdfSelected(newState);
       if (newState) {
         setSendToSunat(false);
-        setDeleteOptionSelected(false);
       }
     }
   };
 
   const handleAccept = () => {
     if (sendToSunat) {
-      if (sendToSunat && d_venta.tipoComprobante === 'Nota') {
+      if (d_venta.tipoComprobante === 'Nota') {
         toast.error('Error, no se puede usar esta opción');
       } else {
         closeModal();
         handleSunat(datos_precio, detalles, detalles);
         handleUpdate(d_venta);
-        setIsDeleted(true);
       }
-    } else if (deleteOptionSelected) {
-      handleDeleteVenta();
-      setConfirmDeleteModalOpen(true);
-      setIsDeleted1(true);
     } else if (generatePdfSelected) {
-      if (generatePdfSelected && d_venta.tipoComprobante === 'Nota') {
+      if (d_venta.tipoComprobante === 'Nota') {
         toast.error('Error, no se puede usar esta opción');
       } else {
         handleSunatPDF(d_venta, detalles);
       }
     }
-  };
-
-  useEffect(() => {
-    if (isDeleted) {
-      refetchVentas();
-      setIsDeleted(false);
-    }
-
-    if (isDeleted1) {
-      refetchVentas();
-      setIsDeleted1(false);
-    }
-  }, [isDeleted, isDeleted1, refetchVentas]);
-
-  const handleDeleteVenta = () => {
-    // Lógica para eliminar la venta (puedes implementarla aquí o recibirla por props)
+    // Eliminar venta se maneja por ConfirmationModal y onDeleteVenta
   };
 
   return (
@@ -136,7 +114,7 @@ const OptionsModal = ({ modalOpen, closeModal, setConfirmDeleteModalOpen, refetc
             color="success" 
             variant="shadow" 
             onPress={handleAccept} 
-            isDisabled={(!deleteOptionSelected && !sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado === 1)}
+            isDisabled={(!sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado === 1)}
           >
             Aceptar
           </Button>
@@ -150,7 +128,8 @@ OptionsModal.propTypes = {
   modalOpen: PropTypes.bool.isRequired,
   closeModal: PropTypes.func.isRequired,
   setConfirmDeleteModalOpen: PropTypes.func.isRequired,
-  refetchVentas: PropTypes.func.isRequired,
+  deleteOptionSelected: PropTypes.bool.isRequired,
+  onDeleteVenta: PropTypes.func // Nueva prop
 };
 
 export default OptionsModal;
