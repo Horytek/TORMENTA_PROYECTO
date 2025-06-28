@@ -1,7 +1,7 @@
 import axios from "@/api/axios";
 
 // Obtener todas las ventas (con filtros por query params)
-export const getVentasRequest = (params) => axios.get("/ventas", { params });
+export const getVentasRequest = () => axios.get("/ventas");
 
 // Obtener productos de ventas
 export const getProductosVentasRequest = (params) => axios.get("/ventas/producto_venta", { params });

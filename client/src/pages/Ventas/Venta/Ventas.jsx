@@ -31,8 +31,8 @@ const Ventas = () => {
     totalRecaudado,
     totalEfectivo,
     totalPagoElectronico,
-    removeVenta, // <-- Añade esta función del hook
-    updateVenta, // <-- Si necesitas actualizar ventas localmente
+    removeVenta,
+    updateVenta, 
   } = useVentasData(filters);
 
   // Zustand: obtener y setear datos globales

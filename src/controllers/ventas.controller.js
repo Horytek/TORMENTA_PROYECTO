@@ -2,100 +2,58 @@ import { getConnection } from "./../database/database";
 
 const getVentas = async (req, res) => {
   let connection;
-  const { page = 0, limit = 10, nom_tipocomp = '', razon_social = '', nombre_sucursal = '', fecha_i = '2022-01-01', fecha_e = '2027-12-27', numC= '' } = req.query;
-  const offset = page * limit;
-
   try {
     connection = await getConnection();
 
-    // Procesar nom_tipocomp para la cláusula IN
-    const nomTipocompArray = nom_tipocomp.split(',').map(item => item.trim()).filter(item => item !== '');
-    let inClause = '';
-    const params = [];
-
-    if (nomTipocompArray.length > 0) {
-      inClause = `tp.id_tipocomprobante IN (${nomTipocompArray.map(() => '?').join(',')})`;
-      params.push(...nomTipocompArray);
-    } else {
-      inClause = '1=1'; // Esto no filtra ningún registro
-    }
-
-    // Obtener las ventas con paginación
-    const [ventasResult] = await connection.query(
-      `
-        SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, SUBSTRING(com.num_comprobante, 6, 8) AS num,
-        case when tp.nom_tipocomp='Nota de venta' then 'Nota' else tp.nom_tipocomp end as tipoComprobante, CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
-        cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total, CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero,
-        ve.dni AS cajeroId, v.estado_venta AS estado, s.nombre_sucursal,s.ubicacion, cl.direccion, v.fecha_iso, v.metodo_pago, anl.id_anular, anl.anular, anlb.id_anular_b, anlb.anular_b, v.estado_sunat, vb.id_venta_boucher, usu.usua, v.observacion, v.hora_creacion, v.fecha_anulacion, (SELECT usu.usua FROM usuario usu WHERE usu.id_usuario = v.u_modifica) AS u_modifica
-        FROM venta v
+    // Obtener todas las ventas sin filtros ni paginación
+    const [ventasResult] = await connection.query(`
+      SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, SUBSTRING(com.num_comprobante, 6, 8) AS num,
+        CASE WHEN tp.nom_tipocomp='Nota de venta' THEN 'Nota' ELSE tp.nom_tipocomp END AS tipoComprobante,
+        CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
+        cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total,
+        CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero, ve.dni AS cajeroId, v.estado_venta AS estado,
+        s.nombre_sucursal, s.ubicacion, cl.direccion, v.fecha_iso, v.metodo_pago,
+        anl.id_anular, anl.anular, anlb.id_anular_b, anlb.anular_b, v.estado_sunat,
+        vb.id_venta_boucher, usu.usua, v.observacion, v.hora_creacion, v.fecha_anulacion,
+        (SELECT usu.usua FROM usuario usu WHERE usu.id_usuario = v.u_modifica) AS u_modifica
+      FROM venta v
         INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
         INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
         INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
         INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
         INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
         INNER JOIN vendedor ve ON ve.dni = s.dni
-        INNER JOIN anular_sunat anl on anl.id_anular=v.id_anular
-        INNER JOIN anular_sunat_b anlb on anlb.id_anular_b=v.id_anular_b
+        INNER JOIN anular_sunat anl ON anl.id_anular = v.id_anular
+        INNER JOIN anular_sunat_b anlb ON anlb.id_anular_b = v.id_anular_b
         INNER JOIN venta_boucher vb ON vb.id_venta_boucher = v.id_venta_boucher
         INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
-      	WHERE ${inClause} AND ( cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ? ) AND s.nombre_sucursal LIKE ?  AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')>=? AND DATE_FORMAT(v.f_venta, '%Y-%m-%d')<=? AND com.num_comprobante LIKE ?
-        GROUP BY id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d'), igv, cajero, cajeroId, estado
-        ORDER BY v.id_venta desc
-        LIMIT ? OFFSET ?
-      `,
-      [...params,razon_social+'%',razon_social+'%',nombre_sucursal+'%',fecha_i,fecha_e,numC+'%',parseInt(limit), parseInt(offset)]
-    );
+      GROUP BY id
+      ORDER BY v.id_venta DESC
+    `);
 
-    // Obtener los detalles de venta correspondientes
+    // Obtener detalles de cada venta
     const ventas = await Promise.all(
       ventasResult.map(async (venta) => {
         const [detallesResult] = await connection.query(
           `
-			SELECT dv.id_detalle AS codigo, pr.descripcion AS nombre, dv.cantidad AS cantidad, dv.precio AS precio, dv.descuento AS descuento, dv.total AS subtotal, pr.undm as undm, m.nom_marca AS marca
+          SELECT dv.id_detalle AS codigo, pr.descripcion AS nombre, dv.cantidad, dv.precio, dv.descuento, dv.total AS subtotal, pr.undm, m.nom_marca AS marca
           FROM detalle_venta dv
-          INNER JOIN producto pr ON pr.id_producto = dv.id_producto
-          INNER JOIN marca m ON m.id_marca=pr.id_marca
+            INNER JOIN producto pr ON pr.id_producto = dv.id_producto
+            INNER JOIN marca m ON m.id_marca = pr.id_marca
           WHERE dv.id_venta = ?
-        `,
+          `,
           [venta.id]
         );
-
-        return {
-          ...venta,
-          detalles: detallesResult,
-        };
+        return { ...venta, detalles: detallesResult };
       })
     );
 
-    // Obtener el número total de ventas
-    const [totalResult] = await connection.query(
-      `
-      SELECT COUNT(*) as total 
-      FROM venta v
-      INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
-      INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
-      INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
-      INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
-      WHERE ${inClause} 
-        AND (cl.razon_social LIKE ? OR CONCAT(cl.nombres, ' ', cl.apellidos) LIKE ?) 
-        AND s.nombre_sucursal LIKE ?  
-        AND DATE_FORMAT(v.f_venta, '%Y-%m-%d') >= ? 
-        AND DATE_FORMAT(v.f_venta, '%Y-%m-%d') <= ? 
-        AND com.num_comprobante LIKE ?
-      `,
-      [...params, razon_social + '%', razon_social + '%', nombre_sucursal + '%', fecha_i, fecha_e, numC + '%']
-    );
-
-    const totalVentas = totalResult[0].total;
-
-    res.json({ code: 1, data: ventas, totalVentas });
+    res.json({ code: 1, data: ventas });
   } catch (error) {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
-  }  finally {
-    if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
-    }
-}
+  } finally {
+    if (connection) connection.release();
+  }
 };
 
 
