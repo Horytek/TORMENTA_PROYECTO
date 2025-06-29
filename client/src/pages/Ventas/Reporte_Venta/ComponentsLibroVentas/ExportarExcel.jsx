@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "@/api/axios";
-import useSucursalData from "@/services/Data/data_sucursal_venta";
+import useSucursalData  from "@/services/Data/data_sucursal_venta";
 import {
   Button,
   Modal,
@@ -14,9 +14,9 @@ import {
 } from "@nextui-org/react";
 import { FaFileExcel } from "react-icons/fa";
 
-const ExcelIcon = ({ size = 20, color = "white", ...props }) => {
-  return <FaFileExcel size={size} color={color} {...props} />;
-};
+const ExcelIcon = ({ size = 20, color = "white", ...props }) => (
+  <FaFileExcel size={size} color={color} {...props} />
+);
 
 const MONTHS = [
   { value: "01", name: "Enero" },
@@ -33,14 +33,6 @@ const MONTHS = [
   { value: "12", name: "Diciembre" }
 ];
 
-const SUCURSALES = [
-  { id: 1, nombre: "Tienda Arica-3" },
-  { id: 2, nombre: "Tienda Arica-2" },
-  { id: 3, nombre: "Tienda Arica-1" },
-  { id: 4, nombre: "Tienda Balta" },
-  { id: 5, nombre: "Oficina" }
-];
-
 const COMPROBANTES = [
   { value: "Boleta", label: "Boleta" },
   { value: "Factura", label: "Factura" },
@@ -55,8 +47,9 @@ const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
   const [sucursalSeleccionada, setSucursalSeleccionada] = useState(new Set());
   const [tipoComprobanteSeleccionado, setTipoComprobanteSeleccionado] = useState(new Set());
 
-  const handleExportExcel = async (mes, ano, idSucursal, tipoComprobante) => {
+  const handleExportExcel = async (mes, ano, idSucursal, tipoComprobanteArr) => {
     try {
+      const tipoComprobante = tipoComprobanteArr.join(",");
       let url = `/reporte/registro_ventas_sunat?mes=${mes}&ano=${ano}&tipoComprobante=${tipoComprobante}`;
       if (idSucursal) {
         url += `&idSucursal=${idSucursal}`;
@@ -72,13 +65,14 @@ const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
       const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
-      const sucursalNombre = idSucursal ? 
-      sucursales.find(s => s.id === parseInt(idSucursal))?.nombre : '';
-      const fileName = idSucursal ? 
-        `RegistroVentas_${sucursalNombre}_${tipoComprobante}_${mes}_${ano}.xlsx` : 
-        `RegistroVentas_${tipoComprobante}_${mes}_${ano}.xlsx`;
-      
+
+      const sucursalNombre = idSucursal
+        ? sucursales.find(s => String(s.id) === String(idSucursal))?.nombre
+        : '';
+      const fileName = idSucursal
+        ? `RegistroVentas_${sucursalNombre}_${tipoComprobante}_${mes}_${ano}.xlsx`
+        : `RegistroVentas_${tipoComprobante}_${mes}_${ano}.xlsx`;
+
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
@@ -94,14 +88,14 @@ const ExportarExcel = ({ buttonText = "Exportar a Excel", ...props }) => {
     const mes = mesSeleccionado.size > 0 ? Array.from(mesSeleccionado)[0] : null;
     const ano = anoSeleccionado.size > 0 ? Array.from(anoSeleccionado)[0] : null;
     const idSucursal = sucursalSeleccionada.size > 0 ? Array.from(sucursalSeleccionada)[0] : null;
-    const tipoComprobante = tipoComprobanteSeleccionado.size > 0 ? Array.from(tipoComprobanteSeleccionado) : null;
+    const tipoComprobanteArr = tipoComprobanteSeleccionado.size > 0 ? Array.from(tipoComprobanteSeleccionado) : [];
 
-    if (!mes || !ano || !idSucursal || !tipoComprobante) {
+    if (!mes || !ano || !idSucursal || tipoComprobanteArr.length === 0) {
       alert("Por favor, seleccione la sucursal, mes, año y tipo de comprobante antes de exportar.");
       return;
     }
 
-    handleExportExcel(mes, ano, idSucursal, tipoComprobante);
+    handleExportExcel(mes, ano, idSucursal, tipoComprobanteArr);
   };
 
   return (

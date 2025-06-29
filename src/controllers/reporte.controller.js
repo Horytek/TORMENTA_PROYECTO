@@ -1048,96 +1048,12 @@ const exportarRegistroVentas = async (req, res) => {
 }
 };
 
-
-
-
-
 const obtenerRegistroVentas = async (req, res) => { 
   let connection;
   try {
     connection = await getConnection();
-    
-    // Parámetros de consulta
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
-    const tipoComprobante = req.query.tipoComprobante || '';  // Recibe como string
-    const fechaInicio = req.query.fechaInicio || null;
-    const fechaFin = req.query.fechaFin || null;
-    const idSucursal = req.query.idSucursal || null;
 
-    // Construcción dinámica de filtros
-    let filters = [];
-    let queryParams = [];
-
-    if (idSucursal) {
-      filters.push(`v.id_sucursal = ?`);
-      queryParams.push(idSucursal);
-    }
-
-    // Procesar tipoComprobante (similiar a como lo haces en la segunda función)
-    const tipoComprobanteArray = tipoComprobante.split(',').map(tc => tc.trim()).filter(tc => tc !== '');
-    if (tipoComprobanteArray.length > 0) {
-      filters.push(`tc.nom_tipocomp IN (${tipoComprobanteArray.map(() => '?').join(', ')})`);
-      queryParams.push(...tipoComprobanteArray);
-    }
-
-    filters.push(`v.estado_venta != 0`);
-
-    // Filtro de fechas
-    if (fechaInicio && fechaFin) {
-      if (new Date(fechaInicio) > new Date(fechaFin)) {
-        return res.status(400).json({
-          code: 0,
-          message: "La fecha de inicio no puede ser mayor a la fecha fin"
-        });
-      }
-      filters.push(`DATE(v.f_venta) BETWEEN STR_TO_DATE(?, '%Y-%m-%d') AND STR_TO_DATE(?, '%Y-%m-%d')`);
-      queryParams.push(fechaInicio, fechaFin);
-    }
-
-    // Construir la cláusula WHERE
-    const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
-
-    // Contar los registros totales
-    const countQuery = `
-      SELECT COUNT(*) as total 
-      FROM (
-        SELECT v.id_venta
-        FROM venta v
-        INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante
-        INNER JOIN tipo_comprobante tc ON tc.id_tipocomprobante = c.id_tipocomprobante
-        INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
-        INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
-        ${whereClause}
-        GROUP BY v.id_venta
-      ) AS subquery
-    `;
-
-    const [[{ total }]] = await connection.query(countQuery, [...queryParams]);
-
-    if (total === 0) {
-      return res.json({
-        code: 1,
-        data: { 
-          registroVentas: [], 
-          totales: {
-            total_importe: 0,
-            total_igv: 0,
-            total_general: 0
-          }
-        },
-        metadata: {
-          total_records: 0,
-          current_page: page,
-          per_page: limit,
-          total_pages: 0,
-        },
-        message: "No se encontraron registros de ventas",
-      });
-    }
-
-    // Consulta principal de ventas
+    // Consulta principal de ventas SIN filtros ni paginación
     const query = `
       SELECT 
         ROW_NUMBER() OVER (ORDER BY v.id_venta) AS numero_correlativo,
@@ -1170,18 +1086,18 @@ const obtenerRegistroVentas = async (req, res) => {
         cliente cl ON cl.id_cliente = v.id_cliente
       INNER JOIN
         sucursal s ON s.id_sucursal = v.id_sucursal
-      ${whereClause}
+      WHERE v.estado_venta != 0
       GROUP BY 
         v.id_venta, v.f_venta, s.nombre_sucursal, s.ubicacion, 
         cl.dni, cl.ruc, cl.nombres, cl.apellidos, cl.razon_social,
         c.num_comprobante, tc.nom_tipocomp
       ORDER BY 
         v.id_venta
-      LIMIT ? OFFSET ?
     `;
 
-    const [resultados] = await connection.query(query, [...queryParams, limit, offset]);
+    const [resultados] = await connection.query(query);
 
+    // Mapear resultados
     const registroVentas = resultados.map((row) => ({
       numero_correlativo: row.numero_correlativo,
       fecha: row.fecha,
@@ -1196,21 +1112,9 @@ const obtenerRegistroVentas = async (req, res) => {
       total: parseFloat(row.total) || 0.0,
     }));
 
-    const totales = {
-      total_importe: resultados.reduce((sum, row) => sum + (parseFloat(row.importe) || 0), 0),
-      total_igv: resultados.reduce((sum, row) => sum + (parseFloat(row.igv) || 0), 0),
-      total_general: resultados.reduce((sum, row) => sum + (parseFloat(row.total) || 0), 0),
-    };
-
     res.json({
       code: 1,
-      data: { registroVentas, totales },
-      metadata: {
-        total_records: total,
-        current_page: page,
-        per_page: limit,
-        total_pages: Math.ceil(total / limit),
-      },
+      data: registroVentas,
       message: "Registro de ventas obtenido correctamente",
     });
   } catch (error) {
@@ -1219,7 +1123,7 @@ const obtenerRegistroVentas = async (req, res) => {
     });
   } finally {
     if (connection) {
-      connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
   }
 };

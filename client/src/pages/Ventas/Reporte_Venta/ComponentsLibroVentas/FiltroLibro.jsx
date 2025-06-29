@@ -1,13 +1,32 @@
 import { DateRangePicker, Select, SelectItem, Button } from "@nextui-org/react";
 import { useState, useCallback } from "react";
 import { format, isValid } from "date-fns";
-import useSucursalData from "../../Data/data_sucursal_venta";
+import useSucursalData from '@/services/Data/data_sucursal_venta';
 
 const FiltroLibro = ({ onFilter, filters }) => {
     const { sucursales } = useSucursalData();
-    const [dateRange, setDateRange] = useState(filters.startDate ? { start: filters.startDate, end: filters.endDate } : null);
-    const [tipoComprobante, setTipoComprobante] = useState(new Set(filters.tipoComprobante || []));
-    const [sucursal1, setSucursal] = useState(new Set(filters.idSucursal ? [filters.idSucursal] : []));
+    const [dateRange, setDateRange] = useState(
+        filters.startDate && filters.endDate
+            ? {
+                start: {
+                    year: Number(filters.startDate.split('-')[0]),
+                    month: Number(filters.startDate.split('-')[1]),
+                    day: Number(filters.startDate.split('-')[2])
+                },
+                end: {
+                    year: Number(filters.endDate.split('-')[0]),
+                    month: Number(filters.endDate.split('-')[1]),
+                    day: Number(filters.endDate.split('-')[2])
+                }
+            }
+            : null
+    );
+    const [tipoComprobante, setTipoComprobante] = useState(
+        new Set(Array.isArray(filters.tipoComprobante) ? filters.tipoComprobante : [])
+    );
+    const [sucursal1, setSucursal] = useState(
+        new Set(filters.idSucursal ? [filters.idSucursal] : [])
+    );
 
     const comprobantes = [
         { label: "Boleta", value: "Boleta" },

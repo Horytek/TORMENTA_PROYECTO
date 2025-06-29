@@ -10,7 +10,6 @@ import {
   Select,
   SelectItem
 } from "@heroui/react";
-import useLibroVentasSunatData from "../Data/getLibroVenta";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -45,11 +44,11 @@ const TablaLibro = ({
       case "num_comprobante":
         return venta.num_comprobante;
       case "importe":
-        return venta.importe.toFixed(2);
+        return venta.importe?.toFixed(2);
       case "igv":
-        return venta.igv.toFixed(2);
+        return venta.igv?.toFixed(2);
       case "total":
-        return venta.total.toFixed(2);
+        return venta.total?.toFixed(2);
       default:
         return null;
     }
@@ -141,7 +140,7 @@ const TablaLibro = ({
 
       <div className="p-4 text-right rounded-lg">
         <span className="font-bold mr-4">TOTAL GENERAL: S/</span>
-        <span className="font-bold">{totales.total_general.toFixed(2)}</span>
+        <span className="font-bold">{totales.total_general?.toFixed(2)}</span>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import TablaLibro from './ComponentsLibroVentas/TablaLibro';
 import ExportarExcel from './ComponentsLibroVentas/ExportarExcel';
 import FiltroLibro from './ComponentsLibroVentas/FiltroLibro';
-import useLibroVentasSunatData from './Data/getLibroVenta';
+import useLibroVentasSunatData from '@/services/Data/getLibroVenta';
 
 const LibroVentas = () => {
     const [filters, setFilters] = useState({
@@ -22,13 +22,11 @@ const LibroVentas = () => {
         limit,
         changePage,
         changeLimit,
-        refetch,
     } = useLibroVentasSunatData(filters);
 
     // Método para manejar los filtros aplicados
     const handleFilter = (newFilters) => {
         setFilters(newFilters);
-        refetch(1, limit, newFilters);
     };
 
     return (
