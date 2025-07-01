@@ -1,12 +1,33 @@
 import { useState, useEffect } from 'react';
 import { getVentasRequest } from "@/api/api.ventas";
 
-const useVentasData = (filters) => {
+const useVentasData = (filters = {}) => {
   const [allVentas, setAllVentas] = useState([]);
   const [ventas, setVentas] = useState([]);
   const [totalVentas, setTotalVentas] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [ventasPerPage, setVentasPerPage] = useState(10);
+
+  // Estado para detalles de venta
+  const [detalles, setDetalles] = useState([]);
+
+  // Métodos para manejo local de detalles
+  const addDetalle = (nuevoDetalle) => {
+    setDetalles(prev => [...prev, nuevoDetalle]);
+  };
+
+  const updateDetalle = (detalleActualizado) => {
+    setDetalles(prev =>
+      prev.map(detalle =>
+        detalle.codigo === detalleActualizado.codigo ? detalleActualizado : detalle
+      )
+    );
+  };
+
+  const removeDetalle = (codigo) => {
+    setDetalles(prev => prev.filter(detalle => detalle.codigo !== codigo));
+  };
+
 
   // Solo consulta la base de datos la primera vez
   useEffect(() => {
@@ -157,13 +178,17 @@ if (filters.comprobanteSeleccionado) {
   );
 
   // Totales
-  const getTotalRecaudado = () => ventas.reduce((total, venta) => {
-    if (venta.estado === 'Anulada') return total;
-    const subtotalVenta = venta.detalles.reduce((subtotal, detalle) => {
-      return subtotal + parseFloat(detalle.subtotal.replace('S/ ', ''));
-    }, 0);
-    return total + subtotalVenta;
-  }, 0).toFixed(2);
+const getTotalRecaudado = () => ventas.reduce((total, venta) => {
+  if (venta.estado === 'Anulada') return total;
+  const subtotalVenta = venta.detalles.reduce((subtotal, detalle) => {
+    // Validación robusta
+    const rawSubtotal = typeof detalle.subtotal === 'string'
+      ? detalle.subtotal.replace('S/ ', '')
+      : (typeof detalle.subtotal === 'number' ? detalle.subtotal : '0');
+    return subtotal + parseFloat(rawSubtotal || '0');
+  }, 0);
+  return total + subtotalVenta;
+}, 0).toFixed(2);
 
   const getTotalPagoElectronico = () => ventas.reduce((total, venta) => {
     if (venta.estado === 'Anulada') return total;
@@ -182,6 +207,10 @@ if (filters.comprobanteSeleccionado) {
 
   return {
     ventas,
+    detalles,
+    addDetalle,
+    updateDetalle,
+    removeDetalle,
     removeVenta,
     addVenta,
     updateVenta,
