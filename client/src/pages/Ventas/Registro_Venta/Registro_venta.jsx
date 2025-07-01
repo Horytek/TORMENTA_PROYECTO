@@ -17,7 +17,15 @@ import { Button } from "@heroui/react";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 
 const Registro_Venta = () => {
-  const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
+    // Estado para manejar la lista de ventas
+    const [filters, setFilters] = useState({
+      comprobanteSeleccionado: '',
+      sucursalSeleccionado: '',
+      fecha_i: '',
+      fecha_e: '',
+      razon: ''
+    });
+  const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData(filters);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCobrarModalOpen, setIsCobrarModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

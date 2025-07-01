@@ -163,11 +163,10 @@ if (filters.comprobanteSeleccionado) {
     );
 
   setTotalVentas(filtradas.length);
-
-  // Paginación local
   const start = (currentPage - 1) * ventasPerPage;
   const end = start + ventasPerPage;
   setVentas(filtradas.slice(start, end));
+  // No retornes nada aquí
 }, [allVentas, filters, currentPage, ventasPerPage]);
 
   // Métodos locales
