@@ -73,6 +73,30 @@ const Registro_Venta = () => {
     setProductos(prevProductos => prevProductos.map(p => p.codigo === codigo ? { ...p, stock: p.stock + cantidad } : p));
   };
 
+  // Filtrado para ProductoModal
+const filteredProductos = productos.filter(producto =>
+  producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+  (selectedCategory ? producto.categoria === selectedCategory : true)
+);
+
+
+const handleRemoveAllProducts = () => { 
+  // Quita todos los productos de la tabla usando handleProductRemove
+  detalles.forEach(detalle => {
+    handleProductRemove(detalle.codigo, detalle.cantidad);
+
+    // Actualiza el stock sumando la cantidad removida nuevamente
+    setProductos(prevProductos =>
+      prevProductos.map(p =>
+        p.codigo === detalle.codigo
+          ? { ...p, stock: p.stock - detalle.cantidad } // Aumenta el stock según lo removido
+          : p
+      )
+    );
+  });
+};
+
+
   const totalImporte = detalles.reduce((acc, item) => {
     const subtotalNumber = parseFloat(item.subtotal.replace(/[^\d.-]/g, ''));
     return acc + subtotalNumber / 1.18;
@@ -83,11 +107,6 @@ const Registro_Venta = () => {
 
   // Si necesitas los totales en Zustand para otros componentes:
   useVentaSeleccionadaStore.getState().setTotalVentas(detalles);
-
-  const filteredProductos = productos.filter(producto =>
-    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedCategory ? producto.categoria === selectedCategory : true)
-  );
 
   const toggleDetalleMode = () => {
     setDetalleMode(prevMode => !prevMode);
@@ -282,11 +301,12 @@ const Registro_Venta = () => {
         filteredProductos={filteredProductos}
         searchTerm2={searchTerm2}
       />
-      <CobrarModal
+<CobrarModal
   isOpen={isCobrarModalOpen}
   onClose={() => setIsCobrarModalOpen(false)}
   totalImporte={Number(total_t)}
   total_I={Number(totalImporte)}
+  handleRemoveAllProducts={handleRemoveAllProducts}
 />
     </>
   );

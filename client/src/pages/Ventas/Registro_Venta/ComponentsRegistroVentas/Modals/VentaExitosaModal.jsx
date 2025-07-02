@@ -6,7 +6,7 @@ const VentaExitosaModal = ({ isOpen, onClose }) => {
         if (isOpen) {
             const timeout = setTimeout(() => {
                 onClose();
-                window.location.reload();
+                //window.location.reload();
             }, 2400);
             return () => clearTimeout(timeout);
         }

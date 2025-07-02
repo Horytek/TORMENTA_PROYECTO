@@ -21,7 +21,7 @@ import { generateReceiptContent } from '../Comprobantes/Voucher/Voucher';
 import { validateDecimalInput, handleCobrar } from '@/services/Data/add_venta';
 import { handleGuardarCliente } from '@/services/Data/add_cliente';
 
-const CobrarModal = ({ isOpen, onClose, totalImporte, total_I }) => {
+const CobrarModal = ({ isOpen, onClose, totalImporte, total_I, handleRemoveAllProducts }) => {
   const {
     productos, sucursales, last, clientes, addCliente,
     montoRecibido, setMontoRecibido,
@@ -45,6 +45,29 @@ const CobrarModal = ({ isOpen, onClose, totalImporte, total_I }) => {
     detalles, options,
     disabledKeys1, disabledKeys2, disabledKeys3,
   } = useCobrarModalState();
+
+  const resetCobrarModal = () => {
+  setMontoRecibido('');
+  setObservacion('');
+  setDescuentoActivado(false);
+  setMontoDescuento(0);
+  setMontoRecibido2('');
+  setcomprobante_pago('Boleta');
+  setmetodo_pago('');
+  setmetodo_pago2('');
+  setMontoRecibido3('');
+  setmetodo_pago3('');
+  setShowNuevoCliente(false);
+  settipo_cliente('Natural');
+  SetSerie('');
+  SetNum('');
+  setClienteSeleccionado('');
+  setDni('');
+  setNombreCliente('');
+  setDireccionCliente('');
+  setActivarPagoDividido3(false);
+  // ...agrega más si tienes más campos
+};
 
   const nombre = useUserStore((state) => state.nombre);
   const setComprobante = useVentaSeleccionadaStore((state) => state.setComprobante);
@@ -279,10 +302,10 @@ const handleSubmit = (e) => {
     (parseFloat(montoRecibido3) || 0);
 
   // Validación: Primer método de pago debe ser EFECTIVO para Boleta/Factura
-  if ((comprobante_pago === 'Boleta' || comprobante_pago === 'Factura') && metodo_pago !== 'EFECTIVO') {
-    toast.error('El primer método de pago debe ser EFECTIVO para Boleta o Factura.');
-    return;
-  }
+if (comprobante_pago === 'Nota de venta' && metodo_pago !== 'EFECTIVO') {
+  toast.error('El primer método de pago debe ser EFECTIVO para Nota de venta.');
+  return;
+}
 
   if (totalRecibido < totalImporte) {
     errorMessage += 'Ingrese una cantidad que cubra el total requerido. ';
@@ -504,7 +527,15 @@ const handleSubmit = (e) => {
                     Cobrar e Imprimir
                   </Button>
                 </div>
-                <VentaExitosaModal isOpen={showConfirmacion} onClose={() => setShowConfirmacion(false)} />
+                <VentaExitosaModal
+                  isOpen={showConfirmacion}
+                  onClose={() => {
+                    resetCobrarModal();
+                    if (typeof handleRemoveAllProducts === 'function') handleRemoveAllProducts();
+                    setShowConfirmacion(false);
+                    onClose();
+                  }}
+                />
                 {showConfirmacion && <VentaExitosaModal onClose={() => setShowConfirmacion(false)} />}
               </form>
               {showNuevoCliente && (
@@ -533,6 +564,7 @@ CobrarModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   totalImporte: PropTypes.number.isRequired,
   total_I: PropTypes.number.isRequired,
+  handleRemoveAllProducts: PropTypes.func.isRequired, // <-- agrega esto
 };
 
 export default CobrarModal;
