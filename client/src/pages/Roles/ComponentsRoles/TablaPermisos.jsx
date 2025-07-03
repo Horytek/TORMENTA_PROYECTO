@@ -13,8 +13,8 @@ import { MdPlaylistRemove } from "react-icons/md";
 import { RiCollapseDiagonal2Line, RiExpandDiagonalLine, RiPlayListAddFill } from "react-icons/ri";
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useState, useEffect } from "react";
-import useGetRutas from "../data/getRutas";
-import { useRoles, usePermisosByRol, useSavePermisos } from "../data/rolPermisos";
+import { useGetRutas } from '@/services/permisos.services';
+import { useRoles, usePermisosByRol, useSavePermisos } from '@/services/permisos.services';
 import { toast } from "react-hot-toast";
 
 export function TablaPermisos() {

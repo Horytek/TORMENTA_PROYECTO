@@ -14,8 +14,8 @@ import { MdOutlineRestore } from "react-icons/md";
 import { RiCollapseDiagonal2Line, RiExpandDiagonalLine } from "react-icons/ri";
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight, FaHouseUser } from "react-icons/fa";
 import { useState, useEffect } from "react";
-import useGetRutas from "../data/getRutas";
-import { useRoles } from "../data/rolPermisos";
+import {useGetRutas} from '@/services/permisos.services';
+import { useRoles } from '@/services/permisos.services';
 import { toast } from "react-hot-toast";
 import axios from "@/api/axios";
 
