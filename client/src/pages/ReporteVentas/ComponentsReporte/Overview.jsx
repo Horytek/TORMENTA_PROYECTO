@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, Dialog, DialogPanel, TextInput, Badge, ProgressBar } from "@tremor/react";
 import { RiSearchLine } from "@remixicon/react";
 import { ScrollShadow } from "@heroui/react";
-import useCantidadVentasPorProducto from "../data/data_prod_venta";
+import useCantidadVentasPorProducto from "@/services/reports/data_prod_venta";
 
 const dataFormatter = (number) => ` ${Intl.NumberFormat("us").format(number).toString()}`;
 const currencyFormatter = (number) => `S/ ${Intl.NumberFormat("us").format(number).toString()}`;

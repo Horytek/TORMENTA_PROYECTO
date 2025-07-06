@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import axios from "@/api/axios";
+import { getSucursalMayorRendimientoRequest } from "@/api/api.reporte";
 
 const useVentasSucursal = (year, month, week) => {
   const [data, setData] = useState([]);
@@ -11,9 +11,11 @@ const useVentasSucursal = (year, month, week) => {
     setError(null);
 
     try {
-      const response = await axios.get("/reporte/ventas_sucursal", {
-        params: { year, month, week },
+      const params = { year, month, week };
+      Object.keys(params).forEach(key => {
+        if (params[key] === undefined || params[key] === "") delete params[key];
       });
+      const response = await getSucursalMayorRendimientoRequest(params);
 
       if (response.data.code === 1) {
         setData(response.data.data);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from "@/api/axios";
+import { getAnalisisGananciasSucursalesRequest } from "@/api/api.reporte";
 
 const useAnalisisGananciasSucursales = () => {
   const [data, setData] = useState([]);
@@ -12,7 +12,7 @@ const useAnalisisGananciasSucursales = () => {
       setError(null);
 
       try {
-        const response = await axios.get('/reporte/analisis_ganancias_sucursales');
+        const response = await getAnalisisGananciasSucursalesRequest();
         if (response.data.code === 1) {
           setData(response.data.data);
         } else {

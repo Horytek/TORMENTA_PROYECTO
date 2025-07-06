@@ -1,45 +1,42 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from "@/api/axios";
+import { getTopProductosMargenRequest } from "@/api/api.reporte";
 
-const useTendenciaVentas = (idSucursal, year, month, week) => {
+const useTopProductosMargen = (idSucursal, year, month, week, limit = 5) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchTendenciaVentas = useCallback(async () => {
+  const fetchTopProductosMargen = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = {
-        id_sucursal: idSucursal,
-        year,
-        month,
-        week,
-      };
+      const params = { id_sucursal: idSucursal, year, month, week, limit };
       Object.keys(params).forEach(key => {
         if (params[key] === undefined || params[key] === "") delete params[key];
       });
 
-      const response = await axios.get('/reporte/tendencia_ventas', { params });
+      const response = await getTopProductosMargenRequest(params);
 
       if (response.data.code === 1) {
         setData(response.data.data);
       } else {
         setError('Error en la solicitud');
+        setData([]);
       }
     } catch (error) {
       setError('Error en la solicitud');
+      setData([]);
     } finally {
       setLoading(false);
     }
-  }, [idSucursal, year, month, week]);
+  }, [idSucursal, year, month, week, limit]);
 
   useEffect(() => {
-    fetchTendenciaVentas();
-  }, [fetchTendenciaVentas]);
+    fetchTopProductosMargen();
+  }, [fetchTopProductosMargen]);
 
   return { data, loading, error };
 };
 
-export default useTendenciaVentas;
+export default useTopProductosMargen;

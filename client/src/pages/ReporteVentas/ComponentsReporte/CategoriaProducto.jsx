@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardHeader, CardBody, CardFooter, Chip, Tooltip, Divider, Badge } from "@heroui/react";
 import { DonutChart } from '@tremor/react';
-import useCantidadVentasPorSubcategoria from '../data/data_venta_subcat';
+import useCantidadVentasPorSubcategoria from '@/services/reports/data_venta_subcat';
 import { Tag } from "lucide-react";
 
 function classNames(...classes) {

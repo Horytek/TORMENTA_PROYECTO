@@ -9,10 +9,10 @@ import {
   DollarSign,
   Store,
 } from "lucide-react";
-import useVentasData from "../data/data_soles";
-import useTotalProductosVendidos from "../data/data_prod";
-import useProductoTop from "../data/data_top";
-import useVentasSucursal from "../data/data_ventas_sucursal";
+import useVentasData from "@/services/reports/data_soles";
+import useTotalProductosVendidos from "@/services/reports/data_prod";
+import useProductoTop from "@/services/reports/data_top";
+import useVentasSucursal from "@/services/reports/data_ventas_sucursal";
 
 // Card métrica reutilizable con fondo degradado y diseño consistente
 function MetricCardKPI({ icon, title, value, change, gradient, iconColor, borderColor, children }) {

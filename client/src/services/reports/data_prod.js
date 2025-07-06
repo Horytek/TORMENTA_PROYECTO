@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from "@/api/axios";
+import { getTotalProductosVendidosRequest } from "@/api/api.reporte";
 
 const useTotalProductosVendidos = (idSucursal, year, month, week) => { 
   const [data, setData] = useState({
@@ -11,15 +11,11 @@ const useTotalProductosVendidos = (idSucursal, year, month, week) => {
 
   const fetchProductos = useCallback(async () => {
     try {
-      const response = await axios.get('/reporte/productos_vendidos', {
-        params: {
-          id_sucursal: idSucursal,
-          year,
-          month,
-          week,
-        },
+      const params = { id_sucursal: idSucursal, year, month, week };
+      Object.keys(params).forEach(key => {
+        if (params[key] === undefined || params[key] === "") delete params[key];
       });
-
+      const response = await getTotalProductosVendidosRequest(params);
       if (response.status === 200 && response.data.code === 1) {
         setData({
           totalProductosVendidos: parseInt(response.data.totalProductosVendidos || 0, 10),
@@ -28,10 +24,20 @@ const useTotalProductosVendidos = (idSucursal, year, month, week) => {
           subcategorias: response.data.subcategorias || {},
         });
       } else {
-        console.error('Error en la solicitud: ', response.data.message);
+        setData({
+          totalProductosVendidos: 0,
+          totalAnterior: 0,
+          porcentaje: 0,
+          subcategorias: {},
+        });
       }
     } catch (error) {
-      console.error('Error en la solicitud: ', error.message);
+      setData({
+        totalProductosVendidos: 0,
+        totalAnterior: 0,
+        porcentaje: 0,
+        subcategorias: {},
+      });
     }
   }, [idSucursal, year, month, week]); 
 
