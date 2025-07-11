@@ -1,7 +1,16 @@
 import PropTypes from 'prop-types';
 import { FaTrashAlt } from 'react-icons/fa';
 
-const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChange, handleDiscountChange, handlePrecieChange }) => {
+const TablaDetallesVenta = ({
+  detalles,
+  handleProductRemove,
+  handleQuantityChange,
+  handleDiscountChange,
+  handlePrecieChange,
+  handleIncrement,
+  handleDecrement
+}) => {
+
 
   const handleDescuentoChange = (index, newDescuento) => {
     const updatedDetalles = [...detalles];
@@ -61,22 +70,6 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
       handleQuantityChange(index, 1);
     }
   };
-
-  const handleIncrement = (index) => {
-    const updatedDetalles = [...detalles];
-    updatedDetalles[index].cantidad = (parseFloat(updatedDetalles[index].cantidad) || 1) + 1;
-    handleQuantityChange(index, updatedDetalles[index].cantidad);
-  };
-
-  const handleDecrement = (index) => {
-    const updatedDetalles = [...detalles];
-    const currentCantidad = parseFloat(updatedDetalles[index].cantidad) || 1;
-    if (currentCantidad > 1) {
-      updatedDetalles[index].cantidad = currentCantidad - 1;
-      handleQuantityChange(index, updatedDetalles[index].cantidad);
-    }
-  };
-
   const validateDecimalInput = (e) => {
     const { value } = e.target;
     const allowedKeys = ['Backspace', 'ArrowLeft', 'ArrowRight', 'Delete', '.', ...Array.from(Array(10).keys()).map(String)];
@@ -115,14 +108,32 @@ const TablaDetallesVenta = ({ detalles, handleProductRemove, handleQuantityChang
                   style={{ background: "transparent", outline: "none !important" }}
                   value={detalle.cantidad}
                   onChange={(e) => {
-                    const newValue = e.target.value.trim(); // Elimina espacios en blanco al inicio y al final
-                    if (newValue === '' || !isNaN(parseInt(newValue))) {
-                      // Actualiza el estado solo si el nuevo valor es una cadena vacía o un número válido
-                      handleQuantityChange(index, newValue === '' ? '' : Math.max(1, parseFloat(newValue)));
+                    const newValue = e.target.value;
+                    // Permite solo números y evita que se borre todo el input
+                    if (/^\d+$/.test(newValue)) {
+                      const parsed = parseInt(newValue, 10);
+                      if (parsed >= 1) {
+                        handleQuantityChange(index, parsed);
+                      }
                     }
                   }}
-                  onBlur={() => handleCantidadBlur(index)}
+                  onKeyDown={(e) => {
+                    const allowedKeys = ['Backspace', 'ArrowLeft', 'ArrowRight', 'Delete'];
+                    const isNumber = /^[0-9]$/.test(e.key);
 
+                    // Evita que borren todo si solo hay un dígito
+                    if (
+                      e.key === 'Backspace' &&
+                      String(detalle.cantidad).length === 1
+                    ) {
+                      e.preventDefault();
+                    }
+
+                    // Solo permite números y teclas de navegación
+                    if (!isNumber && !allowedKeys.includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               <button className="increment" onClick={() => handleIncrement(index)}>+</button>
               </div>

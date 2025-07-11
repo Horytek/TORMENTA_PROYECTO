@@ -113,36 +113,94 @@ const handleRemoveAllProducts = () => {
     setSearchTerm('');
   };
 
-  const handleQuantityChange = (index, newCantidad) => {
-    if (newCantidad >= 0) {
-      const updatedDetalles = [...detalles];
-      const detalleToUpdate = { ...updatedDetalles[index] };
-      const oldCantidad = detalleToUpdate.cantidad;
+const handleQuantityChange = (index, newCantidad) => {
+  if (newCantidad >= 0) {
+    const updatedDetalles = [...detalles];
+    const detalleToUpdate = { ...updatedDetalles[index] };
+    const oldCantidad = parseFloat(detalleToUpdate.cantidad);
+    const productoCodigo = detalleToUpdate.codigo;
 
-      const productoCodigo = detalleToUpdate.codigo;
-      const productoIndex = productos.findIndex(p => p.codigo === productoCodigo);
+    const productoIndex = productos.findIndex(p => p.codigo === productoCodigo);
 
-      if (productoIndex !== -1) {
-        const producto = productos[productoIndex];
+    if (productoIndex !== -1) {
+      const producto = productos[productoIndex];
+      const stockDisponible = producto.stock + oldCantidad;
 
-        if (newCantidad <= producto.stock + oldCantidad) {
-          detalleToUpdate.cantidad = newCantidad;
+      if (newCantidad <= stockDisponible) {
+        detalleToUpdate.cantidad = newCantidad;
 
-          const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad - ((parseFloat(detalleToUpdate.descuento) / 100) * detalleToUpdate.precio) * newCantidad).toFixed(2);
+        const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad -
+          ((parseFloat(detalleToUpdate.descuento) / 100) * detalleToUpdate.precio) * newCantidad).toFixed(2);
 
-          detalleToUpdate.subtotal = `S/ ${subtotal}`;
+        detalleToUpdate.subtotal = `S/ ${subtotal}`;
 
-          updateDetalle(detalleToUpdate);
+        updateDetalle(detalleToUpdate);
 
-          const updatedProductos = [...productos];
-          updatedProductos[productoIndex].stock += oldCantidad - newCantidad;
-          setProductos(updatedProductos);
-        } else {
-          setShowAlert(true);
-        }
+        const updatedProductos = [...productos];
+        updatedProductos[productoIndex].stock = stockDisponible - newCantidad;
+        setProductos(updatedProductos);
+      } else {
+        setShowAlert(true);
       }
     }
-  };
+  }
+};
+
+  const handleIncrement = (index) => {
+  const updatedDetalles = [...detalles];
+  const detalleToUpdate = { ...updatedDetalles[index] };
+  const productoCodigo = detalleToUpdate.codigo;
+
+  const productoIndex = productos.findIndex(p => p.codigo === productoCodigo);
+
+  if (productoIndex !== -1 && productos[productoIndex].stock > 0) {
+    const newCantidad = parseFloat(detalleToUpdate.cantidad) + 1;
+
+    detalleToUpdate.cantidad = newCantidad;
+
+    const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad -
+      ((parseFloat(detalleToUpdate.descuento) / 100) * detalleToUpdate.precio) * newCantidad).toFixed(2);
+
+    detalleToUpdate.subtotal = `S/ ${subtotal}`;
+
+    updateDetalle(detalleToUpdate);
+
+    const updatedProductos = [...productos];
+    updatedProductos[productoIndex].stock -= 1;
+    setProductos(updatedProductos);
+  } else {
+    setShowAlert(true);
+  }
+};
+
+const handleDecrement = (index) => {
+  const updatedDetalles = [...detalles];
+  const detalleToUpdate = { ...updatedDetalles[index] };
+  const productoCodigo = detalleToUpdate.codigo;
+
+  const currentCantidad = parseFloat(detalleToUpdate.cantidad) || 1;
+
+  if (currentCantidad > 1) {
+    const newCantidad = currentCantidad - 1;
+
+    detalleToUpdate.cantidad = newCantidad;
+
+    const subtotal = (parseFloat(detalleToUpdate.precio) * newCantidad -
+      ((parseFloat(detalleToUpdate.descuento) / 100) * detalleToUpdate.precio) * newCantidad).toFixed(2);
+
+    detalleToUpdate.subtotal = `S/ ${subtotal}`;
+
+    updateDetalle(detalleToUpdate);
+
+    const productoIndex = productos.findIndex(p => p.codigo === productoCodigo);
+    if (productoIndex !== -1) {
+      const updatedProductos = [...productos];
+      updatedProductos[productoIndex].stock += 1;
+      setProductos(updatedProductos);
+    }
+  }
+};
+
 
   const handleDiscountChange = (index, detalle) => {
     const updatedDetalles = [...detalles];
@@ -241,13 +299,16 @@ const handleRemoveAllProducts = () => {
               Producto
             </Button>
           </div>
-          <TablaDetallesVenta
-            detalles={detalles}
-            handleProductRemove={handleProductRemove}
-            handleQuantityChange={handleQuantityChange}
-            handleDiscountChange={handleDiscountChange}
-            handlePrecieChange={handlePrecieChange}
-          />
+<TablaDetallesVenta
+  detalles={detalles}
+  handleProductRemove={handleProductRemove}
+  handleQuantityChange={handleQuantityChange}
+  handleDiscountChange={handleDiscountChange}
+  handlePrecieChange={handlePrecieChange}
+  handleIncrement={handleIncrement}
+  handleDecrement={handleDecrement}
+/>
+
 
           <div className="flex justify-end mt-4">
             <div className="flex flex-col w-100">
