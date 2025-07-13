@@ -98,62 +98,27 @@ const handleTodayFilters = () => {
     fetchSucursales();
   }, []);
 
-  return (
-        <ScrollShadow hideScrollBar className="h-[calc(100vh-40px)] w-full">
-    <div>
-      <Breadcrumb
-        paths={[
-          { name: "Inicio", href: "/inicio" },
-          { name: "Ventas", href: "/ventas" },
-          { name: "Reporte", href: "/reportes" },
-        ]}
-      />
-
-      <hr className="mb-4" />
-      <div className="space-y-1">
-        <div className="container-tormenta">
-          <div className="title-tormenta">
-            <h3
-              className="text-xl font-bold"
-              style={{
-                fontSize: "32px",
-                marginBottom: "12px",
-                pointerEvents: "none",
-                userSelect: "none",
-              }}
-            >
-              Reporte de ventas en sucursales
-            </h3>
-          </div>
+return (
+  <ScrollShadow hideScrollBar className="h-[calc(100vh-40px)] w-full">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 py-8 px-2 sm:px-6">
+      <div className="max-w-[1600px] mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-white/90 rounded-2xl shadow border border-blue-100 p-8 mb-2">
+          <h3 className="text-3xl font-extrabold text-blue-900 mb-1 tracking-tight">Reporte de ventas en sucursales</h3>
+          <p className="text-base text-blue-700/80">Visualiza el análisis de ventas y productos de las sucursales.</p>
         </div>
 
-        <p
-          className="text-small text-default-400"
-          style={{
-            fontSize: "14px",
-            pointerEvents: "none",
-            userSelect: "none",
-          }}
-        >
-          Visualiza el análisis de ventas y productos de las sucursales.
-        </p>
-      </div>
-      <div className="max-w-md">
-        <Divider className="my-2" />
-      </div>
-
-      <div
-        className="container-rv"
-        style={{ marginBottom: "10px", marginTop: "17px" }}
-      >
-        <div className="flex flex-col md:flex-row md:space-x-2 space-y-2 md:space-y-0 relative">
-          {loading ? (
-            <Spinner />
-          ) : (
+        {/* Filtros */}
+        <div className="bg-white/80 rounded-xl shadow-sm border border-blue-100 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex-1">
             <Tabs
               aria-label="Tabs variants"
               selectedKey={selectedTab}
               onSelectionChange={setSelectedTab}
+              classNames={{
+                tabList: "bg-transparent",
+                tab: "text-blue-700 data-[selected=true]:bg-blue-100 data-[selected=true]:text-blue-900 rounded-lg px-4 py-2 font-semibold",
+              }}
             >
               <Tab key="todas" title="Todas" />
               {Array.isArray(sucursales) &&
@@ -164,22 +129,18 @@ const handleTodayFilters = () => {
                   />
                 ))}
             </Tabs>
-          )}
-          <div
-            className="element-right flex gap-2"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              marginLeft: "auto",
-            }}
-          >
+          </div>
+          <div className="flex flex-wrap gap-2 items-center">
             {/* Select de semanas */}
             <Select
-              className="w-[150px]"
+              className="w-[130px]"
               isDisabled={!selectedMonth.length}
               placeholder="Semana"
               selectedKeys={selectedWeek}
               onSelectionChange={(keys) => setSelectedWeek(Array.from(keys))}
+              classNames={{
+                trigger: "bg-blue-50 border-blue-200 text-blue-900",
+              }}
             >
               <SelectItem key="all" value="all">
                 Todo el mes
@@ -190,44 +151,47 @@ const handleTodayFilters = () => {
                 </SelectItem>
               ))}
             </Select>
-
             {/* Select de meses */}
-              <Select
-                className="w-[150px]"
-                placeholder="Mes"
-                selectedKeys={selectedMonth}
-                onSelectionChange={(keys) => {
-                  setSelectedMonth(Array.from(keys));
-                  setSelectedWeek([]);
-                }}
-              >
+            <Select
+              className="w-[130px]"
+              placeholder="Mes"
+              selectedKeys={selectedMonth}
+              onSelectionChange={(keys) => {
+                setSelectedMonth(Array.from(keys));
+                setSelectedWeek([]);
+              }}
+              classNames={{
+                trigger: "bg-blue-50 border-blue-200 text-blue-900",
+              }}
+            >
               {months.map((month) => (
                 <SelectItem key={month.key} value={month.key}>
                   {month.name}
                 </SelectItem>
               ))}
             </Select>
-
             {/* Select de años */}
-              <Select
-                className="w-[150px]"
-                placeholder="Año"
-                selectedKeys={selectedYear}
-                onSelectionChange={(keys) => {
-                  setSelectedYear(Array.from(keys));
-                  if (!keys.size) {
-                    setSelectedMonth([]);
-                    setSelectedWeek([]);
-                  }
-                }}
-              >
+            <Select
+              className="w-[110px]"
+              placeholder="Año"
+              selectedKeys={selectedYear}
+              onSelectionChange={(keys) => {
+                setSelectedYear(Array.from(keys));
+                if (!keys.size) {
+                  setSelectedMonth([]);
+                  setSelectedWeek([]);
+                }
+              }}
+              classNames={{
+                trigger: "bg-blue-50 border-blue-200 text-blue-900",
+              }}
+            >
               {years.map((year) => (
                 <SelectItem key={year} value={year}>
                   {year}
                 </SelectItem>
               ))}
             </Select>
-
             {/* Botón limpiar */}
             <Button
               isIconOnly
@@ -235,6 +199,7 @@ const handleTodayFilters = () => {
               color="danger"
               onPress={handleClearFilters}
               title="Limpiar filtros"
+              className="bg-rose-50 hover:bg-rose-100 text-rose-600"
             >
               <MdClear className="text-xl" />
             </Button>
@@ -245,80 +210,84 @@ const handleTodayFilters = () => {
               color="primary"
               onPress={handleTodayFilters}
               title="Ir a hoy"
+              className="bg-blue-50 hover:bg-blue-100 text-blue-700"
             >
               <MdToday className="text-xl" />
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Si la pestaña seleccionada es "todas", no pasamos idSucursal */}
-<KPIS
-  idSucursal={selectedTab !== "todas" ? selectedTab : null}
-  periodoTexto={
-    (selectedYear[0] === new Date().getFullYear().toString() &&
-      !selectedMonth.length &&
-      (!selectedWeek.length || selectedWeek[0] === "all"))
-      ? "vs. mes anterior"
-      : selectedWeek.length && selectedWeek[0] !== "all"
-      ? "vs semana anterior"
-      : "vs. mes anterior"
-  }
-  year={selectedYear[0] || undefined}
-  month={selectedMonth[0] || undefined}
-  week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
-/>
-
-      <div className="flex-grow mb-8 grid grid-cols-1 sm:grid-cols-[3fr_1fr] gap-6 px-4">
-        {/* Parte superior: TablaGanancias y CategoriaProducto */}
-        <div className="h-full">
-          <TablaGanancias
+        {/* KPIS */}
+        <div className="mb-2">
+          <KPIS
             idSucursal={selectedTab !== "todas" ? selectedTab : null}
-            className="p-6 bg-white rounded-xl shadow-sm h-full"
-  year={selectedYear[0] || undefined}
-  month={selectedMonth[0] || undefined}
-  week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
+            periodoTexto={
+              (selectedYear[0] === new Date().getFullYear().toString() &&
+                !selectedMonth.length &&
+                (!selectedWeek.length || selectedWeek[0] === "all"))
+                ? "vs. mes anterior"
+                : selectedWeek.length && selectedWeek[0] !== "all"
+                ? "vs semana anterior"
+                : "vs. mes anterior"
+            }
+            year={selectedYear[0] || undefined}
+            month={selectedMonth[0] || undefined}
+            week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
           />
         </div>
-        <div className="h-full">
-          <CategoriaProducto
-            idSucursal={selectedTab !== "todas" ? selectedTab : null}
-            className="p-6 bg-white rounded-xl shadow-sm h-full"
-  year={selectedYear[0] || undefined}
-  month={selectedMonth[0] || undefined}
-  week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
-          />
+
+        {/* Parte superior: TablaGanancias y CategoriaProducto */}
+        <div className="grid grid-cols-1 sm:grid-cols-[3fr_1fr] gap-6">
+          <div className="h-full">
+            <TablaGanancias
+              idSucursal={selectedTab !== "todas" ? selectedTab : null}
+              className="p-6 bg-white rounded-xl shadow-sm h-full"
+              year={selectedYear[0] || undefined}
+              month={selectedMonth[0] || undefined}
+              week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
+            />
+          </div>
+          <div className="h-full">
+            <CategoriaProducto
+              idSucursal={selectedTab !== "todas" ? selectedTab : null}
+              className="p-6 bg-white rounded-xl shadow-sm h-full"
+              year={selectedYear[0] || undefined}
+              month={selectedMonth[0] || undefined}
+              week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
+            />
+          </div>
         </div>
 
         {/* Parte inferior: TendenciaVentas y TopProductosMargen */}
         <div className="col-span-full grid grid-cols-[3fr_1fr] gap-6">
           <div className="rounded-xl p-1 h-full">
             <TendenciaVentas
-  year={selectedYear[0] || undefined}
-  month={selectedMonth[0] || undefined}
-  week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
+              year={selectedYear[0] || undefined}
+              month={selectedMonth[0] || undefined}
+              week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
             />
           </div>
           <div className="rounded-xl p-1 h-full">
             <TopProductosMargen
-  year={selectedYear[0] || undefined}
-  month={selectedMonth[0] || undefined}
-  week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
+              year={selectedYear[0] || undefined}
+              month={selectedMonth[0] || undefined}
+              week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
+            />
+          </div>
+        </div>
+
+        {/* Comparativa */}
+        <div className="grid grid-cols-5 grid-rows-[0.9fr] gap-0">
+          <div className="col-start-1 col-end-6 row-start-2 row-end-3 pl-4">
+            <Comparativa
+              idSucursal={selectedTab !== "todas" ? selectedTab : null}
             />
           </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-5 grid-rows-[0.9fr] gap-0">
-        <div className="col-start-1 col-end-6 row-start-2 row-end-3 pl-4">
-          <Comparativa
-            idSucursal={selectedTab !== "todas" ? selectedTab : null}
-          />
-        </div>
-      </div>
     </div>
   </ScrollShadow>
-  );
+);
 };
 
 export default ReporteVentas;

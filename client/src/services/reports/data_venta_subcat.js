@@ -50,12 +50,7 @@ const useCantidadVentasPorSubcategoria = (idSucursal, year, month, week) => {
   }, [idSucursal, year, month, week]);
 
   useEffect(() => {
-    if (idSucursal && (year || month || week)) {
       fetchData();
-    } else {
-      setData([]);
-      setLoading(false);
-    }
   }, [fetchData]);
 
   return { data, loading, error };

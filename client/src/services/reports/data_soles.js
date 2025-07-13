@@ -54,15 +54,9 @@ const useVentasData = (idSucursal, year, month, week) => {
     }
   }, [idSucursal, year, month, week]);
 
-  useEffect(() => {
-    if (idSucursal && (year || month || week)) {
-      fetchVentas();
-    } else {
-      // Si no hay parámetros válidos, limpiar
-      setData({ totalRecaudado: 0, totalAnterior: 0, porcentaje: 0 });
-      setLoading(false);
-    }
-  }, [fetchVentas]);
+useEffect(() => {
+  fetchVentas();
+}, [fetchVentas]);
 
   return { ...data, loading };
 };

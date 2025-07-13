@@ -15,9 +15,6 @@ const useTotalProductosVendidos = (idSucursal, year, month, week) => {
   const lastParams = useRef({});
 
   useEffect(() => {
-    // Solo consulta si hay parámetros válidos
-    if (!idSucursal || !year || !month) return;
-
     const params = { id_sucursal: idSucursal, year, month, week };
     // Limpiar params vacíos
     Object.keys(params).forEach(key => {

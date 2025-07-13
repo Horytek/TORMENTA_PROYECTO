@@ -49,13 +49,7 @@ const useTopProductosMargen = (idSucursal, year, month, week, limit = 5) => {
   }, [idSucursal, year, month, week, limit]);
 
   useEffect(() => {
-    if (idSucursal && (year || month || week)) {
       fetchTopProductosMargen();
-    } else {
-      // Si los parámetros son inválidos, limpiamos
-      setData([]);
-      setLoading(false);
-    }
   }, [fetchTopProductosMargen]);
 
   return { data, loading, error };

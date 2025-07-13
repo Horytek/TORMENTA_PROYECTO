@@ -49,12 +49,7 @@ const useTendenciaVentas = (idSucursal, year, month, week) => {
   }, [idSucursal, year, month, week]);
 
   useEffect(() => {
-    if (idSucursal && (year || month || week)) {
       fetchTendenciaVentas();
-    } else {
-      setData([]);
-      setLoading(false);
-    }
   }, [fetchTendenciaVentas]);
 
   return { data, loading, error };

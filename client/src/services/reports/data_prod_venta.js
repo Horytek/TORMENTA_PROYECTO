@@ -50,9 +50,7 @@ const useCantidadVentasPorProducto = (idSucursal, year, month, week) => {
   }, [idSucursal, year, month, week]);
 
   useEffect(() => {
-    if (idSucursal && (year || month || week)) {
       fetchCantidadVentasPorProducto();
-    }
   }, [fetchCantidadVentasPorProducto]);
 
   return { ventasPorProducto, loading, error };

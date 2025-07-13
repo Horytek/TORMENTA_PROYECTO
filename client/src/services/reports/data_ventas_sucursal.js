@@ -19,13 +19,6 @@ const useVentasSucursal = (year, month, week) => {
       }
     });
 
-    // Si no hay ningún parámetro válido, no continuar
-    if (Object.keys(params).length === 0) {
-      setData([]);
-      setLoading(false);
-      return;
-    }
-
     const cacheKey = JSON.stringify(params);
 
     // Verificar si ya se tiene la consulta en caché

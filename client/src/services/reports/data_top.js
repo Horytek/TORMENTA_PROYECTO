@@ -50,12 +50,7 @@ const useProductoTop = (idSucursal, year, month, week) => {
   }, [idSucursal, year, month, week]);
 
   useEffect(() => {
-    if (idSucursal && (year || month || week)) {
       fetchProductoTop();
-    } else {
-      setProductoTop(null);
-      setLoading(false);
-    }
   }, [fetchProductoTop]);
 
   return { productoTop, loading, error };
