@@ -356,104 +356,106 @@ const porcentajePendientes =
 
   
   return (
-    <div className="relative items-center justify-between bg-white">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-5xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-500 to-cyan-400 transform-gpu">
-            Dashboard de inicio
-          </h1>
-          <p
-            className="text-small text-default-400"
-            style={{ fontSize: "16px", userSelect: "none", marginTop: "10px" }}
-          >
-            Visualiza el dashboard general de ventas por periodos de tiempo.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {userRol === ADMIN_ROL && (
-            <>
-              <Select
-                className="w-64"
-                selectedKeys={new Set([selectedSucursal])}
-                onSelectionChange={(keys) => {
-                  const firstKey = keys.values().next().value || "";
-                  setSelectedSucursal(firstKey);
-                }}
-                placeholder="Seleccionar sucursal"
+    <div className="min-h-screen py-8 px-2 sm:px-6">
+      <div className="max-w-[1600px] mx-auto space-y-6">
+<header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 border border-blue-100 rounded-2xl shadow-sm p-6 mb-2">
+  <div>
+    <h1 className="text-5xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-500 to-cyan-400 drop-shadow-md">
+      Panel Principal
+    </h1>
+    <p className="text-base text-blue-700/80 mt-2">
+      Visualiza el dashboard general de ventas por periodos de tiempo.
+    </p>
+  </div>
+  <div className="flex items-center gap-3">
+    <Select
+      className="w-64"
+      selectedKeys={new Set([selectedSucursal])}
+      onSelectionChange={(keys) => {
+        const firstKey = keys.values().next().value || "";
+        setSelectedSucursal(firstKey);
+      }}
+      placeholder="Seleccionar sucursal"
+      classNames={{
+        trigger: "bg-blue-50 border-blue-100 text-blue-900 shadow-sm",
+      }}
+    >
+      {sucursales.map((sucursal) => (
+        <SelectItem
+          key={sucursal.id.toString()}
+          value={sucursal.id.toString()}
+        >
+          {sucursal.nombre}
+        </SelectItem>
+      ))}
+    </Select>
+    <Button
+      auto
+      light
+      color="danger"
+      onClick={() => setSelectedSucursal("")}
+      className="bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm"
+    >
+      <MdDeleteForever style={{ fontSize: "20px" }} />
+      Limpiar
+    </Button>
+  </div>
+</header>
+<div className="max-w-md">
+  <Divider className="my-3 opacity-60" />
+</div>
+        <div style={{ marginTop: "15px" }}>
+          <main>
+            <div className="bg-white/70 border border-blue-100 rounded-xl shadow-sm px-2 py-2 mb-4 flex flex-col">
+              <Tabs
+                selectedKey={selectedTab}
+                onSelectionChange={setSelectedTab}
                 classNames={{
-                  trigger: "bg-gray-200 text-gray-700 hover:bg-gray-300",
+                  tabList: "bg-transparent flex gap-2",
+                  tab: "rounded-lg px-4 py-2 font-semibold transition-colors text-blue-700 data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-blue-100 data-[selected=true]:to-blue-50 data-[selected=true]:text-blue-900 data-[selected=true]:shadow data-[selected=true]:border data-[selected=true]:border-blue-200",
                 }}
               >
-                {sucursales.map((sucursal) => (
-                  <SelectItem
-                    key={sucursal.id.toString()}
-                    value={sucursal.id.toString()}
-                  >
-                    {sucursal.nombre}
-                  </SelectItem>
-                ))}
-              </Select>
-              <Button
-                auto
-                light
-                color="danger"
-                onClick={() => setSelectedSucursal("")}
-              >
-                <MdDeleteForever style={{ fontSize: "20px" }} />
-                Limpiar
-              </Button>
-            </>
-          )}
-        </div>
-      </header>
-      <div className="max-w-md">
-        <Divider className="my-3" />
-      </div>
-      <div style={{ marginTop: "15px" }}>
-        <main>
-          <Tabs
-            selectedKey={selectedTab}
-            onSelectionChange={setSelectedTab}
-          >
-            <Tab key="24h" title="Ult. 24hrs" />
-            <Tab key="semana" title="Ult. Semana" />
-            <Tab key="mes" title="Ult. mes" />
-            <Tab key="anio" title="Ult. año" />
-          </Tabs>
-          <div className="mt-4">
+                <Tab key="24h" title="Ult. 24hrs" />
+                <Tab key="semana" title="Ult. Semana" />
+                <Tab key="mes" title="Ult. mes" />
+                <Tab key="anio" title="Ult. año" />
+              </Tabs>
+            </div>
+            <div className="mt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <MetricCard
-                icon={<ShoppingBag className="h-6 w-6" />}
-                title="Total Ventas"
-                value={`S/. ${ventasTotal}`}
-                change={`${percentageChange > 0 ? "+" : ""}${percentageChange.toFixed(1)}%`}
-                periodoLabel={periodoLabel}
-                gradient="from-rose-500/20 via-pink-500/10 to-transparent"
-                iconColor="bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"
-                borderColor="border-rose-200/50 dark:border-rose-800/50"
-              />
-              <MetricCard
-                icon={<Users className="h-6 w-6" />}
-                title="Nuevos Clientes"
-                value={totalRegistros}
-                change={`${cambioNuevosClientes > 0 ? "+" : ""}${cambioNuevosClientes.toFixed(1)}%`}
-                periodoLabel={periodoLabel}
-                gradient="from-violet-500/20 via-purple-500/10 to-transparent"
-                iconColor="bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400"
-                borderColor="border-violet-200/50 dark:border-violet-800/50"
-              />
-              <MetricCard
-                icon={<Package className="h-6 w-6" />}
-                title="Productos Vendidos"
-                value={totalProductsSold}
-                change={`${percentageChangeProducts > 0 ? "+" : ""}${percentageChangeProducts.toFixed(1)}%`}
-                periodoLabel={periodoLabel}
-                gradient="from-emerald-500/20 via-green-500/10 to-transparent"
-                iconColor="bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
-                borderColor="border-emerald-200/50 dark:border-emerald-800/50"
-              />
-              <MetricCard
-                    icon={
+                {/* KPIs */}
+                <MetricCard
+                  icon={<ShoppingBag className="h-6 w-6" />}
+                  title="Total Ventas"
+                  value={`S/. ${ventasTotal}`}
+                  change={`${percentageChange > 0 ? "+" : ""}${percentageChange.toFixed(1)}%`}
+                  periodoLabel={periodoLabel}
+                  gradient="from-rose-500/20 via-pink-500/10 to-transparent"
+                  iconColor="bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"
+                  borderColor="border-rose-200/50 dark:border-rose-800/50"
+                />
+                <MetricCard
+                  icon={<Users className="h-6 w-6" />}
+                  title="Nuevos Clientes"
+                  value={totalRegistros}
+                  change={`${cambioNuevosClientes > 0 ? "+" : ""}${cambioNuevosClientes.toFixed(1)}%`}
+                  periodoLabel={periodoLabel}
+                  gradient="from-violet-500/20 via-purple-500/10 to-transparent"
+                  iconColor="bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400"
+                  borderColor="border-violet-200/50 dark:border-violet-800/50"
+                />
+                <MetricCard
+                  icon={<Package className="h-6 w-6" />}
+                  title="Productos Vendidos"
+                  value={totalProductsSold}
+                  change={`${percentageChangeProducts > 0 ? "+" : ""}${percentageChangeProducts.toFixed(1)}%`}
+                  periodoLabel={periodoLabel}
+                  gradient="from-emerald-500/20 via-green-500/10 to-transparent"
+                  iconColor="bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+                  borderColor="border-emerald-200/50 dark:border-emerald-800/50"
+                />
+                <MetricCard
+                  icon={
                     <Tooltip content={cantidadPendientes === 0 ? "No hay notas pendientes" : "Ver notas pendientes"}>
                       <span
                         className="cursor-pointer"
@@ -464,46 +466,47 @@ const porcentajePendientes =
                         <LayoutGrid className="h-6 w-6" />
                       </span>
                     </Tooltip>
-                    }
-                    title="Notas Pendientes"
-                    value={cantidadPendientes === 0 ? "Sin pendientes" : cantidadPendientes}
-                    change={
-                      cantidadPendientes === 0
-                        ? ""
-                        : `${porcentajePendientes.toFixed(1)}% pendientes`
-                    }
-                    gradient={
-                      cantidadPendientes === 0
-                        ? "from-emerald-400/20 via-green-400/10 to-transparent"
-                        : "from-rose-500/20 via-pink-500/10 to-transparent"
-                    }
-                    iconColor={
-                      cantidadPendientes === 0
-                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
-                        : "bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"
-                    }
-                    borderColor={
-                      cantidadPendientes === 0
-                        ? "border-emerald-200/50 dark:border-emerald-800/50"
-                        : "border-rose-200/50 dark:border-rose-800/50"
-                    }
-                  />
+                  }
+                  title="Notas Pendientes"
+                  value={cantidadPendientes === 0 ? "Sin pendientes" : cantidadPendientes}
+                  change={
+                    cantidadPendientes === 0
+                      ? ""
+                      : `${porcentajePendientes.toFixed(1)}% pendientes`
+                  }
+                  gradient={
+                    cantidadPendientes === 0
+                      ? "from-emerald-400/20 via-green-400/10 to-transparent"
+                      : "from-rose-500/20 via-pink-500/10 to-transparent"
+                  }
+                  iconColor={
+                    cantidadPendientes === 0
+                      ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+                      : "bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"
+                  }
+                  borderColor={
+                    cantidadPendientes === 0
+                      ? "border-emerald-200/50 dark:border-emerald-800/50"
+                      : "border-rose-200/50 dark:border-rose-800/50"
+                  }
+                />
                 <NotasPendientesModal
                   open={modalNotasOpen}
                   onClose={() => setModalNotasOpen(false)}
                   notas={notasPendientes}
                   refetchNotas={refetchNotasPendientes}
                 />
+              </div>
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <StockCard productos={productosMenorStock} />
+                <PerformanceCard sucursales={sucursalesDesempeno} promedioGeneral={promedioGeneral} />
+              </div>
+              <div className="mt-7">
+                <LineChartComponent sucursal={selectedSucursal} />
+              </div>
             </div>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <StockCard productos={productosMenorStock} />
-              <PerformanceCard sucursales={sucursalesDesempeno} promedioGeneral={promedioGeneral} />
-            </div>
-            <div className="mt-7">
-              <LineChartComponent sucursal={selectedSucursal} />
-            </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   );

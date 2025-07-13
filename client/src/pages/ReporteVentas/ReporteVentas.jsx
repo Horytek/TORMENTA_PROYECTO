@@ -100,7 +100,7 @@ const handleTodayFilters = () => {
 
 return (
   <ScrollShadow hideScrollBar className="h-[calc(100vh-40px)] w-full">
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 py-8 px-2 sm:px-6">
+    <div className="min-h-screen py-8 px-2 sm:px-6">
       <div className="max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
         <div className="bg-white/90 rounded-2xl shadow border border-blue-100 p-8 mb-2">

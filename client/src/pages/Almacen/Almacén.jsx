@@ -326,7 +326,7 @@ const Kardex = () => {
 
 
 return (
-  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+  <div className="min-h-screen from-slate-50 p-6">
     <Toaster />
     <div className="max-w-[98vw] xl:max-w-[1600px] mx-auto space-y-6 px-2 sm:px-4">
       {/* Header */}
