@@ -13,10 +13,11 @@ import { Select, SelectItem } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { Toaster, toast } from 'react-hot-toast';
 import html2pdf from 'html2pdf.js';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar, Button } from "@heroui/react";
 import { CgOptions } from "react-icons/cg";
 import { FaRegFilePdf } from "react-icons/fa";
 import { FaFileExcel } from "react-icons/fa";
+import { RefreshCw } from 'lucide-react';
 import { IoIosSearch } from "react-icons/io";
 import 'jspdf-autotable';
 import { useUserStore } from "@/store/useStore";
@@ -324,285 +325,264 @@ const Kardex = () => {
     };
 
 
-    return (
-        <div>
-            <Toaster />
-
-         
-            <div className="flex justify-between mt-2 mb-4">
-                <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-                    Kardex Movimientos
-                </h1>
+return (
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+    <Toaster />
+    <div className="max-w-[98vw] xl:max-w-[1600px] mx-auto space-y-6 px-2 sm:px-4">
+      {/* Header */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Kardex de Movimientos</h1>
+            <div className="flex items-center gap-2 text-slate-600">
+              <span className="font-medium">Tienda: {almacenSeleccionado?.almacen || "Almacén"}</span>
             </div>
-            <div className="flex items-center gap-2">
-                <label htmlFor="" className='mr-2 font-bold'>Kardex de Movimientos / Tienda: Almacén:</label>
-                <Select
-                    id="almacen"
-                    className="w-[250px]"
-                    onChange={handleAlmacenChange}
-                    selectedKeys={[almacenSeleccionado.id.toString()]}
-                    classNames={{
-                        trigger: "bg-white",
-                        value: "text-black",
-                    }}
+          </div>
+          <div className="flex gap-3">
+                <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 transition-colors"
+                onClick={fetchKardex}
                 >
-                    {rolUsuario === '1' && <SelectItem key="%" value="%">Seleccione...</SelectItem>}
-                    {almacenesFiltrados.map((almacen) => (
-                        <SelectItem key={almacen.id} value={almacen.id}>
-                            {almacen.almacen}
-                        </SelectItem>
-                    ))}
-                </Select>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-4 mt-5 mb-4">
-                <div className="flex items-center gap-2">
-                <Input
-                        startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />} 
-                        type="text"
-                        placeholder='Código' 
-                        className="max-w-[150px]"
-                        onChange={handleCodigoChange}
-                        style={{
-                            border: "none",
-                            boxShadow: "none",
-                            outline: "none",
-                            }}
-                    />
-                </div>
-                <div className="flex items-center gap-2">
-                <Input
-                        startContent={<IoIosSearch className='w-4 h-4 text-gray-500' />} 
-                        type="text"
-                        placeholder='Descripción'
-                        className="max-w-[250px]"
-                        onChange={handleDescripcionChange}
-                        style={{
-                            border: "none",
-                            boxShadow: "none",
-                            outline: "none",
-                            }}
-                    />
-                </div>
-                <div className="flex items-center gap-2">
-                <Select
-                        className="w-[150px]"
-                        onChange={handleCategoriaChange}
-                        selectedKeys={[categoriaSeleccionada]}
-                        placeholder="Línea"
-                        classNames={{
-                            trigger: "bg-white ",
-                            value: "text-black",
-                        }}
-                    >
-                        {categorias.map((categoria) => (
-                            <SelectItem key={categoria.id} value={categoria.id}>
-                                {categoria.categoria}
-                            </SelectItem>
-                        ))}
-                    </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                <Select
-                        className="w-[200px]"
-                        onChange={handleSubCategoriaChange}
-                        placeholder="Sub-línea"
-                        classNames={{
-                            trigger: "bg-white ",
-                            value: "text-black",
-                        }}
-                    >
-                        {subcategorias.map((subcategoria) => (
-                            <SelectItem key={subcategoria.id} value={subcategoria.id}>
-                                {subcategoria.sub_categoria}
-                            </SelectItem>
-                        ))}
-                    </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                <Select
-                        className="w-[180px]"
-                        onChange={handleMarcaChange}
-                        placeholder="Marca"
-                        classNames={{
-                            trigger: "bg-white",
-                            value: "text-black",
-                        }}
-                    >
-                        {marcas.map((marca) => (
-                            <SelectItem key={marca.id} value={marca.id}>
-                                {marca.marca}
-                            </SelectItem>
-                        ))}
-                    </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Select
-                        className="w-[180px]"
-                        onChange={handleStockFilterChange}
-                        placeholder="Stock"
-                        value={stockFilter}
-                        classNames={{
-                            trigger: "bg-white",
-                            value: "text-black",
-                        }}
-                    >
-                        <SelectItem key="" value="">Todos</SelectItem>
-                        <SelectItem key="con_stock" value="con_stock">Con stock</SelectItem>
-                        <SelectItem key="sin_stock" value="sin_stock">Sin stock</SelectItem>
-                    </Select>
-                </div>
-                <Dropdown>
-                    <DropdownTrigger className="bg-gray-100">
-                        <Avatar
-                            isBordered
-                            as="button"
-                            className="transition-transform"
-                            icon={<CgOptions className="text-xl text-gray-600" />}
-                        />
-                    </DropdownTrigger>
-                    <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">
-                        <DropdownItem
-                            key="pdf"
-                            startContent={<FaRegFilePdf />}
-                            onClick={() => handleGeneratePDF()} // Llama a tu función aquí
-                        >
-                            Guardar PDF Productos
-                        </DropdownItem>
-                        <DropdownItem
-                            key=""
-                            startContent={<FaFileExcel />}
-                            onClick={handleOpenModal}
-                        >
-                            Rep. Mensual
-                        </DropdownItem>
-                        <DropdownItem
-                            key=""
-                            startContent={<FaFileExcel />}
-                            onClick={handleOpenWeeklyModal}
-                        >
-                            Rep. Semanal
-                        </DropdownItem>
-
-                    </DropdownMenu>
-                </Dropdown>
-
-
-            </div>
-            <TablaKardex kardex={kardex} />
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-75">
-                    <div className="bg-white p-6 rounded-md w-96">
-                        <h2 className="text-xl font-bold mb-4">Seleccionar Opciones</h2>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Mes:</label>
-                            <select
-                                className="w-full border border-gray-300 p-2 rounded-lg"
-                                value={modalContent.mes}
-                                onChange={(e) => handleModalChange("mes", e.target.value)}
-                            >
-                                <option value="">Seleccione un mes</option>
-                                {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].map(
-                                    (mes, index) => (
-                                        <option key={index} value={index + 1}>
-                                            {mes}
-                                        </option>
-                                    )
-                                )}
-                            </select>
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Año:</label>
-                            <input
-                                type="number"
-                                className="w-full border border-gray-300 p-2 rounded-lg"
-                                value={modalContent.year}
-                                onChange={(e) => handleModalChange("year", e.target.value)}
-                                placeholder="Ingrese el año"
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Almacén:</label>
-                            <select
-                                className="w-full border border-gray-300 p-2 rounded-lg"
-                                value={modalContent.almacen}
-                                onChange={(e) => handleModalChange("almacen", e.target.value)}
-                            >
-                                <option value="">Seleccione un almacén</option>
-                                {almacenes.map((almacen) => (
-                                    <option key={almacen.id} value={almacen.id}>
-                                        {almacen.almacen}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <button
-                                className="px-4 py-2 bg-gray-300 rounded-md"
-                                onClick={handleCloseModal}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                                onClick={handleModalSubmit}
-                            >
-                                Aceptar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-
-            {isWeeklyModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-75">
-                    <div className="bg-white p-6 rounded-md w-96">
-                        <h2 className="text-xl font-bold mb-4">Seleccionar Rango Semanal</h2>
-                        <div className="mb-4">
-                            <DateRangePicker
-                                classNames={{ inputWrapper: "bg-white" }}
-                                value={tempValue}
-                                onChange={handleDateChange}
-                                renderInput={(props) => (
-                                    <input {...props} className="p-2 bg-white border border-gray-300 rounded-lg" />
-                                )}
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Almacén:</label>
-                            <select
-                                className="w-full border border-gray-300 p-2 rounded-lg"
-                                value={weeklyModalContent.almacen}
-                                onChange={handleAlmacenModalChange}
-                            >
-                                <option value="">Seleccione un almacén</option>
-                                {almacenes.map((almacen) => (
-                                    <option key={almacen.id} value={almacen.id}>
-                                        {almacen.almacen}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <button
-                                className="px-4 py-2 bg-gray-300 rounded-md"
-                                onClick={handleCloseWeeklyModal}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                                onClick={handleWeeklyModalSubmit}
-                            >
-                                Aceptar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                <RefreshCw className="w-4 h-4 text-blue-500" />
+                Actualizar
+                </Button>
+                <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700 transition-colors"
+                onClick={handleGeneratePDF}
+                >
+                <FaRegFilePdf className="w-4 h-4 text-rose-500" />
+                Exportar PDF
+                </Button>
+                <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 transition-colors"
+                onClick={handleOpenModal}
+                >
+                <FaFileExcel className="w-4 h-4 text-emerald-500" />
+                Rep. Mensual
+                </Button>
+                <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-yellow-50 hover:bg-yellow-100 border-yellow-200 text-yellow-700 transition-colors"
+                onClick={handleOpenWeeklyModal}
+                >
+                <FaFileExcel className="w-4 h-4 text-yellow-500" />
+                Rep. Semanal
+                </Button>
+          </div>
         </div>
+      </div>
 
-    );
+      {/* Filtros */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <Select
+            id="almacen"
+            className="w-full"
+            onChange={handleAlmacenChange}
+            selectedKeys={[almacenSeleccionado.id?.toString()]}
+            classNames={{
+              trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
+              value: "text-blue-900",
+            }}
+          >
+            {rolUsuario === '1' && <SelectItem key="%" value="%">Seleccione...</SelectItem>}
+            {almacenesFiltrados.map((almacen) => (
+              <SelectItem key={almacen.id} value={almacen.id}>
+                {almacen.almacen}
+              </SelectItem>
+            ))}
+          </Select>
+          <Input
+            startContent={<IoIosSearch className='w-4 h-4 text-blue-400' />}
+            type="text"
+            placeholder="Código"
+            className="w-full border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+            onChange={handleCodigoChange}
+          />
+          <Input
+            startContent={<IoIosSearch className='w-4 h-4 text-blue-400' />}
+            type="text"
+            placeholder="Descripción"
+            className="w-full border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+            onChange={handleDescripcionChange}
+          />
+          <Select
+            className="w-full"
+            onChange={handleCategoriaChange}
+            selectedKeys={[categoriaSeleccionada]}
+            placeholder="Línea"
+            classNames={{
+              trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
+              value: "text-blue-900",
+            }}
+          >
+            {categorias.map((categoria) => (
+              <SelectItem key={categoria.id} value={categoria.id}>
+                {categoria.categoria}
+              </SelectItem>
+            ))}
+          </Select>
+          <Select
+            className="w-full"
+            onChange={handleSubCategoriaChange}
+            placeholder="Sub-línea"
+            classNames={{
+              trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
+              value: "text-blue-900",
+            }}
+          >
+            {subcategorias.map((subcategoria) => (
+              <SelectItem key={subcategoria.id} value={subcategoria.id}>
+                {subcategoria.sub_categoria}
+              </SelectItem>
+            ))}
+          </Select>
+          <Select
+            className="w-full"
+            onChange={handleMarcaChange}
+            placeholder="Marca"
+            classNames={{
+              trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
+              value: "text-blue-900",
+            }}
+          >
+            {marcas.map((marca) => (
+              <SelectItem key={marca.id} value={marca.id}>
+                {marca.marca}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+      </div>
+
+      {/* Tabla de Kardex */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <TablaKardex kardex={kardex} />
+      </div>
+
+      {/* Modales */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-75">
+          <div className="bg-white p-6 rounded-md w-96">
+            <h2 className="text-xl font-bold mb-4">Seleccionar Opciones</h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Mes:</label>
+              <select
+                className="w-full border border-gray-300 p-2 rounded-lg"
+                value={modalContent.mes}
+                onChange={(e) => handleModalChange("mes", e.target.value)}
+              >
+                <option value="">Seleccione un mes</option>
+                {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].map(
+                  (mes, index) => (
+                    <option key={index} value={index + 1}>
+                      {mes}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Año:</label>
+              <input
+                type="number"
+                className="w-full border border-gray-300 p-2 rounded-lg"
+                value={modalContent.year}
+                onChange={(e) => handleModalChange("year", e.target.value)}
+                placeholder="Ingrese el año"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Almacén:</label>
+              <select
+                className="w-full border border-gray-300 p-2 rounded-lg"
+                value={modalContent.almacen}
+                onChange={(e) => handleModalChange("almacen", e.target.value)}
+              >
+                <option value="">Seleccione un almacén</option>
+                {almacenes.map((almacen) => (
+                  <option key={almacen.id} value={almacen.id}>
+                    {almacen.almacen}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                className="px-4 py-2 bg-gray-200 rounded-md"
+                onClick={handleCloseModal}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                onClick={handleModalSubmit}
+              >
+                Aceptar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isWeeklyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-75">
+          <div className="bg-white p-6 rounded-md w-96">
+            <h2 className="text-xl font-bold mb-4">Seleccionar Rango Semanal</h2>
+            <div className="mb-4">
+              <DateRangePicker
+                classNames={{ inputWrapper: "bg-white" }}
+                value={tempValue}
+                onChange={handleDateChange}
+                renderInput={(props) => (
+                  <input {...props} className="p-2 bg-white border border-gray-300 rounded-lg" />
+                )}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Almacén:</label>
+              <select
+                className="w-full border border-gray-300 p-2 rounded-lg"
+                value={weeklyModalContent.almacen}
+                onChange={handleAlmacenModalChange}
+              >
+                <option value="">Seleccione un almacén</option>
+                {almacenes.map((almacen) => (
+                  <option key={almacen.id} value={almacen.id}>
+                    {almacen.almacen}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                className="px-4 py-2 bg-gray-200 rounded-md"
+                onClick={handleCloseWeeklyModal}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                onClick={handleWeeklyModalSubmit}
+              >
+                Aceptar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+);
 };
 
 export default Kardex;

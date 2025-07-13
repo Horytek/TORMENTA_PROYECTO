@@ -34,10 +34,7 @@ const TablaCliente = ({
     limit,
     changePage,
     changeLimit,
-    onFilter, // Add this new prop
-    onView = (id) => console.log("Ver:", id),
-    onEdit = (id) => console.log("Editar:", id),
-    onDelete = (id) => console.log("Dar de baja:", id),
+    onFilter,
 }) => {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
