@@ -24,8 +24,10 @@ const OptionsModal = ({
   const detalles = useVentaSeleccionadaStore((state) => state.detalles) || [];
   const datos_precio = useVentaSeleccionadaStore((state) => state.venta) || {};
 
+
   // Rol desde Zustand
   const ver_rol = useUserStore((state) => state.rol);
+  const nombre = useUserStore((state) => state.nombre);
 
   const handleCheckboxChange = (option) => {
     if (option === 'sendToSunat') {
@@ -83,7 +85,7 @@ const OptionsModal = ({
             <Checkbox
               isSelected={sendToSunat}
               onValueChange={() => handleCheckboxChange('sendToSunat')}
-              isDisabled={d_venta.estado === 1 || d_venta.tipoComprobante === 'Nota' || ver_rol != 1}
+              isDisabled={d_venta.estado === "Aceptada" || d_venta.tipoComprobante === 'Nota' || ver_rol != 1}
             >
               Enviar datos a la Sunat
             </Checkbox>
@@ -114,7 +116,7 @@ const OptionsModal = ({
             color="success" 
             variant="shadow" 
             onPress={handleAccept} 
-            isDisabled={(!sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado === 1)}
+            isDisabled={(!sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado === "Aceptada")}
           >
             Aceptar
           </Button>

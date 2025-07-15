@@ -67,7 +67,7 @@ export const anularVentaEnSunatF = async (ventaData) => {
       ],
     };
 
-    console.log('Payload enviado:', JSON.stringify(data, null, 2));
+    //console.log('Payload enviado:', JSON.stringify(data, null, 2));
 
     const response = await axios.post(url, data, {
       headers: {
@@ -76,7 +76,7 @@ export const anularVentaEnSunatF = async (ventaData) => {
       },
     });
 
-    console.log('Respuesta de la API:', response.data);
+    //console.log('Respuesta de la API:', response.data);
 
     if (response.status === 200) {
       toast.success('La anulación de la venta se ha enviado con éxito a la Sunat.');
@@ -155,7 +155,7 @@ export const anularVentaEnSunatB = async (ventaData, detalles) => {
       ],
     };
 
-    console.log('Payload enviado:', JSON.stringify(data, null, 2));
+    //console.log('Payload enviado:', JSON.stringify(data, null, 2));
 
     const response = await axios.post(url, data, {
       headers: {
@@ -164,7 +164,7 @@ export const anularVentaEnSunatB = async (ventaData, detalles) => {
       },
     });
 
-    console.log('Respuesta de la API:', response.data);
+    //console.log('Respuesta de la API:', response.data);
 
     if (response.status === 200) {
       toast.success('La anulación de la venta se ha enviado con éxito a la Sunat.');

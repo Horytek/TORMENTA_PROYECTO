@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 import { handleDelete } from '@/services/data/delete_venta';
 import { Pagination } from "@heroui/pagination";
 import { Select, SelectItem } from "@heroui/react";
+import { useUserStore } from "@/store/useStore";
 import { anularVentaEnSunatF, anularVentaEnSunatB } from '@/services/data/anular_sunat';
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { Card, CardBody, ScrollShadow } from "@heroui/react";
@@ -42,6 +43,7 @@ const Ventas = () => {
   const setVentaSeleccionada = useVentaSeleccionadaStore((state) => state.setVentaSeleccionada);
   const ventaSeleccionada = useVentaSeleccionadaStore((state) => state.venta);
   const detallesSeleccionados = useVentaSeleccionadaStore((state) => state.detalles);
+  const nombre = useUserStore((state) => state.nombre);
 
   // Estado para el manejo del modal y opciones de eliminación
   const [SelectedRowId, setSelectedRowId] = useState(null);
@@ -55,14 +57,36 @@ const Ventas = () => {
   }, [ventas, setTotalVentas]);
 
   // Funciones para abrir y cerrar el modal de opciones
-  const openModal = (id, estado) => {
+const openModal = (id, estado) => {
     setSelectedRowId(id);
     setModalOpen(true);
 
     // Busca la venta seleccionada y sus detalles
     const venta = ventas.find(v => v.id === id);
     if (venta) {
-      setVentaSeleccionada(venta, venta.detalles);
+      const datos_venta = {
+        id,
+        serieNum: venta.serieNum,
+        num: venta.num,
+        tipoComprobante: venta.tipoComprobante,
+        estado: venta.estado,
+        igv: venta.igv,
+        nombre: venta.cliente,
+        documento: venta.ruc,
+        fechaEmision: venta.fecha_iso,
+        id_anular: venta.id_anular,
+        id_anular_b: venta.id_anular_b,
+        estado_sunat: venta.estado_sunat,
+        anular: venta.anular,
+        anular_b: venta.anular_b,
+        id_venta_boucher: venta.id_venta_boucher,
+        sucursal: venta.nombre_sucursal,
+        direccion: venta.ubicacion,
+        usua_vendedor: venta.usua_vendedor,
+        observacion: venta.observacion || '',
+        usua_usuario: nombre
+      };
+      setVentaSeleccionada(datos_venta, venta.detalles);
     }
 
     let estadoNum = estado;
@@ -74,6 +98,7 @@ const Ventas = () => {
       setModalOpen(false);
     }
   };
+
 
   const closeModal = () => {
     setSelectedRowId(null);
