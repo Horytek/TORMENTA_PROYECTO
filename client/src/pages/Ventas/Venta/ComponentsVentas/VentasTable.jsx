@@ -5,7 +5,7 @@ import { TiPrinter } from "react-icons/ti";
 import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
 import useBoucher from '@/services/Data/data_boucher';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, RadioGroup, Radio, Card, 
-  CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
+  CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Select, SelectItem } from "@heroui/react";
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
@@ -14,7 +14,17 @@ import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable"; // <-- Importa tu store
 
 
-const TablaVentas = ({ ventas, modalOpen, deleteOptionSelected, openModal, currentPage }) => {
+const TablaVentas = ({
+  ventas,
+  modalOpen,
+  deleteOptionSelected,
+  openModal,
+  currentPage,
+  totalPages,
+  setCurrentPage,
+  ventasPerPage,
+  setVentasPerPage,
+}) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [printOption, setPrintOption] = useState('');
   const [empresaData, setEmpresaData] = useState(null); // Estado para almacenar los datos de la empresa
@@ -176,188 +186,19 @@ const handlePrint = async () => {
   }
 };
 
-  const renderVentaRow = (venta) => (
-    <TableRow key={venta.id} onClick={(e) => handleRowClick(e, venta)} className='cursor-pointer hover:bg-gray-100 transition-colors'>
-      <TableCell className="font-bold text-center text-[12px] p-1">
-        <div>{venta.serieNum}</div>
-        <div className="text-gray-500">{venta.num}</div>
-      </TableCell>
-      <TableCell className="text-center text-[12px] p-1">
-        <span className={`px-4 py-2 rounded-full ${getTipoComprobanteClass(venta.tipoComprobante)} text-white`}>
-          {venta.tipoComprobante}
-        </span>
-      </TableCell>
-      <TableCell className="font-bold whitespace-normal text-[12px] p-1">
-        <div className='whitespace-normal'>{venta.cliente}</div>
-        <div className="text-gray-500 whitespace-normal">{venta.ruc}</div>
-      </TableCell>
-      <TableCell className="text-center text-[12px] p-1">
-        <Tooltip
-          content={
-            <div className="text-sm text-gray-800">
-              <p>
-                <strong>Hora de creación:</strong>{" "}
-                {venta.hora_creacion
-                  ? new Date(`1970-01-01T${venta.hora_creacion}`).toLocaleTimeString("es-ES", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: true, // Formato de 12 horas
-                    })
-                  : "N/A"}
-              </p>
-              <p>
-                <strong>Fecha y hora de anulación:</strong>{" "}
-                {venta.fecha_anulacion
-                  ? new Date(venta.fecha_anulacion).toLocaleString("es-ES", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: true, // Formato de 12 horas
-                    })
-                  : "N/A"}
-              </p>
-            </div>
-          }
-          placement="top"
-          className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
-        >
-          <div className="flex justify-center items-center gap-1">
-          <span>
-            {venta.fechaEmision
-              ? new Date(venta.fechaEmision + "T12:00:00").toLocaleDateString("es-ES", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })
-              : "N/A"}
-          </span>
-            <i className="fas fa-calendar-alt text-blue-500 cursor-pointer"></i>
-          </div>
-        </Tooltip>
-      </TableCell>
-      <TableCell className="text-center text-[12px] p-1">{venta.igv}</TableCell>
-      <TableCell className="text-center text-[12px] p-1">{venta.total}</TableCell>
-      <TableCell className="font-bold text-[12px] p-1">
-        <div className="whitespace-normal">{venta.cajero}</div>
-        <div className="text-gray-500 whitespace-normal">{venta.cajeroId}</div>
-      </TableCell>
-      <TableCell className="text-center text-[12px] p-1" style={{ color: getEstadoColor(venta.estado), fontWeight: "400" }}>
-        <Tooltip content={venta.estado === 'Anulada' ? `Usuario que dio de baja: ${venta.u_modifica || 'N/A'}` : `Estado: ${venta.estado}`}>
-          <div className="flex justify-center items-center gap-1 py-1.5 rounded-full" style={{ background: getEstadoBackground(venta.estado) }}>
-            <span>{venta.estado}</span>
-            <i className={`fas ${venta.estado === 'Anulada' ? 'fa-user text-red-500' : 'fa-info-circle text-gray-500'} cursor-pointer`}></i>
-          </div>
-        </Tooltip>
-      </TableCell>
-      <TableCell className="text-[12px] p-1">
-        <div className='flex justify-center items-center'>
-          <Tooltip content="Opciones">
-            <IoMdOptions
-              className={`ml-2 ml-5 mr-4 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' : 'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
-              style={{ fontSize: '20px' }}
-              onClick={() => openModal(venta.id, venta.estado)}
-            />
-          </Tooltip>
-          <Tooltip content="Imprimir">
-            <TiPrinter className='text-gray-500 cursor-pointer' onClick={onOpen} style={{ fontSize: '20px' }} />
-          </Tooltip>
-          <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
-            motionProps={{
-              variants: {
-                enter: { y: 0, opacity: 1, transition: { duration: 0.2, ease: "easeOut" } },
-                exit: { y: -20, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } },
-              }
-            }}
-            classNames={{ backdrop: "bg-[#27272A]/10 backdrop-opacity-4" }}
-          >
-            <ModalContent>
-              {(onClose) => (
-                <>
-                  <ModalHeader className="flex flex-col gap-1">Opciones de impresión</ModalHeader>
-                  <ModalBody>
-                    <RadioGroup
-                      label="Selecciona la opción para el formato del boucher"
-                      value={printOption}
-                      onChange={(e) => setPrintOption(e.target.value)}
-                    >
-                      <Radio value="print">Descargar PDF</Radio>
-                      <Radio value="print-1">Imprimir boucher de la venta</Radio>
-                    </RadioGroup>
-                  </ModalBody>
-                  <ModalFooter>
-                    <Button color="danger" variant="shadow" onPress={onClose}>Cerrar</Button>
-                    <Button color="primary" variant="shadow" onPress={onClose} onClick={handlePrint}>Aceptar</Button>
-                  </ModalFooter>
-                </>
-              )}
-            </ModalContent>
-          </Modal>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
+const TIPO_COMPROBANTE_COLORS = {
+  Factura: "bg-orange-100 text-orange-700",
+  Boleta: "bg-purple-100 text-purple-700",
+  Nota: "bg-blue-100 text-blue-700",
+  Default: "bg-gray-100 text-gray-700"
+};
 
-  const renderVentaDetails = (detalles) => (
-    <Card className="mt-4 w-full shadow-[0_0_10px_#171a1f33] bg-[#171a1f09] rounded-[10px] animate-fade-in max-h-[400px] overflow-y-auto">
-      <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-2xl p-4">
-        <h4 className="text-xl font-semibold text-gray-700">Detalles de la Venta</h4>
-      </CardHeader>
-      <CardBody className="p-5">
-        <Table aria-label="Detalles de la Venta">
-          <TableHeader>
-            <TableColumn className="text-[12px]">CÓDIGO</TableColumn>
-            <TableColumn className="text-[12px]">NOMBRE</TableColumn>
-            <TableColumn className="text-[12px]">CANTIDAD</TableColumn>
-            <TableColumn className="text-[12px]">PRECIO</TableColumn>
-            <TableColumn className="text-[12px]">DESCUENTO</TableColumn>
-            <TableColumn className="text-[12px]">SUBTOTAL</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {detalles.map((detalle, index) => (
-              <TableRow key={index}>
-                <TableCell className="text-[10px] p-1">{detalle.codigo}</TableCell>
-                <TableCell className="text-[10px] p-1">{detalle.nombre}</TableCell>
-                <TableCell className="text-[10px] p-1">{detalle.cantidad}</TableCell>
-                <TableCell className="text-[10px] p-1">{detalle.precio}</TableCell>
-                <TableCell className="text-[10px] p-1">{detalle.descuento}</TableCell>
-                <TableCell className="text-[10px] p-1">{detalle.subtotal}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardBody>
-    </Card>
-  );
-
-  const getTipoComprobanteClass = (tipoComprobante) => {
-    switch (tipoComprobante) {
-      case 'Factura': return 'bg-orange-500';
-      case 'Boleta': return 'bg-purple-500';
-      default: return 'bg-blue-500';
-    }
-  };
-
-  const getEstadoColor = (estado) => {
-    switch (estado) {
-      case 'Aceptada': return '#117B34FF';
-      case 'En proceso': return '#F5B047';
-      case 'Anulada': return '#E05858FF';
-      default: return '#000';
-    }
-  };
-
-  const getEstadoBackground = (estado) => {
-    switch (estado) {
-      case 'Aceptada': return 'rgb(191, 237, 206)';
-      case 'En proceso': return '#FDEDD4';
-      case 'Anulada': return '#F5CBCBFF';
-      default: return '#FFF';
-    }
-  };
+const ESTADO_STYLES = {
+  "Aceptada": { bg: "bg-green-100", text: "text-green-700" },
+  "En proceso": { bg: "bg-yellow-100", text: "text-yellow-700" },
+  "Anulada": { bg: "bg-rose-100", text: "text-rose-700" },
+  Default: { bg: "bg-gray-100", text: "text-gray-700" }
+};
 
   return (
     <div className="flex flex-col lg:flex-row">
@@ -375,13 +216,211 @@ const handlePrint = async () => {
             <TableColumn className="text-[12px]"></TableColumn>
           </TableHeader>
           <TableBody>
-            {ventas.map(renderVentaRow)}
+            {ventas.map((venta) => (
+              <TableRow key={venta.id} onClick={(e) => handleRowClick(e, venta)} className='cursor-pointer hover:bg-gray-100 transition-colors'>
+                <TableCell className="font-bold text-center text-[12px] p-1">
+                  <div>{venta.serieNum}</div>
+                  <div className="text-gray-500">{venta.num}</div>
+                </TableCell>
+                <TableCell className="text-center text-[12px] p-1">
+                  <span className={`px-4 py-2 rounded-full ${
+                    venta.tipoComprobante === 'Factura'
+                      ? 'bg-orange-500'
+                      : venta.tipoComprobante === 'Boleta'
+                        ? 'bg-purple-500'
+                        : 'bg-blue-500'
+                  } text-white`}>
+                    {venta.tipoComprobante}
+                  </span>
+                </TableCell>
+                <TableCell className="font-bold whitespace-normal text-[12px] p-1">
+                  <div className='whitespace-normal'>{venta.cliente}</div>
+                  <div className="text-gray-500 whitespace-normal">{venta.ruc}</div>
+                </TableCell>
+                <TableCell className="text-center text-[12px] p-1">
+                  <Tooltip
+                    content={
+                      <div className="text-sm text-gray-800">
+                        <p>
+                          <strong>Hora de creación:</strong>{" "}
+                          {venta.hora_creacion
+                            ? new Date(`1970-01-01T${venta.hora_creacion}`).toLocaleTimeString("es-ES", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                                hour12: true,
+                              })
+                            : "N/A"}
+                        </p>
+                        <p>
+                          <strong>Fecha y hora de anulación:</strong>{" "}
+                          {venta.fecha_anulacion
+                            ? new Date(venta.fecha_anulacion).toLocaleString("es-ES", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                                hour12: true,
+                              })
+                            : "N/A"}
+                        </p>
+                      </div>
+                    }
+                    placement="top"
+                    className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
+                  >
+                    <div className="flex justify-center items-center gap-1">
+                      <span>
+                        {venta.fechaEmision
+                          ? new Date(venta.fechaEmision + "T12:00:00").toLocaleDateString("es-ES", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })
+                          : "N/A"}
+                      </span>
+                      <i className="fas fa-calendar-alt text-blue-500 cursor-pointer"></i>
+                    </div>
+                  </Tooltip>
+                </TableCell>
+                <TableCell className="text-center text-[12px] p-1">{venta.igv}</TableCell>
+                <TableCell className="text-center text-[12px] p-1">{venta.total}</TableCell>
+                <TableCell className="font-bold text-[12px] p-1">
+                  <div className="whitespace-normal">{venta.cajero}</div>
+                  <div className="text-gray-500 whitespace-normal">{venta.cajeroId}</div>
+                </TableCell>
+                <TableCell className="text-center text-[12px] p-1" style={{
+                  color:
+                    venta.estado === 'Aceptada'
+                      ? '#117B34FF'
+                      : venta.estado === 'En proceso'
+                        ? '#F5B047'
+                        : venta.estado === 'Anulada'
+                          ? '#E05858FF'
+                          : '#000',
+                  fontWeight: "400"
+                }}>
+                  <Tooltip content={venta.estado === 'Anulada' ? `Usuario que dio de baja: ${venta.u_modifica || 'N/A'}` : `Estado: ${venta.estado}`}>
+                    <div className="flex justify-center items-center gap-1 py-1.5 rounded-full" style={{
+                      background:
+                        venta.estado === 'Aceptada'
+                          ? 'rgb(191, 237, 206)'
+                          : venta.estado === 'En proceso'
+                            ? '#FDEDD4'
+                            : venta.estado === 'Anulada'
+                              ? '#F5CBCBFF'
+                              : '#FFF'
+                    }}>
+                      <span>{venta.estado}</span>
+                      <i className={`fas ${venta.estado === 'Anulada' ? 'fa-user text-red-500' : 'fa-info-circle text-gray-500'} cursor-pointer`}></i>
+                    </div>
+                  </Tooltip>
+                </TableCell>
+                <TableCell className="text-[12px] p-1">
+                  <div className='flex justify-center items-center'>
+                    <Tooltip content="Opciones">
+                      <IoMdOptions
+                        className={`ml-2 ml-5 mr-4 cursor-pointer ${venta.estado === 'Anulada' ? 'text-gray-300' : 'text-gray-500'} ${modalOpen && !deleteOptionSelected ? 'opacity-50 pointer-events-none' : ''}`}
+                        style={{ fontSize: '20px' }}
+                        onClick={() => openModal(venta.id, venta.estado)}
+                      />
+                    </Tooltip>
+                    <Tooltip content="Imprimir">
+                      <TiPrinter className='text-gray-500 cursor-pointer' onClick={onOpen} style={{ fontSize: '20px' }} />
+                    </Tooltip>
+                    <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
+                      motionProps={{
+                        variants: {
+                          enter: { y: 0, opacity: 1, transition: { duration: 0.2, ease: "easeOut" } },
+                          exit: { y: -20, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } },
+                        }
+                      }}
+                      classNames={{ backdrop: "bg-[#27272A]/10 backdrop-opacity-4" }}
+                    >
+                      <ModalContent>
+                        {(onClose) => (
+                          <>
+                            <ModalHeader className="flex flex-col gap-1">Opciones de impresión</ModalHeader>
+                            <ModalBody>
+                              <RadioGroup
+                                label="Selecciona la opción para el formato del boucher"
+                                value={printOption}
+                                onChange={(e) => setPrintOption(e.target.value)}
+                              >
+                                <Radio value="print">Descargar PDF</Radio>
+                                <Radio value="print-1">Imprimir boucher de la venta</Radio>
+                              </RadioGroup>
+                            </ModalBody>
+                            <ModalFooter>
+                              <Button color="danger" variant="shadow" onPress={onClose}>Cerrar</Button>
+                              <Button color="primary" variant="shadow" onPress={onClose} onClick={handlePrint}>Aceptar</Button>
+                            </ModalFooter>
+                          </>
+                        )}
+                      </ModalContent>
+                    </Modal>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
+        <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-3">
+          <Pagination
+            showControls
+            color="primary"
+            page={currentPage}
+            total={totalPages}
+            onChange={setCurrentPage}
+          />
+          <Select
+            aria-label="Ventas por página"
+            selectedKeys={[String(ventasPerPage)]}
+            onSelectionChange={(keys) => setVentasPerPage(Number(Array.from(keys)[0]))}
+            className="w-28"
+          >
+            <SelectItem key="5" value={5}>5</SelectItem>
+            <SelectItem key="10" value={10}>10</SelectItem>
+            <SelectItem key="20" value={20}>20</SelectItem>
+            <SelectItem key="100000" value={100000}>Todos</SelectItem>
+          </Select>
+        </div>
       </div>
       {expandedRow !== null && (
         <div className="w-full lg:w-full lg:ml-4 mt-4 lg:mt-0">
-          {ventas.find(venta => venta.id === expandedRow) && renderVentaDetails(ventas.find(venta => venta.id === expandedRow).detalles)}
+          {ventas.find(venta => venta.id === expandedRow) && (
+            <Card className="mt-4 w-full shadow-[0_0_10px_#171a1f33] bg-[#171a1f09] rounded-[10px] animate-fade-in max-h-[400px] overflow-y-auto">
+              <CardHeader className="bg-gray-50 border-b border-gray-200 rounded-t-2xl p-4">
+                <h4 className="text-xl font-semibold text-gray-700">Detalles de la Venta</h4>
+              </CardHeader>
+              <CardBody className="p-5">
+                <Table aria-label="Detalles de la Venta">
+                  <TableHeader>
+                    <TableColumn className="text-[12px]">CÓDIGO</TableColumn>
+                    <TableColumn className="text-[12px]">NOMBRE</TableColumn>
+                    <TableColumn className="text-[12px]">CANTIDAD</TableColumn>
+                    <TableColumn className="text-[12px]">PRECIO</TableColumn>
+                    <TableColumn className="text-[12px]">DESCUENTO</TableColumn>
+                    <TableColumn className="text-[12px]">SUBTOTAL</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {ventas.find(venta => venta.id === expandedRow).detalles.map((detalle, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="text-[10px] p-1">{detalle.codigo}</TableCell>
+                        <TableCell className="text-[10px] p-1">{detalle.nombre}</TableCell>
+                        <TableCell className="text-[10px] p-1">{detalle.cantidad}</TableCell>
+                        <TableCell className="text-[10px] p-1">{detalle.precio}</TableCell>
+                        <TableCell className="text-[10px] p-1">{detalle.descuento}</TableCell>
+                        <TableCell className="text-[10px] p-1">{detalle.subtotal}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardBody>
+            </Card>
+          )}
         </div>
       )}
     </div>
@@ -394,6 +433,10 @@ TablaVentas.propTypes = {
   deleteOptionSelected: PropTypes.bool.isRequired,
   openModal: PropTypes.func.isRequired,
   currentPage: PropTypes.number.isRequired,
+  totalPages: PropTypes.number.isRequired,
+  setCurrentPage: PropTypes.func.isRequired,
+  ventasPerPage: PropTypes.number.isRequired,
+  setVentasPerPage: PropTypes.func.isRequired,
 };
 
 export default TablaVentas;

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import Pagination from "@/components/Pagination/Pagination";
-import { Tooltip } from "@heroui/react";
+import { Tooltip, Button } from "@heroui/react";
 import { usePermisos } from "@/routes";
 import {
   deleteCategoria,
@@ -101,143 +101,157 @@ export function ShowCategorias({
     handleCloseDeactivationModal();
   };
 
-  return (
-    <div>
-      <div className="overflow-x-auto shadow-md sm:rounded-lg">
-        <table className="w-full text-sm table-auto divide-gray-200 rounded-lg">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">
-                CODIGO
-              </th>
-              <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">
-                NOMBRE
-              </th>
-              <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">
-                ESTADO
-              </th>
-              <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">
-                ACCIONES
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-gray-200">
-            {currentProductos.length > 0 ? (
-              currentProductos.map((categoria) => (
-                <tr
-                  className="hover:bg-gray-100"
-                  key={categoria.id_categoria}
-                  data-product={categoria.id_categoria}
-                >
-                  <td className="py-2 text-center">{categoria.id_categoria}</td>
-                  <td className="py-2 text-center">
+ return (
+  <div>
+    <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-4">
+      <table className="w-full text-[15px] table-auto rounded-xl overflow-hidden">
+        <thead>
+          <tr className="bg-blue-50 text-blue-900 font-bold">
+            <th className="py-3 px-3 text-center rounded-tl-xl">CÓDIGO</th>
+            <th className="py-3 px-3 text-center">NOMBRE</th>
+            <th className="py-3 px-3 text-center">ESTADO</th>
+            <th className="py-3 px-3 text-center rounded-tr-xl">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentProductos.length > 0 ? (
+            currentProductos.map((categoria, idx) => (
+              <tr
+                className={`transition-colors duration-150 ${
+                  idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                } hover:bg-blue-100/60`}
+                key={categoria.id_categoria}
+                data-product={categoria.id_categoria}
+              >
+                <td className="py-2 text-center text-blue-900 font-semibold">{categoria.id_categoria}</td>
+                <td className="py-2 text-center">
+                  <span className="inline-block px-4 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-700 text-[14px] font-semibold shadow-sm">
                     {categoria.nom_categoria}
-                  </td>
-                  <td className="py-2 text-center">
-                    <span
-                      className={
-                        categoria.estado_categoria === 1
-                          ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-                          : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
-                      }
-                    >
-                      {categoria.estado_categoria === 1 ? "Activo" : "Inactivo"}
-                    </span>
-                  </td>
-                  <td className="py-4 text-center">
-                    <div className="flex justify-center items-center">
-                      <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
-                        <button
-                          className={`px-2 py-1 ${hasEditPermission ? "text-yellow-400" : "text-gray-400"} text-xl ${!hasEditPermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          onClick={() => hasEditPermission 
-                            ? handleOpenEditModal(
-                                categoria.id_categoria,
-                                categoria.nom_categoria,
-                                categoria.estado_categoria
-                              ) 
-                            : null
-                          }
-                        >
-                          <MdEdit />
-                        </button>
-                      </Tooltip>
-                      <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
-                        <button
-                          className={`px-2 py-1 ${hasDeletePermission ? "text-red-500" : "text-gray-400"} ${!hasDeletePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          onClick={() => hasDeletePermission 
-                            ? handleOpenConfirmationModal(
-                                categoria.nom_categoria,
-                                categoria.id_categoria
-                              ) 
-                            : null
-                          }
-                        >
-                          <FaTrash />
-                        </button>
-                      </Tooltip>
-                      <Tooltip content={hasDeactivatePermission ? "Desactivar" : "No tiene permisos para desactivar"}>
-                        <button
-                          className={`px-3 py-1 ${hasDeactivatePermission ? "text-red-600" : "text-gray-400"} ${!hasDeactivatePermission ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          style={{ fontSize: "20px" }}
-                          onClick={() => hasDeactivatePermission 
-                            ? handleOpenDeactivationModal(
-                                categoria.nom_categoria,
-                                categoria.id_categoria
-                              ) 
-                            : null
-                          }
-                        >
-                          <MdDoNotDisturbAlt />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="py-4 text-center">
-                  No hay categorías correspondientes/existentes.
+                  </span>
                 </td>
+                <td className="py-2 text-center">
+  <span
+    className={
+      categoria.estado_categoria === 1
+        ? "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[13px] font-semibold bg-green-100 text-green-700 border border-green-200"
+        : "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[13px] font-semibold bg-rose-100 text-rose-700 border border-rose-200"
+    }
+  >
+    {categoria.estado_categoria === 1 ? (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    ) : (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
+      </svg>
+    )}
+    {categoria.estado_categoria === 1 ? "Activo" : "Inactivo"}
+  </span>
+</td>
+<td className="py-2 text-center">
+  <div className="flex justify-center items-center gap-2">
+    <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+      <Button
+        isIconOnly
+        variant="light"
+        color={hasEditPermission ? "warning" : "default"}
+        onClick={() =>
+          hasEditPermission
+            ? handleOpenEditModal(
+                categoria.id_categoria,
+                categoria.nom_categoria,
+                categoria.estado_categoria
+              )
+            : null
+        }
+        className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+      >
+        <MdEdit />
+      </Button>
+    </Tooltip>
+    <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+      <Button
+        isIconOnly
+        variant="light"
+        color={hasDeletePermission ? "danger" : "default"}
+        onClick={() =>
+          hasDeletePermission
+            ? handleOpenConfirmationModal(
+                categoria.nom_categoria,
+                categoria.id_categoria
+              )
+            : null
+        }
+        className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+      >
+        <FaTrash />
+      </Button>
+    </Tooltip>
+    <Tooltip content={hasDeactivatePermission ? "Desactivar" : "No tiene permisos para desactivar"}>
+      <Button
+        isIconOnly
+        variant="light"
+        color={hasDeactivatePermission ? "danger" : "default"}
+        onClick={() =>
+          hasDeactivatePermission
+            ? handleOpenDeactivationModal(
+                categoria.nom_categoria,
+                categoria.id_categoria
+              )
+            : null
+        }
+        className={hasDeactivatePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+      >
+        <MdDoNotDisturbAlt />
+      </Button>
+    </Tooltip>
+  </div>
+</td>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex justify-end mt-4">
-        <div className="flex">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={Math.ceil(filteredProductos.length / productosPerPage)}
-            onPageChange={setCurrentPage}
-          />
-        </div>
-      </div>
-      {isConfirmationModalOpen && (
-        <ConfirmationModal
-          message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
-          onClose={handleCloseConfirmationModal}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
-      {isEditModalOpen && selectedRow && (
-        <EditCat
-          isOpen={isEditModalOpen}
-          modalTitle={"Editar categoria"}
-          onClose={handleCloseEditModal}
-          initialData={selectedRow}
-          onSuccess={handleEditCategoria}
-        />
-      )}
-      {deactivateCat && (
-        <ConfirmationModal
-          message={`¿Estás seguro que deseas dar de baja a "${selectedRow}"?`}
-          onClose={handleCloseDeactivationModal}
-          onConfirm={handleConfirmDeactivate}
-        />
-      )}
+            ))
+          ) : (
+            <tr>
+              <td colSpan="4" className="py-4 text-center text-slate-400">
+                No hay categorías correspondientes/existentes.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
-  );
+    <div className="flex justify-start mt-4">
+      <Pagination
+        currentPage={currentPage}
+        totalPages={Math.ceil(filteredProductos.length / productosPerPage)}
+        onPageChange={setCurrentPage}
+      />
+    </div>
+    {isConfirmationModalOpen && (
+      <ConfirmationModal
+        message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
+        onClose={handleCloseConfirmationModal}
+        onConfirm={handleConfirmDelete}
+      />
+    )}
+    {isEditModalOpen && selectedRow && (
+      <EditCat
+        isOpen={isEditModalOpen}
+        modalTitle={"Editar categoria"}
+        onClose={handleCloseEditModal}
+        initialData={selectedRow}
+        onSuccess={handleEditCategoria}
+      />
+    )}
+    {deactivateCat && (
+      <ConfirmationModal
+        message={`¿Estás seguro que deseas dar de baja a "${selectedRow}"?`}
+        onClose={handleCloseDeactivationModal}
+        onConfirm={handleConfirmDeactivate}
+      />
+    )}
+  </div>
+);
 }
 
 export default ShowCategorias;

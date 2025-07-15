@@ -61,7 +61,7 @@ const TablaKardex = ({ kardex }) => {
       <div className="overflow-x-auto rounded-xl">
         <table className="min-w-full bg-white rounded-xl overflow-hidden">
           <thead>
-            <tr className="bg-gradient-to-r from-blue-50 via-blue-100 to-emerald-50 text-blue-900 shadow-sm">
+            <tr className="bg-blue-50 text-blue-900 shadow-sm">
               <th className="py-3 px-4 text-left font-semibold text-sm rounded-tl-xl">Código</th>
               <th className="py-3 px-4 text-left font-semibold text-sm">Descripción</th>
               <th className="py-3 px-4 text-left font-semibold text-sm">Marca</th>

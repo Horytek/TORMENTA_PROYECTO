@@ -71,13 +71,6 @@ const updatedData = {
       <ModalContent>
         <ModalHeader>
           <h3 className="text-lg font-bold">{modalTitle}</h3>
-          <button
-            type="button"
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-            onClick={onClose}
-          >
-            <IoMdClose className="text-2xl" />
-          </button>
         </ModalHeader>
         <ModalBody>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

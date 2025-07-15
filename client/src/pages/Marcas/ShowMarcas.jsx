@@ -101,28 +101,53 @@ const deactivateM = async (id) => {
   };
 
   return (
-    <div>
-      <Table isStriped aria-label="Tabla de Marcas">
-        <TableHeader>
-          <TableColumn className="text-center">CÓDIGO</TableColumn>
-          <TableColumn className="text-center">NOMBRE</TableColumn>
-          <TableColumn className="text-center">ESTADO</TableColumn>
-          <TableColumn className="text-center">ACCIONES</TableColumn>
-        </TableHeader>
-
+    <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-4">
+      <Table
+        isStriped
+        aria-label="Tabla de Marcas"
+        className="min-w-full border-collapse rounded-xl overflow-hidden text-[15px]"
+      >
+<TableHeader>
+  <TableColumn className="py-3 px-3 text-center text-blue-900 font-bold bg-blue-50">
+    CÓDIGO
+  </TableColumn>
+  <TableColumn className="py-3 px-3 text-center text-blue-900 font-bold bg-blue-50">
+    NOMBRE
+  </TableColumn>
+  <TableColumn className="py-3 px-3 text-center text-blue-900 font-bold bg-blue-50">
+    ESTADO
+  </TableColumn>
+  <TableColumn className="py-3 px-3 text-center text-blue-900 font-bold bg-blue-50">
+    ACCIONES
+  </TableColumn>
+</TableHeader>
         <TableBody emptyContent={"No hay marcas correspondientes/existentes."}>
-          {currentProductos.map((marca) => (
-            <TableRow key={marca.id_marca}>
-              <TableCell className="text-center">{marca.id_marca}</TableCell>
-              <TableCell className="text-center">{marca.nom_marca}</TableCell>
+          {currentProductos.map((marca, idx) => (
+            <TableRow
+              key={marca.id_marca}
+              className={`transition-colors duration-150 ${
+                idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+              } hover:bg-blue-100/60`}
+            >
+              <TableCell className="text-center text-blue-900 font-semibold">{marca.id_marca}</TableCell>
+              <TableCell className="text-center">
+                <span className="inline-block px-4 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-700 text-[14px] font-semibold shadow-sm">
+                  {marca.nom_marca}
+                </span>
+              </TableCell>
               <TableCell className="text-center">
                 <span
                   className={
                     marca.estado_marca === 1
-                      ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full bg-green-200 text-green-700 text-sm font-medium"
-                      : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full bg-red-100 text-red-600 text-sm font-medium"
+                      ? "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[13px] font-semibold bg-green-100 text-green-700 border border-green-200"
+                      : "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[13px] font-semibold bg-rose-100 text-rose-700 border border-rose-200"
                   }
                 >
+                  {marca.estado_marca === 1 ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" /></svg>
+                  )}
                   {marca.estado_marca === 1 ? "Activo" : "Inactivo"}
                 </span>
               </TableCell>
@@ -130,9 +155,9 @@ const deactivateM = async (id) => {
                 <div className="flex items-center justify-center gap-2">
                   <Tooltip content={hasEditPermission ? "Editar" : "Sin permiso"}>
                     <Button
-                                                    isIconOnly 
-                                variant="light" 
-                                color={hasEditPermission ? "warning" : "default"}
+                      isIconOnly
+                      variant="light"
+                      color={hasEditPermission ? "warning" : "default"}
                       className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
                       disabled={!hasEditPermission}
                       onClick={() =>
@@ -143,12 +168,11 @@ const deactivateM = async (id) => {
                       <MdEdit />
                     </Button>
                   </Tooltip>
-
                   <Tooltip content={hasDeletePermission ? "Eliminar" : "Sin permiso"}>
                     <Button
-                                                    isIconOnly 
-                                variant="light" 
-                                color={hasDeletePermission ? "danger" : "default"}
+                      isIconOnly
+                      variant="light"
+                      color={hasDeletePermission ? "danger" : "default"}
                       className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
                       disabled={!hasDeletePermission}
                       onClick={() =>
@@ -159,12 +183,11 @@ const deactivateM = async (id) => {
                       <FaTrash />
                     </Button>
                   </Tooltip>
-
                   <Tooltip content={hasDeactivatePermission ? "Desactivar" : "Sin permiso"}>
                     <Button
-                                           isIconOnly 
-                                variant="light" 
-                                color={hasDeactivatePermission ? "danger" : "default"}
+                      isIconOnly
+                      variant="light"
+                      color={hasDeactivatePermission ? "danger" : "default"}
                       className={hasDeactivatePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
                       disabled={!hasDeactivatePermission}
                       onClick={() =>
@@ -182,8 +205,8 @@ const deactivateM = async (id) => {
         </TableBody>
       </Table>
 
-      {/* Paginación */}
-      <div className="flex justify-end mt-4">
+      {/* Paginación alineada a la izquierda */}
+      <div className="flex justify-start mt-4">
         <Pagination
           currentPage={currentPage}
           totalPages={Math.ceil(filteredProductos.length / productosPerPage)}
@@ -200,15 +223,15 @@ const deactivateM = async (id) => {
         />
       )}
 
-{isEditModalOpen && selectedRow && (
-  <EditForm
-    isOpen={isEditModalOpen}
-    modalTitle={"Editar marca"}
-    onClose={handleCloseEditModal}
-    initialData={selectedRow}
-    onMarcaEdit={handleMarcaEdit}
-  />
-)}
+      {isEditModalOpen && selectedRow && (
+        <EditForm
+          isOpen={isEditModalOpen}
+          modalTitle={"Editar marca"}
+          onClose={handleCloseEditModal}
+          initialData={selectedRow}
+          onMarcaEdit={handleMarcaEdit}
+        />
+      )}
 
       {deactivateBrand && (
         <ConfirmationModal

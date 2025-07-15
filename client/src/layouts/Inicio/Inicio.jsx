@@ -401,9 +401,6 @@ const porcentajePendientes =
     </Button>
   </div>
 </header>
-<div className="max-w-md">
-  <Divider className="my-3 opacity-60" />
-</div>
         <div style={{ marginTop: "15px" }}>
           <main>
             <div className="bg-white/70 border border-blue-100 rounded-xl shadow-sm px-2 py-2 mb-4 flex flex-col">

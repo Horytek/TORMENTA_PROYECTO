@@ -3,13 +3,15 @@ import TablaVentas from './ComponentsVentas/VentasTable';
 import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
-import useVentasData from '@/services/Data/data_venta';
+import useVentasData from '@/services/data/data_venta';
 import { Toaster } from "react-hot-toast";
-import { handleDelete } from '@/services/Data/delete_venta';
+import { handleDelete } from '@/services/data/delete_venta';
 import { Pagination } from "@heroui/pagination";
 import { Select, SelectItem } from "@heroui/react";
-import { anularVentaEnSunatF, anularVentaEnSunatB } from '@/services/Data/anular_sunat';
+import { anularVentaEnSunatF, anularVentaEnSunatB } from '@/services/data/anular_sunat';
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
+import { Card, CardBody, ScrollShadow } from "@heroui/react";
+import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator } from "react-icons/fa";
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
@@ -83,7 +85,7 @@ const Ventas = () => {
   const handleDeleteVenta = () => {
     if (!ventaSeleccionada) return;
     handleDelete(ventaSeleccionada); // Lógica de backend si aplica
-    removeVenta(ventaSeleccionada.id); // Elimina del estado local
+    updateVenta(ventaSeleccionada.id, { estado: 'Anulada' });
     if (ventaSeleccionada?.tipoComprobante === 'Boleta' && ventaSeleccionada?.estado_sunat === 1) {
       anularVentaEnSunatB(ventaSeleccionada, detallesSeleccionados);
     } else if (ventaSeleccionada?.tipoComprobante === 'Factura' && ventaSeleccionada?.estado_sunat === 1) {
@@ -98,49 +100,124 @@ const Ventas = () => {
     setCurrentPage(1); // Resetear la página actual al cambiar filtros
   }, [setCurrentPage]);
 
-  return (
-    <div>
-      <Toaster />
+return (
+  <div className="min-h-screen py-8 px-2 sm:px-6">
+    <Toaster />
 
-      {/* Encabezado principal */}
-      <div className="flex justify-between mb-4">
-        <h1 className="text-xl font-bold text-[36px]">
-          Ventas
+    <div className="max-w-[1600px] mx-auto space-y-6">
+      {/* Header principal */}
+      <div className="bg-white/80 border border-blue-100 rounded-2xl shadow-sm p-6 mb-4">
+        <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">
+          Gestión de ventas
         </h1>
+        <p className="text-base text-blue-700/80 mb-2">
+          Visualiza, filtra y administra todas tus ventas de manera eficiente y centralizada.
+        </p>
       </div>
 
-      <div className='w-full mb-3 rounded-lg'>
-        <table className='w-full text-sm divide-gray-200 rounded-lg table-auto border-collapse shadow-[0_0_10px_#171a1f0e] bg-[#171a1f0e]'>
-          <tbody className="bg-gray-50">
-            <tr className='text-center'>
-              <td className='border-r-2 border-t-0 py-2 px-4'>
-                <strong>Cant. Ventas:</strong> <span>{ventas.length}</span>
-              </td>
-              <td className='border-l-2 border-r-2 border-t-0 py-2 px-4'>
-                <strong>Total Efectivo: S/.</strong> <span>{totalEfectivo}</span>
-              </td>
-              <td className='border-l-2 border-r-2 border-t-0 py-2 px-4'>
-                <strong>Total Pago Electr: S/.</strong> <span>{totalPagoElectronico}</span>
-              </td>
-              <td className='border-l border-t-0 py-2 px-4'>
-                <strong>Total General: S/.</strong> {totalRecaudado}<span></span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      {/* KPIs */}
+      <div className="w-full mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="relative overflow-hidden border border-rose-200/40 bg-white/90 rounded-2xl shadow-none">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-rose-100/80 via-white to-white rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-rose-200/70 to-white rounded-full blur-xl"></div>
+          </div>
+          <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="p-3 rounded-xl bg-rose-200 shadow">
+                <FaShoppingBag className="text-2xl text-rose-500" />
+              </span>
+            </div>
+            <div>
+              <span className="text-3xl font-extrabold text-zinc-900">
+                S/. {totalRecaudado ? totalRecaudado : "0.00"}
+              </span>
+              <div className="text-sm text-zinc-600 font-medium">Total Ventas</div>
+            </div>
+          </CardBody>
+        </Card>
+        <Card className="relative overflow-hidden border border-violet-200/40 bg-white/90 rounded-2xl shadow-none">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-violet-100/80 via-white to-white rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-violet-200/70 to-white rounded-full blur-xl"></div>
+          </div>
+          <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="p-3 rounded-xl bg-violet-200 shadow">
+                <FaMoneyBillWave className="text-2xl text-violet-500" />
+              </span>
+            </div>
+            <div>
+              <span className="text-3xl font-extrabold text-zinc-900">
+                {totalEfectivo ? totalEfectivo : "0.00"}
+              </span>
+              <div className="text-sm text-zinc-600 font-medium">Total Efectivo</div>
+            </div>
+          </CardBody>
+        </Card>
+        <Card className="relative overflow-hidden border border-emerald-200/40 bg-white/90 rounded-2xl shadow-none">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-emerald-100/80 via-white to-white rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-200/70 to-white rounded-full blur-xl"></div>
+          </div>
+          <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="p-3 rounded-xl bg-emerald-200 shadow">
+                <FaCreditCard className="text-2xl text-emerald-500" />
+              </span>
+            </div>
+            <div>
+              <span className="text-3xl font-extrabold text-zinc-900">
+                {totalPagoElectronico ? totalPagoElectronico : "0.00"}
+              </span>
+              <div className="text-sm text-zinc-600 font-medium">Total Pago Electrónico</div>
+            </div>
+          </CardBody>
+        </Card>
+        <Card className="relative overflow-hidden border border-blue-200/40 bg-white/90 rounded-2xl shadow-none">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-100/80 via-white to-white rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-200/70 to-white rounded-full blur-xl"></div>
+          </div>
+          <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="p-3 rounded-xl bg-blue-200 shadow">
+                <FaCalculator className="text-2xl text-blue-500" />
+              </span>
+            </div>
+            <div>
+              <span className="text-3xl font-extrabold text-zinc-900">
+                {ventas && ventas.length ? ventas.length : "0"}
+              </span>
+              <div className="text-sm text-zinc-600 font-medium">Cantidad de Ventas</div>
+            </div>
+          </CardBody>
+        </Card>
       </div>
 
-      {/* Componente de filtros */}
-      <FiltrosVentas onFiltersChange={handleFilterChange} />
+      {/* Filtros */}
+      <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-0 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex-1 p-4">
+          <FiltrosVentas onFiltersChange={handleFilterChange} />
+        </div>
+      </div>
 
-      {/* Componente de tabla de ventas */}
-      <TablaVentas
-        ventas={ventas}
-        modalOpen={modalOpen}
-        deleteOptionSelected={deleteOptionSelected}
-        openModal={openModal}
-        currentPage={currentPage}
-      />
+      {/* Tabla de ventas con ScrollShadow */}
+      <ScrollShadow hideScrollBar className="rounded-xl mt-6 w-full overflow-x-auto overflow-y-hidden">
+        <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-4 min-w-[900px]">
+          <TablaVentas
+            ventas={ventas || []}
+            modalOpen={modalOpen}
+            deleteOptionSelected={deleteOptionSelected}
+            openModal={openModal}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            setCurrentPage={setCurrentPage}
+            ventasPerPage={ventasPerPage}
+            setVentasPerPage={setVentasPerPage}
+          />
+        </div>
+      </ScrollShadow>
 
       {/* Modal para opciones */}
       <OptionsModal
@@ -158,26 +235,9 @@ const Ventas = () => {
         closeModal={closeModal}
         setConfirmDeleteModalOpen={setConfirmDeleteModalOpen}
       />
-
-      {/* Contenedor para paginación */}
-      <div className="flex justify-between mt-4">
-        <div className="flex">
-          <Pagination showControls color="primary" page={currentPage} total={totalPages} onChange={setCurrentPage} />
-        </div>
-        <Select
-          aria-label="Ventas por página"
-          selectedKeys={[String(ventasPerPage)]}
-          onSelectionChange={(keys) => setVentasPerPage(Number(Array.from(keys)[0]))}
-          className="w-28"
-        >
-          <SelectItem key="5" value={5}>5</SelectItem>
-          <SelectItem key="10" value={10}>10</SelectItem>
-          <SelectItem key="20" value={20}>20</SelectItem>
-          <SelectItem key="100000" value={100000}>Todos</SelectItem>
-        </Select>
-      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default Ventas;

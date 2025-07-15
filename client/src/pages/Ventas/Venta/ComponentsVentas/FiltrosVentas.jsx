@@ -201,14 +201,14 @@ const FiltrosVentas = ({ onFiltersChange }) => {
           </div>
           <div className="flex gap-2 input-wrapper">
             <DateRangePicker
-              className="w-xs"
-              classNames={{ inputWrapper: "bg-white" }}
+              className="w-xs bg-blue-50/60 rounded-lg"
+              classNames={{ inputWrapper: "bg-blue-50/60" }}
               value={tempValue}
               onChange={handleDateChange}
               renderInput={(props) => (
                 <input
                   {...props}
-                  className="p-2 bg-white border border-gray-300 rounded-lg"
+                  className="p-2 bg-blue-50/60 border-none rounded-lg"
                 />
               )}
             />
