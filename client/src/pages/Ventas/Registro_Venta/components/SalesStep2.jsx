@@ -51,15 +51,19 @@ const SalesStep2 = ({
   const descuentoCalculado = parseFloat(paymentData.descuentoCalculado || 0);
   const totalConDescuento = paymentData.descuentoActivado ? total_t - descuentoCalculado : total_t;
   const montoRecibido = parseFloat(paymentData.montoRecibido || 0);
-  const cambio = Math.max(montoRecibido - totalConDescuento, 0);
-  const faltante = Math.max(totalConDescuento - montoRecibido, 0);
   
   // Cálculos para pagos adicionales
   const montoAdicional = parseFloat(paymentData.montoAdicional || 0);
-  const faltante2 = Math.max(faltante - montoAdicional, 0);
-  
   const montoAdicional2 = parseFloat(paymentData.montoAdicional2 || 0);
-  const faltante3 = Math.max(faltante2 - montoAdicional2, 0);
+  
+  // Calcular el total pagado (suma de todos los pagos)
+  const totalPagado = montoRecibido + montoAdicional + montoAdicional2;
+  const faltanteFinal = Math.max(totalConDescuento - totalPagado, 0);
+  const cambioFinal = Math.max(totalPagado - totalConDescuento, 0);
+  
+  // Para mostrar cuándo activar el segundo y tercer pago
+  const necesitaSegundoPago = montoRecibido > 0 && montoRecibido < totalConDescuento;
+  const necesitaTercerPago = necesitaSegundoPago && montoAdicional > 0 && (montoRecibido + montoAdicional) < totalConDescuento;
 
   // Actualizar payment data
   const handlePaymentChange = (field, value) => {
@@ -321,7 +325,7 @@ const SalesStep2 = ({
               )}
             </div>
 
-            {faltante2 > 0 && selectedDocumentType !== 'Nota de venta' && (
+            {necesitaTercerPago && selectedDocumentType !== 'Nota de venta' && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
                 <h5 className="font-medium text-yellow-800">Tercer método de pago</h5>
                 <Select
@@ -387,22 +391,22 @@ const SalesStep2 = ({
                 </div>
                 <div className="flex justify-between">
                   <span>Cambio:</span>
-                  <span className="font-medium text-blue-600">S/ {cambio.toFixed(2)}</span>
+                  <span className="font-medium text-blue-600">S/ {cambioFinal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total pagado:</span>
+                  <span className="font-medium text-green-600">S/ {totalPagado.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Faltante:</span>
-                  <span className="font-medium text-red-600">S/ {faltante.toFixed(2)}</span>
+                  <span className={`font-medium ${faltanteFinal > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    S/ {faltanteFinal.toFixed(2)}
+                  </span>
                 </div>
-                {faltante2 > 0 && selectedDocumentType !== 'Nota de venta' && (
-                  <div className="flex justify-between">
-                    <span>Faltante 2:</span>
-                    <span className="font-medium text-red-600">S/ {faltante2.toFixed(2)}</span>
-                  </div>
-                )}
               </div>
             </div>
 
-            {faltante > 0 && selectedDocumentType !== 'Nota de venta' && (
+            {necesitaSegundoPago && selectedDocumentType !== 'Nota de venta' && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
                 <h5 className="font-medium text-orange-800">Pago adicional</h5>
                 <Select
@@ -473,10 +477,10 @@ const SalesStep2 = ({
           (!clienteData.nombreCliente && selectedDocumentType !== 'Nota de venta') ||
           !paymentData.metodoPago || 
           montoRecibido <= 0 ||
-          faltante3 > 0 // No permitir continuar si hay faltante final
+          faltanteFinal > 0 // No permitir continuar si hay faltante final
         }
       >
-        {faltante > 0 || faltante2 > 0 || faltante3 > 0
+        {faltanteFinal > 0
           ? 'Continuar' 
           : 'Revisar y confirmar venta'
         }

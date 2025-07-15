@@ -1,7 +1,8 @@
 import { Button, ScrollShadow, Divider } from '@heroui/react';
 import { GrDocumentPerformance } from 'react-icons/gr';
 import { BsCashCoin } from 'react-icons/bs';
-import { useState } from 'react';
+import { BiBarcodeReader } from 'react-icons/bi';
+import { useState, useEffect } from 'react';
 import BarraSearch from "@/components/Search/Search";
 
 const SalesStep1 = ({
@@ -17,10 +18,85 @@ const SalesStep1 = ({
   igv_t,
   total_t,
   handlePrint,
-  Comprobar_mayor_499
+  Comprobar_mayor_499,
+  // Props para el escáner directo
+  productos,
+  handleProductSelect
 }) => {
   // Estado local para el filtro si no viene del padre
   const [localSearchTerm, setLocalSearchTerm] = useState('');
+  
+  // Estados para el escáner directo
+  const [isScanning, setIsScanning] = useState(false);
+  const [barcode, setBarcode] = useState('');
+
+  // Efecto para manejar el escáner de códigos de barras
+  useEffect(() => {
+    if (!isScanning) return;
+
+    const handleKeyPress = (event) => {
+      if (event.key === 'Enter') {
+        // Al presionar Enter, el escáner ha terminado de enviar el código
+        console.log('Código escaneado:', barcode);
+        
+        if (barcode && productos) {
+          const productoEscaneado = productos.find(p => 
+            p.codigo_barras === barcode || 
+            p.codigo.toString() === barcode
+          );
+
+          if (productoEscaneado && productoEscaneado.stock > 0) {
+            console.log('Producto encontrado:', productoEscaneado);
+            if (handleProductSelect) {
+              handleProductSelect(productoEscaneado);
+            }
+          } else {
+            console.warn('Producto no encontrado o sin stock');
+            alert('Producto no encontrado o sin stock disponible');
+          }
+        }
+        
+        // Limpiar y desactivar escáner
+        setBarcode('');
+        setIsScanning(false);
+      } else if (event.key.length === 1) {
+        // Solo agregar caracteres imprimibles al código
+        setBarcode(prev => prev + event.key);
+      }
+    };
+
+    window.addEventListener('keypress', handleKeyPress);
+    
+    return () => {
+      window.removeEventListener('keypress', handleKeyPress);
+    };
+  }, [isScanning, barcode, productos, handleProductSelect]);
+
+  // Función para activar el modo escáner
+  const activateScanner = () => {
+    setBarcode('');
+    setIsScanning(true);
+    alert('Modo escáner activado. Escanee un producto o presione ESC para cancelar.');
+  };
+
+  // Efecto para manejar la tecla ESC para cancelar el escáner
+  useEffect(() => {
+    if (!isScanning) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsScanning(false);
+        setBarcode('');
+        console.log('Escáner cancelado');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isScanning]);
   
   // Usar el término de búsqueda - simplificado para evitar loops
   const searchTermToUse = searchTerm || localSearchTerm || '';
@@ -69,15 +145,29 @@ const SalesStep1 = ({
             onClear={handleLocalClearSearch}
             className="max-w-xs"
           />
-          <Button
-            size="sm"
-            variant="flat"
-            color="danger"
-            onClick={handleRemoveAllProducts}
-            className="text-xs text-bold text-red-600 shrink-0"
-          >
-            Limpiar todo
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              variant="flat"
+              color="danger"
+              onClick={handleRemoveAllProducts}
+              className="text-xs text-bold text-red-600"
+            >
+              Limpiar todo
+            </Button>
+            <Button
+              size="sm"
+              variant="flat"
+              color="success"
+              onClick={activateScanner}
+              className={`text-xs text-bold flex items-center gap-1 ${isScanning ? 'bg-green-200 text-green-800' : 'text-green-600'}`}
+              title={isScanning ? "Escáner activado - Escanee un producto" : "Usar escáner de productos"}
+              disabled={!productos || productos.length === 0}
+            >
+              <BiBarcodeReader className="text-base" />
+              {isScanning ? 'Escaneando...' : 'Escáner'}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -174,9 +264,21 @@ const SalesStep1 = ({
         ) : (
           <div className="text-center py-8 text-gray-500">
             <p className="text-sm">No hay productos seleccionados</p>
-            <p className="text-xs mt-1">
-              Selecciona productos de la lista de la izquierda
+            <p className="text-xs mt-1 mb-4">
+              Selecciona productos de la lista de la izquierda o usa el escáner
             </p>
+            <Button
+              size="md"
+              variant="flat"
+              color="success"
+              onClick={activateScanner}
+              className={`text-sm text-bold flex items-center gap-2 ${isScanning ? 'bg-green-200 text-green-800' : 'text-green-600'}`}
+              title={isScanning ? "Escáner activado - Escanee un producto" : "Usar escáner de productos"}
+              disabled={!productos || productos.length === 0}
+            >
+              <BiBarcodeReader className="text-lg" />
+              {isScanning ? 'Escáner Activado - Escanee un Producto' : 'Usar Escáner de Productos'}
+            </Button>
           </div>
         )}
       </ScrollShadow>
@@ -223,6 +325,14 @@ const SalesStep1 = ({
             </Button>
           </div>
         </>
+      )}
+
+      {/* Indicador visual cuando el escáner está activo */}
+      {isScanning && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
+          <BiBarcodeReader className="text-lg animate-pulse" />
+          <span className="text-sm font-medium">Escáner activo - Presione ESC para cancelar</span>
+        </div>
       )}
     </div>
   );

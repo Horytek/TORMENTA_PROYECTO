@@ -283,6 +283,45 @@ const Registro_Venta = () => {
   const igv_t = (totalImporte * 0.18).toFixed(2);
   const total_t = Math.round(parseFloat(totalImporte) + parseFloat(igv_t));
 
+  // Función para resetear todos los datos de la venta
+  const resetVentaData = () => {
+    // Limpiar detalles (esto debería estar en el hook useVentasData)
+    detalles.forEach(detalle => {
+      removeDetalle(detalle.codigo);
+    });
+    
+    // Resetear datos del cliente
+    setClienteData({
+      tipo_cliente: 'Natural',
+      dniOrRuc: '',
+      nombreCliente: '',
+      direccionCliente: '',
+      clienteSeleccionado: ''
+    });
+    
+    // Resetear datos de pago
+    setPaymentData({
+      metodoPago: "",
+      montoRecibido: "",
+      metodoPago2: "",
+      montoAdicional: "",
+      metodoPago3: "",
+      montoRecibido3: "",
+      observaciones: "",
+      total: 0,
+      vuelto: 0
+    });
+    
+    // Resetear tipo de documento
+    setSelectedDocumentType("Boleta");
+    
+    // Cerrar modales si están abiertos
+    setShowNuevoCliente(false);
+    setShowAlert(false);
+    
+    console.log('Datos de venta reseteados completamente');
+  };
+
   // Sale data for receipt
   const datosVentaComprobante = {
     fecha: new Date().toISOString().slice(0, 10),
@@ -516,6 +555,8 @@ const Registro_Venta = () => {
             total_t={total_t}
             handlePrint={handlePrint}
             Comprobar_mayor_499={Comprobar_mayor_499}
+            productos={productos}
+            handleProductSelect={handleProductSelect}
           />
         ) : currentStep === 2 ? (
           <SalesStep2
@@ -562,6 +603,7 @@ const Registro_Venta = () => {
             paymentData={paymentData}
             productos={productos}
             nombre={nombre}
+            onResetVenta={resetVentaData}
           />
         )}
 

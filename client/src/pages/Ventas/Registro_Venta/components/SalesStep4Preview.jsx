@@ -14,7 +14,9 @@ const SalesStep4Preview = ({
   selectedDocumentType,
   clienteData,
   paymentData,
-  productos
+  productos,
+  // Agregar callbacks para limpiar datos
+  onResetVenta
 }) => {
   const [showVentaExitosa, setShowVentaExitosa] = useState(false);
   const nombre = useUserStore(state => state.nombre);
@@ -27,8 +29,13 @@ const SalesStep4Preview = ({
   // Cálculos para descuentos
   const descuentoCalculado = parseFloat(paymentData.descuentoCalculado || 0);
   const totalConDescuento = paymentData.descuentoActivado ? total_t - descuentoCalculado : total_t;
+  
+  // Cálculos para pagos múltiples
   const montoRecibido = parseFloat(paymentData.montoRecibido || 0);
-  const cambio = Math.max(montoRecibido - totalConDescuento, 0);
+  const montoAdicional = parseFloat(paymentData.montoAdicional || 0);
+  const montoAdicional2 = parseFloat(paymentData.montoAdicional2 || 0);
+  const totalPagado = montoRecibido + montoAdicional + montoAdicional2;
+  const cambio = Math.max(totalPagado - totalConDescuento, 0);
   
   // Construir datos de venta
   const datosVenta = useMemo(() => ({
@@ -53,8 +60,8 @@ const SalesStep4Preview = ({
     })),
     fecha_iso: new Date(),
     metodo_pago: paymentData.metodoPago + ':' + montoRecibido +
-      (paymentData.metodoPago2 ? ", " + paymentData.metodoPago2 + ':' + (paymentData.montoAdicional || 0) : '') +
-      (paymentData.metodoPago3 ? ", " + paymentData.metodoPago3 + ':' + (paymentData.montoAdicional2 || 0) : ''),
+      (paymentData.metodoPago2 ? ", " + paymentData.metodoPago2 + ':' + montoAdicional : '') +
+      (paymentData.metodoPago3 ? ", " + paymentData.metodoPago3 + ':' + montoAdicional2 : ''),
     fecha: localDate,
     nombre_cliente: clienteData.nombreCliente || 'Clientes Varios',
     documento_cliente: clienteData.dniOrRuc || '00000000',
@@ -75,7 +82,7 @@ const SalesStep4Preview = ({
       acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0
     ).toFixed(2),
     vuelto: cambio.toFixed(2),
-    recibido: montoRecibido.toFixed(2),
+    recibido: totalPagado.toFixed(2),
     formadepago: paymentData.metodoPago +
       (paymentData.metodoPago2 ? ", " + paymentData.metodoPago2 : '') +
       (paymentData.metodoPago3 ? ", " + paymentData.metodoPago3 : ''),
@@ -93,7 +100,7 @@ const SalesStep4Preview = ({
       };
     }).filter(detalle => detalle !== null),
     observacion: paymentData.observaciones || '',
-  }), [detalles, selectedDocumentType, clienteData, paymentData, total_t, totalConDescuento, montoRecibido, cambio, nombre, usuario, productos]);
+  }), [detalles, selectedDocumentType, clienteData, paymentData, total_t, totalConDescuento, montoRecibido, montoAdicional, montoAdicional2, totalPagado, cambio, nombre, usuario, productos]);
 
   // Función para procesar la venta
   const procesarVenta = async () => {
@@ -114,8 +121,8 @@ const SalesStep4Preview = ({
         return;
       }
       
-      if (montoRecibido < totalConDescuento) {
-        toast.error('El monto recibido debe cubrir el total');
+      if (totalPagado < totalConDescuento) {
+        toast.error('El monto total recibido debe cubrir el total de la venta');
         return;
       }
       
@@ -129,6 +136,8 @@ const SalesStep4Preview = ({
         nombre || usuario || 'admin'
       );
       
+      console.log('Venta procesada exitosamente, modal debería aparecer...');
+      
     } catch (error) {
       console.error('Error al procesar la venta:', error);
       toast.error('Error al procesar la venta');
@@ -136,10 +145,18 @@ const SalesStep4Preview = ({
   };
 
   const handleVentaExitosaClose = () => {
+    console.log('Cerrando modal de venta exitosa...');
     setShowVentaExitosa(false);
-    // Reiniciar el formulario o redirigir
+    
+    // Ejecutar callback para limpiar datos inmediatamente
+    if (onResetVenta) {
+      console.log('Ejecutando reset de datos...');
+      onResetVenta();
+    }
+    
+    // Redirigir al paso 1 inmediatamente después de limpiar datos
+    console.log('Redirigiendo al paso 1...');
     setCurrentStep(1);
-    // Aquí podrías agregar lógica para limpiar el formulario
   };
   // Validación para evitar errores si cobrarState es undefined
   if (!cobrarState) {
@@ -187,22 +204,36 @@ const SalesStep4Preview = ({
         </div>
         <div className="flex justify-between">
           <span className="text-sm text-gray-600">Método de pago:</span>
-          <span className="text-sm font-medium text-gray-900">{cobrarState.metodo_pago || 'N/A'}</span>
+          <div className="text-right">
+            <div className="text-sm font-medium text-gray-900">
+              {paymentData.metodoPago} - S/ {montoRecibido.toFixed(2)}
+            </div>
+            {paymentData.metodoPago2 && (
+              <div className="text-sm font-medium text-gray-900">
+                {paymentData.metodoPago2} - S/ {montoAdicional.toFixed(2)}
+              </div>
+            )}
+            {paymentData.metodoPago3 && (
+              <div className="text-sm font-medium text-gray-900">
+                {paymentData.metodoPago3} - S/ {montoAdicional2.toFixed(2)}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex justify-between">
-          <span className="text-sm text-gray-600">Monto recibido:</span>
-          <span className="text-sm font-medium text-gray-900">S/ {cobrarState.montoRecibido || '0.00'}</span>
+          <span className="text-sm text-gray-600">Total recibido:</span>
+          <span className="text-sm font-medium text-gray-900">S/ {totalPagado.toFixed(2)}</span>
         </div>
         <Divider />
         <div className="flex justify-between">
           <span className="text-base font-medium text-gray-900">Total:</span>
-          <span className="text-base font-bold text-green-600">S/ {total_t || '0.00'}</span>
+          <span className="text-base font-bold text-green-600">S/ {totalConDescuento.toFixed(2)}</span>
         </div>
-        {parseFloat(cobrarState.montoRecibido || 0) - total_t > 0 && (
+        {totalPagado > totalConDescuento && (
           <div className="flex justify-between">
             <span className="text-sm text-gray-600">Vuelto:</span>
             <span className="text-sm font-medium text-blue-600">
-              S/ {(parseFloat(cobrarState.montoRecibido || 0) - total_t).toFixed(2)}
+              S/ {cambio.toFixed(2)}
             </span>
           </div>
         )}
