@@ -35,6 +35,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
   const [modalOpen, setModalOpen] = useState(false);
 
   // Zustand
+  const nombre = useUserStore((state) => state.nombre);
   const rol = useUserStore((state) => state.rol);
   const sur = useUserStore((state) => state.sur);
   const total_ventas = useVentaSeleccionadaStore((state) => state.total_ventas);
@@ -114,7 +115,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
       "Se están enviando los datos a la Sunat..."
     );
 
-    handleSunatMultiple(ventas_new);
+    handleSunatMultiple(ventas_new, nombre);
     handleUpdateMultiple(ventas_new);
 
     toast.dismiss(loadingToastId);

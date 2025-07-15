@@ -58,10 +58,9 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 
 
 // Función para enviar los datos a SUNAT
-const enviarVentaASunat = async (data) => {
+const enviarVentaASunat = async (data, nombre) => {
 
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
-    const nombre = useUserStore((state) => state.nombre);
     const token = await getClaveSunatByUser(nombre);
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
@@ -91,10 +90,9 @@ const enviarVentaASunat = async (data) => {
 };
 
 // Función principal para manejar la aceptación de múltiples ventas
-export const handleSunatMultiple = async (ventas) => {
+export const handleSunatMultiple = async (ventas, nombre) => {
     //const loadingToastId = toast.loading('Enviando ventas a la Sunat...');
     // Obtener los datos de la empresa
-    const nombre = useUserStore((state) => state.nombre);
     const empresaData = await getEmpresaDataByUser(nombre);
     // Iterar sobre cada venta y enviarla a SUNAT
     ventas.forEach((venta) => {
@@ -213,7 +211,7 @@ export const handleSunatMultiple = async (ventas) => {
             ]
         };
 
-        enviarVentaASunat(data)
+        enviarVentaASunat(data, nombre)
             .then(() => {
                 console.log(`Venta ${nuevaSerie_t}-${nuevoCorrelativo} enviada con éxito.`);
             })

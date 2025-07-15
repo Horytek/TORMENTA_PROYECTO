@@ -83,10 +83,12 @@ export const anularVentaEnSunatF = async (ventaData) => {
     } else {
       toast.error('Error al anular la venta en la Sunat. Por favor, inténtelo de nuevo.');
     }
-  } catch (error) {
-    console.error('Error en la solicitud:', error.response ? error.response.data : error.message);
-    toast.error(`Error al anular la venta en la Sunat: ${error.response?.status || ''} - ${error.response?.data || error.message}`);
-  }
+} catch (error) {
+    // Log interno solo el mensaje general
+    console.error('Error en la solicitud:', error.message);
+    // Mensaje genérico para el usuario, sin detalles internos ni datos sensibles
+    toast.error('Error al anular la venta en la Sunat. Por favor, inténtelo de nuevo más tarde.');
+}
 };
 
 // ==========================
@@ -171,8 +173,10 @@ export const anularVentaEnSunatB = async (ventaData, detalles) => {
     } else {
       toast.error('Error al anular la venta en la Sunat. Por favor, inténtelo de nuevo.');
     }
-  } catch (error) {
-    console.error('Error en la solicitud:', error.response ? error.response.data : error.message);
-    toast.error(`Error al anular la venta en la Sunat: ${error.response?.status || ''} - ${error.response?.data || error.message}`);
-  }
+} catch (error) {
+    // Log interno solo el mensaje general
+    console.error('Error en la solicitud:', error.message);
+    // Mensaje genérico para el usuario, sin detalles internos ni datos sensibles
+    toast.error('Error al anular la venta en la Sunat. Por favor, inténtelo de nuevo más tarde.');
+}
 };

@@ -324,7 +324,7 @@ if (comprobante_pago === 'Nota de venta' && metodo_pago !== 'EFECTIVO') {
     return;
   }
   handlePrint();
-  handleCobrar(datosVenta, setShowConfirmacion, datosVenta, { id: last.length > 0 ? last[0].id : '' });
+  handleCobrar(datosVenta, setShowConfirmacion, datosVenta, { id: last.length > 0 ? last[0].id : '' }, nombre);
 };
 
   const handleGuardarClientes = (e) => {

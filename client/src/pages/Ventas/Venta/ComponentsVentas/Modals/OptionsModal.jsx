@@ -55,14 +55,14 @@ const OptionsModal = ({
         toast.error('Error, no se puede usar esta opción');
       } else {
         closeModal();
-        handleSunat(datos_precio, detalles, detalles);
+        handleSunat(datos_precio, detalles, detalles, nombre);
         handleUpdate(d_venta);
       }
     } else if (generatePdfSelected) {
       if (d_venta.tipoComprobante === 'Nota') {
         toast.error('Error, no se puede usar esta opción');
       } else {
-        handleSunatPDF(d_venta, detalles);
+        handleSunatPDF(d_venta, detalles,nombre);
       }
     }
     // Eliminar venta se maneja por ConfirmationModal y onDeleteVenta

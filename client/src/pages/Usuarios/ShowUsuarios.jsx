@@ -9,7 +9,8 @@ import {
   Tooltip,
   Pagination,
   Button,
-  Chip
+  Chip,
+  ScrollShadow
 } from "@heroui/react";
 import UsuariosForm from './UsuariosForm';
 import { MdEdit } from "react-icons/md";
@@ -21,50 +22,29 @@ import { PiPlugsConnected } from "react-icons/pi";
 import { usePermisos } from '@/routes';
 
 export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLocal, removeUsuario }) {
-
-  
-    // Estados de listado de usuarios
-    //const [usuarios, setUsuarios] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [showPassword, setShowPassword] = useState({}); // Estado para manejar la visibilidad de contraseñas
+    const [showPassword, setShowPassword] = useState({});
     const usuariosPerPage = 10;
-    
 
-   /* useEffect(() => {
-        getUsers();
-    }, []);
-
-    // Obtener usuarios mediante API
-    const getUsers = async () => {
-        const data = await getUsuarios();
-        setUsuarios(data);
-    };*/
-
-  // Filtrar usuarios localmente
-  const filteredUsuarios = usuarios.filter(usuario =>
-    usuario.usua.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    // Filtrar usuarios localmente
+    const filteredUsuarios = usuarios.filter(usuario =>
+        usuario.usua.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     // Usuarios a mostrar en la página actual
     const indexOfLastUsuario = currentPage * usuariosPerPage;
     const indexOfFirstUsuario = indexOfLastUsuario - usuariosPerPage;
     const currentUsuarios = filteredUsuarios.slice(indexOfFirstUsuario, indexOfLastUsuario);
 
-    // Eliminar usuario mediante API
-    /*const deleteUser = async (id) => {
+    // Eliminar usuario solo en el array local
+    const deleteUser = async (id) => {
         await deleteUsuario(id);
-        getUsers();
-    };*/
-
-  // Eliminar usuario solo en el array local
-  const deleteUser = async (id) => {
-    await deleteUsuario(id); // Solo llama a la API para eliminar en backend
-    removeUsuario(id);       // Elimina en el array local
-  };
+        removeUsuario(id);
+    };
 
     // Estado de Modal de Edición de Producto
     const [activeEdit, setActiveEdit] = useState(false);
-    const [initialData, setInitialData] = useState(null); // Datos iniciales del usuario a editar
+    const [initialData, setInitialData] = useState(null);
 
     const handleModalEdit = async (id_usuario) => {
         const data = await getUsuario(id_usuario);
@@ -73,7 +53,7 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
                 id_usuario: parseInt(id_usuario),
                 data: data[0]
             });
-            setActiveEdit(true); // Abre el modal solo si los datos están disponibles
+            setActiveEdit(true);
         }
     };
 
@@ -92,9 +72,8 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
         setSelectedRow(null);
     };
 
-    // Función para manejar la acción de confirmación de eliminación de usuario
     const handleConfirmDelete = () => {
-        deleteUser(selectedId); // Eliminación de usuario mediante api
+        deleteUser(selectedId);
         handleCloseConfirmationModal();
     };
 
@@ -103,28 +82,18 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
         setInitialData(null);
     };
 
-  const handleSuccess = () => {
-    reloadUsuarios();
-    setActiveEdit(false);
-    setInitialData(null);
-  };
+    const handleSuccessEdit = (id_usuario, updatedData) => {
+        updateUsuarioLocal(id_usuario, updatedData);
+        setActiveEdit(false);
+        setInitialData(null);
+    };
 
-    // Editar usuario (abre modal y luego actualiza localmente)
-  const handleSuccessEdit = (id_usuario, updatedData) => {
-    updateUsuarioLocal(id_usuario, updatedData);
-    setActiveEdit(false);
-    setInitialData(null);
-  };
+    const handleSuccessAdd = (nuevoUsuario) => {
+        addUsuario(nuevoUsuario);
+        setActiveEdit(false);
+        setInitialData(null);
+    };
 
-  // Agregar usuario (desde el modal)
-  const handleSuccessAdd = (nuevoUsuario) => {
-    addUsuario(nuevoUsuario);
-    setActiveEdit(false);
-    setInitialData(null);
-  };
-
-
-    // Función para alternar la visibilidad de la contraseña
     const togglePasswordVisibility = (id_usuario) => {
         setShowPassword(prevState => ({
             ...prevState,
@@ -138,24 +107,36 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
         switch (columnKey) {
             case "rol":
                 return usuario.nom_rol;
-            case "usuario":
-                return (
-                    <Tooltip content={usuario.estado_token == 1 ? "Conectado" : "Desconectado"}>
-                        <div className="flex gap-x-2">
-                            <span className="font-medium text-gray-700">{usuario.usua}</span>
-                            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 p-1 transition-all duration-200 ease-in-out 
-                                ${usuario.estado_token === 1 
-                                    ? 'border-success-300 bg-success-100' // Verde claro para conectado
-                                    : 'border-danger-300 bg-danger-100'   // Rojo claro para desconectado
-                                }`}>
-                                {usuario.estado_token === 1 
-                                    ? <PiPlugsConnected className="text-success-600 text-lg transition-all duration-300 ease-in-out transform hover:scale-105" />
-                                    : <VscDebugDisconnect className="text-danger-600 text-lg transition-all duration-300 ease-in-out transform hover:scale-105" />
-                                }
-                            </div>
-                        </div>
-                    </Tooltip>
-                );
+case "usuario":
+    return (
+        <Tooltip content={usuario.estado_token == 1 ? "Conectado" : "Desconectado"}>
+            <div className="flex items-center gap-3">
+                <div
+                    className={`
+                        flex items-center justify-center w-9 h-9 rounded-full border-2 shadow-sm
+                        transition-all duration-200
+                        ${usuario.estado_token === 1
+                            ? "border-emerald-300 bg-emerald-50"
+                            : "border-rose-300 bg-rose-50"
+                        }
+                    `}
+                >
+                    {usuario.estado_token === 1 ? (
+                        <PiPlugsConnected className="text-emerald-500 text-xl" />
+                    ) : (
+                        <VscDebugDisconnect className="text-rose-500 text-xl" />
+                    )}
+                </div>
+                <div className="flex flex-col">
+                    <span className="font-semibold text-blue-900 text-[15px] leading-tight">{usuario.usua}</span>
+                    <span className={`text-xs font-medium ${usuario.estado_token === 1 ? "text-emerald-600" : "text-rose-600"} flex items-center gap-1`}>
+                        <span className={`inline-block w-2 h-2 rounded-full ${usuario.estado_token === 1 ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                        {usuario.estado_token === 1 ? "Conectado" : "Desconectado"}
+                    </span>
+                </div>
+            </div>
+        </Tooltip>
+    );
             case "contraseña":
                 return (
                     <div className="flex">
@@ -172,12 +153,26 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
                         </button>
                     </div>
                 );
-            case "estado":
-                return (
-                    <Chip className="capitalize" color={usuario.estado_usuario === 'Inactivo' ? "danger" : "success"} size="lg" variant="flat">
-                        {usuario.estado_usuario}
-                    </Chip>
-                );
+                    case "estado":
+                        return (
+                        <span className={`
+                            inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
+                            ${usuario.estado_usuario === 'Inactivo'
+                            ? "bg-rose-100 text-rose-700 border border-rose-200"
+                            : "bg-green-100 text-green-700 border border-green-200"}
+                        `}>
+                            {usuario.estado_usuario === 'Inactivo' ? (
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                            ) : (
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            )}
+                            {usuario.estado_usuario}
+                        </span>
+                        );
             case "acciones":
                 return (
                     <div className="flex items-center justify-center gap-2">
@@ -211,60 +206,76 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
     }, [showPassword, hasEditPermission, hasDeletePermission]);
 
     return (
-        <div>
-            <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <Table isStriped aria-label="Usuarios" className="min-w-full border-collapse">
-                    <TableHeader>
-                        <TableColumn>ROL</TableColumn>
-                        <TableColumn>USUARIO</TableColumn>
-                        <TableColumn>CONTRASEÑA</TableColumn>
-                        <TableColumn>ESTADO</TableColumn>
-                        <TableColumn className="w-32 text-center">ACCIONES</TableColumn>
-                    </TableHeader>
-                    <TableBody>
-                        {currentUsuarios.map((usuario) => (
-                            <TableRow key={usuario.id_usuario}>
-                                {["rol", "usuario", "contraseña", "estado", "acciones"].map((columnKey) => (
-                                    <TableCell key={columnKey}>{renderCell(usuario, columnKey)}</TableCell>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-
-            {/* Paginación */}
-            <div className="flex justify-end mt-4">
-                <div className="flex">
-                    <Pagination
-                        showControls
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
-                        onPageChange={setCurrentPage}
-                    />
-                </div>
-            </div>
-
-            {/* Modal de Confirmación para eliminar Producto */}
-            {isConfirmationModalOpen && (
-                <ConfirmationModal
-                    message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
-                    onClose={handleCloseConfirmationModal}
-                    onConfirm={handleConfirmDelete}
-                />
-            )}
-
-            {/* Modal de Editar Producto */}
-      {activeEdit && (
-<UsuariosForm
-  modalTitle="Editar Usuario"
-  onClose={() => setActiveEdit(false)}
-  initialData={initialData}
-  onSuccess={handleSuccessEdit}
-  usuarios={usuarios}
-/>
-      )}
+      <div className="bg-white/90 rounded-2xl shadow border border-blue-100 p-0">
+        <ScrollShadow hideScrollBar>
+          <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+            <thead>
+              <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+                <th className="py-2 px-2 text-left">Rol</th>
+                <th className="py-2 px-2 text-left">Usuario</th>
+                <th className="py-2 px-2 text-left">Contraseña</th>
+                <th className="py-2 px-2 text-center">Estado</th>
+                <th className="py-2 px-2 text-center w-32">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentUsuarios.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-gray-400">Sin usuarios para mostrar</td>
+                </tr>
+              ) : (
+                currentUsuarios.map((usuario, idx) => (
+                  <tr
+                    key={usuario.id_usuario}
+                    className={`transition-colors duration-150 ${
+                      idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                    } hover:bg-blue-100/60`}
+                  >
+                    {["rol", "usuario", "contraseña", "estado", "acciones"].map((columnKey) => (
+                      <td
+                        key={columnKey}
+                        className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
+                      >
+                        {renderCell(usuario, columnKey)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </ScrollShadow>
+        {/* Paginación */}
+        <div className="flex justify-between items-center mt-2 px-4 pb-2">
+          <Pagination
+            showControls
+            page={currentPage}
+            total={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
+            onChange={(page) => setCurrentPage(page)}
+            color="primary"
+            size="sm"
+          />
+          <div />
         </div>
+        {/* Modal de Confirmación para eliminar Producto */}
+        {isConfirmationModalOpen && (
+          <ConfirmationModal
+            message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
+            onClose={handleCloseConfirmationModal}
+            onConfirm={handleConfirmDelete}
+          />
+        )}
+        {/* Modal de Editar Producto */}
+        {activeEdit && (
+          <UsuariosForm
+            modalTitle="Editar Usuario"
+            onClose={() => setActiveEdit(false)}
+            initialData={initialData}
+            onSuccess={handleSuccessEdit}
+            usuarios={usuarios}
+          />
+        )}
+      </div>
     );
 }
 

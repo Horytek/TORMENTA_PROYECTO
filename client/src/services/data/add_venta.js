@@ -1,7 +1,7 @@
 //import axios from 'axios';
 import axios from "@/api/axios";
-import { handleSunatUnique } from "../Data/add_sunat_unique";
-import {  handleUpdate } from '../Data/update_venta';
+import { handleSunatUnique } from "../data/add_sunat_unique";
+import {  handleUpdate } from '../data/update_venta';
 // Valida el formato decimal
 export const validateDecimalInput = (e) => {
     const { value } = e.target;
@@ -18,7 +18,7 @@ export const validateDecimalInput = (e) => {
 };
 
 // Maneja la solicitud de cobro
-export const handleCobrar = async (datosVenta, setShowConfirmacion,datosVenta_1,ven) => {
+export const handleCobrar = async (datosVenta, setShowConfirmacion,datosVenta_1,ven, nombre) => {
     try {
         /*console.log('Datos de venta:', datosVenta);
         console.log('Datos de venta_1:', datosVenta_1);
@@ -30,7 +30,7 @@ export const handleCobrar = async (datosVenta, setShowConfirmacion,datosVenta_1,
         });
 
         if(datosVenta_1.comprobante_pago != "Nota de venta"){
-            handleSunatUnique(datosVenta_1);
+            handleSunatUnique(datosVenta_1,nombre);
             handleUpdate(ven);
         }
         

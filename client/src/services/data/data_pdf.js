@@ -58,11 +58,11 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 }
 
 // Función para enviar los datos a SUNAT
-const generarPDF = async (data) => {
+const generarPDF = async (data, nombre) => {
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/pdf';
-  const token = await getClaveSunatByUser();
+  const token = await getClaveSunatByUser(nombre);
     
-  console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
+  //console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
   try {
     const response = await axios.post(url, data, {
@@ -73,7 +73,7 @@ const generarPDF = async (data) => {
       },
       responseType: 'blob'
     });
-    console.log('Respuesta de la API:', response.data);
+    //console.log('Respuesta de la API:', response.data);
 
 
       toast.success(`PDF generado con exito`);
@@ -96,13 +96,12 @@ const generarPDF = async (data) => {
 };
 
 // Función principal para manejar la aceptación de la venta
-export const handleSunatPDF = async (venta,detalles) => {
+export const handleSunatPDF = async (venta,detalles, nombre) => {
     //const loadingToastId = toast.loading('Enviando ventas a la Sunat...');
 
     // Iterar sobre cada venta y enviarla a SUNAT
         // Obtener los detalles de la venta
             // Obtener los datos de la empresa
-    const nombre = useUserStore((state) => state.nombre);
     const empresaData = await getEmpresaDataByUser(nombre);
 
         // Calcular el monto total considerando que los precios ya incluyen IGV
@@ -214,12 +213,12 @@ export const handleSunatPDF = async (venta,detalles) => {
             ]
         };
 
-        generarPDF(data)
+        generarPDF(data,nombre)
             .then(() => {
-                console.log(`Venta ${nuevaSerie_t}-${nuevoCorrelativo} enviada con éxito.`);
+                //console.log(`Venta ${nuevaSerie_t}-${nuevoCorrelativo} enviada con éxito.`);
             })
             .catch((error) => {
-                console.error(`Error al enviar la venta ${nuevaSerie_t}-${nuevoCorrelativo}:`, error);
+                console.error(`Error al enviar la venta ${nuevaSerie_t}-${nuevoCorrelativo}:`);
             });
 
     //toast.dismiss(loadingToastId);

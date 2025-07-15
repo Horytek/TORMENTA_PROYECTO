@@ -59,12 +59,11 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 
 
 // Función para enviar los datos a SUNAT
-const enviarVentaASunat = async (data) => {
+const enviarVentaASunat = async (data, nombre) => {
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
-    const nombre = useUserStore((state) => state.nombre);
     const token = await getClaveSunatByUser(nombre);
   
-  console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
+  //console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
   try {
     const response = await axios.post(url, data, {
@@ -74,7 +73,7 @@ const enviarVentaASunat = async (data) => {
       }
     });
 
-    console.log('Respuesta de la API:', response.data);
+    //console.log('Respuesta de la API:', response.data);
 
     if (response.status === 200) {
       toast.success(`Los datos se han enviado con éxito a la Sunat.`);
@@ -93,10 +92,9 @@ const enviarVentaASunat = async (data) => {
 
 // Función principal para manejar la aceptación de la venta
 // Función principal para manejar la aceptación de la venta
-export const handleSunat = async (cliente, detalles, productos) => {
+export const handleSunat = async (cliente, detalles, productos, nombre) => {
   try {
     // Obtener los datos de la empresa
-    const nombre = useUserStore((state) => state.nombre);
     const empresaData = await getEmpresaDataByUser(nombre);
 
     // Calcular el monto total considerando que los precios ya incluyen IGV
@@ -213,7 +211,7 @@ export const handleSunat = async (cliente, detalles, productos) => {
     };
 
     const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
-    await enviarVentaASunat(data);
+    await enviarVentaASunat(data, nombre);
     toast.dismiss(loadingToastId);
   } catch (error) {
     console.error('Error en handleSunat:', error.message);

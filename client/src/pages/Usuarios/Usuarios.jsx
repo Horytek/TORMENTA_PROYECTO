@@ -35,7 +35,7 @@ function Usuarios() {
     fetchUsuarios();
   }, []);
 
-    // Utilidad para transformar estado_usuario y nom_rol dinámicamente
+  // Utilidad para transformar estado_usuario y nom_rol dinámicamente
   const transformUsuario = (usuario) => ({
     ...usuario,
     estado_usuario: usuario.estado_usuario === 1 || usuario.estado_usuario === "1" ? "Activo" : "Inactivo",
@@ -64,50 +64,70 @@ function Usuarios() {
   };
 
   return (
-    <div>
+    <div className="min-h-screen py-8 px-2 sm:px-6">
       <Toaster />
-      <hr className="mb-4" />
-      <h1 className='text-4xl font-extrabold'>Usuarios</h1>
-      <div className="flex items-center justify-between mt-5 mb-4">
-        <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
-        <h6 className="font-bold">Lista de Usuarios</h6>
-        <BarraSearch
-          placeholder="Ingrese un usuario"
-          isClearable={true}
-          className="h-9 text-sm w-2/4"
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
-        <div className="flex gap-5">
-          <Button
-            color="primary"
-            endContent={<FaPlus style={{ fontSize: '25px' }} />}
-            onClick={() => setModalOpen(true)}
-            disabled={!hasCreatePermission}
-            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
-          >
-            Agregar usuario
-          </Button>
+      <div className="max-w-[1600px] mx-auto space-y-6">
+        {/* Header principal */}
+        <div className="bg-white/80 border border-blue-100 rounded-2xl shadow-sm p-6 mb-4">
+          <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">
+            Gestión de usuarios
+          </h1>
+          <p className="text-base text-blue-700/80 mb-2">
+            Visualiza, filtra y administra todos los usuarios del sistema.
+          </p>
         </div>
+
+        {/* Filtros y acciones */}
+        <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-0 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex-1 p-4">
+            <BarraSearch
+              placeholder="Ingrese un usuario"
+              isClearable={true}
+              className="h-9 text-sm w-full md:w-72"
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <div className="flex gap-5 p-4">
+            <Button
+              color="primary"
+              endContent={<FaPlus style={{ fontSize: '25px' }} />}
+              onClick={() => setModalOpen(true)}
+              disabled={!hasCreatePermission}
+              className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+              style={{
+                background: "linear-gradient(to right, #3b82f6, #6366f1)",
+                color: "#fff",
+                fontWeight: "bold",
+                boxShadow: "0 2px 8px rgba(59,130,246,0.08)"
+              }}
+            >
+              Agregar usuario
+            </Button>
+          </div>
+        </div>
+
+        {/* Tabla de usuarios */}
+        <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-4">
+          <ShowUsuarios
+            searchTerm={searchTerm}
+            usuarios={usuarios}
+            addUsuario={addUsuario}
+            updateUsuarioLocal={updateUsuarioLocal}
+            removeUsuario={removeUsuario}
+          />
+        </div>
+
+        {/* Modal de Agregar Usuario */}
+        {activeAdd && (
+          <UsuariosForm
+            modalTitle="Nuevo Usuario"
+            onClose={() => setModalOpen(false)}
+            onSuccess={addUsuario}
+            usuarios={usuarios}
+          />
+        )}
       </div>
-      <div>
-        <ShowUsuarios
-          searchTerm={searchTerm}
-          usuarios={usuarios}
-          addUsuario={addUsuario}
-          updateUsuarioLocal={updateUsuarioLocal}
-          removeUsuario={removeUsuario}
-        />
-      </div>
-      {/* Modal de Agregar Usuario */}
-      {activeAdd && (
-<UsuariosForm
-  modalTitle="Nuevo Usuario"
-  onClose={() => setModalOpen(false)}
-  onSuccess={addUsuario}
-  usuarios={usuarios}
-/>
-      )}
     </div>
   );
 }

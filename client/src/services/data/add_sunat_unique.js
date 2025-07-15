@@ -58,12 +58,11 @@ const obtenerUltimaVentaYCorrelativo = (tipoComprobante) => {
 
 
 // Función para enviar los datos a SUNAT
-const enviarVentaASunat = async (data) => {
+const enviarVentaASunat = async (data, nombre) => {
 
   const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
   //const token = import.meta.env.VITE_TOKEN_SUNAT || '';
-    const nombre = useUserStore((state) => state.nombre);
-    const token = await getClaveSunatByUser(nombre);
+  const token = await getClaveSunatByUser(nombre);
 
   console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
@@ -93,10 +92,9 @@ const enviarVentaASunat = async (data) => {
 };
 
 // Función principal para manejar la aceptación de múltiples ventas
-export const handleSunatUnique = async (venta) => {
+export const handleSunatUnique = async (venta, nombre) => {
     //const loadingToastId = toast.loading('Enviando ventas a la Sunat...');
     // Obtener los datos de la empresa
-    const nombre = useUserStore((state) => state.nombre);
     const empresaData = await getEmpresaDataByUser(nombre);
     // Iterar sobre cada venta y enviarla a SUNAT
         // Obtener los detalles de la venta
@@ -131,7 +129,7 @@ export const handleSunatUnique = async (venta) => {
         const nuevaSerie_t = ultimaSerie_n + venta.serieNum;
 
         // Determinar el tipo de documento basado en el documento del cliente
-        const tipoDocCliente = venta.ruc.length === 11 ? "6" : "1";
+        const tipoDocCliente = (venta.ruc || '').length === 11 ? "6" : "1";
         const isoDate = venta.fecha_iso;
         const offsetHours = -5; // Ajuste de zona horaria para -05:00
         const result = convertDateToDesiredFormat3(isoDate, offsetHours);
@@ -215,7 +213,7 @@ export const handleSunatUnique = async (venta) => {
             ]
         };
 
-        enviarVentaASunat(data)
+        enviarVentaASunat(data, nombre)
             .then(() => {
                 console.log(`Venta ${nuevaSerie_t}-${nuevoCorrelativo} enviada con éxito.`);
             })
