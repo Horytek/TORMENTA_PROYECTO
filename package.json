@@ -7,6 +7,8 @@
     "babel-node": "babel-node --presets @babel/preset-env",
     "dev": "nodemon --exec babel-node index.js",
     "client": "cd ./client && npm run dev",
+    "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
+    "dev:fullstack": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"npm run dev\" \"npm run client\"",
     "build": "npm install --prefix ./client",
     "start": "npm run build && babel-node index.js"
   },

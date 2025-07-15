@@ -5,7 +5,6 @@
 - **Iniciar Aplicación/Servidor**
 ```
 npm i (solo para nuevos paquetes)
-npm start
 ```
 
 ### React (Frontend)
@@ -26,7 +25,7 @@ npm run dev
 ```
 
 - **Variables de entorno - Backend**
-> Crea un archivo .env dentro de la carpeta backend con el siguiente contenido:
+> Crea un archivo .env dentro de la carpeta raiz (afuera del todo) con el siguiente contenido:
 
 ```
 HOST=localhost

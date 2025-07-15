@@ -1,10 +1,30 @@
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 
-exec('npm run dev', (err, stdout, stderr) => {
-  if (err) {
-    console.error(`Error: ${err}`);
-    return;
-  }
-  console.log(`stdout: ${stdout}`);
-  console.error(`stderr: ${stderr}`);
+
+
+// Ejecutar backend
+const backend = spawn('npm', ['run', 'dev'], { 
+  stdio: 'inherit',
+  shell: true 
+});
+
+// Ejecutar frontend
+const frontend = spawn('npm', ['run', 'client'], { 
+  stdio: 'inherit',
+  shell: true 
+});
+
+// Manejar cierre del proceso
+process.on('SIGINT', () => {
+  backend.kill('SIGINT');
+  frontend.kill('SIGINT');
+  process.exit(0);
+});
+
+backend.on('close', (code) => {
+  console.log(`Backend terminado con código: ${code}`);
+});
+
+frontend.on('close', (code) => {
+  console.log(`Frontend terminado con código: ${code}`);
 });

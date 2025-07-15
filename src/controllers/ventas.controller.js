@@ -305,6 +305,9 @@ const addVenta = async (req, res) => {
   connection = await getConnection();
 
   try {
+    console.log("=== DATOS RECIBIDOS EN EL BACKEND ===");
+    console.log("req.body:", JSON.stringify(req.body, null, 2));
+    
     const {
       usuario,
       id_comprobante,
@@ -386,6 +389,14 @@ const addVenta = async (req, res) => {
 
 
     // Obtener id_tipocomprobante y nom_tipocomp basado en el nombre del comprobante
+    console.log("Buscando comprobante:", id_comprobante);
+    
+    // Primero veamos qué tipos de comprobante existen
+    const [allComprobantes] = await connection.query(
+      "SELECT id_tipocomprobante, nom_tipocomp FROM tipo_comprobante"
+    );
+    console.log("Tipos de comprobante disponibles:", allComprobantes);
+    
     const [comprobanteResult] = await connection.query(
       "SELECT id_tipocomprobante, nom_tipocomp FROM tipo_comprobante WHERE nom_tipocomp=?",
       [id_comprobante]
@@ -455,12 +466,14 @@ const addVenta = async (req, res) => {
     const id_comprobante_final = nuevoComprobanteResult.insertId;
 
     // Obtener id_cliente basado en el nombre completo o razón social
+    console.log("Buscando cliente:", id_cliente);
+    
     const [clienteResult] = await connection.query(
       "SELECT id_cliente, COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS cliente_t FROM cliente WHERE CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ? ORDER BY (CASE WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 ELSE 1 END), cliente_t;",
       [id_cliente, id_cliente]
     );
 
-    //console.log("Resultado del cliente:", clienteResult);
+    console.log("Resultado del cliente:", clienteResult);
 
     if (clienteResult.length === 0) {
       throw new Error("Cliente not found.");
