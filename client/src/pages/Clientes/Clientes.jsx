@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-// import ClientesForm from './ClientesForm';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import { Button } from "@nextui-org/button";
@@ -68,18 +67,17 @@ function Clientes() {
   };
 
   return (
-    <div>
+    <div className="min-h-[80vh] bg-gradient-to-b from-white via-blue-50/60 to-blue-100/60 rounded-2xl shadow border border-blue-100 px-8 py-10 max-w-8xl mx-auto">
       <Toaster />
-     
-      <h1 className="text-4xl font-extrabold">Gestión de clientes</h1>
-      <div className="flex items-center justify-between mt-5 mb-4">
-        <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
-        <h6 className="font-bold">Lista de Clientes</h6>
+      <h1 className="text-4xl font-extrabold text-blue-900 mb-2">Gestión de clientes</h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-5 mb-8">
+        <h6 className="font-bold text-blue-700">Lista de Clientes</h6>
         <BarraSearch
           placeholder="Ingrese nombres o razón social del cliente"
           isClearable={true}
-          className="h-9 text-sm w-1/2"
-         
+          className="h-10 text-sm w-full md:w-2/4 bg-white border border-blue-100 rounded-lg shadow-sm"
+          value={searchTerm}
+          onChange={handleSearchChange}
         />
         <div className="flex gap-5">
           <Button
@@ -87,17 +85,13 @@ function Clientes() {
             endContent={<FaPlus style={{ fontSize: '25px' }} />}
             onClick={handleModalAdd}
             disabled={!hasCreatePermission}
-            style={
-              !hasCreatePermission
-                ? { opacity: 0.5, cursor: 'not-allowed' }
-                : { boxShadow: 'inset 0 1px 0 hsl(224, 84%, 74%), 0 1px 3px hsl(0, 0%, 0%, 0.2)' }
-            }
+            className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Agregar cliente
           </Button>
         </div>
       </div>
-      <div>
+      <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8">
         <TablaCliente
           clientes={clientes}
           totales={null}
@@ -112,11 +106,8 @@ function Clientes() {
           onDelete={() => refetch(page, limit, docType, docNumber)}
           onEdit={() => refetch(page, limit, docType, docNumber)}
           onFilter={handleFilterChange}
-
-
         />
       </div>
-
       <AddClientModal
         open={activeAdd}
         onClose={handleModalAdd}

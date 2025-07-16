@@ -9,6 +9,7 @@ import {
   Tooltip,
   Pagination,
   Button,
+  ScrollShadow
 } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
@@ -18,15 +19,11 @@ import UsuariosForm from './UsuariosForm';
 import { usePermisos } from '@/routes';
 
 export function ShowUsuarios({ searchTerm }) {
-  // Add tab state
-
   // Estados de listado de usuarios
   const [usuarios, setUsuarios] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showPassword, setShowPassword] = useState({}); // Estado para manejar la visibilidad de contraseñas
+  const [showPassword, setShowPassword] = useState({});
   const usuariosPerPage = 10;
-
-
 
   useEffect(() => {
     getUsers();
@@ -34,10 +31,10 @@ export function ShowUsuarios({ searchTerm }) {
 
   // Obtener usuarios mediante API
   const getUsers = async () => {
-const data = await getRoles();
-        // Excluir el rol "administrador"
-        const filteredRoles = data.filter((rol) => rol.nom_rol.toLowerCase() !== "administrador");
-        setUsuarios(filteredRoles);
+    const data = await getRoles();
+    // Excluir el rol "administrador"
+    const filteredRoles = data.filter((rol) => rol.nom_rol.toLowerCase() !== "administrador");
+    setUsuarios(filteredRoles);
   };
 
   // Filtrar usuarios
@@ -58,8 +55,7 @@ const data = await getRoles();
 
   // Estado de Modal de Edición de Producto
   const [activeEdit, setActiveEdit] = useState(false);
-  const [initialData, setInitialData] = useState(null); // Datos iniciales del usuario a editar
-  
+  const [initialData, setInitialData] = useState(null);
 
   const handleModalEdit = async (id_usuario) => {
     const data = await getRol(id_usuario);
@@ -68,7 +64,7 @@ const data = await getRoles();
         id_rol: parseInt(id_usuario),
         data: data[0]
       });
-      setActiveEdit(true); // Abre el modal solo si los datos están disponibles
+      setActiveEdit(true);
     }
   };
 
@@ -87,23 +83,14 @@ const data = await getRoles();
     setSelectedRow(null);
   };
 
-  // Función para manejar la acción de confirmación de eliminación de usuario
   const handleConfirmDelete = () => {
-    deleteUser(selectedId); // Eliminación de usuario mediante api
+    deleteUser(selectedId);
     handleCloseConfirmationModal();
   };
 
   const handleCloseModal = () => {
     setActiveEdit(false);
     setInitialData(null);
-  };
-
-  // Función para alternar la visibilidad de la contraseña
-  const togglePasswordVisibility = (id_usuario) => {
-    setShowPassword(prevState => ({
-      ...prevState,
-      [id_usuario]: !prevState[id_usuario]
-    }));
   };
 
   const { hasEditPermission, hasDeletePermission } = usePermisos();
@@ -116,11 +103,21 @@ const data = await getRoles();
         return usuario.nom_rol;
       case "estado":
         return (
-          <span className={
-            usuario.estado_rol === 'Inactivo'
-              ? "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-red-100 text-red-600"
-              : "inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-medium font-normal bg-green-200 text-green-700"
-          }>
+          <span className={`
+            inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-[13px] font-semibold
+            ${usuario.estado_rol === 'Inactivo'
+              ? "bg-rose-100 text-rose-700 border border-rose-200"
+              : "bg-emerald-100 text-emerald-700 border border-emerald-200"}
+          `}>
+            {usuario.estado_rol === 'Inactivo' ? (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
             {usuario.estado_rol}
           </span>
         );
@@ -154,12 +151,10 @@ const data = await getRoles();
       default:
         return usuario[columnKey];
     }
-  }, []);
-
-
+  }, [hasEditPermission, hasDeletePermission]);
 
   return (
-    <div className="w-full">
+    <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
       {/* Modals */}
       {isConfirmationModalOpen && (
         <ConfirmationModal
@@ -178,34 +173,53 @@ const data = await getRoles();
       )}
 
       {/* Tabla de roles */}
-      <Table
-        isStriped
-        aria-label="Tabla de roles"
-        className="min-w-full border-collapse"
-      >
-        <TableHeader>
-          <TableColumn>ID</TableColumn>
-          <TableColumn>ROL</TableColumn>
-          <TableColumn>ESTADO</TableColumn>
-          <TableColumn className="w-32 text-center">ACCIONES</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {currentUsuarios.map((usuario) => (
-            <TableRow key={usuario.id_rol}>
-              {["id", "rol", "estado", "acciones"].map((columnKey) => (
-                <TableCell key={columnKey}>{renderCell(usuario, columnKey)}</TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="flex justify-end mt-4">
+      <ScrollShadow hideScrollBar className="rounded-2xl">
+        <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+          <thead>
+            <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+              <th className="py-2 px-2 text-left">ID</th>
+              <th className="py-2 px-2 text-left">ROL</th>
+              <th className="py-2 px-2 text-center">ESTADO</th>
+              <th className="py-2 px-2 text-center w-32">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentUsuarios.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="py-8 text-center text-gray-400">Sin roles para mostrar</td>
+              </tr>
+            ) : (
+              currentUsuarios.map((usuario, idx) => (
+                <tr
+                  key={usuario.id_rol}
+                  className={`transition-colors duration-150 ${
+                    idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                  } hover:bg-blue-100/60`}
+                >
+                  {["id", "rol", "estado", "acciones"].map((columnKey) => (
+                    <td
+                      key={columnKey}
+                      className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
+                    >
+                      {renderCell(usuario, columnKey)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </ScrollShadow>
+      <div className="flex justify-between items-center mt-2 px-4 pb-2">
         <Pagination
           showControls
           page={currentPage}
           total={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
           onChange={setCurrentPage}
+          color="primary"
+          size="sm"
         />
+        <div />
       </div>
     </div>
   );

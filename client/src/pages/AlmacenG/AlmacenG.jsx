@@ -8,13 +8,14 @@ import { usePermisos } from '@/routes';
 import { Tooltip } from "@heroui/react";
 import BarraSearch from "@/components/Search/Search";
 import { getAlmacenes_A, deleteAlmacen } from '@/services/almacen.services';
+
 function Almacenes() {
   const [activeAdd, setModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [almacenes, setAlmacenes] = useState([]);
 
   const estadoToText = (estado) =>
-  String(estado) === "1" ? "Activo" : "Inactivo";
+    String(estado) === "1" ? "Activo" : "Inactivo";
 
   const handleModalAdd = () => setModalOpen(!activeAdd);
 
@@ -31,54 +32,53 @@ function Almacenes() {
     fetchAlmacenes();
   }, []);
 
-const handleAddAlmacen = (nuevoAlmacen) => {
-  setAlmacenes(prev => [
-    {
-      ...nuevoAlmacen,
-      estado_almacen: estadoToText(nuevoAlmacen.estado_almacen)
-    },
-    ...prev
-  ]);
-};
+  const handleAddAlmacen = (nuevoAlmacen) => {
+    setAlmacenes(prev => [
+      {
+        ...nuevoAlmacen,
+        estado_almacen: estadoToText(nuevoAlmacen.estado_almacen)
+      },
+      ...prev
+    ]);
+  };
 
-// Al editar almacén localmente
-const handleEditAlmacen = (id_almacen, updatedData) => {
-  setAlmacenes(prev =>
-    prev.map(almacen =>
-      almacen.id_almacen === id_almacen
-        ? { ...almacen, ...updatedData, estado_almacen: estadoToText(updatedData.estado_almacen) }
-        : almacen
-    )
-  );
-};
-
-const handleDeleteAlmacen = async (id_almacen) => {
-  const result = await deleteAlmacen(id_almacen);
-  if (result === 1) {
-    setAlmacenes(prev => prev.filter(almacen => almacen.id_almacen !== id_almacen));
-  } else if (result === 2) {
+  // Al editar almacén localmente
+  const handleEditAlmacen = (id_almacen, updatedData) => {
     setAlmacenes(prev =>
       prev.map(almacen =>
         almacen.id_almacen === id_almacen
-          ? { ...almacen, estado_almacen: "Inactivo" }
+          ? { ...almacen, ...updatedData, estado_almacen: estadoToText(updatedData.estado_almacen) }
           : almacen
       )
     );
-  }
-};
+  };
+
+  const handleDeleteAlmacen = async (id_almacen) => {
+    const result = await deleteAlmacen(id_almacen);
+    if (result === 1) {
+      setAlmacenes(prev => prev.filter(almacen => almacen.id_almacen !== id_almacen));
+    } else if (result === 2) {
+      setAlmacenes(prev =>
+        prev.map(almacen =>
+          almacen.id_almacen === id_almacen
+            ? { ...almacen, estado_almacen: "Inactivo" }
+            : almacen
+        )
+      );
+    }
+  };
 
   return (
-    <div>
+    <div className="min-h-[80vh] bg-gradient-to-b from-white via-blue-50/60 to-blue-100/60 rounded-2xl shadow border border-blue-100 px-8 py-10 max-w-8xl mx-auto">
       <Toaster />
-      <hr className="mb-4" />
-      <h1 className='text-4xl font-extrabold'>Gestión de almacenes</h1>
-      <div className="flex items-center justify-between mt-5 mb-4">
-        <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
-        <h6 className="font-bold">Lista de Almacenes</h6>
+      <hr className="mb-8 border-blue-100" />
+      <h1 className='text-4xl font-extrabold text-blue-900 mb-2'>Gestión de almacenes</h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-5 mb-8">
+        <h6 className="font-bold text-blue-700">Lista de Almacenes</h6>
         <BarraSearch
           placeholder="Ingrese un almacén"
           isClearable={true}
-          className="h-9 text-sm w-2/4"
+          className="h-10 text-sm w-full md:w-2/4"
           value={searchTerm}
           onChange={handleSearchChange}
         />
@@ -88,15 +88,14 @@ const handleDeleteAlmacen = async (id_almacen) => {
               color={hasCreatePermission ? "primary" : "default"}
               endContent={<FaPlus style={{ fontSize: '25px' }} />}
               onClick={() => hasCreatePermission ? handleModalAdd() : null}
-              className={hasCreatePermission ? "" : "opacity-50 cursor-not-allowed"}
+              className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Agregar almacén
             </Button>
           </Tooltip>
         </div>
       </div>
-      
-      <div>
+      <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8">
         <ShowAlmacenes
           searchTerm={searchTerm}
           almacenes={almacenes}
@@ -104,9 +103,8 @@ const handleDeleteAlmacen = async (id_almacen) => {
           onDelete={handleDeleteAlmacen}
         />
       </div>
-
       {activeAdd && (
-        <AlmacenesForm 
+        <AlmacenesForm
           modalTitle="Agregar Almacén"
           onClose={handleModalAdd}
           onSuccess={handleAddAlmacen}

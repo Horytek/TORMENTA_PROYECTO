@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button } from "@heroui/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, ScrollShadow } from "@heroui/react";
 import DestinatariosForm from './DestinatariosForm';
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
@@ -53,63 +53,76 @@ export function ShowDestinatarios({
     };
 
     return (
-        <div>
-            <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <Table isStriped aria-label="Destinatarios" className="min-w-full border-collapse">
+        <div className="bg-gradient-to-b from-white via-blue-50/60 to-blue-100/60 border border-blue-100 rounded-2xl shadow p-0">
+            <ScrollShadow hideScrollBar className="rounded-2xl">
+                <Table isStriped aria-label="Destinatarios" className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
                     <TableHeader>
-                        <TableColumn>DOCUMENTO</TableColumn>
-                        <TableColumn>RAZÓN SOCIAL</TableColumn>
-                        <TableColumn>UBICACIÓN</TableColumn>
-                        <TableColumn>DIRECCIÓN</TableColumn>
-                        <TableColumn>EMAIL</TableColumn>
-                        <TableColumn>TELÉFONO</TableColumn>
-                        <TableColumn className="w-32 text-center">ACCIONES</TableColumn>
+                        <TableColumn className="text-blue-900 font-bold bg-blue-50">DOCUMENTO</TableColumn>
+                        <TableColumn className="text-blue-900 font-bold bg-blue-50">RAZÓN SOCIAL</TableColumn>
+                        <TableColumn className="text-blue-900 font-bold bg-blue-50">UBICACIÓN</TableColumn>
+                        <TableColumn className="text-blue-900 font-bold bg-blue-50">DIRECCIÓN</TableColumn>
+                        <TableColumn className="text-blue-900 font-bold bg-blue-50">EMAIL</TableColumn>
+                        <TableColumn className="text-blue-900 font-bold bg-blue-50">TELÉFONO</TableColumn>
+                        <TableColumn className="text-blue-900 font-bold bg-blue-50 w-32 text-center">ACCIONES</TableColumn>
                     </TableHeader>
                     <TableBody>
-                        {currentDestinatarios.map((destinatario) => (
-                            <TableRow key={destinatario.id}>
-                                <TableCell>{destinatario.documento}</TableCell>
-                                <TableCell>{destinatario.destinatario}</TableCell>
-                                <TableCell>{destinatario.ubicacion}</TableCell>
-                                <TableCell>{destinatario.direccion}</TableCell>
-                                <TableCell>{destinatario.email}</TableCell>
-                                <TableCell>{destinatario.telefono}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Tooltip content="Editar">
-                                            <Button isIconOnly variant="light" color="warning"
-                                                onClick={() => onEdit(destinatario)}
-                                                disabled={!hasEditPermission}
-                                                className={!hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}>
-                                                <MdEdit />
-                                            </Button>
-                                        </Tooltip>
-                                        <Tooltip content="Eliminar">
-                                            <Button isIconOnly variant="light" color="danger"
-                                                onClick={() => handleOpenConfirmationModal(destinatario.destinatario, destinatario.id)}
-                                                disabled={!hasDeletePermission}
-                                                className={!hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}>
-                                                <FaTrash />
-                                            </Button>
-                                        </Tooltip>
-                                    </div>
+                        {currentDestinatarios.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="py-8 text-center text-gray-400">
+                                    Sin proveedores para mostrar
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            currentDestinatarios.map((destinatario, idx) => (
+                                <TableRow
+                                    key={destinatario.id}
+                                    className={`transition-colors duration-150 ${
+                                        idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                                    } hover:bg-blue-100/60`}
+                                >
+                                    <TableCell>{destinatario.documento}</TableCell>
+                                    <TableCell>{destinatario.destinatario}</TableCell>
+                                    <TableCell>{destinatario.ubicacion}</TableCell>
+                                    <TableCell>{destinatario.direccion}</TableCell>
+                                    <TableCell>{destinatario.email}</TableCell>
+                                    <TableCell>{destinatario.telefono}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Tooltip content="Editar">
+                                                <Button isIconOnly variant="light" color="warning"
+                                                    onClick={() => onEdit(destinatario)}
+                                                    disabled={!hasEditPermission}
+                                                    className={!hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}>
+                                                    <MdEdit />
+                                                </Button>
+                                            </Tooltip>
+                                            <Tooltip content="Eliminar">
+                                                <Button isIconOnly variant="light" color="danger"
+                                                    onClick={() => handleOpenConfirmationModal(destinatario.destinatario, destinatario.id)}
+                                                    disabled={!hasDeletePermission}
+                                                    className={!hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}>
+                                                    <FaTrash />
+                                                </Button>
+                                            </Tooltip>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
-            </div>
-
+            </ScrollShadow>
             {/* Paginación */}
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-between items-center mt-2 px-4 pb-2">
                 <Pagination
                     showControls
-                    currentPage={currentPage}
-                    totalPages={Math.ceil(filteredDestinatarios.length / destinatariosPerPage)}
-                    onPageChange={setCurrentPage}
+                    page={currentPage}
+                    total={Math.ceil(filteredDestinatarios.length / destinatariosPerPage)}
+                    onChange={setCurrentPage}
+                    color="primary"
+                    size="sm"
                 />
             </div>
-
             {/* Modal de Confirmación */}
             {isConfirmationModalOpen && (
                 <ConfirmationModal

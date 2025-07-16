@@ -50,16 +50,16 @@ function Sucursal() {
   );
 
   return (
-    <div>
+    <div className="min-h-[80vh] bg-gradient-to-b from-white via-blue-50/60 to-blue-100/60 rounded-2xl shadow border border-blue-100 px-8 py-10 max-w-8xl mx-auto">
       <Toaster />
-      <hr className="mb-4" />
-      <h1 className='text-4xl font-extrabold'>Sucursales</h1>
-      <div className="flex items-center justify-between mt-5 mb-4">
-        <h6 className="font-bold">Lista de Sucursales</h6>
+      <hr className="mb-8 border-blue-100" />
+      <h1 className='text-4xl font-extrabold text-blue-900 mb-2'>Sucursales</h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-5 mb-8">
+        <h6 className="font-bold text-blue-700">Lista de Sucursales</h6>
         <BarraSearch
           placeholder="Ingrese una sucursal"
           isClearable={true}
-          className="h-9 text-sm w-2/4"
+          className="h-10 text-sm w-full md:w-2/4"
           value={searchTerm}
           onChange={handleSearchChange}
         />
@@ -69,13 +69,13 @@ function Sucursal() {
             endContent={<FaPlus style={{ fontSize: '25px' }} />}
             onClick={() => setModalOpen(true)}
             disabled={!hasCreatePermission}
-            className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+            className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Agregar sucursal
           </Button>
         </div>
       </div>
-      <div>
+      <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8">
         <ShowSucursales
           searchTerm={searchTerm}
           sucursales={sucursalesFiltradas}

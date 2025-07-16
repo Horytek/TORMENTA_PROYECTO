@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Tooltip, Pagination, Button, Chip
+  Tooltip, Pagination, Button, Chip, ScrollShadow
 } from "@heroui/react";
 import { MdEdit, MdDelete } from "react-icons/md";
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
@@ -63,19 +63,32 @@ function ShowSucursales({ searchTerm, sucursales, addSucursal, updateSucursalLoc
       case "vendedor":
         return sucursal.nombre_vendedor;
       case "nombre":
-        return sucursal.nombre_sucursal;
+        return (
+          <span className="font-semibold text-blue-900">{sucursal.nombre_sucursal}</span>
+        );
       case "direccion":
-        return sucursal.ubicacion;
+        return (
+          <span className="text-blue-700/90">{sucursal.ubicacion}</span>
+        );
       case "estado":
         return (
-          <Chip
-            className="capitalize"
-            color={sucursal.estado_sucursal === 0 ? "danger" : "success"}
-            size="lg"
-            variant="flat"
-          >
+          <span className={`
+            inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
+            ${sucursal.estado_sucursal === 0
+              ? "bg-rose-100 text-rose-700 border border-rose-200"
+              : "bg-emerald-100 text-emerald-700 border border-emerald-200"}
+          `}>
+            {sucursal.estado_sucursal === 0 ? (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
             {sucursal.estado_sucursal === 0 ? 'Inactivo' : 'Activo'}
-          </Chip>
+          </span>
         );
       case "acciones":
         return (
@@ -110,38 +123,57 @@ function ShowSucursales({ searchTerm, sucursales, addSucursal, updateSucursalLoc
   }, [hasEditPermission, hasDeletePermission]);
 
   return (
-    <div>
-      <div className="overflow-x-auto shadow-md sm:rounded-lg">
-        <Table isStriped aria-label="Sucursales" className="min-w-full border-collapse">
-          <TableHeader>
-            <TableColumn>VENDEDOR</TableColumn>
-            <TableColumn>NOMBRE</TableColumn>
-            <TableColumn>DIRECCIÓN</TableColumn>
-            <TableColumn>ESTADO</TableColumn>
-            <TableColumn className="w-32 text-center">ACCIONES</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {currentSucursales.map((sucursal) => (
-              <TableRow key={sucursal.id}>
-                {["vendedor", "nombre", "direccion", "estado", "acciones"].map((columnKey) => (
-                  <TableCell key={columnKey}>{renderCell(sucursal, columnKey)}</TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
+    <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
+      <ScrollShadow hideScrollBar className="rounded-2xl">
+        <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+          <thead>
+            <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+              <th className="py-2 px-2 text-left">VENDEDOR</th>
+              <th className="py-2 px-2 text-left">NOMBRE</th>
+              <th className="py-2 px-2 text-left">DIRECCIÓN</th>
+              <th className="py-2 px-2 text-center">ESTADO</th>
+              <th className="py-2 px-2 text-center w-32">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentSucursales.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-gray-400">Sin sucursales para mostrar</td>
+              </tr>
+            ) : (
+              currentSucursales.map((sucursal, idx) => (
+                <tr
+                  key={sucursal.id}
+                  className={`transition-colors duration-150 ${
+                    idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                  } hover:bg-blue-100/60`}
+                >
+                  {["vendedor", "nombre", "direccion", "estado", "acciones"].map((columnKey) => (
+                    <td
+                      key={columnKey}
+                      className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
+                    >
+                      {renderCell(sucursal, columnKey)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </ScrollShadow>
       {/* Paginación */}
-      <div className="flex justify-end mt-4">
+      <div className="flex justify-between items-center mt-2 px-4 pb-2">
         <Pagination
           showControls
-          currentPage={currentPage}
-          totalPages={Math.ceil(filteredSucursales.length / itemsPerPage)}
-          onPageChange={setCurrentPage}
+          page={currentPage}
+          total={Math.ceil(filteredSucursales.length / itemsPerPage)}
+          onChange={setCurrentPage}
+          color="primary"
+          size="sm"
         />
+        <div />
       </div>
-
       {/* Modal de Confirmación para eliminar */}
       {isConfirmationModalOpen && (
         <ConfirmationModal
@@ -150,7 +182,6 @@ function ShowSucursales({ searchTerm, sucursales, addSucursal, updateSucursalLoc
           onConfirm={handleConfirmDelete}
         />
       )}
-
       {/* Modal de Editar Sucursal */}
       {activeEdit && (
         <SucursalForm

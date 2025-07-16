@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip } from "@heroui/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip, ScrollShadow } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
@@ -36,11 +36,10 @@ export function ShowAlmacenes({ searchTerm, almacenes, onEdit, onDelete }) {
         setSelectedRow(null);
     };
 
-const handleConfirmDelete = async () => {
-    // Quita esta línea: await deleteAlmacen(selectedId);
-    await onDelete(selectedId); // El padre maneja la lógica y la petición
-    handleCloseConfirmationModal();
-};
+    const handleConfirmDelete = async () => {
+        await onDelete(selectedId);
+        handleCloseConfirmationModal();
+    };
 
     const handleModalEdit = (almacen) => {
         setSelectedAlmacen({
@@ -63,70 +62,104 @@ const handleConfirmDelete = async () => {
 
     const { hasEditPermission, hasDeletePermission } = usePermisos();
 
+    // Renderizado de estado con icono
+    const renderEstado = (estado) => (
+        <span className={`
+            inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
+            ${estado === 'Inactivo'
+                ? "bg-rose-100 text-rose-700 border border-rose-200"
+                : "bg-emerald-100 text-emerald-700 border border-emerald-200"}
+        `}>
+            {estado === 'Inactivo' ? (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            ) : (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+            )}
+            {estado}
+        </span>
+    );
+
     return (
-        <div>
-            <div className="overflow-x-auto shadow-md sm:rounded-lg">
-                <Table isStriped aria-label="Almacenes" className="min-w-full border-collapse">
-                    <TableHeader>
-                        <TableColumn>ID</TableColumn>
-                        <TableColumn>Almacen</TableColumn>
-                        <TableColumn>Sucursal</TableColumn>
-                        <TableColumn>Ubicación</TableColumn>
-                        <TableColumn>Estado</TableColumn>
-                        <TableColumn className="w-32 text-center">Acciones</TableColumn>
-                    </TableHeader>
-                    <TableBody>
-                        {currentAlmacenes.map((almacen) => (
-                            <TableRow key={almacen.id_almacen}>
-                                <TableCell>{almacen.id_almacen}</TableCell>
-                                <TableCell>{almacen.nom_almacen}</TableCell>
-                                <TableCell>{almacen.nombre_sucursal}</TableCell>
-                                <TableCell>{almacen.ubicacion}</TableCell>
-                                <TableCell>
-                                    <Chip color={almacen.estado_almacen === 'Inactivo' ? "danger" : "success"} size="lg" variant="flat">
-                                        {almacen.estado_almacen}
-                                    </Chip>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
-                                            <Button 
-                                                isIconOnly 
-                                                variant="light" 
-                                                color={hasEditPermission ? "warning" : "default"}
-                                                onClick={() => hasEditPermission ? handleModalEdit(almacen) : null}
-                                                className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                                            >
-                                                <MdEdit />
-                                            </Button>
-                                        </Tooltip>
-                                        <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
-                                            <Button 
-                                                isIconOnly 
-                                                variant="light" 
-                                                color={hasDeletePermission ? "danger" : "default"}
-                                                onClick={() => hasDeletePermission ? handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen) : null}
-                                                className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                                            >
-                                                <FaTrash />
-                                            </Button>
-                                        </Tooltip>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-            <div className="flex justify-end mt-4">
+        <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
+            <ScrollShadow hideScrollBar className="rounded-2xl">
+                <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+                    <thead>
+                        <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+                            <th className="py-2 px-2 text-left">ID</th>
+                            <th className="py-2 px-2 text-left">Almacén</th>
+                            <th className="py-2 px-2 text-left">Sucursal</th>
+                            <th className="py-2 px-2 text-left">Ubicación</th>
+                            <th className="py-2 px-2 text-center">Estado</th>
+                            <th className="py-2 px-2 text-center w-32">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentAlmacenes.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="py-8 text-center text-gray-400">Sin almacenes para mostrar</td>
+                            </tr>
+                        ) : (
+                            currentAlmacenes.map((almacen, idx) => (
+                                <tr
+                                    key={almacen.id_almacen}
+                                    className={`transition-colors duration-150 ${
+                                        idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                                    } hover:bg-blue-100/60`}
+                                >
+                                    <td className="py-1.5 px-2">{almacen.id_almacen}</td>
+                                    <td className="py-1.5 px-2 font-semibold text-blue-900">{almacen.nom_almacen}</td>
+                                    <td className="py-1.5 px-2">{almacen.nombre_sucursal}</td>
+                                    <td className="py-1.5 px-2">{almacen.ubicacion}</td>
+                                    <td className="py-1.5 px-2 text-center">
+                                        {renderEstado(almacen.estado_almacen)}
+                                    </td>
+                                    <td className="py-1.5 px-2 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+                                                <Button 
+                                                    isIconOnly 
+                                                    variant="light" 
+                                                    color={hasEditPermission ? "warning" : "default"}
+                                                    onClick={() => hasEditPermission ? handleModalEdit(almacen) : null}
+                                                    className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                                                >
+                                                    <MdEdit />
+                                                </Button>
+                                            </Tooltip>
+                                            <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+                                                <Button 
+                                                    isIconOnly 
+                                                    variant="light" 
+                                                    color={hasDeletePermission ? "danger" : "default"}
+                                                    onClick={() => hasDeletePermission ? handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen) : null}
+                                                    className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                                                >
+                                                    <FaTrash />
+                                                </Button>
+                                            </Tooltip>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </ScrollShadow>
+            <div className="flex justify-between items-center mt-2 px-4 pb-2">
                 <Pagination
                     showControls
-                    currentPage={currentPage}
-                    totalPages={Math.ceil(filteredAlmacenes.length / almacenesPerPage)}
-                    onPageChange={setCurrentPage}
+                    page={currentPage}
+                    total={Math.ceil(filteredAlmacenes.length / almacenesPerPage)}
+                    onChange={setCurrentPage}
+                    color="primary"
+                    size="sm"
                 />
+                <div />
             </div>
-
             {/* Modal de Confirmación */}
             {isConfirmationModalOpen && (
                 <ConfirmationModal
@@ -135,7 +168,6 @@ const handleConfirmDelete = async () => {
                     onConfirm={handleConfirmDelete}
                 />
             )}
-
             {/* Modal de Edición */}
             {isEditModalOpen && (
                 <AlmacenesForm

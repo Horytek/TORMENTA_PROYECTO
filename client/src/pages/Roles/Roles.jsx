@@ -15,20 +15,29 @@ function Usuarios() {
     <div>
       <Toaster />
       {/* <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Roles', href: '/configuracion/roles' }]} /> */}
-      <hr className="mb-4" />
       <Tabs
         selectedKey={selectedTab}
         onSelectionChange={setSelectedTab}
-        className="mb-4"
+        className="mb-8"
+        classNames={{
+          tabList: "bg-transparent flex gap-4",
+          tab: "rounded-lg px-6 py-3 font-semibold text-base transition-colors text-blue-700 data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-blue-100 data-[selected=true]:to-blue-50 data-[selected=true]:text-blue-900 data-[selected=true]:shadow data-[selected=true]:border data-[selected=true]:border-blue-200",
+        }}
       >
         <Tab key="roles" title="Roles">
-          <TablaRoles />
+          <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8 min-h-[400px]">
+            <TablaRoles />
+          </div>
         </Tab>
         <Tab key="permisos" title="Permisos">
-          <TablaPermisos />
+          <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8 min-h-[400px]">
+            <TablaPermisos />
+          </div>
         </Tab>
         <Tab key="paginas" title="Pantalla de inicio">
-          <TablaAsignacion />
+          <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8 min-h-[400px]">
+            <TablaAsignacion />
+          </div>
         </Tab>
       </Tabs>
       {activeAdd && (
