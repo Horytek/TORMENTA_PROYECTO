@@ -409,13 +409,16 @@ const SalesStep2 = ({
                 selectedKeys={paymentData.metodoPago ? new Set([paymentData.metodoPago]) : new Set()}
                 isOpen={shouldOpenPaymentSelect}
                 onOpenChange={(isOpen) => {
-                  if (!isOpen) {
-                    setShouldOpenPaymentSelect(false);
-                  }
+                  setShouldOpenPaymentSelect(isOpen);
                 }}
                 onSelectionChange={(keys) => {
                   const selectedMethod = Array.from(keys)[0] || '';
                   handlePaymentChange('metodoPago', selectedMethod);
+                  
+                  // Autocompletar monto si no es EFECTIVO
+                  if (selectedMethod && selectedMethod !== 'EFECTIVO') {
+                    handlePaymentChange('montoRecibido', totalConDescuento.toFixed(2));
+                  }
                   
                   // Cerrar el menú después de seleccionar
                   setShouldOpenPaymentSelect(false);
@@ -592,9 +595,7 @@ const SalesStep2 = ({
                   selectedKeys={paymentData.metodoPago3 ? new Set([paymentData.metodoPago3]) : new Set()}
                   isOpen={shouldOpenThirdPaymentSelect}
                   onOpenChange={(isOpen) => {
-                    if (!isOpen) {
-                      setShouldOpenThirdPaymentSelect(false);
-                    }
+                    setShouldOpenThirdPaymentSelect(isOpen);
                   }}
                   onSelectionChange={(keys) => {
                     const selectedMethod = Array.from(keys)[0] || '';
@@ -696,9 +697,7 @@ const SalesStep2 = ({
                   selectedKeys={paymentData.metodoPago2 ? new Set([paymentData.metodoPago2]) : new Set()}
                   isOpen={shouldOpenSecondPaymentSelect}
                   onOpenChange={(isOpen) => {
-                    if (!isOpen) {
-                      setShouldOpenSecondPaymentSelect(false);
-                    }
+                    setShouldOpenSecondPaymentSelect(isOpen);
                   }}
                   onSelectionChange={(keys) => {
                     const selectedMethod = Array.from(keys)[0] || '';
