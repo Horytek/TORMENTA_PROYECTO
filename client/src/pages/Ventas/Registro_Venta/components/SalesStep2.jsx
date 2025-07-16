@@ -21,6 +21,32 @@ const SalesStep2 = ({
   // Estado para controlar cuándo mostrar las validaciones
   const [showValidations, setShowValidations] = React.useState(false);
   
+  // Estado para controlar si el select de método de pago debe abrirse
+  const [shouldOpenPaymentSelect, setShouldOpenPaymentSelect] = React.useState(false);
+  
+  // Estado para controlar si el select de segundo método de pago debe abrirse
+  const [shouldOpenSecondPaymentSelect, setShouldOpenSecondPaymentSelect] = React.useState(false);
+  
+  // Estado para controlar si el select de tercer método de pago debe abrirse
+  const [shouldOpenThirdPaymentSelect, setShouldOpenThirdPaymentSelect] = React.useState(false);
+  
+  const paymentSectionRef = React.useRef(null);
+  const amountSectionRef = React.useRef(null);
+  const secondPaymentRef = React.useRef(null);
+  const thirdPaymentRef = React.useRef(null);
+  const paymentSelectRef = React.useRef(null);
+  const clienteAutocompleteRef = React.useRef(null);
+
+  // Función para scroll suave
+  const scrollToSection = (ref) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+  };
+  
   // Estados de error para cada campo
   const [errors, setErrors] = React.useState({
     cliente: false,
@@ -167,6 +193,32 @@ const SalesStep2 = ({
     }
   }, [paymentData.metodoPago3, necesitaTercerPago, totalConDescuento, paymentData.montoRecibido, paymentData.montoAdicional]);
 
+  // Scroll automático cuando se necesita segundo pago
+  React.useEffect(() => {
+    if (necesitaSegundoPago && !paymentData.metodoPago2) {
+      setTimeout(() => {
+        scrollToSection(secondPaymentRef);
+        // Abrir automáticamente el menú del segundo método de pago
+        setTimeout(() => {
+          setShouldOpenSecondPaymentSelect(true);
+        }, 400);
+      }, 500);
+    }
+  }, [necesitaSegundoPago]);
+
+  // Scroll automático cuando se necesita tercer pago
+  React.useEffect(() => {
+    if (necesitaTercerPago && !paymentData.metodoPago3) {
+      setTimeout(() => {
+        scrollToSection(thirdPaymentRef);
+        // Abrir automáticamente el menú del tercer método de pago
+        setTimeout(() => {
+          setShouldOpenThirdPaymentSelect(true);
+        }, 400);
+      }, 500);
+    }
+  }, [necesitaTercerPago]);
+
   // Limpiar montos cuando ya no se necesiten pagos adicionales
   React.useEffect(() => {
     if (!necesitaSegundoPago && paymentData.montoAdicional) {
@@ -248,6 +300,7 @@ const SalesStep2 = ({
         <div className="flex gap-3 items-start">
           <div className="w-80">
             <Autocomplete
+              ref={clienteAutocompleteRef}
               placeholder="Buscar cliente..."
               selectedKey={clienteData.clienteSeleccionado || null}
               onSelectionChange={(key) => {
@@ -270,6 +323,20 @@ const SalesStep2 = ({
                         cliente: false
                       }));
                     }
+
+                    // Scroll automático al método de pago después de seleccionar cliente
+                    setTimeout(() => {
+                      // Desenfocar el autocomplete del cliente
+                      if (clienteAutocompleteRef.current) {
+                        clienteAutocompleteRef.current.blur();
+                      }
+                      // Hacer scroll
+                      scrollToSection(paymentSectionRef);
+                      // Abrir automáticamente el menú de método de pago
+                      setTimeout(() => {
+                        setShouldOpenPaymentSelect(true);
+                      }, 400);
+                    }, 300);
                   }
                 } else {
                   // Limpiar selección si no hay cliente
@@ -334,12 +401,32 @@ const SalesStep2 = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Columna 1: Método de pago y monto */}
           <div className="space-y-4">
-            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+            <div ref={paymentSectionRef} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
               <h5 className="font-medium text-gray-700">Método de pago</h5>
               <Select
+                ref={paymentSelectRef}
                 placeholder="Seleccionar método de pago"
                 selectedKeys={paymentData.metodoPago ? new Set([paymentData.metodoPago]) : new Set()}
-                onSelectionChange={(keys) => handlePaymentChange('metodoPago', Array.from(keys)[0] || '')}
+                isOpen={shouldOpenPaymentSelect}
+                onOpenChange={(isOpen) => {
+                  if (!isOpen) {
+                    setShouldOpenPaymentSelect(false);
+                  }
+                }}
+                onSelectionChange={(keys) => {
+                  const selectedMethod = Array.from(keys)[0] || '';
+                  handlePaymentChange('metodoPago', selectedMethod);
+                  
+                  // Cerrar el menú después de seleccionar
+                  setShouldOpenPaymentSelect(false);
+                  
+                  // Scroll automático al monto recibido cuando se selecciona método de pago
+                  if (selectedMethod) {
+                    setTimeout(() => {
+                      scrollToSection(amountSectionRef);
+                    }, 300);
+                  }
+                }}
                 className="w-full"
                 disabledKeys={disabledKeys1}
                 isInvalid={showValidations && errors.metodoPago}
@@ -353,7 +440,7 @@ const SalesStep2 = ({
               </Select>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+            <div ref={amountSectionRef} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
               <h5 className="font-medium text-gray-700">Monto recibido</h5>
               <Input
                 placeholder="0.00"
@@ -497,13 +584,25 @@ const SalesStep2 = ({
             </div>
 
             {necesitaTercerPago && selectedDocumentType !== 'Nota de venta' && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
+              <div ref={thirdPaymentRef} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
                 <h5 className="font-medium text-yellow-800">Tercer método de pago</h5>
                 <Select
                   label="Tercer método"
                   placeholder="Método adicional"
                   selectedKeys={paymentData.metodoPago3 ? new Set([paymentData.metodoPago3]) : new Set()}
-                  onSelectionChange={(keys) => handlePaymentChange('metodoPago3', Array.from(keys)[0] || '')}
+                  isOpen={shouldOpenThirdPaymentSelect}
+                  onOpenChange={(isOpen) => {
+                    if (!isOpen) {
+                      setShouldOpenThirdPaymentSelect(false);
+                    }
+                  }}
+                  onSelectionChange={(keys) => {
+                    const selectedMethod = Array.from(keys)[0] || '';
+                    handlePaymentChange('metodoPago3', selectedMethod);
+                    
+                    // Cerrar el menú después de seleccionar
+                    setShouldOpenThirdPaymentSelect(false);
+                  }}
                   className="w-full"
                   disabledKeys={[...new Set([...disabledKeys2, paymentData.metodoPago, paymentData.metodoPago2].filter(Boolean))]}
                   isInvalid={showValidations && errors.metodoPago3}
@@ -589,13 +688,32 @@ const SalesStep2 = ({
             </div>
 
             {necesitaSegundoPago && selectedDocumentType !== 'Nota de venta' && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
+              <div ref={secondPaymentRef} className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
                 <h5 className="font-medium text-orange-800">Pago adicional</h5>
                 <Select
                   label="Segundo método"
                   placeholder="Método adicional"
                   selectedKeys={paymentData.metodoPago2 ? new Set([paymentData.metodoPago2]) : new Set()}
-                  onSelectionChange={(keys) => handlePaymentChange('metodoPago2', Array.from(keys)[0] || '')}
+                  isOpen={shouldOpenSecondPaymentSelect}
+                  onOpenChange={(isOpen) => {
+                    if (!isOpen) {
+                      setShouldOpenSecondPaymentSelect(false);
+                    }
+                  }}
+                  onSelectionChange={(keys) => {
+                    const selectedMethod = Array.from(keys)[0] || '';
+                    handlePaymentChange('metodoPago2', selectedMethod);
+                    
+                    // Cerrar el menú después de seleccionar
+                    setShouldOpenSecondPaymentSelect(false);
+                    
+                    // Scroll automático al tercer pago si es necesario
+                    if (selectedMethod && necesitaTercerPago) {
+                      setTimeout(() => {
+                        scrollToSection(thirdPaymentRef);
+                      }, 800);
+                    }
+                  }}
                   className="w-full"
                   disabledKeys={disabledKeys2}
                   isInvalid={showValidations && errors.metodoPago2}
