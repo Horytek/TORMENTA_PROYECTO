@@ -26,42 +26,65 @@ const SalesStep1 = ({
   // Estado local para el filtro si no viene del padre
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   
-  // Estados para el escáner directo
-  const [isScanning, setIsScanning] = useState(false);
+  // Estados para el escáner directo (siempre activo)
   const [barcode, setBarcode] = useState('');
+  const [scanningFeedback, setScanningFeedback] = useState(false);
 
-  // Efecto para manejar el escáner de códigos de barras
+  // Efecto para manejar el escáner de códigos de barras (siempre activo)
   useEffect(() => {
-    if (!isScanning) return;
+    let timeoutId;
 
     const handleKeyPress = (event) => {
+      // Ignorar eventos si estamos en un input o textarea
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
       if (event.key === 'Enter') {
         // Al presionar Enter, el escáner ha terminado de enviar el código
-        console.log('Código escaneado:', barcode);
-        
         if (barcode && productos) {
+         //  console.log('Código escaneado:', barcode);
+          
           const productoEscaneado = productos.find(p => 
             p.codigo_barras === barcode || 
             p.codigo.toString() === barcode
           );
 
           if (productoEscaneado && productoEscaneado.stock > 0) {
-            console.log('Producto encontrado:', productoEscaneado);
+         //   console.log('Producto encontrado:', productoEscaneado);
             if (handleProductSelect) {
               handleProductSelect(productoEscaneado);
+              
+              // Mostrar feedback visual de éxito
+              setScanningFeedback(true);
+              setTimeout(() => setScanningFeedback(false), 2000);
             }
           } else {
             console.warn('Producto no encontrado o sin stock');
-            alert('Producto no encontrado o sin stock disponible');
+            // Mostrar mensaje de error más discreto
+            setScanningFeedback(true);
+            setTimeout(() => setScanningFeedback(false), 3000);
           }
         }
         
-        // Limpiar y desactivar escáner
+        // Limpiar el código después de procesar
         setBarcode('');
-        setIsScanning(false);
-      } else if (event.key.length === 1) {
-        // Solo agregar caracteres imprimibles al código
+        
+        // Limpiar timeout si existe
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      } else if (event.key.length === 1 && /^[0-9]$/.test(event.key)) {
+        // Solo agregar números al código de barras
         setBarcode(prev => prev + event.key);
+        
+        // Auto-limpiar el código después de 2 segundos de inactividad
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+          setBarcode('');
+        }, 2000);
       }
     };
 
@@ -69,34 +92,11 @@ const SalesStep1 = ({
     
     return () => {
       window.removeEventListener('keypress', handleKeyPress);
-    };
-  }, [isScanning, barcode, productos, handleProductSelect]);
-
-  // Función para activar el modo escáner
-  const activateScanner = () => {
-    setBarcode('');
-    setIsScanning(true);
-    alert('Modo escáner activado. Escanee un producto o presione ESC para cancelar.');
-  };
-
-  // Efecto para manejar la tecla ESC para cancelar el escáner
-  useEffect(() => {
-    if (!isScanning) return;
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setIsScanning(false);
-        setBarcode('');
-        console.log('Escáner cancelado');
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isScanning]);
+  }, [barcode, productos, handleProductSelect]);
   
   // Usar el término de búsqueda - simplificado para evitar loops
   const searchTermToUse = searchTerm || localSearchTerm || '';
@@ -154,18 +154,6 @@ const SalesStep1 = ({
               className="text-xs text-bold text-red-600"
             >
               Limpiar todo
-            </Button>
-            <Button
-              size="sm"
-              variant="flat"
-              color="success"
-              onClick={activateScanner}
-              className={`text-xs text-bold flex items-center gap-1 ${isScanning ? 'bg-green-200 text-green-800' : 'text-green-600'}`}
-              title={isScanning ? "Escáner activado - Escanee un producto" : "Usar escáner de productos"}
-              disabled={!productos || productos.length === 0}
-            >
-              <BiBarcodeReader className="text-base" />
-              {isScanning ? 'Escaneando...' : 'Escáner'}
             </Button>
           </div>
         </div>
@@ -263,22 +251,16 @@ const SalesStep1 = ({
           )
         ) : (
           <div className="text-center py-8 text-gray-500">
-            <p className="text-sm">No hay productos seleccionados</p>
-            <p className="text-xs mt-1 mb-4">
-              Selecciona productos de la lista de la izquierda o usa el escáner
-            </p>
-            <Button
-              size="md"
-              variant="flat"
-              color="success"
-              onClick={activateScanner}
-              className={`text-sm text-bold flex items-center gap-2 ${isScanning ? 'bg-green-200 text-green-800' : 'text-green-600'}`}
-              title={isScanning ? "Escáner activado - Escanee un producto" : "Usar escáner de productos"}
-              disabled={!productos || productos.length === 0}
-            >
-              <BiBarcodeReader className="text-lg" />
-              {isScanning ? 'Escáner Activado - Escanee un Producto' : 'Usar Escáner de Productos'}
-            </Button>
+            <div className="mb-4">
+              <BiBarcodeReader className="text-4xl mx-auto mb-2 text-green-600" />
+              <p className="text-sm">No hay productos seleccionados</p>
+              <p className="text-xs mt-1 mb-2">
+                Selecciona productos de la lista de la izquierda o usa el escáner
+              </p>
+              <p className="text-xs text-green-600 font-medium">
+                Escáner siempre activo - Solo escanea un código de barras
+              </p>
+            </div>
           </div>
         )}
       </ScrollShadow>
@@ -327,11 +309,17 @@ const SalesStep1 = ({
         </>
       )}
 
-      {/* Indicador visual cuando el escáner está activo */}
-      {isScanning && (
+      {/* Indicador discreto del escáner siempre activo */}
+      <div className="fixed bottom-4 right-4 bg-green-50 border border-green-200 text-green-700 px-3 py-1 rounded-full text-xs flex items-center gap-2 shadow-sm">
+        <BiBarcodeReader className="text-sm" />
+        <span>Escáner activo</span>
+      </div>
+
+      {/* Feedback visual cuando se escanea */}
+      {scanningFeedback && (
         <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
-          <BiBarcodeReader className="text-lg animate-pulse" />
-          <span className="text-sm font-medium">Escáner activo - Presione ESC para cancelar</span>
+          <BiBarcodeReader className="text-lg" />
+          <span className="text-sm font-medium">¡Producto escaneado!</span>
         </div>
       )}
     </div>

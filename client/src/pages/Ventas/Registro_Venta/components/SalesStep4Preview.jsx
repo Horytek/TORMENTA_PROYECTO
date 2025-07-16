@@ -43,6 +43,7 @@ const SalesStep4Preview = ({
     id_comprobante: selectedDocumentType,
     id_cliente: clienteData.nombreCliente || 'Clientes Varios', // Usar el nombre del cliente, no el ID
     estado_venta: 2,
+    ...(selectedDocumentType !== 'Nota de venta' && { estado_sunat: 1 }),
     sucursal: sucursalV?.nombre || "",
     direccion: sucursalV?.ubicacion || "",
     f_venta: localDate,
@@ -60,8 +61,8 @@ const SalesStep4Preview = ({
     })),
     fecha_iso: new Date(),
     metodo_pago: paymentData.metodoPago + ':' + montoRecibido +
-      (paymentData.metodoPago2 ? ", " + paymentData.metodoPago2 + ':' + montoAdicional : '') +
-      (paymentData.metodoPago3 ? ", " + paymentData.metodoPago3 + ':' + montoAdicional2 : ''),
+      (paymentData.metodoPago2 && montoAdicional > 0 ? ", " + paymentData.metodoPago2 + ':' + montoAdicional : '') +
+      (paymentData.metodoPago3 && montoAdicional2 > 0 ? ", " + paymentData.metodoPago3 + ':' + montoAdicional2 : ''),
     fecha: localDate,
     nombre_cliente: clienteData.nombreCliente || 'Clientes Varios',
     documento_cliente: clienteData.dniOrRuc || '00000000',
@@ -84,8 +85,8 @@ const SalesStep4Preview = ({
     vuelto: cambio.toFixed(2),
     recibido: totalPagado.toFixed(2),
     formadepago: paymentData.metodoPago +
-      (paymentData.metodoPago2 ? ", " + paymentData.metodoPago2 : '') +
-      (paymentData.metodoPago3 ? ", " + paymentData.metodoPago3 : ''),
+      (paymentData.metodoPago2 && montoAdicional > 0 ? ", " + paymentData.metodoPago2 : '') +
+      (paymentData.metodoPago3 && montoAdicional2 > 0 ? ", " + paymentData.metodoPago3 : ''),
     detalles_b: detalles.map(detalle => {
       const producto = productos.find(producto => producto.codigo === detalle.codigo);
       return {
@@ -127,7 +128,6 @@ const SalesStep4Preview = ({
       }
       
       // Procesar la venta
-      console.log('Datos que se enviarán al backend:', datosVenta);
       await handleCobrar(
         datosVenta, 
         setShowVentaExitosa, 
@@ -136,7 +136,6 @@ const SalesStep4Preview = ({
         nombre || usuario || 'admin'
       );
       
-      console.log('Venta procesada exitosamente, modal debería aparecer...');
       
     } catch (error) {
       console.error('Error al procesar la venta:', error);
@@ -145,17 +144,13 @@ const SalesStep4Preview = ({
   };
 
   const handleVentaExitosaClose = () => {
-    console.log('Cerrando modal de venta exitosa...');
     setShowVentaExitosa(false);
     
     // Ejecutar callback para limpiar datos inmediatamente
     if (onResetVenta) {
-      console.log('Ejecutando reset de datos...');
       onResetVenta();
     }
     
-    // Redirigir al paso 1 inmediatamente después de limpiar datos
-    console.log('Redirigiendo al paso 1...');
     setCurrentStep(1);
   };
   // Validación para evitar errores si cobrarState es undefined
@@ -208,12 +203,12 @@ const SalesStep4Preview = ({
             <div className="text-sm font-medium text-gray-900">
               {paymentData.metodoPago} - S/ {montoRecibido.toFixed(2)}
             </div>
-            {paymentData.metodoPago2 && (
+            {paymentData.metodoPago2 && montoAdicional > 0 && (
               <div className="text-sm font-medium text-gray-900">
                 {paymentData.metodoPago2} - S/ {montoAdicional.toFixed(2)}
               </div>
             )}
-            {paymentData.metodoPago3 && (
+            {paymentData.metodoPago3 && montoAdicional2 > 0 && (
               <div className="text-sm font-medium text-gray-900">
                 {paymentData.metodoPago3} - S/ {montoAdicional2.toFixed(2)}
               </div>

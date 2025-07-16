@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Tabs, Tab, Select, SelectItem, Input, Switch, Divider } from '@heroui/react';
+import { Button, Tabs, Tab, Select, SelectItem, Input, Switch, Divider, Autocomplete, AutocompleteItem } from '@heroui/react';
 import AddClientModal from '../../../Clientes/ComponentsClientes/AddClient';
 import { FaPlus } from 'react-icons/fa';
 
@@ -18,6 +18,22 @@ const SalesStep2 = ({
   setPaymentData,
   validateDecimalInput
 }) => {
+  // Estado para controlar cuándo mostrar las validaciones
+  const [showValidations, setShowValidations] = React.useState(false);
+  
+  // Estados de error para cada campo
+  const [errors, setErrors] = React.useState({
+    cliente: false,
+    metodoPago: false,
+    montoRecibido: false,
+    tipoDescuento: false,
+    montoDescuento: false,
+    metodoPago2: false,
+    montoAdicional: false,
+    metodoPago3: false,
+    montoAdicional2: false
+  });
+  
   // Opciones de métodos de pago
   const paymentOptions = [
     { key: 'EFECTIVO', value: 'EFECTIVO', label: 'EFECTIVO' },
@@ -67,15 +83,103 @@ const SalesStep2 = ({
 
   // Actualizar payment data
   const handlePaymentChange = (field, value) => {
-    setPaymentData(prev => ({
-      ...prev,
-      [field]: value,
-      total: total_t,
-      vuelto: Math.max((parseFloat(value) || 0) - total_t, 0)
-    }));
+    setPaymentData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value,
+        total: total_t,
+        vuelto: Math.max((parseFloat(value) || 0) - total_t, 0)
+      };
+
+      // Limpiar montos cuando se cambia el método de pago
+      if (field === 'metodoPago2' && value === '') {
+        newData.montoAdicional = '';
+      }
+      if (field === 'metodoPago3' && value === '') {
+        newData.montoAdicional2 = '';
+      }
+
+      return newData;
+    });
+
+    // Limpiar errores cuando se llena el campo
+    if (showValidations) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        
+        const fieldValidations = {
+          metodoPago: () => value,
+          montoRecibido: () => value && parseFloat(value) > 0,
+          tipoDescuento: () => value,
+          montoDescuento: () => value,
+          porcentajeDescuento: () => value,
+          metodoPago2: () => value,
+          montoAdicional: () => value && parseFloat(value) > 0,
+          metodoPago3: () => value,
+          montoAdicional2: () => value && parseFloat(value) > 0
+        };
+
+        const fieldErrorMapping = {
+          montoDescuento: 'descuento',
+          porcentajeDescuento: 'descuento'
+        };
+
+        // Validar y limpiar errores
+        const validation = fieldValidations[field];
+        if (validation && validation()) {
+          const errorKey = fieldErrorMapping[field] || field;
+          newErrors[errorKey] = false;
+        }
+        
+        return newErrors;
+      });
+    }
   };
 
-  // Efecto para limpiar datos cuando se cambia el tipo de comprobante
+  const autoCompleteAmount = (field) => {
+    const montoRecibido = parseFloat(paymentData.montoRecibido || 0);
+    const montoAdicional = parseFloat(paymentData.montoAdicional || 0);
+    
+    let faltante = 0;
+    
+    if (field === 'montoAdicional') {
+      // Para el segundo pago, calcular lo que falta después del primer pago
+      faltante = Math.max(totalConDescuento - montoRecibido, 0);
+    } else if (field === 'montoAdicional2') {
+      // Para el tercer pago, calcular lo que falta después del primer y segundo pago
+      faltante = Math.max(totalConDescuento - montoRecibido - montoAdicional, 0);
+    }
+    
+    if (faltante > 0) {
+      handlePaymentChange(field, faltante.toFixed(2));
+    }
+  };
+
+  React.useEffect(() => {
+    if (paymentData.metodoPago2 && necesitaSegundoPago) {
+      autoCompleteAmount('montoAdicional');
+    }
+  }, [paymentData.metodoPago2, necesitaSegundoPago, totalConDescuento, paymentData.montoRecibido]);
+
+  React.useEffect(() => {
+    if (paymentData.metodoPago3 && necesitaTercerPago) {
+      autoCompleteAmount('montoAdicional2');
+    }
+  }, [paymentData.metodoPago3, necesitaTercerPago, totalConDescuento, paymentData.montoRecibido, paymentData.montoAdicional]);
+
+  // Limpiar montos cuando ya no se necesiten pagos adicionales
+  React.useEffect(() => {
+    if (!necesitaSegundoPago && paymentData.montoAdicional) {
+      handlePaymentChange('montoAdicional', '');
+    }
+  }, [necesitaSegundoPago]);
+
+  React.useEffect(() => {
+    if (!necesitaTercerPago && paymentData.montoAdicional2) {
+      handlePaymentChange('montoAdicional2', '');
+    }
+  }, [necesitaTercerPago]);
+
   React.useEffect(() => {
     if (selectedDocumentType === 'Nota de venta') {
       // Limpiar métodos adicionales para nota de venta
@@ -89,6 +193,33 @@ const SalesStep2 = ({
       }
     }
   }, [selectedDocumentType, paymentData.metodoPago]);
+
+  // Función para manejar el intento de continuar
+  const handleContinueClick = () => {
+    setShowValidations(true);
+    
+    // Validar campos y establecer errores
+    const newErrors = {
+      cliente: selectedDocumentType !== 'Nota de venta' && !clienteData.nombreCliente,
+      metodoPago: !paymentData.metodoPago,
+      montoRecibido: !paymentData.montoRecibido || parseFloat(paymentData.montoRecibido) <= 0,
+      tipoDescuento: paymentData.descuentoActivado && !paymentData.tipoDescuento,
+      montoDescuento: paymentData.descuentoActivado && (!paymentData.montoDescuento && !paymentData.porcentajeDescuento),
+      metodoPago2: necesitaSegundoPago && !paymentData.metodoPago2,
+      montoAdicional: necesitaSegundoPago && paymentData.metodoPago2 && (!paymentData.montoAdicional || parseFloat(paymentData.montoAdicional) <= 0),
+      metodoPago3: necesitaTercerPago && !paymentData.metodoPago3,
+      montoAdicional2: necesitaTercerPago && paymentData.metodoPago3 && (!paymentData.montoAdicional2 || parseFloat(paymentData.montoAdicional2) <= 0)
+    };
+    
+    setErrors(newErrors);
+    
+    // Verificar si hay errores
+    const hasErrors = Object.values(newErrors).some(error => error) || faltanteFinal > 0;
+    
+    if (!hasErrors) {
+      goToNextStep();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -116,11 +247,10 @@ const SalesStep2 = ({
         
         <div className="flex gap-3 items-start">
           <div className="w-80">
-            <Select
-              placeholder="Seleccionar cliente"
-              selectedKeys={clienteData.clienteSeleccionado ? new Set([clienteData.clienteSeleccionado]) : new Set()}
-              onSelectionChange={(keys) => {
-                const key = Array.from(keys)[0];
+            <Autocomplete
+              placeholder="Buscar cliente..."
+              selectedKey={clienteData.clienteSeleccionado || null}
+              onSelectionChange={(key) => {
                 if (key) {
                   const cliente = clientes.find(c => String(c.id) === String(key));
                   if (cliente) {
@@ -132,6 +262,14 @@ const SalesStep2 = ({
                       direccionCliente: cliente.direccion || '',
                       tipo_cliente: cliente.tipo || 'Natural'
                     }));
+                    
+                    // Limpiar error de cliente cuando se selecciona uno
+                    if (showValidations) {
+                      setErrors(prev => ({
+                        ...prev,
+                        cliente: false
+                      }));
+                    }
                   }
                 } else {
                   // Limpiar selección si no hay cliente
@@ -143,23 +281,35 @@ const SalesStep2 = ({
                     direccionCliente: '',
                     tipo_cliente: 'Natural'
                   }));
+                  
+                  // Activar error de cliente si se limpia la selección
+                  if (showValidations && selectedDocumentType !== 'Nota de venta') {
+                    setErrors(prev => ({
+                      ...prev,
+                      cliente: true
+                    }));
+                  }
                 }
-              }}
-              renderValue={(items) => {
-                return items.map((item) => {
-                  const cliente = clientes.find(c => String(c.id) === item.key);
-                  return cliente ? `${cliente.nombre} - ${cliente.documento}` : '';
-                }).join(', ');
               }}
               className="w-full"
               variant="bordered"
+              isClearable
+              isInvalid={showValidations && errors.cliente}
+              errorMessage={showValidations && errors.cliente ? "Cliente es requerido" : ""}
+              listboxProps={{
+                emptyContent: "No se encontraron resultados"
+              }}
             >
               {clientes.map((cliente) => (
-                <SelectItem key={String(cliente.id)} value={String(cliente.id)}>
-                  {cliente.nombre} - {cliente.documento}
-                </SelectItem>
+                <AutocompleteItem 
+                  key={String(cliente.id)} 
+                  value={String(cliente.id)}
+                  description={cliente.documento}
+                >
+                  {cliente.nombre}
+                </AutocompleteItem>
               ))}
-            </Select>
+            </Autocomplete>
           </div>
           
           <Button
@@ -192,6 +342,8 @@ const SalesStep2 = ({
                 onSelectionChange={(keys) => handlePaymentChange('metodoPago', Array.from(keys)[0] || '')}
                 className="w-full"
                 disabledKeys={disabledKeys1}
+                isInvalid={showValidations && errors.metodoPago}
+                errorMessage={showValidations && errors.metodoPago ? "Método de pago es requerido" : ""}
               >
                 {paymentOptions.map(({ key, value, label }) => (
                   <SelectItem key={key} value={value}>
@@ -214,16 +366,25 @@ const SalesStep2 = ({
                   }
                 }}
                 onKeyDown={validateDecimalInput}
+                onWheel={(e) => e.target.blur()} // Desactivar scroll del mouse
                 className="w-full"
                 startContent={<span>S/</span>}
                 type="number"
                 step="0.01"
                 min="0"
                 disabled={!paymentData.metodoPago}
-                style={{  border: "none",
-                              boxShadow: "none",
-                              outline: "none", }}
+                isInvalid={showValidations && errors.montoRecibido}
+                errorMessage={showValidations && errors.montoRecibido ? "Monto recibido es requerido" : ""}
+                style={{  
+                  border: "none",
+                  boxShadow: "none",
+                  outline: "none"
+                }}
+                classNames={{
+                  input: "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-moz-appearance]:textfield"
+                }}
               />
+              
             </div>
 
             {/* Card de descuento */}
@@ -253,6 +414,8 @@ const SalesStep2 = ({
                     }}
                     className="w-full"
                     size="sm"
+                    isInvalid={showValidations && paymentData.descuentoActivado && errors.tipoDescuento}
+                    errorMessage={showValidations && paymentData.descuentoActivado && errors.tipoDescuento ? "Tipo de descuento es requerido" : ""}
                   >
                     <SelectItem key="monto" value="monto">Monto fijo</SelectItem>
                     <SelectItem key="porcentaje" value="porcentaje">Porcentaje</SelectItem>
@@ -296,18 +459,26 @@ const SalesStep2 = ({
                         }
                       }}
                       onKeyDown={validateDecimalInput}
+                      onWheel={(e) => e.target.blur()} // Desactivar scroll del mouse
                       startContent={
                         <span>{paymentData.tipoDescuento === 'porcentaje' ? '%' : 'S/'}</span>
                       }
                       type="number"
                       step="0.01"
                       min="0"
+                      isInvalid={showValidations && paymentData.descuentoActivado && errors.descuento}
+                      errorMessage={showValidations && paymentData.descuentoActivado && errors.descuento ? "Descuento es requerido" : ""}
                       max={paymentData.tipoDescuento === 'porcentaje' ? 100 : total_t}
                       className="w-full"
                       disabled={!paymentData.descuentoActivado}
-                      style={{  border: "none",
-                                boxShadow: "none",
-                                outline: "none", }}
+                      style={{  
+                        border: "none",
+                        boxShadow: "none",
+                        outline: "none"
+                      }}
+                      classNames={{
+                        input: "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-moz-appearance]:textfield"
+                      }}
                     />
                     <p className="text-xs text-gray-500">
                       {paymentData.tipoDescuento === 'porcentaje' ? 
@@ -335,6 +506,8 @@ const SalesStep2 = ({
                   onSelectionChange={(keys) => handlePaymentChange('metodoPago3', Array.from(keys)[0] || '')}
                   className="w-full"
                   disabledKeys={[...new Set([...disabledKeys2, paymentData.metodoPago, paymentData.metodoPago2].filter(Boolean))]}
+                  isInvalid={showValidations && errors.metodoPago3}
+                  errorMessage={showValidations && errors.metodoPago3 ? "Tercer método de pago es requerido" : ""}
                 >
                   {paymentOptions.filter(option => 
                     option.key !== paymentData.metodoPago && 
@@ -356,16 +529,25 @@ const SalesStep2 = ({
                     }
                   }}
                   onKeyDown={validateDecimalInput}
+                  onWheel={(e) => e.target.blur()} // Desactivar scroll del mouse
                   className="w-full"
                   startContent={<span>S/</span>}
                   type="number"
                   step="0.01"
                   min="0"
                   disabled={!paymentData.metodoPago3}
-                  style={{  border: "none",
-                              boxShadow: "none",
-                              outline: "none", }}
+                  isInvalid={showValidations && errors.montoAdicional2}
+                  errorMessage={showValidations && errors.montoAdicional2 ? "Monto adicional es requerido" : ""}
+                  style={{  
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none"
+                  }}
+                  classNames={{
+                    input: "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-moz-appearance]:textfield"
+                  }}
                 />
+         
               </div>
             )}
           </div>
@@ -416,6 +598,8 @@ const SalesStep2 = ({
                   onSelectionChange={(keys) => handlePaymentChange('metodoPago2', Array.from(keys)[0] || '')}
                   className="w-full"
                   disabledKeys={disabledKeys2}
+                  isInvalid={showValidations && errors.metodoPago2}
+                  errorMessage={showValidations && errors.metodoPago2 ? "Segundo método de pago es requerido" : ""}
                 >
                   {paymentOptions.filter(option => option.key !== paymentData.metodoPago).map(({ key, value, label }) => (
                     <SelectItem key={key} value={value}>
@@ -434,16 +618,25 @@ const SalesStep2 = ({
                     }
                   }}
                   onKeyDown={validateDecimalInput}
+                  onWheel={(e) => e.target.blur()} // Desactivar scroll del mouse
                   className="w-full"
                   startContent={<span>S/</span>}
                   type="number"
                   step="0.01"
                   min="0"
                   disabled={!paymentData.metodoPago2}
-                  style={{  border: "none",
-                              boxShadow: "none",
-                              outline: "none", }}
+                  isInvalid={showValidations && errors.montoAdicional}
+                  errorMessage={showValidations && errors.montoAdicional ? "Monto adicional es requerido" : ""}
+                  style={{  
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none"
+                  }}
+                  classNames={{
+                    input: "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-moz-appearance]:textfield"
+                  }}
                 />
+               
               </div>
             )}
           </div>
@@ -460,7 +653,7 @@ const SalesStep2 = ({
         }}
         refetch={async () => {
           // Aquí puedes agregar lógica para refrescar la lista de clientes
-          console.log('Cliente agregado, refrescando lista...');
+          // console.log('Cliente agregado, refrescando lista...');
         }}
       />
 
@@ -468,17 +661,10 @@ const SalesStep2 = ({
     <div className="flex flex-col items-center space-y-2 pt-6 border-t">
       <Button 
         className="w-full xl:w-96 text-white font-semibold py-3" 
-        onClick={goToNextStep}
+        onClick={handleContinueClick}
         variant="shadow"
         size="lg"
         style={{ backgroundColor: '#338CF1' }}
-        disabled={
-          !selectedDocumentType || 
-          (!clienteData.nombreCliente && selectedDocumentType !== 'Nota de venta') ||
-          !paymentData.metodoPago || 
-          montoRecibido <= 0 ||
-          faltanteFinal > 0 // No permitir continuar si hay faltante final
-        }
       >
         {faltanteFinal > 0
           ? 'Continuar' 

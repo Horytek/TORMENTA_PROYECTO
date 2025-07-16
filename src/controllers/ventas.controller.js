@@ -305,14 +305,15 @@ const addVenta = async (req, res) => {
   connection = await getConnection();
 
   try {
-    console.log("=== DATOS RECIBIDOS EN EL BACKEND ===");
-    console.log("req.body:", JSON.stringify(req.body, null, 2));
+    // console.log("=== DATOS RECIBIDOS EN EL BACKEND ===");
+    //  console.log("req.body:", JSON.stringify(req.body, null, 2));
     
     const {
       usuario,
       id_comprobante,
       id_cliente,
       estado_venta,
+      estado_sunat,
       f_venta,
       igv,
       detalles,
@@ -485,8 +486,8 @@ const addVenta = async (req, res) => {
 
     // Insertar venta
     const [ventaResult] = await connection.query(
-      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular,id_anular_b,observacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [id_comprobante_final, id_cliente_final, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago,id_anular,id_anular_b,observacion]
+      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular, id_anular_b, observacion, estado_sunat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id_comprobante_final, id_cliente_final, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular, id_anular_b, observacion, estado_sunat]
     );
 
     //console.log("Resultado de inserción de venta:", ventaResult);
