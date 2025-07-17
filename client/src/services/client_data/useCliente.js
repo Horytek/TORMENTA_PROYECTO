@@ -1,5 +1,9 @@
 import { useState } from "react";
-import axios from "@/api/axios";
+import {
+    getClienteRequest,
+    deleteClienteRequest
+} from "@/api/api.cliente";
+
 
 const useCliente = () => {
     const [cliente, setCliente] = useState(null);
@@ -10,7 +14,7 @@ const useCliente = () => {
     const getCliente = async (id) => {
         setGetLoading(true);
         try {
-            const response = await axios.get(`/clientes/getCliente/${id}`);
+             const response = await getClienteRequest(id);
             if (response.data.code === 1) {
                 setCliente(response.data.data);
             } else {
@@ -26,7 +30,7 @@ const useCliente = () => {
     const deleteClient = async (clientId) => {
         setDeleteLoading(true);
         try {
-            const response = await axios.delete(`/clientes/deleteCliente/${clientId}`);
+            const response = await deleteClienteRequest(clientId);
             if (response.status === 204 || !response.data) {
                 return { success: true };
             }

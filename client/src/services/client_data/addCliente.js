@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from "@/api/axios";
+import { addClienteRequest } from "@/api/api.cliente";
 
 export const useAddClient = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,7 +10,7 @@ export const useAddClient = () => {
     setError(null);
 
     try {
-      const response = await axios.post('/clientes/', clientData);
+      const response = await addClienteRequest(clientData);
 
       if (response.data.code === 1) {
         return {

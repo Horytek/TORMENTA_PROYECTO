@@ -16,7 +16,7 @@ import {
   } from "@nextui-org/react";
 import { IoIosSearch } from "react-icons/io";
 import { toast, Toaster } from "react-hot-toast";
-import useUpdateClient from "../data/updateCliente";
+import useUpdateClient from "@/services/client_data/updateCliente";
 
 const inputStyles = {
     base: "border-none",

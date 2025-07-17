@@ -17,7 +17,7 @@ import {
   SelectItem
 } from "@nextui-org/react";
 import { IoIosSearch } from "react-icons/io";
-import { useAddClient } from '../data/addCliente';
+import { useAddClient } from "@/services/client_data/addCliente";
 import { toast, Toaster } from "react-hot-toast"; // Updated import
 
 const inputStyles = {

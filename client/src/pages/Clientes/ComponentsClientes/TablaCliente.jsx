@@ -18,8 +18,8 @@ import { MdEdit, MdDelete, MdRemoveCircleOutline, MdVisibility } from "react-ico
 import FiltroCliente from "./FiltroCliente";
 import EditClientModal from "./EditClient.jsx";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import useCliente from "../data/useCliente";
-import deactivateCliente from "../data/deactivateCliente.js";
+import useCliente from "@/services/client_data/useCliente";
+import deactivateCliente from "@/services/client_data/deactivateCliente";
 import { toast, Toaster } from "react-hot-toast";
 import ViewClientModal from "./ShowClient";
 import { usePermisos } from '@/routes';
@@ -143,7 +143,7 @@ case "acciones":
                         setTargetClient(cliente);
                         setOpenConfirmModal(true);
                     }}
-                    className={isInactive || !hasDeactivatePermission ? "opacity-50 cursor-not-allowed" : "rounded-full hover:bg-rose-50 cursor-pointer"}
+                    className={isInactive || !hasDeactivatePermission ? "opacity-50 cursor-not-allowed" : "hover:bg-rose-50 cursor-pointer"}
                 >
                     <MdRemoveCircleOutline className="h-5 w-5" />
                 </Button>
@@ -220,7 +220,7 @@ case "acciones":
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow border border-blue-100 p-0">
+        <div className="bg-gradient-to-b from-white via-blue-50/60 to-blue-100/60 border border-blue-100 rounded-2xl shadow p-0">
             <Toaster />
             <div className="mb-2 px-6 pt-6">
                 <FiltroCliente
@@ -266,31 +266,36 @@ case "acciones":
                 >
                     <TableHeader columns={columns}>
                         {(column) => (
-                            <TableColumn key={column.uid} align={centeredColumns.includes(column.uid) ? "center" : "start"}>
+                            <TableColumn key={column.uid} align={centeredColumns.includes(column.uid) ? "center" : "start"} className="text-blue-900 font-bold bg-blue-50">
                                 {column.name}
                             </TableColumn>
                         )}
                     </TableHeader>
-                    <TableBody
-                        items={clientes}
-                        loadingContent={<p>Cargando registros...</p>}
-                        loadingState={loading ? "loading" : "idle"}
-                        emptyContent={
-                            <div className="flex justify-center items-center h-24 text-gray-500">
-                                No se encontraron registros.
-                            </div>
-                        }
-                    >
-                        {(cliente) => (
-                            <TableRow key={cliente.id}>
-                                {(columnKey) => (
-                                    <TableCell className={centeredColumns.includes(columnKey) ? "text-center" : ""}>
-                                        {renderCell(cliente, columnKey)}
-                                    </TableCell>
-                                )}
-                            </TableRow>
-                        )}
-                    </TableBody>
+                <TableBody
+                    items={clientes}
+                    loadingContent={<p>Cargando registros...</p>}
+                    loadingState={loading ? "loading" : "idle"}
+                    emptyContent={
+                        <div className="flex justify-center items-center h-24 text-gray-500">
+                            No se encontraron registros.
+                        </div>
+                    }
+                >
+                    {(cliente, idx) => (
+                        <TableRow
+                            key={cliente.id}
+                            className={`transition-colors duration-150 ${
+                                idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                            } hover:bg-blue-100/60`}
+                        >
+                            {(columnKey) => (
+                                <TableCell className={centeredColumns.includes(columnKey) ? "text-center" : ""}>
+                                    {renderCell(cliente, columnKey)}
+                                </TableCell>
+                            )}
+                        </TableRow>
+                    )}
+                </TableBody>
                 </Table>
             </ScrollShadow>
             {selectedClient && (

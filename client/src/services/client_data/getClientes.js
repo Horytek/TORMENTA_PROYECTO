@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from "@/api/axios";
+import { getClientesRequest } from "@/api/api.cliente";
 
 const useGetClientes = (
   initialPage = 1, 
@@ -27,14 +27,12 @@ const useGetClientes = (
   ) => {
     try {
       setLoading(true);
-      const response = await axios.get('/clientes/', { 
-        params: { 
-          page, 
-          limit, 
-          docType,
-          docNumber,
-          searchTerm 
-        } 
+      const response = await getClientesRequest({
+        page, 
+        limit, 
+        docType,
+        docNumber,
+        searchTerm 
       });
       
       if (response.data.code === 1) {

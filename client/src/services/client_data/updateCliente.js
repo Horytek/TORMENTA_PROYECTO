@@ -1,5 +1,9 @@
 import { useState } from "react";
-import axios from "@/api/axios";
+import {
+    getClienteRequest,
+    updateClienteRequest
+} from "@/api/api.cliente";
+
 
 const useUpdateClient = () => {
     const [cliente, setCliente] = useState(null);
@@ -10,7 +14,7 @@ const useUpdateClient = () => {
     const getCliente = async (id) => {
         setGetLoading(true);
         try {
-            const response = await axios.get(`/clientes/getCliente/${id}`);
+            const response = await getClienteRequest(id);
             if (response.data.code === 1) {
                 setCliente(response.data.data);
             } else {

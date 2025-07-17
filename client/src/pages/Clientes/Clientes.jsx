@@ -3,7 +3,7 @@ import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import { Button } from "@nextui-org/button";
 import TablaCliente from '@/pages/Clientes/ComponentsClientes/TablaCliente';
-import useGetClientes from './data/getClientes';
+import useGetClientes from "@/services/client_data/getClientes";
 import AddClientModal from './ComponentsClientes/AddClient';
 import { usePermisos } from '@/routes';
 import BarraSearch from "@/components/Search/Search";
