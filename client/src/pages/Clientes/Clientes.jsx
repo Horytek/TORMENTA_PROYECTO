@@ -9,61 +9,47 @@ import { usePermisos } from '@/routes';
 import BarraSearch from "@/components/Search/Search";
 
 function Clientes() {
-
   const { hasCreatePermission } = usePermisos();
 
   // Estado de Modal de Agregar Cliente
   const [activeAdd, setModalOpen] = useState(false);
-  const handleModalAdd = () => {
-    setModalOpen(!activeAdd);
-  };
+  const handleModalAdd = () => setModalOpen(!activeAdd);
 
+  // Filtros y paginación
   const [searchTerm, setSearchTerm] = useState('');
-  const searchTimeoutRef = useRef(null);
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      setPage(1);
-      refetch(1, limit, docType, docNumber, value);
-    }, 500);
-  };
-
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [docType, setDocType] = useState("");
   const [docNumber, setDocNumber] = useState("");
 
-  const { clientes, metadata, loading, error, refetch } = useGetClientes(
-    page,
-    limit,
-    docType,
-    docNumber
-  );
+  // Hook que solo consulta la BD una vez, el resto es local
+  const { clientes, metadata, loading, error, refetch, setAllClientes } = useGetClientes();
+
+  // Filtro y paginación local
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setPage(1);
+    refetch(1, limit, docType, docNumber, value);
+  };
 
   const handleFilterChange = (filterData) => {
     const { docType: newDocType, docNumber: newDocNumber } = filterData;
     setDocType(newDocType);
     setDocNumber(newDocNumber);
-    setPage(1); // Reset to first page when filtering
-    refetch(1, limit, newDocType, newDocNumber);
+    setPage(1);
+    refetch(1, limit, newDocType, newDocNumber, searchTerm);
   };
 
   const changePage = (newPage) => {
     setPage(newPage);
-    refetch(newPage, limit, docType, docNumber);
+    refetch(newPage, limit, docType, docNumber, searchTerm);
   };
 
   const changeLimit = (newLimit) => {
     setLimit(newLimit);
     setPage(1);
-    refetch(1, newLimit, docType, docNumber);
+    refetch(1, newLimit, docType, docNumber, searchTerm);
   };
 
   return (
@@ -92,26 +78,28 @@ function Clientes() {
         </div>
       </div>
       <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8">
-        <TablaCliente
-          clientes={clientes}
-          totales={null}
-          loading={loading}
-          error={error}
-          docType={docType}
-          metadata={metadata}
-          page={page}
-          limit={limit}
-          changePage={changePage}
-          changeLimit={changeLimit}
-          onDelete={() => refetch(page, limit, docType, docNumber)}
-          onEdit={() => refetch(page, limit, docType, docNumber)}
-          onFilter={handleFilterChange}
-        />
+  <TablaCliente
+        clientes={clientes}
+        totales={null}
+        loading={loading}
+        error={error}
+        docType={docType}
+        metadata={metadata}
+        page={page}
+        limit={limit}
+        changePage={changePage}
+        changeLimit={changeLimit}
+        onDelete={() => refetch(page, limit, docType, docNumber, searchTerm)}
+        onEdit={() => refetch(page, limit, docType, docNumber, searchTerm)}
+        onFilter={handleFilterChange}
+        setAllClientes={setAllClientes} // <-- Agrega esta línea
+      />
       </div>
-      <AddClientModal
+<AddClientModal
         open={activeAdd}
         onClose={handleModalAdd}
-        refetch={() => refetch(page, limit, docType, docNumber)}
+        refetch={() => refetch(page, limit, docType, docNumber, searchTerm)}
+        setAllClientes={setAllClientes} // <-- Agrega esta línea
       />
     </div>
   );

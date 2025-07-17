@@ -2,11 +2,9 @@ import React, { useState, useEffect } from "react";
 import {
   Button,
   Input,
-  useDisclosure,
   Tabs,
   Tab,
 } from "@heroui/react";
-
 import {
   Modal, 
   ModalContent, 
@@ -18,7 +16,7 @@ import {
 } from "@nextui-org/react";
 import { IoIosSearch } from "react-icons/io";
 import { useAddClient } from "@/services/client_data/addCliente";
-import { toast, Toaster } from "react-hot-toast"; // Updated import
+import { toast, Toaster } from "react-hot-toast";
 
 const inputStyles = {
   base: "border-none",
@@ -28,8 +26,8 @@ const inputStyles = {
 };
 
 const token_cliente = import.meta.env.VITE_TOKEN_PROOVEDOR || '';
-  
-export default function AddClientModal({ open, onClose, onClientCreated, refetch }) {
+
+export default function AddClientModal({ open, onClose, onClientCreated, setAllClientes }) {
   const [clientType, setClientType] = useState("personal");
   const [documentType, setDocumentType] = useState("dni");
   const [documentNumber, setDocumentNumber] = useState("");
@@ -59,16 +57,15 @@ export default function AddClientModal({ open, onClose, onClientCreated, refetch
 
   const handleValidate = async () => {
     const cleanDocumentNumber = documentNumber.trim().replace(/\s+/g, '');
-    
     if (cleanDocumentNumber === '') {
       toast.error('El número de documento es obligatorio');
       return;
     }
-  
+
     const url = documentType === 'dni'
       ? `https://dniruc.apisperu.com/api/v1/dni/${cleanDocumentNumber}?token=${token_cliente}`
       : `https://dniruc.apisperu.com/api/v1/ruc/${cleanDocumentNumber}?token=${token_cliente}`;
-  
+
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -129,7 +126,23 @@ export default function AddClientModal({ open, onClose, onClientCreated, refetch
 
     if (result.success) {
       toast.success('Cliente guardado exitosamente');
-      if (refetch) await refetch(); 
+      // Reflejar el cambio en tiempo real en el array local
+if (setAllClientes) {
+  setAllClientes(prev => [
+    {
+      id: result.data?.id || Math.random().toString(36),
+      dni: clientType === "personal" ? documentNumber.trim() : null,
+      ruc: clientType === "business" ? documentNumber.trim() : null,
+      dniRuc: documentNumber.trim(), // <-- Agrega este campo para facilitar la visualización
+      nombres: clientType === "personal" ? clientName : null,
+      apellidos: clientType === "personal" ? clientLastName : null,
+      razon_social: clientType === "business" ? businessName : null,
+      direccion: address || null,
+      estado: 1
+    },
+    ...prev
+  ]);
+}
       if (onClientCreated) onClientCreated();
       handleClose();
     } else {
@@ -219,7 +232,6 @@ export default function AddClientModal({ open, onClose, onClientCreated, refetch
                           style={{  border: "none",
                             boxShadow: "none",
                             outline: "none", }}
-                          
                         />
                         <Input
                           label="Apellidos"

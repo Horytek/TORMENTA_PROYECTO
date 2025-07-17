@@ -38,7 +38,8 @@ const TablaCliente = ({
     changeLimit,
     onFilter,
     onEdit,
-    onDelete
+    onDelete,
+    setAllClientes // <-- asegúrate de recibir este prop del padre
 }) => {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -176,7 +177,7 @@ case "acciones":
     ];
     const centeredColumns = ["dniRuc", "estado", "acciones"];
 
-    const handleConfirmAction = async () => {
+      const handleConfirmAction = async () => {
         if (!targetClient) return;
 
         if (actionType === "deactivate") {
@@ -190,7 +191,17 @@ case "acciones":
             const result = await darDeBajaCliente(targetClient.id);
             if (result.success) {
                 toast.success("Cliente dado de baja exitosamente");
-                onDelete(targetClient.id);
+                // Actualiza el array local en tiempo real
+                if (setAllClientes) {
+                    setAllClientes(prev =>
+                        prev.map(c =>
+                            c.id === targetClient.id
+                                ? { ...c, estado: 0 }
+                                : c
+                        )
+                    );
+                }
+                if (onDelete) onDelete(targetClient.id);
             } else {
                 toast.error("Error al desactivar: " + result.error);
                 console.error("Error al desactivar:", result.error);
@@ -199,7 +210,11 @@ case "acciones":
             const result = await deleteClient(targetClient.id);
             if (result.success) {
                 toast.success("Cliente eliminado exitosamente");
-                onDelete(targetClient.id);
+                // Elimina del array local en tiempo real
+                if (setAllClientes) {
+                    setAllClientes(prev => prev.filter(c => c.id !== targetClient.id));
+                }
+                if (onDelete) onDelete(targetClient.id);
             } else {
                 toast.error("Error al eliminar: " + result.error);
                 console.error("Error al eliminar:", result.error);
@@ -307,11 +322,20 @@ case "acciones":
                         setSelectedClient(null);
                     }}
                     client={selectedClient}
-                    onClientUpdated={() => {
-                        onEdit();
-                        setOpenEditModal(false);
-                        setSelectedClient(null);
-                    }}
+onClientUpdated={(updatedClient) => {
+    if (setAllClientes && updatedClient) {
+        setAllClientes(prev =>
+            prev.map(c =>
+                c.id === updatedClient.id
+                    ? { ...c, ...updatedClient }
+                    : c
+            )
+        );
+    }
+    onEdit();
+    setOpenEditModal(false);
+    setSelectedClient(null);
+}}
                 />
             )}
             {openConfirmModal && targetClient && (

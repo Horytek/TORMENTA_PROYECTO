@@ -113,48 +113,61 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
         }
     };
 
-    const handleSave = async () => {
-        if (!documentNumber.trim()) {
-            toast.error('El número de documento es obligatorio');
-            return;
-        }
-        if (clientType === 'personal' && (!clientName || !clientLastName)) {
-            toast.error('Los nombres y apellidos son obligatorios');
-            return;
-        }
-        if (clientType === 'business' && !businessName) {
-            toast.error('La razón social es obligatoria');
-            return;
-        }
+const handleSave = async () => {
+    if (!documentNumber.trim()) {
+        toast.error('El número de documento es obligatorio');
+        return;
+    }
+    if (clientType === 'personal' && (!clientName || !clientLastName)) {
+        toast.error('Los nombres y apellidos son obligatorios');
+        return;
+    }
+    if (clientType === 'business' && !businessName) {
+        toast.error('La razón social es obligatoria');
+        return;
+    }
 
-        const clientData = {
-            id_cliente: client?.id,
-            dni: clientType === 'personal' ? documentNumber.trim() : null,
-            ruc: clientType === 'business' ? documentNumber.trim() : null,
-            nombres: clientType === 'personal' ? clientName : null,
-            apellidos: clientType === 'personal' ? clientLastName : null,
-            razon_social: clientType === 'business' ? businessName : null,
-            direccion: address || null,
-            estado: estado || 0,
-
-        };
-
-        try {
-            const result = await updateClient(clientData);
-            if (result.success) {
-                toast.success('Cliente actualizado exitosamente');
-                if (onClientUpdated) onClientUpdated();
-                handleClose();
-            } else {
-                const errorMessage = typeof result.error === 'object'
-                    ? 'Error al actualizar el cliente'
-                    : result.error;
-                toast.error(errorMessage);
-            }
-        } catch (error) {
-            toast.error('Error al actualizar el cliente');
-        }
+    const clientData = {
+        id_cliente: client?.id,
+        dni: clientType === 'personal' ? documentNumber.trim() : null,
+        ruc: clientType === 'business' ? documentNumber.trim() : null,
+        nombres: clientType === 'personal' ? clientName : null,
+        apellidos: clientType === 'personal' ? clientLastName : null,
+        razon_social: clientType === 'business' ? businessName : null,
+        direccion: address || null,
+        estado: estado || 0,
+        dniRuc: documentNumber.trim()
     };
+
+    try {
+        const result = await updateClient(clientData);
+        if (result.success) {
+            toast.success('Cliente actualizado exitosamente');
+            if (onClientUpdated) {
+                // Pasa el objeto actualizado con la estructura local
+                onClientUpdated({
+                    id: clientData.id_cliente,
+                    dni: clientData.dni,
+                    ruc: clientData.ruc,
+                    nombres: clientData.nombres,
+                    apellidos: clientData.apellidos,
+                    razon_social: clientData.razon_social,
+                    direccion: clientData.direccion,
+                    estado: clientData.estado,
+                    dniRuc: clientData.dni || clientData.ruc
+                });
+            }
+            handleClose();
+        } else {
+            const errorMessage = typeof result.error === 'object'
+                ? 'Error al actualizar el cliente'
+                : result.error;
+            toast.error(errorMessage);
+        }
+    } catch (error) {
+        toast.error('Error al actualizar el cliente');
+    }
+};
 
     const handleClose = () => {
         if (client) {
