@@ -477,7 +477,7 @@ const renderVentaTable = (venta) => (
 
 
   return (
-    <div className="w-full bg-white/90 rounded-2xl shadow border border-blue-100 p-0">
+    <div className="w-full p-0">
       <ScrollShadow hideScrollBar>
         <Table aria-label="Tabla de Ventas" className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
           <TableHeader>

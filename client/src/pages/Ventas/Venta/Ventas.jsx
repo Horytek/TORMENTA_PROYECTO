@@ -229,7 +229,7 @@ return (
 
       {/* Tabla de ventas con ScrollShadow */}
       <ScrollShadow hideScrollBar className="rounded-xl mt-6 w-full overflow-x-auto overflow-y-hidden">
-        <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-4 min-w-[900px]">
+        <div className="min-w-[900px]">
           <TablaVentas
             ventas={ventas || []}
             modalOpen={modalOpen}

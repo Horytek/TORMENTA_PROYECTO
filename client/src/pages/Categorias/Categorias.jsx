@@ -60,16 +60,12 @@ function Categorias() {
   const handleClearSearch = () => setSearchTerm(""); 
 
   return (
-    <div className="min-h-screen py-8 px-2 sm:px-6 bg-gradient-to-b from-white via-blue-50 to-blue-100">
-      <Toaster />
-      <div className="max-w-[1600px] mx-auto space-y-6">
+<div className="m-4">      
+  <Toaster />
         {/* Header y acciones */}
-        <div className="bg-white/80 border border-blue-100 rounded-2xl shadow-sm p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-          <div>
-            <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Gestión de categorías</h1>
-            <p className="text-base text-blue-700/80">Administra y busca categorías fácilmente.</p>
-          </div>
-          <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
+          <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Gestión de categorías</h1>
+      <p className="text-base text-blue-700/80 mb-4">Administra y busca categorías fácilmente.</p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <BarraSearch
               value={searchTerm}
               onChange={handleSearchChange}
@@ -88,9 +84,7 @@ function Categorias() {
               Agregar categoría
             </Button>
           </div>
-        </div>
         {/* Tabla/listado */}
-        <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-4">
           <ShowCategorias
             searchTerm={searchTerm}
             categorias={categorias}
@@ -99,8 +93,6 @@ function Categorias() {
             onDelete={removeCategoriaLocal}
             onDeactivate={deactivateCategoriaLocal}
           />
-        </div>
-      </div>
       {activeAdd && (
         <CategoriasForm
           modalTitle={"Nueva categoría"}

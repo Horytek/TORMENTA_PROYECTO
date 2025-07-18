@@ -65,8 +65,8 @@ function Proveedores() {
     setActiveEdit(false);
   };
 
-return (
-  <div className="min-h-[80vh] bg-gradient-to-b from-white via-blue-50/60 to-blue-100/60 rounded-2xl shadow border border-blue-100 px-8 py-10 max-w-8xl mx-auto">
+ return (
+  <div className="m-4">
     <Toaster />
     <h1 className='text-4xl font-extrabold text-blue-900 mb-2'>Gestión de proveedores</h1>
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-5 mb-8">
@@ -74,32 +74,27 @@ return (
       <BarraSearch
         placeholder="Ingrese el nombre del proveedor"
         isClearable={true}
-        className="h-10 text-sm w-full md:w-2/4 bg-white border border-blue-100 rounded-lg shadow-sm"
+        className="h-10 text-sm w-full md:w-2/4 bg-white"
         value={searchTerm}
         onChange={handleSearchChange}
       />
-      <div className="flex gap-5">
-        <Button
-          color="primary"
-          endContent={<FaPlus style={{ fontSize: '25px' }} />}
-          onClick={() => setModalOpen(true)}
-          disabled={!hasCreatePermission}
-          className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          Agregar proveedor
-        </Button>
-      </div>
+      <Button
+        color="primary"
+        endContent={<FaPlus style={{ fontSize: '25px' }} />}
+        onClick={() => setModalOpen(true)}
+        disabled={!hasCreatePermission}
+        className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        Agregar proveedor
+      </Button>
     </div>
-    <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8">
-      <ShowDestinatarios
-        searchTerm={searchTerm}
-        destinatarios={destinatarios}
-        updateDestinatarioLocal={updateDestinatarioLocal}
-        removeDestinatario={removeDestinatario}
-        onEdit={handleEdit}
-      />
-    </div>
-    {/* Modal de Agregar Proveedor */}
+    <ShowDestinatarios
+      searchTerm={searchTerm}
+      destinatarios={destinatarios}
+      updateDestinatarioLocal={updateDestinatarioLocal}
+      removeDestinatario={removeDestinatario}
+      onEdit={handleEdit}
+    />
     {activeAdd && (
       <DestinatariosForm
         modalTitle={'Nuevo Proveedor'}
@@ -107,7 +102,6 @@ return (
         onSuccess={addDestinatario}
       />
     )}
-    {/* Modal de Editar Proveedor */}
     {activeEdit && (
       <DestinatariosForm
         modalTitle={'Editar Proveedor'}

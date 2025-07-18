@@ -30,29 +30,19 @@ const LibroVentas = () => {
     };
 
     return (
-        <div>
-            <div className="flex justify-between mt-2 mb-2">
-                <h1 className="text-xl font-bold" style={{ fontSize: '36px' }}>
-                    Libro Registro de Ventas
-                </h1>
-            </div>
-
-            <div className="flex justify-between items-center" style={{ marginBottom: "20px" }}>
-                <p
-                    className="text-small text-default-400"
-                    style={{
-                        fontSize: "16px",
-                        pointerEvents: "none",
-                        userSelect: "none",
-                        marginTop: "10px",
-                    }}
-                >
-                    Registro oficial de ventas realizadas por la empresa, compatible con los requerimientos de SUNAT
-                </p>
-
+        <div className="m-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                <div>
+                    <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">
+                        Libro Registro de Ventas
+                    </h1>
+                    <p className="text-base text-blue-700/80 mb-2">
+                        Registro oficial de ventas realizadas por la empresa, compatible con los requerimientos de SUNAT
+                    </p>
+                </div>
                 <ExportarExcel />
             </div>
-            <div className="border-t border-default-200 mb-4" style={{ marginTop: "20px" }}>
+            <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-4 mb-4">
                 <FiltroLibro onFilter={handleFilter} filters={filters} />
             </div>
             <TablaLibro

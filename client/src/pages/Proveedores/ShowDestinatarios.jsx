@@ -53,77 +53,70 @@ export function ShowDestinatarios({
     };
 
     return (
-        <div className="bg-gradient-to-b from-white via-blue-50/60 to-blue-100/60 border border-blue-100 rounded-2xl shadow p-0">
-            <ScrollShadow hideScrollBar className="rounded-2xl">
-                <Table isStriped aria-label="Destinatarios" className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-                    <TableHeader>
-                        <TableColumn className="text-blue-900 font-bold bg-blue-50">DOCUMENTO</TableColumn>
-                        <TableColumn className="text-blue-900 font-bold bg-blue-50">RAZÓN SOCIAL</TableColumn>
-                        <TableColumn className="text-blue-900 font-bold bg-blue-50">UBICACIÓN</TableColumn>
-                        <TableColumn className="text-blue-900 font-bold bg-blue-50">DIRECCIÓN</TableColumn>
-                        <TableColumn className="text-blue-900 font-bold bg-blue-50">EMAIL</TableColumn>
-                        <TableColumn className="text-blue-900 font-bold bg-blue-50">TELÉFONO</TableColumn>
-                        <TableColumn className="text-blue-900 font-bold bg-blue-50 w-32 text-center">ACCIONES</TableColumn>
-                    </TableHeader>
-                    <TableBody>
-                        {currentDestinatarios.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="py-8 text-center text-gray-400">
-                                    Sin proveedores para mostrar
+        <>
+            <Table isStriped aria-label="Destinatarios" className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+                <TableHeader>
+                    <TableColumn className="text-blue-900 font-bold bg-blue-50">DOCUMENTO</TableColumn>
+                    <TableColumn className="text-blue-900 font-bold bg-blue-50">RAZÓN SOCIAL</TableColumn>
+                    <TableColumn className="text-blue-900 font-bold bg-blue-50">UBICACIÓN</TableColumn>
+                    <TableColumn className="text-blue-900 font-bold bg-blue-50">DIRECCIÓN</TableColumn>
+                    <TableColumn className="text-blue-900 font-bold bg-blue-50">EMAIL</TableColumn>
+                    <TableColumn className="text-blue-900 font-bold bg-blue-50">TELÉFONO</TableColumn>
+                    <TableColumn className="text-blue-900 font-bold bg-blue-50 w-32 text-center">ACCIONES</TableColumn>
+                </TableHeader>
+                <TableBody>
+                    {currentDestinatarios.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={7} className="py-8 text-center text-gray-400">
+                                Sin proveedores para mostrar
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        currentDestinatarios.map((destinatario, idx) => (
+                            <TableRow
+                                key={destinatario.id}
+                                className={`transition-colors duration-150 ${
+                                    idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                                } hover:bg-blue-100/60`}
+                            >
+                                <TableCell>{destinatario.documento}</TableCell>
+                                <TableCell>{destinatario.destinatario}</TableCell>
+                                <TableCell>{destinatario.ubicacion}</TableCell>
+                                <TableCell>{destinatario.direccion}</TableCell>
+                                <TableCell>{destinatario.email}</TableCell>
+                                <TableCell>{destinatario.telefono}</TableCell>
+                                <TableCell>
+                                    <Tooltip content="Editar">
+                                        <Button isIconOnly variant="light" color="warning"
+                                            onClick={() => onEdit(destinatario)}
+                                            disabled={!hasEditPermission}
+                                            className={!hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}>
+                                            <MdEdit />
+                                        </Button>
+                                    </Tooltip>
+                                    <Tooltip content="Eliminar">
+                                        <Button isIconOnly variant="light" color="danger"
+                                            onClick={() => handleOpenConfirmationModal(destinatario.destinatario, destinatario.id)}
+                                            disabled={!hasDeletePermission}
+                                            className={!hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}>
+                                            <FaTrash />
+                                        </Button>
+                                    </Tooltip>
                                 </TableCell>
                             </TableRow>
-                        ) : (
-                            currentDestinatarios.map((destinatario, idx) => (
-                                <TableRow
-                                    key={destinatario.id}
-                                    className={`transition-colors duration-150 ${
-                                        idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
-                                    } hover:bg-blue-100/60`}
-                                >
-                                    <TableCell>{destinatario.documento}</TableCell>
-                                    <TableCell>{destinatario.destinatario}</TableCell>
-                                    <TableCell>{destinatario.ubicacion}</TableCell>
-                                    <TableCell>{destinatario.direccion}</TableCell>
-                                    <TableCell>{destinatario.email}</TableCell>
-                                    <TableCell>{destinatario.telefono}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Tooltip content="Editar">
-                                                <Button isIconOnly variant="light" color="warning"
-                                                    onClick={() => onEdit(destinatario)}
-                                                    disabled={!hasEditPermission}
-                                                    className={!hasEditPermission ? 'opacity-50 cursor-not-allowed' : ''}>
-                                                    <MdEdit />
-                                                </Button>
-                                            </Tooltip>
-                                            <Tooltip content="Eliminar">
-                                                <Button isIconOnly variant="light" color="danger"
-                                                    onClick={() => handleOpenConfirmationModal(destinatario.destinatario, destinatario.id)}
-                                                    disabled={!hasDeletePermission}
-                                                    className={!hasDeletePermission ? 'opacity-50 cursor-not-allowed' : ''}>
-                                                    <FaTrash />
-                                                </Button>
-                                            </Tooltip>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </ScrollShadow>
-            {/* Paginación */}
-            <div className="flex justify-between items-center mt-2 px-4 pb-2">
-                <Pagination
-                    showControls
-                    page={currentPage}
-                    total={Math.ceil(filteredDestinatarios.length / destinatariosPerPage)}
-                    onChange={setCurrentPage}
-                    color="primary"
-                    size="sm"
-                />
-            </div>
-            {/* Modal de Confirmación */}
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+            <Pagination
+                showControls
+                page={currentPage}
+                total={Math.ceil(filteredDestinatarios.length / destinatariosPerPage)}
+                onChange={setCurrentPage}
+                color="primary"
+                size="sm"
+                className="mt-2"
+            />
             {isConfirmationModalOpen && (
                 <ConfirmationModal
                     message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
@@ -131,7 +124,7 @@ export function ShowDestinatarios({
                     onConfirm={handleConfirmDelete}
                 />
             )}
-        </div>
+        </>
     );
 }
 
