@@ -86,71 +86,73 @@ export function ShowAlmacenes({ searchTerm, almacenes, onEdit, onDelete }) {
     return (
     <>
         <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
-            <ScrollShadow hideScrollBar className="rounded-2xl">
-                <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-                    <thead>
-                        <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
-                            <th className="py-2 px-2 text-left">ID</th>
-                            <th className="py-2 px-2 text-left">Almacén</th>
-                            <th className="py-2 px-2 text-left">Sucursal</th>
-                            <th className="py-2 px-2 text-left">Ubicación</th>
-                            <th className="py-2 px-2 text-center">Estado</th>
-                            <th className="py-2 px-2 text-center w-32">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentAlmacenes.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} className="py-8 text-center text-gray-400">Sin almacenes para mostrar</td>
-                            </tr>
-                        ) : (
-                            currentAlmacenes.map((almacen, idx) => (
-                                <tr
-                                    key={almacen.id_almacen}
-                                    className={`transition-colors duration-150 ${
-                                        idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
-                                    } hover:bg-blue-100/60`}
-                                >
-                                    <td className="py-1.5 px-2">{almacen.id_almacen}</td>
-                                    <td className="py-1.5 px-2 font-semibold text-blue-900">{almacen.nom_almacen}</td>
-                                    <td className="py-1.5 px-2">{almacen.nombre_sucursal}</td>
-                                    <td className="py-1.5 px-2">{almacen.ubicacion}</td>
-                                    <td className="py-1.5 px-2 text-center">
-                                        {renderEstado(almacen.estado_almacen)}
-                                    </td>
-                                    <td className="py-1.5 px-2 text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
-                                                <Button 
-                                                    isIconOnly 
-                                                    variant="light" 
-                                                    color={hasEditPermission ? "warning" : "default"}
-                                                    onClick={() => hasEditPermission ? handleModalEdit(almacen) : null}
-                                                    className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                                                >
-                                                    <MdEdit />
-                                                </Button>
-                                            </Tooltip>
-                                            <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
-                                                <Button 
-                                                    isIconOnly 
-                                                    variant="light" 
-                                                    color={hasDeletePermission ? "danger" : "default"}
-                                                    onClick={() => hasDeletePermission ? handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen) : null}
-                                                    className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                                                >
-                                                    <FaTrash />
-                                                </Button>
-                                            </Tooltip>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </ScrollShadow>
-        </div>
+  <div className="p-4 bg-white rounded-2xl">
+    <ScrollShadow hideScrollBar className="rounded-2xl">
+      <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+        <thead>
+          <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+            <th className="py-2 px-2 text-left">ID</th>
+            <th className="py-2 px-2 text-left">Almacén</th>
+            <th className="py-2 px-2 text-left">Sucursal</th>
+            <th className="py-2 px-2 text-left">Ubicación</th>
+            <th className="py-2 px-2 text-center">Estado</th>
+            <th className="py-2 px-2 text-center w-32">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentAlmacenes.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="py-8 text-center text-gray-400">Sin almacenes para mostrar</td>
+            </tr>
+          ) : (
+            currentAlmacenes.map((almacen, idx) => (
+              <tr
+                key={almacen.id_almacen}
+                className={`transition-colors duration-150 ${
+                  idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                } hover:bg-blue-100/60`}
+              >
+                <td className="py-1.5 px-2">{almacen.id_almacen}</td>
+                <td className="py-1.5 px-2 font-semibold text-blue-900">{almacen.nom_almacen}</td>
+                <td className="py-1.5 px-2">{almacen.nombre_sucursal}</td>
+                <td className="py-1.5 px-2">{almacen.ubicacion}</td>
+                <td className="py-1.5 px-2 text-center">
+                  {renderEstado(almacen.estado_almacen)}
+                </td>
+                <td className="py-1.5 px-2 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+                      <Button 
+                        isIconOnly 
+                        variant="light" 
+                        color={hasEditPermission ? "warning" : "default"}
+                        onClick={() => hasEditPermission ? handleModalEdit(almacen) : null}
+                        className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                      >
+                        <MdEdit />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+                      <Button 
+                        isIconOnly 
+                        variant="light" 
+                        color={hasDeletePermission ? "danger" : "default"}
+                        onClick={() => hasDeletePermission ? handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen) : null}
+                        className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                      >
+                        <FaTrash />
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </ScrollShadow>
+  </div>
+</div>
         <div className="flex justify-between items-center mt-2 px-4 pb-2">
             <Pagination
                 showControls

@@ -124,46 +124,48 @@ function ShowSucursales({ searchTerm, sucursales, addSucursal, updateSucursalLoc
 
   return (
   <>
-    <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
-      <ScrollShadow hideScrollBar className="rounded-2xl">
-        <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-          <thead>
-            <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
-              <th className="py-2 px-2 text-left">VENDEDOR</th>
-              <th className="py-2 px-2 text-left">NOMBRE</th>
-              <th className="py-2 px-2 text-left">DIRECCIÓN</th>
-              <th className="py-2 px-2 text-center">ESTADO</th>
-              <th className="py-2 px-2 text-center w-32">ACCIONES</th>
+<div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
+  <div className="p-4 bg-white rounded-2xl">
+    <ScrollShadow hideScrollBar className="rounded-2xl">
+      <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+        <thead>
+          <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+            <th className="py-2 px-2 text-left">VENDEDOR</th>
+            <th className="py-2 px-2 text-left">NOMBRE</th>
+            <th className="py-2 px-2 text-left">DIRECCIÓN</th>
+            <th className="py-2 px-2 text-center">ESTADO</th>
+            <th className="py-2 px-2 text-center w-32">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentSucursales.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="py-8 text-center text-gray-400">Sin sucursales para mostrar</td>
             </tr>
-          </thead>
-          <tbody>
-            {currentSucursales.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-400">Sin sucursales para mostrar</td>
+          ) : (
+            currentSucursales.map((sucursal, idx) => (
+              <tr
+                key={sucursal.id}
+                className={`transition-colors duration-150 ${
+                  idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                } hover:bg-blue-100/60`}
+              >
+                {["vendedor", "nombre", "direccion", "estado", "acciones"].map((columnKey) => (
+                  <td
+                    key={columnKey}
+                    className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
+                  >
+                    {renderCell(sucursal, columnKey)}
+                  </td>
+                ))}
               </tr>
-            ) : (
-              currentSucursales.map((sucursal, idx) => (
-                <tr
-                  key={sucursal.id}
-                  className={`transition-colors duration-150 ${
-                    idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
-                  } hover:bg-blue-100/60`}
-                >
-                  {["vendedor", "nombre", "direccion", "estado", "acciones"].map((columnKey) => (
-                    <td
-                      key={columnKey}
-                      className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
-                    >
-                      {renderCell(sucursal, columnKey)}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </ScrollShadow>
-    </div>
+            ))
+          )}
+        </tbody>
+      </table>
+    </ScrollShadow>
+  </div>
+</div>
     <div className="flex justify-between items-center mt-2 px-4 pb-2">
       <Pagination
         showControls

@@ -207,46 +207,48 @@ case "usuario":
 
     return (
   <>
-    <div className="bg-white/90 rounded-2xl shadow border border-blue-100 p-0">
-      <ScrollShadow hideScrollBar>
-        <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-          <thead>
-            <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
-              <th className="py-2 px-2 text-left">Rol</th>
-              <th className="py-2 px-2 text-left">Usuario</th>
-              <th className="py-2 px-2 text-left">Contraseña</th>
-              <th className="py-2 px-2 text-center">Estado</th>
-              <th className="py-2 px-2 text-center w-32">Acciones</th>
+<div className="bg-white/90 rounded-2xl shadow border border-blue-100 p-0">
+  <div className="p-4 bg-white rounded-2xl">
+    <ScrollShadow hideScrollBar>
+      <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+        <thead>
+          <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+            <th className="py-2 px-2 text-left">Rol</th>
+            <th className="py-2 px-2 text-left">Usuario</th>
+            <th className="py-2 px-2 text-left">Contraseña</th>
+            <th className="py-2 px-2 text-center">Estado</th>
+            <th className="py-2 px-2 text-center w-32">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentUsuarios.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="py-8 text-center text-gray-400">Sin usuarios para mostrar</td>
             </tr>
-          </thead>
-          <tbody>
-            {currentUsuarios.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-400">Sin usuarios para mostrar</td>
+          ) : (
+            currentUsuarios.map((usuario, idx) => (
+              <tr
+                key={usuario.id_usuario}
+                className={`transition-colors duration-150 ${
+                  idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                } hover:bg-blue-100/60`}
+              >
+                {["rol", "usuario", "contraseña", "estado", "acciones"].map((columnKey) => (
+                  <td
+                    key={columnKey}
+                    className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
+                  >
+                    {renderCell(usuario, columnKey)}
+                  </td>
+                ))}
               </tr>
-            ) : (
-              currentUsuarios.map((usuario, idx) => (
-                <tr
-                  key={usuario.id_usuario}
-                  className={`transition-colors duration-150 ${
-                    idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
-                  } hover:bg-blue-100/60`}
-                >
-                  {["rol", "usuario", "contraseña", "estado", "acciones"].map((columnKey) => (
-                    <td
-                      key={columnKey}
-                      className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
-                    >
-                      {renderCell(usuario, columnKey)}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </ScrollShadow>
-    </div>
+            ))
+          )}
+        </tbody>
+      </table>
+    </ScrollShadow>
+  </div>
+</div>
     <div className="flex justify-between items-center mt-2 px-4 pb-2">
       <Pagination
         showControls
