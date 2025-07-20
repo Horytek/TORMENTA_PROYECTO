@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Select, SelectItem } from "@heroui/react";
 import { CheckCircle, AlertTriangle, Package } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function getStockStatus(stock) {
   if (stock <= 5) return "critical";
@@ -48,6 +49,13 @@ function getStatusProps(status) {
 const TablaKardex = ({ kardex }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const navigate = useNavigate();
+
+  const handleRowClick = (producto) => {
+    if (producto.codigo) {
+      navigate(`/almacen/kardex/historico/${producto.codigo}`);
+    }
+  };
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -56,10 +64,12 @@ const TablaKardex = ({ kardex }) => {
   const totalPages = Math.ceil(kardex.length / itemsPerPage);
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-lg border border-slate-100 p-6 transition-all">
-      <h2 className="text-2xl font-extrabold mb-6 text-blue-900 tracking-tight">Inventario de Productos</h2>
-      <div className="overflow-x-auto rounded-xl">
-        <table className="min-w-full bg-white rounded-xl overflow-hidden">
+    <>
+      <div className="overflow-x-auto rounded-xl bg-white p-4">
+        <table className="min-w-full rounded-xl overflow-hidden text-[13px]">
+          <caption className="text-2xl font-extrabold mb-6 text-blue-900 tracking-tight caption-top text-left">
+            Inventario de Productos
+          </caption>
           <thead>
             <tr className="bg-blue-50 text-blue-900 shadow-sm">
               <th className="py-3 px-4 text-left font-semibold text-sm rounded-tl-xl">Código</th>
@@ -81,10 +91,12 @@ const TablaKardex = ({ kardex }) => {
                 const { color, text, icon } = getStatusProps(status);
                 return (
                   <tr
-                    key={item.id}
-                    className={`transition-colors duration-150 ${
+                    key={item.codigo}
+                    className={`transition-colors duration-150 cursor-pointer ${
                       idx % 2 === 0 ? "bg-slate-50" : "bg-white"
                     } hover:bg-blue-50`}
+                    onClick={() => handleRowClick(item)}
+                    title="Ver histórico del producto"
                   >
                     <td className="py-3 px-4 font-mono font-medium text-slate-900">{item.codigo}</td>
                     <td className="py-3 px-4 text-slate-700 max-w-md">
@@ -106,8 +118,8 @@ const TablaKardex = ({ kardex }) => {
                           inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
                           ${color === "danger" && "bg-rose-100 text-rose-700 border border-rose-200"}
                           ${color === "warning" && "bg-orange-100 text-orange-700 border border-orange-200"}
-                          ${color === "success" && "bg-emerald-100 text-emerald-700 border border-emerald-200"}
-                          ${color === "primary" && "bg-blue-100 text-blue-700 border border-blue-200"}
+                          ${color === "success" && "bg-emerald-100 text-emerald-700 border-emerald-200"}
+                          ${color === "primary" && "bg-blue-100 text-blue-700 border-blue-200"}
                           transition-all
                         `}
                       >
@@ -123,7 +135,7 @@ const TablaKardex = ({ kardex }) => {
           </tbody>
         </table>
       </div>
-      <div className="flex flex-col md:flex-row justify-between items-center mt-6 gap-4 border-t border-slate-100 pt-4">
+      <div className="flex flex-col md:flex-row justify-between items-center mt-2 gap-4 pt-4">
         <Pagination
           showControls
           total={totalPages}
@@ -155,7 +167,7 @@ const TablaKardex = ({ kardex }) => {
           </Select>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

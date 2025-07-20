@@ -84,6 +84,7 @@ export function ShowAlmacenes({ searchTerm, almacenes, onEdit, onDelete }) {
     );
 
     return (
+    <>
         <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
             <ScrollShadow hideScrollBar className="rounded-2xl">
                 <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
@@ -149,36 +150,37 @@ export function ShowAlmacenes({ searchTerm, almacenes, onEdit, onDelete }) {
                     </tbody>
                 </table>
             </ScrollShadow>
-            <div className="flex justify-between items-center mt-2 px-4 pb-2">
-                <Pagination
-                    showControls
-                    page={currentPage}
-                    total={Math.ceil(filteredAlmacenes.length / almacenesPerPage)}
-                    onChange={setCurrentPage}
-                    color="primary"
-                    size="sm"
-                />
-                <div />
-            </div>
-            {/* Modal de Confirmación */}
-            {isConfirmationModalOpen && (
-                <ConfirmationModal
-                    message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
-                    onClose={handleCloseConfirmationModal}
-                    onConfirm={handleConfirmDelete}
-                />
-            )}
-            {/* Modal de Edición */}
-            {isEditModalOpen && (
-                <AlmacenesForm
-                    modalTitle="Editar Almacén"
-                    onClose={handleCloseEditModal}
-                    initialData={{ id_almacen: selectedAlmacen.id_almacen, data: selectedAlmacen }}
-                    onSuccess={handleEditSuccess}
-                />
-            )}
         </div>
-    );
+        <div className="flex justify-between items-center mt-2 px-4 pb-2">
+            <Pagination
+                showControls
+                page={currentPage}
+                total={Math.ceil(filteredAlmacenes.length / almacenesPerPage)}
+                onChange={setCurrentPage}
+                color="primary"
+                size="sm"
+            />
+            <div />
+        </div>
+        {/* Modal de Confirmación */}
+        {isConfirmationModalOpen && (
+            <ConfirmationModal
+                message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
+                onClose={handleCloseConfirmationModal}
+                onConfirm={handleConfirmDelete}
+            />
+        )}
+        {/* Modal de Edición */}
+        {isEditModalOpen && (
+            <AlmacenesForm
+                modalTitle="Editar Almacén"
+                onClose={handleCloseEditModal}
+                initialData={{ id_almacen: selectedAlmacen.id_almacen, data: selectedAlmacen }}
+                onSuccess={handleEditSuccess}
+            />
+        )}
+    </>
+);
 }
 
 export default ShowAlmacenes;

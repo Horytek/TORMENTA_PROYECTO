@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
-import TablaNotasAlmacen from './ComponentsNotaIngreso/NotaIngresoTable'; // Unificada
+import TablaNotasAlmacen from './ComponentsNotaIngreso/NotaIngresoTable';
 import getIngresosData from './data/data_ingreso';
 import getSalidasData from '../Nota_Salida/data/data_salida';
 import useAlmacenData from './data/data_almacen_ingreso';
 import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
 import FiltrosSalida from '../Nota_Salida/ComponentsNotaSalida/FiltrosSalida';
-import { Tabs, Tab } from "@heroui/react";
+import { Tabs, Tab, Select, SelectItem } from "@heroui/react";
 import { RoutePermission } from '@/routes';
 import { useUserStore } from "@/store/useStore";
 
@@ -22,7 +22,8 @@ const NotasAlmacen = () => {
     return almacenIdGuardado && almacenes ? almacenes.find(a => a.id === parseInt(almacenIdGuardado)) : null;
   });
   const [tabActiva, setTabActiva] = useState("ingreso");
-  // Referencia para PDF de salidas
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const tablaSalidaRef = useRef(null);
 
   // Fetch ingresos
@@ -96,31 +97,44 @@ const NotasAlmacen = () => {
     }
   };
 
-  return (
-    <div>
-      <div className="flex justify-between mt-5 mb-4">
-        <h1 className="text-3xl font-bold">Notas de almacén</h1>
-      </div>
-      <div className='w-full mb-3 rounded-lg'>
-        <table className='w-full text-sm rounded-lg table-auto border-collapse'>
-          <tbody className="bg-gray-50">
-            <tr className="text-center">
-              <td className="border-r-2 border-t-0 p-4">
-                <strong className="block text-lg font-semibold font-sans text-gray-800 tracking-wide">
-                  {almacenSeleccionado
-                    ? `SUCURSAL: ${almacenSeleccionado.sucursal}`
-                    : 'SUCURSAL: Sin almacén seleccionado'}
-                </strong>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  // Paginación
+  const registros = tabActiva === "ingreso" ? ingresos : salidas;
+  const totalPages = Math.ceil(registros.length / itemsPerPage);
+  const currentRegistros = registros.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+ return (
+  <div className="min-h-[80vh] px-4 py-8 max-w-8xl mx-auto bg-gradient-to-b from-white via-blue-50/40 to-blue-50/80">
+    <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Notas de almacén</h1>
+    <p className="text-base text-blue-700/80 mb-6">Administra y busca notas de ingreso y salida fácilmente.</p>
+<div className="w-full mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+  <div className="flex-1 flex items-center">
+    <div className="rounded-2xl w-full max-w-2xl bg-white/80 border border-blue-100 shadow-sm px-8 py-4 flex items-center transition-all">
+      <span className="block text-lg font-semibold font-sans tracking-wide text-blue-900 flex items-center gap-2">
+        <span className="text-cyan-600 font-bold">Sucursal:</span>
+        {almacenSeleccionado && almacenSeleccionado.sucursal ? (
+          <span className="text-blue-900">{almacenSeleccionado.sucursal}</span>
+        ) : (
+          <span className="text-gray-400 italic select-none">&mdash;</span>
+        )}
+      </span>
+    </div>
+  </div>
+</div>
+    <div className="mb-2">
       <Tabs
         aria-label="Notas de almacén"
         color="primary"
         selectedKey={tabActiva}
         onSelectionChange={setTabActiva}
+        classNames={{
+          tabList: "bg-transparent",
+          tab: "rounded-xl px-6 py-2 text-base font-semibold",
+          tabActive: "bg-blue-600 text-white shadow",
+          tabInactive: "bg-blue-50 text-blue-700 hover:bg-blue-100"
+        }}
       >
         <Tab key="ingreso" title="Notas de ingreso">
           <FiltrosIngresos
@@ -133,7 +147,10 @@ const NotasAlmacen = () => {
           />
           <div>
             <RoutePermission idModulo={10} idSubmodulo={10}>
-              <TablaNotasAlmacen registros={Array.isArray(ingresos) ? ingresos : []} tipo="ingreso" />
+              <TablaNotasAlmacen
+                registros={currentRegistros}
+                tipo="ingreso"
+              />
             </RoutePermission>
           </div>
         </Tab>
@@ -147,12 +164,17 @@ const NotasAlmacen = () => {
             tipo="salida"
           />
           <div>
-            <TablaNotasAlmacen ref={tablaSalidaRef} registros={Array.isArray(salidas) ? salidas : []} tipo="salida" />
+            <TablaNotasAlmacen
+              ref={tablaSalidaRef}
+              registros={currentRegistros}
+              tipo="salida"
+            />
           </div>
         </Tab>
       </Tabs>
     </div>
-  );
+  </div>
+);
 };
 
 export default NotasAlmacen;

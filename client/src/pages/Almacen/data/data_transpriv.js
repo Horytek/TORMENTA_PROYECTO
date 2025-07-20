@@ -19,7 +19,7 @@ const useTransPrivData = () => {
             vehiculopriv: item.vehiculopriv,
           }));
           setTransprivados(transportes);
-          console.log('Transportes Privados:', transportes);  // Log para verificar los datos
+          //console.log('Transportes Privados:', transportes);  // Log para verificar los datos
         } else {
           console.error('Error en la solicitud: ', response.data.message);
         }

@@ -30,7 +30,7 @@ const enviarGuiaRemisionASunat = async (data) => {
   const nombre = useUserStore((state) => state.nombre);
   const token = await getClaveSunatByUser(nombre);
     
-  console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Verificar los datos enviados
+  //console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Verificar los datos enviados
 
   try {
     const response = await axios.post(url, data, {
@@ -40,7 +40,7 @@ const enviarGuiaRemisionASunat = async (data) => {
       }
     });
 
-    console.log('Respuesta de la API:', response.data);
+    //console.log('Respuesta de la API:', response.data);
 
     if (response.status === 200) {
       toast.success(`La guía de remisión se ha enviado con éxito a la Sunat.`);
@@ -120,7 +120,7 @@ export const handleGuiaRemisionSunat = async (guia, destinata, transportista, de
   };
 
   const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
-  console.log('Datos de la guía de remisión:', data);
+  //console.log('Datos de la guía de remisión:', data);
   enviarGuiaRemisionASunat(data)
     .then(() => {
       toast.dismiss(loadingToastId);

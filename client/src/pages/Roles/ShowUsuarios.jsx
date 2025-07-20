@@ -154,25 +154,26 @@ export function ShowUsuarios({ searchTerm }) {
   }, [hasEditPermission, hasDeletePermission]);
 
   return (
+  <>
+    {/* Modals */}
+    {isConfirmationModalOpen && (
+      <ConfirmationModal
+        message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
+        onClose={handleCloseConfirmationModal}
+        onConfirm={handleConfirmDelete}
+      />
+    )}
+
+    {activeEdit && (
+      <UsuariosForm
+        modalTitle={'Editar Rol'}
+        onClose={handleCloseModal}
+        initialData={initialData}
+      />
+    )}
+
+    {/* Tabla de roles */}
     <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
-      {/* Modals */}
-      {isConfirmationModalOpen && (
-        <ConfirmationModal
-          message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
-          onClose={handleCloseConfirmationModal}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
-
-      {activeEdit && (
-        <UsuariosForm
-          modalTitle={'Editar Rol'}
-          onClose={handleCloseModal}
-          initialData={initialData}
-        />
-      )}
-
-      {/* Tabla de roles */}
       <ScrollShadow hideScrollBar className="rounded-2xl">
         <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
           <thead>
@@ -210,19 +211,20 @@ export function ShowUsuarios({ searchTerm }) {
           </tbody>
         </table>
       </ScrollShadow>
-      <div className="flex justify-between items-center mt-2 px-4 pb-2">
-        <Pagination
-          showControls
-          page={currentPage}
-          total={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
-          onChange={setCurrentPage}
-          color="primary"
-          size="sm"
-        />
-        <div />
-      </div>
     </div>
-  );
+    <div className="flex justify-between items-center mt-2 px-4 pb-2">
+      <Pagination
+        showControls
+        page={currentPage}
+        total={Math.ceil(filteredUsuarios.length / usuariosPerPage)}
+        onChange={setCurrentPage}
+        color="primary"
+        size="sm"
+      />
+      <div />
+    </div>
+  </>
+);
 }
 
 export default ShowUsuarios;

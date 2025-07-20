@@ -2,7 +2,7 @@ import axios from "@/api/axios";
 
 export const addDestinatarioJuridico = async (data, setShowModal) => {
     try {
-        console.log('Datos del destinatario jurídico:', data);
+        //console.log('Datos del destinatario jurídico:', data);
         const response = await axios.post('/guia_remision/destjuridico', data, {
             headers: {
                 'Content-Type': 'application/json',
@@ -10,7 +10,7 @@ export const addDestinatarioJuridico = async (data, setShowModal) => {
         });
         
         if (response.data.code === 1) {
-            console.log('Destinatario jurídico añadido exitosamente');
+            //console.log('Destinatario jurídico añadido exitosamente');
             setShowModal(false); // Cierra el modal
             return { success: true, message: 'Destinatario jurídico añadido exitosamente' };
         } else {

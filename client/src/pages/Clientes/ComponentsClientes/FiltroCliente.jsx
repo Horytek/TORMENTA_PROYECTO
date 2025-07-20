@@ -17,7 +17,7 @@ const FiltroCliente = ({ docType = "", onFilter }) => {
   };
 
   return (
-    <div className="flex gap-4 items-end">
+    <div className="flex gap-4 items-end pb-4">
       <Select
         label="Tipo de documento"
         selectedKeys={selectedKeys}

@@ -21,7 +21,7 @@ const useGuiasData = (filters) => {
           fecha_e: filters.fecha_e,
         }
       });
-      console.log('API Response:', response.data);
+      //console.log('API Response:', response.data);
       if (response.data.code === 1) {
         const guias = response.data.data.map(guia => ({
           id: guia.id,
@@ -61,7 +61,7 @@ const useGuiasData = (filters) => {
             total: `S/ ${parseFloat(detalle.total).toFixed(2)}`,
           }))
         }));
-        console.log('Transformed Guias:', guias);   // Agrega este log para verificar los datos
+        //console.log('Transformed Guias:', guias);   // Agrega este log para verificar los datos
         setGuias(guias);
         setTotalGuias(response.data.totalGuias);
       } else {

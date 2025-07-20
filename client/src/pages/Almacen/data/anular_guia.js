@@ -10,14 +10,14 @@ const anularGuia = async (guiaId) => {
       usuario: nombre, // Envía el usuario al backend
     });
     if (response.data.code === 1) {
-      console.log('Guía de remisión anulada correctamente');
+      //console.log('Guía de remisión anulada correctamente');
       return { success: true, message: 'Guía de remisión anulada correctamente' };
     } else {
-      console.error('Error en la solicitud: ', response.data.message);
+      console.error('Error en la solicitud: ');
       return { success: false, message: response.data.message };
     }
   } catch (error) {
-    console.error('Error en la solicitud: ', error.message);
+    console.error('Error en la solicitud: ');
     return { success: false, message: error.message };
   }
 };

@@ -2,7 +2,7 @@ import axios from "@/api/axios";
 
 export const addVehiculo = async (data, setShowModal) => {
     try {
-        console.log('Datos del vehículo:', data);
+        //console.log('Datos del vehículo:', data);
         const response = await axios.post('/guia_remision/nuevo_vehiculo', data, {
             headers: {
                 'Content-Type': 'application/json',
@@ -10,7 +10,7 @@ export const addVehiculo = async (data, setShowModal) => {
         });
 
         if (response.data.code === 1) {
-            console.log('Vehículo añadido exitosamente');
+            //console.log('Vehículo añadido exitosamente');
             setShowModal(false); // Cierra el modal
             return { success: true, message: 'Vehículo añadido exitosamente' };
         } else {

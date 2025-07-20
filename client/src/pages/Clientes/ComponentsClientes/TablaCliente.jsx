@@ -234,127 +234,125 @@ case "acciones":
         }
     };
 
-    return (
-        <div className="bg-gradient-to-b from-white via-blue-50/60 to-blue-100/60 border border-blue-100 rounded-2xl shadow p-0">
-            <Toaster />
-            <div className="mb-2 px-6 pt-6">
-                <FiltroCliente
-                    docType={docType}
-                    onFilter={handleFilter} />
-            </div>
-            <ScrollShadow hideScrollBar className="rounded-2xl">
-                <Table
-                    isStriped
-                    aria-label="Tabla de Clientes"
-                    className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]"
-                    bottomContent={
-                        <div className="flex w-full justify-between items-center px-2 py-2">
-                            <Pagination
-                                showControls
-                                color="primary"
-                                page={page}
-                                total={metadata.total_pages}
-                                onChange={(newPage) => changePage(newPage)}
-                                initialPage={1}
-                                isDisabled={loading || !clientes || clientes.length === 0 || metadata.total_records === 0}
-                            />
-                            <Select
-                                size="sm"
-                                label="Filas por página"
-                                selectedKeys={[`${limit}`]}
-                                className="w-[150px]"
-                                defaultSelectedKeys={["5"]}
-                                onChange={(e) => {
-                                    const newLimit = Number(e.target.value);
-                                    changeLimit(newLimit);
-                                }}
-                                isDisabled={!clientes || clientes.length === 0}
-                            >
-                                <SelectItem key="5" value="5">5</SelectItem>
-                                <SelectItem key="10" value="10">10</SelectItem>
-                                <SelectItem key="15" value="15">15</SelectItem>
-                                <SelectItem key="20" value="20">20</SelectItem>
-                                <SelectItem key="100000000" value="100000">Todos</SelectItem>
-                            </Select>
-                        </div>
-                    }
-                >
-                    <TableHeader columns={columns}>
-                        {(column) => (
-                            <TableColumn key={column.uid} align={centeredColumns.includes(column.uid) ? "center" : "start"} className="text-blue-900 font-bold bg-blue-50">
-                                {column.name}
-                            </TableColumn>
+   return (
+   <>
+    <Toaster />
+    <FiltroCliente
+        docType={docType}
+        onFilter={handleFilter}
+        className="mb-6 px-6 pt-6"
+    />
+    <ScrollShadow hideScrollBar className="rounded-2xl">
+        <Table
+            isStriped
+            aria-label="Tabla de Clientes"
+            className="min-w-full text-[13px]"
+        >
+            <TableHeader columns={columns}>
+                {(column) => (
+                    <TableColumn key={column.uid} align={centeredColumns.includes(column.uid) ? "center" : "start"} className="text-blue-900 font-bold bg-blue-50">
+                        {column.name}
+                    </TableColumn>
+                )}
+            </TableHeader>
+            <TableBody
+                items={clientes}
+                loadingContent={<p>Cargando registros...</p>}
+                loadingState={loading ? "loading" : "idle"}
+                emptyContent={
+                    <div className="flex justify-center items-center h-24 text-gray-500">
+                        No se encontraron registros.
+                    </div>
+                }
+            >
+                {(cliente, idx) => (
+                    <TableRow
+                        key={cliente.id}
+                        className={`transition-colors duration-150 ${
+                            idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                        } hover:bg-blue-100/60`}
+                    >
+                        {(columnKey) => (
+                            <TableCell className={centeredColumns.includes(columnKey) ? "text-center" : ""}>
+                                {renderCell(cliente, columnKey)}
+                            </TableCell>
                         )}
-                    </TableHeader>
-                <TableBody
-                    items={clientes}
-                    loadingContent={<p>Cargando registros...</p>}
-                    loadingState={loading ? "loading" : "idle"}
-                    emptyContent={
-                        <div className="flex justify-center items-center h-24 text-gray-500">
-                            No se encontraron registros.
-                        </div>
-                    }
-                >
-                    {(cliente, idx) => (
-                        <TableRow
-                            key={cliente.id}
-                            className={`transition-colors duration-150 ${
-                                idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
-                            } hover:bg-blue-100/60`}
-                        >
-                            {(columnKey) => (
-                                <TableCell className={centeredColumns.includes(columnKey) ? "text-center" : ""}>
-                                    {renderCell(cliente, columnKey)}
-                                </TableCell>
-                            )}
-                        </TableRow>
-                    )}
-                </TableBody>
-                </Table>
-            </ScrollShadow>
-            {selectedClient && (
-                <EditClientModal
-                    key={selectedClient.id}
-                    open={openEditModal}
-                    onClose={() => {
-                        setOpenEditModal(false);
-                        setSelectedClient(null);
-                    }}
-                    client={selectedClient}
-onClientUpdated={(updatedClient) => {
-    if (setAllClientes && updatedClient) {
-        setAllClientes(prev =>
-            prev.map(c =>
-                c.id === updatedClient.id
-                    ? { ...c, ...updatedClient }
-                    : c
-            )
-        );
-    }
-    onEdit();
-    setOpenEditModal(false);
-    setSelectedClient(null);
-}}
-                />
-            )}
-            {openConfirmModal && targetClient && (
-                <ConfirmationModal
-                    message={
-                        actionType === "delete"
-                            ? "¿Estás seguro de eliminar este cliente?"
-                            : "¿Estás seguro de dar de baja este cliente?"
-                    }
-                    onClose={() => {
-                        setOpenConfirmModal(false);
-                        setTargetClient(null);
-                    }}
-                    onConfirm={handleConfirmAction}
-                    loading={loadingConfirm}
-                />
-            )}
-        </div>
-    );
+                    </TableRow>
+                )}
+            </TableBody>
+        </Table>
+    </ScrollShadow>
+    <div className="flex w-full justify-between items-center px-2 py-2 mt-2">
+        <Pagination
+            showControls
+            color="primary"
+            page={page}
+            total={metadata.total_pages}
+            onChange={(newPage) => changePage(newPage)}
+            initialPage={1}
+            isDisabled={loading || !clientes || clientes.length === 0 || metadata.total_records === 0}
+        />
+        <Select
+            size="sm"
+            label="Filas por página"
+            selectedKeys={[`${limit}`]}
+            className="w-[150px]"
+            defaultSelectedKeys={["5"]}
+            onChange={(e) => {
+                const newLimit = Number(e.target.value);
+                changeLimit(newLimit);
+            }}
+            isDisabled={!clientes || clientes.length === 0}
+        >
+            <SelectItem key="5" value="5">5</SelectItem>
+            <SelectItem key="10" value="10">10</SelectItem>
+            <SelectItem key="15" value="15">15</SelectItem>
+            <SelectItem key="20" value="20">20</SelectItem>
+            <SelectItem key="100000000" value="100000">Todos</SelectItem>
+        </Select>
+    </div>
+    {selectedClient && (
+        <EditClientModal
+            key={selectedClient.id}
+            open={openEditModal}
+            onClose={() => {
+                setOpenEditModal(false);
+                setSelectedClient(null);
+            }}
+            client={selectedClient}
+            onClientUpdated={(updatedClient) => {
+                if (setAllClientes && updatedClient) {
+                    setAllClientes(prev =>
+                        prev.map(c =>
+                            c.id === updatedClient.id
+                                ? { ...c, ...updatedClient }
+                                : c
+                        )
+                    );
+                }
+                onEdit();
+                setOpenEditModal(false);
+                setSelectedClient(null);
+            }}
+        />
+    )}
+    {openConfirmModal && targetClient && (
+        <ConfirmationModal
+            message={
+                actionType === "delete"
+                    ? "¿Estás seguro de eliminar este cliente?"
+                    : "¿Estás seguro de dar de baja este cliente?"
+            }
+            onClose={() => {
+                setOpenConfirmModal(false);
+                setTargetClient(null);
+            }}
+            onConfirm={handleConfirmAction}
+            loading={loadingConfirm}
+        />
+    )}
+</>
+);
 };
 
 export default TablaCliente;

@@ -2,7 +2,7 @@ import axios from "@/api/axios";
 
 export const addTransportistaPrivado = async (data, setShowModal) => {
     try {
-        console.log('Datos del transportista privado:', data);
+        //console.log('Datos del transportista privado:', data);
         const response = await axios.post('/guia_remision/nuevo_transportepriv', data, {
             headers: {
                 'Content-Type': 'application/json',
@@ -10,7 +10,7 @@ export const addTransportistaPrivado = async (data, setShowModal) => {
         });
         
         if (response.data.code === 1) {
-            console.log('Transportista privado añadido exitosamente');
+            //console.log('Transportista privado añadido exitosamente');
             setShowModal(false); // Cierra el modal
             return { success: true, message: 'Transportista privado añadido exitosamente' };
         } else {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Tooltip } from "@nextui-org/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Tooltip, ScrollShadow, Pagination, Button } from "@nextui-org/react";
 import { FaFilePdf } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
@@ -8,33 +8,44 @@ import { Toaster, toast } from "react-hot-toast";
 import anularGuia from '../../data/anular_guia';
 import html2pdf from 'html2pdf.js';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+const itemsPerPageDefault = 10;
+
 const TablaGuias = ({ guias }) => {
   const [empresaData, setEmpresaData] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(itemsPerPageDefault);
+  const [selectedGuia, setSelectedGuia] = useState(null);
+  const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
+  const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
+  const [guiaIdToAnular, setGuiaIdToAnular] = useState(null);
 
-useEffect(() => {
-  const fetchEmpresa = async () => {
-    try {
-      const data = await getEmpresaDataByUser();
-      setEmpresaData(data);
-
-      // Convertir logo a base64 si es URL
-      if (data?.logotipo && !data.logotipo.startsWith('data:image')) {
-        const response = await fetch(data.logotipo);
-        const blob = await response.blob();
-        const reader = new window.FileReader();
-        reader.onloadend = () => setLogoBase64(reader.result);
-        reader.readAsDataURL(blob);
-      } else {
-        setLogoBase64(data?.logotipo || null);
+  useEffect(() => {
+    const fetchEmpresa = async () => {
+      try {
+        const data = await getEmpresaDataByUser();
+        setEmpresaData(data);
+        if (data?.logotipo && !data.logotipo.startsWith('data:image')) {
+          const response = await fetch(data.logotipo);
+          const blob = await response.blob();
+          const reader = new window.FileReader();
+          reader.onloadend = () => setLogoBase64(reader.result);
+          reader.readAsDataURL(blob);
+        } else {
+          setLogoBase64(data?.logotipo || null);
+        }
+      } catch (error) {
+        setEmpresaData(null);
+        setLogoBase64(null);
       }
-    } catch (error) {
-      setEmpresaData(null);
-      setLogoBase64(null);
-    }
-  };
-  fetchEmpresa();
-}, []);
+    };
+    fetchEmpresa();
+  }, []);
+
+  // Paginación
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentGuias = guias.slice(indexOfFirst, indexOfLast);
 
 
   // Function to generate PDF
@@ -191,11 +202,6 @@ useEffect(() => {
     html2pdf().from(htmlContent).set(options).save();
   };
 
-  const [selectedGuia, setSelectedGuia] = useState(null);
-  const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
-  const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
-  const [guiaIdToAnular, setGuiaIdToAnular] = useState(null);
-
   const handleRowClick = (guia) => {
     setSelectedGuia(selectedGuia?.id === guia.id ? null : guia);
   };
@@ -235,113 +241,148 @@ useEffect(() => {
     }
     setIsModalOpenImprimir(false); // Cierra el modal
   };
-  return (
-    <div className="flex space-x-4">
-      <div className={selectedGuia ? "w-1/2 transition-all duration-300" : "w-full transition-all duration-300"}>
-        <Toaster />
-        <Table>
-          <TableHeader>
-            <TableColumn>Fecha</TableColumn>
-            <TableColumn>Num Guía</TableColumn>
-            <TableColumn>Cliente</TableColumn>
-            <TableColumn>Vendedor</TableColumn>
-            <TableColumn>Doc Venta</TableColumn>
-            <TableColumn>Concepto</TableColumn>
-            <TableColumn>Estado</TableColumn>
-            <TableColumn>Acción</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {guias.map((guia) => (
-              <TableRow key={guia.id} onClick={() => handleRowClick(guia)}>
-                      <TableCell>
-        <Tooltip
-          content={
-            <div className="text-sm text-gray-800">
-              <p>
-                <strong>Hora de generación:</strong>{" "}
-                {guia.h_generacion
-                  ? new Date(`1970-01-01T${guia.h_generacion}`).toLocaleTimeString("es-ES", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: true,
-                    })
-                  : "N/A"}
-              </p>
-              <p>
-                <strong>Fecha y hora de anulación:</strong>{" "}
-                {guia.f_anulacion
-                  ? new Date(guia.f_anulacion).toLocaleString("es-ES", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: true,
-                    })
-                  : "N/A"}
-              </p>
-            </div>
-          }
-          placement="top"
-          className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
-        >
-          <span>{guia.fecha}</span>
-        </Tooltip>
-      </TableCell>
-                <TableCell>{guia.numGuia}</TableCell>
-                <TableCell>{guia.cliente} <div className='text-gray-500 whitespace-normal'>{guia.documento}</div></TableCell>
-                <TableCell>{guia.vendedor} <div className='text-gray-500 whitespace-normal'>{guia.dni} </div> </TableCell>
-                <TableCell>{guia.serieNum}-{guia.num}</TableCell>
-                <TableCell>{guia.concepto}</TableCell>
-      <TableCell>
-        <Tooltip
-          content={
-            guia.estado === 'Inactivo'
-              ? (
-                <span>
-                  <strong>Anulado por:</strong>{" "}
-                  {guia.u_modifica ? guia.u_modifica : "N/A"}
-                </span>
-              )
-              : (
-                <span>
-                  <strong>Estado:</strong> Activo
-                </span>
-              )
-          }
-          placement="top"
-          className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
-        >
-          <span>
-            <Chip color={guia.estado === 'Activo' ? 'success' : 'danger'} size="lg" variant="flat">
-              {guia.estado}
-            </Chip>
-          </span>
-        </Tooltip>
-      </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                                        <FaFilePdf
-                                          className="text-red-600 cursor-pointer"
-                                          onClick={() => handleSelectChange({ target: { value: 'imprimir' } }, guia.id)}
-                                        />
-                                        <TiDeleteOutline
-                                          className="text-red-600 cursor-pointer"
-                                          onClick={() => handleSelectChange({ target: { value: 'anular' } }, guia.id)}
-                                        />
-                                      </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
 
+
+  return (
+    <>
+      <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
+        <ScrollShadow hideScrollBar className="rounded-2xl">
+          <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+            <thead>
+              <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+                <th className="py-2 px-2 text-left">FECHA</th>
+                <th className="py-2 px-2 text-left">N° GUÍA</th>
+                <th className="py-2 px-2 text-left">CLIENTE</th>
+                <th className="py-2 px-2 text-left">VENDEDOR</th>
+                <th className="py-2 px-2 text-left">DOC VENTA</th>
+                <th className="py-2 px-2 text-left">CONCEPTO</th>
+                <th className="py-2 px-2 text-center">ESTADO</th>
+                <th className="py-2 px-2 text-center w-32">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentGuias.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-gray-400">Sin guías para mostrar</td>
+                </tr>
+              ) : (
+                currentGuias.map((guia, idx) => (
+                  <tr
+                    key={guia.id}
+                    className={`transition-colors duration-150 ${
+                      idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                    } hover:bg-blue-100/60`}
+                    onClick={() => handleRowClick(guia)}
+                  >
+                    <td className="py-1.5 px-2">
+                      <Tooltip
+                        content={
+                          <div className="text-sm text-gray-800">
+                            <p>
+                              <strong>Hora de generación:</strong>{" "}
+                              {guia.h_generacion
+                                ? new Date(`1970-01-01T${guia.h_generacion}`).toLocaleTimeString("es-ES", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    second: "2-digit",
+                                    hour12: true,
+                                  })
+                                : "N/A"}
+                            </p>
+                            <p>
+                              <strong>Fecha y hora de anulación:</strong>{" "}
+                              {guia.f_anulacion
+                                ? new Date(guia.f_anulacion).toLocaleString("es-ES", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    second: "2-digit",
+                                    hour12: true,
+                                  })
+                                : "N/A"}
+                            </p>
+                          </div>
+                        }
+                        placement="top"
+                        className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
+                      >
+                        <span>{guia.fecha}</span>
+                      </Tooltip>
+                    </td>
+                    <td className="py-1.5 px-2">{guia.numGuia}</td>
+                    <td className="py-1.5 px-2">{guia.cliente} <div className='text-gray-500 whitespace-normal'>{guia.documento}</div></td>
+                    <td className="py-1.5 px-2">{guia.vendedor} <div className='text-gray-500 whitespace-normal'>{guia.dni}</div></td>
+                    <td className="py-1.5 px-2">{guia.serieNum}-{guia.num}</td>
+                    <td className="py-1.5 px-2">{guia.concepto}</td>
+                    <td className="py-1.5 px-2 text-center">
+                      <Tooltip
+                        content={
+                          guia.estado === 'Inactivo'
+                            ? (
+                              <span>
+                                <strong>Anulado por:</strong>{" "}
+                                {guia.u_modifica ? guia.u_modifica : "N/A"}
+                              </span>
+                            )
+                            : (
+                              <span>
+                                <strong>Estado:</strong> Activo
+                              </span>
+                            )
+                        }
+                        placement="top"
+                        className="bg-white shadow-lg rounded-lg p-2 border border-gray-300"
+                      >
+                        <span>
+                          <Chip color={guia.estado === 'Activo' ? 'success' : 'danger'} size="lg" variant="flat">
+                            {guia.estado}
+                          </Chip>
+                        </span>
+                      </Tooltip>
+                    </td>
+                    <td className="py-1.5 px-2 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Tooltip content="Imprimir PDF">
+                          <Button
+                            isIconOnly
+                            variant="light"
+                            color="primary"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleSelectChange({ target: { value: 'imprimir' } }, guia.id);
+                            }}
+                          >
+                            <FaFilePdf />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content="Anular guía">
+                          <Button
+                            isIconOnly
+                            variant="light"
+                            color="danger"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleSelectChange({ target: { value: 'anular' } }, guia.id);
+                            }}
+                          >
+                            <TiDeleteOutline />
+                          </Button>
+                        </Tooltip>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </ScrollShadow>
+      </div>
+      {/* Detalles de la guía seleccionada */}
       {selectedGuia && (
-        <div className="flex-1 ml-4 p-4 border-l border-gray-300">
-          <h3 className="font-bold text-lg">Detalles de Guía</h3>
+        <div className="flex-1 ml-4 p-4 border-l border-gray-300 bg-white rounded-2xl mt-4">
+          <h3 className="font-bold text-lg mb-2">Detalles de Guía</h3>
           <Table shadow={"md"} className="rounded-lg overflow-hidden">
             <TableHeader>
               <TableColumn>Código</TableColumn>
@@ -364,14 +405,15 @@ useEffect(() => {
           </Table>
         </div>
       )}
+      {/* Modales de confirmación */}
       {isModalOpenImprimir && (
-              <ConfirmationModal
-                message="¿Desea imprimir esta guía?"
-                onClose={closeModalImprimir}
-                isOpen={isModalOpenImprimir}
-                onConfirm={handleConfirmImprimir}
-              />
-            )}
+        <ConfirmationModal
+          message="¿Desea imprimir esta guía?"
+          onClose={closeModalImprimir}
+          isOpen={isModalOpenImprimir}
+          onConfirm={handleConfirmImprimir}
+        />
+      )}
       {isModalOpenAnular && (
         <ConfirmationModal
           message="¿Desea anular esta guía?"
@@ -380,7 +422,7 @@ useEffect(() => {
           onConfirm={handleConfirmAnular}
         />
       )}
-    </div>
+    </>
   );
 };
 

@@ -2,7 +2,7 @@ import axios from "@/api/axios";
 
 export const addTransportistaPublico = async (data, setShowModal) => {
     try {
-        console.log('Datos del transportista:', data);
+        //console.log('Datos del transportista:', data);
         const response = await axios.post('/guia_remision/nuevo_transportepub', data, {
             headers: {
                 'Content-Type': 'application/json',
@@ -10,7 +10,7 @@ export const addTransportistaPublico = async (data, setShowModal) => {
         });
         
         if (response.data.code === 1) {
-            console.log('Transportista añadido exitosamente');
+            //console.log('Transportista añadido exitosamente');
             setShowModal(false); // Cierra el modal
             return { success: true, message: 'Transportista añadido exitosamente' };
         } else {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-import { ScrollShadow, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Tooltip } from "@heroui/react";
+import { ScrollShadow, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Tooltip, Select, SelectItem } from "@heroui/react";
 import { FaFilePdf, FaEye } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import anularNotaIngreso from '../data/anular_nota_ingreso';
@@ -278,7 +278,7 @@ const getCurrentPageItems = () => {
   ];
 
   return (
-<div className="flex flex-col bg-white rounded-lg p-4">
+<div className="flex flex-col p-4">
   <div className="flex flex-col lg:flex-row">
     <div className={`transition-all duration-500 ${expandedRow !== null ? 'lg:w-2/3' : 'w-full'} animate-[shrinkExpand_0.5s_ease-in-out]`}>
 <Table aria-label={`Tabla de notas de ${tipo}`}>
@@ -505,7 +505,7 @@ const getCurrentPageItems = () => {
           onConfirm={handleConfirmAnular}
         />
       )}
-<div className="mt-4 flex justify-between items-center bg-white py-2 px-2 rounded-lg shadow-sm sticky bottom-0 z-10" style={{ minHeight: 56 }}>
+<div className="mt-4 flex flex-col md:flex-row justify-between items-center gap-4 rounded-lg bottom-0 z-10" style={{ minHeight: 56 }}>
   <Pagination
     showControls
     color="primary"
@@ -513,20 +513,28 @@ const getCurrentPageItems = () => {
     total={totalPages}
     onChange={setCurrentPage}
   />
-  <select
-    id="itemsPerPage"
-    className="border border-gray-300 bg-gray-50 rounded-lg w-20 text-center"
-    value={itemsPerPage}
-    onChange={(e) => {
-      setItemsPerPage(Number(e.target.value));
-      setCurrentPage(1);
-    }}
-  >
-    <option value={5}>05</option>
-    <option value={10}>10</option>
-    <option value={20}>20</option>
-    <option value={100000}>Todo</option>
-  </select>
+  <div className="flex items-center gap-2">
+    <span className="text-sm text-slate-500">Filas por página:</span>
+    <Select
+      size="sm"
+      className="w-28"
+      selectedKeys={[`${itemsPerPage}`]}
+      onChange={e => {
+        setItemsPerPage(Number(e.target.value));
+        setCurrentPage(1);
+      }}
+      aria-label="Filas por página"
+      classNames={{
+        trigger: "bg-slate-50 border-slate-200 text-blue-900 shadow-sm",
+        popoverContent: "bg-white"
+      }}
+    >
+      <SelectItem key="5" value="5">05</SelectItem>
+      <SelectItem key="10" value="10">10</SelectItem>
+      <SelectItem key="20" value="20">20</SelectItem>
+      <SelectItem key="100000" value="100000">Todo</SelectItem>
+    </Select>
+  </div>
 </div>
     </div>
   );

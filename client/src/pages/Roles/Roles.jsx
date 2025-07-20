@@ -12,9 +12,8 @@ function Usuarios() {
   const [selectedTab, setSelectedTab] = useState("roles");
 
   return (
-    <div>
+    <div className="mx-2 md:mx-6 my-4">
       <Toaster />
-      {/* <Breadcrumb paths={[{ name: 'Inicio', href: '/inicio' }, { name: 'Roles', href: '/configuracion/roles' }]} /> */}
       <Tabs
         selectedKey={selectedTab}
         onSelectionChange={setSelectedTab}
@@ -25,19 +24,13 @@ function Usuarios() {
         }}
       >
         <Tab key="roles" title="Roles">
-          <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8 min-h-[400px]">
-            <TablaRoles />
-          </div>
+          <TablaRoles />
         </Tab>
         <Tab key="permisos" title="Permisos">
-          <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8 min-h-[400px]">
-            <TablaPermisos />
-          </div>
+          <TablaPermisos />
         </Tab>
         <Tab key="paginas" title="Pantalla de inicio">
-          <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-8 min-h-[400px]">
-            <TablaAsignacion />
-          </div>
+          <TablaAsignacion />
         </Tab>
       </Tabs>
       {activeAdd && (
