@@ -26,7 +26,7 @@ const login = async (req, res) => {
             userValid = rows;
         } else {
             const [rows] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant
                 FROM usuario usu
                 INNER JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
                 INNER JOIN sucursal su ON su.dni = ven.dni
@@ -38,8 +38,8 @@ const login = async (req, res) => {
         
 
         if (userValid.length > 0) {
-            const token = await createAccessToken({ nameUser: user.usuario });
             const userbd = userValid[0];
+            const token = await createAccessToken({ nameUser: user.usuario, id_tenant: userbd.id_tenant });
             
             // Obtener la página por defecto para el rol del usuario
             let defaultRedirect = '/inicio'; 
@@ -76,6 +76,7 @@ const login = async (req, res) => {
                     rol: userbd.id_rol,
                     usuario: userbd.usua,
                     sucursal: userbd.nombre_sucursal,
+                    id_tenant: userbd.id_tenant,
                     defaultPage: defaultRedirect // Añadir la URL de redirección por defecto
                 },
                 token,
@@ -101,7 +102,13 @@ const login = async (req, res) => {
 const verifyToken = async (req, res) => {
     let connection;
     connection = await getConnection();
-    const token = req.headers['authorization'];
+    const tokenHeader = req.headers['authorization'];
+    let token = tokenHeader;
+
+    // Si el header tiene formato Bearer <token>, extrae solo el token
+    if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
+    token = tokenHeader.split(' ')[1];
+    }
 
     if (!token) return res.send(false);
 

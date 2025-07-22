@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
   const setNombre = useUserStore((state) => state.setNombre);
   const setIdRol = useUserStore((state) => state.setIdRol);
   const setSur = useUserStore((state) => state.setSur);
+  const setIdTenant = useUserStore((state) => state.setIdTenant);
   const clearUser = useUserStore((state) => state.clearUser);
 
   const login = async (user) => {
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }) => {
       setNombre(res.data.data.name || res.data.data.usuario || "");
       setIdRol(res.data.data.rol || res.data.data.idRol || null);
       setSur(res.data.data.sucursal || res.data.data.idSucursal || null);
+      setIdTenant(res.data.data.id_tenant || null);
 
       return res.data;
     } catch (error) {
@@ -78,6 +80,7 @@ export const AuthProvider = ({ children }) => {
         setNombre(res.data.name || res.data.usuario || "");
         setIdRol(res.data.rol || res.data.idRol || null);
         setSur(res.data.sucursal || res.data.idSucursal || null);
+        setIdTenant(res.data.id_tenant || null);
         setLoading(false);
       } catch (error) {
         setIsAuthenticated(false);

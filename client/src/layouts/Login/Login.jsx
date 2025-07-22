@@ -24,6 +24,7 @@ function Login() {
   const setNombre = useUserStore((state) => state.setNombre);
   const setIdRol = useUserStore((state) => state.setIdRol);
   const setSur = useUserStore((state) => state.setSur);
+  const setIdTenant = useUserStore((state) => state.setIdTenant);
 
   // Contexto de autenticación
   const { login, isAuthenticated } = useAuth();
@@ -55,6 +56,7 @@ function Login() {
         setNombre(response.data.usuario); // o el campo correcto de tu respuesta
         setIdRol(response.data.rol);      // o el campo correcto de tu respuesta
         setSur(response.data.sucursal);   // o el campo correcto de tu respuesta
+        setIdTenant(response.data.id_tenant || null);
 
         const redirectPage = response.data.defaultPage || "/inicio";
         navigate(redirectPage);
