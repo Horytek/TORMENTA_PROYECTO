@@ -1,4 +1,4 @@
-import { Button, ScrollShadow, Divider } from '@heroui/react';
+import { Button, ScrollShadow, Divider, Input } from '@heroui/react';
 import { GrDocumentPerformance } from 'react-icons/gr';
 import { BsCashCoin } from 'react-icons/bs';
 import { BiBarcodeReader } from 'react-icons/bi';
@@ -14,6 +14,7 @@ const SalesStep1 = ({
   handleProductRemove,
   handleDecrement,
   handleIncrement,
+  handleQuantityChange, 
   totalImporte,
   igv_t,
   total_t,
@@ -29,6 +30,9 @@ const SalesStep1 = ({
   // Estados para el escáner directo (siempre activo)
   const [barcode, setBarcode] = useState('');
   const [scanningFeedback, setScanningFeedback] = useState(false);
+  
+  // Estado local para manejar la edición de cantidades
+  const [editingQuantities, setEditingQuantities] = useState({});
 
   // Efecto para manejar el escáner de códigos de barras (siempre activo)
   useEffect(() => {
@@ -209,9 +213,81 @@ const SalesStep1 = ({
                       >
                         -
                       </Button>
-                      <span className="text-sm font-medium w-8 text-center">
-                        {detalle.cantidad}
-                      </span>
+                      
+                      <Input
+                        value={
+                          editingQuantities[detalle.codigo] !== undefined 
+                            ? editingQuantities[detalle.codigo] 
+                            : detalle.cantidad.toString()
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          
+                          // Actualizar el estado de edición local
+                          setEditingQuantities(prev => ({
+                            ...prev,
+                            [detalle.codigo]: value
+                          }));
+
+                          const numValue = parseInt(value);
+                          if (!isNaN(numValue) && numValue >= 1 && numValue <= 999 && value.length <= 3) {
+                            if (handleQuantityChange && typeof handleQuantityChange === 'function') {
+                              handleQuantityChange(originalIndex, numValue);
+                            }
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
+                          const isNumber = /^[0-9]$/.test(e.key);
+                          const isControlKey = allowedKeys.includes(e.key);
+                          const isSelectAll = e.ctrlKey && e.key.toLowerCase() === 'a';
+                          
+                          if (!isNumber && !isControlKey && !isSelectAll) {
+                            e.preventDefault();
+                            return;
+                          }
+                          
+                          // Si presiona Enter, procesar el cambio
+                          if (e.key === 'Enter') {
+                            e.target.blur();
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const value = e.target.value;
+                          let finalValue = parseInt(value);
+                          
+                          // Solo corregir si el valor es inválido
+                          if (value === '' || isNaN(finalValue) || finalValue < 1) {
+                            finalValue = 1;
+                            if (handleQuantityChange && typeof handleQuantityChange === 'function') {
+                              handleQuantityChange(originalIndex, finalValue);
+                            }
+                          } else if (finalValue > 999) {
+                            finalValue = 999;
+                            if (handleQuantityChange && typeof handleQuantityChange === 'function') {
+                              handleQuantityChange(originalIndex, finalValue);
+                            }
+                          }
+                          
+                          // Limpiar el estado de edición
+                          setEditingQuantities(prev => {
+                            const newState = { ...prev };
+                            delete newState[detalle.codigo];
+                            return newState;
+                          });
+                        }}
+                        onFocus={(e) => {
+                          // Seleccionar todo al hacer foco
+                          setTimeout(() => e.target.select(), 0);
+                        }}
+                        className="w-16"
+                        size="sm"
+                        variant="bordered"
+                        classNames={{
+                          input: "text-center text-sm font-medium"
+                        }}
+                      />
+                      
                       <Button
                         isIconOnly
                         size="sm"
@@ -309,11 +385,7 @@ const SalesStep1 = ({
         </>
       )}
 
-      {/* Indicador discreto del escáner siempre activo */}
-      <div className="fixed bottom-4 right-4 bg-green-50 border border-green-200 text-green-700 px-3 py-1 rounded-full text-xs flex items-center gap-2 shadow-sm">
-        <BiBarcodeReader className="text-sm" />
-        <span>Escáner activo</span>
-      </div>
+     
 
       {/* Feedback visual cuando se escanea */}
       {scanningFeedback && (

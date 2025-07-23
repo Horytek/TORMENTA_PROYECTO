@@ -28,6 +28,10 @@ const useVentasData = (filters = {}) => {
     setDetalles(prev => prev.filter(detalle => detalle.codigo !== codigo));
   };
 
+  const clearAllDetalles = () => {
+    setDetalles([]);
+  };
+
 
   // Solo consulta la base de datos la primera vez
   useEffect(() => {
@@ -210,6 +214,7 @@ const getTotalRecaudado = () => ventas.reduce((total, venta) => {
     addDetalle,
     updateDetalle,
     removeDetalle,
+    clearAllDetalles,
     removeVenta,
     addVenta,
     updateVenta,

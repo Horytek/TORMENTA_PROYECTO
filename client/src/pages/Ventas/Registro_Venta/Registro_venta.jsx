@@ -39,6 +39,7 @@ const Registro_Venta = () => {
     clienteSeleccionado: ''
   });
   const [showNuevoCliente, setShowNuevoCliente] = useState(false);
+  const [navigationBlocked, setNavigationBlocked] = useState(false);
   const [paymentData, setPaymentData] = useState({
     metodoPago: "",
     montoRecibido: "",
@@ -55,7 +56,7 @@ const Registro_Venta = () => {
   const componentRef = useRef();
   
   // Custom hooks
-  const { detalles, addDetalle, updateDetalle, removeDetalle } = useVentasData();
+  const { detalles, addDetalle, updateDetalle, removeDetalle, clearAllDetalles } = useVentasData();
   const { productos, setProductos } = useProductosData();
   const { clientes, addCliente } = useClientesData();
 
@@ -250,6 +251,74 @@ const Registro_Venta = () => {
     }
   };
 
+  // Función para cambiar directamente la cantidad de un producto
+  const handleQuantityChange = (index, newQuantity) => {
+    const detalle = detalles[index];
+    if (!detalle) return;
+
+    // Validar que la nueva cantidad sea válida
+    if (newQuantity < 1 || newQuantity > 999) return;
+
+    const cantidadAnterior = detalle.cantidad;
+    const diferencia = newQuantity - cantidadAnterior;
+    
+    // Encontrar el producto correspondiente para verificar stock
+    const productoIndex = productos.findIndex(p => p.codigo === detalle.codigo);
+    
+    if (productoIndex === -1) return;
+    
+    const producto = productos[productoIndex];
+    
+    // Si la nueva cantidad es mayor, verificar stock
+    if (diferencia > 0 && producto.stock < diferencia) {
+      toast.error(`No hay stock suficiente. Stock disponible: ${producto.stock}`);
+      return;
+    }
+    
+    // Calcular el nuevo subtotal
+    const updatedSubtotal = (
+      parseFloat(detalle.precio) * newQuantity - 
+      ((parseFloat(detalle.descuento) / 100) * detalle.precio) * newQuantity
+    ).toFixed(2);
+    
+    // Calcular el nuevo total simulado para validar el límite de 499
+    const nuevosDetalles = detalles.map((d, i) => 
+      i === index 
+        ? { ...d, cantidad: newQuantity, subtotal: `S/ ${updatedSubtotal}` }
+        : d
+    );
+    
+    const nuevoTotalImporte = nuevosDetalles.reduce((acc, item) => {
+      const subtotalNumber = parseFloat(item.subtotal.replace(/[^\d.-]/g, ''));
+      return acc + subtotalNumber / 1.18;
+    }, 0);
+    
+    const nuevoIgv = nuevoTotalImporte * 0.18;
+    const nuevoTotalExacto = nuevoTotalImporte + nuevoIgv;
+    
+    // Validar que no supere los 499 soles
+    if (nuevoTotalExacto > 499) {
+      toast.error(`No se puede cambiar a esta cantidad, máximo permitido: S/ 499.00`);
+      return;
+    }
+    
+    // Actualizar el detalle
+    updateDetalle({ 
+      ...detalle, 
+      cantidad: newQuantity, 
+      subtotal: `S/ ${updatedSubtotal}` 
+    });
+
+    // Actualizar el stock del producto
+    setProductos(prevProductos => 
+      prevProductos.map(p => 
+        p.codigo === detalle.codigo 
+          ? { ...p, stock: p.stock - diferencia } 
+          : p
+      )
+    );
+  };
+
     // Filtered products for modal
   const filteredProductos = productos.filter(producto =>
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -285,10 +354,19 @@ const Registro_Venta = () => {
 
   // Función para resetear todos los datos de la venta
   const resetVentaData = () => {
-    // Limpiar detalles (esto debería estar en el hook useVentasData)
+    // Restaurar stock de todos los productos antes de limpiar
     detalles.forEach(detalle => {
-      removeDetalle(detalle.codigo);
+      setProductos(prevProductos =>
+        prevProductos.map(p =>
+          p.codigo === detalle.codigo
+            ? { ...p, stock: p.stock + detalle.cantidad }
+            : p
+        )
+      );
     });
+    
+    // Limpiar todos los detalles de una vez
+    clearAllDetalles();
     
     // Resetear datos del cliente
     setClienteData({
@@ -319,7 +397,11 @@ const Registro_Venta = () => {
     setShowNuevoCliente(false);
     setShowAlert(false);
     
-    console.log('Datos de venta reseteados completamente');
+    // Desbloquear navegación
+    setNavigationBlocked(false);
+    
+    // Forzar actualización del store de Zustand
+    useVentaSeleccionadaStore.getState().setTotalVentas([]);
   };
 
   // Sale data for receipt
@@ -522,8 +604,9 @@ const Registro_Venta = () => {
                       setCurrentStep(currentStep - 1); // Navegación normal
                     }
                   }}
+                  disabled={currentStep === 4 && navigationBlocked}
                   className="text-xs text-white font-bold "
-                  style={{ backgroundColor: '#006FEE'}}
+                  style={{ backgroundColor: navigationBlocked && currentStep === 4 ? '#a1a1aa' : '#006FEE'}}
                 >
                   ← Volver
                 </Button>
@@ -550,6 +633,7 @@ const Registro_Venta = () => {
             handleProductRemove={handleProductRemove}
             handleIncrement={handleIncrement}
             handleDecrement={handleDecrement}
+            handleQuantityChange={handleQuantityChange}
             totalImporte={totalImporte}
             igv_t={igv_t}
             total_t={total_t}
@@ -604,6 +688,10 @@ const Registro_Venta = () => {
             productos={productos}
             nombre={nombre}
             onResetVenta={resetVentaData}
+            onBlockNavigation={(shouldBlock) => {
+              // Esta función será llamada desde SalesStep4Preview para bloquear/desbloquear navegación
+              setNavigationBlocked(shouldBlock);
+            }}
           />
         )}
 
