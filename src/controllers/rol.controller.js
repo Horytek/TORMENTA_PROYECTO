@@ -4,7 +4,10 @@ const getRoles = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol!=10`);
+        const [result] = await connection.query(
+            `SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol!=10 AND id_tenant = ?`,
+            [req.id_tenant]
+        );
         res.json({ code: 1, data: result });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -15,26 +18,21 @@ const getRoles = async (req, res) => {
     }
 };
 
-
 const getPaginaDefecto = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        
         connection = await getConnection();
-        
-        const [result] = await connection.query(`
-            SELECT id_modulo, id_submodulo 
-            FROM rol 
-            WHERE id_rol = ?
-        `, [id]);
+        const [result] = await connection.query(
+            `SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ? AND id_tenant = ?`,
+            [id, req.id_tenant]
+        );
 
         if (result.length === 0) {
             return res.status(404).json({ code: 0, message: "Rol no encontrado" });
         }
 
         res.json({ code: 1, data: result[0] });
-        
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
@@ -43,7 +41,6 @@ const getPaginaDefecto = async (req, res) => {
         }
     }
 };
-
 
 const guardarPaginaPorDefecto = async (req, res) => {
     let connection;
@@ -57,14 +54,11 @@ const guardarPaginaPorDefecto = async (req, res) => {
 
         connection = await getConnection();
 
-        const [result] = await connection.query(`
-            UPDATE rol 
-            SET id_modulo = ? , 
-            id_submodulo = ? 
-            WHERE id_rol = ?
-        `, [id_modulo, id_submodulo || null, id_rol]);
+        const [result] = await connection.query(
+            `UPDATE rol SET id_modulo = ?, id_submodulo = ? WHERE id_rol = ? AND id_tenant = ?`,
+            [id_modulo, id_submodulo || null, id_rol, req.id_tenant]
+        );
 
-        
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "No se encontró el rol o no se actualizó" });
         }
@@ -80,17 +74,15 @@ const guardarPaginaPorDefecto = async (req, res) => {
     }
 };
 
-
-
-
-
-
 const getRol = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol = ?`, id);
+        const [result] = await connection.query(
+            `SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol = ? AND id_tenant = ?`,
+            [id, req.id_tenant]
+        );
 
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Rol no encontrado" });
@@ -101,11 +93,10 @@ const getRol = async (req, res) => {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 const addRol = async (req, res) => {
     let connection;
@@ -116,7 +107,7 @@ const addRol = async (req, res) => {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const usuario = { nom_rol: nom_rol.trim(), estado_rol };
+        const usuario = { nom_rol: nom_rol.trim(), estado_rol, id_tenant: req.id_tenant };
         connection = await getConnection();
         await connection.query("INSERT INTO rol SET ? ", usuario);
 
@@ -125,10 +116,10 @@ const addRol = async (req, res) => {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
-}
+};
 
 const updateRol = async (req, res) => {
     let connection;
@@ -142,7 +133,10 @@ const updateRol = async (req, res) => {
 
         const usuario = { nom_rol: nom_rol.trim(), estado_rol };
         connection = await getConnection();
-        const [result] = await connection.query("UPDATE rol SET ? WHERE id_rol = ?", [usuario, id]);
+        const [result] = await connection.query(
+            "UPDATE rol SET ? WHERE id_rol = ? AND id_tenant = ?",
+            [usuario, id, req.id_tenant]
+        );
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "Rol no encontrado" });
@@ -153,11 +147,10 @@ const updateRol = async (req, res) => {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
-}
-
+};
 
 const deleteRol = async (req, res) => {
     let connection;
@@ -166,11 +159,17 @@ const deleteRol = async (req, res) => {
         connection = await getConnection();
 
         // Verificar si el usuario está en uso dentro de la base de datos
-        const [verify] = await connection.query("SELECT 1 FROM usuario WHERE id_rol = ?", id);
-        const isUserInUse = verify.length > 0
+        const [verify] = await connection.query(
+            "SELECT 1 FROM usuario WHERE id_rol = ? AND id_tenant = ?",
+            [id, req.id_tenant]
+        );
+        const isUserInUse = verify.length > 0;
 
         if (isUserInUse) {
-            const [Updateresult] = await connection.query("UPDATE rol SET estado_rol = 0 WHERE id_rol = ?", id);
+            const [Updateresult] = await connection.query(
+                "UPDATE rol SET estado_rol = 0 WHERE id_rol = ? AND id_tenant = ?",
+                [id, req.id_tenant]
+            );
 
             if (Updateresult.affectedRows === 0) {
                 return res.status(404).json({ code: 0, message: "Rol no encontrado" });
@@ -178,7 +177,10 @@ const deleteRol = async (req, res) => {
 
             res.json({ code: 2, message: "Rol dado de baja" });
         } else {
-            const [result] = await connection.query("DELETE FROM rol WHERE id_rol = ?", id);
+            const [result] = await connection.query(
+                "DELETE FROM rol WHERE id_rol = ? AND id_tenant = ?",
+                [id, req.id_tenant]
+            );
 
             if (result.affectedRows === 0) {
                 return res.status(404).json({ code: 0, message: "Rol no encontrado" });
@@ -191,10 +193,10 @@ const deleteRol = async (req, res) => {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
-}
+};
 
 export const methods = {
     getRoles,

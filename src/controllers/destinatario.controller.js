@@ -7,9 +7,7 @@ const insertDestinatario = async (req, res) => {
     ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, telefono, email
   } = req.body;
 
-  if (
-    !ubicacion
-  ) {
+  if (!ubicacion) {
     return res
       .status(400)
       .json({ message: "Bad Request. Please fill all fields correctly." });
@@ -19,17 +17,15 @@ const insertDestinatario = async (req, res) => {
     connection = await getConnection();
 
     const [result] = await connection.query(
-      "INSERT INTO destinatario (ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email, telefono) VALUES (?, ?, ?, ?, ?, ?, ?,?,?)",
-      [ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email, telefono]
+      "INSERT INTO destinatario (ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email, telefono, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email, telefono, req.id_tenant]
     );
-    //console.log(result);
     res.json({ code: 1, message: 'Destinatario insertado correctamente', id: result.insertId });
   } catch (error) {
-    //console.error("Error en el backend:", error.message);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-      connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
   }
 };
@@ -54,20 +50,19 @@ const addDestinatarioNatural = async (req, res) => {
   try {
     connection = await getConnection();
     const result = await connection.query(
-      `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion, direccion, email, telefono) 
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [dni, nombres, apellidos, ubicacion, direccion || "", email || "", telefono || ""]
+      `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion, direccion, email, telefono, id_tenant) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [dni, nombres, apellidos, ubicacion, direccion || "", email || "", telefono || "", req.id_tenant]
     );
     res.json({ code: 1, data: result, message: "Destinatario natural añadido exitosamente" });
   } catch (error) {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-      connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
   }
 };
-
 
 // INSERTAR DESTINATARIO JURÍDICO
 const addDestinatarioJuridico = async (req, res) => {
@@ -88,21 +83,19 @@ const addDestinatarioJuridico = async (req, res) => {
   try {
     connection = await getConnection();
     const result = await connection.query(
-      `INSERT INTO destinatario (ruc, razon_social, ubicacion, direccion, email, telefono) 
-           VALUES (?, ?, ?, ?, ?, ?)`,
-      [ruc, razon_social, ubicacion, direccion || "", email || "", telefono || ""]
+      `INSERT INTO destinatario (ruc, razon_social, ubicacion, direccion, email, telefono, id_tenant) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [ruc, razon_social, ubicacion, direccion || "", email || "", telefono || "", req.id_tenant]
     );
     res.json({ code: 1, data: result, message: "Destinatario jurídico añadido exitosamente" });
   } catch (error) {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-      connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
   }
 };
-
-
 
 const updateDestinatarioNatural = async (req, res) => {
   let connection;
@@ -126,8 +119,8 @@ const updateDestinatarioNatural = async (req, res) => {
     const [result] = await connection.query(
       `UPDATE destinatario
        SET dni = ?, nombres = ?, apellidos = ?, telefono = ?, direccion = ?, ubicacion = ?, email = ?
-       WHERE id_destinatario = ?`,
-      [dni, nombres, apellidos, telefono, direccion, ubicacion, email, id]
+       WHERE id_destinatario = ? AND id_tenant = ?`,
+      [dni, nombres, apellidos, telefono, direccion, ubicacion, email, id, req.id_tenant]
     );
 
     if (result.affectedRows === 0) {
@@ -162,8 +155,8 @@ const updateDestinatarioJuridico = async (req, res) => {
     const [result] = await connection.query(
       `UPDATE destinatario
        SET ruc = ?, razon_social = ?, ubicacion = ?, direccion = ?, email = ?, telefono = ?
-       WHERE id_destinatario = ?`,
-      [ruc, razon_social, ubicacion, direccion, email, telefono, id]
+       WHERE id_destinatario = ? AND id_tenant = ?`,
+      [ruc, razon_social, ubicacion, direccion, email, telefono, id, req.id_tenant]
     );
 
     if (result.affectedRows === 0) {
@@ -177,7 +170,6 @@ const updateDestinatarioJuridico = async (req, res) => {
   }
 };
 
-
 const getDestinatarios = async (req, res) => {
   let connection;
   try {
@@ -189,29 +181,30 @@ const getDestinatarios = async (req, res) => {
   COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS destinatario,
   ubicacion,
   direccion,
-	email,
-	telefono 
+    email,
+    telefono 
 FROM 
   destinatario
 WHERE 
-  (nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
-  OR
-  (razon_social IS NOT NULL AND razon_social <> '')
+  id_tenant = ?
+  AND (
+    (nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
+    OR
+    (razon_social IS NOT NULL AND razon_social <> '')
+  )
 ORDER BY 
   (CASE 
       WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 
       ELSE 1 
    END),
   destinatario;
-          `);
-          const dataTransformada = result;
-          //console.log("Datos después de la transformación:", dataTransformada);
+          `, [req.id_tenant]);
       res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
       if (connection) {
-          connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+          connection.release();
       }
   }
 };
@@ -220,7 +213,6 @@ const getDestinatario = async (req, res) => {
   let connection;
   try {
       const { id } = req.params;
-      //console.log("ID recibido en backend:", id);
 
       if (!id) {
           return res.status(400).json({ message: "Debe proporcionar un ID" });
@@ -239,14 +231,14 @@ const getDestinatario = async (req, res) => {
           FROM 
               destinatario
           WHERE 
-              COALESCE(NULLIF(dni, ''), ruc) = ?
+              COALESCE(NULLIF(dni, ''), ruc) = ? AND id_tenant = ?
           ORDER BY 
               (CASE 
                   WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 
                   ELSE 1 
               END),
               destinatario;`,
-          [id]
+          [id, req.id_tenant]
       );
 
       if (result.length === 0) {
@@ -255,7 +247,6 @@ const getDestinatario = async (req, res) => {
 
       res.json({ code: 1, data: result, message: "Destinatario encontrado" });
   } catch (error) {
-      //console.error("Error en getDestinatario:", error);
       if (!res.headersSent) {
           res.status(500).json({ code: 0, message: "Error interno del servidor" });
       }
@@ -264,7 +255,6 @@ const getDestinatario = async (req, res) => {
   }
 };
 
-// src/controllers/destinatario.controller.js
 const deleteDestinatario = async (req, res) => {
   let connection;
   try {
@@ -273,7 +263,7 @@ const deleteDestinatario = async (req, res) => {
       connection = await getConnection();
 
       // Eliminar por id_destinatario (id numérico)
-      const [result] = await connection.query("DELETE FROM destinatario WHERE id_destinatario = ?", [id]);
+      const [result] = await connection.query("DELETE FROM destinatario WHERE id_destinatario = ? AND id_tenant = ?", [id, req.id_tenant]);
 
       if (result.affectedRows === 0) {
           return res.status(404).json({ code: 0, message: "Destinatario no encontrado" });
@@ -288,9 +278,6 @@ const deleteDestinatario = async (req, res) => {
       if (connection) connection.release();
   }
 };
-
-
-
 
 export const methods = {
   insertDestinatario,

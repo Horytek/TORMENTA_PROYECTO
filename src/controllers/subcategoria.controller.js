@@ -7,7 +7,8 @@ const getSubCategorias = async (req, res) => {
         const [result] = await connection.query(`
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
-        `);
+            WHERE id_tenant = ?
+        `, [req.id_tenant]);
         res.json({ code: 1, data: result, message: "Subcategorías listadas" });
     } catch (error) {
         if (!res.headersSent) {
@@ -15,7 +16,7 @@ const getSubCategorias = async (req, res) => {
         }
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -28,8 +29,8 @@ const getSubcategoriesForCategory = async (req, res) => {
         const [result] = await connection.query(`
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
-            WHERE id_categoria = ?
-        `, [id]);
+            WHERE id_categoria = ? AND id_tenant = ?
+        `, [id, req.id_tenant]);
 
         if (result.length === 0) {
             return res.status(404).json({code: 0, data: result, message: "Subcategorías de categoría no encontradas" });
@@ -42,7 +43,7 @@ const getSubcategoriesForCategory = async (req, res) => {
         }
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -55,7 +56,7 @@ const getSubCategoria = async (req, res) => {
         const [result] = await connection.query(`
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
-            WHERE id_subcategoria = ?`, [id]);
+            WHERE id_subcategoria = ? AND id_tenant = ?`, [id, req.id_tenant]);
         
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Subcategoría no encontrada" });
@@ -68,26 +69,19 @@ const getSubCategoria = async (req, res) => {
         }
     }    finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
-
-
-
-
 
 const addSubCategoria = async (req, res) => {
     let connection;
     try {
         let { id_categoria, nom_subcat, estado_subcat } = req.body;
 
-        // Casteo seguro de los valores que pueden llegar como string
         id_categoria = Number(id_categoria);
         estado_subcat = Number(estado_subcat);
 
-        // Validación robusta
         if (
             isNaN(id_categoria) ||
             typeof nom_subcat !== 'string' ||
@@ -97,10 +91,10 @@ const addSubCategoria = async (req, res) => {
             return res.status(400).json({ message: "Bad Request. Please fill all fields correctly." });
         }
 
-        const subcategoria = { id_categoria, nom_subcat: nom_subcat.trim(), estado_subcat };
+        const subcategoria = { id_categoria, nom_subcat: nom_subcat.trim(), estado_subcat, id_tenant: req.id_tenant };
         connection = await getConnection();
         await connection.query("INSERT INTO sub_categoria SET ? ", subcategoria);
-        const [idAdd] = await connection.query("SELECT id_subcategoria FROM sub_categoria WHERE nom_subcat = ?", nom_subcat);
+        const [idAdd] = await connection.query("SELECT id_subcategoria FROM sub_categoria WHERE nom_subcat = ? AND id_tenant = ?", [nom_subcat, req.id_tenant]);
 
         res.status(201).json({ code: 1, message: "Subcategoría añadida con éxito", id: idAdd[0].id_subcategoria });
     } catch (error) {
@@ -109,7 +103,7 @@ const addSubCategoria = async (req, res) => {
         }
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -119,7 +113,6 @@ const updateSubCategoria = async (req, res) => {
     try {
         const { id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria } = req.body;
 
-        // Verifica si id_categoria está definido
         if (id_categoria === undefined) {
             return res.status(400).json({ message: "ID de categoría es requerido" });
         }
@@ -129,12 +122,12 @@ const updateSubCategoria = async (req, res) => {
         const [resultSubCat] = await connection.query(`
             UPDATE sub_categoria 
             SET id_categoria = ?, nom_subcat = ?, estado_subcat = ?
-            WHERE id_subcategoria = ?`, [id_categoria, nom_subcat, estado_subcat, id_subcategoria]);
+            WHERE id_subcategoria = ? AND id_tenant = ?`, [id_categoria, nom_subcat, estado_subcat, id_subcategoria, req.id_tenant]);
 
         const [resultCat] = await connection.query(`
             UPDATE categoria 
             SET nom_categoria = ?, estado_categoria = ?
-            WHERE id_categoria = ?`, [nom_categoria, estado_categoria, id_categoria]);
+            WHERE id_categoria = ? AND id_tenant = ?`, [nom_categoria, estado_categoria, id_categoria, req.id_tenant]);
 
         if (resultSubCat.affectedRows === 0 && resultCat.affectedRows === 0) {
             return res.status(404).json({ message: "Subcategoría o categoría no encontrada" });
@@ -147,12 +140,10 @@ const updateSubCategoria = async (req, res) => {
         }
     }     finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
-
 
 const deactivateSubCategoria = async (req, res) => {
     let connection;
@@ -160,8 +151,8 @@ const deactivateSubCategoria = async (req, res) => {
     try {
         connection = await getConnection();
         const [result] = await connection.query(
-            "UPDATE sub_categoria SET estado_subcat = 0 WHERE id_subcategoria = ?",
-            [id]
+            "UPDATE sub_categoria SET estado_subcat = 0 WHERE id_subcategoria = ? AND id_tenant = ?",
+            [id, req.id_tenant]
         );
 
         if (result.affectedRows === 0) {
@@ -175,11 +166,10 @@ const deactivateSubCategoria = async (req, res) => {
         }
     }     finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     } 
 };
-
 
 const deleteSubCategoria = async (req, res) => {
     let connection;
@@ -187,8 +177,8 @@ const deleteSubCategoria = async (req, res) => {
     try {
         connection = await getConnection();
         const [result] = await connection.query(
-            "DELETE FROM sub_categoria WHERE id_subcategoria = ?",
-            [id]
+            "DELETE FROM sub_categoria WHERE id_subcategoria = ? AND id_tenant = ?",
+            [id, req.id_tenant]
         );
 
         if (result.affectedRows === 0) {
@@ -202,12 +192,10 @@ const deleteSubCategoria = async (req, res) => {
         }
     }      finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     } 
 };
-
-
 
 const getSubcategoriasConCategoria = async (req, res) => {
     let connection;
@@ -227,21 +215,21 @@ const getSubcategoriasConCategoria = async (req, res) => {
           categoria c 
         ON 
           sc.id_categoria = c.id_categoria
+        WHERE sc.id_tenant = ? AND c.id_tenant = ?
       `;
   
-      const [result] = await connection.query(query);
+      const [result] = await connection.query(query, [req.id_tenant, req.id_tenant]);
       res.json(result);
     } catch (error) {
       res.status(500).json({ message: "Error al obtener las subcategorías con sus categorías"
        });
     }      finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     } 
   };
-  
-  
+
 export const methods = {
     getSubCategorias,
     getSubcategoriesForCategory,

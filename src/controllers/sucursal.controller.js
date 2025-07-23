@@ -1,7 +1,5 @@
 import { getConnection } from "../database/database";
 
-
-
 const getSucursalInicio = async (req, res) => {
     let connection;
     const { nombre = '' } = req.query; 
@@ -10,20 +8,18 @@ const getSucursalInicio = async (req, res) => {
         connection = await getConnection();
         if (!connection) throw new Error("Error en la conexión con la base de datos.");
 
-        // Consulta SQL para obtener solo el nombre de las sucursales
         const query = `
             SELECT 
                 s.id_sucursal AS id,
                 s.nombre_sucursal AS nombre
             FROM sucursal s
-            WHERE s.nombre_sucursal LIKE ?
+            WHERE s.nombre_sucursal LIKE ? AND s.id_tenant = ?
         `;
 
-        const params = [`%${nombre}%`];
+        const params = [`%${nombre}%`, req.id_tenant];
 
         const [result] = await connection.query(query, params);
 
-        // Enviar la respuesta con los resultados
         res.json({ code: 1, data: result, message: "Sucursales listadas" });
 
     } catch (error) {
@@ -51,15 +47,12 @@ const getSucursales = async (req, res) => {
                 CONCAT(v.nombres, ' ', v.apellidos) AS nombre_vendedor
             FROM sucursal s
             LEFT JOIN vendedor v ON s.dni = v.dni
-            WHERE s.nombre_sucursal LIKE ?
+            WHERE s.nombre_sucursal LIKE ? AND s.id_tenant = ?
         `;
 
+        const params = [`%${nombre}%`, req.id_tenant];
         if (estado !== '%') {
             query += ` AND s.estado_sucursal LIKE ?`;
-        }
-
-        const params = [`%${nombre}%`];
-        if (estado !== '%') {
             params.push(estado);
         }
 
@@ -88,9 +81,9 @@ const insertSucursal = async (req, res) => {
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            `INSERT INTO sucursal (dni, nombre_sucursal, ubicacion, estado_sucursal)
-         VALUES (?, ?, ?, ?)`,
-            [dni, nombre_sucursal, ubicacion, estado_sucursal]
+            `INSERT INTO sucursal (dni, nombre_sucursal, ubicacion, estado_sucursal, id_tenant)
+         VALUES (?, ?, ?, ?, ?)`,
+            [dni, nombre_sucursal, ubicacion, estado_sucursal, req.id_tenant]
         );
 
         await connection.commit();
@@ -129,7 +122,7 @@ const updateSucursal = async (req, res) => {
           ubicacion = ?,
           estado_sucursal = ?
         WHERE 
-          id_sucursal = ?;
+          id_sucursal = ? AND id_tenant = ?;
       `;
 
         await connection.query(query, [
@@ -137,7 +130,8 @@ const updateSucursal = async (req, res) => {
             nombre_sucursal,
             ubicacion,
             estado_sucursal,
-            id
+            id,
+            req.id_tenant
         ]);
 
         await connection.commit();
@@ -154,14 +148,13 @@ const updateSucursal = async (req, res) => {
         }
     }
 };
+
 const getVendedores = async (req, res) => {
     let connection;
 
     try {
-        // Obtener la conexión a la base de datos
         connection = await getConnection();
 
-        // Consulta SQL para obtener los vendedores activos
         const query = `
             SELECT 
                 dni,
@@ -169,19 +162,16 @@ const getVendedores = async (req, res) => {
             FROM 
                 vendedor
             WHERE 
-                estado_vendedor = 1;
+                estado_vendedor = 1 AND id_tenant = ?;
         `;
 
-        // Ejecutar la consulta
-        const [vendedores] = await connection.query(query);
+        const [vendedores] = await connection.query(query, [req.id_tenant]);
 
-        // Devolver los vendedores en formato JSON
         res.json({ code: 1, data: vendedores, message: "Vendedores listados correctamente" });
 
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error al obtener la lista de vendedores" });
     } finally {
-        // Liberar la conexión a la base de datos
         if (connection) connection.release();
     }
 };
@@ -200,8 +190,8 @@ const deleteSucursal = async (req, res) => {
 
         await connection.beginTransaction();
 
-        const query = `DELETE FROM sucursal WHERE id_sucursal = ?`;
-        const [result] = await connection.query(query, [id]);
+        const query = `DELETE FROM sucursal WHERE id_sucursal = ? AND id_tenant = ?`;
+        const [result] = await connection.query(query, [id, req.id_tenant]);
 
         await connection.commit();
 

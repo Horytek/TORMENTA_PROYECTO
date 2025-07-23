@@ -13,30 +13,31 @@ const getClientes = async (req, res) => {
     const docNumber = req.query.docNumber || "";
     const searchTerm = req.query.searchTerm || "";
 
-    let filterCondition = "";
-    const filterValues = [];
+    let filterCondition = "WHERE id_tenant = ?";
+    const filterValues = [req.id_tenant];
 
     if (docType === "dni") {
       if (docNumber) {
-        filterCondition = "WHERE dni LIKE ?";
+        filterCondition += " AND dni LIKE ?";
         filterValues.push(`%${docNumber}%`);
       } else {
-        filterCondition = "WHERE dni IS NOT NULL AND dni <> ''";
+        filterCondition += " AND dni IS NOT NULL AND dni <> ''";
       }
     }
     else if (docType === "ruc") {
       if (docNumber) {
-        filterCondition = "WHERE ruc LIKE ?";
+        filterCondition += " AND ruc LIKE ?";
         filterValues.push(`%${docNumber}%`);
       } else {
-        filterCondition = "WHERE ruc IS NOT NULL AND ruc <> ''";
+        filterCondition += " AND ruc IS NOT NULL AND ruc <> ''";
       }
     }
     else if (searchTerm) {
-      filterCondition = `WHERE 
+      filterCondition += ` AND (
         nombres LIKE ? OR 
         apellidos LIKE ? OR 
-        razon_social LIKE ?`;
+        razon_social LIKE ?
+      )`;
       filterValues.push(
         `%${searchTerm}%`, 
         `%${searchTerm}%`, 
@@ -98,9 +99,9 @@ const addCliente = async (req, res) => {
 
         const duplicateQuery = `
             SELECT id_cliente FROM cliente
-            WHERE (dni = ? OR ruc = ?)
+            WHERE (dni = ? OR ruc = ?) AND id_tenant = ?
         `;
-        const [existing] = await connection.query(duplicateQuery, [documentNumber, documentNumber]);
+        const [existing] = await connection.query(duplicateQuery, [documentNumber, documentNumber, req.id_tenant]);
         if (existing.length > 0) {
             return res.status(400).json({
                 code: 0,
@@ -116,8 +117,9 @@ const addCliente = async (req, res) => {
                 apellidos,
                 razon_social,
                 direccion,
-                estado_cliente
-            ) VALUES (?, ?, ?, ?, ?, ?, 1)
+                estado_cliente,
+                id_tenant
+            ) VALUES (?, ?, ?, ?, ?, ?, 1, ?)
         `;
 
         const values = [
@@ -127,6 +129,7 @@ const addCliente = async (req, res) => {
             clientLastName || null,
             businessName || null,
             address || null,
+            req.id_tenant
         ];
 
         const [result] = await connection.query(query, values);
@@ -138,7 +141,6 @@ const addCliente = async (req, res) => {
         });
 
     } catch (error) {
-        //console.error(error);
         res.status(500).json({
             code: 0,
             message: "Error al crear el cliente"
@@ -147,8 +149,6 @@ const addCliente = async (req, res) => {
         if (connection) connection.release();
     }
 };
-
-
 
 const getCliente = async (req, res) => {
     let connection;
@@ -174,8 +174,8 @@ const getCliente = async (req, res) => {
                 f_creacion,
                 estado_cliente AS estado
              FROM cliente
-             WHERE id_cliente = ?`,
-            [id]
+             WHERE id_cliente = ? AND id_tenant = ?`,
+            [id, req.id_tenant]
         );
 
         if (result.length === 0) {
@@ -192,7 +192,6 @@ const getCliente = async (req, res) => {
         });
 
     } catch (error) {
-        //console.error(error);
         res.status(500).json({
             code: 0,
             message: "Error al obtener el cliente"
@@ -207,7 +206,7 @@ const updateCliente = async (req, res) => {
     let connection;
     try {
         const {
-            id_cliente, // cambiado de id a id_cliente para coincidir con el frontend
+            id_cliente,
             dni,
             ruc,
             nombres,
@@ -228,8 +227,8 @@ const updateCliente = async (req, res) => {
 
         // Verificar si el cliente existe
         const [existingClient] = await connection.query(
-            "SELECT id_cliente FROM cliente WHERE id_cliente = ?",
-            [id_cliente]
+            "SELECT id_cliente FROM cliente WHERE id_cliente = ? AND id_tenant = ?",
+            [id_cliente, req.id_tenant]
         );
 
         if (existingClient.length === 0) {
@@ -248,7 +247,7 @@ const updateCliente = async (req, res) => {
                 razon_social = ?,
                 direccion = ?,
                 estado_cliente = ?
-            WHERE id_cliente = ?
+            WHERE id_cliente = ? AND id_tenant = ?
         `;
         
         const values = [
@@ -259,7 +258,8 @@ const updateCliente = async (req, res) => {
             razon_social || null,
             direccion || null,
             estado,
-            id_cliente
+            id_cliente,
+            req.id_tenant
         ];
 
         const [result] = await connection.query(query, values);
@@ -276,8 +276,8 @@ const updateCliente = async (req, res) => {
                 direccion, 
                 estado_cliente AS estado
              FROM cliente
-             WHERE id_cliente = ?`,
-            [id_cliente]
+             WHERE id_cliente = ? AND id_tenant = ?`,
+            [id_cliente, req.id_tenant]
         );
 
         res.json({
@@ -287,7 +287,6 @@ const updateCliente = async (req, res) => {
         });
 
     } catch (error) {
-        //console.error(error);
         res.status(500).json({
             code: 0,
             message: "Error al actualizar el cliente"
@@ -297,13 +296,12 @@ const updateCliente = async (req, res) => {
     }
 };
 
-
 const deleteCliente = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query("DELETE FROM cliente WHERE id_cliente = ?", [id]);
+        const [result] = await connection.query("DELETE FROM cliente WHERE id_cliente = ? AND id_tenant = ?", [id, req.id_tenant]);
                 
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "Cliente no encontrado" });
@@ -321,13 +319,12 @@ const deleteCliente = async (req, res) => {
     }
 };
 
-
 const deactivateCliente = async (req, res) => {
     let connection;
     const { id } = req.params;
     connection = await getConnection();
     try {
-        const [result] = await connection.query("UPDATE cliente SET estado_cliente = 0 WHERE id_cliente = ?", [id]);
+        const [result] = await connection.query("UPDATE cliente SET estado_cliente = 0 WHERE id_cliente = ? AND id_tenant = ?", [id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: "Cliente no encontrado" });
@@ -345,7 +342,6 @@ const deactivateCliente = async (req, res) => {
     }
 };
 
-
 export const methods = {
     getClientes,
     getCliente,
@@ -354,4 +350,3 @@ export const methods = {
     deleteCliente,
     deactivateCliente
 };
-

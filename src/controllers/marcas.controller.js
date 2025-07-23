@@ -7,7 +7,8 @@ const getMarcas = async (req, res) => {
         const [result] = await connection.query(`
             SELECT id_marca, nom_marca, estado_marca
             FROM marca
-        `);
+            WHERE id_tenant = ?
+        `, [req.id_tenant]);
         res.json({ code: 1, data: result, message: "Marcas listadas" });
     } catch (error) {
         if (!res.headersSent) {
@@ -15,7 +16,7 @@ const getMarcas = async (req, res) => {
         }
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -28,7 +29,7 @@ const getMarca = async (req, res) => {
         const [result] = await connection.query(`
             SELECT id_marca, nom_marca, estado_marca
             FROM marca
-            WHERE id_marca = ?`, [id]);
+            WHERE id_marca = ? AND id_tenant = ?`, [id, req.id_tenant]);
         
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Marca no encontrada" });
@@ -41,7 +42,7 @@ const getMarca = async (req, res) => {
         }
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -55,11 +56,11 @@ const addMarca = async (req, res) => {
             return res.status(400).json({ message: "Bad Request. Please fill all fields correctly." });
         }
 
-        const marca = { nom_marca: nom_marca.trim(), estado_marca };
+        const marca = { nom_marca: nom_marca.trim(), estado_marca, id_tenant: req.id_tenant };
         connection = await getConnection();
         await connection.query("INSERT INTO marca SET ? ", marca);
 
-        const [idAdd] = await connection.query("SELECT id_marca FROM marca WHERE nom_marca = ?", nom_marca);
+        const [idAdd] = await connection.query("SELECT id_marca FROM marca WHERE nom_marca = ? AND id_tenant = ?", [nom_marca, req.id_tenant]);
 
         res.status(201).json({ code: 1, message: "Marca añadida con éxito", id: idAdd[0].id_marca });
     } catch (error) {
@@ -68,7 +69,7 @@ const addMarca = async (req, res) => {
         }
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -83,7 +84,7 @@ const updateMarca = async (req, res) => {
         const [result] = await connection.query(`
             UPDATE marca 
             SET nom_marca = ?, estado_marca = ?
-            WHERE id_marca = ?`, [nom_marca, estado_marca, id]);
+            WHERE id_marca = ? AND id_tenant = ?`, [nom_marca, estado_marca, id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: "Marca no encontrada" });
@@ -96,21 +97,17 @@ const updateMarca = async (req, res) => {
         }
     }    finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
-
-
-
 
 const deactivateMarca = async (req, res) => {
     let connection;
     const { id } = req.params;
     connection = await getConnection();
     try {
-        const [result] = await connection.query("UPDATE marca SET estado_marca = 0 WHERE id_marca = ?", [id]);
+        const [result] = await connection.query("UPDATE marca SET estado_marca = 0 WHERE id_marca = ? AND id_tenant = ?", [id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: "Marca no encontrada" });
@@ -123,18 +120,17 @@ const deactivateMarca = async (req, res) => {
         }
     }    finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 const deleteMarca = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query("DELETE FROM marca WHERE id_marca = ?", [id]);
+        const [result] = await connection.query("DELETE FROM marca WHERE id_marca = ? AND id_tenant = ?", [id, req.id_tenant]);
                 
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "Marca no encontrada" });
@@ -147,7 +143,7 @@ const deleteMarca = async (req, res) => {
         }
     }     finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };

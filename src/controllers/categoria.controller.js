@@ -7,7 +7,8 @@ const getCategorias = async (req, res) => {
     const [result] = await connection.query(`
       SELECT id_categoria, nom_categoria, estado_categoria
       FROM categoria
-    `);
+      WHERE id_tenant = ?
+    `, [req.id_tenant]);
     res.json({ code: 1, data: result, message: "Categorías listadas" });
   } catch (error) {
     if (!res.headersSent) res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
@@ -23,8 +24,8 @@ const getCategoria = async (req, res) => {
     connection = await getConnection();
     const [result] = await connection.query(`
       SELECT id_categoria, nom_categoria, estado_categoria
-      FROM categoria WHERE id_categoria = ?
-    `, [id]);
+      FROM categoria WHERE id_categoria = ? AND id_tenant = ?
+    `, [id, req.id_tenant]);
 
     if (result.length === 0) {
       return res.status(404).json({ code: 0, data: [], message: "Recurso no disponible" });
@@ -47,7 +48,7 @@ const addCategoria = async (req, res) => {
       return res.status(400).json({ code: 0, message: "Campos inválidos" });
     }
 
-    const categoria = { nom_categoria: nom_categoria.trim(), estado_categoria };
+    const categoria = { nom_categoria: nom_categoria.trim(), estado_categoria, id_tenant: req.id_tenant };
     connection = await getConnection();
     await connection.query("INSERT INTO categoria SET ?", [categoria]);
 
@@ -70,8 +71,8 @@ const updateCategoria = async (req, res) => {
     const [result] = await connection.query(`
       UPDATE categoria 
       SET nom_categoria = ?, estado_categoria = ?
-      WHERE id_categoria = ?
-    `, [nom_categoria, estado_categoria, id]);
+      WHERE id_categoria = ? AND id_tenant = ?
+    `, [nom_categoria, estado_categoria, id, req.id_tenant]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ code: 0, message: "Recurso no disponible" });
@@ -91,8 +92,8 @@ const deactivateCategoria = async (req, res) => {
     const { id } = req.params;
     connection = await getConnection();
     const [result] = await connection.query(`
-      UPDATE categoria SET estado_categoria = 0 WHERE id_categoria = ?
-    `, [id]);
+      UPDATE categoria SET estado_categoria = 0 WHERE id_categoria = ? AND id_tenant = ?
+    `, [id, req.id_tenant]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ code: 0, message: "Recurso no disponible" });
@@ -111,7 +112,7 @@ const deleteCategoria = async (req, res) => {
   try {
     const { id } = req.params;
     connection = await getConnection();
-    const [result] = await connection.query("DELETE FROM categoria WHERE id_categoria = ?", [id]);
+    const [result] = await connection.query("DELETE FROM categoria WHERE id_categoria = ? AND id_tenant = ?", [id, req.id_tenant]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ code: 0, message: "Recurso no disponible" });

@@ -5,8 +5,8 @@ const getModulosConSubmodulos = async (req, res) => {
         const connection = await getConnection();
         
         const [modulos] = await connection.query(`
-            SELECT * FROM modulo ORDER BY id_modulo
-        `);
+            SELECT * FROM modulo WHERE id_tenant = ? ORDER BY id_modulo
+        `, [req.id_tenant]);
         
         const [submodulos] = await connection.query(`
             SELECT 
@@ -15,8 +15,9 @@ const getModulosConSubmodulos = async (req, res) => {
                 s.nombre_sub,
                 s.ruta as ruta_submodulo
             FROM submodulos s
+            WHERE s.id_tenant = ?
             ORDER BY s.id_modulo, s.id_submodulo
-        `);
+        `, [req.id_tenant]);
         
         const modulosConSubmodulos = modulos.map(modulo => {
             const moduloSubmodulos = submodulos.filter(
@@ -54,9 +55,8 @@ const getPermisosModulo = async (req, res) => {
             FROM permisos p
             INNER JOIN modulo m ON p.id_modulo = m.id_modulo
             LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
-            WHERE p.id_rol = ?`, 
-            [id_rol]
-        );
+            WHERE p.id_rol = ? AND p.id_tenant = ?
+        `, [id_rol, req.id_tenant]);
 
         res.json(permisos);
     } catch (error) {
@@ -68,8 +68,8 @@ const getRoles = async (req, res) => {
     try {
         const connection = await getConnection();
         const [roles] = await connection.query(`
-            SELECT id_rol, nom_rol FROM rol WHERE id_rol!=10
-        `);
+            SELECT id_rol, nom_rol FROM rol WHERE id_rol!=10 AND id_tenant = ?
+        `, [req.id_tenant]);
         
         res.json({
             success: true,
@@ -101,8 +101,8 @@ const getPermisosByRol = async (req, res) => {
                 desactivar,
                 generar
             FROM permisos
-            WHERE id_rol = ?
-        `, [id_rol]);
+            WHERE id_rol = ? AND id_tenant = ?
+        `, [id_rol, req.id_tenant]);
         
         res.json({
             success: true,
@@ -124,17 +124,16 @@ const savePermisos = async (req, res) => {
         const { id_rol, permisos } = req.body;
         
         await connection.query(
-            'DELETE FROM permisos WHERE id_rol = ?',
-            [id_rol]
+            'DELETE FROM permisos WHERE id_rol = ? AND id_tenant = ?',
+            [id_rol, req.id_tenant]
         );
         
         if (permisos && permisos.length > 0) {
-            //console.log("Permissions to save:", permisos);
             for (const p of permisos) {
                 await connection.query(`
                     INSERT INTO permisos
-                    (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
                     id_rol, 
                     p.id_modulo, 
@@ -144,7 +143,8 @@ const savePermisos = async (req, res) => {
                     p.editar !== undefined ? p.editar : 0,
                     p.eliminar !== undefined ? p.eliminar : 0,
                     p.desactivar !== undefined ? p.desactivar : 0,
-                    p.generar !== undefined ? p.generar : 0
+                    p.generar !== undefined ? p.generar : 0,
+                    req.id_tenant
                 ]);
             }
         }
@@ -170,10 +170,8 @@ const savePermisos = async (req, res) => {
     }
 };
 
-// AQUÍ ESTÁ LA CORRECCIÓN CLAVE
 const checkPermiso = async (req, res) => {
     try {
-      // Convertir a números y validar
       const idModulo = parseInt(req.query.idModulo);
       const idSubmodulo = req.query.idSubmodulo ? parseInt(req.query.idSubmodulo) : null;
       
@@ -184,7 +182,6 @@ const checkPermiso = async (req, res) => {
         });
       }
       
-      //console.log("Token payload:", req.user); // Depuración
       const nameUser = req.user.nameUser;
       
       if (!nameUser) {
@@ -197,8 +194,8 @@ const checkPermiso = async (req, res) => {
       const connection = await getConnection();
       
       const [usuarios] = await connection.query(
-        'SELECT id_usuario, id_rol FROM usuario WHERE usua = ?',
-        [nameUser]
+        'SELECT id_usuario, id_rol FROM usuario WHERE usua = ? AND id_tenant = ?',
+        [nameUser, req.id_tenant]
       );
       
       if (!usuarios.length) {
@@ -213,8 +210,8 @@ const checkPermiso = async (req, res) => {
       
       const [permisos] = await connection.query(
         `SELECT ver, crear, editar, eliminar, desactivar, generar FROM permisos 
-         WHERE id_rol = ? AND id_modulo = ? AND (id_submodulo = ? OR (id_submodulo IS NULL AND ? IS NULL))`,
-        [idRol, idModulo, idSubmodulo, idSubmodulo]
+         WHERE id_rol = ? AND id_modulo = ? AND (id_submodulo = ? OR (id_submodulo IS NULL AND ? IS NULL)) AND id_tenant = ?`,
+        [idRol, idModulo, idSubmodulo, idSubmodulo, req.id_tenant]
       );
       
       const hasPermission = permisos.length > 0 && permisos[0].ver === 1;
@@ -224,7 +221,6 @@ const checkPermiso = async (req, res) => {
       const hasGeneratePermission = permisos.length > 0 && permisos[0].generar === 1;
       const hasDeactivatePermission = permisos.length > 0 && permisos[0].desactivar === 1;
 
-      
       res.json({ hasPermission, hasCreatePermission, hasEditPermission, hasDeletePermission, hasGeneratePermission, hasDeactivatePermission });
     } catch (error) {
       res.status(500).json({ 
@@ -245,4 +241,3 @@ export const methods = {
     getPermisosModulo,
     checkPermiso
 };
-
