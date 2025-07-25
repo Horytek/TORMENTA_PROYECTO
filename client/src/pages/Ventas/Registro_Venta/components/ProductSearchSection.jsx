@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Button, ScrollShadow, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip } from '@heroui/react';
 import BarraSearch from "@/components/Search/Search";
 import { FaTshirt } from 'react-icons/fa';

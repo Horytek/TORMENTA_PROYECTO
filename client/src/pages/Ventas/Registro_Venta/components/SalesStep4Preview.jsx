@@ -14,10 +14,9 @@ const SalesStep4Preview = ({
   clienteData,
   paymentData,
   productos,
-  // Agregar callbacks para limpiar datos
   onResetVenta,
-  // Callback para bloquear navegación
-  onBlockNavigation
+  onBlockNavigation,
+  handleRemoveAllProducts
 }) => {
   const [ventaExitosa, setVentaExitosa] = useState(false);
   const [procesandoVenta, setProcesandoVenta] = useState(false);
@@ -106,78 +105,63 @@ const SalesStep4Preview = ({
   }), [detalles, selectedDocumentType, clienteData, paymentData, total_t, totalConDescuento, montoRecibido, montoAdicional, montoAdicional2, totalPagado, cambio, nombre, usuario, productos]);
 
   // Función para procesar la venta
-  const procesarVenta = async () => {
+ const procesarVenta = async () => {
     try {
       // Validaciones básicas
       if (!selectedDocumentType) {
         toast.error('Seleccione un tipo de comprobante');
         return;
       }
-      
       if (!paymentData.metodoPago) {
         toast.error('Seleccione un método de pago');
         return;
       }
-      
       if (selectedDocumentType !== 'Nota de venta' && !clienteData.nombreCliente) {
         toast.error('Seleccione un cliente');
         return;
       }
-      
       if (totalPagado < totalConDescuento) {
         toast.error('El monto total recibido debe cubrir el total de la venta');
         return;
       }
-      
-      // Mostrar estado de procesamiento y bloquear navegación
+
       setProcesandoVenta(true);
       if (onBlockNavigation) {
         onBlockNavigation(true);
       }
-      
-      // Procesar la venta
+
       await handleCobrar(
-        datosVenta, 
+        datosVenta,
         () => {
-          console.log('🎯 Callback de éxito ejecutado');
+          // Remover todos los productos del detalle y restaurar stock
+          if (typeof handleRemoveAllProducts === 'function') {
+            handleRemoveAllProducts();
+          }
           setVentaExitosa(true);
-          
-          // Manejar la secuencia de reset directamente aquí
+
           setTimeout(() => {
-            console.log('🔄 Iniciando proceso de reset directo');
-            
-            // Limpiar todos los datos de la venta
             if (onResetVenta) {
               onResetVenta();
-              console.log('✅ Datos de venta limpiados');
             }
-            
-            // Resetear estados locales
             setVentaExitosa(false);
             setProcesandoVenta(false);
-            console.log('✅ Estados locales reseteados');
-            
-            // Desbloquear navegación y cambiar step
             if (onBlockNavigation) {
               onBlockNavigation(false);
-              console.log('✅ Navegación desbloqueada');
             }
             setCurrentStep(1);
-            console.log('✅ Cambiado a step 1');
           }, 3000);
-        }, 
-        datosVenta, 
-        { id: '' }, 
+        },
+        datosVenta,
+        { id: '' },
         nombre || usuario || 'admin'
       );
-      
+
       setProcesandoVenta(false);
-      
+
     } catch (error) {
       console.error('Error al procesar la venta:', error);
       toast.error('Error al procesar la venta');
       setProcesandoVenta(false);
-      // Desbloquear navegación en caso de error
       if (onBlockNavigation) {
         onBlockNavigation(false);
       }

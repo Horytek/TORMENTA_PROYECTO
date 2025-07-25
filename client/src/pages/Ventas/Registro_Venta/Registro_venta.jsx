@@ -59,16 +59,25 @@ const Registro_Venta = () => {
   const { detalles, addDetalle, updateDetalle, removeDetalle, clearAllDetalles } = useVentasData();
   const { productos, setProductos } = useProductosData();
   const { clientes, addCliente } = useClientesData();
-
+  const [stockOriginal, setStockOriginal] = useState({});
   
-  // Effects
-  useEffect(() => {
-    // Only update if detalles has actually changed to prevent infinite loops
-    const currentTotalVentas = useVentaSeleccionadaStore.getState().total_ventas;
-    if (JSON.stringify(currentTotalVentas) !== JSON.stringify(detalles)) {
-      useVentaSeleccionadaStore.getState().setTotalVentas(detalles);
-    }
-  }, [detalles]);
+// Effects
+useEffect(() => {
+  // Actualizar total_ventas en Zustand solo si cambia detalles
+  const currentTotalVentas = useVentaSeleccionadaStore.getState().total_ventas;
+  if (JSON.stringify(currentTotalVentas) !== JSON.stringify(detalles)) {
+    useVentaSeleccionadaStore.getState().setTotalVentas(detalles);
+  }
+
+  // Guardar el stock original solo una vez al cargar productos
+  if (productos.length > 0 && Object.keys(stockOriginal).length === 0) {
+    const stockMap = {};
+    productos.forEach(p => {
+      stockMap[p.codigo] = p.stock;
+    });
+    setStockOriginal(stockMap);
+  }
+}, [detalles, productos, stockOriginal]);
 
   // Print handler
   const handlePrint = useReactToPrint({
@@ -330,18 +339,34 @@ const Registro_Venta = () => {
   const marcasUnicas = [...new Set(productos.map(producto => producto.nom_marca))].filter(Boolean).sort();
 
   // Remove all products handler
-  const handleRemoveAllProducts = () => { 
-    detalles.forEach(detalle => {
-      handleProductRemove(detalle.codigo, detalle.cantidad);
-      setProductos(prevProductos =>
-        prevProductos.map(p =>
-          p.codigo === detalle.codigo
-            ? { ...p, stock: p.stock - detalle.cantidad }
-            : p
-        )
-      );
-    });
+  const handleRemoveAllProducts = () => {
+    // Restaurar el stock original de todos los productos
+    setProductos(prevProductos =>
+      prevProductos.map(p =>
+        stockOriginal[p.codigo] !== undefined
+          ? { ...p, stock: stockOriginal[p.codigo] }
+          : p
+      )
+    );
+    // Limpiar todos los detalles de una vez
+    clearAllDetalles();
   };
+
+const actualizarStockDespuesVenta = () => {
+  setProductos(prevProductos =>
+    prevProductos.map(p => {
+      // Buscar si el producto está en los detalles de la venta
+      const detalleVenta = detalles.find(d => d.codigo === p.codigo);
+      if (detalleVenta) {
+        // Restar la cantidad vendida al stock actual
+        return { ...p, stock: p.stock - detalleVenta.cantidad };
+      }
+      return p;
+    })
+  );
+};
+
+
 
   // Calculate totals
   const totalImporte = detalles.reduce((acc, item) => {
@@ -671,28 +696,26 @@ const Registro_Venta = () => {
             goToNextStep={goToNextStep}
           />
         ) : (
-          <SalesStep4Preview
-            cobrarState={{
-              comprobante_pago: selectedDocumentType,
-              serie: '001',
-              nu: '001',
-              metodo_pago: paymentData.metodoPago,
-              montoRecibido: paymentData.montoRecibido
-            }}
-            detalles={detalles}
-            total_t={total_t}
-            setCurrentStep={setCurrentStep}
-            selectedDocumentType={selectedDocumentType}
-            clienteData={clienteData}
-            paymentData={paymentData}
-            productos={productos}
-            nombre={nombre}
-            onResetVenta={resetVentaData}
-            onBlockNavigation={(shouldBlock) => {
-              // Esta función será llamada desde SalesStep4Preview para bloquear/desbloquear navegación
-              setNavigationBlocked(shouldBlock);
-            }}
-          />
+            <SalesStep4Preview
+              cobrarState={{
+                comprobante_pago: selectedDocumentType,
+                serie: '001',
+                nu: '001',
+                metodo_pago: paymentData.metodoPago,
+                montoRecibido: paymentData.montoRecibido
+              }}
+              detalles={detalles}
+              total_t={total_t}
+              setCurrentStep={setCurrentStep}
+              selectedDocumentType={selectedDocumentType}
+              clienteData={clienteData}
+              paymentData={paymentData}
+              productos={productos}
+              nombre={nombre}
+              onResetVenta={resetVentaData}
+              onBlockNavigation={(shouldBlock) => setNavigationBlocked(shouldBlock)}
+              handleRemoveAllProducts={actualizarStockDespuesVenta} // <-- Añade este prop
+            />
         )}
 
         

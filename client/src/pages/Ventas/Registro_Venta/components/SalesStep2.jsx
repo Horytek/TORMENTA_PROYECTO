@@ -243,13 +243,17 @@ const SalesStep2 = ({
       if (paymentData.metodoPago !== 'EFECTIVO') {
         handlePaymentChange('metodoPago', 'EFECTIVO');
       }
+      // Poner el monto recibido igual al total a pagar
+      if (paymentData.montoRecibido !== totalConDescuento.toFixed(2)) {
+        handlePaymentChange('montoRecibido', totalConDescuento.toFixed(2));
+      }
     }
-  }, [selectedDocumentType, paymentData.metodoPago]);
+  }, [selectedDocumentType, paymentData.metodoPago, totalConDescuento]);
 
   // Función para manejar el intento de continuar
   const handleContinueClick = () => {
     setShowValidations(true);
-    
+
     // Validar campos y establecer errores
     const newErrors = {
       cliente: selectedDocumentType !== 'Nota de venta' && !clienteData.nombreCliente,
@@ -262,13 +266,18 @@ const SalesStep2 = ({
       metodoPago3: necesitaTercerPago && !paymentData.metodoPago3,
       montoAdicional2: necesitaTercerPago && paymentData.metodoPago3 && (!paymentData.montoAdicional2 || parseFloat(paymentData.montoAdicional2) <= 0)
     };
-    
+
     setErrors(newErrors);
-    
+
     // Verificar si hay errores
     const hasErrors = Object.values(newErrors).some(error => error) || faltanteFinal > 0;
-    
-    if (!hasErrors) {
+
+    // Validar todos los campos antes de continuar
+    if (!hasErrors &&
+      paymentData.metodoPago &&
+      paymentData.montoRecibido &&
+      parseFloat(paymentData.montoRecibido) > 0
+    ) {
       goToNextStep();
     }
   };
