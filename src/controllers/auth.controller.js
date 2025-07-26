@@ -7,7 +7,6 @@ const login = async (req, res) => {
     let connection;
     try {
         const { usuario, password } = req.body;
-        
         const user = { usuario: usuario.trim(), password: password.trim() };
         connection = await getConnection();
         const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ? AND estado_usuario=1", user.usuario);
@@ -17,6 +16,7 @@ const login = async (req, res) => {
         }
 
         let userValid;
+        let userbd = null;
 
         if (usuario && usuario === 'desarrollador') {
             const [rows] = await connection.query(
@@ -25,31 +25,34 @@ const login = async (req, res) => {
             );
             userValid = rows;
         } else {
+            // Intentar obtener usuario con tenant
             const [rows] = await connection.query(
                 `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant
                 FROM usuario usu
-                INNER JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
-                INNER JOIN sucursal su ON su.dni = ven.dni
+                LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
+                LEFT JOIN sucursal su ON su.dni = ven.dni
                 WHERE usu.usua = ? AND usu.contra = ? AND usu.estado_usuario = 1`, 
                 [user.usuario, user.password]
             );
             userValid = rows;
         }
-        
 
         if (userValid.length > 0) {
-            const userbd = userValid[0];
-            const token = await createAccessToken({ nameUser: user.usuario, id_tenant: userbd.id_tenant });
-            
+            userbd = userValid[0];
+            // Si no tiene id_tenant, no lo incluyas en el token ni en la respuesta
+            const tokenPayload = { nameUser: user.usuario };
+            if (userbd.id_tenant) tokenPayload.id_tenant = userbd.id_tenant;
+            const token = await createAccessToken(tokenPayload);
+
             // Obtener la página por defecto para el rol del usuario
-            let defaultRedirect = '/inicio'; 
-            
+            let defaultRedirect = '/inicio';
+
             const [rolData] = await connection.query(
                 "SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ?",
                 [userbd.id_rol]
             );
-            
-            if (rolData[0].id_submodulo) {
+
+            if (rolData[0]?.id_submodulo) {
                 const [submoduleData] = await connection.query(
                     "SELECT ruta FROM submodulos WHERE id_submodulo = ?",
                     [rolData[0].id_submodulo]
@@ -59,7 +62,7 @@ const login = async (req, res) => {
                 }
             }
 
-            if (defaultRedirect === '/inicio' && rolData[0].id_modulo) {
+            if (defaultRedirect === '/inicio' && rolData[0]?.id_modulo) {
                 const [moduleData] = await connection.query(
                     "SELECT ruta FROM modulo WHERE id_modulo = ?",
                     [rolData[0].id_modulo]
@@ -68,36 +71,35 @@ const login = async (req, res) => {
                     defaultRedirect = moduleData[0].ruta;
                 }
             }
-            
+
             res.json({
                 success: true,
                 data: {
                     id: userbd.id_usuario,
                     rol: userbd.id_rol,
                     usuario: userbd.usua,
-                    sucursal: userbd.nombre_sucursal,
-                    id_tenant: userbd.id_tenant,
-                    defaultPage: defaultRedirect // Añadir la URL de redirección por defecto
+                    sucursal: userbd.nombre_sucursal || null,
+                    id_tenant: userbd.id_tenant || null,
+                    defaultPage: defaultRedirect
                 },
                 token,
                 message: 'Usuario encontrado'
             });
-            
-            // Realizar el UPDATE para, por ejemplo, registrar el último inicio de sesión
+
+            // Registrar el último inicio de sesión
             await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [1, userbd.id_usuario]);
         } else {
             res.status(400).json({ success: false, message: 'La contraseña ingresada no es correcta' });
         }
 
     } catch (error) {
-      res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
+        res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
     } finally {
         if (connection) {
             connection.release();
         }
     }
 };
-
 
 const verifyToken = async (req, res) => {
     let connection;
@@ -107,7 +109,7 @@ const verifyToken = async (req, res) => {
 
     // Si el header tiene formato Bearer <token>, extrae solo el token
     if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
-    token = tokenHeader.split(' ')[1];
+        token = tokenHeader.split(' ')[1];
     }
 
     if (!token) return res.send(false);
@@ -115,11 +117,26 @@ const verifyToken = async (req, res) => {
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
-        const [userFound] = await connection.query(`SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal
+        // Si el usuario tiene id_tenant, buscar con joins, si no, solo por usuario
+        let userFound;
+        if (user.id_tenant) {
+            [userFound] = await connection.query(
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant
                 FROM usuario usu
-                INNER JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
-                INNER JOIN sucursal su ON su.dni = ven.dni
-                WHERE usu.usua = ? AND usu.estado_usuario = 1`, user.nameUser);
+                LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
+                LEFT JOIN sucursal su ON su.dni = ven.dni
+                WHERE usu.usua = ? AND usu.estado_usuario = 1 AND usu.id_tenant = ?`,
+                [user.nameUser, user.id_tenant]
+            );
+        } else {
+            [userFound] = await connection.query(
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, null as nombre_sucursal, null as id_tenant
+                FROM usuario usu
+                WHERE usu.usua = ? AND usu.estado_usuario = 1`,
+                [user.nameUser]
+            );
+        }
+
         if (userFound.length === 0) return res.sendStatus(401);
 
         const userbd = userFound[0];
@@ -128,7 +145,8 @@ const verifyToken = async (req, res) => {
             id: userbd.id_usuario,
             rol: userbd.id_rol,
             usuario: userbd.usua,
-            sucursal: userbd.nombre_sucursal,
+            sucursal: userbd.nombre_sucursal || null,
+            id_tenant: userbd.id_tenant || null
         });
     });
 };
@@ -139,7 +157,7 @@ const logout = async (req, res) => {
     connection = await getConnection();
 
     const token = req.headers['authorization'];
-    if (!token) return res.sendStatus(401);  // Mejor devolver un status 401 si no hay token
+    if (!token) return res.sendStatus(401);
 
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
@@ -148,53 +166,47 @@ const logout = async (req, res) => {
         if (userFound.length === 0) return res.sendStatus(401);
 
         const userbd = userFound[0];
-        // Actualizar el estado del token y limpiarlo
         await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
 
-        // Aquí ya se puede eliminar la cookie
         res.cookie("token", "", {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
-            domain: '.bck-omega.vercel.app', // Mismo dominio utilizado en el login
+            domain: '.bck-omega.vercel.app',
             expires: new Date(0),
         });
 
-        return res.sendStatus(200);  // Eliminar la cookie y devolver un estado 200
+        return res.sendStatus(200);
     });
 };
 
 const updateUsuarioName = async (req, res) => {
     let connection;
     try {
-      const { usua } = req.body; // Obtener 'usua' desde req.body
-      
-      if (!usua) {
-        return res.status(400).json({ message: "El usuario no fue enviado en la solicitud" });
-      }
-  
-      connection = await getConnection();
-      const [userResult] = await connection.query(`SELECT id_usuario FROM usuario WHERE usua = ?`, [usua]);
-  
-      if (userResult.length === 0) {
-        return res.status(404).json({ message: "Usuario no encontrado" });
-      }
-  
-      const userbd = userResult[0];
-      await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
-  
-      res.json({ code: 1, message: "Usuario actualizado" });
+        const { usua } = req.body;
+        if (!usua) {
+            return res.status(400).json({ message: "El usuario no fue enviado en la solicitud" });
+        }
+
+        connection = await getConnection();
+        const [userResult] = await connection.query(`SELECT id_usuario FROM usuario WHERE usua = ?`, [usua]);
+
+        if (userResult.length === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        const userbd = userResult[0];
+        await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
+
+        res.json({ code: 1, message: "Usuario actualizado" });
     } catch (error) {
-      //console.error("Error en updateUsuarioName:", error);
-      res.status(500).send("Error interno del servidor");
+        res.status(500).send("Error interno del servidor");
     } finally {
-      if (connection) {
-        connection.release();  // Liberar la conexión
-      }
+        if (connection) {
+            connection.release();
+        }
     }
 };
-
-
 
 export const methods = {
     login,

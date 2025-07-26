@@ -4,10 +4,13 @@ const getRoles = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(
-            `SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol!=10 AND id_tenant = ?`,
-            [req.id_tenant]
-        );
+        let query = `SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol!=10`;
+        let params = [];
+        if (req.id_tenant) {
+            query += " AND id_tenant = ?";
+            params.push(req.id_tenant);
+        }
+        const [result] = await connection.query(query, params);
         res.json({ code: 1, data: result });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -23,10 +26,13 @@ const getPaginaDefecto = async (req, res) => {
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query(
-            `SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ? AND id_tenant = ?`,
-            [id, req.id_tenant]
-        );
+        let query = `SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ?`;
+        let params = [id];
+        if (req.id_tenant) {
+            query += " AND id_tenant = ?";
+            params.push(req.id_tenant);
+        }
+        const [result] = await connection.query(query, params);
 
         if (result.length === 0) {
             return res.status(404).json({ code: 0, message: "Rol no encontrado" });
@@ -54,10 +60,14 @@ const guardarPaginaPorDefecto = async (req, res) => {
 
         connection = await getConnection();
 
-        const [result] = await connection.query(
-            `UPDATE rol SET id_modulo = ?, id_submodulo = ? WHERE id_rol = ? AND id_tenant = ?`,
-            [id_modulo, id_submodulo || null, id_rol, req.id_tenant]
-        );
+        let query = `UPDATE rol SET id_modulo = ?, id_submodulo = ? WHERE id_rol = ?`;
+        let params = [id_modulo, id_submodulo || null, id_rol];
+        if (req.id_tenant) {
+            query += " AND id_tenant = ?";
+            params.push(req.id_tenant);
+        }
+
+        const [result] = await connection.query(query, params);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "No se encontró el rol o no se actualizó" });
@@ -79,10 +89,13 @@ const getRol = async (req, res) => {
     try {
         const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query(
-            `SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol = ? AND id_tenant = ?`,
-            [id, req.id_tenant]
-        );
+        let query = `SELECT id_rol, nom_rol, estado_rol FROM rol WHERE id_rol = ?`;
+        let params = [id];
+        if (req.id_tenant) {
+            query += " AND id_tenant = ?";
+            params.push(req.id_tenant);
+        }
+        const [result] = await connection.query(query, params);
 
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Rol no encontrado" });
@@ -107,7 +120,9 @@ const addRol = async (req, res) => {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const usuario = { nom_rol: nom_rol.trim(), estado_rol, id_tenant: req.id_tenant };
+        const usuario = { nom_rol: nom_rol.trim(), estado_rol };
+        if (req.id_tenant) usuario.id_tenant = req.id_tenant;
+
         connection = await getConnection();
         await connection.query("INSERT INTO rol SET ? ", usuario);
 
@@ -133,10 +148,13 @@ const updateRol = async (req, res) => {
 
         const usuario = { nom_rol: nom_rol.trim(), estado_rol };
         connection = await getConnection();
-        const [result] = await connection.query(
-            "UPDATE rol SET ? WHERE id_rol = ? AND id_tenant = ?",
-            [usuario, id, req.id_tenant]
-        );
+        let query = "UPDATE rol SET ? WHERE id_rol = ?";
+        let params = [usuario, id];
+        if (req.id_tenant) {
+            query += " AND id_tenant = ?";
+            params.push(req.id_tenant);
+        }
+        const [result] = await connection.query(query, params);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "Rol no encontrado" });
@@ -159,17 +177,23 @@ const deleteRol = async (req, res) => {
         connection = await getConnection();
 
         // Verificar si el usuario está en uso dentro de la base de datos
-        const [verify] = await connection.query(
-            "SELECT 1 FROM usuario WHERE id_rol = ? AND id_tenant = ?",
-            [id, req.id_tenant]
-        );
+        let queryVerify = "SELECT 1 FROM usuario WHERE id_rol = ?";
+        let paramsVerify = [id];
+        if (req.id_tenant) {
+            queryVerify += " AND id_tenant = ?";
+            paramsVerify.push(req.id_tenant);
+        }
+        const [verify] = await connection.query(queryVerify, paramsVerify);
         const isUserInUse = verify.length > 0;
 
         if (isUserInUse) {
-            const [Updateresult] = await connection.query(
-                "UPDATE rol SET estado_rol = 0 WHERE id_rol = ? AND id_tenant = ?",
-                [id, req.id_tenant]
-            );
+            let queryUpdate = "UPDATE rol SET estado_rol = 0 WHERE id_rol = ?";
+            let paramsUpdate = [id];
+            if (req.id_tenant) {
+                queryUpdate += " AND id_tenant = ?";
+                paramsUpdate.push(req.id_tenant);
+            }
+            const [Updateresult] = await connection.query(queryUpdate, paramsUpdate);
 
             if (Updateresult.affectedRows === 0) {
                 return res.status(404).json({ code: 0, message: "Rol no encontrado" });
@@ -177,10 +201,13 @@ const deleteRol = async (req, res) => {
 
             res.json({ code: 2, message: "Rol dado de baja" });
         } else {
-            const [result] = await connection.query(
-                "DELETE FROM rol WHERE id_rol = ? AND id_tenant = ?",
-                [id, req.id_tenant]
-            );
+            let queryDelete = "DELETE FROM rol WHERE id_rol = ?";
+            let paramsDelete = [id];
+            if (req.id_tenant) {
+                queryDelete += " AND id_tenant = ?";
+                paramsDelete.push(req.id_tenant);
+            }
+            const [result] = await connection.query(queryDelete, paramsDelete);
 
             if (result.affectedRows === 0) {
                 return res.status(404).json({ code: 0, message: "Rol no encontrado" });
