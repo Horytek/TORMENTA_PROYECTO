@@ -12,13 +12,14 @@ const getGuias = async (req, res) => {
         fecha_i = '2022-01-01',
         fecha_e = '2027-12-27'
     } = req.query;
+    const id_tenant = req.id_tenant;
     const offset = page * limit;
 
     try {
         connection = await getConnection();
 
         // Obtener el número total de guías
-        const [totalResult] = await connection.query("SELECT COUNT(*) as total FROM guia_remision");
+        const [totalResult] = await connection.query("SELECT COUNT(*) as total FROM guia_remision WHERE id_tenant = ?", [id_tenant]);
         const totalGuias = totalResult[0].total;
 
         // Obtener las guías de remisión con paginación
@@ -62,7 +63,8 @@ const getGuias = async (req, res) => {
             INNER JOIN comprobante c ON gr.id_comprobante = c.id_comprobante
             INNER JOIN transportista t ON gr.id_transportista = t.id_transportista
             WHERE
-                c.num_comprobante LIKE ?
+                gr.id_tenant = ?
+                AND c.num_comprobante LIKE ?
                 AND (d.dni LIKE ? OR d.ruc LIKE ?)
                 AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') >= ? 
                 AND DATE_FORMAT(gr.f_generacion, '%Y-%m-%d') <= ?
@@ -70,7 +72,7 @@ const getGuias = async (req, res) => {
             ORDER BY c.num_comprobante DESC
             LIMIT ? OFFSET ?;
             `,
-            [`%${num_guia}%`, `${documento}%`, `${documento}%`, fecha_i, fecha_e, `${nombre_sucursal}%`, parseInt(limit), parseInt(offset)]
+            [id_tenant, `%${num_guia}%`, `${documento}%`, `${documento}%`, fecha_i, fecha_e, `${nombre_sucursal}%`, parseInt(limit), parseInt(offset)]
         );
 
         const guias = await Promise.all(
@@ -87,11 +89,9 @@ const getGuias = async (req, res) => {
                     FROM detalle_envio de
                     INNER JOIN producto p ON de.id_producto = p.id_producto
                     INNER JOIN marca m ON p.id_marca = m.id_marca
-                    
-                    
-                    WHERE de.id_guiaremision = ? ;
+                    WHERE de.id_guiaremision = ? AND de.id_tenant = ?;
                     `,
-                    [guia.id]
+                    [guia.id, id_tenant]
                 );
 
                 return {
@@ -104,11 +104,10 @@ const getGuias = async (req, res) => {
         res.json({ code: 1, data: guias, totalGuias });
 
     } catch (error) {
-        //console.error("Error obteniendo las guías de remisión:", error.message);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -118,13 +117,16 @@ const getSucursal = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_sucursal AS id, nombre_sucursal AS nombre, ubicacion AS direccion FROM sucursal;`);
+        const [result] = await connection.query(
+            `SELECT id_sucursal AS id, nombre_sucursal AS nombre, ubicacion AS direccion FROM sucursal WHERE id_tenant = ?;`,
+            [req.id_tenant]
+        );
         res.json({ code: 1, data: result, message: "Sucursal listados" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -134,68 +136,78 @@ const getUbigeoGuia = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, departamento AS departamento, provincia AS provincia, distrito AS distrito FROM ubigeo`);
+        const [result] = await connection.query(
+            `SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, departamento AS departamento, provincia AS provincia, distrito AS distrito FROM ubigeo WHERE id_tenant = ?`,
+            [req.id_tenant]
+        );
         res.json({ code: 1, data: result, message: "Ubigeo listados" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 //CODIGO PARA NUEVA GUIA
 const generarCodigoGuia = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`
+        const [result] = await connection.query(
+            `
            SELECT CONCAT('T400-', LPAD(SUBSTRING(MAX(num_comprobante), 6) + 1, 8, '0')) AS nuevo_numero_de_guia
             FROM comprobante
-            WHERE id_tipocomprobante = 5;
-        `);
+            WHERE id_tipocomprobante = 5 AND id_tenant = ?;
+            `,
+            [req.id_tenant]
+        );
         res.json({ code: 1, data: result, message: "Nuevo numero de guía de remisión" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 //DESTINATARIOS
 const getDestinatariosGuia = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`
-                            SELECT 
-    id_destinatario AS id,
-    COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS destinatario,
-    COALESCE(NULLIF(dni, ''), ruc) AS documento, ubicacion AS ubicacion
-FROM 
-    destinatario
-WHERE 
-    (nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
-    OR
-    (razon_social IS NOT NULL AND razon_social <> '')
-ORDER BY 
-    (CASE 
-        WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 
-        ELSE 1 
-     END),
-    destinatario;
-            `);
+        const [result] = await connection.query(
+            `
+            SELECT 
+                id_destinatario AS id,
+                COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS destinatario,
+                COALESCE(NULLIF(dni, ''), ruc) AS documento, ubicacion AS ubicacion
+            FROM 
+                destinatario
+            WHERE 
+                id_tenant = ?
+                AND (
+                    (nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
+                    OR
+                    (razon_social IS NOT NULL AND razon_social <> '')
+                )
+            ORDER BY 
+                (CASE 
+                    WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 
+                    ELSE 1 
+                END),
+                destinatario;
+            `,
+            [req.id_tenant]
+        );
         res.json({ code: 1, data: result, message: "Productos listados" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -209,14 +221,14 @@ const getTransportePublicoGuia = async (req, res) => {
                     FROM transportista t
                     LEFT JOIN vehiculo v 
                     ON t.placa = v.placa 
-                    WHERE t.ruc IS NOT NULL;`;
-        const [result] = await connection.query(sql, []);
+                    WHERE t.ruc IS NOT NULL AND t.id_tenant = ?;`;
+        const [result] = await connection.query(sql, [req.id_tenant]);
         res.json({ code: 1, data: result, message: "Transportes Públicos listados" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -230,65 +242,63 @@ const getTransportePrivadoGuia = async (req, res) => {
                     FROM transportista t
                     LEFT JOIN vehiculo v 
                     ON t.placa = v.placa
-                    WHERE t.dni IS NOT NULL;`;
-        const [result] = await connection.query(sql, []);
+                    WHERE t.dni IS NOT NULL AND t.id_tenant = ?;`;
+        const [result] = await connection.query(sql, [req.id_tenant]);
         res.json({ code: 1, data: result, message: "Transportes Privados listados" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 //CODIGO PARA NUEVO TRANSPORISTA
 const generarCodigoTrans = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`
+        const [result] = await connection.query(
+            `
            SELECT CONCAT('T', LPAD(SUBSTRING(MAX(id_transportista), 6) + 1, 7, '0')) AS nuevo_codigo_trans
-            FROM transportista;
-        `);
+            FROM transportista
+            WHERE id_tenant = ?;
+            `,
+            [req.id_tenant]
+        );
         res.json({ code: 1, data: result, message: "Nuevo código de transportista" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 //INSERTAR NUEVO TRANSPORTE PÚBLICO
 const addTransportistaPublico = async (req, res) => {
     let connection;
     const { id, placa, ruc, razon_social, ubicacion, telefono } = req.body;
+    const id_tenant = req.id_tenant;
 
-    //console.log("Datos recibidos:", req.body);
-    /*console.log("Datos recibidos:", {
-        id, placa, ruc, razon_social, ubicacion, telefono,
-    });*/
     if (!id || !ruc || !razon_social || !ubicacion) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
     }
     try {
         connection = await getConnection();
         const result = await connection.query(
-            `INSERT INTO transportista (id_transportista, placa, ruc, razon_social, direccion, telefono) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [id, placa || null, ruc, razon_social, ubicacion, telefono] // Maneja la placa como nula si no se proporciona
+            `INSERT INTO transportista (id_transportista, placa, ruc, razon_social, direccion, telefono, id_tenant) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [id, placa || null, ruc, razon_social, ubicacion, telefono, id_tenant]
         );
         res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
     } catch (error) {
-        //console.error("Error en el backend:", error.message);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -297,10 +307,7 @@ const addTransportistaPublico = async (req, res) => {
 const addTransportistaPrivado = async (req, res) => {
     let connection;
     const { id, placa, dni, nombres, apellidos, ubicacion, telefono } = req.body;
-    //console.log("Datos recibidos:", req.body);
-    /*console.log("Datos recibidos:", {
-        id, placa, dni, nombres, apellidos, ubicacion, telefono,
-    });*/
+    const id_tenant = req.id_tenant;
 
     if (!id || !dni || !nombres || !apellidos || !ubicacion) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -308,21 +315,19 @@ const addTransportistaPrivado = async (req, res) => {
     try {
         connection = await getConnection();
         const result = await connection.query(
-            `INSERT INTO transportista (id_transportista, placa, dni, nombres, apellidos, direccion, telefono) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [id, placa || null, dni, nombres, apellidos, ubicacion, telefono] // Maneja la placa como nula si no se proporciona
+            `INSERT INTO transportista (id_transportista, placa, dni, nombres, apellidos, direccion, telefono, id_tenant) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, placa || null, dni, nombres, apellidos, ubicacion, telefono, id_tenant]
         );
         res.json({ code: 1, data: result, message: "Transportista añadido exitosamente" });
     } catch (error) {
-        //console.error("Error en el backend:", error.message);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 //LÓGICA VEHÍCULO
 
@@ -331,9 +336,10 @@ const getVehiculos = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`
-           SELECT placa as placa, tipo as tipo FROM vehiculo;
-        `);
+        const [result] = await connection.query(
+            `SELECT placa as placa, tipo as tipo FROM vehiculo WHERE id_tenant = ?;`,
+            [req.id_tenant]
+        );
         res.json({ code: 1, data: result, message: "Vehículos listados" });
     } catch (error) {
         if (!res.headersSent) {
@@ -341,7 +347,7 @@ const getVehiculos = async (req, res) => {
         }
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -350,6 +356,7 @@ const getVehiculos = async (req, res) => {
 const addVehiculo = async (req, res) => {
     let connection;
     const { placa, tipo } = req.body;
+    const id_tenant = req.id_tenant;
 
     if (!placa || !tipo) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -357,15 +364,15 @@ const addVehiculo = async (req, res) => {
     try {
         connection = await getConnection();
         const result = await connection.query(
-            `INSERT INTO vehiculo (placa, tipo) VALUES (?, ?)`,
-            [placa, tipo]
+            `INSERT INTO vehiculo (placa, tipo, id_tenant) VALUES (?, ?, ?)`,
+            [placa, tipo, id_tenant]
         );
         res.json({ code: 1, data: result, message: "Vehículo añadido exitosamente" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -374,8 +381,7 @@ const addVehiculo = async (req, res) => {
 const getProductos = async (req, res) => {
     let connection;
     const { descripcion = '', codbarras = '' } = req.query;
-
-    //console.log('Filtros recibidos:', { descripcion, codbarras });
+    const id_tenant = req.id_tenant;
 
     try {
         connection = await getConnection();
@@ -393,28 +399,27 @@ const getProductos = async (req, res) => {
                 marca m ON p.id_marca = m.id_marca
             WHERE 
                 p.descripcion LIKE ? AND
-                p.cod_barras LIKE ?
+                p.cod_barras LIKE ? AND
+                p.id_tenant = ?
             `,
-            [`%${descripcion}%`, `%${codbarras}%`]
+            [`%${descripcion}%`, `%${codbarras}%`, id_tenant]
         );
-
-        //console.log('Productos encontrados:', productosResult);
 
         res.json({ code: 1, data: productosResult });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 // INSERTAR DESTINATARIO NATURAL
 const addDestinatarioNatural = async (req, res) => {
     let connection;
     const { dni, nombres, apellidos, ubicacion } = req.body;
+    const id_tenant = req.id_tenant;
 
     if (!dni || !nombres || !apellidos || !ubicacion) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -423,25 +428,25 @@ const addDestinatarioNatural = async (req, res) => {
     try {
         connection = await getConnection();
         const result = await connection.query(
-            `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion) 
-             VALUES (?, ?, ?, ?)`,
-            [dni, nombres, apellidos, ubicacion]
+            `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion, id_tenant) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [dni, nombres, apellidos, ubicacion, id_tenant]
         );
         res.json({ code: 1, data: result, message: "Destinatario natural añadido exitosamente" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
 
 // INSERTAR DESTINATARIO JURÍDICO
 const addDestinatarioJuridico = async (req, res) => {
     let connection;
     const { ruc, razon_social, ubicacion } = req.body;
+    const id_tenant = req.id_tenant;
 
     if (!ruc || !razon_social || !ubicacion) {
         return res.status(400).json({ code: 0, message: "Todos los campos son requeridos" });
@@ -450,84 +455,75 @@ const addDestinatarioJuridico = async (req, res) => {
     try {
         connection = await getConnection();
         const result = await connection.query(
-            `INSERT INTO destinatario (ruc, razon_social, ubicacion) 
-             VALUES (?, ?, ?)`,
-            [ruc, razon_social, ubicacion]
+            `INSERT INTO destinatario (ruc, razon_social, ubicacion, id_tenant) 
+             VALUES (?, ?, ?, ?)`,
+            [ruc, razon_social, ubicacion, id_tenant]
         );
         res.json({ code: 1, data: result, message: "Destinatario jurídico añadido exitosamente" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
 
 //ANULAR GUIA
 const anularGuia = async (req, res) => {
-    
-    const { guiaId, usuario } = req.body; // Recibe usuario
-  
+    const { guiaId, usuario } = req.body;
+    const id_tenant = req.id_tenant;
+
     if (!guiaId) {
       return res.status(400).json({ message: "El ID de la guía es necesario." });
     }
-  
+
     let connection;
     try {
       connection = await getConnection();
-  
+
       await connection.beginTransaction();
-  
+
       // Verificar si la guía ya está anulada o no existe
       const [guiaResult] = await connection.query(
-        "SELECT id_guiaremision FROM guia_remision WHERE id_guiaremision = ? AND estado_guia = 1",
-        [guiaId]
+        "SELECT id_guiaremision FROM guia_remision WHERE id_guiaremision = ? AND estado_guia = 1 AND id_tenant = ?",
+        [guiaId, id_tenant]
       );
-  
+
       if (guiaResult.length === 0) {
         return res.status(404).json({ message: "Guía de remisión no encontrada o ya anulada." });
       }
-  
+
       // Anular la guía de remisión (estado_guia = 0)
-        await connection.query(
-        "UPDATE guia_remision SET estado_guia = 0, u_modifica = ? WHERE id_guiaremision = ?",
-        [usuario, guiaId]
-        );
-  
+      await connection.query(
+        "UPDATE guia_remision SET estado_guia = 0, u_modifica = ? WHERE id_guiaremision = ? AND id_tenant = ?",
+        [usuario, guiaId, id_tenant]
+      );
+
       await connection.commit();
-  
+
       res.json({ code: 1, message: 'Guía de remisión anulada correctamente' });
     } catch (error) {
-      //console.error("Error en el backend:", error.message);
       if (connection) {
         await connection.rollback();
       }
       res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
-  };
- 
-  const insertGuiaRemisionAndDetalle = async (req, res) => {
-    
+};
+
+const insertGuiaRemisionAndDetalle = async (req, res) => {
     const {
         id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, canti, peso, observacion, f_generacion, h_generacion, total, producto, num_comprobante, cantidad,
     } = req.body;
-
-    //console.log("Datos recibidos:", req.body);
-    /*console.log("Datos recibidos:", {
-        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, glosa, dir_partida, dir_destino, canti, peso, observacion, f_generacion, h_generacion, producto, num_comprobante, cantidad, 
-    });*/
+    const id_tenant = req.id_tenant;
 
     if (
         !id_sucursal || !id_ubigeo_o || !id_destinatario || !id_transportista || !glosa || !f_generacion ||!h_generacion || !id_ubigeo_d || !producto || !num_comprobante || !cantidad
     ) {
-        /*console.log("Error en los datos:", {
-            id_sucursal, id_ubigeo_o, id_destinatario, id_transportista, glosa, f_generacion, h_generacion, id_ubigeo_d, producto, num_comprobante, cantidad, canti, peso
-        });*/
         return res
             .status(400)
             .json({ message: "Bad Request. Please fill all fields correctly." });
@@ -540,8 +536,8 @@ const anularGuia = async (req, res) => {
 
         // Insertar el comprobante
         const [comprobanteResult] = await connection.query(
-            "INSERT INTO comprobante (id_tipocomprobante, num_comprobante) VALUES (?, ?)",
-            [5, num_comprobante]
+            "INSERT INTO comprobante (id_tipocomprobante, num_comprobante, id_tenant) VALUES (?, ?, ?)",
+            [5, num_comprobante, id_tenant]
         );
 
         const id_comprobante = comprobanteResult.insertId;
@@ -564,8 +560,9 @@ const anularGuia = async (req, res) => {
             f_generacion, 
             h_generacion, 
             estado_guia, 
-            total) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+            total,
+            id_tenant) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
             [id_sucursal,
                 id_ubigeo_o,
                 id_ubigeo_d,
@@ -580,7 +577,8 @@ const anularGuia = async (req, res) => {
                 observacion || null,
                 f_generacion,
                 h_generacion,
-                total || null]
+                total || null,
+                id_tenant]
         );
 
         const id_guiaremision = guiaRemisionResult.insertId;
@@ -590,13 +588,10 @@ const anularGuia = async (req, res) => {
             const id_producto = producto[i];
             const cantidadProducto = cantidad[i];
 
-            //console.log(`Intentando insertar detalle con id_producto: ${id_producto}, cantidad: ${cantidadProducto}`);
-
             const [detalleEnvioResult] = await connection.query(
-                "INSERT INTO detalle_envio (id_guiaremision, id_producto, cantidad, undm) VALUES (?, ?, ?, 'KGM')",
-                [id_guiaremision, id_producto, cantidadProducto]
+                "INSERT INTO detalle_envio (id_guiaremision, id_producto, cantidad, undm, id_tenant) VALUES (?, ?, ?, 'KGM', ?)",
+                [id_guiaremision, id_producto, cantidadProducto, id_tenant]
             );
-            //console.log("Resultado de la inserción:", detalleEnvioResult);
 
             if (detalleEnvioResult.affectedRows === 0) {
                 throw new Error(`Error al insertar el detalle del envío con producto: ${id_producto}, guia: ${id_guiaremision}, cantidad: ${cantidadProducto}`);
@@ -606,19 +601,16 @@ const anularGuia = async (req, res) => {
         await connection.commit();
         res.json({ code: 1, message: 'Guía de remisión y detalles insertados correctamente' });
     } catch (error) {
-        //console.error("Error en el backend:", error.message);
         if (connection) {
             await connection.rollback();
         }
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
-
 
 export const methods = {
     getGuias,

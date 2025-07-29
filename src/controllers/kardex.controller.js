@@ -5,12 +5,11 @@ const { subDays, subWeeks, subMonths, subYears, format } = require("date-fns");
 
 const getProductos = async (req, res) => {
     const { descripcion = '', almacen = '', idProducto = '', marca = '', cat = '', subcat = '', stock = '' } = req.query;
+    const id_tenant = req.id_tenant;
     let connection;
-    //console.log('Filtros recibidos:', { descripcion, almacen, idProducto, marca, cat, subcat, stock });
     try {
         connection = await getConnection();
 
-        // Construir la condición del filtro de stock
         let stockCondition = '';
         if (stock === 'con_stock') {
             stockCondition = 'AND i.stock > 0';
@@ -39,36 +38,34 @@ const getProductos = async (req, res) => {
               AND m.id_marca LIKE ?
               AND CA.id_categoria LIKE ?
               AND CA.id_subcategoria LIKE ?
-              ${stockCondition} -- Agregar la condición del filtro de stock
+              ${stockCondition}
+              AND p.id_tenant = ?
             GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock
             ORDER BY p.id_producto, p.descripcion
             `,
-            [`%${descripcion}%`, almacen, `%${idProducto}`, `%${marca}`, `%${cat}`, `%${subcat}`]
+            [`%${descripcion}%`, almacen, `%${idProducto}`, `%${marca}`, `%${cat}`, `%${subcat}`, id_tenant]
         );
-
-        //console.log('Productos encontrados:', productosResult);
 
         res.json({ code: 1, data: productosResult });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release(); // Liberar la conexión
+            connection.release();
         }
     }
 };
 
 const getProductosMenorStock = async (req, res) => {
     const { sucursal = '' } = req.query;
+    const id_tenant = req.id_tenant;
     let connection;
     try {
         connection = await getConnection();
 
-        // Construir condiciones dinámicas
-        let whereClauses = ['i.stock < 10'];
-        let params = [];
+        let whereClauses = ['i.stock < 10', 'p.id_tenant = ?'];
+        let params = [id_tenant];
 
-        // Filtro por sucursal (opcional)
         if (sucursal) {
             whereClauses.push('sa.id_sucursal LIKE ?');
             params.push(sucursal);
@@ -105,6 +102,7 @@ const getProductosMenorStock = async (req, res) => {
 
 const getMovimientosProducto = async (req, res) => {
     let connection;
+    const id_tenant = req.id_tenant;
     try {
         const { id } = req.params;
         connection = await getConnection();
@@ -112,7 +110,7 @@ const getMovimientosProducto = async (req, res) => {
                 SELECT id_producto, id_marca, SC.id_categoria, PR.id_subcategoria, descripcion, precio, cod_barras, undm, estado_producto
                 FROM producto PR
                 INNER JOIN sub_categoria SC ON PR.id_subcategoria = SC.id_subcategoria
-                WHERE PR.id_producto = ?`, id);
+                WHERE PR.id_producto = ? AND PR.id_tenant = ?`, [id, id_tenant]);
 
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Producto no encontrado" });
@@ -123,13 +121,14 @@ const getMovimientosProducto = async (req, res) => {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }   finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
 
 const getAlmacen = async (req, res) => {
     let connection;
+    const id_tenant = req.id_tenant;
     try {
       connection = await getConnection();
       const [result] = await connection.query(`
@@ -137,85 +136,87 @@ const getAlmacen = async (req, res) => {
               FROM almacen a 
               LEFT JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
               LEFT JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
-              WHERE a.estado_almacen = 1
-          `);
+              WHERE a.estado_almacen = 1 AND a.id_tenant = ?
+          `, [id_tenant]);
       res.json({ code: 1, data: result, message: "Almacenes listados" });
     } catch (error) {
       res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
   };
 
-  const getMarcas = async (req, res) => {
+const getMarcas = async (req, res) => {
     let connection;
+    const id_tenant = req.id_tenant;
     try {
       connection = await getConnection();
       const [result] = await connection.query(`
                 SELECT id_marca AS id, nom_marca AS marca FROM marca
-                WHERE estado_marca = 1;
-          `);
+                WHERE estado_marca = 1 AND id_tenant = ?;
+          `, [id_tenant]);
       res.json({ code: 1, data: result, message: "Marcas listadas" });
     } catch (error) {
       res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
   };
 
-  const getSubCategorias= async (req, res) => {
+const getSubCategorias= async (req, res) => {
     let connection;
     const { cat= '' } = req.query;
-
-    //console.log('Filtros recibidos:', { cat });
+    const id_tenant = req.id_tenant;
     try {
       connection = await getConnection();
       const [result] = await connection.query(`
                    SELECT id_subcategoria AS id, nom_subcat AS sub_categoria FROM sub_categoria
                     WHERE estado_subcat = 1
-                    AND id_categoria = ?;
+                    AND id_categoria = ?
+                    AND id_tenant = ?;
           `,
-          [cat]);
+          [cat, id_tenant]);
       res.json({ code: 1, data: result, message: "Sub categorias listadas" });
     } catch (error) {
       res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
   };
 
-  const getCategorias= async (req, res) => {
+const getCategorias= async (req, res) => {
     let connection;
+    const id_tenant = req.id_tenant;
     try {
       connection = await getConnection();
       const [result] = await connection.query(`
                       SELECT id_categoria as id, nom_categoria as categoria FROM categoria
-                      WHERE estado_categoria = 1;
-          `);
+                      WHERE estado_categoria = 1 AND id_tenant = ?;
+          `, [id_tenant]);
       res.json({ code: 1, data: result, message: "Categorias listadas" });
     } catch (error) {
       res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
   };
 
-  const getDetalleKardex = async (req, res) => {
+const getDetalleKardex = async (req, res) => {
     let connection;
     const { fechaInicio, fechaFin, idProducto, idAlmacen } = req.query;
+    const id_tenant = req.id_tenant;
 
     try {
         connection = await getConnection();
 
-        // Consulta principal para obtener el detalle del Kardex
         const [detalleKardexResult] = await connection.query(
             `
                     SELECT
@@ -243,13 +244,13 @@ const getAlmacen = async (req, res) => {
                         AND DATE_FORMAT(bn.fecha, '%Y-%m-%d') <= ?
                         AND bn.id_producto = ?
                         AND bn.id_almacen = ?
+                        AND bn.id_tenant = ?
                     ORDER BY 
                         bn.fecha;
             `,
-            [fechaInicio, fechaFin, idProducto, idAlmacen]
+            [fechaInicio, fechaFin, idProducto, idAlmacen, id_tenant]
         );
 
-        // Iterar sobre cada documento y agregar productos si corresponde
         for (const detalle of detalleKardexResult) {
             const documento = detalle.documento;
             const letraInicial = documento.charAt(0);
@@ -268,7 +269,7 @@ const getAlmacen = async (req, res) => {
                     INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
                     INNER JOIN producto p ON dn.id_producto = p.id_producto
                     INNER JOIN marca m ON p.id_marca = m.id_marca
-                    WHERE c.num_comprobante = ?;
+                    WHERE c.num_comprobante = ? AND n.id_tenant = ?;
                 `;
             } else if (letraInicial === 'N' || letraInicial === 'B' || letraInicial === 'F') {
                 queryProductos = `
@@ -282,14 +283,13 @@ const getAlmacen = async (req, res) => {
                     INNER JOIN comprobante c ON v.id_comprobante = c.id_comprobante
                     INNER JOIN producto p ON dv.id_producto = p.id_producto
                     INNER JOIN marca m ON p.id_marca = m.id_marca
-                    WHERE c.num_comprobante = ? ORDER BY c.id_comprobante DESC LIMIT 1;
+                    WHERE c.num_comprobante = ? AND v.id_tenant = ? ORDER BY c.id_comprobante DESC LIMIT 1;
                 `;
             }
 
-            // Ejecutar la consulta adicional si corresponde
             if (queryProductos) {
-                const [productosResult] = await connection.query(queryProductos, [documento]);
-                detalle.productos = productosResult; // Agregar los productos al resultado actual
+                const [productosResult] = await connection.query(queryProductos, [documento, id_tenant]);
+                detalle.productos = productosResult;
             }
         }
 
@@ -298,16 +298,14 @@ const getAlmacen = async (req, res) => {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release(); // Liberar la conexión
-        }
-    }
+            connection.release();
+        }
+    }
 };
-
-
-
 
 const getDetalleKardexAnteriores = async (req, res) => {
     const { fecha = '2024-08-01', idProducto ,idAlmacen } = req.query;
+    const id_tenant = req.id_tenant;
     let connection;
     try {
         connection = await getConnection();
@@ -319,14 +317,14 @@ const getDetalleKardexAnteriores = async (req, res) => {
                 COALESCE(SUM(bn.entra), 0) AS entra, 
                 COALESCE(SUM(bn.sale), 0) AS sale
             FROM 
-            
                 bitacora_nota bn 
             WHERE 
                 DATE_FORMAT(bn.fecha, '%Y-%m-%d') < ?
                 AND bn.id_producto = ?
-                AND bn.id_almacen = ?;
+                AND bn.id_almacen = ?
+                AND bn.id_tenant = ?;
             `,
-            [fecha, idProducto,idAlmacen]
+            [fecha, idProducto, idAlmacen, id_tenant]
         );
 
         res.json({ code: 1, data: detalleKardexAnterioresResult });
@@ -334,7 +332,7 @@ const getDetalleKardexAnteriores = async (req, res) => {
        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -342,7 +340,7 @@ const getDetalleKardexAnteriores = async (req, res) => {
 const getInfProducto = async (req, res) => {
     let connection;
     const { idProducto ,idAlmacen } = req.query;
-    
+    const id_tenant = req.id_tenant;
     try {
         connection = await getConnection();
 
@@ -354,9 +352,10 @@ const getInfProducto = async (req, res) => {
             INNER JOIN inventario i on p.id_producto = i.id_producto
             WHERE p.id_producto = ?
             AND i.id_almacen = ?
+            AND p.id_tenant = ?
             GROUP BY codigo, descripcion, marca, stock;
             `,
-            [idProducto,idAlmacen]
+            [idProducto, idAlmacen, id_tenant]
         );
 
         res.json({ code: 1, data: infProductoResult });
@@ -364,7 +363,7 @@ const getInfProducto = async (req, res) => {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
@@ -380,38 +379,35 @@ const limpiarRango2 = (worksheet, startRow, startCol, endRow, endCol) => {
     for (let row = startRow; row <= endRow; row++) {
         for (let col = startCol; col <= endCol; col++) {
             const cell = worksheet.getCell(row, col);
-            cell.value = null;  // Limpiar el contenido
-            cell.style = {};    // Limpiar el estilo
+            cell.value = null;
+            cell.style = {};
         }
     }
 };
 
 const generateExcelReport = async (req, res) => {
     const { mes, year, almacen } = req.query;
+    const id_tenant = req.id_tenant;
     let connection;
     try {
         connection = await getConnection();
 
-        // Validar parámetros
         if (!mes || !year || !almacen) {
             return res.status(400).send("Faltan parámetros requeridos (mes, year, almacen).");
         }
 
-        // Llamar al procedimiento almacenado
         const [rows] = await connection.query(
-            `CALL GetStockByDayForMonth(?, ?, ?)`,
-            [mes, year, almacen]
+            `CALL GetStockByDayForMonth(?, ?, ?, ?)`,
+            [mes, year, almacen, id_tenant]
         );
 
         if (!rows || rows.length === 0 || !rows[0]) {
             return res.status(404).send("No se encontraron datos para los parámetros proporcionados.");
         }
 
-        // Crear el archivo Excel
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Reporte Kardex");
 
-        // --- Información inicial ---
         worksheet.mergeCells("A2:F2");
         worksheet.getCell("A2").value =
             "FORMATO 13.1: REGISTRO DE INVENTARIO PERMANENTE VALORIZADO - DETALLE DEL INVENTARIO VALORIZADO";
@@ -434,7 +430,6 @@ const generateExcelReport = async (req, res) => {
         worksheet.getCell("A5").font = { bold: true, size: 12 };
         worksheet.getCell("A5").alignment = { horizontal: "left" };
 
-        // --- Configurar columnas ---
         const columns = [
             { header: "Mes", key: "mes", width: 10 },
             { header: "Almacén", key: "nom_almacen", width: 20 },
@@ -442,7 +437,6 @@ const generateExcelReport = async (req, res) => {
             { header: "Stock Comienzo", key: "stock_comienzo", width: 15 },
         ];
 
-        // Agregar columnas dinámicas (días del mes)
         const daysInMonth = new Date(year, mes, 0).getDate();
         for (let i = 1; i <= daysInMonth; i++) {
             const day = i.toString().padStart(2, "0");
@@ -454,7 +448,6 @@ const generateExcelReport = async (req, res) => {
             });
         }
 
-        // Mover 'Stock Final' y 'Total Transacciones' al final
         columns.push(
             { header: "Stock Final", key: "stock_final", width: 15 },
             { header: "Total Transacciones", key: "total_transacciones", width: 20 }
@@ -462,30 +455,26 @@ const generateExcelReport = async (req, res) => {
 
         worksheet.columns = columns;
 
-        // --- Limpiar solo filas después de la fila 7 ---
         while (worksheet.rowCount > 7) {
-            worksheet.spliceRows(8, 1); // Eliminar filas desde la fila 8
+            worksheet.spliceRows(8, 1);
         }
 
-        // --- Encabezados en la fila 8 ---
         const headerRow = worksheet.getRow(8);
         headerRow.values = columns.map((col) => col.header);
 
-        // Formato de los encabezados
         headerRow.eachCell((cell) => {
             cell.fill = {
                 type: "pattern",
                 pattern: "solid",
-                fgColor: { argb: "4069E5" }, // Color de fondo azul
+                fgColor: { argb: "4069E5" },
             };
             cell.font = {
-                color: { argb: "FFFFFF" }, // Texto blanco
+                color: { argb: "FFFFFF" },
                 bold: true,
             };
             cell.alignment = { vertical: "middle", horizontal: "center" };
         });
 
-        // --- Mapear y agregar los datos desde la fila 9 ---
         const dataRows = rows[0].map((row) => {
             const rowData = { ...row };
             for (let i = 1; i <= daysInMonth; i++) {
@@ -496,11 +485,8 @@ const generateExcelReport = async (req, res) => {
                     rowData[key] = "";
                 }
             }
-
-            // Asegurarse de que 'stock_final' y 'total_transacciones' estén al final
-            rowData["stock_final"] = row.stock_final || ""; // Asegúrate de que esté presente
-            rowData["total_transacciones"] = row.total_transacciones || ""; // Asegúrate de que esté presente
-
+            rowData["stock_final"] = row.stock_final || "";
+            rowData["total_transacciones"] = row.total_transacciones || "";
             return rowData;
         });
 
@@ -510,7 +496,6 @@ const generateExcelReport = async (req, res) => {
             startRow++;
         });
 
-        // --- Aplicar bordes ---
         worksheet.eachRow({ includeEmpty: true }, (row, rowIndex) => {
             if (rowIndex >= 8) {
                 row.eachCell((cell) => {
@@ -526,7 +511,6 @@ const generateExcelReport = async (req, res) => {
 
         limpiarRango(worksheet, 1, 37, 1);
 
-        // --- Configurar headers y enviar el archivo ---
         res.setHeader(
             "Content-Type",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -542,16 +526,15 @@ const generateExcelReport = async (req, res) => {
         res.status(500).send("Error al generar el reporte Excel.");
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
 
-
-
 const generateExcelReportByDateRange = async (req, res) => {
     let connection;
     const { startDate, endDate, almacen } = req.query;
+    const id_tenant = req.id_tenant;
 
     try {
         connection = await getConnection();
@@ -561,8 +544,8 @@ const generateExcelReportByDateRange = async (req, res) => {
         }
 
         const [rows] = await connection.query(
-            `CALL GetStockByDayForPeriod(?, ?, ?)`,
-            [startDate, endDate, almacen]
+            `CALL GetStockByDayForPeriod(?, ?, ?, ?)`,
+            [startDate, endDate, almacen, id_tenant]
         );
 
         if (!rows || rows.length === 0 || !rows[0]) {
@@ -572,7 +555,6 @@ const generateExcelReportByDateRange = async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Reporte Kardex");
 
-        // Información inicial
         worksheet.mergeCells("A2:F2");
         worksheet.getCell("A2").value =
             "FORMATO 13.1: REGISTRO DE INVENTARIO PERMANENTE VALORIZADO - DETALLE DEL INVENTARIO VALORIZADO";
@@ -593,7 +575,6 @@ const generateExcelReportByDateRange = async (req, res) => {
         worksheet.getCell("A5").font = { bold: true, size: 12 };
         worksheet.getCell("A5").alignment = { horizontal: "left" };
 
-        // Configuración de columnas
         const columns = [
             { header: "Almacén", key: "Almacen", width: 20 },
             { header: "Descripción", key: "descripcion", width: 60 },
@@ -603,7 +584,6 @@ const generateExcelReportByDateRange = async (req, res) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
 
-        // Agregar columnas dinámicas (fechas)
         for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
             const dayKey = d.toISOString().split("T")[0];
             const formattedDate = d.toLocaleDateString("es-ES", {
@@ -613,7 +593,6 @@ const generateExcelReportByDateRange = async (req, res) => {
             columns.push({ header: formattedDate, key: dayKey, width: 15 });
         }
 
-        // Agregar las columnas de "Stock Final" y "Total Transacciones"
         columns.push(
             { header: "Stock Final", key: "stock_final", width: 15 },
             { header: "Total Transacciones", key: "total_transacciones", width: 20 }
@@ -621,7 +600,6 @@ const generateExcelReportByDateRange = async (req, res) => {
 
         worksheet.columns = columns;
 
-        // Función para limpiar un rango de celdas (si se requiere)
         const limpiarRango = (worksheet, startRow, startCol, endRow, endCol) => {
             for (let row = startRow; row <= endRow; row++) {
                 for (let col = startCol; col <= endCol; col++) {
@@ -632,25 +610,22 @@ const generateExcelReportByDateRange = async (req, res) => {
             }
         };
 
-        // Agregar encabezado en la fila 8
         const headerRow = worksheet.getRow(8);
         headerRow.values = columns.map((col) => col.header);
 
-        // Establecer bordes y colores para los encabezados
         headerRow.eachCell((cell) => {
             cell.fill = {
                 type: "pattern",
                 pattern: "solid",
-                fgColor: { argb: "4069E5" }, // Color de fondo azul
+                fgColor: { argb: "4069E5" },
             };
             cell.font = {
-                color: { argb: "FFFFFF" }, // Texto blanco
+                color: { argb: "FFFFFF" },
                 bold: true,
             };
             cell.alignment = { vertical: "middle", horizontal: "center" };
         });
 
-        // Agregar los datos en la fila 9
         const dataRows = rows[0];
         let startRow = 9;
         dataRows.forEach((row, index) => {
@@ -658,9 +633,8 @@ const generateExcelReportByDateRange = async (req, res) => {
             startRow++;
         });
 
-        // Aplicar bordes a la tabla
         worksheet.eachRow({ includeEmpty: true }, (row, rowIndex) => {
-            if (rowIndex >= 8) {  // Solo aplicar bordes a las filas de datos (a partir de la fila 8)
+            if (rowIndex >= 8) {
                 row.eachCell((cell) => {
                     cell.border = {
                         top: { style: "thin" },
@@ -672,10 +646,8 @@ const generateExcelReportByDateRange = async (req, res) => {
             }
         });
 
-        // Limpiar el rango de celdas que no se necesita (por ejemplo, fuera de los datos)
-        limpiarRango2(worksheet, 1, 1, 1 ,37 ); // Ajusta el rango según sea necesario
+        limpiarRango2(worksheet, 1, 1, 1 ,37 );
 
-        // Enviar el archivo como descarga
         res.setHeader(
             "Content-Type",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -691,12 +663,10 @@ const generateExcelReportByDateRange = async (req, res) => {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
-            connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+            connection.release();
         }
     }
 };
-
-
 
 export const methods = {
     getProductos,

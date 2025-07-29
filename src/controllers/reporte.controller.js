@@ -5,27 +5,26 @@ import { startOfWeek, endOfWeek, subWeeks, subMonths, format } from "date-fns";
 const getTotalProductosVendidos = async (req, res) => {
   let connection;
   const { id_sucursal, year, month, week } = req.query;
+  const id_tenant = req.id_tenant;
 
   try {
     connection = await getConnection();
 
     // Fechas para filtro
-   let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
     if (week && week !== "all" && month) {
-      // Ajuste: la semana empieza el día 1 del mes y termina el último día del mes
       const diasEnMes = new Date(y, m + 1, 0).getDate();
-      const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
       const startDay = (weekNumber - 1) * 7 + 1;
       const endDay = Math.min(weekNumber * 7, diasEnMes);
 
       fechaInicioActual = new Date(y, m, startDay);
       fechaFinActual = new Date(y, m, endDay);
 
-      // Semana anterior (dentro del mismo mes anterior)
       const prevMonth = subMonths(fechaInicioActual, 1);
       const diasEnMesAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
       const prevStartDay = (weekNumber - 1) * 7 + 1;
@@ -36,14 +35,12 @@ const getTotalProductosVendidos = async (req, res) => {
     } else if (month) {
       fechaInicioActual = new Date(y, m, 1);
       fechaFinActual = new Date(y, m + 1, 0);
-      // Mes anterior
       const prevMonth = subMonths(fechaInicioActual, 1);
       fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
       fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
     } else {
       fechaInicioActual = new Date(y, 0, 1);
       fechaFinActual = new Date(y, 11, 31);
-      // Año anterior
       fechaInicioAnterior = new Date(y - 1, 0, 1);
       fechaFinAnterior = new Date(y - 1, 11, 31);
     }
@@ -64,6 +61,11 @@ const getTotalProductosVendidos = async (req, res) => {
       baseQuery += ` AND v.id_sucursal = ?`;
       paramsActual.push(id_sucursal);
       paramsAnterior.push(id_sucursal);
+    }
+    if (id_tenant) {
+      baseQuery += ` AND v.id_tenant = ?`;
+      paramsActual.push(id_tenant);
+      paramsAnterior.push(id_tenant);
     }
 
     // Filtro de fechas actual
@@ -102,16 +104,18 @@ const getTotalProductosVendidos = async (req, res) => {
       subcatQuery += ` AND v.id_sucursal = ?`;
       subcatParams.push(id_sucursal);
     }
+    if (id_tenant) {
+      subcatQuery += ` AND v.id_tenant = ?`;
+      subcatParams.push(id_tenant);
+    }
     subcatQuery += `
       GROUP BY sc.nom_subcat
       ORDER BY cantidad_vendida DESC
     `;
     const [subcatResult] = await connection.query(subcatQuery, subcatParams);
 
-    // Mapear a objeto { Shorts: 64, Pantalón: 55, Otros: 72 }
     const subcategorias = {};
     subcatResult.forEach((row) => {
-      // Puedes personalizar los nombres según tus subcategorías reales
       if (row.subcategoria.toLowerCase().includes("short")) {
         subcategorias.Shorts = Number(row.cantidad_vendida);
       } else if (row.subcategoria.toLowerCase().includes("pantal")) {
@@ -140,29 +144,28 @@ const getTotalProductosVendidos = async (req, res) => {
 
 
 const getTotalSalesRevenue = async (req, res) => {
-    let connection;
+  let connection;
   const { id_sucursal, year, month, week } = req.query;
+  const id_tenant = req.id_tenant;
 
   try {
     connection = await getConnection();
 
     // Fechas para filtro
-       let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
     if (week && week !== "all" && month) {
-      // Ajuste: la semana empieza el día 1 del mes y termina el último día del mes
       const diasEnMes = new Date(y, m + 1, 0).getDate();
-      const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
       const startDay = (weekNumber - 1) * 7 + 1;
       const endDay = Math.min(weekNumber * 7, diasEnMes);
 
       fechaInicioActual = new Date(y, m, startDay);
       fechaFinActual = new Date(y, m, endDay);
 
-      // Semana anterior (dentro del mismo mes anterior)
       const prevMonth = subMonths(fechaInicioActual, 1);
       const diasEnMesAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
       const prevStartDay = (weekNumber - 1) * 7 + 1;
@@ -173,19 +176,16 @@ const getTotalSalesRevenue = async (req, res) => {
     } else if (month) {
       fechaInicioActual = new Date(y, m, 1);
       fechaFinActual = new Date(y, m + 1, 0);
-      // Mes anterior
       const prevMonth = subMonths(fechaInicioActual, 1);
       fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
       fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
     } else {
       fechaInicioActual = new Date(y, 0, 1);
       fechaFinActual = new Date(y, 11, 31);
-      // Año anterior
       fechaInicioAnterior = new Date(y - 1, 0, 1);
       fechaFinAnterior = new Date(y - 1, 11, 31);
     }
 
-    // Formatear fechas a 'YYYY-MM-DD'
     const f = (d) => format(d, "yyyy-MM-dd");
 
     // Query base
@@ -202,6 +202,11 @@ const getTotalSalesRevenue = async (req, res) => {
       baseQuery += ` AND v.id_sucursal = ?`;
       paramsActual.push(id_sucursal);
       paramsAnterior.push(id_sucursal);
+    }
+    if (id_tenant) {
+      baseQuery += ` AND v.id_tenant = ?`;
+      paramsActual.push(id_tenant);
+      paramsAnterior.push(id_tenant);
     }
 
     // Filtro de fechas actual
@@ -244,7 +249,8 @@ const getSucursales = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    
+    const id_tenant = req.id_tenant;
+
     const query = `
       SELECT 
         id_sucursal,
@@ -253,11 +259,12 @@ const getSucursales = async (req, res) => {
         sucursal
       WHERE 
         estado_sucursal = 1
+        AND id_tenant = ?
       ORDER BY 
         nombre_sucursal
     `;
 
-    const [sucursales] = await connection.query(query);
+    const [sucursales] = await connection.query(query, [id_tenant]);
     
     res.json({ 
       code: 1, 
@@ -279,27 +286,26 @@ const getSucursales = async (req, res) => {
 const getProductoMasVendido = async (req, res) => {
   let connection;
   const { id_sucursal, year, month, week } = req.query;
+  const id_tenant = req.id_tenant;
 
   try {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-      let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
     if (week && week !== "all" && month) {
-      // Ajuste: la semana empieza el día 1 del mes y termina el último día del mes
       const diasEnMes = new Date(y, m + 1, 0).getDate();
-      const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
       const startDay = (weekNumber - 1) * 7 + 1;
       const endDay = Math.min(weekNumber * 7, diasEnMes);
 
       fechaInicioActual = new Date(y, m, startDay);
       fechaFinActual = new Date(y, m, endDay);
 
-      // Semana anterior (dentro del mismo mes anterior)
       const prevMonth = subMonths(fechaInicioActual, 1);
       const diasEnMesAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
       const prevStartDay = (weekNumber - 1) * 7 + 1;
@@ -310,14 +316,12 @@ const getProductoMasVendido = async (req, res) => {
     } else if (month) {
       fechaInicioActual = new Date(y, m, 1);
       fechaFinActual = new Date(y, m + 1, 0);
-      // Mes anterior
       const prevMonth = subMonths(fechaInicioActual, 1);
       fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
       fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
     } else {
       fechaInicioActual = new Date(y, 0, 1);
       fechaFinActual = new Date(y, 11, 31);
-      // Año anterior
       fechaInicioAnterior = new Date(y - 1, 0, 1);
       fechaFinAnterior = new Date(y - 1, 11, 31);
     }
@@ -341,6 +345,10 @@ const getProductoMasVendido = async (req, res) => {
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
+    }
+    if (id_tenant) {
+      query += ` AND v.id_tenant = ?`;
+      params.push(id_tenant);
     }
     query += `
       GROUP BY p.id_producto, p.descripcion
@@ -367,6 +375,10 @@ const getProductoMasVendido = async (req, res) => {
       totalQuery += ` AND v.id_sucursal = ?`;
       totalParams.push(id_sucursal);
     }
+    if (id_tenant) {
+      totalQuery += ` AND v.id_tenant = ?`;
+      totalParams.push(id_tenant);
+    }
     const [totalResult] = await connection.query(totalQuery, totalParams);
     const totalUnidades = Number(totalResult[0].total_unidades) || 0;
     const porcentajeSobreTotal = totalUnidades > 0 ? (producto.unidades / totalUnidades) * 100 : 0;
@@ -388,6 +400,10 @@ const getProductoMasVendido = async (req, res) => {
     if (id_sucursal) {
       queryAnterior += ` AND v.id_sucursal = ?`;
       paramsAnterior.push(id_sucursal);
+    }
+    if (id_tenant) {
+      queryAnterior += ` AND v.id_tenant = ?`;
+      paramsAnterior.push(id_tenant);
     }
     queryAnterior += `
       GROUP BY p.id_producto, p.descripcion
@@ -426,27 +442,26 @@ const getProductoMasVendido = async (req, res) => {
 const getSucursalMayorRendimiento = async (req, res) => {
   let connection;
   const { year, month, week } = req.query;
+  const id_tenant = req.id_tenant;
 
   try {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-       let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
+    let fechaInicioActual, fechaFinActual, fechaInicioAnterior, fechaFinAnterior;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
     if (week && week !== "all" && month) {
-      // Ajuste: la semana empieza el día 1 del mes y termina el último día del mes
       const diasEnMes = new Date(y, m + 1, 0).getDate();
-      const weekNumber = parseInt(week.replace(/\D/g, "")); // "Semana 2" => 2
+      const weekNumber = parseInt(week.replace(/\D/g, ""));
       const startDay = (weekNumber - 1) * 7 + 1;
       const endDay = Math.min(weekNumber * 7, diasEnMes);
 
       fechaInicioActual = new Date(y, m, startDay);
       fechaFinActual = new Date(y, m, endDay);
 
-      // Semana anterior (dentro del mismo mes anterior)
       const prevMonth = subMonths(fechaInicioActual, 1);
       const diasEnMesAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
       const prevStartDay = (weekNumber - 1) * 7 + 1;
@@ -457,14 +472,12 @@ const getSucursalMayorRendimiento = async (req, res) => {
     } else if (month) {
       fechaInicioActual = new Date(y, m, 1);
       fechaFinActual = new Date(y, m + 1, 0);
-      // Mes anterior
       const prevMonth = subMonths(fechaInicioActual, 1);
       fechaInicioAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
       fechaFinAnterior = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
     } else {
       fechaInicioActual = new Date(y, 0, 1);
       fechaFinActual = new Date(y, 11, 31);
-      // Año anterior
       fechaInicioAnterior = new Date(y - 1, 0, 1);
       fechaFinAnterior = new Date(y - 1, 11, 31);
     }
@@ -472,7 +485,7 @@ const getSucursalMayorRendimiento = async (req, res) => {
     const f = (d) => format(d, "yyyy-MM-dd");
 
     // Sucursal con mayor ventas actual
-    const query = `
+    let query = `
       SELECT 
         s.id_sucursal,
         s.nombre_sucursal,
@@ -482,11 +495,17 @@ const getSucursalMayorRendimiento = async (req, res) => {
       JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       WHERE v.estado_venta != 0
         AND v.f_venta BETWEEN ? AND ?
+    `;
+    const params = [f(fechaInicioActual), f(fechaFinActual)];
+    if (id_tenant) {
+      query += ` AND v.id_tenant = ?`;
+      params.push(id_tenant);
+    }
+    query += `
       GROUP BY s.id_sucursal, s.nombre_sucursal
       ORDER BY total_ventas DESC
       LIMIT 1
     `;
-    const params = [f(fechaInicioActual), f(fechaFinActual)];
     const [result] = await connection.query(query, params);
 
     if (result.length === 0) {
@@ -495,19 +514,24 @@ const getSucursalMayorRendimiento = async (req, res) => {
     const sucursal = result[0];
 
     // Total ventas de todas las sucursales en el periodo actual
-    const totalQuery = `
+    let totalQuery = `
       SELECT SUM(dv.total) AS total_ventas
       FROM venta v
       JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       WHERE v.estado_venta != 0
         AND v.f_venta BETWEEN ? AND ?
     `;
-    const [totalResult] = await connection.query(totalQuery, [f(fechaInicioActual), f(fechaFinActual)]);
+    const totalParams = [f(fechaInicioActual), f(fechaFinActual)];
+    if (id_tenant) {
+      totalQuery += ` AND v.id_tenant = ?`;
+      totalParams.push(id_tenant);
+    }
+    const [totalResult] = await connection.query(totalQuery, totalParams);
     const totalVentas = Number(totalResult[0].total_ventas) || 0;
     const porcentajeSobreTotal = totalVentas > 0 ? (sucursal.total_ventas / totalVentas) * 100 : 0;
 
     // Sucursal con mayor ventas periodo anterior
-    const queryAnterior = `
+    let queryAnterior = `
       SELECT 
         s.id_sucursal,
         s.nombre_sucursal,
@@ -517,11 +541,17 @@ const getSucursalMayorRendimiento = async (req, res) => {
       JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       WHERE v.estado_venta != 0
         AND v.f_venta BETWEEN ? AND ?
+    `;
+    const paramsAnterior = [f(fechaInicioAnterior), f(fechaFinAnterior)];
+    if (id_tenant) {
+      queryAnterior += ` AND v.id_tenant = ?`;
+      paramsAnterior.push(id_tenant);
+    }
+    queryAnterior += `
       GROUP BY s.id_sucursal, s.nombre_sucursal
       ORDER BY total_ventas DESC
       LIMIT 1
     `;
-    const paramsAnterior = [f(fechaInicioAnterior), f(fechaFinAnterior)];
     const [resultAnterior] = await connection.query(queryAnterior, paramsAnterior);
     const sucursalAnterior = resultAnterior[0];
 
@@ -553,12 +583,13 @@ const getSucursalMayorRendimiento = async (req, res) => {
 const getCantidadVentasPorSubcategoria = async (req, res) => {
   let connection;
   const { id_sucursal, year, month, week } = req.query;
+  const id_tenant = req.id_tenant;
 
   try {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-let fechaInicioActual, fechaFinActual;
+    let fechaInicioActual, fechaFinActual;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
@@ -598,11 +629,15 @@ let fechaInicioActual, fechaFinActual;
         AND v.f_venta BETWEEN ? AND ?
     `;
 
-   const params = [f(fechaInicioActual), f(fechaFinActual)];
+    const params = [f(fechaInicioActual), f(fechaFinActual)];
 
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
+    }
+    if (id_tenant) {
+      query += ` AND v.id_tenant = ?`;
+      params.push(id_tenant);
     }
 
     query += `
@@ -626,18 +661,18 @@ let fechaInicioActual, fechaFinActual;
 const getCantidadVentasPorProducto = async (req, res) => {
   let connection;
   const { id_sucursal, year, month, week } = req.query;
+  const id_tenant = req.id_tenant;
 
   try {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-let fechaInicioActual, fechaFinActual;
+    let fechaInicioActual, fechaFinActual;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
 
     if (week && week !== "all" && month) {
-      // Semana empieza el día 1 y termina el último día del mes
       const diasEnMes = new Date(y, m + 1, 0).getDate();
       const weekNumber = parseInt(week.replace(/\D/g, ""));
       const startDay = (weekNumber - 1) * 7 + 1;
@@ -671,11 +706,15 @@ let fechaInicioActual, fechaFinActual;
         AND v.f_venta BETWEEN ? AND ?
     `;
 
-const params = [f(fechaInicioActual), f(fechaFinActual)];
+    const params = [f(fechaInicioActual), f(fechaFinActual)];
 
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
+    }
+    if (id_tenant) {
+      query += ` AND v.id_tenant = ?`;
+      params.push(id_tenant);
     }
 
     query += `
@@ -699,23 +738,28 @@ const getAnalisisGananciasSucursales = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    const [result] = await connection.query(`
-          SELECT 
-              s.nombre_sucursal AS sucursal,
-              DATE_FORMAT(v.f_venta, '%b %y') AS mes,
-              SUM(dv.total) AS ganancias
-          FROM 
-              sucursal s
-          JOIN 
-              venta v ON s.id_sucursal = v.id_sucursal
-          JOIN 
-              detalle_venta dv ON v.id_venta = dv.id_venta
-          WHERE v.estado_venta !=0
-          GROUP BY 
-              s.id_sucursal, mes
-          ORDER BY 
-              mes, s.id_sucursal
-      `);
+    const id_tenant = req.id_tenant;
+
+    const query = `
+      SELECT 
+          s.nombre_sucursal AS sucursal,
+          DATE_FORMAT(v.f_venta, '%b %y') AS mes,
+          SUM(dv.total) AS ganancias
+      FROM 
+          sucursal s
+      JOIN 
+          venta v ON s.id_sucursal = v.id_sucursal
+      JOIN 
+          detalle_venta dv ON v.id_venta = dv.id_venta
+      WHERE v.estado_venta !=0
+        AND v.id_tenant = ?
+      GROUP BY 
+          s.id_sucursal, mes
+      ORDER BY 
+          mes, s.id_sucursal
+    `;
+
+    const [result] = await connection.query(query, [id_tenant]);
 
     res.json({ code: 1, data: result, message: "Análisis de ganancias por sucursal obtenido correctamente" });
   } catch (error) {
@@ -726,13 +770,14 @@ const getAnalisisGananciasSucursales = async (req, res) => {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
     }
-}
+  }
 };
 
 const getVentasPDF = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
+    const id_tenant = req.id_tenant;
 
     const [result] = await connection.query(`
       SELECT 
@@ -781,12 +826,13 @@ const getVentasPDF = async (req, res) => {
       INNER JOIN 
           usuario usu ON usu.id_usuario = ve.id_usuario
       WHERE v.estado_venta !=0
+        AND v.id_tenant = ?
       GROUP BY 
           id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, 
           DATE_FORMAT(v.f_venta, '%Y-%m-%d'), igv, cajero, cajeroId, estado
       ORDER BY 
           v.id_venta DESC;
-    `);
+    `, [id_tenant]);
 
     res.json({ code: 1, data: result, message: "Reporte de ventas" });
 
@@ -796,7 +842,7 @@ const getVentasPDF = async (req, res) => {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
     }
-}
+  }
 };
 
 
@@ -832,10 +878,9 @@ const parseMetodoPago = (metodoPago) => {
 const exportarRegistroVentas = async (req, res) => {
   let connection;
   try {
-    //console.log("Iniciando exportarRegistroVentas...");
-
     connection = await getConnection();
     const { mes, ano, idSucursal, tipoComprobante } = req.query;
+    const id_tenant = req.id_tenant;
 
     if (!mes || !ano) {
       return res.status(400).json({ message: "Debe proporcionar mes y año." });
@@ -869,6 +914,12 @@ const exportarRegistroVentas = async (req, res) => {
     if (idSucursal) {
       filters.push("v.id_sucursal = ?");
       queryParams.push(idSucursal);
+    }
+
+    // Agregar filtro por id_tenant
+    if (id_tenant) {
+      filters.push("v.id_tenant = ?");
+      queryParams.push(id_tenant);
     }
 
     const query = `
@@ -1045,15 +1096,16 @@ const exportarRegistroVentas = async (req, res) => {
     if (connection) {
         connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
     }
-}
+  }
 };
 
 const obtenerRegistroVentas = async (req, res) => { 
   let connection;
   try {
     connection = await getConnection();
+    const id_tenant = req.id_tenant;
 
-    // Consulta principal de ventas SIN filtros ni paginación
+    // Consulta principal de ventas filtrando por id_tenant
     const query = `
       SELECT 
         ROW_NUMBER() OVER (ORDER BY v.id_venta) AS numero_correlativo,
@@ -1087,6 +1139,7 @@ const obtenerRegistroVentas = async (req, res) => {
       INNER JOIN
         sucursal s ON s.id_sucursal = v.id_sucursal
       WHERE v.estado_venta != 0
+        AND v.id_tenant = ?
       GROUP BY 
         v.id_venta, v.f_venta, s.nombre_sucursal, s.ubicacion, 
         cl.dni, cl.ruc, cl.nombres, cl.apellidos, cl.razon_social,
@@ -1095,7 +1148,7 @@ const obtenerRegistroVentas = async (req, res) => {
         v.id_venta
     `;
 
-    const [resultados] = await connection.query(query);
+    const [resultados] = await connection.query(query, [id_tenant]);
 
     // Mapear resultados
     const registroVentas = resultados.map((row) => ({
@@ -1132,12 +1185,13 @@ const obtenerRegistroVentas = async (req, res) => {
 const getTendenciaVentas = async (req, res) => {
   let connection;
   const { id_sucursal, year, month, week } = req.query;
+  const id_tenant = req.id_tenant;
 
   try {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-let fechaInicioActual, fechaFinActual;
+    let fechaInicioActual, fechaFinActual;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
@@ -1170,10 +1224,14 @@ let fechaInicioActual, fechaFinActual;
       WHERE v.estado_venta != 0
         AND v.f_venta BETWEEN ? AND ?
     `;
-const params = [f(fechaInicioActual), f(fechaFinActual)];
+    const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
+    }
+    if (id_tenant) {
+      query += ` AND v.id_tenant = ?`;
+      params.push(id_tenant);
     }
     query += `
       GROUP BY fecha
@@ -1193,12 +1251,13 @@ const params = [f(fechaInicioActual), f(fechaFinActual)];
 const getTopProductosMargen = async (req, res) => {
   let connection;
   const { id_sucursal, year, month, week, limit = 5 } = req.query;
+  const id_tenant = req.id_tenant;
 
   try {
     connection = await getConnection();
 
     // Calcular fechas según filtros
-let fechaInicioActual, fechaFinActual;
+    let fechaInicioActual, fechaFinActual;
     const now = new Date();
     const y = year ? parseInt(year) : now.getFullYear();
     const m = month ? parseInt(month) - 1 : now.getMonth();
@@ -1233,10 +1292,14 @@ let fechaInicioActual, fechaFinActual;
       WHERE v.estado_venta != 0
         AND v.f_venta BETWEEN ? AND ?
     `;
-const params = [f(fechaInicioActual), f(fechaFinActual)];
+    const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
       query += ` AND v.id_sucursal = ?`;
       params.push(id_sucursal);
+    }
+    if (id_tenant) {
+      query += ` AND v.id_tenant = ?`;
+      params.push(id_tenant);
     }
     query += `
       GROUP BY p.id_producto, p.descripcion
@@ -1258,7 +1321,6 @@ const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (connection) connection.release();
   }
 };
-
 
 
 export const methods = {

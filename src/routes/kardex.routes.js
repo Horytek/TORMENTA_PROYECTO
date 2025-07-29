@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { methods as kardexController } from "./../controllers/kardex.controller";
+import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();
+
+// Aplica el middleware de autenticación a todas las rutas de productos
+router.use(auth);
 
 router.get("/", kardexController.getProductos);
 router.get("/almacen", kardexController.getAlmacen);

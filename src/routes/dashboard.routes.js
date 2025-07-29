@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { methods as dashboardController } from "./../controllers/dashboard.controller";
+import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();
+
+// Aplica el middleware de autenticación a todas las rutas de productos
+router.use(auth);
 
 router.get("/sucursales", dashboardController.getSucursalInicio);
 router.get("/product_top", dashboardController.getProductoMasVendido);

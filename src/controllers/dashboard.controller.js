@@ -1,17 +1,16 @@
 import { getConnection } from "./../database/database";
 import { subDays, subWeeks, subMonths, subYears, format } from "date-fns";
 
-
-// Función auxiliar para obtener el id_sucursal usando el nombre de usuario
-const getSucursalIdForUser = async (usuario, connection) => {
+// Función auxiliar para obtener el id_sucursal usando el nombre de usuario y el id_tenant
+const getSucursalIdForUser = async (usuario, connection, id_tenant) => {
   const [result] = await connection.query(
     `SELECT s.id_sucursal 
      FROM sucursal s 
      INNER JOIN vendedor v ON v.dni = s.dni 
      INNER JOIN usuario u ON u.id_usuario = v.id_usuario
      INNER JOIN sucursal_almacen sa ON sa.id_sucursal=s.id_sucursal 
-     WHERE u.usua = ? AND s.estado_sucursal != 0`,
-    [usuario]
+     WHERE u.usua = ? AND s.estado_sucursal != 0 AND s.id_tenant = ?`,
+    [usuario, id_tenant]
   );
   if (result.length === 0) {
     throw new Error("No se encontró la sucursal para el usuario");
@@ -19,10 +18,10 @@ const getSucursalIdForUser = async (usuario, connection) => {
   return result[0].id_sucursal;
 };
 
-
 const getSucursalInicio = async (req, res) => {
   let connection;
   const { nombre = '' } = req.query; 
+  const id_tenant = req.id_tenant;
 
   try {
       connection = await getConnection();
@@ -36,10 +35,10 @@ const getSucursalInicio = async (req, res) => {
               sa.id_almacen AS almace_n
           FROM sucursal s
           INNER JOIN sucursal_almacen sa ON sa.id_sucursal=s.id_sucursal
-          WHERE s.nombre_sucursal LIKE ? AND s.estado_sucursal != 0
+          WHERE s.nombre_sucursal LIKE ? AND s.estado_sucursal != 0 AND s.id_tenant = ?
       `;
 
-      const params = [`%${nombre}%`];
+      const params = [`%${nombre}%`, id_tenant];
 
       const [result] = await connection.query(query, params);
 
@@ -47,21 +46,19 @@ const getSucursalInicio = async (req, res) => {
       res.json({ code: 1, data: result, message: "Sucursales listadas" });
 
   } catch (error) {
-      //console.error("Error al obtener sucursales:", error);
       res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
       if (connection) connection.release(); 
   }
 };
 
-// Función auxiliar para obtener el rol del usuario si no se envía en la petición
-const getUsuarioRol = async (usuario, connection) => {
+const getUsuarioRol = async (usuario, connection, id_tenant) => {
   const [result] = await connection.query(
     `SELECT r.nom_rol 
      FROM rol r 
      INNER JOIN usuario u ON u.id_rol = r.id_rol 
-     WHERE u.usua = ?`,
-    [usuario]
+     WHERE u.usua = ? AND u.id_tenant = ?`,
+    [usuario, id_tenant]
   );
   if (result.length === 0) {
     throw new Error("No se encontró rol para el usuario");
@@ -71,6 +68,7 @@ const getUsuarioRol = async (usuario, connection) => {
 
 const getUserRolController = async (req, res) => {
   let connection;
+  const id_tenant = req.id_tenant;
   try {
     connection = await getConnection();
     const { usuario } = req.query;
@@ -83,8 +81,8 @@ const getUserRolController = async (req, res) => {
     const [rolResult] = await connection.query(
       `SELECT u.id_rol as rol_id 
        FROM usuario u 
-       WHERE u.usua = ?`,
-      [usuario]
+       WHERE u.usua = ? AND u.id_tenant = ?`,
+      [usuario, id_tenant]
     );
     
     if (rolResult.length === 0) {
@@ -93,7 +91,6 @@ const getUserRolController = async (req, res) => {
     
     res.json({ code: 1, rol_id: rolResult[0].rol_id, message: "Rol obtenido correctamente" });
   } catch (error) {
-    //console.error("Error al obtener rol de usuario:", error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
@@ -102,14 +99,14 @@ const getUserRolController = async (req, res) => {
 
 const getProductoMasVendido = async (req, res) => {
   let connection;
+  const id_tenant = req.id_tenant;
   try {
     connection = await getConnection();
-    // Se obtiene el parámetro adicional "sucursal" (opcional)
     let { tiempo, usuario: usuarioQuery, rol, sucursal } = req.query;
     if (!tiempo) return res.status(400).json({ message: "Falta filtro de tiempo" });
     if (!usuarioQuery) return res.status(400).json({ message: "Falta el campo usuario" });
     if (!rol) {
-      rol = await getUsuarioRol(usuarioQuery, connection);
+      rol = await getUsuarioRol(usuarioQuery, connection, id_tenant);
     }
 
     let fechaInicio;
@@ -139,7 +136,6 @@ const getProductoMasVendido = async (req, res) => {
 
     let query;
     let params;
-    // Si el rol es ADMIN, se consulta sin filtro de sucursal a menos que se envíe el parámetro "sucursal"
     if (rol.toLowerCase() === "administrador") {
       query = `
         SELECT 
@@ -149,9 +145,9 @@ const getProductoMasVendido = async (req, res) => {
         FROM detalle_venta dv
         JOIN producto p ON dv.id_producto = p.id_producto
         JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
+        WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_tenant = ?
       `;
-      params = [fechaInicioISO, fechaFinISO];
+      params = [fechaInicioISO, fechaFinISO, id_tenant];
       if(sucursal) {
         query += " AND v.id_sucursal = ?";
         params.push(sucursal);
@@ -162,7 +158,7 @@ const getProductoMasVendido = async (req, res) => {
         LIMIT 1;
       `;
     } else {
-      const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
+      const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection, id_tenant);
       query = `
         SELECT 
           p.id_producto,
@@ -171,12 +167,12 @@ const getProductoMasVendido = async (req, res) => {
         FROM detalle_venta dv
         JOIN producto p ON dv.id_producto = p.id_producto
         JOIN venta v ON dv.id_venta = v.id_venta
-        WHERE v.f_venta BETWEEN ? AND ? AND v.id_sucursal = ? AND v.estado_venta != 0
+        WHERE v.f_venta BETWEEN ? AND ? AND v.id_sucursal = ? AND v.estado_venta != 0 AND v.id_tenant = ?
         GROUP BY p.id_producto, p.descripcion
         ORDER BY total_vendido DESC
         LIMIT 1;
       `;
-      params = [fechaInicioISO, fechaFinISO, id_sucursal];
+      params = [fechaInicioISO, fechaFinISO, id_sucursal, id_tenant];
     }
 
     const [result] = await connection.query(query, params);
@@ -193,6 +189,7 @@ const getProductoMasVendido = async (req, res) => {
 
 const getTotalVentas = async (req, res) => {
   let connection;
+  const id_tenant = req.id_tenant;
   try {
     connection = await getConnection();
     let { tiempo, usuario: usuarioQuery, rol, sucursal, comparacion } = req.query;
@@ -202,7 +199,7 @@ const getTotalVentas = async (req, res) => {
     }
 
     if (!rol) {
-      rol = await getUsuarioRol(usuarioQuery, connection);
+      rol = await getUsuarioRol(usuarioQuery, connection, id_tenant);
     }
 
     const fechaFin = new Date();
@@ -247,13 +244,13 @@ const getTotalVentas = async (req, res) => {
       SELECT SUM(dv.total) AS total, COUNT(v.id_venta) AS totalClientes
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
-      WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
+      WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_tenant = ?
     `;
 
     const extraSucursal = " AND v.id_sucursal LIKE ?";
     let actual, anterior;
-    const paramsActual = [fechaInicioISO, fechaFinISO];
-    const paramsAnterior = [fechaInicioAnteriorISO, fechaFinAnteriorISO];
+    const paramsActual = [fechaInicioISO, fechaFinISO, id_tenant];
+    const paramsAnterior = [fechaInicioAnteriorISO, fechaFinAnteriorISO, id_tenant];
 
     if (rol.toLowerCase() === "administrador") {
       if (sucursal) {
@@ -266,7 +263,7 @@ const getTotalVentas = async (req, res) => {
         anterior = await connection.query(queryBase, paramsAnterior);
       }
     } else {
-      const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
+      const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection, id_tenant);
       paramsActual.push(id_sucursal);
       paramsAnterior.push(id_sucursal);
       actual = await connection.query(queryBase + extraSucursal, paramsActual);
@@ -281,14 +278,14 @@ const getTotalVentas = async (req, res) => {
       ? ((valorActual - valorAnterior) / valorAnterior) * 100
       : (valorActual > 0 ? 100 : 0);
 
-res.json({
-  code: 1,
-  data: valorActual,
-  anterior: valorAnterior,
-  cambio: porcentajeCambio, // <-- solo el número
-  totalRegistros: totalClientesActual,
-  message: "Total de ventas y cambio calculado"
-});
+    res.json({
+      code: 1,
+      data: valorActual,
+      anterior: valorAnterior,
+      cambio: porcentajeCambio,
+      totalRegistros: totalClientesActual,
+      message: "Total de ventas y cambio calculado"
+    });
 
   } catch (error) {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -299,6 +296,7 @@ res.json({
 
 const getTotalProductosVendidos = async (req, res) => {
   let connection;
+  const id_tenant = req.id_tenant;
   try {
     connection = await getConnection();
     let { tiempo, usuario: usuarioQuery, rol, sucursal } = req.query;
@@ -306,7 +304,7 @@ const getTotalProductosVendidos = async (req, res) => {
     if (!usuarioQuery) return res.status(400).json({ message: "Falta el campo usuario" });
 
     if (!rol) {
-      rol = await getUsuarioRol(usuarioQuery, connection);
+      rol = await getUsuarioRol(usuarioQuery, connection, id_tenant);
     }
 
     const fechaFin = new Date();
@@ -314,7 +312,6 @@ const getTotalProductosVendidos = async (req, res) => {
     let fechaComparacionInicio;
     let fechaComparacionFin;
 
-    // Establecer rangos de fechas para actual y comparación
     switch (tiempo) {
       case '24h':
         fechaInicio = subDays(fechaFin, 1);
@@ -354,16 +351,15 @@ const getTotalProductosVendidos = async (req, res) => {
       SELECT SUM(dv.cantidad) AS total_productos_vendidos
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
-      WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0
+      WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_tenant = ?
     `;
 
     const isAdmin = rol.toLowerCase() === "administrador";
-    const id_sucursal = !isAdmin ? await getSucursalIdForUser(usuarioQuery, connection) : null;
+    const id_sucursal = !isAdmin ? await getSucursalIdForUser(usuarioQuery, connection, id_tenant) : null;
 
-    // Construir consultas
     const buildQuery = (inicio, fin) => {
       let query = baseQuery;
-      const params = [inicio, fin];
+      const params = [inicio, fin, id_tenant];
       if (isAdmin) {
         if (sucursal) {
           query += " AND v.id_sucursal = ?";
@@ -395,7 +391,7 @@ const getTotalProductosVendidos = async (req, res) => {
     res.json({
       code: 1,
       totalProductosVendidos: actual,
-      cambio: porcentajeCambio.toFixed(2), // string con 2 decimales
+      cambio: porcentajeCambio.toFixed(2),
       message: "Total de productos vendidos obtenido correctamente",
     });
   } catch (error) {
@@ -405,25 +401,21 @@ const getTotalProductosVendidos = async (req, res) => {
   }
 };
 
-
 const getComparacionVentasPorRango = async (req, res) => {
   let connection;
+  const id_tenant = req.id_tenant;
   try {
     connection = await getConnection();
-    // Se reciben los parámetros vía query (ya que se usa GET)
     let { fechaInicio, fechaFin, usuario: usuarioQuery, rol, sucursal } = req.query;
     if (!fechaInicio || !fechaFin) {
       return res.status(400).json({ message: "Se requieren fecha de inicio y fecha fin" });
     }
-    // Si no se envía rol, se obtiene del usuario o se asume "admin"
     if (!rol || rol.trim() === "") {
       if (usuarioQuery) {
-        // Si se recibe sucursal desde la query, asumimos que se quiere filtrar manualmente.
-        // De lo contrario se obtiene el rol del usuario.
         if (sucursal && sucursal.trim() !== "") {
           rol = "administrador";
         } else {
-          rol = await getUsuarioRol(usuarioQuery, connection);
+          rol = await getUsuarioRol(usuarioQuery, connection, id_tenant);
         }
       } else {
         rol = "administrador";
@@ -437,19 +429,17 @@ const getComparacionVentasPorRango = async (req, res) => {
       SELECT MONTH(v.f_venta) AS mes, SUM(dv.total) AS total_ventas
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
-      WHERE v.f_venta BETWEEN ? AND ?
+      WHERE v.f_venta BETWEEN ? AND ? AND v.id_tenant = ?
     `;
-    let params = [fechaInicioFormatted, fechaFinFormatted];
+    let params = [fechaInicioFormatted, fechaFinFormatted, id_tenant];
 
-    // Si se recibe un valor para sucursal, lo priorizamos y lo usamos en el filtro
     if (sucursal && sucursal.trim() !== "") {
       query += " AND v.id_sucursal = ?";
       params.push(sucursal);
     } else if (rol.toLowerCase() !== "administrador") {
-      // Si el usuario no es admin y no se envió sucursal, se obtiene la sucursal por defecto del usuario
       if (!usuarioQuery)
         return res.status(401).json({ message: "Usuario no autenticado" });
-      const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection);
+      const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection, id_tenant);
       query += " AND v.id_sucursal = ?";
       params.push(id_sucursal);
     }
@@ -482,11 +472,11 @@ const getComparacionVentasPorRango = async (req, res) => {
 
 const getVentasPorSucursalPeriodo = async (req, res) => {
   let connection;
+  const id_tenant = req.id_tenant;
   try {
     connection = await getConnection();
     const { tiempo = "24h", sucursal } = req.query;
 
-    // Calcular fechas según filtro de tiempo
     const fechaFin = new Date();
     let fechaInicio;
     switch (tiempo) {
@@ -510,15 +500,13 @@ const getVentasPorSucursalPeriodo = async (req, res) => {
 
     const f = (d) => format(d, "yyyy-MM-dd HH:mm:ss");
 
-    // Filtro por sucursal (opcional)
-    let where = `WHERE v.estado_venta != 0 AND v.f_venta BETWEEN ? AND ?`;
-    let params = [f(fechaInicio), f(fechaFin)];
+    let where = `WHERE v.estado_venta != 0 AND v.f_venta BETWEEN ? AND ? AND v.id_tenant = ?`;
+    let params = [f(fechaInicio), f(fechaFin), id_tenant];
     if (sucursal) {
       where += " AND v.id_sucursal = ?";
       params.push(sucursal);
     }
 
-    // Ventas por sucursal
     const [result] = await connection.query(
       `
       SELECT 
@@ -535,7 +523,6 @@ const getVentasPorSucursalPeriodo = async (req, res) => {
       , params
     );
 
-    // Promedio general de ventas entre sucursales
     const promedioGeneral =
       result.length > 0
         ? result.reduce((acc, s) => acc + Number(s.ventas), 0) / result.length
@@ -558,6 +545,7 @@ const getVentasPorSucursalPeriodo = async (req, res) => {
 
 export const getNotasPendientes = async (req, res) => {
   const { id_sucursal } = req.query;
+  const id_tenant = req.id_tenant;
   let connection;
   try {
     connection = await getConnection();
@@ -568,8 +556,8 @@ export const getNotasPendientes = async (req, res) => {
         `SELECT a.id_almacen
          FROM almacen a
          INNER JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
-         WHERE sa.id_sucursal = ?`,
-        [id_sucursal]
+         WHERE sa.id_sucursal = ? AND a.id_tenant = ?`,
+        [id_sucursal, id_tenant]
       );
       almacenIds = almacenes.map(a => a.id_almacen);
       if (almacenIds.length === 0) {
@@ -577,7 +565,8 @@ export const getNotasPendientes = async (req, res) => {
       }
     } else {
       const [almacenes] = await connection.query(
-        `SELECT id_almacen FROM almacen WHERE estado_almacen = 1`
+        `SELECT id_almacen FROM almacen WHERE estado_almacen = 1 AND id_tenant = ?`,
+        [id_tenant]
       );
       almacenIds = almacenes.map(a => a.id_almacen);
       if (almacenIds.length === 0) {
@@ -586,50 +575,53 @@ export const getNotasPendientes = async (req, res) => {
     }
 
     // 1. Obtener notas de ingreso y salida con sus detalles
-const [ingresos] = await connection.query(
-  `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
-          dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
-   FROM nota n
-   INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-   INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
-   WHERE n.id_tiponota = 1
-     AND n.id_almacenD IN (?)
-     AND n.estado_nota = 0
-     AND NOT EXISTS (
-       SELECT 1 FROM nota s
-       WHERE s.id_tiponota = 2
-         AND s.fecha = n.fecha
-         AND s.hora_creacion = n.hora_creacion
-         AND s.id_almacenO = n.id_almacenO
-         AND s.id_almacenD = n.id_almacenD
-         AND s.estado_nota = 0
-     )
-  `,
-  [almacenIds]
-);
+    const [ingresos] = await connection.query(
+      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
+              dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
+       FROM nota n
+       INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+       INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+       WHERE n.id_tiponota = 1
+         AND n.id_almacenD IN (?)
+         AND n.estado_nota = 0
+         AND n.id_tenant = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM nota s
+           WHERE s.id_tiponota = 2
+             AND s.fecha = n.fecha
+             AND s.hora_creacion = n.hora_creacion
+             AND s.id_almacenO = n.id_almacenO
+             AND s.id_almacenD = n.id_almacenD
+             AND s.estado_nota = 0
+             AND s.id_tenant = ?
+         )
+      `,
+      [almacenIds, id_tenant, id_tenant]
+    );
 
-const [salidas] = await connection.query(
-  `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
-          dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
-   FROM nota n
-   INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-   INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
-   WHERE n.id_tiponota = 2
-     AND n.id_almacenO IN (?)
-     AND n.estado_nota = 0
-     AND NOT EXISTS (
-       SELECT 1 FROM nota i
-       WHERE i.id_tiponota = 1
-         AND i.fecha = n.fecha
-         AND i.hora_creacion = n.hora_creacion
-         AND i.id_almacenO = n.id_almacenO
-         AND i.id_almacenD = n.id_almacenD
-         AND i.estado_nota = 0
-     )
-  `,
-  [almacenIds]
-);
-
+    const [salidas] = await connection.query(
+      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
+              dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
+       FROM nota n
+       INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+       INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+       WHERE n.id_tiponota = 2
+         AND n.id_almacenO IN (?)
+         AND n.estado_nota = 0
+         AND n.id_tenant = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM nota i
+           WHERE i.id_tiponota = 1
+             AND i.fecha = n.fecha
+             AND i.hora_creacion = n.hora_creacion
+             AND i.id_almacenO = n.id_almacenO
+             AND i.id_almacenD = n.id_almacenD
+             AND i.estado_nota = 0
+             AND i.id_tenant = ?
+         )
+      `,
+      [almacenIds, id_tenant, id_tenant]
+    );
 
     // Obtener detalles para todos los id_nota involucrados
     const allNotasIds = [
@@ -638,19 +630,17 @@ const [salidas] = await connection.query(
     let detallesNotas = [];
     if (allNotasIds.length > 0) {
       const [detalles] = await connection.query(
-        `SELECT id_nota, id_producto, cantidad FROM detalle_nota WHERE id_nota IN (?)`,
-        [allNotasIds]
+        `SELECT id_nota, id_producto, cantidad FROM detalle_nota WHERE id_nota IN (?) AND id_tenant = ?`,
+        [allNotasIds, id_tenant]
       );
       detallesNotas = detalles;
     }
 
-    // Helper para obtener detalles por id_nota
     const getDetalles = (id_nota) =>
       detallesNotas.filter(d => d.id_nota === id_nota);
 
-    // 2. Buscar ingresos sin salida (por producto y cantidad)
     const pendientesIngreso = ingresos.filter(ing =>
-      ing.estado_espera === 0 && // <-- Solo estado_espera 0
+      ing.estado_espera === 0 &&
       (ing.id_almacenO !== null && ing.id_almacenO !== 0) &&
       !salidas.some(sal =>
         sal.id_almacenO === ing.id_almacenO &&
@@ -660,9 +650,8 @@ const [salidas] = await connection.query(
         Number(sal.cantidad) === Number(ing.cantidad)
       )
     );
-    // 3. Buscar salidas sin ingreso (por producto y cantidad)
     const pendientesSalida = salidas.filter(sal =>
-      sal.estado_espera === 0 && // <-- Solo estado_espera 0
+      sal.estado_espera === 0 &&
       !ingresos.some(ing =>
         ing.id_almacenO === sal.id_almacenO &&
         ing.id_almacenD === sal.id_almacenD &&
@@ -672,7 +661,6 @@ const [salidas] = await connection.query(
       )
     );
 
-    // 4. Unir ambos resultados
     const pendientes = [
       ...pendientesIngreso.map(n => ({
         ...n,
@@ -696,6 +684,7 @@ const [salidas] = await connection.query(
 
 export const actualizarEstadoEspera = async (req, res) => {
   const { num_comprobante } = req.body;
+  const id_tenant = req.id_tenant;
   if (!num_comprobante) {
     return res.status(400).json({ code: 0, message: "Falta el num_comprobante" });
   }
@@ -703,8 +692,8 @@ export const actualizarEstadoEspera = async (req, res) => {
   try {
     connection = await getConnection();
     await connection.query(
-      "UPDATE nota n INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante SET n.estado_espera = 1 WHERE c.num_comprobante = ?",
-      [num_comprobante]
+      "UPDATE nota n INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante SET n.estado_espera = 1 WHERE c.num_comprobante = ? AND n.id_tenant = ?",
+      [num_comprobante, id_tenant]
     );
     res.json({ code: 1, message: "estado_espera actualizado correctamente" });
   } catch (error) {

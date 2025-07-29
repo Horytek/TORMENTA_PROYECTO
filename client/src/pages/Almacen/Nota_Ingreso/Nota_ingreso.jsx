@@ -106,7 +106,7 @@ const NotasAlmacen = () => {
   );
 
  return (
-  <div className="min-h-[80vh] px-4 py-8 max-w-8xl mx-auto bg-gradient-to-b from-white via-blue-50/40 to-blue-50/80">
+  <div className="min-h-[80vh] px-4 py-8 max-w-8xl mx-auto">
     <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Notas de almacén</h1>
     <p className="text-base text-blue-700/80 mb-6">Administra y busca notas de ingreso y salida fácilmente.</p>
 <div className="w-full mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
