@@ -155,9 +155,15 @@ const verifyToken = async (req, res) => {
 const logout = async (req, res) => {
     let connection;
     connection = await getConnection();
+    const tokenHeader = req.headers['authorization'];
+    let token = tokenHeader;
 
-    const token = req.headers['authorization'];
-    if (!token) return res.sendStatus(401);
+    // Si el header tiene formato Bearer <token>, extrae solo el token
+    if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
+        token = tokenHeader.split(' ')[1];
+    }
+
+    if (!token) return res.send(false);
 
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
