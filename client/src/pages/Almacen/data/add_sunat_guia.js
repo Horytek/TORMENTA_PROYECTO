@@ -2,7 +2,6 @@ import axios from "@/api/axios";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
-import { useUserStore } from "@/store/useStore";
 
 function convertDateToDesiredFormat(dateString, offsetHours) {
   // Crear una instancia de la fecha en UTC
@@ -25,9 +24,8 @@ function convertDateToDesiredFormat(dateString, offsetHours) {
   return formattedDate;
 }
 
-const enviarGuiaRemisionASunat = async (data) => {
+const enviarGuiaRemisionASunat = async (data, nombre) => {
   const url = 'https://facturacion.apisperu.com/api/v1/despatch/send';
-  const nombre = useUserStore((state) => state.nombre);
   const token = await getClaveSunatByUser(nombre);
     
   //console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Verificar los datos enviados
@@ -57,9 +55,8 @@ const enviarGuiaRemisionASunat = async (data) => {
   }
 };
 
-export const handleGuiaRemisionSunat = async (guia, destinata, transportista, detalles) => {
+export const handleGuiaRemisionSunat = async (guia, destinata, transportista, detalles, nombre) => {
       // Obtener los datos de la empresa
-      const nombre = useUserStore((state) => state.nombre);
       const empresaData = await getEmpresaDataByUser(nombre);
   const tipoDoc = "05";
   const guialetra = "T";
@@ -121,7 +118,7 @@ export const handleGuiaRemisionSunat = async (guia, destinata, transportista, de
 
   const loadingToastId = toast.loading('Se están enviando los datos a la Sunat...');
   //console.log('Datos de la guía de remisión:', data);
-  enviarGuiaRemisionASunat(data)
+  enviarGuiaRemisionASunat(data, nombre)
     .then(() => {
       toast.dismiss(loadingToastId);
     })

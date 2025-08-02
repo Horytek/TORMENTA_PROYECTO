@@ -24,6 +24,7 @@ import {
   SelectItem,
   Textarea,
 } from '@heroui/react';
+import { useUserStore } from "@/store/useStore";
 
 const glosaOptions = [
   "COMPRA", "VENTA CON ENTREGA A TERCEROS", "TRASLADO ENTRE ALMACENES DE LA MISMA CIA.",
@@ -62,6 +63,7 @@ const [productosSeleccionados, setProductosSeleccionados] = useState([]);
   const { clientes } = useClienteData();
   const { sucursales } = useSucursalData();
   const { documentos } = useDocumentoData();
+  const nombre = useUserStore.getState().nombre;
 
   // Fecha y hora actual
   const currentDate = new Date();
@@ -196,7 +198,7 @@ useEffect(() => {
         placa: transporte?.placa || '',
       };
 
-      handleGuiaRemisionSunat(guiaData, destinatario, transportista, productosSeleccionados);
+      handleGuiaRemisionSunat(guiaData, destinatario, transportista, productosSeleccionados, nombre);
 
       handleCancel();
       window.location.reload();
