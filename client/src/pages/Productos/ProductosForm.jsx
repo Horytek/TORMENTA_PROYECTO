@@ -206,17 +206,31 @@ const adaptInitialData = (data) => {
       }, 300);
     };
 
+    // Función para manejar el cierre del modal sin afectar al modal padre
+    const handleModalOnClose = () => {
+      // Solo cierra este modal, no propaga el evento al modal padre
+      handleCloseModal();
+    };
+
   return (
     <div>
       <Toaster />
       <Modal 
         isOpen={isOpen} 
-        onClose={handleCloseModal}
+        onClose={handleModalOnClose}
         size="3xl"
         scrollBehavior="inside"
+        backdrop="blur"
+        isDismissable={true}
+        isKeyboardDismissDisabled={false}
+        classNames={{
+          backdrop: "bg-black/50 backdrop-blur-md z-[10005]",
+          wrapper: "z-[10006]",
+          base: "z-[10007]"
+        }}
       >
         <ModalContent>
-          {(onClose) => (
+          {() => (
             <>
               <ModalHeader className="flex flex-col gap-1">
                 {modalTitle}

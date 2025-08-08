@@ -26,6 +26,11 @@ export default function AgregarProveedorModal({ isOpen, onClose, onProveedorAdde
     email: false,
   });
 
+  // Definir el título del modal
+  const titulo = tipoCliente === 'Natural' ? 'Cliente Natural' : 
+                 tipoCliente === 'Juridico' ? 'Cliente Jurídico' : 
+                 'Destinatario';
+
   const handleGuardarAction = async () => {
     const data = {
       ruc: tipoCliente === 'Juridico' ? dniOrRuc : null,

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { FaTrash } from 'react-icons/fa6';
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
-const NuevaTablaGuia = ({ guias, setProductosSeleccionados }) => {
+const NuevaTablaGuia = ({ guias = [], setProductosSeleccionados }) => {
   const [isModalOpenEliminar, setIsModalOpenEliminar] = useState(false);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
 
@@ -52,7 +52,15 @@ const NuevaTablaGuia = ({ guias, setProductosSeleccionados }) => {
           </tr>
         </thead>
         <tbody>
-          {guias.map(renderEntradaRow)}
+          {Array.isArray(guias) && guias.length > 0 ? (
+            guias.map(renderEntradaRow)
+          ) : (
+            <tr>
+              <td colSpan="5" className="text-center py-4 text-gray-500">
+                No hay productos seleccionados
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
       {isModalOpenEliminar && (

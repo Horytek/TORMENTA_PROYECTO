@@ -46,6 +46,11 @@ const ModalBuscarProducto = ({ isOpen, onClose, productos, agregarProducto }) =>
 
   const handleModalAdd = () => setModalOpen(!activeAdd);
 
+  // Función para cerrar el modal de ProductosForm
+  const handleCloseProductosForm = () => {
+    setModalOpen(false);
+  };
+
   const handleCantidadChange = (codigo, value) => {
     const cantidad = parseInt(value, 10);
     if (!isNaN(cantidad) && cantidad > 0) {
@@ -66,7 +71,17 @@ const ModalBuscarProducto = ({ isOpen, onClose, productos, agregarProducto }) =>
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      size="4xl"
+      backdrop="blur"
+      classNames={{
+        backdrop: "bg-black/30 backdrop-blur-sm",
+        wrapper: "z-[9999]",
+        base: "z-[10000]"
+      }}
+    >
       <ModalContent>
         <ModalHeader>
           <div className="flex justify-between items-center w-full">
@@ -151,7 +166,10 @@ const ModalBuscarProducto = ({ isOpen, onClose, productos, agregarProducto }) =>
       </ModalContent>
 
       {activeAdd && (
-        <ProductosForm modalTitle="Nuevo Producto" onClose={handleModalAdd} />
+        <ProductosForm 
+          modalTitle="Nuevo Producto" 
+          onClose={handleCloseProductosForm} 
+        />
       )}
     </Modal>
   );
