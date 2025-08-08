@@ -4,20 +4,44 @@ const getModulosConSubmodulos = async (req, res) => {
     try {
         const connection = await getConnection();
         
-        const [modulos] = await connection.query(`
-            SELECT * FROM modulo WHERE id_tenant = ? ORDER BY id_modulo
-        `, [req.id_tenant]);
+        // Verificar si es desarrollador o administrador de empresa
+        const nameUser = req.user.nameUser;
+        const isDeveloper = nameUser === 'desarrollador';
+        const id_tenant = req.id_tenant;
         
-        const [submodulos] = await connection.query(`
-            SELECT 
-                s.id_submodulo,
-                s.id_modulo,
-                s.nombre_sub,
-                s.ruta as ruta_submodulo
-            FROM submodulos s
-            WHERE s.id_tenant = ?
-            ORDER BY s.id_modulo, s.id_submodulo
-        `, [req.id_tenant]);
+        let modulosQuery, submodulosQuery, queryParams;
+        
+        if (isDeveloper) {
+            // Desarrollador ve todos los módulos sin filtro de tenant
+            modulosQuery = `SELECT * FROM modulo ORDER BY id_modulo`;
+            submodulosQuery = `
+                SELECT 
+                    s.id_submodulo,
+                    s.id_modulo,
+                    s.nombre_sub,
+                    s.ruta as ruta_submodulo
+                FROM submodulos s
+                ORDER BY s.id_modulo, s.id_submodulo
+            `;
+            queryParams = [];
+        } else {
+            // Administrador de empresa ve solo sus módulos del tenant
+            modulosQuery = `SELECT * FROM modulo WHERE id_tenant = ? ORDER BY id_modulo`;
+            submodulosQuery = `
+                SELECT 
+                    s.id_submodulo,
+                    s.id_modulo,
+                    s.nombre_sub,
+                    s.ruta as ruta_submodulo
+                FROM submodulos s
+                WHERE s.id_tenant = ?
+                ORDER BY s.id_modulo, s.id_submodulo
+            `;
+            queryParams = [id_tenant];
+        }
+        
+        const [modulos] = await connection.query(modulosQuery, queryParams);
+        const [submodulos] = await connection.query(submodulosQuery, queryParams);
         
         const modulosConSubmodulos = modulos.map(modulo => {
             const moduloSubmodulos = submodulos.filter(
@@ -50,13 +74,36 @@ const getPermisosModulo = async (req, res) => {
         const { id_rol } = req.params;
         const connection = await getConnection();
 
-        const [permisos] = await connection.query(`
-            SELECT m.nombre_modulo, s.nombre_submodulo, p.ver, p.crear, p.editar, p.eliminar, p.desactivar, p.generar
-            FROM permisos p
-            INNER JOIN modulo m ON p.id_modulo = m.id_modulo
-            LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
-            WHERE p.id_rol = ? AND p.id_tenant = ?
-        `, [id_rol, req.id_tenant]);
+        // Verificar si es desarrollador
+        const nameUser = req.user.nameUser;
+        const isDeveloper = nameUser === 'desarrollador';
+        const id_tenant = req.id_tenant;
+
+        let permisosQuery, queryParams;
+
+        if (isDeveloper) {
+            // Desarrollador ve permisos sin filtro de tenant
+            permisosQuery = `
+                SELECT m.nombre_modulo, s.nombre_submodulo, p.ver, p.crear, p.editar, p.eliminar, p.desactivar, p.generar
+                FROM permisos p
+                INNER JOIN modulo m ON p.id_modulo = m.id_modulo
+                LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
+                WHERE p.id_rol = ?
+            `;
+            queryParams = [id_rol];
+        } else {
+            // Administrador de empresa ve solo permisos de su tenant
+            permisosQuery = `
+                SELECT m.nombre_modulo, s.nombre_submodulo, p.ver, p.crear, p.editar, p.eliminar, p.desactivar, p.generar
+                FROM permisos p
+                INNER JOIN modulo m ON p.id_modulo = m.id_modulo
+                LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
+                WHERE p.id_rol = ? AND p.id_tenant = ?
+            `;
+            queryParams = [id_rol, id_tenant];
+        }
+
+        const [permisos] = await connection.query(permisosQuery, queryParams);
 
         res.json(permisos);
     } catch (error) {
@@ -67,9 +114,25 @@ const getPermisosModulo = async (req, res) => {
 const getRoles = async (req, res) => {
     try {
         const connection = await getConnection();
-        const [roles] = await connection.query(`
-            SELECT id_rol, nom_rol FROM rol WHERE id_rol!=10 AND id_tenant = ?
-        `, [req.id_tenant]);
+        
+        // Verificar si es desarrollador o administrador de empresa
+        const nameUser = req.user.nameUser;
+        const isDeveloper = nameUser === 'desarrollador';
+        const id_tenant = req.id_tenant;
+        
+        let rolesQuery, queryParams;
+        
+        if (isDeveloper) {
+            // Desarrollador ve todos los roles sin filtro de tenant
+            rolesQuery = `SELECT id_rol, nom_rol FROM rol WHERE id_rol!=10 ORDER BY id_rol`;
+            queryParams = [];
+        } else {
+            // Administrador de empresa ve solo los roles de su tenant
+            rolesQuery = `SELECT id_rol, nom_rol FROM rol WHERE id_rol!=10 AND id_tenant = ? ORDER BY id_rol`;
+            queryParams = [id_tenant];
+        }
+        
+        const [roles] = await connection.query(rolesQuery, queryParams);
         
         res.json({
             success: true,
@@ -88,21 +151,52 @@ const getPermisosByRol = async (req, res) => {
         const { id_rol } = req.params;
         const connection = await getConnection();
         
-        const [permisos] = await connection.query(`
-            SELECT 
-                id_permiso,
-                id_rol,
-                id_modulo,
-                id_submodulo,
-                crear,
-                ver,
-                editar,
-                eliminar,
-                desactivar,
-                generar
-            FROM permisos
-            WHERE id_rol = ? AND id_tenant = ?
-        `, [id_rol, req.id_tenant]);
+        // Verificar si es desarrollador
+        const nameUser = req.user.nameUser;
+        const isDeveloper = nameUser === 'desarrollador';
+        const id_tenant = req.id_tenant;
+        
+        let permisosQuery, queryParams;
+        
+        if (isDeveloper) {
+            // Desarrollador ve permisos sin filtro de tenant
+            permisosQuery = `
+                SELECT 
+                    id_permiso,
+                    id_rol,
+                    id_modulo,
+                    id_submodulo,
+                    crear,
+                    ver,
+                    editar,
+                    eliminar,
+                    desactivar,
+                    generar
+                FROM permisos
+                WHERE id_rol = ?
+            `;
+            queryParams = [id_rol];
+        } else {
+            // Administrador de empresa ve solo permisos de su tenant
+            permisosQuery = `
+                SELECT 
+                    id_permiso,
+                    id_rol,
+                    id_modulo,
+                    id_submodulo,
+                    crear,
+                    ver,
+                    editar,
+                    eliminar,
+                    desactivar,
+                    generar
+                FROM permisos
+                WHERE id_rol = ? AND id_tenant = ?
+            `;
+            queryParams = [id_rol, id_tenant];
+        }
+        
+        const [permisos] = await connection.query(permisosQuery, queryParams);
         
         res.json({
             success: true,
@@ -123,29 +217,69 @@ const savePermisos = async (req, res) => {
     try {
         const { id_rol, permisos } = req.body;
         
-        await connection.query(
-            'DELETE FROM permisos WHERE id_rol = ? AND id_tenant = ?',
-            [id_rol, req.id_tenant]
-        );
+        // Verificar si es desarrollador
+        const nameUser = req.user.nameUser;
+        const isDeveloper = nameUser === 'desarrollador';
+        const id_tenant = req.id_tenant;
+        
+        if (isDeveloper) {
+            // Desarrollador elimina permisos sin filtro de tenant (todos los tenants)
+            await connection.query(
+                'DELETE FROM permisos WHERE id_rol = ?',
+                [id_rol]
+            );
+        } else {
+            // Administrador de empresa elimina solo permisos de su tenant
+            await connection.query(
+                'DELETE FROM permisos WHERE id_rol = ? AND id_tenant = ?',
+                [id_rol, id_tenant]
+            );
+        }
         
         if (permisos && permisos.length > 0) {
             for (const p of permisos) {
-                await connection.query(`
-                    INSERT INTO permisos
-                    (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `, [
-                    id_rol, 
-                    p.id_modulo, 
-                    p.id_submodulo || null, 
-                    p.crear !== undefined ? p.crear : 0,
-                    p.ver !== undefined ? p.ver : 0,
-                    p.editar !== undefined ? p.editar : 0,
-                    p.eliminar !== undefined ? p.eliminar : 0,
-                    p.desactivar !== undefined ? p.desactivar : 0,
-                    p.generar !== undefined ? p.generar : 0,
-                    req.id_tenant
-                ]);
+                if (isDeveloper) {
+                    // Desarrollador inserta permisos para todos los tenants
+                    // Obtener todos los tenants existentes
+                    const [tenants] = await connection.query('SELECT DISTINCT id_tenant FROM usuario WHERE id_tenant IS NOT NULL');
+                    
+                    for (const tenant of tenants) {
+                        await connection.query(`
+                            INSERT INTO permisos
+                            (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        `, [
+                            id_rol, 
+                            p.id_modulo, 
+                            p.id_submodulo || null, 
+                            p.crear !== undefined ? p.crear : 0,
+                            p.ver !== undefined ? p.ver : 0,
+                            p.editar !== undefined ? p.editar : 0,
+                            p.eliminar !== undefined ? p.eliminar : 0,
+                            p.desactivar !== undefined ? p.desactivar : 0,
+                            p.generar !== undefined ? p.generar : 0,
+                            tenant.id_tenant
+                        ]);
+                    }
+                } else {
+                    // Administrador de empresa inserta permisos solo para su tenant
+                    await connection.query(`
+                        INSERT INTO permisos
+                        (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `, [
+                        id_rol, 
+                        p.id_modulo, 
+                        p.id_submodulo || null, 
+                        p.crear !== undefined ? p.crear : 0,
+                        p.ver !== undefined ? p.ver : 0,
+                        p.editar !== undefined ? p.editar : 0,
+                        p.eliminar !== undefined ? p.eliminar : 0,
+                        p.desactivar !== undefined ? p.desactivar : 0,
+                        p.generar !== undefined ? p.generar : 0,
+                        id_tenant
+                    ]);
+                }
             }
         }
         
@@ -190,6 +324,18 @@ const checkPermiso = async (req, res) => {
           message: "Información de usuario incompleta en el token"
         });
       }
+
+      // Si es desarrollador, tiene todos los permisos
+      if (nameUser === 'desarrollador') {
+        return res.json({ 
+          hasPermission: true,
+          hasCreatePermission: true,
+          hasEditPermission: true,
+          hasDeletePermission: true,
+          hasGeneratePermission: true,
+          hasDeactivatePermission: true
+        });
+      }
       
       const connection = await getConnection();
       
@@ -228,6 +374,8 @@ const checkPermiso = async (req, res) => {
         hasCreatePermission: false,
         hasEditPermission: false,
         hasDeletePermission: false,
+        hasGeneratePermission: false,
+        hasDeactivatePermission: false,
         message: "Error interno del servidor" 
       });
     }

@@ -26,6 +26,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await loginRequest(user);
       sessionStorage.setItem("token", res.data.token);
+      
+      // Guardar datos del usuario en sessionStorage
+      sessionStorage.setItem("user", JSON.stringify(res.data.data));
+      
       setUser(res.data.data);
       setIsAuthenticated(true);
 
@@ -46,6 +50,7 @@ export const AuthProvider = ({ children }) => {
       const token = sessionStorage.getItem("token");
       logoutRequest(token);
       sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user"); // También remover datos del usuario
       setUser(null);
       setIsAuthenticated(false);
 
@@ -65,6 +70,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setLoading(false);
         clearUser();
+        sessionStorage.removeItem("user"); // Limpiar datos de usuario si no hay token
         return;
       }
       try {
@@ -73,8 +79,13 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
           setLoading(false);
           clearUser();
+          sessionStorage.removeItem("user");
           return;
         }
+        
+        // Guardar datos del usuario en sessionStorage también aquí
+        sessionStorage.setItem("user", JSON.stringify(res.data));
+        
         setIsAuthenticated(true);
         setUser(res.data);
         setNombre(res.data.name || res.data.usuario || "");
@@ -86,10 +97,11 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setLoading(false);
         clearUser();
+        sessionStorage.removeItem("user");
       }
     };
     checkLogin();
-  }, [setNombre, setIdRol, setSur, clearUser]);
+  }, [setNombre, setIdRol, setSur, clearUser, setIdTenant]);
 
   return (
     <AuthContext.Provider value={{

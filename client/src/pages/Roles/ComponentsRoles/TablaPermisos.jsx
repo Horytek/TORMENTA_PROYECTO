@@ -19,6 +19,7 @@ import { toast } from "react-hot-toast";
 
 export function TablaPermisos() {
   const [selectedTab, setSelectedTab] = useState("administrador");
+  const [userInfo, setUserInfo] = useState(null);
   const {
     modulosConSubmodulos,
     loading: rutasLoading,
@@ -38,6 +39,19 @@ export function TablaPermisos() {
   const { savePermisos, saving: savingPermisos } = useSavePermisos();
 
   const [permisosData, setPermisosData] = useState({});
+
+  // Obtener información del usuario para saber si es desarrollador
+  useEffect(() => {
+    const userDataString = sessionStorage.getItem("user");
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString);
+        setUserInfo(userData);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (roles.length > 0) {
@@ -179,7 +193,11 @@ export function TablaPermisos() {
       const success = await savePermisos(currentRoleId, permisosToSave);
 
       if (success) {
-        toast.success("Permisos guardados correctamente");
+        if (userInfo?.usuario === 'desarrollador') {
+          toast.success("Permisos guardados para todos los inquilinos del sistema");
+        } else {
+          toast.success("Permisos guardados correctamente");
+        }
         refetchPermisos();
       } else {
         toast.error("Error al guardar los permisos");
@@ -518,6 +536,16 @@ export function TablaPermisos() {
         >
           Administra los permisos de acceso para cada rol del sistema.
         </p>
+        {userInfo?.usuario === 'desarrollador' && (
+          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <FaUserShield className="text-yellow-600" />
+              <span className="text-sm font-medium text-yellow-800">
+                Modo Desarrollador: Los cambios se aplicarán a todos los inquilinos del sistema
+              </span>
+            </div>
+          </div>
+        )}
       </div>
       <Card>
         <CardHeader>

@@ -105,6 +105,7 @@ const data = {
   desarrollador: [
     { title: "Desarrollo", url: "/desarrollador", icon: Bot, items: [] },
     { title: "Módulos", url: "/modulos", icon: SquareTerminal, items: [] },
+    { title: "Permisos Globales", url: "/desarrollador/permisos-globales", icon: Settings2, items: [] },
     { title: "Inf. empresas", url: "/sunat", icon: BookOpen, items: [] },
   ],
   projects: [

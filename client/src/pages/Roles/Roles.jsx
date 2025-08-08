@@ -2,7 +2,6 @@ import { useState } from 'react';
 import UsuariosForm from './UsuariosForm';
 import { Toaster } from "react-hot-toast";
 import TablaRoles from './ComponentsRoles/TablaRoles';
-import TablaPermisos from './ComponentsRoles/TablaPermisos';
 import TablaAsignacion from './ComponentsRoles/TablaAsignacion';
 import { Tabs, Tab } from "@heroui/react";
 
@@ -26,9 +25,9 @@ function Usuarios() {
         <Tab key="roles" title="Roles">
           <TablaRoles />
         </Tab>
-        <Tab key="permisos" title="Permisos">
+        {/* <Tab key="permisos" title="Permisos">
           <TablaPermisos />
-        </Tab>
+        </Tab> */}
         <Tab key="paginas" title="Pantalla de inicio">
           <TablaAsignacion />
         </Tab>
