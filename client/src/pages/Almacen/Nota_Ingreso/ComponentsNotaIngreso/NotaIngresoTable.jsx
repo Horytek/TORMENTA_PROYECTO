@@ -13,7 +13,7 @@ import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";
 import { useUserStore } from "@/store/useStore";
 
-const TablaNotasAlmacen = forwardRef(({ registros = [], tipo }, ref) => {
+const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, ref) => {
   const [empresaData, setEmpresaData] = useState(null);
   const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
   const [selectedObservation, setSelectedObservation] = useState("");
@@ -209,7 +209,10 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo }, ref) => {
       }
       if (result.success) {
         toast.success('Nota anulada');
-        window.location.reload();
+        // Actualizar el array local en lugar de recargar la página
+        if (onNotaAnulada) {
+          onNotaAnulada(notaIdToAccion);
+        }
       } else {
         toast.error('La nota ya está anulada.');
       }

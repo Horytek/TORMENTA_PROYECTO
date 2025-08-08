@@ -11,7 +11,7 @@ import {
 import { toast, Toaster } from 'react-hot-toast';
 import insertDestinatario from './data/insert_destinatario';
 
-const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
+export default function AgregarProveedorModal({ isOpen, onClose, onProveedorAdded }) {
   const [dniOrRuc, setDniOrRuc] = useState('');
   const [tipoCliente, setTipoCliente] = useState('');
   const [formData, setFormData] = useState({
@@ -44,9 +44,10 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
       toast.success('Destinatario insertado correctamente.');
       handleClear();
       onClose();
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+      // Llamar al callback para actualizar la lista local
+      if (onProveedorAdded) {
+        onProveedorAdded(result.data || data);
+      }
     } else {
       toast.error('Asegúrese de que los campos sean correctos o que el destinatario no esté registrado.');
     }
@@ -217,5 +218,3 @@ const AgregarProovedor = ({ isOpen, onClose, titulo }) => {
     </Modal>
   );
 };
-
-export default AgregarProovedor;

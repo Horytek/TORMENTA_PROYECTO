@@ -127,7 +127,7 @@ const useGuiasData = (filters) => {
     fetchGuias();
   };
 
-  return { guias, removeGuia, currentPage, setCurrentPage, totalPages, guiasPerPage, setGuiasPerPage, detalles, addGuia, addDetalle, removeDetalle, updateDetalle, totalRecaudado, updateGuia, refetchGuias };
+  return { guias, setGuias, removeGuia, currentPage, setCurrentPage, totalPages, guiasPerPage, setGuiasPerPage, detalles, addGuia, addDetalle, removeDetalle, updateDetalle, totalRecaudado, updateGuia, refetchGuias };
 };
 
 export default useGuiasData;

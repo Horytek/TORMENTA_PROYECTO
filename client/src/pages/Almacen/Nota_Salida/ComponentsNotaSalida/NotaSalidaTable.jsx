@@ -7,7 +7,7 @@ import anularNota from '../data/anular_nota_salida';
 import { Toaster, toast } from "react-hot-toast";
 import { usePermisos } from '@/routes';
 import html2pdf from 'html2pdf.js';
-const NotaSalidaTable = forwardRef(({ salidas }, ref)  => {
+const NotaSalidaTable = forwardRef(({ salidas, onNotaAnulada }, ref)  => {
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
   const [notaIdToAnular, setNotaIdToAnular] = useState(null);
@@ -63,7 +63,10 @@ const NotaSalidaTable = forwardRef(({ salidas }, ref)  => {
       const result = await anularNota(notaIdToAnular);
       if (result.success) {
         toast.success('Nota anulada');
-        window.location.reload();
+        // Actualizar el array local en lugar de recargar la página
+        if (onNotaAnulada) {
+          onNotaAnulada(notaIdToAnular);
+        }
       } else {
         toast.error('La nota ya está anulada.');
       }

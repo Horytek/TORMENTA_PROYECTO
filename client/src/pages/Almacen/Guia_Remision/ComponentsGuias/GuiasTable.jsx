@@ -10,7 +10,7 @@ import html2pdf from 'html2pdf.js';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 const itemsPerPageDefault = 10;
 
-const TablaGuias = ({ guias }) => {
+const TablaGuias = ({ guias, onGuiaAnulada }) => {
   const [empresaData, setEmpresaData] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -226,7 +226,10 @@ const TablaGuias = ({ guias }) => {
       const result = await anularGuia(guiaIdToAnular);
       if (result.success) {
         toast.success('Guía de remisión anulada');
-        window.location.reload();
+        // Actualizar el array local en lugar de recargar la página
+        if (onGuiaAnulada) {
+          onGuiaAnulada(guiaIdToAnular);
+        }
       } else {
         toast.error(result.message);
       }

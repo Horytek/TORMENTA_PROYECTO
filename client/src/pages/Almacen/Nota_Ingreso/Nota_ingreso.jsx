@@ -49,6 +49,27 @@ const NotasAlmacen = () => {
     fetchSalidas();
   }, [fetchSalidas]);
 
+  // Función para actualizar el array local cuando se anula una nota
+  const handleNotaAnulada = (notaId) => {
+    if (tabActiva === "ingreso") {
+      setIngresos(prev => 
+        prev.map(ingreso => 
+          ingreso.id === notaId 
+            ? { ...ingreso, estado: 0 } // Asumiendo que 0 es el estado anulado
+            : ingreso
+        )
+      );
+    } else {
+      setSalidas(prev => 
+        prev.map(salida => 
+          salida.id === notaId 
+            ? { ...salida, estado: 0 } // Asumiendo que 0 es el estado anulado
+            : salida
+        )
+      );
+    }
+  };
+
   useEffect(() => {
     const almacenIdGuardado = almacenGlobal;
     if (almacenIdGuardado && almacenes.length > 0) {
@@ -150,6 +171,7 @@ const NotasAlmacen = () => {
               <TablaNotasAlmacen
                 registros={currentRegistros}
                 tipo="ingreso"
+                onNotaAnulada={handleNotaAnulada}
               />
             </RoutePermission>
           </div>
@@ -168,6 +190,7 @@ const NotasAlmacen = () => {
               ref={tablaSalidaRef}
               registros={currentRegistros}
               tipo="salida"
+              onNotaAnulada={handleNotaAnulada}
             />
           </div>
         </Tab>

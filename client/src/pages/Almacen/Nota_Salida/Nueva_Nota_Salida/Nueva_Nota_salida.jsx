@@ -116,7 +116,8 @@ function NuevaSalidas() {
     if (result.success) {
       toast.success('Nota y detalle insertados correctamente.');
       handleCancel();
-      window.location.reload();
+      // Navegar de vuelta a la lista de notas en lugar de recargar la página
+      window.history.back();
     } else {
       throw new Error('Error inesperado en la inserción de la nota.');
     }

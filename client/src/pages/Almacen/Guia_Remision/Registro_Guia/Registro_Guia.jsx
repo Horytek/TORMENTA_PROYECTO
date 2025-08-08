@@ -201,7 +201,8 @@ useEffect(() => {
       handleGuiaRemisionSunat(guiaData, destinatario, transportista, productosSeleccionados, nombre);
 
       handleCancel();
-      window.location.reload();
+      // Navegar de vuelta a la lista de guías en lugar de recargar la página
+      window.history.back();
     } else {
       toast.error("Error al guardar la Guía de Remisión");
     }

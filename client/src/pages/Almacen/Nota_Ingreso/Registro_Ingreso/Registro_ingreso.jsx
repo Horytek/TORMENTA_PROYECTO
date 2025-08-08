@@ -238,7 +238,8 @@ const almacenesDestinoFiltrados =
       ) {
         toast.success('Nota(s) y detalle(s) insertados correctamente.');
         handleCancel();
-        window.location.reload();
+        // Navegar de vuelta a la lista de notas en lugar de recargar la página
+        window.history.back();
       } else {
         throw new Error('Error inesperado en la inserción de la nota.');
       }

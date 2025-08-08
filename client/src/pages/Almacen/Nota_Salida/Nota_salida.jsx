@@ -51,6 +51,17 @@ const Salidas = () => {
     setAlmacenSeleccionado(almacen);
   };
 
+  // Función para actualizar el array local cuando se anula una nota
+  const handleNotaAnulada = (notaId) => {
+    setSalidas(prev => 
+      prev.map(salida => 
+        salida.id === notaId 
+          ? { ...salida, estado: 0 } // Asumiendo que 0 es el estado anulado
+          : salida
+      )
+    );
+  };
+
   const tablaSalidaRef = useRef(null);
 
   const handlePDFOption = () => {
@@ -89,7 +100,7 @@ const Salidas = () => {
       />
 
       <div>
-        <TablaSalida ref={tablaSalidaRef} salidas={salidas} />
+        <TablaSalida ref={tablaSalidaRef} salidas={salidas} onNotaAnulada={handleNotaAnulada} />
       </div>
 
       {/* Example of converting inline styles to Tailwind (kept commented) */}

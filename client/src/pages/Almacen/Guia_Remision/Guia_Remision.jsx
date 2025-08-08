@@ -18,6 +18,7 @@ const Guias = () => {
     totalPages,
     guiasPerPage,
     setGuiasPerPage,
+    setGuias,
   } = useGuiasData(filters);
 
   const navigate = useNavigate();
@@ -30,6 +31,17 @@ const Guias = () => {
       }
       return prevFilters;
     });
+  };
+
+  // Función para actualizar el array local cuando se anula una guía
+  const handleGuiaAnulada = (guiaId) => {
+    setGuias(prev => 
+      prev.map(guia => 
+        guia.id === guiaId 
+          ? { ...guia, estado: 0 } // Asumiendo que 0 es el estado anulado
+          : guia
+      )
+    );
   };
 
   return (
@@ -58,7 +70,7 @@ const Guias = () => {
       </div>
       <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
         <ScrollShadow hideScrollBar className="rounded-2xl">
-          <TablaGuias guias={guias} handleEditGuia={() => {}} />
+          <TablaGuias guias={guias} handleEditGuia={() => {}} onGuiaAnulada={handleGuiaAnulada} />
         </ScrollShadow>
       </div>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-4 px-4 pb-2">
