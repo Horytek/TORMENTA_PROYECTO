@@ -25,7 +25,22 @@ const SalesStep4Preview = ({
   
   // Obtener datos necesarios
   const sucursalV = { nombre: "Sucursal Principal", ubicacion: "Dirección Principal" };
-  const localDate = new Date().toISOString().slice(0, 10);
+  // Fecha local en formato YYYY-MM-DD
+  function getFechaLocalISO() {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const localISO = new Date(now.getTime() - tzOffset).toISOString().slice(0, 19);
+    return localISO.replace('T', ' ');
+  }
+  const localDate = getFechaLocalISO();
+
+  // Fecha y hora local en formato ISO (con zona horaria)
+  function getFechaIsoLocal() {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffset).toISOString();
+  }
+  const fechaIsoLocal = getFechaIsoLocal();
   
   // Cálculos para descuentos
   const descuentoCalculado = parseFloat(paymentData.descuentoCalculado || 0);
@@ -60,7 +75,7 @@ const SalesStep4Preview = ({
       descuento: parseFloat(detalle.descuento),
       total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
     })),
-    fecha_iso: new Date(),
+    fecha_iso: fechaIsoLocal,
     metodo_pago: paymentData.metodoPago + ':' + montoRecibido +
       (paymentData.metodoPago2 && montoAdicional > 0 ? ", " + paymentData.metodoPago2 + ':' + montoAdicional : '') +
       (paymentData.metodoPago3 && montoAdicional2 > 0 ? ", " + paymentData.metodoPago3 + ':' + montoAdicional2 : ''),
@@ -102,7 +117,7 @@ const SalesStep4Preview = ({
       };
     }).filter(detalle => detalle !== null),
     observacion: paymentData.observaciones || '',
-  }), [detalles, selectedDocumentType, clienteData, paymentData, total_t, totalConDescuento, montoRecibido, montoAdicional, montoAdicional2, totalPagado, cambio, nombre, usuario, productos]);
+  }), [detalles, selectedDocumentType, clienteData, paymentData, total_t, totalConDescuento, montoRecibido, montoAdicional, montoAdicional2, totalPagado, cambio, nombre, usuario, productos, localDate, fechaIsoLocal]);
 
   // Función para procesar la venta
  const procesarVenta = async () => {

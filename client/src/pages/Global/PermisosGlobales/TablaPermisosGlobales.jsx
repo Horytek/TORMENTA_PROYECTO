@@ -91,6 +91,13 @@ export function TablaPermisosGlobales() {
   const { permisos, loading: permisosLoading, refetchPermisos } = usePermisosByRolGlobal(currentRoleId, selectedPlan);
   const { savePermisos, saving: savingPermisos } = useSavePermisosGlobales();
 
+    // Filtrar solo el rol Administrador
+  const adminRoles = useMemo(() => {
+    return (roles || []).filter(
+      (r) => r.id_rol === 1 || (r.nom_rol || '').toUpperCase() === 'Administrador'
+    );
+  }, [roles]);
+
   // Memoizar el cálculo de isDeveloper - verificar múltiples campos con más flexibilidad
   const isDeveloper = useMemo(() => {
     if (!userInfo) {
@@ -151,25 +158,24 @@ export function TablaPermisosGlobales() {
 
   // Manejo inicial de roles y mapeo - más estable
   useEffect(() => {
-      
-    if (!roles || roles.length === 0) return;
+    // Usar solo el rol Administrador
+    if (!adminRoles || adminRoles.length === 0) return;
 
     const tabRoleMapping = {};
-    roles.forEach(role => {
+    adminRoles.forEach(role => {
       const tabKey = role.nom_rol.toLowerCase();
       tabRoleMapping[tabKey] = role.id_rol;
     });
 
-    const firstRole = roles[0];
+    const firstRole = adminRoles[0];
     const firstTabKey = firstRole.nom_rol.toLowerCase();
 
-    // Batch all updates
     setRoleMapping(tabRoleMapping);
     setSelectedTab(firstTabKey);
     setCurrentRoleId(firstRole.id_rol);
 
     isInitialized.current = true;
-  }, [roles]);
+  }, [adminRoles]);
 
   // Manejo de cambio de tab seleccionado - simplificado
   const handleTabChange = useCallback((newTab) => {
@@ -450,7 +456,7 @@ export function TablaPermisosGlobales() {
         </div>
       )}
       
-      {!rutasLoading && !rolesLoading && isInitialized.current && !rutasError && !rolesError && (
+{!rutasLoading && !rolesLoading && isInitialized.current && !rutasError && !rolesError && (
         <>
           <div className="flex flex-col mb-4">
             <h1 className='text-3xl font-extrabold mb-4 text-blue-900 tracking-tight'>
@@ -462,71 +468,66 @@ export function TablaPermisosGlobales() {
             >
               Administra los permisos de acceso según el plan de suscripción de cada empresa.
             </p>
-           
           </div>
-      <Card>
-        <CardHeader>
-        </CardHeader>
-        <CardBody>
-          <Tabs
-            aria-label="Roles"
-            selectedKey={selectedTab}
-            onSelectionChange={handleTabChange}
-            color="primary"
-            variant="bordered"
-            classNames={{
-              tabList: "gap-4",
-              tab: "py-2"
-            }}
-          >
-            {roles.map(role => {
-              const tabKey = role.nom_rol.toLowerCase();
-              const isAdmin = role.id_rol === 1;
+          <Card>
+            <CardHeader />
+            <CardBody>
+              <Tabs
+                aria-label="Roles"
+                selectedKey={selectedTab}
+                onSelectionChange={handleTabChange}
+                color="primary"
+                variant="bordered"
+                classNames={{ tabList: "gap-4", tab: "py-2" }}
+              >
+                {adminRoles.map(role => {
+                  const tabKey = role.nom_rol.toLowerCase();
+                  const isAdmin = role.id_rol === 1;
 
-              return (
-                <Tab
-                  key={tabKey}
-                  title={
-                    <div className="flex items-center gap-2">
-                      {isAdmin ? <FaUserShield /> : <FaUser />}
-                      <span>{formatRoleName(role.nom_rol)}</span>
-                      {role.plan_requerido && (
-                        <Chip size="sm" color={getPlanColor(role.plan_requerido)} variant="flat">
-                          Plan {role.plan_requerido}+
-                        </Chip>
-                      )}
-                    </div>
-                  }
-                >
-                  <div className="p-4">
-                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                      {isAdmin ? <FaUserShield /> : <FaUser />}
-                      Permisos de {formatRoleName(role.nom_rol)}
-                      {isDeveloper && (
-                        <span className="text-sm font-normal text-gray-500">
-                          (Plan {planes.find(p => p.id_plan === selectedPlan)?.descripcion_plan || selectedPlan || "Básico"})
-                        </span>
-                      )}
-                    </h3>
-                    {renderModulosListing()}
-                    {isDeveloper && (
-                      <div className="mt-6 flex justify-end">
-                        <Button
-                          color="primary"
-                          isLoading={savingPermisos}
-                          onPress={handleSavePermissions}
-                        >
-                          {savingPermisos ? "Guardando..." : "Guardar cambios"}
-                        </Button>
+                  return (
+                    <Tab
+                      key={tabKey}
+                      title={
+                        <div className="flex items-center gap-2">
+                          {isAdmin ? <FaUserShield /> : <FaUser />}
+                          <span>{formatRoleName(role.nom_rol)}</span>
+                          {role.plan_requerido && (
+                            <Chip size="sm" color={getPlanColor(role.plan_requerido)} variant="flat">
+                              Plan {role.plan_requerido}+
+                            </Chip>
+                          )}
+                        </div>
+                      }
+                    >
+                      <div className="p-4">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                          {isAdmin ? <FaUserShield /> : <FaUser />}
+                          Permisos de {formatRoleName(role.nom_rol)}
+                          {isDeveloper && (
+                            <span className="text-sm font-normal text-gray-500">
+                              (Plan {planes.find(p => p.id_plan === selectedPlan)?.descripcion_plan || selectedPlan || "Básico"})
+                            </span>
+                          )}
+                        </h3>
+                        {renderModulosListing()}
+                        {isDeveloper && (
+                          <div className="mt-6 flex justify-end">
+                            <Button
+                              color="primary"
+                              isLoading={savingPermisos}
+                              onPress={handleSavePermissions}
+                            >
+                              {savingPermisos ? "Guardando..." : "Guardar cambios"}
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </Tab>
-              );
-            })}
-          </Tabs>
-        </CardBody>
-      </Card>
+                    </Tab>
+                  );
+                })}
+              </Tabs>
+            </CardBody>
+          </Card>
         </>
       )}
     </>

@@ -14,7 +14,8 @@ const SalesStep1 = ({
   handleProductRemove,
   handleDecrement,
   handleIncrement,
-  handleQuantityChange, 
+  handleQuantityChange,
+  handlePriceChange, 
   totalImporte,
   igv_t,
   total_t,
@@ -33,6 +34,8 @@ const SalesStep1 = ({
   
   // Estado local para manejar la edición de cantidades
   const [editingQuantities, setEditingQuantities] = useState({});
+  const [editingPrices, setEditingPrices] = useState({}); // Estado local para edición de precios
+
 
   // Efecto para manejar el escáner de códigos de barras (siempre activo)
   useEffect(() => {
@@ -169,151 +172,186 @@ const SalesStep1 = ({
           filteredDetalles.length > 0 ? (
             <div className="space-y-3">
               {filteredDetalles.map((detalle) => {
-                // Encontrar el índice original del producto para las funciones
                 const originalIndex = detalles.findIndex(d => d.codigo === detalle.codigo);
                 return (
-                <div
-                  key={detalle.codigo}
-                  className="p-3 bg-gray-50 rounded-lg border border-gray-200"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 text-sm">
-                        {detalle.nombre}
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Código: {detalle.codigo}
-                      </p>
-                    </div>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="flat"
-                      color="danger"
-                      onClick={() => handleProductRemove(detalle.codigo, detalle.cantidad)}
-                      className="text-xs"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
+                  <div
+                    key={detalle.codigo}
+                    className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm">
+                          {detalle.nombre}
+                        </h4>
+                        <p className="text-xs text-gray-500">
+                          Código: {detalle.codigo}
+                        </p>
+                      </div>
                       <Button
                         isIconOnly
                         size="sm"
                         variant="flat"
-                        onClick={() => {
-                          if (handleDecrement && typeof handleDecrement === 'function') {
-                            handleDecrement(originalIndex);
-                          }
-                        }}
-                        disabled={detalle.cantidad <= 1 || !handleDecrement}
-                        style={{ backgroundColor: '#f3281ddf', color: '#ffffff', opacity: !handleDecrement ? 0.5 : 1 }}
+                        color="danger"
+                        onClick={() => handleProductRemove(detalle.codigo, detalle.cantidad)}
+                        className="text-xs"
                       >
-                        -
-                      </Button>
-                      
-                      <Input
-                        value={
-                          editingQuantities[detalle.codigo] !== undefined 
-                            ? editingQuantities[detalle.codigo] 
-                            : detalle.cantidad.toString()
-                        }
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          
-                          // Actualizar el estado de edición local
-                          setEditingQuantities(prev => ({
-                            ...prev,
-                            [detalle.codigo]: value
-                          }));
-
-                          const numValue = parseInt(value);
-                          if (!isNaN(numValue) && numValue >= 1 && numValue <= 999 && value.length <= 3) {
-                            if (handleQuantityChange && typeof handleQuantityChange === 'function') {
-                              handleQuantityChange(originalIndex, numValue);
-                            }
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
-                          const isNumber = /^[0-9]$/.test(e.key);
-                          const isControlKey = allowedKeys.includes(e.key);
-                          const isSelectAll = e.ctrlKey && e.key.toLowerCase() === 'a';
-                          
-                          if (!isNumber && !isControlKey && !isSelectAll) {
-                            e.preventDefault();
-                            return;
-                          }
-                          
-                          // Si presiona Enter, procesar el cambio
-                          if (e.key === 'Enter') {
-                            e.target.blur();
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const value = e.target.value;
-                          let finalValue = parseInt(value);
-                          
-                          // Solo corregir si el valor es inválido
-                          if (value === '' || isNaN(finalValue) || finalValue < 1) {
-                            finalValue = 1;
-                            if (handleQuantityChange && typeof handleQuantityChange === 'function') {
-                              handleQuantityChange(originalIndex, finalValue);
-                            }
-                          } else if (finalValue > 999) {
-                            finalValue = 999;
-                            if (handleQuantityChange && typeof handleQuantityChange === 'function') {
-                              handleQuantityChange(originalIndex, finalValue);
-                            }
-                          }
-                          
-                          // Limpiar el estado de edición
-                          setEditingQuantities(prev => {
-                            const newState = { ...prev };
-                            delete newState[detalle.codigo];
-                            return newState;
-                          });
-                        }}
-                        onFocus={(e) => {
-                          // Seleccionar todo al hacer foco
-                          setTimeout(() => e.target.select(), 0);
-                        }}
-                        className="w-16"
-                        size="sm"
-                        variant="bordered"
-                        classNames={{
-                          input: "text-center text-sm font-medium"
-                        }}
-                      />
-                      
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="flat"
-                        onClick={() => {
-                          if (handleIncrement && typeof handleIncrement === 'function') {
-                            handleIncrement(originalIndex);
-                          }
-                        }}
-                        disabled={!handleIncrement}
-                        style={{ backgroundColor: '#0077ffff', color: '#ffffff', opacity: !handleIncrement ? 0.5 : 1 }}
-                      >
-                        +
+                        ×
                       </Button>
                     </div>
                     
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-blue-600">
-                        {detalle.subtotal}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        S/ {detalle.precio} c/u
-                      </p>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        {/* Botón y input para cantidad */}
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="flat"
+                          onClick={() => {
+                            if (handleDecrement && typeof handleDecrement === 'function') {
+                              handleDecrement(originalIndex);
+                            }
+                          }}
+                          disabled={detalle.cantidad <= 1 || !handleDecrement}
+                          style={{ backgroundColor: '#f3281ddf', color: '#ffffff', opacity: !handleDecrement ? 0.5 : 1 }}
+                        >
+                          -
+                        </Button>
+                        <Input
+                          value={
+                            editingQuantities[detalle.codigo] !== undefined 
+                              ? editingQuantities[detalle.codigo] 
+                              : detalle.cantidad.toString()
+                          }
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setEditingQuantities(prev => ({
+                              ...prev,
+                              [detalle.codigo]: value
+                            }));
+                            const numValue = parseInt(value);
+                            if (!isNaN(numValue) && numValue >= 1 && numValue <= 999 && value.length <= 3) {
+                              if (handleQuantityChange && typeof handleQuantityChange === 'function') {
+                                handleQuantityChange(originalIndex, numValue);
+                              }
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
+                            const isNumber = /^[0-9]$/.test(e.key);
+                            const isControlKey = allowedKeys.includes(e.key);
+                            const isSelectAll = e.ctrlKey && e.key.toLowerCase() === 'a';
+                            if (!isNumber && !isControlKey && !isSelectAll) {
+                              e.preventDefault();
+                              return;
+                            }
+                            if (e.key === 'Enter') {
+                              e.target.blur();
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = e.target.value;
+                            let finalValue = parseInt(value);
+                            if (value === '' || isNaN(finalValue) || finalValue < 1) {
+                              finalValue = 1;
+                              if (handleQuantityChange && typeof handleQuantityChange === 'function') {
+                                handleQuantityChange(originalIndex, finalValue);
+                              }
+                            } else if (finalValue > 999) {
+                              finalValue = 999;
+                              if (handleQuantityChange && typeof handleQuantityChange === 'function') {
+                                handleQuantityChange(originalIndex, finalValue);
+                              }
+                            }
+                            setEditingQuantities(prev => {
+                              const newState = { ...prev };
+                              delete newState[detalle.codigo];
+                              return newState;
+                            });
+                          }}
+                          onFocus={(e) => {
+                            setTimeout(() => e.target.select(), 0);
+                          }}
+                          className="w-16"
+                          size="sm"
+                          variant="bordered"
+                          classNames={{
+                            input: "text-center text-sm font-medium"
+                          }}
+                        />
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="flat"
+                          onClick={() => {
+                            if (handleIncrement && typeof handleIncrement === 'function') {
+                              handleIncrement(originalIndex);
+                            }
+                          }}
+                          disabled={!handleIncrement}
+                          style={{ backgroundColor: '#0077ffff', color: '#ffffff', opacity: !handleIncrement ? 0.5 : 1 }}
+                        >
+                          +
+                        </Button>
+                        {/* Input editable para precio */}
+                        <Input
+                          value={
+                            editingPrices[detalle.codigo] !== undefined
+                              ? editingPrices[detalle.codigo]
+                              : detalle.precio.toString()
+                          }
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Solo permitir números positivos y decimales
+                            if (/^\d*\.?\d*$/.test(value)) {
+                              setEditingPrices(prev => ({
+                                ...prev,
+                                [detalle.codigo]: value
+                              }));
+                              const numValue = parseFloat(value);
+                              if (!isNaN(numValue) && numValue >= 0) {
+                                if (handlePriceChange && typeof handlePriceChange === 'function') {
+                                  handlePriceChange(originalIndex, numValue);
+                                }
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            let value = e.target.value;
+                            let finalValue = parseFloat(value);
+                            if (value === '' || isNaN(finalValue) || finalValue < 0) {
+                              finalValue = 0;
+                            }
+                            if (handlePriceChange && typeof handlePriceChange === 'function') {
+                              handlePriceChange(originalIndex, finalValue);
+                            }
+                            setEditingPrices(prev => {
+                              const newState = { ...prev };
+                              delete newState[detalle.codigo];
+                              return newState;
+                            });
+                          }}
+                          onFocus={(e) => {
+                            setTimeout(() => e.target.select(), 0);
+                          }}
+                          className="w-20"
+                          size="sm"
+                          variant="bordered"
+                          startContent={<span>S/</span>}
+                          classNames={{
+                            input: "text-center text-sm font-medium"
+                          }}
+                        />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-blue-600">
+                          {detalle.subtotal}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          S/ {detalle.precio} c/u
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
                 );
               })}
             </div>

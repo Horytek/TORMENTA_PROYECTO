@@ -196,97 +196,104 @@ const getRolesPorPlan = async (req, res) => {
 };
 
 const getPermisosByRolGlobal = async (req, res) => {
-    try {
-        const { id_rol } = req.params;
-        const { plan } = req.query; // Recibir el plan seleccionado desde el frontend
-        const connection = await getConnection();
-        
-        // Verificar si es desarrollador (por nombre de usuario o por ID de rol)
-        const nameUser = req.user.nameUser;
-        const id_tenant = req.id_tenant;
-        
-        // Obtener información del usuario para verificar si es desarrollador
-        const [developerCheck] = await connection.query(`
-            SELECT id_rol FROM usuario WHERE usua = ? AND id_tenant = ?
-        `, [nameUser, id_tenant]);
-        
-        const isDeveloper = nameUser === 'desarrollador' || (developerCheck.length > 0 && developerCheck[0].id_rol === 10);
-        
-        if (isDeveloper) {
-            // Para desarrolladores, obtener permisos para el plan seleccionado
-            const planToUse = plan ? parseInt(plan) : 1; // Cambiar default a 1 (Enterprise)
-            
-            // Para desarrolladores, no filtrar por id_tenant ya que manejan permisos globales
-            const [permisos] = await connection.query(`
-                SELECT 
-                    id_permiso,
-                    id_rol,
-                    id_modulo,
-                    id_submodulo,
-                    crear,
-                    ver,
-                    editar,
-                    eliminar,
-                    desactivar,
-                    generar,
-                    id_plan
-                FROM permisos
-                WHERE id_rol = ? AND id_plan = ? AND id_tenant = ?
-            `, [id_rol, planToUse, id_tenant]);
-            
-            return res.json({
-                success: true,
-                data: permisos,
-                planSeleccionado: planToUse,
-                fuente: 'permisos_unificado'
-            });
-        }
-        
-        // Para administradores, verificar plan de usuario
-        const [userInfo] = await connection.query(`
-            SELECT u.id_empresa, u.plan_pago
-            FROM usuario u
-            WHERE u.usua = ? AND u.id_tenant = ?
-        `, [nameUser, id_tenant]);
-        
-        if (userInfo.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Usuario o empresa no encontrada"
-            });
-        }
-        
-        const planEmpresa = userInfo[0].plan_pago;
-        
-        // Obtener permisos del rol para el plan específico del usuario
-        const [permisos] = await connection.query(`
-            SELECT 
-                id_permiso,
-                id_rol,
-                id_modulo,
-                id_submodulo,
-                crear,
-                ver,
-                editar,
-                eliminar,
-                desactivar,
-                generar
-            FROM permisos
-            WHERE id_rol = ? AND id_plan = ? AND id_tenant = ?
-        `, [id_rol, planEmpresa, id_tenant]);
-        
-        res.json({
-            success: true,
-            data: permisos,
-            planEmpresa: planEmpresa
-        });
-        
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: error.message 
-        });
+  try {
+    const { id_rol } = req.params;
+    const { plan } = req.query; // plan seleccionado desde el front
+    const connection = await getConnection();
+
+    const nameUser = req.user.nameUser;
+    const id_tenant = req.id_tenant;
+
+    const [developerCheck] = await connection.query(
+      `SELECT id_rol FROM usuario WHERE usua = ? AND id_tenant = ?`,
+      [nameUser, id_tenant]
+    );
+    const isDeveloper =
+      nameUser === "desarrollador" ||
+      (developerCheck.length > 0 && developerCheck[0].id_rol === 10);
+
+    if (isDeveloper) {
+      const planToUse = plan ? parseInt(plan) : 1; // Enterprise por defecto
+
+      // AGRUPADO: combinar flags por módulo/submódulo para evitar duplicados por tenant
+      const [permisos] = await connection.query(
+        `
+        SELECT 
+          ? AS id_plan,
+          p.id_rol,
+          p.id_modulo,
+          p.id_submodulo,
+          MAX(p.crear)      AS crear,
+          MAX(p.ver)        AS ver,
+          MAX(p.editar)     AS editar,
+          MAX(p.eliminar)   AS eliminar,
+          MAX(p.desactivar) AS desactivar,
+          MAX(p.generar)    AS generar
+        FROM permisos p
+        WHERE p.id_rol = ? AND p.id_plan = ?
+        GROUP BY p.id_rol, p.id_modulo, p.id_submodulo
+        ORDER BY p.id_modulo, p.id_submodulo
+        `,
+        [planToUse, id_rol, planToUse]
+      );
+
+      return res.json({
+        success: true,
+        data: permisos,
+        planSeleccionado: planToUse,
+        fuente: "permisos_global_agrupado",
+      });
     }
+
+    // Administrador: mantiene filtro por su tenant y plan del usuario
+    const [userInfo] = await connection.query(
+      `
+      SELECT u.id_empresa, u.plan_pago
+      FROM usuario u
+      WHERE u.usua = ? AND u.id_tenant = ?
+      `,
+      [nameUser, id_tenant]
+    );
+
+    if (userInfo.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario o empresa no encontrada",
+      });
+    }
+
+    const planEmpresa = userInfo[0].plan_pago;
+
+    const [permisos] = await connection.query(
+      `
+      SELECT 
+        id_permiso,
+        id_rol,
+        id_modulo,
+        id_submodulo,
+        crear,
+        ver,
+        editar,
+        eliminar,
+        desactivar,
+        generar
+      FROM permisos
+      WHERE id_rol = ? AND id_plan = ? AND id_tenant = ?
+      `,
+      [id_rol, planEmpresa, id_tenant]
+    );
+
+    return res.json({
+      success: true,
+      data: permisos,
+      planEmpresa,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 const savePermisosGlobales = async (req, res) => {
@@ -299,98 +306,69 @@ const savePermisosGlobales = async (req, res) => {
         // Verificar si es desarrollador (por nombre de usuario o por ID de rol)
         const nameUser = req.user.nameUser;
         const id_tenant = req.id_tenant;
-        
-        // Obtener información del usuario para verificar si es desarrollador
+
+        // Chequeo flexible de developer por nombre o rol
         const [developerCheck] = await connection.query(`
             SELECT id_rol FROM usuario WHERE usua = ? AND id_tenant = ?
         `, [nameUser, id_tenant]);
-        
         const isDeveloper = nameUser === 'desarrollador' || (developerCheck.length > 0 && developerCheck[0].id_rol === 10);
-        
+
         if (!isDeveloper) {
-            // Solo desarrolladores pueden modificar permisos globales
+            await connection.rollback();
             return res.status(403).json({
                 success: false,
                 message: "Solo desarrolladores pueden modificar permisos globales"
             });
         }
-        
-        // Para permisos globales por plan, usar la tabla permisos con id_plan
-        if (plan_seleccionado) {
-            // Eliminar permisos existentes para este rol y plan
-            await connection.query(
-                'DELETE FROM permisos WHERE id_rol = ? AND id_plan = ? AND id_tenant = ?',
-                [id_rol, plan_seleccionado, id_tenant]
-            );
-            
-            if (permisos && permisos.length > 0) {
+
+        // Plan objetivo (1=Enterprise por defecto)
+        const planObjetivo = plan_seleccionado ? parseInt(plan_seleccionado) : 1;
+
+        // 1) Eliminar permisos de ese rol/plan para TODOS los tenants (global)
+        await connection.query(
+            'DELETE FROM permisos WHERE id_rol = ? AND id_plan = ?',
+            [id_rol, planObjetivo]
+        );
+
+        // 2) Insertar para TODOS los tenants existentes
+        if (permisos && permisos.length > 0) {
+            const [tenants] = await connection.query('SELECT DISTINCT id_tenant FROM usuario WHERE id_tenant IS NOT NULL');
+
+            for (const tenant of tenants) {
                 for (const p of permisos) {
                     await connection.query(`
                         INSERT INTO permisos
                         (id_rol, id_modulo, id_submodulo, id_plan, crear, ver, editar, eliminar, desactivar, generar, id_tenant, f_creacion)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     `, [
-                        id_rol, 
-                        p.id_modulo, 
-                        p.id_submodulo || null, 
-                        plan_seleccionado,
+                        id_rol,
+                        p.id_modulo,
+                        p.id_submodulo || null,
+                        planObjetivo,
                         p.crear !== undefined ? p.crear : 0,
                         p.ver !== undefined ? p.ver : 0,
                         p.editar !== undefined ? p.editar : 0,
                         p.eliminar !== undefined ? p.eliminar : 0,
                         p.desactivar !== undefined ? p.desactivar : 0,
                         p.generar !== undefined ? p.generar : 0,
-                        id_tenant,
+                        tenant.id_tenant,
                         new Date()
                     ]);
                 }
             }
-        } else {
-            // Si no se especifica plan, usar plan enterprise (id_plan = 1) por defecto
-            const planPorDefecto = 1;
-            await connection.query(
-                'DELETE FROM permisos WHERE id_rol = ? AND id_plan = ? AND id_tenant = ?',
-                [id_rol, planPorDefecto, id_tenant]
-            );
-            
-            if (permisos && permisos.length > 0) {
-                for (const p of permisos) {
-                    const timestamp = new Date();
-                    
-                    await connection.query(`
-                        INSERT INTO permisos
-                        (id_rol, id_modulo, id_submodulo, id_plan, crear, ver, editar, eliminar, desactivar, generar, id_tenant, f_creacion)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    `, [
-                        id_rol, 
-                        p.id_modulo, 
-                        p.id_submodulo || null, 
-                        planPorDefecto,
-                        p.crear !== undefined ? p.crear : 0,
-                        p.ver !== undefined ? p.ver : 0,
-                        p.editar !== undefined ? p.editar : 0,
-                        p.eliminar !== undefined ? p.eliminar : 0,
-                        p.desactivar !== undefined ? p.desactivar : 0,
-                        p.generar !== undefined ? p.generar : 0,
-                        id_tenant,
-                        timestamp
-                    ]);
-                }
-            }
         }
-        
+
         await connection.commit();
-        
-        res.json({
+
+        return res.json({
             success: true,
-            message: `Permisos globales para rol ${id_rol} actualizados correctamente`,
+            message: `Permisos globales para rol ${id_rol} y plan ${planObjetivo} actualizados para todos los tenants`,
             data: {
                 id_rol,
-                plan_seleccionado,
+                plan_seleccionado: planObjetivo,
                 permisos_count: permisos ? permisos.length : 0
             }
         });
-        
     } catch (error) {
         await connection.rollback();
         res.status(500).json({ 

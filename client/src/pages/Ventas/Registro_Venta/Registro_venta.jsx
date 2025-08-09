@@ -328,6 +328,50 @@ useEffect(() => {
     );
   };
 
+    // Función para cambiar el precio de un producto en el detalle
+  const handlePriceChange = (index, newPrice) => {
+    const detalle = detalles[index];
+    if (!detalle) return;
+
+    // Validar que el nuevo precio sea un número positivo
+    const precioFinal = parseFloat(newPrice);
+    if (isNaN(precioFinal) || precioFinal < 0) return;
+
+    // Calcular el nuevo subtotal con el precio actualizado
+    const updatedSubtotal = (
+      precioFinal * detalle.cantidad -
+      ((parseFloat(detalle.descuento) / 100) * precioFinal) * detalle.cantidad
+    ).toFixed(2);
+
+    // Simular el nuevo total para validar el límite de 499 soles
+    const nuevosDetalles = detalles.map((d, i) =>
+      i === index
+        ? { ...d, precio: precioFinal, subtotal: `S/ ${updatedSubtotal}` }
+        : d
+    );
+
+    const nuevoTotalImporte = nuevosDetalles.reduce((acc, item) => {
+      const subtotalNumber = parseFloat(item.subtotal.replace(/[^\d.-]/g, ''));
+      return acc + subtotalNumber / 1.18;
+    }, 0);
+
+    const nuevoIgv = nuevoTotalImporte * 0.18;
+    const nuevoTotalExacto = nuevoTotalImporte + nuevoIgv;
+
+    // Validar que no supere los 499 soles
+    if (nuevoTotalExacto > 499) {
+      toast.error(`No se puede cambiar el precio, máximo permitido: S/ 499.00`);
+      return;
+    }
+
+    // Actualizar el detalle con el nuevo precio y subtotal
+    updateDetalle({
+      ...detalle,
+      precio: precioFinal,
+      subtotal: `S/ ${updatedSubtotal}`
+    });
+  };
+
     // Filtered products for modal
   const filteredProductos = productos.filter(producto =>
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -659,6 +703,7 @@ const actualizarStockDespuesVenta = () => {
             handleIncrement={handleIncrement}
             handleDecrement={handleDecrement}
             handleQuantityChange={handleQuantityChange}
+            handlePriceChange={handlePriceChange}
             totalImporte={totalImporte}
             igv_t={igv_t}
             total_t={total_t}
