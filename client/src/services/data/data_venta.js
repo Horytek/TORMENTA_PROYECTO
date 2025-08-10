@@ -141,6 +141,13 @@ if (filters.comprobanteSeleccionado) {
     filtradas = filtradas.filter(
       v => String(v.nombre_sucursal || '').toLowerCase() === String(filters.sucursalSeleccionado).toLowerCase()
     );
+    
+      // Filtro por estado de la venta (exacto, string)
+  if (filters.estado && filters.estado !== "Todos") {
+    filtradas = filtradas.filter(
+      v => String(v.estado).toLowerCase() === String(filters.estado).toLowerCase()
+    );
+  }
 
   // Filtro por razón social o nombre de cliente (inclusivo, string)
   if (filters.razon)

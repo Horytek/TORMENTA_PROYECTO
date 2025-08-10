@@ -32,6 +32,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
   const [tempValue, setTempValue] = useState(value);
   const [razon, setRazon] = useState("");
   const [numC, setNumC] = useState("");
+  const [estado, setEstado] = useState(""); // Estado de la venta
   const [modalOpen, setModalOpen] = useState(false);
 
   // Zustand
@@ -60,7 +61,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
     }
   };
 
-  useEffect(() => {
+   useEffect(() => {
     const date_i = new Date(
       value.start.year,
       value.start.month - 1,
@@ -82,6 +83,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
       fecha_e,
       razon,
       numC,
+      estado, // <-- Añadido para filtrar por estado
     };
 
     onFiltersChange(filtros);
@@ -91,6 +93,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
     value,
     razon,
     numC,
+    estado, // <-- Añadido dependencia
     onFiltersChange,
   ]);
 
@@ -198,6 +201,21 @@ const FiltrosVentas = ({ onFiltersChange }) => {
                   {sucursal.nombre}
                 </SelectItem>
               ))}
+            </Select>
+          </div>
+                    <div className="mb-2 input-wrapper md:mb-0">
+            <Select
+              id="estado"
+              placeholder="Estado"
+              className="p-2 rounded-lg"
+              style={{ width: "170px" }}
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
+            >
+              <SelectItem key="" value="">Todos</SelectItem>
+              <SelectItem key="Aceptada" value="Aceptada">Aceptada</SelectItem>
+              <SelectItem key="En proceso" value="En proceso">En proceso</SelectItem>
+              <SelectItem key="Anulada" value="Anulada">Anulada</SelectItem>
             </Select>
           </div>
           <div className="flex gap-2 input-wrapper">
