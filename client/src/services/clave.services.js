@@ -37,9 +37,12 @@ const getClaveByEmpresaAndTipo = async (id) => {
       return response.data.data;
     } else {
       console.error('Error en la solicitud: ', response.data.message);
+      return null;
     }
   } catch (error) {
+    if (error?.response?.status === 404) return null;
     console.error('Error en la solicitud: ', error.message);
+    return null;
   }
 };
 

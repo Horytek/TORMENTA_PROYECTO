@@ -7,13 +7,15 @@ import {
 
 // Maneja la solicitud de cobro
 export const handleDelete = async (datosVenta) => {
-    try {
-        const response = await deleteVentaRequest({
-            id_venta: datosVenta.id,
-            comprobante: datosVenta.tipoComprobante,
-            estado_sunat: datosVenta.estado_sunat,
-            usua: datosVenta.usua_usuario,
-          });
+  const payload = {
+    id_venta: datosVenta.id,
+    comprobante: datosVenta.tipoComprobante,
+    estado_sunat: Number(datosVenta.estado_sunat) || 0, // normalizar
+    usua: datosVenta.usua_usuario,
+  };
+
+  try {
+    const response = await deleteVentaRequest(payload);
 
         if (response.status === 200) {
             toast.success('Venta eliminada correctamente');

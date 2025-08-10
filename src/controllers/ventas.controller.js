@@ -699,48 +699,47 @@ const updateVenta = async (req, res) => {
 
   try {
     connection = await getConnection();
-    const { id_venta, comprobante, estado_sunat, usua } = req.body;
+    let { id_venta, comprobante, estado_sunat, usua } = req.body;
     const id_tenant = req.id_tenant;
 
     if (!id_venta) {
-      return res
-        .status(400)
-        .json({ message: "Bad Request. Please provide id_venta and nuevo_estado." });
+      return res.status(400).json({ message: "id_venta requerido" });
     }
+
+    // Normalizar
+    comprobante = String(comprobante || "").trim();
+    const estadoSunat = Number(estado_sunat) || 0;
 
     await connection.beginTransaction();
 
-    // Obtener los detalles de la venta (filtrando por id_tenant)
+    // 1) Obtener detalles sin usar id_tenant en detalle_venta (usa JOIN con venta)
     const [detallesResult] = await connection.query(
       `
-      SELECT id_producto, cantidad
-      FROM detalle_venta
-      WHERE id_venta = ? AND id_tenant = ?
+      SELECT dv.id_producto, dv.cantidad
+      FROM detalle_venta dv
+      INNER JOIN venta v ON v.id_venta = dv.id_venta
+      WHERE dv.id_venta = ? AND v.id_tenant = ?
       `,
       [id_venta, id_tenant]
     );
 
     if (detallesResult.length === 0) {
-      throw new Error("No details found for the given sale.");
+      await connection.rollback();
+      return res.status(404).json({ message: "No hay detalles para la venta o no pertenece a este tenant" });
     }
 
-    // Obtener el id_usuario a partir del usua
+    // 2) Obtener id_usuario
     const [usuarioResult] = await connection.query(
-      `
-      SELECT id_usuario
-      FROM usuario
-      WHERE usua = ?
-      `,
+      `SELECT id_usuario FROM usuario WHERE usua = ?`,
       [usua]
     );
-
     if (usuarioResult.length === 0) {
-      throw new Error("Usuario no encontrado.");
+      await connection.rollback();
+      return res.status(404).json({ message: "Usuario no encontrado" });
     }
-
     const id_usuario = usuarioResult[0].id_usuario;
 
-    // Obtener id_sucursal de la venta (filtrando por id_tenant)
+    // 3) Obtener sucursal y fecha
     const [ventaResult] = await connection.query(
       `
       SELECT id_sucursal, f_venta
@@ -749,75 +748,66 @@ const updateVenta = async (req, res) => {
       `,
       [id_venta, id_tenant]
     );
-
     if (ventaResult.length === 0) {
-      throw new Error("Venta no encontrada.");
+      await connection.rollback();
+      return res.status(404).json({ message: "Venta no encontrada" });
     }
-
     const id_sucursal = ventaResult[0].id_sucursal;
     const f_venta = ventaResult[0].f_venta;
 
-    // Obtener el id_almacen a partir de la sucursal
+    // 4) Almacén de la sucursal
     const [almacenResult] = await connection.query(
-      "SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ?",
+      `SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ?`,
       [id_sucursal]
     );
-
     if (almacenResult.length === 0) {
-      throw new Error("Almacén no encontrado para la sucursal.");
+      await connection.rollback();
+      return res.status(404).json({ message: "No se encontró almacén para la sucursal" });
     }
-
     const id_almacen = almacenResult[0].id_almacen;
 
-    // Restaurar el stock de los productos
+    // 5) Restaurar stock para cada detalle (tu lógica actual)
     for (const detalle of detallesResult) {
       const { id_producto, cantidad } = detalle;
 
-      // Obtener el stock actual del producto
-      const [inventarioResult] = await connection.query(
+      // Stock actual del inventario del producto en el almacén de la venta
+      const [[stockRow]] = await connection.query(
         `
-        SELECT stock
-        FROM inventario
-        WHERE id_producto = ? AND id_almacen = (
-          SELECT id_almacen
-          FROM sucursal_almacen
-          WHERE id_sucursal = (
-            SELECT id_sucursal
-            FROM venta
-            WHERE id_venta = ? AND id_tenant = ?
+        SELECT I.stock AS stockActual
+        FROM inventario I
+        WHERE I.id_producto = ? 
+          AND I.id_almacen = (
+            SELECT id_almacen
+            FROM sucursal_almacen
+            WHERE id_sucursal = (
+              SELECT id_sucursal FROM venta WHERE id_venta = ? AND id_tenant = ?
+            )
+            LIMIT 1
           )
-          LIMIT 1
-        )
         `,
         [id_producto, id_venta, id_tenant]
       );
 
-      if (inventarioResult.length === 0) {
-        throw new Error(`No stock found for product ID ${id_producto}.`);
-      }
+      const stockActual = Number(stockRow?.stockActual ?? 0);
 
-      const stockActual = inventarioResult[0].stock;
-
-      // Actualizar el stock en la tabla inventario
       await connection.query(
         `
         UPDATE inventario
         SET stock = ?
-        WHERE id_producto = ? AND id_almacen = (
-          SELECT id_almacen
-          FROM sucursal_almacen
-          WHERE id_sucursal = (
-            SELECT id_sucursal
-            FROM venta
-            WHERE id_venta = ? AND id_tenant = ?
+        WHERE id_producto = ?
+          AND id_almacen = (
+            SELECT id_almacen
+            FROM sucursal_almacen
+            WHERE id_sucursal = (
+              SELECT id_sucursal FROM venta WHERE id_venta = ? AND id_tenant = ?
+            )
+            LIMIT 1
           )
-          LIMIT 1
-        )
         `,
         [stockActual + cantidad, id_producto, id_venta, id_tenant]
       );
 
-      // Insertar en bitacora_nota solo cuando se aumenta el stock (entra)
+      // Bitácora de entrada
       await connection.query(
         `
         INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta, id_tenant)
@@ -827,39 +817,48 @@ const updateVenta = async (req, res) => {
       );
     }
 
-    // Cambiar el estado de la venta (filtrando por id_tenant)
+    // 6) Anular venta
     await connection.query(
       `
       UPDATE venta
-      SET estado_venta = ? , u_modifica = ?
+      SET estado_venta = ?, u_modifica = ?
       WHERE id_venta = ? AND id_tenant = ?
       `,
       [0, id_usuario, id_venta, id_tenant]
     );
 
-    if (estado_sunat === 1 && comprobante === 'Factura') {
-      await connection.query(
-        `
-        UPDATE anular_sunat
-        SET anular = anular + 1
-        `
+    // 7) Contadores SUNAT por tenant (solo si fue aceptada por SUNAT)
+    if (estadoSunat === 1 && comprobante === 'Factura') {
+      const [r1] = await connection.query(
+        `UPDATE anular_sunat SET anular = anular + 1 WHERE id_tenant = ?`,
+        [id_tenant]
       );
+      if (r1.affectedRows === 0) {
+        await connection.query(
+          `INSERT INTO anular_sunat (anular, id_tenant) VALUES (1, ?)`,
+          [id_tenant]
+        );
+      }
     }
-
-    if (estado_sunat === 1 && comprobante === 'Boleta') {
-      await connection.query(
-        `
-        UPDATE anular_sunat_b
-        SET anular_b = anular_b + 1
-        `
+    if (estadoSunat === 1 && comprobante === 'Boleta') {
+      const [r2] = await connection.query(
+        `UPDATE anular_sunat_b SET anular_b = anular_b + 1 WHERE id_tenant = ?`,
+        [id_tenant]
       );
+      if (r2.affectedRows === 0) {
+        await connection.query(
+          `INSERT INTO anular_sunat_b (anular_b, id_tenant) VALUES (1, ?)`,
+          [id_tenant]
+        );
+      }
     }
 
     await connection.commit();
-
     res.json({ message: "Venta estado actualizado y stock restaurado." });
   } catch (error) {
-    await connection.rollback();
+    if (connection) {
+      try { await connection.rollback(); } catch {}
+    }
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
