@@ -243,7 +243,14 @@ const handleRowClick = (e, venta) => {
                 openModal(venta.id, venta.estado);
               }}
             />
-              <TiPrinter className='ignore-toggle text-gray-500 cursor-pointer' onClick={onOpen} style={{ fontSize: '20px' }} />
+                  <TiPrinter
+                    className='ignore-toggle text-gray-500 cursor-pointer'
+                    onClick={() => {
+                      setVentaSeleccionada(venta);
+                      onOpen();
+                    }}
+                    style={{ fontSize: '20px' }}
+                  />
             <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
               motionProps={{
                 variants: {

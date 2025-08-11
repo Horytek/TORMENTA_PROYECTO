@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { toast, Toaster } from 'react-hot-toast';
+import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
+import { generateReceiptContent } from './ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
+import { getEmpresaDataByUser } from '@/services/empresa.services'; 
 import { Button, Card, CardHeader, CardBody, Divider, Chip, ScrollShadow } from '@heroui/react';
 import PropTypes from 'prop-types';
 
@@ -605,6 +609,86 @@ const actualizarStockDespuesVenta = () => {
     }
   };
 
+  // Imprimir ticket térmico 72mm x 297mm usando el Voucher
+ const handlePrintThermal = async (datosVenta, observacionTexto, printMode = 'window') => {
+  try {
+    const empresaData = await getEmpresaDataByUser(nombre);
+
+    const observacion = { observacion: observacionTexto || '' };
+    const comprobante1 = { nuevoNumComprobante: '' };
+
+    // Contenido del voucher (texto monoespaciado)
+    const content = await generateReceiptContent(
+      datosVentaComprobante,
+      datosVenta,
+      comprobante1,
+      observacion,
+      nombre,
+      empresaData
+    );
+
+    const imgUrl = empresaData?.logotipo || '';
+    const qrText = 'https://www.facebook.com/profile.php?id=100055385846115';
+
+    if (printMode === 'pdf') {
+      // Descargar PDF térmico 72mm x 297mm
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [75, 284] });
+      QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {
+        if (!err) {
+          if (imgUrl) {
+            // Nota: jsPDF requiere base64/DataURL para addImage. Si tu logo es URL, asegúrate que sea dataURL.
+            try { doc.addImage(imgUrl, 'JPEG', 10, 10, 50, 50); } catch {}
+          }
+          doc.setFont('Courier');
+          doc.setFontSize(8);
+          doc.text(content, 3, 55); // texto del voucher
+          try { doc.addImage(qrUrl, 'PNG', 16, 230, 43, 43); } catch {}
+          doc.save('recibo.pdf');
+        }
+      });
+    } else {
+      // Imprimir directamente en ventana con CSS de 72mm x 297mm
+      const printWindow = window.open('', '', 'height=600,width=800');
+      if (!printWindow) return;
+
+      QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {
+        if (!err) {
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Recibo</title>
+                <style>
+                  @page { size: 72mm 297mm; margin: 10px; }
+                  body { margin: 0; padding: 0; font-family: Courier, monospace; font-size: 10pt; width: 100%; }
+                  pre { margin: 0; font-size: 10pt; white-space: pre-wrap; }
+                  .center { text-align: center; }
+                  .qr { display: block; margin: 10px auto; }
+                  .image-container { display: flex; justify-content: center; }
+                </style>
+              </head>
+              <body>
+                <div class="image-container">
+                  ${imgUrl ? `<img src="${imgUrl}" alt="Logo" style="width: 140px; height: 140px;" />` : ''}
+                </div>
+                <pre>${content}</pre>
+                <div class="image-container">
+                  <img src="${qrUrl}" alt="QR Code" class="qr" style="width: 80px; height: 80px;" />
+                </div>
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
+          printWindow.focus();
+          printWindow.print();
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error al imprimir ticket térmico:', e);
+    toast.error('No se pudo imprimir el ticket');
+  }
+};
+
   return (
     <>
       <Toaster />
@@ -759,7 +843,8 @@ const actualizarStockDespuesVenta = () => {
               nombre={nombre}
               onResetVenta={resetVentaData}
               onBlockNavigation={(shouldBlock) => setNavigationBlocked(shouldBlock)}
-              handleRemoveAllProducts={actualizarStockDespuesVenta} // <-- Añade este prop
+              handleRemoveAllProducts={actualizarStockDespuesVenta}
+              onPrintThermal={(datosVenta, observacion) => handlePrintThermal(datosVenta, observacion)} // <-- nuevo
             />
         )}
 

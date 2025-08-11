@@ -12,11 +12,11 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
     const productosPerPage = 10;
 
     // Filtrar productos
-    const filteredProductos = productos.filter(producto =>
-        producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
-        || producto.cod_barras.toLowerCase().includes(searchTerm.toLowerCase())
-        || producto.id_producto.toString().includes(searchTerm.toLowerCase())
-    );
+const filteredProductos = productos.filter(producto =>
+  (producto.descripcion || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+  (producto.cod_barras || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+  (producto.id_producto !== undefined ? producto.id_producto.toString() : '').includes(searchTerm.toLowerCase())
+);
 
     // Productos a mostrar en la página actual
     const indexOfLastProducto = currentPage * productosPerPage;

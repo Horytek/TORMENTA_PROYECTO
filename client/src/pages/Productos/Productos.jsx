@@ -22,6 +22,7 @@ function Productos() {
   // Input de búsqueda de productos
   const [searchTerm, setSearchTerm] = useState('');
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
+  const handleClearSearch = () => setSearchTerm('');
 
   // Cargar productos solo una vez
   useEffect(() => {
@@ -74,13 +75,14 @@ return (
     <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Gestión de productos</h1>
     <p className="text-base text-blue-700/80 mb-4">Administra y busca productos fácilmente.</p>
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-      <BarraSearch
-        placeholder="Ingrese un producto"
-        isClearable={true}
-        className="h-10 text-sm w-full md:w-72"
-        value={searchTerm}
-        onChange={handleSearchChange}
-      />
+        <BarraSearch
+          placeholder="Ingrese un producto"
+          isClearable={true}
+          className="h-10 text-sm w-full md:w-72"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          onClear={handleClearSearch}
+        />
       <Button
         color="primary"
         endContent={<FaPlus style={{ fontSize: '22px' }} />}

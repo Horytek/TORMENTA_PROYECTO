@@ -1,9 +1,10 @@
-import { Button, Divider } from '@heroui/react';
+import { Button, Divider, Textarea } from '@heroui/react';
 import { BsCashCoin } from 'react-icons/bs';
 import { useState, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { handleCobrar } from '@/services/Data/add_venta';
 import { useUserStore } from '@/store/useStore';
+import useSucursalData from '@/services/Data/data_sucursal_venta';
 
 const SalesStep4Preview = ({
   cobrarState,
@@ -16,15 +17,30 @@ const SalesStep4Preview = ({
   productos,
   onResetVenta,
   onBlockNavigation,
-  handleRemoveAllProducts
+  handleRemoveAllProducts,
+  onPrintThermal
 }) => {
   const [ventaExitosa, setVentaExitosa] = useState(false);
   const [procesandoVenta, setProcesandoVenta] = useState(false);
+  const [observacion, setObservacion] = useState(paymentData.observaciones || '');
   const nombre = useUserStore(state => state.nombre);
   const usuario = useUserStore(state => state.usuario);
+  const sur = useUserStore(state => state.sur);
   
   // Obtener datos necesarios
-  const sucursalV = { nombre: "Sucursal Principal", ubicacion: "Dirección Principal" };
+    // Cargar sucursales y obtener dirección de la sucursal del store
+  const { sucursales } = useSucursalData();
+  const sucursalV = useMemo(() => {
+    const found =
+      (sucursales || []).find(
+        s => String(s.nombre || '').toLowerCase() === String(sur || '').toLowerCase()
+      ) || null;
+
+    return {
+      nombre: found?.nombre || sur || '',
+      ubicacion: found?.ubicacion || '',
+    };
+  }, [sucursales, sur]);
   // Fecha local en formato YYYY-MM-DD
   function getFechaLocalISO() {
     const now = new Date();
@@ -116,8 +132,8 @@ const SalesStep4Preview = ({
         sub_total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
       };
     }).filter(detalle => detalle !== null),
-    observacion: paymentData.observaciones || '',
-  }), [detalles, selectedDocumentType, clienteData, paymentData, total_t, totalConDescuento, montoRecibido, montoAdicional, montoAdicional2, totalPagado, cambio, nombre, usuario, productos, localDate, fechaIsoLocal]);
+    observacion: observacion
+  }), [detalles, selectedDocumentType, clienteData, paymentData, total_t, totalConDescuento, montoRecibido, montoAdicional, montoAdicional2, totalPagado, cambio, nombre, usuario, productos, localDate, fechaIsoLocal, observacion, sucursalV]);
 
   // Función para procesar la venta
  const procesarVenta = async () => {
@@ -148,26 +164,25 @@ const SalesStep4Preview = ({
       await handleCobrar(
         datosVenta,
         () => {
-          // Remover todos los productos del detalle y restaurar stock
+          // Imprimir ticket térmico con Voucher.jsx
+          if (typeof onPrintThermal === 'function') {
+            onPrintThermal(datosVenta, observacion); 
+          }
+
           if (typeof handleRemoveAllProducts === 'function') {
             handleRemoveAllProducts();
           }
           setVentaExitosa(true);
 
           setTimeout(() => {
-            if (onResetVenta) {
-              onResetVenta();
-            }
+            if (onResetVenta) onResetVenta();
             setVentaExitosa(false);
             setProcesandoVenta(false);
-            if (onBlockNavigation) {
-              onBlockNavigation(false);
-            }
+            if (onBlockNavigation) onBlockNavigation(false);
             setCurrentStep(1);
           }, 3000);
         },
         datosVenta,
-        { id: '' },
         nombre || usuario || 'admin'
       );
 
@@ -327,6 +342,24 @@ const SalesStep4Preview = ({
               <span className="text-sm text-gray-600">Total recibido:</span>
               <span className="text-sm font-medium text-gray-900">S/ {totalPagado.toFixed(2)}</span>
             </div>
+                    <div className="flex flex-col gap-2">
+          <span className="text-sm text-gray-600 font-medium">Observación:</span>
+          <Textarea
+            value={observacion}
+            onChange={e => setObservacion(e.target.value)}
+            placeholder="Agrega una observación para la venta (opcional)"
+            minRows={2}
+            maxRows={4}
+            className="w-full"
+            size="md"
+            variant="flat"
+            style={{
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+            }}
+          />
+        </div>
             <Divider />
             <div className="flex justify-between">
               <span className="text-base font-medium text-gray-900">Total:</span>
