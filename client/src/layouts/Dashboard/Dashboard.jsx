@@ -21,7 +21,7 @@ const Modulo = lazy(() => import('@/pages/Modulos/Modulos'));
 const Permisos = lazy(() => import('@/pages/Roles/Roles'));
 const PermisosGlobales = lazy(() => import('@/pages/Global/PermisosGlobales/TablaPermisosGlobales'));
 const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
-const Logs = lazy(() => import('@/pages/Logs/Logs'));
+const Logs = lazy(() => import('@/pages/SystemLogs/Logs'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;

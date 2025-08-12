@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database";
+import { logClientes } from "../utils/logActions.js";
 
 const getClientes = async (req, res) => {
   let connection;
@@ -134,6 +135,14 @@ const addCliente = async (req, res) => {
 
         const [result] = await connection.query(query, values);
 
+        // Registrar log de creación de cliente
+        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                  (req.connection.socket ? req.connection.socket.remoteAddress : null);
+        
+        if (req.id_usuario && req.id_tenant) {
+            await logClientes.crear(result.insertId, req.id_usuario, ip, req.id_tenant);
+        }
+
         res.json({
             code: 1,
             data: { id: result.insertId },
@@ -225,9 +234,10 @@ const updateCliente = async (req, res) => {
 
         connection = await getConnection();
 
-        // Verificar si el cliente existe
+        // Verificar si el cliente existe y obtener datos actuales
         const [existingClient] = await connection.query(
-            "SELECT id_cliente FROM cliente WHERE id_cliente = ? AND id_tenant = ?",
+            `SELECT id_cliente, dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente 
+             FROM cliente WHERE id_cliente = ? AND id_tenant = ?`,
             [id_cliente, req.id_tenant]
         );
 
@@ -237,6 +247,8 @@ const updateCliente = async (req, res) => {
                 message: "Cliente no encontrado"
             });
         }
+
+        const clienteAnterior = existingClient[0];
 
         const query = `
             UPDATE cliente SET
@@ -263,6 +275,27 @@ const updateCliente = async (req, res) => {
         ];
 
         const [result] = await connection.query(query, values);
+
+        // Registrar log de edición de cliente si hay cambios
+        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                  (req.connection.socket ? req.connection.socket.remoteAddress : null);
+        
+        if (req.id_usuario && req.id_tenant && result.affectedRows > 0) {
+            // Identificar los campos que cambiaron
+            const cambios = [];
+            
+            if (clienteAnterior.dni !== (dni || null)) cambios.push(`DNI: ${clienteAnterior.dni} → ${dni || 'null'}`);
+            if (clienteAnterior.ruc !== (ruc || null)) cambios.push(`RUC: ${clienteAnterior.ruc} → ${ruc || 'null'}`);
+            if (clienteAnterior.nombres !== (nombres || null)) cambios.push(`Nombres: ${clienteAnterior.nombres} → ${nombres || 'null'}`);
+            if (clienteAnterior.apellidos !== (apellidos || null)) cambios.push(`Apellidos: ${clienteAnterior.apellidos} → ${apellidos || 'null'}`);
+            if (clienteAnterior.razon_social !== (razon_social || null)) cambios.push(`Razón Social: ${clienteAnterior.razon_social} → ${razon_social || 'null'}`);
+            if (clienteAnterior.direccion !== (direccion || null)) cambios.push(`Dirección: ${clienteAnterior.direccion} → ${direccion || 'null'}`);
+            if (clienteAnterior.estado_cliente !== estado) cambios.push(`Estado: ${clienteAnterior.estado_cliente} → ${estado}`);
+            
+            if (cambios.length > 0) {
+                await logClientes.editar(id_cliente, req.id_usuario, ip, req.id_tenant, cambios.join(', '));
+            }
+        }
 
         // Obtener el cliente actualizado
         const [updatedClient] = await connection.query(

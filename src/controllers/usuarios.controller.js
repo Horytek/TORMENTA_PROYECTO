@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database";
+import { logAcceso, logClientes } from "../utils/logActions.js";
 
 // Obtener todos los usuarios (con o sin id_tenant)
 const getUsuarios = async (req, res) => {
@@ -130,8 +131,22 @@ const updateUsuario = async (req, res) => {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario };
         connection = await getConnection();
+        
+        // Obtener el estado actual del usuario para comparar cambios
+        let querySelect = "SELECT estado_usuario, contra FROM usuario WHERE id_usuario = ?";
+        let paramsSelect = [id];
+        if (req.id_tenant) {
+            querySelect += " AND id_tenant = ?";
+            paramsSelect.push(req.id_tenant);
+        }
+        const [currentUser] = await connection.query(querySelect, paramsSelect);
+        
+        if (currentUser.length === 0) {
+            return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
+        }
+
+        const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario };
         let query = "UPDATE usuario SET ? WHERE id_usuario = ?";
         let params = [usuario, id];
         if (req.id_tenant) {
@@ -144,8 +159,32 @@ const updateUsuario = async (req, res) => {
             return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
         }
 
+        // Registrar logs de cambios importantes
+        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                  (req.connection.socket ? req.connection.socket.remoteAddress : null);
+        
+        const currentUserData = currentUser[0];
+        
+        // Log de cambio de estado (bloqueo/desbloqueo)
+        if (currentUserData.estado_usuario !== estado_usuario && req.id_tenant) {
+            if (estado_usuario === 0) {
+                // Usuario bloqueado
+                await logAcceso.bloquearUsuario(id, req.id_usuario, ip, req.id_tenant);
+            } else if (estado_usuario === 1) {
+                // Usuario desbloqueado
+                await logAcceso.desbloquearUsuario(id, req.id_usuario, ip, req.id_tenant);
+            }
+        }
+        
+        // Log de cambio de contraseña
+        if (currentUserData.contra !== contra.trim() && req.id_tenant) {
+            const esAdministrador = req.id_usuario !== parseInt(id);
+            await logAcceso.cambiarContrasena(id, ip, req.id_tenant, esAdministrador);
+        }
+
         res.json({ code: 1, message: "Usuario modificado" });
     } catch (error) {
+        console.error('Error actualizando usuario:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {

@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database";
+import { logVentas, logComprobantes, logSunat } from "../utils/logActions.js";
 
 const getVentas = async (req, res) => {
   let connection;
@@ -625,6 +626,25 @@ const addVenta = async (req, res) => {
 
     await connection.commit();
 
+    // Registrar log de creación de venta
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+              (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    
+    const totalVenta = parseFloat(total_t || 0);
+    
+    // Obtener ID del usuario desde el vendedor de la sucursal
+    const [usuarioVendedor] = await connection.query(
+      `SELECT u.id_usuario FROM usuario u 
+       INNER JOIN vendedor v ON v.id_usuario = u.id_usuario 
+       INNER JOIN sucursal s ON s.dni = v.dni 
+       WHERE s.id_sucursal = ? AND s.id_tenant = ?`,
+      [id_sucursal, id_tenant]
+    );
+    
+    if (usuarioVendedor.length > 0) {
+      await logVentas.crear(id_venta, usuarioVendedor[0].id_usuario, ip, id_tenant, totalVenta);
+    }
+
     res.json({ message: "Venta y detalles añadidos" });
   } catch (error) {
     await connection.rollback();
@@ -826,6 +846,13 @@ const updateVenta = async (req, res) => {
       `,
       [0, id_usuario, id_venta, id_tenant]
     );
+
+    // Registrar log de anulación de venta
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+              (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    
+    const motivoAnulacion = `Anulación solicitada por usuario. Estado SUNAT: ${estadoSunat}, Comprobante: ${comprobante}`;
+    await logVentas.anular(id_venta, id_usuario, ip, id_tenant, motivoAnulacion);
 
     // 7) Contadores SUNAT por tenant (solo si fue aceptada por SUNAT)
     if (estadoSunat === 1 && comprobante === 'Factura') {

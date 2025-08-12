@@ -81,7 +81,7 @@ app.options("*", cors({
 app.use(express.json());
 app.use(cookieParser());
 // Auditoría (después de parseos, antes de rutas) - registra solo rutas autenticadas luego
-app.use(auditLog());
+// app.use(auditLog()); // DESACTIVADO: genera acciones no válidas como "GET OK"
 
 // Routes
 app.use("/api/dashboard", dashboardRoutes);

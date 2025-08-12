@@ -26,6 +26,7 @@ export const addLog = async ({ id_usuario, accion, id_modulo, id_submodulo = nul
 export const getLogs = async (req, res) => {
   let connection;
   try {
+    console.log('🔍 getLogs called with query:', req.query);
     const { from, to, usuario, accion, modulo, page = 1, limit = 25 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const filtros = [];
@@ -35,6 +36,7 @@ export const getLogs = async (req, res) => {
     if (req.id_tenant) { 
       filtros.push("l.id_tenant = ?"); 
       params.push(req.id_tenant); 
+      console.log('🏢 Filtro tenant:', req.id_tenant);
     }
 
     // Filtros de fecha
@@ -62,6 +64,8 @@ export const getLogs = async (req, res) => {
     }
 
     const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
+    console.log('📝 WHERE clause:', where);
+    console.log('🔧 Params:', params);
     
     connection = await getConnection();
     
@@ -71,11 +75,11 @@ export const getLogs = async (req, res) => {
         l.id_log,
         l.fecha,
         l.id_usuario,
-        u.nombre_usuario,
+        u.usua,
         l.id_modulo,
         m.nombre_modulo,
         l.id_submodulo,
-        s.nombre_submodulo,
+        s.nombre_sub,
         l.accion,
         l.recurso,
         l.descripcion,
@@ -89,8 +93,13 @@ export const getLogs = async (req, res) => {
       LIMIT ? OFFSET ?
     `;
 
+    console.log('📊 Executing query:', query);
     const [rows] = await connection.query(query, [...params, parseInt(limit), offset]);
     const [totalRows] = await connection.query("SELECT FOUND_ROWS() AS total");
+    
+    console.log('📈 Found rows:', rows.length);
+    console.log('📊 Total:', totalRows[0].total);
+    console.log('🎯 Sample data:', rows[0]);
     
     res.json({ 
       code: 1, 
@@ -100,7 +109,7 @@ export const getLogs = async (req, res) => {
       limit: parseInt(limit) 
     });
   } catch (e) {
-    console.error('Error obteniendo logs:', e);
+    console.error('❌ Error obteniendo logs:', e);
     res.status(500).json({ code: 0, message: "Error obteniendo logs" });
   } finally {
     if (connection) connection.release();

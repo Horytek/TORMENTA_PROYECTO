@@ -1,7 +1,7 @@
 import { addLog } from "../controllers/logs.controller.js";
 
 export const auditLog = (options = {}) => {
-  const { enabled = true, exclude = ["/api/logs"] } = options;
+  const { enabled = false, exclude = ["/api/logs"] } = options;
   return (req, res, next) => {
     if (!enabled) return next();
     if (exclude.some(p => req.path.startsWith(p))) return next();

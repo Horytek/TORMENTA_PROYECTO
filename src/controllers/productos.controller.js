@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database";
+import { logProductos } from "../utils/logActions.js";
 
 const getProductos = async (req, res) => {
     let connection;
@@ -107,16 +108,39 @@ const updateProducto = async (req, res) => {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
         connection = await getConnection();
+        
+        // Obtener el precio actual para comparar
+        const [currentProduct] = await connection.query(
+            "SELECT precio FROM producto WHERE id_producto = ? AND id_tenant = ?", 
+            [id, req.id_tenant]
+        );
+        
+        if (currentProduct.length === 0) {
+            return res.status(404).json({code: 0, message: "Producto no encontrado"});
+        }
+
+        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
         const [result] = await connection.query("UPDATE producto SET ? WHERE id_producto = ? AND id_tenant = ?", [producto, id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({code: 0, message: "Producto no encontrado"});
         }
 
+        // Registrar log de cambio de precio si hubo cambio
+        const precioAnterior = parseFloat(currentProduct[0].precio);
+        const precioNuevo = parseFloat(precio);
+        
+        if (precioAnterior !== precioNuevo && req.id_usuario) {
+            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
+            
+            await logProductos.cambioPrecio(id, req.id_usuario, ip, req.id_tenant, precioAnterior, precioNuevo);
+        }
+
         res.json({code: 1 ,message: "Producto modificado"});
     } catch (error) {
+        console.error('Error actualizando producto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }  finally {
         if (connection) {

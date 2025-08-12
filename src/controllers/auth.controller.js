@@ -2,6 +2,7 @@ import { getConnection } from "./../database/database";
 import { createAccessToken } from "../libs/jwt";
 import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
+import { logAcceso } from "../utils/logActions.js";
 
 const login = async (req, res) => {
     let connection;
@@ -12,6 +13,12 @@ const login = async (req, res) => {
         const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ? AND estado_usuario=1", user.usuario);
 
         if (userFound.length === 0) {
+            // Registrar log de login fallido por usuario inexistente
+            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
+            
+            await logAcceso.loginFail(user.usuario, ip, 1, 'Usuario no existe o está deshabilitado');
+            
             return res.status(400).json({ success: false, message: 'El usuario ingresado no existe o esta deshabilitado' });
         }
 
@@ -72,6 +79,14 @@ const login = async (req, res) => {
                 }
             }
 
+            // Registrar log de login exitoso
+            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
+            
+            if (userbd.id_tenant) {
+                await logAcceso.loginOk(userbd.id_usuario, ip, userbd.id_tenant);
+            }
+
             res.json({
                 success: true,
                 data: {
@@ -89,6 +104,13 @@ const login = async (req, res) => {
             // Registrar el último inicio de sesión
             await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [1, userbd.id_usuario]);
         } else {
+            // Registrar log de login fallido
+            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
+            
+            // Para login fallido, usar id_tenant = 1 por defecto (o el que corresponda)
+            await logAcceso.loginFail(user.usuario, ip, 1, 'Contraseña incorrecta');
+            
             res.status(400).json({ success: false, message: 'La contraseña ingresada no es correcta' });
         }
 
@@ -172,6 +194,15 @@ const logout = async (req, res) => {
         if (userFound.length === 0) return res.sendStatus(401);
 
         const userbd = userFound[0];
+        
+        // Registrar log de logout
+        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                  (req.connection.socket ? req.connection.socket.remoteAddress : null);
+        
+        if (userbd.id_tenant) {
+            await logAcceso.logout(userbd.id_usuario, ip, userbd.id_tenant);
+        }
+        
         await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
 
         res.cookie("token", "", {
