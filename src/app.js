@@ -34,6 +34,8 @@ import empresaRoutes from "./routes/empresa.routes";
 import claveRoutes from './routes/clave.routes.js';
 import logotipoRoutes from "./routes/logotipo.routes.js";
 import valorRoutes from "./routes/valor.routes.js";
+import logsRoutes from "./routes/logs.routes.js";
+import { auditLog } from "./middlewares/audit.middleware.js";
 
 const app = express();
 
@@ -78,6 +80,8 @@ app.options("*", cors({
 
 app.use(express.json());
 app.use(cookieParser());
+// Auditoría (después de parseos, antes de rutas) - registra solo rutas autenticadas luego
+app.use(auditLog());
 
 // Routes
 app.use("/api/dashboard", dashboardRoutes);
@@ -110,5 +114,6 @@ app.use("/api/empresa", empresaRoutes);
 app.use("/api/clave", claveRoutes);
 app.use("/api/logotipo", logotipoRoutes);
 app.use("/api/valor", valorRoutes);
+app.use("/api/logs", logsRoutes);
 
 export default app;

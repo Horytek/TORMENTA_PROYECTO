@@ -21,6 +21,7 @@ const Modulo = lazy(() => import('@/pages/Modulos/Modulos'));
 const Permisos = lazy(() => import('@/pages/Roles/Roles'));
 const PermisosGlobales = lazy(() => import('@/pages/Global/PermisosGlobales/TablaPermisosGlobales'));
 const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
+const Logs = lazy(() => import('@/pages/Logs/Logs'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
@@ -162,6 +163,18 @@ function Dashboard() {
             <PermisosGlobales />
           </RouteProtectedRol>
         }
+      />
+    );
+
+    dynamicRoutes.push(
+      <Route
+      key="logs"
+      path="/configuracion/logs"
+      element={
+        <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+          <Logs />
+        </RouteProtectedRol>
+      }
       />
     );
 
