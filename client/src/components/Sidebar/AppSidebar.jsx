@@ -102,6 +102,7 @@ const data = {
     { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, items: [] },
     { title: "Roles y permisos", url: "/configuracion/roles", icon: Users, items: [] },
     { title: "Logs", url: "/configuracion/logs", icon: FileBarChart2, items: [] },
+    { title: "Negocio", url: "/configuracion/negocio", icon: Tags, items: [] }
   ],
   desarrollador: [
     { title: "Desarrollo", url: "/desarrollador", icon: Bot, items: [] },

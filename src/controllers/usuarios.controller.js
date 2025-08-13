@@ -101,7 +101,7 @@ const addUsuario = async (req, res) => {
         const { id_rol, usua, contra, estado_usuario, id_empresa } = req.body;
 
         if (id_rol === undefined || usua === undefined || contra === undefined || id_empresa === undefined) {
-            res.status(400).json({ message: "Bad Request. Please fill all field." });
+            return res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
         const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario, id_empresa };
@@ -113,6 +113,7 @@ const addUsuario = async (req, res) => {
 
         res.json({ code: 1, message: "Usuario añadido" });
     } catch (error) {
+        console.error('Error adding user:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -128,7 +129,7 @@ const updateUsuario = async (req, res) => {
         const { id_rol, usua, contra, estado_usuario } = req.body;
 
         if (id_rol === undefined || usua === undefined || contra === undefined || estado_usuario === undefined) {
-            res.status(400).json({ message: "Bad Request. Please fill all field." });
+            return res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
         connection = await getConnection();
@@ -200,7 +201,7 @@ const updateUsuarioPlan = async (req, res) => {
         const { id_empresa, plan_pago, estado_usuario, fecha_pago } = req.body;
 
         if (id_empresa === undefined || plan_pago === undefined || estado_usuario === undefined || fecha_pago === undefined) {
-            res.status(400).json({ message: "Bad Request. Please fill all field." });
+            return res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
         const usuario = { id_empresa, plan_pago, estado_usuario, fecha_pago };
@@ -219,6 +220,7 @@ const updateUsuarioPlan = async (req, res) => {
 
         res.json({ code: 1, message: "Usuario modificado" });
     } catch (error) {
+        console.error('Error updating user plan:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -268,6 +270,7 @@ const deleteUsuario = async (req, res) => {
         }
 
     } catch (error) {
+        console.error('Error deleting user:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {

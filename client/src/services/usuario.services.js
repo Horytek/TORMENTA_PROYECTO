@@ -46,14 +46,20 @@ const addUsuario= async (user) => {
   try {
     const response = await addUsuarioRequest(user);
     if (response.data.code === 1) {
-      //toast.success("Usuario añadido con éxito");
       return true;
     } else {
-      //toast.error("Ocurrió un error al guardar el usuario");
+      console.error('Error adding user:', response.data.message);
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    console.error('Error in addUsuario service:', error);
+    console.log('Error response data:', error.response?.data);
+    if (error.response?.status === 400) {
+      toast.error(`Datos incompletos: ${error.response?.data?.message || 'Verifique los campos requeridos'}`);
+    } else {
+      toast.error("Error en el servidor interno");
+    }
+    return false;
   }
 };
 
