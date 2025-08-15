@@ -8,7 +8,7 @@ import {
   FaFileAlt, 
   FaClock 
 } from "react-icons/fa"
-import { Modal, ModalContent, ModalHeader, ModalBody, Button, Avatar, Badge, Card, CardBody, CardHeader, Tabs, Tab } from "@heroui/react"
+import { Modal, ModalContent, ModalHeader, ModalBody, Button, Avatar, Badge, Card, CardBody, CardHeader, Tabs, Tab, Tooltip } from "@heroui/react"
 import { useState } from "react"
 
 const getDocumentType = (documentNumber) => {
@@ -23,6 +23,7 @@ const ViewClientModal = ({ client }) => {
 
   return (
     <>
+    <Tooltip content="Ver detalles">
     <Button 
       isIconOnly 
       variant="light" 
@@ -31,6 +32,7 @@ const ViewClientModal = ({ client }) => {
     >
       <FaEye className="h-6 w-4" />
     </Button>
+    </Tooltip>
       <Modal 
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)}

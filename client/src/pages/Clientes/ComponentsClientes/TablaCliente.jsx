@@ -43,6 +43,8 @@ const TablaCliente = ({
 }) => {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
+    const [viewClient, setViewClient] = useState(null); // Añade este estado si no existe
+
 
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [actionType, setActionType] = useState(null);
@@ -100,20 +102,20 @@ case "acciones":
     const isInactive = cliente.estado === "0" || cliente.estado === 0;
     return (
         <div className="flex items-center justify-center gap-2">
-            <Tooltip content="Ver detalles">
-                <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    color="primary"
-                    className="hover:bg-blue-50 transition"
-                    onClick={() => {
-                        // Si tienes modal de vista, puedes abrirlo aquí
-                    }}
-                >
-                    <MdVisibility className="h-5 w-5" />
-                </Button>
-            </Tooltip>
+                <ViewClientModal
+                    client={cliente}
+                    trigger={
+                        <Button
+                            isIconOnly
+                            size="sm"
+                            variant="light"
+                            color="primary"
+                            className="hover:bg-blue-50 transition"
+                        >
+                            <MdVisibility className="h-5 w-5" />
+                        </Button>
+                    }
+                />
             <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
                 <Button
                     isIconOnly
