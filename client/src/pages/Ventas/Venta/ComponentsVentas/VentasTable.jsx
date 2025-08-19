@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdOptions } from "react-icons/io";
 import { TiPrinter } from "react-icons/ti";
@@ -54,6 +54,10 @@ const TablaVentas = ({
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const nombre = useUserStore((state) => state.nombre);
 
+  // Nuevo: Estado para el comprobante por venta
+  const [comprobantePorVenta, setComprobantePorVenta] = useState({});
+  const [ventaActualId, setVentaActualId] = useState(null);
+
   // Zustand: setter y selectores
   const setVentaSeleccionada = useVentaSeleccionadaStore((state) => state.setVentaSeleccionada);
   const ventaSeleccionada = useVentaSeleccionadaStore((state) => state.venta);
@@ -89,16 +93,31 @@ const handleRowClick = (e, venta) => {
   };
 
 
-  // Usa los datos seleccionados desde Zustand
+  // Hook para obtener los datos del boucher
   const { venta_B } = useBoucher(ventaSeleccionada?.id_venta_boucher);
 
+  // Mantener el comprobante por venta en estado local
   useEffect(() => {
-    if (venta_B?.num_comprobante) setComprobante1({ nuevoNumComprobante: venta_B.num_comprobante });
+    if (venta_B?.num_comprobante && ventaSeleccionada?.id) {
+      setComprobantePorVenta(prev => ({
+        ...prev,
+        [ventaSeleccionada.id]: venta_B.num_comprobante
+      }));
+    }
     if (ventaSeleccionada?.observacion) setObservacion({ observacion: ventaSeleccionada.observacion });
-  }, [venta_B?.num_comprobante, ventaSeleccionada?.observacion, setComprobante1, setObservacion]);
+  }, [venta_B?.num_comprobante, ventaSeleccionada?.id, ventaSeleccionada?.observacion, setObservacion]);
+  
+  // Al hacer click en imprimir, setear venta actual y abrir modal
+  const handlePrintIconClick = (venta) => {
+    setVentaSeleccionada(venta);
+    setVentaActualId(venta.id);
+    onOpen();
+  };
 
   const handlePrint = async () => {
     try {
+      const numComprobante = comprobantePorVenta[ventaActualId];
+      const comprobante1 = { nuevoNumComprobante: numComprobante };
       const content = await generateReceiptContent(
         venta_B,
         ventaSeleccionada,
@@ -243,14 +262,11 @@ const handleRowClick = (e, venta) => {
                 openModal(venta.id, venta.estado);
               }}
             />
-                  <TiPrinter
-                    className='ignore-toggle text-gray-500 cursor-pointer'
-                    onClick={() => {
-                      setVentaSeleccionada(venta);
-                      onOpen();
-                    }}
-                    style={{ fontSize: '20px' }}
-                  />
+            <TiPrinter
+              className='ignore-toggle text-gray-500 cursor-pointer'
+              onClick={() => handlePrintIconClick(venta)}
+              style={{ fontSize: '20px' }}
+            />
             <Modal backdrop={"opaque"} isOpen={isOpen} onOpenChange={onOpenChange}
               motionProps={{
                 variants: {

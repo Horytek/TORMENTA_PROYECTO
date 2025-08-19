@@ -8,11 +8,11 @@ function centerText(text, lineWidth) {
         let lines = [];
         while (text.length > maxWidth) {
             let cutIndex = text.substring(0, maxWidth).lastIndexOf(' ');
-            if (cutIndex === -1) cutIndex = maxWidth; // Si no hay espacio, corta en el ancho máximo
+            if (cutIndex === -1) cutIndex = maxWidth;
             lines.push(text.substring(0, cutIndex).trim());
             text = text.substring(cutIndex).trim();
         }
-        lines.push(text); // Agregar el resto del texto
+        lines.push(text);
         return lines;
     };
 
@@ -44,17 +44,16 @@ function leftAlignText(text, lineWidth) {
 
 function wrapText(text, maxWidth) {
   if (!text || typeof text !== 'string') {
-    console.warn('wrapText recibió un valor no válido:', text); // Agrega un mensaje de advertencia para depuración
-    return ['']; // Si el texto es null, undefined o no es una cadena, retorna una línea vacía
+    return [''];
   }
   let lines = [];
   while (text.length > maxWidth) {
     let cutIndex = text.substring(0, maxWidth).lastIndexOf(' ');
-    if (cutIndex === -1) cutIndex = maxWidth; // Si no hay espacio, corta en el ancho máximo
+    if (cutIndex === -1) cutIndex = maxWidth;
     lines.push(text.substring(0, cutIndex).trim());
     text = text.substring(cutIndex).trim();
   }
-  lines.push(text); // Agregar el resto del texto
+  lines.push(text);
   return lines;
 }
 
@@ -63,31 +62,25 @@ function formatDetail(nombre, cantidad, precio, subTotal) {
     const cantidadWidth = 5;
     const precioWidth = 8;
     const totalWidth = 8;
-
-    // Divide el nombre en líneas si es necesario
     const nombreLines = wrapText(nombre, nombreWidth);
 
     let formattedDetail = '';
     nombreLines.forEach((line, index) => {
         if (index === 0) {
-            // Primera línea: Incluye todos los campos
             const formattedNombre = line.padEnd(nombreWidth, ' ').substring(0, nombreWidth);
             const formattedCantidad = cantidad.toString().padStart(cantidadWidth, ' ').substring(0, cantidadWidth);
             const formattedPrecio = precio.toFixed(2).padStart(precioWidth, ' ').substring(0, precioWidth);
             const formattedTotal = subTotal.toFixed(2).padStart(totalWidth, ' ').substring(0, totalWidth);
-
             formattedDetail += `${formattedNombre} ${formattedCantidad} ${formattedPrecio} ${formattedTotal}\n`;
         } else {
-            // Líneas adicionales: Solo el nombre, alineado con la columna y espacios para las otras columnas
             const formattedNombre = line.padEnd(nombreWidth, ' ').substring(0, nombreWidth);
-            const spacesForOtherColumns = ' '.repeat(cantidadWidth + precioWidth + totalWidth + 2); // +2 para los espacios entre columnas
+            const spacesForOtherColumns = ' '.repeat(cantidadWidth + precioWidth + totalWidth + 2);
             formattedDetail += `${formattedNombre}${spacesForOtherColumns}\n`;
         }
     });
 
     return formattedDetail;
 }
-
 
 function rightAlignText(text) {
     const lineWidth = 34;
@@ -149,6 +142,33 @@ export const generateReceiptContent = async (
     content += `${text}\n`;
   };
 
+const getHora = (date, raw = false) => {
+  if (!date) return '';
+  // Siempre usar hour12: true y locale es-ES para ambos casos
+  if (raw && typeof date === 'string') {
+    return new Date(`1970-01-01T${date}`).toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true
+    });
+  }
+  // Para Date o string tipo Date
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+};
+
+const now = new Date();
+const hora_creacion = datosVenta?.hora_creacion
+  ? getHora(datosVenta.hora_creacion, true)
+  : getHora(now);
+const hora_impresion = getHora(now, true);
+
   const descuentoVenta = Number(datosVentaComprobante.descuento_venta || 0);
   const totalT = Number(datosVentaComprobante.total_t || 0);
   const igv = Number(datosVentaComprobante.igv || 0);
@@ -157,29 +177,54 @@ export const generateReceiptContent = async (
 
   const totalEnLetras = numeroALetras(totalT);
 
-  // empresaData y nombre ahora vienen como argumento
   if (!empresaData) {
     console.error('No se pudieron obtener los datos de la empresa.');
     return '';
   }
 
-  appendContent(centerText(empresaData?.nombreComercial || "Nombre Comercial", 34));
-  appendContent(centerText(empresaData?.razonSocial || "Razón Social", 34));
-  appendContent(centerText("Dirección: " + (empresaData?.direccion || "Dirección no disponible"), 34));
-  appendContent(centerText(`${empresaData?.distrito || ''}, ${empresaData?.provincia || ''}, ${empresaData?.departamento || ''}`, 34));
-  appendContent(centerText("RUC: " + (empresaData?.ruc || "20610588981"), 34));
-  appendContent(centerText("Tel: " + (empresaData?.telefono || "Teléfono no disponible"), 34));
-  appendContent(centerText(datosVentaComprobante.comprobante_pago + ": " + (comprobante1?.nuevoNumComprobante || 'N/A')));
+  // --- Encabezado empresa ---
+  //if (empresaData?.nombreComercial)
+  //  appendContent(centerText(empresaData.nombreComercial, 34));
+  if (empresaData?.razonSocial)
+    appendContent(centerText(empresaData.razonSocial, 34));
+  if (empresaData?.direccion)
+    appendContent(centerText("Dirección: " + empresaData.direccion, 34));
+  if (empresaData?.distrito || empresaData?.provincia || empresaData?.departamento)
+    appendContent(centerText(
+      [empresaData.distrito, empresaData.provincia, empresaData.departamento].filter(Boolean).join(', '),
+      34
+    ));
+  if (empresaData?.ruc)
+    appendContent(centerText("RUC: " + empresaData.ruc, 34));
+  if (empresaData?.telefono)
+    appendContent(centerText("Tel: " + empresaData.telefono, 34));
+  appendContent(centerText(
+    (datosVentaComprobante.comprobante_pago || datosVenta.comprobante_pago) + ": " + (comprobante1?.nuevoNumComprobante || 'N/A')
+  ));
   appendContent("==================================");
-  appendContent("Fecha de Emisión: " + (datosVentaComprobante.fecha || 'N/A'));
-  appendContent("Dirección: " + (datosVenta.direccion || 'N/A'));
-  appendContent(leftAlignText("Sucursal: " + (datosVenta.sucursal || 'N/A')));
+  if (datosVentaComprobante.fecha)
+    appendContent("Fecha de Emisión: " + datosVentaComprobante.fecha);
+  // Sucursal y dirección solo si existen
+  if (datosVenta?.direccion)
+    appendContent("Dirección: " + datosVenta.direccion);
+  if (datosVenta?.sucursal)
+    appendContent(leftAlignText("Sucursal: " + datosVenta.sucursal));
+    if (datosVenta?.ubicacion)
+    appendContent("Dirección: " + datosVenta.ubicacion);
+  if (datosVenta?.nombre_sucursal)
+    appendContent(leftAlignText("Sucursal: " + datosVenta.nombre_sucursal));
   appendContent("==================================");
-  appendContent(leftAlignText("CLIENTE: " + (datosVentaComprobante.nombre_cliente || 'N/A')));
-  appendContent("RUC/DNI: " + (datosVentaComprobante.documento_cliente || 'N/A'));
-  appendContent(leftAlignText(datosVentaComprobante.direccion_cliente || 'N/A'));
+  // --- Cliente ---
+  if (datosVentaComprobante.nombre_cliente)
+    appendContent(leftAlignText("CLIENTE: " + datosVentaComprobante.nombre_cliente));
+  if (datosVentaComprobante.documento_cliente)
+    appendContent("RUC/DNI: " + datosVentaComprobante.documento_cliente);
+  if (datosVentaComprobante.direccion_cliente)
+    appendContent(leftAlignText(datosVentaComprobante.direccion_cliente));
   appendContent("==================================");
-  appendContent(leftAlignText("Observacion: " + (observacion?.observacion || 'Ninguna')));
+  // Observación solo si existe
+  if (observacion?.observacion)
+    appendContent(leftAlignText("Observacion: " + observacion.observacion));
   appendContent("==================================");
   appendContent("Descrip      Cant   P.Unit   TOTAL");
   appendContent("==================================");
@@ -204,7 +249,10 @@ export const generateReceiptContent = async (
   appendContent(centerText("Vuelto: S/" + vuelto.toFixed(2)));
   appendContent(centerText("Peso: Kg 0.00"));
   appendContent("\n");
+  // Hora creación e impresión
   appendContent(centerText("Fec.Regist: " + (datosVentaComprobante.fecha || 'N/A')));
+  appendContent(centerText("Hora creación: " + hora_creacion));
+  appendContent(centerText("Hora impresión: " + hora_impresion));
   appendContent("\n");
   appendContent(centerText("Gracias por su preferencia"));
   appendContent(centerText("¡Vuelva Pronto!"));
@@ -241,7 +289,21 @@ const Voucher = ({ datosVentaComprobante, datosVenta }) => {
     fetchContent();
   }, [datosVentaComprobante, datosVenta, comprobante1, observacion, nombre]);
 
-  return <pre>{content}</pre>;
+  // Mejorar tipo de letra usando una fuente monoespaciada y tamaño más legible
+  return (
+    <pre style={{
+      fontFamily: '"Fira Mono", "Consolas", "Menlo", "Monaco", "monospace"',
+      fontSize: "13px",
+      lineHeight: "1.35",
+      letterSpacing: "0.01em",
+      margin: 0,
+      padding: 0,
+      background: "white",
+      color: "#222"
+    }}>
+      {content}
+    </pre>
+  );
 };
 
 export default Voucher;

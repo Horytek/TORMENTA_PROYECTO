@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import { generateReceiptContent } from './ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
 import { getEmpresaDataByUser } from '@/services/empresa.services'; 
+import generateComprobanteNumber from '@/services/data/generate_comprobante';
 import { Button, Card, CardHeader, CardBody, Divider, Chip, ScrollShadow } from '@heroui/react';
 import PropTypes from 'prop-types';
 
@@ -33,6 +34,7 @@ const Registro_Venta = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedMarca, setSelectedMarca] = useState('');
   const [showAlert, setShowAlert] = useState(false);
+  const [nuevoNumComprobante, setNuevoNumComprobante] = useState(null); // <--- NUEVO
   const [currentStep, setCurrentStep] = useState(1); // 1: Resumen, 2: Comprobante, 3: Pago, 4: Confirmación
   const [selectedDocumentType, setSelectedDocumentType] = useState("Boleta");
   const [clienteData, setClienteData] = useState({
@@ -609,13 +611,33 @@ const actualizarStockDespuesVenta = () => {
     }
   };
 
+    // Obtener el número de comprobante cuando se llega al paso de confirmación (antes de registrar la venta)
+  useEffect(() => {
+    if (currentStep === 4 && !nuevoNumComprobante) {
+      (async () => {
+        try {
+          const num = await generateComprobanteNumber(selectedDocumentType, nombre);
+          setNuevoNumComprobante(num);
+        } catch (e) {
+          toast.error('No se pudo obtener el número de comprobante');
+        }
+      })();
+    }
+    // Limpiar el comprobante si se regresa a pasos anteriores
+    if (currentStep < 4 && nuevoNumComprobante) {
+      setNuevoNumComprobante(null);
+    }
+  }, [currentStep, selectedDocumentType, nombre]);
+  
+
   // Imprimir ticket térmico 72mm x 297mm usando el Voucher
  const handlePrintThermal = async (datosVenta, observacionTexto, printMode = 'window') => {
   try {
     const empresaData = await getEmpresaDataByUser(nombre);
 
     const observacion = { observacion: observacionTexto || '' };
-    const comprobante1 = { nuevoNumComprobante: '' };
+    // Obtener el número de comprobante usando el hook
+    const comprobante1 = { nuevoNumComprobante };
 
     // Contenido del voucher (texto monoespaciado)
     const content = await generateReceiptContent(

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import TablaVentas from './ComponentsVentas/VentasTable';
 import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
@@ -13,6 +13,7 @@ import { anularVentaEnSunatF, anularVentaEnSunatB } from '@/services/data/anular
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { Card, CardBody, ScrollShadow } from "@heroui/react";
 import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator } from "react-icons/fa";
+import useSucursalData from '@/services/Data/data_sucursal_venta';
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
@@ -44,6 +45,7 @@ const Ventas = () => {
   const ventaSeleccionada = useVentaSeleccionadaStore((state) => state.venta);
   const detallesSeleccionados = useVentaSeleccionadaStore((state) => state.detalles);
   const nombre = useUserStore((state) => state.nombre);
+  const sur = useUserStore(state => state.sur);
 
   // Estado para el manejo del modal y opciones de eliminación
   const [SelectedRowId, setSelectedRowId] = useState(null);
@@ -51,6 +53,18 @@ const Ventas = () => {
   const [deleteOptionSelected, setDeleteOptionSelected] = useState(false);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
 
+  const { sucursales } = useSucursalData();
+  const sucursalV = useMemo(() => {
+      const found =
+        (sucursales || []).find(
+          s => String(s.nombre || '').toLowerCase() === String(sur || '').toLowerCase()
+        ) || null;
+  
+      return {
+        nombre: found?.nombre || sur || '',
+        ubicacion: found?.ubicacion || '',
+      };
+    }, [sucursales, sur]);
   // Guarda el total de ventas en Zustand cada vez que cambian
   useEffect(() => {
     setTotalVentas(ventas);
@@ -80,11 +94,12 @@ const openModal = (id, estado) => {
         anular: venta.anular,
         anular_b: venta.anular_b,
         id_venta_boucher: venta.id_venta_boucher,
-        sucursal: venta.nombre_sucursal,
-        direccion: venta.ubicacion,
+        sucursal: sucursalV.nombre,
+        direccion: sucursalV.ubicacion,
         usua_vendedor: venta.usua_vendedor,
         observacion: venta.observacion || '',
-        usua_usuario: nombre
+        usua_usuario: nombre,
+        hora_creacion: venta.hora_creacion
       };
       setVentaSeleccionada(datos_venta, venta.detalles);
     }
