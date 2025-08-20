@@ -185,7 +185,11 @@ const hora_impresion = getHora(now, true);
   // --- Encabezado empresa ---
   //if (empresaData?.nombreComercial)
   //  appendContent(centerText(empresaData.nombreComercial, 34));
-  if (empresaData?.razonSocial)
+if (empresaData?.razonSocial)
+    appendContent(""); // Salto de línea extra
+    appendContent(""); // Salto de línea extra
+    appendContent(""); // Salto de línea extra
+    appendContent(""); // Salto de línea extra
     appendContent(centerText(empresaData.razonSocial, 34));
   if (empresaData?.direccion)
     appendContent(centerText("Dirección: " + empresaData.direccion, 34));
@@ -199,18 +203,34 @@ const hora_impresion = getHora(now, true);
   if (empresaData?.telefono)
     appendContent(centerText("Tel: " + empresaData.telefono, 34));
   appendContent(centerText(
-    (datosVentaComprobante.comprobante_pago || datosVenta.comprobante_pago) + ": " + (comprobante1?.nuevoNumComprobante || 'N/A')
+    "==============================", 34
+  ));
+  appendContent(centerText(
+    (
+      "** " +
+      ((datosVentaComprobante.comprobante_pago || datosVenta.comprobante_pago)?.toUpperCase() + ": " + (comprobante1?.nuevoNumComprobante || 'N/A')) +
+      " **"
+    ),
+    34
+  ));
+  appendContent(centerText(
+    "==============================", 34
   ));
   appendContent("==================================");
   if (datosVentaComprobante.fecha)
     appendContent("Fecha de Emisión: " + datosVentaComprobante.fecha);
+    appendContent(""); // Salto de línea extra
   // Sucursal y dirección solo si existen
-  if (datosVenta?.direccion)
-    appendContent("Dirección: " + datosVenta.direccion);
+  if (datosVenta?.direccion) {
+    appendContent(leftAlignText("Dirección: " + datosVenta.direccion, 34));
+    appendContent(""); // Salto de línea extra
+  }
   if (datosVenta?.sucursal)
     appendContent(leftAlignText("Sucursal: " + datosVenta.sucursal));
-    if (datosVenta?.ubicacion)
-    appendContent("Dirección: " + datosVenta.ubicacion);
+  if (datosVenta?.ubicacion) {
+    appendContent(leftAlignText("Dirección: " + datosVenta.ubicacion, 34));
+    appendContent(""); // Salto de línea extra
+  }
   if (datosVenta?.nombre_sucursal)
     appendContent(leftAlignText("Sucursal: " + datosVenta.nombre_sucursal));
   appendContent("==================================");
@@ -219,8 +239,10 @@ const hora_impresion = getHora(now, true);
     appendContent(leftAlignText("CLIENTE: " + datosVentaComprobante.nombre_cliente));
   if (datosVentaComprobante.documento_cliente)
     appendContent("RUC/DNI: " + datosVentaComprobante.documento_cliente);
-  if (datosVentaComprobante.direccion_cliente)
-    appendContent(leftAlignText(datosVentaComprobante.direccion_cliente));
+  if (datosVentaComprobante.direccion_cliente) {
+    appendContent(leftAlignText(datosVentaComprobante.direccion_cliente, 34));
+    appendContent(""); // Salto de línea extra
+  }
   appendContent("==================================");
   // Observación solo si existe
   if (observacion?.observacion)
@@ -260,7 +282,7 @@ const hora_impresion = getHora(now, true);
   appendContent("==================================");
   appendContent(centerText("Generado desde el Sistema"));
   appendContent(centerText("de Horytek Negocios"));
-  appendContent(centerText("Un Producto de " + (empresaData?.razonSocial || 'N/A')));
+  appendContent(leftAlignText("Un Producto de " + (empresaData?.nombreComercial || 'N/A'), 34));
   appendContent("==================================");
 
   return content;
@@ -291,18 +313,20 @@ const Voucher = ({ datosVentaComprobante, datosVenta }) => {
 
   // Mejorar tipo de letra usando una fuente monoespaciada y tamaño más legible
   return (
-    <pre style={{
-      fontFamily: '"Fira Mono", "Consolas", "Menlo", "Monaco", "monospace"',
-      fontSize: "13px",
-      lineHeight: "1.35",
-      letterSpacing: "0.01em",
-      margin: 0,
-      padding: 0,
-      background: "white",
-      color: "#222"
-    }}>
-      {content}
-    </pre>
+<pre style={{
+  fontFamily: '"Consolas", "Menlo", "Courier New", "Fira Mono", "Monaco", monospace',
+  fontSize: "15px",
+  lineHeight: "1.5",
+  letterSpacing: "0.02em",
+  margin: 0,
+  padding: "12px 8px",
+  background: "#fff",
+  color: "#18181b",
+  borderRadius: "8px",
+  boxShadow: "0 2px 8px 0 #e5e7eb"
+}}>
+  {content}
+</pre>
   );
 };
 

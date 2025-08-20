@@ -127,7 +127,7 @@ const handleRowClick = (e, venta) => {
         empresaData
       );
       const imgUrl = empresaData?.logotipo || '';
-      if (printOption === 'print') {
+    if (printOption === 'print') {
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [75, 284] });
         const qrText = 'https://www.facebook.com/profile.php?id=100055385846115';
         QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {
@@ -136,7 +136,8 @@ const handleRowClick = (e, venta) => {
             doc.setFont('Courier');
             doc.setFontSize(8);
             doc.text(content, 3, 55);
-            doc.addImage(qrUrl, 'PNG', 16, 230, 43, 43);
+            // QR más pequeño y más abajo
+            doc.addImage(qrUrl, 'PNG', 26, 260, 23, 23);
             doc.save('recibo.pdf');
           }
         });
