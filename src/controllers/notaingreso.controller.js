@@ -1,4 +1,5 @@
 import { getConnection } from "../database/database";
+import { logInventario } from "../utils/logActions.js";
 
 const getIngresos = async (req, res) => {
   const { fecha_i = '2022-01-01', fecha_e = '2038-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
@@ -440,6 +441,14 @@ const insertNotaAndDetalle = async (req, res) => {
     }
 
     await connection.commit();
+
+    // Registrar log de creación de nota de ingreso
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+              (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    
+    if (usuarioResult[0]?.id_usuario && id_tenant) {
+      await logInventario.notaIngreso(id_nota, usuarioResult[0].id_usuario, ip, id_tenant);
+    }
 
     res.json({ code: 1, message: "Nota y detalle insertados correctamente" });
   } catch (error) {

@@ -9,10 +9,13 @@ export const logMiddleware = (req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
             (req.connection.socket ? req.connection.socket.remoteAddress : null);
 
+  console.log('🔍 LogMiddleware ejecutado para:', req.method, req.path, 'IP:', ip, 'Usuario:', req.id_usuario);
+
   // Agregar función helper al request
   req.log = async (accion, id_modulo, opciones = {}) => {
     try {
-      await registrarLog({
+      console.log('📝 Llamada a req.log con:', { accion, id_modulo, opciones, id_usuario: req.id_usuario });
+      console.log('📝 Datos completos para registrarLog:', {
         accion,
         id_modulo,
         id_submodulo: opciones.id_submodulo || null,
@@ -22,9 +25,22 @@ export const logMiddleware = (req, res, next) => {
         ip,
         id_tenant: req.id_tenant || opciones.id_tenant
       });
+      
+      const result = await registrarLog({
+        accion,
+        id_modulo,
+        id_submodulo: opciones.id_submodulo || null,
+        id_usuario: req.id_usuario || opciones.id_usuario || null,
+        recurso: opciones.recurso || null,
+        descripcion: opciones.descripcion || null,
+        ip,
+        id_tenant: req.id_tenant || opciones.id_tenant
+      });
+      
+      console.log('✅ registrarLog ejecutado exitosamente:', result);
     } catch (error) {
       // Log silencioso - no afectar el flujo principal
-      console.error('Error registrando log:', error);
+      console.error('❌ Error registrando log:', error);
     }
   };
 

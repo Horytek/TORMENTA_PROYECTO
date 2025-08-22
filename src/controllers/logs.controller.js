@@ -23,6 +23,126 @@ export const addLog = async ({ id_usuario, accion, id_modulo, id_submodulo = nul
   }
 };
 
+/**
+ * Limpia logs antiguos para mantener la base de datos optimizada
+ * Por defecto elimina logs de más de 90 días, excepto logs críticos que se mantienen por 180 días
+ */
+export const cleanOldLogs = async (daysToKeep = 90, criticalDaysToKeep = 180) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    
+    // Logs críticos que se mantienen más tiempo
+    const criticalActions = [
+      'LOGIN_FAIL', 
+      'USUARIO_BLOQUEAR', 
+      'USUARIO_DESBLOQUEAR',
+      'VENTA_ANULAR',
+      'SUNAT_RECHAZADA',
+      'NOTA_ANULAR',
+      'GUIA_ANULAR'
+    ];
+    
+    // Eliminar logs no críticos antiguos
+    const normalCutoffDate = new Date();
+    normalCutoffDate.setDate(normalCutoffDate.getDate() - daysToKeep);
+    
+    const [normalResult] = await connection.query(
+      `DELETE FROM log_sistema 
+       WHERE fecha < ? 
+       AND accion NOT IN (${criticalActions.map(() => '?').join(',')})`,
+      [normalCutoffDate, ...criticalActions]
+    );
+    
+    // Eliminar logs críticos muy antiguos
+    const criticalCutoffDate = new Date();
+    criticalCutoffDate.setDate(criticalCutoffDate.getDate() - criticalDaysToKeep);
+    
+    const [criticalResult] = await connection.query(
+      `DELETE FROM log_sistema 
+       WHERE fecha < ? 
+       AND accion IN (${criticalActions.map(() => '?').join(',')})`,
+      [criticalCutoffDate, ...criticalActions]
+    );
+    
+    const totalDeleted = normalResult.affectedRows + criticalResult.affectedRows;
+    
+    if (totalDeleted > 0) {
+      console.log(`🗑️  Logs limpiados: ${normalResult.affectedRows} normales, ${criticalResult.affectedRows} críticos. Total: ${totalDeleted}`);
+    }
+    
+    return { 
+      normalDeleted: normalResult.affectedRows, 
+      criticalDeleted: criticalResult.affectedRows, 
+      totalDeleted 
+    };
+    
+  } catch (error) {
+    console.error('❌ Error limpiando logs antiguos:', error);
+    throw error;
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+/**
+ * Obtiene estadísticas de la tabla de logs
+ */
+export const getLogStats = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    
+    let tenantFilter = "";
+    let params = [];
+    
+    if (req.id_tenant) {
+      tenantFilter = "WHERE id_tenant = ?";
+      params.push(req.id_tenant);
+    }
+    
+    const [stats] = await connection.query(`
+      SELECT 
+        COUNT(*) as total_logs,
+        COUNT(DISTINCT id_usuario) as unique_users,
+        COUNT(DISTINCT ip) as unique_ips,
+        MIN(fecha) as oldest_log,
+        MAX(fecha) as newest_log,
+        COUNT(CASE WHEN fecha >= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 1 END) as logs_last_24h,
+        COUNT(CASE WHEN fecha >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as logs_last_week,
+        COUNT(CASE WHEN accion IN ('LOGIN_OK', 'LOGIN_FAIL', 'LOGOUT') THEN 1 END) as access_logs
+      FROM log_sistema 
+      ${tenantFilter}
+    `, params);
+    
+    const [actionStats] = await connection.query(`
+      SELECT 
+        accion, 
+        COUNT(*) as count,
+        MAX(fecha) as last_occurrence
+      FROM log_sistema 
+      ${tenantFilter}
+      GROUP BY accion 
+      ORDER BY count DESC 
+      LIMIT 10
+    `, params);
+    
+    res.json({
+      code: 1,
+      data: {
+        general: stats[0],
+        topActions: actionStats
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error obteniendo estadísticas de logs:', error);
+    res.status(500).json({ code: 0, message: "Error obteniendo estadísticas" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 export const getLogs = async (req, res) => {
   let connection;
   try {
@@ -157,4 +277,4 @@ export const getLog = async (req, res) => {
   }
 };
 
-export const methods = { getLogs, getLog };
+export const methods = { getLogs, getLog, getLogStats, cleanOldLogs };

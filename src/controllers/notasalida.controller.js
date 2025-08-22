@@ -1,4 +1,5 @@
 import { getConnection } from "../database/database";
+import { logInventario } from "../utils/logActions.js";
 
 const getSalidas = async (req, res) => {
   let connection;
@@ -322,6 +323,14 @@ const insertNotaAndDetalle = async (req, res) => {
     }
 
     await connection.commit();
+
+    // Registrar log de creación de nota de salida
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+              (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    
+    if (usuarioResult[0]?.id_usuario && id_tenant) {
+      await logInventario.notaSalida(id_nota, usuarioResult[0].id_usuario, ip, id_tenant);
+    }
 
     res.json({ code: 1, message: 'Nota y detalle insertados correctamente' });
   } catch (error) {

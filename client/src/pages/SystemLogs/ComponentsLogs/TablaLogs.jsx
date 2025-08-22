@@ -4,31 +4,34 @@ import PropTypes from 'prop-types';
 import { LOG_ACTIONS } from '../../../utils/logActions';
 
 const ACTION_STYLES = {
-	[LOG_ACTIONS.LOGIN_OK]: { color: 'success', label: 'Ingreso exitoso' },
-	[LOG_ACTIONS.LOGOUT]: { color: 'warning', label: 'Cierre de sesión' },
-	[LOG_ACTIONS.LOGIN_FAIL]: { color: 'danger', label: 'Intento fallido' },
-	[LOG_ACTIONS.USUARIO_BLOQUEAR]: { color: 'danger', label: 'Usuario bloqueado' },
-	[LOG_ACTIONS.USUARIO_DESBLOQUEAR]: { color: 'success', label: 'Usuario desbloqueado' },
-	[LOG_ACTIONS.USUARIO_CAMBIAR_CONTRASENA]: { color: 'primary', label: 'Cambio de contraseña' },
-	[LOG_ACTIONS.VENTA_CREAR]: { color: 'success', label: 'Venta creada' },
-	[LOG_ACTIONS.VENTA_ANULAR]: { color: 'danger', label: 'Venta anulada' },
-	[LOG_ACTIONS.COMPROBANTE_EMITIR]: { color: 'primary', label: 'Comprobante emitido' },
-	[LOG_ACTIONS.SUNAT_ENVIAR]: { color: 'primary', label: 'Enviado a SUNAT' },
-	[LOG_ACTIONS.SUNAT_ACEPTADA]: { color: 'success', label: 'SUNAT aceptó' },
-	[LOG_ACTIONS.SUNAT_RECHAZADA]: { color: 'danger', label: 'SUNAT rechazó' },
-	[LOG_ACTIONS.NOTA_INGRESO_CREAR]: { color: 'success', label: 'Nota de ingreso' },
-	[LOG_ACTIONS.NOTA_SALIDA_CREAR]: { color: 'warning', label: 'Nota de salida' },
-	[LOG_ACTIONS.NOTA_ANULAR]: { color: 'danger', label: 'Nota anulada' },
-	[LOG_ACTIONS.GUIA_CREAR]: { color: 'success', label: 'Guía creada' },
-	[LOG_ACTIONS.GUIA_ANULAR]: { color: 'danger', label: 'Guía anulada' },
-	[LOG_ACTIONS.CLIENTE_CREAR]: { color: 'success', label: 'Cliente creado' },
-	[LOG_ACTIONS.CLIENTE_EDITAR]: { color: 'primary', label: 'Cliente editado' },
-	[LOG_ACTIONS.PRODUCTO_CAMBIO_PRECIO]: { color: 'warning', label: 'Cambio de precio' }
+	[LOG_ACTIONS.LOGIN_OK]: { color: 'success', label: 'Ingreso exitoso', duplicateControl: true },
+	[LOG_ACTIONS.LOGOUT]: { color: 'warning', label: 'Cierre de sesión', duplicateControl: true },
+	[LOG_ACTIONS.LOGIN_FAIL]: { color: 'danger', label: 'Intento fallido', duplicateControl: true },
+	[LOG_ACTIONS.USUARIO_BLOQUEAR]: { color: 'danger', label: 'Usuario bloqueado', duplicateControl: false },
+	[LOG_ACTIONS.USUARIO_DESBLOQUEAR]: { color: 'success', label: 'Usuario desbloqueado', duplicateControl: false },
+	[LOG_ACTIONS.USUARIO_CAMBIAR_CONTRASENA]: { color: 'primary', label: 'Cambio de contraseña', duplicateControl: true },
+	[LOG_ACTIONS.VENTA_CREAR]: { color: 'success', label: 'Venta creada', duplicateControl: false },
+	[LOG_ACTIONS.VENTA_ANULAR]: { color: 'danger', label: 'Venta anulada', duplicateControl: false },
+	[LOG_ACTIONS.COMPROBANTE_EMITIR]: { color: 'primary', label: 'Comprobante emitido', duplicateControl: true },
+	[LOG_ACTIONS.SUNAT_ENVIAR]: { color: 'primary', label: 'Enviado a SUNAT', duplicateControl: true },
+	[LOG_ACTIONS.SUNAT_ACEPTADA]: { color: 'success', label: 'SUNAT aceptó', duplicateControl: false },
+	[LOG_ACTIONS.SUNAT_RECHAZADA]: { color: 'danger', label: 'SUNAT rechazó', duplicateControl: false },
+	[LOG_ACTIONS.NOTA_INGRESO_CREAR]: { color: 'success', label: 'Nota de ingreso', duplicateControl: true },
+	[LOG_ACTIONS.NOTA_SALIDA_CREAR]: { color: 'warning', label: 'Nota de salida', duplicateControl: true },
+	[LOG_ACTIONS.NOTA_ANULAR]: { color: 'danger', label: 'Nota anulada', duplicateControl: false },
+	[LOG_ACTIONS.GUIA_CREAR]: { color: 'success', label: 'Guía creada', duplicateControl: false },
+	[LOG_ACTIONS.GUIA_ANULAR]: { color: 'danger', label: 'Guía anulada', duplicateControl: false },
+	[LOG_ACTIONS.CLIENTE_CREAR]: { color: 'success', label: 'Cliente creado', duplicateControl: true },
+	[LOG_ACTIONS.CLIENTE_EDITAR]: { color: 'primary', label: 'Cliente editado', duplicateControl: true },
+	[LOG_ACTIONS.PRODUCTO_CAMBIO_PRECIO]: { color: 'warning', label: 'Cambio de precio', duplicateControl: true }
 };
 
 const TablaLogs = ({ logs, loading }) => {
 	return (
 		<div className="bg-white rounded-2xl shadow border border-blue-100 p-4">
+			{/* Leyenda informativa */}
+			
+			
 			<div className="overflow-auto rounded-2xl">
 				<table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
 					<thead>
@@ -36,7 +39,6 @@ const TablaLogs = ({ logs, loading }) => {
 							<th className="py-2 px-2 text-left">Fecha/Hora</th>
 							<th className="py-2 px-2 text-center">Usuario</th>
 							<th className="py-2 px-2 text-center">Acción</th>
-							<th className="py-2 px-2 text-center">Módulo</th>
 							<th className="py-2 px-2 text-center">Descripción</th>
 							<th className="py-2 px-2 text-center">IP</th>
 						</tr>
@@ -60,15 +62,20 @@ const TablaLogs = ({ logs, loading }) => {
 								</td>
 								<td className="py-1.5 px-2 text-center">
 									{(() => {
-										const style = ACTION_STYLES[l.accion] || { color: 'secondary', label: l.accion };
+										const style = ACTION_STYLES[l.accion] || { color: 'secondary', label: l.accion, duplicateControl: false };
 										return (
-											<Chip color={style.color} variant="flat" size="sm">{style.label}</Chip>
+											<div className="flex items-center justify-center gap-1">
+												<Chip color={style.color} variant="flat" size="sm">{style.label}</Chip>
+												{style.duplicateControl && (
+													<Tooltip content="Control de duplicados activo">
+														<span className="text-green-500 text-xs">🛡️</span>
+													</Tooltip>
+												)}
+											</div>
 										);
 									})()}
 								</td>
-								<td className="py-1.5 px-2 text-center">
-									<Chip color="default" variant="flat" size="sm">{l.nombre_modulo || l.id_modulo || '-'}</Chip>
-								</td>
+									
 								<td className="py-1.5 px-2 text-left max-w-sm truncate" title={l.descripcion}>
 									<Tooltip content={l.descripcion || '-'}>{l.descripcion || '-'}</Tooltip>
 								</td>

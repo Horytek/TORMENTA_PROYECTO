@@ -28,6 +28,7 @@ export const auth = (req, res, next) => {
         return res.status(401).json({ message: "Token no válido" });
       }
       req.user = user;
+      req.id_usuario = user.id_usuario;  // Establecer id_usuario desde el token
       req.id_tenant = user.id_tenant;
       next();
     });

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Toaster, toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
 import { useVendedoresData } from '@/services/sucursal.services';
+import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import {
   Input,
   Button
@@ -122,7 +123,10 @@ const onSubmit = (data) => {
                       errorMessage={errors.dni_vendedor?.message}
                     >
                       {vendedores.map((v) => (
-                        <AutocompleteItem key={v.dni}>
+                        <AutocompleteItem 
+                          key={v.dni}
+                          textValue={`${v.nombre} (${v.dni})`}
+                        >
                           {v.nombre} ({v.dni})
                         </AutocompleteItem>
                       ))}
@@ -151,10 +155,8 @@ const onSubmit = (data) => {
                   control={control}
                   rules={{ required: "La ubicación es requerida" }}
                   render={({ field }) => (
-                    <Input
+                    <GooglePlacesAutocomplete
                       {...field}
-                      label="Ubicación"
-                      placeholder="Ej: Av. Los Olivos 123"
                       isInvalid={!!errors.ubicacion}
                       errorMessage={errors.ubicacion?.message}
                       isRequired

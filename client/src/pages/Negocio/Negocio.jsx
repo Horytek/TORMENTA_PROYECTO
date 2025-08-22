@@ -34,7 +34,7 @@ export default function Negocio() {
       ) : (
         <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-6">
           {/* Columna principal */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
             <BusinessInfoForm
               nombre={nombre}
               setNombre={setNombre}
@@ -42,22 +42,23 @@ export default function Negocio() {
               setDireccion={setDireccion}
             />
 
-            <FormActions
-              hasChanges={hasChanges}
-              saving={saving}
-              resetChanges={resetChanges}
-              onSubmit={handleSubmit}
-            />
+           
           </div>
 
           {/* Columna lateral: Logo */}
-          <div className="space-y-6">
+          <div className="space-y-4 ">
             <LogoUploader
               preview={preview}
               logo={logo}
               handleLogoChange={handleLogoChange}
               removeLogo={removeLogo}
             />
+             <FormActions
+              hasChanges={hasChanges}
+              saving={saving}
+              resetChanges={resetChanges}
+              onSubmit={handleSubmit}
+            />  
           </div>
         </form>
       )}

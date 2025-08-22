@@ -36,6 +36,7 @@ import logotipoRoutes from "./routes/logotipo.routes.js";
 import valorRoutes from "./routes/valor.routes.js";
 import logsRoutes from "./routes/logs.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
+import { startLogMaintenance } from "./services/logMaintenance.service.js";
 
 const app = express();
 
@@ -115,5 +116,13 @@ app.use("/api/clave", claveRoutes);
 app.use("/api/logotipo", logotipoRoutes);
 app.use("/api/valor", valorRoutes);
 app.use("/api/logs", logsRoutes);
+
+// Inicializar servicio de mantenimiento de logs
+try {
+  startLogMaintenance();
+  console.log('🔧 Servicio de mantenimiento de logs iniciado correctamente');
+} catch (error) {
+  console.error('❌ Error iniciando servicio de mantenimiento de logs:', error);
+}
 
 export default app;

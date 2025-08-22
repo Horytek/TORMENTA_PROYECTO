@@ -1,5 +1,5 @@
 import { getConnection } from "./../database/database";
-import { logClientes } from "../utils/logActions.js";
+import { LOG_ACTIONS, MODULOS } from "../utils/logActions.js";
 
 const getClientes = async (req, res) => {
   let connection;
@@ -135,12 +135,29 @@ const addCliente = async (req, res) => {
 
         const [result] = await connection.query(query, values);
 
-        // Registrar log de creación de cliente
-        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                  (req.connection.socket ? req.connection.socket.remoteAddress : null);
-        
-        if (req.id_usuario && req.id_tenant) {
-            await logClientes.crear(result.insertId, req.id_usuario, ip, req.id_tenant);
+        console.log('🔍 Cliente creado exitosamente, preparando log...');
+        console.log('🔍 req.log disponible:', typeof req.log);
+        console.log('🔍 req.id_usuario:', req.id_usuario);
+        console.log('🔍 req.id_tenant:', req.id_tenant);
+
+        // Registrar log de creación de cliente usando el nuevo sistema
+        if (req.log && req.id_usuario) {
+            console.log('📝 Llamando a req.log para CLIENTE_CREAR...');
+            try {
+                await req.log(LOG_ACTIONS.CLIENTE_CREAR, MODULOS.CLIENTES, {
+                    recurso: `cliente_id:${result.insertId}`,
+                    descripcion: `Cliente creado: ${clientName || businessName || 'Sin nombre'} (Doc: ${documentNumber})`
+                });
+                console.log('✅ Log de cliente creado exitosamente');
+            } catch (error) {
+                console.error('❌ Error al registrar log de cliente:', error);
+            }
+        } else {
+            console.log('❌ No se puede registrar log:', {
+                req_log_available: !!req.log,
+                id_usuario: req.id_usuario,
+                id_tenant: req.id_tenant
+            });
         }
 
         res.json({
@@ -277,10 +294,7 @@ const updateCliente = async (req, res) => {
         const [result] = await connection.query(query, values);
 
         // Registrar log de edición de cliente si hay cambios
-        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                  (req.connection.socket ? req.connection.socket.remoteAddress : null);
-        
-        if (req.id_usuario && req.id_tenant && result.affectedRows > 0) {
+        if (req.log && req.id_usuario && result.affectedRows > 0) {
             // Identificar los campos que cambiaron
             const cambios = [];
             
@@ -293,7 +307,10 @@ const updateCliente = async (req, res) => {
             if (clienteAnterior.estado_cliente !== estado) cambios.push(`Estado: ${clienteAnterior.estado_cliente} → ${estado}`);
             
             if (cambios.length > 0) {
-                await logClientes.editar(id_cliente, req.id_usuario, ip, req.id_tenant, cambios.join(', '));
+                await req.log(LOG_ACTIONS.CLIENTE_EDITAR, MODULOS.CLIENTES, {
+                    recurso: `cliente_id:${id_cliente}`,
+                    descripcion: `Cliente editado. Cambios: ${cambios.join(', ')}`
+                });
             }
         }
 

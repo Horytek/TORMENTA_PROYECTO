@@ -46,8 +46,11 @@ const login = async (req, res) => {
 
         if (userValid.length > 0) {
             userbd = userValid[0];
-            // Si no tiene id_tenant, no lo incluyas en el token ni en la respuesta
-            const tokenPayload = { nameUser: user.usuario };
+            // Crear payload del token con los datos necesarios
+            const tokenPayload = { 
+                nameUser: user.usuario,
+                id_usuario: userbd.id_usuario  // Agregar id_usuario al token
+            };
             if (userbd.id_tenant) tokenPayload.id_tenant = userbd.id_tenant;
             const token = await createAccessToken(tokenPayload);
 
