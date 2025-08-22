@@ -4,6 +4,7 @@ import {
   Input,
   Tabs,
   Tab,
+  Checkbox
 } from "@heroui/react";
 import {
   Modal, 
@@ -36,6 +37,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
   const [businessName, setBusinessName] = useState("");
   const [address, setAddress] = useState("");
   const { addClient, isLoading } = useAddClient();
+  const [manualInput, setManualInput] = useState(false); // NUEVO
 
   useEffect(() => {
     if (clientType === "personal") {
@@ -177,6 +179,15 @@ if (setAllClientes) {
                 <p className="text-sm text-gray-600">
                   Ingrese los datos del cliente. Los campos obligatorios están marcados con *.
                 </p>
+                                {/* Checkbox para habilitar inputs manualmente */}
+                <div className="mb-2">
+                  <Checkbox
+                    checked={manualInput}
+                    onChange={e => setManualInput(e.target.checked)}
+                  >
+                    Registrar cliente de manera manual
+                  </Checkbox>
+                </div>
 
                 <Tabs
                   selectedKey={clientType}
@@ -227,22 +238,18 @@ if (setAllClientes) {
                           value={clientName}
                           onChange={(e) => setClientName(e.target.value)}
                           isRequired
-                          isDisabled
                           classNames={inputStyles}
-                          style={{  border: "none",
-                            boxShadow: "none",
-                            outline: "none", }}
+                          style={{ border: "none", boxShadow: "none", outline: "none" }}
+                          isDisabled={!manualInput}
                         />
                         <Input
                           label="Apellidos"
                           value={clientLastName}
                           onChange={(e) => setClientLastName(e.target.value)}
                           isRequired
-                          isDisabled
                           classNames={inputStyles}
-                          style={{  border: "none",
-                            boxShadow: "none",
-                            outline: "none", }}
+                          style={{ border: "none", boxShadow: "none", outline: "none" }}
+                          isDisabled={!manualInput}
                         />
                         <Input
                           label="Dirección"
@@ -299,12 +306,11 @@ if (setAllClientes) {
                           value={businessName}
                           onChange={(e) => setBusinessName(e.target.value)}
                           isRequired
-                          isDisabled
                           classNames={inputStyles}
-                          style={{  border: "none",
-                            boxShadow: "none",
-                            outline: "none", }}
+                          style={{ border: "none", boxShadow: "none", outline: "none" }}
+                          isDisabled={!manualInput}
                         />
+                        
                         <Input
                           label="Dirección"
                           value={address}
