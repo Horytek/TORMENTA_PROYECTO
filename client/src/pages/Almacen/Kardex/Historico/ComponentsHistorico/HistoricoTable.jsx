@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Card, CardHeader, Divider, CardBody, Pagination, Chip } from "@heroui/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Card, CardHeader, Divider, CardBody, Pagination, Chip, Select, SelectItem } from "@heroui/react";
 import { ProgressBar } from "@tremor/react";
 import { TrendingUp, Archive, Package, DollarSign } from 'lucide-react'; // NUEVO: iconos
 
@@ -277,7 +277,7 @@ const precioUnitActual = (() => {
 
       <div className="flex w-full">
         {/* Tabla principal ocupando toda la pantalla */}
-        <div className={`px-4 bg-white rounded-lg shadow-md transition-all ${collapsedTransaction ? 'w-2/3' : 'w-full'}`}>
+        <div className={`rounded-lg transition-all ${collapsedTransaction ? 'w-2/3' : 'w-full'}`}>
           <Table aria-label="Historico de Transacciones">
             <TableHeader>
               {["Fecha", "Hora", "Documento", "Nombre", "Entra", "Sale", "Stock", "Precio", "Glosa"].map((header) => (
@@ -319,19 +319,28 @@ const precioUnitActual = (() => {
               onChange={setCurrentPage}
             />
 
-            <select
+            <Select
               id="itemsPerPage"
-              className="border border-gray-300 bg-gray-50 rounded-lg w-20 text-center"
-              value={itemsPerPage}
-              onChange={(e) => {
+              className="w-24"
+              selectedKeys={[`${itemsPerPage}`]}
+              onChange={e => {
                 setItemsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
+              aria-label="Filas por página"
+              classNames={{
+                trigger: "bg-gray-50 border border-gray-300 text-center rounded-lg",
+                popoverContent: "bg-white"
+              }}
+              size="sm"
+              variant="bordered"
+              placement="bottom-end"
             >
-              <option value={5}>05</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-            </select>
+              <SelectItem key="5" value={5}>05</SelectItem>
+              <SelectItem key="10" value={10}>10</SelectItem>
+              <SelectItem key="20" value={20}>20</SelectItem>
+              <SelectItem key="1000000" value={1000000}>Todos</SelectItem>
+            </Select>
           </div>
         </div>
 
