@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody, Chip, Button, Divider, Tooltip, Select, Sel
 import { DateRangePicker } from "@nextui-org/date-picker";
 import useAlmacenData from "../../data/data_almacen_kardex";
 import { parseDate } from "@internationalized/date";
+import { startOfWeek, endOfWeek } from "date-fns";
 import html2pdf from "html2pdf.js";
 import "jspdf-autotable";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
@@ -15,15 +16,30 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
   const almacenGlobal = useUserStore((state) => state.almacen);
   const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);
 
+  // Calcular el rango de la semana actual (lunes a domingo) según la fecha actual
+  function getCurrentWeekRange() {
+    const today = new Date();
+    // Lunes como primer día de la semana
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    return {
+      start: weekStart,
+      end: weekEnd,
+    };
+  }
+
+    // Inicializar el rango de fechas al rango de la semana actual
+  const initialWeekRange = getCurrentWeekRange();
+
   const [selectedAlmacen, setSelectedAlmacen] = useState(almacenGlobal || "");
   const [selectedDates, setSelectedDates] = useState({
-    startDate: new Date("2024-04-01"),
-    endDate: new Date("2028-04-08"),
+    startDate: initialWeekRange.start,
+    endDate: initialWeekRange.end,
   });
 
   const [value, setValue] = useState({
-    start: parseDate("2024-04-01"),
-    end: parseDate("2028-04-08"),
+    start: parseDate(initialWeekRange.start.toISOString().slice(0, 10)),
+    end: parseDate(initialWeekRange.end.toISOString().slice(0, 10)),
   });
 
   const [empresaData, setEmpresaData] = useState(null);

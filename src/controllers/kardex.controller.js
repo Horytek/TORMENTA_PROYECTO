@@ -247,7 +247,7 @@ const getDetalleKardex = async (req, res) => {
                         AND bn.id_almacen = ?
                         AND bn.id_tenant = ?
                     ORDER BY 
-                        bn.fecha desc;
+                        bn.fecha, bn.hora_creacion desc;
             `,
             [fechaInicio, fechaFin, idProducto, idAlmacen, id_tenant]
         );

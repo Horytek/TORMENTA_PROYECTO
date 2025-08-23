@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Card, CardHeader, Divider, CardBody, Pagination, Chip } from "@heroui/react";
 import { ProgressBar } from "@tremor/react";
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Archive, Package, DollarSign } from 'lucide-react'; // NUEVO: iconos
 
 function HistoricoTable({ transactions, previousTransactions, productoData = [] }) {
   const [collapsedTransaction, setCollapsedTransaction] = useState(null);
@@ -16,7 +16,6 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
     return dateB - dateA;
   });
 
-  // Cuando cambie el filtro de fecha (o las transacciones), vuelve a la primera página
   React.useEffect(() => {
     setCurrentPage(1);
   }, [transactions]);
@@ -35,27 +34,36 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
   const salidasActual = sortedTransactions.reduce((acc, t) => acc + (parseFloat(t.sale) || 0), 0);
 
   // Stock inicial antes del rango
-  const stockPrev = stockInventario + salidasActual - entradasActual;
+  const stockPrev = Math.max(0, stockInventario + salidasActual - entradasActual); // CORREGIDO: nunca negativo
 
   // Entradas y salidas históricas (acumulado antes del rango)
   const prev = previousTransactions?.[0] || {};
-  const entradasPrev = Number(prev.entra) || 0;
-  const salidasPrev = Number(prev.sale) || 0;
+  const entradasPrev = Math.max(0, Number(prev.entra) || 0); // CORREGIDO: nunca negativo
+  const salidasPrev = Math.max(0, Number(prev.sale) || 0); // CORREGIDO: nunca negativo
 
-  // Precio unitario actual (último precio de entrada en el rango, o el último precio disponible)
-  const precioUnitActual = (() => {
-    const lastEntrada = [...sortedTransactions].reverse().find(t => parseFloat(t.entra) > 0 && t.precio);
-    if (lastEntrada) return Number(lastEntrada.precio);
-    if (sortedTransactions.length > 0) return Number(sortedTransactions[0].precio) || 0;
-    return 0;
-  })();
+// Solo ventas reales para cálculos financieros
+const transaccionesFinancieras = sortedTransactions.filter(
+  t =>
+    !(typeof t.documento === "string" && (t.documento.startsWith("I") || t.documento.startsWith("S"))) &&
+    t.nombre !== "INGRESO" &&
+    t.nombre !== "SALIDA" &&
+    parseFloat(t.sale) > 0
+);
+
+// Precio unitario actual SOLO de ventas reales
+const precioUnitActual = (() => {
+  const lastVenta = [...transaccionesFinancieras].reverse().find(t => t.precio);
+  if (lastVenta) return Number(lastVenta.precio);
+  if (transaccionesFinancieras.length > 0) return Number(transaccionesFinancieras[0].precio) || 0;
+  return 0;
+})();
 
   // Valor total actual (stock actual * precio unitario)
-  const valorTotalActual = stockInventario * precioUnitActual;
+  const valorTotalActual = Math.max(0, stockInventario * precioUnitActual); // CORREGIDO: nunca negativo
 
   // Valor total histórico (stock inicial * precio unitario anterior)
   const precioUnitPrev = Number(prev.precio) || precioUnitActual;
-  const valorTotalPrev = stockPrev * precioUnitPrev;
+  const valorTotalPrev = Math.max(0, stockPrev * precioUnitPrev); // CORREGIDO: nunca negativo
 
   // Rotación (ventas/entradas en el rango)
   const rotacion = entradasActual > 0 ? (salidasActual / entradasActual) * 100 : 0;
@@ -87,14 +95,19 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
   }
 
   // Datos para el Card Financiero
-  const totalIngresos = sortedTransactions.reduce((acc, t) => acc + ((parseFloat(t.sale) || 0) * (parseFloat(t.precio) || 0)), 0);
-  const inversionTotal = entradasPrev * precioUnitPrev;
+  const totalIngresos = transaccionesFinancieras.reduce(
+    (acc, t) => acc + ((parseFloat(t.sale) || 0) * (parseFloat(t.precio) || 0)),
+    0
+  );
+  
+  const inversionTotal = Math.max(0, entradasPrev * precioUnitPrev); // CORREGIDO: nunca negativo
   let porcentajeCrecimiento = "0%";
   if (entradasPrev > 0) {
     porcentajeCrecimiento = `${(((entradasActual - entradasPrev) / entradasPrev) * 100).toFixed(1)}%`;
   } else if (entradasActual > 0) {
-    porcentajeCrecimiento = "100%";
+    porcentajeCrecimiento = `${(entradasActual * 100).toFixed(1)}%`;
   }
+
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
   const paginatedTransactions = sortedTransactions.slice(
     (currentPage - 1) * itemsPerPage,
@@ -108,12 +121,14 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
         {/* Card Histórico */}
         <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
           <CardHeader className="flex items-center gap-3 mb-2 p-0">
-            <Chip color="primary" variant="flat" className="font-bold text-base px-2 py-1 bg-cyan-50 text-cyan-700">
-              <i className="fas fa-calendar-alt mr-2" /> HISTÓRICO
+            <Chip color="primary" variant="flat" className="font-bold text-base px-2 py-1 bg-cyan-50 text-cyan-700 flex items-center gap-2">
+              HISTÓRICO
             </Chip>
           </CardHeader>
           <CardBody className="p-0">
-            <h2 className="text-2xl font-bold mb-1">Transacciones Anteriores</h2>
+            <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
+              <Package className="w-6 h-6 text-blue-400" /> Transacciones Anteriores
+            </h2>
             <p className="text-gray-500 mb-4">{prev.numero || 0} documento(s)</p>
             <div className="flex gap-4 mb-4">
               <Card className="bg-blue-50 flex-1 p-3 items-center flex flex-col shadow-none border-none">
@@ -154,12 +169,14 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
         {/* Card Actual */}
         <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
           <CardHeader className="flex items-center gap-3 mb-2 p-0">
-            <Chip color="secondary" variant="flat" className="font-bold text-base px-2 py-1 bg-fuchsia-50 text-fuchsia-600">
-              <i className="fas fa-cube mr-2" /> ACTUAL
+            <Chip color="secondary" variant="flat" className="font-bold text-base px-2 py-1 bg-fuchsia-50 text-fuchsia-600 flex items-center gap-2">
+              ACTUAL
             </Chip>
           </CardHeader>
           <CardBody className="p-0">
-            <h2 className="text-2xl font-bold mb-1">Stock actual del producto</h2>
+            <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
+              <Archive className="w-6 h-6 text-fuchsia-400" /> Stock actual del producto
+            </h2>
             <div className="bg-gradient-to-r from-fuchsia-50 to-blue-50 rounded-xl p-4 mb-4 flex items-center justify-between">
               <div>
                 <span className="block text-xs text-gray-500">Stock Disponible</span>
@@ -177,12 +194,12 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
             </div>
             <div className="flex gap-4 mb-4">
               <Card className="bg-blue-500/90 flex-1 p-3 items-center flex flex-col shadow-none border-none text-white">
-                <span className="font-bold text-2xl">+{entradasActual}</span>
+                <span className="font-bold text-2xl">+{entradasActual < 0 ? 0 : entradasActual}</span>
                 <span className="text-xs font-semibold">ÚLTIMAS ENTRADAS</span>
                 <span className="text-xs">Este período</span>
               </Card>
               <Card className="bg-pink-500/90 flex-1 p-3 items-center flex flex-col shadow-none border-none text-white">
-                <span className="font-bold text-2xl">-{salidasActual}</span>
+                <span className="font-bold text-2xl">-{salidasActual < 0 ? 0 : salidasActual}</span>
                 <span className="text-xs font-semibold">ÚLTIMAS SALIDAS</span>
                 <span className="text-xs">Este período</span>
               </Card>
@@ -199,12 +216,14 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
         {/* Card Financiero */}
         <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
           <CardHeader className="flex items-center gap-3 mb-2 p-0">
-            <Chip color="success" variant="flat" className="font-bold text-base px-2 py-1 bg-emerald-50 text-emerald-700">
-              <TrendingUp className="inline-block w-5 h-5 mr-2" /> FINANCIERO
+            <Chip color="success" variant="flat" className="font-bold text-base px-2 py-1 bg-emerald-50 text-emerald-700 flex items-center gap-2">
+              FINANCIERO
             </Chip>
           </CardHeader>
           <CardBody className="p-0">
-            <h2 className="text-2xl font-bold mb-1">Análisis de Rendimiento</h2>
+            <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
+              <DollarSign className="w-6 h-6 text-emerald-400" /> Análisis de Rendimiento
+            </h2>
             <div className="bg-emerald-50/40 rounded-xl p-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -215,7 +234,7 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
                   {porcentajeCrecimiento}
                 </Chip>
               </div>
-              <span className="block text-xs text-emerald-700 mt-1">Basado en {salidasActual} unidades vendidas</span>
+              <span className="block text-xs text-emerald-700 mt-1">Basado en {salidasActual < 0 ? 0 : salidasActual} unidades vendidas</span>
             </div>
             <div className="flex gap-2 mb-4">
               <Card className="bg-blue-50 flex-1 p-3 items-center flex flex-col shadow-none border-none">
@@ -261,14 +280,28 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
         <div className={`px-4 bg-white rounded-lg shadow-md transition-all ${collapsedTransaction ? 'w-2/3' : 'w-full'}`}>
           <Table aria-label="Historico de Transacciones">
             <TableHeader>
-              {["Fecha", "Documento", "Nombre", "Entra", "Sale", "Stock", "Precio", "Glosa"].map((header) => (
+              {["Fecha", "Hora", "Documento", "Nombre", "Entra", "Sale", "Stock", "Precio", "Glosa"].map((header) => (
                 <TableColumn key={header}>{header}</TableColumn>
               ))}
             </TableHeader>
             <TableBody emptyContent={"No hay transacciones registradas."}>
               {paginatedTransactions.map((transaction, index) => (
                 <TableRow key={index} onClick={() => toggleRow(transaction)} className="cursor-pointer hover:bg-blue-50 transition-colors">
-                  {["fecha", "documento", "nombre", "entra", "sale", "stock", "precio", "glosa"].map((field) => (
+                  {/* Fecha */}
+                  <TableCell className="text-xs">{transaction["fecha"] || "0"}</TableCell>
+                  {/* Hora de creación */}
+                  <TableCell className="text-xs">
+                    {transaction["hora_creacion"]
+                      ? new Date(`1970-01-01T${transaction["hora_creacion"]}`).toLocaleTimeString("es-ES", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: true,
+                        })
+                      : "N/A"}
+                  </TableCell>
+                  {/* Resto de columnas */}
+                  {["documento", "nombre", "entra", "sale", "stock", "precio", "glosa"].map((field) => (
                     <TableCell className="text-xs" key={field}>{transaction[field] || "0"}</TableCell>
                   ))}
                 </TableRow>
