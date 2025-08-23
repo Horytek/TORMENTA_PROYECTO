@@ -228,7 +228,8 @@ const getDetalleKardex = async (req, res) => {
                         bn.sale AS sale,
                         bn.stock_actual AS stock, 
                         p.precio AS precio,
-                        COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa
+                        COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa,
+                        bn.hora_creacion
                     FROM 
                         bitacora_nota bn
                     INNER JOIN 
@@ -246,7 +247,7 @@ const getDetalleKardex = async (req, res) => {
                         AND bn.id_almacen = ?
                         AND bn.id_tenant = ?
                     ORDER BY 
-                        bn.fecha;
+                        bn.fecha desc;
             `,
             [fechaInicio, fechaFin, idProducto, idAlmacen, id_tenant]
         );

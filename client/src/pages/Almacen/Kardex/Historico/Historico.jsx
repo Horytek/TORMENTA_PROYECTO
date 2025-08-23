@@ -81,7 +81,11 @@ function Historico() {
         almacenSeleccionado={almacenSeleccionado}
       />
       <br />
-      <HistoricoTable transactions={kardexData} previousTransactions={previousTransactions} />
+      <HistoricoTable
+  transactions={kardexData}
+  previousTransactions={previousTransactions}
+  productoData={productoData}
+/>
     </div>
   );
 }

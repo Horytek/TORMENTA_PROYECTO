@@ -1,21 +1,102 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Card, CardHeader, Divider, CardBody, Pagination, Chip } from "@heroui/react";
+import { ProgressBar } from "@tremor/react";
+import { TrendingUp } from 'lucide-react';
 
-function HistoricoTable({ transactions, previousTransactions }) {
+function HistoricoTable({ transactions, previousTransactions, productoData = [] }) {
   const [collapsedTransaction, setCollapsedTransaction] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Ordenar transacciones por fecha descendente (más reciente primero)
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    const dateA = new Date(a.fecha);
+    const dateB = new Date(b.fecha);
+    return dateB - dateA;
+  });
+
+  // Cuando cambie el filtro de fecha (o las transacciones), vuelve a la primera página
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [transactions]);
 
   const toggleRow = (transaction) => {
     setCollapsedTransaction(collapsedTransaction === transaction ? null : transaction);
   };
 
-  const calculateTotal = (type) =>
-    transactions.reduce((total, trans) => total + (parseFloat(trans[type]) || 0), 0);
+  // Stock actual real desde inventario/productoData
+  const stockInventario = Array.isArray(productoData) && productoData.length > 0
+    ? Number(productoData[0].stock) || 0
+    : 0;
 
-  const totalPages = Math.ceil(transactions.length / itemsPerPage);
-  const paginatedTransactions = transactions.slice(
+  // Entradas y salidas del rango filtrado
+  const entradasActual = sortedTransactions.reduce((acc, t) => acc + (parseFloat(t.entra) || 0), 0);
+  const salidasActual = sortedTransactions.reduce((acc, t) => acc + (parseFloat(t.sale) || 0), 0);
+
+  // Stock inicial antes del rango
+  const stockPrev = stockInventario + salidasActual - entradasActual;
+
+  // Entradas y salidas históricas (acumulado antes del rango)
+  const prev = previousTransactions?.[0] || {};
+  const entradasPrev = Number(prev.entra) || 0;
+  const salidasPrev = Number(prev.sale) || 0;
+
+  // Precio unitario actual (último precio de entrada en el rango, o el último precio disponible)
+  const precioUnitActual = (() => {
+    const lastEntrada = [...sortedTransactions].reverse().find(t => parseFloat(t.entra) > 0 && t.precio);
+    if (lastEntrada) return Number(lastEntrada.precio);
+    if (sortedTransactions.length > 0) return Number(sortedTransactions[0].precio) || 0;
+    return 0;
+  })();
+
+  // Valor total actual (stock actual * precio unitario)
+  const valorTotalActual = stockInventario * precioUnitActual;
+
+  // Valor total histórico (stock inicial * precio unitario anterior)
+  const precioUnitPrev = Number(prev.precio) || precioUnitActual;
+  const valorTotalPrev = stockPrev * precioUnitPrev;
+
+  // Rotación (ventas/entradas en el rango)
+  const rotacion = entradasActual > 0 ? (salidasActual / entradasActual) * 100 : 0;
+
+  // Velocidad de venta y días para agotar stock
+  const velocidadVenta = salidasActual > 0 && sortedTransactions.length > 0
+    ? (salidasActual / sortedTransactions.length).toFixed(1)
+    : "0";
+  const diasParaAgotar = velocidadVenta > 0 ? Math.round(stockInventario / velocidadVenta) : "-";
+
+  // Margen de ganancia (puedes ajustar la fórmula si tienes datos de costo)
+  const margenGanancia = rotacion;
+
+  // Próximo pedido
+  const proximoPedido = diasParaAgotar > 0 ? `En ${diasParaAgotar} días` : "Sin estimar";
+
+  // Estado de stock
+  let estadoStock = "Stock Medio";
+  let estadoColor = "bg-fuchsia-500";
+  let estadoMsg = "El inventario está en un nivel medio. Considera programar un nuevo pedido pronto.";
+  if (stockInventario <= 5) {
+    estadoStock = "Stock Bajo";
+    estadoColor = "bg-rose-500";
+    estadoMsg = "El inventario es bajo. Es recomendable realizar un pedido.";
+  } else if (stockInventario >= 30) {
+    estadoStock = "Stock Alto";
+    estadoColor = "bg-emerald-500";
+    estadoMsg = "Inventario suficiente para la demanda actual.";
+  }
+
+  // Datos para el Card Financiero
+  const totalIngresos = sortedTransactions.reduce((acc, t) => acc + ((parseFloat(t.sale) || 0) * (parseFloat(t.precio) || 0)), 0);
+  const inversionTotal = entradasPrev * precioUnitPrev;
+  let porcentajeCrecimiento = "0%";
+  if (entradasPrev > 0) {
+    porcentajeCrecimiento = `${(((entradasActual - entradasPrev) / entradasPrev) * 100).toFixed(1)}%`;
+  } else if (entradasActual > 0) {
+    porcentajeCrecimiento = "100%";
+  }
+  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+  const paginatedTransactions = sortedTransactions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -23,62 +104,153 @@ function HistoricoTable({ transactions, previousTransactions }) {
   return (
     <div className="flex flex-col space-y-4 w-full">
       {/* Contenedor de Cards en una fila */}
-      <div className="flex flex-wrap gap-4">
-        {/* Card de transacciones anteriores */}
-        {previousTransactions?.length > 0 && (
-          <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 min-w-[320px] max-w-[400px] flex-1">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-100/60 to-blue-200/40 rounded-full blur-2xl"></div>
-              <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-blue-100/40 to-cyan-100/30 rounded-full blur-xl"></div>
-            </div>
-            <CardHeader className="flex gap-3 z-10">
-              <div className="flex flex-col">
-                <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Histórico</span>
-                <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Transacciones Anteriores</p>
-                <p className="text-gray-600 text-md">{previousTransactions[0].numero} documento(s)</p>
-              </div>
-            </CardHeader>
-            <Divider />
-            <CardBody className="z-10">
-              <div className="flex flex-col gap-1">
-                <Chip color="primary" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
-                  Entra: {previousTransactions[0].entra}
-                </Chip>
-                <Chip color="danger" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
-                  Sale: {previousTransactions[0].sale}
-                </Chip>
-                <Chip color="default" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
-                  Stock: {parseFloat(previousTransactions[0].entra) - parseFloat(previousTransactions[0].sale)}
-                </Chip>
-              </div>
-            </CardBody>
-          </Card>
-        )}
-
-        {/* Card de totales */}
-        <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 min-w-[320px] max-w-[400px] flex-1">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-100/60 to-cyan-200/40 rounded-full blur-2xl"></div>
-            <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-cyan-100/40 to-indigo-100/30 rounded-full blur-xl"></div>
-          </div>
-          <CardHeader className="flex gap-3 z-10">
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">Actual</span>
-              <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Stock actual del producto</p>
-            </div>
+      <div className="flex flex-wrap gap-6">
+        {/* Card Histórico */}
+        <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
+          <CardHeader className="flex items-center gap-3 mb-2 p-0">
+            <Chip color="primary" variant="flat" className="font-bold text-base px-2 py-1 bg-cyan-50 text-cyan-700">
+              <i className="fas fa-calendar-alt mr-2" /> HISTÓRICO
+            </Chip>
           </CardHeader>
-          <Divider />
-          <CardBody className="z-10">
-            <div className="flex flex-col gap-1">
-              <Chip color="primary" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
-                Entra: {calculateTotal("entra")}
+          <CardBody className="p-0">
+            <h2 className="text-2xl font-bold mb-1">Transacciones Anteriores</h2>
+            <p className="text-gray-500 mb-4">{prev.numero || 0} documento(s)</p>
+            <div className="flex gap-4 mb-4">
+              <Card className="bg-blue-50 flex-1 p-3 items-center flex flex-col shadow-none border-none">
+                <span className="text-blue-600 font-bold text-3xl">{entradasPrev}</span>
+                <span className="text-xs text-blue-700 font-semibold">ENTRADAS</span>
+                <span className="text-xs text-blue-400">Total acumulado</span>
+              </Card>
+              <Card className="bg-pink-50 flex-1 p-3 items-center flex flex-col shadow-none border-none">
+                <span className="text-pink-600 font-bold text-3xl">{salidasPrev}</span>
+                <span className="text-xs text-pink-700 font-semibold">SALIDAS</span>
+                <span className="text-xs text-pink-400">Total vendido</span>
+              </Card>
+            </div>
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-semibold text-gray-700">Rotación de Inventario</span>
+                <span className="text-xs font-bold text-gray-700">{rotacion.toFixed(1)}%</span>
+              </div>
+              <div className="w-full mb-1">
+                <ProgressBar value={rotacion} color="fuchsia" className="h-2 rounded-full" />
+              </div>
+              <span className="text-xs text-gray-400">Relación entre ventas y compras</span>
+            </div>
+            <Divider className="my-3" />
+            <div className="flex justify-between items-end mt-2">
+              <div>
+                <span className="block text-xs text-gray-500">Stock Inicial</span>
+                <span className="text-2xl font-bold text-gray-800">{stockPrev} unidades</span>
+              </div>
+              <div className="text-right">
+                <span className="block text-xs text-gray-500">Valor Total</span>
+                <span className="text-xl font-bold text-emerald-600">S/ {valorTotalPrev.toFixed(2)}</span>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Card Actual */}
+        <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
+          <CardHeader className="flex items-center gap-3 mb-2 p-0">
+            <Chip color="secondary" variant="flat" className="font-bold text-base px-2 py-1 bg-fuchsia-50 text-fuchsia-600">
+              <i className="fas fa-cube mr-2" /> ACTUAL
+            </Chip>
+          </CardHeader>
+          <CardBody className="p-0">
+            <h2 className="text-2xl font-bold mb-1">Stock actual del producto</h2>
+            <div className="bg-gradient-to-r from-fuchsia-50 to-blue-50 rounded-xl p-4 mb-4 flex items-center justify-between">
+              <div>
+                <span className="block text-xs text-gray-500">Stock Disponible</span>
+                <span className="text-3xl font-bold text-fuchsia-700">{stockInventario}</span>
+              </div>
+              <Chip className={`text-xs font-bold px-3 py-1 ml-2 ${estadoColor} text-white`} variant="solid">
+                {estadoStock}
               </Chip>
-              <Chip color="danger" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
-                Sale: {calculateTotal("sale")}
-              </Chip>
-              <Chip color="default" variant="flat" className="font-bold text-xs px-2 py-0.5 w-fit">
-                Stock: {calculateTotal("entra") - calculateTotal("sale")}
-              </Chip>
+              <div className="text-right ml-4">
+                <span className="block text-xs text-gray-500">Precio unitario</span>
+                <span className="text-lg font-bold text-emerald-600">S/ {precioUnitActual.toFixed(2)}</span>
+                <span className="block text-xs text-gray-500 mt-1">Valor total</span>
+                <span className="text-lg font-bold text-emerald-600">S/ {valorTotalActual.toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="flex gap-4 mb-4">
+              <Card className="bg-blue-500/90 flex-1 p-3 items-center flex flex-col shadow-none border-none text-white">
+                <span className="font-bold text-2xl">+{entradasActual}</span>
+                <span className="text-xs font-semibold">ÚLTIMAS ENTRADAS</span>
+                <span className="text-xs">Este período</span>
+              </Card>
+              <Card className="bg-pink-500/90 flex-1 p-3 items-center flex flex-col shadow-none border-none text-white">
+                <span className="font-bold text-2xl">-{salidasActual}</span>
+                <span className="text-xs font-semibold">ÚLTIMAS SALIDAS</span>
+                <span className="text-xs">Este período</span>
+              </Card>
+            </div>
+            <Card className="bg-yellow-50 border-l-4 border-yellow-400 rounded-xl p-3 mt-2 shadow-none border-none">
+              <span className="flex items-center gap-2 text-yellow-700 font-semibold">
+                <i className="fas fa-exclamation-circle" /> Estado del Inventario
+              </span>
+              <span className="block text-yellow-700 text-xs mt-1">{estadoMsg}</span>
+            </Card>
+          </CardBody>
+        </Card>
+
+        {/* Card Financiero */}
+        <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
+          <CardHeader className="flex items-center gap-3 mb-2 p-0">
+            <Chip color="success" variant="flat" className="font-bold text-base px-2 py-1 bg-emerald-50 text-emerald-700">
+              <TrendingUp className="inline-block w-5 h-5 mr-2" /> FINANCIERO
+            </Chip>
+          </CardHeader>
+          <CardBody className="p-0">
+            <h2 className="text-2xl font-bold mb-1">Análisis de Rendimiento</h2>
+            <div className="bg-emerald-50/40 rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="block text-xs text-emerald-700 font-semibold">Ingresos Totales</span>
+                  <span className="text-3xl font-bold text-emerald-600">S/ {totalIngresos.toFixed(2)}</span>
+                </div>
+                <Chip color="success" variant="flat" className="font-bold text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700">
+                  {porcentajeCrecimiento}
+                </Chip>
+              </div>
+              <span className="block text-xs text-emerald-700 mt-1">Basado en {salidasActual} unidades vendidas</span>
+            </div>
+            <div className="flex gap-2 mb-4">
+              <Card className="bg-blue-50 flex-1 p-3 items-center flex flex-col shadow-none border-none">
+                <span className="text-blue-700 font-bold text-xl">S/ {inversionTotal.toFixed(2)}</span>
+                <span className="text-xs text-blue-700 font-semibold">Inversión Total</span>
+                <span className="text-xs text-blue-400">{entradasPrev} unidades</span>
+              </Card>
+              <Card className="bg-fuchsia-50 flex-1 p-3 items-center flex flex-col shadow-none border-none">
+                <span className="text-fuchsia-700 font-bold text-xl">S/ {valorTotalActual.toFixed(2)}</span>
+                <span className="text-xs text-fuchsia-700 font-semibold">Valor en Stock</span>
+                <span className="text-xs text-fuchsia-400">{stockInventario} unidades</span>
+              </Card>
+            </div>
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-semibold text-gray-700">Velocidad de Venta</span>
+                <Chip color="secondary" variant="flat" className="font-bold text-xs px-2 py-0.5 bg-fuchsia-100 text-fuchsia-700">
+                  {velocidadVenta} u/día
+                </Chip>
+              </div>
+              <ProgressBar value={Math.min((stockInventario / (velocidadVenta > 0 ? velocidadVenta * 7 : 1)) * 100, 100)} color="emerald" className="h-2 rounded-full" />
+              <span className="text-xs text-gray-400">Estimado: {diasParaAgotar !== "-" ? `${diasParaAgotar} días para agotar stock` : "Sin estimar"}</span>
+            </div>
+            <Divider className="my-3" />
+            <div className="flex justify-between items-end mt-2">
+              <div>
+                <span className="block text-xs text-gray-500">Margen de Ganancia</span>
+                <span className="text-lg font-bold text-emerald-700">{margenGanancia.toFixed(1)}%</span>
+              </div>
+              <div className="text-right">
+                <span className="block text-xs text-gray-500">Próximo Pedido</span>
+                <Chip color="default" variant="flat" className="font-bold text-xs px-2 py-0.5 bg-gray-100 text-gray-700">
+                  {proximoPedido}
+                </Chip>
+              </div>
             </div>
           </CardBody>
         </Card>
@@ -162,6 +334,7 @@ function HistoricoTable({ transactions, previousTransactions }) {
 HistoricoTable.propTypes = {
   transactions: PropTypes.array.isRequired,
   previousTransactions: PropTypes.array,
+  productoData: PropTypes.array,
 };
 
 export default HistoricoTable;
