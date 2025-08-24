@@ -1,4 +1,5 @@
-import { getEmpresasRequest, getEmpresaRequest, addEmpresaRequest, updateEmpresaRequest, deleteEmpresaRequest } 
+import { getEmpresasRequest, getEmpresaRequest, addEmpresaRequest,
+  updateEmpresaRequest, deleteEmpresaRequest, updateEmpresaMonedasRequest } 
 from '@/api/api.empresa';
 import { getUsuario_1 } from "@/services/usuario.services";
 import { toast } from "react-hot-toast";
@@ -98,5 +99,22 @@ const getEmpresaDataByUser = async (nombre) => {
   }
 };
 
+const updateEmpresaMonedas = async (id, monedas) => {
+  try {
+    const response = await updateEmpresaMonedasRequest(id, monedas);
+    if (response.data.code === 1) {
+      toast.success("Monedas actualizadas correctamente");
+      return true;
+    } else {
+      toast.error(response.data.message || "Error al actualizar monedas");
+      return false;
+    }
+  } catch (error) {
+    toast.error("Error en el servidor interno");
+    return false;
+  }
+};
 
-export { getEmpresas, getEmpresa, addEmpresa, updateEmpresa, deleteEmpresa, getEmpresaDataByUser };
+
+export { getEmpresas, getEmpresa, addEmpresa, 
+  updateEmpresa, deleteEmpresa, getEmpresaDataByUser, updateEmpresaMonedas };
