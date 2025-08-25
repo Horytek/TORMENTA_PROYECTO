@@ -64,11 +64,16 @@ export const ModalSubCategoria = ({ modalTitle, closeModel }) => {
   return (
     <>
       <Toaster />
-      <Modal 
-        isOpen={isOpen} 
-        onClose={handleCloseModal}
-        size="md"
-      >
+<Modal
+  isOpen={isOpen}
+  onClose={handleCloseModal}
+  size="md"
+  classNames={{
+    backdrop: "z-[10020]",
+    wrapper: "z-[10021]",
+    base: "z-[10022]"
+  }}
+>
         <ModalContent>
           {(onClose) => (
             <>
