@@ -15,5 +15,5 @@ export const updateEmpresaRequest = async (id, newFields) =>
 export const deleteEmpresaRequest = async (id) =>
   await axios.delete(`/empresa/${id}`);
 
-export const updateEmpresaMonedasRequest = async (id, monedas) =>
-  await axios.put(`/empresa/${id}/monedas`, { monedas });
+export const updateEmpresaMonedasRequest = async (id, monedas, pais) =>
+  await axios.put(`/empresa/${id}/monedas`, { monedas, pais });

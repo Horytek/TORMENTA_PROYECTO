@@ -99,14 +99,14 @@ const getEmpresaDataByUser = async (nombre) => {
   }
 };
 
-const updateEmpresaMonedas = async (id, monedas) => {
+const updateEmpresaMonedas = async (id, monedas, pais) => {
   try {
-    const response = await updateEmpresaMonedasRequest(id, monedas);
+    const response = await updateEmpresaMonedasRequest(id, monedas, pais);
     if (response.data.code === 1) {
-      toast.success("Monedas actualizadas correctamente");
+      toast.success("Monedas y país actualizados correctamente");
       return true;
     } else {
-      toast.error(response.data.message || "Error al actualizar monedas");
+      toast.error(response.data.message || "Error al actualizar monedas y país");
       return false;
     }
   } catch (error) {
@@ -114,7 +114,6 @@ const updateEmpresaMonedas = async (id, monedas) => {
     return false;
   }
 };
-
 
 export { getEmpresas, getEmpresa, addEmpresa, 
   updateEmpresa, deleteEmpresa, getEmpresaDataByUser, updateEmpresaMonedas };

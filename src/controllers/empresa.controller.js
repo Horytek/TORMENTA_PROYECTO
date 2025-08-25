@@ -96,19 +96,22 @@ const updateEmpresaMonedas = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { monedas } = req.body; // monedas debe ser un string (ej: "USD, PEN, EUR")
+        const { monedas, pais } = req.body; // ahora recibe también el país
         if (!monedas) {
             return res.status(400).json({ code: 0, message: "El campo monedas es obligatorio." });
         }
+        if (!pais) {
+            return res.status(400).json({ code: 0, message: "El campo país es obligatorio." });
+        }
         connection = await getConnection();
         const [result] = await connection.query(
-            "UPDATE empresa SET moneda = ? WHERE id_empresa = ?",
-            [monedas, id]
+            "UPDATE empresa SET moneda = ?, pais = ? WHERE id_empresa = ?",
+            [monedas, pais, id]
         );
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "Empresa no encontrada" });
         }
-        res.json({ code: 1, message: "Monedas actualizadas correctamente" });
+        res.json({ code: 1, message: "Monedas y país actualizados correctamente" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {

@@ -81,6 +81,17 @@ const monedas = [
   { code: "NZD", name: "Dólar neozelandés", country: "Nueva Zelanda", flag: "🇳🇿" },
 ];
 
+// Obtener lista única de países de las monedas, ordenados alfabéticamente
+const paisesMonedas = Array.from(
+  new Set(monedas.map(m => m.country))
+)
+  .sort((a, b) => a.localeCompare(b))
+  .map(country => ({
+    label: country,
+    key: country,
+    flag: monedas.find(m => m.country === country)?.flag || "🌎"
+  }));
+
 const EmpresasSunat = () => {
   const [empresas, setEmpresas] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,6 +110,7 @@ const EmpresasSunat = () => {
     telefono: "",
     email: "",
     logotipo: "",
+    pais: "", // Nuevo campo país
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -107,6 +119,8 @@ const EmpresasSunat = () => {
   const [selectedMonedas, setSelectedMonedas] = useState([]);
   const [empresaSeleccionadaId, setEmpresaSeleccionadaId] = useState("");
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null);
+  const [selectedPais, setSelectedPais] = useState(""); // Nuevo estado para país
+  
 
 
   // Estado para mostrar monedas guardadas de una empresa
@@ -191,19 +205,24 @@ const EmpresasSunat = () => {
       ? empresa.moneda.split(",").map(m => m.trim()).filter(Boolean)
       : [];
     setSelectedMonedas(monedasGuardadas);
+    setSelectedPais(empresa?.pais || ""); // Cargar país guardado
   };
 
   // Guardar monedas seleccionadas para la empresa seleccionada en el Card
   const handleSaveMonedasCard = async () => {
     if (!empresaSeleccionadaId) {
-      toast.error("Selecciona una empresa para actualizar monedas");
+      toast.error("Selecciona una empresa para actualizar monedas y país");
+      return;
+    }
+    if (!selectedPais) {
+      toast.error("Selecciona un país");
       return;
     }
     const monedasString = selectedMonedas.join(", ");
-    const ok = await updateEmpresaMonedas(empresaSeleccionadaId, monedasString);
+    const ok = await updateEmpresaMonedas(empresaSeleccionadaId, monedasString, selectedPais);
     if (ok) {
       fetchEmpresas();
-      toast.success("Monedas actualizadas para la empresa");
+      toast.success("Monedas y país actualizados para la empresa");
     }
   };
 
@@ -230,7 +249,7 @@ const EmpresasSunat = () => {
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Panel de monedas */}
-        <Card className="w-full lg:w-1/3 min-w-[320px] max-w-[420px] pr-4">
+       <Card className="w-full lg:w-1/3 min-w-[320px] max-w-[420px] pr-4">
           <CardHeader className="flex items-center gap-2 border-b">
             <GiMoneyStack className="text-2xl text-green-600" />
             <h3 className="font-semibold text-gray-700">Monedas internacionales</h3>
@@ -238,7 +257,12 @@ const EmpresasSunat = () => {
           <CardBody>
             <div className="mb-2 text-gray-600 text-sm flex items-center gap-2">
               <HiCurrencyDollar className="text-lg text-blue-500" />
-              Selecciona una empresa, luego selecciona una o varias monedas para asociar.
+              <span>
+                Selecciona una empresa para ver y actualizar sus monedas y país asociados.<br />
+                <span className="text-xs text-gray-500">
+                  Puedes seleccionar varias monedas y un país para cada empresa. Al guardar, se actualizarán los datos en la base de datos.
+                </span>
+              </span>
             </div>
             <div className="mb-3">
               <Autocomplete
@@ -246,9 +270,7 @@ const EmpresasSunat = () => {
                 placeholder="Buscar empresa..."
                 className="w-full"
                 selectedKey={empresaSeleccionadaId}
-                onSelectionChange={id => {
-                  handleEmpresaSelect(id);
-                }}
+                onSelectionChange={id => handleEmpresaSelect(id)}
                 variant="flat"
                 size="sm"
                 allowsCustomValue={false}
@@ -264,6 +286,32 @@ const EmpresasSunat = () => {
                   </AutocompleteItem>
                 )}
               </Autocomplete>
+            </div>
+            {/* Apartado para seleccionar país */}
+            <div className="mb-3">
+              <Autocomplete
+                label=""
+                placeholder="Selecciona un país..."
+                className="w-full"
+                selectedKey={selectedPais || (empresaSeleccionada?.pais || "")}
+                onSelectionChange={key => setSelectedPais(key)}
+                variant="flat"
+                size="sm"
+                allowsCustomValue={false}
+                defaultItems={paisesMonedas}
+              >
+                {(pais) => (
+                  <AutocompleteItem key={pais.key} startContent={<span className="text-lg">{pais.flag}</span>}>
+                    {pais.label}
+                  </AutocompleteItem>
+                )}
+              </Autocomplete>
+              {selectedPais && (
+                <div className="mt-1 text-xs text-gray-600 flex items-center gap-2">
+                  <span className="text-lg">{paisesMonedas.find(p => p.key === selectedPais)?.flag}</span>
+                  <span>País seleccionado: <span className="font-semibold">{selectedPais}</span></span>
+                </div>
+              )}
             </div>
             <ScrollShadow hideScrollBar className="max-h-60 rounded-lg border border-gray-100 bg-white/80 p-2">
               <div className="flex flex-col gap-2">
@@ -314,9 +362,9 @@ const EmpresasSunat = () => {
                   color="success"
                   className="mt-3"
                   onPress={handleSaveMonedasCard}
-                  isDisabled={!empresaSeleccionadaId}
+                  isDisabled={!empresaSeleccionadaId || !selectedPais}
                 >
-                  Guardar monedas para la empresa
+                  Guardar monedas y país para la empresa
                 </Button>
               </div>
             </div>
