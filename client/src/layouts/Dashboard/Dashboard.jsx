@@ -68,11 +68,14 @@ function Dashboard() {
         if (Component && module.ruta) {
           // Normaliza la ruta
           const normalizedPath = module.ruta.startsWith('/') ? module.ruta : `/${module.ruta}`;
+          
+          // Si es el módulo de productos (ID 2), agregar wildcard para subrutas
+          const routePath = module.id === 2 ? `${normalizedPath}/*` : normalizedPath;
 
           dynamicRoutes.push(
             <Route
               key={`module-${module.id}`}
-              path={normalizedPath}
+              path={routePath}
               element={
                 <RoutePermission idModulo={module.id}>
                   <Component />

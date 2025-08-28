@@ -61,11 +61,7 @@ const data = {
       title: "Productos",
       url: "/productos",
       icon: Tags,
-      items: [
-        { title: "Marcas", url: "/productos/marcas" },
-        { title: "Categorías", url: "/productos/categorias" },
-        { title: "Subcategorías", url: "/productos/subcategorias" },
-      ],
+   
     },
     {
       title: "Ventas",

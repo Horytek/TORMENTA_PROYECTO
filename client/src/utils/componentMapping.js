@@ -8,6 +8,7 @@ const Empleados = lazy(() => import('@/pages/Empleados/Empleados'));
 const Sunat = lazy(() => import('@/pages/Sunat/Sunat'));
 const Proveedores = lazy(() => import('@/pages/Proveedores/Proveedores'));
 const Productos = lazy(() => import('@/pages/Productos/Productos'));
+const ProductosWrapper = lazy(() => import('@/pages/Productos/ProductosWrapper'));
 const Almacenes = lazy(() => import('@/pages/AlmacenG/AlmacenG'));
 const Marcas = lazy(() => import('@/pages/Marcas/Marcas'));
 const Categorias = lazy(() => import('@/pages/Categorias/Categorias'));
@@ -32,7 +33,7 @@ const Modulos = lazy(() => import('@/pages/Modulos/Modulos'));
 
 const moduleComponentMap = {
   1: Inicio,
-  2: Productos,
+  2: ProductosWrapper,
   3: Almacenes,
   4: Clientes,
   5: Empleados,
@@ -47,9 +48,9 @@ const moduleComponentMap = {
 };
 
 const submoduleComponentMap = {
-  1: Marcas,
-  2: Categorias,
-  3: Subcategorias,
+  // 1: Marcas, // Ahora es parte de ProductosWrapper
+  // 2: Categorias, // Ahora es parte de ProductosWrapper
+  // 3: Subcategorias, // Ahora es parte de ProductosWrapper
   4: Registro_venta,
   5: LibroVentas,
   6: Usuarios,
