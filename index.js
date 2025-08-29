@@ -5,8 +5,8 @@ const main = () => {
     
     try {
         server = app.listen(app.get('port'), '0.0.0.0', () => {
-            console.log(`✅ Servidor corriendo en http://0.0.0.0:${app.get('port')}`);
-            console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
+            //console.log(`✅ Servidor corriendo en http://0.0.0.0:${app.get('port')}`);
+            //console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
         });
 
         server.on('error', (err) => {
@@ -27,9 +27,9 @@ const main = () => {
         });
         
         function gracefulShutdown() {
-            console.log('🛑 Cerrando servidor...');
+            //console.log('🛑 Cerrando servidor...');
             server.close(() => {
-                console.log('✅ Servidor cerrado correctamente');
+                //console.log('✅ Servidor cerrado correctamente');
                 process.exit(0);
             });
             

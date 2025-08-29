@@ -9,8 +9,8 @@ import {
   RadioGroup, Radio, Card, CardHeader, CardBody, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Tooltip, Pagination, Select, SelectItem, ScrollShadow
 } from "@heroui/react";
-import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
+//import jsPDF from 'jspdf';
+//import QRCode from 'qrcode';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
@@ -128,6 +128,8 @@ const handleRowClick = (e, venta) => {
       );
       const imgUrl = empresaData?.logotipo || '';
     if (printOption === 'print') {
+        const jsPDF = (await import('jspdf')).default;
+        const QRCode = (await import('qrcode')).default;
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [75, 284] });
         const qrText = 'https://www.facebook.com/profile.php?id=100055385846115';
         QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {
@@ -142,6 +144,8 @@ const handleRowClick = (e, venta) => {
           }
         });
       } else if (printOption === 'print-1') {
+        // Importa QRCode solo cuando se usa
+        const QRCode = (await import('qrcode')).default;
         const printWindow = window.open('', '', 'height=600,width=800');
         const qrText = 'https://www.facebook.com/profile.php?id=100055385846115';
         QRCode.toDataURL(qrText, { width: 100, height: 100 }, (err, qrUrl) => {

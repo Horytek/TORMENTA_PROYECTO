@@ -18,7 +18,7 @@ class LogMaintenanceService {
    */
   start() {
     if (this.isRunning) {
-      console.log('⚠️  Servicio de mantenimiento de logs ya está ejecutándose');
+      //console.log('⚠️  Servicio de mantenimiento de logs ya está ejecutándose');
       return;
     }
 
@@ -31,7 +31,7 @@ class LogMaintenanceService {
     });
 
     this.isRunning = true;
-    console.log('🚀 Servicio de mantenimiento de logs iniciado - Se ejecutará diariamente a las 2:00 AM');
+    //console.log('🚀 Servicio de mantenimiento de logs iniciado - Se ejecutará diariamente a las 2:00 AM');
 
     // Ejecutar una limpieza inicial si han pasado más de 24 horas desde la última
     if (!this.lastCleanup || Date.now() - this.lastCleanup > 24 * 60 * 60 * 1000) {
@@ -48,7 +48,7 @@ class LogMaintenanceService {
       this.schedule = null;
     }
     this.isRunning = false;
-    console.log('🛑 Servicio de mantenimiento de logs detenido');
+    //console.log('🛑 Servicio de mantenimiento de logs detenido');
   }
 
   /**
@@ -56,16 +56,16 @@ class LogMaintenanceService {
    */
   async performMaintenance() {
     try {
-      console.log('🧹 Iniciando mantenimiento de logs...');
+      //console.log('🧹 Iniciando mantenimiento de logs...');
       
       const result = await cleanOldLogs(90, 180); // 90 días para logs normales, 180 para críticos
       
       this.lastCleanup = Date.now();
       
       if (result.totalDeleted > 0) {
-        console.log(`✅ Mantenimiento completado: ${result.totalDeleted} logs eliminados`);
+        //console.log(`✅ Mantenimiento completado: ${result.totalDeleted} logs eliminados`);
       } else {
-        console.log('✅ Mantenimiento completado: No hay logs antiguos para eliminar');
+        //console.log('✅ Mantenimiento completado: No hay logs antiguos para eliminar');
       }
       
       return result;
@@ -79,7 +79,7 @@ class LogMaintenanceService {
    * Fuerza una ejecución manual del mantenimiento
    */
   async forceCleanup() {
-    console.log('🔧 Ejecutando limpieza manual de logs...');
+    //console.log('🔧 Ejecutando limpieza manual de logs...');
     return await this.performMaintenance();
   }
 

@@ -120,7 +120,7 @@ app.use("/api/logs", logsRoutes);
 // Inicializar servicio de mantenimiento de logs
 try {
   startLogMaintenance();
-  console.log('🔧 Servicio de mantenimiento de logs iniciado correctamente');
+  //console.log('🔧 Servicio de mantenimiento de logs iniciado correctamente');
 } catch (error) {
   console.error('❌ Error iniciando servicio de mantenimiento de logs:', error);
 }

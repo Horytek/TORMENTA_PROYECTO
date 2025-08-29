@@ -164,7 +164,7 @@ const isDuplicateLog = (accion, id_usuario, ip, id_tenant, recurso = null) => {
     
     // Si el último registro fue hace menos de la duración específica, es duplicado
     if (timeDiff < cacheDuration) {
-      console.log(`⚠️  Log duplicado detectado: ${accion} para usuario ${id_usuario || 'null'} desde IP ${ip}. Tiempo desde último: ${Math.round(timeDiff/1000)}s (límite: ${Math.round(cacheDuration/1000)}s)`);
+      //console.log(`⚠️  Log duplicado detectado: ${accion} para usuario ${id_usuario || 'null'} desde IP ${ip}. Tiempo desde último: ${Math.round(timeDiff/1000)}s (límite: ${Math.round(cacheDuration/1000)}s)`);
       return true;
     }
   }
@@ -201,7 +201,7 @@ export const registrarLog = async ({
   try {
     // Verificar duplicados solo si no se fuerza el guardado
     if (!forceSave && isDuplicateLog(accion, id_usuario, ip, id_tenant, recurso)) {
-      console.log(`🚫 Log duplicado omitido: ${accion}`);
+      //console.log(`🚫 Log duplicado omitido: ${accion}`);
       return; // No registrar log duplicado
     }
 
@@ -216,7 +216,7 @@ export const registrarLog = async ({
       id_tenant
     });
     
-    console.log(`✅ Log registrado: ${accion} para usuario ${id_usuario || 'system'}`);
+    //console.log(`✅ Log registrado: ${accion} para usuario ${id_usuario || 'system'}`);
   } catch (error) {
     console.error('Error registrando log:', error);
     // No lanzar error para no afectar el flujo principal

@@ -6,13 +6,12 @@ import { Button } from "@heroui/button";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-import html2pdf from 'html2pdf.js';
+//import html2pdf from 'html2pdf.js';
 import { Select, SelectItem } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";
 import { CgOptions } from "react-icons/cg";
 import { FaFilePdf } from "react-icons/fa";
-import 'jspdf-autotable';
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
@@ -239,6 +238,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
             }
         };
         try {
+            const html2pdf = (await import('html2pdf.js')).default;
             const pdfExport = html2pdf().set(options).from(htmlContent);
             const pdf = await pdfExport.toPdf().get('pdf');
             const totalPages = pdf.internal.getNumberOfPages();
