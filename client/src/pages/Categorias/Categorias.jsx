@@ -8,7 +8,13 @@ import { usePermisos } from '@/routes';
 import { Button } from "@heroui/button";
 import { getCategorias } from "@/services/categoria.services";
 
-function Categorias() {
+function Categorias({ 
+  categoriasData = null, 
+  onAdd = null, 
+  onUpdate = null, 
+  onDelete = null, 
+  skipApiCall = false 
+}) {
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => setModalOpen(!activeAdd);
 
@@ -17,21 +23,29 @@ function Categorias() {
 
   const { hasCreatePermission } = usePermisos();
 
-  // Estado local de categorías
-  const [categorias, setCategorias] = useState([]);
+  // Estado local de categorías - usar datos externos si están disponibles
+  const [categorias, setCategorias] = useState(categoriasData || []);
 
-  // Cargar solo una vez
+  // Cargar categorías solo si no se pasan datos externos
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await getCategorias();
-      setCategorias(data || []);
-    };
-    fetchData();
-  }, []);
+    if (!skipApiCall && !categoriasData) {
+      const fetchData = async () => {
+        const data = await getCategorias();
+        setCategorias(data || []);
+      };
+      fetchData();
+    } else if (categoriasData) {
+      setCategorias(categoriasData);
+    }
+  }, [skipApiCall, categoriasData]);
 
   // Agregar categoría localmente
   const addCategoriaLocal = (nuevaCategoria) => {
-    setCategorias(prev => [nuevaCategoria, ...prev]);
+    if (onAdd) {
+      onAdd(nuevaCategoria); // Usar callback externo
+    } else {
+      setCategorias(prev => [nuevaCategoria, ...prev]); // Fallback local
+    }
   };
 
   // Editar categoría localmente

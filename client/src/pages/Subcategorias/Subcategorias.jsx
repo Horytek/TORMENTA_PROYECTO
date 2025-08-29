@@ -16,9 +16,20 @@ import {
 import { useCategorias } from '@/context/Categoria/CategoriaProvider';
 import EditForm from "./EditSubcat";
 
-function Subcategorias() {
-  const { subcategorias: subcategoriasApi, loading } = getSubcategoriasConCategoria();
-  const [subcategorias, setSubcategorias] = useState([]);
+function Subcategorias({ 
+  subcategoriasData = null, 
+  categoriasData = null,
+  onAdd = null, 
+  onUpdate = null, 
+  onDelete = null, 
+  skipApiCall = false 
+}) {
+  // Solo usar el hook si no tenemos datos externos
+  const { subcategorias: subcategoriasApi, loading } = skipApiCall ? 
+    { subcategorias: [], loading: false } : 
+    getSubcategoriasConCategoria();
+    
+  const [subcategorias, setSubcategorias] = useState(subcategoriasData || []);
   const { categorias, loadCategorias } = useCategorias();
   const [activeAdd, setModalOpen] = useState(false);
   const [editModal, setEditModal] = useState({ open: false, data: null });
@@ -31,15 +42,21 @@ function Subcategorias() {
   const handleClearSearch = () => setSearchTerm("");
 
   useEffect(() => {
-    if (!loading && subcategorias.length === 0 && Array.isArray(subcategoriasApi)) {
+    if (skipApiCall && subcategoriasData) {
+      // Usar datos externos
+      setSubcategorias(subcategoriasData);
+    } else if (!loading && subcategorias.length === 0 && Array.isArray(subcategoriasApi)) {
+      // Usar datos de la API
       setSubcategorias(subcategoriasApi);
     }
     // eslint-disable-next-line
-  }, [loading, subcategoriasApi]);
+  }, [loading, subcategoriasApi, skipApiCall, subcategoriasData]);
 
   useEffect(() => {
-    loadCategorias();
-  }, []);
+    if (!skipApiCall) {
+      loadCategorias();
+    }
+  }, [skipApiCall]);
 
   // Agregar subcategoría localmente
   const handleAddSubcategoria = async (newSubcat) => {

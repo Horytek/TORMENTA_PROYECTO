@@ -8,28 +8,42 @@ import { usePermisos } from '@/routes';
 import { Button } from "@heroui/button";
 import { getMarcas } from "@/services/marca.services";
 
-function Marcas() {
+function Marcas({ 
+  marcasData = null, 
+  onAdd = null, 
+  onUpdate = null, 
+  onDelete = null, 
+  skipApiCall = false 
+}) {
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => setModalOpen(!activeAdd);
 
   const { hasCreatePermission } = usePermisos();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Estado de marcas
-  const [marcas, setMarcas] = useState([]);
+  // Estado de marcas - usar datos externos si están disponibles
+  const [marcas, setMarcas] = useState(marcasData || []);
 
-  // Cargar marcas solo una vez
+  // Cargar marcas solo si no se pasan datos externos
   useEffect(() => {
-    const fetchMarcas = async () => {
-      const data = await getMarcas();
-      setMarcas(data || []);
-    };
-    fetchMarcas();
-  }, []);
+    if (!skipApiCall && !marcasData) {
+      const fetchMarcas = async () => {
+        const data = await getMarcas();
+        setMarcas(data || []);
+      };
+      fetchMarcas();
+    } else if (marcasData) {
+      setMarcas(marcasData);
+    }
+  }, [skipApiCall, marcasData]);
 
   // Agregar marca al array local
   const handleAddMarca = (nuevaMarca) => {
-    setMarcas(prev => [nuevaMarca, ...prev]);
+    if (onAdd) {
+      onAdd(nuevaMarca); // Usar callback externo
+    } else {
+      setMarcas(prev => [nuevaMarca, ...prev]); // Fallback local
+    }
   };
 
   const handleSearchChange = (e) => setSearchTerm(e.target.value);

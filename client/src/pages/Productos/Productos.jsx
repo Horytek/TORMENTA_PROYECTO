@@ -8,6 +8,9 @@ import { Button, Tabs, Tab } from "@heroui/react";
 import { usePermisos } from '@/routes';
 import BarraSearch from "@/components/Search/Search";
 import { getProductos } from '@/services/productos.services';
+import { getMarcas } from '@/services/marca.services';
+import { getCategorias } from '@/services/categoria.services';
+import { getSubcategoriaNomCategoria } from '@/services/subcategoria.services';
 import Marcas from '../Marcas/Marcas';
 import Categorias from '../Categorias/Categorias';
 import Subcategorias from '../Subcategorias/Subcategorias';
@@ -65,6 +68,18 @@ function Productos() {
   const [productos, setProductos] = useState([]);
   const [activeAdd, setModalOpen] = useState(false);
 
+  // Estados para los datos compartidos (evitar llamadas masivas a APIs)
+  const [marcas, setMarcas] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [subcategorias, setSubcategorias] = useState([]);
+  const [dataLoaded, setDataLoaded] = useState({
+    productos: false,
+    marcas: false,
+    categorias: false,
+    subcategorias: false
+  });
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
   // Estado de edición
   const [activeEdit, setActiveEdit] = useState(false);
   const [editData, setEditData] = useState(null);
@@ -74,14 +89,71 @@ function Productos() {
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
   const handleClearSearch = () => setSearchTerm('');
 
-  // Cargar productos solo una vez
+  // Cargar todos los datos solo una vez
   useEffect(() => {
-    const fetchProductos = async () => {
-      const data = await getProductos();
-      setProductos(data || []);
+    const fetchAllData = async () => {
+      try {
+        const promises = [];
+        
+        // Cargar productos
+        if (!dataLoaded.productos) {
+          promises.push(
+            getProductos().then(data => {
+              setProductos(data || []);
+              setDataLoaded(prev => ({ ...prev, productos: true }));
+            })
+          );
+        }
+
+        // Cargar marcas
+        if (!dataLoaded.marcas) {
+          promises.push(
+            getMarcas().then(data => {
+              setMarcas(data || []);
+              setDataLoaded(prev => ({ ...prev, marcas: true }));
+            })
+          );
+        }
+
+        // Cargar categorías
+        if (!dataLoaded.categorias) {
+          promises.push(
+            getCategorias().then(data => {
+              setCategorias(data || []);
+              setDataLoaded(prev => ({ ...prev, categorias: true }));
+            })
+          );
+        }
+
+        // Cargar subcategorías
+        if (!dataLoaded.subcategorias) {
+          promises.push(
+            getSubcategoriaNomCategoria().then(data => {
+              setSubcategorias(data || []);
+              setDataLoaded(prev => ({ ...prev, subcategorias: true }));
+            })
+          );
+        }
+
+        // Ejecutar todas las promesas en paralelo
+        await Promise.all(promises);
+        setIsLoadingData(false);
+      } catch (error) {
+        console.error('Error cargando datos:', error);
+        setIsLoadingData(false);
+      }
     };
-    fetchProductos();
-  }, []);
+
+    // Solo cargar si hay datos pendientes
+    const hasPendingData = !dataLoaded.productos || !dataLoaded.marcas || 
+                          !dataLoaded.categorias || !dataLoaded.subcategorias;
+    
+    if (hasPendingData) {
+      fetchAllData();
+    } else {
+      setIsLoadingData(false);
+    }
+  }, []); // Solo ejecutar una vez al montar el componente
 
   const transformProducto = (producto) => ({
     ...producto,
@@ -105,6 +177,45 @@ function Productos() {
   // Eliminar producto localmente
   const removeProducto = (id) => {
     setProductos(prev => prev.filter(p => p.id_producto !== id));
+  };
+
+  // Funciones para actualizar marcas localmente
+  const addMarcaLocal = (nuevaMarca) => {
+    setMarcas(prev => [nuevaMarca, ...prev]);
+  };
+
+  const updateMarcaLocal = (id, updatedData) => {
+    setMarcas(prev => prev.map(marca => marca.id_marca === id ? { ...marca, ...updatedData } : marca));
+  };
+
+  const removeMarcaLocal = (id) => {
+    setMarcas(prev => prev.filter(marca => marca.id_marca !== id));
+  };
+
+  // Funciones para actualizar categorías localmente
+  const addCategoriaLocal = (nuevaCategoria) => {
+    setCategorias(prev => [nuevaCategoria, ...prev]);
+  };
+
+  const updateCategoriaLocal = (id, updatedData) => {
+    setCategorias(prev => prev.map(cat => cat.id_categoria === id ? { ...cat, ...updatedData } : cat));
+  };
+
+  const removeCategoriaLocal = (id) => {
+    setCategorias(prev => prev.filter(cat => cat.id_categoria !== id));
+  };
+
+  // Funciones para actualizar subcategorías localmente
+  const addSubcategoriaLocal = (nuevaSubcategoria) => {
+    setSubcategorias(prev => [nuevaSubcategoria, ...prev]);
+  };
+
+  const updateSubcategoriaLocal = (id, updatedData) => {
+    setSubcategorias(prev => prev.map(subcat => subcat.id_subcategoria === id ? { ...subcat, ...updatedData } : subcat));
+  };
+
+  const removeSubcategoriaLocal = (id) => {
+    setSubcategorias(prev => prev.filter(subcat => subcat.id_subcategoria !== id));
   };
 
   // Abrir modal de edición
@@ -174,11 +285,36 @@ function Productos() {
           </>
         );
       case 'marcas':
-        return <Marcas />;
+        return (
+          <Marcas 
+            marcasData={marcas}
+            onAdd={addMarcaLocal}
+            onUpdate={updateMarcaLocal}
+            onDelete={removeMarcaLocal}
+            skipApiCall={true}
+          />
+        );
       case 'categorias':
-        return <Categorias />;
+        return (
+          <Categorias 
+            categoriasData={categorias}
+            onAdd={addCategoriaLocal}
+            onUpdate={updateCategoriaLocal}
+            onDelete={removeCategoriaLocal}
+            skipApiCall={true}
+          />
+        );
       case 'subcategorias':
-        return <Subcategorias />;
+        return (
+          <Subcategorias 
+            subcategoriasData={subcategorias}
+            categoriasData={categorias}
+            onAdd={addSubcategoriaLocal}
+            onUpdate={updateSubcategoriaLocal}
+            onDelete={removeSubcategoriaLocal}
+            skipApiCall={true}
+          />
+        );
       default:
         return null;
     }
@@ -187,6 +323,17 @@ function Productos() {
 return (
   <div className="m-4">
     <Toaster />
+    
+    {/* Indicador de carga global */}
+    {isLoadingData && (
+      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <span className="text-blue-700">Cargando datos del sistema...</span>
+        </div>
+      </div>
+    )}
+    
     <Tabs 
       selectedKey={activeTab}
       onSelectionChange={handleTabChange}
@@ -210,7 +357,12 @@ return (
     
     {/* Contenido dinámico según la pestaña activa */}
     <div className="mt-4">
-      {renderTabContent()}
+      {!isLoadingData ? renderTabContent() : (
+        <div className="text-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Preparando datos...</p>
+        </div>
+      )}
     </div>
   </div>
 );
