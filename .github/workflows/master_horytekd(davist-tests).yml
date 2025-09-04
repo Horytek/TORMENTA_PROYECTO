@@ -28,7 +28,7 @@ jobs:
           npm install
           cd client
           npm install
-          npm run build
+          NODE_OPTIONS=--max-old-space-size=4096 npm run build
           cd ..
           npm run test --if-present
 
