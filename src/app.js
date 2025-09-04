@@ -3,24 +3,26 @@ import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { FRONTEND_URL } from "./config.js";
+import path from "path";
+import { fileURLToPath } from "url";
 //Rutas
-import dashboardRoutes from "./routes/dashboard.routes";
-import auhtRoutes from "./routes/auth.routes";
-import usuariosRoutes from "./routes/usuarios.routes";
+import dashboardRoutes from "./routes/dashboard.routes.js";
+import auhtRoutes from "./routes/auth.routes.js";
+import usuariosRoutes from "./routes/usuarios.routes.js";
 import rolRoutes from "./routes/rol.routes.js";
-import productosRoutes from "./routes/productos.routes";
-import ventasRoutes from "./routes/ventas.routes";
-import marcasRoutes from "./routes/marcas.routes";
-import ingresosRoutes from "./routes/notaingreso.routes";
-import salidaRoutes from "./routes/notasalida.routes";
+import productosRoutes from "./routes/productos.routes.js";
+import ventasRoutes from "./routes/ventas.routes.js";
+import marcasRoutes from "./routes/marcas.routes.js";
+import ingresosRoutes from "./routes/notaingreso.routes.js";
+import salidaRoutes from "./routes/notasalida.routes.js";
 import kardexRoutes from "./routes/kardex.routes.js"
-import guiasRoutes from "./routes/guiaremision.routes";
-import categoriaRoutes from "./routes/categoria.routes";
-import subcategoriaRoutes from "./routes/subcategoria.routes";
-import reporteRoutes from "./routes/reporte.routes";
-import destinatarioRoutes from "./routes/destinatario.routes";
+import guiasRoutes from "./routes/guiaremision.routes.js";
+import categoriaRoutes from "./routes/categoria.routes.js";
+import subcategoriaRoutes from "./routes/subcategoria.routes.js";
+import reporteRoutes from "./routes/reporte.routes.js";
+import destinatarioRoutes from "./routes/destinatario.routes.js";
 import vendedoresRoutes from "./routes/vendedores.routes.js";
-import sucursalRoutes from "./routes/sucursal.routes";
+import sucursalRoutes from "./routes/sucursal.routes.js";
 import almacenesRoutes from "./routes/almacen.routes.js";
 import funcionesRoutes from "./routes/funciones.routes.js";
 import planesRoutes from "./routes/plan_pago.routes.js";
@@ -43,6 +45,8 @@ const app = express();
 // Settings
 const port = process.env.PORT || 4000 ;
 app.set("port", port);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Middlewares
 app.use(morgan("dev"));
@@ -116,6 +120,15 @@ app.use("/api/clave", claveRoutes);
 app.use("/api/logotipo", logotipoRoutes);
 app.use("/api/valor", valorRoutes);
 app.use("/api/logs", logsRoutes);
+
+// Servir archivos estáticos de Vite/React
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+// Redirigir todas las rutas no API al frontend (SPA)
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
 
 // Inicializar servicio de mantenimiento de logs
 try {

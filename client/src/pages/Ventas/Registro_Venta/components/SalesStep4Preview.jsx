@@ -2,9 +2,9 @@ import { Button, Divider, Textarea } from '@heroui/react';
 import { BsCashCoin } from 'react-icons/bs';
 import { useState, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
-import { handleCobrar } from '@/services/Data/add_venta';
+import { handleCobrar } from '@/services/data/add_venta';
 import { useUserStore } from '@/store/useStore';
-import useSucursalData from '@/services/Data/data_sucursal_venta';
+import useSucursalData from '@/services/data/data_sucursal_venta';
 
 const SalesStep4Preview = ({
   cobrarState,

@@ -21,9 +21,9 @@ import AlertModal from '../../../components/Modals/AlertModal';
 import Comprobante from '../Registro_Venta/ComponentsRegistroVentas/Comprobantes/CotizacionPDF/CotizacionPDF';
 
 // Custom hooks
-import useVentasData from '@/services/Data/data_venta';
-import useProductosData from '@/services/Data/data_producto_venta';
-import useClientesData from '@/services/Data/data_cliente_venta';
+import useVentasData from '@/services/data/data_venta';
+import useProductosData from '@/services/data/data_producto_venta';
+import useClientesData from '@/services/data/data_cliente_venta';
 import { useVentaSeleccionadaStore } from '@/store/useVentaTable';
 import { useUserStore } from '@/store/useStore';
 

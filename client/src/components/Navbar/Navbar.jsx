@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator"
 
 import BarraSearch from "@/components/Search/Search";
 import CommandDemo from "@/components/ui/command";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/Sidebar";
 import EnhancedBreadcrumb from "@/components/ui/EnhancedBreadcrumb"; // Importamos el componente
 
 function Navbar({ routes }) {

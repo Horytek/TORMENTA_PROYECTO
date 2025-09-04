@@ -1,7 +1,7 @@
 import { DateRangePicker, Select, SelectItem, Button } from "@nextui-org/react";
 import { useState, useCallback } from "react";
 import { format, isValid } from "date-fns";
-import useSucursalData from '@/services/Data/data_sucursal_venta';
+import useSucursalData from '@/services/data/data_sucursal_venta';
 
 const FiltroLibro = ({ onFilter, filters }) => {
     const { sucursales } = useSucursalData();

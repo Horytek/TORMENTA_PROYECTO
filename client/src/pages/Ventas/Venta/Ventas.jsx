@@ -13,7 +13,7 @@ import { anularVentaEnSunatF, anularVentaEnSunatB } from '@/services/data/anular
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { Card, CardBody, ScrollShadow } from "@heroui/react";
 import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator } from "react-icons/fa";
-import useSucursalData from '@/services/Data/data_sucursal_venta';
+import useSucursalData from '@/services/data/data_sucursal_venta';
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas

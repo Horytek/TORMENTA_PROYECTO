@@ -29,7 +29,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/Sidebar";
 import { useAuth } from "@/context/Auth/AuthProvider";
 import { getRoles } from "@/services/rol.services";
 

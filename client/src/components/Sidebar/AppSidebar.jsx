@@ -42,7 +42,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/Sidebar";
 
 const data = {
   user: {

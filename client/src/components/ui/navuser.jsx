@@ -12,7 +12,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/Sidebar";
 import { useAuth } from "@/context/Auth/AuthProvider";
 import { getRoles } from "@/services/rol.services";
 

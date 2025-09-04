@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import TablaLibro from './ComponentsLibroVentas/TablaLibro';
 import ExportarExcel from './ComponentsLibroVentas/ExportarExcel';
 import FiltroLibro from './ComponentsLibroVentas/FiltroLibro';
-import useLibroVentasSunatData from '@/services/Data/getLibroVenta';
+import useLibroVentasSunatData from '@/services/data/getLibroVenta';
 
 const LibroVentas = () => {
     const [filters, setFilters] = useState({

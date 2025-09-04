@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './layouts/Login/Login';
 import Dashboard from './layouts/Dashboard/Dashboard';
 import { AppSidebar } from './components/Sidebar/AppSidebar';
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/Sidebar";
 import './main.css';
 import { ScrollShadow } from "@heroui/react";
 import { AuthProvider } from "@/context/Auth/AuthProvider";

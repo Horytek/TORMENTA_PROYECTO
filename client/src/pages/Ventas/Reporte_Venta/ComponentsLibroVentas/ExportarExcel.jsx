@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "@/api/axios";
-import useSucursalData  from "@/services/Data/data_sucursal_venta";
+import useSucursalData  from "@/services/data/data_sucursal_venta";
 import {
   Button,
   Modal,

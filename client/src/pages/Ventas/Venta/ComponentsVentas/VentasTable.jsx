@@ -14,7 +14,8 @@ import {
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
-import { FaUser, FaCalendarAlt, FaFileInvoice, FaMapMarkerAlt, FaMoneyBillWave, FaUserTie, FaCalculator } from "react-icons/fa";
+import { FaUser, FaCalendarAlt, FaFileInvoice,
+  FaMapMarkerAlt, FaMoneyBillWave, FaUserTie, FaCalculator } from "react-icons/fa";
 
 
 const ESTADO_MAP = {
