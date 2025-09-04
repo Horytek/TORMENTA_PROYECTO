@@ -1,6 +1,8 @@
 import colors from 'tailwindcss/colors';
 import { heroui } from '@heroui/react';
 import forms from '@tailwindcss/forms';
+import tailwindcssAnimate from "tailwindcss-animate";
+
 
 export default {
   content: [
@@ -172,6 +174,6 @@ export default {
   plugins: [
     forms,
     heroui(),
-    require("tailwindcss-animate"),
+    tailwindcssAnimate,
   ],
 };
