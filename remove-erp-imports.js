@@ -1,6 +1,5 @@
-const fs = require('fs');
-const path = require('path');
-
+import fs from 'fs';
+import path from 'path';
 const walk = (dir, callback) => {
   fs.readdirSync(dir).forEach(f => {
     const dirPath = path.join(dir, f);
