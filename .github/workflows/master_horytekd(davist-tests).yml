@@ -30,7 +30,7 @@ jobs:
         working-directory: client
         run: |
           npm ci
-          npm run build
+          NODE_OPTIONS=--max-old-space-size=3072 npm run build
 
       - name: Upload artifact (runtime only)
         uses: actions/upload-artifact@v4
