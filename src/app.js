@@ -32,7 +32,7 @@ import permisosRoutes from "./routes/permisos.routes.js";
 import permisosGlobalesRoutes from "./routes/permisosGlobales.routes.js";
 import submodulosRoutes from "./routes/submodulos.routes.js";
 import rutasRoutes from "./routes/rutas.routes.js";
-import empresaRoutes from "./routes/empresa.routes";
+import empresaRoutes from "./routes/empresa.routes.js";
 import claveRoutes from './routes/clave.routes.js';
 import logotipoRoutes from "./routes/logotipo.routes.js";
 import valorRoutes from "./routes/valor.routes.js";
