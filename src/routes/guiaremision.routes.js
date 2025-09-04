@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as guiasController } from "./../controllers/guiaremision.controller";
+import { methods as guiasController } from "./../controllers/guiaremision.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as sucursalController } from "./../controllers/sucursal.controller";
+import { methods as sucursalController } from "./../controllers/sucursal.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();

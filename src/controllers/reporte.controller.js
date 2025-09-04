@@ -1,4 +1,4 @@
-import { getConnection } from "./../database/database";
+import { getConnection } from "./../database/database.js";
 import { startOfWeek, endOfWeek, subWeeks, subMonths, format } from "date-fns";
 
 
@@ -846,9 +846,9 @@ const getVentasPDF = async (req, res) => {
 };
 
 
-const path = require("path");
-const ExcelJS = require("exceljs");
-const fs = require("fs");
+import path from "path";
+import ExcelJS from "exceljs";
+import fs from "fs";
 
 const parseMetodoPago = (metodoPago) => {
   if (!metodoPago) return { efectivo: 0, electronico: 0 };

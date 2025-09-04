@@ -1,4 +1,3 @@
-// src/main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -11,6 +10,8 @@ import { ScrollShadow } from "@heroui/react";
 import { AuthProvider } from "@/context/Auth/AuthProvider";
 import { ProtectedRoute } from "./routes";
 import { HeroUIProvider } from "@heroui/react";
+import LandingPage from './pages/Landing/LandingPage';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Router>
@@ -19,14 +20,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <SidebarProvider>
             <Routes>
               <Route path="/" element={<Login />} />
+              <Route path="/landing" element={<LandingPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route
                   path="/*"
                   element={
                     <div className="flex h-screen w-screen overflow-hidden">
-                      {/* Sidebar fijo a la izquierda */}
                       <AppSidebar />
-                      {/* Contenido principal, scroll solo dentro de este div */}
                       <ScrollShadow hideScrollBar className="flex-1 h-full">
                         <Dashboard />
                       </ScrollShadow>

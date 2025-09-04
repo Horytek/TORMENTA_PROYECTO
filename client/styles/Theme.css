@@ -1,0 +1,97 @@
+@import "tailwindcss";
+@reference "tailwindcss";
+@theme {
+  /* Colores (tokens v4) */
+  --color-primary-text: rgb(255 255 255);
+  --color-secondary-text: rgb(174 178 183);
+  --color-secondary-color: rgb(161 163 247);
+  --color-primary-color: rgb(99 102 241);
+
+  --color-bg-dark-1: rgb(31 32 35);
+  --color-bg-dark-2: rgb(38 39 43);
+  --color-bg-dark-3: rgb(48 49 54);
+  --color-bg-dark-3-hover: rgb(55 56 62);
+  --color-bg-dark-transparent: rgb(31 32 35 / 0.7);
+  --color-bg-dark-transparent-darker: rgb(0 0 0 / 0.5);
+  --color-bg-dark-transparent-lighter: rgb(48 49 54 / 0.7);
+
+  --color-main-border: rgb(255 255 255 / 0.15);
+  --color-main-border-darker: rgb(255 255 255 / 0.07);
+
+  --color-quote-icon-color: rgb(178 184 205);
+
+  /* Breakpoint extra opcional (coincidiendo con tu xs) */
+  --breakpoint-xs: 530px;
+}
+
+/* Typography */
+.block-title { @apply text-primary-text text-3xl font-bold tracking-normal; }
+.block-big-title { @apply text-primary-text text-4xl xl:text-5xl font-bold tracking-normal; }
+.block-subtitle { @apply text-xs text-secondary-color tracking-wider font-bold uppercase; }
+.content-title { @apply text-primary-text text-lg font-bold tracking-normal; }
+.content-text-white { @apply text-primary-text text-base leading-relaxed; }
+.content-text-gray { @apply text-gray-400 text-base; }
+
+/* Borders */
+.main-border-gray { @apply border border-solid border-main-border; }
+.main-border-gray-darker { @apply border border-solid border-main-border-darker; }
+
+/* Buttons */
+.contained-button {
+  @apply rounded-lg font-bold bg-primary-color text-primary-text
+         flex justify-center items-center cursor-pointer transition;
+}
+.contained-button:hover { @apply bg-[#7274f3]; }
+
+.outlined-button {
+  @apply text-primary-text border border-solid border-main-border
+         rounded-xl bg-bg-dark-2 hover:bg-bg-dark-3 border-gray-700 text-sm;
+}
+
+/* Alias para mantener compatibilidad */
+.bg-primaryColor         { @apply bg-primary-color; }
+.border-primaryColor     { @apply border-primary-color; }
+
+.text-primaryText        { @apply text-primary-text; }
+.text-secondaryColor     { @apply text-secondary-color; }
+
+.border-mainBorder       { @apply border-main-border; }
+.border-mainBorderDarker { @apply border-main-border-darker; }
+
+.bg-bgDark1              { @apply bg-bg-dark-1; }
+.bg-bgDark2              { @apply bg-bg-dark-2; }
+.bg-bgDark3              { @apply bg-bg-dark-3; }
+.hover\:bg-bgDark3:hover { @apply bg-bg-dark-3; }
+
+.bg-bgDarkTransparent            { @apply bg-bg-dark-transparent; }
+.bg-bgDarkTransparentDarker      { @apply bg-bg-dark-transparent-darker; }
+.bg-bgDarkTransparentLighter     { @apply bg-bg-dark-transparent-lighter; }
+
+.fill-primaryColor      { @apply fill-primary-color; }
+.fill-secondaryColor    { @apply fill-secondary-color; }
+.stroke-primaryColor    { @apply stroke-primary-color; }
+.stroke-secondaryColor  { @apply stroke-secondary-color; }
+
+.fill-bgDark1 { @apply fill-bg-dark-1; }
+.fill-bgDark2 { @apply fill-bg-dark-2; }
+.fill-bgDark3 { @apply fill-bg-dark-3; }
+
+.fill-quoteIconColor { @apply fill-quote-icon-color; }
+.text-quoteIconColor { @apply text-quote-icon-color; }   /* por si decides usar currentColor */
+.stroke-quoteIconColor { @apply stroke-quote-icon-color; }
+
+.bg-bgDark3Hover { @apply bg-bg-dark-3-hover; }
+.hover\:bg-bgDark3Hover:hover { @apply bg-bg-dark-3-hover; }
+
+.text-secondaryText { @apply text-secondary-text; }
+.hover\:text-secondaryText:hover { @apply text-secondary-text; } /* si lo usas con hover */
+
+@media (min-width: 1024px) {
+  .lg\:bg-bgDarkTransparent { @apply bg-bg-dark-transparent; }
+}
+.hover\:bg-bgDark3:hover         { @apply bg-bg-dark-3; }
+/* Si en JSX usas hover:bg-primaryColor/80 */
+.hover\:bg-primaryColor\/80:hover { @apply bg-primary-color/80; }
+
+/* Preventing FOUC */
+@font-face { font-display: var(--fontsource-Inter-font-display, optional); }

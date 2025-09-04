@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as notaingresoController } from "./../controllers/notaingreso.controller";
+import { methods as notaingresoController } from "./../controllers/notaingreso.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 import { logMiddleware } from "../middlewares/log.middleware.js";
 

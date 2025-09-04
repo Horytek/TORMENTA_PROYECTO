@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as subCategoriaController } from "./../controllers/subcategoria.controller";
+import { methods as subCategoriaController } from "./../controllers/subcategoria.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();

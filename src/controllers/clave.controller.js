@@ -1,5 +1,5 @@
-import { getConnection } from "./../database/database";
-import { encrypt, decrypt } from "./../utils/cryptoUtil"; // Ruta según tu estructura
+import { getConnection } from "./../database/database.js";
+import { encrypt, decrypt } from "./../utils/cryptoUtil.js"; // Ruta según tu estructura
 
 const getClaves = async (req, res) => {
     let connection;

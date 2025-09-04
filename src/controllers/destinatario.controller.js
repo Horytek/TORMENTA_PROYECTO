@@ -1,4 +1,4 @@
-import { getConnection } from "../database/database";
+import { getConnection } from "../database/database.js";
 
 // INSERTAR DESTINATARIO 
 const insertDestinatario = async (req, res) => {

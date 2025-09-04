@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as claveController } from "./../controllers/clave.controller";
+import { methods as claveController } from "./../controllers/clave.controller.js";
 
 const router = Router();
 

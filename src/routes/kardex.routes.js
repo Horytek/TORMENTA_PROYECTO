@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as kardexController } from "./../controllers/kardex.controller";
+import { methods as kardexController } from "./../controllers/kardex.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();

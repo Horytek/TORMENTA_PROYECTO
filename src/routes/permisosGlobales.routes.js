@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as permisosGlobalesController } from "./../controllers/permisosGlobales.controller";
+import { methods as permisosGlobalesController } from "./../controllers/permisosGlobales.controller.js";
 import { auth } from "../middlewares/auth.middleware.js"; 
 
 const router = Router();

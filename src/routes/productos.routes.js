@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as productosController } from "./../controllers/productos.controller";
+import { methods as productosController } from "./../controllers/productos.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 import { logMiddleware } from "../middlewares/log.middleware.js";
 

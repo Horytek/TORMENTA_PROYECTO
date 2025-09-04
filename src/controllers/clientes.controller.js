@@ -1,4 +1,4 @@
-import { getConnection } from "./../database/database";
+import { getConnection } from "./../database/database.js";
 import { LOG_ACTIONS, MODULOS } from "../utils/logActions.js";
 
 const getClientes = async (req, res) => {

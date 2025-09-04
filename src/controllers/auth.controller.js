@@ -1,5 +1,5 @@
-import { getConnection } from "./../database/database";
-import { createAccessToken } from "../libs/jwt";
+import { getConnection } from "./../database/database.js";
+import { createAccessToken } from "../libs/jwt.js";
 import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 import { logAcceso } from "../utils/logActions.js";

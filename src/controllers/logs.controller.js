@@ -1,4 +1,4 @@
-import { getConnection } from "../database/database";
+import { getConnection } from "../database/database.js";
 
 export const addLog = async ({ id_usuario, accion, id_modulo, id_submodulo = null, recurso = null, descripcion = null, ip, id_tenant }) => {
   let connection;

@@ -1,4 +1,4 @@
-import { getConnection } from "./../database/database";
+import { getConnection } from "./../database/database.js";
 import { subDays, subWeeks, subMonths, subYears, format } from "date-fns";
 
 // Función auxiliar para obtener el id_sucursal usando el nombre de usuario y el id_tenant

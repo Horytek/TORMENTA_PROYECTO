@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as SubmodulosController } from "./../controllers/submodulos.controller";
+import { methods as SubmodulosController } from "./../controllers/submodulos.controller.js";
 
 const router = Router();
 

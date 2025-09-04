@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as almacenesController } from "./../controllers/almacen.controller";
+import { methods as almacenesController } from "./../controllers/almacen.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();

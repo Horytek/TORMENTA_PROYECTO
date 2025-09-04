@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as permisosController } from "./../controllers/permisos.controller";
+import { methods as permisosController } from "./../controllers/permisos.controller.js";
 import { auth } from "../middlewares/auth.middleware.js"; 
 
 const router = Router();

@@ -1,7 +1,7 @@
-import { getConnection } from "./../database/database";
+import { getConnection } from "./../database/database.js";
 import ExcelJS from "exceljs";
 
-const { subDays, subWeeks, subMonths, subYears, format } = require("date-fns");
+import { subDays, subWeeks, subMonths, subYears, format } from "date-fns";
 
 const getProductos = async (req, res) => {
     const { descripcion = '', almacen = '', idProducto = '', marca = '', cat = '', subcat = '', stock = '' } = req.query;

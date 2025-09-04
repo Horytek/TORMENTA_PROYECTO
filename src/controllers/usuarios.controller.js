@@ -1,4 +1,4 @@
-import { getConnection } from "./../database/database";
+import { getConnection } from "./../database/database.js";
 import { logAcceso, logClientes } from "../utils/logActions.js";
 
 // Obtener todos los usuarios (con o sin id_tenant)

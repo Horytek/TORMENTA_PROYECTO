@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as dashboardController } from "./../controllers/dashboard.controller";
+import { methods as dashboardController } from "./../controllers/dashboard.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();

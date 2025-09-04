@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { methods as rolController } from "../controllers/rol.controller";
+import { methods as rolController } from "../controllers/rol.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();

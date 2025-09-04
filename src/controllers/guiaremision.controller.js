@@ -1,4 +1,4 @@
-import { getConnection } from "./../database/database";
+import { getConnection } from "./../database/database.js";
 
 //MOSTRAR TODAS LAS GUIAS DE REMISION
 const getGuias = async (req, res) => {
