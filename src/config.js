@@ -4,7 +4,7 @@ config();
 
 export const HOST = process.env.HOST || "";
 export const DATABASE = process.env.DATABASE || "";
-export const USER = process.env.USER || "";
+export const USER = process.env.USERNAME || "";
 export const PASSWORD = process.env.PASSWORD || "";
 export const PORT_DB = process.env.PORT_DB || "3306";
 export const TOKEN_SECRET = process.env.TOKEN_SECRET || "";
