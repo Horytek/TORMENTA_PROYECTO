@@ -40,6 +40,9 @@ import logsRoutes from "./routes/logs.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 
+// 🌐 Mostrar todas las variables de entorno (solo para pruebas)
+console.log('🌐 Variables de entorno:', process.env);
+
 const app = express();
 
 // Settings
