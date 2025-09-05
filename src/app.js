@@ -40,14 +40,66 @@ import logsRoutes from "./routes/logs.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 
-// 🌐 Mostrar todas las variables de entorno (solo para pruebas)
-console.log('🌐 Variables de entorno:', process.env);
+// 🛡️ SANITIZACIÓN CRÍTICA PARA AZURE APP SERVICE
+// Azure puede inyectar variables de entorno con URLs que rompen Express
+const sanitizeEnvironmentForAzure = () => {
+    // Lista completa de variables problemáticas conocidas de Azure
+    const azureProblematicVars = [
+        'REPOSITORY_URL', 'SCM_REPOSITORY_URL', 'SCM_COMMIT_ID', 'SCM_BRANCH',
+        'DEPLOYMENT_SOURCE_URL', 'GITHUB_REPOSITORY_URL', 'GITHUB_REF', 'GITHUB_SHA',
+        'GITLAB_CI_REPOSITORY_URL', 'CI_REPOSITORY_URL', 'BUILD_REPOSITORY_URI',
+        'BITBUCKET_REPO_FULL_NAME', 'WEBSITE_SITE_NAME', 'APPSETTING_WEBSITE_SITE_NAME',
+        // Variables adicionales que pueden contener URLs
+        'REMOTE_URL', 'GIT_URL', 'SOURCE_URL', 'ORIGIN_URL'
+    ];
+    
+    const sanitizedVars = [];
+    
+    // Sanitizar variables específicas conocidas
+    azureProblematicVars.forEach(varName => {
+        if (process.env[varName]) {
+            const value = process.env[varName];
+            if (typeof value === 'string' && value.includes('://')) {
+                process.env[`${varName}_BACKUP`] = value;
+                delete process.env[varName];
+                sanitizedVars.push(varName);
+            }
+        }
+    });
+    
+    // Buscar CUALQUIER variable que contenga URLs que empiecen con https://g (GitHub)
+    Object.keys(process.env).forEach(key => {
+        const value = process.env[key];
+        if (value && typeof value === 'string' && 
+            (value.startsWith('https://g') || value.match(/https:\/\/github\.com|https:\/\/gitlab\.com/))) {
+            process.env[`${key}_BACKUP`] = value;
+            delete process.env[key];
+            sanitizedVars.push(key);
+        }
+    });
+    
+    if (sanitizedVars.length > 0) {
+        console.log('🛡️ AZURE FIX: Variables con URLs sanitizadas para prevenir error "Missing parameter name":', sanitizedVars);
+    }
+    
+    return sanitizedVars;
+};
+
+// EJECUTAR SANITIZACIÓN ANTES DE CREAR LA APP
+const sanitizedVars = sanitizeEnvironmentForAzure();
 
 const app = express();
 
 // Settings
-const port = process.env.PORT || 4000 ;
+const port = Number(process.env.PORT || process.env.WEBSITES_PORT || 4000);
 app.set("port", port);
+
+console.log(`🚀 Servidor iniciando en puerto ${port}`);
+console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
+if (sanitizedVars.length > 0) {
+    console.log(`🛡️ Azure: ${sanitizedVars.length} variables problemáticas neutralizadas`);
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -73,7 +125,6 @@ const allowedOrigin = (origin, callback) => {
     callback(new Error('Not allowed by CORS'));
 };
 
-
 app.use(cors({
     origin: allowedOrigin,
     methods: "GET,POST,PUT,DELETE,OPTIONS",
@@ -91,38 +142,46 @@ app.use(cookieParser());
 // Auditoría (después de parseos, antes de rutas) - registra solo rutas autenticadas luego
 // app.use(auditLog()); // DESACTIVADO: genera acciones no válidas como "GET OK"
 
+// 🛡️ Validación de rutas - prevenir URLs completas como paths
+function validateRoute(path) {
+    if (typeof path === 'string' && (path.startsWith('http://') || path.startsWith('https://'))) {
+        throw new Error(`❌ Ruta inválida detectada: "${path}". Las rutas deben ser paths (empezar con /) no URLs completas.`);
+    }
+    return path;
+}
+
 // Routes
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/reporte", reporteRoutes);
-app.use("/api/auth", auhtRoutes);
-app.use("/api/usuario", usuariosRoutes);
-app.use("/api/rol", rolRoutes);
-app.use("/api/productos", productosRoutes);
-app.use("/api/ventas", ventasRoutes);
-app.use("/api/marcas", marcasRoutes);
-app.use("/api/nota_ingreso", ingresosRoutes);
-app.use("/api/nota_salida", salidaRoutes);
-app.use("/api/destinatario", destinatarioRoutes);
-app.use("/api/kardex", kardexRoutes);
-app.use("/api/guia_remision", guiasRoutes);
-app.use("/api/categorias", categoriaRoutes);
-app.use("/api/subcategorias", subcategoriaRoutes);
-app.use("/api/vendedores", vendedoresRoutes);
-app.use("/api/sucursales", sucursalRoutes);
-app.use("/api/almacen", almacenesRoutes);
-app.use("/api/funciones", funcionesRoutes);
-app.use("/api/planes", planesRoutes);
-app.use("/api/clientes", clienteRoutes);
-app.use("/api/modulos", modulosRoutes);
-app.use("/api/submodulos", submodulosRoutes);
-app.use("/api/permisos", permisosRoutes);
-app.use("/api/permisos-globales", permisosGlobalesRoutes);
-app.use("/api/rutas", rutasRoutes);
-app.use("/api/empresa", empresaRoutes);
-app.use("/api/clave", claveRoutes);
-app.use("/api/logotipo", logotipoRoutes);
-app.use("/api/valor", valorRoutes);
-app.use("/api/logs", logsRoutes);
+app.use(validateRoute("/api/dashboard"), dashboardRoutes);
+app.use(validateRoute("/api/reporte"), reporteRoutes);
+app.use(validateRoute("/api/auth"), auhtRoutes);
+app.use(validateRoute("/api/usuario"), usuariosRoutes);
+app.use(validateRoute("/api/rol"), rolRoutes);
+app.use(validateRoute("/api/productos"), productosRoutes);
+app.use(validateRoute("/api/ventas"), ventasRoutes);
+app.use(validateRoute("/api/marcas"), marcasRoutes);
+app.use(validateRoute("/api/nota_ingreso"), ingresosRoutes);
+app.use(validateRoute("/api/nota_salida"), salidaRoutes);
+app.use(validateRoute("/api/destinatario"), destinatarioRoutes);
+app.use(validateRoute("/api/kardex"), kardexRoutes);
+app.use(validateRoute("/api/guia_remision"), guiasRoutes);
+app.use(validateRoute("/api/categorias"), categoriaRoutes);
+app.use(validateRoute("/api/subcategorias"), subcategoriaRoutes);
+app.use(validateRoute("/api/vendedores"), vendedoresRoutes);
+app.use(validateRoute("/api/sucursales"), sucursalRoutes);
+app.use(validateRoute("/api/almacen"), almacenesRoutes);
+app.use(validateRoute("/api/funciones"), funcionesRoutes);
+app.use(validateRoute("/api/planes"), planesRoutes);
+app.use(validateRoute("/api/clientes"), clienteRoutes);
+app.use(validateRoute("/api/modulos"), modulosRoutes);
+app.use(validateRoute("/api/submodulos"), submodulosRoutes);
+app.use(validateRoute("/api/permisos"), permisosRoutes);
+app.use(validateRoute("/api/permisos-globales"), permisosGlobalesRoutes);
+app.use(validateRoute("/api/rutas"), rutasRoutes);
+app.use(validateRoute("/api/empresa"), empresaRoutes);
+app.use(validateRoute("/api/clave"), claveRoutes);
+app.use(validateRoute("/api/logotipo"), logotipoRoutes);
+app.use(validateRoute("/api/valor"), valorRoutes);
+app.use(validateRoute("/api/logs"), logsRoutes);
 
 // Servir archivos estáticos de Vite/React
 app.use(express.static(path.join(__dirname, "../client/dist")));
