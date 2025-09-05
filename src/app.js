@@ -43,6 +43,8 @@ import { startLogMaintenance } from "./services/logMaintenance.service.js";
 // 🛡️ SANITIZACIÓN CRÍTICA PARA AZURE APP SERVICE
 // Azure puede inyectar variables de entorno con URLs que rompen Express
 const sanitizeEnvironmentForAzure = () => {
+    console.log('🔍 Iniciando sanitización de variables de entorno...');
+    
     // Lista completa de variables problemáticas conocidas de Azure
     const azureProblematicVars = [
         'REPOSITORY_URL', 'SCM_REPOSITORY_URL', 'SCM_COMMIT_ID', 'SCM_BRANCH',
@@ -50,36 +52,51 @@ const sanitizeEnvironmentForAzure = () => {
         'GITLAB_CI_REPOSITORY_URL', 'CI_REPOSITORY_URL', 'BUILD_REPOSITORY_URI',
         'BITBUCKET_REPO_FULL_NAME', 'WEBSITE_SITE_NAME', 'APPSETTING_WEBSITE_SITE_NAME',
         // Variables adicionales que pueden contener URLs
-        'REMOTE_URL', 'GIT_URL', 'SOURCE_URL', 'ORIGIN_URL'
+        'REMOTE_URL', 'GIT_URL', 'SOURCE_URL', 'ORIGIN_URL',
+        // Variables específicas vistas en logs de Azure
+        'PUBLIC_API_URL', 'VITE_API_URL', 'DEPLOYMENT_URL', 'SCM_DO_BUILD_DURING_DEPLOYMENT'
     ];
     
     const sanitizedVars = [];
     
-    // Sanitizar variables específicas conocidas
-    azureProblematicVars.forEach(varName => {
-        if (process.env[varName]) {
-            const value = process.env[varName];
-            if (typeof value === 'string' && value.includes('://')) {
-                process.env[`${varName}_BACKUP`] = value;
-                delete process.env[varName];
-                sanitizedVars.push(varName);
+    // PASO 1: Buscar TODAS las variables que contengan URLs completas
+    Object.keys(process.env).forEach(key => {
+        const value = process.env[key];
+        if (value && typeof value === 'string') {
+            // Detectar URLs completas (especialmente las que causan problemas con path-to-regexp)
+            if (value.match(/^https?:\/\//)) {
+                console.log(`🚨 URL detectada en ${key}: ${value.substring(0, 50)}...`);
+                
+                // Si empieza con https://g (GitHub), es MUY probable que cause el error
+                if (value.startsWith('https://g')) {
+                    console.log(`🎯 ¡VARIABLE PROBLEMÁTICA ENCONTRADA! ${key}: ${value}`);
+                }
+                
+                // Respaldar y eliminar CUALQUIER variable que contenga URLs completas
+                process.env[`${key}_BACKUP`] = value;
+                delete process.env[key];
+                sanitizedVars.push(key);
             }
         }
     });
     
-    // Buscar CUALQUIER variable que contenga URLs que empiecen con https://g (GitHub)
-    Object.keys(process.env).forEach(key => {
-        const value = process.env[key];
-        if (value && typeof value === 'string' && 
-            (value.startsWith('https://g') || value.match(/https:\/\/github\.com|https:\/\/gitlab\.com/))) {
-            process.env[`${key}_BACKUP`] = value;
-            delete process.env[key];
-            sanitizedVars.push(key);
+    // PASO 2: Sanitizar variables específicas conocidas (por si acaso)
+    azureProblematicVars.forEach(varName => {
+        if (process.env[varName]) {
+            const value = process.env[varName];
+            if (typeof value === 'string' && value.includes('://')) {
+                if (!sanitizedVars.includes(varName)) {
+                    process.env[`${varName}_BACKUP`] = value;
+                    delete process.env[varName];
+                    sanitizedVars.push(varName);
+                }
+            }
         }
     });
     
+    console.log(`🛡️ Sanitización completada. ${sanitizedVars.length} variables procesadas.`);
     if (sanitizedVars.length > 0) {
-        console.log('🛡️ AZURE FIX: Variables con URLs sanitizadas para prevenir error "Missing parameter name":', sanitizedVars);
+        console.log('🛡️ AZURE FIX: Variables con URLs sanitizadas:', sanitizedVars);
     }
     
     return sanitizedVars;
@@ -87,6 +104,34 @@ const sanitizeEnvironmentForAzure = () => {
 
 // EJECUTAR SANITIZACIÓN ANTES DE CREAR LA APP
 const sanitizedVars = sanitizeEnvironmentForAzure();
+
+// 🛡️ Manejo de errores específico para path-to-regexp
+process.on('uncaughtException', (error) => {
+    if (error.message && error.message.includes('Missing parameter name')) {
+        console.error('🚨 ERROR CRÍTICO DETECTADO: Missing parameter name at path-to-regexp');
+        console.error('🔍 Este error indica que una URL completa se está usando como ruta de Express');
+        console.error('📝 Error completo:', error.message);
+        console.error('🛡️ Variables sanitizadas:', sanitizedVars);
+        
+        // Buscar cualquier variable restante que pueda causar problemas
+        const remainingProblematic = [];
+        Object.keys(process.env).forEach(key => {
+            const value = process.env[key];
+            if (value && typeof value === 'string' && value.match(/^https?:\/\//)) {
+                remainingProblematic.push(`${key}: ${value.substring(0, 50)}...`);
+            }
+        });
+        
+        if (remainingProblematic.length > 0) {
+            console.error('🚨 Variables con URLs que aún existen:', remainingProblematic);
+        }
+        
+        process.exit(1);
+    } else {
+        console.error('❌ Error no capturado:', error);
+        process.exit(1);
+    }
+});
 
 const app = express();
 
@@ -145,12 +190,28 @@ app.use(cookieParser());
 // 🛡️ Validación de rutas - prevenir URLs completas como paths
 function validateRoute(path) {
     if (typeof path === 'string' && (path.startsWith('http://') || path.startsWith('https://'))) {
+        console.error(`🚨 RUTA INVÁLIDA BLOQUEADA: "${path}"`);
         throw new Error(`❌ Ruta inválida detectada: "${path}". Las rutas deben ser paths (empezar con /) no URLs completas.`);
     }
     return path;
 }
 
-// Routes
+// 🛡️ Verificación adicional antes de montar rutas
+console.log('🔍 Verificando que no haya variables de entorno problemáticas antes de montar rutas...');
+const preRouteCheck = Object.keys(process.env).filter(key => {
+    const value = process.env[key];
+    return value && typeof value === 'string' && value.match(/^https?:\/\//);
+});
+
+if (preRouteCheck.length > 0) {
+    console.error('🚨 ALERTA: Aún hay variables con URLs después de la sanitización:');
+    preRouteCheck.forEach(key => {
+        const value = process.env[key];
+        console.error(`   ${key}: ${value.substring(0, 50)}...`);
+    });
+}
+
+// Routes con validación robusta
 app.use(validateRoute("/api/dashboard"), dashboardRoutes);
 app.use(validateRoute("/api/reporte"), reporteRoutes);
 app.use(validateRoute("/api/auth"), auhtRoutes);
