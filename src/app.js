@@ -54,10 +54,13 @@ const sanitizeEnvironmentForAzure = () => {
         // Variables adicionales que pueden contener URLs
         'REMOTE_URL', 'GIT_URL', 'SOURCE_URL', 'ORIGIN_URL',
         // Variables específicas vistas en logs de Azure
-        'PUBLIC_API_URL', 'VITE_API_URL', 'DEPLOYMENT_URL', 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+        'PUBLIC_API_URL', 'VITE_API_URL', 'DEPLOYMENT_URL', 'SCM_DO_BUILD_DURING_DEPLOYMENT',
+        // Variables de npm que pueden contener URLs problemáticas
+        'npm_config_registry', 'npm_config_fund', 'npm_config_audit_level'
     ];
     
     const sanitizedVars = [];
+    let foundGithubVar = false;
     
     // PASO 1: Buscar TODAS las variables que contengan URLs completas
     Object.keys(process.env).forEach(key => {
@@ -70,12 +73,53 @@ const sanitizeEnvironmentForAzure = () => {
                 // Si empieza con https://g (GitHub), es MUY probable que cause el error
                 if (value.startsWith('https://g')) {
                     console.log(`🎯 ¡VARIABLE PROBLEMÁTICA ENCONTRADA! ${key}: ${value}`);
+                    foundGithubVar = true;
                 }
                 
                 // Respaldar y eliminar CUALQUIER variable que contenga URLs completas
                 process.env[`${key}_BACKUP`] = value;
                 delete process.env[key];
                 sanitizedVars.push(key);
+            }
+            
+            // También remover variables que contengan patrones problemáticos
+            if (value.includes('github.com') || value.includes('://g')) {
+                console.log(`🚨 Patrón GitHub detectado en ${key}: ${value}`);
+                process.env[`${key}_BACKUP`] = value;
+                delete process.env[key];
+                sanitizedVars.push(key);
+                foundGithubVar = true;
+            }
+        }
+    });
+    
+    // PASO 1.5: Forzar eliminación de variables npm específicas que pueden causar problemas
+    const npmProblematicVars = [
+        'npm_config_fund', 'npm_config_update_notifier', 'npm_config_audit_level',
+        'npm_package_homepage', 'npm_package_repository_url', 'npm_package_bugs_url',
+        // Variables específicas de npm que pueden contener URLs de GitHub
+        'npm_config_registry', 'npm_config_fund', 'npm_package_repository',
+        'npm_package_bugs', 'npm_package_homepage'
+    ];
+    
+    npmProblematicVars.forEach(varName => {
+        if (process.env[varName]) {
+            console.log(`🚨 Eliminando variable npm problemática: ${varName} = ${process.env[varName]}`);
+            delete process.env[varName];
+            sanitizedVars.push(varName);
+        }
+    });
+    
+    // PASO 1.6: Buscar específicamente variables que contengan "github" en su nombre o valor
+    Object.keys(process.env).forEach(key => {
+        const value = process.env[key];
+        if (key.toLowerCase().includes('github') || key.toLowerCase().includes('git') || 
+            (value && value.toString().toLowerCase().includes('github.com'))) {
+            console.log(`🚨 Variable relacionada con GitHub encontrada: ${key} = ${value}`);
+            if (!sanitizedVars.includes(key)) {
+                delete process.env[key];
+                sanitizedVars.push(key);
+                foundGithubVar = true;
             }
         }
     });
