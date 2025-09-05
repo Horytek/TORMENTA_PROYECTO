@@ -69,7 +69,7 @@ const sanitizeEnvironmentForAzure = () => {
                 
                 // Si empieza con https://g (GitHub), es MUY probable que cause el error
                 if (value.startsWith('https://g')) {
-                    console.log(`🎯 ¡VARIABLE PROBLEMÁTICA ENCONTRADA! ${key}: ${value}`);
+                    console.log(`🎯 ¡VARIABLE PROBLEMÁTICA ENCONTRADA_TOTAL! ${key}: ${value}`);
                 }
                 
                 // Respaldar y eliminar CUALQUIER variable que contenga URLs completas
