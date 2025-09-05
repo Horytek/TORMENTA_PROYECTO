@@ -94,7 +94,7 @@ const sanitizeEnvironmentForAzure = () => {
         }
     });
     
-    console.log(`🛡️ Sanitización completada. ${sanitizedVars.length} variables procesadas.`);
+    console.log(`🛡️ Sanitización completada_Total. ${sanitizedVars.length} variables procesadas.`);
     if (sanitizedVars.length > 0) {
         console.log('🛡️ AZURE FIX: Variables con URLs sanitizadas:', sanitizedVars);
     }
