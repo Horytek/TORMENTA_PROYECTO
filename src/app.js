@@ -1,8 +1,8 @@
-import express from "express";
+import express, { Router } from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { FRONTEND_URL } from "./config.js";
+import { FRONTEND_URL, FRONTEND_ORIGIN } from "./config.js";
 import path from "path";
 import { fileURLToPath } from "url";
 //Rutas
@@ -15,7 +15,7 @@ import ventasRoutes from "./routes/ventas.routes.js";
 import marcasRoutes from "./routes/marcas.routes.js";
 import ingresosRoutes from "./routes/notaingreso.routes.js";
 import salidaRoutes from "./routes/notasalida.routes.js";
-import kardexRoutes from "./routes/kardex.routes.js"
+import kardexRoutes from "./routes/kardex.routes.js";
 import guiasRoutes from "./routes/guiaremision.routes.js";
 import categoriaRoutes from "./routes/categoria.routes.js";
 import subcategoriaRoutes from "./routes/subcategoria.routes.js";
@@ -33,7 +33,7 @@ import permisosGlobalesRoutes from "./routes/permisosGlobales.routes.js";
 import submodulosRoutes from "./routes/submodulos.routes.js";
 import rutasRoutes from "./routes/rutas.routes.js";
 import empresaRoutes from "./routes/empresa.routes.js";
-import claveRoutes from './routes/clave.routes.js';
+import claveRoutes from "./routes/clave.routes.js";
 import logotipoRoutes from "./routes/logotipo.routes.js";
 import valorRoutes from "./routes/valor.routes.js";
 import logsRoutes from "./routes/logs.routes.js";
@@ -41,140 +41,65 @@ import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 
 // 🛡️ SANITIZACIÓN CRÍTICA PARA AZURE APP SERVICE
-// Azure puede inyectar variables de entorno con URLs que rompen Express
 const sanitizeEnvironmentForAzure = () => {
-    console.log('🔍 Iniciando sanitización de variables de entorno...');
-    
-    // Lista completa de variables problemáticas conocidas de Azure
-    const azureProblematicVars = [
-        'REPOSITORY_URL', 'SCM_REPOSITORY_URL', 'SCM_COMMIT_ID', 'SCM_BRANCH',
-        'DEPLOYMENT_SOURCE_URL', 'GITHUB_REPOSITORY_URL', 'GITHUB_REF', 'GITHUB_SHA',
-        'GITLAB_CI_REPOSITORY_URL', 'CI_REPOSITORY_URL', 'BUILD_REPOSITORY_URI',
-        'BITBUCKET_REPO_FULL_NAME', 'WEBSITE_SITE_NAME', 'APPSETTING_WEBSITE_SITE_NAME',
-        // Variables adicionales que pueden contener URLs
-        'REMOTE_URL', 'GIT_URL', 'SOURCE_URL', 'ORIGIN_URL',
-        // Variables específicas vistas en logs de Azure
-        'PUBLIC_API_URL', 'VITE_API_URL', 'DEPLOYMENT_URL', 'SCM_DO_BUILD_DURING_DEPLOYMENT',
-        // Variables de npm que pueden contener URLs problemáticas
-        'npm_config_registry', 'npm_config_fund', 'npm_config_audit_level'
-    ];
-    
-    const sanitizedVars = [];
-    let foundGithubVar = false;
-    
-    // PASO 1: Buscar TODAS las variables que contengan URLs completas
-    Object.keys(process.env).forEach(key => {
-        const value = process.env[key];
-        if (value && typeof value === 'string') {
-            // Detectar URLs completas (especialmente las que causan problemas con path-to-regexp)
-            if (value.match(/^https?:\/\//)) {
-                console.log(`🚨 URL detectada en ${key}: ${value.substring(0, 50)}...`);
-                
-                // Si empieza con https://g (GitHub), es MUY probable que cause el error
-                if (value.startsWith('https://g')) {
-                    console.log(`🎯 ¡VARIABLE PROBLEMÁTICA ENCONTRADA! ${key}: ${value}`);
-                    foundGithubVar = true;
-                }
-                
-                // Respaldar y eliminar CUALQUIER variable que contenga URLs completas
-                process.env[`${key}_BACKUP`] = value;
-                delete process.env[key];
-                sanitizedVars.push(key);
-            }
-            
-            // También remover variables que contengan patrones problemáticos
-            if (value.includes('github.com') || value.includes('://g')) {
-                console.log(`🚨 Patrón GitHub detectado en ${key}: ${value}`);
-                process.env[`${key}_BACKUP`] = value;
-                delete process.env[key];
-                sanitizedVars.push(key);
-                foundGithubVar = true;
-            }
-        }
-    });
-    
-    // PASO 1.5: Forzar eliminación de variables npm específicas que pueden causar problemas
-    const npmProblematicVars = [
-        'npm_config_fund', 'npm_config_update_notifier', 'npm_config_audit_level',
-        'npm_package_homepage', 'npm_package_repository_url', 'npm_package_bugs_url',
-        // Variables específicas de npm que pueden contener URLs de GitHub
-        'npm_config_registry', 'npm_config_fund', 'npm_package_repository',
-        'npm_package_bugs', 'npm_package_homepage'
-    ];
-    
-    npmProblematicVars.forEach(varName => {
-        if (process.env[varName]) {
-            console.log(`🚨 Eliminando variable npm problemática: ${varName} = ${process.env[varName]}`);
-            delete process.env[varName];
-            sanitizedVars.push(varName);
-        }
-    });
-    
-    // PASO 1.6: Buscar específicamente variables que contengan "github" en su nombre o valor
-    Object.keys(process.env).forEach(key => {
-        const value = process.env[key];
-        if (key.toLowerCase().includes('github') || key.toLowerCase().includes('git') || 
-            (value && value.toString().toLowerCase().includes('github.com'))) {
-            console.log(`🚨 Variable relacionada con GitHub encontrada: ${key} = ${value}`);
-            if (!sanitizedVars.includes(key)) {
-                delete process.env[key];
-                sanitizedVars.push(key);
-                foundGithubVar = true;
-            }
-        }
-    });
-    
-    // PASO 2: Sanitizar variables específicas conocidas (por si acaso)
-    azureProblematicVars.forEach(varName => {
-        if (process.env[varName]) {
-            const value = process.env[varName];
-            if (typeof value === 'string' && value.includes('://')) {
-                if (!sanitizedVars.includes(varName)) {
-                    process.env[`${varName}_BACKUP`] = value;
-                    delete process.env[varName];
-                    sanitizedVars.push(varName);
-                }
-            }
-        }
-    });
-    
-    console.log(`🛡️ Sanitización completada_Total. ${sanitizedVars.length} variables procesadas.`);
-    if (sanitizedVars.length > 0) {
-        console.log('🛡️ AZURE FIX: Variables con URLs sanitizadas:', sanitizedVars);
+  console.log("🔍 Iniciando sanitización de variables de entorno...");
+  const sanitizedVars = [];
+
+  const skipDeleteIf = new Set(["FRONTEND_URL"]);
+
+  Object.keys(process.env).forEach((key) => {
+    const value = process.env[key];
+    if (!value || typeof value !== "string") return;
+    if (key.endsWith("_BACKUP")) return;
+
+    if (/^https?:\/\//i.test(value) && !skipDeleteIf.has(key)) {
+      process.env[`${key}_BACKUP`] = value;
+      delete process.env[key];
+      sanitizedVars.push(key);
+      return;
     }
-    
-    return sanitizedVars;
+  });
+
+  console.log(
+    `🛡️ Sanitización completada_Total. ${sanitizedVars.length} variables procesadas.`
+  );
+  if (sanitizedVars.length) {
+    console.log("🛡️ AZURE FIX: Variables con URLs sanitizadas:", sanitizedVars);
+  }
+  return sanitizedVars;
 };
 
 // EJECUTAR SANITIZACIÓN ANTES DE CREAR LA APP
 const sanitizedVars = sanitizeEnvironmentForAzure();
 
-// 🛡️ Manejo de errores específico para path-to-regexp
-process.on('uncaughtException', (error) => {
-    if (error.message && error.message.includes('Missing parameter name')) {
-        console.error('🚨 ERROR CRÍTICO DETECTADO: Missing parameter name at path-to-regexp');
-        console.error('🔍 Este error indica que una URL completa se está usando como ruta de Express');
-        console.error('📝 Error completo:', error.message);
-        console.error('🛡️ Variables sanitizadas:', sanitizedVars);
-        
-        // Buscar cualquier variable restante que pueda causar problemas
-        const remainingProblematic = [];
-        Object.keys(process.env).forEach(key => {
-            const value = process.env[key];
-            if (value && typeof value === 'string' && value.match(/^https?:\/\//)) {
-                remainingProblematic.push(`${key}: ${value.substring(0, 50)}...`);
-            }
-        });
-        
-        if (remainingProblematic.length > 0) {
-            console.error('🚨 Variables con URLs que aún existen:', remainingProblematic);
-        }
-        
-        process.exit(1);
-    } else {
-        console.error('❌ Error no capturado:', error);
-        process.exit(1);
+// Manejo de uncaughtException específico
+process.on("uncaughtException", (error) => {
+  if (error.message && error.message.includes("Missing parameter name")) {
+    console.error(
+      "🚨 ERROR CRÍTICO DETECTADO: Missing parameter name at path-to-regexp"
+    );
+    console.error(
+      "🔍 Este error indica que una URL completa se está usando como ruta de Express"
+    );
+    console.error("📝 Error completo:", error.message);
+    console.error("🛡️ Variables sanitizadas:", sanitizedVars);
+
+    const remainingProblematic = [];
+    Object.keys(process.env).forEach((key) => {
+      const value = process.env[key];
+      if (value && typeof value === "string" && value.match(/^https?:\/\//)) {
+        remainingProblematic.push(`${key}: ${value.substring(0, 50)}...`);
+      }
+    });
+
+    if (remainingProblematic.length > 0) {
+      console.error("🚨 Variables con URLs que aún existen:", remainingProblematic);
     }
+    process.exit(1);
+  } else {
+    console.error("❌ Error no capturado:", error);
+    process.exit(1);
+  }
 });
 
 const app = express();
@@ -184,97 +109,116 @@ const port = Number(process.env.PORT || process.env.WEBSITES_PORT || 4000);
 app.set("port", port);
 
 console.log(`🚀 Servidor iniciando en puerto ${port}`);
-console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🌍 Entorno: ${process.env.NODE_ENV || "development"}`);
 console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
+console.log(`🔗 Frontend ORIGIN (solo CORS): ${FRONTEND_ORIGIN}`);
 if (sanitizedVars.length > 0) {
-    console.log(`🛡️ Azure: ${sanitizedVars.length} variables problemáticas neutralizadas`);
+  console.log(
+    `🛡️ Azure: ${sanitizedVars.length} variables problemáticas neutralizadas`
+  );
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Middlewares
 app.use(morgan("dev"));
+
+// Usa FRONTEND_ORIGIN para CORS (alias FRONTEND_URL sigue válido)
 const allowedOrigin = (origin, callback) => {
-    // permite peticiones sin origin (Postman, curl, apps móviles…)
-    if (!origin) {
-        return callback(null, true);
-    }
-    
-    // permite tu FRONTEND_URL desde .env
-    if (origin === FRONTEND_URL) {
-        return callback(null, true);
-    }
-    
-    // AZURE: Permite dominios de Azure App Service (para desarrollo y producción)
-    if (origin.endsWith('.azurewebsites.net')) {
-        return callback(null, true);
-    }
-    
-    // Permite localhost y LAN para desarrollo local
-    if (
-        /^http:\/\/localhost(:\d+)?$/.test(origin) ||
-        /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
-        /^http:\/\/192\.168\.194\.\d{1,3}(:\d+)?$/.test(origin)
-    ) {
-        return callback(null, true);
-    }
-    
-    // Permite HTTPS localhost para desarrollo local con certificados
-    if (/^https:\/\/localhost(:\d+)?$/.test(origin)) {
-        return callback(null, true);
-    }
-    
-    // Log para debugging en desarrollo
-    if (process.env.NODE_ENV === 'development') {
-        console.log(`🔍 CORS: Origin "${origin}" rechazado`);
-    }
-    
-    // rechaza el resto
-    callback(new Error('Not allowed by CORS'));
+  if (!origin) return callback(null, true);
+  if (origin === FRONTEND_ORIGIN) return callback(null, true);
+  if (origin.endsWith(".azurewebsites.net")) return callback(null, true);
+  if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+  if (/^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return callback(null, true);
+  if (/^https:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+  return callback(new Error("Not allowed by CORS"));
 };
 
-app.use(cors({
+app.use(
+  cors({
     origin: allowedOrigin,
     methods: "GET,POST,PUT,DELETE,OPTIONS",
-    credentials: true
-}));
-// habilita pre‑flight OPTIONS en todas las rutas
-app.options("*", cors({
+    credentials: true,
+  })
+);
+app.options(
+  "*",
+  cors({
     origin: allowedOrigin,
     methods: "GET,POST,PUT,DELETE,OPTIONS",
-    credentials: true
-}));
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 app.use(cookieParser());
-// Auditoría (después de parseos, antes de rutas) - registra solo rutas autenticadas luego
-// app.use(auditLog()); // DESACTIVADO: genera acciones no válidas como "GET OK"
 
-// 🛡️ Validación de rutas - prevenir URLs completas como paths
-function validateRoute(path) {
-    if (typeof path === 'string' && (path.startsWith('http://') || path.startsWith('https://'))) {
-        console.error(`🚨 RUTA INVÁLIDA BLOQUEADA: "${path}"`);
-        throw new Error(`❌ Ruta inválida detectada: "${path}". Las rutas deben ser paths (empezar con /) no URLs completas.`);
-    }
-    return path;
+// Guard global para detectar rutas inválidas antes de que path-to-regexp falle
+function guardPath(p, originLabel = "app/use") {
+  if (typeof p === "string" && /^https?:\/\//i.test(p)) {
+    console.error(
+      `🚨 DETECTADO PATH CON URL (${originLabel}): "${p}" -> reemplazado por "/"`
+    );
+    return "/";
+  }
+  return p;
 }
 
-// 🛡️ Verificación adicional antes de montar rutas
-console.log('🔍 Verificando que no haya variables de entorno problemáticas antes de montar rutas...');
-const preRouteCheck = Object.keys(process.env).filter(key => {
-    const value = process.env[key];
-    return value && typeof value === 'string' && value.match(/^https?:\/\//);
+// Parche app.use
+const originalUse = app.use.bind(app);
+app.use = function patchedUse(first, ...rest) {
+  first = guardPath(first, "app.use");
+  return originalUse(first, ...rest);
+};
+
+// Parche Router para rutas internas (solo efecto diagnóstico)
+const origRouter = Router;
+function PatchedRouter(...args) {
+  const r = origRouter(...args);
+  const wrap =
+    (fn, label) =>
+    (first, ...rest) =>
+      fn.call(r, guardPath(first, label), ...rest);
+  r.use = wrap(r.use, "router.use");
+  r.get = wrap(r.get, "router.get");
+  r.post = wrap(r.post, "router.post");
+  r.put = wrap(r.put, "router.put");
+  r.delete = wrap(r.delete, "router.delete");
+  return r;
+}
+// NOTA: Esto sirve solo para nuevos Routers creados después; ya tienes routers importados arriba.
+// Si aún apareciera el error, revisar archivos de rutas por cualquier uso dinámico de URLs.
+
+// Validación simple de rutas declaradas
+function validateRoute(p) {
+  if (
+    typeof p === "string" &&
+    (p.startsWith("http://") || p.startsWith("https://"))
+  ) {
+    console.error(`🚨 RUTA INVÁLIDA BLOQUEADA: "${p}"`);
+    throw new Error(
+      `❌ Ruta inválida detectada: "${p}". Debe iniciar con / (path), no ser URL completa.`
+    );
+  }
+  return p;
+}
+
+console.log(
+  "🔍 Verificando que no haya variables de entorno problemáticas antes de montar rutas..."
+);
+const preRouteCheck = Object.keys(process.env).filter((key) => {
+  const value = process.env[key];
+  return value && typeof value === "string" && value.match(/^https?:\/\//);
 });
-
 if (preRouteCheck.length > 0) {
-    console.error('🚨 ALERTA: Aún hay variables con URLs después de la sanitización:');
-    preRouteCheck.forEach(key => {
-        const value = process.env[key];
-        console.error(`   ${key}: ${value.substring(0, 50)}...`);
-    });
+  console.error("🚨 ALERTA: Aún hay variables con URLs después de la sanitización:");
+  preRouteCheck.forEach((key) => {
+    const value = process.env[key];
+    console.error(`   ${key}: ${value.substring(0, 50)}...`);
+  });
 }
 
-// Routes con validación robusta
+// Rutas
 app.use(validateRoute("/api/dashboard"), dashboardRoutes);
 app.use(validateRoute("/api/reporte"), reporteRoutes);
 app.use(validateRoute("/api/auth"), auhtRoutes);
@@ -307,21 +251,19 @@ app.use(validateRoute("/api/logotipo"), logotipoRoutes);
 app.use(validateRoute("/api/valor"), valorRoutes);
 app.use(validateRoute("/api/logs"), logsRoutes);
 
-// Servir archivos estáticos de Vite/React
+// Static frontend
 app.use(express.static(path.join(__dirname, "../client/dist")));
 
-// Redirigir todas las rutas no API al frontend (SPA)
 app.get("*", (req, res, next) => {
   if (req.path.startsWith("/api")) return next();
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
-// Inicializar servicio de mantenimiento de logs
+// Servicio mantenimiento logs
 try {
   startLogMaintenance();
-  //console.log('🔧 Servicio de mantenimiento de logs iniciado correctamente');
 } catch (error) {
-  console.error('❌ Error iniciando servicio de mantenimiento de logs:', error);
+  console.error("❌ Error iniciando servicio de mantenimiento de logs:", error);
 }
 
 export default app;
