@@ -1,139 +1,128 @@
-import express, { Router } from "express";
+// index.js
+import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { FRONTEND_URL, FRONTEND_ORIGIN } from "./config.js";
 import path from "path";
 import { fileURLToPath } from "url";
-//Rutas
-import dashboardRoutes from "./routes/dashboard.routes.js";
-import auhtRoutes from "./routes/auth.routes.js";
-import usuariosRoutes from "./routes/usuarios.routes.js";
-import rolRoutes from "./routes/rol.routes.js";
-import productosRoutes from "./routes/productos.routes.js";
-import ventasRoutes from "./routes/ventas.routes.js";
-import marcasRoutes from "./routes/marcas.routes.js";
-import ingresosRoutes from "./routes/notaingreso.routes.js";
-import salidaRoutes from "./routes/notasalida.routes.js";
-import kardexRoutes from "./routes/kardex.routes.js";
-import guiasRoutes from "./routes/guiaremision.routes.js";
-import categoriaRoutes from "./routes/categoria.routes.js";
-import subcategoriaRoutes from "./routes/subcategoria.routes.js";
-import reporteRoutes from "./routes/reporte.routes.js";
-import destinatarioRoutes from "./routes/destinatario.routes.js";
-import vendedoresRoutes from "./routes/vendedores.routes.js";
-import sucursalRoutes from "./routes/sucursal.routes.js";
-import almacenesRoutes from "./routes/almacen.routes.js";
-import funcionesRoutes from "./routes/funciones.routes.js";
-import planesRoutes from "./routes/plan_pago.routes.js";
-import clienteRoutes from "./routes/clientes.routes.js";
-import modulosRoutes from "./routes/modulos.routes.js";
-import permisosRoutes from "./routes/permisos.routes.js";
-import permisosGlobalesRoutes from "./routes/permisosGlobales.routes.js";
-import submodulosRoutes from "./routes/submodulos.routes.js";
-import rutasRoutes from "./routes/rutas.routes.js";
-import empresaRoutes from "./routes/empresa.routes.js";
-import claveRoutes from "./routes/clave.routes.js";
-import logotipoRoutes from "./routes/logotipo.routes.js";
-import valorRoutes from "./routes/valor.routes.js";
-import logsRoutes from "./routes/logs.routes.js";
-import { auditLog } from "./middlewares/audit.middleware.js";
+import { FRONTEND_URL } from "./config.js";
+// import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 
-// 🛡️ SANITIZACIÓN CRÍTICA PARA AZURE APP SERVICE
-const sanitizeEnvironmentForAzure = () => {
-  console.log("🔍 Iniciando sanitización de variables de entorno...");
-  const sanitizedVars = [];
+/* ────────────────────────────────────────────────────────────────────────────
+   Utilidades
+   ──────────────────────────────────────────────────────────────────────────── */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  const skipDeleteIf = new Set(["FRONTEND_URL"]);
+const env = process.env.NODE_ENV || "production";
+const port = Number(process.env.PORT || process.env.WEBSITES_PORT || 8080);
 
-  Object.keys(process.env).forEach((key) => {
-    const value = process.env[key];
-    if (!value || typeof value !== "string") return;
-    if (key.endsWith("_BACKUP")) return;
-
-    if (/^https?:\/\//i.test(value) && !skipDeleteIf.has(key)) {
-      process.env[`${key}_BACKUP`] = value;
-      delete process.env[key];
-      sanitizedVars.push(key);
-      return;
-    }
-  });
-
-  console.log(
-    `🛡️ Sanitización completada_Total. ${sanitizedVars.length} variables procesadas.`
-  );
-  if (sanitizedVars.length) {
-    console.log("🛡️ AZURE FIX: Variables con URLs sanitizadas:", sanitizedVars);
-  }
-  return sanitizedVars;
-};
-
-// EJECUTAR SANITIZACIÓN ANTES DE CREAR LA APP
-const sanitizedVars = sanitizeEnvironmentForAzure();
-
-// Manejo de uncaughtException específico
-process.on("uncaughtException", (error) => {
-  if (error.message && error.message.includes("Missing parameter name")) {
-    console.error(
-      "🚨 ERROR CRÍTICO DETECTADO: Missing parameter name at path-to-regexp"
-    );
-    console.error(
-      "🔍 Este error indica que una URL completa se está usando como ruta de Express"
-    );
-    console.error("📝 Error completo:", error.message);
-    console.error("🛡️ Variables sanitizadas:", sanitizedVars);
-
-    const remainingProblematic = [];
-    Object.keys(process.env).forEach((key) => {
-      const value = process.env[key];
-      if (value && typeof value === "string" && value.match(/^https?:\/\//)) {
-        remainingProblematic.push(`${key}: ${value.substring(0, 50)}...`);
-      }
-    });
-
-    if (remainingProblematic.length > 0) {
-      console.error("🚨 Variables con URLs que aún existen:", remainingProblematic);
-    }
-    process.exit(1);
-  } else {
-    console.error("❌ Error no capturado:", error);
-    process.exit(1);
-  }
-});
-
-const app = express();
-
-// Settings
-const port = Number(process.env.PORT || process.env.WEBSITES_PORT || 4000);
-app.set("port", port);
-
-console.log(`🚀 Servidor iniciando en puerto ${port}`);
-console.log(`🌍 Entorno: ${process.env.NODE_ENV || "development"}`);
-console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
-console.log(`🔗 Frontend ORIGIN (solo CORS): ${FRONTEND_ORIGIN}`);
-if (sanitizedVars.length > 0) {
-  console.log(
-    `🛡️ Azure: ${sanitizedVars.length} variables problemáticas neutralizadas`
-  );
+/** Devuelve true si el string es una URL absoluta http(s) */
+function isHttpUrl(str) {
+  return typeof str === "string" && /^https?:\/\//i.test(str.trim());
 }
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+/** Normaliza argumentos de rutas: si llega una URL, usa su pathname; asegura "/" inicial. */
+function normalizeRouteArg(arg) {
+  // String
+  if (typeof arg === "string") {
+    const s = arg.trim();
+    if (isHttpUrl(s)) {
+      try {
+        const u = new URL(s);
+        const pathname = u.pathname || "/";
+        console.warn(
+          `⚠️  Se detectó URL usada como ruta ("${s}"). ` +
+          `Se usará su pathname "${pathname}".`
+        );
+        return pathname;
+      } catch {
+        throw new Error(`Ruta inválida (no convertible a path): "${s}"`);
+      }
+    }
+    return s.startsWith("/") ? s : `/${s}`;
+  }
+  // Array de strings/regex
+  if (Array.isArray(arg)) {
+    return arg.map((x) => normalizeRouteArg(x));
+  }
+  // RegExp u otros tipos: los devolvemos tal cual
+  return arg;
+}
 
-// Middlewares
-app.use(morgan("dev"));
+/** Envuelve métodos de registro de rutas para validar/normalizar el primer argumento */
+function patchRegisterMethods(target, label = "router/app") {
+  const methods = ["use", "get", "post", "put", "delete", "patch", "options", "all"];
+  for (const m of methods) {
+    if (typeof target[m] !== "function") continue;
+    const orig = target[m].bind(target);
+    target[m] = (...args) => {
+      if (args.length > 0) {
+        args[0] = normalizeRouteArg(args[0]);
+      }
+      try {
+        return orig(...args);
+      } catch (err) {
+        console.error(`❌ Error registrando ruta en ${label}.${m}:`, err?.message || err);
+        throw err;
+      }
+    };
+  }
+}
 
-// Usa FRONTEND_ORIGIN para CORS (alias FRONTEND_URL sigue válido)
+/** Parchea express.Router para que **todos** los routers creados queden protegidos */
+function patchExpressRouter(expressModule) {
+  const originalRouterFactory = expressModule.Router;
+  expressModule.Router = function patchedRouter(...args) {
+    const router = originalRouterFactory.apply(this, args);
+    patchRegisterMethods(router, "Router");
+    return router;
+  };
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Aplicación
+   ──────────────────────────────────────────────────────────────────────────── */
+const app = express();
+
+// Parcheos ANTES de cargar módulos de rutas
+patchRegisterMethods(app, "App");
+patchExpressRouter(express);
+
+// Logs básicos
+console.log(`🚀 Servidor iniciando en puerto ${port}`);
+console.log(`🌍 Entorno: ${env}`);
+
+// CORS: permite FRONTEND_URL + localhost/LAN
+function onlyOrigin(urlLike) {
+  if (!urlLike) return null;
+  try {
+    const u = new URL(urlLike);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return null;
+  }
+}
+const allowedOrigins = new Set(
+  [FRONTEND_URL, process.env.FRONTEND_URL, process.env.APPSETTING_FRONTEND_URL]
+    .map(onlyOrigin)
+    .filter(Boolean)
+);
+
+console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
+console.log(`🔗 Frontend ORIGIN (solo CORS): ${[...allowedOrigins].join(", ") || "(none)"}`);
+
 const allowedOrigin = (origin, callback) => {
-  if (!origin) return callback(null, true);
-  if (origin === FRONTEND_ORIGIN) return callback(null, true);
-  if (origin.endsWith(".azurewebsites.net")) return callback(null, true);
+  if (!origin) return callback(null, true); // Postman/curl/native apps
+  if (allowedOrigins.has(origin)) return callback(null, true);
   if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
-  if (/^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return callback(null, true);
-  if (/^https:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+  if (/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin)) return callback(null, true);
   return callback(new Error("Not allowed by CORS"));
 };
 
+// Middlewares
+app.use(morgan("dev"));
 app.use(
   cors({
     origin: allowedOrigin,
@@ -141,6 +130,7 @@ app.use(
     credentials: true,
   })
 );
+// Preflight
 app.options(
   "*",
   cors({
@@ -152,118 +142,116 @@ app.options(
 
 app.use(express.json());
 app.use(cookieParser());
+// app.use(auditLog()); // si lo reactivas, colócalo después de auth para no llenar logs
 
-// Guard global para detectar rutas inválidas antes de que path-to-regexp falle
-function guardPath(p, originLabel = "app/use") {
-  if (typeof p === "string" && /^https?:\/\//i.test(p)) {
-    console.error(
-      `🚨 DETECTADO PATH CON URL (${originLabel}): "${p}" -> reemplazado por "/"`
-    );
-    return "/";
+/* ────────────────────────────────────────────────────────────────────────────
+   Carga de rutas (dinámica, después de parchear Router)
+   ──────────────────────────────────────────────────────────────────────────── */
+async function mountRoutes() {
+  const table = [
+    ["/api/dashboard", "./routes/dashboard.routes.js"],
+    ["/api/reporte", "./routes/reporte.routes.js"],
+    ["/api/auth", "./routes/auth.routes.js"],
+    ["/api/usuario", "./routes/usuarios.routes.js"],
+    ["/api/rol", "./routes/rol.routes.js"],
+    ["/api/productos", "./routes/productos.routes.js"],
+    ["/api/ventas", "./routes/ventas.routes.js"],
+    ["/api/marcas", "./routes/marcas.routes.js"],
+    ["/api/nota_ingreso", "./routes/notaingreso.routes.js"],
+    ["/api/nota_salida", "./routes/notasalida.routes.js"],
+    ["/api/kardex", "./routes/kardex.routes.js"],
+    ["/api/guia_remision", "./routes/guiaremision.routes.js"],
+    ["/api/categorias", "./routes/categoria.routes.js"],
+    ["/api/subcategorias", "./routes/subcategoria.routes.js"],
+    ["/api/destinatario", "./routes/destinatario.routes.js"],
+    ["/api/vendedores", "./routes/vendedores.routes.js"],
+    ["/api/sucursales", "./routes/sucursal.routes.js"],
+    ["/api/almacen", "./routes/almacen.routes.js"],
+    ["/api/funciones", "./routes/funciones.routes.js"],
+    ["/api/planes", "./routes/plan_pago.routes.js"],
+    ["/api/clientes", "./routes/clientes.routes.js"],
+    ["/api/modulos", "./routes/modulos.routes.js"],
+    ["/api/submodulos", "./routes/submodulos.routes.js"],
+    ["/api/permisos", "./routes/permisos.routes.js"],
+    ["/api/permisos-globales", "./routes/permisosGlobales.routes.js"],
+    ["/api/rutas", "./routes/rutas.routes.js"],
+    ["/api/empresa", "./routes/empresa.routes.js"],
+    ["/api/clave", "./routes/clave.routes.js"],
+    ["/api/logotipo", "./routes/logotipo.routes.js"],
+    ["/api/valor", "./routes/valor.routes.js"],
+    ["/api/logs", "./routes/logs.routes.js"],
+  ];
+
+  for (const [base, modPath] of table) {
+    try {
+      const mod = await import(modPath);
+      const router = mod?.default ?? mod;
+      app.use(base, router);
+      console.log(`✅ Ruta montada: ${base} <- ${modPath}`);
+    } catch (err) {
+      console.error(`❌ Error importando/montando ${modPath}:`, err?.message || err);
+      // Si prefieres que falle duro, vuelve a lanzar:
+      // throw err;
+    }
   }
-  return p;
 }
 
-// Parche app.use
-const originalUse = app.use.bind(app);
-app.use = function patchedUse(first, ...rest) {
-  first = guardPath(first, "app.use");
-  return originalUse(first, ...rest);
-};
+await mountRoutes();
 
-// Parche Router para rutas internas (solo efecto diagnóstico)
-const origRouter = Router;
-function PatchedRouter(...args) {
-  const r = origRouter(...args);
-  const wrap =
-    (fn, label) =>
-    (first, ...rest) =>
-      fn.call(r, guardPath(first, label), ...rest);
-  r.use = wrap(r.use, "router.use");
-  r.get = wrap(r.get, "router.get");
-  r.post = wrap(r.post, "router.post");
-  r.put = wrap(r.put, "router.put");
-  r.delete = wrap(r.delete, "router.delete");
-  return r;
-}
-// NOTA: Esto sirve solo para nuevos Routers creados después; ya tienes routers importados arriba.
-// Si aún apareciera el error, revisar archivos de rutas por cualquier uso dinámico de URLs.
-
-// Validación simple de rutas declaradas
-function validateRoute(p) {
-  if (
-    typeof p === "string" &&
-    (p.startsWith("http://") || p.startsWith("https://"))
-  ) {
-    console.error(`🚨 RUTA INVÁLIDA BLOQUEADA: "${p}"`);
-    throw new Error(
-      `❌ Ruta inválida detectada: "${p}". Debe iniciar con / (path), no ser URL completa.`
-    );
-  }
-  return p;
-}
-
-console.log(
-  "🔍 Verificando que no haya variables de entorno problemáticas antes de montar rutas..."
-);
-const preRouteCheck = Object.keys(process.env).filter((key) => {
-  const value = process.env[key];
-  return value && typeof value === "string" && value.match(/^https?:\/\//);
-});
-if (preRouteCheck.length > 0) {
-  console.error("🚨 ALERTA: Aún hay variables con URLs después de la sanitización:");
-  preRouteCheck.forEach((key) => {
-    const value = process.env[key];
-    console.error(`   ${key}: ${value.substring(0, 50)}...`);
-  });
-}
-
-// Rutas
-app.use(validateRoute("/api/dashboard"), dashboardRoutes);
-app.use(validateRoute("/api/reporte"), reporteRoutes);
-app.use(validateRoute("/api/auth"), auhtRoutes);
-app.use(validateRoute("/api/usuario"), usuariosRoutes);
-app.use(validateRoute("/api/rol"), rolRoutes);
-app.use(validateRoute("/api/productos"), productosRoutes);
-app.use(validateRoute("/api/ventas"), ventasRoutes);
-app.use(validateRoute("/api/marcas"), marcasRoutes);
-app.use(validateRoute("/api/nota_ingreso"), ingresosRoutes);
-app.use(validateRoute("/api/nota_salida"), salidaRoutes);
-app.use(validateRoute("/api/destinatario"), destinatarioRoutes);
-app.use(validateRoute("/api/kardex"), kardexRoutes);
-app.use(validateRoute("/api/guia_remision"), guiasRoutes);
-app.use(validateRoute("/api/categorias"), categoriaRoutes);
-app.use(validateRoute("/api/subcategorias"), subcategoriaRoutes);
-app.use(validateRoute("/api/vendedores"), vendedoresRoutes);
-app.use(validateRoute("/api/sucursales"), sucursalRoutes);
-app.use(validateRoute("/api/almacen"), almacenesRoutes);
-app.use(validateRoute("/api/funciones"), funcionesRoutes);
-app.use(validateRoute("/api/planes"), planesRoutes);
-app.use(validateRoute("/api/clientes"), clienteRoutes);
-app.use(validateRoute("/api/modulos"), modulosRoutes);
-app.use(validateRoute("/api/submodulos"), submodulosRoutes);
-app.use(validateRoute("/api/permisos"), permisosRoutes);
-app.use(validateRoute("/api/permisos-globales"), permisosGlobalesRoutes);
-app.use(validateRoute("/api/rutas"), rutasRoutes);
-app.use(validateRoute("/api/empresa"), empresaRoutes);
-app.use(validateRoute("/api/clave"), claveRoutes);
-app.use(validateRoute("/api/logotipo"), logotipoRoutes);
-app.use(validateRoute("/api/valor"), valorRoutes);
-app.use(validateRoute("/api/logs"), logsRoutes);
-
-// Static frontend
+/* ────────────────────────────────────────────────────────────────────────────
+   Frontend estático (SPA) y catch‑all seguro
+   ──────────────────────────────────────────────────────────────────────────── */
 app.use(express.static(path.join(__dirname, "../client/dist")));
 
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api")) return next();
+// Cualquier GET que **no** empiece por /api sirve index.html
+app.get(/^(?!\/api).*/, (req, res, next) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
-// Servicio mantenimiento logs
-try {
-  startLogMaintenance();
-} catch (error) {
-  console.error("❌ Error iniciando servicio de mantenimiento de logs:", error);
+/* ────────────────────────────────────────────────────────────────────────────
+   Manejadores de error
+   ──────────────────────────────────────────────────────────────────────────── */
+app.use((err, _req, res, _next) => {
+  console.error("💥 Error en middleware/ruta:", err?.stack || err);
+  const status = typeof err?.status === "number" ? err.status : 500;
+  res.status(status).json({
+    ok: false,
+    message:
+      err?.message ||
+      "Error interno del servidor. Revisa los logs para más detalles.",
+  });
+});
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Arranque
+   ──────────────────────────────────────────────────────────────────────────── */
+function start() {
+  // Para cookies "secure" detrás de Azure/NGINX si usas proxies:
+  app.set("trust proxy", 1);
+
+  const server = app.listen(port, "0.0.0.0", () => {
+    console.log(`✅ Escuchando en http://0.0.0.0:${port}`);
+  });
+
+  try {
+    startLogMaintenance();
+  } catch (e) {
+    console.error("⚠️  No se pudo iniciar el mantenimiento de logs:", e?.message || e);
+  }
+
+  // Manejo de señales (shutdown limpio)
+  const shutdown = (sig) => () => {
+    console.log(`🔻 Recibido ${sig}, cerrando servidor...`);
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(1), 10000).unref();
+  };
+  process.on("SIGTERM", shutdown("SIGTERM"));
+  process.on("SIGINT", shutdown("SIGINT"));
+}
+
+// Si este archivo es el entrypoint, arrancamos
+if (import.meta.url === `file://${process.argv[1]}`) {
+  start();
 }
 
 export default app;
