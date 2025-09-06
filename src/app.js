@@ -43,7 +43,8 @@ import { startLogMaintenance } from "./services/logMaintenance.service.js";
 const app = express();
 
 // Settings
-const port = process.env.PORT || 4000 ;
+const isProd = process.env.NODE_ENV === "production";
+const port = process.env.PORT || (isProd ? 8080 : 4000);
 app.set("port", port);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
