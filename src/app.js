@@ -15,6 +15,9 @@ const __dirname = path.dirname(__filename);
 const env = process.env.NODE_ENV || "production";
 const port = Number(process.env.PORT || process.env.WEBSITES_PORT || 8080);
 
+// Configurar puerto en la app para que index.js pueda accederlo
+app.set('port', port);
+
 const isHttpUrl = (s) => typeof s === "string" && /^https?:\/\//i.test(s?.trim());
 
 /** Si llega una URL como ruta, convierte a pathname; respeta '*' y patrones especiales */
