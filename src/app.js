@@ -8,56 +8,64 @@ import { fileURLToPath } from "url";
 import { FRONTEND_URL } from "./config.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 
-/* ────────── Utilidades ────────── */
+/* ───────── Utilidades ───────── */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const env = process.env.NODE_ENV || "production";
 const port = Number(process.env.PORT || process.env.WEBSITES_PORT || 8080);
 
-// Configurar puerto en la app para que index.js pueda accederlo
-app.set('port', port);
+// Sanitizar BASE_PATH para evitar URLs completas
+const sanitizeBasePath = (basePath) => {
+  if (!basePath) return "/api";
+  if (typeof basePath === "string" && basePath.startsWith("http")) {
+    console.warn(`⚠️  BASE_PATH contiene URL completa: "${basePath}". Usando "/api" por seguridad.`);
+    return "/api";
+  }
+  return basePath.startsWith("/") ? basePath : `/${basePath}`;
+};
 
-const isHttpUrl = (s) => typeof s === "string" && /^https?:\/\//i.test(s?.trim());
+const BASE_PATH = sanitizeBasePath(process.env.BASE_PATH || "/api");
 
-/** Si llega una URL como ruta, convierte a pathname; respeta '*' y patrones especiales */
+const isHttpUrl = (s) => typeof s === "string" && /^https?:\/\//i.test(s.trim());
+
+/** Si llega una URL como path, usa su pathname; deja RegExp y '*' en paz */
 function normalizeRouteArg(arg) {
   if (typeof arg === "string") {
     const s = arg.trim();
-    // Mantén comodines típicos sin cambiar
+    // No tocar comodines/variantes típicas
     if (s === "*" || s === "/*" || s === "/" || s === "/(.*)" || s === "/(.*)?") return s;
 
     if (isHttpUrl(s)) {
       const u = new URL(s);
       let p = u.pathname || "/";
       if (!p.startsWith("/")) p = `/${p}`;
-      console.warn(`⚠️  URL usada como ruta: "${s}". Usando solo pathname "${p}".`);
+      console.warn(`⚠️  URL usada como ruta: "${s}". Usando pathname "${p}".`);
       return p;
     }
-    // Asegura que empiece por "/"
     return s.startsWith("/") ? s : `/${s}`;
   }
   if (Array.isArray(arg)) return arg.map((x) => normalizeRouteArg(x));
-  return arg; // RegExp o función, se deja tal cual
+  return arg; // RegExp / funciones
 }
 
-/** Parchea métodos de registro de rutas en app/router */
+/** Parchea métodos de registro (use/get/post/...) en app/router */
 function patchRegisterMethods(target, label = "app") {
   const methods = ["use", "get", "post", "put", "delete", "patch", "options", "all"];
   for (const m of methods) {
     if (typeof target[m] !== "function") continue;
     const orig = target[m].bind(target);
     target[m] = (...args) => {
-      if (args.length && (typeof args[0] === "string" || Array.isArray(args[0]))) {
-        args[0] = normalizeRouteArg(args[0]);
-      }
       try {
+        if (args.length && (typeof args[0] === "string" || Array.isArray(args[0]))) {
+          args[0] = normalizeRouteArg(args[0]);
+        }
         return orig(...args);
       } catch (err) {
         const msg = err?.message || String(err);
         console.error(`❌ Error registrando ruta en ${label}.${m}: ${msg}`);
         if (msg.includes("Missing parameter name")) {
-          console.error("🔍 Suele pasar si se usa una URL completa como path. Usa paths como '/api/...'.");
+          console.error("🔍 Eso pasa cuando se usa una URL absoluta como path. Usa '/ruta' en lugar de 'https://...'.");
         }
         throw err;
       }
@@ -65,7 +73,7 @@ function patchRegisterMethods(target, label = "app") {
   }
 }
 
-/** Parchea express.Router para proteger todos los routers creados */
+/** Parchea express.Router para cubrir todos los módulos de rutas */
 function patchExpressRouter(expressModule) {
   const original = expressModule.Router;
   expressModule.Router = function patchedRouter(...args) {
@@ -75,14 +83,16 @@ function patchExpressRouter(expressModule) {
   };
 }
 
-/* ────────── App ────────── */
+/* ───────── App ───────── */
 const app = express();
 
-// Parchear ANTES de montar rutas
+// Configurar puerto para que index.js pueda accederlo
+app.set('port', port);
+
+// Parcheos ANTES de montar rutas
 patchRegisterMethods(app, "app");
 patchExpressRouter(express);
 
-// Logs básicos
 console.log(`🚀 Servidor iniciando en puerto ${port}`);
 console.log(`🌍 Entorno: ${env}`);
 
@@ -105,14 +115,13 @@ console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
 console.log(`🔗 Frontend ORIGIN (solo CORS): ${[...allowedOrigins].join(", ") || "(none)"}`);
 
 const corsOrigin = (origin, cb) => {
-  if (!origin) return cb(null, true); // Postman/curl/native apps
+  if (!origin) return cb(null, true); // Postman/curl/mobile
   if (allowedOrigins.has(origin)) return cb(null, true);
   if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return cb(null, true);
   if (/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin)) return cb(null, true);
   return cb(new Error("Not allowed by CORS"));
 };
 
-// Middlewares
 app.use(morgan("dev"));
 app.use(
   cors({
@@ -121,9 +130,9 @@ app.use(
     credentials: true,
   })
 );
-// Preflight global (deja '*' tal cual)
+// Preflight global: usar RegExp evita rarezas con "*"
 app.options(
-  "*",
+  /.*/,
   cors({
     origin: corsOrigin,
     methods: "GET,POST,PUT,DELETE,OPTIONS",
@@ -133,75 +142,73 @@ app.options(
 
 app.use(express.json());
 app.use(cookieParser());
-// import y uso de auditLog si corresponde, después de auth para no ensuciar logs
-// app.use(auditLog());
 
-/* ────────── Montaje de rutas ────────── */
+/* ───────── Montaje de rutas ───────── */
 async function mountRoutes() {
-  const table = [
-    ["/api/dashboard", "./routes/dashboard.routes.js"],
-    ["/api/reporte", "./routes/reporte.routes.js"],
-    ["/api/auth", "./routes/auth.routes.js"],
-    ["/api/usuario", "./routes/usuarios.routes.js"],
-    ["/api/rol", "./routes/rol.routes.js"],
-    ["/api/productos", "./routes/productos.routes.js"],
-    ["/api/ventas", "./routes/ventas.routes.js"],
-    ["/api/marcas", "./routes/marcas.routes.js"],
-    ["/api/nota_ingreso", "./routes/notaingreso.routes.js"],
-    ["/api/nota_salida", "./routes/notasalida.routes.js"],
-    ["/api/kardex", "./routes/kardex.routes.js"],
-    ["/api/guia_remision", "./routes/guiaremision.routes.js"],
-    ["/api/categorias", "./routes/categoria.routes.js"],
-    ["/api/subcategorias", "./routes/subcategoria.routes.js"],
-    ["/api/destinatario", "./routes/destinatario.routes.js"],
-    ["/api/vendedores", "./routes/vendedores.routes.js"],
-    ["/api/sucursales", "./routes/sucursal.routes.js"],
-    ["/api/almacen", "./routes/almacen.routes.js"],
-    ["/api/funciones", "./routes/funciones.routes.js"],
-    ["/api/planes", "./routes/plan_pago.routes.js"],
-    ["/api/clientes", "./routes/clientes.routes.js"],
-    ["/api/modulos", "./routes/modulos.routes.js"],
-    ["/api/submodulos", "./routes/submodulos.routes.js"],
-    ["/api/permisos", "./routes/permisos.routes.js"],
-    ["/api/permisos-globales", "./routes/permisosGlobales.routes.js"],
-    ["/api/rutas", "./routes/rutas.routes.js"],
-    ["/api/empresa", "./routes/empresa.routes.js"],
-    ["/api/clave", "./routes/clave.routes.js"],
-    ["/api/logotipo", "./routes/logotipo.routes.js"],
-    ["/api/valor", "./routes/valor.routes.js"],
-    ["/api/logs", "./routes/logs.routes.js"],
+  const routes = [
+    ["dashboard", "./routes/dashboard.routes.js"],
+    ["reporte", "./routes/reporte.routes.js"],
+    ["auth", "./routes/auth.routes.js"],
+    ["usuario", "./routes/usuarios.routes.js"],
+    ["rol", "./routes/rol.routes.js"],
+    ["productos", "./routes/productos.routes.js"],
+    ["ventas", "./routes/ventas.routes.js"],
+    ["marcas", "./routes/marcas.routes.js"],
+    ["nota_ingreso", "./routes/notaingreso.routes.js"],
+    ["nota_salida", "./routes/notasalida.routes.js"],
+    ["kardex", "./routes/kardex.routes.js"],
+    ["guia_remision", "./routes/guiaremision.routes.js"],
+    ["categorias", "./routes/categoria.routes.js"],
+    ["subcategorias", "./routes/subcategoria.routes.js"],
+    ["destinatario", "./routes/destinatario.routes.js"],
+    ["vendedores", "./routes/vendedores.routes.js"],
+    ["sucursales", "./routes/sucursal.routes.js"],
+    ["almacen", "./routes/almacen.routes.js"],
+    ["funciones", "./routes/funciones.routes.js"],
+    ["planes", "./routes/plan_pago.routes.js"],
+    ["clientes", "./routes/clientes.routes.js"],
+    ["modulos", "./routes/modulos.routes.js"],
+    ["submodulos", "./routes/submodulos.routes.js"],
+    ["permisos", "./routes/permisos.routes.js"],
+    ["permisos-globales", "./routes/permisosGlobales.routes.js"],
+    ["rutas", "./routes/rutas.routes.js"],
+    ["empresa", "./routes/empresa.routes.js"],
+    ["clave", "./routes/clave.routes.js"],
+    ["logotipo", "./routes/logotipo.routes.js"],
+    ["valor", "./routes/valor.routes.js"],
+    ["logs", "./routes/logs.routes.js"],
   ];
 
-  for (const [base, modPath] of table) {
+  for (const [segment, modPath] of routes) {
     const mod = await import(modPath);
     const router = mod?.default ?? mod;
+    const base = path.posix.join(BASE_PATH, segment);
     app.use(base, router);
     console.log(`✅ Ruta montada: ${base} <- ${modPath}`);
   }
 }
 await mountRoutes();
 
-/* ────────── Frontend estático (SPA) ────────── */
+/* ───────── Healthcheck rápido ───────── */
+app.get("/__ping", (_req, res) => res.status(200).send("ok"));
+
+/* ───────── Frontend (SPA) ───────── */
 app.use(express.static(path.join(__dirname, "../client/dist")));
-// Cualquier GET que NO empiece por /api, sirve index.html
-app.get(/^(?!\/api).*/, (_req, res) => {
+const escapedBase = BASE_PATH.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+app.get(new RegExp(`^(?!${escapedBase}).*`), (_req, res) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
-/* ────────── Manejador de errores ────────── */
+/* ───────── Manejador de errores ───────── */
 app.use((err, _req, res, _next) => {
   console.error("💥 Error:", err?.stack || err);
   const status = typeof err?.status === "number" ? err.status : 500;
-  res.status(status).json({
-    ok: false,
-    message: err?.message || "Error interno del servidor",
-  });
+  res.status(status).json({ ok: false, message: err?.message || "Error interno del servidor" });
 });
 
-/* ────────── Arranque ────────── */
+/* ───────── Arranque ───────── */
 function start() {
-  // Detrás de proxy (App Service) para cookies secure, IPs, etc.
-  app.set("trust proxy", 1);
+  app.set("trust proxy", 1); // detrás de App Service
 
   const server = app.listen(port, "0.0.0.0", () => {
     console.log(`✅ Escuchando en http://0.0.0.0:${port}`);
