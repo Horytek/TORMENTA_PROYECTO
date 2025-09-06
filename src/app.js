@@ -51,22 +51,24 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Middlewares
 app.use(morgan("dev"));
 const allowedOrigin = (origin, callback) => {
-    // permite peticiones sin origin (Postman, curl, apps móviles…)
     if (!origin) {
         return callback(null, true);
     }
-    // permite tu FRONTEND_URL desde .env
-    if (origin === FRONTEND_URL) {
-        return callback(null, true);
-    }
-    // mantiene tus reglas para localhost y LAN
+    // permite tu FRONTEND_URL desde .env (acepta http y https)
     if (
-        /^http:\/\/localhost(:\d+)?$/.test(origin) ||
-        /^http:\/\/192\.168\.194\.\d{1,3}(:\d+)?$/.test(origin)
+        origin === FRONTEND_URL ||
+        origin === FRONTEND_URL.replace('http://', 'https://') ||
+        origin === FRONTEND_URL.replace('https://', 'http://')
     ) {
         return callback(null, true);
     }
-    // rechaza el resto
+    // permite localhost y LAN con http o https
+    if (
+        /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+        /^https?:\/\/192\.168\.194\.\d{1,3}(:\d+)?$/.test(origin)
+    ) {
+        return callback(null, true);
+    }
     callback(new Error('Not allowed by CORS'));
 };
 
