@@ -6,81 +6,55 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import { FRONTEND_URL } from "./config.js";
-// import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 
-/* ────────────────────────────────────────────────────────────────────────────
-   Utilidades
-   ──────────────────────────────────────────────────────────────────────────── */
+/* ────────── Utilidades ────────── */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const env = process.env.NODE_ENV || "production";
 const port = Number(process.env.PORT || process.env.WEBSITES_PORT || 8080);
 
-/** Devuelve true si el string es una URL absoluta http(s) */
-function isHttpUrl(str) {
-  return typeof str === "string" && /^https?:\/\//i.test(str.trim());
-}
+const isHttpUrl = (s) => typeof s === "string" && /^https?:\/\//i.test(s?.trim());
 
-/** Normaliza argumentos de rutas: si llega una URL, usa su pathname; asegura "/" inicial. */
+/** Si llega una URL como ruta, convierte a pathname; respeta '*' y patrones especiales */
 function normalizeRouteArg(arg) {
-  // String
   if (typeof arg === "string") {
     const s = arg.trim();
+    // Mantén comodines típicos sin cambiar
+    if (s === "*" || s === "/*" || s === "/" || s === "/(.*)" || s === "/(.*)?") return s;
+
     if (isHttpUrl(s)) {
-      try {
-        const u = new URL(s);
-        let pathname = u.pathname || "/";
-        if (!pathname.startsWith("/")) pathname = "/" + pathname;
-        if (pathname === "") pathname = "/";
-        console.warn(
-          `⚠️  Se detectó URL usada como ruta ("${s}"). ` +
-          `Se usará solo su pathname "${pathname}".`
-        );
-        return pathname;
-      } catch {
-        console.error(`❌ Ruta inválida (no convertible a path): "${s}"`);
-        return "/";
-      }
+      const u = new URL(s);
+      let p = u.pathname || "/";
+      if (!p.startsWith("/")) p = `/${p}`;
+      console.warn(`⚠️  URL usada como ruta: "${s}". Usando solo pathname "${p}".`);
+      return p;
     }
+    // Asegura que empiece por "/"
     return s.startsWith("/") ? s : `/${s}`;
   }
-  // Array de strings/regex
-  if (Array.isArray(arg)) {
-    return arg.map((x) => normalizeRouteArg(x));
-  }
-  // RegExp u otros tipos: los devolvemos tal cual
-  return arg;
+  if (Array.isArray(arg)) return arg.map((x) => normalizeRouteArg(x));
+  return arg; // RegExp o función, se deja tal cual
 }
 
-/** Envuelve métodos de registro de rutas para validar/normalizar el primer argumento */
-function patchRegisterMethods(target, label = "router/app") {
+/** Parchea métodos de registro de rutas en app/router */
+function patchRegisterMethods(target, label = "app") {
   const methods = ["use", "get", "post", "put", "delete", "patch", "options", "all"];
   for (const m of methods) {
     if (typeof target[m] !== "function") continue;
     const orig = target[m].bind(target);
     target[m] = (...args) => {
-      if (args.length > 0) {
+      if (args.length && (typeof args[0] === "string" || Array.isArray(args[0]))) {
         args[0] = normalizeRouteArg(args[0]);
       }
       try {
         return orig(...args);
       } catch (err) {
-        // Si el error es de path-to-regexp, muestra advertencia clara
-        if (
-          err?.message &&
-          err.message.includes("Missing parameter name")
-        ) {
-          console.error(
-            `❌ Error registrando ruta en ${label}.${m}:`,
-            err.message
-          );
-          console.error(
-            "🔍 Esto suele ocurrir si se usa una URL completa como path. Usa solo paths relativos (ej: '/api/ventas')."
-          );
-        } else {
-          console.error(`❌ Error registrando ruta en ${label}.${m}:`, err?.message || err);
+        const msg = err?.message || String(err);
+        console.error(`❌ Error registrando ruta en ${label}.${m}: ${msg}`);
+        if (msg.includes("Missing parameter name")) {
+          console.error("🔍 Suele pasar si se usa una URL completa como path. Usa paths como '/api/...'.");
         }
         throw err;
       }
@@ -88,33 +62,31 @@ function patchRegisterMethods(target, label = "router/app") {
   }
 }
 
-/** Parchea express.Router para que **todos** los routers creados queden protegidos */
+/** Parchea express.Router para proteger todos los routers creados */
 function patchExpressRouter(expressModule) {
-  const originalRouterFactory = expressModule.Router;
+  const original = expressModule.Router;
   expressModule.Router = function patchedRouter(...args) {
-    const router = originalRouterFactory.apply(this, args);
-    patchRegisterMethods(router, "Router");
+    const router = original.apply(this, args);
+    patchRegisterMethods(router, "router");
     return router;
   };
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
-   Aplicación
-   ──────────────────────────────────────────────────────────────────────────── */
+/* ────────── App ────────── */
 const app = express();
 
-// Parcheos ANTES de cargar módulos de rutas
-patchRegisterMethods(app, "App");
+// Parchear ANTES de montar rutas
+patchRegisterMethods(app, "app");
 patchExpressRouter(express);
 
 // Logs básicos
 console.log(`🚀 Servidor iniciando en puerto ${port}`);
 console.log(`🌍 Entorno: ${env}`);
 
-// CORS: permite FRONTEND_URL + localhost/LAN
+// CORS
 function onlyOrigin(urlLike) {
-  if (!urlLike) return null;
   try {
+    if (!urlLike) return null;
     const u = new URL(urlLike);
     return `${u.protocol}//${u.host}`;
   } catch {
@@ -126,32 +98,31 @@ const allowedOrigins = new Set(
     .map(onlyOrigin)
     .filter(Boolean)
 );
-
 console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
 console.log(`🔗 Frontend ORIGIN (solo CORS): ${[...allowedOrigins].join(", ") || "(none)"}`);
 
-const allowedOrigin = (origin, callback) => {
-  if (!origin) return callback(null, true); // Postman/curl/native apps
-  if (allowedOrigins.has(origin)) return callback(null, true);
-  if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
-  if (/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin)) return callback(null, true);
-  return callback(new Error("Not allowed by CORS"));
+const corsOrigin = (origin, cb) => {
+  if (!origin) return cb(null, true); // Postman/curl/native apps
+  if (allowedOrigins.has(origin)) return cb(null, true);
+  if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return cb(null, true);
+  if (/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin)) return cb(null, true);
+  return cb(new Error("Not allowed by CORS"));
 };
 
 // Middlewares
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: corsOrigin,
     methods: "GET,POST,PUT,DELETE,OPTIONS",
     credentials: true,
   })
 );
-// Preflight
+// Preflight global (deja '*' tal cual)
 app.options(
   "*",
   cors({
-    origin: allowedOrigin,
+    origin: corsOrigin,
     methods: "GET,POST,PUT,DELETE,OPTIONS",
     credentials: true,
   })
@@ -159,11 +130,10 @@ app.options(
 
 app.use(express.json());
 app.use(cookieParser());
-// app.use(auditLog()); // si lo reactivas, colócalo después de auth para no llenar logs
+// import y uso de auditLog si corresponde, después de auth para no ensuciar logs
+// app.use(auditLog());
 
-/* ────────────────────────────────────────────────────────────────────────────
-   Carga de rutas (dinámica, después de parchear Router)
-   ──────────────────────────────────────────────────────────────────────────── */
+/* ────────── Montaje de rutas ────────── */
 async function mountRoutes() {
   const table = [
     ["/api/dashboard", "./routes/dashboard.routes.js"],
@@ -200,50 +170,34 @@ async function mountRoutes() {
   ];
 
   for (const [base, modPath] of table) {
-    try {
-      const mod = await import(modPath);
-      const router = mod?.default ?? mod;
-      app.use(base, router);
-      console.log(`✅ Ruta montada: ${base} <- ${modPath}`);
-    } catch (err) {
-      console.error(`❌ Error importando/montando ${modPath}:`, err?.message || err);
-      // Si prefieres que falle duro, vuelve a lanzar:
-      // throw err;
-    }
+    const mod = await import(modPath);
+    const router = mod?.default ?? mod;
+    app.use(base, router);
+    console.log(`✅ Ruta montada: ${base} <- ${modPath}`);
   }
 }
-
 await mountRoutes();
 
-/* ────────────────────────────────────────────────────────────────────────────
-   Frontend estático (SPA) y catch‑all seguro
-   ──────────────────────────────────────────────────────────────────────────── */
+/* ────────── Frontend estático (SPA) ────────── */
 app.use(express.static(path.join(__dirname, "../client/dist")));
-
-// Cualquier GET que **no** empiece por /api sirve index.html
-app.get(/^(?!\/api).*/, (req, res, next) => {
+// Cualquier GET que NO empiece por /api, sirve index.html
+app.get(/^(?!\/api).*/, (_req, res) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
-/* ────────────────────────────────────────────────────────────────────────────
-   Manejadores de error
-   ──────────────────────────────────────────────────────────────────────────── */
+/* ────────── Manejador de errores ────────── */
 app.use((err, _req, res, _next) => {
-  console.error("💥 Error en middleware/ruta:", err?.stack || err);
+  console.error("💥 Error:", err?.stack || err);
   const status = typeof err?.status === "number" ? err.status : 500;
   res.status(status).json({
     ok: false,
-    message:
-      err?.message ||
-      "Error interno del servidor. Revisa los logs para más detalles.",
+    message: err?.message || "Error interno del servidor",
   });
 });
 
-/* ────────────────────────────────────────────────────────────────────────────
-   Arranque
-   ──────────────────────────────────────────────────────────────────────────── */
+/* ────────── Arranque ────────── */
 function start() {
-  // Para cookies "secure" detrás de Azure/NGINX si usas proxies:
+  // Detrás de proxy (App Service) para cookies secure, IPs, etc.
   app.set("trust proxy", 1);
 
   const server = app.listen(port, "0.0.0.0", () => {
@@ -256,7 +210,6 @@ function start() {
     console.error("⚠️  No se pudo iniciar el mantenimiento de logs:", e?.message || e);
   }
 
-  // Manejo de señales (shutdown limpio)
   const shutdown = (sig) => () => {
     console.log(`🔻 Recibido ${sig}, cerrando servidor...`);
     server.close(() => process.exit(0));
@@ -266,7 +219,6 @@ function start() {
   process.on("SIGINT", shutdown("SIGINT"));
 }
 
-// Si este archivo es el entrypoint, arrancamos
 if (import.meta.url === `file://${process.argv[1]}`) {
   start();
 }
