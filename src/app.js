@@ -131,14 +131,11 @@ app.use(
   })
 );
 // Preflight global: usar RegExp evita rarezas con "*"
-app.options(
-  /.*/,
-  cors({
-    origin: corsOrigin,
-    methods: "GET,POST,PUT,DELETE,OPTIONS",
-    credentials: true,
-  })
-);
+app.options("/api/*", cors({
+  origin: corsOrigin,
+  methods: "GET,POST,PUT,DELETE,OPTIONS",
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use(cookieParser());
