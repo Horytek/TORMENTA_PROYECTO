@@ -31,14 +31,17 @@ function normalizeRouteArg(arg) {
     if (isHttpUrl(s)) {
       try {
         const u = new URL(s);
-        const pathname = u.pathname || "/";
+        let pathname = u.pathname || "/";
+        if (!pathname.startsWith("/")) pathname = "/" + pathname;
+        if (pathname === "") pathname = "/";
         console.warn(
           `⚠️  Se detectó URL usada como ruta ("${s}"). ` +
-          `Se usará su pathname "${pathname}".`
+          `Se usará solo su pathname "${pathname}".`
         );
         return pathname;
       } catch {
-        throw new Error(`Ruta inválida (no convertible a path): "${s}"`);
+        console.error(`❌ Ruta inválida (no convertible a path): "${s}"`);
+        return "/";
       }
     }
     return s.startsWith("/") ? s : `/${s}`;
@@ -64,7 +67,21 @@ function patchRegisterMethods(target, label = "router/app") {
       try {
         return orig(...args);
       } catch (err) {
-        console.error(`❌ Error registrando ruta en ${label}.${m}:`, err?.message || err);
+        // Si el error es de path-to-regexp, muestra advertencia clara
+        if (
+          err?.message &&
+          err.message.includes("Missing parameter name")
+        ) {
+          console.error(
+            `❌ Error registrando ruta en ${label}.${m}:`,
+            err.message
+          );
+          console.error(
+            "🔍 Esto suele ocurrir si se usa una URL completa como path. Usa solo paths relativos (ej: '/api/ventas')."
+          );
+        } else {
+          console.error(`❌ Error registrando ruta en ${label}.${m}:`, err?.message || err);
+        }
         throw err;
       }
     };
