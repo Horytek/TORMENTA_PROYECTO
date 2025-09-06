@@ -23,11 +23,6 @@ const main = () => {
         
         process.on('uncaughtException', (error) => {
             console.error('❌ Error no capturado:', error);
-            // Log específico para el error de path-to-regexp
-            if (error.message && error.message.includes('Missing parameter name')) {
-                console.error('🔍 Error de ruta Express detectado - verifica que no uses URLs completas como rutas');
-                console.error('🔍 Stack trace:', error.stack);
-            }
             gracefulShutdown();
         });
         
@@ -45,12 +40,6 @@ const main = () => {
         }
     } catch (error) {
         console.error('❌ Error fatal al iniciar la aplicación:', error);
-        // Log específico para errores de Express/path-to-regexp
-        if (error.message && error.message.includes('Missing parameter name')) {
-            console.error('🔍 Error de Express: Una ruta contiene una URL completa en lugar de un path');
-            console.error('🔍 Revisa que todas las rutas empiecen con "/" y no con "http://" o "https://"');
-            console.error('🔍 Stack trace:', error.stack);
-        }
         process.exit(1);
     }
 };
