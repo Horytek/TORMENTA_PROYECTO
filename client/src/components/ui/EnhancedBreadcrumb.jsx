@@ -20,7 +20,7 @@ const createComponentNameMap = () => {
     6: { name: 'Ventas', path: '/ventas' },
     7: { name: 'Reportes de Ventas', path: '/reportes-ventas' },
     8: { name: 'Sucursal', path: '/sucursal' },
-    10: { name: 'Almacén', path: '/almacen' },
+    10: { name: 'Almacen', path: '/almacen' },
     12: { name: 'Proveedores', path: '/proveedores' },
     13: { name: 'SUNAT', path: '/sunat' }
   };

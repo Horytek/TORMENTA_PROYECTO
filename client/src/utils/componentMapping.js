@@ -13,7 +13,7 @@ const Almacenes = lazy(() => import('@/pages/AlmacenG/AlmacenG'));
 const Marcas = lazy(() => import('@/pages/Marcas/Marcas'));
 const Categorias = lazy(() => import('@/pages/Categorias/Categorias'));
 const Subcategorias = lazy(() => import('@/pages/Subcategorias/Subcategorias'));
-const Almacen = lazy(() => import('@/pages/Almacen/Almacén'));
+const Almacen = lazy(() => import('@/pages/Almacen/Almacen'));
 const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
 const Nota_Ingreso = lazy(() => import('@/pages/Almacen/Nota_Ingreso/Nota_ingreso'));
 const Nueva_Nota_Ingreso = lazy(() => import('@/pages/Almacen/Nota_Ingreso/Registro_Ingreso/Registro_ingreso'));

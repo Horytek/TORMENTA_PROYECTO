@@ -151,25 +151,29 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
         hotfixes: ["px_scaling"]
       }
     };
-    try {
-      const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
-      const pdfExport = html2pdf().set(options).from(htmlContent);
-      const pdf = await pdfExport.toPdf().get('pdf');
-      const totalPages = pdf.internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(150);
-        pdf.text(
-          `Página ${i} de ${totalPages}`,
-          pdf.internal.pageSize.getWidth() - 20,
-          pdf.internal.pageSize.getHeight() - 10
-        );
-      }
-      pdfExport.save();
-    } catch (error) {
-      toast.error("Error al generar el PDF");
-    }
+try {
+  const html2pdf = (await import(
+    /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js'
+  )).default;
+
+  const pdfExport = html2pdf().set(options).from(htmlContent);
+  const pdf = await pdfExport.toPdf().get('pdf');
+  const totalPages = pdf.internal.getNumberOfPages();
+
+  for (let i = 1; i <= totalPages; i++) {
+    pdf.setPage(i);
+    pdf.setFontSize(8);
+    pdf.setTextColor(150);
+    pdf.text(
+      `Página ${i} de ${totalPages}`,
+      pdf.internal.pageSize.getWidth() - 20,
+      pdf.internal.pageSize.getHeight() - 10
+    );
+  }
+  pdfExport.save();
+} catch (error) {
+  toast.error("Error al generar el PDF");
+}
   };
 
   // Acciones

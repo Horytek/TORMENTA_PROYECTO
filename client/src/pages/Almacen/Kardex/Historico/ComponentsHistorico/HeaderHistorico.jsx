@@ -205,11 +205,13 @@ const generatePDFKardex = async (productoData, transactions, previousTransaction
     };
 
    try {
-     const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
-    await html2pdf().from(htmlContent).set(options).save();
+    const html2pdf = (await import(
+      /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js'
+    )).default;
+     await html2pdf().from(htmlContent).set(options).save();
    } catch (e) {
      console.error('Error generando PDF Kardex', e);
-    }
+   }
   };
 
   const handleGeneratePDFKardex = () => {
