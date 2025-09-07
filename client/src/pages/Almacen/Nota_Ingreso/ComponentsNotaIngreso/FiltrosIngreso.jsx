@@ -6,7 +6,6 @@ import { Button } from "@heroui/button";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-//import html2pdf from 'html2pdf.js';
 import { Select, SelectItem } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";

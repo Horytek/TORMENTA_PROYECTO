@@ -6,7 +6,6 @@ import { TiDeleteOutline } from "react-icons/ti";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Toaster, toast } from "react-hot-toast";
 import anularGuia from '../../data/anular_guia';
-//import html2pdf from 'html2pdf.js';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 const itemsPerPageDefault = 10;
 
@@ -49,7 +48,7 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
 
 
   // Function to generate PDF
-  const generatePDF = (guia) => {
+  const generatePDF = async (guia) => {
   const peso = isNaN(parseFloat(guia.peso)) ? "0.00" : parseFloat(guia.peso).toFixed(2);
   const observacion = guia.observacion || 'No hay ninguna observacion';
   const cantPaquetes = guia.canti || '0';
@@ -199,8 +198,12 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
   
-    const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
-    html2pdf().from(htmlContent).set(options).save();
+   try {
+     const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
+    await html2pdf().from(htmlContent).set(options).save();
+   } catch (e) {
+     console.error('Error generando PDF Kardex', e);
+    }
   };
 
   const handleRowClick = (guia) => {

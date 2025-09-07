@@ -7,7 +7,6 @@ import { TiDeleteOutline } from "react-icons/ti";
 import anularNotaIngreso from '../data/anular_nota_ingreso';
 import anularNotaSalida from '../../Nota_Salida/data/anular_nota_salida';
 import { toast } from "react-hot-toast";
-//import html2pdf from 'html2pdf.js';
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";

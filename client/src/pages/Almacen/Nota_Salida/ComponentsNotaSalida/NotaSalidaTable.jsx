@@ -98,7 +98,7 @@ const NotaSalidaTable = forwardRef(({ salidas, onNotaAnulada }, ref)  => {
 useImperativeHandle(ref, () => ({
     generatePDFGeneral
   }));
-  const generatePDFGeneral = () => {
+  const generatePDFGeneral = async () => {
     const now = new Date();
     const fechaGeneracion = now.toLocaleDateString('es-PE'); // Ajusta el formato según tu necesidad
     const horaGeneracion = now.toLocaleTimeString('es-PE'); // Ajusta el formato según tu necesidad
@@ -182,12 +182,16 @@ useImperativeHandle(ref, () => ({
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
   
-    const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
-    html2pdf().from(htmlContent).set(options).save();
+   try {
+     const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
+    await html2pdf().from(htmlContent).set(options).save();
+   } catch (e) {
+     console.error('Error generando PDF Kardex', e);
+    }
   };
   
 
-  const generatePDF = (nota) => {
+  const generatePDF = async (nota) => {
     if (!nota) {
       toast.error('Nota está vacío o no válido');
       return;
@@ -297,8 +301,12 @@ useImperativeHandle(ref, () => ({
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
-    html2pdf().from(htmlContent).set(options).save();
+   try {
+     const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
+    await html2pdf().from(htmlContent).set(options).save();
+   } catch (e) {
+     console.error('Error generando PDF Kardex', e);
+    }
   };
 
   const getCurrentPageItems = () => {

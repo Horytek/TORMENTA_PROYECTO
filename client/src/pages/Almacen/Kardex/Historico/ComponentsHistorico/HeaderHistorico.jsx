@@ -5,8 +5,6 @@ import { DateRangePicker } from '@heroui/react';
 import useAlmacenData from "../../data/data_almacen_kardex";
 import { parseDate } from "@internationalized/date";
 import { startOfWeek, endOfWeek } from "date-fns";
-//import html2pdf from "html2pdf.js";
-import "jspdf-autotable";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 
@@ -91,7 +89,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
   }, [setAlmacenGlobal]);
   
   // ADAPTADO: Usa datos de empresa dinámicos
-  const generatePDFKardex = (productoData, transactions, previousTransactions, dateRange) => {
+const generatePDFKardex = async (productoData, transactions, previousTransactions, dateRange) => {
     const empresaNombre = empresaData?.nombreComercial || 'TORMENTA JEANS';
     const empresaRazon = empresaData?.razonSocial || 'TEXTILES CREANDO MODA S.A.C.';
     const empresaDireccion = empresaData?.direccion || 'Cal San Martin 1573 Urb Urrunaga SC Tres';
@@ -206,8 +204,12 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-        const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
-        html2pdf().from(htmlContent).set(options).save();
+   try {
+     const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
+    await html2pdf().from(htmlContent).set(options).save();
+   } catch (e) {
+     console.error('Error generando PDF Kardex', e);
+    }
   };
 
   const handleGeneratePDFKardex = () => {
