@@ -238,7 +238,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
             }
         };
         try {
-            const html2pdf = (await import('html2pdf.js')).default;
+            const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
             const pdfExport = html2pdf().set(options).from(htmlContent);
             const pdf = await pdfExport.toPdf().get('pdf');
             const totalPages = pdf.internal.getNumberOfPages();

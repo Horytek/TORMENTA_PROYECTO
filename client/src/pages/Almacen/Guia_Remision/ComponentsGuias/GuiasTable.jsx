@@ -199,7 +199,7 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
   
-    const html2pdf = (await import('html2pdf.js')).default;
+    const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
     html2pdf().from(htmlContent).set(options).save();
   };
 
