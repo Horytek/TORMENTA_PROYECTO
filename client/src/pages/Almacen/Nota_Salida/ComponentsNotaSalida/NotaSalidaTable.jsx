@@ -6,7 +6,7 @@ import ConfirmationModal from './Modals/ConfirmationModal';
 import anularNota from '../data/anular_nota_salida';
 import { Toaster, toast } from "react-hot-toast";
 import { usePermisos } from '@/routes';
-import html2pdf from 'html2pdf.js';
+//import html2pdf from 'html2pdf.js';
 const NotaSalidaTable = forwardRef(({ salidas, onNotaAnulada }, ref)  => {
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
@@ -182,6 +182,7 @@ useImperativeHandle(ref, () => ({
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
   
+    const html2pdf = (await import('html2pdf.js')).default;
     html2pdf().from(htmlContent).set(options).save();
   };
   
@@ -296,6 +297,7 @@ useImperativeHandle(ref, () => ({
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
+    const html2pdf = (await import('html2pdf.js')).default;
     html2pdf().from(htmlContent).set(options).save();
   };
 

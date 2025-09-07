@@ -7,7 +7,7 @@ import { TiDeleteOutline } from "react-icons/ti";
 import anularNotaIngreso from '../data/anular_nota_ingreso';
 import anularNotaSalida from '../../Nota_Salida/data/anular_nota_salida';
 import { toast } from "react-hot-toast";
-import html2pdf from 'html2pdf.js';
+//import html2pdf from 'html2pdf.js';
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";
@@ -153,6 +153,7 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
       }
     };
     try {
+      const html2pdf = (await import('html2pdf.js')).default;
       const pdfExport = html2pdf().set(options).from(htmlContent);
       const pdf = await pdfExport.toPdf().get('pdf');
       const totalPages = pdf.internal.getNumberOfPages();

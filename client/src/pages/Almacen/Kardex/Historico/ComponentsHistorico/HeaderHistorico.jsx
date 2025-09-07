@@ -5,7 +5,7 @@ import { DateRangePicker } from '@heroui/react';
 import useAlmacenData from "../../data/data_almacen_kardex";
 import { parseDate } from "@internationalized/date";
 import { startOfWeek, endOfWeek } from "date-fns";
-import html2pdf from "html2pdf.js";
+//import html2pdf from "html2pdf.js";
 import "jspdf-autotable";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
@@ -206,7 +206,8 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().from(htmlContent).set(options).save();
+            const html2pdf = (await import('html2pdf.js')).default;
+        html2pdf().from(htmlContent).set(options).save();
   };
 
   const handleGeneratePDFKardex = () => {

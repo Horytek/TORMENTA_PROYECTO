@@ -6,7 +6,7 @@ import { TiDeleteOutline } from "react-icons/ti";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Toaster, toast } from "react-hot-toast";
 import anularGuia from '../../data/anular_guia';
-import html2pdf from 'html2pdf.js';
+//import html2pdf from 'html2pdf.js';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 const itemsPerPageDefault = 10;
 
@@ -199,6 +199,7 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
   
+    const html2pdf = (await import('html2pdf.js')).default;
     html2pdf().from(htmlContent).set(options).save();
   };
 
