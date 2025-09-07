@@ -9,7 +9,7 @@ import {
   CardFooter,
   Input,
   Button,
-} from "@nextui-org/react";
+} from '@heroui/react';
 
 import { useAuth } from "@/context/Auth/AuthProvider";
 import AlertModal from "@/components/Modals/AlertModal";

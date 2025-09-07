@@ -2,7 +2,7 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Pagination as NextUIPagination } from '@nextui-org/react';
+import { Pagination as NextUIPagination } from '@heroui/react';
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const handlePageChange = (newPage) => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { MdAddCircleOutline, MdOutlineRealEstateAgent } from "react-icons/md";
-import { DateRangePicker } from "@nextui-org/date-picker";
+import { DateRangePicker } from '@heroui/react';
 import useComprobanteData from "@/services/data/data_comprobante_venta";
 import useSucursalData from "@/services/data/data_sucursal_venta";
 import { parseDate } from "@internationalized/date";

@@ -1,4 +1,4 @@
-import { DateRangePicker, Select, SelectItem, Button } from "@nextui-org/react";
+import { DateRangePicker, Select, SelectItem, Button } from "@heroui/react";
 import { useState, useCallback } from "react";
 import { format, isValid } from "date-fns";
 import useSucursalData from '@/services/data/data_sucursal_venta';

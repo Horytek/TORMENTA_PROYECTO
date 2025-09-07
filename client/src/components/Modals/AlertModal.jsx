@@ -1,7 +1,7 @@
 // src/components/AlertModal/AlertModal.jsx
 
 import PropTypes from 'prop-types';
-import { Button } from '@nextui-org/react';
+import { Button } from '@heroui/react';
 
 const AlertModal = ({ message, onClose }) => {
   return (

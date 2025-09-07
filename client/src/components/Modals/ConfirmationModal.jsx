@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Button } from '@nextui-org/react';
+import { Button } from '@heroui/react';
 
 const ConfirmationModal = ({ message, onClose, onConfirm }) => {
   return (

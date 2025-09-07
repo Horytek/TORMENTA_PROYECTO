@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DateRangePicker } from "@nextui-org/date-picker";
+import { DateRangePicker } from '@heroui/react';
 import { parseDate } from "@internationalized/date";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@heroui/button";

@@ -3,13 +3,14 @@ import { heroui } from '@heroui/react';
 import forms from '@tailwindcss/forms';
 import tailwindcssAnimate from "tailwindcss-animate";
 
-
 export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
     "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
     "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@shadcn/ui/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@nextui-org/react/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     transparent: 'transparent',

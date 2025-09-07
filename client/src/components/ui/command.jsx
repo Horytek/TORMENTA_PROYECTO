@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { File, Search } from "lucide-react";
-import { ScrollShadow } from "@nextui-org/react";
+import { ScrollShadow } from '@heroui/react';
 
 export function Command({ className = "", children, ...props }) {
   return (
