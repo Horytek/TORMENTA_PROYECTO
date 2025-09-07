@@ -28,7 +28,6 @@
     "@tailwindcss/forms": "^0.5.7",
     "@tremor/react": "^3.17.4",
     "axios": "^1.7.2",
-    "backend": "file:..",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "countries-list": "^3.1.1",
