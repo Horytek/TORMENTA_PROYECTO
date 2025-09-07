@@ -96,9 +96,9 @@ const NotaSalidaTable = forwardRef(({ salidas, onNotaAnulada }, ref)  => {
 
 
 useImperativeHandle(ref, () => ({
-    generatePDFGeneral
+    //generatePDFGeneral
   }));
-  const generatePDFGeneral = async () => {
+  /*const generatePDFGeneral = () => {
     const now = new Date();
     const fechaGeneracion = now.toLocaleDateString('es-PE'); // Ajusta el formato según tu necesidad
     const horaGeneracion = now.toLocaleTimeString('es-PE'); // Ajusta el formato según tu necesidad
@@ -136,8 +136,8 @@ useImperativeHandle(ref, () => ({
       .pdf-table th, .pdf-table td {
         padding: 5px;
         text-align: center;
-        white-space: normal; /* Ajuste de texto */
-        word-wrap: break-word; /* Ajuste de palabras largas */
+        white-space: normal;
+        word-wrap: break-word; 
       }
         </style>
         <table class="pdf-table w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
@@ -182,16 +182,11 @@ useImperativeHandle(ref, () => ({
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
   
-   try {
-     const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
-    await html2pdf().from(htmlContent).set(options).save();
-   } catch (e) {
-     console.error('Error generando PDF Kardex', e);
-    }
+    html2pdf().from(htmlContent).set(options).save();
   };
   
 
-  const generatePDF = async (nota) => {
+  const generatePDF = (nota) => {
     if (!nota) {
       toast.error('Nota está vacío o no válido');
       return;
@@ -301,13 +296,8 @@ useImperativeHandle(ref, () => ({
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-   try {
-     const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
-    await html2pdf().from(htmlContent).set(options).save();
-   } catch (e) {
-     console.error('Error generando PDF Kardex', e);
-    }
-  };
+    html2pdf().from(htmlContent).set(options).save();
+  };*/
 
   const getCurrentPageItems = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;

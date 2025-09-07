@@ -7,6 +7,7 @@ import { TiDeleteOutline } from "react-icons/ti";
 import anularNotaIngreso from '../data/anular_nota_ingreso';
 import anularNotaSalida from '../../Nota_Salida/data/anular_nota_salida';
 import { toast } from "react-hot-toast";
+//import html2pdf from 'html2pdf.js';
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";
@@ -40,7 +41,7 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
   const { hasGeneratePermission = false, hasDeactivatePermission = false } = usePermisos() || {};
 
   // PDF GENERATION
-  const generatePDF = async (nota) => {
+/*  const generatePDF = async (nota) => {
     let logoBase64 = empresaData?.logotipo;
     if (empresaData?.logotipo && !empresaData.logotipo.startsWith('data:image')) {
       try {
@@ -151,30 +152,25 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
         hotfixes: ["px_scaling"]
       }
     };
-try {
-  const html2pdf = (await import(
-    /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js'
-  )).default;
-
-  const pdfExport = html2pdf().set(options).from(htmlContent);
-  const pdf = await pdfExport.toPdf().get('pdf');
-  const totalPages = pdf.internal.getNumberOfPages();
-
-  for (let i = 1; i <= totalPages; i++) {
-    pdf.setPage(i);
-    pdf.setFontSize(8);
-    pdf.setTextColor(150);
-    pdf.text(
-      `Página ${i} de ${totalPages}`,
-      pdf.internal.pageSize.getWidth() - 20,
-      pdf.internal.pageSize.getHeight() - 10
-    );
-  }
-  pdfExport.save();
-} catch (error) {
-  toast.error("Error al generar el PDF");
-}
-  };
+    try {
+      const pdfExport = html2pdf().set(options).from(htmlContent);
+      const pdf = await pdfExport.toPdf().get('pdf');
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(150);
+        pdf.text(
+          `Página ${i} de ${totalPages}`,
+          pdf.internal.pageSize.getWidth() - 20,
+          pdf.internal.pageSize.getHeight() - 10
+        );
+      }
+      pdfExport.save();
+    } catch (error) {
+      toast.error("Error al generar el PDF");
+    }
+  };*/
 
   // Acciones
   const handleSelectChange2 = (event, id) => {
@@ -199,7 +195,7 @@ try {
 
   const handleConfirmImprimir2 = () => {
     const notaSeleccionada = registros.find((nota) => nota.id === notaIdToAccion);
-    if (notaSeleccionada) generatePDF(notaSeleccionada);
+    //if (notaSeleccionada) generatePDF(notaSeleccionada);
     setIsModalOpenImprimir2(false);
   };
 

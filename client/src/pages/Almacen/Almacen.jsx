@@ -158,7 +158,7 @@ useEffect(() => {
         setAlmacenGlobal(nuevoAlmacen.id.toString());
     };
 
-        const generatePDFKardex = async (kardex, almacenSeleccionado) => {
+        /*const generatePDFKardex = async (kardex, almacenSeleccionado) => {
         // Esperar a que empresaData esté disponible
         if (!empresaData) {
             toast.error("No se pudo obtener los datos de la empresa.");
@@ -235,10 +235,10 @@ useEffect(() => {
         // Importación dinámica de html2pdf
         const html2pdf = (await import('html2pdf.js/dist/html2pdf.es.js')).default;
         html2pdf().from(htmlContent).set(options).save();
-    };
+    };*/
     
     const handleGeneratePDF = () => {
-        generatePDFKardex(kardex, almacenSeleccionado);
+        //generatePDFKardex(kardex, almacenSeleccionado);
     };
 
     const handleCategoriaChange = (event) => {

@@ -6,6 +6,7 @@ import { Button } from "@heroui/button";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+//import html2pdf from 'html2pdf.js';
 import { Select, SelectItem } from "@heroui/react";
 import { Input } from "@heroui/input";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";
@@ -127,13 +128,13 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     const handleSelectChange = (value) => {
         if (value === "pdf") {
             // Genera el PDF para todos los registros visibles en la tabla
-            generatePDFIngreso(ingresos, almacenSseleccionado);
+            //generatePDFIngreso(ingresos, almacenSseleccionado);
         }
     };
 
     const currentDate = new Date().toLocaleDateString('es-ES');
 
-    const generatePDFIngreso = async (ingresos) => {
+   /* const generatePDFIngreso = async (ingresos) => {
         let logoBase64 = empresaData?.logotipo;
         if (empresaData?.logotipo && !empresaData.logotipo.startsWith('data:image')) {
             try {
@@ -236,30 +237,26 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                 hotfixes: ["px_scaling"]
             }
         };
-try {
-  const html2pdf = (await import(
-    /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js'
-  )).default;
-
-  const pdfExport = html2pdf().set(options).from(htmlContent);
-  const pdf = await pdfExport.toPdf().get('pdf');
-  const totalPages = pdf.internal.getNumberOfPages();
-
-  for (let i = 1; i <= totalPages; i++) {
-    pdf.setPage(i);
-    pdf.setFontSize(8);
-    pdf.setTextColor(150);
-    pdf.text(
-      `Página ${i} de ${totalPages}`,
-      pdf.internal.pageSize.getWidth() - 20,
-      pdf.internal.pageSize.getHeight() - 10
-    );
-  }
-  pdfExport.save();
-} catch (error) {
-  toast.error("Error al generar el PDF");
-}
-    };
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            const pdfExport = html2pdf().set(options).from(htmlContent);
+            const pdf = await pdfExport.toPdf().get('pdf');
+            const totalPages = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(8);
+                pdf.setTextColor(150);
+                pdf.text(
+                    `Página ${i} de ${totalPages}`,
+                    pdf.internal.pageSize.getWidth() - 20,
+                    pdf.internal.pageSize.getHeight() - 10
+                );
+            }
+            pdfExport.save();
+        } catch (error) {
+            toast.error("Error al generar el PDF");
+        }
+    };*/
 
     
     const { hasCreatePermission } = usePermisos();
