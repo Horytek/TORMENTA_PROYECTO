@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Tooltip, ScrollShadow, Pagination, Button } from '@heroui/react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Tooltip, ScrollShadow, Pagination, Button } from "@nextui-org/react";
 import { FaFilePdf } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Toaster, toast } from "react-hot-toast";
 import anularGuia from '../../data/anular_guia';
-//import html2pdf from 'html2pdf.js';
+import html2pdf from 'html2pdf.js';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 const itemsPerPageDefault = 10;
 

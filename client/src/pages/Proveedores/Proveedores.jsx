@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import DestinatariosForm from './DestinatariosForm';
 import { Toaster } from "react-hot-toast";
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import { FaPlus } from "react-icons/fa";
 import { ShowDestinatarios } from '@/pages/Proveedores/ShowDestinatarios';
 import { usePermisos } from '@/routes';

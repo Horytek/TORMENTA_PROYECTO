@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DateRangePicker } from '@heroui/react';
+import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-//import html2pdf from 'html2pdf.js';
+import { exportHtmlToPdf } from '@/utils/pdf/exportHtmlToPdf';
 import { Select, SelectItem } from "@heroui/react";
-import { Input } from "@heroui/input";
+import { Input } from '@heroui/react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";
 import { CgOptions } from "react-icons/cg";
 import { FaFilePdf } from "react-icons/fa";
@@ -128,13 +128,13 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
     const handleSelectChange = (value) => {
         if (value === "pdf") {
             // Genera el PDF para todos los registros visibles en la tabla
-            //generatePDFIngreso(ingresos, almacenSseleccionado);
+            generatePDFIngreso(ingresos, almacenSseleccionado);
         }
     };
 
     const currentDate = new Date().toLocaleDateString('es-ES');
 
-   /* const generatePDFIngreso = async (ingresos) => {
+    const generatePDFIngreso = async (ingresos) => {
         let logoBase64 = empresaData?.logotipo;
         if (empresaData?.logotipo && !empresaData.logotipo.startsWith('data:image')) {
             try {
@@ -219,9 +219,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
         </div>
         `;
         const options = {
-            margin: [10, 10],
             filename: `ingresos_general.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
                 scale: 2,
                 useCORS: true,
@@ -230,33 +228,28 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                 async: true,
                 letterRendering: true,
             },
-            jsPDF: {
-                unit: 'mm',
-                format: 'a4',
-                orientation: 'portrait',
-                hotfixes: ["px_scaling"]
+            onInstance: (inst) => {
+              inst.toPdf().get('pdf').then(pdf => {
+                const total = pdf.internal.getNumberOfPages();
+                for (let i = 1; i <= total; i++) {
+                  pdf.setPage(i);
+                  pdf.setFontSize(8);
+                  pdf.setTextColor(150);
+                  pdf.text(
+                    `Página ${i} de ${total}`,
+                    pdf.internal.pageSize.getWidth() - 20,
+                    pdf.internal.pageSize.getHeight() - 10
+                  );
+                }
+              });
             }
         };
         try {
-            const html2pdf = (await import('html2pdf.js')).default;
-            const pdfExport = html2pdf().set(options).from(htmlContent);
-            const pdf = await pdfExport.toPdf().get('pdf');
-            const totalPages = pdf.internal.getNumberOfPages();
-            for (let i = 1; i <= totalPages; i++) {
-                pdf.setPage(i);
-                pdf.setFontSize(8);
-                pdf.setTextColor(150);
-                pdf.text(
-                    `Página ${i} de ${totalPages}`,
-                    pdf.internal.pageSize.getWidth() - 20,
-                    pdf.internal.pageSize.getHeight() - 10
-                );
-            }
-            pdfExport.save();
+            await exportHtmlToPdf(htmlContent, 'ingresos_general.pdf', options);
         } catch (error) {
             toast.error("Error al generar el PDF");
         }
-    };*/
+    };
 
     
     const { hasCreatePermission } = usePermisos();

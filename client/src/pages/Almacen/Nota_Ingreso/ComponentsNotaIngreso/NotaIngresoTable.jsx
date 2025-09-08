@@ -7,7 +7,7 @@ import { TiDeleteOutline } from "react-icons/ti";
 import anularNotaIngreso from '../data/anular_nota_ingreso';
 import anularNotaSalida from '../../Nota_Salida/data/anular_nota_salida';
 import { toast } from "react-hot-toast";
-//import html2pdf from 'html2pdf.js';
+import { exportHtmlToPdf } from '@/utils/pdf/exportHtmlToPdf';
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";
@@ -41,7 +41,7 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
   const { hasGeneratePermission = false, hasDeactivatePermission = false } = usePermisos() || {};
 
   // PDF GENERATION
-/*  const generatePDF = async (nota) => {
+  const generatePDF = async (nota) => {
     let logoBase64 = empresaData?.logotipo;
     if (empresaData?.logotipo && !empresaData.logotipo.startsWith('data:image')) {
       try {
@@ -134,9 +134,7 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
       </div>
     `;
     const options = {
-      margin: [10, 10],
       filename: `${nota.documento || (isIngreso ? 'nota-ingreso' : 'nota-salida')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         scale: 2,
         useCORS: true,
@@ -145,32 +143,28 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
         async: true,
         letterRendering: true,
       },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait',
-        hotfixes: ["px_scaling"]
+      onInstance: (inst) => {
+        inst.toPdf().get('pdf').then(pdf => {
+          const total = pdf.internal.getNumberOfPages();
+          for (let i = 1; i <= total; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(8);
+            pdf.setTextColor(150);
+            pdf.text(
+              `Página ${i} de ${total}`,
+              pdf.internal.pageSize.getWidth() - 20,
+              pdf.internal.pageSize.getHeight() - 10
+            );
+          }
+        });
       }
     };
     try {
-      const pdfExport = html2pdf().set(options).from(htmlContent);
-      const pdf = await pdfExport.toPdf().get('pdf');
-      const totalPages = pdf.internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(150);
-        pdf.text(
-          `Página ${i} de ${totalPages}`,
-          pdf.internal.pageSize.getWidth() - 20,
-          pdf.internal.pageSize.getHeight() - 10
-        );
-      }
-      pdfExport.save();
-    } catch (error) {
+      await exportHtmlToPdf(htmlContent, options.filename, options);
+    } catch {
       toast.error("Error al generar el PDF");
     }
-  };*/
+  };
 
   // Acciones
   const handleSelectChange2 = (event, id) => {
@@ -195,7 +189,7 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
 
   const handleConfirmImprimir2 = () => {
     const notaSeleccionada = registros.find((nota) => nota.id === notaIdToAccion);
-    //if (notaSeleccionada) generatePDF(notaSeleccionada);
+    if (notaSeleccionada) generatePDF(notaSeleccionada);
     setIsModalOpenImprimir2(false);
   };
 

@@ -18,7 +18,7 @@ import {
     ModalFooter, 
     Select,
     SelectItem
-  } from '@heroui/react';
+  } from "@nextui-org/react";
 
 const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios }) => {
 

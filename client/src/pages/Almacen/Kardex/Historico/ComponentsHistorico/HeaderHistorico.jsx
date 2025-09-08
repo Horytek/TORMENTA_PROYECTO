@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { MdOutlineLocalPrintshop } from "react-icons/md";
 import { Card, CardHeader, CardBody, Chip, Button, Divider, Tooltip, Select, SelectItem } from "@heroui/react";
-import { DateRangePicker } from '@heroui/react';
+import { DateRangePicker } from "@nextui-org/date-picker";
 import useAlmacenData from "../../data/data_almacen_kardex";
 import { parseDate } from "@internationalized/date";
 import { startOfWeek, endOfWeek } from "date-fns";
-//import html2pdf from "html2pdf.js";
-import "jspdf-autotable";
+import { exportHtmlToPdf } from '@/utils/pdf/exportHtmlToPdf';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 
@@ -91,7 +90,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
   }, [setAlmacenGlobal]);
   
   // ADAPTADO: Usa datos de empresa dinámicos
-  /*const generatePDFKardex = (productoData, transactions, previousTransactions, dateRange) => {
+  const generatePDFKardex = (productoData, transactions, previousTransactions, dateRange) => {
     const empresaNombre = empresaData?.nombreComercial || 'TORMENTA JEANS';
     const empresaRazon = empresaData?.razonSocial || 'TEXTILES CREANDO MODA S.A.C.';
     const empresaDireccion = empresaData?.direccion || 'Cal San Martin 1573 Urb Urrunaga SC Tres';
@@ -199,18 +198,27 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
     `;
 
     const options = {
-        margin: [10, 10],
-        filename: `kardex_movimientos.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      filename: `kardex_movimientos.pdf`,
+      onInstance: (inst) => {
+        inst.toPdf().get('pdf').then(pdf => {
+          const total = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= total; i++) {
+              pdf.setPage(i);
+              pdf.setFontSize(8);
+              pdf.text(
+                `Página ${i} de ${total}`,
+                pdf.internal.pageSize.getWidth() - 20,
+                pdf.internal.pageSize.getHeight() - 10
+              );
+            }
+        });
+      }
     };
-
-    html2pdf().from(htmlContent).set(options).save();
-  };*/
+    exportHtmlToPdf(htmlContent, `kardex_movimientos.pdf`, options);
+  };
 
   const handleGeneratePDFKardex = () => {
-    //generatePDFKardex(productoData, transactions, previousTransactions, dateRange);
+    generatePDFKardex(productoData, transactions, previousTransactions, dateRange);
   };
 
   const handleDateChange = (newValue) => {

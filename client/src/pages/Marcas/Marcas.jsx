@@ -5,7 +5,7 @@ import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import { ShowMarcas } from "./ShowMarcas";
 import { usePermisos } from '@/routes';
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import { getMarcas } from "@/services/marca.services";
 
 function Marcas({ 

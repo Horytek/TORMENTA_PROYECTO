@@ -19,8 +19,14 @@ import { useRoles } from '@/services/permisos.services';
 import { toast } from "react-hot-toast";
 import axios from "@/api/axios";
 
-export function TablaAsignacion() {
+export function TablaAsignacion({ externalData, skipApiCall = false }) {
     const [selectedTab, setSelectedTab] = useState("administrador");
+    
+    // Usar datos externos o hooks de API condicionalmente
+    const rutasHook = skipApiCall ? null : useGetRutas();
+    const rolesHook = skipApiCall ? null : useRoles();
+    
+    // Asignar datos desde hooks o datos externos
     const {
         modulosConSubmodulos,
         loading: rutasLoading,
@@ -29,19 +35,39 @@ export function TablaAsignacion() {
         toggleExpand,
         expandAll,
         collapseAll
-    } = useGetRutas();
+    } = skipApiCall ? {
+        modulosConSubmodulos: externalData?.rutas,
+        loading: false,
+        error: null,
+        expandedModulos: externalData?.expandedModulos,
+        toggleExpand: externalData?.toggleExpand,
+        expandAll: externalData?.expandAll,
+        collapseAll: externalData?.collapseAll
+    } : rutasHook;
 
-    const { roles, loading: rolesLoading, error: rolesError } = useRoles();
+    const { roles, loading: rolesLoading, error: rolesError } = skipApiCall ? {
+        roles: externalData?.roles,
+        loading: false,
+        error: null
+    } : rolesHook;
+    
     const [roleMapping, setRoleMapping] = useState({});
     const [currentRoleId, setCurrentRoleId] = useState(null);
     const [saving, setSaving] = useState(false);
-    const [defaultPages, setDefaultPages] = useState({});
-    const [loading, setLoading] = useState(true);
+    const [defaultPages, setDefaultPages] = useState(skipApiCall ? externalData?.defaultPages || {} : {});
+    const [loading, setLoading] = useState(!skipApiCall);
 
     // Fetch default pages for all roles
     useEffect(() => {
+        // Si tenemos datos externos, usar esos datos directamente
+        if (skipApiCall) {
+            setDefaultPages(externalData?.defaultPages || {});
+            setLoading(false);
+            return;
+        }
+
         async function fetchDefaultPages() {
-            if (!roles.length) return;
+            if (!roles?.length) return;
 
             try {
                 setLoading(true);
@@ -71,7 +97,7 @@ export function TablaAsignacion() {
         }
 
         fetchDefaultPages();
-    }, [roles]);
+    }, [roles, skipApiCall, externalData?.defaultPages]);
 
     useEffect(() => {
         if (roles.length > 0) {
@@ -133,7 +159,7 @@ export function TablaAsignacion() {
         }
     };
 
-    const handleDeleteConfig = () => {
+    const _handleDeleteConfig = () => {
         if (!currentRoleId) return;
 
         setDefaultPages(prev => ({
@@ -194,7 +220,11 @@ export function TablaAsignacion() {
     };
 
     const renderModulosListing = () => {
-        if (rutasLoading || rolesLoading || loading) {
+        // Si usar datos externos y skipApiCall, no mostrar loading de API
+        const isLoading = skipApiCall ? loading : (rutasLoading || rolesLoading || loading);
+        const hasError = skipApiCall ? false : (rutasError || rolesError);
+        
+        if (isLoading) {
             return (
                 <div className="flex justify-center items-center h-64">
                     <Spinner label="Cargando..." color="primary" size="lg" />
@@ -202,7 +232,7 @@ export function TablaAsignacion() {
             );
         }
 
-        if (rutasError || rolesError) {
+        if (hasError) {
             return (
                 <div className="p-4 text-center text-danger">
                     <p>Error al cargar los datos:</p>

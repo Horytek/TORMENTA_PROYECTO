@@ -11,7 +11,7 @@ import {
   NumberInput,
 } from '@heroui/react';
 import { IoMdClose, IoMdAdd } from "react-icons/io";
-import { ScrollShadow } from '@heroui/react';
+import { ScrollShadow } from '@nextui-org/react';
 import ProductosForm from '../../../../Productos/ProductosForm';
 import { toast } from "react-hot-toast";
 

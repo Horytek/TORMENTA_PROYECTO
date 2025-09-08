@@ -12,6 +12,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     const { detalles, fecha, total_t, igv, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
     const [currentDate, setCurrentDate] = useState('');
     const [pdfUrl, setPdfUrl] = useState(null);
+    const [qrDataUrl, setQrDataUrl] = useState(null);
     const [empresaData, setEmpresaData] = useState(null); // Estado para almacenar los datos de la empresa
     const [sucursalData, setSucursalData] = useState(null);
     
@@ -45,6 +46,14 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
         generatePDF();
         fetchEmpresaData(); // Llamar a la función para obtener los datos de la empresa
     }, [nombre]);
+
+    useEffect(() => {
+        if (pdfUrl) {
+            QRCode.toDataURL(pdfUrl, { width: 128, margin: 1 }, (err, url) => {
+                if (!err) setQrDataUrl(url);
+            });
+        }
+    }, [pdfUrl]);
 
     useEffect(() => {
         // Busca la sucursal del usuario actual
@@ -168,11 +177,13 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                 </div>
 
                 <div className="flex flex-wrap justify-between mb-6">
-                    <div className='flex items-center justify-center bg-gray-100 rounded border w-[170px]'>
-                        {pdfUrl && (
-                            <QRCode value={pdfUrl} size={128} />
-                        )}
-                    </div>
+                <div className='flex items-center justify-center bg-gray-100 rounded border w-[170px] h-[170px]'>
+                    {qrDataUrl ? (
+                        <img src={qrDataUrl} alt="QR" className="w-[128px] h-[128px]" />
+                    ) : (
+                        <span className="text-xs text-gray-500">Generando QR...</span>
+                    )}
+                </div>
 
                     <div className="flex-1 mr-6 py-6 pl-6 pr-0">
                         <p className="text-md font-bold text-gray-900 mb-2">ORDEN DE COMPRA:</p>

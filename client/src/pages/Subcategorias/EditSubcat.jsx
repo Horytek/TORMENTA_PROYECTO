@@ -14,7 +14,7 @@ import {
   ModalFooter, 
   Select,
   SelectItem
-} from '@heroui/react';
+} from "@nextui-org/react";
 import { IoMdClose } from "react-icons/io";
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess, categorias }) => {

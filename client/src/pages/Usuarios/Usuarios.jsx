@@ -3,7 +3,7 @@ import UsuariosForm from './UsuariosForm';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import { ShowUsuarios } from '@/pages/Usuarios/ShowUsuarios';
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import { usePermisos } from '@/routes';
 import BarraSearch from "@/components/Search/Search";
 import { getUsuarios } from '@/services/usuario.services';

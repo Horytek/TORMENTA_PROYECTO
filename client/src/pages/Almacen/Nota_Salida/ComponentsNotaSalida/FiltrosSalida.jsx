@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DateRangePicker } from '@heroui/react';
+import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Select, SelectItem } from "@heroui/react";
-import { Input } from "@heroui/input";
+import { Input } from '@heroui/react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";
 import { CgOptions } from "react-icons/cg";
 import { FaFilePdf } from "react-icons/fa";
 import { usePermisos } from '@/routes';
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import { useNavigate } from 'react-router-dom';
 
 const FiltrosSalida = ({ almacenes = [], onAlmacenChange, onFiltersChange, onPDFOptionClick }) => {

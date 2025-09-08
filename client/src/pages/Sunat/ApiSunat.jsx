@@ -28,7 +28,7 @@ import {
   ModalFooter, 
   Select,
   SelectItem
-} from '@heroui/react';
+} from "@nextui-org/react";
 import { Autocomplete, AutocompleteItem } from "@heroui/react";
 import { FaEdit, FaPlus, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-hot-toast";

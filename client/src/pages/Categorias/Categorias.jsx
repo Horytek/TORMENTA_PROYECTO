@@ -5,7 +5,7 @@ import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import { ShowCategorias } from "./ShowCategorias";
 import { usePermisos } from '@/routes';
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import { getCategorias } from "@/services/categoria.services";
 
 function Categorias({ 

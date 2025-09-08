@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import BarraSearch from "@/components/Search/Search";
-import { Tooltip } from "@heroui/tooltip";
-import { Button } from "@heroui/button";
+import { Button, Tooltip } from '@heroui/react';
 import { FaPlus } from "react-icons/fa";
 import ShowUsuarios from '@/pages/Roles/ShowUsuarios';
 import { usePermisos } from '@/routes';
 import UsuariosForm from '../UsuariosForm'; // Asegúrate de importar el formulario
 
-export default function TablaRoles({ searchTerm: initialSearchTerm }) {
+export default function TablaRoles({ searchTerm: initialSearchTerm, externalData, skipApiCall = false }) {
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
     const [activeAdd, setModalOpen] = useState(false);
     const handleModalAdd = () => setModalOpen(!activeAdd);

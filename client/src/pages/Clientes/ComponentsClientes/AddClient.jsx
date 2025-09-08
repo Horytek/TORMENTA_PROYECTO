@@ -14,7 +14,7 @@ import {
   ModalFooter, 
   Select,
   SelectItem
-} from '@heroui/react';
+} from "@nextui-org/react";
 import { IoIosSearch } from "react-icons/io";
 import { useAddClient } from "@/services/client_data/addCliente";
 import { toast, Toaster } from "react-hot-toast";

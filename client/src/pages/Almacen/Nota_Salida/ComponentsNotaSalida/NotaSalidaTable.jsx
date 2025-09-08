@@ -6,7 +6,7 @@ import ConfirmationModal from './Modals/ConfirmationModal';
 import anularNota from '../data/anular_nota_salida';
 import { Toaster, toast } from "react-hot-toast";
 import { usePermisos } from '@/routes';
-//import html2pdf from 'html2pdf.js';
+import { exportHtmlToPdf } from '@/utils/pdf/exportHtmlToPdf';
 const NotaSalidaTable = forwardRef(({ salidas, onNotaAnulada }, ref)  => {
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
@@ -96,9 +96,9 @@ const NotaSalidaTable = forwardRef(({ salidas, onNotaAnulada }, ref)  => {
 
 
 useImperativeHandle(ref, () => ({
-    //generatePDFGeneral
+    generatePDFGeneral
   }));
-  /*const generatePDFGeneral = () => {
+  const generatePDFGeneral = async () => {
     const now = new Date();
     const fechaGeneracion = now.toLocaleDateString('es-PE'); // Ajusta el formato según tu necesidad
     const horaGeneracion = now.toLocaleTimeString('es-PE'); // Ajusta el formato según tu necesidad
@@ -136,8 +136,8 @@ useImperativeHandle(ref, () => ({
       .pdf-table th, .pdf-table td {
         padding: 5px;
         text-align: center;
-        white-space: normal;
-        word-wrap: break-word; 
+        white-space: normal; /* Ajuste de texto */
+        word-wrap: break-word; /* Ajuste de palabras largas */
       }
         </style>
         <table class="pdf-table w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
@@ -174,19 +174,32 @@ useImperativeHandle(ref, () => ({
     `;
   
     // Convert HTML to PDF
-    const options = {
-      margin: [10, 10],
-      filename: `Nota_Salida.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-  
-    html2pdf().from(htmlContent).set(options).save();
-  };
+try {
+    await exportHtmlToPdf(htmlContent, 'Nota_Salida.pdf', {
+      onInstance: inst => {
+        inst.toPdf().get('pdf').then(pdf => {
+          const total = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= total; i++) {
+              pdf.setPage(i);
+              pdf.setFontSize(8);
+              pdf.setTextColor(120);
+              pdf.text(
+                `Página ${i} de ${total}`,
+                pdf.internal.pageSize.getWidth() - 28,
+                pdf.internal.pageSize.getHeight() - 8
+              );
+            }
+        });
+      }
+    });
+    toast.success('PDF general generado');
+  } catch {
+    toast.error('Error generando PDF');
+  }
+};
   
 
-  const generatePDF = (nota) => {
+const generatePDF = async (nota) => {
     if (!nota) {
       toast.error('Nota está vacío o no válido');
       return;
@@ -288,16 +301,29 @@ useImperativeHandle(ref, () => ({
     `;
 
     // Convert HTML to PDF
-    const options = {
-      margin: [10, 10],
-      filename: `${nota.documento}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().from(htmlContent).set(options).save();
-  };*/
+  try {
+    await exportHtmlToPdf(htmlContent, `${nota.documento}.pdf`, {
+      onInstance: inst => {
+        inst.toPdf().get('pdf').then(pdf => {
+          const total = pdf.internal.getNumberOfPages();
+          for (let i = 1; i <= total; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(8);
+            pdf.setTextColor(120);
+            pdf.text(
+              `Página ${i} de ${total}`,
+              pdf.internal.pageSize.getWidth() - 28,
+              pdf.internal.pageSize.getHeight() - 8
+            );
+          }
+        });
+      }
+    });
+    toast.success('PDF generado');
+  } catch {
+    toast.error('Error generando PDF');
+  }
+};
 
   const getCurrentPageItems = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;

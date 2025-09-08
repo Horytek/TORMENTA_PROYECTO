@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import TablaModulos from '@/pages/Modulos/ComponentsModulos/TablaModulos';
 import AddModuloModal from './ComponentsModulos/AddModulo';
 import useGetModulos from "./data/getModulos";

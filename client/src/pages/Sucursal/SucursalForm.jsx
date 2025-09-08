@@ -18,7 +18,7 @@ import {
   AutocompleteItem,
   Select,
   SelectItem
-} from '@heroui/react';
+} from "@nextui-org/react";
 
 const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
   const { vendedores } = useVendedoresData();

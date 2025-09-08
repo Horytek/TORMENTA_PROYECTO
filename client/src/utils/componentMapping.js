@@ -13,7 +13,7 @@ const Almacenes = lazy(() => import('@/pages/AlmacenG/AlmacenG'));
 const Marcas = lazy(() => import('@/pages/Marcas/Marcas'));
 const Categorias = lazy(() => import('@/pages/Categorias/Categorias'));
 const Subcategorias = lazy(() => import('@/pages/Subcategorias/Subcategorias'));
-const Almacen = lazy(() => import('@/pages/Almacen/Almacen'));
+const Almacen = lazy(() => import('@/pages/Almacen/Almacén'));
 const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
 const Nota_Ingreso = lazy(() => import('@/pages/Almacen/Nota_Ingreso/Nota_ingreso'));
 const Nueva_Nota_Ingreso = lazy(() => import('@/pages/Almacen/Nota_Ingreso/Registro_Ingreso/Registro_ingreso'));
@@ -24,6 +24,7 @@ const RegistroGuia = lazy(() => import('@/pages/Almacen/Guia_Remision/Registro_G
 const ReporteVentas = lazy(() => import('@/pages/ReporteVentas/ReporteVentas'));
 const Usuarios = lazy(() => import('@/pages/Usuarios/Usuarios'));
 const Roles = lazy(() => import('@/pages/Roles/Roles'));
+const RolesWrapper = lazy(() => import('@/pages/Roles/RolesWrapper'));
 const Global = lazy(() => import('@/pages/Global/Global'));
 const Sucursal = lazy(() => import('@/pages/Sucursal/Sucursal'));
 const Clientes = lazy(() => import('@/pages/Clientes/Clientes'));
@@ -54,7 +55,7 @@ const submoduleComponentMap = {
   4: Registro_venta,
   5: LibroVentas,
   6: Usuarios,
-  7: Roles,
+  7: RolesWrapper,
   8: Modulos,
   10: Nota_Ingreso,
   11: Nota_Salida,

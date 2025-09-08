@@ -16,7 +16,7 @@ import {
   ModalFooter, 
   Select,
   SelectItem
-} from '@heroui/react';
+} from "@nextui-org/react";
 import {
   updateMarca
 } from "@/services/marca.services";

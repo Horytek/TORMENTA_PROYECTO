@@ -5,7 +5,7 @@ import BarraSearch from "@/components/Search/Search";
 import SubcategoriaForm from "./SubcategoriaForm";
 import ShowSubcategorias from "./ShowSubcategoria";
 import { usePermisos } from '@/routes';
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import {
   useSubcategoriasConCategoria as getSubcategoriasConCategoria,
   addSubcategoria,

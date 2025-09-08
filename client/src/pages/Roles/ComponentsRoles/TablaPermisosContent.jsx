@@ -13,40 +13,37 @@ import { MdPlaylistRemove } from "react-icons/md";
 import { RiCollapseDiagonal2Line, RiExpandDiagonalLine, RiPlayListAddFill } from "react-icons/ri";
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useState, useEffect } from "react";
-import { useGetRutas } from '@/services/permisos.services';
-import { useRoles, usePermisosByRol, useSavePermisos } from '@/services/permisos.services';
 import { toast } from "react-hot-toast";
 
-export function TablaPermisos({ externalData, skipApiCall = false }) {
-  const [selectedTab, setSelectedTab] = useState("administrador");
-  const [userInfo, setUserInfo] = useState(null);
-  
-  // Solo obtener rutas y roles si no hay datos externos
-  const rutasHook = skipApiCall ? null : useGetRutas();
-  const rolesHook = skipApiCall ? null : useRoles();
-  
-  // Usar datos externos o datos de hooks
-  const modulosConSubmodulos = skipApiCall ? externalData?.rutas : rutasHook?.modulosConSubmodulos;
-  const roles = skipApiCall ? externalData?.roles : rolesHook?.roles;
-  const expandedModulos = skipApiCall ? externalData?.expandedModulos : rutasHook?.expandedModulos;
-  const toggleExpand = skipApiCall ? externalData?.toggleExpand : rutasHook?.toggleExpand;
-  const expandAll = skipApiCall ? externalData?.expandAll : rutasHook?.expandAll;
-  const collapseAll = skipApiCall ? externalData?.collapseAll : rutasHook?.collapseAll;
-  
-  const rutasLoading = skipApiCall ? false : (rutasHook?.loading || false);
-  const rutasError = skipApiCall ? null : (rutasHook?.error || null);
-  const rolesLoading = skipApiCall ? false : (rolesHook?.loading || false);
-  const rolesError = skipApiCall ? null : (rolesHook?.error || null);
-  
-  const [roleMapping, setRoleMapping] = useState({});
-  const [currentRoleId, setCurrentRoleId] = useState(null);
-  
-  // Hooks condicionales para permisos - siempre necesarios para funcionalidad
-  const { permisos, loading: permisosLoading, refetchPermisos } = usePermisosByRol(currentRoleId);
-  const { savePermisos, saving: savingPermisos } = useSavePermisos();
-
-  const [permisosData, setPermisosData] = useState({});
-
+// Componente de contenido compartido
+export default function TablaPermisosContent({
+  selectedTab,
+  setSelectedTab,
+  userInfo,
+  setUserInfo,
+  modulosConSubmodulos,
+  roles,
+  expandedModulos,
+  toggleExpand,
+  expandAll,
+  collapseAll,
+  rutasLoading,
+  rutasError,
+  rolesLoading,
+  rolesError,
+  roleMapping,
+  setRoleMapping,
+  currentRoleId,
+  setCurrentRoleId,
+  permisos,
+  permisosLoading,
+  refetchPermisos,
+  savePermisos,
+  savingPermisos,
+  permisosData,
+  setPermisosData,
+  onPermisosUpdate
+}) {
   // Obtener información del usuario para saber si es desarrollador
   useEffect(() => {
     const userDataString = sessionStorage.getItem("user");
@@ -58,7 +55,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
         console.error("Error parsing user data:", error);
       }
     }
-  }, []);
+  }, [setUserInfo]);
 
   useEffect(() => {
     if (roles?.length > 0) {
@@ -81,7 +78,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
         setCurrentRoleId(roles[0].id_rol);
       }
     }
-  }, [roles, selectedTab]);
+  }, [roles, selectedTab, setRoleMapping, setSelectedTab, setCurrentRoleId]);
 
   useEffect(() => {
     if (currentRoleId) {
@@ -117,13 +114,13 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
         [currentRoleId]: rolePermisos
       }));
     }
-  }, [permisos, currentRoleId]);
+  }, [permisos, currentRoleId, setPermisosData]);
 
   useEffect(() => {
     if (selectedTab && roleMapping[selectedTab]) {
       setCurrentRoleId(roleMapping[selectedTab]);
     }
-  }, [selectedTab, roleMapping]);
+  }, [selectedTab, roleMapping, setCurrentRoleId]);
 
   const handlePermissionChange = (id, field, value, type = 'modulo') => {
     if (!currentRoleId) return;
@@ -163,7 +160,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
       const rolePermisos = permisosData[currentRoleId] || {};
       const permisosToSave = [];
 
-      modulosConSubmodulos?.forEach((modulo) => {
+      modulosConSubmodulos.forEach((modulo) => {
         const moduloKey = `modulo_${modulo.id}`;
         if (rolePermisos[moduloKey]) {
           const { ver, crear, editar, eliminar, desactivar, generar } = rolePermisos[moduloKey];
@@ -179,7 +176,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
           });
         }
 
-        modulo.submodulos?.forEach((submodulo) => {
+        modulo.submodulos.forEach((submodulo) => {
           const subKey = `submodulo_${submodulo.id_submodulo}`;
           if (rolePermisos[subKey]) {
             const { ver, crear, editar, eliminar, desactivar, generar } = rolePermisos[subKey];
@@ -220,7 +217,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
 
     const allPermissions = {};
 
-    modulosConSubmodulos?.forEach(modulo => {
+    modulosConSubmodulos.forEach(modulo => {
       // Add all permissions for the module
       allPermissions[`modulo_${modulo.id}`] = {
         ver: true,
@@ -608,5 +605,3 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
     </>
   );
 }
-
-export default TablaPermisos;

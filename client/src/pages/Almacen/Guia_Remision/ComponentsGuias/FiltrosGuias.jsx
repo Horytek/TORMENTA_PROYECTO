@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import useSucursalData from '../../data/data_sucursal_guia';
-import { DateRangePicker } from '@heroui/react';
+import { DateRangePicker } from "@nextui-org/date-picker";
 import { parseDate } from "@internationalized/date";
 import { Select, SelectItem } from "@heroui/react";
-import { Input } from "@heroui/input";
+import { Input } from '@heroui/react';
 
 const FiltrosGuias = ({ onFiltersChange }) => {
     const { sucursales } = useSucursalData();

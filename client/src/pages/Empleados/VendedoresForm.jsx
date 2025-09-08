@@ -24,7 +24,7 @@ import {
     ModalFooter, 
     Select,
     SelectItem
-  } from '@heroui/react';
+  } from "@nextui-org/react";
 
 const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
   const [usuarios, setUsuarios] = useState([]);

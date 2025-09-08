@@ -6,7 +6,7 @@ import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
 import { useNavigate } from "react-router-dom";
 import useGuiasData from '../data/data_guia';
 import { usePermisos } from '@/routes';
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 
 const Guias = () => {
   const [filters, setFilters] = useState({});

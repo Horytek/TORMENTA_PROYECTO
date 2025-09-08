@@ -3,7 +3,7 @@ import { ShowAlmacenes } from '@/pages/AlmacenG/ShowAlmacenes';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import AlmacenesForm from './AlmacenesForm';
-import { Button } from "@heroui/button";
+import { Button } from '@heroui/react';
 import { usePermisos } from '@/routes';
 import { Tooltip } from "@heroui/react";
 import BarraSearch from "@/components/Search/Search";

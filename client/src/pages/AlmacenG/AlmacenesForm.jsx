@@ -19,7 +19,7 @@ import {
     ModalFooter, 
     Select,
     SelectItem
-  } from '@heroui/react';
+  } from "@nextui-org/react";
 
 const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
     const [sucursales, setSucursales] = useState([]);
