@@ -3,6 +3,7 @@ import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
 import { loginRequest, logoutRequest, verifyTokenRequest } from "../../api/api.auth";
 import { useUserStore } from "@/store/useStore";
+import { setAuthReady } from "@/api/axios";
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -50,37 +51,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    const checkLogin = async () => {
-      const token = sessionStorage.getItem("token");
-      if (!token) {
+useEffect(() => {
+  const checkLogin = async () => {
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      setIsAuthenticated(false);
+      clearUserStore();
+      setLoading(false);
+      setAuthReady(true); // <- importante
+      return;
+    }
+    try {
+      const res = await verifyTokenRequest(token);
+      if (res?.data) {
+        sessionStorage.setItem("user", JSON.stringify(res.data));
+        setIsAuthenticated(true);
+        setUser(res.data);
+        setUserRaw(res.data);
+      } else {
         setIsAuthenticated(false);
         clearUserStore();
-        setLoading(false);
-        return;
       }
-      try {
-        const res = await verifyTokenRequest(token);
-        if (res?.data) {
-          sessionStorage.setItem("user", JSON.stringify(res.data));
-          setIsAuthenticated(true);
-          setUser(res.data);
-          setUserRaw(res.data);          // Normaliza nuevamente (por si shape cambió)
-        } else {
-          setIsAuthenticated(false);
-          clearUserStore();
-        }
-      } catch {
-        setIsAuthenticated(false);
-        clearUserStore();
-        sessionStorage.removeItem("user");
-        sessionStorage.removeItem("token");
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkLogin();
-  }, [setUserRaw, clearUserStore]);
+    } catch {
+      setIsAuthenticated(false);
+      clearUserStore();
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+    } finally {
+      setLoading(false);
+      setAuthReady(true); // <- marca listo siempre
+    }
+  };
+  checkLogin();
+}, [setUserRaw, clearUserStore]);
 
   const logout = async () => {
     try {

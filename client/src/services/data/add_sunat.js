@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/api/axios';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getClaveSunatByUser } from "@/services/clave.services";
 import toast from 'react-hot-toast';
