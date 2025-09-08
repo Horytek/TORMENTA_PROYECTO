@@ -22,28 +22,25 @@ export const AuthProvider = ({ children }) => {
   const setIdTenant = useUserStore((state) => state.setIdTenant);
   const clearUser = useUserStore((state) => state.clearUser);
 
-  const login = async (user) => {
-    try {
-      const res = await loginRequest(user);
-      sessionStorage.setItem("token", res.data.token);
-      
-      // Guardar datos del usuario en sessionStorage
-      sessionStorage.setItem("user", JSON.stringify(res.data.data));
-      
-      setUser(res.data.data);
+const login = async (credentials) => {
+  try {
+    const { data } = await loginRequest(credentials);
+    if (data?.success) {
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(data.data));
       setIsAuthenticated(true);
-
-      // Actualiza Zustand
-      setNombre(res.data.data.name || res.data.data.usuario || "");
-      setIdRol(res.data.data.rol || res.data.data.idRol || null);
-      setSur(res.data.data.sucursal || res.data.data.idSucursal || null);
-      setIdTenant(res.data.data.id_tenant || null);
-
-      return res.data;
-    } catch (error) {
-      console.log(error);
+      setUser(data.data);
+      setNombre(data.data.usuario || data.data.name || "");
+      setIdRol(data.data.rol || data.data.idRol || null);
+      setSur(data.data.sucursal || null);
+      setIdTenant(data.data.id_tenant || null);
+      return { success: true, data: data.data };
     }
-  };
+    return { success: false, message: data?.message || "Credenciales inválidas" };
+  } catch (e) {
+    return { success: false, message: "Error de autenticación" };
+  }
+};
 
   const logout = async () => {
     try {

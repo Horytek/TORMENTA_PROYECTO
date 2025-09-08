@@ -39,27 +39,24 @@ function Login() {
   // Maneja el evento de inicio de sesión
   const handleLogin = async (e) => {
     e.preventDefault();
-
     if (!usuario || !password) {
       setShowAlert(true);
       return;
     }
-
     try {
-      const user = { usuario, password };
-      const response = await login(user);
-      if (response.success) {
+      const response = await login({ usuario, password });
+      if (response?.success) {
         //localStorage.setItem("usuario", usuario);
         //localStorage.setItem("rol", response.data.rol);
         //localStorage.setItem("sur", response.data.sucursal);
 
-        setNombre(response.data.usuario); // o el campo correcto de tu respuesta
-        setIdRol(response.data.rol);      // o el campo correcto de tu respuesta
-        setSur(response.data.sucursal);   // o el campo correcto de tu respuesta
+        setNombre(response.data.usuario);
+        setIdRol(response.data.rol);    
+        setSur(response.data.sucursal);   
         setIdTenant(response.data.id_tenant || null);
 
-        const redirectPage = response.data.defaultPage || "/inicio";
-        navigate(redirectPage);
+        const redirectPage = response.data?.defaultPage || "/inicio";
+        navigate(redirectPage.toLowerCase());
       } else {
         setShowAlert(true);
       }

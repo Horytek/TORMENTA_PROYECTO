@@ -299,11 +299,11 @@ function Inicio() {
     const fetchSucursales = async () => {
       try {
         const response = await axios.get("/dashboard/sucursales");
-        if (response.data && response.data.data) {
-          setSucursales(response.data.data);
-        }
+        const list = response.data?.data || [];
+        setSucursales(Array.isArray(list) ? list : []);
       } catch (error) {
-        console.error(error);
+        console.error("Error obteniendo sucursales:", error);
+        setSucursales([]); // fallback
       }
     };
     fetchSucursales();

@@ -1,4 +1,3 @@
-// ...existing code...
 import axios from "axios";
 
 function normalize(url) {
@@ -7,13 +6,10 @@ function normalize(url) {
 }
 
 const envBase = normalize(import.meta.env.VITE_API_URL);
-// Si VITE_API_URL ya termina en /api lo usamos, si no lo añadimos.
-// Si no hay env, usamos el origin actual del navegador + /api.
 let baseURL = envBase
   ? (envBase.endsWith("/api") ? envBase : envBase + "/api")
   : (typeof window !== "undefined" ? window.location.origin + "/api" : "/api");
 
-// Diagnóstico en consola (solo una vez)
 if (typeof window !== "undefined") {
   if (!/\/api$/.test(baseURL)) {
     console.warn("[axios] baseURL sin /api, corrigiendo:", baseURL);
@@ -29,7 +25,6 @@ const api = axios.create({
   }
 });
 
-// Helper genérico para errores
 api.interceptors.response.use(
   r => r,
   e => {
