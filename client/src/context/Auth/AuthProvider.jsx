@@ -1,7 +1,7 @@
 import { AuthContext } from "./AuthContext";
 import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
-import { loginRequest, logoutRequest, nameRequest, verifyTokenRequest } from "../../api/api.auth";
+import { loginRequest, logoutRequest, verifyTokenRequest } from "../../api/api.auth";
 import { useUserStore } from "@/store/useStore";
 
 export const useAuth = () => {
@@ -11,52 +11,42 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);               // Expuesto para componentes que ya lo consumen
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Zustand setters
-  const setNombre = useUserStore((state) => state.setNombre);
-  const setIdRol = useUserStore((state) => state.setIdRol);
-  const setSur = useUserStore((state) => state.setSur);
-  const setIdTenant = useUserStore((state) => state.setIdTenant);
-  const clearUser = useUserStore((state) => state.clearUser);
+  // NUEVO: API unificada del store
+  const setUserRaw = useUserStore(state => state.setUserRaw);
+  const hydrateFromSession = useUserStore(state => state.hydrateFromSession);
+  const clearUserStore = useUserStore(state => state.clearUser);
 
-const login = async (credentials) => {
-  try {
-    const { data } = await loginRequest(credentials);
-    if (data?.success) {
-      sessionStorage.setItem("token", data.token);
-      sessionStorage.setItem("user", JSON.stringify(data.data));
-      setIsAuthenticated(true);
-      setUser(data.data);
-      setNombre(data.data.usuario || data.data.name || "");
-      setIdRol(data.data.rol || data.data.idRol || null);
-      setSur(data.data.sucursal || null);
-      setIdTenant(data.data.id_tenant || null);
-      return { success: true, data: data.data };
-    }
-    return { success: false, message: data?.message || "Credenciales inválidas" };
-  } catch (e) {
-    return { success: false, message: "Error de autenticación" };
-  }
-};
+  // (Legacy setters - ya NO se usan aquí, mantenidos por compatibilidad si quisieras revertir)
+  // const setNombre = useUserStore(state => state.setNombre);
+  // const setIdRol = useUserStore(state => state.setIdRol);
+  // const setSur = useUserStore(state => state.setSur);
+  // const setIdTenant = useUserStore(state => state.setIdTenant);
 
-  const logout = async () => {
+  // Rehidratación temprana (restaura user normalizado desde sessionStorage antes del chequeo de token)
+  useEffect(() => {
+    hydrateFromSession();
+  }, [hydrateFromSession]);
+
+  const login = async (credentials) => {
     try {
-      const token = sessionStorage.getItem("token");
-      logoutRequest(token);
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("user"); // También remover datos del usuario
-      setUser(null);
-      setIsAuthenticated(false);
-
-      // Limpia Zustand
-      clearUser();
-
-      redirect('/');
-    } catch (error) {
-      console.log(error);
+      const { data } = await loginRequest(credentials);
+      if (data?.success || data?.token) {
+        sessionStorage.setItem("token", data.token);
+        if (data.data) {
+          sessionStorage.setItem("user", JSON.stringify(data.data));
+          setUser(data.data);
+          setUserRaw(data.data);          // Sincroniza todo (user + alias legacy)
+        }
+        setIsAuthenticated(true);
+        return { success: true, data: data.data };
+      }
+      return { success: false, message: data?.message || "Credenciales inválidas" };
+    } catch {
+      return { success: false, message: "Error de autenticación" };
     }
   };
 
@@ -65,49 +55,55 @@ const login = async (credentials) => {
       const token = sessionStorage.getItem("token");
       if (!token) {
         setIsAuthenticated(false);
+        clearUserStore();
         setLoading(false);
-        clearUser();
-        sessionStorage.removeItem("user"); // Limpiar datos de usuario si no hay token
         return;
       }
       try {
         const res = await verifyTokenRequest(token);
-        if (!res.data) {
+        if (res?.data) {
+          sessionStorage.setItem("user", JSON.stringify(res.data));
+          setIsAuthenticated(true);
+          setUser(res.data);
+          setUserRaw(res.data);          // Normaliza nuevamente (por si shape cambió)
+        } else {
           setIsAuthenticated(false);
-          setLoading(false);
-          clearUser();
-          sessionStorage.removeItem("user");
-          return;
+          clearUserStore();
         }
-        
-        // Guardar datos del usuario en sessionStorage también aquí
-        sessionStorage.setItem("user", JSON.stringify(res.data));
-        
-        setIsAuthenticated(true);
-        setUser(res.data);
-        setNombre(res.data.name || res.data.usuario || "");
-        setIdRol(res.data.rol || res.data.idRol || null);
-        setSur(res.data.sucursal || res.data.idSucursal || null);
-        setIdTenant(res.data.id_tenant || null);
-        setLoading(false);
-      } catch (error) {
+      } catch {
         setIsAuthenticated(false);
-        setLoading(false);
-        clearUser();
+        clearUserStore();
         sessionStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+      } finally {
+        setLoading(false);
       }
     };
     checkLogin();
-  }, [setNombre, setIdRol, setSur, clearUser, setIdTenant]);
+  }, [setUserRaw, clearUserStore]);
+
+  const logout = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (token) logoutRequest(token);
+    } catch { /* noop */ }
+    sessionStorage.clear();
+    clearUserStore();
+    setIsAuthenticated(false);
+    setUser(null);
+    redirect('/');
+  };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated,
-      loading,
-      login,
-      logout
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        loading,
+        login,
+        logout
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
