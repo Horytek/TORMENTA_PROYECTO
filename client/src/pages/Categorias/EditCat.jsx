@@ -14,7 +14,7 @@ import {
   ModalFooter, 
   Select,
   SelectItem
-} from "@nextui-org/react";
+} from '@heroui/react';
 import {useEditCat} from '@/services/categoria.services';
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {

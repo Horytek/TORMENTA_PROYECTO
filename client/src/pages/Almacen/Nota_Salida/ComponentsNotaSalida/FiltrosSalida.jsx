@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DateRangePicker } from "@nextui-org/date-picker";
+import { DateRangePicker } from '@heroui/react';
 import { parseDate } from "@internationalized/date";
 import { FaPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";

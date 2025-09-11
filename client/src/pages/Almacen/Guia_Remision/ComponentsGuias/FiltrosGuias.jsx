@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import useSucursalData from '../../data/data_sucursal_guia';
-import { DateRangePicker } from "@nextui-org/date-picker";
+import { DateRangePicker } from '@heroui/react';
 import { parseDate } from "@internationalized/date";
 import { Select, SelectItem } from "@heroui/react";
 import { Input } from '@heroui/react';
@@ -57,11 +57,6 @@ const FiltrosGuias = ({ onFiltersChange }) => {
                     placeholder="Número de guía"
                     value={numGuia}
                     onChange={handleNumGuiaChange}
-                    style={{
-                        border: "none",
-                        boxShadow: "none",
-                        outline: "none",
-                    }}
                 />
                 </div>
                 <div className="input-wrapper flex">
@@ -69,11 +64,6 @@ const FiltrosGuias = ({ onFiltersChange }) => {
                     placeholder="Documento o RUC"
                     value={documento}
                     onChange={handleDocumentoChange}
-                    style={{
-                        border: "none",
-                        boxShadow: "none",
-                        outline: "none",
-                    }}
                 />
                 </div>
                 <div className="input-wrapper flex gap-2">

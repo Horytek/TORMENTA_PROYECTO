@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { MdOutlineLocalPrintshop } from "react-icons/md";
 import { Card, CardHeader, CardBody, Chip, Button, Divider, Tooltip, Select, SelectItem } from "@heroui/react";
-import { DateRangePicker } from "@nextui-org/date-picker";
+import { DateRangePicker } from '@heroui/react';
 import useAlmacenData from "../../data/data_almacen_kardex";
 import { parseDate } from "@internationalized/date";
 import { startOfWeek, endOfWeek } from "date-fns";

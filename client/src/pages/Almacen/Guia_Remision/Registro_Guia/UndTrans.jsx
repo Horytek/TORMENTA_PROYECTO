@@ -12,7 +12,7 @@ import {
   Radio,
   Select,
   SelectItem,
-} from '@nextui-org/react';
+} from '@heroui/react';
 import { IoMdClose } from "react-icons/io";
 import { FaPlus } from "react-icons/fa";
 import { Toaster, toast } from 'react-hot-toast';

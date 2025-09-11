@@ -14,7 +14,7 @@ import {
   ModalFooter, 
   Select,
   SelectItem
-} from "@nextui-org/react";
+} from '@heroui/react';
 
 const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }) => {
   const {

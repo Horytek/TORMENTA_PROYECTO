@@ -13,7 +13,7 @@ import {
     ModalFooter, 
     Select,
     SelectItem
-  } from "@nextui-org/react";
+  } from '@heroui/react';
 import { IoIosSearch } from "react-icons/io";
 import { toast, Toaster } from "react-hot-toast";
 import useUpdateClient from "@/services/client_data/updateCliente";

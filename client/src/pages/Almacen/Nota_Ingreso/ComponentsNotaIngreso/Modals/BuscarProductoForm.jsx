@@ -10,7 +10,7 @@ import {
   NumberInput,
 } from '@heroui/react';
 import { RiCloseLargeLine } from "react-icons/ri";
-import { ScrollShadow } from '@nextui-org/react';
+import { ScrollShadow } from '@heroui/react';
 import { IoMdAdd } from "react-icons/io";
 import ProductosForm from '../../../../Productos/ProductosForm';
 import { toast } from "react-hot-toast";

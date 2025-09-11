@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DateRangePicker } from "@nextui-org/date-picker";
+import { DateRangePicker } from '@heroui/react';
 import { parseDate } from "@internationalized/date";
 import { useNavigate } from "react-router-dom";
 import { Button } from '@heroui/react';
@@ -288,11 +288,6 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                     value={razon}
                     onChange={(e) => setRazon(e.target.value)}
                     className='w-60'
-                    style={{
-                        border: "none",
-                        boxShadow: "none",
-                        outline: "none",
-                    }}
                 />
             </div>
             <div className="flex items-center gap-2">
@@ -302,11 +297,6 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                     value={documento}
                     onChange={(e) => setDocumento(e.target.value)}
                     className='w-44'
-                    style={{
-                        border: "none",
-                        boxShadow: "none",
-                        outline: "none",
-                    }}
                 />
             </div>
             <div className="flex items-center gap-2">
@@ -339,11 +329,6 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
                     value={usuario}
                     onChange={(e) => setUsuario(e.target.value)}
                     className='w-48'
-                    style={{
-                        border: "none",
-                        boxShadow: "none",
-                        outline: "none",
-                    }}
                 />
             </div>
             <div className="flex items-center gap-2 ml-auto">
