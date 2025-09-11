@@ -37,7 +37,7 @@ const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
-const SIDEBAR_WIDTH_ICON = "3rem";
+const SIDEBAR_WIDTH_ICON = "3.25rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 const SidebarContext = createContext(null);
@@ -65,8 +65,13 @@ export const SidebarProvider = forwardRef(
   ) => {
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = useState(false);
-
-    const [internalOpen, setInternalOpen] = useState(defaultOpen);
+    // Añadimos estado para auto-expand on hover cuando está colapsado
+    const [hoverExpanded, setHoverExpanded] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(() => {
+      // Restaurar desde cookie (opcional)
+      const match = document.cookie.match(/(?:^|;)\\s*sidebar_state=(true|false)/);
+      return match ? match[1] === "true" : defaultOpen;
+    });
     const open = openProp !== undefined ? openProp : internalOpen;
 
     const setOpen = useCallback(
@@ -91,6 +96,19 @@ export const SidebarProvider = forwardRef(
     }, [isMobile, setOpen]);
 
     useEffect(() => {
+      const apply = (isOpen) => {
+        const nav = document.getElementById("main-navbar");
+        const content = document.querySelector(".contenido-cambiante");
+        const width = isOpen ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON;
+        if (nav) nav.style.marginLeft = width;
+        if (content) content.style.marginLeft = width;
+      };
+      apply(open);
+      document.documentElement.style.setProperty("--sidebar-width", open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON);
+      document.documentElement.dataset.sidebarState = open ? "expanded" : "collapsed";
+    }, [open]);
+
+    useEffect(() => {
       const handleKeyDown = (e) => {
         if (
           e.key === SIDEBAR_KEYBOARD_SHORTCUT &&
@@ -106,7 +124,7 @@ export const SidebarProvider = forwardRef(
 
     const state = open ? "expanded" : "collapsed";
 
-    const contextValue = useMemo(
+const contextValue = useMemo(
       () => ({
         state,
         open,
@@ -115,8 +133,11 @@ export const SidebarProvider = forwardRef(
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        // Exponemos hoverExpanded al árbol
+        hoverExpanded,
+        setHoverExpanded,
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, hoverExpanded]
     );
 
     return (
@@ -125,12 +146,12 @@ export const SidebarProvider = forwardRef(
           <div
             ref={ref}
             style={{
-              "--sidebar-width": SIDEBAR_WIDTH,
+              "--sidebar-width": open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-              ...style,
+              ...style
             }}
             className={cn(
-              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+              "group/sidebar-wrapper flex min-h-svh w-full bg-transparent",
               className
             )}
             {...props}
@@ -156,12 +177,16 @@ export const Sidebar = forwardRef(
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
-
+    const { isMobile, state, openMobile, setOpenMobile, open } = useSidebar();
+    const expanded = state === "expanded";
     if (collapsible === "none") {
       return (
         <div
           ref={ref}
+                    style={{
+            // usar expanded en vez de open (evita undefined)
+            width: expanded ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON
+          }}
           className={cn(
             "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
             className
@@ -200,7 +225,7 @@ export const Sidebar = forwardRef(
     return (
       <div
         ref={ref}
-        className="group peer hidden text-sidebar-foreground md:block"
+        className="group peer hidden md:block"
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
@@ -209,30 +234,24 @@ export const Sidebar = forwardRef(
       >
         <div
           className={cn(
-            "relative w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
-            "group-data-[collapsible=offcanvas]:w-0",
-            "group-data-[side=right]:rotate-180",
+            "fixed inset-y-0 z-30 flex h-svh transition-all duration-200 ease-in-out backdrop-blur-sm",
+            side === "left" ? "left-0" : "right-0",
+            // quitamos w-[--sidebar-width] y controlamos por style
             variant === "floating" || variant === "inset"
-              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
-          )}
-        />
-        <div
-          className={cn(
-            "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex",
-            side === "left"
-              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-              : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-            variant === "floating" || variant === "inset"
-              ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+              ? "p-2"
+              : "border-r border-sidebar-border",
             className
           )}
-          {...props}
+          style={{
+            width: open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON
+          }}
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className={cn(
+              "flex h-full w-full flex-col bg-sidebar",
+              variant === "floating" && "rounded-lg border border-sidebar-border shadow"
+            )}
           >
             {children}
           </div>

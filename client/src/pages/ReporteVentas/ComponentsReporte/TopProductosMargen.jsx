@@ -23,7 +23,7 @@ export default function TopProductosMargen({ idSucursal, year, month, week, limi
   ];
 
   return (
-    <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 transition-all sm:mx-auto sm:max-w-lg p-6">
+    <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white dark:bg-zinc-900 transition-all sm:mx-auto sm:max-w-lg p-6">
       {/* Fondo decorativo sutil */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-100/60 to-blue-200/40 rounded-full blur-2xl"></div>

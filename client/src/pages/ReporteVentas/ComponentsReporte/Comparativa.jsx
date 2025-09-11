@@ -62,7 +62,7 @@ const LineChartUsageExampleAxisLabel = () => {
   const categories = [...new Set(data.map(item => item.sucursal))];
 
   return (
-    <Card className="bg-white border-1 rounded-xl">
+    <Card className="bg-white rounded-xl">
       <CardHeader className="flex flex-col gap-2 items-start">
         <div className="flex items-center gap-3">
           <BarChart2 className="text-blue-500" size={22} />

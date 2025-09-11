@@ -26,7 +26,7 @@ import { useUserStore } from "@/store/useStore";
 // Card para productos con menor stock
 function StockCard({ productos }) {
   return (
-    <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 transition-all flex flex-col h-full min-h-[340px]">
+    <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white dark:bg-zinc-900 transition-all flex flex-col h-full min-h-[340px]">
       {/* Fondo decorativo más sutil */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-rose-100/60 to-pink-200/40 rounded-full blur-2xl"></div>
@@ -121,7 +121,7 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
     "from-emerald-500 via-green-600 to-teal-600",
   ];
   return (
-    <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 transition-all flex flex-col h-full min-h-[340px]">
+    <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white dark:bg-zinc-900 transition-all flex flex-col h-full min-h-[340px]">
       {/* Fondo decorativo elegante y sutil */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-6 -left-6 w-28 h-28 bg-gradient-to-br from-blue-400/30 to-indigo-600/20 rounded-full blur-2xl"></div>

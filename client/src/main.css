@@ -153,17 +153,88 @@
     border: 1px solid #0070f3;
     box-shadow: 0 0 5px rgba(0,112,243,.35);
   }
+input[type="date"],
+input[type="date"]:focus,
+input[type="date"]:active {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background-color: #f3f4f6;
+  color: inherit;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  transition: background 0.2s;
+}
+  .card-no-border,
+  .no-border,
+  .border-black,
+  .border-gray-900,
+  .border-neutral-900,
+  .border-zinc-900 {
+    border-color: #e5e7eb !important; /* border-gray-200 */
+    box-shadow: none;
+  }
+}
+
+:root {
+  --sidebar-width: 16rem;        /* Unificado */
+  --sidebar-width-icon: 3rem;
+}
+
+/* Navbar alineado al sidebar */
+#main-navbar {
+  margin-left: var(--sidebar-width);
+  transition: margin-left .2s cubic-bezier(.4,0,.2,1);
+}
+body.sidebar-collapsed #main-navbar {
+  margin-left: var(--sidebar-width-icon);
+}
+@media (max-width: 1024px) {
+  #main-navbar { margin-left: 0 !important; }
+}
+
+/* Contenido principal */
+.contenido-cambiante {
+  margin-left: var(--sidebar-width);
+  padding: 0 1rem 2rem 0;
+  transition: margin-left .2s cubic-bezier(.4,0,.2,1);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+body.sidebar-collapsed .contenido-cambiante {
+  margin-left: var(--sidebar-width-icon);
+}
+
+@media (max-width: 1024px) {
+  .contenido-cambiante {
+    margin-left: 0 !important;
+    padding: 0 0.75rem 2rem 0.75rem !important;
+  }
+}
+
+/* Placeholder interno del Sidebar (cuando colapsa a íconos) ya funciona con data attributes;
+   asegúrate de no sobreescribir aquí con padding-left previos. Elimina reglas viejas conflictivas. */
+
+/* (Opcional) Suavizar ancho interno del nav en estado colapsado si mantienes padding dentro */
+#main-navbar > nav {
+  padding-left: .75rem;
+  padding-right: 1rem;
+  box-sizing: border-box;
 }
 
 /* Utilidades extra / alias para homogeneizar estilos de tarjetas */
 @layer utilities {
   .card-surface {
-    @apply bg-white/80 dark:bg-zinc-900/70 backdrop-blur-sm border border-gray-200/60 dark:border-zinc-700/50 rounded-2xl shadow-sm;
+    @apply bg-white/90 dark:bg-zinc-900/80 border border-gray-200/70 dark:border-zinc-700/60 rounded-2xl shadow-xl backdrop-blur-[2px] transition-all duration-200;
+    /* Sombra más suave y profunda, fondo más translúcido, transición suave */
   }
   .card-flat {
-    @apply bg-white dark:bg-zinc-900 border border-gray-200/50 dark:border-zinc-800/60 rounded-xl;
+    @apply bg-white dark:bg-zinc-900 border border-gray-200/60 dark:border-zinc-800/70 rounded-xl shadow-md transition-all duration-200;
+    /* Sombra media, borde más visible, transición */
   }
-  .no-border { @apply border-0 shadow-none; }
+  .no-border { 
+    @apply border-0 shadow-none; 
+  }
 
   /* Corrige uso inválido de border-1 (usar .border) */
   .border-1 { @apply border; }

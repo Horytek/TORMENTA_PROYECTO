@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { MdAddCircleOutline, MdOutlineRealEstateAgent } from "react-icons/md";
-import { DateRangePicker } from "@nextui-org/date-picker";
+import { DateRangePicker } from "@heroui/date-picker";
 import useComprobanteData from "@/services/data/data_comprobante_venta";
 import useSucursalData from "@/services/data/data_sucursal_venta";
 import { parseDate } from "@internationalized/date";
@@ -143,11 +143,6 @@ const FiltrosVentas = ({ onFiltersChange }) => {
               placeholder="Numero de comprobante"
               value={numC}
               onChange={handleChanger}
-              style={{
-                border: "none",
-                boxShadow: "none",
-                outline: "none",
-              }}
             />
           </div>
           <div className="flex input-wrapper">
@@ -158,11 +153,6 @@ const FiltrosVentas = ({ onFiltersChange }) => {
               placeholder="Nombre o Razón Social"
               value={razon}
               onChange={handleChange}
-              style={{
-                border: "none",
-                boxShadow: "none",
-                outline: "none",
-              }}
             />
           </div>
           <div className="mb-2 input-wrapper md:mb-0">
