@@ -216,9 +216,6 @@ if (setAllClientes) {
                             onChange={(e) => setDocumentNumber(e.target.value)}
                             isRequired
                             classNames={inputStyles}
-                            style={{  border: "none",
-                              boxShadow: "none",
-                              outline: "none", }}
                           />
                           <Button
                             isIconOnly
@@ -239,7 +236,6 @@ if (setAllClientes) {
                           onChange={(e) => setClientName(e.target.value)}
                           isRequired
                           classNames={inputStyles}
-                          style={{ border: "none", boxShadow: "none", outline: "none" }}
                           isDisabled={!manualInput}
                         />
                         <Input
@@ -248,7 +244,6 @@ if (setAllClientes) {
                           onChange={(e) => setClientLastName(e.target.value)}
                           isRequired
                           classNames={inputStyles}
-                          style={{ border: "none", boxShadow: "none", outline: "none" }}
                           isDisabled={!manualInput}
                         />
                         <Input
@@ -256,9 +251,6 @@ if (setAllClientes) {
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
                           classNames={inputStyles}
-                          style={{  border: "none",
-                            boxShadow: "none",
-                            outline: "none", }}
                         />
                       </div>
                     </div>
@@ -284,9 +276,6 @@ if (setAllClientes) {
                             onChange={(e) => setDocumentNumber(e.target.value)}
                             isRequired
                             classNames={inputStyles}
-                            style={{  border: "none",
-                              boxShadow: "none",
-                              outline: "none", }}
                           />
                           <Button
                             isIconOnly
@@ -307,7 +296,6 @@ if (setAllClientes) {
                           onChange={(e) => setBusinessName(e.target.value)}
                           isRequired
                           classNames={inputStyles}
-                          style={{ border: "none", boxShadow: "none", outline: "none" }}
                           isDisabled={!manualInput}
                         />
                         
@@ -316,9 +304,6 @@ if (setAllClientes) {
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
                           classNames={inputStyles}
-                          style={{  border: "none",
-                            boxShadow: "none",
-                            outline: "none", }}
                         />
                       </div>
                     </div>

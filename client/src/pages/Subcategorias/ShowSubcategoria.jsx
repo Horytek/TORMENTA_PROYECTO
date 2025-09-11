@@ -77,7 +77,6 @@ export function ShowSubcategorias({
         <thead>
           <tr className="bg-blue-50 text-blue-900 text-[14px] font-bold">
             <th className="py-3 px-3 text-center rounded-tl-2xl">CÓDIGO</th>
-            <th className="py-3 px-3 text-center">CATEGORÍA</th>
             <th className="py-3 px-3 text-center">NOMBRE</th>
             <th className="py-3 px-3 text-center">ESTADO</th>
             <th className="py-3 px-3 text-center rounded-tr-2xl">ACCIONES</th>
@@ -93,11 +92,6 @@ export function ShowSubcategorias({
                 key={sub_categoria.id_subcategoria}
               >
                 <td className="py-4 text-center text-blue-900 font-bold text-[16px]">{sub_categoria.id_subcategoria}</td>
-                <td className="py-4 text-center">
-                  <span className="inline-block px-4 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-700 text-[15px] font-semibold shadow-sm">
-                    {sub_categoria.nom_categoria || "Sin categoría"}
-                  </span>
-                </td>
                 <td className="py-4 text-center">
                   <span className="inline-block px-4 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-700 text-[15px] font-semibold shadow-sm">
                     {sub_categoria.nom_subcat}

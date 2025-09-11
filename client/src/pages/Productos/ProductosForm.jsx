@@ -249,16 +249,11 @@ const adaptInitialData = (data) => {
                             {...field}
                             label="Descripción"
                             placeholder="Ingrese la descripción del producto"
-                                                           variant="faded"
+                            variant="faded"
                             color={errors.descripcion ? "danger" : "default"}
                             errorMessage={errors.descripcion?.message}
                             isRequired
                             rows={4}
-                            style={{
-                              border: "none",
-                              boxShadow: "none",
-                              outline: "none",
-                            }}
                           />
                         )}
                       />
@@ -383,13 +378,8 @@ const adaptInitialData = (data) => {
                               isRequired
                               type="number"
                               min={0}
-                                                              variant="faded"
+                              variant="faded"
                               step={0.01}
-                              style={{
-                                border: "none",
-                                boxShadow: "none",
-                                outline: "none",
-                              }}
                               onChange={(e) => {
                                 handlePrice(e);
                                 field.onChange(e.target.value);

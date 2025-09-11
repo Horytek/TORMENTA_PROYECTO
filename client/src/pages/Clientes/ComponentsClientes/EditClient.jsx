@@ -240,11 +240,6 @@ const handleSave = async () => {
                                             value={documentNumber}
                                             onChange={(e) => setDocumentNumber(e.target.value)}
                                             isRequired
-                                            style={{
-                                                border: "none",
-                                                boxShadow: "none",
-                                                outline: "none",
-                                            }}
                                             classNames={inputStyles}
                                         />
                                         <Button
@@ -273,11 +268,6 @@ const handleSave = async () => {
                                                 onChange={(e) => setClientName(e.target.value)}
                                                 isRequired
                                                 classNames={inputStyles}
-                                                style={{
-                                                    border: "none",
-                                                    boxShadow: "none",
-                                                    outline: "none",
-                                                }}
                                             />
                                             <Input
                                                 label="Apellidos"
@@ -286,11 +276,6 @@ const handleSave = async () => {
                                                 onChange={(e) => setClientLastName(e.target.value)}
                                                 isRequired
                                                 classNames={inputStyles}
-                                                style={{
-                                                    border: "none",
-                                                    boxShadow: "none",
-                                                    outline: "none",
-                                                }}
                                             />
                                         </>
                                     ) : (
@@ -301,11 +286,6 @@ const handleSave = async () => {
                                             onChange={(e) => setBusinessName(e.target.value)}
                                             isRequired
                                             classNames={inputStyles}
-                                            style={{
-                                                border: "none",
-                                                boxShadow: "none",
-                                                outline: "none",
-                                            }}
                                         />
                                     )}
 
@@ -315,11 +295,6 @@ const handleSave = async () => {
                                         value={address}
                                         onChange={(e) => setAddress(e.target.value)}
                                         classNames={inputStyles}
-                                        style={{
-                                            border: "none",
-                                            boxShadow: "none",
-                                            outline: "none",
-                                        }}
                                     />
                                     <Select
                                         label="Estado"

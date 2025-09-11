@@ -130,104 +130,138 @@ const FiltrosVentas = ({ onFiltersChange }) => {
     navigate("/ventas/registro_venta");
   };
 
-  return (
+    return (
     <>
       <Toaster />
-      <div className="flex flex-wrap justify-between mb-4">
-        <div className="items-center justify-between block ms:block md:flex lg:w-12/12 xl:8/12 md:space-y-0 md:space-x-2 lg:space-x-15 md:flex-wrap">
-          <div className="flex input-wrapper">
-            <Input
-              type="text"
-              id="numC"
-              className="rounded-lg"
-              placeholder="Numero de comprobante"
-              value={numC}
-              onChange={handleChanger}
-            />
-          </div>
-          <div className="flex input-wrapper">
-            <Input
-              type="text"
-              id="valor"
-              className="rounded-lg"
-              placeholder="Nombre o Razón Social"
-              value={razon}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="mb-2 input-wrapper md:mb-0">
-            <Select
-              id="tipo"
-              placeholder="Tipo Comprobante"
-              selectionMode="multiple"
-              className="p-0 rounded-lg"
-              style={{ width: "190px" }}
-              value={comprobanteSeleccionado}
-              onChange={(e) => setComprobanteSeleccionado(e.target.value)}
-            >
-              {comprobantes.map((comprobante) => (
-                <SelectItem key={comprobante.id} value={comprobante.nombre}>
-                  {comprobante.nombre}
-                </SelectItem>
-              ))}
-            </Select>
-          </div>
-          <div className="mb-2 input-wrapper md:mb-0">
-            <Select
-              id="campo"
-              placeholder="Sucursal"
-              className="p-2 rounded-lg"
-              style={{ width: "170px" }}
-              value={sucursalSeleccionado}
-              onChange={(e) => setSucursalSeleccionado(e.target.value)}
-              defaultSelectedKeys={[rol !== 1 ? sur : sucursalSeleccionado]}
-            >
-              {sucursales.map((sucursal) => (
-                <SelectItem
-                  key={sucursal.nombre}
-                  value={sucursal.nombre}
-                  isDisabled={rol !== 1 && sucursal.nombre !== sur}
-                >
-                  {sucursal.nombre}
-                </SelectItem>
-              ))}
-            </Select>
-          </div>
-                    <div className="mb-2 input-wrapper md:mb-0">
-            <Select
-              id="estado"
-              placeholder="Estado"
-              className="p-2 rounded-lg"
-              style={{ width: "170px" }}
-              value={estado}
-              onChange={(e) => setEstado(e.target.value)}
-            >
-              <SelectItem key="" value="">Todos</SelectItem>
-              <SelectItem key="Aceptada" value="Aceptada">Aceptada</SelectItem>
-              <SelectItem key="En proceso" value="En proceso">En proceso</SelectItem>
-              <SelectItem key="Anulada" value="Anulada">Anulada</SelectItem>
-            </Select>
-          </div>
-          <div className="flex gap-2 input-wrapper">
-            <DateRangePicker
-              className="w-xs bg-blue-50/60 rounded-lg"
-              classNames={{ inputWrapper: "bg-blue-50/60" }}
-              value={tempValue}
-              onChange={handleDateChange}
-              renderInput={(props) => (
-                <input
-                  {...props}
-                  className="p-2 bg-blue-50/60 border-none rounded-lg"
-                />
-              )}
-            />
-          </div>
-        </div>
+      {/* Contenedor filtros */}
+      <div className="mb-4">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Grid de filtros */}
+            <div className="flex-1">
+              <div
+                className="
+                  grid
+                  grid-cols-1
+                  sm:grid-cols-2
+                  md:grid-cols-3
+                  xl:grid-cols-6
+                  gap-3
+                "
+              >
+                {/* Número de comprobante */}
+                <div className="col-span-1">
+                  <Input
+                    type="text"
+                    id="numC"
+                    placeholder="Número comprobante"
+                    value={numC}
+                    onChange={handleChanger}
+                    className="w-full"
+                    size="sm"
+                  />
+                </div>
 
-        <div className="flex items-center mt-3 xl:justify-end md:mt-3 lg:mt-0 xl:mt-0">
-          <button className="mr-4">
+                {/* Razón social / nombre */}
+                <div className="col-span-1">
+                  <Input
+                    type="text"
+                    id="valor"
+                    placeholder="Nombre o Razón Social"
+                    value={razon}
+                    onChange={handleChange}
+                    className="w-full"
+                    size="sm"
+                  />
+                </div>
+
+                {/* Tipo comprobante */}
+                <div className="col-span-1">
+                  <Select
+                    id="tipo"
+                    placeholder="Tipo Comprobante"
+                    selectionMode="multiple"
+                    selectedKeys={
+                      comprobanteSeleccionado
+                        ? new Set(comprobanteSeleccionado.split(","))
+                        : new Set([])
+                    }
+                    onChange={(e) => setComprobanteSeleccionado(e.target.value)}
+                    className="w-full"
+                    size="sm"
+                    classNames={{ trigger: "min-h-10" }}
+                  >
+                    {comprobantes.map((comprobante) => (
+                      <SelectItem key={comprobante.id} value={comprobante.nombre}>
+                        {comprobante.nombre}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Sucursal */}
+                <div className="col-span-1">
+                  <Select
+                    id="campo"
+                    placeholder="Sucursal"
+                    value={sucursalSeleccionado}
+                    onChange={(e) => setSucursalSeleccionado(e.target.value)}
+                    defaultSelectedKeys={[rol !== 1 ? sur : sucursalSeleccionado]}
+                    className="w-full"
+                    size="sm"
+                    classNames={{ trigger: "min-h-10" }}
+                  >
+                    {sucursales.map((sucursal) => (
+                      <SelectItem
+                        key={sucursal.nombre}
+                        value={sucursal.nombre}
+                        isDisabled={rol !== 1 && sucursal.nombre !== sur}
+                      >
+                        {sucursal.nombre}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Estado */}
+                <div className="col-span-1">
+                  <Select
+                    id="estado"
+                    placeholder="Estado"
+                    value={estado}
+                    onChange={(e) => setEstado(e.target.value)}
+                    className="w-full"
+                    size="sm"
+                    classNames={{ trigger: "min-h-10" }}
+                  >
+                    <SelectItem key="" value="">Todos</SelectItem>
+                    <SelectItem key="Aceptada" value="Aceptada">Aceptada</SelectItem>
+                    <SelectItem key="En proceso" value="En proceso">En proceso</SelectItem>
+                    <SelectItem key="Anulada" value="Anulada">Anulada</SelectItem>
+                  </Select>
+                </div>
+
+                {/* Rango de fechas */}
+                <div className="sm:col-span-2 md:col-span-2 xl:col-span-1">
+                  <DateRangePicker
+                    className="w-full rounded-lg"
+                    classNames={{ inputWrapper: "bg-blue-50/60 shadow-none min-h-10" }}
+                    value={tempValue}
+                    onChange={handleDateChange}
+                    renderInput={(props) => (
+                      <input
+                        {...props}
+                        className="p-2 bg-blue-50/60 border-none rounded-lg text-sm"
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
+          {/* Acciones */}
+          <div className="flex items-start gap-3 lg:w-auto lg:pt-0">
             <Dropdown>
-              <DropdownTrigger className="bg-gray-100">
+              <DropdownTrigger className="bg-gray-100 rounded-lg h-10 w-10 flex items-center justify-center">
                 <Avatar
                   isBordered
                   as="button"
@@ -235,7 +269,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
                   icon={<CgOptions className="text-xl text-gray-600" />}
                 />
               </DropdownTrigger>
-              <DropdownMenu variant="faded" aria-label="Dropdown menu with icons">
+              <DropdownMenu variant="faded" aria-label="Acciones masivas">
                 <DropdownItem
                   key="sunat"
                   onClick={handleAccept}
@@ -245,27 +279,27 @@ const FiltrosVentas = ({ onFiltersChange }) => {
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
-          </button>
 
-          {hasCreatePermission ? (
-            <Button
-              color="primary"
-              endContent={<MdAddCircleOutline style={{ fontSize: '25px' }} />}
-              onClick={handleNavigation}
-              className="mr-0"
-            >
-              Nueva venta
-            </Button>
-          ) : (
-            <Button
-              color="primary"
-              endContent={<MdAddCircleOutline style={{ fontSize: '25px' }} />}
-              disabled
-              className="mr-0 opacity-50 cursor-not-allowed"
-            >
-              Nueva venta
-            </Button>
-          )}
+            {hasCreatePermission ? (
+              <Button
+                color="primary"
+                endContent={<MdAddCircleOutline style={{ fontSize: '22px' }} />}
+                onClick={handleNavigation}
+                className="h-10"
+              >
+                Nueva venta
+              </Button>
+            ) : (
+              <Button
+                color="primary"
+                endContent={<MdAddCircleOutline style={{ fontSize: '22px' }} />}
+                disabled
+                className="h-10 opacity-50 cursor-not-allowed"
+              >
+                Nueva venta
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -273,9 +307,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
       <PDFModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onConfirm={() => {
-          setModalOpen(false);
-        }}
+        onConfirm={() => setModalOpen(false)}
       />
     </>
   );

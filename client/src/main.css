@@ -174,6 +174,65 @@ input[type="date"]:active {
     border-color: #e5e7eb !important; /* border-gray-200 */
     box-shadow: none;
   }
+
+  input[type="number"],
+textarea {
+  border: 1px solid transparent;
+  outline: none;
+  box-shadow: none;
+  background-color: #f9fafb; /* mismo fondo que variant faded */
+  border-radius: 0.5rem;
+  transition: border .15s, box-shadow .15s;
+}
+
+input[type="number"]:focus
+
+/* Si HeroUI agrega wrapper, reforzar (opcional) */
+[data-slot="input-wrapper"]:has(> input[type="number"]),
+[data-slot="base"]:has(> textarea) {
+  border: 1px solid transparent;
+}
+[data-slot="input-wrapper"]:has(> input[type="number"]:focus)
+[data-slot="base"]:has(> textarea) {
+  border: 1px solid #e5e7eb !important;    /* gris claro */
+  background: #f9fafb !important;
+  border-radius: 0.5rem !important;
+  box-shadow: none !important;
+  transition: border .15s, box-shadow .15s;
+}
+
+[data-slot="base"]:has(> textarea:focus)
+
+[data-slot="base"] > textarea {
+  border: 1px solid transparent !important; /* añadido */
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  resize: vertical;
+}
+
+/* Compatibilidad directa si algún textarea queda fuera de NextUI */
+textarea:not([data-slot]) {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+textarea,
+[data-slot="base"],
+[data-slot="base"] > textarea,
+[data-slot="input-wrapper"] {
+  border-color: transparent !important;
+}
+
+/* Si algún componente necesita borde neutro explícito, usa esta clase */
+.border-default-soft {
+  border: 1px solid #e5e7eb !important;
+}
 }
 
 :root {
