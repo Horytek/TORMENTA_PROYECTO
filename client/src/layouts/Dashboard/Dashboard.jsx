@@ -158,6 +158,30 @@ function Dashboard() {
       />
     );
 
+        dynamicRoutes.push(
+      <Route
+        key="roles-permisos"
+        path="/configuracion/roles/permisos"
+        element={
+          <RouteProtectedRol allowedRoles={[ADMIN_ROL, DESARROLLO_ROL]}>
+            <Permisos />
+          </RouteProtectedRol>
+        }
+      />
+    );
+    dynamicRoutes.push(
+      <Route
+        key="roles-paginas"
+        path="/configuracion/roles/paginas"
+        element={
+          <RouteProtectedRol allowedRoles={[ADMIN_ROL, DESARROLLO_ROL]}>
+            <Permisos />
+          </RouteProtectedRol>
+        }
+      />
+    );
+    
+
     dynamicRoutes.push(
       <Route
         key="permisos-globales"
