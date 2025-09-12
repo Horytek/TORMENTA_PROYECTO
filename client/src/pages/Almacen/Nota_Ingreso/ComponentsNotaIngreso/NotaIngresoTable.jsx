@@ -12,6 +12,8 @@ import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";
 import { useUserStore } from "@/store/useStore";
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, ref) => {
   const [empresaData, setEmpresaData] = useState(null);
@@ -41,21 +43,26 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
   const { hasGeneratePermission = false, hasDeactivatePermission = false } = usePermisos() || {};
 
   // PDF GENERATION
-  const generatePDF = async (nota) => {
+    const generatePDF = async (nota) => {
+    if (!nota) return;
+
+    // Obtener logo (base64)
     let logoBase64 = empresaData?.logotipo;
     if (empresaData?.logotipo && !empresaData.logotipo.startsWith('data:image')) {
       try {
         const response = await fetch(empresaData.logotipo);
         const blob = await response.blob();
-        logoBase64 = await new Promise((resolve) => {
+        logoBase64 = await new Promise((res) => {
           const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
+          reader.onloadend = () => res(reader.result);
           reader.readAsDataURL(blob);
         });
-      } catch (error) {
+      } catch {
         logoBase64 = null;
       }
     }
+
+    const isIngreso = tipo === 'ingreso';
     const empresaNombre = empresaData?.razonSocial || 'TEXTILES CREANDO MODA S.A.C.';
     const empresaDireccion = empresaData?.direccion || 'Cal San Martin 1573 Urb Urrunaga SC Tres';
     const empresaUbicacion = `${empresaData?.distrito || 'Chiclayo'} - ${empresaData?.provincia || 'Chiclayo'} - ${empresaData?.departamento || 'Lambayeque'}`;
@@ -64,105 +71,175 @@ const TablaNotasAlmacen = forwardRef(({ registros = [], tipo, onNotaAnulada }, r
     const empresaRuc = empresaData?.ruc || '20610588981';
     const empresaNombreComercial = empresaData?.nombreComercial || 'TORMENTA JEANS';
 
-    const isIngreso = tipo === 'ingreso';
-    const htmlContent = `
-      <style>
-        .logo-empresa { width: 180px; height: 180px; object-fit: contain; }
-        .observacion-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 1rem; margin-top: 1.5rem; }
-      </style>
-      <div class="p-5 text-sm leading-6 font-sans w-full">
-        <div class="flex justify-between items-start mb-3">
-          <div class='flex'>
-            ${logoBase64 ? `<div class="Logo-compro mr-4"><img src="${logoBase64}" alt="Logo-comprobante" class="logo-empresa" /></div>` : ''}
-            <div class="text-start">
-              <h1 class="text-xl font-extrabold leading-snug text-blue-800">${empresaNombreComercial}</h1>
-              <p class="font-semibold leading-snug text-gray-700">${empresaNombre}</p>
-              <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">Central:</span> ${empresaDireccion}</p>
-              <p class="leading-snug text-gray-600">${empresaUbicacion}</p>
-              <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">TELF:</span> ${empresaTelefono}</p>
-              <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">EMAIL:</span> ${empresaEmail}</p>
-            </div>
-          </div>
-          <div class="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
-            <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC ${empresaRuc}</h2>
-            <div class="bg-blue-200">
-              <h2 class="text-lg font-bold text-gray-900 py-2">${isIngreso ? 'NOTA DE INGRESO' : 'NOTA DE SALIDA'}</h2>
-            </div>
-            <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">${nota.documento || 'N/A'}</h2>
-          </div>
-        </div>
-        <div class="container-datos-compro bg-white rounded-lg mb-6">
-          <div class="grid grid-cols-2 gap-6 mb-6">
-            <div class="space-y-2">
-              <p class="text-sm font-semibold text-gray-800"><span class="font-bold text-gray-900">NRO. DOCU.:</span> <span class="font-semibold text-gray-600">${nota.documento || 'N/A'}</span></p>
-              <p class="text-sm font-semibold text-gray-800"><span class="font-bold text-gray-900">${isIngreso ? 'PROVEEDOR' : 'DESTINATARIO'}:</span> <span class="font-semibold text-gray-600">${nota.proveedor || 'N/A'}</span></p>
-              ${isIngreso ? `<p class="text-sm font-semibold text-gray-800"><span class="font-bold text-gray-900">ALMACÉN:</span> <span class="font-semibold text-gray-600">${nota.almacen_D || 'N/A'}</span></p>` : ''}
-              <p class="text-sm font-semibold text-gray-800"><span class="font-bold text-gray-900">CONCEPTO:</span> <span class="font-semibold text-gray-600">${nota.concepto || 'N/A'}</span></p>
-            </div>
-            <div class="space-y-2 ml-auto text-left">
-              <p class="text-sm font-semibold text-gray-800"><span class="font-bold text-gray-900">FECHA:</span> <span class="font-semibold text-gray-600">${nota.fecha || 'N/A'}</span></p>
-              <p class="text-sm font-semibold text-gray-800"><span class="font-bold text-gray-900">USUARIO:</span> <span class="font-semibold text-gray-600">${nota.usuario || 'N/A'}</span></p>
-            </div>
-          </div>
-        </div>
-        <table class="w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
-          <thead class="bg-blue-200 text-blue-800">
-            <tr>
-              <th class="border-b p-3 text-center">Código</th>
-              <th class="border-b p-3 text-center">Marca</th>
-              <th class="border-b p-3 text-center">Descripción</th>
-              <th class="border-b p-3 text-center">Cant.</th>
-              <th class="border-b p-3 text-center">Unidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${(nota.detalles || []).map(detalle => `
-              <tr class="bg-gray-50 hover:bg-gray-100">
-                <td class="border-b p-2 text-center">${detalle.codigo || 'N/A'}</td>
-                <td class="border-b p-2 text-center">${detalle.marca || 'N/A'}</td>
-                <td class="border-b p-2 text-center">${detalle.descripcion || 'N/A'}</td>
-                <td class="border-b p-2 text-center">${detalle.cantidad || 'N/A'}</td>
-                <td class="border-b p-2 text-center">${detalle.unidad || 'N/A'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        <div class="observacion-box">
-          <h3 class="font-bold text-gray-800 mb-2">OBSERVACIÓN:</h3>
-          <p class="text-gray-700">${nota.observacion || 'Ninguna'}</p>
-        </div>
-      </div>
-    `;
-    const options = {
-      filename: `${nota.documento || (isIngreso ? 'nota-ingreso' : 'nota-salida')}.pdf`,
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: true,
-        async: true,
-        letterRendering: true,
-      },
-      onInstance: (inst) => {
-        inst.toPdf().get('pdf').then(pdf => {
-          const total = pdf.internal.getNumberOfPages();
-          for (let i = 1; i <= total; i++) {
-            pdf.setPage(i);
-            pdf.setFontSize(8);
-            pdf.setTextColor(150);
-            pdf.text(
-              `Página ${i} de ${total}`,
-              pdf.internal.pageSize.getWidth() - 20,
-              pdf.internal.pageSize.getHeight() - 10
-            );
-          }
-        });
-      }
-    };
     try {
-      await exportHtmlToPdf(htmlContent, options.filename, options);
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+      doc.setLineHeightFactor(1.15);
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Helpers
+      const drawLabelValue = (label, value, xL, xV, y) => {
+        doc.setFont('helvetica', 'bold'); doc.text(label, xL, y);
+        doc.setFont('helvetica', 'normal'); doc.text(value || 'N/A', xV, y);
+      };
+
+      let cursorY = 18;
+
+      // Logo + bloque derecha
+      if (logoBase64) {
+        try { doc.addImage(logoBase64, 'PNG', 16, cursorY - 4, 28, 28); } catch {}
+      }
+
+      // Caja derecha (más compacta)
+      const boxW = 68;
+      const boxH = 36;
+      const boxX = pageWidth - boxW - 16;
+      doc.setDrawColor(80); doc.setLineWidth(0.25);
+      doc.rect(boxX, cursorY - 6, boxW, boxH);
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+      doc.text(`RUC ${empresaRuc}`, boxX + boxW / 2, cursorY + 2, { align: 'center' });
+
+      doc.setFillColor(191, 219, 254);
+      doc.rect(boxX, cursorY + 5, boxW, 11, 'F');
+      doc.setTextColor(20);
+      doc.setFontSize(10.5);
+      doc.text(isIngreso ? 'NOTA DE INGRESO' : 'NOTA DE SALIDA', boxX + boxW / 2, cursorY + 12, { align: 'center' });
+
+      doc.setFontSize(9.5);
+      doc.text(nota.documento || 'SIN DOC', boxX + boxW / 2, cursorY + 22, { align: 'center' });
+      doc.setTextColor(0,0,0);
+
+      // Datos empresa (alineado a la izquierda con menos líneas sueltas)
+      const xText = logoBase64 ? 50 : 16;
+
+      // Nuevo: limitar ancho hasta antes del recuadro y dejar un gap
+      const gapToBox = 8; // espacio horizontal entre texto y recuadro
+      let infoMaxWidth = boxX - xText - gapToBox;
+      if (infoMaxWidth < 60) infoMaxWidth = pageWidth - xText - 20; // fallback seguridad
+
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+
+      let textY = cursorY + 6;
+      doc.text(empresaNombreComercial, xText, textY);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      textY += 5;
+      doc.text(empresaNombre, xText, textY);
+
+      // Dirección envuelta (más agresiva)
+      const rawDireccion = `Central: ${empresaDireccion}`;
+      let direccionLines = doc.splitTextToSize(rawDireccion, infoMaxWidth);
+
+      // Si sigue muy larga, reducimos tipografía a 8 para ese bloque
+      if (direccionLines.length > 3) {
+        doc.setFontSize(8);
+        direccionLines = doc.splitTextToSize(rawDireccion, infoMaxWidth);
+      }
+      direccionLines.forEach(line => {
+        textY += 4;
+        doc.text(line, xText, textY);
+      });
+
+      // Restaurar tamaño para resto si se redujo
+      if (doc.getFontSize() !== 9) doc.setFontSize(9);
+
+      // Ubicación envuelta
+      textY += 4;
+      const ubicacionLines = doc.splitTextToSize(empresaUbicacion, infoMaxWidth);
+      ubicacionLines.forEach(line => {
+        doc.text(line, xText, textY);
+        textY += 4;
+      });
+      textY -= 4;
+
+      // TELF y EMAIL
+      textY += 4;
+      doc.text(`TELF: ${empresaTelefono}`, xText, textY);
+      textY += 4;
+      doc.text(`EMAIL: ${empresaEmail}`, xText, textY);
+
+      // Respira extra debajo del bloque (más espacio del recuadro lateral)
+      cursorY = Math.max(cursorY + 14, textY + 12);
+
+      // Línea divisoria suave
+      doc.setDrawColor(210); doc.setLineWidth(0.2);
+      doc.line(15, cursorY - 6, pageWidth - 15, cursorY - 6);
+
+      // Bloque datos (dos columnas)
+      const col1XLabel = 15;
+      const col1XValue = 46;
+      const col2XLabel = 115;
+      const col2XValue = 145;
+
+      drawLabelValue('NRO. DOCU.:', nota.documento, col1XLabel, col1XValue, cursorY);
+      drawLabelValue(isIngreso ? 'PROVEEDOR:' : 'DESTINATARIO:', nota.proveedor, col1XLabel, col1XValue, cursorY + 5);
+      if (isIngreso) drawLabelValue('ALMACÉN:', nota.almacen_D, col1XLabel, col1XValue, cursorY + 10);
+      drawLabelValue('CONCEPTO:', nota.concepto, col1XLabel, col1XValue, cursorY + (isIngreso ? 15 : 10));
+
+      drawLabelValue('FECHA:', nota.fecha, col2XLabel, col2XValue, cursorY);
+      drawLabelValue('USUARIO:', nota.usuario, col2XLabel, col2XValue, cursorY + 5);
+
+      cursorY += isIngreso ? 23 : 18;
+
+      // Separador antes de tabla
+      doc.setDrawColor(230);
+      doc.line(15, cursorY - 4, pageWidth - 15, cursorY - 4);
+
+      // Tabla detalles (anchos optimizados)
+      const rows = (nota.detalles || []).map(d => [
+        d.codigo || '',
+        d.marca || '',
+        (d.descripcion || '').trim(),
+        d.cantidad != null ? String(d.cantidad) : '',
+        d.unidad || ''
+      ]);
+
+      doc.autoTable({
+        head: [['Código', 'Marca', 'Descripción', 'Cant.', 'Und.']],
+        body: rows,
+        startY: cursorY,
+        styles: { fontSize: 8, cellPadding: 2.2, valign: 'middle' },
+        headStyles: { fillColor: [191,219,254], textColor: [15,23,42], fontStyle: 'bold' },
+        bodyStyles: { textColor: [31,41,55] },
+        columnStyles: {
+          0: { cellWidth: 22 },
+          1: { cellWidth: 24 },
+            2: { cellWidth: 'auto' }, // que respire
+          3: { cellWidth: 16, halign: 'right' },
+          4: { cellWidth: 14 }
+        },
+        tableWidth: 'auto',
+        didDrawPage: () => {}
+      });
+
+      cursorY = doc.lastAutoTable.finalY + 8;
+
+      // Observación
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.text('OBSERVACIÓN:', 15, cursorY);
+      doc.setFont('helvetica', 'normal');
+      const obs = nota.observacion || 'Ninguna';
+      const wrapped = doc.splitTextToSize(obs, pageWidth - 30);
+      doc.text(wrapped, 15, cursorY + 5);
+
+      // Paginación
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8); doc.setTextColor(130);
+        doc.text(`Página ${i} de ${totalPages}`,
+          pageWidth - 18,
+          doc.internal.pageSize.getHeight() - 8,
+          { align: 'right' }
+        );
+      }
+
+      doc.save(`${nota.documento || (isIngreso ? 'nota-ingreso' : 'nota-salida')}.pdf`);
+      toast.success('PDF generado');
     } catch {
-      toast.error("Error al generar el PDF");
+      toast.error('Error al generar el PDF');
     }
   };
 
