@@ -5,7 +5,6 @@ import { DateRangePicker } from '@heroui/react';
 import useAlmacenData from "../../data/data_almacen_kardex";
 import { parseDate } from "@internationalized/date";
 import { startOfWeek, endOfWeek } from "date-fns";
-import { exportHtmlToPdf } from '@/utils/pdf/exportHtmlToPdf';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 
@@ -90,131 +89,103 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
   }, [setAlmacenGlobal]);
   
   // ADAPTADO: Usa datos de empresa dinámicos
-  const generatePDFKardex = (productoData, transactions, previousTransactions, dateRange) => {
-    const empresaNombre = empresaData?.nombreComercial || 'TORMENTA JEANS';
-    const empresaRazon = empresaData?.razonSocial || 'TEXTILES CREANDO MODA S.A.C.';
-    const empresaDireccion = empresaData?.direccion || 'Cal San Martin 1573 Urb Urrunaga SC Tres';
-    const empresaUbicacion = `${empresaData?.distrito || 'Chiclayo'} - ${empresaData?.provincia || 'Chiclayo'} - ${empresaData?.departamento || 'Lambayeque'}`;
-    const empresaTelefono = empresaData?.telefono || '918378590';
-    const empresaEmail = empresaData?.email || 'textiles.creando.moda.sac@gmail.com';
-    const empresaRuc = empresaData?.ruc || '20610588981';
+    const generatePDFKardex = async (productoData, transactions = [], previousTransactions = [], dateRange = {}) => {
+    try {
+      const jspdfModule = await import(/* @vite-ignore */ 'jspdf');
+      await import(/* @vite-ignore */ 'jspdf-autotable');
+      const jsPDF = jspdfModule.jsPDF || jspdfModule.default || jspdfModule;
 
-    const htmlContent = `
-    <div class="p-5 text-sm leading-6 font-sans w-full">
-        <div class="flex justify-between items-center mb-3">
-                <div class='flex'>
-                    <div class="Logo-compro">
-                        ${logoBase64 ? `<img src="${logoBase64}" alt="Logo-comprobante" />` : ''}
-                    </div>
-                    <div class="text-start ml-8">
-                        <h1 class="text-xl font-extrabold leading-snug text-blue-800">${empresaNombre}</h1>
-                        <p class="font-semibold leading-snug text-gray-700">${empresaRazon}</p>
-                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">Central:</span> ${empresaDireccion}</p>
-                        <p class="leading-snug text-gray-600">${empresaUbicacion}</p>
-                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">TELF:</span> ${empresaTelefono}</p>
-                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">EMAIL:</span> ${empresaEmail}</p>
-                    </div>
-                </div>
-            </div>
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      let cursorY = 14;
 
-            <div class="container-datos-compro bg-white rounded-lg mb-6 ">
-            <div class="grid grid-cols-2 gap-6 mb-6">
-                <div class="space-y-2">
-                    <p class="text-sm font-semibold text-gray-800">
-                        <span class="font-bold text-gray-900">HISTÓRICO</span> <span class="font-semibold text-gray-600"></span>
-                    </p>
-                    <p class="text-sm font-semibold text-gray-800">
-                        <span class="font-bold text-gray-900">RUC:</span> <span class="font-semibold text-gray-600">${empresaRuc}</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-        <!-- Información del Producto -->
-        <div class="container-datos-compro bg-white rounded-lg mb-6">
-            <div class="grid grid-cols-2 gap-6 mb-6">
-                <div class="space-y-2">
-                    <p class="text-sm font-semibold text-gray-800">
-                        <span class="font-bold text-gray-900">Producto:</span> <span class="font-semibold text-gray-600">${productoData[0].descripcion}</span>
-                    </p>
-                    <p class="text-sm font-semibold text-gray-800">
-                        <span class="font-bold text-gray-900">Marca:</span> <span class="font-semibold text-gray-600">${productoData[0].marca}</span>
-                    </p>
-                    <p class="text-sm font-semibold text-gray-800">
-                        <span class="font-bold text-gray-900">Stock actual:</span> <span class="font-semibold text-gray-600">${productoData[0].stock}</span>
-                    </p>
-                    <p class="text-sm font-semibold text-gray-800">
-                        <span class="font-bold text-gray-900">Fecha:</span> <span class="font-semibold text-gray-600">${dateRange.fechaInicio} - ${dateRange.fechaFin}</span>
-                    </p>
-                </div>
-            </div>
-        </div>
+      // Logo
+     try { if (logoBase64) doc.addImage(logoBase64, 'PNG', 12, cursorY - 2, 28, 28); } catch {}
 
-        <!-- Información de Transacciones Anteriores -->
-        <div class="mb-6">
-        <p class="text-sm font-semibold text-gray-800">
-                <span class="font-bold text-gray-900">TRANSACCIÓN ANTERIORES</span> 
-            </p>
-            <p class="text-sm font-semibold text-gray-800">
-                <span class="font-bold text-gray-900">Entra:</span> ${previousTransactions[0].entra} 
-            </p>
-            <p class="text-sm font-semibold text-gray-800">
-                <span class="font-bold text-gray-900">Sale:</span> ${previousTransactions[0].sale}
-            </p>
-            <p class="text-sm font-semibold text-gray-800">
-                <span class="font-bold text-gray-900">Stock:</span> ${previousTransactions[0].entra - previousTransactions[0].sale}
-            </p>
-        </div>
+      // Encabezado empresa (respetando espacio derecho)
+      const xText = logoBase64 ? 46 : 16;
+     doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+     doc.text(empresaData?.nombreComercial || 'TORMENTA JEANS', xText, cursorY);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      cursorY += 6;
+      const boxW = 72;
+      const boxX = pageWidth - boxW - 16;
+      const infoMaxWidth = Math.max(80, boxX - xText - 8);
 
-        <!-- Tabla de Transacciones Actuales -->
-        <table class="w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
-            <thead class="bg-blue-200 text-blue-800">
-                <tr>
-                    <th class="border-b p-3 text-center">Fecha</th>
-                    <th class="border-b p-3 text-center">Documento</th>
-                    <th class="border-b p-3 text-center">Nombre</th>
-                    <th class="border-b p-3 text-center">Entra</th>
-                    <th class="border-b p-3 text-center">Sale</th>
-                    <th class="border-b p-3 text-center">Stock</th>
-                    <th class="border-b p-3 text-center">Precio</th>
-                    <th class="border-b p-3 text-center">Glosa</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${transactions.map(item => 
-                `<tr class="bg-gray-50 hover:bg-gray-100">
-                    <td class="border-b p-2 text-center">${new Date(item.fecha).toLocaleDateString()}</td>
-                    <td class="border-b p-2 text-center">${item.documento}</td>
-                    <td class="border-b p-2 text-center">${item.nombre}</td>
-                    <td class="border-b p-2 text-center">${item.entra || 0}</td>
-                    <td class="border-b p-2 text-center">${item.sale || 0}</td>
-                    <td class="border-b p-2 text-center">${item.stock}</td>
-                    <td class="border-b p-2 text-center">${item.precio}</td>
-                    <td class="border-b p-2 text-center whitespace-pre-wrap">${item.glosa}</td>
-                </tr>`
-                ).join('')}
-            </tbody>
-        </table>
-    </div>
-    `;
+      const direccionLines = doc.splitTextToSize(`Central: ${empresaData?.direccion || ''}`, infoMaxWidth);
+      direccionLines.forEach(line => { doc.text(line, xText, cursorY); cursorY += 4; });
+      const ubicLines = doc.splitTextToSize(`${empresaData?.distrito || ''} - ${empresaData?.provincia || ''} - ${empresaData?.departamento || ''}`, infoMaxWidth);
+      ubicLines.forEach(line => { doc.text(line, xText, cursorY); cursorY += 4; });
+      doc.text(`TELF: ${empresaData?.telefono || ''}`, xText, cursorY); cursorY += 4;
+      doc.text(`EMAIL: ${empresaData?.email || ''}`, xText, cursorY); cursorY += 8;
 
-    const options = {
-      filename: `kardex_movimientos.pdf`,
-      onInstance: (inst) => {
-        inst.toPdf().get('pdf').then(pdf => {
-          const total = pdf.internal.getNumberOfPages();
-            for (let i = 1; i <= total; i++) {
-              pdf.setPage(i);
-              pdf.setFontSize(8);
-              pdf.text(
-                `Página ${i} de ${total}`,
-                pdf.internal.pageSize.getWidth() - 20,
-                pdf.internal.pageSize.getHeight() - 10
-              );
-            }
-        });
+      // Recuadro derecho (RUC / título)
+      doc.setDrawColor(80); doc.setLineWidth(0.25);
+      doc.rect(boxX, 12, boxW, 36);
+      doc.setFontSize(10.5); doc.setFont('helvetica', 'bold');
+      doc.text(`RUC ${empresaData?.ruc || '20610588981'}`, boxX + boxW / 2, 18, { align: 'center' });
+      doc.setFillColor(191,219,254); doc.rect(boxX, 24, boxW, 11, 'F');
+      doc.setFontSize(10.5);
+      doc.text('HISTÓRICO', boxX + boxW / 2, 30, { align: 'center' });
+
+      // Producto / resumen
+      cursorY += 4;
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      const prodLabel = productoData?.[0];
+      if (prodLabel) {
+        doc.text(`Producto: ${prodLabel.descripcion}`, 15, cursorY);
+        cursorY += 5;
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text(`Marca: ${prodLabel.marca}   COD: ${prodLabel.codigo}   Stock: ${prodLabel.stock}`, 15, cursorY);
+        cursorY += 8;
       }
-    };
-    exportHtmlToPdf(htmlContent, `kardex_movimientos.pdf`, options);
+
+      // Tabla transacciones
+      const rows = (transactions || []).map(item => [
+       item.fecha ? new Date(item.fecha).toLocaleDateString() : '',
+        item.documento || '',
+        item.nombre || '',
+       item.entra != null ? String(item.entra) : '0',
+       item.sale != null ? String(item.sale) : '0',
+        item.stock != null ? String(item.stock) : '',
+        item.precio != null ? String(item.precio) : '',
+        (item.glosa || '').replace(/\r?\n/g, ' ')
+     ]);
+
+      doc.autoTable({
+       head: [['Fecha','Documento','Nombre','Entra','Sale','Stock','Precio','Glosa']],
+       body: rows,
+       startY: cursorY,
+        styles: { fontSize: 8, cellPadding: 3 },
+       headStyles: { fillColor: [191,219,254], textColor: [15,23,42], fontStyle: 'bold' },
+       columnStyles: {
+         0: { cellWidth: 24 },
+         1: { cellWidth: 36 },
+         2: { cellWidth: 46 },
+          3: { cellWidth: 18, halign: 'right' },
+          4: { cellWidth: 18, halign: 'right' },
+          5: { cellWidth: 18, halign: 'right' },
+         6: { cellWidth: 20, halign: 'right' },
+         7: { cellWidth: 46 }
+       },
+       tableWidth: 'auto'
+      });
+
+      // Footer / paginación
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8); doc.setTextColor(120);
+        doc.text(`Página ${i} de ${totalPages}`, pageWidth - 20, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
+     }
+
+      doc.save(`kardex_movimientos.pdf`);
+      // feedback
+      console.info('PDF generado: kardex_movimientos.pdf');
+    } catch (err) {
+      console.error('Error generando PDF con jsPDF:', err);
+      alert('Error al generar PDF (ver consola)');
+    }
   };
 
   const handleGeneratePDFKardex = () => {

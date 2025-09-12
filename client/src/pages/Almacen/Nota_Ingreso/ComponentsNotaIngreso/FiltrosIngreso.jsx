@@ -134,122 +134,150 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
 
     const currentDate = new Date().toLocaleDateString('es-ES');
 
-    const generatePDFIngreso = async (ingresos) => {
-        let logoBase64 = empresaData?.logotipo;
-        if (empresaData?.logotipo && !empresaData.logotipo.startsWith('data:image')) {
-            try {
-                const response = await fetch(empresaData.logotipo);
-                const blob = await response.blob();
-                logoBase64 = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-            } catch (error) {
-                logoBase64 = null;
-            }
-        }
-        const empresaNombre = empresaData?.razonSocial || 'TEXTILES CREANDO MODA S.A.C.';
-        const empresaDireccion = empresaData?.direccion || 'Cal San Martin 1573 Urb Urrunaga SC Tres';
-        const empresaUbicacion = `${empresaData?.distrito || 'Chiclayo'} - ${empresaData?.provincia || 'Chiclayo'} - ${empresaData?.departamento || 'Lambayeque'}`;
-        const empresaTelefono = empresaData?.telefono || '918378590';
-        const empresaEmail = empresaData?.email || 'textiles.creando.moda.sac@gmail.com';
-        const empresaRuc = empresaData?.ruc || '20610588981';
-        const empresaNombreComercial = empresaData?.nombreComercial || 'TORMENTA JEANS';
+const generatePDFIngreso = async (ingresos) => {
+  try {
+    const [{ jsPDF }, autoTable] = await Promise.all([
+      import(/* @vite-ignore */ 'jspdf').then(m => ({ jsPDF: m.jsPDF || m.default?.jsPDF || m.default || m })),
+      import(/* @vite-ignore */ 'jspdf-autotable').then(m => m.default || m)
+    ]);
 
-        const htmlContent = `
-        <style>
-            .logo-empresa { width: 180px; height: 180px; object-fit: contain; }
-        </style>
-        <div class="p-5 text-sm leading-6 font-sans w-full">
-            <div class="flex justify-between items-start mb-3">
-                <div class='flex'>
-                    ${logoBase64 ? `<div class="Logo-compro mr-4"><img src="${logoBase64}" alt="Logo-comprobante" class="logo-empresa" /></div>` : ''}
-                    <div class="text-start">
-                        <h1 class="text-xl font-extrabold leading-snug text-blue-800">${empresaNombreComercial}</h1>
-                        <p class="font-semibold leading-snug text-gray-700">${empresaNombre}</p>
-                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">Central:</span> ${empresaDireccion}</p>
-                        <p class="leading-snug text-gray-600">${empresaUbicacion}</p>
-                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">TELF:</span> ${empresaTelefono}</p>
-                        <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">EMAIL:</span> ${empresaEmail}</p>
-                    </div>
-                </div>
-                <div class="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
-                    <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC ${empresaRuc}</h2>
-                    <div class="bg-blue-200">
-                        <h2 class="text-lg font-bold text-gray-900 py-2">NOTA DE INGRESO</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="container-datos-compro bg-white rounded-lg mb-6 ">
-                <div class="grid grid-cols-2 gap-6 mb-6">
-                    <div class="space-y-2">
-                        <p class="text-sm font-semibold text-gray-800">
-                            <span class="font-bold text-gray-900">Almacén:</span> <span class="font-semibold text-gray-600">${almacenSseleccionado?.almacen || 'N/A'}</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <table class="w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
-                <thead class="bg-blue-200 text-blue-800">
-                    <tr>
-                        <th class="border-b p-3 text-center">Fecha</th>
-                        <th class="border-b p-3 text-center">Documento</th>
-                        <th class="border-b p-3 text-center">Proveedor</th>
-                        <th class="border-b p-3 text-center">Concepto</th>
-                        <th class="border-b p-3 text-center">Almacén Destino</th>
-                        <th class="border-b p-3 text-center">Estado</th>
-                        <th class="border-b p-3 text-center">Usuario</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${ingresos.map(ingreso => `
-                        <tr class="bg-gray-50 hover:bg-gray-100">
-                            <td class="border-b p-2 text-center">${ingreso.fecha}</td>
-                            <td class="border-b p-2 text-center">${ingreso.documento}</td>
-                            <td class="border-b p-2 text-center">${ingreso.proveedor}</td>
-                            <td class="border-b p-2 text-center">${ingreso.concepto}</td>
-                            <td class="border-b p-2 text-center">${ingreso.almacen_D}</td>
-                            <td class="border-b p-2 text-center">${ingreso.estado === 1 ? 'Inactivo' : 'Activo'}</td>
-                            <td class="border-b p-2 text-center">${ingreso.usuario}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-        `;
-        const options = {
-            filename: `ingresos_general.pdf`,
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                logging: true,
-                async: true,
-                letterRendering: true,
-            },
-            onInstance: (inst) => {
-              inst.toPdf().get('pdf').then(pdf => {
-                const total = pdf.internal.getNumberOfPages();
-                for (let i = 1; i <= total; i++) {
-                  pdf.setPage(i);
-                  pdf.setFontSize(8);
-                  pdf.setTextColor(150);
-                  pdf.text(
-                    `Página ${i} de ${total}`,
-                    pdf.internal.pageSize.getWidth() - 20,
-                    pdf.internal.pageSize.getHeight() - 10
-                  );
-                }
-              });
-            }
-        };
-        try {
-            await exportHtmlToPdf(htmlContent, 'ingresos_general.pdf', options);
-        } catch (error) {
-            toast.error("Error al generar el PDF");
-        }
-    };
+    let logoBase64 = empresaData?.logotipo;
+    if (empresaData?.logotipo && !empresaData.logotipo.startsWith('data:image')) {
+      try {
+        const r = await fetch(empresaData.logotipo);
+        const blob = await r.blob();
+        logoBase64 = await new Promise(res => {
+          const reader = new FileReader();
+          reader.onloadend = () => res(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      } catch {
+        logoBase64 = null;
+      }
+    }
+
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const left = 12;
+    const right = 12;
+    let cursorY = 12;
+
+    // Logo (más grande) y recuadro derecho desplazado
+    const logoW = 36;
+    const logoH = 36;
+    if (logoBase64) {
+      try { doc.addImage(logoBase64, 'PNG', left, cursorY, logoW, logoH); } catch {}
+    }
+
+    const boxW = 70;
+    const boxH = 38;
+    const boxX = pageWidth - boxW - right;
+    doc.setDrawColor(80);
+    doc.setLineWidth(0.25);
+    doc.rect(boxX, cursorY - 4, boxW, boxH);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+    doc.text(`RUC ${empresaData?.ruc || '20610588981'}`, boxX + boxW / 2, cursorY + 2, { align: 'center' });
+    doc.setFillColor(191, 219, 254);
+    doc.rect(boxX, cursorY + 6, boxW, 10, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(20);
+    doc.text('NOTAS DE INGRESO', boxX + boxW / 2, cursorY + 13, { align: 'center' });
+    doc.setTextColor(0);
+
+    // Texto empresa: usar más ancho disponible y centrar verticalmente respecto a logo/recuadro
+    const xText = logoBase64 ? left + logoW + 8 : left;
+    const gapToBox = 22;
+    let infoMaxWidth = Math.max(80, boxX - xText - gapToBox);
+
+    const headerCenterY = cursorY + Math.max(logoH, boxH) / 2;
+    let textY = Math.round(headerCenterY - 10);
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+    doc.text(empresaData?.nombreComercial || 'TORMENTA JEANS', xText, textY, { maxWidth: infoMaxWidth });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    textY += 6;
+    doc.text(empresaData?.razonSocial || 'TEXTILES CREANDO MODA S.A.C.', xText, textY, { maxWidth: infoMaxWidth });
+
+    // Dirección y ubicación compactas (menos líneas, texto más pequeño si hace falta)
+    textY += 5;
+    const rawDir = `Central: ${empresaData?.direccion || ''}`;
+    let dirLines = doc.splitTextToSize(rawDir, infoMaxWidth);
+    if (dirLines.length > 2) { doc.setFontSize(8); dirLines = doc.splitTextToSize(rawDir, infoMaxWidth); }
+    dirLines.forEach(l => { textY += 4; doc.text(l, xText, textY); });
+
+    if (doc.getFontSize() < 9) doc.setFontSize(9);
+    textY += 4;
+    const ubicLines = doc.splitTextToSize(`${empresaData?.distrito || ''} - ${empresaData?.provincia || ''} - ${empresaData?.departamento || ''}`, infoMaxWidth);
+    ubicLines.forEach(l => { doc.text(l, xText, textY); textY += 4; });
+
+    textY += 2;
+    doc.text(`TELF: ${empresaData?.telefono || ''}`, xText, textY);
+    textY += 4;
+    doc.text(`EMAIL: ${empresaData?.email || ''}`, xText, textY);
+
+    // Mover cursorY justo debajo del bloque de encabezado (sin dejar tanto espacio)
+    cursorY = Math.max(cursorY + boxH + 4, textY + 8);
+
+    // Línea divisoria y fondo de cabecera más corto
+    doc.setDrawColor(210); doc.setLineWidth(0.2);
+    doc.line(left, cursorY - 6, pageWidth - right, cursorY - 6);
+
+    const headerBgH = 10;
+    doc.setFillColor(222, 238, 255);
+    doc.rect(left, cursorY - 2, pageWidth - left - right, headerBgH, 'F');
+
+    // Preparar filas y columnas usando más ancho utilizable
+    const rows = (ingresos || []).map(i => [
+      i.fecha || '',
+      i.documento || '',
+      i.proveedor || '',
+      i.concepto || '',
+      i.almacen_D || '',
+      i.estado === 1 ? 'Inactivo' : 'Activo',
+      i.usuario || ''
+    ]);
+
+    doc.autoTable({
+      head: [['Fecha','Documento','Proveedor','Concepto','Almacén','Estado','Usuario']],
+      body: rows,
+      startY: cursorY + 5,
+      margin: { left, right },
+      styles: { fontSize: 9, cellPadding: 3, valign: 'middle', lineWidth: 0 },
+      headStyles: { fillColor: [222,238,255], textColor: [20,30,40], fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 26 },
+        1: { cellWidth: 42 },
+        2: { cellWidth: 56 },
+        3: { cellWidth: pageWidth * 0.34 },
+        4: { cellWidth: 44 },
+        5: { cellWidth: 22 },
+        6: { cellWidth: 38 }
+      },
+      tableWidth: pageWidth - left - right,
+      tableLineWidth: 0,
+      tableLineColor: [255,255,255]
+    });
+
+    const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : cursorY + 8;
+    const now = new Date();
+    doc.setFontSize(9);
+    doc.text(`Generado: ${now.toLocaleDateString('es-PE')} ${now.toLocaleTimeString('es-PE')}`, left, finalY);
+
+    // Paginación
+    const totalPages = doc.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(8); doc.setTextColor(120);
+      doc.text(`Página ${p} de ${totalPages}`, pageWidth - right - 3, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+    }
+
+    doc.save(`ingresos_general.pdf`);
+    toast.success('PDF generado');
+  } catch (err) {
+    console.error('Error generando PDF con jsPDF:', err);
+    toast.error('Error al generar el PDF');
+  }
+};
 
     
     const { hasCreatePermission } = usePermisos();

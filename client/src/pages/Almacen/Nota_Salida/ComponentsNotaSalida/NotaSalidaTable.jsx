@@ -6,7 +6,8 @@ import ConfirmationModal from './Modals/ConfirmationModal';
 import anularNota from '../data/anular_nota_salida';
 import { Toaster, toast } from "react-hot-toast";
 import { usePermisos } from '@/routes';
-import { exportHtmlToPdf } from '@/utils/pdf/exportHtmlToPdf';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 const NotaSalidaTable = forwardRef(({ salidas, onNotaAnulada }, ref)  => {
   const [isModalOpenImprimir2, setIsModalOpenImprimir2] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
@@ -99,228 +100,191 @@ useImperativeHandle(ref, () => ({
     generatePDFGeneral
   }));
   const generatePDFGeneral = async () => {
+  try {
     const now = new Date();
-    const fechaGeneracion = now.toLocaleDateString('es-PE'); // Ajusta el formato según tu necesidad
-    const horaGeneracion = now.toLocaleTimeString('es-PE'); // Ajusta el formato según tu necesidad
-  
-    // Define el HTML content con las notas de salida de la primera página
-    const htmlContent = `
-      <div class="p-5 text-sm leading-6 font-sans w-full">
-        <div class="flex justify-between items-center mb-6">
-          <div class='flex'>
-            <div class="Logo-compro">
-              <img src="${base64Image}" alt="Logo-comprobante" />
-            </div>
-            <div class="text-start ml-8">
-              <h1 class="text-xl font-extrabold leading-snug text-blue-800">TORMENTA JEANS</h1>
-              <p class="font-semibold leading-snug text-gray-700">TEXTILES CREANDO MODA S.A.C.</p>
-              <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">Central:</span> Cal San Martin 1573 Urb Urrunaga SC Tres</p>
-              <p class="leading-snug text-gray-600">Chiclayo - Chiclayo - Lambayeque</p>
-              <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">TELF:</span> 918378590</p>
-              <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">EMAIL:</span> textiles.creando.moda.sac@gmail.com</p>
-            </div>
-          </div>
-  
-          <div class="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
-            <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC 20610588981</h2>
-            <div class="bg-blue-200">
-              <h2 class="text-lg font-bold text-gray-900 py-2">NOTA DE SALIDA</h2>
-            </div>
-          </div>
-        </div>
-      <style>
-      .pdf-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      .pdf-table th, .pdf-table td {
-        padding: 5px;
-        text-align: center;
-        white-space: normal; /* Ajuste de texto */
-        word-wrap: break-word; /* Ajuste de palabras largas */
-      }
-        </style>
-        <table class="pdf-table w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
-          <thead class="bg-blue-200 text-blue-800">
-            <tr>
-              <th class="border-b p-3 text-center">FECHA</th>
-              <th class="border-b p-3 text-center">DOCUMENTO</th>
-              <th class="border-b p-3 text-center">DESTINATARIO</th>
-              <th class="border-b p-3 text-center">CONCEPTO</th>
-              <th class="border-b p-3 text-center">ESTADO</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${getCurrentPageItems().map(salida => `
-              <tr class="bg-gray-50 hover:bg-gray-100">
-                <td class="border-b p-2 text-center">${salida.fecha}</td>
-                <td class="border-b p-2 text-center">${salida.documento}</td>
-                <td class="border-b p-2 text-center">${salida.proveedor}</td>
-                <td class="border-b p-2 text-center">${salida.concepto}</td>
-                <td class="border-b p-2 text-center">${salida.estado === 1 ? 'INACTIVO' : 'ACTIVO'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-  
-        <div class="bg-white rounded-lg shadow-lg">
-          <div class="px-4 py-2 border-b border-gray-700 rounded-lg bg-gray-100">
-            <p class="text-sm text-gray-700">Fecha de Generación: ${fechaGeneracion}</p>
-            <p class="text-sm text-gray-700">Hora de Generación: ${horaGeneracion}</p>
-            <p class="text-sm text-gray-700">Generado desde el Sistema de Tormenta S.A.C</p>
-          </div>
-        </div>
-      </div>
-    `;
-  
-    // Convert HTML to PDF
-try {
-    await exportHtmlToPdf(htmlContent, 'Nota_Salida.pdf', {
-      onInstance: inst => {
-        inst.toPdf().get('pdf').then(pdf => {
-          const total = pdf.internal.getNumberOfPages();
-            for (let i = 1; i <= total; i++) {
-              pdf.setPage(i);
-              pdf.setFontSize(8);
-              pdf.setTextColor(120);
-              pdf.text(
-                `Página ${i} de ${total}`,
-                pdf.internal.pageSize.getWidth() - 28,
-                pdf.internal.pageSize.getHeight() - 8
-              );
-            }
-        });
-      }
+    const fechaGeneracion = now.toLocaleDateString('es-PE');
+    const horaGeneracion = now.toLocaleTimeString('es-PE');
+    const items = getCurrentPageItems();
+
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let cursorY = 18;
+
+    // Logo
+    try {
+      if (base64Image) doc.addImage(base64Image, 'PNG', 16, cursorY - 4, 28, 28);
+    } catch {}
+
+    // Caja derecha
+    const boxW = 68;
+    const boxX = pageWidth - boxW - 16;
+    doc.setDrawColor(80); doc.setLineWidth(0.25);
+    doc.rect(boxX, cursorY - 6, boxW, 36);
+    doc.setFontSize(10.5); doc.setFont('helvetica', 'bold');
+    doc.text(`RUC 20610588981`, boxX + boxW / 2, cursorY + 2, { align: 'center' });
+    doc.setFillColor(191, 219, 254);
+    doc.rect(boxX, cursorY + 5, boxW, 11, 'F');
+    doc.setFontSize(10.5);
+    doc.text('NOTA DE SALIDA', boxX + boxW / 2, cursorY + 12, { align: 'center' });
+
+    // Datos empresa (izquierda)
+    const xText = base64Image ? 50 : 16;
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text('TORMENTA JEANS', xText, cursorY);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    cursorY += 6;
+    const infoMaxWidth = boxX - xText - 8;
+    const lines = doc.splitTextToSize('Central: Cal San Martin 1573 Urb Urrunaga SC Tres', Math.max(80, infoMaxWidth));
+    lines.forEach(line => { doc.text(line, xText, cursorY); cursorY += 4; });
+    const ubic = doc.splitTextToSize('Chiclayo - Chiclayo - Lambayeque', Math.max(80, infoMaxWidth));
+    ubic.forEach(line => { doc.text(line, xText, cursorY); cursorY += 4; });
+    doc.text(`TELF: 918378590`, xText, cursorY); cursorY += 5;
+    doc.text(`EMAIL: textiles.creando.moda.sac@gmail.com`, xText, cursorY);
+    cursorY += 10;
+
+    // Separador
+    doc.setDrawColor(210); doc.setLineWidth(0.2);
+    doc.line(15, cursorY - 4, pageWidth - 15, cursorY - 4);
+
+    // Tabla con jsPDF-AutoTable
+    const head = [['FECHA', 'DOCUMENTO', 'DESTINATARIO', 'CONCEPTO', 'ESTADO']];
+    const body = items.map(s => [
+      s.fecha || '',
+      s.documento || '',
+      s.proveedor || '',
+      s.concepto || '',
+      s.estado === 1 ? 'INACTIVO' : 'ACTIVO'
+    ]);
+
+    doc.autoTable({
+      startY: cursorY,
+      head,
+      body,
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [191,219,254], textColor: [15,23,42], fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 28 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 'auto' },
+        4: { cellWidth: 24, halign: 'center' }
+      },
+      tableWidth: 'auto',
     });
+
+    // Pie: fecha/hora
+    let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : cursorY + 8;
+    doc.setFontSize(9);
+    doc.text(`Fecha de Generación: ${fechaGeneracion}`, 15, finalY);
+    doc.text(`Hora de Generación: ${horaGeneracion}`, 15, finalY + 6);
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(`Página ${i} de ${totalPages}`, pageWidth - 18, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+    }
+
+    doc.save(`salidas_${fechaGeneracion}.pdf`);
     toast.success('PDF general generado');
-  } catch {
+  } catch (err) {
+    console.error('Error generando PDF general:', err);
     toast.error('Error generando PDF');
   }
 };
   
 
 const generatePDF = async (nota) => {
-    if (!nota) {
-      toast.error('Nota está vacío o no válido');
-      return;
-    }
-    const now = new Date();
-    const fechaGeneracion = now.toLocaleDateString('es-PE'); // Ajusta el formato según tu necesidad
-    const horaGeneracion = now.toLocaleTimeString('es-PE'); // Ajusta el formato según tu necesidad
-    // Define the HTML content with test data
-    const htmlContent = `
-      <div class="p-5 text-sm leading-6 font-sans w-full">
-          <div class="flex justify-between items-center mb-3">
-              <div class='flex'>
-                  <div class="Logo-compro">
-                      <img src="${base64Image}" alt="Logo-comprobante" />
-                  </div>
-                  <div class="text-start ml-8">
-                      <h1 class="text-xl font-extrabold leading-snug text-blue-800">TORMENTA JEANS</h1>
-                      <p class="font-semibold leading-snug text-gray-700">TEXTILES CREANDO MODA S.A.C.</p>
-                      <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">Central:</span> Cal San Martin 1573 Urb Urrunaga SC Tres</p>
-                      <p class="leading-snug text-gray-600">Chiclayo - Chiclayo - Lambayeque</p>
-                      <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">TELF:</span> 918378590</p>
-                      <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">EMAIL:</span> textiles.creando.moda.sac@gmail.com</p>
-                  </div>
-              </div>
-  
-              <div class="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
-                  <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC 20610588981</h2>
-                  <div class="bg-blue-200">
-                      <h2 class="text-lg font-bold text-gray-900 py-2">NOTA DE SALIDA</h2>
-                  </div>
-                  <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">${nota.documento}</h2>
-              </div>
-          </div>
-  
-          <div class="container-datos-compro bg-white rounded-lg mb-6 ">
-              <div class="grid grid-cols-2 gap-6 mb-6">
-                  <div class="space-y-2">
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">CONCEPTO:</span> <span class="font-semibold text-gray-600">${nota.concepto}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">DESTINATARIO:</span> <span class="font-semibold text-gray-600">${nota.proveedor}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">REMITENTE:</span> <span class="font-semibold text-gray-600">TEXTILES CREANDO MODA S.A.C.</span>
-                      </p>                  
-<p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">ALMACÉN:</span> <span class="font-semibold text-gray-600">${nota.almacen_O}</span>
-                      </p>
-                 </div>
-                  <div class="space-y-2 ml-auto text-left">
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">FECHA: </span> <span class="font-semibold text-gray-600">${nota.fecha}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">DOC.REFER:</span> <span class="font-semibold text-gray-600">${nota.documento}</span>
-                      </p>
-
-                      <p class="text-sm font-semibold text-gray-800">
-
-                      </p>
-                                <p class="text-sm font-semibold text-gray-800" className={getEstadoClassName(salida.estado)}>
-            <span class="font-bold text-gray-900">ESTADO:</span> <span class="font-semibold text-gray-600">${nota.estado === 1 ? 'INACTIVO' : 'ACTIVO'}</span>
-          </p>
-                  </div>
-              </div>
-          </div>
-  
-          <table class="w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
-  <thead class="bg-blue-200 text-blue-800">
-    <tr>
-      <th class="border-b p-3 text-center">Marca</th>
-      <th class="border-b p-3 text-center">Descripción</th>
-      <th class="border-b p-3 text-center" style="width: 15%;">Cantidad</th>
-      <th class="border-b p-3 text-center">UM</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${nota.detalles.map(detalle => `
-      <tr class="bg-gray-50 hover:bg-gray-100">
-        <td class="border-b p-2 text-center">${detalle.marca}</td>
-        <td class="border-b p-2 text-center">${detalle.descripcion}</td>
-        <td class="border-b p-2 text-center" style="width: 15%;">${detalle.cantidad}</td>
-        <td class="border-b p-2 text-center">${detalle.unidad}</td>
-      </tr>
-    `).join('')}
-  </tbody>
-</table>
-          <div class="bg-white rounded-lg shadow-lg">
-              <div class="px-4 py-2 border-b border-gray-700 rounded-lg bg-gray-100">
-                  <div>
-                      <p className="text-sm text-gray-700">Fecha de Generación:${fechaGeneracion}</p>
-                      <p className="text-sm text-gray-700">Hora de Generación: ${horaGeneracion}</p>
-                      <p className="text-sm text-gray-700">Generado desde el Sistema de Tormenta S.A.C</p>
-                  </div>
-              </div>
-          </div>
-      </div>
-    `;
-
-    // Convert HTML to PDF
+  if (!nota) {
+    toast.error('Nota está vacío o no válido');
+    return;
+  }
   try {
-    await exportHtmlToPdf(htmlContent, `${nota.documento}.pdf`, {
-      onInstance: inst => {
-        inst.toPdf().get('pdf').then(pdf => {
-          const total = pdf.internal.getNumberOfPages();
-          for (let i = 1; i <= total; i++) {
-            pdf.setPage(i);
-            pdf.setFontSize(8);
-            pdf.setTextColor(120);
-            pdf.text(
-              `Página ${i} de ${total}`,
-              pdf.internal.pageSize.getWidth() - 28,
-              pdf.internal.pageSize.getHeight() - 8
-            );
-          }
-        });
-      }
+    const now = new Date();
+    const fechaGeneracion = now.toLocaleDateString('es-PE');
+    const horaGeneracion = now.toLocaleTimeString('es-PE');
+
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let cursorY = 18;
+
+    // Logo
+    try { if (base64Image) doc.addImage(base64Image, 'PNG', 16, cursorY - 4, 28, 28); } catch {}
+
+    // Caja derecha con documento
+    const boxW = 68; const boxX = pageWidth - boxW - 16;
+    doc.setDrawColor(80); doc.setLineWidth(0.25);
+    doc.rect(boxX, cursorY - 6, boxW, 36);
+    doc.setFontSize(10.5); doc.setFont('helvetica', 'bold');
+    doc.text(`RUC 20610588981`, boxX + boxW / 2, cursorY + 2, { align: 'center' });
+    doc.setFillColor(191, 219, 254);
+    doc.rect(boxX, cursorY + 5, boxW, 11, 'F');
+    doc.setFontSize(10.5);
+    doc.text('NOTA DE SALIDA', boxX + boxW / 2, cursorY + 12, { align: 'center' });
+    doc.setFontSize(9);
+    doc.text(nota.documento || '', boxX + boxW / 2, cursorY + 22, { align: 'center' });
+
+    // Empresa y datos
+    const xText = base64Image ? 50 : 16;
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text('TORMENTA JEANS', xText, cursorY);
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    cursorY += 6;
+    const infoMaxWidth = boxX - xText - 8;
+    const lines = doc.splitTextToSize(`Central: Cal San Martin 1573 Urb Urrunaga SC Tres`, Math.max(80, infoMaxWidth));
+    lines.forEach(line => { doc.text(line, xText, cursorY); cursorY += 4; });
+    const ubic = doc.splitTextToSize('Chiclayo - Chiclayo - Lambayeque', Math.max(80, infoMaxWidth));
+    ubic.forEach(line => { doc.text(line, xText, cursorY); cursorY += 4; });
+    doc.text(`TELF: 918378590`, xText, cursorY); cursorY += 5;
+    doc.text(`EMAIL: textiles.creando.moda.sac@gmail.com`, xText, cursorY);
+    cursorY += 10;
+
+    // Datos de la nota (dos columnas)
+    const col1XLabel = 15, col1XValue = 46, col2XLabel = 120, col2XValue = 150;
+    const drawLabelValue = (label, value, xL, xV, y) => {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(label, xL, y);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(value || 'N/A', xV, y);
+    };
+    drawLabelValue('CONCEPTO:', nota.concepto, col1XLabel, col1XValue, cursorY);
+    drawLabelValue('DESTINATARIO:', nota.proveedor, col1XLabel, col1XValue, cursorY + 6);
+    drawLabelValue('ALMACÉN:', nota.almacen_O, col1XLabel, col1XValue, cursorY + 12);
+    drawLabelValue('FECHA:', nota.fecha, col2XLabel, col2XValue, cursorY);
+    drawLabelValue('DOC. REFER:', nota.documento, col2XLabel, col2XValue, cursorY + 6);
+    cursorY += 22;
+
+    // Tabla detalles
+    const rows = (nota.detalles || []).map(d => [
+      d.marca || '',
+      (d.descripcion || '').trim(),
+      d.cantidad != null ? String(d.cantidad) : '',
+      d.unidad || ''
+    ]);
+    doc.autoTable({
+      head: [['Marca', 'Descripción', 'Cantidad', 'UM']],
+      body: rows,
+      startY: cursorY,
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: [191,219,254], textColor: [15,23,42], fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 20, halign: 'right' }, 3: { cellWidth: 18 } },
     });
+
+    let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : cursorY + 8;
+    doc.setFontSize(9);
+    doc.text(`Fecha de Generación: ${fechaGeneracion}`, 15, finalY);
+    doc.text(`Hora de Generación: ${horaGeneracion}`, 15, finalY + 6);
+
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(`Página ${i} de ${totalPages}`, pageWidth - 18, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+    }
+
+    doc.save(`${nota.documento || 'nota-salida'}.pdf`);
     toast.success('PDF generado');
-  } catch {
+  } catch (err) {
+    console.error('Error generando PDF individual:', err);
     toast.error('Error generando PDF');
   }
 };

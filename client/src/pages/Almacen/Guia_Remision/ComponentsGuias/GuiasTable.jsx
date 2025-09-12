@@ -6,7 +6,7 @@ import { TiDeleteOutline } from "react-icons/ti";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Toaster, toast } from "react-hot-toast";
 import anularGuia from '../../data/anular_guia';
-import { exportHtmlToPdf } from '@/utils/pdf/exportHtmlToPdf';
+import { useUserStore } from "@/store/useStore";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 const itemsPerPageDefault = 10;
 
@@ -19,11 +19,12 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
   const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
   const [guiaIdToAnular, setGuiaIdToAnular] = useState(null);
+  const nombre = useUserStore(state => state.nombre);
 
   useEffect(() => {
     const fetchEmpresa = async () => {
       try {
-        const data = await getEmpresaDataByUser();
+        const data = await getEmpresaDataByUser(nombre);
         setEmpresaData(data);
         if (data?.logotipo && !data.logotipo.startsWith('data:image')) {
           const response = await fetch(data.logotipo);
@@ -40,7 +41,7 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
       }
     };
     fetchEmpresa();
-  }, []);
+  }, [nombre]);
 
   // Paginación
   const indexOfLast = currentPage * itemsPerPage;
@@ -49,156 +50,118 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
 
 
   // Function to generate PDF
-  const generatePDF = async (guia) => {
-  const peso = isNaN(parseFloat(guia.peso)) ? "0.00" : parseFloat(guia.peso).toFixed(2);
-  const observacion = guia.observacion || 'No hay ninguna observacion';
-  const cantPaquetes = guia.canti || '0';
+    const generatePDF = async (guia) => {
+    try {
+      // import dinámico para evitar problemas de bundling en Azure
+      const jspdfModule = await import(/* @vite-ignore */ 'jspdf');
+      await import(/* @vite-ignore */ 'jspdf-autotable');
+      const jsPDF = jspdfModule.jsPDF || jspdfModule.default || jspdfModule;
 
-  // Usa los datos de empresa obtenidos dinámicamente
-  const empresaNombre = empresaData?.nombreComercial || 'TORMENTA JEANS';
-  const empresaRazon = empresaData?.razonSocial || 'TEXTILES CREANDO MODA S.A.C.';
-  const empresaDireccion = empresaData?.direccion || 'Cal San Martin 1573 Urb Urrunaga SC Tres';
-  const empresaUbicacion = `${empresaData?.distrito || 'Chi'} - ${empresaData?.provincia || 'Chiclayo'} - ${empresaData?.departamento || 'Lambayeque'}`;
-  const empresaTelefono = empresaData?.telefono || '918';
-  const empresaEmail = empresaData?.email || 'textiles';
-  const empresaRuc = empresaData?.ruc || '20';
+      const peso = isNaN(parseFloat(guia.peso)) ? "0.00" : parseFloat(guia.peso).toFixed(2);
+      const observacion = guia.observacion || 'No hay ninguna observacion';
+      const cantPaquetes = guia.canti || '0';
 
-  // Usa la fecha y hora del registro
-  const fechaGeneracion = guia.fecha || '';
-  const horaGeneracion = guia.h_generacion || '';
+      // Datos empresa
+      const empresaNombre = empresaData?.nombreComercial || 'TORMENTA JEANS';
+     const empresaRazon = empresaData?.razonSocial || 'TEXTILES CREANDO MODA S.A.C.';
+     const empresaDireccion = empresaData?.direccion || 'Cal San Martin 1573 Urb Urrunaga SC Tres';
+      const empresaUbicacion = `${empresaData?.distrito || 'Chi'} - ${empresaData?.provincia || 'Chiclayo'} - ${empresaData?.departamento || 'Lambayeque'}`;
+      const empresaTelefono = empresaData?.telefono || '918';
+      const empresaEmail = empresaData?.email || 'textiles';
+      const empresaRuc = empresaData?.ruc || '20';
 
-    // Define the HTML content with test data
-    const htmlContent = `
-     <div class="p-5 text-sm leading-6 font-sans w-full">
-          <div class="flex justify-between items-center mb-3">
-              <div class='flex'>
-                  <div class="Logo-compro">
-                      ${logoBase64 ? `<img src="${logoBase64}" alt="Logo-comprobante" />` : ''}
-                  </div>
-                  <div class="text-start ml-8">
-                      <h1 class="text-xl font-extrabold leading-snug text-blue-800">${empresaNombre}</h1>
-                      <p class="font-semibold leading-snug text-gray-700">${empresaRazon}</p>
-                      <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">Central:</span> ${empresaDireccion}</p>
-                      <p class="leading-snug text-gray-600">${empresaUbicacion}</p>
-                      <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">TELF:</span> ${empresaTelefono}</p>
-                      <p class="leading-snug text-gray-600"><span class="font-bold text-gray-800">EMAIL:</span> ${empresaEmail}</p>
-                  </div>
-              </div>
-              <div class="text-center border border-gray-400 rounded-md ml-8 overflow-hidden w-80">
-                  <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">RUC ${empresaRuc}</h2>
-                  <div class="bg-blue-200">
-                      <h2 class="text-lg font-bold text-gray-900 py-2">GUIA DE REMISION</h2>
-                  </div>
-                  <h2 class="text-lg font-bold text-gray-800 p-2 border-b border-gray-400">${guia.numGuia}</h2>
-              </div>
-          </div>
-  
-          <div class="container-datos-compro bg-white rounded-lg mb-6 ">
-              <div class="grid grid-cols-2 gap-6 mb-6">
-                  <div class="space-y-2">
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">NRO. DOCU.:</span> <span class="font-semibold text-gray-600">${guia.documento}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">DESTINATARIO:</span> <span class="font-semibold text-gray-600">${guia.cliente}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">REMITENTE:</span> <span class="font-semibold text-gray-600">TEXTILES CREANDO MODA S.A.C.</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">DIR. PARTIDA:</span><span class="font-semibold text-gray-600"> ${guia.dirpartida}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">DIR. ENTREGA:</span><span class="font-semibold text-gray-600"> ${guia.dirdestino}</span>
-                      </p>
-                  </div>
-                  <div class="space-y-2 ml-auto text-left">
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">FECHA EMISIÓN:</span> <span class="font-semibold text-gray-600">${guia.fecha}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">DOC.REFER:</span> <span class="font-semibold text-gray-600">${guia.numGuia}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">VENDEDOR:</span> <span class="font-semibold text-gray-600">${guia.vendedor}</span>
-                      </p>
-                      <p class="text-sm font-semibold text-gray-800">
-                          <span class="font-bold text-gray-900">CANT. PAQUETES:</span> <span class="font-semibold text-gray-600">${cantPaquetes}</span>
-                          <span class="font-bold text-gray-900">PESO: </span> <span class="font-semibold text-gray-600">${peso}</span>
-                      </p>
-                  </div>
-              </div>
-          </div>
-  
-          <table class="w-full border-collapse mb-6 bg-white shadow-md rounded-lg overflow-hidden">
-  <thead class="bg-blue-200 text-blue-800">
-    <tr>
-      <th class="border-b p-3 text-center">Código</th>
-      <th class="border-b p-3 text-center">Descripción</th>
-      <th class="border-b p-3 text-center">Cant.</th>
-      <th class="border-b p-3 text-center">U.M.</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${guia.detalles.map(detalle => `
-      <tr class="bg-gray-50 hover:bg-gray-100">
-        <td class="border-b p-2 text-center">${detalle.codigo}</td>
-        <td class="border-b p-2 text-center">${detalle.descripcion}</td>
-        <td class="border-b p-2 text-center">${detalle.cantidad}</td>
-        <td class="border-b p-2 text-center">${detalle.um}</td>
-      </tr>
-    `).join('')}
-  </tbody>
-</table>
+      const fechaGeneracion = guia.fecha || '';
+      const horaGeneracion = guia.h_generacion || '';
 
-  
-          <div class="bg-white rounded-lg shadow-lg">
-              <div class="px-4 py-2 border-b border-gray-700 rounded-lg bg-gray-100">
-                  <p class="text-md font-semibold text-gray-800 mb-1">OBSERVACION:</p>
-                  <div>
-                      <p class="text-md font-semibold text-gray-800 items-center">
-                      ${observacion}
-                      </p>
-                  </div>
-              </div>
-          <br><br/>
-          </div>
-          <div class="bg-white rounded-lg shadow-lg">
-          <div class="px-4 py-2 border-b border-gray-700 rounded-lg bg-gray-100">
-                  <div className="flex-1 mr-6 py-6 pl-6 pr-0">
-                      <p className="text-md font-bold text-gray-900 mb-2"> TRANSPORTE: ${guia.transpub ? guia.transpub : guia.transpriv}</p>
-                      <div className="space-y-1">
-                          <p className="text-sm text-gray-700">DOC. TRANSPORTISTA: ${guia.docpub ? guia.docpub : guia.docpriv}</p>
-                      </div>
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      let cursorY = 18;
 
-                      
-                  </div>
-              </div>
-              <div class="px-4 py-2 border-b border-gray-700 rounded-lg bg-gray-100">
-                  <div>
-                      <p className="text-md font-bold text-gray-900 mb-2">MOTIVO TRANSPORTE: ${guia.concepto}</p>
-                  </div>
-              </div>
-              <div class="px-4 py-2 border-b border-gray-700 rounded-lg bg-gray-100">
-                  <div>
-                      <p className="text-sm text-gray-700">Fecha de Generación:${fechaGeneracion}</p>
-                      <p className="text-sm text-gray-700">Hora de Generación: ${horaGeneracion}</p>
-                      <p className="text-sm text-gray-700">Generado desde el Sistema de Hyrotek</p>
-                  </div>
-              </div>
-          </div>
-      </div>
-    `;
-  
-    // Convert HTML to PDF
-  const options =  {
-    margin: [10, 10],
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-  
-     await exportHtmlToPdf(htmlContent, `${guia.numGuia}.pdf`, options);
+      // Logo
+      try { if (logoBase64) doc.addImage(logoBase64, 'PNG', 16, cursorY - 4, 28, 28); } catch {}
+
+      // Recuadro derecho (RUC / título)
+     const boxW = 80;
+      const boxX = pageWidth - boxW - 16;
+      doc.setDrawColor(80); doc.setLineWidth(0.25);
+      doc.rect(boxX, cursorY - 6, boxW, 40);
+      doc.setFontSize(10.5); doc.setFont('helvetica', 'bold');
+      doc.text(`RUC ${empresaRuc}`, boxX + boxW / 2, cursorY + 2, { align: 'center' });
+      doc.setFillColor(191, 219, 254);
+      doc.rect(boxX, cursorY + 8, boxW, 12, 'F');
+      doc.setFontSize(10.5);
+      doc.text('GUIA DE REMISION', boxX + boxW / 2, cursorY + 15, { align: 'center' });
+      doc.setFontSize(9.5);
+      doc.text(guia.numGuia || '', boxX + boxW / 2, cursorY + 26, { align: 'center' });
+
+      // Encabezado empresa (izquierda)
+      const xText = logoBase64 ? 52 : 16;
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.text(empresaNombre, xText, cursorY);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      let y = cursorY + 6;
+      doc.text(empresaRazon, xText, y);
+     y += 4;
+      const infoMaxWidth = Math.max(60, boxX - xText - 8);
+      const direccionLines = doc.splitTextToSize(`Central: ${empresaDireccion}`, infoMaxWidth);
+      direccionLines.forEach(line => { doc.text(line, xText, y); y += 4; });
+     const ubicLines = doc.splitTextToSize(empresaUbicacion, infoMaxWidth);
+      ubicLines.forEach(line => { doc.text(line, xText, y); y += 4; });
+      doc.text(`TELF: ${empresaTelefono}`, xText, y); y += 4;
+      doc.text(`EMAIL: ${empresaEmail}`, xText, y);
+
+      // Separador
+      cursorY = Math.max(cursorY + 36, y + 8);
+      doc.setDrawColor(230); doc.line(15, cursorY - 4, pageWidth - 15, cursorY - 4);
+
+      // Tabla detalles usando autotable
+      const rows = (guia.detalles || []).map(d => [
+        d.codigo || '',
+        d.descripcion || '',
+        d.cantidad != null ? String(d.cantidad) : '',
+        d.um || ''
+      ]);
+
+     doc.autoTable({
+       head: [['Código', 'Descripción', 'Cant.', 'U.M.']],
+       body: rows,
+        startY: cursorY,
+        styles: { fontSize: 9, cellPadding: 3 },
+       headStyles: { fillColor: [191,219,254], textColor: [15,23,42], fontStyle: 'bold' },
+        columnStyles: { 0:{cellWidth:30}, 1:{cellWidth:'auto'}, 2:{cellWidth:22, halign:'right'}, 3:{cellWidth:20} },
+       tableWidth: 'auto'
+      });
+
+      const afterTableY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : cursorY + 8;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.text('OBSERVACIÓN:', 15, afterTableY);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      const obsLines = doc.splitTextToSize(observacion, pageWidth - 30);
+      doc.text(obsLines, 15, afterTableY + 6);
+
+     // Transporte / motivo / fecha
+      const baseY = afterTableY + Math.max(20, obsLines.length * 4 + 8);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.text(`TRANSPORTE: ${guia.transpub ? guia.transpub : guia.transpriv || ''}`, 15, baseY);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text(`DOC. TRANSPORTISTA: ${guia.docpub ? guia.docpub : guia.docpriv || ''}`, 15, baseY + 6);
+      doc.text(`MOTIVO TRANSPORTE: ${guia.concepto || ''}`, 15, baseY + 12);
+     doc.text(`Generado: ${fechaGeneracion} ${horaGeneracion}`, 15, baseY + 18);
+
+      // Paginación
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+       doc.setFontSize(8); doc.setTextColor(120);
+       doc.text(`Página ${i} de ${totalPages}`, pageWidth - 18, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+     }
+
+     doc.save(`${guia.numGuia || 'guia'}.pdf`);
+      toast.success('PDF generado');
+    } catch (err) {
+      console.error('Error generando PDF con jsPDF:', err);
+      toast.error('Error al generar el PDF');
+    }
   };
 
   const handleRowClick = (guia) => {
