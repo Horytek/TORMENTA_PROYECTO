@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@botpress/chat": "^0.5.1",
+    "@botpress/webchat": "^3.2.7",
     "@fontsource/inter": "^5.2.6",
     "@headlessui/react": "^2.1.2",
     "@headlessui/tailwindcss": "^0.2.1",

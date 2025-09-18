@@ -17,6 +17,8 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@botpress/chat": "^0.5.1",
+    "@botpress/webchat": "^3.2.7",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
