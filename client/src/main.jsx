@@ -10,7 +10,7 @@ import { ScrollShadow } from "@heroui/react";
 import { AuthProvider } from "@/context/Auth/AuthProvider";
 import { ProtectedRoute } from "./routes";
 import { HeroUIProvider } from "@heroui/react";
-import LandingPage from './pages/landing/LandingPage';
+import LandingPage from './pages/Landing/LandingPage';
 import ServiciosPage from './pages/Landing/ServiciosPage';
 import AboutPage from './pages/Landing/aboutPage';
 import EquipoPage from './pages/Landing/EquipoPage';
