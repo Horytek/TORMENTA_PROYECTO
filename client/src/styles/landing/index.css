@@ -12,7 +12,7 @@
 /* Importar estilos modulares de landing */
 @import "./Theme.css";
 @import "./Diagonals.css";
-@import "./Components.css";
+@import "./components.css";
 
 /* Scope global para landing page - Todo debe estar dentro de .landing-page */
 @layer landing {
