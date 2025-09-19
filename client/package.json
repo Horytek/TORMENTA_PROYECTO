@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@botpress/chat": "^0.5.1",
+    "@botpress/webchat": "^3.2.7",
     "@fontsource/inter": "^5.2.6",
     "@headlessui/react": "^2.1.2",
     "@headlessui/tailwindcss": "^0.2.1",
@@ -52,20 +54,22 @@
     "@tailwindcss/postcss": "^4.1.13",
     "@tailwindcss/vite": "^4.1.13",
     "@tremor/react": "^3.17.4",
-    "axios": "^1.7.2",
+    "axios": "^1.12.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "countries-list": "^3.1.1",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.12",
+    "dompurify": "^3.2.6",
+    "esbuild": "^0.25.9",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.23.3",
     "html2pdf.js": "^0.10.2",
     "input-otp": "^1.4.2",
     "js-cookie": "^3.0.5",
     "jsbarcode": "^3.11.6",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.506.0",
     "mysql2": "^3.12.0",
@@ -110,7 +114,7 @@
     "eslint-plugin-react-refresh": "^0.4.7",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
-    "vite": "^5.3.1",
+    "vite": "^5.4.20",
     "vite-tsconfig-paths": "^5.1.4"
   }
 }

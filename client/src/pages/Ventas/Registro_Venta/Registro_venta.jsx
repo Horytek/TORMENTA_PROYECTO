@@ -480,41 +480,49 @@ const actualizarStockDespuesVenta = () => {
   };
 
   // Sale data for receipt
-  const datosVentaComprobante = {
-    fecha: new Date().toISOString().slice(0, 10),
-    totalImporte_venta: detalles.reduce((acc, detalle) => {
-      const precioSinIGV = parseFloat(detalle.precio) / 1.18;
-      return acc + (precioSinIGV * detalle.cantidad);
-    }, 0).toFixed(2),
-    igv: detalles.reduce((acc, detalle) => {
-      const precioSinIGV = parseFloat(detalle.precio) / 1.18;
-      const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad;
-      return acc + igvDetalle;
-    }, 0).toFixed(2),
-    total_t: detalles.reduce((acc, detalle) => {
-      const precioSinIGV = parseFloat(detalle.precio) / 1.18;
-      const igvDetalle = precioSinIGV * 0.18 * detalle.cantidad;
-      return acc + (precioSinIGV + igvDetalle) * detalle.cantidad;
-    }, 0).toFixed(2),
-    descuento_venta: parseFloat(
-      detalles.reduce((acc, detalle) => 
-        acc + (parseFloat(detalle.precio) * parseFloat(detalle.descuento) / 100) * detalle.cantidad, 0
-      ).toFixed(2)
-    ),
-    detalles: detalles.map(detalle => {
-      const producto = productos.find(producto => producto.codigo === detalle.codigo);
-      return {
-        id_producto: detalle.codigo,
-        nombre: detalle.nombre,
-        undm: producto ? producto.undm : '',
-        nom_marca: producto ? producto.nom_marca : '',
-        cantidad: detalle.cantidad,
-        precio: parseFloat(detalle.precio),
-        descuento: parseFloat(detalle.descuento),
-        sub_total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
-      };
-    }).filter(detalle => detalle !== null),
-  };
+const datosVentaComprobante = {
+  fecha: new Date().toISOString().slice(0, 10),
+  // Calcular el total real considerando descuentos
+  total_t: detalles.reduce((acc, detalle) => {
+    const cantidad = Number(detalle.cantidad) || 0;
+    const precio = Number(detalle.precio) || 0;
+    const descuento = Number(detalle.descuento) || 0;
+    const importe = cantidad * precio * (1 - descuento / 100);
+    return acc + importe;
+  }, 0).toFixed(2),
+  // Subtotal (base imponible)
+  totalImporte_venta: detalles.reduce((acc, detalle) => {
+    const cantidad = Number(detalle.cantidad) || 0;
+    const precio = Number(detalle.precio) || 0;
+    const descuento = Number(detalle.descuento) || 0;
+    const importe = cantidad * precio * (1 - descuento / 100);
+    return acc + (importe / 1.18);
+  }, 0).toFixed(2),
+  // IGV (diferencia entre total y subtotal)
+  igv: detalles.reduce((acc, detalle) => {
+    const cantidad = Number(detalle.cantidad) || 0;
+    const precio = Number(detalle.precio) || 0;
+    const descuento = Number(detalle.descuento) || 0;
+    const importe = cantidad * precio * (1 - descuento / 100);
+    return acc + (importe - (importe / 1.18));
+  }, 0).toFixed(2),
+  descuento_venta: detalles.reduce((acc, detalle) =>
+    acc + (Number(detalle.precio) * Number(detalle.descuento) / 100) * Number(detalle.cantidad), 0
+  ).toFixed(2),
+  detalles: detalles.map(detalle => {
+    const producto = productos.find(producto => producto.codigo === detalle.codigo);
+    return {
+      id_producto: detalle.codigo,
+      nombre: detalle.nombre,
+      undm: producto ? producto.undm : '',
+      nom_marca: producto ? producto.nom_marca : '',
+      cantidad: detalle.cantidad,
+      precio: Number(detalle.precio),
+      descuento: Number(detalle.descuento),
+      sub_total: parseFloat(detalle.subtotal.replace(/[^0-9.-]+/g, '')),
+    };
+  }).filter(detalle => detalle !== null),
+};
 
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
   const handleClearSearch = () => setSearchTerm("");

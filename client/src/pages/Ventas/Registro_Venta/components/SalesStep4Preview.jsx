@@ -353,11 +353,6 @@ const SalesStep4Preview = ({
             className="w-full"
             size="md"
             variant="flat"
-            style={{
-              border: "none",
-              boxShadow: "none",
-              outline: "none",
-            }}
           />
         </div>
             <Divider />

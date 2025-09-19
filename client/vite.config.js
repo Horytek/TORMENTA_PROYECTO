@@ -15,20 +15,18 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       'html2pdf.js',
-      'html2pdf.js/dist/html2pdf.bundle.js'
+      'html2pdf.js/dist/html2pdf.bundle.js',
+      '@botpress/webchat',
+      '@botpress/chat'
     ]
   },
+  assetsInclude: ['**/*.ogg', '**/*.mp3', '**/*.wav'],
   build: {
-    target: 'es2020',          // BigInt soportado
+    target: 'es2020',
     sourcemap: false,
     minify: 'esbuild',
     cssCodeSplit: true,
-    rollupOptions: {
-      output: {
-        // Forzar no dividir chunks si aún quieres 1 bundle (opcional):
-        // manualChunks: undefined
-      }
-    },
+    rollupOptions: { output: {} },
     commonjsOptions: { transformMixedEsModules: true }
   }
 })

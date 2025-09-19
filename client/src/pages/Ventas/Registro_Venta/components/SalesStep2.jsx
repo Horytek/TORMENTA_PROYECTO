@@ -474,11 +474,6 @@ const SalesStep2 = ({
                 disabled={!paymentData.metodoPago}
                 isInvalid={showValidations && errors.montoRecibido}
                 errorMessage={showValidations && errors.montoRecibido ? "Monto recibido es requerido" : ""}
-                style={{  
-                  border: "none",
-                  boxShadow: "none",
-                  outline: "none"
-                }}
                 classNames={{
                   input: "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-moz-appearance]:textfield"
                 }}
