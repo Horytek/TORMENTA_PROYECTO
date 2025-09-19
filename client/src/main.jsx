@@ -12,7 +12,7 @@ import { ProtectedRoute } from "./routes";
 import { HeroUIProvider } from "@heroui/react";
 import LandingPage from './pages/Landing/LandingPage';
 import ServiciosPage from './pages/Landing/ServiciosPage';
-import AboutPage from './pages/Landing/aboutPage';
+import AboutPage from './pages/Landing/AboutPage';
 import EquipoPage from './pages/Landing/EquipoPage';
 import ActualizacionesPage from './pages/Landing/ActualizacionesPage';
 import TerminosCondicionesPage from './pages/Landing/TerminosCondicionesPage';
