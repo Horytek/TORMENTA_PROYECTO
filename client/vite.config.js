@@ -1,10 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': resolve('./src') } },
+  css: {
+    modules: {
+      localsConvention: 'camelCase',
+      generateScopedName: '[name]_[local]__[hash:base64:5]'
+    }
+  },
   optimizeDeps: {
     exclude: [
       'html2pdf.js',

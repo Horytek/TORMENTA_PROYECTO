@@ -1,23 +1,24 @@
 import React, { useEffect } from 'react';
 
-// Importa los componentes de la landing
-import Navbar from '../../components/Navbar';
-import Hero from '../../components/Hero';
-import Features1 from '../../components/Features1';
-import Features2 from '../../components/Features2';
-import FeaturesDiagonal from '../../components/FeaturesDiagonal';
-import Pricing from '../../components/Pricing';
-import Brands from '../../components/Brands';
-import Testimonials from '../../components/Testimonials';
-import Blog from '../../components/Blog';
-import FAQ from '../../components/FAQ';
-import Footer from '../../components/Footer';
-import ScrollUpButton from '../../components/ScrollUpButton';
+// Importa los componentes de la landing migrados
+import { Navbar } from '../../components/landing/Navbar';
+import { Hero } from '../../components/landing/Hero';
+import { Features1 } from '../../components/landing/Features1';
+import { Features2 } from '../../components/landing/Features2';
+import { FeaturesDiagonal } from '../../components/landing/FeaturesDiagonal';
+import { Pricing } from '../../components/landing/Pricing';
+import { Brands } from '../../components/landing/Brands';
+import { Testimonials } from '../../components/landing/Testimonials';
+import { Blog } from '../../components/landing/Blog';
+import { FAQ } from '../../components/landing/FAQ';
+import { Footer } from '../../components/landing/Footer';
+import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
 
-import './landing.css';
+// Importar estilos específicos de landing aislados
+import '../../styles/landing/index.css';
 
 export default function LandingPage() {
-  // Añade/remueve una clase al body para aislar estilos si lo deseas
+  // Añade/remueve una clase al body para aislar estilos
   useEffect(() => {
     document.body.classList.add('landing-body');
     return () => {
@@ -26,7 +27,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="landing-root">
+    <div className="landing-page" data-theme="landing">
       <Navbar />
       <Hero />
       <Features1 />

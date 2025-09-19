@@ -1,0 +1,60 @@
+/* Landing Page CSS Module - Solo para estilos que Tailwind NO puede hacer */
+@import "tailwindcss";
+@reference "tailwindcss";
+@theme {
+  /* Variables de color para Tailwind v4 */
+  --color-primary-text: rgb(255 255 255);
+  --color-secondary-text: rgb(174 178 183);
+  --color-secondary-color: rgb(161 163 247);
+  --color-primary-color: rgb(99 102 241);
+
+  --color-bg-dark-1: rgb(31 32 35);
+  --color-bg-dark-2: rgb(38 39 43);
+  --color-bg-dark-3: rgb(48 49 54);
+  --color-bg-dark-transparent: rgb(31 32 35 / 0.7);
+
+  --color-main-border: rgb(255 255 255 / 0.15);
+}
+
+/* === GRADIENTES COMPLEJOS === */
+.heroBgGradient {
+  background: linear-gradient(
+    180deg,
+    rgb(31, 32, 35) 0%,
+    rgb(31, 32, 35) 40%,
+    rgb(38, 39, 43) 100%
+  );
+}
+
+.heroDashboardBorderGradient {
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, 
+    rgba(161, 163, 247, 0.3) 0%,
+    rgba(99, 102, 241, 0.3) 50%,
+    rgba(161, 163, 247, 0.1) 100%
+  );
+  background-clip: border-box;
+}
+
+/* === SHAPES SVG COMPLEJOS === */
+.heroShapeDivider {
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.heroShapeDivider svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 200px;
+}
+
+.heroShapeFill {
+  fill: rgb(31 32 35);
+}
+
+/* === EFECTOS ESPECIALES === */
+.navbarBackdrop {
+  backdrop-filter: blur(12px);
+}

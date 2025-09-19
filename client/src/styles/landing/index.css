@@ -1,0 +1,56 @@
+/* Landing Page Styles - Aislados del ERP */
+@import "tailwindcss";
+
+/* Importar fuentes específicas para landing solo si no están globalmente */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/inter/800.css";
+@import "@fontsource/inter/900.css";
+
+/* Importar estilos modulares de landing */
+@import "./theme.css";
+@import "./diagonals.css";
+@import "./components.css";
+
+/* Scope global para landing page - Todo debe estar dentro de .landing-page */
+@layer landing {
+  .landing-page {
+    /* Base font family para landing */
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    
+    /* Asegurar que la landing use su propio contexto de estilos */
+    isolation: isolate;
+    position: relative;
+    
+    /* Background color base para landing */
+    background-color: var(--color-bg-dark-2);
+    color: var(--color-primary-text);
+    
+    /* Scroll behavior suave */
+    scroll-behavior: smooth;
+  }
+  
+  /* Reset styles dentro de landing page para prevenir herencia del ERP */
+  .landing-page * {
+    box-sizing: border-box;
+  }
+  
+  /* Override potenciales conflictos del main.css - Reset más específico */
+  .landing-page input,
+  .landing-page textarea {
+    all: unset;
+    display: revert;
+    box-sizing: border-box;
+  }
+  
+  /* EXPERIMENTO: Sin reset específico para botones */
+  
+  /* Asegurar que el HTML y body no interfieran cuando estamos en landing */
+  .landing-body {
+    background-color: var(--color-bg-dark-2);
+    overflow-x: hidden;
+    scroll-behavior: smooth !important;
+  }
+}

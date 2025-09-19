@@ -1,0 +1,27 @@
+/* Tailwind v4 theme tokens para landing */
+@import "tailwindcss";
+@reference "tailwindcss";
+
+@theme {
+  /* Colores personalizados para landing */
+  --color-primary-text: rgb(255 255 255);
+  --color-secondary-text: rgb(174 178 183);
+  --color-secondary-color: rgb(161 163 247);
+  --color-primary-color: rgb(99 102 241);
+
+  --color-bg-dark-1: rgb(31 32 35);
+  --color-bg-dark-2: rgb(38 39 43);
+  --color-bg-dark-3: rgb(48 49 54);
+  --color-bg-dark-3-hover: rgb(55 56 62);
+  --color-bg-dark-transparent: rgb(31 32 35 / 0.7);
+  --color-bg-dark-transparent-darker: rgb(0 0 0 / 0.5);
+  --color-bg-dark-transparent-lighter: rgb(48 49 54 / 0.7);
+
+  --color-main-border: rgb(255 255 255 / 0.15);
+  --color-main-border-darker: rgb(255 255 255 / 0.07);
+
+  --color-quote-icon-color: rgb(178 184 205);
+
+  /* Breakpoint extra opcional */
+  --breakpoint-xs: 530px;
+}

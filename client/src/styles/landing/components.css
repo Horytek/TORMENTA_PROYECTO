@@ -1,0 +1,134 @@
+/* Estilos scoped para landing page */
+@layer landing {
+  .landing-page {
+    color-scheme: dark;
+  }
+
+  /* Typography */
+  .landing-page .block-title {
+    color: var(--color-primary-text);
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .landing-page .block-big-title {
+    color: var(--color-primary-text);
+    font-size: 2.25rem; /* text-4xl */
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  @media (min-width: 1280px) {
+    .landing-page .block-big-title {
+      font-size: 3rem; /* xl:text-5xl */
+    }
+  }
+
+  .landing-page .block-subtitle {
+    color: var(--color-secondary-color);
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .landing-page .content-title {
+    color: var(--color-primary-text);
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .landing-page .content-text-white {
+    color: var(--color-primary-text);
+    font-size: 1rem; /* text-base */
+    line-height: 1.625;
+  }
+
+  .landing-page .content-text-gray {
+    color: rgb(156 163 175); /* text-gray-400 */
+    font-size: 1rem; /* text-base */
+  }
+
+  /* Borders */
+  .landing-page .main-border-gray {
+    border: 1px solid var(--color-main-border);
+  }
+
+  .landing-page .main-border-gray-darker {
+    border: 1px solid var(--color-main-border-darker);
+  }
+
+  /* Buttons */
+  .landing-page .contained-button {
+    border-radius: 0.5rem;
+    font-weight: 700;
+    background-color: var(--color-primary-color);
+    color: var(--color-primary-text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .landing-page .contained-button:hover {
+    background-color: #7274f3;
+  }
+
+  .landing-page .outlined-button {
+    color: var(--color-primary-text);
+    border: 1px solid var(--color-main-border);
+    border-radius: 0.75rem;
+    background-color: var(--color-bg-dark-2);
+    font-size: 0.875rem;
+    border-color: rgb(55 65 81); /* border-gray-700 */
+  }
+
+  .landing-page .outlined-button:hover {
+    background-color: var(--color-bg-dark-3);
+  }
+}
+
+/* Alias para mantener compatibilidad con clases personalizadas */
+/* Estas clases funcionan FUERA del scope .landing-page para máxima compatibilidad */
+
+/* Backgrounds */
+.bg-primaryColor         { background-color: var(--color-primary-color); }
+.border-primaryColor     { border-color: var(--color-primary-color); }
+
+.text-primaryText        { color: var(--color-primary-text); }
+.text-secondaryColor     { color: var(--color-secondary-color); }
+.text-secondaryText      { color: var(--color-secondary-text); }
+
+.border-mainBorder       { border-color: var(--color-main-border); }
+.border-mainBorderDarker { border-color: var(--color-main-border-darker); }
+
+.bg-bgDark1              { background-color: var(--color-bg-dark-1); }
+.bg-bgDark2              { background-color: var(--color-bg-dark-2); }
+.bg-bgDark3              { background-color: var(--color-bg-dark-3); }
+.bg-bgDark3Hover         { background-color: var(--color-bg-dark-3-hover); }
+
+.bg-bgDarkTransparent            { background-color: var(--color-bg-dark-transparent); }
+.bg-bgDarkTransparentDarker      { background-color: var(--color-bg-dark-transparent-darker); }
+.bg-bgDarkTransparentLighter     { background-color: var(--color-bg-dark-transparent-lighter); }
+
+/* Fill y Stroke para SVGs */
+.fill-primaryColor      { fill: var(--color-primary-color); }
+.fill-secondaryColor    { fill: var(--color-secondary-color); }
+.stroke-primaryColor    { stroke: var(--color-primary-color); }
+.stroke-secondaryColor  { stroke: var(--color-secondary-color); }
+
+.fill-bgDark1 { fill: var(--color-bg-dark-1); }
+.fill-bgDark2 { fill: var(--color-bg-dark-2); }
+.fill-bgDark3 { fill: var(--color-bg-dark-3); }
+
+.fill-quoteIconColor { fill: var(--color-quote-icon-color); }
+.text-quoteIconColor { color: var(--color-quote-icon-color); }
+.stroke-quoteIconColor { stroke: var(--color-quote-icon-color); }
+
+/* Hover effects */
+.hover\:bg-bgDark3:hover         { background-color: var(--color-bg-dark-3); }
+.hover\:bg-bgDark3Hover:hover    { background-color: var(--color-bg-dark-3-hover); }
+.hover\:text-secondaryText:hover { color: var(--color-secondary-text); }
