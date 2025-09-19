@@ -10,9 +10,9 @@
 @import "@fontsource/inter/900.css";
 
 /* Importar estilos modulares de landing */
-@import "./theme.css";
-@import "./diagonals.css";
-@import "./components.css";
+@import "./Theme.css";
+@import "./Diagonals.css";
+@import "./Components.css";
 
 /* Scope global para landing page - Todo debe estar dentro de .landing-page */
 @layer landing {
