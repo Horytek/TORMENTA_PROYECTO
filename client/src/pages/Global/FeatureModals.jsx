@@ -46,11 +46,6 @@ export const AddFeatureModal = ({ isOpen, onClose, handleAddFeature }) => {
                 <Input
                   {...register("funcion", { required: true })}
                   placeholder="Nueva característica..."
-                  style={{
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                  }}
                   className={`w-full ${errors.funcion ? "border-red-600 focus:border-red-600 focus:ring-red-600" : "border-gray-300"} text-gray-900 rounded-lg`}
                 />
               </div>
@@ -123,11 +118,6 @@ export const EditFeatureModal = ({ isOpen, onClose, selectedFeature, handleEditF
                   value={funcion}
                   onChange={(e) => setFuncion(e.target.value)}
                   placeholder="Nombre de la característica..."
-                  style={{
-                    border: "none",
-                    boxShadow: "none",
-                    outline: "none",
-                  }}
                   className={`w-full ${!funcion ? "border-red-600 focus:border-red-600 focus:ring-red-600" : "border-gray-300"} text-gray-900 rounded-lg`}
                 />
               </div>

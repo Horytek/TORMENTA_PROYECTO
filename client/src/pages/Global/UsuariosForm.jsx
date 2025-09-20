@@ -152,8 +152,8 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
             </div>
 
             <div className="flex flex-col md:flex-row gap-3 justify-end mt-8">
-              <ButtonClose onClick={onClose} className="w-full md:w-auto" />
-              <ButtonSave type="submit" className="w-full md:w-auto" />
+              <ButtonClose onClick={onClose} color="default" className="w-full md:w-auto" />
+              <ButtonSave type="submit" color="primary" className="w-full md:w-auto" />
             </div>
           </div>
         </form>

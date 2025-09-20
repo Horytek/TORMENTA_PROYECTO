@@ -115,29 +115,19 @@ const PlanUsers = () => {
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
   return (
-    <div className="space-y-6 p-6 bg-white shadow-lg rounded-xl border border-gray-200">
+    <div className="space-y-6 p-6 bg-white shadow-lg rounded-xl border-gray-200">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Input
           type="text"
           placeholder="Buscar usuario..."
           value={searchUser}
           onChange={(e) => setSearchUser(e.target.value)}
-          style={{
-            border: "none",
-            boxShadow: "none",
-            outline: "none",
-          }}
         />
         <Input
           type="text"
           placeholder="Buscar empresa..."
           value={searchEmpresa}
           onChange={(e) => setSearchEmpresa(e.target.value)}
-          style={{
-            border: "none",
-            boxShadow: "none",
-            outline: "none",
-          }}
         />
         <Select
           label="Filtrar por Plan"
@@ -155,7 +145,7 @@ const PlanUsers = () => {
           </Button>
         </div>
       </div>
-      <Table aria-label="Lista de Usuarios" className="border rounded-lg">
+      <Table aria-label="Lista de Usuarios" className="rounded-lg">
         <TableHeader>
           <TableColumn>Empresa</TableColumn>
           <TableColumn>Usuario</TableColumn>
@@ -183,11 +173,6 @@ const PlanUsers = () => {
   <Autocomplete
     className="ml-2 max-w-xs"
     label="Empresa"
-    style={{
-      border: "none",
-      boxShadow: "none",
-      outline: "none",
-    }}
     selectedKey={user.id_empresa?.toString()} // Asegúrate de que sea string
     onSelectionChange={(selected) =>
       handleEmpresaChange(user.id_usuario, selected)
@@ -232,11 +217,6 @@ const PlanUsers = () => {
         {editableUsers[user.id_usuario] ? (
           <Input
             type="date"
-            style={{
-              border: "none",
-              boxShadow: "none",
-              outline: "none",
-            }}
             value={user.fecha_pago ? new Date(user.fecha_pago).toISOString().split("T")[0] : ""}
             onChange={(e) => handleFechaChange(user.id_usuario, e.target.value)}
           />

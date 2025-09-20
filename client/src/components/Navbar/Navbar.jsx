@@ -48,7 +48,7 @@ function Navbar({ routes }) {
             readOnly
             style={{ cursor: 'pointer' }}
             isClearable
-            className="h-9 text-sm cursor-pointer w-full max-w-xs"
+            className="h-9 text-sm cursor-pointer max-w-xs"
             onFocus={() => setShowCommand(true)}
             onClick={() => setShowCommand(true)}
           />
