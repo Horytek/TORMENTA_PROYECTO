@@ -70,7 +70,7 @@ export const Hero = () => {
                             Empezar
                         </button>
                         <a
-                            href="https://tormenta-proyecto.vercel.app/"
+                            href="https://horytekd-davist-tests.azurewebsites.net/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-64 sm:w-52 h-12 rounded-xl font-bold text-primary-text border border-solid flex justify-center items-center cursor-pointer bg-bg-dark-2 hover:bg-bg-dark-3 border-primary-color transition text-center no-underline"

@@ -3,7 +3,11 @@ import { motion } from "framer-motion";
 export const ModulosPrincipales = () => {
   const modulos = [
     {
-      icon: "📊",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+          <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+        </svg>
+      ),
       titulo: "Contabilidad y Finanzas",
       color: "from-primary-color to-secondary-color",
       descripcion: "Gestión financiera integral y automatizada",
@@ -17,7 +21,11 @@ export const ModulosPrincipales = () => {
       ]
     },
     {
-      icon: "🛒",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+          <path d="M19,7H18V6A2,2 0 0,0 16,4H8A2,2 0 0,0 6,6V7H5A3,3 0 0,0 2,10V19A3,3 0 0,0 5,22H19A3,3 0 0,0 22,19V10A3,3 0 0,0 19,7M8,6H16V7H8V6Z"/>
+        </svg>
+      ),
       titulo: "Ventas y CRM",
       color: "from-secondary-color to-primary-color",
       descripcion: "Optimiza tu fuerza de ventas y relación con clientes",
@@ -31,7 +39,11 @@ export const ModulosPrincipales = () => {
       ]
     },
     {
-      icon: "📦",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+          <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
+        </svg>
+      ),
       titulo: "Inventarios y Almacén",
       color: "from-primary-color to-secondary-color",
       descripcion: "Control total de stock y movimientos",
@@ -45,7 +57,11 @@ export const ModulosPrincipales = () => {
       ]
     },
     {
-      icon: "🛍️",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+          <path d="M17,18C15.89,18 15,18.89 15,20A2,2 0 0,0 17,22A2,2 0 0,0 19,20C19,18.89 18.1,18 17,18M1,2V4H3L6.6,11.59L5.24,14.04C5.09,14.32 5,14.65 5,15A2,2 0 0,0 7,17H19V15H7.42A0.25,0.25 0 0,1 7.17,14.75C7.17,14.7 7.18,14.66 7.2,14.63L8.1,13H15.55C16.3,13 16.96,12.58 17.3,11.97L20.88,5H5.21L4.27,3H1M7,18C5.89,18 5,18.89 5,20A2,2 0 0,0 7,22A2,2 0 0,0 9,20C9,18.89 8.1,18 7,18Z"/>
+        </svg>
+      ),
       titulo: "Compras y Proveedores",
       color: "from-secondary-color to-primary-color",
       descripcion: "Optimización de procesos de adquisición",
@@ -59,7 +75,11 @@ export const ModulosPrincipales = () => {
       ]
     },
     {
-      icon: "👥",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+          <path d="M16,4C16.88,4 17.67,4.5 18,5.26L19,7H20A2,2 0 0,1 22,9V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V9A2,2 0 0,1 4,7H5L6,5.26C6.33,4.5 7.12,4 8,4H16M16.5,10A1.5,1.5 0 0,0 15,11.5V12.5A1.5,1.5 0 0,0 16.5,14A1.5,1.5 0 0,0 18,12.5V11.5A1.5,1.5 0 0,0 16.5,10M7.5,10A1.5,1.5 0 0,0 6,11.5V12.5A1.5,1.5 0 0,0 7.5,14A1.5,1.5 0 0,0 9,12.5V11.5A1.5,1.5 0 0,0 7.5,10Z"/>
+        </svg>
+      ),
       titulo: "Recursos Humanos",
       color: "from-primary-color to-secondary-color",
       descripcion: "Gestión integral del capital humano",
@@ -73,7 +93,11 @@ export const ModulosPrincipales = () => {
       ]
     },
     {
-      icon: "🏭",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+          <path d="M7,2V4H8V18A4,4 0 0,0 12,22A4,4 0 0,0 16,18V4H17V2H7M11,16C10.4,16 10,15.6 10,15C10,14.4 10.4,14 11,14C11.6,14 12,14.4 12,15C12,15.6 11.6,16 11,16M13,12C12.4,12 12,11.6 12,11C12,10.4 12.4,10 13,10C13.6,10 14,10.4 14,11C14,11.6 13.6,12 13,12M14,7H10V4H14V7Z"/>
+        </svg>
+      ),
       titulo: "Producción",
       color: "from-secondary-color to-primary-color",
       descripcion: "Planificación y control de manufactura",
