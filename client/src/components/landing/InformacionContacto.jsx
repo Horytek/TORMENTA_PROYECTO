@@ -10,8 +10,8 @@ export const InformacionContacto = () => {
         </svg>
       ),
       title: "Email",
-      primary: "ventas@horytek.com",
-      secondary: "atencion@horytek.com",
+      primary: "javierrojasq.0612@gmail.com",
+      secondary: "javierrojasq.0612@gmail.com",
       description: "Consultas sobre productos y atención al cliente",
       color: "secondary-color",
       gradient: "from-secondary-color/20 to-primary-color/20"
@@ -23,8 +23,8 @@ export const InformacionContacto = () => {
         </svg>
       ),
       title: "Teléfono",
-      primary: "+51 987 654 321",
-      secondary: "+51 123 456 789",
+      primary: "+51 961 797 720",
+      secondary: "+51 961 797 720",
       description: "Consultas sobre productos y disponibilidad",
       color: "primary-color",
       gradient: "from-primary-color/20 to-secondary-color/20"
@@ -37,9 +37,9 @@ export const InformacionContacto = () => {
         </svg>
       ),
       title: "WhatsApp",
-      primary: "+51 949 423 702",
-      secondary: "Atención personalizada",
-      description: "Asesoría de moda y consultas rápidas",
+      primary: "+51 961 797 720",
+      secondary: "Javier Rojas - Gerente",
+      description: "Asesoría directa con el Gerente de HoryCore",
       color: "green-400",
       gradient: "from-green-400/20 to-green-500/20"
     },
@@ -171,7 +171,7 @@ export const InformacionContacto = () => {
                   <span className="text-green-400 text-sm font-medium">Soporte de emergencia</span>
                 </div>
                 <p className="text-secondary-text text-xs">
-                  Para consultas sobre productos y asesoría de moda, contáctanos por WhatsApp.
+                  Para consultas sobre productos y soluciones empresariales, contáctanos por WhatsApp.
                 </p>
               </div>
             </motion.div>
@@ -191,10 +191,10 @@ export const InformacionContacto = () => {
               ¿Necesitas una respuesta inmediata?
             </h3>
             <p className="text-secondary-text mb-6">
-              Nuestro equipo está disponible para atenderte por WhatsApp y brindarte asesoría personalizada sobre nuestros productos.
+              Contacta directamente con <span className="text-secondary-color font-semibold">Javier Rojas</span>, Gerente de HoryCore, para recibir asesoría personalizada sobre nuestros productos y soluciones empresariales.
             </p>
             <a
-              href="https://wa.me/51949423702"
+              href="https://wa.me/51961797720"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-colors duration-200"

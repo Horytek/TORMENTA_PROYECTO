@@ -1,16 +1,30 @@
+import { motion } from 'framer-motion';
+
 export const ProximasActualizaciones = () => {
   return (
     <section className="w-full py-16 bg-gradient-to-b from-bgDark1 via-bgDark2 to-bgDark1">
       <div className="flex justify-center px-2 sm:px-4">
         <div className="w-4/5 md:w-11/12 lg:w-10/12 xl:w-4/5 2xl:w-2/3">
-          <div className="flex items-center mb-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="flex items-center mb-8"
+          >
             <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
             <h2 className="text-3xl font-bold text-white">Próximas Actualizaciones</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-          </div>
+          </motion.div>
           
           {/* Próxima versión */}
-          <div className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-3xl border border-gray-600/30 hover:border-primary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary-color/10">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            viewport={{ once: true }}
+            className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-3xl border border-gray-600/30 hover:border-primary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary-color/10"
+          >
             {/* Elemento decorativo */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-primary-color/5 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary-color/5 rounded-full blur-2xl"></div>
@@ -89,7 +103,7 @@ export const ProximasActualizaciones = () => {
               </div>
             </div>
           </div>
-        </div>
+          </motion.div>
         </div>
       </div>
     </section>

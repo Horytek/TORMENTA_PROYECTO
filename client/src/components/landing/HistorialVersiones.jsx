@@ -1,18 +1,31 @@
 import React from 'react';
+import { motion } from "framer-motion";
 
 export const HistorialVersiones = () => {
   return (
     <section className="w-full pb-8 bg-gradient-to-b from-bgDark1 via-bgDark2 to-bgDark1">
       <div className="flex justify-center px-2 sm:px-4">
         <div className="w-4/5 md:w-11/12 lg:w-10/12 xl:w-4/5 2xl:w-2/3">
-        <div className="flex items-center mb-8">
+        <motion.div 
+          className="flex items-center mb-8"
+          initial={{ opacity: 0, x: -50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          viewport={{ once: true }}
+        >
           <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
           <h2 className="text-3xl font-bold text-white">Historial de Versiones</h2>
           <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
+        </motion.div>
         
         {/* Versión 4.2.0 */}
-        <div className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-3xl border border-gray-600/20 transition-all duration-500 overflow-hidden mb-8 hover:border-secondary-color/40">
+        <motion.div 
+          className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-3xl border border-gray-600/20 transition-all duration-500 overflow-hidden mb-8 hover:border-secondary-color/40"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          viewport={{ once: true }}
+        >
           {/* Elementos decorativos de fondo */}
           <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/5 to-primary-color/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-secondary-color/10 to-transparent rounded-full blur-3xl"></div>
@@ -87,10 +100,16 @@ export const HistorialVersiones = () => {
               </ul>
             </div>
           </div>
-        </div>
+        </motion.div>
         
         {/* Versión 4.1.5 */}
-        <div className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-2xl border border-gray-600/20 transition-all duration-500 overflow-hidden mb-8 hover:border-primary-color/40">
+        <motion.div 
+          className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-2xl border border-gray-600/20 transition-all duration-500 overflow-hidden mb-8 hover:border-primary-color/40"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          viewport={{ once: true }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-primary-color/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           
           <div className="relative z-10">
@@ -136,10 +155,16 @@ export const HistorialVersiones = () => {
               </ul>
             </div>
           </div>
-        </div>
+        </motion.div>
         
         {/* Versión 4.1.0 */}
-        <div className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-2xl border border-gray-600/20 transition-all duration-500 overflow-hidden mb-8 hover:border-secondary-color/40">
+        <motion.div 
+          className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-2xl border border-gray-600/20 transition-all duration-500 overflow-hidden mb-8 hover:border-secondary-color/40"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          viewport={{ once: true }}
+        >
           <div className="relative z-10">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div className="flex items-center">
@@ -183,7 +208,7 @@ export const HistorialVersiones = () => {
               </ul>
             </div>
           </div>
-        </div>
+        </motion.div>
         </div>
       </div>
     </section>

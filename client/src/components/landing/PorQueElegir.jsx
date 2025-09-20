@@ -1,16 +1,30 @@
+import { motion } from 'framer-motion';
+
 export const PorQueElegir = () => {
   return (
-    <section className="w-full py-24 bg-gradient-to-b from-bgDark2 to-bgDark1">
+    <section className="w-full py-12 bg-gradient-to-b from-bgDark2 to-bgDark1">
       <div className="max-w-6xl mx-auto px-8">
         {/* Título */}
-        <div className="flex items-center mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="flex items-center mb-6"
+        >
           <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
           <h2 className="text-3xl font-bold text-white">¿Por Qué Elegir HoryCore?</h2>
           <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
+        </motion.div>
         
         {/* Grid de estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8"
+        >
           {/* Card 1: Satisfacción del cliente */}
           <div className="group relative bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/20 hover:border-secondary-color/50 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary-color/15 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -92,7 +106,7 @@ export const PorQueElegir = () => {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

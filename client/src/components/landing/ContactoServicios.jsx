@@ -38,7 +38,7 @@ export const ContactoServicios = () => {
                     </svg>
                   </div>
                   <h4 className="text-white font-semibold mb-2">Email</h4>
-                  <p className="text-secondary-text text-sm">contacto@horytek.com</p>
+                  <p className="text-secondary-text text-sm">javierrojasq.0612@gmail.com</p>
                 </div>
                 
                 <div className="bg-bgDark1 p-6 rounded-2xl border border-gray-600/30 hover:border-primary-color/50 transition-colors duration-300">
@@ -48,7 +48,7 @@ export const ContactoServicios = () => {
                     </svg>
                   </div>
                   <h4 className="text-white font-semibold mb-2">WhatsApp</h4>
-                  <p className="text-secondary-text text-sm">+51 987 654 321</p>
+                  <p className="text-secondary-text text-sm">+51 961 797 720</p>
                 </div>
                 
                 <div className="bg-bgDark1 p-6 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-colors duration-300">

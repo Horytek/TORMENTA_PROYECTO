@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from 'react-router-dom';
 
 import { InvitationModal } from "./InvitationModal";
 import { CheckArrowIcon } from "../../assets/icons/CheckArrowIcon";
@@ -7,9 +8,20 @@ import { CheckArrowIcon } from "../../assets/icons/CheckArrowIcon";
 export const Pricing = () => {
   const [isMonthly, setIsMonthly] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = () => {
     setIsMonthly(!isMonthly);
+  };
+
+  const handlePlanSelection = (planName, price, period) => {
+    // Redirigir a la página de registro de licencia con parámetros del plan
+    const searchParams = new URLSearchParams({
+      plan: planName,
+      price: price,
+      period: period
+    });
+    navigate(`/landing/registro-licencia?${searchParams.toString()}`);
   };
 
   return (
@@ -76,7 +88,7 @@ export const Pricing = () => {
                   </ul>
                   <button
                     className="inline-block text-center py-2 px-4 w-full rounded-xl rounded-t-xl contained-button font-bold leading-loose mt-16"
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => handlePlanSelection('Plan Básico', 'S/ 0', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar
@@ -109,7 +121,7 @@ export const Pricing = () => {
                   </ul>
                   <button
                     className="inline-block text-center py-2 px-4 w-full contained-button leading-loose transition duration-200 mt-20"
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => handlePlanSelection('Plan Empresarial', isMonthly ? 'S/ 30' : 'S/ 300', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar
@@ -140,7 +152,7 @@ export const Pricing = () => {
                   </ul>
                   <button
                     className="inline-block text-center py-2 px-4 w-full rounded-xl rounded-t-xl contained-button font-bold leading-loose mt-16"
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => handlePlanSelection('Plan Corporativo', isMonthly ? 'S/ 70' : 'S/ 700', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar

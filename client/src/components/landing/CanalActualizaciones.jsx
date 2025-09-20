@@ -1,21 +1,41 @@
+import { motion } from 'framer-motion';
+
 export const CanalActualizaciones = () => {
   return (
     <section className="w-full py-16 bg-gradient-to-b from-bgDark1 via-bgDark2 to-bgDark1">
       <div className="flex justify-center px-2 sm:px-4">
         <div className="w-4/5 md:w-11/12 lg:w-10/12 xl:w-4/5 2xl:w-2/3">
-          <div className="flex items-center mb-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="flex items-center mb-8"
+          >
             <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
             <h2 className="text-3xl font-bold text-white">Canal de Actualizaciones</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-          </div>
+          </motion.div>
           
-          <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-8">
+          <motion.div 
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-8"
+          >
             <p className="text-lg leading-relaxed text-secondary-text">
               Mantente al día con todas las <span className="text-primary-color font-semibold">novedades y mejoras</span> de HoryCore a través de nuestros <span className="text-white font-medium">diferentes canales de comunicación</span>.
             </p>
-          </div>
+          </motion.div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          viewport={{ once: true }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10"
+        >
           {/* Canal Newsletter */}
           <div className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-6 rounded-2xl border border-gray-600/20 hover:border-secondary-color/50 transition-all duration-300 overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-secondary-color/10 rounded-full blur-2xl opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>
@@ -33,8 +53,19 @@ export const CanalActualizaciones = () => {
               
               <div className="mt-auto pt-4">
                 <div className="relative">
-                  <input type="email" placeholder="Tu correo electrónico" className="w-full px-4 py-3 bg-bgDark1 border border-gray-600/50 rounded-lg focus:outline-none focus:border-secondary-color/70 text-sm text-white" />
-                  <button className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1.5 bg-gradient-to-r from-secondary-color to-primary-color text-white rounded-md text-sm font-medium">
+                  <input 
+                    type="email" 
+                    placeholder="Tu correo electrónico" 
+                    className="!w-full !display-block px-4 py-3 bg-gradient-to-r from-bgDark3/80 via-bgDark2/60 to-bgDark3/80 rounded-xl text-white placeholder-gray-400 focus:border-secondary-color focus:shadow-xl focus:shadow-secondary-color/30 focus:bg-gradient-to-r focus:from-secondary-color/10 focus:via-bgDark2/80 focus:to-primary-color/10 focus:outline-none focus:ring-2 focus:ring-secondary-color/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-bgDark2/90 hover:to-bgDark3/90 !box-border pr-28"
+                    style={{
+                      width: '100% !important',
+                      display: 'block !important',
+                      boxSizing: 'border-box !important',
+                      border: '3px solid rgba(107, 114, 128, 0.6) !important',
+                      boxShadow: '0 10px 15px -3px rgba(31, 41, 55, 0.3) !important'
+                    }}
+                  />
+                  <button className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1.5 bg-gradient-to-r from-secondary-color to-primary-color text-white rounded-md text-sm font-medium hover:from-primary-color hover:to-secondary-color transition-all duration-300">
                     Suscribirse
                   </button>
                 </div>
@@ -95,10 +126,16 @@ export const CanalActualizaciones = () => {
               </ul>
             </div>
           </div>
-        </div>
+        </motion.div>
         
         {/* Bloque de contacto */}
-        <div className="relative">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          viewport={{ once: true }}
+          className="relative"
+        >
           <div className="absolute -inset-1 bg-gradient-to-r from-secondary-color/20 to-primary-color/20 blur-lg rounded-2xl"></div>
           <div className="relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-xl border border-secondary-color/30">
             <div className="flex flex-col md:flex-row items-center gap-6">
@@ -115,12 +152,12 @@ export const CanalActualizaciones = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div className="bg-bgDark1 p-3 rounded-lg border border-gray-600/30">
                     <span className="text-primary-color font-semibold block mb-1">Soporte</span>
-                    <a href="mailto:soporte@horytek.com" className="text-white hover:text-secondary-color transition-colors duration-300">soporte@horytek.com</a>
+                    <a href="mailto:javierrojasq.0612@gmail.com" className="text-white hover:text-secondary-color transition-colors duration-300">javierrojasq.0612@gmail.com</a>
                   </div>
                   
                   <div className="bg-bgDark1 p-3 rounded-lg border border-gray-600/30">
                     <span className="text-primary-color font-semibold block mb-1">WhatsApp</span>
-                    <a href="tel:+51987654321" className="text-white hover:text-secondary-color transition-colors duration-300">+51 987 654 321</a>
+                    <a href="tel:+51961797720" className="text-white hover:text-secondary-color transition-colors duration-300">+51 961 797 720</a>
                   </div>
                   
                   <div className="bg-bgDark1 p-3 rounded-lg border border-gray-600/30">
@@ -131,7 +168,7 @@ export const CanalActualizaciones = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
         </div>
       </div>
     </section>

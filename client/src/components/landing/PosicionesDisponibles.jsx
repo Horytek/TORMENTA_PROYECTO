@@ -1,16 +1,30 @@
+import { motion } from 'framer-motion';
+
 export const PosicionesDisponibles = () => {
   return (
     <section className="w-full py-24 bg-gradient-to-b from-bgDark1 to-bgDark2">
       <div className="max-w-6xl mx-auto px-8">
         {/* Título */}
-        <div className="flex items-center mb-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="flex items-center mb-8"
+        >
           <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
           <h2 className="text-3xl font-bold text-white">Posiciones Disponibles</h2>
           <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
+        </motion.div>
 
         {/* Job Card */}
-        <div className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-3xl border border-gray-600/20 transition-all duration-500 overflow-hidden mb-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-3xl border border-gray-600/20 transition-all duration-500 overflow-hidden mb-8"
+        >
           {/* Elementos decorativos de fondo */}
           <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/5 to-primary-color/5 opacity-0 transition-opacity duration-500"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-secondary-color/10 to-transparent rounded-full blur-3xl"></div>
@@ -174,7 +188,7 @@ export const PosicionesDisponibles = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

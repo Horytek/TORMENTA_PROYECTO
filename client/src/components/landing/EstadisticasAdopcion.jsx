@@ -1,21 +1,41 @@
+import { motion } from 'framer-motion';
+
 export const EstadisticasAdopcion = () => {
   return (
     <section className="w-full py-16 bg-gradient-to-b from-bgDark1 via-bgDark2 to-bgDark1">
       <div className="flex justify-center px-2 sm:px-4">
         <div className="w-4/5 md:w-11/12 lg:w-10/12 xl:w-4/5 2xl:w-2/3">
-          <div className="flex items-center mb-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="flex items-center mb-8"
+          >
             <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
             <h2 className="text-3xl font-bold text-white">Estadísticas de Adopción</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-          </div>
+          </motion.div>
           
-          <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-8">
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-8"
+          >
             <p className="text-lg leading-relaxed text-secondary-text">
               Conoce el <span className="text-secondary-color font-semibold">impacto y alcance</span> de HoryCore en el mercado empresarial peruano y el <span className="text-white font-medium">nivel de satisfacción</span> de nuestros usuarios.
             </p>
-          </div>
+          </motion.div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          viewport={{ once: true }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+        >
           {/* Card 1 */}
           <div className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-6 rounded-2xl border border-gray-600/20 hover:border-secondary-color/50 transition-all duration-300 overflow-hidden">
             {/* Elemento decorativo */}
@@ -81,10 +101,16 @@ export const EstadisticasAdopcion = () => {
               <p className="text-sm text-secondary-text mt-2">Garantizamos disponibilidad permanente con servidores redundantes y sistemas de respaldo automático.</p>
             </div>
           </div>
-        </div>
+        </motion.div>
         
         {/* Indicadores adicionales */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          viewport={{ once: true }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8"
+        >
           <div className="bg-bgDark2/70 p-4 rounded-xl border border-gray-600/30">
             <div className="flex items-baseline">
               <span className="text-2xl font-bold text-white">45</span>
@@ -116,7 +142,7 @@ export const EstadisticasAdopcion = () => {
             </div>
             <p className="text-xs text-secondary-text mt-1">Ciclo de desarrollo</p>
           </div>
-        </div>
+        </motion.div>
         </div>
       </div>
     </section>

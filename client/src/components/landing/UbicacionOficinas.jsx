@@ -8,8 +8,8 @@ export const UbicacionOficinas = () => {
       ciudad: "Chiclayo",
       pais: "Perú",
       tipo: "Tienda de Ropa",
-      telefono: "+51 987 654 321",
-      email: "central@horytek.com",
+      telefono: "+51 961 797 720",
+      email: "javierrojasq.0612@gmail.com",
       horario: "Lunes - Sábado: 9:00 AM - 8:00 PM",
       servicios: ["Venta de ropa", "Atención al cliente", "Asesoría de moda"],
       destacada: true
@@ -20,8 +20,8 @@ export const UbicacionOficinas = () => {
       ciudad: "Chiclayo",
       pais: "Perú",
       tipo: "Tienda de Ropa",
-      telefono: "+51 123 456 789",
-      email: "dangelo@horytek.com",
+      telefono: "+51 961 797 720",
+      email: "javierrojasq.0612@gmail.com",
       horario: "Lunes - Sábado: 9:00 AM - 8:00 PM",
       servicios: ["Venta de ropa", "Atención al cliente", "Asesoría de moda"],
       destacada: false
@@ -32,8 +32,8 @@ export const UbicacionOficinas = () => {
       ciudad: "Chiclayo",
       pais: "Perú",
       tipo: "Tienda de Ropa",
-      telefono: "+51 456 789 123",
-      email: "sanmartin@horytek.com",
+      telefono: "+51 961 797 720",
+      email: "javierrojasq.0612@gmail.com",
       horario: "Lunes - Sábado: 9:00 AM - 8:00 PM",
       servicios: ["Venta de ropa", "Atención al cliente", "Asesoría de moda"],
       destacada: false

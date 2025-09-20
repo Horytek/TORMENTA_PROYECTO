@@ -19,6 +19,8 @@ import TerminosCondicionesPage from './pages/Landing/TerminosCondicionesPage';
 import PoliticaPrivacidadPage from './pages/Landing/PoliticaPrivacidadPage';
 import EmpleoPage from './pages/Landing/EmpleoPage';
 import ContactanosPage from './pages/Landing/ContactanosPage';
+import BlogPage from './pages/Landing/BlogPage';
+import RegistroLicenciaPage from './pages/Landing/RegistroLicenciaPage';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -37,6 +39,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="/landing/politica-de-privacidad" element={<PoliticaPrivacidadPage />} />
             <Route path="/landing/empleos" element={<EmpleoPage />} />
             <Route path="/landing/contactanos" element={<ContactanosPage />} />
+            <Route path="/landing/blog" element={<BlogPage />} />
+            <Route path="/landing/registro-licencia" element={<RegistroLicenciaPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/article" element={<BlogPage />} />
             
             {/* Rutas del ERP CON SidebarProvider */}
             <Route element={<ProtectedRoute />}>

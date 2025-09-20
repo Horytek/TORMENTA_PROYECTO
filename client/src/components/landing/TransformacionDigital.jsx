@@ -1,35 +1,67 @@
+import { motion } from 'framer-motion';
+
 export const TransformacionDigital = () => {
   return (
-    <section className="w-full py-24 bg-gradient-to-b from-bgDark1 to-bgDark2">
+    <section className="w-full py-12 bg-gradient-to-b from-bgDark1 to-bgDark2">
       <div className="max-w-6xl mx-auto px-8">
         {/* Título */}
-        <div className="flex items-center mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="flex items-center mb-6"
+        >
           <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
           <h2 className="text-3xl font-bold text-white">Únete a la Transformación Digital</h2>
           <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
+        </motion.div>
         
         {/* Descripción en cards */}
-        <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-6">
+        <motion.div 
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          viewport={{ once: true }}
+          className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-6"
+        >
           <p className="text-lg leading-relaxed">
             En Horycore, estamos construyendo una <span className="text-secondary-color font-semibold">comunidad de empresas</span> que están listas para crecer de manera inteligente. Aunque recién comenzamos, cada una de nuestras primeras empresas clientes está confirmando que Horycore es la herramienta que necesitan para <span className="text-white font-medium">simplificar sus operaciones</span> y sentar las bases de su futuro.
           </p>
-        </div>
+        </motion.div>
         
-        <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-6">
+        <motion.div 
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          viewport={{ once: true }}
+          className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-6"
+        >
           <p className="text-lg leading-relaxed">
             Estamos enfocados en ofrecerte una solución que <span className="text-secondary-color font-semibold">se adapte a tu etapa de crecimiento</span> y que te ayude a <span className="text-white font-medium">optimizar tus procesos desde el primer día</span>.
           </p>
-        </div>
+        </motion.div>
         
-        <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-12">
+        <motion.div 
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          viewport={{ once: true }}
+          className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-12"
+        >
           <p className="text-lg leading-relaxed">
             ¿Estás listo para <span className="text-secondary-color font-semibold">dar el primer paso</span>? Contacta con nosotros hoy mismo y descubre cómo Horycore puede empezar a <span className="text-white font-medium">transformar la gestión de tu negocio</span>.
           </p>
-        </div>
+        </motion.div>
 
         {/* CTA Card */}
-        <div className="relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-10 rounded-3xl border border-secondary-color/40 overflow-hidden group hover:border-secondary-color/60 transition-all duration-500">
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+          viewport={{ once: true }}
+          className="relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-10 rounded-3xl border border-secondary-color/40 overflow-hidden group hover:border-secondary-color/60 transition-all duration-500"
+        >
           {/* Elementos decorativos de fondo */}
           <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/5 to-primary-color/5 opacity-70"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-secondary-color/20 to-transparent rounded-full blur-3xl"></div>
@@ -82,7 +114,7 @@ export const TransformacionDigital = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

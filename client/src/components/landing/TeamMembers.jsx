@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 export const TeamMembers = () => {
   return (
     <div className="flex justify-center bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 relative pt-2">
@@ -7,14 +9,40 @@ export const TeamMembers = () => {
           <section className="text-secondary-text !leading-7 sm:!leading-8 text-base sm:text-lg text-left sm:text-justify mx-auto w-full md:w-10/12 lg:w-2/3">
             
             {/* Sección del Equipo Principal */}
-            <div className="text-white text-2xl mb-4">Equipo HoryCore</div>
-            <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-8">
+            <motion.div 
+              className="text-white text-2xl mb-4"
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              viewport={{ once: true }}
+            >
+              Equipo HoryCore
+            </motion.div>
+            <motion.div 
+              className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-8"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
               <p className="text-lg leading-relaxed text-secondary-text">Nuestro equipo está formado por los <span className="text-secondary-color font-semibold">líderes y arquitectos de Horycore</span>, quienes definen la visión estratégica y <span className="text-white font-medium">guían el desarrollo del producto</span>:</p>
-            </div>
+            </motion.div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          viewport={{ once: true }}
+        >
           {/* Marco Rioja */}
-          <div className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10">
+          <motion.div 
+            className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            viewport={{ once: true }}
+          >
             <div className="flex flex-col items-center text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-2xl">MR</span>
@@ -24,10 +52,16 @@ export const TeamMembers = () => {
               <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
               <p className="text-secondary-text text-sm leading-relaxed">Responsable de la arquitectura técnica y la escalabilidad de Horycore. Supervisa el desarrollo del núcleo del sistema.</p>
             </div>
-          </div>
+          </motion.div>
           
           {/* Davist Bustamante - CEO destacado */}
-          <div className="bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-2xl border-2 border-secondary-color/40 hover:border-secondary-color/70 transition-all duration-300 hover:shadow-2xl hover:shadow-secondary-color/20 relative overflow-hidden">
+          <motion.div 
+            className="bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-2xl border-2 border-secondary-color/40 hover:border-secondary-color/70 transition-all duration-300 hover:shadow-2xl hover:shadow-secondary-color/20 relative overflow-hidden"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/5 to-transparent pointer-events-none"></div>
             <div className="flex flex-col items-center text-center relative z-10">
               <div className="w-24 h-24 bg-gradient-to-br from-secondary-color via-primary-color to-secondary-color rounded-full mb-6 flex items-center justify-center shadow-2xl shadow-secondary-color/30 ring-2 ring-secondary-color/20">
@@ -38,10 +72,16 @@ export const TeamMembers = () => {
               <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
               <p className="text-secondary-text text-sm leading-relaxed">Visionario y líder del proyecto Horycore. Dirige la estrategia general y la innovación tecnológica de la empresa.</p>
             </div>
-          </div>
+          </motion.div>
           
           {/* Andree Requejo */}
-          <div className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10">
+          <motion.div 
+            className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
             <div className="flex flex-col items-center text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-2xl">AR</span>
@@ -51,14 +91,26 @@ export const TeamMembers = () => {
               <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
               <p className="text-secondary-text text-sm leading-relaxed">Lidera la investigación y desarrollo de nuevas funcionalidades. Mantiene Horycore a la vanguardia tecnológica.</p>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
         
         {/* Segunda fila centrada */}
-        <div className="flex justify-center mt-8">
+        <motion.div 
+          className="flex justify-center mt-8"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          viewport={{ once: true }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
             {/* Ángel Montenegro */}
-            <div className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10">
+            <motion.div 
+              className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-2xl">ÁM</span>
@@ -68,10 +120,16 @@ export const TeamMembers = () => {
                 <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
                 <p className="text-secondary-text text-sm leading-relaxed">Optimiza los procesos internos y la eficiencia operativa. Coordina los equipos para garantizar entregas de calidad.</p>
               </div>
-            </div>
+            </motion.div>
             
             {/* Fernando Fernandez */}
-            <div className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10">
+            <motion.div 
+              className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-2xl">FF</span>
@@ -81,9 +139,9 @@ export const TeamMembers = () => {
                 <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
                 <p className="text-secondary-text text-sm leading-relaxed">Especialista en experiencia de usuario. Asegura que Horycore sea intuitivo y cumpla con las necesidades reales de los clientes.</p>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Sección del Equipo de Apoyo */}
         <br/>

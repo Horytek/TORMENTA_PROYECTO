@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { HoryCoreLogo } from "../../assets/logos/HoryCoreLogo";
 import styles from "../../styles/landing.module.css";
 
@@ -10,11 +10,43 @@ const navbarLinks = [
   { label: "Precios", href: "#pricing", ariaLabel: "Precios" },
   { label: "Opiniones", href: "#feedback", ariaLabel: "Opiniones de clientes" },
   { label: "Preguntas frecuentes", href: "#FAQ", ariaLabel: "Preguntas frecuentes" },
-  { label: "Contacto", href: "/landing/contacto", ariaLabel: "Contactar con nosotros" },
+  { label: "Contacto", href: "/landing/contactanos", ariaLabel: "Contactar con nosotros" },
 ];
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Función para manejar la navegación a secciones
+  const handleSectionNavigation = (href, label) => {
+    // Si es un enlace de sección (#)
+    if (href.startsWith('#')) {
+      // Si no estamos en la página principal de landing, navegar allí primero
+      if (location.pathname !== '/landing') {
+        navigate('/landing');
+        // Usar setTimeout para asegurar que la navegación se complete antes del scroll
+        setTimeout(() => {
+          const section = document.querySelector(href);
+          if (section) {
+            section.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        // Si ya estamos en landing, hacer scroll directo
+        const section = document.querySelector(href);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    } else {
+      // Para enlaces normales, usar navegación de React Router
+      navigate(href);
+    }
+    
+    // Cerrar el menú móvil si está abierto
+    setIsOpen(false);
+  };
 
   return (
       <nav
@@ -47,14 +79,14 @@ export const Navbar = () => {
           >
             <div className="hidden lg:flex h-full items-center">
               {navbarLinks.map(({ href, label, ariaLabel }) => (
-                <a
-                  className="text-white lg:text-base text-2xl leading-6 mr-4 ml-4 2xl:mr-6 2xl:ml-6 cursor-pointer font-normal lg:font-medium hover:scale-110 transition whitespace-nowrap flex items-center"
-                  href={href.startsWith('#') ? href : href}
+                <button
+                  className="text-white lg:text-base text-2xl leading-6 mr-4 ml-4 2xl:mr-6 2xl:ml-6 cursor-pointer font-normal lg:font-medium hover:scale-110 transition whitespace-nowrap flex items-center bg-transparent border-none"
+                  onClick={() => handleSectionNavigation(href, label)}
                   aria-label={ariaLabel}
                   key={label}
                 >
                   {label}
-                </a>
+                </button>
               ))}
             </div>
           </motion.div>
@@ -115,15 +147,14 @@ export const Navbar = () => {
                 className="flex flex-col mt-16 lg:hidden absolute top-4 left-0 bg-bg-dark-1 z-50 w-full items-center gap-6 pb-10 border-y border-solid border-bg-dark-3 pt-10"
               >
                 {navbarLinks.map(({ label, href, ariaLabel }) => (
-                  <a
+                  <button
                     key={href}
-                    className="text-white text-xl font-medium hover:scale-105 transition duration-300"
-                    href={href.startsWith('#') ? href : href}
-                    onClick={() => setIsOpen(false)}
+                    className="text-white text-xl font-medium hover:scale-105 transition duration-300 bg-transparent border-none"
+                    onClick={() => handleSectionNavigation(href, label)}
                     aria-label={ariaLabel}
                   >
                     {label}
-                  </a>
+                  </button>
                 ))}
 
                 <Link to="/login"

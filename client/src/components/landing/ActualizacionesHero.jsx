@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from "framer-motion";
 
 export const ActualizacionesHero = () => {
   return (
@@ -11,30 +12,55 @@ export const ActualizacionesHero = () => {
       {/* Contenido principal */}
       <div className="relative z-10 flex justify-center px-2 sm:px-4 py-24">
         <div className="w-full md:w-10/12 lg:w-[1200px] 2xl:w-[1400px]">
-          <div className="text-center">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
             {/* Badge */}
-            <div className="inline-flex items-center bg-gradient-to-r from-secondary-color/20 to-primary-color/20 rounded-full px-6 py-3 mb-8 border border-secondary-color/30">
+            <motion.div 
+              className="inline-flex items-center bg-gradient-to-r from-secondary-color/20 to-primary-color/20 rounded-full px-6 py-3 mb-8 border border-secondary-color/30"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               <div className="w-2 h-2 bg-secondary-color rounded-full mr-3 animate-pulse"></div>
               <span className="text-secondary-color font-semibold text-sm">Historial de Versiones</span>
-            </div>
+            </motion.div>
             
             {/* Título principal */}
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">
+            <motion.h1 
+              className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
               Actualizaciones{" "}
               <span className="bg-gradient-to-r from-secondary-color to-primary-color bg-clip-text text-transparent">
                 HoryCore
               </span>
-            </h1>
+            </motion.h1>
             
             {/* Subtítulo */}
-            <p className="text-xl md:text-2xl text-secondary-text max-w-4xl mx-auto mb-12 leading-relaxed">
+            <motion.p 
+              className="text-xl md:text-2xl text-secondary-text max-w-4xl mx-auto mb-12 leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
               Historial de versiones, nuevas funcionalidades y próximas actualizaciones de nuestro{" "}
               <span className="text-white font-semibold">sistema ERP líder</span>.
-            </p>
+            </motion.p>
             
             {/* Línea decorativa */}
-            <div className="w-32 h-1 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full"></div>
-          </div>
+            <motion.div 
+              className="w-32 h-1 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: "8rem" }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+            ></motion.div>
+          </motion.div>
         </div>
       </div>
       

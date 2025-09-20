@@ -1,3 +1,6 @@
+import React from 'react';
+import { motion } from "framer-motion";
+
 export const ServiciosHero = () => {
   return (
     <section className="w-full relative overflow-hidden bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 pt-20">
@@ -8,29 +11,56 @@ export const ServiciosHero = () => {
       
       {/* Contenido principal */}
       <div className="relative z-10 flex justify-center px-2 sm:px-4 py-24">
-        <div className="w-full md:w-10/12 lg:w-[1200px] 2xl:w-[1400px] text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center bg-gradient-to-r from-secondary-color/20 to-primary-color/20 rounded-full px-6 py-3 mb-8 border border-secondary-color/30">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mr-3 animate-pulse"></div>
-            <span className="text-secondary-color font-semibold text-sm">ERP líder en el Perú</span>
-          </div>
-          
-          {/* Título */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            Servicios{" "}
-            <span className="bg-gradient-to-r from-secondary-color to-primary-color bg-clip-text text-transparent">
-              HoryCore ERP
-            </span>
-          </h1>
-          
-          {/* Subtítulo */}
-          <p className="text-xl md:text-2xl text-secondary-text max-w-4xl mx-auto mb-12 leading-relaxed">
-            Solución integral para la gestión empresarial moderna que transforma la manera de hacer negocios con{" "}
-            <span className="text-white font-semibold">tecnología avanzada</span>.
-          </p>
-          
-          {/* Línea decorativa */}
-          <div className="w-32 h-1 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full"></div>
+        <div className="w-full md:w-10/12 lg:w-[1200px] 2xl:w-[1400px]">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            {/* Badge */}
+            <motion.div 
+              className="inline-flex items-center bg-gradient-to-r from-secondary-color/20 to-primary-color/20 rounded-full px-6 py-3 mb-8 border border-secondary-color/30"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="w-2 h-2 bg-secondary-color rounded-full mr-3 animate-pulse"></div>
+              <span className="text-secondary-color font-semibold text-sm">ERP líder en el Perú</span>
+            </motion.div>
+            
+            {/* Título */}
+            <motion.h1 
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              Servicios{" "}
+              <span className="bg-gradient-to-r from-secondary-color to-primary-color bg-clip-text text-transparent">
+                HoryCore ERP
+              </span>
+            </motion.h1>
+            
+            {/* Subtítulo */}
+            <motion.p 
+              className="text-xl md:text-2xl text-secondary-text max-w-4xl mx-auto mb-12 leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              Solución integral para la gestión empresarial moderna que transforma la manera de hacer negocios con{" "}
+              <span className="text-white font-semibold">tecnología avanzada</span>.
+            </motion.p>
+            
+            {/* Línea decorativa */}
+            <motion.div 
+              className="w-32 h-1 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: "8rem" }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+            ></motion.div>
+          </motion.div>
         </div>
       </div>
       

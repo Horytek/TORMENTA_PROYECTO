@@ -48,7 +48,7 @@ export const Blog = () => (
           <div className="flex 2xl:w-[1200px] lg:w-[1000px] xl:w-[1150px] flex-wrap -mx-4 items-start h-auto sm:h-[30rem] lg:h-[31rem] xl:h-[35rem]">
             {/* Card grande */}
             <div className="flex sm:hidden lg:flex w-11/12 mx-auto sm:ml-0 sm:mr-0 lg:w-1/2 xl:w-3/5 px-4 mb-8 lg:mb-0 h-full">
-              <a href="/blog/article" className="w-full">
+              <a href="/landing/blog" className="w-full">
                 <div className="p-6 sm:p-10 bg-bgDark3 rounded-3xl h-full hover:bg-bgDark3Hover transition cursor-pointer">
                   <img
                     src={blogData[0].image}
@@ -69,7 +69,7 @@ export const Blog = () => (
             {/* Columna derecha: 2 cards*/}
             <div className="hidden sm:grid mx-auto lg:ml-0 lg:mr-0 w-11/12 sm:w-4/5 lg:w-1/2 xl:w-2/5 px-4 grid-rows-2 gap-6 h-full">
               {blogData.slice(1).map((post, index) => (
-                <a href="/blog/article" key={`${post.title}-${index}`} className="group">
+                <a href="/landing/blog" key={`${post.title}-${index}`} className="group">
                   <div className="flex gap-4 p-10 bg-bgDark3 rounded-3xl h-full hover:bg-bgDark3Hover transition">
                     <div className="pt-2 flex-1">
                       <h3 className="mb-4 text-xl font-bold font-heading text-primaryText">

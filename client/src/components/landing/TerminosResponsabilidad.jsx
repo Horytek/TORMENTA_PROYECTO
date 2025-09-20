@@ -1,8 +1,16 @@
+import { motion } from 'framer-motion';
+
 export const TerminosResponsabilidad = () => {
   return (
     <div className="flex justify-center bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 relative pt-2">
       <div className="px-2 sm:px-4">
-        <article className="p-8 rounded-3xl w-full lg:w-[1200px] 2xl:w-[1400px] mb-24 mt-16 sm:mt-24">
+        <motion.article 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="p-8 rounded-3xl w-full lg:w-[1200px] 2xl:w-[1400px] mb-24 mt-16 sm:mt-24"
+        >
           
           <section className="text-secondary-text !leading-7 sm:!leading-8 text-base sm:text-lg text-left sm:text-justify mx-auto w-full md:w-10/12 lg:w-2/3">
             
@@ -170,13 +178,13 @@ export const TerminosResponsabilidad = () => {
                 <div className="group bg-gradient-to-br from-bgDark2/80 to-bgDark2/40 rounded-xl p-6 text-center border border-gray-600/20 hover:border-secondary-color/40 transition-all duration-300">
                   <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">📧</div>
                   <h4 className="text-secondary-color font-semibold mb-2 text-lg">Email</h4>
-                  <p className="text-secondary-text text-sm">contacto@horytek.com</p>
+                  <p className="text-secondary-text text-sm">javierrojasq.0612@gmail.com</p>
                 </div>
                 
                 <div className="group bg-gradient-to-br from-bgDark2/80 to-bgDark2/40 rounded-xl p-6 text-center border border-gray-600/20 hover:border-primary-color/40 transition-all duration-300">
                   <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">📞</div>
                   <h4 className="text-primary-color font-semibold mb-2 text-lg">Teléfono</h4>
-                  <p className="text-secondary-text text-sm">+51 (1) 123-4567</p>
+                  <p className="text-secondary-text text-sm">+51 961 797 720</p>
                 </div>
                 
                 <div className="group bg-gradient-to-br from-bgDark2/80 to-bgDark2/40 rounded-xl p-6 text-center border border-gray-600/20 hover:border-secondary-color/40 transition-all duration-300">
@@ -208,7 +216,7 @@ export const TerminosResponsabilidad = () => {
             </div>
             
           </section>
-        </article>
+        </motion.article>
       </div>
     </div>
   );

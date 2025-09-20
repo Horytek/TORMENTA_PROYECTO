@@ -1,8 +1,16 @@
+import { motion } from 'framer-motion';
+
 export const PrivacyContent = () => {
   return (
     <div className="flex justify-center bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 relative pt-2">
       <div className="px-2 sm:px-4">
-        <article className="p-8 rounded-3xl w-full lg:w-[1200px] 2xl:w-[1400px] mb-24 mt-16 sm:mt-24">
+        <motion.article 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="p-8 rounded-3xl w-full lg:w-[1200px] 2xl:w-[1400px] mb-24 mt-16 sm:mt-24"
+        >
           
           <section className="text-secondary-text !leading-7 sm:!leading-8 text-base sm:text-lg text-left sm:text-justify mx-auto w-full md:w-10/12 lg:w-2/3">
             
@@ -257,15 +265,15 @@ export const PrivacyContent = () => {
         <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
           <li className="flex items-start">
             <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Correo electrónico:</strong> privacidad@horycore.com</span>
+            <span><strong className="text-white">Correo electrónico:</strong> javierrojasq.0612@gmail.com</span>
           </li>
           <li className="flex items-start">
             <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Teléfono:</strong> +51 1 234-5678</span>
+            <span><strong className="text-white">Teléfono:</strong> +51 961 797 720</span>
           </li>
           <li className="flex items-start">
             <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Dirección:</strong> Av. Tecnología 123, San Isidro, Lima, Perú</span>
+            <span><strong className="text-white">Dirección:</strong> AV. ARICA 1028 INT 22</span>
           </li>
           <li className="flex items-start">
             <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
@@ -288,7 +296,7 @@ export const PrivacyContent = () => {
         </div>
         
           </section>
-        </article>
+        </motion.article>
       </div>
     </div>
   );
