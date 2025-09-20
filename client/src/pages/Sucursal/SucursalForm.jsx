@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Toaster, toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
 import { useVendedoresData } from '@/services/sucursal.services';
-import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
+import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete/GooglePlacesAutocomplete';
 import {
   Input,
   Button
