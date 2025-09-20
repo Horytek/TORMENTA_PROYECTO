@@ -92,7 +92,12 @@ export const ConfirmacionModal = ({ isOpen, setIsOpen, planName, onClose }) => {
               </p>
               <div className="bg-gradient-to-r from-secondary-color/10 to-primary-color/10 rounded-xl p-4 border border-secondary-color/20">
                 <p className="text-sm text-gray-400">
-                  <span className="text-primary-color font-semibold">📞 Próximo paso:</span> Nuestro equipo te contactará dentro de las próximas 24 horas para activar tu licencia y programar la capacitación inicial.
+                  <span className="text-primary-color font-semibold flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    Próximo paso:
+                  </span> Nuestro equipo te contactará dentro de las próximas 24 horas para activar tu licencia y programar la capacitación inicial.
                 </p>
               </div>
             </motion.div>
@@ -107,17 +112,23 @@ export const ConfirmacionModal = ({ isOpen, setIsOpen, planName, onClose }) => {
               {/* Botón principal */}
               <button
                 onClick={handleContactSupport}
-                className="w-full bg-gradient-to-r from-secondary-color to-primary-color hover:from-primary-color hover:to-secondary-color text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-secondary-color/25"
+                className="w-full bg-gradient-to-r from-secondary-color to-primary-color hover:from-primary-color hover:to-secondary-color text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-secondary-color/25 flex items-center justify-center gap-2"
               >
-                💬 Contactar Soporte Ahora
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                Contactar Soporte Ahora
               </button>
 
               {/* Botón secundario */}
               <button
                 onClick={handleGoToLanding}
-                className="w-full bg-gradient-to-r from-bgDark3/80 to-bgDark2/80 hover:from-bgDark2/90 hover:to-bgDark3/90 text-gray-300 hover:text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 border border-gray-600/30 hover:border-gray-500/50"
+                className="w-full bg-gradient-to-r from-bgDark3/80 to-bgDark2/80 hover:from-bgDark2/90 hover:to-bgDark3/90 text-gray-300 hover:text-white font-medium py-3 px-6 rounded-xl transition-all duration-300 border border-gray-600/30 hover:border-gray-500/50 flex items-center justify-center gap-2"
               >
-                🏠 Volver al Inicio
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                Volver al Inicio
               </button>
             </motion.div>
 
