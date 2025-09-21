@@ -104,6 +104,26 @@ const addUsuario = async (req, res) => {
             return res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
+        connection = await getConnection();
+
+        let id_tenant = req.id_tenant;
+
+        // 1. Si el rol es "administrador", crear un nuevo tenant
+        // (Asegúrate que el id_rol de administrador es 1, si no, ajusta el valor)
+        if (id_rol === 1) {
+            // Obtener el último id_tenant
+            const [lastTenant] = await connection.query("SELECT MAX(id_tenant) as lastId FROM tenant");
+            const newIdTenant = (lastTenant[0].lastId || 0) + 1;
+
+            // Insertar nuevo tenant
+            await connection.query(
+                "INSERT INTO tenant (id_tenant) VALUES (?)",
+                [newIdTenant]
+            );
+
+            id_tenant = newIdTenant;
+        }
+
         // Solo agrega id_empresa si viene definido
         const usuario = {
             id_rol,
@@ -112,9 +132,8 @@ const addUsuario = async (req, res) => {
             estado_usuario
         };
         if (id_empresa !== undefined) usuario.id_empresa = id_empresa;
-        if (req.id_tenant) usuario.id_tenant = req.id_tenant;
+        if (id_tenant) usuario.id_tenant = id_tenant;
 
-        connection = await getConnection();
         await connection.query("INSERT INTO usuario SET ? ", usuario);
 
         res.json({ code: 1, message: "Usuario añadido" });

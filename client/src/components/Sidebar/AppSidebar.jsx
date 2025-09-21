@@ -97,7 +97,6 @@ export function AppSidebar(props) {
           getPlanes()
         ]);
         setPlanes(planesData || []);
-        // Solo empresas del tenant actual
         const empresasLigadas = empresas.filter(e => String(e.id_tenant) === String(id_tenant));
         setEmpresasTenant(empresasLigadas);
       } catch (e) {
@@ -111,29 +110,38 @@ export function AppSidebar(props) {
   // Empresa principal del tenant (la primera empresa del tenant)
   const empresaPrincipal = empresasTenant[0];
 
-const getPlanDescripcion = (planId) => {
-  const plan = planes.find(p => String(p.id_plan) === String(planId));
-  return plan ? plan.descripcion_plan : "Desconocido";
-};
+  // Función para capitalizar la primera letra del plan
+  const capitalize = (str) =>
+    typeof str === "string" && str.length > 0
+      ? str.charAt(0).toUpperCase() + str.slice(1)
+      : str;
 
-const teams = [
-  ...(empresaPrincipal
-    ? [{
-        name: empresaPrincipal.razonSocial || empresaPrincipal.nombreComercial || "Empresa",
-        logo: empresaPrincipal.logotipo || GalleryVerticalEnd,
-        plan: getPlanDescripcion(empresaPrincipal.plan_pago),
-      }]
-    : []),
-  ...empresasTenant
-    .slice(1)
-    .map(emp => ({
-      name: emp.razonSocial || emp.nombreComercial || "Empresa",
-      logo: emp.logotipo || GalleryVerticalEnd,
-      plan: getPlanDescripcion(emp.plan_pago),
-    })),
-  ...SIDEBAR_DATA.teams,
-];
+  // Busca el plan por id_tenant y retorna la descripción capitalizada
+  const getPlanDescripcion = (planId) => {
+    const plan = planes.find(p => String(p.id_tenant) === String(planId));
+    return plan ? capitalize(plan.descripcion_plan) : "Desconocido";
+  };
 
+  // Construye el array de teams: primero la empresa principal, luego otras empresas, luego las opciones por defecto
+  const teams = [
+    ...(empresaPrincipal
+      ? [{
+          name: empresaPrincipal.razonSocial || empresaPrincipal.nombreComercial || "Empresa",
+          logo: empresaPrincipal.logotipo || GalleryVerticalEnd,
+          plan: getPlanDescripcion(empresaPrincipal.id_tenant),
+        }]
+      : []),
+    ...empresasTenant
+      .slice(1)
+      .map(emp => ({
+        name: emp.razonSocial || emp.nombreComercial || "Empresa",
+        logo: emp.logotipo || GalleryVerticalEnd,
+        plan: getPlanDescripcion(emp.id_tenant),
+      })),
+    ...SIDEBAR_DATA.teams,
+  ];
+
+  // El primer equipo será la empresa principal seleccionada por defecto
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

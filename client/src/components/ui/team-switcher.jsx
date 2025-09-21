@@ -21,6 +21,13 @@ export function TeamSwitcher({ teams, nameClassName = "" }) {
   const [activeTeam, setActiveTeam] = React.useState(teams[0]);
   const collapsed = state === "collapsed";
 
+  // Sincroniza el equipo activo cuando cambian los teams (por ejemplo, tras carga asíncrona)
+  React.useEffect(() => {
+    if (teams.length > 0) {
+      setActiveTeam(teams[0]);
+    }
+  }, [teams]);
+
   if (!activeTeam) return null;
 
   return (
