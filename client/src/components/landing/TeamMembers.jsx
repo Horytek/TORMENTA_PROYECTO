@@ -102,7 +102,7 @@ export const TeamMembers = () => {
           transition={{ duration: 0.8, delay: 0.6 }}
           viewport={{ once: true }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl">
             {/* Ángel Montenegro */}
             <motion.div 
               className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
@@ -140,6 +140,25 @@ export const TeamMembers = () => {
                 <p className="text-secondary-text text-sm leading-relaxed">Especialista en experiencia de usuario. Asegura que Horycore sea intuitivo y cumpla con las necesidades reales de los clientes.</p>
               </div>
             </motion.div>
+
+            {/* Javier Rojas */}
+            <motion.div 
+              className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-2xl">JR</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Javier Rojas</h3>
+                <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Gerente de HoryCore</p>
+                <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
+                <p className="text-secondary-text text-sm leading-relaxed">Supervisa las operaciones generales de HoryCore. Coordina los equipos y asegura el cumplimiento de los objetivos estratégicos.</p>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -150,90 +169,119 @@ export const TeamMembers = () => {
         </div>
         
         {/* Primera fila del equipo de apoyo */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          viewport={{ once: true }}
+        >
           {/* Adrian Portocarrero */}
-          <div className="bg-gradient-to-br from-bgDark2 to-bgDark1 p-6 rounded-xl border border-gray-500/20 hover:border-secondary-color/30 transition-all duration-300 hover:shadow-lg hover:shadow-secondary-color/5">
+          <motion.div 
+            className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            viewport={{ once: true }}
+          >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full mb-4 flex items-center justify-center shadow-md">
-                <span className="text-white font-semibold text-lg">AP</span>
+              <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-2xl">AP</span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Adrian Portocarrero</h3>
-              <p className="text-secondary-color font-medium mb-3 text-xs uppercase tracking-wider">Desarrollador Full Stack Senior</p>
-              <div className="w-12 h-0.5 bg-gradient-to-r from-gray-500 to-gray-400 mx-auto rounded-full mb-3"></div>
-              <p className="text-secondary-text text-xs leading-relaxed">Especialista en desarrollo frontend y backend. Contribuye al desarrollo de interfaces y lógica del servidor.</p>
+              <h3 className="text-xl font-bold text-white mb-2">Adrian Portocarrero</h3>
+              <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Desarrollador Full Stack Senior</p>
+              <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
+              <p className="text-secondary-text text-sm leading-relaxed">Especialista en desarrollo frontend y backend. Contribuye al desarrollo de interfaces y lógica del servidor.</p>
             </div>
-          </div>
+          </motion.div>
           
           {/* Armando Infante */}
-          <div className="bg-gradient-to-br from-bgDark2 to-bgDark1 p-6 rounded-xl border border-gray-500/20 hover:border-secondary-color/30 transition-all duration-300 hover:shadow-lg hover:shadow-secondary-color/5">
+          <motion.div 
+            className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full mb-4 flex items-center justify-center shadow-md">
-                <span className="text-white font-semibold text-lg">AI</span>
+              <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-2xl">AI</span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Armando Infante</h3>
-              <p className="text-secondary-color font-medium mb-3 text-xs uppercase tracking-wider">Especialista en Bases de Datos</p>
-              <div className="w-12 h-0.5 bg-gradient-to-r from-gray-500 to-gray-400 mx-auto rounded-full mb-3"></div>
-              <p className="text-secondary-text text-xs leading-relaxed">Responsable del diseño y optimización de bases de datos. Garantiza el rendimiento y la integridad de los datos.</p>
+              <h3 className="text-xl font-bold text-white mb-2">Armando Infante</h3>
+              <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Especialista en Bases de Datos</p>
+              <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
+              <p className="text-secondary-text text-sm leading-relaxed">Responsable del diseño y optimización de bases de datos. Garantiza el rendimiento y la integridad de los datos.</p>
             </div>
-          </div>
-          
-          {/* Javier Rojas */}
-          <div className="bg-gradient-to-br from-bgDark2 to-bgDark1 p-6 rounded-xl border border-gray-500/20 hover:border-secondary-color/30 transition-all duration-300 hover:shadow-lg hover:shadow-secondary-color/5">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full mb-4 flex items-center justify-center shadow-md">
-                <span className="text-white font-semibold text-lg">JR</span>
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Javier Rojas</h3>
-              <p className="text-secondary-color font-medium mb-3 text-xs uppercase tracking-wider">Analista de Calidad (QA)</p>
-              <div className="w-12 h-0.5 bg-gradient-to-r from-gray-500 to-gray-400 mx-auto rounded-full mb-3"></div>
-              <p className="text-secondary-text text-xs leading-relaxed">Encargado del testing y control de calidad. Asegura que cada funcionalidad funcione perfectamente.</p>
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
         
         {/* Segunda fila centrada del equipo de apoyo */}
-        <div className="flex justify-center mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl">
+        <motion.div 
+          className="flex justify-center mt-8"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          viewport={{ once: true }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl">
             {/* Julio Castañeda */}
-            <div className="bg-gradient-to-br from-bgDark2 to-bgDark1 p-6 rounded-xl border border-gray-500/20 hover:border-secondary-color/30 transition-all duration-300 hover:shadow-lg hover:shadow-secondary-color/5">
+            <motion.div 
+              className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full mb-4 flex items-center justify-center shadow-md">
-                  <span className="text-white font-semibold text-lg">JC</span>
+                <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-2xl">JC</span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Julio Castañeda</h3>
-                <p className="text-secondary-color font-medium mb-3 text-xs uppercase tracking-wider">Especialista en Soporte Técnico</p>
-                <div className="w-12 h-0.5 bg-gradient-to-r from-gray-500 to-gray-400 mx-auto rounded-full mb-3"></div>
-                <p className="text-secondary-text text-xs leading-relaxed">Responsable del soporte al cliente y la resolución de incidencias. Asegura la mejor experiencia de usuario.</p>
+                <h3 className="text-xl font-bold text-white mb-2">Julio Castañeda</h3>
+                <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Especialista en Soporte Técnico</p>
+                <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
+                <p className="text-secondary-text text-sm leading-relaxed">Responsable del soporte al cliente y la resolución de incidencias. Asegura la mejor experiencia de usuario.</p>
               </div>
-            </div>
+            </motion.div>
             
             {/* Juan Forero */}
-            <div className="bg-gradient-to-br from-bgDark2 to-bgDark1 p-6 rounded-xl border border-gray-500/20 hover:border-secondary-color/30 transition-all duration-300 hover:shadow-lg hover:shadow-secondary-color/5">
+            <motion.div 
+              className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full mb-4 flex items-center justify-center shadow-md">
-                  <span className="text-white font-semibold text-lg">JF</span>
+                <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-2xl">JF</span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Juan Forero</h3>
-                <p className="text-secondary-color font-medium mb-3 text-xs uppercase tracking-wider">Administrador de Bases de Datos</p>
-                <div className="w-12 h-0.5 bg-gradient-to-r from-gray-500 to-gray-400 mx-auto rounded-full mb-3"></div>
-                <p className="text-secondary-text text-xs leading-relaxed">Especialista en administración y mantenimiento de bases de datos. Asegura la disponibilidad y seguridad de la información.</p>
+                <h3 className="text-xl font-bold text-white mb-2">Juan Forero</h3>
+                <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Administrador de Bases de Datos</p>
+                <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
+                <p className="text-secondary-text text-sm leading-relaxed">Especialista en administración y mantenimiento de bases de datos. Asegura la disponibilidad y seguridad de la información.</p>
               </div>
-            </div>
+            </motion.div>
             
             {/* Johan Torres */}
-            <div className="bg-gradient-to-br from-bgDark2 to-bgDark1 p-6 rounded-xl border border-gray-500/20 hover:border-secondary-color/30 transition-all duration-300 hover:shadow-lg hover:shadow-secondary-color/5">
+            <motion.div 
+              className="bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/30 hover:border-secondary-color/50 transition-all duration-300 hover:shadow-xl hover:shadow-secondary-color/10"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
               <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full mb-4 flex items-center justify-center shadow-md">
-                  <span className="text-white font-semibold text-lg">JT</span>
+                <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-2xl">JT</span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Johan Torres</h3>
-                <p className="text-secondary-color font-medium mb-3 text-xs uppercase tracking-wider">Analista de Datos</p>
-                <div className="w-12 h-0.5 bg-gradient-to-r from-gray-500 to-gray-400 mx-auto rounded-full mb-3"></div>
-                <p className="text-secondary-text text-xs leading-relaxed">Especialista en análisis y modelado de datos. Optimiza las consultas y reportes para mejorar el rendimiento del sistema.</p>
+                <h3 className="text-xl font-bold text-white mb-2">Johan Torres</h3>
+                <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Analista de Datos</p>
+                <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
+                <p className="text-secondary-text text-sm leading-relaxed">Especialista en análisis y modelado de datos. Optimiza las consultas y reportes para mejorar el rendimiento del sistema.</p>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
         
           </section>
         </article>
