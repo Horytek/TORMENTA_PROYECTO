@@ -97,11 +97,6 @@ const PlanFeatures = () => {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="flex-1"
-          style={{
-            border: "none",
-            boxShadow: "none",
-            outline: "none",
-          }}
         />
         <Button onClick={() => setIsAddModalOpen(true)} color="primary" variant="shadow">
           <FaPlus className="w-4 h-4 mr-2" />

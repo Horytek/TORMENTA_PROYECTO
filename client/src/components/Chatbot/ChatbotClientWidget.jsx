@@ -1,10 +1,11 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Container, Header, MessageList, Composer, useWebchat } from "@botpress/webchat";
-import { Card, Button, Chip, Divider } from "@heroui/react";
+import { Card, Button, Chip, Divider, Tooltip } from "@heroui/react";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/react";
-import { Sparkles, MessageCircle, Trash2 } from "lucide-react";
+import { Sparkles, MessageCircle, Trash2, Search } from "lucide-react";
 import { getModulosConSubmodulos } from "@/services/rutas.services";
 import { useLocation } from "react-router-dom";
+import CommandDemo from "@/components/ui/command";
 
 /* Config UI (estable, fuera del render) */
 const HEADER_CONFIG = {
@@ -100,7 +101,7 @@ function NotificationBubble({ open, text, onOpen, onDismiss }) {
   );
 }
 
-export default function ChatbotClientWidget() {
+export default function ChatbotClientWidget({ routes }) {
   const clientId = import.meta.env.VITE_BOTPRESS_CLIENT_ID || "fd9676e2-d7f2-4563-ab0e-69fbbbb0b8df";
   const { pathname } = useLocation();
 
@@ -112,6 +113,7 @@ export default function ChatbotClientWidget() {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [notifications, setNotifications] = useState([]); // { id, text, ts }[]
   const [unread, setUnread] = useState(0);
+  const [showCommand, setShowCommand] = useState(false);
 
   // Webchat manual (control total)
   const { client, messages, isTyping, user, clientState, newConversation, on } = useWebchat({ clientId });
@@ -315,116 +317,143 @@ export default function ChatbotClientWidget() {
         onDismiss={dismissBubble}
       />
 
-      {/* BOTÓN + POPOVER (nuevo diseño minimal) */}
+      {/* BOTONES FLOTANTES EN COLUMNA */}
       {!isOpen && (
-        <Popover
-          isOpen={popoverOpen}
-          onOpenChange={setPopoverOpen}
-          placement="top-end"
-          offset={8}
-        >
-          <PopoverTrigger>
-            <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 9998 }}>
-              <Button
-                isIconOnly
-                variant="flat"
-                color="default"
-                className="rounded-xl shadow-sm border border-blue-100/60 dark:border-zinc-700/60 bg-white/90 dark:bg-zinc-900/85 hover:bg-white/100 dark:hover:bg-zinc-900/95"
-                onPress={() => setPopoverOpen((v) => !v)}
-                aria-label="Asistente"
-              >
-                <MessageCircle className="w-5 h-5 text-blue-600" />
-              </Button>
-
-              {/* Badge de no leídos (suave y minimal) */}
-              {unread > 0 && (
-                <span
-                  aria-label={`${unread} notificaciones sin leer`}
-                  title={`${unread} sin leer`}
-                  style={{
-                    position: "absolute",
-                    top: -2,
-                    right: -2,
-                    minWidth: 18,
-                    height: 18,
-                    padding: "0 5px",
-                    borderRadius: 999,
-                    background: "linear-gradient(135deg, #e0ecff, #c7dbff)",
-                    color: "#1e3a8a",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    lineHeight: "18px",
-                    textAlign: "center",
-                    boxShadow: "0 2px 8px rgba(0,0,0,.12)",
+        <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 9998 }} className="flex flex-col items-end gap-2">
+          {/* Botón de búsqueda */}
+          <Tooltip content="Buscar en el sistema" placement="left">
+            <Button
+              isIconOnly
+              variant="flat"
+              className="rounded-xl shadow-md border border-blue-100/60 bg-gradient-to-br from-blue-50 via-white to-blue-100 hover:from-blue-100 hover:to-blue-200 hover:bg-white/90 transition-all duration-200 w-10 h-10 flex items-center justify-center"
+              style={{
+                boxShadow: "0 4px 12px 0 rgba(59,130,246,0.10)",
+                backdropFilter: "blur(2px)",
               }}
+              onClick={() => setShowCommand(true)}
+              aria-label="Buscar"
+            >
+              <Search className="w-5 h-5 text-blue-500" />
+            </Button>
+          </Tooltip>
+          {/* Botón de chatbot */}
+          <Popover
+            isOpen={popoverOpen}
+            onOpenChange={setPopoverOpen}
+            placement="top-end"
+            offset={8}
+          >
+            <PopoverTrigger>
+              <div className="relative">
+              <Tooltip content="Abrir asistente" placement="left">
+                <Button
+                  isIconOnly
+                  variant="flat"
+                  color="default"
+                  className="rounded-xl shadow-sm border border-blue-100/60 dark:border-zinc-700/60 bg-white/90 dark:bg-zinc-900/85 hover:bg-white/100 dark:hover:bg-zinc-900/95 w-10 h-10"
+                  onPress={() => setPopoverOpen((v) => !v)}
+                  aria-label="Asistente"
                 >
-                  {unread}
-                </span>
-              )}
-            </div>
-          </PopoverTrigger>
-
-          <PopoverContent className="p-3 rounded-xl shadow-xl border border-blue-100/60 dark:border-zinc-700/60 bg-white/95 dark:bg-zinc-900/90 w-80">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center rounded-lg bg-blue-500/90 text-white w-7 h-7 shadow">
-                  <Sparkles className="w-4 h-4" />
-                </span>
-                <div className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                  {HEADER_CONFIG.botName}
-                </div>
-              </div>
-              {/* Botón limpiar minimalista */}
-              <button
-                onClick={clearNotifications}
-                aria-label="Limpiar notificaciones"
-                className="rounded-full p-1.5 bg-blue-50 hover:bg-blue-100 transition-colors text-blue-600 shadow-sm border border-blue-100/60"
-                style={{ lineHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
-                title="Limpiar notificaciones"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-
-            <Divider className="mb-2" />
-
-            {/* Lista de notificaciones recientes */}
-            <div className="max-h-48 overflow-auto space-y-2">
-              {notifications.length === 0 ? (
-                <div className="text-xs text-zinc-500">Sin notificaciones</div>
-              ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    className="text-xs p-2 rounded-lg bg-blue-50/60 dark:bg-zinc-800/60 text-blue-900 dark:text-blue-100 border border-blue-100/60 dark:border-zinc-700/60"
+                  <MessageCircle className="w-5 h-5 text-blue-600" />
+                </Button>
+              </Tooltip>
+                {/* Badge de no leídos */}
+                {unread > 0 && (
+                  <span
+                    aria-label={`${unread} notificaciones sin leer`}
+                    title={`${unread} sin leer`}
+                    style={{
+                      position: "absolute",
+                      top: -2,
+                      right: -2,
+                      minWidth: 16,
+                      height: 16,
+                      padding: "0 4px",
+                      borderRadius: 999,
+                      background: "linear-gradient(135deg, #e0ecff, #c7dbff)",
+                      color: "#1e3a8a",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      lineHeight: "16px",
+                      textAlign: "center",
+                      boxShadow: "0 2px 8px rgba(0,0,0,.12)",
+                    }}
                   >
-                    {n.text}
+                    {unread}
+                  </span>
+                )}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="p-3 rounded-xl shadow-xl border border-blue-100/60 dark:border-zinc-700/60 bg-white/95 dark:bg-zinc-900/90 w-80">
+              {/* ...popover content igual que antes... */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center rounded-lg bg-blue-500/90 text-white w-7 h-7 shadow">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <div className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                    {HEADER_CONFIG.botName}
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+                <button
+                  onClick={clearNotifications}
+                  aria-label="Limpiar notificaciones"
+                  className="rounded-full p-1.5 bg-blue-50 hover:bg-blue-100 transition-colors text-blue-600 shadow-sm border border-blue-100/60"
+                  style={{ lineHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                  title="Limpiar notificaciones"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <Divider className="mb-2" />
+              <div className="max-h-48 overflow-auto space-y-2">
+                {notifications.length === 0 ? (
+                  <div className="text-xs text-zinc-500">Sin notificaciones</div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className="text-xs p-2 rounded-lg bg-blue-50/60 dark:bg-zinc-800/60 text-blue-900 dark:text-blue-100 border border-blue-100/60 dark:border-zinc-700/60"
+                    >
+                      {n.text}
+                    </div>
+                  ))
+                )}
+              </div>
+              <Divider className="my-2" />
+              <div className="flex gap-2">
+                <Button
+                  color="primary"
+                  variant="flat"
+                  className="flex-1"
+                  onPress={openChat}
+                >
+                  Abrir chat
+                </Button>
+                <Button
+                  variant="light"
+                  className="flex-1"
+                  onPress={() => setPopoverOpen(false)}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
 
-            <Divider className="my-2" />
-
-            <div className="flex gap-2">
-              <Button
-                color="primary"
-                variant="flat"
-                className="flex-1"
-                onPress={openChat}
-              >
-                Abrir chat
-              </Button>
-              <Button
-                variant="light"
-                className="flex-1"
-                onPress={() => setPopoverOpen(false)}
-              >
-                Cerrar
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+      {/* Modal CommandDemo */}
+      {showCommand && (
+        <div
+          id="command-modal-bg"
+          className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[10000]"
+          onClick={() => setShowCommand(false)}
+        >
+          <div className="bg-white rounded-lg shadow-lg p-4" onClick={e => e.stopPropagation()}>
+            <CommandDemo routes={routes} onClose={() => setShowCommand(false)} />
+          </div>
+        </div>
       )}
 
       {/* Ventana del chat */}
@@ -460,7 +489,7 @@ export default function ChatbotClientWidget() {
             </Button>
           </div>
 
-          {/* Cuerpo del chat (implementación manual) */}
+          {/* Cuerpo del chat */}
           <Container connected={clientState !== "disconnected"} style={{ width: "100%", height: "calc(100% - 56px)" }}>
             <Header
               defaultOpen={false}

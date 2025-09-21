@@ -33,6 +33,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// --- Diseño minimalista y suave ---
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
@@ -65,11 +66,9 @@ export const SidebarProvider = forwardRef(
   ) => {
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = useState(false);
-    // Añadimos estado para auto-expand on hover cuando está colapsado
     const [hoverExpanded, setHoverExpanded] = useState(false);
     const [internalOpen, setInternalOpen] = useState(() => {
-      // Restaurar desde cookie (opcional)
-      const match = document.cookie.match(/(?:^|;)\\s*sidebar_state=(true|false)/);
+      const match = document.cookie.match(/(?:^|;)\s*sidebar_state=(true|false)/);
       return match ? match[1] === "true" : defaultOpen;
     });
     const open = openProp !== undefined ? openProp : internalOpen;
@@ -124,7 +123,7 @@ export const SidebarProvider = forwardRef(
 
     const state = open ? "expanded" : "collapsed";
 
-const contextValue = useMemo(
+    const contextValue = useMemo(
       () => ({
         state,
         open,
@@ -133,7 +132,6 @@ const contextValue = useMemo(
         openMobile,
         setOpenMobile,
         toggleSidebar,
-        // Exponemos hoverExpanded al árbol
         hoverExpanded,
         setHoverExpanded,
       }),
@@ -151,7 +149,8 @@ const contextValue = useMemo(
               ...style
             }}
             className={cn(
-              "group/sidebar-wrapper flex min-h-svh w-full bg-transparent",
+              // Fondo translúcido, blur, sombra suave, sin bordes fuertes
+              "group/sidebar-wrapper flex min-h-svh w-full bg-white/90 dark:bg-zinc-900/80 backdrop-blur-[2px] shadow-xl transition-all duration-200",
               className
             )}
             {...props}
@@ -183,12 +182,11 @@ export const Sidebar = forwardRef(
       return (
         <div
           ref={ref}
-                    style={{
-            // usar expanded en vez de open (evita undefined)
+          style={{
             width: expanded ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON
           }}
           className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
+            "flex h-full w-[--sidebar-width] flex-col bg-white/90 dark:bg-zinc-900/80 text-sidebar-foreground shadow-xl backdrop-blur-[2px] border-r border-gray-200/60 dark:border-zinc-800/70",
             className
           )}
           {...props}
@@ -204,7 +202,7 @@ export const Sidebar = forwardRef(
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            className="w-[--sidebar-width] bg-white/95 dark:bg-zinc-900/95 p-0 text-sidebar-foreground shadow-xl backdrop-blur-[2px] border-r border-gray-200/60 dark:border-zinc-800/70"
             style={{ "--sidebar-width": SIDEBAR_WIDTH_MOBILE }}
             side={side}
           >
@@ -234,12 +232,9 @@ export const Sidebar = forwardRef(
       >
         <div
           className={cn(
-            "fixed inset-y-0 z-30 flex h-svh transition-all duration-200 ease-in-out backdrop-blur-sm",
+            "fixed inset-y-0 z-30 flex h-svh transition-all duration-200 ease-in-out",
             side === "left" ? "left-0" : "right-0",
-            // quitamos w-[--sidebar-width] y controlamos por style
-            variant === "floating" || variant === "inset"
-              ? "p-2"
-              : "border-r border-sidebar-border",
+            "bg-white/90 dark:bg-zinc-900/80 shadow-xl backdrop-blur-[2px] border-r border-gray-200/60 dark:border-zinc-800/70",
             className
           )}
           style={{
@@ -249,7 +244,7 @@ export const Sidebar = forwardRef(
           <div
             data-sidebar="sidebar"
             className={cn(
-              "flex h-full w-full flex-col bg-sidebar",
+              "flex h-full w-full flex-col",
               variant === "floating" && "rounded-lg border border-sidebar-border shadow"
             )}
           >
@@ -261,6 +256,7 @@ export const Sidebar = forwardRef(
   }
 );
 Sidebar.displayName = "Sidebar";
+
 
 export const SidebarTrigger = forwardRef(
   ({ className, onClick, ...props }, ref) => {

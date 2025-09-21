@@ -65,7 +65,8 @@ export function NavUser() {
     .toUpperCase();
 
   // Oculta el texto cuando el sidebar está colapsado
-  const showText = state !== "collapsed";
+  const collapsed = state === "collapsed";
+  const showText = !collapsed;
 
   return (
     <SidebarMenu>
@@ -75,19 +76,22 @@ export function NavUser() {
             <SidebarMenuButton
               size="lg"
               className={`
-                data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground
-                hover:bg-gray-100 transition-all duration-150
-                px-2 py-1.5 rounded-xl
+                ${collapsed ? "sidebar-icon-btn" : ""}
+                data-[state=open]:bg-blue-50/80 data-[state=open]:text-blue-900
+                hover:bg-blue-50/60 transition-all duration-150
+                px-2 py-2 rounded-xl
                 flex items-center gap-3
-                ${!showText ? "justify-center" : ""}
+                shadow-none border border-gray-100
+                bg-white/80
               `}
               style={{
-                minHeight: "48px",
-                minWidth: showText ? 0 : "48px",
-                boxShadow: "0 1px 4px 0 rgba(0,0,0,0.04)",
+                minHeight: collapsed ? "40px" : "48px",
+                minWidth: collapsed ? "40px" : 0,
+                width: collapsed ? "40px" : undefined,
+                boxShadow: "0 1px 4px 0 rgba(59,130,246,0.04)",
               }}
             >
-              <Avatar className="h-9 w-9 rounded-lg shadow-sm ring-1 ring-gray-200">
+              <Avatar className={`rounded-lg shadow-sm ring-1 ring-gray-200 ${collapsed ? "h-8 w-8" : "h-9 w-9"}`}>
                 {user.avatar ? (
                   <AvatarImage src={user.avatar} alt={displayName} />
                 ) : (
@@ -95,17 +99,17 @@ export function NavUser() {
                 )}
               </Avatar>
               {showText && (
-                <div className="grid flex-1 text-left text-[15px] leading-tight">
-                  <span className="truncate font-semibold">{displayName}</span>
-                  <span className="truncate text-xs text-gray-500">{userRole}</span>
+                <div className="sidebar-user-text grid flex-1 text-left text-[15px] leading-tight">
+                  <span className="truncate font-semibold text-blue-900">{displayName}</span>
+                  <span className="truncate text-xs text-blue-500">{userRole}</span>
                 </div>
               )}
-              <ChevronsUpDown className={`ml-auto size-4 text-gray-400 ${!showText ? "hidden" : ""}`} />
+              <ChevronsUpDown className={`ml-auto size-4 text-blue-400 ${!showText ? "hidden" : ""}`} />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            className="z-[9999] min-w-56 rounded-xl bg-white text-black shadow-xl border border-gray-100"
+            className="z-[9999] min-w-56 rounded-xl bg-white/95 text-blue-900 shadow-xl border border-blue-100/60 p-1"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={6}
@@ -120,30 +124,30 @@ export function NavUser() {
                   )}
                 </Avatar>
                 <div className="grid flex-1 text-left text-[15px] leading-tight">
-                  <span className="truncate font-semibold">{displayName}</span>
-                  <span className="truncate text-xs text-gray-500">{userRole}</span>
+                  <span className="truncate font-semibold text-blue-900">{displayName}</span>
+                  <span className="truncate text-xs text-blue-500">{userRole}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck className="mr-2" />
+              <DropdownMenuItem className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg">
+                <BadgeCheck className="mr-2 text-blue-400" />
                 Cuenta
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard className="mr-2" />
+              <DropdownMenuItem className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg">
+                <CreditCard className="mr-2 text-blue-400" />
                 Facturación
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell className="mr-2" />
+              <DropdownMenuItem className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg">
+                <Bell className="mr-2 text-blue-400" />
                 Notificaciones
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}
-              className="cursor-pointer text-red-600 hover:bg-red-50 active:bg-red-100 font-medium"
+              className="cursor-pointer text-red-600 hover:bg-red-50 active:bg-red-100 font-medium rounded-lg"
             >
               <LogOut className="mr-2" />
               Cerrar sesión

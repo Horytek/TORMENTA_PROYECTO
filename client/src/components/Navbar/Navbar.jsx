@@ -40,33 +40,7 @@ function Navbar({ routes }) {
             </div>
           </div>
         )}
-
-        {/* Derecha: barra de búsqueda */}
-        <div className="flex items-center gap-3 max-w-xs w-full">
-          <BarraSearch
-            placeholder="Buscar en el sistema"
-            readOnly
-            style={{ cursor: 'pointer' }}
-            isClearable
-            className="h-9 text-sm cursor-pointer w-full max-w-xs"
-            onFocus={() => setShowCommand(true)}
-            onClick={() => setShowCommand(true)}
-          />
-        </div>
       </nav>
-
-      {/* Modal CommandDemo */}
-      {showCommand && (
-        <div
-          id="command-modal-bg"
-          className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
-          onClick={handleCloseCommand}
-        >
-          <div className="bg-white rounded-lg shadow-lg p-4" onClick={e => e.stopPropagation()}>
-            <CommandDemo routes={routes} />
-          </div>
-        </div>
-      )}
     </header>
   );
 }
