@@ -1,31 +1,9 @@
-"use client";
-
-import React from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-  Home,
-  Tags,
-  Warehouse,
-  Users,
-  User,
-  LineChart,
-  Building2,
-  FileBarChart2,
-  UserCog,
-  UserRound,
+  AudioWaveform, BookOpen, Bot, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, SquareTerminal,
+  Home, Tags, Warehouse, Users, User, LineChart, Building2, FileBarChart2, UserCog,
 } from "lucide-react";
-
 import { ScrollShadow } from "@heroui/react";
-
 import { NavMain } from "@/components/ui/nav-main";
 import { NavProjects } from "@/components/ui/nav-projects";
 import { NavReports } from "@/components/ui/nav-reports";
@@ -35,7 +13,9 @@ import { NavTerceros } from "@/components/ui/nav-terceros";
 import { NavConfig } from "@/components/ui/nav-config";
 import { NavDesarrollador } from "@/components/ui/nav-dev";
 import { TeamSwitcher } from "@/components/ui/team-switcher";
-
+import { getEmpresas } from "@/services/empresa.services";
+import { getPlanes } from "@/services/planes.services";
+import { useUserStore } from "@/store/useStore";
 import {
   Sidebar,
   SidebarContent,
@@ -44,42 +24,31 @@ import {
   SidebarRail,
 } from "@/components/ui/Sidebar";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
+// Sidebar navigation data
+const SIDEBAR_DATA = {
   teams: [
-    { name: "Hyrotek Inc", logo: GalleryVerticalEnd, plan: "Enterprise" },
-    { name: "Hyrotek Corp.", logo: AudioWaveform, plan: "Startup" },
+    { name: "Horytek Inc", logo: GalleryVerticalEnd, plan: "Enterprise" },
+    { name: "Horytek Corp.", logo: AudioWaveform, plan: "Startup" },
     { name: "Misterius Corp.", logo: Command, plan: "Free" },
   ],
   navMain: [
-    { title: "Dashboard", url: "/inicio", icon: Home, items: [] },
-    {
-      title: "Productos",
-      url: "/productos",
-      icon: Tags,
-   
-    },
+    { title: "Dashboard", url: "/inicio", icon: Home },
+    { title: "Productos", url: "/productos", icon: Tags },
     {
       title: "Ventas",
       url: "/ventas",
       icon: LineChart,
-      items: [
-        { title: "Nueva venta", url: "/ventas/registro_venta" },
-      ],
+      items: [{ title: "Nueva venta", url: "/ventas/registro_venta" }],
     },
   ],
   reportes: [
-    { title: "Análisis de ventas", url: "/reportes", icon: FileBarChart2, items: [] },
-    { title: "Libro de ventas", url: "/ventas/libro_ventas", icon: FileBarChart2, items: [] },
+    { title: "Análisis de ventas", url: "/reportes", icon: FileBarChart2 },
+    { title: "Libro de ventas", url: "/ventas/libro_ventas", icon: FileBarChart2 },
   ],
   terceros: [
-    { title: "Clientes", url: "/clientes", icon: User, items: [] },
-    { title: "Empleados", url: "/empleados", icon: Users, items: [] },
-    { title: "Proveedores", url: "/proveedores", icon: Users, items: [] },
+    { title: "Clientes", url: "/clientes", icon: User },
+    { title: "Empleados", url: "/empleados", icon: Users },
+    { title: "Proveedores", url: "/proveedores", icon: Users },
   ],
   logistica: [
     {
@@ -91,20 +60,20 @@ const data = {
         { title: "Guía Remisión", url: "/almacen/guia_remision" },
       ],
     },
-    { title: "Almacenes", url: "/almacenG", icon: Warehouse, items: [] },
-    { title: "Sucursal", url: "/sucursal", icon: Building2, items: [] },
+    { title: "Almacenes", url: "/almacenG", icon: Warehouse },
+    { title: "Sucursal", url: "/sucursal", icon: Building2 },
   ],
   configuracion: [
-    { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog, items: [] },
-    { title: "Roles y permisos", url: "/configuracion/roles", icon: Users, items: [] },
-    { title: "Logs", url: "/configuracion/logs", icon: FileBarChart2, items: [] },
-    { title: "Negocio", url: "/configuracion/negocio", icon: Tags, items: [] }
+    { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog },
+    { title: "Roles y permisos", url: "/configuracion/roles", icon: Users },
+    { title: "Logs", url: "/configuracion/logs", icon: FileBarChart2 },
+    { title: "Negocio", url: "/configuracion/negocio", icon: Tags },
   ],
   desarrollador: [
-    { title: "Desarrollo", url: "/desarrollador", icon: Bot, items: [] },
-    { title: "Módulos", url: "/modulos", icon: SquareTerminal, items: [] },
-    { title: "Permisos Globales", url: "/desarrollador/permisos-globales", icon: Settings2, items: [] },
-    { title: "Inf. empresas", url: "/sunat", icon: BookOpen, items: [] },
+    { title: "Desarrollo", url: "/desarrollador", icon: Bot },
+    { title: "Módulos", url: "/modulos", icon: SquareTerminal },
+    { title: "Permisos Globales", url: "/desarrollador/permisos-globales", icon: Settings2 },
+    { title: "Inf. empresas", url: "/sunat", icon: BookOpen },
   ],
   projects: [
     { name: "Design Engineering", url: "#", icon: Frame },
@@ -114,12 +83,65 @@ const data = {
 };
 
 export function AppSidebar(props) {
+  const id_tenant = useUserStore(state => state.id_tenant);
+  const [empresasTenant, setEmpresasTenant] = useState([]);
+  const [planes, setPlanes] = useState([]);
+  const data = useMemo(() => SIDEBAR_DATA, []);
+
+  useEffect(() => {
+    const fetchEmpresasYPlanes = async () => {
+      if (!id_tenant) return;
+      try {
+        const [empresas, planesData] = await Promise.all([
+          getEmpresas(),
+          getPlanes()
+        ]);
+        setPlanes(planesData || []);
+        // Solo empresas del tenant actual
+        const empresasLigadas = empresas.filter(e => String(e.id_tenant) === String(id_tenant));
+        setEmpresasTenant(empresasLigadas);
+      } catch (e) {
+        setEmpresasTenant([]);
+        setPlanes([]);
+      }
+    };
+    fetchEmpresasYPlanes();
+  }, [id_tenant]);
+
+  // Empresa principal del tenant (la primera empresa del tenant)
+  const empresaPrincipal = empresasTenant[0];
+
+const getPlanDescripcion = (planId) => {
+  const plan = planes.find(p => String(p.id_plan) === String(planId));
+  return plan ? plan.descripcion_plan : "Desconocido";
+};
+
+const teams = [
+  ...(empresaPrincipal
+    ? [{
+        name: empresaPrincipal.razonSocial || empresaPrincipal.nombreComercial || "Empresa",
+        logo: empresaPrincipal.logotipo || GalleryVerticalEnd,
+        plan: getPlanDescripcion(empresaPrincipal.plan_pago),
+      }]
+    : []),
+  ...empresasTenant
+    .slice(1)
+    .map(emp => ({
+      name: emp.razonSocial || emp.nombreComercial || "Empresa",
+      logo: emp.logotipo || GalleryVerticalEnd,
+      plan: getPlanDescripcion(emp.plan_pago),
+    })),
+  ...SIDEBAR_DATA.teams,
+];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher
+          teams={teams}
+          nameClassName="truncate max-w-[120px] md:max-w-[180px] block"
+        />
       </SidebarHeader>
-
       <SidebarContent>
         <ScrollShadow hideScrollBar className="h-full px-1">
           <NavMain items={data.navMain} />
@@ -131,11 +153,9 @@ export function AppSidebar(props) {
           <NavProjects projects={data.projects} />
         </ScrollShadow>
       </SidebarContent>
-
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
-
       <SidebarRail />
     </Sidebar>
   );

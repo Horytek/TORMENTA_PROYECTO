@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { File, Search } from "lucide-react";
-import { ScrollShadow } from '@heroui/react';
+import React, { useState, useEffect, useRef } from "react";
+import { File, Search, X } from "lucide-react";
+import { ScrollShadow, Button, Divider } from '@heroui/react';
 
 export function Command({ className = "", children, ...props }) {
   return (
     <div
-      className={`command bg-white rounded-xl border border-gray-200 shadow-2xl p-0 z-50 ${className}`}
+      className={`command bg-white/95 rounded-2xl border border-blue-100 shadow-2xl p-0 z-[10001] ${className}`}
       style={{ maxWidth: 480, width: "100%" }}
       {...props}
     >
@@ -16,12 +16,14 @@ export function Command({ className = "", children, ...props }) {
 
 export function CommandInput({ value, onChange, className = "", ...props }) {
   return (
-    <div className="relative sticky top-0 z-20 bg-white rounded-t-xl">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+    <div className="relative top-0 z-20 bg-white/95 rounded-t-2xl">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-5 h-5" />
       <input
-        className={`w-full pl-10 pr-3 py-3 border-b border-gray-100 outline-none text-base rounded-t-xl focus:ring-2 focus:ring-blue-100 transition ${className}`}
+        className={`w-full pl-10 pr-3 py-3 border-b border-blue-100 outline-none text-base rounded-t-2xl focus:ring-2 focus:ring-blue-100 transition bg-white/95 ${className}`}
         value={value}
         onChange={onChange}
+        placeholder="Buscar módulo o sección..."
+        autoFocus
         {...props}
       />
     </div>
@@ -33,7 +35,7 @@ export function CommandList({ className = "", children, ...props }) {
     <ScrollShadow
       hideScrollBar
       size={30}
-      className={`max-h-[340px] ${className}`}
+      className={`max-h-[340px] bg-white/95 ${className}`}
       {...props}
     >
       <div className="py-2">{children}</div>
@@ -43,7 +45,7 @@ export function CommandList({ className = "", children, ...props }) {
 
 export function CommandEmpty({ children }) {
   return (
-    <div className="text-center text-gray-400 py-8 text-lg">{children}</div>
+    <div className="text-center text-blue-400 py-8 text-base">{children}</div>
   );
 }
 
@@ -51,7 +53,7 @@ export function CommandGroup({ heading, children }) {
   return (
     <div className="mb-3">
       {heading && (
-        <div className="px-5 py-1 text-xs font-bold text-blue-500 uppercase tracking-wider bg-blue-50 rounded-t">
+        <div className="px-5 py-1 text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-50/80 rounded-t">
           {heading}
         </div>
       )}
@@ -62,26 +64,56 @@ export function CommandGroup({ heading, children }) {
 
 export function CommandItem({ disabled, className = "", children, ...props }) {
   return (
-    <button
-      className={`flex items-center gap-3 w-full px-5 py-3 text-left rounded-lg transition hover:bg-blue-50 focus:bg-blue-100 disabled:opacity-50 text-gray-700 font-medium ${className}`}
+    <Button
+      variant="light"
+      color="primary"
+      className={`flex items-center gap-3 w-full px-5 py-3 text-left rounded-lg transition hover:bg-blue-50/80 focus:bg-blue-100/80 disabled:opacity-50 text-blue-900 font-medium ${className}`}
       disabled={disabled}
       {...props}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
 export function CommandSeparator() {
-  return <hr className="my-3 border-gray-200" />;
+  return <Divider className="my-3 border-blue-100" />;
 }
 
 export function CommandShortcut({ children }) {
-  return <span className="ml-auto text-xs text-gray-400">{children}</span>;
+  return <span className="ml-auto text-xs text-blue-400">{children}</span>;
 }
 
-function CommandDemo({ routes }) {
+function CommandDemo({ routes, onClose }) {
   const [search, setSearch] = useState("");
+  const modalRef = useRef(null);
+
+  // Cerrar con ESC
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  // Cerrar al hacer click fuera
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(e.target)
+      ) {
+        onClose?.();
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [onClose]);
+
+  // Compensar sidebar (usa la variable CSS del layout)
+  const sidebarWidth = getComputedStyle(document.documentElement)
+    .getPropertyValue("--sidebar-width") || "184px";
 
   const allLinks = [];
   if (routes?.length) {
@@ -105,34 +137,73 @@ function CommandDemo({ routes }) {
     normalize(link.name).includes(normalize(search))
   );
 
-  return (
-<div className="relative z-[999] flex justify-center items-start w-full">
-  <Command className="relative md:min-w-[400px] max-w-full z-[999]">
-    <CommandInput
-      placeholder="Buscar módulo o sección..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-    />
-    <CommandList>
-      {filteredLinks.length === 0 ? (
-        <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-      ) : (
-        <CommandGroup heading="Accesos rápidos">
-          {filteredLinks.map((link) => (
-            <CommandItem
-              key={link.path}
-              onClick={() => (window.location.href = link.path)}
-            >
-              <File className="w-5 h-5 text-blue-400" />
-              <span>{link.name}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
-    </CommandList>
-  </Command>
-</div>
+  const shortcuts = [
+    { label: "Ir a Dashboard", action: () => (window.location.href = "/inicio"), key: "D" },
+    { label: "Ir a Ventas", action: () => (window.location.href = "/ventas"), key: "V" },
+    { label: "Ir a Productos", action: () => (window.location.href = "/productos"), key: "P" },
+  ];
 
+  return (
+    <div
+      className="fixed inset-0 z-[10000] flex items-start justify-center"
+      style={{
+        background: "rgba(255,255,255,0.60)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        paddingLeft: sidebarWidth.trim(),
+        transition: "background 0.2s"
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="mt-24 md:mt-32 w-full max-w-lg px-2 md:px-0"
+        ref={modalRef}
+        onClick={e => e.stopPropagation()}
+      >
+        <Command className="relative shadow-2xl border-blue-100">
+          <CommandInput
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <CommandList>
+            {filteredLinks.length === 0 ? (
+              <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+            ) : (
+              <CommandGroup heading="Accesos rápidos">
+                {filteredLinks.map((link) => (
+                  <CommandItem
+                    key={link.path}
+                    onClick={() => (window.location.href = link.path)}
+                  >
+                    <File className="w-5 h-5 text-blue-400" />
+                    <span>{link.name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            <CommandSeparator />
+            <CommandGroup heading="Atajos">
+              {shortcuts.map((s) => (
+                <CommandItem key={s.key} onClick={s.action}>
+                  <span>{s.label}</span>
+                  <CommandShortcut>{s.key}</CommandShortcut>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+          <div className="flex justify-end px-5 pb-4 pt-2">
+            <Button
+              color="default"
+              variant="flat"
+              onClick={e => { e.stopPropagation(); onClose(); }}
+              className="rounded-lg"
+            >
+              Cerrar
+            </Button>
+          </div>
+        </Command>
+      </div>
+    </div>
   );
 }
 

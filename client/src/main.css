@@ -297,6 +297,35 @@ body.sidebar-collapsed .contenido-cambiante {
 
   /* Corrige uso inválido de border-1 (usar .border) */
   .border-1 { @apply border; }
+
+    .sidebar-icon-btn {
+    @apply justify-center items-center h-12 w-12 p-0 gap-0 my-1;
+  }
+  .sidebar-icon-btn .sidebar-user-text {
+    display: none !important;
+  }
+  .sidebar-icon-btn > svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
 }
 
+/* Variante para usar con data attributes de Tailwind v4 */
+.group-data-\[collapsible\=icon\]\:sidebar-icon-btn {
+  justify-content: center !important;
+  align-items: center !important;
+  height: 3rem !important;
+  width: 3rem !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+}
+.group-data-\[collapsible\=icon\]\:sidebar-icon-btn > span {
+  display: none !important;
+}
+.group-data-\[collapsible\=icon\]\:sidebar-icon-btn > svg {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+}
 /* Fin adaptación completa */

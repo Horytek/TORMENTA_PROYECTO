@@ -345,6 +345,7 @@ export default function ChatbotClientWidget({ routes }) {
           >
             <PopoverTrigger>
               <div className="relative">
+              <Tooltip content="Abrir asistente" placement="left">
                 <Button
                   isIconOnly
                   variant="flat"
@@ -355,6 +356,7 @@ export default function ChatbotClientWidget({ routes }) {
                 >
                   <MessageCircle className="w-5 h-5 text-blue-600" />
                 </Button>
+              </Tooltip>
                 {/* Badge de no leídos */}
                 {unread > 0 && (
                   <span
@@ -449,7 +451,7 @@ export default function ChatbotClientWidget({ routes }) {
           onClick={() => setShowCommand(false)}
         >
           <div className="bg-white rounded-lg shadow-lg p-4" onClick={e => e.stopPropagation()}>
-            <CommandDemo routes={routes} />
+            <CommandDemo routes={routes} onClose={() => setShowCommand(false)} />
           </div>
         </div>
       )}
