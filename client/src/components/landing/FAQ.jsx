@@ -67,7 +67,11 @@ const FAQBox = ({ defaultOpen, title, content }) => {
 
   return (
     <div
-      className="pt-2 sm:pt-6 pb-2 px-3 sm:px-8  rounded-3xl bg-bgDark3 main-border-gray-darker mb-4 relative hover:bg-bgDark3Hover cursor-pointer transition"
+      className="pt-2 sm:pt-6 pb-2 px-3 sm:px-8 rounded-3xl main-border-gray-darker mb-4 relative hover:bg-bgDark3Hover cursor-pointer transition"
+      style={{
+        backgroundColor: 'rgba(48, 49, 54, 0.85)',
+        backdropFilter: 'blur(2px)'
+      }}
       onClick={() => setIsOpen(!isOpen)}
     >
       <div className="flex flex-col p-2  justify-center items-start">

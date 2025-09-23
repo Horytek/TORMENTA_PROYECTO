@@ -18,8 +18,13 @@ export const Hero = () => {
 
     return (
         <section
-            className={`landing-hero w-screen flex justify-center items-center bg-bg-dark-1 mb-[28vw] md:mb-[18vw] lg:mb-[10vw] xl:mb-[13vw] 2xl:mb-60 ${styles.heroBgGradient} pb-24 sm:pb-32 md:pb-44 lg:pb-0`}
+            className={`landing-hero w-screen flex justify-center items-center mb-[28vw] md:mb-[18vw] lg:mb-[10vw] xl:mb-[13vw] 2xl:mb-60 pb-24 sm:pb-32 md:pb-44 lg:pb-0`}
             id="home"
+            style={{
+                background: 'transparent',
+                backdropFilter: 'blur(1px)',
+                WebkitBackdropFilter: 'blur(1px)'
+            }}
         >
             <div className="w-full md:w-[800px] xl:w-[900px] flex flex-col justify-center items-center pt-16 md:pt-16 lg:pt-20 text-center">
                 <motion.div
@@ -94,17 +99,25 @@ export const Hero = () => {
                     </div>
                 </motion.div>
                 <div className="relative w-screen flex justify-center">
-                    <div className={`${styles.heroShapeDivider} mt-4 sm:mt-16 md:mt-52 hidden lg:block`}>
+                    <div 
+                        className={`${styles.heroShapeDivider} mt-4 sm:mt-16 md:mt-52 hidden lg:block`}
+                        style={{
+                            backgroundColor: 'rgba(38, 39, 43, 0.5)',
+                            backdropFilter: 'blur(16px)',
+                        }}
+                    >
                         <svg
                             data-name="Layer 1"
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 1200 120"
                             preserveAspectRatio="none"
-                            className="bg-bg-dark-2"
+                            style={{ background: 'transparent' }}
                         >
                             <path
                                 d="M1200 0L0 0 598.97 114.72 1200 0z"
-                                className={styles.heroShapeFill}
+                                style={{ 
+                                    fill: 'rgba(38, 39, 43, 0.5)'
+                                }}
                             ></path>
                         </svg>
                     </div>

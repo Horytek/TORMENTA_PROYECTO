@@ -30,7 +30,13 @@ const testimonialsData = [
 ];
 
 export const Testimonials = () => (
-  <section className="w-full flex justify-center pt-16 mb-16 lg:mb-32 bg-bgDark2 relative">
+  <section 
+    className="w-full flex justify-center pt-16 pb-20 mb-8 lg:mb-16 relative"
+    style={{
+      backgroundColor: 'rgba(38, 39, 43, 0.5)',
+      backdropFilter: 'blur(16px)'
+    }}
+  >
     <div className="absolute -top-16" id="feedback" />
     <div className="flex flex-col w-full lg:w-[1150px] justify-center">
       <motion.div
@@ -47,7 +53,11 @@ export const Testimonials = () => (
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-5 xl:gap-10 px-6 xl:px-0 items-center">
           {testimonialsData.map((testimonial, index) => (
             <div
-              className="w-11/12 sm:w-4/5 md:w-[560px] lg:w-1/3 main-border-gray-darker rounded-xl bg-bgDark3 flex flex-col px-6 py-4"
+              className="w-11/12 sm:w-4/5 md:w-[560px] lg:w-1/3 main-border-gray-darker rounded-xl flex flex-col px-6 py-4"
+              style={{
+                backgroundColor: 'rgba(48, 49, 54, 0.7)',
+                backdropFilter: 'blur(4px)'
+              }}
               key={`${testimonial.customerName}-${index}`}
             >
               <div className="flex mb-2">

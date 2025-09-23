@@ -11,7 +11,7 @@
   --color-bg-dark-1: rgb(31 32 35);
   --color-bg-dark-2: rgb(38 39 43);
   --color-bg-dark-3: rgb(48 49 54);
-  --color-bg-dark-transparent: rgb(31 32 35 / 0.7);
+  --color-bg-dark-transparent: rgb(31 32 35 / 0.25);
 
   --color-main-border: rgb(255 255 255 / 0.15);
 }
@@ -56,5 +56,5 @@
 
 /* === EFECTOS ESPECIALES === */
 .navbarBackdrop {
-  backdrop-filter: blur(12px);
+  /* Los estilos se aplican directamente en el componente */
 }

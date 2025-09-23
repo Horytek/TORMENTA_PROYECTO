@@ -13,6 +13,11 @@ import { Blog } from '../../components/landing/Blog';
 import { FAQ } from '../../components/landing/FAQ';
 import { Footer } from '../../components/landing/Footer';
 import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
+import { MetaballsBackground } from '../../components/landing/MetaballsBackground';
+import { MetaballsBackgroundSimple } from '../../components/landing/MetaballsBackgroundSimple';
+import { TestThreeJS } from '../../components/landing/TestThreeJS';
+import { AnimatedBackground } from '../../components/landing/AnimatedBackground';
+import { MetaballsOriginal } from '../../components/landing/MetaballsOriginal';
 
 // Importar estilos específicos de landing aislados
 import '../../styles/landing/index.css';
@@ -28,18 +33,24 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page" data-theme="landing">
-      <Navbar />
-      <Hero />
-      <Features1 />
-      <Features2 />
-      <FeaturesDiagonal />
-      <Pricing />
-      <Brands />
-      <Testimonials />
-      <Blog />
-      <FAQ />
-      <Footer />
-      <ScrollUpButton />
+      {/* Fondo animado - Metaballs Original */}
+      <MetaballsOriginal />
+      
+      {/* Contenido de la landing page */}
+      <div className="relative z-10">
+        <Navbar />
+        <Hero />
+        <Features1 />
+        <Features2 />
+        <FeaturesDiagonal />
+        <Pricing />
+        <Brands />
+        <Testimonials />
+        <Blog />
+        <FAQ />
+        <Footer />
+        <ScrollUpButton />
+      </div>
     </div>
   );
 }

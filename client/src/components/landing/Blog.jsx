@@ -25,9 +25,15 @@ const blogData = [
 ];
 
 export const Blog = () => (
-  <section className="w-screen flex justify-center bg-bgDark2 relative">
+  <section 
+    className="w-screen flex justify-center relative"
+    style={{
+      backgroundColor: 'rgba(38, 39, 43, 0.5)',
+      backdropFilter: 'blur(16px)'
+    }}
+  >
     <div className="absolute -top-16" id="blog" />
-    <div className="pb-0 pt-4 bg-bgDark2 2xl:w-[1200px] lg:w-[1000px] xl:w-[1150px]">
+    <div className="pb-0 pt-12 2xl:w-[1200px] lg:w-[1000px] xl:w-[1150px]">
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -49,7 +55,13 @@ export const Blog = () => (
             {/* Card grande */}
             <div className="flex sm:hidden lg:flex w-11/12 mx-auto sm:ml-0 sm:mr-0 lg:w-1/2 xl:w-3/5 px-4 mb-8 lg:mb-0 h-full">
               <a href="/landing/blog" className="w-full">
-                <div className="p-6 sm:p-10 bg-bgDark3 rounded-3xl h-full hover:bg-bgDark3Hover transition cursor-pointer">
+                <div 
+                  className="p-6 sm:p-10 rounded-3xl h-full hover:bg-bgDark3Hover transition cursor-pointer"
+                  style={{
+                    backgroundColor: 'rgba(48, 49, 54, 0.7)',
+                    backdropFilter: 'blur(4px)'
+                  }}
+                >
                   <img
                     src={blogData[0].image}
                     alt={blogData[0].title}
@@ -70,7 +82,13 @@ export const Blog = () => (
             <div className="hidden sm:grid mx-auto lg:ml-0 lg:mr-0 w-11/12 sm:w-4/5 lg:w-1/2 xl:w-2/5 px-4 grid-rows-2 gap-6 h-full">
               {blogData.slice(1).map((post, index) => (
                 <a href="/landing/blog" key={`${post.title}-${index}`} className="group">
-                  <div className="flex gap-4 p-10 bg-bgDark3 rounded-3xl h-full hover:bg-bgDark3Hover transition">
+                  <div 
+                    className="flex gap-4 p-10 rounded-3xl h-full hover:bg-bgDark3Hover transition"
+                    style={{
+                      backgroundColor: 'rgba(48, 49, 54, 0.7)',
+                      backdropFilter: 'blur(4px)'
+                    }}
+                  >
                     <div className="pt-2 flex-1">
                       <h3 className="mb-4 text-xl font-bold font-heading text-primaryText">
                         {post.title}

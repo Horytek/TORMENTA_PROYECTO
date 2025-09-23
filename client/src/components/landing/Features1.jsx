@@ -10,8 +10,12 @@ import styles from "../../styles/landing.module.css";
 export const Features1 = () => {
   return (
     <section
-      className="w-full bg-bgDark2 pt-24 -mt-8 mb-8 sm:-mt-8 sm:mb-24 xl:-mt-8 2xl:mt-0 md:pt-[12vw] lg:pt-16"
+      className="w-full pt-24 -mt-8 mb-8 sm:-mt-8 sm:mb-24 xl:-mt-8 2xl:mt-0 md:pt-[12vw] lg:pt-16"
       id="features"
+      style={{
+        backgroundColor: 'rgba(38, 39, 43, 0.5)',
+        backdropFilter: 'blur(16px)',
+      }}
     >
       <motion.div
         initial={{ opacity: 0 }}

@@ -6,7 +6,13 @@ import feature6 from "../../assets/images/feature9.svg";
 import { CheckArrowIcon } from "../../assets/icons/CheckArrowIcon";
 
 export const Features2 = () => (
-  <section className="w-full bg-bgDark2 mt-12 sm:mt-24 mb-12 lg:my-20 lg:mb-24 pt-4">
+  <section 
+    className="w-full mt-12 sm:mt-24 mb-12 lg:my-20 lg:mb-24 pt-4"
+    style={{
+      backgroundColor: 'rgba(38, 39, 43, 0.5)',
+      backdropFilter: 'blur(16px)',
+    }}
+  >
     <motion.div
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}

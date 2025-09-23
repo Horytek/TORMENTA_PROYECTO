@@ -50,7 +50,11 @@ export const Navbar = () => {
 
   return (
       <nav
-        className={`landing-navbar w-full h-20 flex flex-col justify-center items-center fixed bg-bg-dark-1 lg:bg-bg-dark-transparent ${styles.navbarBackdrop} z-40`}
+        className={`landing-navbar w-full h-20 flex flex-col justify-center items-center fixed ${styles.navbarBackdrop} z-40`}
+        style={{
+          backgroundColor: 'rgba(31, 32, 35, 0.25)',
+          backdropFilter: 'blur(28px)',
+        }}
         aria-label="Main navigation"
       >
         <div className="w-11/12 xl:w-10/12 2xl:w-[1280px] flex justify-between items-center relative h-full">

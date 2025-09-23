@@ -8,7 +8,13 @@ import { SpotifyLogo } from "../../assets/logos/SpotifyLogo";
 import { StripeLogo } from "../../assets/logos/StripeLogo";
 
 export const Brands = () => (
-  <section className="py-12 sm:py-24 bg-bgDark1 w-full  lg:mt-16 mb-8 lg:mb-16">
+  <section 
+    className="py-12 sm:py-24 w-full lg:mt-16 mb-8 lg:mb-16"
+    style={{
+      backgroundColor: 'rgba(38, 39, 43, 0.5)',
+      backdropFilter: 'blur(16px)'
+    }}
+  >
     <motion.div
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}

@@ -104,6 +104,63 @@
   outline-color: var(--ring);
 }
 
+/* Estilos para contenido sobre animación de fondo */
+.landing-page {
+  position: relative;
+  overflow-x: hidden;
+  background: #020203 !important;
+  min-height: 100vh;
+}
+
+.landing-page > div:last-child {
+  position: relative;
+  z-index: 10;
+}
+
+/* Forzar fondo para landing */
+body.landing-body {
+  background: #020203 !important;
+  background-image: none !important;
+  background-attachment: initial !important;
+}
+
+body.landing-body #root {
+  background: #020203 !important;
+  background-image: none !important;
+}
+
+/* Mejoras de contraste para el contenido */
+.landing-root .navbar,
+.landing-root .hero,
+.landing-root .features,
+.landing-root .pricing,
+.landing-root .testimonials,
+.landing-root .footer {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+}
+
+/* Sombras de texto para mejor legibilidad */
+.landing-root h1,
+.landing-root h2,
+.landing-root h3,
+.landing-root .block-title,
+.landing-root .block-big-title,
+.landing-root .content-title {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Fondos semitransparentes para secciones importantes */
+.landing-root .card,
+.landing-root .pricing-card,
+.landing-root .testimonial-card {
+  background: rgba(31, 32, 35, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .landing-root .block-title,
 .landing-root .block-big-title,
 .landing-root .content-title,

@@ -25,9 +25,15 @@ export const Pricing = () => {
   };
 
   return (
-    <section className="w-screen flex justify-center bg-bgDark2 relative">
+    <section 
+      className="w-screen flex justify-center relative"
+      style={{
+        backgroundColor: 'rgba(38, 39, 43, 0.5)',
+        backdropFilter: 'blur(16px)',
+      }}
+    >
       <div className="absolute -top-16" id="pricing" />
-      <div className="pb-20 pt-12 bg-bgDark2  2xl:w-[1150px] lg:w-[1050px]  md:w-4/5 ">
+      <div className="pb-20 pt-12 2xl:w-[1150px] lg:w-[1050px] md:w-4/5">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -66,7 +72,13 @@ export const Pricing = () => {
             </div>
             <div className="flex flex-wrap flex-col lg:flex-row -mx-4 items-center mt-20">
               <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0">
-                <div className="p-8 bg-bgDark3 rounded-3xl">
+                <div 
+                  className="p-8 rounded-3xl"
+                  style={{
+                    backgroundColor: 'rgba(48, 49, 54, 0.7)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
                   <h3 className="mb-2 text-xl font-bold font-heading text-primary-text text-left">
                     Plan Básico
                   </h3>
@@ -96,10 +108,16 @@ export const Pricing = () => {
                 </div>
               </div>
               <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0 relative">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-xs font-semibold px-4 py-1 rounded-full shadow">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-xs font-semibold px-4 py-1 rounded-full shadow z-10">
                   Popular
                 </div>
-                <div className="px-8 py-8 bg-bgDark3 rounded-3xl border border-orange-500">
+                <div 
+                  className="px-8 py-8 rounded-3xl border border-orange-500"
+                  style={{
+                    backgroundColor: 'rgba(48, 49, 54, 0.7)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
                   <h3 className="mb-2 2xl:mb-4 text-2xl font-bold font-heading text-primary-text text-left">
                     Plan Empresarial
                   </h3>
@@ -130,7 +148,13 @@ export const Pricing = () => {
               </div>
 
               <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0">
-                <div className="p-8 bg-bgDark3 rounded-3xl">
+                <div 
+                  className="p-8 rounded-3xl"
+                  style={{
+                    backgroundColor: 'rgba(48, 49, 54, 0.7)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
                   <h3 className="mb-2 text-xl font-bold font-heading text-primary-text text-left">
                     Plan Corporativo
                   </h3>
