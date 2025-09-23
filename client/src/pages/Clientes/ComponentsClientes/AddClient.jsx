@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import {
   Button,
   Input,
@@ -36,6 +37,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
   const [clientLastName, setClientLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [address, setAddress] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState(null); // Para guardar el objeto seleccionado
   const { addClient, isLoading } = useAddClient();
   const [manualInput, setManualInput] = useState(false); // NUEVO
 
@@ -79,7 +81,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
           setClientType("personal");
         } else {
           toast.error('No se encontraron datos para el DNI proporcionado');
-          setClientName('');
+  // ...existing code...
           setClientLastName('');
         }
       } else {
@@ -246,12 +248,33 @@ if (setAllClientes) {
                           classNames={inputStyles}
                           isDisabled={!manualInput}
                         />
-                        <Input
-                          label="Dirección"
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                          classNames={inputStyles}
-                        />
+                        {/* Campo de dirección con autocompletado Google Places, solo Chiclayo */}
+                        <div>
+                          <label className="text-sm font-medium mb-1">Dirección</label>
+                          <GooglePlacesAutocomplete
+                            apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+                            selectProps={{
+                              value: selectedAddress,
+                              onChange: (value) => {
+                                setSelectedAddress(value);
+                                setAddress(value ? value.label : "");
+                              },
+                              placeholder: 'Buscar dirección en Chiclayo...',
+                              isClearable: true,
+                              styles: {
+                                input: (provided) => ({ ...provided, minHeight: '38px' })
+                              },
+                              loadingMessage: () => 'Cargando direcciones...',
+                              noOptionsMessage: () => 'No se encontraron direcciones'
+                            }}
+                            autocompletionRequest={{
+                              types: ['address'],
+                              componentRestrictions: { country: 'pe' },
+                              location: { lat: -6.7714, lng: -79.8406 },
+                              radius: 15000 // 15km alrededor de Chiclayo
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </Tab>
@@ -299,12 +322,33 @@ if (setAllClientes) {
                           isDisabled={!manualInput}
                         />
                         
-                        <Input
-                          label="Dirección"
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                          classNames={inputStyles}
-                        />
+                        {/* Campo de dirección con autocompletado Google Places, solo Chiclayo */}
+                        <div>
+                          <label className="text-sm font-medium mb-1">Dirección</label>
+                          <GooglePlacesAutocomplete
+                            apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+                            selectProps={{
+                              value: selectedAddress,
+                              onChange: (value) => {
+                                setSelectedAddress(value);
+                                setAddress(value ? value.label : "");
+                              },
+                              placeholder: 'Buscar dirección en Chiclayo...',
+                              isClearable: true,
+                              styles: {
+                                input: (provided) => ({ ...provided, minHeight: '38px' })
+                              },
+                              loadingMessage: () => 'Cargando direcciones...',
+                              noOptionsMessage: () => 'No se encontraron direcciones'
+                            }}
+                            autocompletionRequest={{
+                              types: ['address'],
+                              componentRestrictions: { country: 'pe' },
+                              location: { lat: -6.7714, lng: -79.8406 },
+                              radius: 15000 // 15km alrededor de Chiclayo
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </Tab>
