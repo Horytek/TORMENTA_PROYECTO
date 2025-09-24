@@ -4,6 +4,7 @@ import { Card, Button, Chip, Divider, Tooltip } from "@heroui/react";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/react";
 import { Sparkles, MessageCircle, Trash2, Search } from "lucide-react";
 import { getModulosConSubmodulos } from "@/services/rutas.services";
+import { useUserStore } from "@/store/useStore";
 import { useLocation } from "react-router-dom";
 import CommandDemo from "@/components/ui/command";
 
@@ -11,127 +12,96 @@ import CommandDemo from "@/components/ui/command";
 const HEADER_CONFIG = {
   botName: "Asistente HoryCore",
   botAvatar: "https://cdn.botpress.cloud/bot-avatar.png",
-  botDescription: "Ayuda sobre módulos y flujos del sistema.",
+  botDescription: "Ayuda especializada sobre módulos y flujos del sistema ERP.",
 };
+
 const QUICK_PROMPTS = [
   "¿Cómo registro una venta?",
   "¿Emitir boleta/factura?",
   "¿Notas de ingreso/salida?",
   "¿Reporte de ventas?",
-  "¿Envío a Sunat?"
+  "¿Envío a Sunat?",
+  "¿Gestión de clientes?",
+  "¿Control de inventario?",
+  "¿Permisos de usuario?"
 ];
 
 /* Utilidades */
 const sanitize = (v) => (typeof v === "string" ? v.trim() : v);
 
-/* Burbuja compacta de notificación (solo visual) */
-function NotificationBubble({ open, text, onOpen, onDismiss }) {
+/* Componente NotificationBubble */
+const NotificationBubble = ({ open, text, onOpen, onDismiss }) => {
   if (!open) return null;
+
   return (
-    <div
-      id="msgDiv"
-      role="button"
-      tabIndex={0}
-      aria-live="polite"
-      aria-label="Notification"
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onOpen();
-        }
-      }}
-      style={{
-        position: "fixed",
-        right: 24,
-        bottom: 102,
-        zIndex: 9999,
-        display: "block",
-        background: "var(--bubble-bg, #ccddfa)",
-        color: "var(--bubble-fg, #173569)",
-        borderRadius: 16,
-        padding: "14px 42px 14px 16px",
-        maxWidth: 340,
-        lineHeight: 1.35,
-        boxShadow: "0 10px 25px rgba(0,0,0,.18)",
-        cursor: "pointer",
-      }}
+    <div 
+      className="fixed bottom-20 right-6 z-[9997] max-w-xs bg-white/95 dark:bg-zinc-900/95 border border-blue-100/60 dark:border-zinc-700/60 rounded-xl shadow-xl p-3 animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
     >
-      <span id="msgText">{text}</span>
-      <button
-        type="button"
-        aria-label="Dismiss"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDismiss();
-        }}
-        style={{
-          position: "absolute",
-          top: 8,
-          right: 8,
-          width: 26,
-          height: 26,
-          borderRadius: 999,
-          background: "rgba(255,255,255,.18)",
-          color: "var(--bubble-fg, #173569)",
-          border: 0,
-          cursor: "pointer",
-          lineHeight: 1,
-          fontSize: 16,
-        }}
-      >
-        ×
-      </button>
-      <span
-        aria-hidden
-        style={{
-          position: "absolute",
-          right: 22,
-          bottom: -8,
-          width: 16,
-          height: 16,
-          background: "var(--bubble-bg, #ccddfa)",
-          transform: "rotate(45deg)",
-          boxShadow: "0 10px 25px rgba(0,0,0,.18)",
-          borderBottomRightRadius: 4,
-          display: "block",
-        }}
-      />
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0">
+          <span className="inline-flex items-center justify-center rounded-full bg-blue-500/90 text-white w-6 h-6">
+            <Sparkles className="w-3 h-3" />
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-blue-900 dark:text-blue-100 font-medium mb-1">
+            {HEADER_CONFIG.botName}
+          </p>
+          <p className="text-xs text-blue-700 dark:text-blue-200 break-words">
+            {text}
+          </p>
+        </div>
+        <div className="flex-shrink-0 flex flex-col gap-1">
+          <button
+            onClick={onOpen}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            title="Abrir chat"
+          >
+            Abrir
+          </button>
+          <button
+            onClick={onDismiss}
+            className="text-xs text-gray-500 hover:text-gray-700"
+            title="Cerrar"
+          >
+            ×
+          </button>
+        </div>
+      </div>
     </div>
   );
-}
+};
 
 export default function ChatbotClientWidget({ routes }) {
   const clientId = import.meta.env.VITE_BOTPRESS_CLIENT_ID || "fd9676e2-d7f2-4563-ab0e-69fbbbb0b8df";
   const { pathname } = useLocation();
+  
+  // Zustand store access
+  const userStore = useUserStore();
+  const {
+    nombre: usuario,
+    rol,
+    id_tenant,
+    id_empresa,
+    sucursal
+  } = userStore;
 
   // Estado UI
   const [isOpen, setIsOpen] = useState(false);
   const [bubble, setBubble] = useState({ visible: false, text: "" });
-
-  // Estado para popover y notificaciones
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]); // { id, text, ts }[]
+  const [notifications, setNotifications] = useState([]);
   const [unread, setUnread] = useState(0);
   const [showCommand, setShowCommand] = useState(false);
 
-  // Webchat manual (control total)
+  // Webchat manual
   const { client, messages, isTyping, user, clientState, newConversation, on } = useWebchat({ clientId });
 
   // Helpers burbuja
   const dismissBubble = useCallback(() => setBubble({ visible: false, text: "" }), []);
   const showBubble = useCallback((text) => setBubble({ visible: true, text: sanitize(text) || "" }), []);
-  const openFromBubble = useCallback(() => {
-    setIsOpen(true);
-    dismissBubble();
-  }, [dismissBubble]);
 
-  // Enviar prompts
-  const sendPrompt = useCallback(async (text) => {
-    await client?.sendMessage?.({ type: "text", text });
-  }, [client]);
-
-  // Cache en sesión para no sobrecargar al bot (5 min)
+  // Cache en sesión para módulos (5 min)
   const loadModulesSnapshot = useCallback(async () => {
     try {
       const cacheKey = "bp:modulesSnapshot:v1";
@@ -141,7 +111,7 @@ export default function ChatbotClientWidget({ routes }) {
         if (Date.now() - (parsed.ts || 0) < 5 * 60 * 1000) return parsed.data;
       }
 
-      const raw = await getModulosConSubmodulos(); // ya normaliza nombres/rutas
+      const raw = await getModulosConSubmodulos();
       const snapshot = Array.isArray(raw)
         ? raw.map(m => ({
             id: m.id,
@@ -162,7 +132,133 @@ export default function ChatbotClientWidget({ routes }) {
     }
   }, []);
 
-    const pushNotification = useCallback((text) => {
+  // Construir contexto completo del sistema
+  const buildSystemContext = useCallback(() => {
+    const token = sessionStorage.getItem('token') || '';
+    const currentRoute = pathname || "/";
+    
+    // Identificar el módulo actual basado en la ruta
+    const getModuloActual = (ruta) => {
+      if (ruta.includes('/inicio')) return 'Dashboard';
+      if (ruta.includes('/productos')) return 'Gestión de Productos';
+      if (ruta.includes('/ventas')) return 'Módulo de Ventas';
+      if (ruta.includes('/almacen')) return 'Gestión de Almacén';
+      if (ruta.includes('/clientes')) return 'Gestión de Clientes';
+      if (ruta.includes('/proveedores')) return 'Gestión de Proveedores';
+      if (ruta.includes('/configuracion')) return 'Configuración del Sistema';
+      if (ruta.includes('/sunat')) return 'Integración SUNAT';
+      if (ruta.includes('/reportes')) return 'Reportes y Análisis';
+      return 'Sistema General';
+    };
+
+    return {
+      // Datos del usuario
+      usuario: usuario || 'Usuario desconocido',
+      rol: rol || 'Sin rol',
+      id_tenant: id_tenant || 'Sin tenant',
+      id_empresa: id_empresa || 'Sin empresa',
+      sucursal: sucursal || 'Sin sucursal',
+      
+      // Contexto de navegación
+      moduloActual: getModuloActual(currentRoute),
+      rutaActual: currentRoute,
+      
+      // Datos técnicos
+      sistemaERP: 'HoryCore ERP',
+      version: '1.0.0',
+      fechaAcceso: new Date().toISOString(),
+      
+      // Token (sin exponer valor completo)
+      autenticado: !!token,
+      
+      // Capacidades del usuario según rol
+      capacidades: getRolCapabilities(rol)
+    };
+  }, [usuario, rol, id_tenant, id_empresa, sucursal, pathname]);
+
+  // Función para determinar capacidades según el rol
+  const getRolCapabilities = (userRole) => {
+    const capabilities = {
+      1: ['administrador', 'configuración_avanzada', 'gestión_usuarios', 'todos_los_módulos'],
+      2: ['vendedor', 'registro_ventas', 'gestión_clientes', 'reportes_ventas'],
+      3: ['almacenero', 'gestión_inventario', 'notas_ingreso_salida', 'kardex'],
+      4: ['contador', 'reportes_fiscales', 'sunat', 'libros_electronicos'],
+      5: ['gerente', 'dashboard', 'reportes_gerenciales', 'análisis_ventas']
+    };
+    return capabilities[userRole] || ['usuario_básico'];
+  };
+
+  // Función para generar mensaje de contexto enriquecido
+  const generateContextMessage = useCallback(async () => {
+    const systemContext = buildSystemContext();
+    const modulesSnapshot = await loadModulesSnapshot();
+    
+    const contextMessage = `
+CONTEXTO DEL SISTEMA HORYCORE ERP:
+
+👤 USUARIO ACTUAL:
+- Nombre: ${systemContext.usuario}
+- Rol: ${systemContext.rol}
+- Tenant ID: ${systemContext.id_tenant}
+- Empresa ID: ${systemContext.id_empresa}
+- Sucursal: ${systemContext.sucursal}
+- Capacidades: ${systemContext.capacidades.join(', ')}
+
+🗂️ MÓDULO ACTUAL:
+- Ubicación: ${systemContext.moduloActual}
+- Ruta: ${systemContext.rutaActual}
+
+📋 MÓDULOS DISPONIBLES EN EL SISTEMA:
+${modulesSnapshot.map(m => 
+  `• ${m.nombre} (${m.ruta})
+    Submódulos: ${m.submodulos.map(s => `${s.nombre_sub} (${s.ruta})`).join(', ') || 'Ninguno'}`
+).join('\n')}
+
+⚙️ INFORMACIÓN TÉCNICA:
+- Sistema: ${systemContext.sistemaERP}
+- Versión: ${systemContext.version}
+- Estado: ${systemContext.autenticado ? 'Autenticado' : 'No autenticado'}
+- Acceso: ${systemContext.fechaAcceso}
+
+IMPORTANTE: Responde únicamente sobre procesos, módulos y funcionalidades que existen en este sistema ERP. Si no tienes información específica sobre algo, indica que necesitas más detalles o deriva a la documentación oficial.
+    `;
+
+    return contextMessage.trim();
+  }, [buildSystemContext, loadModulesSnapshot]);
+
+  // Evita reenviar el mismo contexto en la misma ruta
+  const lastContextRef = useRef("");
+
+  // Envía contexto completo al chatbot
+  const sendContextIntro = useCallback(async () => {
+    const currentPath = pathname || "/";
+    const contextKey = `${currentPath}-${usuario}-${id_tenant}`;
+    
+    // Evita enviar el mismo contexto repetidamente
+    if (lastContextRef.current === contextKey) return;
+    lastContextRef.current = contextKey;
+
+    try {
+      const contextMessage = await generateContextMessage();
+      
+      // Envía el contexto como mensaje del sistema
+      await client?.sendMessage?.({
+        type: "text",
+        text: contextMessage
+      });
+
+      // Mensaje adicional para instruir al bot
+      await client?.sendMessage?.({
+        type: "text",
+        text: `Contexto actualizado. Estoy en ${pathname}. Como Asistente HoryCore, ayúdame con este módulo específico usando únicamente información del sistema ERP mostrado arriba.`
+      });
+
+    } catch (error) {
+      console.error("Error enviando contexto al chatbot:", error);
+    }
+  }, [client, pathname, usuario, id_tenant, generateContextMessage]);
+
+  const pushNotification = useCallback((text) => {
     const safe = sanitize(text);
     if (!safe) return;
     setNotifications((prev) => [
@@ -171,52 +267,6 @@ export default function ChatbotClientWidget({ routes }) {
     ].slice(0, 8));
     setUnread((u) => u + 1);
   }, []);
-
-  // Construir contexto de sesión (usuario/rol/sucursal/tenant/jwt)
-  const buildSessionContext = useCallback(() => {
-    const token = sessionStorage.getItem('token') || '';
-    const raw = sessionStorage.getItem('user');
-    let user = null;
-    try { user = raw ? JSON.parse(raw) : null } catch {}
-    return {
-      usuario: user?.usuario ?? '',
-      rol: user?.rol ?? '',
-      sucursal: user?.sucursal ?? '',
-      id_tenant: user?.id_tenant ?? '',
-      jwt: token
-    };
-  }, []);
-
-  // Evita reenviar el mismo contexto en la misma ruta
-  const lastContextRef = useRef("");
-
-  // Envía JSON de contexto + snapshot de módulos y luego un texto humano
-  const sendContextIntro = useCallback(async () => {
-    const moduloActual = pathname || "/";
-    if (lastContextRef.current === moduloActual) return;
-    lastContextRef.current = moduloActual;
-
-    /*const [context, modulesSnapshot] = await Promise.all([
-      buildSessionContext(),
-      loadModulesSnapshot()
-    ]);
-
-    await client?.sendMessage?.({
-      type: "text",
-      text: JSON.stringify({
-        context: {
-          ...context,
-          moduloActual,
-          modulesSnapshot
-        }
-      })
-    });
-
-    await client?.sendMessage?.({
-      type: "text",
-      text: `Contexto: estoy en la ruta ${moduloActual}. Necesito ayuda para este módulo.`
-    });*/
-  }, [client, pathname, buildSessionContext, loadModulesSnapshot]);
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);
@@ -228,32 +278,31 @@ export default function ChatbotClientWidget({ routes }) {
     setPopoverOpen(false);
     setUnread(0);
     dismissBubble();
-    setTimeout(() => sendContextIntro(), 200);
+    // Envía contexto después de abrir
+    setTimeout(() => sendContextIntro(), 500);
   }, [dismissBubble, sendContextIntro]);
-  // Atajos de teclado (Esc para cerrar)
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape" && isOpen) setIsOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen]);
 
-  // Listeners oficiales (con limpieza)
+  const sendPrompt = useCallback(async (text) => {
+    await client?.sendMessage?.({ type: "text", text });
+  }, [client]);
+
+  // Envía contexto automáticamente cuando cambia la ruta (para usuarios ya logueados)
+  useEffect(() => {
+    if (isOpen && usuario && id_tenant) {
+      sendContextIntro();
+    }
+  }, [pathname, isOpen, usuario, id_tenant, sendContextIntro]);
+
+  // Listeners del webchat
   useEffect(() => {
     if (!on) return;
 
-    const unsubConversation = on("conversation", (conversationId) => {
-      console.log("Nueva conversación:", conversationId);
-    });
-
     const unsubMessage = on("message", (message) => {
-      // Si llega un mensaje (del bot) y la ventana está cerrada, muestra burbuja + guarda notificación
       const authoredByUser = message?.authorId && user?.userId && message.authorId === user.userId;
       if (!isOpen && !authoredByUser) {
         const preview = typeof message?.payload?.text === "string" ? message.payload.text : message?.preview || "Nuevo mensaje";
         showBubble(preview);
-        pushNotification(preview);       // <- guardar notificación
+        pushNotification(preview);
         setTimeout(dismissBubble, 15000);
       }
     });
@@ -266,33 +315,14 @@ export default function ChatbotClientWidget({ routes }) {
       if (visible) dismissBubble();
     });
 
-    const unsubCustom = on("customEvent", (payload) => {
-      try {
-        // El Hook "Before Outgoing" puede enviar { eventType: 'notification', message: '...' }
-        let data = payload;
-        if (typeof data === "string") data = JSON.parse(data);
-        if (typeof data?.event === "string") data = JSON.parse(data.event);
-        else if (typeof data?.event === "object") data = data.event;
-
-        if (!isOpen && data?.eventType === "notification") {
-          showBubble(data.message);
-          setTimeout(dismissBubble, 15000);
-        }
-      } catch {
-        /* noop */
-      }
-    });
-
     return () => {
-      unsubConversation?.();
       unsubMessage?.();
       unsubError?.();
       unsubVisibility?.();
-      unsubCustom?.();
     };
-}, [on, isOpen, user?.userId, showBubble, dismissBubble, pushNotification]);
+  }, [on, isOpen, user?.userId, showBubble, dismissBubble, pushNotification]);
 
-  // Enriquecer mensajes (memoizado)
+  // Enriquecer mensajes
   const enriched = useMemo(() => {
     return (messages || []).map((m) => {
       const direction = m.authorId === user?.userId ? "outgoing" : "incoming";
@@ -307,9 +337,18 @@ export default function ChatbotClientWidget({ routes }) {
     });
   }, [messages, user?.userId, user?.name, user?.pictureUrl]);
 
+  // Atajos de teclado
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && isOpen) setIsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen]);
+
   return (
     <>
-      {/* Burbuja de notificación */}
+      {/* NotificationBubble */}
       <NotificationBubble
         open={bubble.visible}
         text={bubble.text}
@@ -317,7 +356,7 @@ export default function ChatbotClientWidget({ routes }) {
         onDismiss={dismissBubble}
       />
 
-      {/* BOTONES FLOTANTES EN COLUMNA */}
+      {/* BOTONES FLOTANTES */}
       {!isOpen && (
         <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 9998 }} className="flex flex-col items-end gap-2">
           {/* Botón de búsqueda */}
@@ -336,7 +375,8 @@ export default function ChatbotClientWidget({ routes }) {
               <Search className="w-5 h-5 text-blue-500" />
             </Button>
           </Tooltip>
-          {/* Botón de chatbot */}
+
+          {/* Botón de chatbot con popover */}
           <Popover
             isOpen={popoverOpen}
             onOpenChange={setPopoverOpen}
@@ -345,19 +385,18 @@ export default function ChatbotClientWidget({ routes }) {
           >
             <PopoverTrigger>
               <div className="relative">
-              <Tooltip content="Abrir asistente" placement="left">
-                <Button
-                  isIconOnly
-                  variant="flat"
-                  color="default"
-                  className="rounded-xl shadow-sm border border-blue-100/60 dark:border-zinc-700/60 bg-white/90 dark:bg-zinc-900/85 hover:bg-white/100 dark:hover:bg-zinc-900/95 w-10 h-10"
-                  onPress={() => setPopoverOpen((v) => !v)}
-                  aria-label="Asistente"
-                >
-                  <MessageCircle className="w-5 h-5 text-blue-600" />
-                </Button>
-              </Tooltip>
-                {/* Badge de no leídos */}
+                <Tooltip content="Abrir asistente especializado" placement="left">
+                  <Button
+                    isIconOnly
+                    variant="flat"
+                    color="default"
+                    className="rounded-xl shadow-sm border border-blue-100/60 dark:border-zinc-700/60 bg-white/90 dark:bg-zinc-900/85 hover:bg-white/100 dark:hover:bg-zinc-900/95 w-10 h-10"
+                    onPress={() => setPopoverOpen((v) => !v)}
+                    aria-label="Asistente ERP"
+                  >
+                    <MessageCircle className="w-5 h-5 text-blue-600" />
+                  </Button>
+                </Tooltip>
                 {unread > 0 && (
                   <span
                     aria-label={`${unread} notificaciones sin leer`}
@@ -385,7 +424,6 @@ export default function ChatbotClientWidget({ routes }) {
               </div>
             </PopoverTrigger>
             <PopoverContent className="p-3 rounded-xl shadow-xl border border-blue-100/60 dark:border-zinc-700/60 bg-white/95 dark:bg-zinc-900/90 w-80">
-              {/* ...popover content igual que antes... */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center justify-center rounded-lg bg-blue-500/90 text-white w-7 h-7 shadow">
@@ -428,7 +466,7 @@ export default function ChatbotClientWidget({ routes }) {
                   className="flex-1"
                   onPress={openChat}
                 >
-                  Abrir chat
+                  Abrir chat especializado
                 </Button>
                 <Button
                   variant="light"
@@ -459,35 +497,7 @@ export default function ChatbotClientWidget({ routes }) {
       {/* Ventana del chat */}
       {isOpen && (
         <Card className="fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-blue-100/70 dark:border-zinc-700/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200 w-[380px] h-[620px] max-w-[95vw]">
-          {/* Header compacto del widget */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-blue-50/70 dark:border-zinc-700/60 bg-gradient-to-r from-blue-50/80 via-white/90 to-blue-100/80 dark:from-zinc-800/80 dark:via-zinc-900/90 dark:to-zinc-800/80">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center rounded-full bg-blue-500/90 text-white w-8 h-8 shadow">
-                <Sparkles className="w-5 h-5" />
-              </span>
-              <div className="flex flex-col">
-                <span className="font-semibold text-blue-900 dark:text-blue-100 text-base">
-                  {HEADER_CONFIG.botName}
-                </span>
-                <span className="text-xs text-blue-800/80 dark:text-blue-200/80">
-                  {HEADER_CONFIG.botDescription}
-                </span>
-              </div>
-            </div>
-            <Button
-              isIconOnly
-              variant="light"
-              color="danger"
-              size="sm"
-              onPress={() => setIsOpen(false)}
-              aria-label="Cerrar chat"
-              className="rounded-full"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M6 6L14 14M6 14L14 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </Button>
-          </div>
+          {/* Header del widget */}
 
           {/* Cuerpo del chat */}
           <Container connected={clientState !== "disconnected"} style={{ width: "100%", height: "calc(100% - 56px)" }}>
@@ -500,17 +510,6 @@ export default function ChatbotClientWidget({ routes }) {
             />
 
             {/* Chips de prompts rápidos */}
-            <div className="px-3 pt-2">
-              <div className="flex flex-wrap gap-2">
-                {QUICK_PROMPTS.map((q) => (
-                  <Chip key={q} size="sm" variant="flat" color="primary" onClick={() => sendPrompt(q)}>
-                    {q}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
-            <Divider className="my-2" />
 
             <MessageList
               botName={HEADER_CONFIG.botName}
@@ -528,7 +527,7 @@ export default function ChatbotClientWidget({ routes }) {
               connected={clientState !== "disconnected"}
               sendMessage={client?.sendMessage}
               uploadFile={client?.uploadFile}
-              composerPlaceholder="Escribe tu mensaje..."
+              composerPlaceholder="Pregunta sobre HoryCore ERP..."
             />
           </Container>
         </Card>
