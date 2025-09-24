@@ -3,6 +3,8 @@ import { toast } from 'react-hot-toast';
 import TablaLogs from './ComponentsLogs/TablaLogs';
 import { Pagination } from '@heroui/react';
 import { getSystemLogs } from '../../api/api.logs';
+import { Tabs, Tab, Select, SelectItem } from "@heroui/react";
+
 
 export default function LogsPage() {
   const [logs, setLogs] = useState([]);
@@ -58,6 +60,16 @@ export default function LogsPage() {
           Aquí puedes ver los registros de actividad del sistema.
         </p>
       </div>
+      <div className="bg-white/70 border border-blue-100 rounded-xl shadow-sm px-2 py-2 mb-4 flex flex-col">
+              <Tabs
+              
+              >
+                <Tab key="24h" title="Ult. 24hrs" />
+                <Tab key="semana" title="Ult. Semana" />
+                <Tab key="mes" title="Ult. mes" />
+                <Tab key="anio" title="Ult. año" />
+              </Tabs>
+            </div>
       
       <TablaLogs
         logs={logs}

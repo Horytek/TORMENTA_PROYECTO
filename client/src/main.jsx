@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './layouts/Login/Login';
 import Dashboard from './layouts/Dashboard/Dashboard';
+import Messenger from './pages/Messenger/Messenger';
 import { AppSidebar } from './components/Sidebar/AppSidebar';
+import ChatbotClientWidget from "@/components/Chatbot/ChatbotClientWidget";
+import MessengerWidget from "@/components/MessengerWidget";
 import { SidebarProvider } from "@/components/ui/Sidebar";
 import './main.css';
 import { ScrollShadow } from "@heroui/react";
@@ -54,11 +57,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                       <AppSidebar />
                       <ScrollShadow hideScrollBar className="flex-1 h-full">
                         <Dashboard />
+                        {/* Widgets flotantes: Chatbot y Messenger */}
+                        <ChatbotClientWidget />
+                        <MessengerWidget />
                       </ScrollShadow>
                     </div>
                   </SidebarProvider>
                 }
               />
+              <Route path="/messenger" element={<Messenger />} />
             </Route>
           </Routes>
         </HeroUIProvider>

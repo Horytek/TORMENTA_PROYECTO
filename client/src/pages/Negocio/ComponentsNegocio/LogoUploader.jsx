@@ -12,8 +12,10 @@ export default function LogoUploader({
     <div className="bg-white rounded-xl shadow-sm border border-blue-50/60 hover:border-blue-200 transition-colors p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-blue-900">Identidad visual</h2>
-          <p className="text-xs text-blue-600/70 mt-1">PNG o JPG, fondo transparente recomendado. Máx 2MB.</p>
+          <h2 className="text-xl font-semibold text-blue-900">Previsualización de los comprobantes</h2>
+          <p className="text-md text-blue-600/70 mt-1">Customiza los comprobantes con el logo de tu negocio</p>
+
+
         </div>
         {preview && (
           <Tooltip content="Eliminar logo" color="danger" offset={6}>
@@ -43,6 +45,7 @@ export default function LogoUploader({
         <label className="mt-4 inline-flex items-center gap-2 cursor-pointer text-sm font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200/80 px-4 py-2 rounded-full transition">
           <FaUpload className="text-blue-700" />
           <span>{preview ? 'Cambiar logo' : 'Subir logo'}</span>
+          
           <input
             type="file"
             accept="image/*"
