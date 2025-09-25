@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import TablaCliente from '@/pages/Clientes/ComponentsClientes/TablaCliente';
 import useGetClientes from "@/services/client_data/getClientes";
 import AddClientModal from './ComponentsClientes/AddClient';

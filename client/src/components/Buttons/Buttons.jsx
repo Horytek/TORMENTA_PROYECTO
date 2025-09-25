@@ -4,7 +4,7 @@ import { FiDownload } from "react-icons/fi";
 import { CiSearch, CiFilter } from "react-icons/ci";
 import { RiCloseLargeLine } from "react-icons/ri";
 import { IoIosArrowDropdownCircle } from "react-icons/io";
-import { Button, ButtonGroup } from "@nextui-org/button";
+import { Button, ButtonGroup } from "@heroui/button";
 
 export function ButtonSave({ ...props }) {
   return (
