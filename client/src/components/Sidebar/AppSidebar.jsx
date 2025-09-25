@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState } from "react";
 import {
   AudioWaveform, BookOpen, Bot, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, SquareTerminal,
-  Home, Tags, Warehouse, Users, User, LineChart, Building2, FileBarChart2, UserCog,
+  Home, Tags, Warehouse, Users, User, LineChart, Building2, FileBarChart2, UserCog, Phone
 } from "lucide-react";
 import { ScrollShadow } from "@heroui/react";
 import { NavMain } from "@/components/ui/nav-main";
@@ -68,6 +68,7 @@ const SIDEBAR_DATA = {
     { title: "Roles y permisos", url: "/configuracion/roles", icon: Users },
     { title: "Logs", url: "/configuracion/logs", icon: FileBarChart2 },
     { title: "Negocio", url: "/configuracion/negocio", icon: Tags },
+    { title: "Llamadas", url: "/configuracion/llamadas", icon: Phone },
   ],
   desarrollador: [
     { title: "Desarrollo", url: "/desarrollador", icon: Bot },

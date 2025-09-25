@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Phone, Video } from 'lucide-react';
+import socket from '@/lib/socket';
+import LlamadasMessenger from './ComponentsMessenger/LlamadasMessenger';
 
 const users = [
   { id: 1, name: 'Ana', avatar: 'https://randomuser.me/api/portraits/women/1.jpg' },
@@ -14,6 +17,9 @@ function Messenger({ embedded = false }) {
   ]);
   const [input, setInput] = useState('');
   const currentUser = users[0];
+  const [callOpen, setCallOpen] = useState(false);
+  const [callType, setCallType] = useState('audio'); // 'audio' | 'video'
+  const [incomingOffer, setIncomingOffer] = useState(null);
 
   // Evita el scroll de la página mientras se usa el Messenger
   useEffect(() => {
@@ -29,6 +35,30 @@ function Messenger({ embedded = false }) {
       body.style.overflow = prevBodyOverflow;
     };
   }, [embedded]);
+
+  // Socket: registrar usuario y escuchar llamadas entrantes
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    const handleConnect = () => {
+      socket.emit('register', currentUser.id);
+    };
+    const onOffer = ({ from, sdp, callType }) => {
+      // Abrir llamada entrante automáticamente hacia el usuario que llama
+      const fromUser = users.find(u => String(u.id) === String(from));
+      if (fromUser) setSelectedUser(fromUser);
+      setIncomingOffer({ from, sdp, callType });
+      setCallType(callType || 'audio');
+      setCallOpen(true);
+    };
+    socket.on('connect', handleConnect);
+    // Enviar registro si ya estaba conectado
+    if (socket.connected) handleConnect();
+    socket.on('call:offer', onOffer);
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('call:offer', onOffer);
+    };
+  }, [currentUser?.id]);
 
   const chatMessages = messages.filter(
     m =>
@@ -109,6 +139,40 @@ function Messenger({ embedded = false }) {
           <span style={{ fontWeight: 700, fontSize: 20, color: '#2d3748' }}>
             {selectedUser.name}
           </span>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              title="Llamada de voz"
+              onClick={() => {
+                setCallType('audio');
+                setCallOpen(true);
+              }}
+              style={{
+                background: 'transparent',
+                border: '1px solid #e3e6ee',
+                borderRadius: 10,
+                padding: '6px 8px',
+                cursor: 'pointer'
+              }}
+            >
+              <Phone size={18} color="#2d3748" />
+            </button>
+            <button
+              title="Videollamada"
+              onClick={() => {
+                setCallType('video');
+                setCallOpen(true);
+              }}
+              style={{
+                background: 'transparent',
+                border: '1px solid #e3e6ee',
+                borderRadius: 10,
+                padding: '6px 8px',
+                cursor: 'pointer'
+              }}
+            >
+              <Video size={18} color="#2d3748" />
+            </button>
+          </div>
         </div>
 
         {/* Mensajes */}
@@ -226,6 +290,14 @@ function Messenger({ embedded = false }) {
           </button>
         </div>
       </div>
+      <LlamadasMessenger
+        open={callOpen}
+        onClose={() => setCallOpen(false)}
+        caller={currentUser}
+        callee={selectedUser}
+        type={callType}
+        incomingOffer={incomingOffer}
+      />
     </div>
   );
 }

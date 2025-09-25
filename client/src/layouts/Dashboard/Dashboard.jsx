@@ -23,6 +23,7 @@ const PermisosGlobales = lazy(() => import('@/pages/Global/PermisosGlobales/Tabl
 const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
 const Logs = lazy(() => import('@/pages/SystemLogs/Logs'));
 const Negocio = lazy(() => import('@/pages/Negocio/Negocio'));
+const HistorialLlamadas = lazy(() => import('@/pages/HistorialLlamadas/HistorialLlamadas'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
@@ -213,6 +214,18 @@ function Dashboard() {
       element={
         <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
           <Negocio />
+        </RouteProtectedRol>
+      }
+      />
+    );
+
+    dynamicRoutes.push(
+      <Route
+      key="historial-llamadas"
+      path="/configuracion/llamadas"
+      element={
+        <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
+          <HistorialLlamadas />
         </RouteProtectedRol>
       }
       />

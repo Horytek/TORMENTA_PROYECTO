@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Button, Tooltip } from '@heroui/react';
-import { MessageSquare, Phone, Video } from 'lucide-react';
+import { MessageSquare, Expand, Video } from 'lucide-react';
 import Messenger from '@/pages/Messenger/Messenger';
 
 export default function MessengerWidget() {
@@ -43,16 +43,16 @@ export default function MessengerWidget() {
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
-              <Tooltip content="Llamar" placement="bottom">
+              <Tooltip content="Expandir ventana" placement="bottom">
                 <Button
                   isIconOnly
                   variant="light"
                   color="primary"
                   size="sm"
-                  aria-label="Llamar"
+                  aria-label="Expandir ventana"
                   className="rounded-full"
                 >
-                  <Phone className="w-4 h-4 text-blue-700" />
+                  <Expand className="w-4 h-4 text-blue-700" />
                 </Button>
               </Tooltip>
               
