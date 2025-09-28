@@ -20,7 +20,7 @@ const base = (() => {
 
 const api = axios.create({
   baseURL: base,
-  withCredentials: true,
+  withCredentials: true, // Importante para cookies HTTPOnly
   headers: { "Content-Type": "application/json" }
 });
 
@@ -33,16 +33,10 @@ function waitForAuth() {
   });
 }
 
+// Ya no se usa token en headers, solo cookies HTTPOnly
 api.interceptors.request.use(async cfg => {
   await waitForAuth();
-  const token = sessionStorage.getItem("token");
-  if (token) {
-    cfg.headers.Authorization = `Bearer ${token}`;
-  } else {
-    if (import.meta.env.PROD) {
-      console.warn("[auth] Sin token para:", cfg.url);
-    }
-  }
+  // No añadir Authorization, el backend debe leer la cookie
   return cfg;
 });
 
@@ -60,5 +54,4 @@ export default api;
 
 // Helpers ya usados
 export const loginRequest = (credentials) => api.post("/auth/login", credentials);
-export const verifyTokenRequest = (token) =>
-  api.get("/auth/verify", { headers: { Authorization: `Bearer ${token}` } });
+export const verifyTokenRequest = () => api.get("/auth/verify");

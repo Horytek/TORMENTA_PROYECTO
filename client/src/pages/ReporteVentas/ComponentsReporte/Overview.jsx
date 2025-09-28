@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Badge, Progress, Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, ScrollShadow } from "@heroui/react";
+import { Card, Badge,Chip, Progress, Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, ScrollShadow } from "@heroui/react";
 import { RiSearchLine } from "@remixicon/react";
 import useCantidadVentasPorProducto from "@/services/reports/data_prod_venta";
 
@@ -71,9 +71,9 @@ const BarChartHero = ({ idSucursal, year, month, week }) => {
                           {dataFormatter(item.cantidad)} vendidos
                         </span>
                       </div>
-                      <Badge className="ml-2" color="success" size="sm" variant="solid">
+                      <Chip className="ml-2" color="success" size="sm" variant="solid">
                         {currencyFormatter(item.ingresos)}
-                      </Badge>
+                      </Chip>
                     </div>
                   </div>
                 ))}
@@ -124,14 +124,14 @@ const BarChartHero = ({ idSucursal, year, month, week }) => {
                           {dataFormatter(item.cantidad)} vendidos
                         </span>
                       </div>
-                      <Badge
+                      <Chip
                         className="ml-2"
                         color="success"
                         size="sm"
                         variant="solid"
                       >
                         {currencyFormatter(item.ingresos)}
-                      </Badge>
+                      </Chip>
                     </div>
                   </div>
                 ))

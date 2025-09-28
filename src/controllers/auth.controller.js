@@ -13,12 +13,9 @@ const login = async (req, res) => {
         const [userFound] = await connection.query("SELECT 1 FROM usuario WHERE usua = ? AND estado_usuario=1", user.usuario);
 
         if (userFound.length === 0) {
-            // Registrar log de login fallido por usuario inexistente
-            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
-            
+            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
+                (req.connection.socket ? req.connection.socket.remoteAddress : null);
             await logAcceso.loginFail(user.usuario, ip, 1, 'Usuario no existe o está deshabilitado');
-            
             return res.status(400).json({ success: false, message: 'El usuario ingresado no existe o esta deshabilitado' });
         }
 
@@ -27,18 +24,17 @@ const login = async (req, res) => {
 
         if (usuario && usuario === 'desarrollador') {
             const [rows] = await connection.query(
-                "SELECT * FROM usuario WHERE usua = ? AND contra = ?", 
+                "SELECT * FROM usuario WHERE usua = ? AND contra = ?",
                 [user.usuario, user.password]
             );
             userValid = rows;
         } else {
-            // Intentar obtener usuario con tenant
             const [rows] = await connection.query(
                 `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant
                 FROM usuario usu
                 LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
                 LEFT JOIN sucursal su ON su.dni = ven.dni
-                WHERE usu.usua = ? AND usu.contra = ? AND usu.estado_usuario = 1`, 
+                WHERE usu.usua = ? AND usu.contra = ? AND usu.estado_usuario = 1`,
                 [user.usuario, user.password]
             );
             userValid = rows;
@@ -46,15 +42,13 @@ const login = async (req, res) => {
 
         if (userValid.length > 0) {
             userbd = userValid[0];
-            // Crear payload del token con los datos necesarios
-            const tokenPayload = { 
+            const tokenPayload = {
                 nameUser: user.usuario,
-                id_usuario: userbd.id_usuario  // Agregar id_usuario al token
+                id_usuario: userbd.id_usuario
             };
             if (userbd.id_tenant) tokenPayload.id_tenant = userbd.id_tenant;
             const token = await createAccessToken(tokenPayload);
 
-            // Obtener la página por defecto para el rol del usuario
             let defaultRedirect = '/inicio';
 
             const [rolData] = await connection.query(
@@ -82,13 +76,20 @@ const login = async (req, res) => {
                 }
             }
 
-            // Registrar log de login exitoso
-            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
-            
+            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
+                (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
             if (userbd.id_tenant) {
                 await logAcceso.loginOk(userbd.id_usuario, ip, userbd.id_tenant);
             }
+
+            // Set cookie HTTPOnly, Secure, SameSite
+                res.cookie("token", token, {
+                httpOnly: true,
+                secure: false,      // En desarrollo debe ser false, en producción true
+                sameSite: "lax",    // En desarrollo "lax", en producción "none" si usas HTTPS
+                maxAge: 1000 * 60 * 60 * 8 // 8 horas
+                });
 
             res.json({
                 success: true,
@@ -100,20 +101,14 @@ const login = async (req, res) => {
                     id_tenant: userbd.id_tenant || null,
                     defaultPage: defaultRedirect
                 },
-                token,
                 message: 'Usuario encontrado'
             });
 
-            // Registrar el último inicio de sesión
             await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [1, userbd.id_usuario]);
         } else {
-            // Registrar log de login fallido
-            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
-            
-            // Para login fallido, usar id_tenant = 1 por defecto (o el que corresponda)
+            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
+                (req.connection.socket ? req.connection.socket.remoteAddress : null);
             await logAcceso.loginFail(user.usuario, ip, 1, 'Contraseña incorrecta');
-            
             res.status(400).json({ success: false, message: 'La contraseña ingresada no es correcta' });
         }
 
@@ -129,20 +124,14 @@ const login = async (req, res) => {
 const verifyToken = async (req, res) => {
     let connection;
     connection = await getConnection();
-    const tokenHeader = req.headers['authorization'];
-    let token = tokenHeader;
-
-    // Si el header tiene formato Bearer <token>, extrae solo el token
-    if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
-        token = tokenHeader.split(' ')[1];
-    }
+    // Leer token desde cookie HTTPOnly
+    const token = req.cookies?.token;
 
     if (!token) return res.send(false);
 
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
         if (error) return res.sendStatus(401);
 
-        // Si el usuario tiene id_tenant, buscar con joins, si no, solo por usuario
         let userFound;
         if (user.id_tenant) {
             [userFound] = await connection.query(
@@ -176,17 +165,11 @@ const verifyToken = async (req, res) => {
     });
 };
 
-//Revisa
 const logout = async (req, res) => {
     let connection;
     connection = await getConnection();
-    const tokenHeader = req.headers['authorization'];
-    let token = tokenHeader;
-
-    // Si el header tiene formato Bearer <token>, extrae solo el token
-    if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
-        token = tokenHeader.split(' ')[1];
-    }
+    // Leer token desde cookie HTTPOnly
+    const token = req.cookies?.token;
 
     if (!token) return res.send(false);
 
@@ -197,22 +180,21 @@ const logout = async (req, res) => {
         if (userFound.length === 0) return res.sendStatus(401);
 
         const userbd = userFound[0];
-        
-        // Registrar log de logout
-        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                  (req.connection.socket ? req.connection.socket.remoteAddress : null);
-        
+
+        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
+            (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
         if (userbd.id_tenant) {
             await logAcceso.logout(userbd.id_usuario, ip, userbd.id_tenant);
         }
-        
+
         await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
 
         res.cookie("token", "", {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
-            domain: '.bck-omega.vercel.app',
+            // domain: '.bck-omega.vercel.app', // Descomenta si usas dominio cruzado
             expires: new Date(0),
         });
 

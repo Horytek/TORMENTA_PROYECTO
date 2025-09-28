@@ -28,7 +28,6 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
   let periodoLabel = "";
 
   if (year && month && week && week !== "all") {
-    // Calcular rango de días de la semana seleccionada
     const y = parseInt(year);
     const m = parseInt(month) - 1;
     const weekNumber = parseInt(week.replace(/\D/g, ""));
@@ -36,11 +35,10 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
     const diasEnMes = new Date(y, m + 1, 0).getDate();
     const endDay = Math.min(weekNumber * 7, diasEnMes);
 
-    // Generar los días de la semana con su número y abreviación
     const diasSemanaConNumero = [];
     for (let d = startDay; d <= endDay; d++) {
       const fecha = new Date(y, m, d);
-      const diaSemanaIdx = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1; // Lunes=0, ..., Domingo=6
+      const diaSemanaIdx = fecha.getDay() === 0 ? 6 : fecha.getDay() - 1;
       diasSemanaConNumero.push({
         label: `${d} ${diasSemana[diaSemanaIdx]}`,
         dia: diasSemana[diaSemanaIdx],
@@ -51,7 +49,6 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
     }
 
     chartData = diasSemanaConNumero.map(({ label, diaNumero, diaSemanaIdx, fecha }) => {
-      // Buscar el elemento de data que coincida con el día exacto
       const found = data?.find(item => {
         const itemDate = new Date(item.fecha);
         return (
@@ -104,7 +101,7 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
   }
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 shadow-xl rounded-2xl transition-all">
       <CardHeader className="flex flex-col items-start gap-2">
         <div className="flex flex-wrap gap-4 items-center w-full">
           <div className="flex items-center gap-2">
@@ -139,7 +136,7 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
       <CardBody>
         <div className="h-[250px] w-full flex flex-col">
           {loading ? (
-            <p className="text-center py-8">Cargando...</p>
+            <p className="text-center py-8 text-gray-700 dark:text-gray-200">Cargando...</p>
           ) : error ? (
             <p className="text-center text-red-500 py-8">{error}</p>
           ) : (
@@ -170,7 +167,7 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
                     xAxisLabel={xAxisLabel}
                     customTooltip={({ payload }) =>
                       payload?.length ? (
-                        <div className="p-2 bg-white rounded shadow text-xs">
+                        <div className="p-2 bg-white dark:bg-zinc-900 rounded shadow text-xs text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-zinc-700">
                           <div>
                             <strong>
                               {indexKey === "mes"
@@ -197,7 +194,7 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
                     xAxisLabel={xAxisLabel}
                     customTooltip={({ payload }) =>
                       payload?.length ? (
-                        <div className="p-2 bg-white rounded shadow text-xs">
+                        <div className="p-2 bg-white dark:bg-zinc-900 rounded shadow text-xs text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-zinc-700">
                           <div>
                             <strong>
                               {indexKey === "mes"
@@ -219,7 +216,7 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
       </CardBody>
       <Divider />
       <CardFooter>
-        <p className="text-sm text-default-500">Datos actualizados diariamente.</p>
+        <p className="text-sm text-default-500 dark:text-default-400">Datos actualizados diariamente.</p>
       </CardFooter>
     </Card>
   );

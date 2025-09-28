@@ -12,36 +12,27 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);               // Expuesto para componentes que ya lo consumen
+  const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // NUEVO: API unificada del store
   const setUserRaw = useUserStore(state => state.setUserRaw);
   const hydrateFromSession = useUserStore(state => state.hydrateFromSession);
   const clearUserStore = useUserStore(state => state.clearUser);
 
-  // (Legacy setters - ya NO se usan aquí, mantenidos por compatibilidad si quisieras revertir)
-  // const setNombre = useUserStore(state => state.setNombre);
-  // const setIdRol = useUserStore(state => state.setIdRol);
-  // const setSur = useUserStore(state => state.setSur);
-  // const setIdTenant = useUserStore(state => state.setIdTenant);
-
-  // Rehidratación temprana (restaura user normalizado desde sessionStorage antes del chequeo de token)
+  // Solo guarda el usuario (no el token)
   useEffect(() => {
     hydrateFromSession();
   }, [hydrateFromSession]);
 
   const login = async (credentials) => {
     try {
-      const { data } = await loginRequest(credentials);
-      if (data?.success || data?.token) {
-        sessionStorage.setItem("token", data.token);
-        if (data.data) {
-          sessionStorage.setItem("user", JSON.stringify(data.data));
-          setUser(data.data);
-          setUserRaw(data.data);          // Sincroniza todo (user + alias legacy)
-        }
+      const { data } = await loginRequest(credentials); // El backend debe enviar la cookie HTTPOnly aquí
+      if (data?.success && data.data) {
+        // No guardar token, solo usuario
+        //sessionStorage.setItem("user", JSON.stringify(data.data));
+        setUser(data.data);
+        setUserRaw(data.data);
         setIsAuthenticated(true);
         return { success: true, data: data.data };
       }
@@ -51,44 +42,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-useEffect(() => {
-  const checkLogin = async () => {
-    const token = sessionStorage.getItem("token");
-    if (!token) {
-      setIsAuthenticated(false);
-      clearUserStore();
-      setLoading(false);
-      setAuthReady(true); // <- importante
-      return;
-    }
-    try {
-      const res = await verifyTokenRequest(token);
-      if (res?.data) {
-        sessionStorage.setItem("user", JSON.stringify(res.data));
-        setIsAuthenticated(true);
-        setUser(res.data);
-        setUserRaw(res.data);
-      } else {
+  useEffect(() => {
+    const checkLogin = async () => {
+      // No leer token, solo pedir verificación al backend
+      try {
+        const res = await verifyTokenRequest(); // El backend debe leer la cookie
+        if (res?.data) {
+          //sessionStorage.setItem("user", JSON.stringify(res.data));
+          setIsAuthenticated(true);
+          setUser(res.data);
+          setUserRaw(res.data);
+        } else {
+          setIsAuthenticated(false);
+          clearUserStore();
+        }
+      } catch {
         setIsAuthenticated(false);
         clearUserStore();
+        sessionStorage.removeItem("user");
+      } finally {
+        setLoading(false);
+        setAuthReady(true);
       }
-    } catch {
-      setIsAuthenticated(false);
-      clearUserStore();
-      sessionStorage.removeItem("user");
-      sessionStorage.removeItem("token");
-    } finally {
-      setLoading(false);
-      setAuthReady(true); // <- marca listo siempre
-    }
-  };
-  checkLogin();
-}, [setUserRaw, clearUserStore]);
+    };
+    checkLogin();
+  }, [setUserRaw, clearUserStore]);
 
   const logout = async () => {
     try {
-      const token = sessionStorage.getItem("token");
-      if (token) logoutRequest(token);
+      await logoutRequest(); // El backend debe limpiar la cookie
     } catch { /* noop */ }
     sessionStorage.clear();
     clearUserStore();

@@ -46,9 +46,6 @@ function Login() {
     try {
       const response = await login({ usuario, password });
       if (response?.success) {
-        //localStorage.setItem("usuario", usuario);
-        //localStorage.setItem("rol", response.data.rol);
-        //localStorage.setItem("sur", response.data.sucursal);
 
         setNombre(response.data.usuario);
         setIdRol(response.data.rol);    

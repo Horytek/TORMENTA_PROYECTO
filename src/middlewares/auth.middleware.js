@@ -5,17 +5,9 @@ export const auth = (req, res, next) => {
   try {
     let token = null;
 
-    // Extraer token de cookie o header Authorization
+    // Solo acepta token desde cookie HTTPOnly (no desde header Authorization)
     if (req.cookies?.token) {
       token = req.cookies.token;
-    } else if (req.headers.authorization) {
-      const authHeader = req.headers.authorization;
-      // Soporta formato "Bearer <token>" o solo el token
-      if (authHeader.startsWith("Bearer ")) {
-        token = authHeader.split(" ")[1];
-      } else {
-        token = authHeader;
-      }
     }
 
     if (!token)
@@ -28,7 +20,7 @@ export const auth = (req, res, next) => {
         return res.status(401).json({ message: "Token no válido" });
       }
       req.user = user;
-      req.id_usuario = user.id_usuario;  // Establecer id_usuario desde el token
+      req.id_usuario = user.id_usuario;  
       req.id_tenant = user.id_tenant;
       next();
     });

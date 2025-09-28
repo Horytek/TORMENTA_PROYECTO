@@ -129,14 +129,25 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 222.2 47.4% 5%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 7%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 7%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 5%;
+    --secondary: 217.2 22.7% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 22.7% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 22.7% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 22.7% 17.5%;
+    --input: 217.2 22.7% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 
   /* Inputs base */
@@ -147,12 +158,14 @@
     outline: none;
     box-shadow: none;
   }
-  input[type="text"]:focus,
-  input[type="password"]:focus,
-  input[type="search"]:focus {
-    border: 1px solid #0070f3;
-    box-shadow: 0 0 5px rgba(0,112,243,.35);
-  }
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+textarea:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
 input[type="date"],
 input[type="date"]:focus,
 input[type="date"]:active {

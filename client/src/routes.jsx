@@ -96,42 +96,15 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
           hasDeletePermission: true,
           hasGeneratePermission: true,
           hasDeactivatePermission: true,
-          
         });
         setLoading(false);
         return;
       }
-      
-      const token = sessionStorage.getItem('token');
-      
-      if (!token) {
-        console.error("No authentication token found in sessionStorage");
-        toast.error("Sesión expirada o inválida. Por favor, vuelva a iniciar sesión", {
-          duration: 2000,
-          position: 'top-right',
-        });
-        setHasAccess(false);
-        setPermissions({
-          hasPermission: false,
-          hasCreatePermission: false,
-          hasEditPermission: false,
-          hasDeletePermission: false,
-          hasGeneratePermission: false,
-          hasDeactivatePermission: false,
-        });
-        setLoading(false);
-        return;
-      }
-      
+
+      // Ya no se usa token, el backend lee la cookie HTTPOnly
       const response = await axios.get(
-        `/permisos/check?idModulo=${idModulo}${idSubmodulo ? `&idSubmodulo=${idSubmodulo}` : ''}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        `/permisos/check?idModulo=${idModulo}${idSubmodulo ? `&idSubmodulo=${idSubmodulo}` : ''}`
       );
-      
       
       const hasAccess = response.data.hasPermission;
       setHasAccess(hasAccess);
@@ -142,7 +115,6 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
         hasDeletePermission: response.data.hasDeletePermission || false,
         hasGeneratePermission: response.data.hasGeneratePermission || false,
         hasDeactivatePermission: response.data.hasDeactivatePermission || false,
-        
       });
       
       if (!hasAccess) {

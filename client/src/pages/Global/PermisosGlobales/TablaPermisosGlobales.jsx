@@ -14,6 +14,7 @@ import { useGetRutasPorPlan } from '@/services/permisosGlobales.services';
 import { useRolesPorPlan, usePermisosByRolGlobal, useSavePermisosGlobales, usePlanesDisponibles } from '@/services/permisosGlobales.services';
 import { toast } from "react-hot-toast";
 import ModulosListing from './ModulosListing';
+import { useUserStore } from "@/store/useStore";
 
 export function TablaPermisosGlobales() {
   const [selectedTab, setSelectedTab] = useState("administrador");
@@ -125,7 +126,7 @@ export function TablaPermisosGlobales() {
   useEffect(() => {
     if (userInfo) return; // Ya tenemos la data
     
-    const userDataString = sessionStorage.getItem("user");
+    const userDataString = useUserStore.getState();
     
     if (userDataString) {
       try {
@@ -144,7 +145,7 @@ export function TablaPermisosGlobales() {
       }
     } else {
       // Intentar obtener de localStorage como fallback
-      const userDataFromLocalStorage = localStorage.getItem("user");
+      const userDataFromLocalStorage = useUserStore.getState();
       if (userDataFromLocalStorage) {
         try {
           const userData = JSON.parse(userDataFromLocalStorage);

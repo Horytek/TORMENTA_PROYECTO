@@ -72,26 +72,10 @@ export const useUserStore = create((set) => ({
     });
   },
 
-  // Rehidratación desde sessionStorage
+  // Ya no se usa sessionStorage para hidratar usuario
   hydrateFromSession: () => {
-    try {
-      const s = sessionStorage.getItem("user");
-      if (!s) return;
-      const parsed = JSON.parse(s);
-      const u = normalizeUser(parsed);
-      if (u) {
-        set({
-          user: u,
-          nombre: u.username,
-            usuario: u.username,
-          rol: u.roleId,
-          sur: u.sucursal,
-          id_tenant: u.id_tenant
-        });
-      }
-    } catch {
-      /* silencioso */
-    }
+    // No hace nada, se mantiene por compatibilidad
+    return;
   },
 
   clearUser: () =>

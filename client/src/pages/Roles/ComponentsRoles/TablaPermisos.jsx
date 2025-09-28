@@ -13,52 +13,45 @@ import { MdPlaylistRemove } from "react-icons/md";
 import { RiCollapseDiagonal2Line, RiExpandDiagonalLine, RiPlayListAddFill } from "react-icons/ri";
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useState, useEffect } from "react";
-import { useGetRutas } from '@/services/permisos.services';
-import { useRoles, usePermisosByRol, useSavePermisos } from '@/services/permisos.services';
 import { toast } from "react-hot-toast";
+import { useUserStore } from "@/store/useStore";
 
-export function TablaPermisos({ externalData, skipApiCall = false }) {
-  const [selectedTab, setSelectedTab] = useState("administrador");
-  const [userInfo, setUserInfo] = useState(null);
-  
-  // Solo obtener rutas y roles si no hay datos externos
-  const rutasHook = skipApiCall ? null : useGetRutas();
-  const rolesHook = skipApiCall ? null : useRoles();
-  
-  // Usar datos externos o datos de hooks
-  const modulosConSubmodulos = skipApiCall ? externalData?.rutas : rutasHook?.modulosConSubmodulos;
-  const roles = skipApiCall ? externalData?.roles : rolesHook?.roles;
-  const expandedModulos = skipApiCall ? externalData?.expandedModulos : rutasHook?.expandedModulos;
-  const toggleExpand = skipApiCall ? externalData?.toggleExpand : rutasHook?.toggleExpand;
-  const expandAll = skipApiCall ? externalData?.expandAll : rutasHook?.expandAll;
-  const collapseAll = skipApiCall ? externalData?.collapseAll : rutasHook?.collapseAll;
-  
-  const rutasLoading = skipApiCall ? false : (rutasHook?.loading || false);
-  const rutasError = skipApiCall ? null : (rutasHook?.error || null);
-  const rolesLoading = skipApiCall ? false : (rolesHook?.loading || false);
-  const rolesError = skipApiCall ? null : (rolesHook?.error || null);
-  
-  const [roleMapping, setRoleMapping] = useState({});
-  const [currentRoleId, setCurrentRoleId] = useState(null);
-  
-  // Hooks condicionales para permisos - siempre necesarios para funcionalidad
-  const { permisos, loading: permisosLoading, refetchPermisos } = usePermisosByRol(currentRoleId);
-  const { savePermisos, saving: savingPermisos } = useSavePermisos();
-
-  const [permisosData, setPermisosData] = useState({});
-
+// Componente de contenido compartido
+export default function TablaPermisosContent({
+  selectedTab,
+  setSelectedTab,
+  userInfo,
+  setUserInfo,
+  modulosConSubmodulos,
+  roles,
+  expandedModulos,
+  toggleExpand,
+  expandAll,
+  collapseAll,
+  rutasLoading,
+  rutasError,
+  rolesLoading,
+  rolesError,
+  roleMapping,
+  setRoleMapping,
+  currentRoleId,
+  setCurrentRoleId,
+  permisos,
+  permisosLoading,
+  refetchPermisos,
+  savePermisos,
+  savingPermisos,
+  permisosData,
+  setPermisosData,
+  onPermisosUpdate
+}) {
   // Obtener información del usuario para saber si es desarrollador
+  const userStore = useUserStore(state => state.user);
   useEffect(() => {
-    const userDataString = sessionStorage.getItem("user");
-    if (userDataString) {
-      try {
-        const userData = JSON.parse(userDataString);
-        setUserInfo(userData);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
+    if (userStore) {
+      setUserInfo(userStore?.original || userStore);
     }
-  }, []);
+  }, [userStore, setUserInfo]);
 
   useEffect(() => {
     if (roles?.length > 0) {
@@ -66,7 +59,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
       const tabRoleMapping = {};
 
       roles.forEach(role => {
-        const tabKey = role.nom_rol.toLowerCase();
+        const tabKey = role.nom_rol?.toLowerCase?.() || "";
         mapping[role.id_rol] = tabKey;
         tabRoleMapping[tabKey] = role.id_rol;
       });
@@ -76,12 +69,12 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
       if (selectedTab && tabRoleMapping[selectedTab]) {
         setCurrentRoleId(tabRoleMapping[selectedTab]);
       } else if (roles.length > 0) {
-        const firstTabKey = roles[0].nom_rol.toLowerCase();
+        const firstTabKey = roles[0].nom_rol?.toLowerCase?.() || "";
         setSelectedTab(firstTabKey);
         setCurrentRoleId(roles[0].id_rol);
       }
     }
-  }, [roles, selectedTab]);
+  }, [roles, selectedTab, setRoleMapping, setSelectedTab, setCurrentRoleId]);
 
   useEffect(() => {
     if (currentRoleId) {
@@ -106,7 +99,6 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
               eliminar: !!permiso.eliminar,
               desactivar: !!permiso.desactivar,
               generar: !!permiso.generar
-
             };
           }
         });
@@ -117,13 +109,13 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
         [currentRoleId]: rolePermisos
       }));
     }
-  }, [permisos, currentRoleId]);
+  }, [permisos, currentRoleId, setPermisosData]);
 
   useEffect(() => {
     if (selectedTab && roleMapping[selectedTab]) {
       setCurrentRoleId(roleMapping[selectedTab]);
     }
-  }, [selectedTab, roleMapping]);
+  }, [selectedTab, roleMapping, setCurrentRoleId]);
 
   const handlePermissionChange = (id, field, value, type = 'modulo') => {
     if (!currentRoleId) return;
@@ -143,7 +135,6 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
           eliminar: false,
           desactivar: false,
           generar: false
-
         })
       };
       currentPermission[field] = isChecked;
@@ -163,7 +154,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
       const rolePermisos = permisosData[currentRoleId] || {};
       const permisosToSave = [];
 
-      modulosConSubmodulos?.forEach((modulo) => {
+      modulosConSubmodulos.forEach((modulo) => {
         const moduloKey = `modulo_${modulo.id}`;
         if (rolePermisos[moduloKey]) {
           const { ver, crear, editar, eliminar, desactivar, generar } = rolePermisos[moduloKey];
@@ -179,7 +170,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
           });
         }
 
-        modulo.submodulos?.forEach((submodulo) => {
+        (modulo.submodulos || []).forEach((submodulo) => {
           const subKey = `submodulo_${submodulo.id_submodulo}`;
           if (rolePermisos[subKey]) {
             const { ver, crear, editar, eliminar, desactivar, generar } = rolePermisos[subKey];
@@ -220,8 +211,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
 
     const allPermissions = {};
 
-    modulosConSubmodulos?.forEach(modulo => {
-      // Add all permissions for the module
+    modulosConSubmodulos.forEach(modulo => {
       allPermissions[`modulo_${modulo.id}`] = {
         ver: true,
         crear: true,
@@ -231,19 +221,16 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
         generar: true
       };
 
-      // Add all permissions for submodules
-      if (modulo.submodulos && modulo.submodulos.length > 0) {
-        modulo.submodulos.forEach(submodulo => {
-          allPermissions[`submodulo_${submodulo.id_submodulo}`] = {
-            ver: true,
-            crear: true,
-            editar: true,
-            eliminar: true,
-            desactivar: true,
-            generar: true
-          };
-        });
-      }
+      (modulo.submodulos || []).forEach(submodulo => {
+        allPermissions[`submodulo_${submodulo.id_submodulo}`] = {
+          ver: true,
+          crear: true,
+          editar: true,
+          eliminar: true,
+          desactivar: true,
+          generar: true
+        };
+      });
     });
 
     setPermisosData(prev => ({
@@ -303,7 +290,6 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
             <div className="text-sm text-gray-500">
               {modulosConSubmodulos.length} módulos disponibles
             </div>
-
           </div>
           <div className="flex gap-2">
             <Button
@@ -313,7 +299,6 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
               onPress={handleAddAllPermissions}
             >
               <RiPlayListAddFill className="text-green-700" size={20} />
-
               Agregar todos los permisos
             </Button>
             <Button
@@ -323,7 +308,6 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
               onPress={handleDeleteAllPermissions}
             >
               <MdPlaylistRemove className="text-red-700" size={20} />
-
               Quitar todos los permisos
             </Button>
             <Button
@@ -340,7 +324,6 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
               variant="flat"
               color="secondary"
               onPress={collapseAll}
-
             >
               <RiCollapseDiagonal2Line className="text-purple-700" size={20} />
               Colapsar todo
@@ -439,14 +422,14 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
                   )}
                 </div>
 
-                {expandedModulos[modulo.id] && modulo.submodulos && modulo.submodulos.length > 0 && (
+                {expandedModulos[modulo.id] && (modulo.submodulos || []).length > 0 && (
                   <>
                     <Divider />
                     <div className="bg-gray-100 px-5 py-2">
                       <span className="text-sm font-medium text-gray-600">Submodulos</span>
                     </div>
                     <div className="bg-gray-50">
-                      {modulo.submodulos
+                      {(modulo.submodulos || [])
                         .filter(submodulo => submodulo.id_submodulo !== 8)
                         .map((submodulo) => (
                           <div
@@ -570,7 +553,7 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
             }}
           >
             {roles?.map(role => {
-              const tabKey = role.nom_rol.toLowerCase();
+              const tabKey = role.nom_rol?.toLowerCase?.() || "";
               const isAdmin = role.id_rol === 1;
 
               return (
@@ -608,5 +591,3 @@ export function TablaPermisos({ externalData, skipApiCall = false }) {
     </>
   );
 }
-
-export default TablaPermisos;

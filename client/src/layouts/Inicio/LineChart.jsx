@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardHeader, CardBody, CardFooter, Divider, Chip, Tooltip, Input, Select, SelectItem, Popover, PopoverTrigger, PopoverContent, Button } from "@heroui/react";
-import { TrendingUp, Calendar } from "lucide-react";
+import { TrendingUp, Calendar,Sparkles } from "lucide-react";
 import useComparacionTotal from "@/layouts/Inicio/hooks/comparacion_ventas";
 import { es } from "date-fns/locale";
 import { LineChart } from "@tremor/react";
@@ -124,31 +124,43 @@ export function LineChartComponent({ sucursal }) {
     setPopoverOpen(false);
   };
 
-  return (
-    <Card className="bg-white rounded-xl">
-      <CardHeader className="flex flex-col gap-2 items-start">
-        <div className="flex items-center gap-3">
-          <TrendingUp className="text-blue-500" size={22} />
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Tendencia de Ventas
-          </h3>
+   return (
+    <Card className="bg-white rounded-2xl shadow-xl border border-blue-100/40">
+      <CardHeader className="flex flex-col gap-2 items-start bg-gradient-to-r from-blue-50/80 via-white/90 to-cyan-50/80 dark:from-blue-900/40 dark:to-cyan-900/20 rounded-t-2xl border-b border-blue-100/40 relative overflow-hidden">
+        {/* Fondo decorativo */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute -top-8 -left-8 w-32 h-32 bg-gradient-to-br from-blue-200/40 to-cyan-200/30 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-gradient-to-tr from-cyan-400/20 to-blue-500/10 rounded-full blur-xl"></div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Chip color="primary" variant="flat">
+        <div className="flex items-center gap-3 z-10">
+          <span className="inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-400/80 to-cyan-400/80 shadow w-10 h-10">
+            <Sparkles className="w-6 h-6 text-white" />
+          </span>
+          <div>
+            <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100 tracking-tight">
+              Tendencia de Ventas
+            </h3>
+            <p className="text-xs text-blue-700/80 dark:text-blue-200/80 font-medium">
+              Evolución mensual de ventas en el periodo seleccionado
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-3 z-10">
+          <Chip color="primary" variant="flat" className="font-semibold text-sm px-3 py-1">
             Total: {valueFormatter(total)}
           </Chip>
           <Tooltip content="Escala máxima del gráfico">
-            <Chip color="default" variant="flat">
+            <Chip color="default" variant="flat" className="font-semibold text-sm px-3 py-1">
               Escala máx: {valueFormatter(maxVentas)}
             </Chip>
           </Tooltip>
           <Tooltip content="Promedio mensual">
-            <Chip color="violet" variant="flat">
+            <Chip color="violet" variant="flat" className="font-semibold text-sm px-3 py-1">
               Promedio: {valueFormatter(promedio)}
             </Chip>
           </Tooltip>
         </div>
-        <div className="grid grid-cols-1 gap-2 w-full md:w-auto md:ml-auto md:justify-end">
+        <div className="grid grid-cols-1 gap-2 w-full md:w-auto md:ml-auto md:justify-end mt-3 z-10">
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger>
               <Button
@@ -179,22 +191,22 @@ export function LineChartComponent({ sucursal }) {
                 ))}
               </div>
               <div className="mb-2 font-semibold text-sm text-zinc-700 dark:text-zinc-100">Personalizado</div>
-<div className="grid grid-cols-2 gap-2">
-  <Input
-    type="date"
-    value={value?.start ? value.start.toISOString().split("T")[0] : ""}
-    onChange={e => setValue(v => ({ ...v, start: new Date(e.target.value) }))}
-    className="w-full bg-gray-100 focus:bg-white border-0 ring-0 focus:ring-2 focus:ring-blue-300 shadow-none outline-none"
-    style={{ boxShadow: "none", outline: "none", border: "none" }}
-  />
-  <Input
-    type="date"
-    value={value?.end ? value.end.toISOString().split("T")[0] : ""}
-    onChange={e => setValue(v => ({ ...v, end: new Date(e.target.value) }))}
-    className="w-full bg-gray-100 focus:bg-white border-0 ring-0 focus:ring-2 focus:ring-blue-300 shadow-none outline-none"
-    style={{ boxShadow: "none", outline: "none", border: "none" }}
-  />
-</div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  type="date"
+                  value={value?.start ? value.start.toISOString().split("T")[0] : ""}
+                  onChange={e => setValue(v => ({ ...v, start: new Date(e.target.value) }))}
+                  className="w-full bg-gray-100 focus:bg-white border-0 ring-0 focus:ring-2 focus:ring-blue-300 shadow-none outline-none"
+                  style={{ boxShadow: "none", outline: "none", border: "none" }}
+                />
+                <Input
+                  type="date"
+                  value={value?.end ? value.end.toISOString().split("T")[0] : ""}
+                  onChange={e => setValue(v => ({ ...v, end: new Date(e.target.value) }))}
+                  className="w-full bg-gray-100 focus:bg-white border-0 ring-0 focus:ring-2 focus:ring-blue-300 shadow-none outline-none"
+                  style={{ boxShadow: "none", outline: "none", border: "none" }}
+                />
+              </div>
               <div className="flex justify-end mt-3">
                 <Button
                   color="primary"
@@ -207,76 +219,73 @@ export function LineChartComponent({ sucursal }) {
             </PopoverContent>
           </Popover>
         </div>
-        <p className="text-sm text-default-400">
-          Ventas totales por mes del año actual
-        </p>
       </CardHeader>
       <Divider />
-<CardBody>
-  {loading ? (
-    <div className="text-center py-8 text-default-500">Cargando...</div>
-  ) : error ? (
-    <div className="text-center text-red-500 py-8">{error.message}</div>
-  ) : (
-    <>
-      <LineChart
-        className="mt-2 h-[340px]"
-        data={chartData}
-        index="date"
-        yAxisWidth={80}
-        categories={["Ventas Totales"]}
-        colors={COLORS}
-        valueFormatter={valueFormatter}
-        xAxisLabel="Meses"
-        yAxisLabel="Ventas (S/.)"
-        showAnimation={true}
-        showLegend={false}
-        curveType="monotone"
-        connectNulls={true}
-        showDots={true}
-        minValue={0}
-        maxValue={maxVentas}
-        customTooltip={({ payload, active, label }) =>
-          active && payload && payload.length ? (
-            <Card
-              shadow="md"
-              radius="md"
-              className="min-w-[200px] max-w-[320px] border border-default-200 bg-white/95 px-3 py-2 shadow-xl"
-            >
-              <CardBody className="space-y-1 p-0">
-                <div className="font-semibold text-xs text-default-900 mb-1">{label}</div>
-                {payload.map((entry, idx) => (
-                  <div
-                    key={entry.dataKey}
-                    className="flex items-center gap-2 py-0.5"
+      <CardBody>
+        {loading ? (
+          <div className="text-center py-8 text-default-500">Cargando...</div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-8">{error.message}</div>
+        ) : (
+          <>
+            <LineChart
+              className="mt-2 h-[340px]"
+              data={chartData}
+              index="date"
+              yAxisWidth={80}
+              categories={["Ventas Totales"]}
+              colors={COLORS}
+              valueFormatter={valueFormatter}
+              xAxisLabel="Meses"
+              yAxisLabel="Ventas (S/.)"
+              showAnimation={true}
+              showLegend={false}
+              curveType="monotone"
+              connectNulls={true}
+              showDots={true}
+              minValue={0}
+              maxValue={maxVentas}
+              customTooltip={({ payload, active, label }) =>
+                active && payload && payload.length ? (
+                  <Card
+                    shadow="md"
+                    radius="md"
+                    className="min-w-[200px] max-w-[320px] border border-default-200 bg-white/95 px-3 py-2 shadow-xl"
                   >
-                    <span
-                      className={`inline-block w-3 h-3 rounded-full border border-default-200 bg-${COLORS[idx % COLORS.length]}-400`}
-                      style={{
-                        filter: "brightness(1.1) saturate(0.85)",
-                        minWidth: 12,
-                        minHeight: 12,
-                      }}
-                    ></span>
-                    <span className="font-medium text-xs text-default-800">{entry.dataKey}</span>
-                    <span className="ml-auto font-bold text-xs text-default-900">{valueFormatter(entry.value)}</span>
-                  </div>
-                ))}
-              </CardBody>
-            </Card>
-          ) : null
-        }
-      />
-      <div className="mt-4">
-        <div className="flex flex-wrap gap-2">
-          <Chip color="indigo" variant="flat">
-            Ventas Totales
-          </Chip>
-        </div>
-      </div>
-    </>
-  )}
-</CardBody>
+                    <CardBody className="space-y-1 p-0">
+                      <div className="font-semibold text-xs text-default-900 mb-1">{label}</div>
+                      {payload.map((entry, idx) => (
+                        <div
+                          key={entry.dataKey}
+                          className="flex items-center gap-2 py-0.5"
+                        >
+                          <span
+                            className={`inline-block w-3 h-3 rounded-full border border-default-200 bg-${COLORS[idx % COLORS.length]}-400`}
+                            style={{
+                              filter: "brightness(1.1) saturate(0.85)",
+                              minWidth: 12,
+                              minHeight: 12,
+                            }}
+                          ></span>
+                          <span className="font-medium text-xs text-default-800">{entry.dataKey}</span>
+                          <span className="ml-auto font-bold text-xs text-default-900">{valueFormatter(entry.value)}</span>
+                        </div>
+                      ))}
+                    </CardBody>
+                  </Card>
+                ) : null
+              }
+            />
+            <div className="mt-4">
+              <div className="flex flex-wrap gap-2">
+                <Chip color="indigo" variant="flat">
+                  Ventas Totales
+                </Chip>
+              </div>
+            </div>
+          </>
+        )}
+      </CardBody>
       <Divider />
       <CardFooter>
         <span className="text-xs text-default-400">

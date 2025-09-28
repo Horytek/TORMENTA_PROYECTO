@@ -1,14 +1,14 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Container, Header, MessageList, Composer, useWebchat } from "@botpress/webchat";
-import { Card, Button, Chip, Divider, Tooltip } from "@heroui/react";
-import { Popover, PopoverTrigger, PopoverContent } from "@heroui/react";
-import { Sparkles, MessageCircle, Trash2, Search } from "lucide-react";
+import { Card, Button, Divider, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip } from "@heroui/react";
+import { Sparkles, MessageCircle, Search, Settings } from "lucide-react";
 import { getModulosConSubmodulos } from "@/services/rutas.services";
 import { useUserStore } from "@/store/useStore";
 import { useLocation } from "react-router-dom";
 import CommandDemo from "@/components/ui/command";
+import MessengerWidget from "@/components/MessengerWidget/MessengerWidget"; 
 
-/* Config UI (estable, fuera del render) */
+
 const HEADER_CONFIG = {
   botName: "Asistente HoryCore",
   botAvatar: "https://cdn.botpress.cloud/bot-avatar.png",
@@ -26,17 +26,12 @@ const QUICK_PROMPTS = [
   "¿Permisos de usuario?"
 ];
 
-/* Utilidades */
 const sanitize = (v) => (typeof v === "string" ? v.trim() : v);
 
-/* Componente NotificationBubble */
 const NotificationBubble = ({ open, text, onOpen, onDismiss }) => {
   if (!open) return null;
-
   return (
-    <div 
-      className="fixed bottom-20 right-6 z-[9997] max-w-xs bg-white/95 dark:bg-zinc-900/95 border border-blue-100/60 dark:border-zinc-700/60 rounded-xl shadow-xl p-3 animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
-    >
+    <div className="fixed bottom-20 right-6 z-[9997] max-w-xs bg-white/95 dark:bg-zinc-900/95 border border-blue-100/60 dark:border-zinc-700/60 rounded-xl shadow-xl p-3 animate-in slide-in-from-bottom-2 fade-in-0 duration-300">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
           <span className="inline-flex items-center justify-center rounded-full bg-blue-500/90 text-white w-6 h-6">
@@ -47,25 +42,11 @@ const NotificationBubble = ({ open, text, onOpen, onDismiss }) => {
           <p className="text-sm text-blue-900 dark:text-blue-100 font-medium mb-1">
             {HEADER_CONFIG.botName}
           </p>
-          <p className="text-xs text-blue-700 dark:text-blue-200 break-words">
-            {text}
-          </p>
+          <p className="text-xs text-blue-700 dark:text-blue-200 break-words">{text}</p>
         </div>
         <div className="flex-shrink-0 flex flex-col gap-1">
-          <button
-            onClick={onOpen}
-            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-            title="Abrir chat"
-          >
-            Abrir
-          </button>
-          <button
-            onClick={onDismiss}
-            className="text-xs text-gray-500 hover:text-gray-700"
-            title="Cerrar"
-          >
-            ×
-          </button>
+          <button onClick={onOpen} className="text-xs text-blue-600 hover:text-blue-800 font-medium" title="Abrir chat">Abrir</button>
+          <button onClick={onDismiss} className="text-xs text-gray-500 hover:text-gray-700" title="Cerrar">×</button>
         </div>
       </div>
     </div>
@@ -75,24 +56,16 @@ const NotificationBubble = ({ open, text, onOpen, onDismiss }) => {
 export default function ChatbotClientWidget({ routes }) {
   const clientId = import.meta.env.VITE_BOTPRESS_CLIENT_ID || "fd9676e2-d7f2-4563-ab0e-69fbbbb0b8df";
   const { pathname } = useLocation();
-  
-  // Zustand store access
   const userStore = useUserStore();
-  const {
-    nombre: usuario,
-    rol,
-    id_tenant,
-    id_empresa,
-    sucursal
-  } = userStore;
+  const { nombre: usuario, rol, id_tenant, id_empresa, sucursal } = userStore;
 
   // Estado UI
-  const [isOpen, setIsOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [bubble, setBubble] = useState({ visible: false, text: "" });
-  const [popoverOpen, setPopoverOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unread, setUnread] = useState(0);
-  const [showCommand, setShowCommand] = useState(false);
+  const [isMessengerOpen, setIsMessengerOpen] = useState(false);
 
   // Webchat manual
   const { client, messages, isTyping, user, clientState, newConversation, on } = useWebchat({ clientId });
@@ -100,81 +73,78 @@ export default function ChatbotClientWidget({ routes }) {
   // Helpers burbuja
   const dismissBubble = useCallback(() => setBubble({ visible: false, text: "" }), []);
   const showBubble = useCallback((text) => setBubble({ visible: true, text: sanitize(text) || "" }), []);
-
+  const modulesCacheRef = useRef({ ts: 0, data: [] });
   // Cache en sesión para módulos (5 min)
-  const loadModulesSnapshot = useCallback(async () => {
-    try {
-      const cacheKey = "bp:modulesSnapshot:v1";
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Date.now() - (parsed.ts || 0) < 5 * 60 * 1000) return parsed.data;
-      }
+const loadModulesSnapshot = useCallback(async () => {
+  // Si la caché es válida (menos de 5 min), úsala
+  if (modulesCacheRef.current.ts && Date.now() - modulesCacheRef.current.ts < 5 * 60 * 1000) {
+    return modulesCacheRef.current.data;
+  }
 
-      const raw = await getModulosConSubmodulos();
-      const snapshot = Array.isArray(raw)
-        ? raw.map(m => ({
-            id: m.id,
-            nombre: m.nombre,
-            ruta: m.ruta,
-            submodulos: (m.submodulos || []).map(s => ({
-              id_submodulo: s.id_submodulo,
-              nombre_sub: s.nombre_sub,
-              ruta: s.ruta
-            }))
+  try {
+    const raw = await getModulosConSubmodulos();
+    const snapshot = Array.isArray(raw)
+      ? raw.map(m => ({
+          id: m.id,
+          nombre: m.nombre,
+          ruta: m.ruta,
+          submodulos: (m.submodulos || []).map(s => ({
+            id_submodulo: s.id_submodulo,
+            nombre_sub: s.nombre_sub,
+            ruta: s.ruta
           }))
-        : [];
-
-      sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: snapshot }));
-      return snapshot;
-    } catch {
-      return [];
-    }
-  }, []);
+        }))
+      : [];
+    modulesCacheRef.current = { ts: Date.now(), data: snapshot };
+    return snapshot;
+  } catch {
+    return [];
+  }
+}, []);
 
   // Construir contexto completo del sistema
-  const buildSystemContext = useCallback(() => {
-    const token = sessionStorage.getItem('token') || '';
-    const currentRoute = pathname || "/";
-    
-    // Identificar el módulo actual basado en la ruta
-    const getModuloActual = (ruta) => {
-      if (ruta.includes('/inicio')) return 'Dashboard';
-      if (ruta.includes('/productos')) return 'Gestión de Productos';
-      if (ruta.includes('/ventas')) return 'Módulo de Ventas';
-      if (ruta.includes('/almacen')) return 'Gestión de Almacén';
-      if (ruta.includes('/clientes')) return 'Gestión de Clientes';
-      if (ruta.includes('/proveedores')) return 'Gestión de Proveedores';
-      if (ruta.includes('/configuracion')) return 'Configuración del Sistema';
-      if (ruta.includes('/sunat')) return 'Integración SUNAT';
-      if (ruta.includes('/reportes')) return 'Reportes y Análisis';
-      return 'Sistema General';
-    };
+const buildSystemContext = useCallback(() => {
+  // Ya no se debe leer el token de sessionStorage ni exponerlo
+  const currentRoute = pathname || "/";
 
-    return {
-      // Datos del usuario
-      usuario: usuario || 'Usuario desconocido',
-      rol: rol || 'Sin rol',
-      id_tenant: id_tenant || 'Sin tenant',
-      id_empresa: id_empresa || 'Sin empresa',
-      sucursal: sucursal || 'Sin sucursal',
-      
-      // Contexto de navegación
-      moduloActual: getModuloActual(currentRoute),
-      rutaActual: currentRoute,
-      
-      // Datos técnicos
-      sistemaERP: 'HoryCore ERP',
-      version: '1.0.0',
-      fechaAcceso: new Date().toISOString(),
-      
-      // Token (sin exponer valor completo)
-      autenticado: !!token,
-      
-      // Capacidades del usuario según rol
-      capacidades: getRolCapabilities(rol)
-    };
-  }, [usuario, rol, id_tenant, id_empresa, sucursal, pathname]);
+  // Identificar el módulo actual basado en la ruta
+  const getModuloActual = (ruta) => {
+    if (ruta.includes('/inicio')) return 'Dashboard';
+    if (ruta.includes('/productos')) return 'Gestión de Productos';
+    if (ruta.includes('/ventas')) return 'Módulo de Ventas';
+    if (ruta.includes('/almacen')) return 'Gestión de Almacén';
+    if (ruta.includes('/clientes')) return 'Gestión de Clientes';
+    if (ruta.includes('/proveedores')) return 'Gestión de Proveedores';
+    if (ruta.includes('/configuracion')) return 'Configuración del Sistema';
+    if (ruta.includes('/sunat')) return 'Integración SUNAT';
+    if (ruta.includes('/reportes')) return 'Reportes y Análisis';
+    return 'Sistema General';
+  };
+
+  return {
+    // Datos del usuario
+    usuario: usuario || 'Usuario desconocido',
+    rol: rol || 'Sin rol',
+    id_tenant: id_tenant || 'Sin tenant',
+    id_empresa: id_empresa || 'Sin empresa',
+    sucursal: sucursal || 'Sin sucursal',
+
+    // Contexto de navegación
+    moduloActual: getModuloActual(currentRoute),
+    rutaActual: currentRoute,
+
+    // Datos técnicos
+    sistemaERP: 'HoryCore ERP',
+    version: '1.0.0',
+    fechaAcceso: new Date().toISOString(),
+
+    // Estado de autenticación (sin exponer token)
+    autenticado: !!usuario && !!rol && !!id_tenant,
+
+    // Capacidades del usuario según rol
+    capacidades: getRolCapabilities(rol)
+  };
+}, [usuario, rol, id_tenant, id_empresa, sucursal, pathname]);
 
   // Función para determinar capacidades según el rol
   const getRolCapabilities = (userRole) => {
@@ -287,11 +257,11 @@ IMPORTANTE: Responde únicamente sobre procesos, módulos y funcionalidades que 
   }, [client]);
 
   // Envía contexto automáticamente cuando cambia la ruta (para usuarios ya logueados)
-  useEffect(() => {
-    if (isOpen && usuario && id_tenant) {
-      sendContextIntro();
-    }
-  }, [pathname, isOpen, usuario, id_tenant, sendContextIntro]);
+useEffect(() => {
+  if (isChatOpen && usuario && id_tenant) {
+    sendContextIntro();
+  }
+}, [pathname, isChatOpen, usuario, id_tenant, sendContextIntro]);
 
   // Listeners del webchat
   useEffect(() => {
@@ -299,7 +269,7 @@ IMPORTANTE: Responde únicamente sobre procesos, módulos y funcionalidades que 
 
     const unsubMessage = on("message", (message) => {
       const authoredByUser = message?.authorId && user?.userId && message.authorId === user.userId;
-      if (!isOpen && !authoredByUser) {
+      if (!isChatOpen && !authoredByUser) {
         const preview = typeof message?.payload?.text === "string" ? message.payload.text : message?.preview || "Nuevo mensaje";
         showBubble(preview);
         pushNotification(preview);
@@ -320,7 +290,7 @@ IMPORTANTE: Responde únicamente sobre procesos, módulos y funcionalidades que 
       unsubError?.();
       unsubVisibility?.();
     };
-  }, [on, isOpen, user?.userId, showBubble, dismissBubble, pushNotification]);
+  }, [on, isChatOpen, user?.userId, showBubble, dismissBubble, pushNotification]);
 
   // Enriquecer mensajes
   const enriched = useMemo(() => {
@@ -337,180 +307,92 @@ IMPORTANTE: Responde únicamente sobre procesos, módulos y funcionalidades que 
     });
   }, [messages, user?.userId, user?.name, user?.pictureUrl]);
 
-  // Atajos de teclado
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape" && isOpen) setIsOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen]);
-
+  // Panel flotante compacto
   return (
     <>
-      {/* NotificationBubble */}
       <NotificationBubble
         open={bubble.visible}
         text={bubble.text}
-        onOpen={openChat}
+        onOpen={() => setIsChatOpen(true)}
         onDismiss={dismissBubble}
       />
 
-      {/* BOTONES FLOTANTES */}
-      {!isOpen && (
-        <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 9998 }} className="flex flex-col items-end gap-2">
-          {/* Botón de búsqueda */}
-          <Tooltip content="Buscar en el sistema" placement="left">
-            <Button
-              isIconOnly
-              variant="flat"
-              className="rounded-xl shadow-md border border-blue-100/60 bg-gradient-to-br from-blue-50 via-white to-blue-100 hover:from-blue-100 hover:to-blue-200 hover:bg-white/90 transition-all duration-200 w-10 h-10 flex items-center justify-center"
-              style={{
-                boxShadow: "0 4px 12px 0 rgba(59,130,246,0.10)",
-                backdropFilter: "blur(2px)",
-              }}
-              onClick={() => setShowCommand(true)}
-              aria-label="Buscar"
-            >
-              <Search className="w-5 h-5 text-blue-500" />
-            </Button>
-          </Tooltip>
-
-          {/* Botón de chatbot con popover */}
-          <Popover
-            isOpen={popoverOpen}
-            onOpenChange={setPopoverOpen}
-            placement="top-end"
-            offset={8}
-          >
-            <PopoverTrigger>
-              <div className="relative">
-                <Tooltip content="Abrir asistente especializado" placement="left">
-                  <Button
-                    isIconOnly
-                    variant="flat"
-                    color="default"
-                    className="rounded-xl shadow-sm border border-blue-100/60 dark:border-zinc-700/60 bg-white/90 dark:bg-zinc-900/85 hover:bg-white/100 dark:hover:bg-zinc-900/95 w-10 h-10"
-                    onPress={() => setPopoverOpen((v) => !v)}
-                    aria-label="Asistente ERP"
-                  >
-                    <MessageCircle className="w-5 h-5 text-blue-600" />
-                  </Button>
-                </Tooltip>
+      {/* Botón flotante compacto con Tooltip seguro */}
+      <div style={{ position: "fixed", right: 20, bottom: 20, zIndex: 9998 }}>
+        <Tooltip content="Opciones rápidas" placement="left">
+          <Dropdown>
+            <DropdownTrigger>
+              <Button
+                isIconOnly
+                size="md"
+                variant="flat"
+                color="primary"
+                className="rounded-full shadow border border-blue-100/60 bg-gradient-to-br from-blue-50 via-white to-blue-100 w-11 h-11 flex items-center justify-center"
+                aria-label="Panel de opciones"
+                tabIndex={0}
+              >        <Tooltip content="Opciones rápidas" placement="left">
+                <Settings className="w-6 h-6" />
+                        </Tooltip>
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Panel de opciones">
+              <DropdownItem
+                key="chatbot"
+                startContent={<MessageCircle className="w-4 h-4 text-blue-600" />}
+                onClick={() => setIsChatOpen(true)}
+              >
+                Asistente ERP
                 {unread > 0 && (
-                  <span
-                    aria-label={`${unread} notificaciones sin leer`}
-                    title={`${unread} sin leer`}
-                    style={{
-                      position: "absolute",
-                      top: -2,
-                      right: -2,
-                      minWidth: 16,
-                      height: 16,
-                      padding: "0 4px",
-                      borderRadius: 999,
-                      background: "linear-gradient(135deg, #e0ecff, #c7dbff)",
-                      color: "#1e3a8a",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      lineHeight: "16px",
-                      textAlign: "center",
-                      boxShadow: "0 2px 8px rgba(0,0,0,.12)",
-                    }}
-                  >
+                  <span className="ml-2 inline-flex items-center justify-center rounded-full bg-blue-100 text-blue-700 px-2 py-0.5 text-xs font-bold">
                     {unread}
                   </span>
                 )}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="p-3 rounded-xl shadow-xl border border-blue-100/60 dark:border-zinc-700/60 bg-white/95 dark:bg-zinc-900/90 w-80">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center rounded-lg bg-blue-500/90 text-white w-7 h-7 shadow">
-                    <Sparkles className="w-4 h-4" />
-                  </span>
-                  <div className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                    {HEADER_CONFIG.botName}
-                  </div>
-                </div>
-                <button
-                  onClick={clearNotifications}
-                  aria-label="Limpiar notificaciones"
-                  className="rounded-full p-1.5 bg-blue-50 hover:bg-blue-100 transition-colors text-blue-600 shadow-sm border border-blue-100/60"
-                  style={{ lineHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
-                  title="Limpiar notificaciones"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              <Divider className="mb-2" />
-              <div className="max-h-48 overflow-auto space-y-2">
-                {notifications.length === 0 ? (
-                  <div className="text-xs text-zinc-500">Sin notificaciones</div>
-                ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className="text-xs p-2 rounded-lg bg-blue-50/60 dark:bg-zinc-800/60 text-blue-900 dark:text-blue-100 border border-blue-100/60 dark:border-zinc-700/60"
-                    >
-                      {n.text}
-                    </div>
-                  ))
-                )}
-              </div>
-              <Divider className="my-2" />
-              <div className="flex gap-2">
-                <Button
-                  color="primary"
-                  variant="flat"
-                  className="flex-1"
-                  onPress={openChat}
-                >
-                  Abrir chat especializado
-                </Button>
-                <Button
-                  variant="light"
-                  className="flex-1"
-                  onPress={() => setPopoverOpen(false)}
-                >
-                  Cerrar
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-      )}
+              </DropdownItem>
+              <DropdownItem
+                key="search"
+                startContent={<Search className="w-4 h-4 text-blue-500" />}
+                onClick={() => setIsSearchOpen(true)}
+              >
+                Buscar en el sistema
+              </DropdownItem>
+              <DropdownItem
+                key="messenger"
+                startContent={<MessageCircle className="w-4 h-4 text-green-600" />}
+                onClick={() => setIsMessengerOpen(true)}
+              >
+                Mensajería interna
+              </DropdownItem>
+              {/* Puedes agregar más opciones aquí */}
+            </DropdownMenu>
+          </Dropdown>
+        </Tooltip>
+      </div>
 
-      {/* Modal CommandDemo */}
-      {showCommand && (
+      {/* Modal de búsqueda */}
+      {isSearchOpen && (
         <div
           id="command-modal-bg"
           className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[10000]"
-          onClick={() => setShowCommand(false)}
+          onClick={() => setIsSearchOpen(false)}
         >
           <div className="bg-white rounded-lg shadow-lg p-4" onClick={e => e.stopPropagation()}>
-            <CommandDemo routes={routes} onClose={() => setShowCommand(false)} />
+            <CommandDemo routes={routes} onClose={() => setIsSearchOpen(false)} />
           </div>
         </div>
       )}
 
       {/* Ventana del chat */}
-      {isOpen && (
+      {isChatOpen && (
         <Card className="fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-blue-100/70 dark:border-zinc-700/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200 w-[380px] h-[620px] max-w-[95vw]">
-          {/* Header del widget */}
-
-          {/* Cuerpo del chat */}
           <Container connected={clientState !== "disconnected"} style={{ width: "100%", height: "calc(100% - 56px)" }}>
             <Header
               defaultOpen={false}
-              closeWindow={() => setIsOpen(false)}
+              closeWindow={() => setIsChatOpen(false)}
               restartConversation={newConversation}
               disabled={false}
               configuration={HEADER_CONFIG}
             />
-
-            {/* Chips de prompts rápidos */}
-
+            <Divider className="my-2" />
             <MessageList
               botName={HEADER_CONFIG.botName}
               botDescription={HEADER_CONFIG.botDescription}
@@ -531,6 +413,11 @@ IMPORTANTE: Responde únicamente sobre procesos, módulos y funcionalidades que 
             />
           </Container>
         </Card>
+      )}
+
+      {/* Ventana del MessengerWidget */}
+      {isMessengerOpen && (
+        <MessengerWidget open={isMessengerOpen} onClose={() => setIsMessengerOpen(false)} />
       )}
     </>
   );

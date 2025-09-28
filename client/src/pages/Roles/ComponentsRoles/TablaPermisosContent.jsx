@@ -14,6 +14,7 @@ import { RiCollapseDiagonal2Line, RiExpandDiagonalLine, RiPlayListAddFill } from
 import { FaUserShield, FaUser, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
+import { useUserStore } from "@/store/useStore";
 
 // Componente de contenido compartido
 export default function TablaPermisosContent({
@@ -45,17 +46,12 @@ export default function TablaPermisosContent({
   onPermisosUpdate
 }) {
   // Obtener información del usuario para saber si es desarrollador
+  const userStore = useUserStore(state => state.user);
   useEffect(() => {
-    const userDataString = sessionStorage.getItem("user");
-    if (userDataString) {
-      try {
-        const userData = JSON.parse(userDataString);
-        setUserInfo(userData);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
+    if (userStore) {
+      setUserInfo(userStore.original || userStore);
     }
-  }, [setUserInfo]);
+  }, [userStore, setUserInfo]);
 
   useEffect(() => {
     if (roles?.length > 0) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from "react";
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './layouts/Login/Login';
@@ -6,7 +6,7 @@ import Dashboard from './layouts/Dashboard/Dashboard';
 import Messenger from './pages/Messenger/Messenger';
 import { AppSidebar } from './components/Sidebar/AppSidebar';
 import ChatbotClientWidget from "@/components/Chatbot/ChatbotClientWidget";
-import MessengerWidget from "@/components/MessengerWidget";
+//import MessengerWidget from "@/components/MessengerWidget/MessengerWidget";
 import { SidebarProvider } from "@/components/ui/Sidebar";
 import './main.css';
 import { ScrollShadow } from "@heroui/react";
@@ -24,6 +24,19 @@ import EmpleoPage from './pages/Landing/EmpleoPage';
 import ContactanosPage from './pages/Landing/ContactanosPage';
 import BlogPage from './pages/Landing/BlogPage';
 import RegistroLicenciaPage from './pages/Landing/RegistroLicenciaPage';
+import { useTheme } from "@heroui/use-theme";
+
+
+// Sincroniza el tema con la clase global
+function ThemeClassSync() {
+  const { theme } = useTheme();
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
+  return null;
+}
+
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -59,7 +72,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                         <Dashboard />
                         {/* Widgets flotantes: Chatbot y Messenger */}
                         <ChatbotClientWidget />
-                        <MessengerWidget />
                       </ScrollShadow>
                     </div>
                   </SidebarProvider>
