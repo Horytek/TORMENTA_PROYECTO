@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react"
+import { Link } from "react-router-dom"
 
 import {
   SidebarGroup,
@@ -28,9 +29,9 @@ export function NavTerceros({ items }) {
                 {item.items.map((subItem) => (
                   <SidebarMenuSubItem key={subItem.title}>
                     <SidebarMenuSubButton asChild>
-                      <a href={subItem.url}>
+                      <Link to={subItem.url}>
                         <span>{subItem.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 ))}
@@ -39,10 +40,10 @@ export function NavTerceros({ items }) {
           ) : (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild tooltip={item.title}>
-                <a href={item.url} className="flex items-center w-full">
+                <Link to={item.url} className="flex items-center w-full">
                   {item.icon && <item.icon className="mr-2" />}
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )

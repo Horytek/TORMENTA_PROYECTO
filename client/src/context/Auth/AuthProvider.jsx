@@ -11,6 +11,9 @@ export const useAuth = () => {
   return context;
 };
 
+// Evitar doble ejecución del verify en desarrollo (StrictMode)
+let VERIFY_EFFECT_RAN = false;
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -66,7 +69,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
     checkLogin();
-  }, [setUserRaw, clearUserStore]);
+  }, []);
 
   const logout = async () => {
     try {

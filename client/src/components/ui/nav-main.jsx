@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react"
+import { Link } from "react-router-dom"
 
 import {
   Collapsible,
@@ -35,13 +36,13 @@ export function NavMain({ items }) {
                     {/* Ícono e información del ítem */}
                     {item.icon && <item.icon className="mr-2 h-4 w-4" />}
                     {item.url ? (
-                      <a
-                        href={item.url}
+                      <Link
+                        to={item.url}
                         className="flex-1 text-left"
                         onClick={(e) => e.stopPropagation()} // evita que el colapsable se active
                       >
                         {item.title}
-                      </a>
+                      </Link>
                     ) : (
                       <span className="flex-1 text-left">{item.title}</span>
                     )}
@@ -66,9 +67,9 @@ export function NavMain({ items }) {
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
-                          <a href={subItem.url}>
+                          <Link to={subItem.url}>
                             <span>{subItem.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -80,10 +81,10 @@ export function NavMain({ items }) {
           ) : (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild tooltip={item.title}>
-                <a href={item.url} className="flex items-center w-full">
+                <Link to={item.url} className="flex items-center w-full">
                   {item.icon && <item.icon className="mr-2" />}
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )

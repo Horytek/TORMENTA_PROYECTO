@@ -2,8 +2,15 @@ import axios from "./axios";
 
 // Ya no se envía el token, el backend debe leer la cookie HTTPOnly
 
-export const verifyTokenRequest = async () => {
-    return await axios.get('/auth/verify');
+// Cachea el resultado de verificación para evitar llamadas duplicadas
+// causadas por React.StrictMode (doble montaje en desarrollo).
+let __verifyTokenPromise = null;
+
+export const verifyTokenRequest = () => {
+  if (!__verifyTokenPromise) {
+    __verifyTokenPromise = axios.get('/auth/verify');
+  }
+  return __verifyTokenPromise;
 };
 
 export const loginRequest = async (user) => 

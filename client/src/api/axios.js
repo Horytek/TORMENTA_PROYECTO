@@ -54,4 +54,4 @@ export default api;
 
 // Helpers ya usados
 export const loginRequest = (credentials) => api.post("/auth/login", credentials);
-export const verifyTokenRequest = () => api.get("/auth/verify");
+// Nota: la verificación se expone desde api.auth.js con caché de promesa
