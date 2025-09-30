@@ -9,7 +9,11 @@ import crypto from "crypto";
  * - HS256: firma corta (secreto robusto requerido)
  * - jti: opcional para revocación (replay defense)
  */
-export async function createAccessToken({ nameUser, id_usuario, id_tenant }) {
+export async function createAccessToken(input) {
+  const nameUser   = input?.nameUser   ?? input?.usr      ?? input?.usuario ?? input?.username ?? null;
+  const id_usuario = input?.id_usuario ?? input?.sub      ?? input?.id      ?? null;
+  const id_tenant  = input?.id_tenant  ?? input?.ten      ?? input?.tenant  ?? null;
+
   const now = Math.floor(Date.now() / 1000);
 
   const payload = {
@@ -26,10 +30,7 @@ export async function createAccessToken({ nameUser, id_usuario, id_tenant }) {
     jwt.sign(
       payload,
       TOKEN_SECRET,
-      {
-        expiresIn: "8h",
-        algorithm: "HS256",
-      },
+      { expiresIn: "8h", algorithm: "HS256" },
       (err, token) => (err ? reject(err) : resolve(token))
     );
   });

@@ -42,13 +42,11 @@ const login = async (req, res) => {
 
         if (userValid.length > 0) {
             userbd = userValid[0];
-            // NUEVO: payload con claves cortas
-            const tokenPayload = {
-                usr: user.usuario, // nombre de usuario
-                sub: userbd.id_usuario, // id_usuario
-                ten: userbd.id_tenant ?? null // id_tenant
-            };
-            const token = await createAccessToken(tokenPayload);
+            const token = await createAccessToken({
+            nameUser: user.usuario,
+            id_usuario: userbd.id_usuario,
+            id_tenant: userbd.id_tenant ?? null
+            });
 
             let defaultRedirect = '/inicio';
 

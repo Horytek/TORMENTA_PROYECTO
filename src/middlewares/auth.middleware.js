@@ -13,7 +13,6 @@ export const auth = (req, res, next) => {
       return res.status(401).json({ message: "No token, autorización denegada" });
     }
 
-    // Verificación con issuer/audience para mayor seguridad
     jwt.verify(
       token,
       TOKEN_SECRET,
@@ -23,25 +22,31 @@ export const auth = (req, res, next) => {
           return res.status(401).json({ message: "Token no válido" });
         }
 
-        // Normalización (compatibilidad hacia atrás)
+        // Normalización más robusta
         const normalized = {
           ...user,
-          nameUser: user.usr ?? user.nameUser,
-          id_usuario: user.sub ?? user.id_usuario,
-          id_tenant: user.ten ?? user.id_tenant ?? null,
+          // posibles nombres en distintos flujos
+          nameUser:
+            user.usr ??
+            user.nameUser ??
+            user.usuario ??
+            user.username ??
+            user.name_user ??
+            null,
+          id_usuario: user.sub ?? user.id_usuario ?? user.id ?? null,
+          id_tenant: user.ten ?? user.id_tenant ?? user.tenant ?? null,
+          rol: user.rol ?? user.role ?? null,
         };
 
         req.user = normalized;
+        req.id_tenant = normalized.id_tenant ?? null;
+        // compat opcional
+        req.nameUser = normalized.nameUser ?? null;
 
-        // Accesos directos usados por el código actual
-        req.id_usuario = normalized.id_usuario;
-        req.id_tenant = normalized.id_tenant;
-        req.nameUser = normalized.nameUser;
-
-        next();
+        return next();
       }
     );
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+  } catch {
+    return res.status(401).json({ message: "Token no válido" });
   }
 };

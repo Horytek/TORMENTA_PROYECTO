@@ -305,25 +305,30 @@ const savePermisos = async (req, res) => {
 };
 
 const checkPermiso = async (req, res) => {
-    try {
-      const idModulo = parseInt(req.query.idModulo);
-      const idSubmodulo = req.query.idSubmodulo ? parseInt(req.query.idSubmodulo) : null;
-      
-      if (isNaN(idModulo)) {
-        return res.status(400).json({ 
-          hasPermission: false,
-          message: "El parámetro idModulo debe ser un número válido" 
-        });
-      }
-      
-      const nameUser = req.user.nameUser;
-      
-      if (!nameUser) {
-        return res.status(400).json({
-          hasPermission: false,
-          message: "Información de usuario incompleta en el token"
-        });
-      }
+  try {
+    const idModulo = parseInt(req.query.idModulo);
+    const idSubmodulo = req.query.idSubmodulo ? parseInt(req.query.idSubmodulo) : null;
+
+    if (isNaN(idModulo)) {
+      return res.status(400).json({
+        hasPermission: false,
+        message: "El parámetro idModulo debe ser un número válido"
+      });
+    }
+
+    const nameUser =
+      req.user?.nameUser ||
+      req.user?.usr ||
+      req.user?.usuario ||
+      req.user?.username ||
+      req.nameUser;
+
+    if (!nameUser) {
+      return res.status(400).json({
+        hasPermission: false,
+        message: "Información de usuario incompleta en el token"
+      });
+    }
 
       // Si es desarrollador, tiene todos los permisos
       if (nameUser === 'desarrollador') {

@@ -405,9 +405,9 @@ body.sidebar-collapsed .contenido-cambiante {
 /* Contenedores de tarjeta/panel por defecto (usa tokens) */
 @layer utilities {
   .app-surface { @apply bg-background text-foreground; }
-  .app-panel   { @apply bg-white dark:bg-zinc-900 text-foreground border border-border rounded-xl; }
-  .app-card    { @apply bg-card text-card-foreground border border-border rounded-2xl shadow-[var(--shadow-tremor-card)]; }
-  .app-input   { @apply bg-background text-foreground border border-input; }
+  .app-panel   { @apply bg-white dark:bg-zinc-900 text-foreground border border-gray-200 dark:border-zinc-700 rounded-xl; }
+  .app-card    { @apply bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-[var(--shadow-tremor-card)]; }
+  .app-input   { @apply bg-background text-foreground border border-gray-200 dark:border-zinc-700; }
 }
 
 /* Asegura fondo general del ERP en dark (landing excluida) */

@@ -85,6 +85,21 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
       setLoading(false);
       return;
     }
+
+        // Evitar llamadas inválidas
+    if (!idModulo || isNaN(Number(idModulo))) {
+      setHasAccess(false);
+      setPermissions({
+        hasPermission: false,
+        hasCreatePermission: false,
+        hasEditPermission: false,
+        hasDeletePermission: false,
+        hasGeneratePermission: false,
+        hasDeactivatePermission: false,
+      });
+      setLoading(false);
+      return;
+    }
     
     try {
       if (user.rol === 10) {
@@ -103,7 +118,7 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
 
       // Ya no se usa token, el backend lee la cookie HTTPOnly
       const response = await axios.get(
-        `/permisos/check?idModulo=${idModulo}${idSubmodulo ? `&idSubmodulo=${idSubmodulo}` : ''}`
+        `/permisos/check?idModulo=${Number(idModulo)}${idSubmodulo ? `&idSubmodulo=${Number(idSubmodulo)}` : ''}`
       );
       
       const hasAccess = response.data.hasPermission;
