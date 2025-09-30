@@ -405,7 +405,7 @@ body.sidebar-collapsed .contenido-cambiante {
 /* Contenedores de tarjeta/panel por defecto (usa tokens) */
 @layer utilities {
   .app-surface { @apply bg-background text-foreground; }
-  .app-panel   { @apply bg-popover text-popover-foreground border border-border rounded-xl; }
+  .app-panel   { @apply bg-white dark:bg-zinc-900 text-foreground border border-border rounded-xl; }
   .app-card    { @apply bg-card text-card-foreground border border-border rounded-2xl shadow-[var(--shadow-tremor-card)]; }
   .app-input   { @apply bg-background text-foreground border border-input; }
 }
