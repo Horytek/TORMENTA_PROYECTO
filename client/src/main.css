@@ -198,7 +198,13 @@ textarea {
   transition: border .15s, box-shadow .15s;
 }
 
-input[type="number"]:focus
+ input[type="number"]:focus {
+   border: 1px solid #e5e7eb !important;    /* gris claro */
+   background: #f9fafb !important;
+   border-radius: 0.5rem !important;
+   box-shadow: none !important;
+   transition: border .15s, box-shadow .15s;
+}
 
 /* Si HeroUI agrega wrapper, reforzar (opcional) */
 [data-slot="input-wrapper"]:has(> input[type="number"]),
