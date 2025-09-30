@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { File, Search, X } from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { File, Search } from "lucide-react";
 import { ScrollShadow, Button, Divider } from '@heroui/react';
+import { useNavigate } from "react-router-dom";
 
 export function Command({ className = "", children, ...props }) {
   return (
@@ -87,12 +88,11 @@ export function CommandShortcut({ children }) {
 function CommandDemo({ routes, onClose }) {
   const [search, setSearch] = useState("");
   const modalRef = useRef(null);
+  const navigate = useNavigate();
 
   // Cerrar con ESC
   useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === "Escape") onClose?.();
-    };
+    const handleKey = (e) => { if (e.key === "Escape") onClose?.(); };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
@@ -100,47 +100,59 @@ function CommandDemo({ routes, onClose }) {
   // Cerrar al hacer click fuera
   useEffect(() => {
     const handleClick = (e) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(e.target)
-      ) {
-        onClose?.();
-      }
+      if (modalRef.current && !modalRef.current.contains(e.target)) onClose?.();
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
 
-  // Compensar sidebar (usa la variable CSS del layout)
   const sidebarWidth = getComputedStyle(document.documentElement)
     .getPropertyValue("--sidebar-width") || "184px";
 
-  const allLinks = [];
-  if (routes?.length) {
-    routes.forEach((module) => {
-      if (module?.ruta) {
-        allLinks.push({
-          name: module.nombre,
-          path: module.ruta.startsWith("/") ? module.ruta : "/" + module.ruta,
+  const toPath = (p) => {
+    if (!p || typeof p !== "string") return null;
+    const s = p.trim();
+    if (!s) return null;
+    return s.startsWith("/") ? s : `/${s}`;
+  };
+
+  // Construir lista de accesos con tolerancia a campos
+  const allLinks = useMemo(() => {
+    const links = [];
+    if (Array.isArray(routes)) {
+      routes.forEach((module) => {
+        const moduleName = (module?.nombre || "").trim();
+        const modulePath = toPath(module?.ruta || module?.ruta_modulo || module?.path);
+        if (modulePath) links.push({ name: moduleName || modulePath, path: modulePath });
+
+        const subs = Array.isArray(module?.submodulos) ? module.submodulos : [];
+        subs.forEach((sub) => {
+          const subName = (sub?.nombre_sub || sub?.nombre || "").trim();
+          const subPath = toPath(sub?.ruta || sub?.ruta_submodulo || sub?.path);
+          if (subPath) {
+            links.push({
+              name: moduleName && subName ? `${moduleName} > ${subName}` : (subName || subPath),
+              path: subPath,
+            });
+          }
         });
-      }
-    });
-  }
+      });
+    }
+    // Debug mínimo
+    // console.debug("CommandDemo routes:", routes, "links:", links);
+    return links;
+  }, [routes]);
 
-  function normalize(str) {
-    return str
-      ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-      : "";
-  }
+  const normalize = (str) =>
+    str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : "";
 
-  const filteredLinks = allLinks.filter((link) =>
-    normalize(link.name).includes(normalize(search))
-  );
+  const filteredLinks =
+    search.trim() === "" ? allLinks : allLinks.filter((l) => normalize(l.name).includes(normalize(search)));
 
   const shortcuts = [
-    { label: "Ir a Dashboard", action: () => (window.location.href = "/inicio"), key: "D" },
-    { label: "Ir a Ventas", action: () => (window.location.href = "/ventas"), key: "V" },
-    { label: "Ir a Productos", action: () => (window.location.href = "/productos"), key: "P" },
+    { label: "Ir a Dashboard", action: () => navigate("/inicio"), key: "D" },
+    { label: "Ir a Ventas", action: () => navigate("/ventas"), key: "V" },
+    { label: "Ir a Productos", action: () => navigate("/productos"), key: "P" },
   ];
 
   return (
@@ -155,16 +167,9 @@ function CommandDemo({ routes, onClose }) {
       }}
       onClick={onClose}
     >
-      <div
-        className="mt-24 md:mt-32 w-full max-w-lg px-2 md:px-0"
-        ref={modalRef}
-        onClick={e => e.stopPropagation()}
-      >
+      <div className="mt-24 md:mt-32 w-full max-w-lg px-2 md:px-0" ref={modalRef} onClick={(e) => e.stopPropagation()}>
         <Command className="relative shadow-2xl border-blue-100">
-          <CommandInput
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <CommandInput value={search} onChange={(e) => setSearch(e.target.value)} />
           <CommandList>
             {filteredLinks.length === 0 ? (
               <CommandEmpty>No se encontraron resultados.</CommandEmpty>
@@ -173,7 +178,7 @@ function CommandDemo({ routes, onClose }) {
                 {filteredLinks.map((link) => (
                   <CommandItem
                     key={link.path}
-                    onClick={() => (window.location.href = link.path)}
+                    onClick={() => { navigate(link.path); onClose?.(); }}
                   >
                     <File className="w-5 h-5 text-blue-400" />
                     <span>{link.name}</span>
@@ -184,7 +189,7 @@ function CommandDemo({ routes, onClose }) {
             <CommandSeparator />
             <CommandGroup heading="Atajos">
               {shortcuts.map((s) => (
-                <CommandItem key={s.key} onClick={s.action}>
+                <CommandItem key={s.key} onClick={() => { s.action(); onClose?.(); }}>
                   <span>{s.label}</span>
                   <CommandShortcut>{s.key}</CommandShortcut>
                 </CommandItem>
@@ -192,12 +197,7 @@ function CommandDemo({ routes, onClose }) {
             </CommandGroup>
           </CommandList>
           <div className="flex justify-end px-5 pb-4 pt-2">
-            <Button
-              color="default"
-              variant="flat"
-              onClick={e => { e.stopPropagation(); onClose(); }}
-              className="rounded-lg"
-            >
+            <Button color="default" variant="flat" onClick={(e) => { e.stopPropagation(); onClose?.(); }} className="rounded-lg">
               Cerrar
             </Button>
           </div>

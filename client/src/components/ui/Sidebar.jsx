@@ -202,10 +202,13 @@ export const Sidebar = forwardRef(
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-white/95 dark:bg-zinc-900/95 p-0 text-sidebar-foreground shadow-xl backdrop-blur-[2px] border-r border-gray-200/60 dark:border-zinc-800/70"
-            style={{ "--sidebar-width": SIDEBAR_WIDTH_MOBILE }}
-            side={side}
-          >
+          className={cn(
+            "w-[--sidebar-width] app-panel p-0 text-sidebar-foreground shadow-xl backdrop-blur-[2px]",
+            className
+          )}
+          style={{ "--sidebar-width": SIDEBAR_WIDTH_MOBILE }}
+          side={side}
+        >
             <SheetHeader className="sr-only">
               <SheetTitle>Sidebar</SheetTitle>
               <SheetDescription>

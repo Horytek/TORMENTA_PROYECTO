@@ -43,6 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Router>
       <AuthProvider>
         <HeroUIProvider>
+          <ThemeClassSync />
           <Routes>
             {/* Rutas públicas SIN SidebarProvider */}
             <Route path="/" element={<Login />} />

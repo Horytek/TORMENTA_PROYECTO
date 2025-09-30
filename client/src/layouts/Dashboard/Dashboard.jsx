@@ -291,6 +291,7 @@ function Dashboard() {
         </div>
 
         {/* Widget global del chatbot (siempre visible sobre el contenido) */}
+        
         <ChatbotClientWidget routes={routes} />
       </div>
     </div>

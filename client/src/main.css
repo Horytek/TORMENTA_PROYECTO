@@ -342,3 +342,77 @@ body.sidebar-collapsed .contenido-cambiante {
   height: 1.5rem !important;
 }
 /* Fin adaptación completa */
+.dark .bg-white\/5  { background-color: rgb(24 24 27 / .05) !important; }
+.dark .bg-white\/10 { background-color: rgb(24 24 27 / .10) !important; }
+.dark .bg-white\/20 { background-color: rgb(24 24 27 / .20) !important; }
+.dark .bg-white\/30 { background-color: rgb(24 24 27 / .30) !important; }
+.dark .bg-white\/40 { background-color: rgb(24 24 27 / .40) !important; }
+.dark .bg-white\/50 { background-color: rgb(24 24 27 / .50) !important; }
+.dark .bg-white\/60 { background-color: rgb(24 24 27 / .60) !important; }
+.dark .bg-white\/70 { background-color: rgb(24 24 27 / .70) !important; }
+.dark .bg-white\/80 { background-color: rgb(24 24 27 / .80) !important; }
+
+.dark .bg-gray-200 { background-color: rgb(63 63 70) !important; }   /* zinc-700 */
+.dark .border-gray-300,
+.dark .border-gray-400,
+.dark .border-zinc-200,
+.dark .border-zinc-300,
+.dark .border-zinc-400 { border-color: rgb(63 63 70) !important; }  /* zinc-700 */
+
+.dark .text-black     { color: rgb(244 244 245) !important; }       /* zinc-100 */
+.dark .text-zinc-900  { color: rgb(244 244 245) !important; }
+.dark .text-zinc-800  { color: rgb(228 228 231) !important; }
+.dark .text-zinc-700  { color: rgb(212 212 216) !important; }
+.dark .text-gray-600  { color: rgb(212 212 216) !important; }
+
+/* Ajuste de acentos comunes en dark (mejor contraste) */
+.dark .text-blue-700  { color: #93c5fd !important; }
+.dark .text-emerald-700 { color: #6ee7b7 !important; }
+.dark .text-red-700   { color: #fca5a5 !important; }
+
+/* Sidebar (usa variables del theme y fallback) */
+[data-sidebar="sidebar"],
+[data-sidebar="content"],
+[data-sidebar="footer"],
+[data-sidebar="header"] {
+  background: var(--color-sidebar, hsl(var(--sidebar))) !important;
+  color: var(--color-sidebar-foreground, hsl(var(--sidebar-foreground))) !important;
+}
+.dark [data-sidebar="sidebar"],
+.dark [data-sidebar="content"],
+.dark [data-sidebar="footer"],
+.dark [data-sidebar="header"] {
+  background: hsl(var(--sidebar)) !important;
+  color: hsl(var(--sidebar-foreground)) !important;
+  border-color: hsl(var(--sidebar-border)) !important;
+}
+
+/* Tremor / Recharts: textos, grillas y tooltip */
+.dark .recharts-text tspan,
+.dark .recharts-legend-wrapper text { fill: var(--color-dark-tremor-content-strong) !important; }
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line { stroke: var(--color-dark-tremor-border) !important; }
+.dark .recharts-cartesian-axis-line,
+.dark .recharts-cartesian-axis-tick-line { stroke: var(--color-dark-tremor-border) !important; }
+.dark .recharts-default-tooltip,
+.dark .tremor-Tooltip-root {
+  background: #18181b !important;
+  color: #e4e4e7 !important;
+  border: 1px solid #3f3f46 !important;
+  box-shadow: var(--shadow-dark-tremor-dropdown) !important;
+}
+
+/* Contenedores de tarjeta/panel por defecto (usa tokens) */
+@layer utilities {
+  .app-surface { @apply bg-background text-foreground; }
+  .app-panel   { @apply bg-popover text-popover-foreground border border-border rounded-xl; }
+  .app-card    { @apply bg-card text-card-foreground border border-border rounded-2xl shadow-[var(--shadow-tremor-card)]; }
+  .app-input   { @apply bg-background text-foreground border border-input; }
+}
+
+/* Asegura fondo general del ERP en dark (landing excluida) */
+html.dark body:not(.landing-body),
+html.dark body:not(.landing-body) #root {
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}

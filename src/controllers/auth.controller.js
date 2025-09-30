@@ -42,11 +42,12 @@ const login = async (req, res) => {
 
         if (userValid.length > 0) {
             userbd = userValid[0];
+            // NUEVO: payload con claves cortas
             const tokenPayload = {
-                nameUser: user.usuario,
-                id_usuario: userbd.id_usuario
+                usr: user.usuario, // nombre de usuario
+                sub: userbd.id_usuario, // id_usuario
+                ten: userbd.id_tenant ?? null // id_tenant
             };
-            if (userbd.id_tenant) tokenPayload.id_tenant = userbd.id_tenant;
             const token = await createAccessToken(tokenPayload);
 
             let defaultRedirect = '/inicio';
@@ -84,12 +85,13 @@ const login = async (req, res) => {
             }
 
             // Set cookie HTTPOnly, Secure, SameSite
-                res.cookie("token", token, {
+            const isProd = process.env.NODE_ENV === "production";
+            res.cookie("token", token, {
                 httpOnly: true,
-                secure: false,      // En desarrollo debe ser false, en producción true
-                sameSite: "lax",    // En desarrollo "lax", en producción "none" si usas HTTPS
+                secure: isProd,
+                sameSite: isProd ? "none" : "lax",
                 maxAge: 1000 * 60 * 60 * 8 // 8 horas
-                });
+            });
 
             res.json({
                 success: true,
@@ -122,84 +124,100 @@ const login = async (req, res) => {
 };
 
 const verifyToken = async (req, res) => {
-    let connection;
-    connection = await getConnection();
-    // Leer token desde cookie HTTPOnly
-    const token = req.cookies?.token;
+  let connection;
+  connection = await getConnection();
+  const token = req.cookies?.token;
 
-    if (!token) return res.send(false);
+  if (!token) return res.send(false);
 
-    jwt.verify(token, TOKEN_SECRET, async (error, user) => {
-        if (error) return res.sendStatus(401);
+  jwt.verify(
+    token,
+    TOKEN_SECRET,
+    { audience: "horytek-erp", issuer: "horytek-backend" },
+    async (error, user) => {
+      if (error) return res.sendStatus(401);
 
-        let userFound;
-        if (user.id_tenant) {
-            [userFound] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant
-                FROM usuario usu
-                LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
-                LEFT JOIN sucursal su ON su.dni = ven.dni
-                WHERE usu.usua = ? AND usu.estado_usuario = 1 AND usu.id_tenant = ?`,
-                [user.nameUser, user.id_tenant]
-            );
-        } else {
-            [userFound] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, null as nombre_sucursal, null as id_tenant
-                FROM usuario usu
-                WHERE usu.usua = ? AND usu.estado_usuario = 1`,
-                [user.nameUser]
-            );
-        }
+      // Con middleware normalizado podría no ser necesario,
+      // pero aquí soportamos ambos flujos por seguridad.
+      const usuario = user.usr ?? user.nameUser;
+      const id_tenant = user.ten ?? user.id_tenant ?? null;
 
-        if (userFound.length === 0) return res.sendStatus(401);
+      let userFound;
+      if (id_tenant) {
+        [userFound] = await connection.query(
+          `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant
+           FROM usuario usu
+           LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
+           LEFT JOIN sucursal su ON su.dni = ven.dni
+           WHERE usu.usua = ? AND usu.estado_usuario = 1 AND usu.id_tenant = ?`,
+          [usuario, id_tenant]
+        );
+      } else {
+        [userFound] = await connection.query(
+          `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, null as nombre_sucursal, null as id_tenant
+           FROM usuario usu
+           WHERE usu.usua = ? AND usu.estado_usuario = 1`,
+          [usuario]
+        );
+      }
 
-        const userbd = userFound[0];
+      if (userFound.length === 0) return res.sendStatus(401);
 
-        return res.json({
-            id: userbd.id_usuario,
-            rol: userbd.id_rol,
-            usuario: userbd.usua,
-            sucursal: userbd.nombre_sucursal || null,
-            id_tenant: userbd.id_tenant || null
-        });
-    });
+      const userbd = userFound[0];
+      return res.json({
+        id: userbd.id_usuario,
+        rol: userbd.id_rol,
+        usuario: userbd.usua,
+        sucursal: userbd.nombre_sucursal || null,
+        id_tenant: userbd.id_tenant || null,
+      });
+    }
+  );
 };
 
 const logout = async (req, res) => {
-    let connection;
-    connection = await getConnection();
-    // Leer token desde cookie HTTPOnly
-    const token = req.cookies?.token;
+  let connection;
+  connection = await getConnection();
+  const token = req.cookies?.token;
 
-    if (!token) return res.send(false);
+  if (!token) return res.send(false);
 
-    jwt.verify(token, TOKEN_SECRET, async (error, user) => {
-        if (error) return res.sendStatus(401);
+  jwt.verify(
+    token,
+    TOKEN_SECRET,
+    { audience: "horytek-erp", issuer: "horytek-backend" },
+    async (error, user) => {
+      if (error) return res.sendStatus(401);
 
-        const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", user.nameUser);
-        if (userFound.length === 0) return res.sendStatus(401);
+      const usuario = user.usr ?? user.nameUser;
+      const [userFound] = await connection.query("SELECT * FROM usuario WHERE usua = ?", [usuario]);
+      if (userFound.length === 0) return res.sendStatus(401);
 
-        const userbd = userFound[0];
+      const userbd = userFound[0];
 
-        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
-            (req.connection.socket ? req.connection.socket.remoteAddress : null);
+      const ip =
+        req.ip ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        (req.connection.socket ? req.connection.socket.remoteAddress : null);
 
-        if (userbd.id_tenant) {
-            await logAcceso.logout(userbd.id_usuario, ip, userbd.id_tenant);
-        }
+      if (userbd.id_tenant) {
+        await logAcceso.logout(userbd.id_usuario, ip, userbd.id_tenant);
+      }
 
-        await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
+      await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [0, userbd.id_usuario]);
 
-        res.cookie("token", "", {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            // domain: '.bck-omega.vercel.app', // Descomenta si usas dominio cruzado
-            expires: new Date(0),
-        });
+      const isProd = process.env.NODE_ENV === "production";
+      res.cookie("token", "", {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        expires: new Date(0),
+      });
 
-        return res.sendStatus(200);
-    });
+      return res.sendStatus(200);
+    }
+  );
 };
 
 const updateUsuarioName = async (req, res) => {

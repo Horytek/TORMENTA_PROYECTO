@@ -66,6 +66,7 @@ export default function ChatbotClientWidget({ routes }) {
   const [notifications, setNotifications] = useState([]);
   const [unread, setUnread] = useState(0);
   const [isMessengerOpen, setIsMessengerOpen] = useState(false);
+  const [internalRoutes, setInternalRoutes] = useState([]);
 
   // Webchat manual
   const { client, messages, isTyping, user, clientState, newConversation, on } = useWebchat({ clientId });
@@ -81,26 +82,43 @@ const loadModulesSnapshot = useCallback(async () => {
     return modulesCacheRef.current.data;
   }
 
-  try {
-    const raw = await getModulosConSubmodulos();
-    const snapshot = Array.isArray(raw)
-      ? raw.map(m => ({
-          id: m.id,
-          nombre: m.nombre,
-          ruta: m.ruta,
-          submodulos: (m.submodulos || []).map(s => ({
-            id_submodulo: s.id_submodulo,
-            nombre_sub: s.nombre_sub,
-            ruta: s.ruta
+    try {
+      const raw = await getModulosConSubmodulos();
+      const snapshot = Array.isArray(raw)
+        ? raw.map(m => ({
+            id: m.id,
+            nombre: (m.nombre || "").trim(),
+            ruta: (m.ruta || m.ruta_modulo || m.path || "").trim(),
+            submodulos: Array.isArray(m.submodulos)
+              ? m.submodulos.map(s => ({
+                  id_submodulo: s.id_submodulo ?? s.id ?? undefined,
+                  nombre_sub: (s.nombre_sub || s.nombre || "").trim(),
+                  ruta: (s.ruta || s.ruta_submodulo || s.path || "").trim(),
+                }))
+              : [],
           }))
-        }))
-      : [];
-    modulesCacheRef.current = { ts: Date.now(), data: snapshot };
-    return snapshot;
-  } catch {
-    return [];
-  }
-}, []);
+        : [];
+      modulesCacheRef.current = { ts: Date.now(), data: snapshot };
+      return snapshot;
+    } catch {
+      return [];
+    }
+  }, []);
+
+  useEffect(() => {
+    // Si no vienen rutas por props, usar fallback
+    if (!Array.isArray(routes) || routes.length === 0) {
+      (async () => {
+        const snap = await loadModulesSnapshot();
+        setInternalRoutes(snap);
+      })();
+    }
+  }, [routes, loadModulesSnapshot]);
+
+  // Normaliza la fuente: props > fallback
+  const effectiveRoutes = useMemo(() => {
+    return Array.isArray(routes) && routes.length > 0 ? routes : internalRoutes;
+  }, [routes, internalRoutes]);
 
   // Construir contexto completo del sistema
 const buildSystemContext = useCallback(() => {
@@ -319,7 +337,6 @@ useEffect(() => {
 
       {/* Botón flotante compacto con Tooltip seguro */}
       <div style={{ position: "fixed", right: 20, bottom: 20, zIndex: 9998 }}>
-        <Tooltip content="Opciones rápidas" placement="left">
           <Dropdown>
             <DropdownTrigger>
               <Button
@@ -365,18 +382,20 @@ useEffect(() => {
               {/* Puedes agregar más opciones aquí */}
             </DropdownMenu>
           </Dropdown>
-        </Tooltip>
       </div>
 
       {/* Modal de búsqueda */}
-      {isSearchOpen && (
+        {isSearchOpen && (
         <div
           id="command-modal-bg"
-          className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[10000]"
+          className="fixed inset-0 bg-black/40 dark:bg-black/70 flex items-center justify-center z-[10000]"
           onClick={() => setIsSearchOpen(false)}
         >
-          <div className="bg-white rounded-lg shadow-lg p-4" onClick={e => e.stopPropagation()}>
-            <CommandDemo routes={routes} onClose={() => setIsSearchOpen(false)} />
+          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-4 transition-colors duration-200" onClick={e => e.stopPropagation()}>
+            <CommandDemo
+              routes={effectiveRoutes}
+              onClose={() => setIsSearchOpen(false)}
+            />
           </div>
         </div>
       )}
@@ -391,8 +410,9 @@ useEffect(() => {
               restartConversation={newConversation}
               disabled={false}
               configuration={HEADER_CONFIG}
+              className="!bg-white !dark:!bg-zinc-900 !text-blue-900 !dark:!text-blue-100 transition-colors"
             />
-            <Divider className="my-2" />
+            <Divider className="my-2 dark:border-zinc-700/60" />
             <MessageList
               botName={HEADER_CONFIG.botName}
               botDescription={HEADER_CONFIG.botDescription}
@@ -401,6 +421,7 @@ useEffect(() => {
               showMarquee={false}
               messages={enriched}
               sendMessage={client?.sendMessage}
+              className="bg-white/95 dark:bg-zinc-900/90 text-blue-900 dark:text-blue-100 transition-colors"
             />
             <Composer
               disableComposer={false}
@@ -410,6 +431,7 @@ useEffect(() => {
               sendMessage={client?.sendMessage}
               uploadFile={client?.uploadFile}
               composerPlaceholder="Pregunta sobre HoryCore ERP..."
+              className="bg-white/90 dark:bg-zinc-900/80 border-t border-blue-100/60 dark:border-zinc-700/60 text-blue-900 dark:text-blue-100 transition-colors"
             />
           </Container>
         </Card>

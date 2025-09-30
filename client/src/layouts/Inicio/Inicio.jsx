@@ -358,12 +358,12 @@ const porcentajePendientes =
   return (
     <div className="min-h-screen py-8 px-2 sm:px-6">
       <div className="max-w-[1600px] mx-auto space-y-6">
-<header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 border border-blue-100 rounded-2xl shadow-sm p-6 mb-2">
+<header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 dark:bg-zinc-900/80 border border-blue-100 dark:border-zinc-700 rounded-2xl shadow-sm p-6 mb-2 transition-colors">
   <div>
-    <h1 className="text-5xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-500 to-cyan-400 drop-shadow-md">
+    <h1 className="text-5xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-500 to-cyan-400 dark:from-blue-200 dark:via-blue-400 dark:to-cyan-300 drop-shadow-md">
       Panel Principal
     </h1>
-    <p className="text-base text-blue-700/80 mt-2">
+    <p className="text-base text-blue-700/80 dark:text-blue-200/80 mt-2">
       Visualiza el dashboard general de ventas por periodos de tiempo.
     </p>
   </div>
@@ -377,7 +377,7 @@ const porcentajePendientes =
       }}
       placeholder="Seleccionar sucursal"
       classNames={{
-        trigger: "bg-blue-50 border-blue-100 text-blue-900 shadow-sm",
+        trigger: "bg-blue-50 border-blue-100 text-blue-900 shadow-sm dark:bg-zinc-800 dark:border-zinc-700 dark:text-blue-200",
       }}
     >
       {sucursales.map((sucursal) => (
@@ -394,24 +394,24 @@ const porcentajePendientes =
       light
       color="danger"
       onClick={() => setSelectedSucursal("")}
-      className="bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm"
+      className="bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-sm dark:bg-rose-950 dark:hover:bg-rose-900 dark:text-rose-300"
     >
       <MdDeleteForever style={{ fontSize: "20px" }} />
       Limpiar
     </Button>
   </div>
 </header>
-        <div style={{ marginTop: "15px" }}>
-          <main>
-            <div className="bg-white/70 border border-blue-100 rounded-xl shadow-sm px-2 py-2 mb-4 flex flex-col">
-              <Tabs
-                selectedKey={selectedTab}
-                onSelectionChange={setSelectedTab}
-                classNames={{
-                  tabList: "bg-transparent flex gap-2",
-                  tab: "rounded-lg px-4 py-2 font-semibold transition-colors text-blue-700 data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-blue-100 data-[selected=true]:to-blue-50 data-[selected=true]:text-blue-900 data-[selected=true]:shadow data-[selected=true]:border data-[selected=true]:border-blue-200",
-                }}
-              >
+          <div style={{ marginTop: "15px" }}>
+            <main>
+              <div className="app-panel px-2 py-2 mb-4 flex flex-col">
+                <Tabs
+                  selectedKey={selectedTab}
+                  onSelectionChange={setSelectedTab}
+                  classNames={{
+                    tabList: "bg-transparent flex gap-2",
+                    tab: "rounded-lg px-4 py-2 font-semibold transition-colors text-blue-700 data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-blue-100 data-[selected=true]:to-blue-50 data-[selected=true]:text-blue-900 data-[selected=true]:shadow data-[selected=true]:border data-[selected=true]:border-blue-200",
+                  }}
+                >
                 <Tab key="24h" title="Ult. 24hrs" />
                 <Tab key="semana" title="Ult. Semana" />
                 <Tab key="mes" title="Ult. mes" />
