@@ -422,3 +422,448 @@ html.dark body:not(.landing-body) #root {
   background: hsl(var(--background)) !important;
   color: hsl(var(--foreground)) !important;
 }
+
+/* Sidebar y nav-user: modo oscuro mejorado */
+.dark .sidebar,
+.dark [data-sidebar="sidebar"],
+.dark .sidebar-content,
+.dark [data-sidebar="content"],
+.dark .sidebar-footer,
+.dark [data-sidebar="footer"],
+.dark .sidebar-header,
+.dark [data-sidebar="header"] {
+  background: #18192b !important; /* Fondo más oscuro */
+  color: #f8fafc !important;      /* Texto blanco puro */
+  border-color: #232339 !important;
+}
+
+.dark .sidebar .sidebar-section-title,
+.dark .sidebar .sidebar-group-title,
+.dark .sidebar .sidebar-category,
+.dark .sidebar .sidebar-label,
+.dark .sidebar .sidebar-link,
+.dark .sidebar .sidebar-link span,
+.dark .sidebar .sidebar-link .icon,
+.dark .sidebar .sidebar-link .text,
+.dark .sidebar .sidebar-link .font-semibold,
+.dark .sidebar .sidebar-link .font-bold,
+.dark .sidebar .sidebar-link .text-xs,
+.dark .sidebar .sidebar-link .text-sm,
+.dark .sidebar .sidebar-link .truncate {
+  color: #f8fafc !important;
+}
+
+.dark .sidebar .sidebar-link.active,
+.dark .sidebar .sidebar-link:hover,
+.dark .sidebar .sidebar-link:focus {
+  background: #232339 !important;
+  color: #fff !important;
+}
+
+.dark .sidebar .sidebar-link .icon {
+  color: #e0e7ff !important;
+}
+
+.dark .sidebar .sidebar-link .text-secondary,
+.dark .sidebar .sidebar-link .text-muted {
+  color: #cbd5e1 !important;
+}
+
+.dark .sidebar .sidebar-link .text-blue-900,
+.dark .sidebar .sidebar-link .text-blue-500 {
+  color: #f8fafc !important;
+}
+
+.dark .sidebar .sidebar-link .text-emerald-500,
+.dark .sidebar .sidebar-link .text-rose-500 {
+  color: #f8fafc !important;
+}
+
+.dark .sidebar .sidebar-link .border-emerald-300,
+.dark .sidebar .sidebar-link .border-rose-300 {
+  border-color: #232339 !important;
+}
+
+.dark .sidebar .sidebar-link .bg-emerald-50,
+.dark .sidebar .sidebar-link .bg-rose-50 {
+  background: #232339 !important;
+}
+
+.dark .sidebar .sidebar-link .font-semibold {
+  color: #fff !important;
+}
+
+/* nav-user */
+.dark .nav-user,
+.dark .nav-user-dropdown,
+.dark .nav-user-dropdown *,
+.dark .sidebar-user-text,
+.dark .sidebar-user-text span,
+.dark .sidebar-user-text .truncate,
+.dark .sidebar-user-text .font-semibold,
+.dark .sidebar-user-text .text-xs {
+  background: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+.dark .nav-user .avatar,
+.dark .sidebar-user-text .avatar {
+  background: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+.dark .nav-user .font-bold,
+.dark .nav-user .font-semibold {
+  color: #fff !important;
+}
+
+.dark .nav-user .text-blue-900,
+.dark .nav-user .text-blue-500 {
+  color: #f8fafc !important;
+}
+
+.dark .nav-user .text-emerald-500,
+.dark .nav-user .text-rose-500 {
+  color: #f8fafc !important;
+}
+
+.dark .nav-user .text-xs,
+.dark .nav-user .text-sm {
+  color: #f8fafc !important;
+}
+
+/* Mejor contraste para iconos y badges */
+.dark .sidebar .sidebar-link .icon,
+.dark .nav-user .icon {
+  color: #e0e7ff !important;
+}
+
+.dark .nav-user-dropdown .text-red-600 {
+  color: #fca5a5 !important;
+}
+.dark .nav-user-dropdown .hover\:bg-red-50:hover,
+.dark .nav-user-dropdown .active\:bg-red-100:active {
+  background: #3f3f46 !important;
+  color: #fca5a5 !important;
+}
+
+/* Fondos claros a oscuros */
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-zinc-50,
+.dark .bg-zinc-100,
+.dark .bg-blue-50,
+.dark .bg-blue-100,
+.dark .bg-slate-50,
+.dark .bg-slate-100,
+.dark .bg-neutral-50,
+.dark .bg-neutral-100 {
+  background-color: #18192b !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-zinc-100,
+.dark .border-zinc-200,
+.dark .border-zinc-300,
+.dark .border-blue-100,
+.dark .border-blue-200,
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-neutral-100,
+.dark .border-neutral-200 {
+  border-color: #36364a !important;
+}
+
+/* Texto oscuro a claro */
+.dark .text-black,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-zinc-900,
+.dark .text-zinc-800,
+.dark .text-zinc-700,
+.dark .text-blue-900,
+.dark .text-blue-700,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700,
+.dark .text-neutral-900,
+.dark .text-neutral-800,
+.dark .text-neutral-700 {
+  color: #f8fafc !important;
+}
+
+/* Inputs, selects, textareas */
+.dark input,
+.dark select,
+.dark textarea,
+.dark .app-input,
+.dark .heroui-input,
+.dark .heroui-select,
+.dark .heroui-textarea {
+  background-color: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #cbd5e1 !important;
+  opacity: 1;
+}
+
+/* Botones */
+.dark .btn,
+.dark .heroui-btn,
+.dark .Button,
+.dark .heroui-Button,
+.dark .bg-blue-50,
+.dark .bg-blue-100,
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+.dark .btn-primary,
+.dark .heroui-btn-primary,
+.dark .bg-blue-600,
+.dark .bg-blue-700 {
+  background-color: #3b82f6 !important;
+  color: #fff !important;
+}
+
+/* Tablas */
+.dark table,
+.dark .heroui-table,
+.dark .Table {
+  background-color: #18192b !important;
+  color: #f8fafc !important;
+}
+
+.dark th,
+.dark td {
+  background-color: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+/* Modales y overlays */
+.dark .heroui-modal,
+.dark .Modal,
+.dark .modal,
+.dark .modal-overlay,
+.dark .heroui-modal-content {
+  background-color: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+/* Badges, chips, tooltips */
+.dark .heroui-chip,
+.dark .heroui-badge,
+.dark .heroui-tooltip,
+.dark .Chip,
+.dark .Badge,
+.dark .Tooltip {
+  background-color: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+/* Iconos */
+
+
+/* Scrollbar en modo oscuro */
+.dark ::-webkit-scrollbar {
+  background: #232339;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #36364a;
+}
+
+/* Cards y paneles */
+.dark .card,
+.dark .heroui-card,
+.dark .app-card {
+  background: rgba(44, 46, 66, 0.75) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: #f8fafc !important;
+}
+
+.dark .card .text-secondary,
+.dark .heroui-card .text-secondary,
+.dark .app-card .text-secondary,
+.dark .card .text-gray-400,
+.dark .heroui-card .text-gray-400,
+.dark .app-card .text-gray-400 {
+  color: #cbd5e1 !important;
+}
+
+.dark .card,
+.dark .heroui-card,
+.dark .app-card{
+  color: #e0e7ff !important;
+}
+
+.dark .card .font-bold,
+.dark .heroui-card .font-bold,
+.dark .app-card .font-bold {
+  color: #fff !important;
+}
+
+/* Otros elementos que suelen quedar sin adaptar */
+.dark .bg-white\/90,
+.dark .bg-white\/95,
+.dark .bg-white\/80,
+.dark .bg-white\/70,
+.dark .bg-white\/60,
+.dark .bg-white\/50,
+.dark .bg-white\/40,
+.dark .bg-white\/30,
+.dark .bg-white\/20,
+.dark .bg-white\/10,
+.dark .bg-white\/5 {
+  background-color: #232339 !important;
+}
+
+/* Asegura que los dropdowns y popovers sean oscuros */
+.dark .heroui-dropdown,
+.dark .Dropdown,
+.dark .Popover,
+.dark .heroui-popover {
+  background-color: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+/* Adaptación visual de botones y su contenido en modo oscuro (sin cambiar iconos) */
+.dark .btn,
+.dark .heroui-btn,
+.dark .Button,
+.dark .heroui-Button {
+  background-color: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+.dark .btn-primary,
+.dark .heroui-btn-primary,
+.dark .Button.bg-blue-600,
+.dark .Button.bg-blue-700 {
+  background-color: #2563eb !important;
+  color: #fff !important;
+}
+
+.dark .btn .font-medium,
+.dark .heroui-btn .font-medium,
+.dark .Button .font-medium,
+.dark .heroui-Button .font-medium,
+.dark .btn .font-bold,
+.dark .heroui-btn .font-bold,
+.dark .Button .font-bold,
+.dark .heroui-Button .font-bold {
+  color: #f8fafc !important;
+}
+
+.dark .btn .text-white,
+.dark .heroui-btn .text-white,
+.dark .Button .text-white,
+.dark .heroui-Button .text-white {
+  color: #f8fafc !important;
+}
+
+.dark .btn .text-gray-700,
+.dark .heroui-btn .text-gray-700,
+.dark .Button .text-gray-700,
+.dark .heroui-Button .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+.dark .btn .text-blue-500,
+.dark .heroui-btn .text-blue-500,
+.dark .Button .text-blue-500,
+.dark .heroui-Button .text-blue-500 {
+  color: #93c5fd !important;
+}
+
+/* Si el botón tiene fondo de color, el texto debe ser blanco */
+.dark .bg-blue-500,
+.dark .bg-blue-600,
+.dark .bg-blue-700,
+.dark .bg-emerald-500,
+.dark .bg-emerald-600,
+.dark .bg-emerald-700,
+.dark .bg-red-500,
+.dark .bg-red-600,
+.dark .bg-red-700,
+.dark .bg-purple-500,
+.dark .bg-purple-600,
+.dark .bg-purple-700,
+.dark .bg-teal-500,
+.dark .bg-teal-600,
+.dark .bg-teal-700 {
+  color: #fff !important;
+}
+
+/* Botones outline en modo oscuro */
+.dark .btn-outline,
+.dark .heroui-btn-outline,
+.dark .Button.variant-outline,
+.dark .heroui-Button.variant-outline {
+  background-color: transparent !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+/* Botones con hover en modo oscuro */
+.dark .btn:hover,
+.dark .heroui-btn:hover,
+.dark .Button:hover,
+.dark .heroui-Button:hover {
+  background-color: #36364a !important;
+  color: #fff !important;
+}
+
+/* Botones deshabilitados en modo oscuro */
+.dark .btn:disabled,
+.dark .heroui-btn:disabled,
+.dark .Button:disabled,
+.dark .heroui-Button:disabled {
+  background-color: #232339 !important;
+  color: #a1a1aa !important;
+  border-color: #36364a !important;
+  opacity: 0.6 !important;
+}
+
+/* Si usas clases personalizadas para botones, refuerza también */
+.dark .contained-button,
+.dark .outlined-button {
+  background-color: #232339 !important;
+  color: #f8fafc !important;
+  border-color: #36364a !important;
+}
+
+.dark .contained-button:hover,
+.dark .outlined-button:hover {
+  background-color: #36364a !important;
+  color: #fff !important;
+}
+
+/* Si el botón tiene badge, asegúrate que el texto sea claro */
+.dark .btn .badge,
+.dark .heroui-btn .badge,
+.dark .Button .badge,
+.dark .heroui-Button .badge {
+  color: #f8fafc !important;
+  background-color: #36364a !important;
+}

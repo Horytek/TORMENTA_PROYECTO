@@ -42,7 +42,7 @@ const RegistroTablaIngreso = ({ ingresos, setProductosSeleccionados }) => {
   );
 
   return (
-    <div className="container-table-reg px-4 bg-white rounded-lg shadow-md">
+    <div className="container-table-reg px-4 rounded-lg">
       <Table aria-label="Tabla de ingresos" className="w-full">
         <TableHeader>
           <TableColumn className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">CÓDIGO</TableColumn>

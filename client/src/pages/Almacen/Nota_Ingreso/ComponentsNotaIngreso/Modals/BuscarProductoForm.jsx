@@ -82,92 +82,92 @@ const ModalBuscarProducto = ({
         base: "z-[10000]"
       }}
     >
-      <ModalContent>
+      <ModalContent className="bg-white/95 dark:bg-zinc-900/95 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-xl transition-colors">
         <ModalHeader>
           <div className="flex justify-between items-center w-full">
-            <h2 className="text-xl font-bold">Buscar producto</h2>
+            <h2 className="text-xl font-bold text-blue-900 dark:text-blue-100">Buscar producto</h2>
           </div>
         </ModalHeader>
 
         <ModalBody>
         <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_auto] gap-4 mb-4 items-center">
-  <Input
-    placeholder="Buscar producto"
-    value={searchInputValue}
-    onChange={(e) => {
-      setSearchInputValue(e.target.value);
-      setSearchInput(e.target.value);
-    }}
-  />
-  <Input
-    placeholder="Código de barras"
-    value={codigoBarrasValue}
-    onChange={(e) => {
-      setCodigoBarrasValue(e.target.value);
-      setCodigoBarras(e.target.value);
-    }}
-  />
-  <Button
-    color="success"
-    onPress={handleModalAdd}
-    startContent={<IoMdAdd />}
-    className="w-full md:w-auto whitespace-nowrap"
-  >
-    Nuevo
-  </Button>
-</div>
+          <Input
+            placeholder="Buscar producto"
+            value={searchInputValue}
+            onChange={(e) => {
+              setSearchInputValue(e.target.value);
+              setSearchInput(e.target.value);
+            }}
+            className="bg-white/90 dark:bg-zinc-900/80 text-zinc-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+          />
+          <Input
+            placeholder="Código de barras"
+            value={codigoBarrasValue}
+            onChange={(e) => {
+              setCodigoBarrasValue(e.target.value);
+              setCodigoBarras(e.target.value);
+            }}
+            className="bg-white/90 dark:bg-zinc-900/80 text-zinc-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+          />
+          <Button
+            color="success"
+            onPress={handleModalAdd}
+            startContent={<IoMdAdd />}
+            className="w-full md:w-auto whitespace-nowrap"
+          >
+            Nuevo
+          </Button>
+        </div>
 
-
-  <ScrollShadow hideScrollBar className="max-h-[400px] overflow-y-auto rounded-lg shadow-sm">
-  <table className="min-w-full bg-white border-separate border-spacing-y-2">
-    <thead className="bg-gray-50 sticky top-0 z-10 text-gray-600 text-sm">
-      <tr>
-        <th className="py-3 px-4 text-left">Código</th>
-        <th className="py-3 px-4 text-left">Descripción</th>
-        <th className="py-3 px-4 text-left">Marca</th>
-        {!hideStock && <th className="py-3 px-4 text-left">Stock</th>}
-        <th className="py-3 px-4 text-left">Cantidad</th>
-        <th className="py-3 px-4 text-left">Acción</th>
-      </tr>
-    </thead>
-    <tbody>
-      {productos.map((producto) => (
-        <tr
-          key={producto.codigo}
-          className="bg-white hover:bg-gray-50 rounded-md shadow-sm"
-        >
-          <td className="py-2 px-4">{producto.codigo}</td>
-          <td className="py-2 px-4">{producto.descripcion}</td>
-          <td className="py-2 px-4">{producto.marca}</td>
-          {!hideStock && <td className="py-2 px-4">{producto.stock}</td>}
-          <td className="py-2 px-4">
-            <NumberInput
-              min={1}
-              value={cantidades[producto.codigo]}
-              onValueChange={(value) => handleCantidadChange(producto.codigo, value)}
-              className="max-w-xs"
-            />
-          </td>
-          <td className="py-2 px-4">
-            <Button
-              color="success"
-              isIconOnly
-              size="sm"
-              onPress={() => handleAgregarProducto(producto)}
-            >
-              <IoMdAdd />
-            </Button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</ScrollShadow>
-</ModalBody>
-
+        <ScrollShadow hideScrollBar className="max-h-[400px] overflow-y-auto rounded-lg shadow-sm">
+          <table className="min-w-full bg-white dark:bg-zinc-900 border-separate border-spacing-y-2">
+            <thead className="bg-gray-50 dark:bg-zinc-800 sticky top-0 z-10 text-gray-600 dark:text-zinc-300 text-sm">
+              <tr>
+                <th className="py-3 px-4 text-left">Código</th>
+                <th className="py-3 px-4 text-left">Descripción</th>
+                <th className="py-3 px-4 text-left">Marca</th>
+                {!hideStock && <th className="py-3 px-4 text-left">Stock</th>}
+                <th className="py-3 px-4 text-left">Cantidad</th>
+                <th className="py-3 px-4 text-left">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productos.map((producto) => (
+                <tr
+                  key={producto.codigo}
+                  className="bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-md shadow-sm transition-colors"
+                >
+                  <td className="py-2 px-4 text-zinc-900 dark:text-zinc-100">{producto.codigo}</td>
+                  <td className="py-2 px-4 text-zinc-900 dark:text-zinc-100">{producto.descripcion}</td>
+                  <td className="py-2 px-4 text-zinc-900 dark:text-zinc-100">{producto.marca}</td>
+                  {!hideStock && <td className="py-2 px-4 text-zinc-900 dark:text-zinc-100">{producto.stock}</td>}
+                  <td className="py-2 px-4">
+                    <NumberInput
+                      min={1}
+                      value={cantidades[producto.codigo]}
+                      onValueChange={(value) => handleCantidadChange(producto.codigo, value)}
+                      className="max-w-xs bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+                    />
+                  </td>
+                  <td className="py-2 px-4">
+                    <Button
+                      color="success"
+                      isIconOnly
+                      size="sm"
+                      onPress={() => handleAgregarProducto(producto)}
+                    >
+                      <IoMdAdd />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ScrollShadow>
+        </ModalBody>
 
         <ModalFooter>
-          <Button color="default" onPress={onClose}>
+          <Button color="default" onPress={onClose} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700">
             Cerrar
           </Button>
         </ModalFooter>

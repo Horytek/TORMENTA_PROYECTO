@@ -390,11 +390,6 @@ const almacenesDestinoFiltrados =
                 value={fecha}
                 onChange={e => setFecha(e.target.value)}
                 defaultValue={formattedDate}
-                style={{
-                  border: "none",
-                  boxShadow: "none",
-                  outline: "none",
-                }}
               />
               <Input
                 label="Número"
@@ -427,9 +422,6 @@ const almacenesDestinoFiltrados =
               value={observacion}
               onChange={e => setObservacion(e.target.value)}
               style={{
-                border: "none",
-                boxShadow: "none",
-                outline: "none",
                 padding: "0.8rem",
               }}
             />

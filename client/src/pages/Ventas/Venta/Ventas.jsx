@@ -155,80 +155,80 @@ return (
       </div>
 
       {/* KPIs */}
-      <div className="w-full mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="relative overflow-hidden border border-rose-200/40 bg-white/90 rounded-2xl shadow-none">
+<div className="w-full mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="relative overflow-hidden border border-rose-200/40 bg-white/90 dark:bg-[#232339cc] dark:border-rose-800/40 rounded-2xl shadow-none backdrop-blur-md transition-all">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-rose-100/80 via-white to-white rounded-full blur-2xl"></div>
-            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-rose-200/70 to-white rounded-full blur-xl"></div>
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-rose-100/80 via-white to-white dark:from-rose-900/40 dark:via-rose-800/20 dark:to-transparent rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-rose-200/70 to-white dark:from-rose-900/30 dark:to-transparent rounded-full blur-xl"></div>
           </div>
           <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
             <div className="flex items-center gap-3 mb-3">
-              <span className="p-3 rounded-xl bg-rose-200 shadow">
-                <FaShoppingBag className="text-2xl text-rose-500" />
+              <span className="p-3 rounded-xl bg-rose-200 dark:bg-rose-900/70 shadow">
+                <FaShoppingBag className="text-2xl text-rose-500 dark:text-rose-300" />
               </span>
             </div>
             <div>
-              <span className="text-3xl font-extrabold text-zinc-900">
+              <span className="text-3xl font-extrabold text-zinc-900 dark:text-white">
                 S/. {totalRecaudado ? totalRecaudado : "0.00"}
               </span>
-              <div className="text-sm text-zinc-600 font-medium">Total Ventas</div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-300 font-medium">Total Ventas</div>
             </div>
           </CardBody>
         </Card>
-        <Card className="relative overflow-hidden border border-violet-200/40 bg-white/90 rounded-2xl shadow-none">
+        <Card className="relative overflow-hidden border border-violet-200/40 bg-white/90 dark:bg-[#232339cc] dark:border-violet-800/40 rounded-2xl shadow-none backdrop-blur-md transition-all">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-violet-100/80 via-white to-white rounded-full blur-2xl"></div>
-            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-violet-200/70 to-white rounded-full blur-xl"></div>
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-violet-100/80 via-white to-white dark:from-violet-900/40 dark:via-violet-800/20 dark:to-transparent rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-violet-200/70 to-white dark:from-violet-900/30 dark:to-transparent rounded-full blur-xl"></div>
           </div>
           <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
             <div className="flex items-center gap-3 mb-3">
-              <span className="p-3 rounded-xl bg-violet-200 shadow">
-                <FaMoneyBillWave className="text-2xl text-violet-500" />
+              <span className="p-3 rounded-xl bg-violet-200 dark:bg-violet-900/70 shadow">
+                <FaMoneyBillWave className="text-2xl text-violet-500 dark:text-violet-300" />
               </span>
             </div>
             <div>
-              <span className="text-3xl font-extrabold text-zinc-900">
+              <span className="text-3xl font-extrabold text-zinc-900 dark:text-white">
                 {totalEfectivo ? totalEfectivo : "0.00"}
               </span>
-              <div className="text-sm text-zinc-600 font-medium">Total Efectivo</div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-300 font-medium">Total Efectivo</div>
             </div>
           </CardBody>
         </Card>
-        <Card className="relative overflow-hidden border border-emerald-200/40 bg-white/90 rounded-2xl shadow-none">
+        <Card className="relative overflow-hidden border border-emerald-200/40 bg-white/90 dark:bg-[#232339cc] dark:border-emerald-800/40 rounded-2xl shadow-none backdrop-blur-md transition-all">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-emerald-100/80 via-white to-white rounded-full blur-2xl"></div>
-            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-200/70 to-white rounded-full blur-xl"></div>
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-emerald-100/80 via-white to-white dark:from-emerald-900/40 dark:via-emerald-800/20 dark:to-transparent rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-200/70 to-white dark:from-emerald-900/30 dark:to-transparent rounded-full blur-xl"></div>
           </div>
           <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
             <div className="flex items-center gap-3 mb-3">
-              <span className="p-3 rounded-xl bg-emerald-200 shadow">
-                <FaCreditCard className="text-2xl text-emerald-500" />
+              <span className="p-3 rounded-xl bg-emerald-200 dark:bg-emerald-900/70 shadow">
+                <FaCreditCard className="text-2xl text-emerald-500 dark:text-emerald-300" />
               </span>
             </div>
             <div>
-              <span className="text-3xl font-extrabold text-zinc-900">
+              <span className="text-3xl font-extrabold text-zinc-900 dark:text-white">
                 {totalPagoElectronico ? totalPagoElectronico : "0.00"}
               </span>
-              <div className="text-sm text-zinc-600 font-medium">Total Pago Electrónico</div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-300 font-medium">Total Pago Electrónico</div>
             </div>
           </CardBody>
         </Card>
-        <Card className="relative overflow-hidden border border-blue-200/40 bg-white/90 rounded-2xl shadow-none">
+        <Card className="relative overflow-hidden border border-blue-200/40 bg-white/90 dark:bg-[#232339cc] dark:border-blue-800/40 rounded-2xl shadow-none backdrop-blur-md transition-all">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-100/80 via-white to-white rounded-full blur-2xl"></div>
-            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-200/70 to-white rounded-full blur-xl"></div>
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-100/80 via-white to-white dark:from-blue-900/40 dark:via-blue-800/20 dark:to-transparent rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-200/70 to-white dark:from-blue-900/30 dark:to-transparent rounded-full blur-xl"></div>
           </div>
           <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
             <div className="flex items-center gap-3 mb-3">
-              <span className="p-3 rounded-xl bg-blue-200 shadow">
-                <FaCalculator className="text-2xl text-blue-500" />
+              <span className="p-3 rounded-xl bg-blue-200 dark:bg-blue-900/70 shadow">
+                <FaCalculator className="text-2xl text-blue-500 dark:text-blue-300" />
               </span>
             </div>
             <div>
-              <span className="text-3xl font-extrabold text-zinc-900">
+              <span className="text-3xl font-extrabold text-zinc-900 dark:text-white">
                 {ventas && ventas.length ? ventas.length : "0"}
               </span>
-              <div className="text-sm text-zinc-600 font-medium">Cantidad de Ventas</div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-300 font-medium">Cantidad de Ventas</div>
             </div>
           </CardBody>
         </Card>
