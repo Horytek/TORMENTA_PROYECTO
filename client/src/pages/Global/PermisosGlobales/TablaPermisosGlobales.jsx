@@ -100,62 +100,26 @@ export function TablaPermisosGlobales() {
   }, [roles]);
 
   // Memoizar el cálculo de isDeveloper - verificar múltiples campos con más flexibilidad
-  const isDeveloper = useMemo(() => {
-    if (!userInfo) {
-      return false;
-    }
-    
-    // Múltiples verificaciones más flexibles
-    const isDevByUsername = userInfo?.usuario === 'desarrollador' || 
-                           userInfo?.nameUser === 'desarrollador';
-    
-    const isDevByRole = userInfo?.rol === 10 || 
-                       userInfo?.rol === '10' ||
-                       parseInt(userInfo?.rol) === 10;
-    
-    const isDevByIdRole = userInfo?.id_rol === 10 || 
-                         userInfo?.id_rol === '10' ||
-                         parseInt(userInfo?.id_rol) === 10;
-    
-    const isDev = isDevByUsername || isDevByRole || isDevByIdRole;
-    
-    return isDev;
-  }, [userInfo]);
+const isDeveloper = useMemo(() => {
+  if (!userInfo) return false;
+  const isDevByUsername = userInfo?.usuario === 'desarrollador' || userInfo?.nameUser === 'desarrollador';
+  const isDevByRole = userInfo?.rol === 10 || userInfo?.rol === '10' || parseInt(userInfo?.rol) === 10;
+  const isDevByIdRole = userInfo?.id_rol === 10 || userInfo?.id_rol === '10' || parseInt(userInfo?.id_rol) === 10;
+  return isDevByUsername || isDevByRole || isDevByIdRole;
+}, [userInfo]);
 
   // Obtener información del usuario para saber si es desarrollador - solo una vez
-  useEffect(() => {
-    if (userInfo) return; // Ya tenemos la data
-    
-    const userDataString = useUserStore.getState();
-    
-    if (userDataString) {
-      try {
-        const userData = JSON.parse(userDataString);
-        
-        // Asegurar que los números sean números
-        const normalizedUserData = {
-          ...userData,
-          rol: parseInt(userData.rol) || userData.rol,
-          id_rol: parseInt(userData.id_rol) || userData.id_rol
-        };
-        
-        setUserInfo(normalizedUserData);
-      } catch {
-        // Error parsing user data
-      }
-    } else {
-      // Intentar obtener de localStorage como fallback
-      const userDataFromLocalStorage = useUserStore.getState();
-      if (userDataFromLocalStorage) {
-        try {
-          const userData = JSON.parse(userDataFromLocalStorage);
-          setUserInfo(userData);
-        } catch {
-          // Error parsing localStorage data
-        }
-      }
-    }
-  }, []); // Sin dependencias para ejecutar solo una vez
+useEffect(() => {
+  if (userInfo) return;
+  const userData = useUserStore.getState();
+  if (userData) {
+    setUserInfo({
+      ...userData,
+      rol: parseInt(userData.rol) || userData.rol,
+      id_rol: parseInt(userData.id_rol) || userData.id_rol
+    });
+  }
+}, []);
 
   // Manejo inicial de roles y mapeo - más estable
   useEffect(() => {

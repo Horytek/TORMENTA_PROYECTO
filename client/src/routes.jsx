@@ -31,6 +31,10 @@ export function RouteProtectedRol({ children, allowedRoles }) {
   const [hasAccess, setHasAccess] = useState(false);
 
   const checkAccess = debounce(() => {
+    if (!user || typeof user.rol === "undefined" || user.rol === null) {
+      setHasAccess(false);
+      return;
+    }
     const access = allowedRoles.includes(user.rol);
     setHasAccess(access);
 
