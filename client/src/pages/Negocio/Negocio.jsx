@@ -52,6 +52,8 @@ export default function Negocio() {
               logo={logo}
               handleLogoChange={handleLogoChange}
               removeLogo={removeLogo}
+              nombre={nombre}
+              direccion={direccion}
             />
              <FormActions
               hasChanges={hasChanges}

@@ -35,8 +35,6 @@ export const useNegocio = () => {
         }
       } catch (err) {
         // Podemos loguear para debug sin romper UX
-        console.error('Error cargando configuración negocio', err);
-        toast.error('No se pudo cargar la configuración');
       } finally {
         if (mounted) setLoading(false);
       }

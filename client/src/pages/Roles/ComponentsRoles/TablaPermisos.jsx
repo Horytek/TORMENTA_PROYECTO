@@ -547,6 +547,9 @@ export default function TablaPermisosContent({
             onSelectionChange={setSelectedTab}
             color="primary"
             variant="bordered"
+            disableAnimation
+            disableCursorAnimation
+            motionProps={{ transition: { duration: 0 } }}
             classNames={{
               tabList: "gap-4",
               tab: "py-2"

@@ -1,22 +1,18 @@
-import React, { useState } from 'react';
+﻿import React from 'react';
 import { Button, Tooltip } from '@heroui/react';
 import { FaTrashAlt, FaUpload } from 'react-icons/fa';
-import ReceiptPreviewModal from './ReceiptPreviewModal';
 
 export default function LogoUploader({ 
   preview, 
   logo, 
   handleLogoChange, 
-  removeLogo,
-  nombre,
-  direccion 
+  removeLogo 
 }) {
-  const [openPreview, setOpenPreview] = useState(false);
   return (
     <div className="bg-white rounded-xl shadow-sm border border-blue-50/60 hover:border-blue-200 transition-colors p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-xl font-semibold text-blue-900">Previsualización de los comprobantes</h2>
+          <h2 className="text-xl font-semibold text-blue-900">PrevisualizaciÃ³n de los comprobantes</h2>
           <p className="text-md text-blue-600/70 mt-1">Customiza los comprobantes con el logo de tu negocio</p>
 
 
@@ -60,23 +56,7 @@ export default function LogoUploader({
         {logo && (
           <p className="mt-2 text-[11px] text-blue-600/70">{logo.name} ({(logo.size/1024).toFixed(1)} KB)</p>
         )}
-
-        <Button
-          className="mt-4"
-          color="primary"
-          variant="shadow"
-          onPress={() => setOpenPreview(true)}
-        >
-          Previsualizar comprobante
-        </Button>
       </div>
-      <ReceiptPreviewModal
-        isOpen={openPreview}
-        onClose={() => setOpenPreview(false)}
-        logoUrl={preview || null}
-        nombre={nombre}
-        direccion={direccion}
-      />
     </div>
   );
 }
