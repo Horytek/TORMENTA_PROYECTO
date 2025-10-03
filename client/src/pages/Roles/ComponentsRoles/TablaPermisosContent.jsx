@@ -47,11 +47,22 @@ export default function TablaPermisosContent({
 }) {
   // Obtener información del usuario para saber si es desarrollador
   const userStore = useUserStore(state => state.user);
+
+  // Fallback local si el padre no provee setUserInfo
+  const [localUserInfo, setLocalUserInfo] = useState(null);
+  const setUserInfoSafe = typeof setUserInfo === "function" ? setUserInfo : setLocalUserInfo;
+  const effectiveUserInfo = userInfo ?? localUserInfo;
+
   useEffect(() => {
     if (userStore) {
-      setUserInfo(userStore.original || userStore);
+      if (typeof setUserInfo !== "function" && import.meta.env?.DEV) {
+        // Log claro para identificar el origen si vuelve a pasar
+        console.warn("TablaPermisosContent: setUserInfo no es función; usando estado local.");
+      }
+      setUserInfoSafe(userStore.original || userStore);
     }
-  }, [userStore, setUserInfo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userStore]);
 
   useEffect(() => {
     if (roles?.length > 0) {
