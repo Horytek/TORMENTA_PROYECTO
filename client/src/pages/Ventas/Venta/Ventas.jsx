@@ -6,7 +6,6 @@ import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import useVentasData from '@/services/data/data_venta';
 import { Toaster } from "react-hot-toast";
 import { handleDelete } from '@/services/data/delete_venta';
-import { Select, SelectItem, Pagination } from "@heroui/react";
 import { useUserStore } from "@/store/useStore";
 import { anularVentaEnSunatF, anularVentaEnSunatB } from '@/services/data/anular_sunat';
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
@@ -34,7 +33,6 @@ const Ventas = () => {
     totalRecaudado,
     totalEfectivo,
     totalPagoElectronico,
-    removeVenta,
     updateVenta, 
   } = useVentasData(filters);
 

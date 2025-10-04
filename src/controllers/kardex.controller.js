@@ -1,8 +1,6 @@
 import { getConnection } from "./../database/database.js";
 import ExcelJS from "exceljs";
 
-import { subDays, subWeeks, subMonths, subYears, format } from "date-fns";
-
 const getProductos = async (req, res) => {
     const { descripcion = '', almacen = '', idProducto = '', marca = '', cat = '', subcat = '', stock = '' } = req.query;
     const id_tenant = req.id_tenant;
@@ -10,40 +8,60 @@ const getProductos = async (req, res) => {
     try {
         connection = await getConnection();
 
-        let stockCondition = '';
-        if (stock === 'con_stock') {
-            stockCondition = 'AND i.stock > 0';
-        } else if (stock === 'sin_stock') {
-            stockCondition = 'AND i.stock = 0';
+        // Construir filtros de manera dinámica sin usar LIKE
+        const whereClauses = [
+            'i.id_almacen = ?',
+            'p.id_tenant = ?'
+        ];
+        const params = [almacen, id_tenant];
+
+        if (descripcion) {
+            whereClauses.push('p.descripcion = ?');
+            params.push(descripcion);
         }
+        if (idProducto) {
+            whereClauses.push('p.id_producto = ?');
+            params.push(idProducto);
+        }
+        if (marca) {
+            whereClauses.push('m.id_marca = ?');
+            params.push(marca);
+        }
+        if (cat) {
+            whereClauses.push('CA.id_categoria = ?');
+            params.push(cat);
+        }
+        if (subcat) {
+            whereClauses.push('CA.id_subcategoria = ?');
+            params.push(subcat);
+        }
+        if (stock === 'con_stock') {
+            whereClauses.push('i.stock > 0');
+        } else if (stock === 'sin_stock') {
+            whereClauses.push('i.stock = 0');
+        }
+
+        const where = `WHERE ${whereClauses.join(' AND ')}`;
 
         const [productosResult] = await connection.query(
             `
             SELECT 
-                p.id_producto as codigo, 
-                p.descripcion as descripcion, 
-                m.nom_marca as marca, 
+                p.id_producto AS codigo, 
+                p.descripcion AS descripcion, 
+                m.nom_marca AS marca, 
                 COALESCE(i.stock, 0) AS stock, 
-                p.undm as um, 
+                p.undm AS um, 
                 CAST(p.precio AS DECIMAL(10, 2)) AS precio, 
                 p.cod_barras, 
-                p.estado_producto as estado
+                p.estado_producto AS estado
             FROM producto p 
             INNER JOIN marca m ON p.id_marca = m.id_marca 
             INNER JOIN inventario i ON p.id_producto = i.id_producto 
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
-            WHERE p.descripcion LIKE ?
-              AND i.id_almacen = ?
-              AND p.id_producto LIKE ?
-              AND m.id_marca LIKE ?
-              AND CA.id_categoria LIKE ?
-              AND CA.id_subcategoria LIKE ?
-              ${stockCondition}
-              AND p.id_tenant = ?
-            GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock
+            ${where}
             ORDER BY p.id_producto, p.descripcion
             `,
-            [`%${descripcion}%`, almacen, `%${idProducto}`, `%${marca}`, `%${cat}`, `%${subcat}`, id_tenant]
+            params
         );
 
         res.json({ code: 1, data: productosResult });
@@ -67,7 +85,7 @@ const getProductosMenorStock = async (req, res) => {
         let params = [id_tenant];
 
         if (sucursal) {
-            whereClauses.push('sa.id_sucursal LIKE ?');
+            whereClauses.push('sa.id_sucursal = ?');
             params.push(sucursal);
         }
 
@@ -220,13 +238,13 @@ const getDetalleKardex = async (req, res) => {
         const [detalleKardexResult] = await connection.query(
             `
                     SELECT
-                        bn.id_bitacora AS id,	  
+                        bn.id_bitacora AS id,
                         DATE_FORMAT(bn.fecha, '%d/%m/%Y') AS fecha,
-                        COALESCE(c.num_comprobante, 'Sin comprobante') AS documento, 
-                        COALESCE(n.nom_nota, 'Venta') AS nombre, 
+                        COALESCE(c.num_comprobante, 'Sin comprobante') AS documento,
+                        COALESCE(n.nom_nota, 'Venta') AS nombre,
                         bn.entra AS entra,
                         bn.sale AS sale,
-                        bn.stock_actual AS stock, 
+                        bn.stock_actual AS stock,
                         p.precio AS precio,
                         COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa,
                         bn.hora_creacion
@@ -241,13 +259,13 @@ const getDetalleKardex = async (req, res) => {
                     LEFT JOIN 
                         comprobante c ON COALESCE(n.id_comprobante, v.id_comprobante) = c.id_comprobante 
                     WHERE 
-                        DATE_FORMAT(bn.fecha, '%Y-%m-%d') >= ?
-                        AND DATE_FORMAT(bn.fecha, '%Y-%m-%d') <= ?
+                        bn.fecha >= ?
+                        AND bn.fecha < DATE_ADD(?, INTERVAL 1 DAY)
                         AND bn.id_producto = ?
                         AND bn.id_almacen = ?
                         AND bn.id_tenant = ?
                     ORDER BY 
-                        bn.fecha, bn.hora_creacion desc;
+                        bn.fecha ASC, bn.hora_creacion DESC;
             `,
             [fechaInicio, fechaFin, idProducto, idAlmacen, id_tenant]
         );
@@ -320,7 +338,7 @@ const getDetalleKardexAnteriores = async (req, res) => {
             FROM 
                 bitacora_nota bn 
             WHERE 
-                DATE_FORMAT(bn.fecha, '%Y-%m-%d') < ?
+                bn.fecha < ?
                 AND bn.id_producto = ?
                 AND bn.id_almacen = ?
                 AND bn.id_tenant = ?;
