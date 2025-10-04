@@ -6,60 +6,97 @@ const getVentas = async (req, res) => {
   try {
     connection = await getConnection();
 
-    // Si hay id_tenant en la request, filtra por tenant
-    let query = `
-      SELECT v.id_venta AS id, SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, SUBSTRING(com.num_comprobante, 6, 8) AS num,
+    // Paginación y tenant
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(Math.max(1, parseInt(req.query.limit, 10) || 100), 500);
+    const offset = (page - 1) * limit;
+    const id_tenant = req.id_tenant;
+
+    let where = [];
+    let params = [];
+
+    if (id_tenant) {
+      where.push("s.id_tenant = ?");
+      params.push(id_tenant);
+    }
+
+    // Solo ventas activas (trae todas, los filtros se aplican en frontend)
+    let whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    // Consulta principal con detalles agregados
+    const ventasQuery = `
+      SELECT
+        v.id_venta AS id,
+        SUBSTRING(com.num_comprobante, 2, 3) AS serieNum,
+        SUBSTRING(com.num_comprobante, 6, 8) AS num,
         CASE WHEN tp.nom_tipocomp='Nota de venta' THEN 'Nota' ELSE tp.nom_tipocomp END AS tipoComprobante,
-        CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n, cl.razon_social AS cliente_r,
-        cl.dni AS dni, cl.ruc AS ruc, DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha, v.igv AS igv, SUM(dv.total) AS total,
-        CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero, ve.dni AS cajeroId, v.estado_venta AS estado,
-        s.nombre_sucursal, s.ubicacion, cl.direccion, v.fecha_iso, v.metodo_pago,
-        anl.id_anular, anl.anular, anlb.id_anular_b, anlb.anular_b, v.estado_sunat,
-        vb.id_venta_boucher, usu.usua, v.observacion, v.hora_creacion, v.fecha_anulacion,
-        (SELECT usu.usua FROM usuario usu WHERE usu.id_usuario = v.u_modifica) AS u_modifica
+        CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n,
+        cl.razon_social AS cliente_r,
+        cl.dni AS dni,
+        cl.ruc AS ruc,
+        DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha,
+        v.igv AS igv,
+        SUM(dv.total) AS total,
+        CONCAT(ve.nombres, ' ', ve.apellidos) AS cajero,
+        ve.dni AS cajeroId,
+        v.estado_venta AS estado,
+        s.nombre_sucursal,
+        s.ubicacion,
+        cl.direccion,
+        v.fecha_iso,
+        v.metodo_pago,
+        anl.id_anular,
+        anl.anular,
+        anlb.id_anular_b,
+        anlb.anular_b,
+        v.estado_sunat,
+        vb.id_venta_boucher,
+        usu.usua,
+        v.observacion,
+        v.hora_creacion,
+        v.fecha_anulacion,
+        (SELECT usu.usua FROM usuario usu WHERE usu.id_usuario = v.u_modifica) AS u_modifica,
+        JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'codigo', dv.id_detalle,
+            'nombre', pr.descripcion,
+            'cantidad', dv.cantidad,
+            'precio', dv.precio,
+            'descuento', dv.descuento,
+            'subtotal', dv.total,
+            'undm', pr.undm,
+            'marca', m.nom_marca
+          )
+        ) AS detalles
       FROM venta v
         INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
         INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
         INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
         INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
+        INNER JOIN producto pr ON pr.id_producto = dv.id_producto
+        INNER JOIN marca m ON m.id_marca = pr.id_marca
         INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
         INNER JOIN vendedor ve ON ve.dni = s.dni
         INNER JOIN anular_sunat anl ON anl.id_anular = v.id_anular
         INNER JOIN anular_sunat_b anlb ON anlb.id_anular_b = v.id_anular_b
         INNER JOIN venta_boucher vb ON vb.id_venta_boucher = v.id_venta_boucher
         INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
-    `;
-    const params = [];
-
-    // Si existe req.id_tenant, filtra por tenant (en la tabla sucursal)
-    if (req.id_tenant) {
-      query += " WHERE s.id_tenant = ?";
-      params.push(req.id_tenant);
-    }
-
-    query += `
-      GROUP BY id
+      ${whereClause}
+      GROUP BY v.id_venta
       ORDER BY v.id_venta DESC
+      LIMIT ? OFFSET ?
     `;
 
-    const [ventasResult] = await connection.query(query, params);
+    const finalParams = [...params, limit, offset];
+    const [ventasResult] = await connection.query(ventasQuery, finalParams);
 
-    // Obtener detalles de cada venta
-    const ventas = await Promise.all(
-      ventasResult.map(async (venta) => {
-        const [detallesResult] = await connection.query(
-          `
-          SELECT dv.id_detalle AS codigo, pr.descripcion AS nombre, dv.cantidad, dv.precio, dv.descuento, dv.total AS subtotal, pr.undm, m.nom_marca AS marca
-          FROM detalle_venta dv
-            INNER JOIN producto pr ON pr.id_producto = dv.id_producto
-            INNER JOIN marca m ON m.id_marca = pr.id_marca
-          WHERE dv.id_venta = ?
-          `,
-          [venta.id]
-        );
-        return { ...venta, detalles: detallesResult };
-      })
-    );
+    // Parsear detalles JSON
+    const ventas = ventasResult.map(venta => ({
+      ...venta,
+      detalles: Array.isArray(venta.detalles)
+        ? venta.detalles
+        : JSON.parse(venta.detalles || "[]")
+    }));
 
     res.json({ code: 1, data: ventas });
   } catch (error) {
