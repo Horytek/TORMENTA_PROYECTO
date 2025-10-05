@@ -36,9 +36,11 @@ const getSucursalInicio = async (req, res) => {
           FROM sucursal s
           INNER JOIN sucursal_almacen sa ON sa.id_sucursal=s.id_sucursal
           WHERE s.nombre_sucursal LIKE ? AND s.estado_sucursal != 0 AND s.id_tenant = ?
+          ORDER BY s.nombre_sucursal ASC
+          LIMIT 50
       `;
 
-      const params = [`%${nombre}%`, id_tenant];
+      const params = [`${nombre}%`, id_tenant];
 
       const [result] = await connection.query(query, params);
 
@@ -57,7 +59,8 @@ const getUsuarioRol = async (usuario, connection, id_tenant) => {
     `SELECT r.nom_rol 
      FROM rol r 
      INNER JOIN usuario u ON u.id_rol = r.id_rol 
-     WHERE u.usua = ? AND u.id_tenant = ?`,
+     WHERE u.usua = ? AND u.id_tenant = ?
+     LIMIT 1`,
     [usuario, id_tenant]
   );
   if (result.length === 0) {
@@ -81,7 +84,8 @@ const getUserRolController = async (req, res) => {
     const [rolResult] = await connection.query(
       `SELECT u.id_rol as rol_id 
        FROM usuario u 
-       WHERE u.usua = ? AND u.id_tenant = ?`,
+       WHERE u.usua = ? AND u.id_tenant = ?
+       LIMIT 1`,
       [usuario, id_tenant]
     );
     
@@ -247,7 +251,7 @@ const getTotalVentas = async (req, res) => {
       WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_tenant = ?
     `;
 
-    const extraSucursal = " AND v.id_sucursal LIKE ?";
+    const extraSucursal = " AND v.id_sucursal = ?";
     let actual, anterior;
     const paramsActual = [fechaInicioISO, fechaFinISO, id_tenant];
     const paramsAnterior = [fechaInicioAnteriorISO, fechaFinAnteriorISO, id_tenant];
@@ -366,7 +370,7 @@ const getTotalProductosVendidos = async (req, res) => {
           params.push(sucursal);
         }
       } else {
-        query += " AND v.id_sucursal LIKE ?";
+        query += " AND v.id_sucursal = ?";
         params.push(id_sucursal);
       }
       return { query, params };
@@ -574,54 +578,57 @@ export const getNotasPendientes = async (req, res) => {
       }
     }
 
-    // 1. Obtener notas de ingreso y salida con sus detalles
-    const [ingresos] = await connection.query(
-      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
-              dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
-       FROM nota n
-       INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-       INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
-       WHERE n.id_tiponota = 1
-         AND n.id_almacenD IN (?)
-         AND n.estado_nota = 0
-         AND n.id_tenant = ?
-         AND NOT EXISTS (
-           SELECT 1 FROM nota s
-           WHERE s.id_tiponota = 2
-             AND s.fecha = n.fecha
-             AND s.hora_creacion = n.hora_creacion
-             AND s.id_almacenO = n.id_almacenO
-             AND s.id_almacenD = n.id_almacenD
-             AND s.estado_nota = 0
-             AND s.id_tenant = ?
-         )
-      `,
-      [almacenIds, id_tenant, id_tenant]
-    );
-
-    const [salidas] = await connection.query(
-      `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
-              dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
-       FROM nota n
-       INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-       INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
-       WHERE n.id_tiponota = 2
-         AND n.id_almacenO IN (?)
-         AND n.estado_nota = 0
-         AND n.id_tenant = ?
-         AND NOT EXISTS (
-           SELECT 1 FROM nota i
-           WHERE i.id_tiponota = 1
-             AND i.fecha = n.fecha
-             AND i.hora_creacion = n.hora_creacion
-             AND i.id_almacenO = n.id_almacenO
-             AND i.id_almacenD = n.id_almacenD
-             AND i.estado_nota = 0
-             AND i.id_tenant = ?
-         )
-      `,
-      [almacenIds, id_tenant, id_tenant]
-    );
+    // 1. Obtener notas de ingreso y salida con sus detalles (en paralelo)
+    const [ingresosRes, salidasRes] = await Promise.all([
+      connection.query(
+        `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
+                dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
+         FROM nota n
+         INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+         INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+         WHERE n.id_tiponota = 1
+           AND n.id_almacenD IN (?)
+           AND n.estado_nota = 0
+           AND n.id_tenant = ?
+           AND NOT EXISTS (
+             SELECT 1 FROM nota s
+             WHERE s.id_tiponota = 2
+               AND s.fecha = n.fecha
+               AND s.hora_creacion = n.hora_creacion
+               AND s.id_almacenO = n.id_almacenO
+               AND s.id_almacenD = n.id_almacenD
+               AND s.estado_nota = 0
+               AND s.id_tenant = ?
+           )
+        `,
+        [almacenIds, id_tenant, id_tenant]
+      ),
+      connection.query(
+        `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
+                dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
+         FROM nota n
+         INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+         INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+         WHERE n.id_tiponota = 2
+           AND n.id_almacenO IN (?)
+           AND n.estado_nota = 0
+           AND n.id_tenant = ?
+           AND NOT EXISTS (
+             SELECT 1 FROM nota i
+             WHERE i.id_tiponota = 1
+               AND i.fecha = n.fecha
+               AND i.hora_creacion = n.hora_creacion
+               AND i.id_almacenO = n.id_almacenO
+               AND i.id_almacenD = n.id_almacenD
+               AND i.estado_nota = 0
+               AND i.id_tenant = ?
+           )
+        `,
+        [almacenIds, id_tenant, id_tenant]
+      )
+    ]);
+    const ingresos = ingresosRes[0];
+    const salidas = salidasRes[0];
 
     // Obtener detalles para todos los id_nota involucrados
     const allNotasIds = [

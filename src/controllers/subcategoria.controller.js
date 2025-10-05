@@ -8,6 +8,8 @@ const getSubCategorias = async (req, res) => {
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
             WHERE id_tenant = ?
+            ORDER BY nom_subcat ASC
+            LIMIT 200
         `, [req.id_tenant]);
         res.json({ code: 1, data: result, message: "Subcategorías listadas" });
     } catch (error) {
@@ -30,6 +32,8 @@ const getSubcategoriesForCategory = async (req, res) => {
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
             WHERE id_categoria = ? AND id_tenant = ?
+            ORDER BY nom_subcat ASC
+            LIMIT 200
         `, [id, req.id_tenant]);
 
         if (result.length === 0) {
@@ -56,7 +60,8 @@ const getSubCategoria = async (req, res) => {
         const [result] = await connection.query(`
             SELECT id_subcategoria, id_categoria, nom_subcat, estado_subcat
             FROM sub_categoria
-            WHERE id_subcategoria = ? AND id_tenant = ?`, [id, req.id_tenant]);
+            WHERE id_subcategoria = ? AND id_tenant = ?
+            LIMIT 1`, [id, req.id_tenant]);
         
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Subcategoría no encontrada" });
@@ -93,7 +98,7 @@ const addSubCategoria = async (req, res) => {
 
         const subcategoria = { id_categoria, nom_subcat: nom_subcat.trim(), estado_subcat, id_tenant: req.id_tenant };
         connection = await getConnection();
-        await connection.query("INSERT INTO sub_categoria SET ? ", subcategoria);
+        const [insertRes] = await connection.query("INSERT INTO sub_categoria SET ? ", subcategoria);
         const [idAdd] = await connection.query("SELECT id_subcategoria FROM sub_categoria WHERE nom_subcat = ? AND id_tenant = ?", [nom_subcat, req.id_tenant]);
 
         res.status(201).json({ code: 1, message: "Subcategoría añadida con éxito", id: idAdd[0].id_subcategoria });

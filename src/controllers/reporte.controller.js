@@ -4,7 +4,7 @@ import { startOfWeek, endOfWeek, subWeeks, subMonths, format } from "date-fns";
 
 const getTotalProductosVendidos = async (req, res) => {
   let connection;
-  const { id_sucursal, year, month, week } = req.query;
+  const { id_sucursal, year, month, week, limit } = req.query;
   const id_tenant = req.id_tenant;
 
   try {
@@ -47,39 +47,35 @@ const getTotalProductosVendidos = async (req, res) => {
 
     const f = (d) => format(d, "yyyy-MM-dd");
 
-    // Query base para total productos vendidos
+    // Query base para total productos vendidos (rango index-friendly)
     let baseQuery = `
       SELECT SUM(dv.cantidad) AS total_productos_vendidos
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
     `;
-    let paramsActual = [];
-    let paramsAnterior = [];
-
+    const comunes = [];
     if (id_sucursal) {
       baseQuery += ` AND v.id_sucursal = ?`;
-      paramsActual.push(id_sucursal);
-      paramsAnterior.push(id_sucursal);
+      comunes.push(id_sucursal);
     }
     if (id_tenant) {
       baseQuery += ` AND v.id_tenant = ?`;
-      paramsActual.push(id_tenant);
-      paramsAnterior.push(id_tenant);
+      comunes.push(id_tenant);
     }
 
-    // Filtro de fechas actual
-    baseQuery += ` AND v.f_venta BETWEEN ? AND ?`;
-    paramsActual.push(f(fechaInicioActual), f(fechaFinActual));
-    paramsAnterior.push(f(fechaInicioAnterior), f(fechaFinAnterior));
+    const rangoSQL = ` AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)`;
+    const actualSQL = baseQuery + rangoSQL;
+    const anteriorSQL = baseQuery + rangoSQL;
+    const paramsActual = [...comunes, f(fechaInicioActual), f(fechaFinActual)];
+    const paramsAnterior = [...comunes, f(fechaInicioAnterior), f(fechaFinAnterior)];
 
-    // Actual
-    const [actualResult] = await connection.query(baseQuery, paramsActual);
-    const actual = Number(actualResult[0].total_productos_vendidos) || 0;
-
-    // Anterior
-    const [anteriorResult] = await connection.query(baseQuery, paramsAnterior);
-    const anterior = Number(anteriorResult[0].total_productos_vendidos) || 0;
+    const [[actualResult], [anteriorResult]] = await Promise.all([
+      connection.query(actualSQL, paramsActual),
+      connection.query(anteriorSQL, paramsAnterior)
+    ]);
+    const actual = Number(actualResult[0]?.total_productos_vendidos) || 0;
+    const anterior = Number(anteriorResult[0]?.total_productos_vendidos) || 0;
 
     // Porcentaje
     let porcentaje = 0;
@@ -97,7 +93,7 @@ const getTotalProductosVendidos = async (req, res) => {
       JOIN sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
       JOIN venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const subcatParams = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
@@ -188,39 +184,35 @@ const getTotalSalesRevenue = async (req, res) => {
 
     const f = (d) => format(d, "yyyy-MM-dd");
 
-    // Query base
+    // Query base (rango index-friendly)
     let baseQuery = `
       SELECT SUM(dv.total) AS totalRevenue 
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
     `;
-    let paramsActual = [];
-    let paramsAnterior = [];
-
+    const comunes = [];
     if (id_sucursal) {
       baseQuery += ` AND v.id_sucursal = ?`;
-      paramsActual.push(id_sucursal);
-      paramsAnterior.push(id_sucursal);
+      comunes.push(id_sucursal);
     }
     if (id_tenant) {
       baseQuery += ` AND v.id_tenant = ?`;
-      paramsActual.push(id_tenant);
-      paramsAnterior.push(id_tenant);
+      comunes.push(id_tenant);
     }
 
-    // Filtro de fechas actual
-    baseQuery += ` AND v.f_venta BETWEEN ? AND ?`;
-    paramsActual.push(f(fechaInicioActual), f(fechaFinActual));
-    paramsAnterior.push(f(fechaInicioAnterior), f(fechaFinAnterior));
+    const rangoSQL = ` AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)`;
+    const actualSQL = baseQuery + rangoSQL;
+    const anteriorSQL = baseQuery + rangoSQL;
+    const paramsActual = [...comunes, f(fechaInicioActual), f(fechaFinActual)];
+    const paramsAnterior = [...comunes, f(fechaInicioAnterior), f(fechaFinAnterior)];
 
-    // Actual
-    const [actualResult] = await connection.query(baseQuery, paramsActual);
-    const actual = Number(actualResult[0].totalRevenue) || 0;
-
-    // Anterior
-    const [anteriorResult] = await connection.query(baseQuery, paramsAnterior);
-    const anterior = Number(anteriorResult[0].totalRevenue) || 0;
+    const [[actualResult], [anteriorResult]] = await Promise.all([
+      connection.query(actualSQL, paramsActual),
+      connection.query(anteriorSQL, paramsAnterior)
+    ]);
+    const actual = Number(actualResult[0]?.totalRevenue) || 0;
+    const anterior = Number(anteriorResult[0]?.totalRevenue) || 0;
 
     // Porcentaje
     let porcentaje = 0;
@@ -250,8 +242,9 @@ const getSucursales = async (req, res) => {
   try {
     connection = await getConnection();
     const id_tenant = req.id_tenant;
+    const limitParam = req.query.limit ? Math.max(parseInt(req.query.limit, 10) || 0, 0) : 0;
 
-    const query = `
+    let query = `
       SELECT 
         id_sucursal,
         nombre_sucursal as nombre
@@ -263,8 +256,13 @@ const getSucursales = async (req, res) => {
       ORDER BY 
         nombre_sucursal
     `;
+    const params = [id_tenant];
+    if (limitParam > 0) {
+      query += " LIMIT ?";
+      params.push(limitParam);
+    }
 
-    const [sucursales] = await connection.query(query, [id_tenant]);
+    const [sucursales] = await connection.query(query, params);
     
     res.json({ 
       code: 1, 
@@ -339,7 +337,7 @@ const getProductoMasVendido = async (req, res) => {
       JOIN producto p ON dv.id_producto = p.id_producto
       JOIN venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
@@ -368,7 +366,7 @@ const getProductoMasVendido = async (req, res) => {
       FROM detalle_venta dv
       JOIN venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const totalParams = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
@@ -394,7 +392,7 @@ const getProductoMasVendido = async (req, res) => {
       JOIN producto p ON dv.id_producto = p.id_producto
       JOIN venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const paramsAnterior = [f(fechaInicioAnterior), f(fechaFinAnterior)];
     if (id_sucursal) {
@@ -494,7 +492,7 @@ const getSucursalMayorRendimiento = async (req, res) => {
       JOIN venta v ON s.id_sucursal = v.id_sucursal
       JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_tenant) {
@@ -519,7 +517,7 @@ const getSucursalMayorRendimiento = async (req, res) => {
       FROM venta v
       JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const totalParams = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_tenant) {
@@ -540,7 +538,7 @@ const getSucursalMayorRendimiento = async (req, res) => {
       JOIN venta v ON s.id_sucursal = v.id_sucursal
       JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const paramsAnterior = [f(fechaInicioAnterior), f(fechaFinAnterior)];
     if (id_tenant) {
@@ -626,7 +624,7 @@ const getCantidadVentasPorSubcategoria = async (req, res) => {
       JOIN 
         venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
 
     const params = [f(fechaInicioActual), f(fechaFinActual)];
@@ -703,7 +701,7 @@ const getCantidadVentasPorProducto = async (req, res) => {
       JOIN 
         venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
 
     const params = [f(fechaInicioActual), f(fechaFinActual)];
@@ -721,6 +719,12 @@ const getCantidadVentasPorProducto = async (req, res) => {
       GROUP BY p.id_producto, p.descripcion
       ORDER BY cantidad_vendida DESC
     `;
+
+    const limitNum = limit ? Math.max(parseInt(limit, 10) || 0, 0) : 0;
+    if (limitNum > 0) {
+      query += `\r\n      LIMIT ?\r\n    `;
+      params.push(limitNum);
+    }
 
     const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Cantidad de ventas por producto obtenida correctamente" });
@@ -740,7 +744,7 @@ const getAnalisisGananciasSucursales = async (req, res) => {
     connection = await getConnection();
     const id_tenant = req.id_tenant;
 
-    const query = `
+    let query = `
       SELECT 
           s.nombre_sucursal AS sucursal,
           DATE_FORMAT(v.f_venta, '%b %y') AS mes,
@@ -756,7 +760,7 @@ const getAnalisisGananciasSucursales = async (req, res) => {
       GROUP BY 
           s.id_sucursal, mes
       ORDER BY 
-          mes, s.id_sucursal
+          YEAR(v.f_venta), MONTH(v.f_venta), s.id_sucursal
     `;
 
     const [result] = await connection.query(query, [id_tenant]);
@@ -778,8 +782,9 @@ const getVentasPDF = async (req, res) => {
   try {
     connection = await getConnection();
     const id_tenant = req.id_tenant;
+    const { startDate, endDate, id_sucursal, limit } = req.query;
 
-    const [result] = await connection.query(`
+    let query = `
       SELECT 
           v.id_venta AS id, 
           SUBSTRING(com.num_comprobante, 2, 3) AS serieNum, 
@@ -825,14 +830,31 @@ const getVentasPDF = async (req, res) => {
           venta_boucher vb ON vb.id_venta_boucher = v.id_venta_boucher
       INNER JOIN 
           usuario usu ON usu.id_usuario = ve.id_usuario
-      WHERE v.estado_venta !=0
-        AND v.id_tenant = ?
+      WHERE v.estado_venta != 0 AND v.id_tenant = ?`;
+
+    const params = [id_tenant];
+    if (id_sucursal) {
+      query += ' AND v.id_sucursal = ?';
+      params.push(id_sucursal);
+    }
+    if (startDate && endDate) {
+      query += ' AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)';
+      params.push(startDate, endDate);
+    }
+
+    query += `
       GROUP BY 
           id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, 
           DATE_FORMAT(v.f_venta, '%Y-%m-%d'), igv, cajero, cajeroId, estado
       ORDER BY 
-          v.id_venta DESC;
-    `, [id_tenant]);
+          v.id_venta DESC`;
+    const limitNum = limit ? Math.max(parseInt(limit, 10) || 0, 0) : 0;
+    if (limitNum > 0) {
+      query += ' LIMIT ?';
+      params.push(limitNum);
+    }
+
+    const [result] = await connection.query(query, params);
 
     res.json({ code: 1, data: result, message: "Reporte de ventas" });
 
@@ -899,7 +921,9 @@ const exportarRegistroVentas = async (req, res) => {
 
     // Inicializar los filtros y parámetros
     const filters = [];
-    const queryParams = [mes, ano];
+    const startDate = format(new Date(Number(ano), Number(mes) - 1, 1), 'yyyy-MM-dd');
+    const endDateExclusive = format(new Date(Number(ano), Number(mes)), 'yyyy-MM-dd');
+    const queryParams = [startDate, endDateExclusive];
 
     // Tratamos el tipo de comprobante
     if (tipoComprobante) {
@@ -952,7 +976,7 @@ const exportarRegistroVentas = async (req, res) => {
       INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
       INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
       INNER JOIN tipo_comprobante tc ON tc.id_tipocomprobante = c.id_tipocomprobante
-      WHERE MONTH(v.f_venta) = ? AND v.estado_venta !=0 AND YEAR(v.f_venta) = ?
+      WHERE v.estado_venta != 0 AND v.f_venta >= ? AND v.f_venta < ?
       ${filters.length > 0 ? 'AND ' + filters.join(' AND ') : ''}
       GROUP BY v.id_venta, c.num_comprobante, cl.dni, cl.ruc, cl.nombres, cl.apellidos, cl.razon_social, 
                v.f_venta, s.nombre_sucursal, v.metodo_pago
@@ -1106,7 +1130,7 @@ const obtenerRegistroVentas = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     // Consulta principal de ventas filtrando por id_tenant
-    const query = `
+    let query = `
       SELECT 
         ROW_NUMBER() OVER (ORDER BY v.id_venta) AS numero_correlativo,
         v.f_venta AS fecha,
@@ -1147,8 +1171,31 @@ const obtenerRegistroVentas = async (req, res) => {
       ORDER BY 
         v.id_venta
     `;
+    const params = [id_tenant];
+    const { startDate: rvStart, endDate: rvEnd, id_sucursal: rvSucursal } = req.query;
+    //
+    // Añadir filtros opcionales
+    if (rvSucursal) {
+      query = query.replace('ORDER BY', ' AND v.id_sucursal = ? ORDER BY');
+      params.push(rvSucursal);
+    }
+    if (rvStart && rvEnd) {
+      // handled below in queryFinal composition
+    }
 
-    const [resultados] = await connection.query(query, [id_tenant]);
+    // Compose final query with extra WHERE parts before GROUP BY
+    let extraWhere = '';
+    if (rvSucursal) {
+      extraWhere += ' AND v.id_sucursal = ?';
+      params.push(rvSucursal);
+    }
+    if (rvStart && rvEnd) {
+      extraWhere += ' AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)';
+      params.push(rvStart, rvEnd);
+    }
+    const queryFinal = query.replace('GROUP BY', `${extraWhere}\r\n      GROUP BY`);
+
+    const [resultados] = await connection.query(queryFinal, params);
 
     // Mapear resultados
     const registroVentas = resultados.map((row) => ({
@@ -1222,7 +1269,7 @@ const getTendenciaVentas = async (req, res) => {
       FROM venta v
       JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {
@@ -1290,7 +1337,7 @@ const getTopProductosMargen = async (req, res) => {
       JOIN producto p ON dv.id_producto = p.id_producto
       JOIN venta v ON dv.id_venta = v.id_venta
       WHERE v.estado_venta != 0
-        AND v.f_venta BETWEEN ? AND ?
+        AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
     const params = [f(fechaInicioActual), f(fechaFinActual)];
     if (id_sucursal) {

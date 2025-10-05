@@ -1,27 +1,92 @@
 import { getConnection } from "./../database/database.js";
-import { logAcceso, logClientes } from "../utils/logActions.js";
+import { logAcceso } from "../utils/logActions.js";
 
-// Obtener todos los usuarios (con o sin id_tenant)
+// Obtener usuarios con paginación, límites y filtros seguros
 const getUsuarios = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        let query = `
-            SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, id_empresa, pp.descripcion_plan AS plan_pago_1, U.fecha_pago AS fecha_pago
+
+        // Paginación y límites
+        const page = Math.max(parseInt(req.query.page ?? '1', 10) || 1, 1);
+        const rawLimit = Math.max(parseInt(req.query.limit ?? '20', 10) || 20, 1);
+        const limit = Math.min(rawLimit, 100); // límite máximo seguro
+        const offset = (page - 1) * limit;
+
+        // Orden seguro
+        const allowedSort = {
+            id_usuario: 'U.id_usuario',
+            usua: 'U.usua',
+            fecha_pago: 'U.fecha_pago'
+        };
+        const sortBy = allowedSort[(req.query.sortBy || 'id_usuario')] || allowedSort.id_usuario;
+        const sortDir = (String(req.query.sortDir || 'desc').toLowerCase() === 'asc') ? 'ASC' : 'DESC';
+
+        // Filtros adicionales (exactos, sin LIKE)
+        const { id_rol, estado_usuario, id_empresa, usua } = req.query;
+        const whereClauses = [
+            'R.id_rol != 10'
+        ];
+        const whereParams = [];
+
+        if (req.id_tenant) {
+            whereClauses.push('U.id_tenant = ?');
+            whereParams.push(req.id_tenant);
+        }
+        if (id_rol) {
+            whereClauses.push('U.id_rol = ?');
+            whereParams.push(id_rol);
+        }
+        if (typeof estado_usuario !== 'undefined' && estado_usuario !== '') {
+            whereClauses.push('U.estado_usuario = ?');
+            whereParams.push(estado_usuario);
+        }
+        if (id_empresa) {
+            whereClauses.push('U.id_empresa = ?');
+            whereParams.push(id_empresa);
+        }
+        if (usua) {
+            whereClauses.push('U.usua = ?');
+            whereParams.push(String(usua).trim());
+        }
+
+        const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
+
+        // Total para paginación
+        const countSQL = `
+            SELECT COUNT(1) AS total
             FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol
-            LEFT JOIN plan_pago pp ON pp.id_plan=U.plan_pago
-            WHERE R.id_rol!=10
-            ORDER BY id_usuario desc
+            LEFT JOIN plan_pago pp ON pp.id_plan = U.plan_pago
+            ${whereSQL}
         `;
-        let params = [];
-        // Si existe req.id_tenant, filtra por tenant
-        if (req.id_tenant) {
-            query = query.replace('ORDER BY', 'AND U.id_tenant = ? ORDER BY');
-            params.push(req.id_tenant);
-        }
-        const [result] = await connection.query(query, params);
-        res.json({ code: 1, data: result });
+        const [countRows] = await connection.query(countSQL, whereParams);
+        const total = countRows?.[0]?.total || 0;
+
+        // Datos paginados
+        const dataSQL = `
+            SELECT 
+                U.id_usuario, U.id_rol, R.nom_rol, U.usua, U.contra, U.estado_usuario, U.estado_token, 
+                U.id_empresa, pp.descripcion_plan AS plan_pago_1, U.fecha_pago AS fecha_pago
+            FROM usuario U
+            INNER JOIN rol R ON U.id_rol = R.id_rol
+            LEFT JOIN plan_pago pp ON pp.id_plan = U.plan_pago
+            ${whereSQL}
+            ORDER BY ${sortBy} ${sortDir}
+            LIMIT ? OFFSET ?
+        `;
+        const [rows] = await connection.query(dataSQL, [...whereParams, limit, offset]);
+
+        res.json({
+            code: 1,
+            data: rows,
+            meta: {
+                total,
+                page,
+                limit,
+                pages: Math.max(Math.ceil(total / limit), 1)
+            }
+        });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
@@ -49,6 +114,7 @@ const getUsuario = async (req, res) => {
             query += " AND U.id_tenant = ?";
             params.push(req.id_tenant);
         }
+        query += " LIMIT 1";
         const [result] = await connection.query(query, params);
 
         if (result.length === 0) {
@@ -81,6 +147,7 @@ const getUsuario_1 = async (req, res) => {
             query += " AND id_tenant = ?";
             params.push(req.id_tenant);
         }
+        query += " LIMIT 1";
         const [result] = await connection.query(query, params);
 
         if (result.length === 0) {
@@ -261,7 +328,7 @@ const deleteUsuario = async (req, res) => {
         connection = await getConnection();
 
         // Verificar si el usuario está en uso dentro de la base de datos
-        const [verify] = await connection.query("SELECT 1 FROM vendedor WHERE id_usuario = ?", id);
+        const [verify] = await connection.query("SELECT 1 FROM vendedor WHERE id_usuario = ? LIMIT 1", [id]);
         const isUserInUse = verify.length > 0;
 
         if (isUserInUse) {

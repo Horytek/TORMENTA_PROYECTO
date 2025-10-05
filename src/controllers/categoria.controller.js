@@ -8,6 +8,8 @@ const getCategorias = async (req, res) => {
       SELECT id_categoria, nom_categoria, estado_categoria
       FROM categoria
       WHERE id_tenant = ?
+      ORDER BY nom_categoria ASC
+      LIMIT 200
     `, [req.id_tenant]);
     res.json({ code: 1, data: result, message: "Categorías listadas" });
   } catch (error) {
@@ -25,6 +27,7 @@ const getCategoria = async (req, res) => {
     const [result] = await connection.query(`
       SELECT id_categoria, nom_categoria, estado_categoria
       FROM categoria WHERE id_categoria = ? AND id_tenant = ?
+      LIMIT 1
     `, [id, req.id_tenant]);
 
     if (result.length === 0) {

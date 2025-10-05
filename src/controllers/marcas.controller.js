@@ -4,11 +4,32 @@ const getMarcas = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(`
-            SELECT id_marca, nom_marca, estado_marca
-            FROM marca
-            WHERE id_tenant = ?
-        `, [req.id_tenant]);
+
+        const page = Math.max(parseInt(req.query.page ?? '1', 10) || 1, 1);
+        const rawLimit = Math.max(parseInt(req.query.limit ?? '100', 10) || 100, 1);
+        const limit = Math.min(rawLimit, 200);
+        const offset = (page - 1) * limit;
+
+        const allowedSort = { id_marca: 'id_marca', nom_marca: 'nom_marca', estado_marca: 'estado_marca' };
+        const sortBy = allowedSort[req.query.sortBy] || allowedSort.nom_marca;
+        const sortDir = (String(req.query.sortDir || 'ASC').toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
+
+        const { nom_marca, estado_marca } = req.query;
+        const whereClauses = ['id_tenant = ?'];
+        const params = [req.id_tenant];
+        if (nom_marca) { whereClauses.push('nom_marca = ?'); params.push(String(nom_marca).trim()); }
+        if (typeof estado_marca !== 'undefined' && estado_marca !== '') { whereClauses.push('estado_marca = ?'); params.push(estado_marca); }
+
+        const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
+
+        const [result] = await connection.query(
+            `SELECT id_marca, nom_marca, estado_marca
+             FROM marca
+             ${whereSQL}
+             ORDER BY ${sortBy} ${sortDir}
+             LIMIT ? OFFSET ?`,
+            [...params, limit, offset]
+        );
         res.json({ code: 1, data: result, message: "Marcas listadas" });
     } catch (error) {
         if (!res.headersSent) {
@@ -29,7 +50,8 @@ const getMarca = async (req, res) => {
         const [result] = await connection.query(`
             SELECT id_marca, nom_marca, estado_marca
             FROM marca
-            WHERE id_marca = ? AND id_tenant = ?`, [id, req.id_tenant]);
+            WHERE id_marca = ? AND id_tenant = ?
+            LIMIT 1`, [id, req.id_tenant]);
         
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Marca no encontrada" });
