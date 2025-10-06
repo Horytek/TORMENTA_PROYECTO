@@ -26,14 +26,29 @@ import { useUserStore } from "@/store/useStore";
 // Card para productos con menor stock
 function StockCard({ productos }) {
   return (
-    <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white dark:bg-zinc-900 transition-all flex flex-col h-full min-h-[340px]">
-      {/* Fondo decorativo más sutil */}
+    <Card
+      className="relative overflow-hidden rounded-2xl shadow-xl
+                 bg-white/95 dark:bg-[#151722]/95 backdrop-blur-md
+                 border border-rose-100/70 dark:border-rose-900/30
+                 transition-all flex flex-col h-full min-h-[340px]"
+    >
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-rose-100/60 to-pink-200/40 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-orange-100/40 to-red-100/30 rounded-full blur-xl"></div>
+        {/* Halos SOLO modo claro (se reducen un poco) */}
+        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-rose-100/50 to-pink-200/30 rounded-full blur-2xl dark:hidden"></div>
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-orange-100/35 to-red-100/25 rounded-full blur-xl dark:hidden"></div>
+
+        {/* Nueva capa unificada para dark (sin mancha blanca) */}
+        <div className="hidden dark:block absolute inset-0 opacity-100 mix-blend-normal
+          bg-[radial-gradient(circle_at_82%_28%,rgba(236,72,153,0.18),transparent_58%),radial-gradient(circle_at_18%_85%,rgba(244,63,94,0.14),transparent_62%),radial-gradient(circle_at_50%_50%,rgba(88,34,54,0.10),transparent_70%),linear-gradient(150deg,rgba(244,63,94,0.07),rgba(190,24,93,0.04)_38%,transparent_75%)]">
+        </div>
+
+        {/* Textura sutil y borde interior */}
+        <div className="hidden dark:block absolute inset-0 opacity-[0.07] mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIwLjA1Ii8+PC9zdmc+')]"></div>
+        <div className="hidden dark:block absolute inset-0 ring-1 ring-white/5 rounded-2xl"></div>
       </div>
-      <CardHeader className="flex items-center gap-3 mb-1 bg-transparent">
-        <div className="p-2 rounded-lg bg-gradient-to-br from-rose-400/80 to-pink-500/80 shadow">
+
+      <CardHeader className="flex items-center gap-3 mb-1 bg-transparent relative z-10">
+        <div className="p-2 rounded-lg bg-gradient-to-br from-rose-400/85 to-pink-500/85 shadow">
           <AlertTriangle className="h-5 w-5 text-white" />
         </div>
         <div>
@@ -43,13 +58,15 @@ function StockCard({ productos }) {
           </p>
         </div>
       </CardHeader>
-      <CardBody className="py-3 px-4 flex-1 flex flex-col">
-        <span className="text-[11px] text-rose-500 mb-2 font-medium">
+
+      <CardBody className="py-3 px-4 flex-1 flex flex-col relative z-10">
+        <span className="text-[11px] text-rose-600 dark:text-rose-400 mb-2 font-medium">
           * Se actualiza en tiempo real (solo filtra por sucursal)
         </span>
         <ScrollShadow hideScrollBar className="flex-1 min-h-[120px] max-h-[220px]">
+          {/* ...existing list rendering... */}
           {productos.length > 0 ? (
-            <ul className="divide-y divide-rose-50 dark:divide-rose-900">
+            <ul className="divide-y divide-rose-50 dark:divide-rose-900/35">
               {productos.map((prod, idx) => {
                 const key = prod.id ? prod.id : `${prod.nombre}-${idx}`;
                 const urgencyLevel = 6 - Number.parseInt(prod.stock);
@@ -66,18 +83,29 @@ function StockCard({ productos }) {
                     ? "warning"
                     : "success";
                 return (
-                 <li key={key} className="py-2 flex items-center gap-3">
+                  <li key={key} className="py-2 flex items-center gap-3">
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{prod.nombre}</span>
-                        <Chip color={chipColor} variant="flat" className="font-bold text-xs px-2 py-0.5">
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                          {prod.nombre}
+                        </span>
+                        <Chip
+                          color={chipColor}
+                          variant="flat"
+                          className="font-bold text-xs px-2 py-0.5 backdrop-blur-sm dark:bg-zinc-800/50"
+                        >
                           {prod.stock} und.
                         </Chip>
                       </div>
-                      {/* Indicador de stock simple */}
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`inline-block w-2 h-2 rounded-full ${urgencyColor}`}></span>
-                        <span className="text-xs text-zinc-400">{Number(prod.stock) <= 3 ? "Muy bajo" : Number(prod.stock) <= 5 ? "Bajo" : "Moderado"}</span>
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                          {Number(prod.stock) <= 3
+                            ? "Muy bajo"
+                            : Number(prod.stock) <= 5
+                            ? "Bajo"
+                            : "Moderado"}
+                        </span>
                       </div>
                     </div>
                   </li>
@@ -85,7 +113,7 @@ function StockCard({ productos }) {
               })}
             </ul>
           ) : (
-            <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/60 rounded-xl">
+            <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/50 rounded-xl border border-transparent dark:border-white/5">
               <p className="text-zinc-500 dark:text-zinc-400">
                 No hay productos con stock crítico en esta sucursal
               </p>
@@ -121,13 +149,19 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
     "from-emerald-500 via-green-600 to-teal-600",
   ];
   return (
-    <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white dark:bg-zinc-900 transition-all flex flex-col h-full min-h-[340px]">
-      {/* Fondo decorativo elegante y sutil */}
+    <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white/95 dark:bg-[#151a26]/95 backdrop-blur-md border border-blue-100/60 dark:border-blue-900/35 transition-all flex flex-col h-full min-h-[340px]">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-6 -left-6 w-28 h-28 bg-gradient-to-br from-blue-400/30 to-indigo-600/20 rounded-full blur-2xl"></div>
-        <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-gradient-to-tr from-cyan-400/20 to-blue-500/10 rounded-full blur-xl"></div>
+        {/* Claro */}
+        <div className="absolute -top-6 -left-6 w-28 h-28 bg-gradient-to-br from-blue-400/25 to-indigo-600/15 rounded-full blur-2xl dark:hidden"></div>
+        <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-gradient-to-tr from-cyan-400/25 to-blue-500/15 rounded-full blur-xl dark:hidden"></div>
+
+        {/* Dark refinado sin hotspot */}
+        <div className="hidden dark:block absolute inset-0 bg-[radial-gradient(circle_at_78%_30%,rgba(56,189,248,0.16),transparent_55%),radial-gradient(circle_at_18%_85%,rgba(99,102,241,0.18),transparent_60%),linear-gradient(155deg,rgba(37,99,235,0.10),rgba(30,64,175,0.05)_55%,transparent_82%)]"></div>
+        <div className="hidden dark:block absolute inset-0 opacity-[0.07] mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIwLjA1Ii8+PC9zdmc+')]"></div>
+        <div className="hidden dark:block absolute inset-0 ring-1 ring-white/5 rounded-2xl"></div>
       </div>
-      <CardHeader className="flex items-center gap-3 mb-1 bg-transparent">
+
+      <CardHeader className="flex items-center gap-3 mb-1 bg-transparent relative z-10">
         <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow">
           <TrendingUp className="h-5 w-5 text-white" />
         </div>
@@ -138,13 +172,14 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
           </p>
         </div>
       </CardHeader>
-      <CardBody className="py-3 px-4 flex-1 flex flex-col">
-        <span className="text-[11px] text-blue-600 mb-2 font-medium">
+      <CardBody className="py-3 px-4 flex-1 flex flex-col relative z-10">
+        <span className="text-[11px] text-blue-600 dark:text-blue-400 mb-2 font-medium">
           * Se actualiza en tiempo real (solo filtra por sucursal y tiempo)
         </span>
+        {/* ...existing list and footer content sin cambios... */}
         <ScrollShadow hideScrollBar className="flex-1 min-h-[120px] max-h-[220px]">
           {sucursales.length > 0 ? (
-            <ul className="divide-y divide-blue-50 dark:divide-blue-900">
+            <ul className="divide-y divide-blue-50 dark:divide-blue-900/35">
               {sucursales.map((branch, index) => {
                 const salesValue = branch.ventas || branch.sales || 0;
                 const maxSales = 15000;
@@ -154,20 +189,17 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`w-2.5 h-2.5 rounded-full bg-gradient-to-r ${gradients[index % gradients.length]} shadow`}
-                          ></span>
+                          <span className={`w-2.5 h-2.5 rounded-full bg-gradient-to-r ${gradients[index % gradients.length]} shadow`}></span>
                           <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
                             {branch.nombre || branch.name}
                           </span>
                         </div>
-                        <Chip color="primary" variant="flat" className="font-bold text-xs px-2 py-0.5">
+                        <Chip color="primary" variant="flat" className="font-bold text-xs px-2 py-0.5 dark:bg-zinc-800/50">
                           S/. {(branch.ventas || branch.sales || 0).toLocaleString()}
                         </Chip>
                       </div>
-                      {/* Indicador de rendimiento simple */}
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-zinc-400">{Math.round(percentage)}% del objetivo</span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">{Math.round(percentage)}% del objetivo</span>
                       </div>
                     </div>
                   </li>
@@ -175,14 +207,14 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
               })}
             </ul>
           ) : (
-            <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/60 rounded-xl">
+            <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/55 rounded-xl border border-transparent dark:border-white/5">
               <p className="text-zinc-500 dark:text-zinc-400">No hay datos disponibles para esta sucursal</p>
             </div>
           )}
         </ScrollShadow>
-        <div className="flex items-center justify-between mt-5 p-2 rounded-xl bg-gradient-to-r from-zinc-100/80 to-zinc-50/80 dark:from-zinc-800/80 dark:to-zinc-700/80 backdrop-blur-sm border border-white/40 dark:border-zinc-600/40">
+        <div className="flex items-center justify-between mt-5 p-2 rounded-xl bg-gradient-to-r from-zinc-100/80 to-zinc-50/80 dark:from-zinc-800/75 dark:to-zinc-700/70 backdrop-blur-sm border border-white/40 dark:border-zinc-600/40">
           <span className="font-semibold text-zinc-900 dark:text-zinc-100">Promedio general</span>
-          <Chip color="success" variant="flat" className="font-bold text-xs px-3 py-1">
+          <Chip color="success" variant="flat" className="font-bold text-xs px-3 py-1 dark:bg-zinc-800/60">
             S/. {promedioGeneral?.toLocaleString()}
           </Chip>
         </div>

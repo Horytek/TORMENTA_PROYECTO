@@ -393,67 +393,94 @@ const renderVentaResumen = (venta) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Información de Pago */}
-      <Card className="relative overflow-hidden border border-yellow-200/40 bg-yellow-50/80 rounded-2xl shadow-none flex flex-col">
-        <CardHeader className="bg-yellow-100/80 border-b border-yellow-200">
-          <span className="font-semibold text-yellow-700 text-base flex items-center gap-2">
+      <Card className="relative overflow-hidden border border-yellow-200/40 dark:border-yellow-900/40 bg-yellow-50/80 dark:bg-[#2a281c]/70 rounded-2xl shadow-none flex flex-col">
+        <div className="pointer-events-none absolute inset-0 hidden dark:block">
+          <div className="absolute -top-8 -left-6 w-40 h-40 bg-[radial-gradient(circle_at_30%_30%,rgba(234,179,8,0.15),transparent_70%)] blur-2xl" />
+          <div className="absolute bottom-[-30px] right-[-20px] w-48 h-48 bg-[radial-gradient(circle_at_65%_60%,rgba(217,119,6,0.18),transparent_75%)] blur-2xl" />
+        </div>
+        <CardHeader className="bg-yellow-100/80 dark:bg-yellow-900/30 border-b border-yellow-200 dark:border-yellow-800/50">
+          <span className="font-semibold text-yellow-700 dark:text-yellow-200 text-base flex items-center gap-2">
             <FaMoneyBillWave className="text-lg" /> Información de Pago
           </span>
         </CardHeader>
-        <CardBody className="p-4 flex-1">
+        <CardBody className="p-4 flex-1 text-yellow-900 dark:text-yellow-100">
           <div className="mb-2">
-            <span className="font-semibold text-yellow-900">Método de Pago: </span>
-            <span>{metodoPagoLegible}</span>
+            <span className="font-semibold text-yellow-900 dark:text-yellow-200">Método de Pago: </span>
+            <span className="dark:text-yellow-50">{metodoPagoLegible}</span>
           </div>
           <div className="mb-2">
-            <span className="font-semibold text-yellow-900">Cajero: </span>
-            <span>{venta.cajero}</span>
+            <span className="font-semibold text-yellow-900 dark:text-yellow-200">Cajero: </span>
+            <span className="dark:text-yellow-50">{venta.cajero}</span>
           </div>
           <div>
-            <span className="font-semibold text-yellow-900">ID Cajero: </span>
-            <span>{venta.cajeroId}</span>
+            <span className="font-semibold text-yellow-900 dark:text-yellow-200">ID Cajero: </span>
+            <span className="dark:text-yellow-50">{venta.cajeroId}</span>
           </div>
         </CardBody>
       </Card>
+
       {/* Resumen de Totales */}
-      <Card className="relative overflow-hidden border border-emerald-200/40 bg-emerald-50/80 rounded-2xl shadow-none flex flex-col">
-        <CardHeader className="bg-emerald-100/80 border-b border-emerald-200">
-          <span className="font-semibold text-emerald-700 text-base flex items-center gap-2">
+      <Card className="relative overflow-hidden border border-emerald-200/40 dark:border-emerald-900/40 bg-emerald-50/80 dark:bg-[#1c2b25]/75 rounded-2xl shadow-none flex flex-col">
+        <div className="pointer-events-none absolute inset-0 hidden dark:block">
+          <div className="absolute top-[-20px] right-[-10px] w-44 h-44 bg-[radial-gradient(circle_at_70%_30%,rgba(16,185,129,0.20),transparent_70%)] blur-2xl" />
+        </div>
+        <CardHeader className="bg-emerald-100/80 dark:bg-emerald-900/30 border-b border-emerald-200 dark:border-emerald-800/50">
+          <span className="font-semibold text-emerald-700 dark:text-emerald-200 text-base flex items-center gap-2">
             <FaCalculator className="text-lg" /> Resumen de Totales
           </span>
         </CardHeader>
-        <CardBody className="p-4 flex-1">
-          <div className="flex flex-col gap-1">
+        <CardBody className="p-4 flex-1 text-emerald-900 dark:text-emerald-50">
+          <div className="flex flex-col gap-1 text-sm">
             <div className="flex justify-between">
-              <span>Subtotal:</span>
+              <span className="text-emerald-800 dark:text-emerald-200">Subtotal:</span>
               <span>{subtotal}</span>
             </div>
             <div className="flex justify-between">
-              <span>Descuento:</span>
+              <span className="text-emerald-800 dark:text-emerald-200">Descuento:</span>
               <span className="text-red-500">{venta.descuento || "-/ -"}</span>
             </div>
             <div className="flex justify-between">
-              <span>IGV (18%):</span>
+              <span className="text-emerald-800 dark:text-emerald-200">IGV (18%):</span>
               <span>{venta.igv}</span>
             </div>
-            <div className="flex justify-between font-bold text-emerald-700 mt-2">
+            <div className="flex justify-between font-bold text-emerald-700 dark:text-emerald-300 mt-2">
               <span>Total:</span>
               <span>{venta.total}</span>
             </div>
           </div>
         </CardBody>
       </Card>
+
       {/* Observación */}
-      <Card className={`relative overflow-hidden border rounded-2xl shadow-none flex flex-col ${venta.observacion ? "border-blue-200/40 bg-blue-50/80" : "border-gray-200/40 bg-gray-50/80"}`}>
-        <CardHeader className={`${venta.observacion ? "bg-blue-100/80 border-b border-blue-200" : "bg-gray-100/80 border-b border-gray-200"}`}>
-          <span className={`font-semibold text-base flex items-center gap-2 ${venta.observacion ? "text-blue-700" : "text-gray-700"}`}>
+      <Card
+        className={`relative overflow-hidden border rounded-2xl shadow-none flex flex-col
+          ${venta.observacion
+            ? "border-blue-200/40 bg-blue-50/80 dark:border-blue-900/50 dark:bg-[#132238]/80"
+            : "border-gray-200/40 bg-gray-50/80 dark:border-gray-700/60 dark:bg-[#1f242b]/70"}`}
+      >
+        <CardHeader
+          className={`${
+            venta.observacion
+              ? "bg-blue-100/80 dark:bg-blue-900/30 border-b border-blue-200 dark:border-blue-800/60"
+              : "bg-gray-100/80 dark:bg-gray-800/40 border-b border-gray-200 dark:border-gray-700/60"
+          }`}
+        >
+          <span
+            className={`font-semibold text-base flex items-center gap-2 ${
+              venta.observacion
+                ? "text-blue-700 dark:text-blue-200"
+                : "text-gray-700 dark:text-gray-200"
+            }`}
+          >
             <FaFileInvoice className="text-lg" /> Observación
           </span>
         </CardHeader>
-        <CardBody className="p-4 flex-1">
-          {venta.observacion
-            ? <span className="text-blue-900">{venta.observacion}</span>
-            : <span className="text-gray-500 italic">Sin observación</span>
-          }
+        <CardBody className="p-4 flex-1 text-sm">
+          {venta.observacion ? (
+            <span className="text-blue-900 dark:text-blue-100">{venta.observacion}</span>
+          ) : (
+            <span className="text-gray-500 dark:text-gray-400 italic">Sin observación</span>
+          )}
         </CardBody>
       </Card>
     </div>
@@ -462,15 +489,23 @@ const renderVentaResumen = (venta) => {
 
 const renderVentaTable = (venta) => (
   <div className="w-full mt-4">
-    <Card className="relative overflow-hidden border border-blue-100 bg-white/90 rounded-2xl shadow-none">
-      <CardHeader className="flex items-center gap-2 bg-blue-50 border-b border-blue-100">
-        <span className="font-semibold text-blue-900 text-base flex items-center gap-2">
+    <Card className="relative overflow-hidden border border-blue-100 dark:border-blue-900/40 bg-white/90 dark:bg-[#18212b]/85 rounded-2xl shadow-none">
+      <CardHeader className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 border-b border-blue-100 dark:border-blue-800/60">
+        <span className="font-semibold text-blue-900 dark:text-blue-100 text-base flex items-center gap-2">
           <span className="text-xl">🛒</span> Productos y Servicios
         </span>
       </CardHeader>
       <CardBody className="p-0">
         <ScrollShadow hideScrollBar className="max-h-[220px] min-w-0 overflow-x-auto">
-          <Table aria-label="Detalles de la Venta" className="min-w-[1400px] text-[13px]">
+          <Table
+            aria-label="Detalles de la Venta"
+            className="min-w-[1400px] text-[13px]"
+            classNames={{
+              th: "bg-white/90 dark:bg-[#1e2a36]/90 text-blue-800 dark:text-blue-200",
+              tr: "dark:hover:bg-[#223140]/60",
+              td: "dark:text-gray-200"
+            }}
+          >
             <TableHeader>
               <TableColumn className="text-[12px] text-center w-20">CÓDIGO</TableColumn>
               <TableColumn className="text-[12px] text-left w-96">NOMBRE</TableColumn>
@@ -484,7 +519,7 @@ const renderVentaTable = (venta) => (
             </TableHeader>
             <TableBody>
               {venta.detalles.map((detalle, idx) => (
-                <TableRow key={idx}>
+                <TableRow key={idx} className="dark:even:bg-[#202d3a]/70 dark:odd:bg-[#1b2631]/70">
                   <TableCell className="text-[11px] p-1 text-center align-middle">{detalle.codigo}</TableCell>
                   <TableCell className="text-[11px] p-1 text-left align-middle">{detalle.nombre}</TableCell>
                   <TableCell className="text-[11px] p-1 text-left align-middle">{detalle.nom_marca}</TableCell>
@@ -504,11 +539,18 @@ const renderVentaTable = (venta) => (
   </div>
 );
 
-
-  return (
-    <div className="w-full p-0">
-      <ScrollShadow hideScrollBar>
-        <Table aria-label="Tabla de Ventas" className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+return (
+  <div className="w-full p-0">
+    <ScrollShadow hideScrollBar>
+      <Table
+        aria-label="Tabla de Ventas"
+        className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]"
+        classNames={{
+          th: "py-2 px-2 text-center bg-blue-50 text-blue-900 dark:bg-[#1e2a36] dark:text-blue-100",
+          td: "dark:text-gray-200",
+          tr: "hover:bg-blue-50 dark:hover:bg-[#233243]"
+        }}
+      >
           <TableHeader>
             <TableColumn className="py-2 px-2 text-center text-blue-900 bg-blue-50">SERIE/NUM</TableColumn>
             <TableColumn className="py-2 px-2 text-center text-blue-900 bg-blue-50">TIPO.COMP</TableColumn>

@@ -2,98 +2,136 @@ import { getConnection } from "../database/database.js";
 import { logInventario } from "../utils/logActions.js";
 
 const getIngresos = async (req, res) => {
-  const { fecha_i = '2022-01-01', fecha_e = '2038-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
+  // Parámetros con defaults
+  const {
+    fecha_i = '2022-01-01',
+    fecha_e = '2038-12-27',
+    razon_social = '',
+    almacen = '%',
+    usuario = '',
+    documento = '',
+    estado = '%'
+  } = req.query;
+
   const id_tenant = req.id_tenant;
   let connection;
   try {
-      connection = await getConnection();
+    connection = await getConnection();
 
-      const [ingresosResult] = await connection.query(
-        `
-        SELECT 
-            n.id_nota AS id,
-            DATE_FORMAT(n.fecha, '%Y-%m-%d') AS fecha,
-            c.num_comprobante AS documento,
-            ao.nom_almacen AS almacen_O,
-            COALESCE(ad.nom_almacen,'Almacen externo') AS almacen_D,
-            COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
-            n.glosa AS concepto,
-            n.estado_nota AS estado,
-            ROUND(IFNULL(SUM(dn.total), 0), 2) AS total_nota,
-            COALESCE(u.usua, '') as usuario,
-            n.observacion AS observacion,
-            n.hora_creacion,
-            n.fecha_anulacion,
-            n.u_modifica AS u_modifica,
-            n.nom_nota
-        FROM 
-            nota n
-        LEFT JOIN 
-            destinatario d ON n.id_destinatario = d.id_destinatario
+    // Filtros dinámicos (evitar funciones sobre columnas para usar índices)
+    const where = [
+      'n.id_tiponota = 1',
+      'n.id_tenant = ?',
+      'c.num_comprobante LIKE ?',
+      'n.fecha >= ?',
+      'n.fecha <= ?',
+      '(d.razon_social LIKE ? OR CONCAT(d.nombres," ",d.apellidos) LIKE ?)'
+    ];
+    const params = [
+      id_tenant,
+      `%${documento}%`,
+      fecha_i,
+      fecha_e,
+      `%${razon_social}%`,
+      `%${razon_social}%`
+    ];
+
+    if (almacen && almacen !== '%') {
+      where.push('(n.id_almacenD = ? OR n.id_almacenO = ?)');
+      params.push(almacen, almacen);
+    }
+    if (estado && estado !== '%') {
+      where.push('n.estado_nota LIKE ?');
+      params.push(`%${estado}%`);
+    }
+    if (usuario) {
+      where.push('(u.usua LIKE ? OR u.usua IS NULL)');
+      params.push(`%${usuario}%`);
+    }
+
+    const cabecerasQuery = `
+      SELECT 
+        n.id_nota AS id,
+        DATE_FORMAT(n.fecha,'%Y-%m-%d') AS fecha,
+        c.num_comprobante AS documento,
+        ao.nom_almacen AS almacen_O,
+        COALESCE(ad.nom_almacen,'Almacen externo') AS almacen_D,
+        COALESCE(d.razon_social, CONCAT(d.nombres,' ',d.apellidos)) AS proveedor,
+        n.glosa AS concepto,
+        n.estado_nota AS estado,
+        ROUND(IFNULL(SUM(dn.total),0),2) AS total_nota,
+        COALESCE(u.usua,'') AS usuario,
+        n.observacion,
+        n.hora_creacion,
+        n.fecha_anulacion,
+        n.u_modifica,
+        n.nom_nota
+      FROM nota n
+        LEFT JOIN destinatario d ON n.id_destinatario = d.id_destinatario
         LEFT JOIN comprobante c ON n.id_comprobante = c.id_comprobante
         LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
-        LEFT JOIN almacen ad ON n.id_almacenD= ad.id_almacen
-        LEFT JOIN 
-            detalle_nota dn ON n.id_nota = dn.id_nota
-        LEFT JOIN
-            usuario u ON n.id_usuario = u.id_usuario
-        WHERE 
-            n.id_tiponota = 1
-            AND n.id_tenant = ?
-            AND c.num_comprobante LIKE ?
-            AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
-            AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
-            AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
-            ${almacen !== '%' ? 'AND n.id_almacenD = ?' : ''}
-            ${estado !== '%' ? 'AND n.estado_nota LIKE ?' : ''}
-            ${usuario ? 'AND (u.usua LIKE ? OR u.usua IS NULL)' : ''}
-        GROUP BY 
-            id, n.fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
-        ORDER BY 
-            n.fecha DESC, documento DESC;
-        `,
-          [
-            id_tenant,
-            `%${documento}%`,
-            fecha_i,
-            fecha_e,
-            `%${razon_social}%`,
-            `%${razon_social}%`,
-            ...(almacen !== '%' ? [almacen] : []),
-            ...(estado !== '%' ? [`%${estado}%`] : []),
-            ...(usuario ? [`%${usuario}%`] : [])
-          ]
-      );
+        LEFT JOIN almacen ad ON n.id_almacenD = ad.id_almacen
+        LEFT JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+        LEFT JOIN usuario u ON n.id_usuario = u.id_usuario
+      WHERE ${where.join(' AND ')}
+      GROUP BY n.id_nota
+      ORDER BY n.fecha DESC, documento DESC;
+    `;
 
-      // Obtener los detalles de venta correspondientes
-      const ingresos = await Promise.all(
-          ingresosResult.map(async (ingreso) => {
-              const [detallesResult] = await connection.query(
-                  `
-                  SELECT p.id_producto AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
-                  dn.cantidad AS cantidad, p.undm AS unidad, dn.precio AS precio, dn.total AS total
-                  FROM producto p INNER JOIN marca m ON p.id_marca=m.id_marca
-                  INNER JOIN sub_categoria sc ON p.id_subcategoria=sc.id_subcategoria
-                  INNER JOIN detalle_nota dn ON p.id_producto=dn.id_producto
-                  WHERE dn.id_nota= ? AND dn.id_tenant = ?
-                  `,
-                  [ingreso.id, id_tenant]
-              );
+    const [ingresosResult] = await connection.query(cabecerasQuery, params);
 
-              return {
-                  ...ingreso,
-                  detalles: detallesResult,
-              };
-          })
-      );
-
-      res.json({ code: 1, data: ingresos });
-  } catch (error) {
-      res.status(500).send(error.message);
-  } finally {
-    if (connection) {
-        connection.release();
+    if (!ingresosResult.length) {
+      return res.json({ code: 1, data: [] });
     }
+
+    // Obtener todos los detalles en un solo query (evita N+1)
+    const ids = ingresosResult.map(r => r.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const detallesQuery = `
+      SELECT 
+        dn.id_nota,
+        p.id_producto AS codigo,
+        m.nom_marca AS marca,
+        sc.nom_subcat AS categoria,
+        p.descripcion,
+        dn.cantidad,
+        p.undm AS unidad,
+        dn.precio,
+        dn.total
+      FROM detalle_nota dn
+        INNER JOIN producto p ON p.id_producto = dn.id_producto
+        INNER JOIN marca m ON p.id_marca = m.id_marca
+        INNER JOIN sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
+      WHERE dn.id_nota IN (${placeholders}) AND dn.id_tenant = ?;
+    `;
+    const [detallesResult] = await connection.query(detallesQuery, [...ids, id_tenant]);
+
+    // Indexar detalles por id_nota
+    const detallesMap = {};
+    for (const d of detallesResult) {
+      if (!detallesMap[d.id_nota]) detallesMap[d.id_nota] = [];
+      detallesMap[d.id_nota].push({
+        codigo: d.codigo,
+        marca: d.marca,
+        categoria: d.categoria,
+        descripcion: d.descripcion,
+        cantidad: d.cantidad,
+        unidad: d.unidad,
+        precio: d.precio,
+        total: d.total
+      });
+    }
+
+    const respuesta = ingresosResult.map(n => ({
+      ...n,
+      detalles: detallesMap[n.id] || []
+    }));
+
+    return res.json({ code: 1, data: respuesta });
+  } catch (error) {
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
   }
 };
 

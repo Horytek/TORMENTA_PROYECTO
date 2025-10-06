@@ -3,12 +3,16 @@ import { toast } from 'react-hot-toast';
 
 const useProductosData = async (searchInput, setProductos) => {
   try {
-    const response = await axios.get('/guia_remision/productos', {
-      params: { 
-        descripcion: searchInput,  // Enviar el input de búsqueda como parámetro para descripcion
-        codbarras: searchInput     // Enviar el mismo input de búsqueda como parámetro para codbarras
-      },
-    });
+    const term = (searchInput || '').trim();
+
+    // Construir params solo con valores presentes
+    const params = {};
+    if (term) {
+      params.descripcion = term;
+      params.codbarras = term;
+    }
+
+    const response = await axios.get('/guia_remision/productos', { params });
 
     if (response.data.code === 1) {
       setProductos(response.data.data);
@@ -17,8 +21,11 @@ const useProductosData = async (searchInput, setProductos) => {
       setProductos([]);
     }
   } catch (error) {
-    toast.error('Error al buscar productos.');
-    console.error('Error en la solicitud: ', error.message);
+    // Evitar múltiples toasts idénticos en ráfaga
+    console.error('Error en la solicitud productos guía:', error?.message);
+    if (!axios.isCancel?.(error)) {
+      toast.error('No se pudieron cargar productos.');
+    }
     setProductos([]);
   }
 };

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ModalBuscarProducto from '../ComponentsNotaIngreso/Modals/BuscarProductoForm';
 import ProductosModal from '@/pages/Productos/ProductosForm';
 import { Link } from 'react-router-dom';
@@ -13,488 +12,518 @@ import useAlmacenData from '../data/data_almacen_ingreso';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
 import useProductosData from './data/data_buscar_producto';
-import useSinStockProductosData from './data/data_buscar_producto_s';
 import insertNotaAndDetalleIngreso from '../data/add_nota';
 import insertNotaAndDetalleSalida from '../../Nota_Salida/data/insert_nota_salida';
 import { Toaster, toast } from "react-hot-toast";
 import ConfirmationModal from '../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
-import { Button, Input, Select, SelectItem, Textarea, Tabs, Tab } from "@heroui/react";
+import { Button, Input, Select, SelectItem, Textarea, Tabs, Tab, Chip, Tooltip, Divider, ScrollShadow } from "@heroui/react";
 import { useUserStore } from "@/store/useStore";
 
-const glosaOptions = [
-  "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
-  "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA", "DEVOLUCION", "CLIENTE",
-  "MERCAD DEVOLUCIÓN (PRUEBA)", "PROD.DESVOLUCIÓN (M.P.)", 
-  "ING. PRODUCCIÓN(P.T.)", "AJUSTE INVENTARIO", "OTROS INGRESOS",
-  "DESARROLLO CONSUMO INTERNO", "INGRESO DIFERIDO"
+const GLOSAS = [
+  "COMPRA EN EL PAIS","COMPRA EN EL EXTERIOR","RESERVADO",
+  "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA","DEVOLUCION","CLIENTE",
+  "MERCAD DEVOLUCIÓN (PRUEBA)","PROD.DESVOLUCIÓN (M.P.)",
+  "ING. PRODUCCIÓN(P.T.)","AJUSTE INVENTARIO","OTROS INGRESOS",
+  "DESARROLLO CONSUMO INTERNO","INGRESO DIFERIDO"
 ];
 
-const tipoNotaOptions = [
+const TIPO_NOTA = [
   { value: 'ingreso', label: 'Nota de Ingreso' },
-  { value: 'salida', label: 'Nota de Salida' },
+  { value: 'salida',  label: 'Nota de Salida' },
   { value: 'conjunto', label: 'Conjunto (Ingreso y Salida)' }
 ];
 
+// Utilidades
+const formatDate = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+const nowDate = formatDate();
+
+// Debounce simple
+const useDebounce = (fn, delay=350) => {
+  const t = useRef();
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+  return useCallback((...args) => {
+    clearTimeout(t.current);
+    t.current = setTimeout(() => fnRef.current(...args), delay);
+  }, [delay]);
+};
+
 function Registro_Ingresos() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isModalOpenProducto, setIsModalOpenProducto] = useState(false);
-  const [isModalOpenProovedor, setIsModalOpenProovedor] = useState(false);
+  // Modales
+  const [isModalBuscar, setIsModalBuscar] = useState(false);
+  const [isModalProducto, setIsModalProducto] = useState(false);
+  const [isModalProveedor, setIsModalProveedor] = useState(false);
+  const [isModalGuardar, setIsModalGuardar] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
+
+  // Datos externos
+  const { almacenes } = useAlmacenData();
+  const { destinatarios } = useDestinatarioData();
+  const { documentos: documentosIng } = useDocumentoData();
+  const { documentos: documentosSal } = useDocumentoData_S();
+
+  const currentDocumentoIngreso = documentosIng[0]?.nota || '';
+  const currentDocumentoSalida = documentosSal[0]?.nota || '';
+
+  // Usuario global
+  const sucursalSeleccionada = useUserStore(s => s.sur);
+  const rolUsuario = useUserStore(s => s.rol);
+  const usuario = useUserStore(s => s.nombre);
+
+  // Form state
+  const [tipoNota, setTipoNota] = useState('ingreso');
+  const [almacenOrigen, setAlmacenOrigen] = useState('');
+  const [almacenDestino, setAlmacenDestino] = useState('');
+  const [destinatario, setDestinatario] = useState('');
+  const [rucDest, setRucDest] = useState('');
+  const [glosa, setGlosa] = useState('');
+  const [nota, setNota] = useState('');
+  const [fecha, setFecha] = useState(nowDate);
+  const [observacion, setObservacion] = useState('');
+
+  // Productos
   const [productos, setProductos] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [codigoBarras, setCodigoBarras] = useState('');
-  const [selectedRuc, setSelectedRuc] = useState('');
-  const [isModalOpenGuardar, setisModalOpenGuardar] = useState(false);
+  const [productosSeleccionados, setProductosSeleccionados] = useState([]);
+
+    // Validaciones memo
+  const isValid = useMemo(() => {
+    if (!usuario) return false;
+    if (!almacenDestino || !destinatario || !glosa || !fecha || !nota) return false;
+    if ((tipoNota === 'ingreso' || tipoNota === 'conjunto') && !currentDocumentoIngreso) return false;
+    if ((tipoNota === 'salida' || tipoNota === 'conjunto') && !currentDocumentoSalida) return false;
+    if (!productosSeleccionados.length) return false;
+    if (productosSeleccionados.some(p => p.cantidad > p.stock)) return false;
+    return true;
+  }, [
+    usuario, almacenDestino, destinatario, glosa, fecha, nota,
+    tipoNota, currentDocumentoIngreso, currentDocumentoSalida,
+    productosSeleccionados
+  ]);
+
+  // UI / control
+  const [isSaving, setIsSaving] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
-  const [almacenDestino, setAlmacenDestino] = useState('');
-  const [almacenOrigen, setAlmacenOrigen] = useState('');
-  const [destinatario, setDestinatario] = useState('');
-  const [glosa, setGlosa] = useState('');
-  const [nota, setNota] = useState('');
-  const currentDate = new Date();
-  const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1)
-    .toString()
-    .padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
-  const { documentos: documentosIngreso } = useDocumentoData();
-  const { documentos: documentosSalida } = useDocumentoData_S();
-  const currentDocumentoIngreso = documentosIngreso.length > 0 ? documentosIngreso[0].nota : '';
-  const currentDocumentoSalida = documentosSalida.length > 0 ? documentosSalida[0].nota : '';
-  const [fecha, setFecha] = useState(formattedDate);
-  const [observacion, setObservacion] = useState('');
-  const [productosSeleccionados, setProductosSeleccionados] = useState([]); // Solo en memoria
 
-  const { almacenes } = useAlmacenData();
-  const { destinatarios } = useDestinatarioData();
+  // Filtros de almacenes memo
+  const almacenesOrigenFiltrados = useMemo(() => {
+    if (rolUsuario === 1) return almacenes;
+    if (tipoNota === 'salida') {
+      // salida: origen restringido a sucursal
+      return almacenes.filter(a => a.sucursal === sucursalSeleccionada);
+    }
+    return almacenes;
+  }, [almacenes, rolUsuario, sucursalSeleccionada, tipoNota]);
 
-  // Zustand: datos globales de usuario
-  const sucursalSeleccionada = useUserStore((state) => state.sur);
-  const rolUsuario = useUserStore((state) => state.rol);
-  const usuario = useUserStore((state) => state.nombre);
+  const almacenesDestinoFiltrados = useMemo(() => {
+    if (rolUsuario === 1) return almacenes;
+    if (tipoNota === 'ingreso') {
+      // ingreso: destino restringido a sucursal
+      return almacenes.filter(a => a.sucursal === sucursalSeleccionada);
+    }
+    return almacenes;
+  }, [almacenes, rolUsuario, sucursalSeleccionada, tipoNota]);
 
-    // Nuevo: tipo de nota (ingreso, salida, conjunto)
-  const [tipoNota, setTipoNota] = useState('ingreso');
+  // Destinatario -> RUC
+  useEffect(() => {
+    const sel = destinatarios.find(d => String(d.id) === String(destinatario));
+    setRucDest(sel?.documento || '');
+  }, [destinatario, destinatarios]);
 
-const almacenesOrigenFiltrados = 
-  rolUsuario !== 1
-    ? almacenes.filter((almacen) => 
-        tipoNota === 'salida' ? almacen.sucursal === sucursalSeleccionada : true
-      )
-    : almacenes;
-
-const almacenesDestinoFiltrados = 
-  rolUsuario !== 1
-    ? almacenes.filter((almacen) => 
-        tipoNota === 'ingreso' ? almacen.sucursal === sucursalSeleccionada : true
-      )
-    : almacenes;
-
+  // Debounced búsqueda productos al cambiar criterios
+  const debouncedBuscar = useDebounce(async (crit) => {
+    // Permitir búsqueda sin almacén sólo en notas de ingreso
+    if (!almacenOrigen && tipoNota !== 'ingreso') { 
+      setProductos([]); 
+      return; 
+    }
+    try {
+      const res = await useProductosData(crit);
+      setProductos(res?.productos || []);
+    } catch {
+      setProductos([]);
+    }
+  }, 400);
 
   useEffect(() => {
-    if (isModalOpen && almacenOrigen) {
-      handleBuscarProducto();
+    if (isModalBuscar && almacenOrigen) {
+      debouncedBuscar({ descripcion: searchInput, almacen: almacenOrigen, cod_barras: codigoBarras });
     }
-  }, [isModalOpen, almacenOrigen]);
+  }, [searchInput, codigoBarras, almacenOrigen, isModalBuscar, debouncedBuscar]);
 
-  const openModalBuscarProducto = async () => {
-    await handleBuscarProducto();
-    setIsModalOpen(true); 
-  };
-
-  const closeModalBuscarProducto = () => setIsModalOpen(false);
-
-  const openModalOpenGuardar = () => {
-    if (almacenDestino) {
-      setConfirmationMessage('¿Desea guardar esta nueva nota?');
-    } 
-    setisModalOpenGuardar(true);
-  };
-
-  const closeModalOpenGuardar = () => {
-    setisModalOpenGuardar(false);
-  };
-
-  const closeModalProducto = () => setIsModalOpenProducto(false);
-
-  const handleConfirmGuardar = async () => {
-    closeModalOpenGuardar();
-    await handleGuardarAction();
-  };
-
-  const handleProveedorChange = (e) => {
-    const selected = destinatarios.find(
-      (d) => d.id === parseInt(e.target.value)
-    );
-    setSelectedRuc(selected?.documento || '');
-  };
-
-  // Unificación de guardado
-  const handleGuardarAction = async () => {
-    try {
-      if (!usuario) {
-        toast.error('Usuario no encontrado. Por favor, inicie sesión nuevamente.');
-        return;
+  // Atajo guardar (Ctrl+S)
+  useEffect(() => {
+    const h = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (isValid) openModalGuardar();
       }
-
-      // Validaciones generales
-      if (
-        !almacenDestino ||
-        !destinatario ||
-        !glosa ||
-        !fecha ||
-        !nota ||
-        ((tipoNota === 'ingreso' || tipoNota === 'conjunto') && !currentDocumentoIngreso) ||
-        ((tipoNota === 'salida' || tipoNota === 'conjunto') && !currentDocumentoSalida)
-      ) {
-        toast.error('Por favor complete todos los campos.');
-        return;
-      }
-
-      if (productosSeleccionados.length === 0) {
-        toast.error('Debe agregar al menos un producto.');
-        return;
-      }
-
-      let stockExcedido = false;
-      productosSeleccionados.forEach(producto => {
-        if (producto.cantidad > producto.stock) {
-          stockExcedido = true;
-        }
-      });
-
-      if (stockExcedido) {
-        toast.error('La cantidad de algunos productos excede el stock disponible.');
-        return;
-      }
-
-      // Prepara los datos para ambas APIs
-      const productos = productosSeleccionados.map(producto => ({
-        id: producto.codigo,
-        cantidad: producto.cantidad
-      }));
-
-      // Ajustar la fecha con la zona horaria local
-      function getFechaLocal() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-      }
-
-      const fechaISO = getFechaLocal();
-
-      // Datos para ingreso
-      const dataIngreso = {
-        almacenO: almacenOrigen,
-        almacenD: almacenDestino,
-        destinatario,
-        glosa,
-        nota,
-        fecha: fechaISO,
-        producto: productos.map(p => p.id),
-        numComprobante: currentDocumentoIngreso,
-        cantidad: productos.map(p => p.cantidad),
-        observacion,
-        usuario
-      };
-
-      // Datos para salida
-      const dataSalida = {
-        almacenO: almacenOrigen,
-        almacenD: almacenDestino,
-        destinatario,
-        glosa,
-        nota,
-        fecha: fechaISO,
-        producto: productos.map(p => p.id),
-        numComprobante: currentDocumentoSalida,
-        cantidad: productos.map(p => p.cantidad),
-        observacion,
-        nom_usuario: usuario
-      };
-
-      let resultIngreso = { success: false };
-      let resultSalida = { success: false };
-
-      if (tipoNota === 'conjunto') {
-        [resultIngreso, resultSalida] = await Promise.all([
-          insertNotaAndDetalleIngreso(dataIngreso),
-          insertNotaAndDetalleSalida(dataSalida)
-        ]);
-      } else if (tipoNota === 'ingreso') {
-        resultIngreso = await insertNotaAndDetalleIngreso(dataIngreso);
-      } else if (tipoNota === 'salida') {
-        resultSalida = await insertNotaAndDetalleSalida(dataSalida);
-      }
-
-      // Mensajes y control de éxito
-      if (
-        (tipoNota === 'conjunto' && resultIngreso.success && resultSalida.success) ||
-        (tipoNota === 'ingreso' && resultIngreso.success) ||
-        (tipoNota === 'salida' && resultSalida.success)
-      ) {
-        toast.success('Nota(s) y detalle(s) insertados correctamente.');
-        handleCancel();
-        // Navegar de vuelta a la lista de notas en lugar de recargar la página
-        window.history.back();
-      } else {
-        throw new Error('Error inesperado en la inserción de la nota.');
-      }
-    } catch (error) {
-      console.error('Error en handleGuardarAction:', error);
-      toast.error(`Error inesperado: ${error.message}`);
-    }
-  };
-
-  const openModalProovedor = () => setIsModalOpenProovedor(true);
-  const closeModalProovedor = () => setIsModalOpenProovedor(false);
-
-  const handleBuscarProducto = async () => {
-    const almacenId = almacenOrigen || '';
-    const filters = {
-      descripcion: searchInput,
-      almacen: almacenId,
-      cod_barras: codigoBarras
     };
-    const result = await useProductosData(filters);
-    setProductos(result.productos);
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [isValid]);
+
+  // Reset productos si cambian almacenes (para evitar inconsistencias)
+  useEffect(() => {
+    setProductosSeleccionados(prev =>
+      prev.length ? [] : prev
+    );
+  }, [almacenOrigen]);
+
+
+  // Métricas productos
+  const totalItems = productosSeleccionados.length;
+  const totalUnidades = useMemo(
+    () => productosSeleccionados.reduce((acc, p) => acc + (p.cantidad || 0), 0),
+    [productosSeleccionados]
+  );
+
+  // Handlers
+  const openModalBuscarProducto = useCallback(() => {
+    // Restringir solo si NO es ingreso
+    if (!almacenOrigen && tipoNota !== 'ingreso') {
+      toast.error('Seleccione un almacén origen primero');
+      return;
+    }
+    setIsModalBuscar(true);
+  }, [almacenOrigen, tipoNota]);
+
+  const closeModalBuscarProducto = () => setIsModalBuscar(false);
+
+  const openModalProveedor = () => setIsModalProveedor(true);
+  const closeModalProveedor = () => setIsModalProveedor(false);
+
+  const openModalGuardar = () => {
+    setConfirmationMessage('¿Desea guardar esta nueva nota?');
+    setIsModalGuardar(true);
   };
+  const closeModalGuardar = () => setIsModalGuardar(false);
+
+  const agregarProducto = useCallback((producto, cantidad) => {
+    setProductosSeleccionados(prev => {
+      const agregadoPrev = prev
+        .filter(p => p.codigo === producto.codigo)
+        .reduce((a, p) => a + p.cantidad, 0);
+      const nuevoTotal = agregadoPrev + cantidad;
+      if (nuevoTotal > producto.stock) {
+        const restante = producto.stock - agregadoPrev;
+        if (restante > 0) {
+          toast.error(`Stock máximo ${producto.stock}. Solo puedes añadir ${restante} más.`);
+        } else {
+          toast.error('Stock máximo alcanzado.');
+        }
+        return prev;
+      }
+      const existe = prev.find(p => p.codigo === producto.codigo);
+      if (existe) {
+        return prev.map(p =>
+          p.codigo === producto.codigo
+            ? { ...p, cantidad: p.cantidad + cantidad }
+            : p
+        );
+      }
+      return [...prev, { ...producto, cantidad }];
+    });
+    closeModalBuscarProducto();
+  }, []);
 
   const handleCancel = () => {
     setProductosSeleccionados([]);
   };
 
-  const agregarProducto = (producto, cantidad) => {
-    setProductosSeleccionados((prevProductos) => {
-      const cantidadExistente = prevProductos
-        .filter(p => p.codigo === producto.codigo)
-        .reduce((total, p) => total + p.cantidad, 0);
-      const cantidadTotal = cantidadExistente + cantidad;
-
-      if (cantidadTotal > producto.stock) {
-        const maxCantidad = producto.stock - cantidadExistente;
-        if (maxCantidad > 0) {
-          toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}. Solo puedes agregar ${maxCantidad}`);
-        }
-        toast.error(`No se puede agregar más de ${producto.stock} unidades de ${producto.descripcion}.`);
-        return prevProductos;
-      }
-
-      const productoExistente = prevProductos.find(p => p.codigo === producto.codigo);
-      if (productoExistente) {
-        return prevProductos.map(p =>
-          p.codigo === producto.codigo ? { ...p, cantidad: p.cantidad + cantidad } : p
-        );
-      } else {
-        return [...prevProductos, { ...producto, cantidad }];
-      }
-    });
-
-    closeModalBuscarProducto();
+  const buildFechaCompleta = () => {
+    const d = new Date();
+    const tz = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tz).toISOString().slice(0, 19).replace('T',' ');
   };
 
+  const buildPayloadBase = (fechaBase, doc, isSalida = false) => ({
+    almacenO: almacenOrigen,
+    almacenD: almacenDestino,
+    destinatario,
+    glosa,
+    nota,
+    fecha: fechaBase,
+    producto: productosSeleccionados.map(p => p.codigo),
+    numComprobante: doc,
+    cantidad: productosSeleccionados.map(p => p.cantidad),
+    observacion,
+    ...(isSalida ? { nom_usuario: usuario } : { usuario })
+  });
+
+  const handleGuardar = async () => {
+    if (!isValid) {
+      toast.error('Complete los campos requeridos.');
+      return;
+    }
+    setIsSaving(true);
+    const fechaBase = buildFechaCompleta();
+    try {
+      let resIng = { success: false };
+      let resSal = { success: false };
+      if (tipoNota === 'conjunto') {
+        const [r1, r2] = await Promise.all([
+          insertNotaAndDetalleIngreso(buildPayloadBase(fechaBase, currentDocumentoIngreso, false)),
+          insertNotaAndDetalleSalida(buildPayloadBase(fechaBase, currentDocumentoSalida, true))
+        ]);
+        resIng = r1; resSal = r2;
+      } else if (tipoNota === 'ingreso') {
+        resIng = await insertNotaAndDetalleIngreso(buildPayloadBase(fechaBase, currentDocumentoIngreso, false));
+      } else {
+        resSal = await insertNotaAndDetalleSalida(buildPayloadBase(fechaBase, currentDocumentoSalida, true));
+      }
+
+      const ok =
+        (tipoNota === 'ingreso'  && resIng.success) ||
+        (tipoNota === 'salida'   && resSal.success) ||
+        (tipoNota === 'conjunto' && resIng.success && resSal.success);
+
+      if (ok) {
+        toast.success('Nota(s) registrada(s) correctamente.');
+        handleCancel();
+        window.history.back();
+      } else {
+        toast.error('Error al registrar la nota.');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Error inesperado al guardar.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleConfirmGuardar = async () => {
+    closeModalGuardar();
+    await handleGuardar();
+  };
+
+  // UI
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Nota de almacén</h1>
+      <Toaster />
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-extrabold tracking-tight text-blue-900">
+          Nota de almacén
+        </h1>
+        <p className="text-sm text-blue-700/70">
+          Registra una nota de ingreso, salida o ambas simultáneamente.
+        </p>
       </div>
-      <div className="mb-4">
+
+      <div className="rounded-2xl bg-white/85 dark:bg-zinc-900/80 backdrop-blur-sm border border-blue-100/60 dark:border-zinc-700/60 shadow-sm p-5 space-y-4">
         <Tabs
           aria-label="Tipo de nota"
           selectedKey={tipoNota}
-          onSelectionChange={setTipoNota}
+            onSelectionChange={(k) => {
+              setTipoNota(k);
+              setProductosSeleccionados([]);
+            }}
           color="primary"
-          variant="bordered"
-          className="w-full"
+          variant="solid"
+          classNames={{
+            tabList: "bg-blue-50/70 dark:bg-zinc-800/60 p-1 rounded-xl",
+            tab: "rounded-lg px-4 py-2 text-sm font-semibold data-[hover=true]:bg-blue-100/60 dark:data-[hover=true]:bg-zinc-700/50",
+            cursor: "bg-blue-600 shadow",
+            tabContent: "group-data-[selected=true]:text-white text-blue-700"
+          }}
         >
-          {tipoNotaOptions.map(option => (
+          {TIPO_NOTA.map(t => (
             <Tab
-              key={option.value}
-              title={option.label}
-              isDisabled={option.value === "conjunto" && rolUsuario !== 1}
+              key={t.value}
+              title={t.label}
+              isDisabled={t.value === "conjunto" && rolUsuario !== 1}
             />
           ))}
         </Tabs>
-      </div>
-      <div className="bg-gray-200 p-6 rounded-lg shadow-md">
+
+        <Divider />
+
+        <div className="flex flex-wrap gap-2">
+          <Chip size="sm" variant="flat" color="primary" className="text-[11px]">Productos: {totalItems}</Chip>
+          <Chip size="sm" variant="flat" color="secondary" className="text-[11px]">Unidades: {totalUnidades}</Chip>
+          <Chip size="sm" variant="flat" color={isValid ? 'success' : 'danger'} className="text-[11px]">
+            {isValid ? 'Listo para guardar' : 'Incompleto'}
+          </Chip>
+        </div>
+
         <form className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Toaster />
           {/* Columna izquierda */}
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <Select
-                label="Almacén origen"
+                label="Almacén Origen"
                 placeholder="Seleccionar"
-                id="almacen_origen"
+                selectedKeys={almacenOrigen ? [String(almacenOrigen)] : []}
                 isDisabled={productosSeleccionados.length > 0}
-                value={almacenOrigen}
                 onChange={(e) => setAlmacenOrigen(e.target.value)}
+                classNames={{ trigger: "bg-white/90 dark:bg-zinc-900/70" }}
               >
-                {almacenesOrigenFiltrados.map((almacen) => (
-                  <SelectItem key={almacen.id} value={almacen.id}>
-                    {almacen.almacen}
-                  </SelectItem>
+                {almacenesOrigenFiltrados.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.almacen}</SelectItem>
                 ))}
               </Select>
               <Select
-                label="Almacén destino"
+                label="Almacén Destino"
                 placeholder="Seleccionar"
-                id="almacen_destino"
-                value={almacenDestino}
-                onChange={e => setAlmacenDestino(e.target.value)}
+                selectedKeys={almacenDestino ? [String(almacenDestino)] : []}
+                onChange={(e) => setAlmacenDestino(e.target.value)}
+                classNames={{ trigger: "bg-white/90 dark:bg-zinc-900/70" }}
               >
-                {almacenesDestinoFiltrados.map((almacen) => (
-                  <SelectItem key={almacen.id} value={almacen.id}>
-                    {almacen.almacen}
-                  </SelectItem>
+                {almacenesDestinoFiltrados.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.almacen}</SelectItem>
                 ))}
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Select
-                label="Proveedor"
+                label="Proveedor / Destinatario"
                 placeholder="Seleccionar"
-                id="destinatario"
-                value={destinatario}
-                onChange={e => {
-                  setDestinatario(e.target.value);
-                  handleProveedorChange(e);
-                }}
+                selectedKeys={destinatario ? [String(destinatario)] : []}
+                onChange={(e) => setDestinatario(e.target.value)}
+                classNames={{ trigger: "bg-white/90 dark:bg-zinc-900/70" }}
               >
-                {destinatarios.map((destinatario) => (
-                  <SelectItem key={destinatario.id} value={destinatario.id}>
-                    {destinatario.destinatario}
-                  </SelectItem>
+                {destinatarios.map(d => (
+                  <SelectItem key={d.id} value={d.id}>{d.destinatario}</SelectItem>
                 ))}
               </Select>
-              <Input label="RUC" value={selectedRuc} isReadOnly />
+              <Input label="RUC / Documento" value={rucDest} isReadOnly className="bg-white/90 dark:bg-zinc-900/70" />
             </div>
             <Input
               label="Nombre de nota"
-              id="nomnota"
               value={nota}
               onChange={e => setNota(e.target.value)}
+              className="bg-white/90 dark:bg-zinc-900/70"
+              maxLength={60}
             />
           </div>
 
           {/* Columna derecha */}
-          <div className="space-y-4">
+            <div className="space-y-5">
             <div className="grid grid-cols-3 gap-4">
               <Input
                 label="Fecha Documento"
-                id="fechaDocu"
                 type="date"
                 value={fecha}
                 onChange={e => setFecha(e.target.value)}
-                defaultValue={formattedDate}
+                className="bg-white/90 dark:bg-zinc-900/70"
               />
               <Input
                 label="Número"
-                id="numero"
                 value={
                   tipoNota === 'ingreso'
                     ? currentDocumentoIngreso
                     : tipoNota === 'salida'
                       ? currentDocumentoSalida
-                      : `I: ${currentDocumentoIngreso} / S: ${currentDocumentoSalida}`
+                      : `I:${currentDocumentoIngreso} / S:${currentDocumentoSalida}`
                 }
                 isReadOnly
+                className="bg-white/90 dark:bg-zinc-900/70"
               />
               <Select
                 label="Glosa"
-                id="glosa"
-                value={glosa}
+                selectedKeys={glosa ? [glosa] : []}
                 onChange={e => setGlosa(e.target.value)}
+                classNames={{ trigger: "bg-white/90 dark:bg-zinc-900/70" }}
               >
-                {glosaOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
+                {GLOSAS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
               </Select>
             </div>
             <Textarea
               label="Observación"
-              id="observacion"
+              minRows={3}
               value={observacion}
               onChange={e => setObservacion(e.target.value)}
-              style={{
-                padding: "0.8rem",
-              }}
+              className="bg-white/90 dark:bg-zinc-900/70"
             />
           </div>
         </form>
 
-        {/* Botones de acción */}
-        <div className="flex justify-start mt-6 space-x-4">
-          <Button
-            color="primary"
-            onPress={openModalProovedor}
-            startContent={<MdPersonAdd />}
-          >
-            Nuevo destinatario
-          </Button>
-          <Button
-            color="warning"
-            onPress={openModalBuscarProducto}
-            startContent={<FaBarcode />}
-          >
-            Buscar producto
-          </Button>
+        <Divider className="my-4" />
+
+        <div className="flex flex-wrap gap-3">
+          <Tooltip content="Registrar nuevo destinatario" placement="top" delay={400}>
+            <Button
+              color="primary"
+              variant="flat"
+              startContent={<MdPersonAdd />}
+              onPress={openModalProveedor}
+            >
+              Destinatario
+            </Button>
+          </Tooltip>
+          <Tooltip content="Buscar y añadir productos" placement="top" delay={400}>
+            <Button
+              color="warning"
+              variant="flat"
+              startContent={<FaBarcode />}
+              onPress={openModalBuscarProducto}
+              isDisabled={tipoNota !== 'ingreso' && !almacenOrigen}
+            >
+              Productos
+            </Button>
+          </Tooltip>
           <Link to="/almacen/nota_ingreso">
             <Button
               color="danger"
-              onPress={handleCancel}
+              variant="flat"
               startContent={<MdCancelPresentation />}
+              onPress={handleCancel}
             >
               Cancelar
             </Button>
           </Link>
-          <Button
-            color="success"
-            onPress={openModalOpenGuardar}
-            startContent={<FiSave />}
-          >
-            Guardar
-          </Button>
+          <Tooltip content={isValid ? "Guardar (Ctrl+S)" : "Complete los campos requeridos"} placement="top">
+            <Button
+              color="success"
+              startContent={<FiSave />}
+              onPress={openModalGuardar}
+              isDisabled={!isValid || isSaving}
+              isLoading={isSaving}
+            >
+              Guardar
+            </Button>
+          </Tooltip>
         </div>
       </div>
 
-      {/* Tabla de productos seleccionados */}
-      <div className="mt-6">
-        <RegistroTablaIngreso
-          ingresos={productosSeleccionados}
-          setProductosSeleccionados={setProductosSeleccionados}
-        />
+      {/* Tabla productos */}
+      <div className="rounded-2xl border-blue-100/60 dark:border-zinc-700/60  dark:bg-zinc-900/70 backdrop-blur-sm">
+        <ScrollShadow className="max-h-[360px]">
+          <RegistroTablaIngreso
+            ingresos={productosSeleccionados}
+            setProductosSeleccionados={setProductosSeleccionados}
+          />
+        </ScrollShadow>
       </div>
 
       {/* Modales */}
       <ModalBuscarProducto
-        isOpen={isModalOpen}
+        isOpen={isModalBuscar}
         onClose={closeModalBuscarProducto}
-        onBuscar={handleBuscarProducto}
+        onBuscar={() => debouncedBuscar({ descripcion: searchInput, almacen: almacenOrigen, cod_barras: codigoBarras })}
         setSearchInput={setSearchInput}
         productos={productos}
         agregarProducto={agregarProducto}
         setCodigoBarras={setCodigoBarras}
         hideStock={!almacenOrigen}
       />
-      {isModalOpenProducto && (
-        <ProductosModal modalTitle={modalTitle} onClose={closeModalProducto} />
+      {isModalProducto && (
+        <ProductosModal modalTitle={modalTitle} onClose={() => setIsModalProducto(false)} />
       )}
       <AgregarProovedor
-        isOpen={isModalOpenProovedor}
-        onClose={closeModalProovedor}
-        titulo={'proovedor'}
+        isOpen={isModalProveedor}
+        onClose={closeModalProveedor}
+        titulo="destinatario"
       />
-      {isModalOpenGuardar && (
+      {isModalGuardar && (
         <ConfirmationModal
           message={confirmationMessage}
-          onClose={closeModalOpenGuardar}
-          isOpen={isModalOpenGuardar}
+          onClose={closeModalGuardar}
+          isOpen={isModalGuardar}
           onConfirm={handleConfirmGuardar}
         />
       )}

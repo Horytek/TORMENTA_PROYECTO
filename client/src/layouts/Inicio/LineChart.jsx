@@ -197,49 +197,64 @@ export function LineChartComponent({ sucursal }) {
     );
   };
 
-  return (
-    <Card className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-blue-100/40 dark:border-zinc-700/60 transition-all">
-      {/* Modo oscuro para ejes y grilla */}
+    return (
+    <Card className="relative overflow-hidden rounded-2xl shadow-xl
+                     bg-white/95 dark:bg-[#131722]/90 backdrop-blur-md
+                     border border-blue-100/40 dark:border-blue-800/40 transition-all">
       <style>{`
         .dark .recharts-cartesian-axis-tick text,
         .dark .recharts-legend-item text,
-        .dark .recharts-text tspan { fill: #e5e7eb !important; }
-        .dark .recharts-cartesian-grid line { stroke: #3f3f46 !important; }
+        .dark .recharts-text tspan { fill: #e2e8f0 !important; }
+        .dark .recharts-cartesian-grid line { stroke: #2c3240 !important; }
+        .dark .recharts-tooltip-wrapper { filter: drop-shadow(0 4px 14px rgba(0,0,0,.45)); }
       `}</style>
 
-      <CardHeader className="flex flex-col gap-2 items-start bg-gradient-to-r from-blue-50/80 via-white/90 to-cyan-50/80 dark:from-blue-900/40 dark:to-cyan-900/20 rounded-t-2xl border-b border-blue-100/40 dark:border-zinc-700/60 relative overflow-hidden transition-colors">
+      <CardHeader className="relative flex flex-col gap-2 items-start
+                             bg-gradient-to-r from-blue-50/80 via-white/90 to-cyan-50/80
+                             dark:from-transparent dark:via-transparent dark:to-transparent
+                             rounded-t-2xl border-b border-blue-100/40 dark:border-blue-800/40
+                             overflow-hidden transition-colors">
+        {/* Fondos modo claro */}
         <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute -top-8 -left-8 w-32 h-32 bg-gradient-to-br from-blue-200/40 to-cyan-200/30 dark:from-blue-900/30 dark:to-cyan-900/20 rounded-full blur-2xl"></div>
-          <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-gradient-to-tr from-cyan-400/20 to-blue-500/10 dark:from-cyan-900/20 dark:to-blue-900/10 rounded-full blur-xl"></div>
+          <div className="absolute -top-8 -left-8 w-32 h-32 bg-gradient-to-br from-blue-200/40 to-cyan-200/30 rounded-full blur-2xl dark:hidden" />
+          <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-gradient-to-tr from-cyan-400/20 to-blue-500/10 rounded-full blur-xl dark:hidden" />
+        </div>
+        {/* Capas modo oscuro (sin manchas blancas) */}
+        <div className="absolute inset-0 pointer-events-none z-0 hidden dark:block">
+          <div className="absolute -top-10 left-1/3 w-72 h-72 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.18),transparent_65%)] blur-3xl" />
+          <div className="absolute bottom-[-60px] -right-10 w-80 h-80 bg-[radial-gradient(circle_at_60%_40%,rgba(99,102,241,0.22),transparent_70%)] blur-3xl" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(30,64,175,0.18),rgba(15,23,42,0)_70%)]" />
+          <div className="absolute inset-0 opacity-[0.08] mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')]" />
+          <div className="absolute inset-0 ring-1 ring-white/5 rounded-2xl" />
         </div>
 
         <div className="flex items-center gap-3 z-10">
-          <span className="inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-400/80 to-cyan-400/80 dark:from-blue-700/80 dark:to-cyan-700/80 shadow w-10 h-10">
+          <span className="inline-flex items-center justify-center rounded-lg
+                           bg-gradient-to-br from-blue-400/85 to-cyan-400/85
+                           dark:from-blue-600/80 dark:to-cyan-600/80 shadow w-10 h-10">
             <Sparkles className="w-6 h-6 text-white" />
           </span>
           <div>
             <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100 tracking-tight">Tendencia de Ventas</h3>
-            <p className="text-xs text-blue-700/80 dark:text-blue-200/80 font-medium">Evolución según el rango seleccionado</p>
+            <p className="text-xs text-blue-700/80 dark:text-blue-300/70 font-medium">Evolución según el rango seleccionado</p>
           </div>
         </div>
 
-        {/* Métricas y contexto */}
         <div className="flex flex-wrap gap-2 mt-3 z-10">
-          <Chip color="primary" variant="flat" className="font-semibold text-sm px-3 py-1">Total: {valueFormatter(total)}</Chip>
-          <Chip color="default" variant="flat" className="font-semibold text-sm px-3 py-1">Escala máx: {valueFormatter(maxVentas)}</Chip>
-          <Chip color="violet" variant="flat" className="font-semibold text-sm px-3 py-1">Promedio: {valueFormatter(promedio)}</Chip>
-          <Chip color="default" variant="flat" className="font-semibold text-sm px-3 py-1">Resolución: {resolution}</Chip>
-          <Chip color="default" variant="flat" className="font-semibold text-sm px-3 py-1">Puntos: {chartData.length}</Chip>
+          <Chip color="primary" variant="flat" className="font-semibold text-xs md:text-sm px-3 py-1">Total: {valueFormatter(total)}</Chip>
+          <Chip color="default" variant="flat" className="font-semibold text-xs md:text-sm px-3 py-1">Escala máx: {valueFormatter(maxVentas)}</Chip>
+          <Chip color="violet" variant="flat" className="font-semibold text-xs md:text-sm px-3 py-1">Promedio: {valueFormatter(promedio)}</Chip>
+          <Chip color="default" variant="flat" className="font-semibold text-xs md:text-sm px-3 py-1">Resolución: {resolution}</Chip>
+          <Chip color="default" variant="flat" className="font-semibold text-xs md:text-sm px-3 py-1">Puntos: {chartData.length}</Chip>
           {value?.start && value?.end && (
             <Tooltip content="Rango seleccionado">
-              <Chip color="primary" variant="flat" className="font-semibold text-sm px-3 py-1">
+              <Chip color="primary" variant="flat" className="font-semibold text-xs md:text-sm px-3 py-1">
                 {value.start.toLocaleDateString("es-PE")} – {value.end.toLocaleDateString("es-PE")}
               </Chip>
             </Tooltip>
           )}
         </div>
 
-        {/* Controles: Escala + Rango */}
         <div className="flex flex-wrap gap-2 mt-2 z-10 items-center">
           <Select
             aria-label="Escala mínima Y"
@@ -260,7 +275,8 @@ export function LineChartComponent({ sucursal }) {
                 <Button
                   variant="flat"
                   color="default"
-                  className="max-w-xs w-full rounded-lg border border-blue-100/60 dark:border-zinc-700/60 bg-white/90 dark:bg-zinc-900/80 shadow-sm focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-900 transition-all"
+                  className="max-w-xs w-full rounded-lg border border-blue-100/60 dark:border-blue-800/50
+                             bg-white/90 dark:bg-[#141a24]/80 shadow-sm focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-800 transition-all"
                   startContent={<Calendar className="w-4 h-4 text-blue-500 dark:text-blue-300" />}
                   onClick={() => setPopoverOpen(true)}
                 >
@@ -269,7 +285,7 @@ export function LineChartComponent({ sucursal }) {
                     : "Selecciona un rango de fechas"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="p-4 rounded-xl shadow-lg border border-blue-100/60 dark:border-zinc-700/60 bg-white/95 dark:bg-zinc-900/90 w-80">
+              <PopoverContent className="p-4 rounded-xl shadow-lg border border-blue-100/60 dark:border-blue-800/50 bg-white/95 dark:bg-[#141a24]/95 w-80 backdrop-blur-md">
                 <div className="mb-2 font-semibold text-sm text-zinc-700 dark:text-zinc-100 text-center">Rangos rápidos</div>
                 <div className="grid grid-cols-1 gap-2">
                   {quickRanges.map((range) => (
@@ -277,7 +293,7 @@ export function LineChartComponent({ sucursal }) {
                       key={range.key}
                       variant="light"
                       color="primary"
-                      className="justify-start"
+                      className="justify-start dark:bg-white/5 dark:hover:bg-white/10"
                       onClick={() => handleQuickRange(range)}
                     >
                       {range.label}
@@ -290,16 +306,21 @@ export function LineChartComponent({ sucursal }) {
         </div>
       </CardHeader>
 
-      <Divider />
-      <CardBody className="bg-white dark:bg-zinc-900 transition-colors">
+      <Divider className="dark:border-blue-800/40" />
+
+      <CardBody className="relative bg-white/95 dark:bg-[#131722]/90 transition-colors">
+        <div className="pointer-events-none absolute inset-0 hidden dark:block">
+          <div className="absolute top-1/3 -left-12 w-60 h-60 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.12),transparent_70%)] blur-3xl" />
+          <div className="absolute bottom-4 right-8 w-48 h-48 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.10),transparent_65%)] blur-2xl" />
+        </div>
         {loading ? (
-          <div className="text-center py-8 text-default-500 dark:text-default-400">Cargando...</div>
+          <div className="relative z-10 text-center py-8 text-default-500 dark:text-blue-300/70">Cargando...</div>
         ) : error ? (
-          <div className="text-center text-red-500 py-8">{error?.message || "Error al cargar"}</div>
+          <div className="relative z-10 text-center text-red-500 py-8">{error?.message || "Error al cargar"}</div>
         ) : (
-          <>
+          <div className="relative z-10">
             <LineChart
-              className="mt-2 h-[340px] dark:bg-zinc-900"
+              className="mt-2 h-[340px]"
               data={chartData}
               index="date"
               yAxisWidth={80}
@@ -308,28 +329,30 @@ export function LineChartComponent({ sucursal }) {
               valueFormatter={valueFormatter}
               xAxisLabel={xAxisLabel}
               yAxisLabel="Ventas (S/.)"
-              showAnimation={true}
+              showAnimation
               showLegend={false}
-              showGridX={true}
-              showGridY={true}
+              showGridX
+              showGridY
               curveType="monotone"
-              connectNulls={true}
-              showDots={true}
+              connectNulls
+              showDots
               minValue={0}
               maxValue={maxVentas}
               customTooltip={renderTooltip}
             />
             <div className="mt-4">
               <div className="flex flex-wrap gap-2">
-                <Chip color="indigo" variant="flat">Ventas Totales</Chip>
+                <Chip color="indigo" variant="flat" className="font-semibold text-xs px-3 py-1">Ventas Totales</Chip>
               </div>
             </div>
-          </>
+          </div>
         )}
       </CardBody>
-      <Divider />
-      <CardFooter className="bg-white dark:bg-zinc-900 transition-colors">
-        <span className="text-xs text-default-400 dark:text-default-500">
+
+      <Divider className="dark:border-blue-800/40" />
+
+      <CardFooter className="bg-white/90 dark:bg-[#131722]/90 backdrop-blur-sm">
+        <span className="text-xs text-default-500 dark:text-zinc-400">
           Datos actualizados según el rango seleccionado.
         </span>
       </CardFooter>

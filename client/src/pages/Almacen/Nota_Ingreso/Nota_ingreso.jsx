@@ -1,12 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import TablaNotasAlmacen from './ComponentsNotaIngreso/NotaIngresoTable';
 import getIngresosData from './data/data_ingreso';
 import getSalidasData from '../Nota_Salida/data/data_salida';
 import useAlmacenData from './data/data_almacen_ingreso';
 import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
-import FiltrosSalida from '../Nota_Salida/ComponentsNotaSalida/FiltrosSalida';
-import { Tabs, Tab, Select, SelectItem } from "@heroui/react";
+import { Tabs, Tab, Select, SelectItem, Chip } from "@heroui/react";
 import { RoutePermission } from '@/routes';
 import { useUserStore } from "@/store/useStore";
 
@@ -30,42 +28,29 @@ const NotasAlmacen = () => {
   const fetchIngresos = useCallback(async () => {
     const data = await getIngresosData({
       ...filtersIngreso,
-      almacenId: filtersIngreso.almacenId || undefined,
+      // Asegurar nombre correcto del parámetro que el backend espera
+      almacen: filtersIngreso.almacen || undefined,
     });
-    setIngresos(data.ingresos);
+    setIngresos(data.ingresos || []);
   }, [filtersIngreso]);
 
-  // Fetch salidas
   const fetchSalidas = useCallback(async () => {
     const data = await getSalidasData(filtersSalida);
-    setSalidas(data.salida);
+    setSalidas(data.salida || []);
   }, [filtersSalida]);
 
-  useEffect(() => {
-    fetchIngresos();
-  }, [fetchIngresos]);
-
-  useEffect(() => {
-    fetchSalidas();
-  }, [fetchSalidas]);
+  useEffect(() => { fetchIngresos(); }, [fetchIngresos]);
+  useEffect(() => { fetchSalidas(); }, [fetchSalidas]);
 
   // Función para actualizar el array local cuando se anula una nota
   const handleNotaAnulada = (notaId) => {
     if (tabActiva === "ingreso") {
-      setIngresos(prev => 
-        prev.map(ingreso => 
-          ingreso.id === notaId 
-            ? { ...ingreso, estado: 0 } // Asumiendo que 0 es el estado anulado
-            : ingreso
-        )
+      setIngresos(prev =>
+        prev.map(i => i.id === notaId ? { ...i, estado: 0 } : i)
       );
     } else {
-      setSalidas(prev => 
-        prev.map(salida => 
-          salida.id === notaId 
-            ? { ...salida, estado: 0 } // Asumiendo que 0 es el estado anulado
-            : salida
-        )
+      setSalidas(prev =>
+        prev.map(s => s.id === notaId ? { ...s, estado: 0 } : s)
       );
     }
   };
@@ -74,41 +59,28 @@ const NotasAlmacen = () => {
     const almacenIdGuardado = almacenGlobal;
     if (almacenIdGuardado && almacenes.length > 0) {
       const almacen = almacenes.find(a => a.id === parseInt(almacenIdGuardado));
-      if (almacen) {
-        setAlmacenSeleccionado(almacen);
-      }
+      if (almacen) setAlmacenSeleccionado(almacen);
     }
-  }, [almacenes]);
-
-  const handleFiltersChange = (newFilters) => {
-    if (tabActiva === "ingreso") {
-      setFiltersIngreso(prevFilters => {
-        if (JSON.stringify(prevFilters) !== JSON.stringify(newFilters)) {
-          return newFilters;
-        }
-        return prevFilters;
-      });
-    } else {
-      setFiltersSalida(prevFilters => {
-        if (JSON.stringify(prevFilters) !== JSON.stringify(newFilters)) {
-          return newFilters;
-        }
-        return prevFilters;
-      });
-    }
-  };
+  }, [almacenes, almacenGlobal]);
 
   // Cambio de almacén sincronizado para ambos
   const handleAlmacenChange = (almacen) => {
     setAlmacenSeleccionado(almacen || null);
-    setFiltersIngreso((prev) => ({
-      ...prev,
-      almacenId: almacen ? almacen.id : null,
-    }));
-    setFiltersSalida((prev) => ({
-      ...prev,
-      almacen: almacen ? almacen.id : null,
-    }));
+    // Filtro correcto: 'almacen' (antes 'almacenId')
+    setFiltersIngreso(prev => ({ ...prev, almacen: almacen ? almacen.id : '%' }));
+    setFiltersSalida(prev => ({ ...prev, almacen: almacen ? almacen.id : '%' }));
+  };
+
+
+    const handleFiltersChange = (newFilters) => {
+    if (tabActiva === "ingreso") {
+      // Normalizar: si no viene almacen, mantener '%'
+      const nf = { ...newFilters };
+      if (nf.almacen === undefined || nf.almacen === null) nf.almacen = '%';
+      setFiltersIngreso(prev => JSON.stringify(prev) !== JSON.stringify(nf) ? nf : prev);
+    } else {
+      setFiltersSalida(prev => JSON.stringify(prev) !== JSON.stringify(newFilters) ? newFilters : prev);
+    }
   };
 
   // PDF Salida
@@ -120,84 +92,110 @@ const NotasAlmacen = () => {
 
   // Paginación
   const registros = tabActiva === "ingreso" ? ingresos : salidas;
-  const totalPages = Math.ceil(registros.length / itemsPerPage);
-  const currentRegistros = registros.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(registros.length / itemsPerPage) || 1;
+  const currentRegistros = useMemo(() => (
+    registros.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  ), [registros, currentPage, itemsPerPage]);
+
+  // Métricas para chips
+  const totalIngresos = ingresos.length;
+  const totalSalidas = salidas.length;
 
  return (
-  <div className="min-h-[80vh] px-4 py-8 max-w-8xl mx-auto">
-    <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Notas de almacén</h1>
-    <p className="text-base text-blue-700/80 mb-6">Administra y busca notas de ingreso y salida fácilmente.</p>
-<div className="w-full mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-  <div className="flex-1 flex items-center">
-    <div className="rounded-2xl w-full max-w-2xl bg-white/80 border border-blue-100 shadow-sm px-8 py-4 flex items-center transition-all">
-      <span className="block text-lg font-semibold font-sans tracking-wide text-blue-900 flex items-center gap-2">
-        <span className="text-cyan-600 font-bold">Sucursal:</span>
-        {almacenSeleccionado && almacenSeleccionado.sucursal ? (
-          <span className="text-blue-900">{almacenSeleccionado.sucursal}</span>
-        ) : (
-          <span className="text-gray-400 italic select-none">&mdash;</span>
-        )}
-      </span>
-    </div>
-  </div>
-</div>
-    <div className="mb-2">
-      <Tabs
-        aria-label="Notas de almacén"
-        color="primary"
-        selectedKey={tabActiva}
-        onSelectionChange={setTabActiva}
-        classNames={{
-          tabList: "bg-transparent",
-          tab: "rounded-xl px-6 py-2 text-base font-semibold",
-          tabActive: "bg-blue-600 text-white shadow",
-          tabInactive: "bg-blue-50 text-blue-700 hover:bg-blue-100"
-        }}
-      >
-        <Tab key="ingreso" title="Notas de ingreso">
-          <FiltrosIngresos
-            almacenes={almacenes}
-            onFiltersChange={handleFiltersChange}
-            onAlmacenChange={handleAlmacenChange}
-            ingresos={ingresos}
-            almacenSseleccionado={almacenSeleccionado}
-            tipo="ingreso"
-          />
-          <div>
-            <RoutePermission idModulo={10} idSubmodulo={10}>
-              <TablaNotasAlmacen
-                registros={currentRegistros}
+    <div className="min-h-[80vh] px-4 py-8 max-w-8xl mx-auto">
+      {/* Header principal */}
+      <div className="mb-6 space-y-3">
+        <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight">
+          Notas de almacén
+        </h1>
+        <p className="text-base text-blue-700/80">
+          Administra y busca notas de ingreso y salida fácilmente.
+        </p>
+      </div>
+
+      {/* Card de contexto + métricas */}
+      <div className="mb-6 rounded-2xl bg-white/85 border border-blue-100 shadow-sm px-6 py-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 backdrop-blur-sm">
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold uppercase tracking-wide text-blue-600">Contexto</span>
+          <div className="mt-1 flex items-center gap-2 text-blue-900 font-medium">
+            <span className="text-cyan-600 font-semibold">Sucursal:</span>
+            {almacenSeleccionado?.sucursal
+              ? <span>{almacenSeleccionado.sucursal}</span>
+              : <span className="italic text-gray-400">&mdash;</span>}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Chip size="sm" variant="flat" color="primary" className="text-[11px]">Ingresos: {totalIngresos}</Chip>
+            <Chip size="sm" variant="flat" color="secondary" className="text-[11px]">Salidas: {totalSalidas}</Chip>
+          <Chip size="sm" variant="flat" color="success" className="text-[11px]">
+            Página {currentPage}/{totalPages}
+          </Chip>
+        </div>
+      </div>
+
+      {/* Tabs + filtros (tabla NO se toca) */}
+      <div className="mb-2">
+        <Tabs
+          aria-label="Notas de almacén"
+          color="primary"
+          selectedKey={tabActiva}
+          onSelectionChange={setTabActiva}
+          classNames={{
+            tabList: "relative flex gap-2 bg-blue-50/60 p-1 rounded-xl w-fit",
+            cursor: "bg-blue-600 shadow",
+            tab: "px-5 py-2 text-sm font-semibold rounded-lg data-[hover=true]:bg-blue-100/80",
+            tabContent: "group-data-[selected=true]:text-white text-blue-700"
+          }}
+        >
+          <Tab key="ingreso" title="Notas de ingreso">
+            {/* Contenedor filtros */}
+            <div className="mb-4 rounded-xl border border-blue-100/70 bg-white/85 backdrop-blur-sm shadow-sm p-4">
+              <FiltrosIngresos
+                almacenes={almacenes}
+                onFiltersChange={handleFiltersChange}
+                onAlmacenChange={handleAlmacenChange}
+                ingresos={ingresos}
+                almacenSseleccionado={almacenSeleccionado}
                 tipo="ingreso"
+              />
+            </div>
+            {/* --- NO MODIFICAR BLOQUE TABLA --- */}
+            <div>
+              <RoutePermission idModulo={10} idSubmodulo={10}>
+                <TablaNotasAlmacen
+                  registros={currentRegistros}
+                  tipo="ingreso"
+                  onNotaAnulada={handleNotaAnulada}
+                />
+              </RoutePermission>
+            </div>
+          </Tab>
+
+          <Tab key="salida" title="Notas de salida">
+            <div className="mb-4 rounded-xl border border-blue-100/70 bg-white/85 backdrop-blur-sm shadow-sm p-4">
+              <FiltrosIngresos
+                almacenes={almacenes}
+                onFiltersChange={handleFiltersChange}
+                onAlmacenChange={handleAlmacenChange}
+                ingresos={salidas}
+                almacenSseleccionado={almacenSeleccionado}
+                tipo="salida"
+              />
+            </div>
+            {/* --- NO MODIFICAR BLOQUE TABLA --- */}
+            <div>
+              <TablaNotasAlmacen
+                ref={tablaSalidaRef}
+                registros={currentRegistros}
+                tipo="salida"
                 onNotaAnulada={handleNotaAnulada}
               />
-            </RoutePermission>
-          </div>
-        </Tab>
-        <Tab key="salida" title="Notas de salida">
-          <FiltrosIngresos
-            almacenes={almacenes}
-            onFiltersChange={handleFiltersChange}
-            onAlmacenChange={handleAlmacenChange}
-            ingresos={salidas}
-            almacenSseleccionado={almacenSeleccionado}
-            tipo="salida"
-          />
-          <div>
-            <TablaNotasAlmacen
-              ref={tablaSalidaRef}
-              registros={currentRegistros}
-              tipo="salida"
-              onNotaAnulada={handleNotaAnulada}
-            />
-          </div>
-        </Tab>
-      </Tabs>
+            </div>
+          </Tab>
+        </Tabs>
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default NotasAlmacen;
