@@ -6,6 +6,7 @@ import BarraSearch from "@/components/Search/Search";
 import CommandDemo from "@/components/ui/command";
 import { SidebarTrigger } from "@/components/ui/Sidebar";
 import EnhancedBreadcrumb from "@/components/ui/EnhancedBreadcrumb";
+import DeepSeekChatbot from "@/components/Chatbot/DeepSeekChatbot";
 
 // Iconos personalizados
 const MoonIcon = (props) => (
@@ -47,34 +48,37 @@ function Navbar({ routes }) {
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
   return (
-    <header className="sticky top-0 z-30 w-full" id="main-navbar">
-      <nav className="flex items-center justify-between py-3 gap-2 max-w-[1900px] mx-auto w-full">
-        {/* Izquierda: Sidebar trigger + breadcrumb + darkmode */}
-        <div className="flex items-center gap-3 min-w-0">
-          <SidebarTrigger
-            className="ml-1 rounded-lg hover:bg-gray-100 transition-all duration-150 h-9 w-9 flex items-center justify-center text-gray-700"
-          />
-          <div className="hidden md:flex items-center gap-3 min-w-0">
-            <EnhancedBreadcrumb />
-            <DarkModeSwitch />
-          </div>
-          {/* Mobile: botón menú para mostrar breadcrumb */}
-          <button className="md:hidden ml-2" onClick={toggleMenu} aria-label="Abrir menú">
-            {menuOpen ? <FaTimes className="text-gray-700" /> : <FaBars className="text-gray-700" />}
-          </button>
-        </div>
-
-        {/* Centro: Breadcrumb y switch en mobile */}
-        {menuOpen && (
-          <div className="absolute left-0 top-full w-full bg-white border-b border-gray-100 shadow-md md:hidden animate-fade-in">
-            <div className="px-4 py-3 flex items-center gap-3">
+    <>
+      <header className="sticky top-0 z-30 w-full" id="main-navbar">
+        <nav className="flex items-center justify-between py-3 gap-2 max-w-[1900px] mx-auto w-full">
+          {/* Izquierda: Sidebar trigger + breadcrumb + darkmode */}
+          <div className="flex items-center gap-3 min-w-0">
+            <SidebarTrigger
+              className="ml-1 rounded-lg hover:bg-gray-100 transition-all duration-150 h-9 w-9 flex items-center justify-center text-gray-700"
+            />
+            <div className="hidden md:flex items-center gap-3 min-w-0">
               <EnhancedBreadcrumb />
               <DarkModeSwitch />
             </div>
+            {/* Mobile: botón menú para mostrar breadcrumb */}
+            <button className="md:hidden ml-2" onClick={toggleMenu} aria-label="Abrir menú">
+              {menuOpen ? <FaTimes className="text-gray-700" /> : <FaBars className="text-gray-700" />}
+            </button>
           </div>
-        )}
-      </nav>
-    </header>
+
+          {/* Centro: Breadcrumb y switch en mobile */}
+          {menuOpen && (
+            <div className="absolute left-0 top-full w-full bg-white border-b border-gray-100 shadow-md md:hidden animate-fade-in">
+              <div className="px-4 py-3 flex items-center gap-3">
+                <EnhancedBreadcrumb />
+                <DarkModeSwitch />
+              </div>
+            </div>
+          )}
+        </nav>
+      </header>
+      <DeepSeekChatbot />
+    </>
   );
 }
 

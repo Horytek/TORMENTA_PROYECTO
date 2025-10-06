@@ -73,7 +73,10 @@ export default function CategoriaProducto({ idSucursal, year, month, week }) {
   index="name"
   valueFormatter={currencyFormatter}
   colors={donutColors}
-  // Mejor diseño de tooltip
+centerLabel={{
+  value: currencyFormatter(total),
+  className: "font-bold text-blue-700 dark:text-gray-100 text-lg"
+}}
   customTooltip={({ payload }) =>
     payload?.length ? (
       <div className="p-3 rounded-xl shadow-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 min-w-[120px]">

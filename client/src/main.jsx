@@ -31,8 +31,9 @@ const SidebarProvider = lazy(() =>
     default: module.SidebarProvider,
   }))
 );
+
 const ChatbotClientWidget = lazy(() =>
-  import("@/components/Chatbot/ChatbotClientWidget")
+  import("@/components/Chatbot/DeepSeekChatbot")
 );
 
 function ThemeClassSync() {

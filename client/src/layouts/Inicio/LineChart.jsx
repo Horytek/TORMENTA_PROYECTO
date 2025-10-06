@@ -180,20 +180,20 @@ export function LineChartComponent({ sucursal }) {
       (Number.isInteger(row.__m) && row.__y ? fmtMonth(row.__m, row.__y) : payload[0]?.payload?.date || "");
 
     return (
-      <Card shadow="md" radius="md" className="min-w-[220px] max-w-[340px] border border-default-200 bg-white/95 dark:bg-zinc-900/95 px-3 py-2 shadow-xl">
-        <CardBody className="space-y-1 p-0">
-          <div className="font-semibold text-xs text-default-900 dark:text-default-100 mb-1">{label}</div>
-          {unique.map((entry, idx) => (
-            <div key={`${entry.dataKey}-${idx}`} className="flex items-center gap-2 py-0.5">
-              <span className="inline-block w-3 h-3 rounded-full border border-default-200" style={{ backgroundColor: "#6366F1", minWidth: 12, minHeight: 12 }}></span>
-              <span className="font-medium text-xs text-default-800 dark:text-default-200">{entry.dataKey}</span>
-              <span className="ml-auto font-bold text-xs text-default-900 dark:text-default-100">
-                {valueFormatter(Number.isFinite(entry.value) ? entry.value : 0)}
-              </span>
-            </div>
-          ))}
-        </CardBody>
-      </Card>
+        <Card shadow="md" radius="md" className="min-w-[220px] max-w-[340px] border border-default-200 bg-white/95 dark:bg-zinc-900/95 px-3 py-2 shadow-xl">
+          <CardBody className="space-y-1 p-0">
+            <div className="font-semibold text-xs text-default-900 dark:text-white mb-1">{label}</div>
+            {unique.map((entry, idx) => (
+              <div key={`${entry.dataKey}-${idx}`} className="flex items-center gap-2 py-0.5">
+                <span className="inline-block w-3 h-3 rounded-full border border-default-200" style={{ backgroundColor: "#6366F1", minWidth: 12, minHeight: 12 }}></span>
+                <span className="font-medium text-xs text-default-800 dark:text-white">{entry.dataKey}</span>
+                <span className="ml-auto font-bold text-xs text-default-900 dark:text-white">
+                  {valueFormatter(Number.isFinite(entry.value) ? entry.value : 0)}
+                </span>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
     );
   };
 

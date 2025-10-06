@@ -128,7 +128,7 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
             </Tooltip>
           </div>
         </div>
-        <p className="text-sm text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+        <p className=" text-tremor-content dark:text-dark-tremor-content">
           Evolución de ventas en el periodo seleccionado
         </p>
       </CardHeader>

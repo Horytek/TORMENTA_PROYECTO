@@ -658,8 +658,10 @@ const getCantidadVentasPorSubcategoria = async (req, res) => {
 
 const getCantidadVentasPorProducto = async (req, res) => {
   let connection;
-  const { id_sucursal, year, month, week } = req.query;
+  // Se añade 'limit' al destructuring para evitar ReferenceError
+  const { id_sucursal, year, month, week, limit } = req.query;
   const id_tenant = req.id_tenant;
+
 
   try {
     connection = await getConnection();
@@ -722,7 +724,7 @@ const getCantidadVentasPorProducto = async (req, res) => {
 
     const limitNum = limit ? Math.max(parseInt(limit, 10) || 0, 0) : 0;
     if (limitNum > 0) {
-      query += `\r\n      LIMIT ?\r\n    `;
+      query += ` LIMIT ?`;
       params.push(limitNum);
     }
 
@@ -748,6 +750,8 @@ const getAnalisisGananciasSucursales = async (req, res) => {
       SELECT 
           s.nombre_sucursal AS sucursal,
           DATE_FORMAT(v.f_venta, '%b %y') AS mes,
+          YEAR(v.f_venta) AS anio,
+          MONTH(v.f_venta) AS mes_num,
           SUM(dv.total) AS ganancias
       FROM 
           sucursal s
@@ -758,9 +762,9 @@ const getAnalisisGananciasSucursales = async (req, res) => {
       WHERE v.estado_venta !=0
         AND v.id_tenant = ?
       GROUP BY 
-          s.id_sucursal, mes
+          s.id_sucursal, s.nombre_sucursal, anio, mes_num, mes
       ORDER BY 
-          YEAR(v.f_venta), MONTH(v.f_venta), s.id_sucursal
+          anio, mes_num, s.id_sucursal
     `;
 
     const [result] = await connection.query(query, [id_tenant]);
@@ -772,7 +776,7 @@ const getAnalisisGananciasSucursales = async (req, res) => {
     }
   }   finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+        connection.release();
     }
   }
 };
@@ -1128,9 +1132,21 @@ const obtenerRegistroVentas = async (req, res) => {
   try {
     connection = await getConnection();
     const id_tenant = req.id_tenant;
+    const { startDate: rvStart, endDate: rvEnd, id_sucursal: rvSucursal } = req.query;
 
-    // Consulta principal de ventas filtrando por id_tenant
-    let query = `
+    const params = [id_tenant];
+    const extra = [];
+
+    if (rvSucursal) {
+      extra.push('AND v.id_sucursal = ?');
+      params.push(rvSucursal);
+    }
+    if (rvStart && rvEnd) {
+      extra.push('AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)');
+      params.push(rvStart, rvEnd);
+    }
+
+    const query = `
       SELECT 
         ROW_NUMBER() OVER (ORDER BY v.id_venta) AS numero_correlativo,
         v.f_venta AS fecha,
@@ -1150,81 +1166,43 @@ const obtenerRegistroVentas = async (req, res) => {
         ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18, 2) AS importe,
         ROUND((SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18) * 0.18, 2) AS igv,
         ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento), 2) AS total
-      FROM 
-        venta v
-      INNER JOIN 
-        detalle_venta dv ON v.id_venta = dv.id_venta
-      INNER JOIN 
-        comprobante c ON c.id_comprobante = v.id_comprobante
-      INNER JOIN 
-        tipo_comprobante tc ON tc.id_tipocomprobante = c.id_tipocomprobante
-      INNER JOIN 
-        cliente cl ON cl.id_cliente = v.id_cliente
-      INNER JOIN
-        sucursal s ON s.id_sucursal = v.id_sucursal
+      FROM venta v
+      INNER JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+      INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante
+      INNER JOIN tipo_comprobante tc ON tc.id_tipocomprobante = c.id_tipocomprobante
+      INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
+      INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
       WHERE v.estado_venta != 0
         AND v.id_tenant = ?
+        ${extra.join(' ')}
       GROUP BY 
-        v.id_venta, v.f_venta, s.nombre_sucursal, s.ubicacion, 
+        v.id_venta, v.f_venta, s.nombre_sucursal, s.ubicacion,
         cl.dni, cl.ruc, cl.nombres, cl.apellidos, cl.razon_social,
         c.num_comprobante, tc.nom_tipocomp
-      ORDER BY 
-        v.id_venta
+      ORDER BY v.id_venta
     `;
-    const params = [id_tenant];
-    const { startDate: rvStart, endDate: rvEnd, id_sucursal: rvSucursal } = req.query;
-    //
-    // Añadir filtros opcionales
-    if (rvSucursal) {
-      query = query.replace('ORDER BY', ' AND v.id_sucursal = ? ORDER BY');
-      params.push(rvSucursal);
-    }
-    if (rvStart && rvEnd) {
-      // handled below in queryFinal composition
-    }
 
-    // Compose final query with extra WHERE parts before GROUP BY
-    let extraWhere = '';
-    if (rvSucursal) {
-      extraWhere += ' AND v.id_sucursal = ?';
-      params.push(rvSucursal);
-    }
-    if (rvStart && rvEnd) {
-      extraWhere += ' AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)';
-      params.push(rvStart, rvEnd);
-    }
-    const queryFinal = query.replace('GROUP BY', `${extraWhere}\r\n      GROUP BY`);
+    const [resultados] = await connection.query(query, params);
 
-    const [resultados] = await connection.query(queryFinal, params);
-
-    // Mapear resultados
-    const registroVentas = resultados.map((row) => ({
-      numero_correlativo: row.numero_correlativo,
-      fecha: row.fecha,
-      sucursal: row.sucursal,
-      ubicacion_sucursal: row.ubicacion_sucursal,
-      documento_cliente: row.documento_cliente,
-      nombre_cliente: row.nombre_cliente,
-      num_comprobante: row.num_comprobante,
-      tipo_comprobante: row.tipo_comprobante,
-      importe: parseFloat(row.importe) || 0.0,
-      igv: parseFloat(row.igv) || 0.0,
-      total: parseFloat(row.total) || 0.0,
+    const registroVentas = resultados.map(r => ({
+      numero_correlativo: r.numero_correlativo,
+      fecha: r.fecha,
+      sucursal: r.sucursal,
+      ubicacion_sucursal: r.ubicacion_sucursal,
+      documento_cliente: r.documento_cliente,
+      nombre_cliente: r.nombre_cliente,
+      num_comprobante: r.num_comprobante,
+      tipo_comprobante: r.tipo_comprobante,
+      importe: parseFloat(r.importe) || 0,
+      igv: parseFloat(r.igv) || 0,
+      total: parseFloat(r.total) || 0,
     }));
 
-    res.json({
-      code: 1,
-      data: registroVentas,
-      message: "Registro de ventas obtenido correctamente",
-    });
+    res.json({ code: 1, data: registroVentas, message: "Registro de ventas obtenido correctamente" });
   } catch (error) {
-    res.status(500).json({
-      message: "Error al obtener el registro de ventas"
-    });
+    res.status(500).json({ message: "Error al obtener el registro de ventas" });
   } finally {
-    if (connection) {
-      connection.release();
-    }
+    if (connection) connection.release();
   }
 };
 

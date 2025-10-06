@@ -7,7 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { getModulosConSubmodulos } from '@/services/rutas.services';
 
 import { moduleComponentMap, submoduleComponentMap } from '@/utils/componentMapping';
-import ChatbotClientWidget from "@/components/Chatbot/ChatbotClientWidget";
+import DeepSeekOpenRouterChatbot from "@/components/Chatbot/DeepSeekChatbot";
 // Contexts
 import { CategoriaContextProvider } from '@/context/Categoria/CategoriaProvider';
 import { SubcategoriaContextProvider } from '@/context/Subcategoria/SubcategoriaProvider';
@@ -292,7 +292,7 @@ function Dashboard() {
 
         {/* Widget global del chatbot (siempre visible sobre el contenido) */}
         
-        <ChatbotClientWidget routes={routes} />
+        <DeepSeekOpenRouterChatbot routes={routes} />
       </div>
     </div>
   );

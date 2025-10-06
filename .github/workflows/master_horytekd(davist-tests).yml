@@ -30,6 +30,9 @@ jobs:
         working-directory: client
         run: |
           echo VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }} >> .env
+          echo VITE_OPENROUTER_API_KEY=${{ secrets.VITE_OPENROUTER_API_KEY }} >> .env
+          echo VITE_SITE_URL=${{ secrets.VITE_SITE_URL }} >> .env
+          echo VITE_SITE_TITLE=${{ secrets.VITE_SITE_TITLE }} >> .env
 
       - name: Build client
         working-directory: client

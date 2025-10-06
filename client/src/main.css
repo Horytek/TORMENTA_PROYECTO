@@ -867,3 +867,24 @@ html.dark body:not(.landing-body) #root {
   color: #f8fafc !important;
   background-color: #36364a !important;
 }
+
+.dark .tremor-DonutChart-centerLabel,
+.dark .tremor-DonutChart-center-label,
+.dark [data-testid="donut-chart-center-label"],
+.dark .fill-dark-tremor-content-emphasis,
+.dark .recharts-layer text,
+.dark .recharts-layer > text,
+.dark .recharts-layer > tspan,
+.dark .recharts-layer tspan,
+.dark .recharts-layer text[fill],
+.dark .tremor-DonutChart svg text {
+  fill: #fff !important;
+  color: #fff !important;
+}
+
+.dark .tremor-CardBody, 
+.dark .tremor-Card, 
+.dark .recharts-default-tooltip, 
+.dark .recharts-layer text {
+  color: #fff !important;
+}
