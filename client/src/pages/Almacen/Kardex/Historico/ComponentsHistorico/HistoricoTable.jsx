@@ -119,7 +119,7 @@ const precioUnitActual = (() => {
       {/* Contenedor de Cards en una fila */}
       <div className="flex flex-wrap gap-6">
         {/* Card Histórico */}
-        <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
+        <Card className="relative rounded-2xl shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
           <CardHeader className="flex items-center gap-3 mb-2 p-0">
             <Chip color="primary" variant="flat" className="font-bold text-base px-2 py-1 bg-cyan-50 text-cyan-700 flex items-center gap-2">
               HISTÓRICO
@@ -167,7 +167,7 @@ const precioUnitActual = (() => {
         </Card>
 
         {/* Card Actual */}
-        <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
+        <Card className="relative rounded-2xl shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
           <CardHeader className="flex items-center gap-3 mb-2 p-0">
             <Chip color="secondary" variant="flat" className="font-bold text-base px-2 py-1 bg-fuchsia-50 text-fuchsia-600 flex items-center gap-2">
               ACTUAL
@@ -214,7 +214,7 @@ const precioUnitActual = (() => {
         </Card>
 
         {/* Card Financiero */}
-        <Card className="relative rounded-2xl border shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
+        <Card className="relative rounded-2xl shadow-xl bg-white min-w-[340px] max-w-[420px] flex-1 p-6">
           <CardHeader className="flex items-center gap-3 mb-2 p-0">
             <Chip color="success" variant="flat" className="font-bold text-base px-2 py-1 bg-emerald-50 text-emerald-700 flex items-center gap-2">
               FINANCIERO
@@ -329,7 +329,7 @@ const precioUnitActual = (() => {
               }}
               aria-label="Filas por página"
               classNames={{
-                trigger: "bg-gray-50 border border-gray-300 text-center rounded-lg",
+                trigger: "bg-gray-50 border-gray-300 text-center rounded-lg",
                 popoverContent: "bg-white"
               }}
               size="sm"

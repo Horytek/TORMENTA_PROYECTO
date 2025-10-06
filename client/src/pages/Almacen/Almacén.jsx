@@ -38,36 +38,31 @@ const Kardex = () => {
     const [empresaData, setEmpresaData] = useState(null);
 
     // Inicializar almacenSeleccionado con estado global
-    const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
-        if (almacenGlobal && almacenes.length > 0) {
-            return almacenes.find(a => a.id === parseInt(almacenGlobal)) || { id: '', sucursal: '' };
-        }
-        return { id: '', sucursal: '' };
-    });
+    const [almacenSeleccionado, setAlmacenSeleccionado] = useState({ id: "%", almacen: "Seleccione..." });
+
 
     const [stockFilter, setStockFilter] = useState(''); // filtro stock
 
     // Filtrar almacenes según rol y sucursal
     const almacenesFiltrados =
-      rolUsuario !== 1
+      rolUsuario !== 1 && almacenSeleccionado.id !== "%"
         ? almacenes.filter(almacen => almacen.sucursal === sucursalSeleccionada)
         : almacenes;
 
-useEffect(() => {
-  // Lógica de almacenes
-  if (almacenes.length > 0) {
-    if (almacenGlobal) {
-      const almacen = almacenes.find(a => a.id === Number(almacenGlobal));
-      if (almacen) {
-        setAlmacenSeleccionado(almacen);
-      }
-    } else {
-      const primero = almacenes[0];
-      setAlmacenSeleccionado(primero);
-      setAlmacenGlobal(String(primero.id));
-    }
-  }
-}, [almacenGlobal, almacenes, setAlmacenGlobal]);
+      useEffect(() => {
+        // Solo inicializa si el global no es "%" y existe en la lista
+        if (almacenGlobal && almacenes.length > 0 && almacenGlobal !== "%") {
+          const almacen = almacenes.find(a => a.id === Number(almacenGlobal));
+          if (almacen) {
+            setAlmacenSeleccionado(almacen);
+          }
+        }
+        // Si no hay almacén global, deja la opción por defecto
+        else if (!almacenGlobal && almacenes.length > 0) {
+          setAlmacenSeleccionado({ id: "%", almacen: "Seleccione..." });
+          setAlmacenGlobal("%");
+        }
+      }, [almacenGlobal, almacenes, setAlmacenGlobal]);
 
 useEffect(() => {
   // Lógica de empresa
@@ -151,9 +146,15 @@ useEffect(() => {
 
     // Cuando se cambia almacen en UI
     const handleAlmacenChange = (event) => {
-        const nuevoAlmacen = almacenes.find(a => a.id === parseInt(event.target.value)) || { id: '', sucursal: '' };
+      const value = event.target.value;
+      if (value === "%") {
+        setAlmacenSeleccionado({ id: "%", almacen: "Todos los almacenes" });
+        setAlmacenGlobal("%");
+      } else {
+        const nuevoAlmacen = almacenes.find(a => a.id === parseInt(value)) || { id: '', sucursal: '' };
         setAlmacenSeleccionado(nuevoAlmacen);
         setAlmacenGlobal(nuevoAlmacen.id.toString());
+      }
     };
 
 const generatePDFKardex = async (kardexItems, almacenSeleccionado) => {
@@ -415,23 +416,24 @@ return (
       {/* Filtros */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          <Select
-            id="almacen"
-            className="w-full"
-            onChange={handleAlmacenChange}
-            selectedKeys={[almacenSeleccionado.id?.toString()]}
-            classNames={{
-              trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
-              value: "text-blue-900",
-            }}
-          >
-            {rolUsuario === '1' && <SelectItem key="%" value="%">Seleccione...</SelectItem>}
-            {almacenesFiltrados.map((almacen) => (
-              <SelectItem key={almacen.id} value={almacen.id}>
-                {almacen.almacen}
-              </SelectItem>
-            ))}
-          </Select>
+        <Select
+          id="almacen"
+          className="w-full"
+          onChange={handleAlmacenChange}
+          selectedKeys={[almacenSeleccionado.id?.toString()]}
+          classNames={{
+            trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
+            value: "text-blue-900",
+          }}
+        >
+          {/* Opción por defecto*/}
+          <SelectItem key="%" value="%">Seleccione...</SelectItem>
+          {almacenesFiltrados.map((almacen) => (
+            <SelectItem key={almacen.id} value={almacen.id}>
+              {almacen.almacen}
+            </SelectItem>
+          ))}
+        </Select>
           <Input
             startContent={<IoIosSearch className='w-4 h-4 text-blue-400' />}
             type="text"

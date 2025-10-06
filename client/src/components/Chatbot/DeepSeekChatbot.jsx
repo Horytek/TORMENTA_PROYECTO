@@ -290,18 +290,18 @@ Historial breve: ${historySummary || "inicio"}.
   }, [buildSystemContext, systemHash]);
 
   // =================== CARGA MÓDULOS ===================
-  useEffect(() => {
-    if (!isChatOpen || modulesSnapshot.length) return;
-    (async () => {
-      try {
-        const data = await getModulosConSubmodulos();
-        if (Array.isArray(data?.data)) setModulesSnapshot(data.data);
-        else if (Array.isArray(data)) setModulesSnapshot(data);
-      } catch {
-        setModulesSnapshot([]);
-      }
-    })();
-  }, [isChatOpen, modulesSnapshot.length]);
+useEffect(() => {
+  if ((!isChatOpen && !isSearchOpen) || modulesSnapshot.length) return;
+  (async () => {
+    try {
+      const data = await getModulosConSubmodulos();
+      if (Array.isArray(data?.data)) setModulesSnapshot(data.data);
+      else if (Array.isArray(data)) setModulesSnapshot(data);
+    } catch {
+      setModulesSnapshot([]);
+    }
+  })();
+}, [isChatOpen, isSearchOpen, modulesSnapshot.length]);
 
 
   // Inyectar system al abrir
@@ -310,10 +310,22 @@ Historial breve: ${historySummary || "inicio"}.
   }, [isChatOpen, ensureSystemMessage]);
 
     // Rutas efectivas mínimas para el buscador (placeholder simple)
-  const effectiveRoutes = modulesSnapshot.map(m => ({
-    name: m.nombre,
+const effectiveRoutes = modulesSnapshot.flatMap(m => {
+  const main = {
+    name: m.nombre || m.ruta || m.path || "Sin nombre",
     path: m.ruta || m.path || "/"
-  }));
+  };
+  const subs = Array.isArray(m.submodulos)
+    ? m.submodulos.map(sub => ({
+        name: sub.nombre_sub
+          ? `${m.nombre} > ${sub.nombre_sub}`
+          : sub.ruta || sub.ruta_submodulo || sub.path || "Sin nombre",
+        path: sub.ruta || sub.ruta_submodulo || sub.path || "/"
+      }))
+    : [];
+  return [main, ...subs];
+});
+
 
   // =================== HISTORIAL ===================
   const pruneHistory = (all) => {

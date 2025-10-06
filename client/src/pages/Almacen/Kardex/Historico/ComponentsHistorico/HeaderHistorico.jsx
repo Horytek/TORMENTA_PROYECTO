@@ -205,14 +205,14 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
   };
 
 return (
-    <Card className="relative overflow-hidden rounded-2xl border-1 shadow-xl bg-white dark:bg-zinc-900 transition-all mb-4">
+    <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white dark:bg-zinc-900 transition-all mb-4">
       <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-blue-50/80 to-cyan-50/60 dark:from-blue-900/40 dark:to-cyan-900/20 rounded-t-2xl">
         <div className="flex items-center gap-4">
           {logoBase64 && (
             <img
               src={logoBase64}
               alt="Logo empresa"
-              className="w-20 h-20 object-contain rounded-lg border border-gray-200 bg-white"
+              className="w-20 h-20 object-contain rounded-lg border-gray-200 bg-white"
               style={{ background: "#fff" }}
             />
           )}
