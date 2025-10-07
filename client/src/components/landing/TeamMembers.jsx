@@ -207,10 +207,10 @@ export const TeamMembers = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-2xl">AI</span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Armando Infante</h3>
-              <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Especialista en Bases de Datos</p>
+              <h3 className="text-xl font-bold text-white mb-2">Julio Castañeda</h3>
+              <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Desarrollador Full Stack Senior</p>
               <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
-              <p className="text-secondary-text text-sm leading-relaxed">Responsable del diseño y optimización de bases de datos. Garantiza el rendimiento y la integridad de los datos.</p>
+              <p className="text-secondary-text text-sm leading-relaxed">Especialista en desarrollo frontend y backend. Contribuye al desarrollo de interfaces y lógica del servidor.</p>
             </div>
           </motion.div>
         </motion.div>
@@ -236,10 +236,10 @@ export const TeamMembers = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-secondary-color to-primary-color rounded-full mb-6 flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-2xl">JC</span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">Julio Castañeda</h3>
-                <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Especialista en Soporte Técnico</p>
+                <h3 className="text-xl font-bold text-white mb-2">Armando Infante</h3>
+                <p className="text-secondary-color font-semibold mb-4 text-sm uppercase tracking-wide">Especialista en Base de datos</p>
                 <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-4"></div>
-                <p className="text-secondary-text text-sm leading-relaxed">Responsable del soporte al cliente y la resolución de incidencias. Asegura la mejor experiencia de usuario.</p>
+                <p className="text-secondary-text text-sm leading-relaxed">Responsable del diseño y optimización de bases de datos. Garantiza el rendimiento y la integridad de los datos.</p>
               </div>
             </motion.div>
             
