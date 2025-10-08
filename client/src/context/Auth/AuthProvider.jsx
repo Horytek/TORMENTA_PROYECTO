@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       const { data } = await loginRequest(credentials); // El backend debe enviar la cookie HTTPOnly aquí
       if (data?.success && data.data) {
         // No guardar token, solo usuario
-        localStorage.setItem("user", JSON.stringify(data.data));
+        //sessionStorage.setItem("user", JSON.stringify(data.data));
         setUser(data.data);
         setUserRaw(data.data);
         setIsAuthenticated(true);

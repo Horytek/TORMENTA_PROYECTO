@@ -17,7 +17,7 @@ const pool = mysql.createPool({
 const getConnection = async () => {
     try {
         const connection = await pool.getConnection();
-        localStorage.setItem("dbConnection exitosa", JSON.stringify(connection));
+        //console.log("Connected to the database");
         return connection;
     } catch (error) {
         console.error("Error connecting to the database:", error);
