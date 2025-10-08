@@ -112,10 +112,8 @@ const login = async (req, res) => {
             res.status(400).json({ success: false, message: 'La contraseña ingresada no es correcta' });
         }
 
-        } catch (error) {
-            console.error("[auth.login] error:", error.code, error.message, error.stack);
-            res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
-        } finally {
+    } catch (error) {
+        res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
     } finally {
         if (connection) {
             connection.release();
