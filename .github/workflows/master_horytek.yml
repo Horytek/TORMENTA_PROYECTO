@@ -14,14 +14,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-            node-version: '20.x'
-            cache: 'npm'
-            cache-dependency-path: |
-              package-lock.json
-              client/package-lock.json
-
-      - name: Install backend deps
-        run: npm ci
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            client/package-lock.json
 
       - name: Install frontend deps
         working-directory: client
@@ -41,35 +38,21 @@ jobs:
         working-directory: client
         run: NODE_OPTIONS=--max-old-space-size=3072 npm run build
 
-      # (Temporal) NO prune hasta confirmar dependencias runtime
-      # - name: Prune dev deps backend
-      #   run: npm prune --production
-
-      - name: Remove frontend node_modules
-        run: rm -rf client/node_modules
-
-      - name: Prepare artifact
+      - name: Prepare artifact (fuente + dist sin node_modules)
         run: |
           mkdir artifact
-          cp    artifact/
+          cp package.json package-lock.json index.js artifact/
           cp -r src artifact/src
           mkdir -p artifact/client
           cp -r client/dist artifact/client/dist
           echo "Contenido artifact:"
           find artifact -maxdepth 3 -type f | head -n 40
 
-      - name: Create zip (Run From Package)
-        run: |
-          cd artifact
-            zip -r ../app.zip .
-          cd ..
-        shell: bash
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: app.zip
+          path: artifact
           retention-days: 2
 
   deploy:
@@ -89,9 +72,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_72F8E139CBDE4707B8BB8482CEE8F717 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_38F8D2B441E44FA0A34B88EA1CD8D237 }}
 
-      - name: Deploy zip
+      - name: Deploy (Oryx build en Azure)
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'horytek'
           slot-name: 'Production'
-          package: app.zip
+          package: .
