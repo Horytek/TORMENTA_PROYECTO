@@ -25,16 +25,16 @@ const ESTADO_MAP = {
 };
 
 const TIPO_COMPROBANTE_COLORS = {
-  Factura: 'bg-orange-100 text-orange-700 border border-orange-200',
-  Boleta: 'bg-purple-100 text-purple-700 border border-purple-200',
-  Default: 'bg-blue-100 text-blue-700 border border-blue-200'
+  Factura: 'bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-800/60',
+  Boleta: 'bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-200 dark:border-purple-800/60',
+  Default: 'bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800/60'
 };
 
 const ESTADO_STYLES = {
-  Aceptada: { bg: 'bg-green-100', text: 'text-green-700', icon: 'fa-check-circle' },
-  'En proceso': { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'fa-hourglass-half' },
-  Anulada: { bg: 'bg-rose-100', text: 'text-rose-700', icon: 'fa-times-circle' },
-  Default: { bg: 'bg-gray-100', text: 'text-gray-700', icon: 'fa-info-circle' }
+  Aceptada: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-200', icon: 'fa-check-circle' },
+  'En proceso': { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-200', icon: 'fa-hourglass-half' },
+  Anulada: { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-700 dark:text-rose-200', icon: 'fa-times-circle' },
+  Default: { bg: 'bg-gray-100 dark:bg-gray-800/40', text: 'text-gray-700 dark:text-gray-200', icon: 'fa-info-circle' }
 };
 
 const TablaVentas = ({
@@ -230,15 +230,15 @@ const handleRowClick = (e, venta) => {
         </TableCell>
         <TableCell className="text-center text-[13px] p-2">
           <Tooltip content={venta.estado === 'Anulada' ? `Usuario que dio de baja: ${venta.u_modifica || 'N/A'}` : `Estado: ${venta.estado}`}>
-            <span
-              className={`
-                inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold
-                ${estadoStyle.bg} ${estadoStyle.text} border
-                ${venta.estado === 'Aceptada' ? 'border-green-200' : venta.estado === 'En proceso' ? 'border-yellow-200' : venta.estado === 'Anulada' ? 'border-rose-200' : 'border-gray-200'}
-                min-w-[90px] justify-center
-              `}
-              style={{ fontSize: "13px" }}
-            >
+              <span
+                className={`
+                  inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold
+                  ${estadoStyle.bg} ${estadoStyle.text} border
+                  ${venta.estado === 'Aceptada' ? 'border-green-200 dark:border-green-800/60' : venta.estado === 'En proceso' ? 'border-yellow-200 dark:border-yellow-800/60' : venta.estado === 'Anulada' ? 'border-rose-200 dark:border-rose-800/60' : 'border-gray-200 dark:border-gray-700/60'}
+                  min-w-[90px] justify-center
+                `}
+                style={{ fontSize: "13px" }}
+              >
               {venta.estado === 'Aceptada' && (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -358,7 +358,7 @@ const handleRowClick = (e, venta) => {
             <span className="block text-xs text-violet-700 font-semibold">Fecha</span>
             <span className="font-bold text-violet-900 text-lg">{venta.fechaEmision}</span>
             <div className="mt-1">
-              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ESTADO_STYLES[venta.estado]?.bg || "bg-gray-100"} ${ESTADO_STYLES[venta.estado]?.text || "text-gray-700"}`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ESTADO_STYLES[venta.estado]?.bg || "bg-gray-100 dark:bg-gray-800/40"} ${ESTADO_STYLES[venta.estado]?.text || "text-gray-700 dark:text-gray-200"}`}>
                 {venta.estado}
               </span>
             </div>
