@@ -15,7 +15,6 @@ const login = async (req, res) => {
         const user = { usuario: usuario.trim(), password: password.trim() };
         connection = await getConnection();
 
-        // FIX: params siempre como array (mysql2 v3 es estricto)
         const [userFound] = await connection.query(
             "SELECT 1 FROM usuario WHERE usua = ? AND estado_usuario = 1",
             [user.usuario]
@@ -134,7 +133,14 @@ const login = async (req, res) => {
 
     } catch (error) {
         console.error("[auth.login] error:", error.code || error.message);
-        res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
+        // Modo diagnóstico: expone el código del error SOLO si DEBUG_AUTH=1
+        if (process.env.DEBUG_AUTH === "1") {
+          return res.status(500).json({
+            code: 0,
+            debug: { code: error.code || null, msg: error.sqlMessage || error.message || "unknown" }
+          });
+        }
+        return res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
     } finally {
         if (connection) connection.release();
     }
