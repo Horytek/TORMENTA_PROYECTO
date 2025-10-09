@@ -51,12 +51,27 @@ export default function DeepSeekOpenRouterChatbot() {
   // Snapshot UI
   const [uiSnapshot, setUiSnapshot] = useState("");
   const [uiSnapshotHash, setUiSnapshotHash] = useState("");
+  const [activePath, setActivePath] = useState("");
+  const [activeCrumbs, setActiveCrumbs] = useState([]);
 
   const chatEndRef = useRef(null);
   const createdAtRef = useRef(new Date().toISOString()); // estable para el system prompt
 
   // control para no repetir la sugerencia muy seguido
   const visualTipCooldownRef = useRef(0);
+
+  useEffect(() => {
+    try {
+      const path = typeof window !== "undefined" ? window.location.pathname : "";
+      setActivePath(path || "");
+      const crumbs = Array.from(
+        document.querySelectorAll('[data-breadcrumb] li, nav[aria-label="breadcrumb"] li, .breadcrumb li')
+      )
+        .map((el) => (el.textContent || "").trim())
+        .filter(Boolean);
+      setActiveCrumbs(crumbs.slice(0, 8));
+    } catch {}
+  }, [isChatOpen]); // al abrir el chat basta
 
   // Utils
   const scrollToEnd = useCallback(() => {
@@ -71,6 +86,9 @@ export default function DeepSeekOpenRouterChatbot() {
 
   function detectEntity(question) {
     const q = question.toLowerCase();
+    if (/(inventario|almacen|almac[eé]n|kardex|ingreso|salida)/i.test(q)) return { type: "inventory" };
+    if (/(compra|compras|orden de compra|oc|proveedor)/i.test(q)) return { type: "purchases" };
+    if (/(permiso|permisos|rol|roles)/i.test(q)) return { type: "permissions" };
     if (q.includes("stock") || q.includes("producto")) return { type: "product" };
     if (q.includes("usuario") || q.includes("permiso")) return { type: "user" };
     if (/(venta|factura|boleta|comprobante)/i.test(q)) return { type: "sales" };
@@ -80,22 +98,12 @@ export default function DeepSeekOpenRouterChatbot() {
   async function fetchDBContext(kind) {
     if (!includeDBContext || !kind) return "";
     try {
-      switch (kind.type) {
-        case "sales": {
-          const { data } = await axios.get("/reporte/ventas/top-productos", { params: { limit: 3 } }).catch(() => ({ data: null }));
-          if (Array.isArray(data?.data) && data.data.length) {
-            const mini = data.data.slice(0, 3).map(r => `${r.descripcion || r.producto || "Item"}=${r.ventas || r.total || "-"}`).join(", ");
-            return `Resumen ventas recientes: ${mini}`;
-          }
-          return "";
-        }
-        case "product":
-          return "Contexto producto: stock_min, stock_actual y permisos de ajuste dependen del rol.";
-        case "user":
-          return "Contexto permisos: switches (modo oscuro / apariencia) visibles sólo con rol adecuado.";
-        default:
-          return "";
-      }
+      // Nuevo endpoint RAG (ver backend)
+      const { data } = await axios.get("/help/mini-context", {
+        params: { entity: kind.type },
+      });
+      if (data?.ok && data?.text) return String(data.text).slice(0, 600);
+      return "";
     } catch {
       return "";
     }
@@ -160,16 +168,75 @@ export default function DeepSeekOpenRouterChatbot() {
     }
   }
 
-    // helper para saber si ya hay contexto visual disponible
+   // --- FAQs locales canónicas (sin llamar a la IA) ---
   const hasVisualContext = useCallback(() => {
     return Boolean(screenDesc?.trim()) || (autoUISnapshot && uiSnapshot);
   }, [screenDesc, autoUISnapshot, uiSnapshot]);
 
-  // detectar preguntas que suelen requerir contexto de pantalla
   function needsVisualContext(text = "") {
     const q = (text || "").toLowerCase();
-    return /(\b(donde|dónde|como|cómo)\b.*(esta|está|encuentro|hago|voy|ingreso|llego))|no encuentro|no aparece|en que modulo|en qué módulo|pantalla|pasos|¿dónde|¿cómo/i.test(q);
+    return /(\b(donde|dónde|como|cómo)\b.*(esta|está|encuentro|hago|voy|ingreso|llego))|no encuentro|no aparece|en (que|qué) m[óo]dulo|pantalla|pasos|¿dónde|¿cómo/i.test(q);
   }
+
+  // Buscar entrada en el menú real para una palabra clave
+  const findEntryByKeyword = (kw) => {
+    const K = (kw || "").toLowerCase();
+    let best = null;
+
+    const match = (s) => (s || "").toLowerCase().includes(K);
+
+    for (const m of modulesSnapshot || []) {
+      if (match(m?.nombre) || match(m?.ruta) || match(m?.path)) {
+        best = { name: m?.nombre || "Módulo", path: m?.ruta || m?.path || "/" };
+        break;
+      }
+      for (const s of m?.submodulos || []) {
+        if (match(s?.nombre_sub) || match(s?.ruta) || match(s?.ruta_submodulo) || match(s?.path)) {
+          best = { name: `${m?.nombre || "Módulo"} > ${s?.nombre_sub || "Submódulo"}`, path: s?.ruta || s?.ruta_submodulo || s?.path || "/" };
+          break;
+        }
+      }
+      if (best) break;
+    }
+    return best;
+  };
+
+  const detectPermissionsIntent = (text = "") => {
+    const q = (text || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return /(permiso|permisos|roles y permisos|rol(es)?.*permiso|donde.*permiso|donde.*rol|seccion.*permiso|modulo.*permiso)/i.test(q);
+  };
+
+  const buildCanonicalLocationAnswer = (entryName, route, visible) => {
+    const base = visible
+      ? `Está en el menú: ${entryName} (${route}).`
+      : `Esa sección no está visible para tu usuario. Ubicación habitual: ${entryName} (${route}).`;
+    const hint = "Si no aparece, solicita a un administrador que te habilite el acceso.";
+    return `${base}\n${hint}`;
+  };
+
+  const handleLocalFaqs = (text = "") => {
+    // Permisos primero (canónico)
+    if (detectPermissionsIntent(text)) {
+      const entry = findEntryByKeyword("permis");
+      const route = entry?.path || "/configuracion/roles";
+      const name = entry?.name || "Configuración → Roles y permisos";
+      const visible = Boolean(entry);
+      return buildCanonicalLocationAnswer(name, route, visible);
+    }
+
+    // Intentos de “¿dónde está X?” genérico
+    const navLike = /(d[oó]nde|donde|en que|en qué|no encuentro|no aparece)/i.test(text || "");
+    if (navLike) {
+      const keywords = ["venta", "ventas", "almac", "kardex", "cliente", "proveedor", "sunat", "roles", "permis"];
+      for (const k of keywords) {
+        if ((text || "").toLowerCase().includes(k)) {
+          const entry = findEntryByKeyword(k);
+          if (entry) return buildCanonicalLocationAnswer(entry.name, entry.path, true);
+        }
+      }
+    }
+    return null;
+  };
 
   // Cargar módulos una sola vez cuando se abra chat/buscador (evita bucles)
   useEffect(() => {
@@ -210,6 +277,8 @@ export default function DeepSeekOpenRouterChatbot() {
       }).join("\n") || "Sin módulos cargados.";
 
     const uiLine = uiSnapshot ? `\nVista detectada: ${uiSnapshot}` : "";
+    const pathLine = activePath ? `\nRuta actual: ${activePath}` : "";
+    const crumbsLine = activeCrumbs?.length ? `\nBreadcrumbs: ${activeCrumbs.join(" > ")}` : "";
 
     return `
 Eres un asistente integrado en HoryCore ERP.
@@ -217,10 +286,10 @@ Estilo: conversacional, breve y natural. Evita listas numeradas salvo que pidan 
 No inventes módulos ni cifras. Si algo no aparece, sugiere ruta o permisos.
 Usuario: Rol=${rol || "N/D"} | Sucursal=${sucursal || "N/D"} | Empresa=${id_empresa || "-"} | Tenant=${id_tenant || "-"} | Sesión=${createdAtRef.current}
 Mapa funcional:
-${modsAbstract}${uiLine}
+${modsAbstract}${uiLine}${pathLine}${crumbsLine}
 Historial breve: ${historySummary || "inicio"}.
 `.trim();
-  }, [rol, sucursal, id_empresa, id_tenant, modulesSnapshot, historySummary, uiSnapshot]);
+  }, [rol, sucursal, id_empresa, id_tenant, modulesSnapshot, historySummary, uiSnapshot, activePath, activeCrumbs]);
 
   const ensureSystemMessage = useCallback(() => {
     const ctx = buildSystemContext();
@@ -301,25 +370,34 @@ Historial breve: ${historySummary || "inicio"}.
   };
 
   // Envío
-const sendMessage = async (rawText) => {
+  const sendMessage = async (rawText) => {
     const text = (rawText ?? input).trim();
     if (!text || loading) return;
     setLoading(true);
     setErrorMsg("");
 
-    // NUEVO: si la pregunta indica navegación/proceso y no hay contexto visual, sugiera primero
+    // Interceptar FAQs locales (sin IA)
+    const local = handleLocalFaqs(text);
+    if (local) {
+      setMessages(prev => [...prev, { role: "user", content: text }, { role: "assistant", content: local }]);
+      setLoading(false);
+      setInput("");
+      return;
+    }
+
+    // Sugerir descripción visual si aplica
     if (!hasVisualContext() && needsVisualContext(text) && Date.now() - visualTipCooldownRef.current > 90_000) {
-      setShowScreenDesc(true); // abre el área para escribir la descripción
-      const tip =
-        "Sugerencia: para orientarme mejor en tu pantalla, pulsa “Añadir descripción visual” y escribe brevemente lo que ves (ej.: «menú lateral con Inicio y Ventas; botón Nueva venta arriba»). Luego envíame tu pregunta otra vez.";
+      setShowScreenDesc(true);
+      const tip = "Sugerencia: para orientarme mejor en tu pantalla, pulsa “Añadir descripción visual” y escribe brevemente lo que ves (ej.: «menú lateral con Inicio y Ventas; botón Nueva venta arriba»). Luego envíame tu pregunta otra vez.";
       setMessages(prev => [...prev, { role: "assistant", content: tip }]);
       setLoading(false);
       visualTipCooldownRef.current = Date.now();
-      return; // no llamamos al backend todavía
+      return;
     }
 
     ensureSystemMessage();
 
+    // Contexto RAG/mini BD por intención
     const entity = detectEntity(text);
     const dbContext = await fetchDBContext(entity);
     const userMsg = buildUserMessage(text, screenDesc, dbContext);
@@ -334,6 +412,7 @@ const sendMessage = async (rawText) => {
     if (screenDesc) setScreenDesc("");
 
     try {
+      // El backend añadirá “snippets” RAG adicionales antes de la llamada a OpenAI
       const { data } = await axios.post("/chat", { messages: provisional });
       let assistantReply = data?.choices?.[0]?.message?.content || data?.text || "Sin respuesta.";
       assistantReply = enforceConcise(simplifyResponse(assistantReply));
