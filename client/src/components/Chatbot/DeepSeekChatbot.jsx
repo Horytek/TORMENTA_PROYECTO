@@ -19,12 +19,9 @@ const QUICK_PROMPTS = [
 const MAX_CONTEXT_CHARS = 20000;
 const TARGET_SUMMARY_TRIGGER = 12000;
 
-// Modelo / modos
-const MODEL_ID = "deepseek/deepseek-chat-v3.1:free";
-const ENABLE_DB_CONTEXT = true;
+// Modo conciso
 const CONCISE_HARD_LIMIT = 180;
 
-// =================== COMPONENTE ===================
 export default function DeepSeekOpenRouterChatbot() {
   const { nombre: usuario, rol, id_tenant, id_empresa, sur: sucursal } = useUserStore();
 
@@ -36,6 +33,7 @@ export default function DeepSeekOpenRouterChatbot() {
   const [modulesSnapshot, setModulesSnapshot] = useState([]);
   const [historySummary, setHistorySummary] = useState("");
   const [systemHash, setSystemHash] = useState("");
+  const [modulesLoaded, setModulesLoaded] = useState(false);
 
   // Entrada / envío
   const [input, setInput] = useState("");
@@ -55,18 +53,22 @@ export default function DeepSeekOpenRouterChatbot() {
   const [uiSnapshotHash, setUiSnapshotHash] = useState("");
 
   const chatEndRef = useRef(null);
+  const createdAtRef = useRef(new Date().toISOString()); // estable para el system prompt
 
-  // =================== UTIL HASH ===================
+  // control para no repetir la sugerencia muy seguido
+  const visualTipCooldownRef = useRef(0);
+
+  // Utils
+  const scrollToEnd = useCallback(() => {
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  }, []);
+
   function hashString(s = "") {
     let h = 0;
-    for (let i = 0; i < s.length; i++) {
-      h = (h << 5) - h + s.charCodeAt(i);
-      h |= 0;
-    }
+    for (let i = 0; i < s.length; i++) { h = (h << 5) - h + s.charCodeAt(i); h |= 0; }
     return h.toString();
   }
 
-  // =================== DETECCIÓN ENTIDAD ===================
   function detectEntity(question) {
     const q = question.toLowerCase();
     if (q.includes("stock") || q.includes("producto")) return { type: "product" };
@@ -75,22 +77,16 @@ export default function DeepSeekOpenRouterChatbot() {
     return null;
   }
 
-  // =================== CONTEXTO BD (mini) ===================
   async function fetchDBContext(kind) {
-    if (!ENABLE_DB_CONTEXT || !includeDBContext || !kind) return "";
+    if (!includeDBContext || !kind) return "";
     try {
       switch (kind.type) {
         case "sales": {
-          const { data } = await axios
-            .get("/reporte/ventas/top-productos", { params: { limit: 3 } })
-            .catch(() => ({ data: null }));
-            if (Array.isArray(data?.data) && data.data.length) {
-              const mini = data.data
-                .slice(0, 3)
-                .map(r => `${r.descripcion || r.producto || "Item"}=${r.ventas || r.total || "-"}`)
-                .join(", ");
-              return `Resumen ventas recientes: ${mini}`;
-            }
+          const { data } = await axios.get("/reporte/ventas/top-productos", { params: { limit: 3 } }).catch(() => ({ data: null }));
+          if (Array.isArray(data?.data) && data.data.length) {
+            const mini = data.data.slice(0, 3).map(r => `${r.descripcion || r.producto || "Item"}=${r.ventas || r.total || "-"}`).join(", ");
+            return `Resumen ventas recientes: ${mini}`;
+          }
           return "";
         }
         case "product":
@@ -105,17 +101,21 @@ export default function DeepSeekOpenRouterChatbot() {
     }
   }
 
-  // =================== POST-PROCESO RESPUESTA ===================
+  // Limpieza de texto
   function simplifyResponse(text = "") {
-    let t = text
-      .replace(/^\s*\d+\.\s+/gm, "") // números
-      .replace(/^\s*[-*•]\s+/gm, "") // viñetas
+    let t = (text || "")
+      .replace(/<\|.*?\|>/g, "")
+      .replace(/<\uFF5C.*?\uFF5C>/g, "")
+      .replace(/^\s*\d+\.\s+/gm, "")
+      .replace(/^\s*[-*•]\s+/gm, "")
+      .replace(/\. *\n/g, ". ")
       .replace(/\n{3,}/g, "\n\n")
+      .replace(/\n+/g, "\n")
+      .replace(/\.{2,}/g, ".")
       .trim();
     t = t.replace(/([^.])\n([^.])/g, "$1. $2");
     return t;
   }
-
   function enforceConcise(text) {
     if (!conciseMode) return text;
     const words = text.split(/\s+/);
@@ -123,9 +123,8 @@ export default function DeepSeekOpenRouterChatbot() {
     return words.slice(0, CONCISE_HARD_LIMIT).join(" ") + " …";
   }
 
-  // =================== SNAPSHOT UI AMPLIADO ===================
+  // Snapshot UI helpers
   const MAX_UI_CHARS = 900;
-
   function uniqueText(nodes, limit = 12, minLen = 3) {
     const arr = [];
     nodes.forEach(n => {
@@ -134,90 +133,25 @@ export default function DeepSeekOpenRouterChatbot() {
     });
     return [...new Set(arr)].slice(0, limit);
   }
-
   function captureUISnapshot() {
     try {
       const parts = [];
-
-      // Encabezados principales
       const headings = uniqueText(document.querySelectorAll("main h1, main h2, h1.page-title, h2.page-title"));
       if (headings.length) parts.push(`Encabezados:${headings.join(" | ")}`);
-
-      // Breadcrumb
-      const breadcrumb = uniqueText(
-        document.querySelectorAll('[data-breadcrumb] li, nav[aria-label="breadcrumb"] li, .breadcrumb li')
-      , 8);
+      const breadcrumb = uniqueText(document.querySelectorAll('[data-breadcrumb] li, nav[aria-label="breadcrumb"] li, .breadcrumb li'), 8);
       if (breadcrumb.length) parts.push(`Ruta:${breadcrumb.join(" > ")}`);
-
-      // Sidebar links
-      const sidebarLinks = uniqueText(
-        document.querySelectorAll("aside a, .sidebar a, [data-sidebar='sidebar'] a")
-      , 14);
+      const sidebarLinks = uniqueText(document.querySelectorAll("aside a, .sidebar a, [data-sidebar='sidebar'] a"), 14);
       if (sidebarLinks.length) parts.push(`Menú:${sidebarLinks.join(", ")}`);
-
-      // Tabs activos
       const activeTabs = Array.from(document.querySelectorAll('[role="tab"][aria-selected="true"], .tab-active'))
-        .map(el => (el.textContent || "").trim())
-        .filter(Boolean)
-        .slice(0, 5);
+        .map(el => (el.textContent || "").trim()).filter(Boolean).slice(0, 5);
       if (activeTabs.length) parts.push(`Tabs:${[...new Set(activeTabs)].join(", ")}`);
-
-      // Botones clave
       const actionButtons = Array.from(document.querySelectorAll("button, a"))
         .map(b => (b.textContent || "").trim())
         .filter(t => /(venta|nueva venta|crear|guardar|factura|boleta|nota|cliente|producto|stock|exportar)/i.test(t))
         .slice(0, 8);
       if (actionButtons.length) parts.push(`Acciones:${[...new Set(actionButtons)].join(", ")}`);
-
-      // KPI labels (chips / cards)
-      const kpis = uniqueText(document.querySelectorAll(".kpi, .kpi-card h3, .kpi-card span.value, .kpi-label"), 8);
-      if (kpis.length) parts.push(`KPIs:${kpis.join(", ")}`);
-
-      // Tabla: headers
-      const ths = Array.from(document.querySelectorAll("table thead th"))
-        .map(th => (th.textContent || "").trim())
-        .filter(Boolean)
-        .slice(0, 10);
+      const ths = Array.from(document.querySelectorAll("table thead th")).map(th => (th.textContent || "").trim()).filter(Boolean).slice(0, 10);
       if (ths.length) parts.push(`TablaCols:${ths.join("|")}`);
-
-      // Modal abierto (título)
-      const modalTitles = uniqueText(document.querySelectorAll('[role="dialog"] h2, [role="dialog"] h3, .modal h2, .modal h3'), 3);
-      if (modalTitles.length) parts.push(`Modal:${modalTitles.join(" / ")}`);
-
-      // Switch modo oscuro
-      let darkSwitch = "";
-      const darkLabels = Array.from(document.querySelectorAll("label, span"))
-        .filter(el => /(oscuro|modo oscuro|apariencia|theme)/i.test(el.textContent || ""));
-      if (darkLabels.length) {
-        const el = darkLabels[0];
-        const isInHeader = !!el.closest("header");
-        const isInSidebar = !!el.closest("aside") || !!el.closest(".sidebar");
-        darkSwitch = `Tema:${isInHeader ? "header" : isInSidebar ? "sidebar" : "general"}`;
-      } else if (document.body.classList.contains("dark")) {
-        darkSwitch = "Tema:oscuro-activo";
-      }
-      if (darkSwitch) parts.push(darkSwitch);
-
-      // Inputs required vacíos
-      const requiredInputs = Array.from(document.querySelectorAll("form input[required], form textarea[required]"))
-        .filter(i => !i.value)
-        .slice(0, 5)
-        .map(i => i.name || i.id || "campo");
-      if (requiredInputs.length) parts.push(`ReqVacíos:${requiredInputs.join(", ")}`);
-
-      // Chips seleccionados
-      const selectedChips = Array.from(document.querySelectorAll(".chip-selected, .chip[data-selected='true']"))
-        .map(c => (c.textContent || "").trim())
-        .filter(Boolean)
-        .slice(0, 5);
-      if (selectedChips.length) parts.push(`Chips:${selectedChips.join(", ")}`);
-
-      // Estado de filtros (inputs con value en panel de filtros)
-      const filterInputs = Array.from(document.querySelectorAll(".filtro input[value], .filters input[value]"))
-        .map(f => (f.getAttribute("placeholder") || f.name || "filtro") + "=" + f.value)
-        .slice(0, 4);
-      if (filterInputs.length) parts.push(`Filtros:${filterInputs.join("; ")}`);
-
       let snapshot = parts.join(" | ");
       if (snapshot.length > MAX_UI_CHARS) snapshot = snapshot.slice(0, MAX_UI_CHARS) + " …";
       return snapshot;
@@ -226,29 +160,47 @@ export default function DeepSeekOpenRouterChatbot() {
     }
   }
 
-  // Auto actualización snapshot
+    // helper para saber si ya hay contexto visual disponible
+  const hasVisualContext = useCallback(() => {
+    return Boolean(screenDesc?.trim()) || (autoUISnapshot && uiSnapshot);
+  }, [screenDesc, autoUISnapshot, uiSnapshot]);
+
+  // detectar preguntas que suelen requerir contexto de pantalla
+  function needsVisualContext(text = "") {
+    const q = (text || "").toLowerCase();
+    return /(\b(donde|dónde|como|cómo)\b.*(esta|está|encuentro|hago|voy|ingreso|llego))|no encuentro|no aparece|en que modulo|en qué módulo|pantalla|pasos|¿dónde|¿cómo/i.test(q);
+  }
+
+  // Cargar módulos una sola vez cuando se abra chat/buscador (evita bucles)
+  useEffect(() => {
+    if ((!isChatOpen && !isSearchOpen) || modulesLoaded) return;
+    (async () => {
+      try {
+        const data = await getModulosConSubmodulos();
+        if (Array.isArray(data?.data)) setModulesSnapshot(data.data);
+        else if (Array.isArray(data)) setModulesSnapshot(data);
+      } catch {
+        setModulesSnapshot([]);
+      } finally {
+        setModulesLoaded(true);
+      }
+    })();
+  }, [isChatOpen, isSearchOpen, modulesLoaded]);
+
+  // Capturar snapshot de UI solo al abrir el chat
   useEffect(() => {
     if (!isChatOpen || !autoUISnapshot) return;
-    const update = () => {
+    try {
       const snap = captureUISnapshot();
-      if (!snap) return;
       const h = hashString(snap);
       if (h !== uiSnapshotHash) {
         setUiSnapshot(snap);
         setUiSnapshotHash(h);
       }
-    };
-    update();
-    const int = setInterval(update, 5000);
-    const obs = new MutationObserver(() => update());
-    obs.observe(document.body, { childList: true, subtree: true, attributes: true });
-    return () => {
-      clearInterval(int);
-      obs.disconnect();
-    };
+    } catch {}
   }, [isChatOpen, autoUISnapshot, uiSnapshotHash]);
 
-  // =================== SYSTEM PROMPT ===================
+  // System prompt (estable, sin timestamp cambiante)
   const buildSystemContext = useCallback(() => {
     const modsAbstract = modulesSnapshot
       .slice(0, 8)
@@ -261,21 +213,14 @@ export default function DeepSeekOpenRouterChatbot() {
 
     return `
 Eres un asistente integrado en HoryCore ERP.
-Estilo: conversacional, breve y natural. Evita listas numeradas salvo que pidan "pasos"/"detalle".
-Si el usuario describe pantalla o hay snapshot interno, usa: "según lo que describes" o "según la vista actual".
-Si algo no aparece: sugiere permisos o ruta alternativa corta.
-Para datos dinámicos sugiere acción: acción: "consulta_x", parámetros:{...} sólo si aporta valor.
-No inventes módulos ni cifras.
-Modo conciso=${conciseMode ? "sí" : "no"}.
-
-Usuario: Rol=${rol || "N/D"} | Sucursal=${sucursal || "N/D"} | Empresa=${id_empresa || "-"} | Tenant=${id_tenant || "-"} | Hora=${new Date().toISOString()}
-
+Estilo: conversacional, breve y natural. Evita listas numeradas salvo que pidan "pasos".
+No inventes módulos ni cifras. Si algo no aparece, sugiere ruta o permisos.
+Usuario: Rol=${rol || "N/D"} | Sucursal=${sucursal || "N/D"} | Empresa=${id_empresa || "-"} | Tenant=${id_tenant || "-"} | Sesión=${createdAtRef.current}
 Mapa funcional:
 ${modsAbstract}${uiLine}
-
 Historial breve: ${historySummary || "inicio"}.
 `.trim();
-  }, [rol, sucursal, id_empresa, id_tenant, modulesSnapshot, historySummary, uiSnapshot, conciseMode]);
+  }, [rol, sucursal, id_empresa, id_tenant, modulesSnapshot, historySummary, uiSnapshot]);
 
   const ensureSystemMessage = useCallback(() => {
     const ctx = buildSystemContext();
@@ -289,75 +234,48 @@ Historial breve: ${historySummary || "inicio"}.
     }
   }, [buildSystemContext, systemHash]);
 
-  // =================== CARGA MÓDULOS ===================
-useEffect(() => {
-  if ((!isChatOpen && !isSearchOpen) || modulesSnapshot.length) return;
-  (async () => {
-    try {
-      const data = await getModulosConSubmodulos();
-      if (Array.isArray(data?.data)) setModulesSnapshot(data.data);
-      else if (Array.isArray(data)) setModulesSnapshot(data);
-    } catch {
-      setModulesSnapshot([]);
-    }
-  })();
-}, [isChatOpen, isSearchOpen, modulesSnapshot.length]);
-
-
   // Inyectar system al abrir
   useEffect(() => {
     if (isChatOpen) ensureSystemMessage();
-  }, [isChatOpen, ensureSystemMessage]);
+    // no depende de systemHash para evitar re‑inyectar en bucle
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChatOpen]);
 
-    // Rutas efectivas mínimas para el buscador (placeholder simple)
-const effectiveRoutes = modulesSnapshot.flatMap(m => {
-  const main = {
-    name: m.nombre || m.ruta || m.path || "Sin nombre",
-    path: m.ruta || m.path || "/"
-  };
-  const subs = Array.isArray(m.submodulos)
-    ? m.submodulos.map(sub => ({
-        name: sub.nombre_sub
-          ? `${m.nombre} > ${sub.nombre_sub}`
-          : sub.ruta || sub.ruta_submodulo || sub.path || "Sin nombre",
-        path: sub.ruta || sub.ruta_submodulo || sub.path || "/"
-      }))
-    : [];
-  return [main, ...subs];
-});
+  // Rutas para el buscador
+  const effectiveRoutes = modulesSnapshot.flatMap(m => {
+    const main = { name: m.nombre || m.ruta || m.path || "Sin nombre", path: m.ruta || m.path || "/" };
+    const subs = Array.isArray(m.submodulos)
+      ? m.submodulos.map(sub => ({
+          name: sub.nombre_sub ? `${m.nombre} > ${sub.nombre_sub}` : sub.ruta || sub.ruta_submodulo || sub.path || "Sin nombre",
+          path: sub.ruta || sub.ruta_submodulo || sub.path || "/"
+        }))
+      : [];
+    return [main, ...subs];
+  });
 
-
-  // =================== HISTORIAL ===================
+  // Historial y resumen
   const pruneHistory = (all) => {
     const system = all.find(m => m.role === "system");
     const rest = all.filter(m => m.role !== "system");
-    let acc = 0;
-    const kept = [];
+    let acc = 0; const kept = [];
     for (let i = rest.length - 1; i >= 0; i--) {
       const len = (rest[i].content || "").length;
       if (acc + len > MAX_CONTEXT_CHARS) break;
-      kept.unshift(rest[i]);
-      acc += len;
+      kept.unshift(rest[i]); acc += len;
     }
     return [system, ...kept].filter(Boolean);
   };
-
   const summarizeIfNeeded = useCallback((msgs) => {
     const nonSystem = msgs.filter(m => m.role !== "system");
     const totalChars = nonSystem.reduce((a, m) => a + (m.content?.length || 0), 0);
     if (totalChars < TARGET_SUMMARY_TRIGGER) return;
-    const lastPairs = nonSystem.slice(-8).map(m =>
-      `${m.role === "user" ? "U>" : "A>"} ${m.content.substring(0, 110)}`
-    );
+    const lastPairs = nonSystem.slice(-8).map(m => `${m.role === "user" ? "U>" : "A>"} ${m.content.substring(0, 110)}`);
     setHistorySummary(`Reciente: ${lastPairs.join(" | ")}`);
   }, []);
 
-    // =================== FORMAT VISIBLE USER MESSAGE ===================
+  // Formato visible
   function formatVisibleUserContent(raw = "") {
     if (!raw) return raw;
-
-    // Elimina componentes internos no deseados para el usuario
-    // UI:... | ContextoBD:...
     let cleaned = raw
       .replace(/UI:[^|]+(\|)?/g, "")
       .replace(/ContextoBD:[^|]+(\|)?/g, "")
@@ -365,112 +283,72 @@ const effectiveRoutes = modulesSnapshot.flatMap(m => {
       .replace(/\|\s*\|\s*/g, "|")
       .replace(/\s{2,}/g, " ")
       .trim();
-
     const pantallaMatch = cleaned.match(/Pantalla:([^|]+)(\||$)/);
     const preguntaMatch = cleaned.match(/Pregunta:([^|]+)$/);
-
-    if (pantallaMatch && preguntaMatch) {
-      const pantalla = pantallaMatch[1].trim();
-      const pregunta = preguntaMatch[1].trim();
-      return `(Pantalla:${pantalla} | Pregunta:${pregunta})`;
-    }
-
-    if (preguntaMatch) {
-      return preguntaMatch[1].trim();
-    }
-
+    if (pantallaMatch && preguntaMatch) return `(Pantalla:${pantallaMatch[1].trim()} | Pregunta:${preguntaMatch[1].trim()})`;
+    if (preguntaMatch) return preguntaMatch[1].trim();
     return cleaned;
   }
 
-  // =================== USER MESSAGE BUILDER ===================
+  // Construcción del mensaje user
   const buildUserMessage = (question, screenDescription, dbContext) => {
     const parts = [];
-
-    if (screenDescription?.trim()) {
-      parts.push(`Pantalla:${screenDescription.trim()}`);
-    } else if (autoUISnapshot && uiSnapshot) {
-      // No mostrar al usuario luego; solo para contexto
-      parts.push(`UI:${uiSnapshot}`);
-    }
-
+    if (screenDescription?.trim()) parts.push(`Pantalla:${screenDescription.trim()}`);
+    else if (autoUISnapshot && uiSnapshot) parts.push(`UI:${uiSnapshot}`);
     if (dbContext) parts.push(`ContextoBD:${dbContext}`);
-
-    // Pregunta siempre al final
     parts.push(`Pregunta:${question.trim()}`);
-
-    // Cadena interna (sin paréntesis, se formatea al render)
-    return {
-      role: "user",
-      content: parts.join(" | ")
-    };
+    return { role: "user", content: parts.join(" | ") };
   };
 
-  // =================== ENVÍO ===================
-  const scrollToEnd = () => {
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 60);
-  };
-
-  const sendMessage = async (rawText) => {
+  // Envío
+const sendMessage = async (rawText) => {
     const text = (rawText ?? input).trim();
     if (!text || loading) return;
     setLoading(true);
     setErrorMsg("");
+
+    // NUEVO: si la pregunta indica navegación/proceso y no hay contexto visual, sugiera primero
+    if (!hasVisualContext() && needsVisualContext(text) && Date.now() - visualTipCooldownRef.current > 90_000) {
+      setShowScreenDesc(true); // abre el área para escribir la descripción
+      const tip =
+        "Sugerencia: para orientarme mejor en tu pantalla, pulsa “Añadir descripción visual” y escribe brevemente lo que ves (ej.: «menú lateral con Inicio y Ventas; botón Nueva venta arriba»). Luego envíame tu pregunta otra vez.";
+      setMessages(prev => [...prev, { role: "assistant", content: tip }]);
+      setLoading(false);
+      visualTipCooldownRef.current = Date.now();
+      return; // no llamamos al backend todavía
+    }
 
     ensureSystemMessage();
 
     const entity = detectEntity(text);
     const dbContext = await fetchDBContext(entity);
     const userMsg = buildUserMessage(text, screenDesc, dbContext);
-    setMessages(prev => [...prev, userMsg]);
+    const base = messages.filter(Boolean);
+    const provisional = pruneHistory([
+      ...base.filter(m => m.role === "system"),
+      ...base.filter(m => m.role !== "system"),
+      userMsg
+    ]);
 
-    // Limpiar descripción de pantalla tras usarla
+    setMessages(prev => [...prev, userMsg]);
     if (screenDesc) setScreenDesc("");
 
-    let provisional = [
-      ...messages.filter(m => m.role === "system"),
-      ...messages.filter(m => m.role !== "system"),
-      userMsg
-    ];
-    provisional = pruneHistory(provisional);
-
     try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-          "HTTP-Referer": window.location.origin,
-          "X-Title": "HoryCore ERP",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: MODEL_ID,
-          messages: provisional
-        })
-      });
-
-      if (res.status === 401) throw new Error("Credenciales inválidas (401)");
-      if (res.status === 429) throw new Error("Límite de peticiones (429)");
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(`Error ${res.status}: ${t.slice(0,140)}`);
-      }
-
-      const data = await res.json();
-      let assistantReply = data?.choices?.[0]?.message?.content || "Sin respuesta.";
-      assistantReply = simplifyResponse(assistantReply);
-      assistantReply = enforceConcise(assistantReply);
-
+      const { data } = await axios.post("/chat", { messages: provisional });
+      let assistantReply = data?.choices?.[0]?.message?.content || data?.text || "Sin respuesta.";
+      assistantReply = enforceConcise(simplifyResponse(assistantReply));
       setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
-      summarizeIfNeeded([...messages, userMsg, { role: "assistant", content: assistantReply }]);
+      summarizeIfNeeded([...base, userMsg, { role: "assistant", content: assistantReply }]);
       scrollToEnd();
     } catch (e) {
-      setErrorMsg(e.message || "Error al conectar.");
+      setErrorMsg(e?.response?.data?.error || e.message || "Error al conectar.");
       setMessages(prev => [...prev, { role: "assistant", content: "Ocurrió un error procesando la solicitud." }]);
     } finally {
       setLoading(false);
       setInput("");
     }
   };
+
 
   // =================== UI ===================
   return (
@@ -659,7 +537,7 @@ const effectiveRoutes = modulesSnapshot.flatMap(m => {
               maxRows={4}
               value={screenDesc}
               onChange={e => setScreenDesc(e.target.value)}
-              placeholder="Ej: Veo menú lateral con Inicio y Ventas, icono de sol arriba..."
+              placeholder="Describe lo que ves: «menú lateral con Inicio y Ventas; pestaña Ventas abierta; botón Nueva venta arriba; tabla con columnas Cliente/Fecha/Total»"
               className="mb-2 font-medium rounded-lg border border-blue-100/70 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/70 text-blue-700 dark:text-blue-100 placeholder:text-blue-300 dark:placeholder:text-blue-400"
               disabled={loading}
             />
@@ -677,7 +555,9 @@ const effectiveRoutes = modulesSnapshot.flatMap(m => {
                 sendMessage(input);
               }
             }}
-            placeholder="Describe tu duda o proceso..."
+            placeholder={hasVisualContext()
+              ? "Escribe tu duda o proceso (Enter para enviar, Shift+Enter para nueva línea)"
+              : "Haz tu pregunta. Para más precisión, añade una descripción visual (botón arriba)."}
             className="mb-2 font-medium rounded-lg border border-blue-100/60 dark:border-zinc-700 bg-white/85 dark:bg-zinc-800/70 text-blue-700 dark:text-blue-100 placeholder:text-blue-300 dark:placeholder:text-blue-400"
             disabled={loading}
           />
@@ -706,8 +586,21 @@ const effectiveRoutes = modulesSnapshot.flatMap(m => {
               Enviar
             </Button>
           </div>
-          <div className="mt-2 text-[10px] text-blue-400 dark:text-blue-300 flex items-center gap-2 font-medium">
-            Usa snapshot UI + contexto (oculto) para responder.
+
+          {/* NUEVO: ayudas contextuales para usuarios novatos */}
+          <div className="mt-2 text-[10px] text-blue-400 dark:text-blue-300 flex flex-col gap-1 font-medium">
+            {!hasVisualContext() ? (
+              <span>
+                Consejo: añade una descripción visual para respuestas más precisas.{" "}
+                <button type="button" className="underline" onClick={() => setShowScreenDesc(true)}>
+                  Añadir descripción visual
+                </button>
+                .
+              </span>
+            ) : (
+              <span>Atajo: Enter envía, Shift+Enter inserta salto de línea.</span>
+            )}
+            <span className="opacity-80">Evita datos sensibles en la descripción.</span>
           </div>
         </div>
 

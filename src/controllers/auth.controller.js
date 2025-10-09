@@ -9,7 +9,7 @@ const login = async (req, res) => {
     try {
         const { usuario, password } = req.body;
         if (!usuario || !password) {
-            return res.status(400).json({ success: false, message: "Credenciales incompletas" });
+            return res.status(400).json({ success: false, message: "Surgio un problema" });
         }
 
         const user = { usuario: usuario.trim(), password: password.trim() };
@@ -25,9 +25,9 @@ const login = async (req, res) => {
             try {
                 await logAcceso.loginFail(user.usuario, ip, null, "Usuario no existe o está deshabilitado");
             } catch (eLog) {
-                console.warn("[auth.login] fallo registrando loginFail:", eLog.code || eLog.message);
+                //console.warn("[auth.login] fallo registrando loginFail:", eLog.code || eLog.message);
             }
-            return res.status(400).json({ success: false, message: "El usuario ingresado no existe o esta deshabilitado" });
+            return res.status(400).json({ success: false, message: "Ha surgido un problema" });
         }
 
         let userValid;
@@ -90,7 +90,7 @@ const login = async (req, res) => {
                 try {
                     await logAcceso.loginOk(userbd.id_usuario, ip, userbd.id_tenant);
                 } catch (eLog) {
-                    console.warn("[auth.login] fallo registrando loginOk:", eLog.code || eLog.message);
+                    //console.warn("[auth.login] fallo registrando loginOk:", eLog.code || eLog.message);
                 }
             }
 
@@ -112,27 +112,26 @@ const login = async (req, res) => {
                     sucursal: userbd.nombre_sucursal || null,
                     id_tenant: userbd.id_tenant || null,
                     defaultPage: defaultRedirect
-                },
-                message: "Usuario encontrado"
+                }
             });
 
             try {
                 await connection.query("UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", [1, userbd.id_usuario]);
             } catch (eUpd) {
-                console.warn("[auth.login] fallo actualizando estado_token:", eUpd.code || eUpd.message);
+                //console.warn("[auth.login] fallo actualizando estado_token:", eUpd.code || eUpd.message);
             }
         } else {
             const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
             try {
-                await logAcceso.loginFail(user.usuario, ip, userbd?.id_tenant ?? null, "Contraseña incorrecta");
+                await logAcceso.loginFail(user.usuario, ip, userbd?.id_tenant ?? null, "Ha surgido un problema");
             } catch (eLog) {
-                console.warn("[auth.login] fallo registrando loginFail:", eLog.code || eLog.message);
+                //console.warn("[auth.login] fallo registrando loginFail:", eLog.code || eLog.message);
             }
-            res.status(400).json({ success: false, message: "La contraseña ingresada no es correcta" });
+            res.status(400).json({ success: false, message: "Ocurrió un error inesperado" });
         }
 
     } catch (error) {
-        console.error("[auth.login] error:", error.code || error.message);
+        //console.error("[auth.login] error:", error.code || error.message);
         // Modo diagnóstico: expone el código del error SOLO si DEBUG_AUTH=1
         if (process.env.DEBUG_AUTH === "1") {
           return res.status(500).json({
@@ -196,8 +195,8 @@ const verifyToken = async (req, res) => {
       id_tenant: userbd.id_tenant || null
     });
   } catch (e) {
-    console.error("[auth.verifyToken] error:", e.code || e.message);
-    return res.status(500).json({ code: 0, message: "VERIFY_DB_FAIL" });
+    //console.error("[auth.verifyToken] error:", e.code || e.message);
+    return res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
   } finally {
     if (connection) connection.release();
   }
@@ -241,8 +240,8 @@ const logout = async (req, res) => {
 
     return res.sendStatus(200);
   } catch (e) {
-    console.error("[auth.logout] error:", e.code || e.message);
-    return res.status(500).json({ code: 0, message: "LOGOUT_DB_FAIL" });
+    //console.error("[auth.logout] error:", e.code || e.message);
+    return res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
   } finally {
     if (connection) connection.release();
   }
@@ -260,7 +259,7 @@ const updateUsuarioName = async (req, res) => {
         const [userResult] = await connection.query(`SELECT id_usuario FROM usuario WHERE usua = ?`, [usua]);
 
         if (userResult.length === 0) {
-            return res.status(404).json({ message: "Usuario no encontrado" });
+            return res.status(404).json({ message: "Ocurrió un error inesperado" });
         }
 
         const userbd = userResult[0];

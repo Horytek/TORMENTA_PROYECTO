@@ -37,6 +37,7 @@ import claveRoutes from './routes/clave.routes.js';
 import logotipoRoutes from "./routes/logotipo.routes.js";
 import valorRoutes from "./routes/valor.routes.js";
 import logsRoutes from "./routes/logs.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 import { getConnection } from "./database/database.js";
@@ -136,18 +137,7 @@ app.use("/api/clave", claveRoutes);
 app.use("/api/logotipo", logotipoRoutes);
 app.use("/api/valor", valorRoutes);
 app.use("/api/logs", logsRoutes);
-app.get("/api/__db_ping", async (_req, res) => {
-  let c;
-  try {
-    c = await getConnection();
-    const [[r]] = await c.query("SELECT 1 AS ok");
-    res.json({ db: "up", ok: r.ok === 1 });
-  } catch (e) {
-    res.status(500).json({ db: "down", error: e.code || e.message });
-  } finally {
-    if (c) c.release();
-  }
-});
+app.use("/api/chat", chatRoutes);
 
 // Servir archivos estáticos de Vite/React
 app.use(express.static(path.join(__dirname, "../client/dist")));
