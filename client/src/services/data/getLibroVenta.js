@@ -49,7 +49,9 @@ const useLibroVentasSunatData = (filters) => {
 
     // Filtro por sucursal
     if (filters.idSucursal) {
-      filtradas = filtradas.filter(v => String(v.sucursal).toLowerCase() === String(filters.idSucursal).toLowerCase());
+      filtradas = filtradas.filter(
+        v => String(v.id_sucursal) === String(filters.idSucursal)
+      );
     }
 
     // Filtro por tipo de comprobante (puede ser string, string separado por comas o array)

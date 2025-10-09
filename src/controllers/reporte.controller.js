@@ -1152,6 +1152,7 @@ const obtenerRegistroVentas = async (req, res) => {
         v.f_venta AS fecha,
         s.nombre_sucursal AS sucursal,
         s.ubicacion AS ubicacion_sucursal,
+        s.id_sucursal,
         CASE 
             WHEN cl.dni IS NOT NULL AND cl.dni <> '' THEN cl.dni 
             ELSE cl.ruc 
@@ -1189,6 +1190,7 @@ const obtenerRegistroVentas = async (req, res) => {
       fecha: r.fecha,
       sucursal: r.sucursal,
       ubicacion_sucursal: r.ubicacion_sucursal,
+      id_sucursal: r.id_sucursal,
       documento_cliente: r.documento_cliente,
       nombre_cliente: r.nombre_cliente,
       num_comprobante: r.num_comprobante,
