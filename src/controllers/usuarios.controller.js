@@ -1,6 +1,20 @@
 import { getConnection } from "./../database/database.js";
 import { logAcceso } from "../utils/logActions.js";
 
+// Cache para queries repetitivas
+const queryCache = new Map();
+const CACHE_TTL = 60000; // 1 minuto
+
+// Limpiar caché periódicamente
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of queryCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL * 2) {
+            queryCache.delete(key);
+        }
+    }
+}, CACHE_TTL * 2);
+
 // Obtener usuarios con paginación, límites y filtros seguros
 const getUsuarios = async (req, res) => {
     let connection;
@@ -88,6 +102,7 @@ const getUsuarios = async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('Error en getUsuarios:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -123,6 +138,7 @@ const getUsuario = async (req, res) => {
 
         res.json({ code: 1, data: result, message: "Usuario encontrado" });
     } catch (error) {
+        console.error('Error en getUsuario:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -156,6 +172,7 @@ const getUsuario_1 = async (req, res) => {
 
         res.json({ code: 1, data: result, message: "Usuario encontrado" });
     } catch (error) {
+        console.error('Error en getUsuario_1:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) connection.release();
@@ -203,9 +220,12 @@ const addUsuario = async (req, res) => {
 
         await connection.query("INSERT INTO usuario SET ? ", usuario);
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.json({ code: 1, message: "Usuario añadido" });
     } catch (error) {
-        console.error('Error adding user:', error);
+        console.error('Error en addUsuario:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -275,9 +295,12 @@ const updateUsuario = async (req, res) => {
             await logAcceso.cambiarContrasena(id, ip, req.id_tenant, esAdministrador);
         }
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.json({ code: 1, message: "Usuario modificado" });
     } catch (error) {
-        console.error('Error actualizando usuario:', error);
+        console.error('Error en updateUsuario:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -310,9 +333,12 @@ const updateUsuarioPlan = async (req, res) => {
             return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
         }
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.json({ code: 1, message: "Usuario modificado" });
     } catch (error) {
-        console.error('Error updating user plan:', error);
+        console.error('Error en updateUsuarioPlan:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -344,6 +370,9 @@ const deleteUsuario = async (req, res) => {
                 return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
             }
 
+            // Limpiar caché
+            queryCache.clear();
+
             res.json({ code: 2, message: "Usuario dado de baja" });
         } else {
             let query = "DELETE FROM usuario WHERE id_usuario = ?";
@@ -358,11 +387,14 @@ const deleteUsuario = async (req, res) => {
                 return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
             }
 
+            // Limpiar caché
+            queryCache.clear();
+
             res.json({ code: 1, message: "Usuario eliminado" });
         }
 
     } catch (error) {
-        console.error('Error deleting user:', error);
+        console.error('Error en deleteUsuario:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
