@@ -1,5 +1,19 @@
 import { getConnection } from "./../database/database.js";
 
+// Cache compartido para productos, marcas, categorías y subcategorías
+const queryCache = new Map();
+const CACHE_TTL = 60000; // 1 minuto
+
+// Limpiar caché periódicamente
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of queryCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL * 2) {
+            queryCache.delete(key);
+        }
+    }
+}, CACHE_TTL * 2);
+
 const getMarcas = async (req, res) => {
     let connection;
     try {
@@ -32,10 +46,11 @@ const getMarcas = async (req, res) => {
         );
         res.json({ code: 1, data: result, message: "Marcas listadas" });
     } catch (error) {
+        console.error('Error en getMarcas:', error);
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
-    }   finally {
+    } finally {
         if (connection) {
             connection.release();
         }
@@ -59,10 +74,11 @@ const getMarca = async (req, res) => {
 
         res.json({ data: result, message: "Marca encontrada" });
     } catch (error) {
+        console.error('Error en getMarca:', error);
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
-    }   finally {
+    } finally {
         if (connection) {
             connection.release();
         }
@@ -84,12 +100,16 @@ const addMarca = async (req, res) => {
 
         const [idAdd] = await connection.query("SELECT id_marca FROM marca WHERE nom_marca = ? AND id_tenant = ?", [nom_marca, req.id_tenant]);
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.status(201).json({ code: 1, message: "Marca añadida con éxito", id: idAdd[0].id_marca });
     } catch (error) {
+        console.error('Error en addMarca:', error);
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
-    }   finally {
+    } finally {
         if (connection) {
             connection.release();
         }
@@ -112,12 +132,16 @@ const updateMarca = async (req, res) => {
             return res.status(404).json({ message: "Marca no encontrada" });
         }
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.json({ message: "Marca actualizada con éxito" });
     } catch (error) {
+        console.error('Error en updateMarca:', error);
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
-    }    finally {
+    } finally {
         if (connection) {
             connection.release();
         }
@@ -127,20 +151,24 @@ const updateMarca = async (req, res) => {
 const deactivateMarca = async (req, res) => {
     let connection;
     const { id } = req.params;
-    connection = await getConnection();
     try {
+        connection = await getConnection();
         const [result] = await connection.query("UPDATE marca SET estado_marca = 0 WHERE id_marca = ? AND id_tenant = ?", [id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: "Marca no encontrada" });
         }
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.json({ message: "Marca dada de baja con éxito" });
     } catch (error) {
+        console.error('Error en deactivateMarca:', error);
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
-    }    finally {
+    } finally {
         if (connection) {
             connection.release();
         }
@@ -158,12 +186,16 @@ const deleteMarca = async (req, res) => {
             return res.status(404).json({ code: 0, message: "Marca no encontrada" });
         }
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.json({ code: 1, message: "Marca eliminada" });
     } catch (error) {
+        console.error('Error en deleteMarca:', error);
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
-    }     finally {
+    } finally {
         if (connection) {
             connection.release();
         }

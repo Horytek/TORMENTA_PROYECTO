@@ -1,6 +1,20 @@
 import { getConnection } from "./../database/database.js";
 import { logProductos } from "../utils/logActions.js";
 
+// Cache compartido (mismo que los demás)
+const queryCache = new Map();
+const CACHE_TTL = 60000; // 1 minuto
+
+// Limpiar caché periódicamente
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of queryCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL * 2) {
+            queryCache.delete(key);
+        }
+    }
+}, CACHE_TTL * 2);
+
 const getProductos = async (req, res) => {
     let connection;
     try {
@@ -63,6 +77,7 @@ const getProductos = async (req, res) => {
 
         res.json({ code: 1, data: result, message: "Productos listados" });
     } catch (error) {
+        console.error('Error en getProductos:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -80,6 +95,7 @@ const getUltimoIdProducto = async (req, res) => {
             `, [req.id_tenant]);
         res.json({code:1, data: result});
     } catch (error) {
+        console.error('Error en getUltimoIdProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -106,6 +122,7 @@ const getProducto = async (req, res) => {
 
         res.json({code: 1 ,data: result, message: "Producto encontrado"});
     } catch (error) {
+        console.error('Error en getProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -127,8 +144,12 @@ const addProducto = async (req, res) => {
         connection = await getConnection();
         const [result] = await connection.query("INSERT INTO producto SET ? ", producto);
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.json({code: 1, id_producto: result.insertId, message: "Producto añadido" });
     } catch (error) {
+        console.error('Error en addProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -177,11 +198,14 @@ const updateProducto = async (req, res) => {
             await logProductos.cambioPrecio(id, req.id_usuario, ip, req.id_tenant, precioAnterior, precioNuevo);
         }
 
+        // Limpiar caché
+        queryCache.clear();
+
         res.json({code: 1 ,message: "Producto modificado"});
     } catch (error) {
-        console.error('Error actualizando producto:', error);
+        console.error('Error en updateProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
-    }  finally {
+    } finally {
         if (connection) {
             connection.release();
         }
@@ -209,6 +233,9 @@ const deleteProducto = async (req, res) => {
                 return res.status(404).json({code: 0, message: "Producto no encontrado"});
             }
 
+            // Limpiar caché
+            queryCache.clear();
+
             res.json({code: 2 ,message: "Producto dado de baja"});
         } else {
             const [result] = await connection.query("DELETE FROM producto WHERE id_producto = ? AND id_tenant = ?", [id, req.id_tenant]);
@@ -217,12 +244,16 @@ const deleteProducto = async (req, res) => {
                 return res.status(404).json({code: 0, message: "Producto no encontrado"});
             }
 
+            // Limpiar caché
+            queryCache.clear();
+
             res.json({code: 1 ,message: "Producto eliminado"});
         }
         
     } catch (error) {
+        console.error('Error en deleteProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
-    }   finally {
+    } finally {
         if (connection) {
             connection.release();
         }
