@@ -16,6 +16,8 @@ setInterval(() => {
 
 //MOSTRAR TODAS LAS GUIAS DE REMISION - OPTIMIZADO
 const getGuias = async (req, res) => {
+    console.log('Parámetros recibidos en getGuias:', req.query);
+    
     let connection;
     const {
         page = 0,
@@ -75,8 +77,8 @@ const getGuias = async (req, res) => {
                         ELSE d.razon_social
                     END AS cliente,
                     COALESCE(d.dni, d.ruc) AS documento,
-                    CONCAT(v.nombres, ' ', v.apellidos) AS vendedor,
-                    v.dni as dni,
+                    COALESCE(CONCAT(v.nombres, ' ', v.apellidos), 'Sin vendedor') AS vendedor,
+                    COALESCE(v.dni, '') as dni,
                     SUBSTRING(c.num_comprobante, 2, 3) AS serieNum, 
                     SUBSTRING(c.num_comprobante, 6, 8) AS num,
                     gr.total as total,
@@ -97,7 +99,7 @@ const getGuias = async (req, res) => {
                 FROM guia_remision gr
                 INNER JOIN destinatario d ON gr.id_destinatario = d.id_destinatario
                 INNER JOIN sucursal s ON gr.id_sucursal = s.id_sucursal
-                INNER JOIN vendedor v ON s.dni = v.dni
+                LEFT JOIN vendedor v ON s.dni = v.dni
                 INNER JOIN comprobante c ON gr.id_comprobante = c.id_comprobante
                 LEFT JOIN transportista t ON gr.id_transportista = t.id_transportista
                 WHERE
@@ -121,7 +123,7 @@ const getGuias = async (req, res) => {
             LEFT JOIN detalle_envio de ON gp.id = de.id_guiaremision AND de.id_tenant = ?
             LEFT JOIN producto p ON de.id_producto = p.id_producto
             LEFT JOIN marca m ON p.id_marca = m.id_marca
-            ORDER BY gp.num_guia DESC, de.id_detalle
+            ORDER BY gp.num_guia ASC
             `,
             [
                 id_tenant, 
@@ -862,6 +864,8 @@ const anularGuia = async (req, res) => {
 
 // INSERTAR GUÍA DE REMISIÓN Y DETALLES - OPTIMIZADO CON BATCH INSERT
 const insertGuiaRemisionAndDetalle = async (req, res) => {
+    console.log('Datos recibidos en insertGuiaRemisionAndDetalle:', req.body);
+    
     const {
         id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, 
         glosa, dir_partida, dir_destino, canti, peso, observacion, 
@@ -869,17 +873,33 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
     } = req.body;
     const id_tenant = req.id_tenant;
 
-    // Validación mejorada
-    const camposRequeridos = [
-        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, 
-        id_transportista, glosa, f_generacion, h_generacion, 
-        producto, num_comprobante, cantidad
-    ];
+    // Validación mejorada con detalle de campos faltantes
+    const camposRequeridos = {
+        id_sucursal, 
+        id_ubigeo_o, 
+        id_ubigeo_d, 
+        id_destinatario, 
+        id_transportista, 
+        glosa, 
+        f_generacion, 
+        h_generacion, 
+        producto, 
+        num_comprobante, 
+        cantidad
+    };
     
-    if (camposRequeridos.some(campo => !campo)) {
+    const camposFaltantes = [];
+    for (const [campo, valor] of Object.entries(camposRequeridos)) {
+        if (!valor || (Array.isArray(valor) && valor.length === 0)) {
+            camposFaltantes.push(campo);
+        }
+    }
+    
+    if (camposFaltantes.length > 0) {
+        console.error('Campos requeridos faltantes:', camposFaltantes);
         return res.status(400).json({ 
             code: 0,
-            message: "Faltan campos requeridos" 
+            message: `Faltan campos requeridos: ${camposFaltantes.join(', ')}`
         });
     }
 

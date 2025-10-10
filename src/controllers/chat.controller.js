@@ -1,8 +1,21 @@
 import OpenAI from "openai";
 import { getConnection } from "../database/database.js";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Inicializar el cliente de OpenAI solo si hay API key disponible
+let client = null;
+const API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+if (API_KEY && API_KEY !== "" && API_KEY !== "tu_api_key_de_openai_aqui") {
+  try {
+    client = new OpenAI({ apiKey: API_KEY });
+  } catch (error) {
+    console.error("Error al inicializar cliente OpenAI:", error.message);
+  }
+} else {
+  console.warn("⚠️ API de OpenAI no configurada. El servicio de chat no estará disponible.");
+  console.warn("   Por favor, configura OPENAI_API_KEY en tu archivo .env");
+}
 
 async function getRAGSnippetFromDB(queryText, id_tenant) {
   if (!queryText) return "";
@@ -118,6 +131,15 @@ async function getSchemaSnippetFromDB(tableList = []) {
 
 export const chat = async (req, res) => {
   try {
+    // Verificar si el cliente de OpenAI está disponible
+    if (!client) {
+      console.warn("Intento de usar chat sin API key configurada");
+      return res.status(503).json({ 
+        error: "CHAT_SERVICE_UNAVAILABLE",
+        message: "El servicio de chat no está disponible. Por favor, configura la API key de OpenAI."
+      });
+    }
+
     const messages = Array.isArray(req.body?.messages) ? req.body.messages : [];
     const safeMessages = messages.slice(-20).map(m => ({
       role: m.role === "system" || m.role === "assistant" ? m.role : "user",

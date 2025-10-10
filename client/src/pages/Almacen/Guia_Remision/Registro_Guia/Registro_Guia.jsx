@@ -235,6 +235,8 @@ export default function RegistroGuia() {
     if (!glosa) errors.push('Seleccione una glosa');
     if (!currentDocumento) errors.push('Documento no disponible');
     if (!productosSeleccionados.length) errors.push('Agregue al menos un producto');
+    if (!ubipart) errors.push('Ingrese el ubigeo de partida');
+    if (!ubidest) errors.push('Ingrese el ubigeo de destino');
 
     const stockInvalid = productosSeleccionados.some(p => p.cantidad > p.stock);
     if (stockInvalid) errors.push('Alguna cantidad excede el stock');

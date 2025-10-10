@@ -1,93 +1,176 @@
 import { getConnection } from "../database/database.js";
 import { logInventario } from "../utils/logActions.js";
 
+// Cache para queries repetitivas
+const queryCache = new Map();
+const CACHE_TTL = 60000; // 1 minuto
+
+// Limpiar caché periódicamente
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of queryCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL * 2) {
+            queryCache.delete(key);
+        }
+    }
+}, CACHE_TTL * 2);
+
 const getSalidas = async (req, res) => {
   let connection;
-  const { fecha_i = '2012-01-01', fecha_e = '2057-12-27', razon_social = '', almacen = '%', usuario = '', documento = '', estado = '%' } = req.query;
+  const { 
+    page = 0,
+    limit = 10,
+    fecha_i = '2012-01-01', 
+    fecha_e = '2057-12-27', 
+    razon_social = '', 
+    almacen = '%', 
+    usuario = '', 
+    documento = '', 
+    estado = '%' 
+  } = req.query;
   const id_tenant = req.id_tenant;
+  const offset = page * limit;
 
   try {
     connection = await getConnection();
 
-    const [salidaResult] = await connection.query(
-      `
-          SELECT 
-              n.id_nota AS id,
-              DATE_FORMAT(n.fecha, '%Y-%m-%d') AS fecha,
-              c.num_comprobante AS documento,
-              ao.nom_almacen AS almacen_O,
-              COALESCE(ad.nom_almacen,'Almacen externo') AS almacen_D,
-              COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
-              n.glosa AS concepto,
-              n.estado_nota AS estado,
-              COALESCE(u.usua, '') as usuario,
-              n.observacion AS observacion,
-              n.hora_creacion, n.fecha_anulacion, n.u_modifica AS u_modifica,n.nom_nota
-          FROM 
-              nota n
-          LEFT JOIN 
-              destinatario d ON n.id_destinatario = d.id_destinatario
+    // Construir WHERE clause dinámico
+    const where = [
+      'n.id_tiponota = 2',
+      'n.id_tenant = ?',
+      'c.num_comprobante LIKE ?',
+      'n.fecha >= ?',
+      'n.fecha <= ?',
+      '(d.razon_social LIKE ? OR CONCAT(d.nombres, " ", d.apellidos) LIKE ?)'
+    ];
+    
+    const params = [
+      id_tenant,
+      `%${documento}%`,
+      fecha_i,
+      fecha_e,
+      `%${razon_social}%`,
+      `%${razon_social}%`
+    ];
+
+    if (almacen !== '%') {
+      where.push('n.id_almacenO = ?');
+      params.push(almacen);
+    }
+    if (estado !== '%') {
+      where.push('n.estado_nota LIKE ?');
+      params.push(`%${estado}%`);
+    }
+    if (usuario) {
+      where.push('(u.usua LIKE ? OR u.usua IS NULL)');
+      params.push(`%${usuario}%`);
+    }
+
+    // Query para contar total de registros
+    const countQuery = `
+      SELECT COUNT(DISTINCT n.id_nota) as total
+      FROM nota n
+        LEFT JOIN destinatario d ON n.id_destinatario = d.id_destinatario
+        LEFT JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+        LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
+        LEFT JOIN almacen ad ON n.id_almacenD = ad.id_almacen
+        LEFT JOIN usuario u ON n.id_usuario = u.id_usuario
+      WHERE ${where.join(' AND ')}
+    `;
+
+    const [totalResult] = await connection.query(countQuery, params);
+    const totalNotas = totalResult[0].total;
+
+    // Si no hay notas, retornar temprano
+    if (totalNotas === 0) {
+      return res.json({ code: 1, data: [], totalNotas: 0 });
+    }
+
+    // Query principal con paginación optimizada
+    const cabecerasQuery = `
+      WITH NotasPaginadas AS (
+        SELECT 
+          n.id_nota AS id,
+          DATE_FORMAT(n.fecha, '%Y-%m-%d') AS fecha,
+          c.num_comprobante AS documento,
+          ao.nom_almacen AS almacen_O,
+          COALESCE(ad.nom_almacen,'Almacen externo') AS almacen_D,
+          COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
+          n.glosa AS concepto,
+          n.estado_nota AS estado,
+          COALESCE(u.usua, '') as usuario,
+          n.observacion AS observacion,
+          n.hora_creacion,
+          n.fecha_anulacion,
+          n.u_modifica AS u_modifica,
+          n.nom_nota
+        FROM nota n
+          LEFT JOIN destinatario d ON n.id_destinatario = d.id_destinatario
           LEFT JOIN comprobante c ON n.id_comprobante = c.id_comprobante
           LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
-          LEFT JOIN almacen ad ON n.id_almacenD= ad.id_almacen
-          LEFT JOIN 
-              detalle_nota dn ON n.id_nota = dn.id_nota
-          LEFT JOIN
-              usuario u ON n.id_usuario = u.id_usuario
-          WHERE 
-              n.id_tiponota = 2
-              AND n.id_tenant = ?
-              AND c.num_comprobante LIKE ?
-              AND DATE_FORMAT(n.fecha, '%Y-%m-%d') >= ?
-              AND DATE_FORMAT(n.fecha, '%Y-%m-%d') <= ?
-              AND (d.razon_social LIKE ? OR CONCAT(d.nombres, ' ', d.apellidos) LIKE ?)
-              ${almacen !== '%' ? 'AND n.id_almacenO = ?' : ''}
-              ${estado !== '%' ? 'AND n.estado_nota LIKE ?' : ''}
-              ${usuario ? 'AND (u.usua LIKE ? OR u.usua IS NULL)' : ''}
-          GROUP BY 
-              id, n.fecha, documento, almacen_O, almacen_D, proveedor, concepto, estado
-          ORDER BY 
-              n.fecha DESC, documento DESC;
-          `,
-      [
-        id_tenant,
-        `%${documento}%`,
-        fecha_i,
-        fecha_e,
-        `%${razon_social}%`,
-        `%${razon_social}%`,
-        ...(almacen !== '%' ? [almacen] : []),
-        ...(estado !== '%' ? [`%${estado}%`] : []),
-        ...(usuario ? [`%${usuario}%`] : [])
-      ]
-    );
+          LEFT JOIN almacen ad ON n.id_almacenD = ad.id_almacen
+          LEFT JOIN usuario u ON n.id_usuario = u.id_usuario
+        WHERE ${where.join(' AND ')}
+        ORDER BY n.fecha DESC, c.num_comprobante DESC
+        LIMIT ? OFFSET ?
+      )
+      SELECT * FROM NotasPaginadas
+    `;
 
-    const salidas = await Promise.all(
-      salidaResult.map(async (salida) => {
-        const [detallesResult] = await connection.query(
-          `
-                  SELECT dn.id_detalle_nota AS codigo, m.nom_marca AS marca, sc.nom_subcat AS categoria, p.descripcion AS descripcion, 
-                  dn.cantidad AS cantidad, p.undm AS unidad, 
-                  p.id_producto
-                  FROM producto p INNER JOIN marca m ON p.id_marca=m.id_marca
-                  INNER JOIN sub_categoria sc ON p.id_subcategoria=sc.id_subcategoria
-                  INNER JOIN detalle_nota dn ON p.id_producto=dn.id_producto
-                  WHERE dn.id_nota= ? AND dn.id_tenant = ?
-                  `,
-          [salida.id, id_tenant]
-        );
+    const queryParams = [...params, parseInt(limit), parseInt(offset)];
+    const [salidaResult] = await connection.query(cabecerasQuery, queryParams);
 
-        return {
-          ...salida,
-          detalles: detallesResult,
-        };
-      })
-    );
+    if (!salidaResult.length) {
+      return res.json({ code: 1, data: [], totalNotas: 0 });
+    }
 
-    res.json({ code: 1, data: salidas });
+    // Obtener todos los detalles en un solo query (evita N+1)
+    const ids = salidaResult.map(r => r.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const detallesQuery = `
+      SELECT 
+        dn.id_nota,
+        dn.id_detalle_nota AS codigo,
+        m.nom_marca AS marca,
+        sc.nom_subcat AS categoria,
+        p.descripcion AS descripcion,
+        dn.cantidad AS cantidad,
+        p.undm AS unidad,
+        p.id_producto
+      FROM detalle_nota dn
+        INNER JOIN producto p ON p.id_producto = dn.id_producto
+        INNER JOIN marca m ON p.id_marca = m.id_marca
+        INNER JOIN sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
+      WHERE dn.id_nota IN (${placeholders}) AND dn.id_tenant = ?
+    `;
+    
+    const [detallesResult] = await connection.query(detallesQuery, [...ids, id_tenant]);
+
+    // Indexar detalles por id_nota
+    const detallesMap = {};
+    for (const d of detallesResult) {
+      if (!detallesMap[d.id_nota]) detallesMap[d.id_nota] = [];
+      detallesMap[d.id_nota].push({
+        codigo: d.codigo,
+        marca: d.marca,
+        categoria: d.categoria,
+        descripcion: d.descripcion,
+        cantidad: d.cantidad,
+        unidad: d.unidad,
+        id_producto: d.id_producto
+      });
+    }
+
+    const salidas = salidaResult.map(n => ({
+      ...n,
+      detalles: detallesMap[n.id] || []
+    }));
+
+    res.json({ code: 1, data: salidas, totalNotas });
   } catch (error) {
+    console.error('Error en getSalidas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
-  }  finally {
+  } finally {
     if (connection) {
         connection.release();
     }
@@ -97,6 +180,14 @@ const getSalidas = async (req, res) => {
 const getAlmacen = async (req, res) => {
   let connection;
   const id_tenant = req.id_tenant;
+  
+  // Usar caché
+  const cacheKey = `almacenes_salida_${id_tenant}`;
+  const cached = queryCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return res.json({ code: 1, data: cached.data, message: "Almacenes listados" });
+  }
+  
   try {
     connection = await getConnection();
     const [result] = await connection.query(`
@@ -106,10 +197,15 @@ const getAlmacen = async (req, res) => {
             LEFT JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
             WHERE a.estado_almacen = 1 AND a.id_tenant = ?
         `, [id_tenant]);
+    
+    // Guardar en caché
+    queryCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    
     res.json({ code: 1, data: result, message: "Almacenes listados" });
   } catch (error) {
+    console.error('Error en getAlmacen:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
-  }  finally {
+  } finally {
     if (connection) {
         connection.release();
     }
@@ -118,7 +214,7 @@ const getAlmacen = async (req, res) => {
 
 const getProductos = async (req, res) => {
   let connection;
-  const { descripcion = '', almacen = 1, cod_barras = '' } = req.query;
+  const { descripcion = '', almacen = 1, cod_barras = '', limit = 50 } = req.query;
   const id_tenant = req.id_tenant;
 
   try {
@@ -149,14 +245,16 @@ const getProductos = async (req, res) => {
       queryParams.push(`%${cod_barras}%`);
     }
 
-    query += ' GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock';
+    query += ' GROUP BY p.id_producto, p.descripcion, m.nom_marca, i.stock LIMIT ?';
+    queryParams.push(parseInt(limit));
 
     const [productosResult] = await connection.query(query, queryParams);
 
     res.json({ code: 1, data: productosResult });
   } catch (error) {
+    console.error('Error en getProductos:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
-  }  finally {
+  } finally {
     if (connection) {
         connection.release();
     }
@@ -197,6 +295,7 @@ const getNuevoDocumento = async (req, res) => {
 
     res.json({ code: 1, data: [{ nuevo_numero_de_nota: nuevoNumComprobante }], message: "Nuevo numero de nota" });
   } catch (error) {
+    console.error('Error en getNuevoDocumento:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -208,17 +307,29 @@ const getNuevoDocumento = async (req, res) => {
 const getDestinatario = async (req, res) => {
   let connection;
   const id_tenant = req.id_tenant;
+  
+  // Usar caché
+  const cacheKey = `destinatarios_salida_${id_tenant}`;
+  const cached = queryCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return res.json({ code: 1, data: cached.data, message: "Destinatarios listados" });
+  }
+  
   try {
     connection = await getConnection();
     const [result] = await connection.query(`
-            SELECT id_destinatario AS id,COALESCE(ruc, dni) AS documento ,COALESCE(razon_social, CONCAT(nombres, ' ', apellidos)) AS destinatario 
+            SELECT id_destinatario AS id, COALESCE(ruc, dni) AS documento, COALESCE(razon_social, CONCAT(nombres, ' ', apellidos)) AS destinatario 
             FROM destinatario
-            WHERE id_tenant = ?;
+            WHERE id_tenant = ?
         `, [id_tenant]);
+    
+    // Guardar en caché
+    queryCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    
     res.json({ code: 1, data: result, message: "Destinatarios listados" });
   } catch (error) {
-    res.status(500);
-    res.send(error.message);
+    console.error('Error en getDestinatario:', error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
         connection.release();
@@ -268,61 +379,102 @@ const insertNotaAndDetalle = async (req, res) => {
 
     const id_nota = notaResult.insertId;
 
+    // Obtener precios de todos los productos en un solo query (optimización)
+    const productosPlaceholders = producto.map(() => '?').join(',');
+    const [preciosResult] = await connection.query(
+      `SELECT id_producto, precio FROM producto WHERE id_producto IN (${productosPlaceholders}) AND id_tenant = ?`,
+      [...producto, id_tenant]
+    );
+
+    // Crear mapa de precios
+    const preciosMap = new Map(preciosResult.map(p => [p.id_producto, p.precio]));
+
+    // Validar que todos los productos existan
+    for (const id_prod of producto) {
+      if (!preciosMap.has(id_prod)) {
+        throw new Error(`El producto con ID ${id_prod} no existe.`);
+      }
+    }
+
+    // Preparar datos para batch insert de detalles
+    const detalleValues = [];
+    const detalleParams = [];
+    
     for (let i = 0; i < producto.length; i++) {
       const id_producto = producto[i];
       const cantidadProducto = cantidad[i];
-
-      // Obtener el precio del producto
-      const [precioResult] = await connection.query(
-        "SELECT precio FROM producto WHERE id_producto = ? AND id_tenant = ?",
-        [id_producto, id_tenant]
-      );
-
-      if (precioResult.length === 0) {
-        throw new Error(`El producto con ID ${id_producto} no existe.`);
-      }
-
-      const precio = precioResult[0].precio;
+      const precio = preciosMap.get(id_producto);
       const totalProducto = cantidadProducto * precio;
+      
+      detalleValues.push('(?, ?, ?, ?, ?, ?)');
+      detalleParams.push(id_producto, id_nota, cantidadProducto, precio, totalProducto, id_tenant);
+    }
 
-      // Insertar en detalle_nota
-      const [detalleResult] =  await connection.query(
-        "INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant) VALUES (?, ?, ?, ?, ?, ?)",
-        [id_producto, id_nota, cantidadProducto, precio, totalProducto, id_tenant]
+    // Batch insert de detalles
+    const [detalleResult] = await connection.query(
+      `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant) VALUES ${detalleValues.join(', ')}`,
+      detalleParams
+    );
+
+    // Obtener IDs de detalles insertados
+    const firstDetalleId = detalleResult.insertId;
+
+    // Obtener stocks actuales de todos los productos en un solo query
+    const [stocksResult] = await connection.query(
+      `SELECT id_producto, stock FROM inventario WHERE id_producto IN (${productosPlaceholders}) AND id_almacen = ? AND id_tenant = ?`,
+      [...producto, almacenO, id_tenant]
+    );
+
+    const stocksMap = new Map(stocksResult.map(s => [s.id_producto, s.stock]));
+
+    // Preparar batch operations
+    const updateInventarioPromises = [];
+    const bitacoraValues = [];
+    const bitacoraParams = [];
+
+    for (let i = 0; i < producto.length; i++) {
+      const id_producto = producto[i];
+      const cantidadProducto = cantidad[i];
+      const id_detalle = firstDetalleId + i;
+      const stockAnterior = stocksMap.get(id_producto) || 0;
+      
+      // Validar stock suficiente
+      if (stockAnterior < cantidadProducto) {
+        throw new Error(`Stock insuficiente para producto ID ${id_producto}. Disponible: ${stockAnterior}, Solicitado: ${cantidadProducto}`);
+      }
+      
+      const totalStock = stockAnterior - cantidadProducto;
+
+      // Actualizar stock (en paralelo)
+      updateInventarioPromises.push(
+        connection.query(
+          "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ? AND id_tenant = ?",
+          [cantidadProducto, id_producto, almacenO, id_tenant]
+        )
       );
 
-      const id_detalle = detalleResult.insertId;
+      // Preparar bitácora
+      bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?)');
+      bitacoraParams.push(id_nota, id_producto, almacenO, id_detalle, cantidadProducto, stockAnterior, totalStock, fecha, id_tenant);
+    }
 
-      const [stockResult] = await connection.query(
-        "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ? AND id_tenant = ?",
-        [id_producto, almacenO, id_tenant]
-      );
+    // Ejecutar batch updates en paralelo
+    if (updateInventarioPromises.length > 0) {
+      await Promise.all(updateInventarioPromises);
+    }
 
-      let totalStock;
-      totalStock = stockResult[0].stock - cantidadProducto;
-      // Reducir stock en el almacén de origen
+    // Batch insert de bitácora
+    if (bitacoraValues.length > 0) {
       await connection.query(
-        "UPDATE inventario SET stock = stock - ? WHERE id_producto = ? AND id_almacen = ? AND id_tenant = ?",
-        [cantidadProducto, id_producto, almacenO, id_tenant]
-      );
-
-      await connection.query(
-        "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id_nota,
-          id_producto,
-          almacenO,
-          id_detalle,
-          cantidadProducto,
-          stockResult[0]?.stock || 0,
-          totalStock,
-          fecha,
-          id_tenant
-        ]
+        `INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha, id_tenant) VALUES ${bitacoraValues.join(', ')}`,
+        bitacoraParams
       );
     }
 
     await connection.commit();
+
+    // Limpiar caché relacionado
+    queryCache.clear();
 
     // Registrar log de creación de nota de salida
     const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
@@ -337,8 +489,9 @@ const insertNotaAndDetalle = async (req, res) => {
     if (connection) {
       await connection.rollback();
     }
+    console.error('Error en insertNotaAndDetalle:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
-  }  finally {
+  } finally {
     if (connection) {
         connection.release();
     }
@@ -360,7 +513,7 @@ const anularNota = async (req, res) => {
 
     // Obtener los detalles de la nota
     const [notaResult] = await connection.query(
-      "SELECT id_almacenO, id_almacenD, id_comprobante FROM nota WHERE id_nota = ? AND estado_nota = 0 AND id_tenant = ?",
+      "SELECT id_almacenO FROM nota WHERE id_nota = ? AND estado_nota = 0 AND id_tenant = ?",
       [notaId, id_tenant]
     );
 
@@ -368,7 +521,7 @@ const anularNota = async (req, res) => {
       return res.status(404).json({ message: "Nota no encontrada o ya anulada." });
     }
 
-    const { id_almacenO, id_almacenD, id_comprobante } = notaResult[0];
+    const { id_almacenO } = notaResult[0];
 
     // Obtener los detalles de los productos de la nota
     const [detalleResult] = await connection.query(
@@ -434,12 +587,16 @@ const anularNota = async (req, res) => {
     );
 
     await connection.commit();
+    
+    // Limpiar caché relacionado
+    queryCache.clear();
 
     res.json({ code: 1, message: "Nota anulada correctamente" });
   } catch (error) {
     if (connection) {
       await connection.rollback();
     }
+    console.error('Error en anularNota:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection && typeof connection.release === "function") {

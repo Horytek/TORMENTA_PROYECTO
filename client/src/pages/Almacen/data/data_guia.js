@@ -33,7 +33,7 @@ const useGuiasData = (filters) => {
           dni: guia.dni,
           serieNum: guia.serieNum,
           num: guia.num,
-          total: `S/ ${parseFloat(guia.total).toFixed(2)}`,
+          total: guia.total ? `S/ ${parseFloat(guia.total).toFixed(2)}` : 'S/ 0.00',
           concepto: guia.concepto,
           dirpartida: guia.dir_partida,
           dirdestino: guia.dir_destino,
@@ -51,15 +51,15 @@ const useGuiasData = (filters) => {
           guia.estado === 1 ? 'Activo' :
           guia.estado === 2 ? 'En proceso' :
           'Desconocido', // Valor por defecto para estados no especificados
-          detalles: guia.detalles.map(detalle => ({
-            codigo: detalle.codigo.toString().padStart(3, '0'),
-            marca: detalle.marca,
-            descripcion: detalle.descripcion,
-            cantidad: detalle.cantidad,
-            um: detalle.um,
-            precio: `S/ ${parseFloat(detalle.precio).toFixed(2)}`,
-            total: `S/ ${parseFloat(detalle.total).toFixed(2)}`,
-          }))
+          detalles: guia.detalles ? guia.detalles.map(detalle => ({
+            codigo: detalle.codigo ? detalle.codigo.toString().padStart(3, '0') : '000',
+            marca: detalle.marca || '',
+            descripcion: detalle.descripcion || '',
+            cantidad: detalle.cantidad || 0,
+            um: detalle.um || '',
+            precio: detalle.precio ? `S/ ${parseFloat(detalle.precio).toFixed(2)}` : 'S/ 0.00',
+            total: detalle.precio && detalle.cantidad ? `S/ ${(parseFloat(detalle.precio) * parseFloat(detalle.cantidad)).toFixed(2)}` : 'S/ 0.00',
+          })) : []
         }));
         //console.log('Transformed Guias:', guias);   // Agrega este log para verificar los datos
         setGuias(guias);
