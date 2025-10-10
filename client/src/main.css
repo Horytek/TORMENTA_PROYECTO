@@ -672,15 +672,105 @@ html.dark body:not(.landing-body) #root {
 }
 
 /* Badges, chips, tooltips */
-.dark .heroui-chip,
 .dark .heroui-badge,
 .dark .heroui-tooltip,
-.dark .Chip,
 .dark .Badge,
 .dark .Tooltip {
   background-color: #232339 !important;
   color: #f8fafc !important;
   border-color: #36364a !important;
+}
+
+/* Chips: conservar color en modo oscuro (HeroUI/NextUI usan data-attrs) */
+.dark .heroui-chip[data-variant="flat"][data-color="primary"],
+.dark .Chip[data-variant="flat"][data-color="primary"] {
+  background: linear-gradient(135deg, rgba(59,130,246,.20), rgba(59,130,246,.08)) !important;
+  border-color: rgba(59,130,246,.35) !important;
+  color: #dbeafe !important;
+}
+.dark .heroui-chip[data-variant="flat"][data-color="success"],
+.dark .Chip[data-variant="flat"][data-color="success"] {
+  background: linear-gradient(135deg, rgba(16,185,129,.20), rgba(16,185,129,.08)) !important;
+  border-color: rgba(16,185,129,.35) !important;
+  color: #d1fae5 !important;
+}
+.dark .heroui-chip[data-variant="flat"][data-color="warning"],
+.dark .Chip[data-variant="flat"][data-color="warning"] {
+  background: linear-gradient(135deg, rgba(245,158,11,.22), rgba(245,158,11,.10)) !important;
+  border-color: rgba(245,158,11,.42) !important;
+  color: #fde68a !important;
+}
+.dark .heroui-chip[data-variant="flat"][data-color="danger"],
+.dark .Chip[data-variant="flat"][data-color="danger"] {
+  background: linear-gradient(135deg, rgba(244,63,94,.22), rgba(244,63,94,.10)) !important;
+  border-color: rgba(244,63,94,.40) !important;
+  color: #fecaca !important;
+}
+.dark .heroui-chip[data-variant="flat"][data-color="secondary"],
+.dark .Chip[data-variant="flat"][data-color="secondary"],
+.dark .heroui-chip[data-variant="flat"][data-color="violet"],
+.dark .Chip[data-variant="flat"][data-color="violet"] {
+  background: linear-gradient(135deg, rgba(139,92,246,.22), rgba(139,92,246,.10)) !important;
+  border-color: rgba(139,92,246,.42) !important;
+  color: #ddd6fe !important;
+}
+.dark .heroui-chip[data-variant="flat"][data-color="default"],
+.dark .Chip[data-variant="flat"][data-color="default"] {
+  background: linear-gradient(135deg, rgba(100,116,139,.20), rgba(100,116,139,.10)) !important;
+  border-color: rgba(148,163,184,.40) !important;
+  color: #e2e8f0 !important;
+}
+
+/* Solid: conserva color con buen contraste */
+.dark .heroui-chip[data-variant="solid"][data-color="primary"],
+.dark .Chip[data-variant="solid"][data-color="primary"] {
+  background-color: #2563eb !important; color: #fff !important; border-color: transparent !important;
+}
+.dark .heroui-chip[data-variant="solid"][data-color="success"],
+.dark .Chip[data-variant="solid"][data-color="success"] {
+  background-color: #059669 !important; color: #fff !important; border-color: transparent !important;
+}
+.dark .heroui-chip[data-variant="solid"][data-color="warning"],
+.dark .Chip[data-variant="solid"][data-color="warning"] {
+  background-color: #d97706 !important; color: #fff !important; border-color: transparent !important;
+}
+.dark .heroui-chip[data-variant="solid"][data-color="danger"],
+.dark .Chip[data-variant="solid"][data-color="danger"] {
+  background-color: #dc2626 !important; color: #fff !important; border-color: transparent !important;
+}
+.dark .heroui-chip[data-variant="solid"][data-color="secondary"],
+.dark .Chip[data-variant="solid"][data-color="secondary"],
+.dark .heroui-chip[data-variant="solid"][data-color="violet"],
+.dark .Chip[data-variant="solid"][data-color="violet"] {
+  background-color: #7c3aed !important; color: #fff !important; border-color: transparent !important;
+}
+
+/* Bordered: borde y texto con el color, fondo transparente */
+.dark .heroui-chip[data-variant="bordered"][data-color="primary"],
+.dark .Chip[data-variant="bordered"][data-color="primary"] {
+  background-color: transparent !important; color: #93c5fd !important; border-color: rgba(59,130,246,.55) !important;
+}
+.dark .heroui-chip[data-variant="bordered"][data-color="success"],
+.dark .Chip[data-variant="bordered"][data-color="success"] {
+  background-color: transparent !important; color: #86efac !important; border-color: rgba(16,185,129,.55) !important;
+}
+.dark .heroui-chip[data-variant="bordered"][data-color="warning"],
+.dark .Chip[data-variant="bordered"][data-color="warning"] {
+  background-color: transparent !important; color: #fcd34d !important; border-color: rgba(245,158,11,.55) !important;
+}
+.dark .heroui-chip[data-variant="bordered"][data-color="danger"],
+.dark .Chip[data-variant="bordered"][data-color="danger"] {
+  background-color: transparent !important; color: #fca5a5 !important; border-color: rgba(244,63,94,.55) !important;
+}
+.dark .heroui-chip[data-variant="bordered"][data-color="secondary"],
+.dark .Chip[data-variant="bordered"][data-color="secondary"],
+.dark .heroui-chip[data-variant="bordered"][data-color="violet"],
+.dark .Chip[data-variant="bordered"][data-color="violet"] {
+  background-color: transparent !important; color: #c4b5fd !important; border-color: rgba(139,92,246,.55) !important;
+}
+.dark .heroui-chip[data-variant="bordered"][data-color="default"],
+.dark .Chip[data-variant="bordered"][data-color="default"] {
+  background-color: transparent !important; color: #e5e7eb !important; border-color: rgba(148,163,184,.55) !important;
 }
 
 /* Iconos */
@@ -996,3 +1086,5 @@ html.dark body:not(.landing-body) #root {
 .dark .bg-blue-100:hover {
   filter: brightness(1.05);
 }
+
+/*Probando de que todo funciona*/

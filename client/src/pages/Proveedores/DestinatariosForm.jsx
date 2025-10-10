@@ -237,7 +237,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     <Input
                       {...field}
                       label="Documento"
-                      variant="bordered"
+                      variant="flat"
                       value={documento}
                       onChange={handleDocumentoChange}
                       color={errors.documento ? "danger" : "default"}
@@ -257,7 +257,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Nombre"
-                          variant="bordered"
+                          variant="flat"
                           color={errors.nombre ? "danger" : "default"}
                           errorMessage={errors.nombre?.message}
                           isRequired={isDNI}
@@ -273,7 +273,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Apellidos"
-                          variant="bordered"
+                          variant="flat"
                           color={errors.apellidos ? "danger" : "default"}
                           errorMessage={errors.apellidos?.message}
                           isRequired={isDNI}
@@ -292,7 +292,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Razón Social"
-                        variant="bordered"
+                        variant="flat"
                         color={errors.razonsocial ? "danger" : "default"}
                         errorMessage={errors.razonsocial?.message}
                         className="mt-2"
@@ -310,7 +310,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Teléfono"
-                        variant="bordered"
+                        variant="flat"
                         color={errors.telefono ? "danger" : "default"}
                         errorMessage={errors.telefono?.message}
                       />
@@ -325,7 +325,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Ubicación"
-                        variant="bordered"
+                        variant="flat"
                         color={errors.ubicacion ? "danger" : "default"}
                         errorMessage={errors.ubicacion?.message}
                         isRequired
@@ -341,7 +341,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     <Input
                       {...field}
                       label="Dirección"
-                      variant="bordered"
+                      variant="flat"
                       color={errors.direccion ? "danger" : "default"}
                       errorMessage={errors.direccion?.message}
                       className="mt-2"
@@ -357,7 +357,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       {...field}
                       label="Email"
                       type="email"
-                      variant="bordered"
+                      variant="flat"
                       color={errors.email ? "danger" : "default"}
                       errorMessage={errors.email?.message}
                       className="mt-2"

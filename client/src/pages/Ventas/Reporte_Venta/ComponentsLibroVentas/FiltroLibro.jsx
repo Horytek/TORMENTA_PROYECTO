@@ -40,9 +40,11 @@ const FiltroLibro = ({ onFilter, filters }) => {
         return isValid(jsDate) ? format(jsDate, "yyyy-MM-dd") : null;
     }, []);
 
-    const applyFilters = useCallback((newDateRange, newTipoComprobante, newSucursal) => {
+const applyFilters = useCallback((newDateRange, newTipoComprobante, newSucursal) => {
         const selectedComprobante = Array.from(newTipoComprobante);
-        const selectedSucursal = Array.from(newSucursal)[0] || null;
+        // Siempre string o vacío
+        const selectedSucursal = Array.from(newSucursal)[0];
+        let idSucursal = selectedSucursal !== undefined && selectedSucursal !== null ? String(selectedSucursal) : "";
         let startDate = null;
         let endDate = null;
 
@@ -55,7 +57,7 @@ const FiltroLibro = ({ onFilter, filters }) => {
             startDate,
             endDate,
             tipoComprobante: selectedComprobante,
-            idSucursal: selectedSucursal
+            idSucursal: idSucursal
         });
     }, [onFilter, formatDateSafely]);
 

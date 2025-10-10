@@ -37,10 +37,14 @@ import claveRoutes from './routes/clave.routes.js';
 import logotipoRoutes from "./routes/logotipo.routes.js";
 import valorRoutes from "./routes/valor.routes.js";
 import logsRoutes from "./routes/logs.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+import helpRoutes from "./routes/help.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
+import { getConnection } from "./database/database.js";
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Settings
 const port = process.env.PORT || 4000 ;
@@ -102,7 +106,6 @@ app.use(express.json());
 app.use(cookieParser());
 // Auditoría (después de parseos, antes de rutas) - registra solo rutas autenticadas luego
 // app.use(auditLog()); // DESACTIVADO: genera acciones no válidas como "GET OK"
-
 // Routes
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reporte", reporteRoutes);
@@ -135,6 +138,8 @@ app.use("/api/clave", claveRoutes);
 app.use("/api/logotipo", logotipoRoutes);
 app.use("/api/valor", valorRoutes);
 app.use("/api/logs", logsRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/help", helpRoutes);
 
 // Servir archivos estáticos de Vite/React
 app.use(express.static(path.join(__dirname, "../client/dist")));
