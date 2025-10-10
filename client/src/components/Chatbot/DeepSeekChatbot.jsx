@@ -47,6 +47,7 @@ export default function DeepSeekOpenRouterChatbot() {
   const [conciseMode, setConciseMode] = useState(true);
   const [includeDBContext, setIncludeDBContext] = useState(true);
   const [autoUISnapshot, setAutoUISnapshot] = useState(true);
+  const [autoNavigateOnExact, setAutoNavigateOnExact] = useState(true);
 
   // Snapshot UI
   const [uiSnapshot, setUiSnapshot] = useState("");
@@ -59,6 +60,46 @@ export default function DeepSeekOpenRouterChatbot() {
 
   // control para no repetir la sugerencia muy seguido
   const visualTipCooldownRef = useRef(0);
+  // Estado local para usar el esquema después de la respuesta del modelo
+  const [lastFormSchema, setLastFormSchema] = useState(null);
+
+  // Obtener definición de formulario por entidad (usuario, producto, etc.)
+  async function fetchFormSchema(kind) {
+    if (!kind) return { prompt: "", schema: null };
+    try {
+      const { data } = await axios.get("/help/forms", { params: { entity: kind.type } });
+      if (!data?.ok) return { prompt: "", schema: null };
+      const req = Array.isArray(data.required) && data.required.length ? `Obligatorios: ${data.required.join(", ")}` : "";
+      const opt = Array.isArray(data.optional) && data.optional.length ? `Opcionales: ${data.optional.join(", ")}` : "";
+      const ex  = Array.isArray(data.extras)   && data.extras.length   ? `Solo desarrollador: ${data.extras.join(", ")}` : "";
+      const parts = [req, opt, ex, data.notes].filter(Boolean).join(" | ");
+      return { prompt: parts ? `EsquemaFormulario(${kind.type}): ${parts}` : "", schema: data };
+    } catch {
+      return { prompt: "", schema: null };
+    }
+  }
+
+  // Unifica la salida del modelo con el formulario real (evita confusiones)
+  function mergeWithFormSchema(entity, reply, schemaData) {
+    if (!schemaData || !entity?.type) return reply;
+    const req = (schemaData.required || []).map(s => `- ${s}`).join("\n");
+    const opt = (schemaData.optional || []).map(s => `- ${s}`).join("\n");
+    const ex  = (schemaData.extras || []).map(s => `- ${s}`).join("\n");
+
+    const header =
+      entity.type === "product" ? "Campos del formulario de producto detectados:" :
+      entity.type === "user"    ? "Campos del formulario de usuario detectados:" :
+      "Campos del formulario detectados:";
+    const canonical = [
+      `\n${header}`,
+      req ? `Obligatorios:\n${req}` : null,
+      opt ? `Opcionales:\n${opt}` : null,
+      ex  ? `Solo desarrollador:\n${ex}` : null
+    ].filter(Boolean).join("\n\n");
+
+    // Respuesta final estilo ChatGPT + bloque canónico del formulario
+    return `${reply}\n${canonical}`;
+  }
 
   useEffect(() => {
     try {
@@ -110,26 +151,18 @@ export default function DeepSeekOpenRouterChatbot() {
   }
 
   // Limpieza de texto
-  function simplifyResponse(text = "") {
-    let t = (text || "")
-      .replace(/<\|.*?\|>/g, "")
-      .replace(/<\uFF5C.*?\uFF5C>/g, "")
-      .replace(/^\s*\d+\.\s+/gm, "")
-      .replace(/^\s*[-*•]\s+/gm, "")
-      .replace(/\. *\n/g, ". ")
-      .replace(/\n{3,}/g, "\n\n")
-      .replace(/\n+/g, "\n")
-      .replace(/\.{2,}/g, ".")
-      .trim();
-    t = t.replace(/([^.])\n([^.])/g, "$1. $2");
-    return t;
-  }
-  function enforceConcise(text) {
-    if (!conciseMode) return text;
-    const words = text.split(/\s+/);
-    if (words.length <= CONCISE_HARD_LIMIT) return text;
-    return words.slice(0, CONCISE_HARD_LIMIT).join(" ") + " …";
-  }
+function simplifyResponse(text = "") {
+  return String(text || "")
+    .replace(/<\|.*?\|>/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+function enforceConcise(text) {
+  if (!conciseMode) return text;
+  const words = text.split(/\s+/);
+  if (words.length <= CONCISE_HARD_LIMIT) return text;
+  return words.slice(0, CONCISE_HARD_LIMIT).join(" ") + " …";
+}
 
   // Snapshot UI helpers
   const MAX_UI_CHARS = 900;
@@ -167,6 +200,22 @@ export default function DeepSeekOpenRouterChatbot() {
       return "";
     }
   }
+
+    // Buscar en backend (módulos/submódulos visibles para tu tenant)
+  const searchSystemForKeyword = useCallback(async (qText) => {
+    try {
+      const { data } = await axios.get("/help/search", { params: { q: qText } });
+      const matches = Array.isArray(data?.matches) ? data.matches : [];
+      // normalizar shape a {name, path}
+      return matches.map(m => ({
+        name: m.nombre || m.name || m.ruta || "Sin nombre",
+        path: m.ruta || m.path || "/",
+        tipo: m.tipo || "modulo"
+      }));
+    } catch {
+      return [];
+    }
+  }, []);
 
    // --- FAQs locales canónicas (sin llamar a la IA) ---
   const hasVisualContext = useCallback(() => {
@@ -218,25 +267,60 @@ export default function DeepSeekOpenRouterChatbot() {
     // Permisos primero (canónico)
     if (detectPermissionsIntent(text)) {
       const entry = findEntryByKeyword("permis");
+      // si no está en snapshot, intentar en backend
+      if (!entry) {
+        return awaitable(async () => {
+          const found = await searchSystemForKeyword("permis");
+          if (found.length === 0) {
+            return "Esa sección no existe para tu empresa/tenant. Ubicación habitual: Configuración → Roles y permisos.";
+          }
+          const first = found[0];
+          if (found.length === 1 && autoNavigateOnExact && first.path?.startsWith("/")) {
+            window.location.assign(first.path);
+          }
+          return buildCanonicalLocationAnswer(first.name, first.path, true);
+        });
+      }
       const route = entry?.path || "/configuracion/roles";
       const name = entry?.name || "Configuración → Roles y permisos";
-      const visible = Boolean(entry);
-      return buildCanonicalLocationAnswer(name, route, visible);
+      return buildCanonicalLocationAnswer(name, route, Boolean(entry));
     }
 
     // Intentos de “¿dónde está X?” genérico
     const navLike = /(d[oó]nde|donde|en que|en qué|no encuentro|no aparece)/i.test(text || "");
     if (navLike) {
-      const keywords = ["venta", "ventas", "almac", "kardex", "cliente", "proveedor", "sunat", "roles", "permis"];
-      for (const k of keywords) {
-        if ((text || "").toLowerCase().includes(k)) {
-          const entry = findEntryByKeyword(k);
-          if (entry) return buildCanonicalLocationAnswer(entry.name, entry.path, true);
+      const keywords = ["venta","ventas","almac","kardex","cliente","proveedor","sunat","roles","permis","finanzas","contabilidad"];
+      const lowered = (text || "").toLowerCase();
+      const kw = keywords.find(k => lowered.includes(k));
+      if (kw) {
+        const entry = findEntryByKeyword(kw);
+        if (entry) {
+          if (autoNavigateOnExact && entry.path?.startsWith("/")) window.location.assign(entry.path);
+          return buildCanonicalLocationAnswer(entry.name, entry.path, true);
         }
+        // Fallback a backend (puede existir pero no estar en tu menú)
+        return awaitable(async () => {
+          const found = await searchSystemForKeyword(kw);
+          if (found.length === 0) {
+            // Mensaje claro de inexistencia (p.ej., Finanzas)
+            const pretty = kw.charAt(0).toUpperCase() + kw.slice(1);
+            return `No encuentro ningún módulo o sección relacionada a “${pretty}” en tu empresa/tenant. Es probable que no exista en este sistema para tu organización.`;
+          }
+          const first = found[0];
+          if (found.length === 1 && autoNavigateOnExact && first.path?.startsWith("/")) {
+            window.location.assign(first.path);
+          }
+          return buildCanonicalLocationAnswer(first.name, first.path, true);
+        });
       }
     }
     return null;
   };
+
+    // util para permitir que handleLocalFaqs devuelva promesas sin romper la llamada
+  function awaitable(fn) {
+    return { __awaitable: true, run: fn };
+  }
 
   // Cargar módulos una sola vez cuando se abra chat/buscador (evita bucles)
   useEffect(() => {
@@ -352,6 +436,8 @@ Historial breve: ${historySummary || "inicio"}.
       .replace(/\|\s*\|\s*/g, "|")
       .replace(/\s{2,}/g, " ")
       .trim();
+    // Negrita para "Descripción:" (y variantes) en la respuesta
+    cleaned = cleaned.replace(/(\bDescripción\b\s*:)/gi, '<b>$1</b>');
     const pantallaMatch = cleaned.match(/Pantalla:([^|]+)(\||$)/);
     const preguntaMatch = cleaned.match(/Pregunta:([^|]+)$/);
     if (pantallaMatch && preguntaMatch) return `(Pantalla:${pantallaMatch[1].trim()} | Pregunta:${preguntaMatch[1].trim()})`;
@@ -359,78 +445,92 @@ Historial breve: ${historySummary || "inicio"}.
     return cleaned;
   }
 
-  // Construcción del mensaje user
-  const buildUserMessage = (question, screenDescription, dbContext) => {
-    const parts = [];
-    if (screenDescription?.trim()) parts.push(`Pantalla:${screenDescription.trim()}`);
-    else if (autoUISnapshot && uiSnapshot) parts.push(`UI:${uiSnapshot}`);
-    if (dbContext) parts.push(`ContextoBD:${dbContext}`);
-    parts.push(`Pregunta:${question.trim()}`);
-    return { role: "user", content: parts.join(" | ") };
-  };
+// Construcción del mensaje user (inyecta el contexto del formulario si existe)
+const buildUserMessage = (question, screenDescription, dbContext, formCtx) => {
+  const parts = [];
+  if (screenDescription?.trim()) parts.push(`Pantalla:${screenDescription.trim()}`);
+  else if (autoUISnapshot && uiSnapshot) parts.push(`UI:${uiSnapshot}`);
+  if (dbContext) parts.push(`ContextoBD:${dbContext}`);
+  if (formCtx) parts.push(`ContextoBD:${formCtx}`);
+  parts.push(`Pregunta:${question.trim()}`);
+  return { role: "user", content: parts.join(" | ") };
+};
 
-  // Envío
-  const sendMessage = async (rawText) => {
-    const text = (rawText ?? input).trim();
-    if (!text || loading) return;
-    setLoading(true);
-    setErrorMsg("");
+// Envío
+const sendMessage = async (rawText) => {
+  const text = (rawText ?? input).trim();
+  if (!text || loading) return;
+  setLoading(true);
+  setErrorMsg("");
 
-    // Interceptar FAQs locales (sin IA)
-    const local = handleLocalFaqs(text);
-    if (local) {
+  const local = handleLocalFaqs(text);
+  if (local) {
+    if (local.__awaitable) {
+      const reply = await local.run();
+      setMessages(prev => [...prev, { role: "user", content: text }, { role: "assistant", content: reply }]);
+    } else {
       setMessages(prev => [...prev, { role: "user", content: text }, { role: "assistant", content: local }]);
-      setLoading(false);
-      setInput("");
-      return;
+    }
+    setLoading(false);
+    setInput("");
+    return;
+  }
+
+  if (!hasVisualContext() && needsVisualContext(text) && Date.now() - visualTipCooldownRef.current > 90_000) {
+    setShowScreenDesc(true);
+    const tip = "Sugerencia: para orientarme mejor, añade una breve descripción visual y reenvía tu pregunta.";
+    setMessages(prev => [...prev, { role: "assistant", content: tip }]);
+    setLoading(false);
+    visualTipCooldownRef.current = Date.now();
+    return;
+  }
+
+  ensureSystemMessage();
+
+  // Contextos
+  const entity = detectEntity(text);
+  const [dbContext, formObj] = await Promise.all([
+    fetchDBContext(entity),
+    fetchFormSchema(entity)
+  ]);
+  setLastFormSchema(formObj?.schema || null);
+
+  const userMsg = buildUserMessage(text, screenDesc, dbContext, formObj?.prompt || "");
+  const base = messages.filter(Boolean);
+  const provisional = pruneHistory([
+    ...base.filter(m => m.role === "system"),
+    ...base.filter(m => m.role !== "system"),
+    userMsg
+  ]);
+
+  setMessages(prev => [...prev, userMsg]);
+  if (screenDesc) setScreenDesc("");
+
+  try {
+    const { data } = await axios.post("/chat", { messages: provisional });
+    let assistantReply = data?.choices?.[0]?.message?.content || data?.text || "Sin respuesta.";
+    assistantReply = simplifyResponse(assistantReply);
+
+    // Si hay esquema del formulario, añadimos bloque canónico (evita “Nombre/SKU” cuando no existe)
+    if (lastFormSchema || formObj?.schema) {
+      assistantReply = mergeWithFormSchema(entity, assistantReply, formObj?.schema || lastFormSchema);
     }
 
-    // Sugerir descripción visual si aplica
-    if (!hasVisualContext() && needsVisualContext(text) && Date.now() - visualTipCooldownRef.current > 90_000) {
-      setShowScreenDesc(true);
-      const tip = "Sugerencia: para orientarme mejor en tu pantalla, pulsa “Añadir descripción visual” y escribe brevemente lo que ves (ej.: «menú lateral con Inicio y Ventas; botón Nueva venta arriba»). Luego envíame tu pregunta otra vez.";
-      setMessages(prev => [...prev, { role: "assistant", content: tip }]);
-      setLoading(false);
-      visualTipCooldownRef.current = Date.now();
-      return;
-    }
-
-    ensureSystemMessage();
-
-    // Contexto RAG/mini BD por intención
-    const entity = detectEntity(text);
-    const dbContext = await fetchDBContext(entity);
-    const userMsg = buildUserMessage(text, screenDesc, dbContext);
-    const base = messages.filter(Boolean);
-    const provisional = pruneHistory([
-      ...base.filter(m => m.role === "system"),
-      ...base.filter(m => m.role !== "system"),
-      userMsg
-    ]);
-
-    setMessages(prev => [...prev, userMsg]);
-    if (screenDesc) setScreenDesc("");
-
-    try {
-      // El backend añadirá “snippets” RAG adicionales antes de la llamada a OpenAI
-      const { data } = await axios.post("/chat", { messages: provisional });
-      let assistantReply = data?.choices?.[0]?.message?.content || data?.text || "Sin respuesta.";
-      assistantReply = enforceConcise(simplifyResponse(assistantReply));
-      setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
-      summarizeIfNeeded([...base, userMsg, { role: "assistant", content: assistantReply }]);
-      scrollToEnd();
-    } catch (e) {
-      setErrorMsg(e?.response?.data?.error || e.message || "Error al conectar.");
-      setMessages(prev => [...prev, { role: "assistant", content: "Ocurrió un error procesando la solicitud." }]);
-    } finally {
-      setLoading(false);
-      setInput("");
-    }
-  };
-
+    assistantReply = enforceConcise(assistantReply);
+    setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
+    summarizeIfNeeded([...base, userMsg, { role: "assistant", content: assistantReply }]);
+    scrollToEnd();
+  } catch (e) {
+    setErrorMsg(e?.response?.data?.error || e.message || "Error al conectar.");
+    setMessages(prev => [...prev, { role: "assistant", content: "Ocurrió un error procesando la solicitud." }]);
+  } finally {
+    setLoading(false);
+    setInput("");
+  }
+};
 
   // =================== UI ===================
-  return (
+return (
   <>
     {/* Botón flotante compacto con dropdown de opciones */}
     <div style={{ position: "fixed", right: 20, bottom: 20, zIndex: 9998 }}>
@@ -440,34 +540,34 @@ Historial breve: ${historySummary || "inicio"}.
             isIconOnly
             size="md"
             variant="flat"
-            color="primary"
-            className="rounded-full shadow border border-blue-100/60 dark:border-zinc-700/60 bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-800 w-11 h-11 flex items-center justify-center"
+            color="default"
+            className="rounded-full shadow border border-gray-200/70 dark:border-zinc-800/70 bg-white/90 dark:bg-zinc-900/90 w-11 h-11 flex items-center justify-center"
             aria-label="Panel de opciones"
             tabIndex={0}
           >
             <Tooltip content="Opciones rápidas" placement="left">
-              <Settings className="w-6 h-6 text-blue-700 dark:text-blue-200" />
+              <Settings className="w-6 h-6 text-gray-700 dark:text-zinc-200" />
             </Tooltip>
           </Button>
         </DropdownTrigger>
-        <DropdownMenu aria-label="Panel de opciones">
+        <DropdownMenu aria-label="Panel de opciones" className="dark:bg-zinc-900">
           <DropdownItem
             key="chatbot"
-            startContent={<MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-300" />}
+            startContent={<MessageCircle className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
             onClick={() => setIsChatOpen(true)}
           >
             Asistente ERP
           </DropdownItem>
           <DropdownItem
             key="search"
-            startContent={<Search className="w-4 h-4 text-blue-500 dark:text-blue-300" />}
+            startContent={<Search className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
             onClick={() => setIsSearchOpen(true)}
           >
             Buscar en el sistema
           </DropdownItem>
           <DropdownItem
             key="messenger"
-            startContent={<MessageCircle className="w-4 h-4 text-green-600 dark:text-green-300" />}
+            startContent={<MessageCircle className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
             onClick={() => setIsMessengerOpen(true)}
           >
             Mensajería interna
@@ -483,29 +583,29 @@ Historial breve: ${historySummary || "inicio"}.
         className="fixed inset-0 bg-black/40 dark:bg-black/70 flex items-center justify-center z-[10000]"
         onClick={() => setIsSearchOpen(false)}
       >
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-4 transition-colors duration-200" onClick={e => e.stopPropagation()}>
-          <CommandDemo
-            routes={effectiveRoutes}
-            onClose={() => setIsSearchOpen(false)}
-          />
+        <div
+          className="bg-white/95 dark:bg-zinc-900/95 rounded-xl shadow-2xl p-4 border border-gray-200/70 dark:border-zinc-800/70 transition-colors duration-200"
+          onClick={e => e.stopPropagation()}
+        >
+          <CommandDemo routes={effectiveRoutes} onClose={() => setIsSearchOpen(false)} />
         </div>
       </div>
     )}
 
     {/* Ventana del chat DeepSeek */}
     {isChatOpen && (
-      <Card className="fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-blue-100/70 dark:border-zinc-700/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200 w-[380px] h-[620px] max-w-[95vw]">
+      <Card className="fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-gray-200/70 dark:border-zinc-800/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200 w-[380px] h-[620px] max-w-[95vw]">
         {/* HEADER */}
-        <div className="relative px-4 py-4 bg-gradient-to-r from-white via-blue-50 to-blue-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-800 flex items-center justify-between border-b border-blue-100/60 dark:border-zinc-700/60">
+        <div className="relative px-4 py-4 bg-white/90 dark:bg-zinc-900/90 flex items-center justify-between border-b border-gray-200/70 dark:border-zinc-800/60">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-zinc-700 dark:to-zinc-600 rounded-lg flex items-center justify-center shadow">
-              <Bot className="w-5 h-5 text-blue-500 dark:text-blue-300" />
+            <div className="w-9 h-9 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center shadow-sm border border-gray-200/70 dark:border-zinc-700/60">
+              <Bot className="w-5 h-5 text-gray-700 dark:text-zinc-200" />
             </div>
             <div className="leading-tight">
-              <h3 className="text-sm font-bold tracking-wide text-blue-700 dark:text-blue-200">
+              <h3 className="text-sm font-semibold tracking-wide text-gray-800 dark:text-zinc-100">
                 Asistente HoryCore
               </h3>
-              <p className="text-[10px] text-blue-400 dark:text-blue-300 font-medium">
+              <p className="text-[10px] text-gray-500 dark:text-zinc-400 font-medium">
                 Conversación contextual
               </p>
             </div>
@@ -514,7 +614,7 @@ Historial breve: ${historySummary || "inicio"}.
             <Button
               size="sm"
               variant="light"
-              className="text-[10px] text-blue-500 dark:text-blue-300"
+              className="text-[10px] text-gray-700 dark:text-zinc-300"
               onClick={() => setShowConfig(v => !v)}
             >
               {showConfig ? "Ocultar" : "Config"}
@@ -523,7 +623,7 @@ Historial breve: ${historySummary || "inicio"}.
               isIconOnly
               size="sm"
               variant="light"
-              className="text-blue-400 dark:text-blue-300"
+              className="text-gray-600 dark:text-zinc-300"
               onClick={() => setIsChatOpen(false)}
             >
               <X className="w-4 h-4" />
@@ -533,7 +633,7 @@ Historial breve: ${historySummary || "inicio"}.
 
         {/* PANEL CONFIG */}
         {showConfig && (
-          <div className="px-4 py-3 border-b border-blue-100/60 dark:border-zinc-700/60 bg-white/70 dark:bg-zinc-800/60 backdrop-blur-sm space-y-3 text-[11px] text-blue-700 dark:text-blue-200">
+          <div className="px-4 py-3 border-b border-gray-200/70 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm space-y-3 text-[11px] text-gray-700 dark:text-zinc-300">
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2">
                 <Switch size="sm" isSelected={conciseMode} onValueChange={setConciseMode}>Conciso</Switch>
@@ -547,9 +647,12 @@ Historial breve: ${historySummary || "inicio"}.
               <div className="flex items-center gap-2">
                 <Switch size="sm" isSelected={showScreenDesc} onValueChange={v => setShowScreenDesc(v)}>Descripción manual</Switch>
               </div>
+              <div className="flex items-center gap-2">
+                <Switch size="sm" isSelected={autoNavigateOnExact} onValueChange={setAutoNavigateOnExact}>Auto‑navegar</Switch>
+              </div>
             </div>
             {autoUISnapshot && (
-              <div className="text-[10px] text-blue-500 dark:text-blue-300 line-clamp-3">
+              <div className="text-[10px] text-gray-500 dark:text-zinc-400 line-clamp-3">
                 Snapshot UI: {uiSnapshot || "capturando..."}
               </div>
             )}
@@ -557,52 +660,51 @@ Historial breve: ${historySummary || "inicio"}.
         )}
 
         {/* HISTORIAL */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 custom-scroll relative bg-gradient-to-br from-white/95 via-blue-50/80 to-blue-100/60 dark:from-zinc-900/90 dark:via-zinc-800/70 dark:to-zinc-800/70">
-          {messages
-            .filter((_, i) => i !== 0)
-            .map((m, idx) => {
-              const visible = m.role === "user" ? formatVisibleUserContent(m.content) : m.content;
-              return (
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 custom-scroll relative bg-gradient-to-br from-white/95 via-gray-50/80 to-gray-100/60 dark:from-zinc-900/90 dark:via-zinc-900/80 dark:to-zinc-900/70">
+        {messages
+          .filter((_, i) => i !== 0)
+          .map((m, idx) => {
+            const visible = m.role === "user"
+              ? formatVisibleUserContent(m.content)
+              : <span dangerouslySetInnerHTML={{ __html: formatVisibleUserContent(m.content) }} />;
+            return (
+              <div key={idx} className={`group max-w-full animate-fade-in ${m.role === "user" ? "ml-auto" : "mr-auto"}`}>
                 <div
-                  key={idx}
-                  className={`group max-w-full animate-fade-in ${m.role === "user" ? "ml-auto" : "mr-auto"}`}
+                  className={`rounded-2xl px-3 py-2 text-[13px] shadow-sm whitespace-pre-wrap break-words border
+                    ${m.role === "user"
+                      ? "bg-gray-100 text-gray-900 border-gray-200 dark:bg-zinc-700 dark:text-zinc-100 dark:border-zinc-700"
+                      : "bg-white text-gray-800 border-gray-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700"
+                    }`}
                 >
-                  <div
-                    className={`rounded-lg px-3 py-2 text-[13px] shadow whitespace-pre-wrap break-words
-                      ${m.role === "user"
-                        ? "bg-gradient-to-r from-blue-200 to-blue-300/80 text-blue-900 dark:from-blue-900/40 dark:to-blue-700/60 dark:text-blue-100"
-                        : "bg-gradient-to-br from-white/90 to-blue-50/70 dark:from-zinc-800/90 dark:to-zinc-700/60 border border-blue-100 dark:border-zinc-700 text-blue-700 dark:text-blue-200"
-                      }`}
-                  >
-                    {visible}
-                  </div>
+                  {visible}
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
           {loading && (
-            <div className="flex items-center gap-2 text-xs text-blue-500 dark:text-blue-300 font-medium">
-              <Spinner size="sm" color="primary" /> Procesando…
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400 font-medium">
+              <Spinner size="sm" color="default" /> Procesando…
             </div>
           )}
           {errorMsg && (
-            <div className="text-[11px] text-red-600 bg-red-50/90 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-xl">
+            <div className="text-[11px] text-red-700 bg-red-50/90 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-xl">
               {errorMsg}
             </div>
           )}
           <div ref={chatEndRef} />
         </div>
 
-        <Divider className="m-0 dark:border-zinc-700/60" />
+        <Divider className="m-0 dark:border-zinc-800/60" />
 
         {/* INPUT */}
-        <div className="px-5 pb-4 pt-3 bg-gradient-to-br from-white/95 via-blue-50/70 to-blue-100/60 dark:from-zinc-900/85 dark:via-zinc-800/70 dark:to-zinc-800/70">
+        <div className="px-5 pb-4 pt-3 bg-white/90 dark:bg-zinc-900/85">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] text-blue-400 dark:text-blue-300 font-medium">
+            <span className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
               {historySummary ? "Resumen aplicado" : "Nuevo contexto"}
             </span>
             <button
               type="button"
-              className="text-[11px] text-blue-500 dark:text-blue-300 hover:underline"
+              className="text-[11px] text-gray-700 dark:text-zinc-300 hover:underline"
               onClick={() => setShowScreenDesc(s => !s)}
             >
               {showScreenDesc ? "Ocultar descripción visual" : "Añadir descripción visual"}
@@ -617,7 +719,7 @@ Historial breve: ${historySummary || "inicio"}.
               value={screenDesc}
               onChange={e => setScreenDesc(e.target.value)}
               placeholder="Describe lo que ves: «menú lateral con Inicio y Ventas; pestaña Ventas abierta; botón Nueva venta arriba; tabla con columnas Cliente/Fecha/Total»"
-              className="mb-2 font-medium rounded-lg border border-blue-100/70 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/70 text-blue-700 dark:text-blue-100 placeholder:text-blue-300 dark:placeholder:text-blue-400"
+              className="mb-2 font-medium rounded-xl border border-gray-200/70 dark:border-zinc-700 bg-white/90 dark:bg-zinc-800/70 text-gray-800 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
               disabled={loading}
             />
           )}
@@ -637,7 +739,7 @@ Historial breve: ${historySummary || "inicio"}.
             placeholder={hasVisualContext()
               ? "Escribe tu duda o proceso (Enter para enviar, Shift+Enter para nueva línea)"
               : "Haz tu pregunta. Para más precisión, añade una descripción visual (botón arriba)."}
-            className="mb-2 font-medium rounded-lg border border-blue-100/60 dark:border-zinc-700 bg-white/85 dark:bg-zinc-800/70 text-blue-700 dark:text-blue-100 placeholder:text-blue-300 dark:placeholder:text-blue-400"
+            className="mb-2 font-medium rounded-xl border border-gray-200/70 dark:border-zinc-700 bg-white/95 dark:bg-zinc-800/70 text-gray-800 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
             disabled={loading}
           />
 
@@ -647,7 +749,7 @@ Historial breve: ${historySummary || "inicio"}.
                 <Chip
                   key={q}
                   size="sm"
-                  className="cursor-pointer bg-gradient-to-r from-white to-blue-50 dark:from-zinc-800 dark:to-zinc-700 text-blue-700 dark:text-blue-200 font-medium border border-blue-100 dark:border-zinc-700 hover:shadow"
+                  className="cursor-pointer bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 font-medium border border-gray-200 dark:border-zinc-700 hover:shadow"
                   onClick={() => { setInput(q); setTimeout(() => sendMessage(q), 40); }}
                 >
                   {q}
@@ -655,19 +757,19 @@ Historial breve: ${historySummary || "inicio"}.
               ))}
             </div>
             <Button
-              color="primary"
+              color="default"
               variant="flat"
               endContent={<Send className="w-4 h-4" />}
               onPress={() => sendMessage(input)}
               isDisabled={!input.trim() || loading}
-              className="rounded-lg px-5 py-1.5 text-xs font-semibold bg-gradient-to-r from-blue-200 to-blue-300 text-blue-900 dark:from-blue-300 dark:to-blue-400 dark:text-blue-900"
+              className="rounded-lg px-5 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
             >
               Enviar
             </Button>
           </div>
 
-          {/* NUEVO: ayudas contextuales para usuarios novatos */}
-          <div className="mt-2 text-[10px] text-blue-400 dark:text-blue-300 flex flex-col gap-1 font-medium">
+          {/* Ayudas contextuales */}
+          <div className="mt-2 text-[10px] text-gray-500 dark:text-zinc-400 flex flex-col gap-1 font-medium">
             {!hasVisualContext() ? (
               <span>
                 Consejo: añade una descripción visual para respuestas más precisas.{" "}
@@ -687,7 +789,7 @@ Historial breve: ${historySummary || "inicio"}.
           .custom-scroll::-webkit-scrollbar { width: 6px; }
           .custom-scroll::-webkit-scrollbar-track { background: transparent; }
           .custom-scroll::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom,#dbeafe,#bfdbfe);
+            background: linear-gradient(to bottom,#e5e7eb,#d1d5db);
             border-radius: 4px;
           }
           @keyframes fade-in { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }

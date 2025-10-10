@@ -46,6 +46,76 @@ async function getRAGSnippetFromDB(queryText, id_tenant) {
   }
 }
 
+// Detectar tablas mencionadas en la consulta del usuario
+function detectTables(text = "") {
+  const q = (text || "").toLowerCase();
+  const known = [
+    "usuario","rol","permisos","modulo","submodulos",
+    "cliente","venta","detalle_venta","comprobante",
+    "producto","marca","sub_categoria","inventario",
+    "almacen","sucursal","nota","detalle_nota",
+    "guia_remision","destinatario","transportista","vehiculo",
+    "kardex","detalle_kardex","vendedor","sucursal_almacen"
+  ];
+  return known.filter(t => q.includes(t) || q.includes(t.replace("_"," "))).slice(0, 6);
+}
+
+async function getSchemaSnippetFromDB(tableList = []) {
+  if (!tableList.length) return "";
+  let connection;
+  try {
+    connection = await getConnection();
+    const [[{ db }]] = await connection.query(`SELECT DATABASE() AS db`);
+    if (!db) return "";
+
+    const placeholders = tableList.map(() => "?").join(",");
+
+    const [cols] = await connection.query(
+      `
+      SELECT TABLE_NAME AS tableName, COLUMN_NAME AS columnName, COLUMN_TYPE AS columnType, COLUMN_KEY AS columnKey
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME IN (${placeholders})
+      ORDER BY TABLE_NAME, ORDINAL_POSITION
+      `,
+      [db, ...tableList]
+    );
+
+    const [fks] = await connection.query(
+      `
+      SELECT TABLE_NAME AS tableName, COLUMN_NAME AS columnName, REFERENCED_TABLE_NAME AS refTable, REFERENCED_COLUMN_NAME AS refColumn
+      FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME IN (${placeholders}) AND REFERENCED_TABLE_NAME IS NOT NULL
+      `,
+      [db, ...tableList]
+    );
+
+    const fkMap = {};
+    for (const fk of fks) {
+      fkMap[`${fk.tableName}.${fk.columnName}`] = `${fk.refTable}.${fk.refColumn}`;
+    }
+
+    const byTable = {};
+    for (const c of cols) (byTable[c.tableName] ||= []).push(c);
+
+    const blocks = [];
+    for (const t of tableList) {
+      const colsT = (byTable[t] || []).map(c => {
+        const k = c.columnKey === "PRI" ? "PK" : c.columnKey === "UNI" ? "UQ" : fkMap[`${t}.${c.columnName}`] ? `FK→${fkMap[`${t}.${c.columnName}`]}` : "";
+        return `${c.columnName} ${c.columnType}${k ? ` [${k}]` : ""}`;
+      });
+      if (colsT.length) blocks.push(`Tabla ${t}:\n  - ${colsT.join("\n  - ")}`);
+    }
+
+    let text = blocks.join("\n\n");
+    if (text.length > 2000) text = text.slice(0, 2000) + "\n…";
+    return text ? `Esquema relevante:\n${text}` : "";
+  } catch {
+    return "";
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
 export const chat = async (req, res) => {
   try {
     const messages = Array.isArray(req.body?.messages) ? req.body.messages : [];
@@ -54,19 +124,26 @@ export const chat = async (req, res) => {
       content: String(m.content || "").slice(0, 4000)
     }));
 
-    // Extraer último texto del usuario para RAG
     const lastUser = [...safeMessages].reverse().find(m => m.role === "user");
     const queryText = lastUser?.content?.slice(-1000) || "";
+
+    // RAG: posibles rutas del sistema
     const rag = await getRAGSnippetFromDB(queryText, req.id_tenant);
 
-    const augmented = rag
-      ? [{ role: "system", content: `Contexto adicional (no visible para el usuario):\n${rag}` }, ...safeMessages]
-      : safeMessages;
+    // RAG: esquema de tablas mencionadas
+    const tables = detectTables(queryText);
+    const schemaSnippet = await getSchemaSnippetFromDB(tables);
+
+    const augmented = [
+      ...(schemaSnippet ? [{ role: "system", content: `Contexto adicional (no visible para el usuario):\n${schemaSnippet}` }] : []),
+      ...(rag ? [{ role: "system", content: `Contexto adicional (no visible para el usuario):\n${rag}` }] : []),
+      ...safeMessages
+    ];
 
     const r = await client.chat.completions.create({
       model: MODEL,
       messages: augmented,
-      temperature: 0.2,
+      temperature: 0.10,
       max_tokens: 380
     });
 
