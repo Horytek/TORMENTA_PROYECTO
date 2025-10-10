@@ -80,26 +80,28 @@ export default function DeepSeekOpenRouterChatbot() {
   }
 
   // Unifica la salida del modelo con el formulario real (evita confusiones)
-  function mergeWithFormSchema(entity, reply, schemaData) {
-    if (!schemaData || !entity?.type) return reply;
-    const req = (schemaData.required || []).map(s => `- ${s}`).join("\n");
-    const opt = (schemaData.optional || []).map(s => `- ${s}`).join("\n");
-    const ex  = (schemaData.extras || []).map(s => `- ${s}`).join("\n");
+function mergeWithFormSchema(entity, reply, schemaData) {
+  if (!schemaData || !entity?.type) return reply;
+  const req = (schemaData.required || []).map(s => `- ${s}`).join("\n");
+  const opt = (schemaData.optional || []).map(s => `- ${s}`).join("\n");
+  const ex  = (schemaData.extras || []).map(s => `- ${s}`).join("\n");
 
-    const header =
-      entity.type === "product" ? "Campos del formulario de producto detectados:" :
-      entity.type === "user"    ? "Campos del formulario de usuario detectados:" :
-      "Campos del formulario detectados:";
-    const canonical = [
-      `\n${header}`,
-      req ? `Obligatorios:\n${req}` : null,
-      opt ? `Opcionales:\n${opt}` : null,
-      ex  ? `Solo desarrollador:\n${ex}` : null
-    ].filter(Boolean).join("\n\n");
+  // Solo mostrar el bloque si hay al menos un campo
+  if (!req && !opt && !ex) return reply;
 
-    // Respuesta final estilo ChatGPT + bloque canónico del formulario
-    return `${reply}\n${canonical}`;
-  }
+  const header =
+    entity.type === "product" ? "Campos del formulario de producto detectados:" :
+    entity.type === "user"    ? "Campos del formulario de usuario detectados:" :
+    "Campos del formulario detectados:";
+  const canonical = [
+    `\n${header}`,
+    req ? `Obligatorios:\n${req}` : null,
+    opt ? `Opcionales:\n${opt}` : null,
+    ex  ? `Solo desarrollador:\n${ex}` : null
+  ].filter(Boolean).join("\n\n");
+
+  return `${reply}\n${canonical}`;
+}
 
   useEffect(() => {
     try {

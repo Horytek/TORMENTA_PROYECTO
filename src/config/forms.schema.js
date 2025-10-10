@@ -253,4 +253,30 @@ Resumen: La navegación es clara y contextual. El sidebar muestra módulos segú
 Adicional: La mayoría de los módulos permiten eliminar y editar registros (según permisos del usuario). Además, cada módulo cuenta con su propio repertorio de filtros para facilitar la búsqueda y gestión de la información.
 `
   },
+    salesRegisterExport: {
+    required: [
+      "Sucursal",
+      "Mes",
+      "Año",
+      "Tipo de Comprobante"
+    ],
+    optional: [],
+    developerExtras: [],
+    notes: "El formulario para exportar el registro de ventas requiere seleccionar sucursal, mes, año y tipo de comprobante. Permite exportar los datos filtrados a Excel."
+  },
+  salesRegister: {
+    required: [
+      "Sucursal (filtro)",
+      "Fecha (filtro por rango)",
+      "Tipo de comprobante (filtro)",
+      "Listado de ventas: N° correlativo, Fecha de emisión, Documento, Cliente, Comprobante, Monto, IGV, Total"
+    ],
+    optional: [
+      "Exportar a Excel",
+      "Paginación",
+      "Total general"
+    ],
+    developerExtras: [],
+    notes: "El Libro Registro de Ventas muestra los registros oficiales de ventas realizados por la empresa, con filtros por sucursal, fecha y tipo de comprobante. Permite exportar a Excel y visualizar totales."
+  },
 };
