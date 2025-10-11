@@ -24,22 +24,39 @@ const NotasAlmacen = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const tablaSalidaRef = useRef(null);
 
-  // Fetch ingresos
-  const fetchIngresos = useCallback(async () => {
+  // Estado de carga inicial
+  const [isInitialLoadingIngresos, setIsInitialLoadingIngresos] = useState(true);
+  const [isInitialLoadingSalidas, setIsInitialLoadingSalidas] = useState(true);
+
+  // Fetch ingresos - NO usar useCallback para evitar re-renders
+  const fetchIngresos = async () => {
     const result = await getNotasIngreso({
       ...filtersIngreso,
       almacen: filtersIngreso.almacen || undefined,
     });
     setIngresos(result.data || []);
-  }, [filtersIngreso]);
+    setIsInitialLoadingIngresos(false);
+  };
 
-  const fetchSalidas = useCallback(async () => {
+  const fetchSalidas = async () => {
     const result = await getNotasSalida(filtersSalida);
     setSalidas(result.data || []);
-  }, [filtersSalida]);
+    setIsInitialLoadingSalidas(false);
+  };
 
-  useEffect(() => { fetchIngresos(); }, [fetchIngresos]);
-  useEffect(() => { fetchSalidas(); }, [fetchSalidas]);
+  // Cargar ingresos solo al inicio
+  useEffect(() => {
+    if (isInitialLoadingIngresos) {
+      fetchIngresos();
+    }
+  }, []); // Sin dependencias, solo una vez
+
+  // Cargar salidas solo cuando se acceda a ese tab por primera vez
+  useEffect(() => {
+    if (tabActiva === "salida" && isInitialLoadingSalidas) {
+      fetchSalidas();
+    }
+  }, [tabActiva]); // Solo cuando cambia el tab
 
   // Función para actualizar el array local cuando se anula una nota
   const handleNotaAnulada = (notaId) => {
@@ -76,9 +93,28 @@ const NotasAlmacen = () => {
       // Normalizar: si no viene almacen, mantener '%'
       const nf = { ...newFilters };
       if (nf.almacen === undefined || nf.almacen === null) nf.almacen = '%';
-      setFiltersIngreso(prev => JSON.stringify(prev) !== JSON.stringify(nf) ? nf : prev);
+      
+      // Solo actualizar si realmente cambió
+      const hasChanged = JSON.stringify(filtersIngreso) !== JSON.stringify(nf);
+      if (hasChanged) {
+        setFiltersIngreso(nf);
+        // Fetch manual cuando cambian filtros
+        getNotasIngreso({
+          ...nf,
+          almacen: nf.almacen || undefined,
+        }).then(result => {
+          setIngresos(result.data || []);
+        });
+      }
     } else {
-      setFiltersSalida(prev => JSON.stringify(prev) !== JSON.stringify(newFilters) ? newFilters : prev);
+      const hasChanged = JSON.stringify(filtersSalida) !== JSON.stringify(newFilters);
+      if (hasChanged) {
+        setFiltersSalida(newFilters);
+        // Fetch manual cuando cambian filtros
+        getNotasSalida(newFilters).then(result => {
+          setSalidas(result.data || []);
+        });
+      }
     }
   };
 
@@ -86,6 +122,22 @@ const NotasAlmacen = () => {
   const handlePDFOption = () => {
     if (tablaSalidaRef.current) {
       tablaSalidaRef.current.generatePDFGeneral();
+    }
+  };
+
+  // Método para refrescar manualmente
+  const handleRefresh = () => {
+    if (tabActiva === "ingreso") {
+      getNotasIngreso({
+        ...filtersIngreso,
+        almacen: filtersIngreso.almacen || undefined,
+      }).then(result => {
+        setIngresos(result.data || []);
+      });
+    } else {
+      getNotasSalida(filtersSalida).then(result => {
+        setSalidas(result.data || []);
+      });
     }
   };
 
@@ -157,7 +209,10 @@ return (
           aria-label="Notas de almacén"
           color="primary"
           selectedKey={tabActiva}
-          onSelectionChange={setTabActiva}
+          onSelectionChange={(key) => {
+            setTabActiva(key);
+            setCurrentPage(1); // Resetear paginación al cambiar de tab
+          }}
           classNames={{
             tabList:
               "relative flex gap-2 bg-blue-50/60 dark:bg-zinc-800/50 border border-blue-100/60 dark:border-zinc-700/60 p-1 rounded-xl w-fit",
@@ -175,6 +230,7 @@ return (
                 almacenes={almacenes}
                 onFiltersChange={handleFiltersChange}
                 onAlmacenChange={handleAlmacenChange}
+                onRefresh={handleRefresh}
                 ingresos={ingresos}
                 almacenSseleccionado={almacenSeleccionado}
                 tipo="ingreso"
@@ -198,6 +254,7 @@ return (
                 almacenes={almacenes}
                 onFiltersChange={handleFiltersChange}
                 onAlmacenChange={handleAlmacenChange}
+                onRefresh={handleRefresh}
                 ingresos={salidas}
                 almacenSseleccionado={almacenSeleccionado}
                 tipo="salida"

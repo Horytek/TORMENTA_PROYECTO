@@ -57,11 +57,14 @@ const TablaKardex = ({ kardex }) => {
     }
   };
 
+  // Asegurar que kardex sea un array válido
+  const safeKardex = kardex || [];
+  
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = kardex.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = safeKardex.slice(indexOfFirstItem, indexOfLastItem);
 
-  const totalPages = Math.ceil(kardex.length / itemsPerPage);
+  const totalPages = Math.ceil(safeKardex.length / itemsPerPage);
 
   return (
     <>
@@ -141,7 +144,7 @@ const TablaKardex = ({ kardex }) => {
           total={totalPages}
           page={currentPage}
           onChange={setCurrentPage}
-          shadow
+          showShadow
           color="primary"
         />
         <div className="flex items-center gap-2">

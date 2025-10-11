@@ -5,13 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { FaPlus, FaFilePdf } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { CgOptions } from "react-icons/cg";
+import { RefreshCw } from "lucide-react";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 import { toast } from "react-hot-toast";
 
-const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ingresos, almacenSseleccionado }) => {
+const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, onRefresh, ingresos, almacenSseleccionado }) => {
   const navigate = useNavigate();
   const { hasCreatePermission } = usePermisos();
   const nombre = useUserStore((state) => state.nombre);
@@ -394,6 +395,18 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, ing
 
       {/* Acciones */}
       <div className="mt-3 flex items-center justify-end gap-2">
+        {onRefresh && (
+          <Button
+            variant="flat"
+            size="sm"
+            onPress={onRefresh}
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-zinc-800/70 dark:hover:bg-zinc-700/70 dark:text-blue-200 border border-blue-200/60 dark:border-zinc-700/60"
+          >
+            <RefreshCw className="w-4 h-4 mr-1" />
+            Actualizar
+          </Button>
+        )}
+        
         <Button
           variant="flat"
           size="sm"

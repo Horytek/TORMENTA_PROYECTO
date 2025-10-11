@@ -18,7 +18,7 @@ import { getEmpresaDataByUser } from "@/services/empresa.services";
 const Kardex = () => {
 
     const { almacenes } = useAlmacenesKardex();
-    const [kardex, setKarddex] = useState([]);
+    const [kardex, setKardex] = useState([]);
     const { marcas } = useMarcasKardex();
     const { categorias } = useCategoriasKardex();
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
@@ -115,8 +115,8 @@ useEffect(() => {
 
     const fetchKardex = useCallback(async () => {
         const result = await getProductosKardex(filters);
-        const data = result.data || [];
-        setKarddex(data.salida);
+        // El backend devuelve directamente el array de productos
+        setKardex(result.data || []);
     }, [filters]);
 
     useEffect(() => {
