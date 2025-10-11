@@ -44,13 +44,7 @@ function ThemeClassSync() {
   return null;
 }
 
-function AppFallback() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-white text-slate-600 dark:bg-slate-950 dark:text-slate-200">
-      <span className="text-sm font-medium">Cargando interfaz...</span>
-    </div>
-  );
-}
+
 
 function ProtectedLayout() {
   const [widgetsReady, setWidgetsReady] = useState(false);
@@ -96,7 +90,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <HeroUIProvider>
           <ThemeClassSync />
-          <Suspense fallback={<AppFallback />}>
             <Routes>
               <Route path="/" element={<Login />} />
               <Route path="/landing" element={<LandingPage />} />
@@ -117,7 +110,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="/messenger" element={<Messenger />} />
               </Route>
             </Routes>
-          </Suspense>
         </HeroUIProvider>
       </AuthProvider>
     </Router>

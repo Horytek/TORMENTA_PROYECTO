@@ -1,60 +1,115 @@
 import { getConnection } from "./../database/database.js";
 
+// Cache para consultas frecuentes
+const queryCache = new Map();
+const CACHE_TTL = 60000; // 1 minuto
+
+// Limpieza periódica del caché
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of queryCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL * 2) {
+            queryCache.delete(key);
+        }
+    }
+}, CACHE_TTL * 2);
+
+// OBTENER MÓDULOS CON SUBMÓDULOS - OPTIMIZADO
 const getModulosConSubmodulos = async (req, res) => {
+    const nameUser = req.user.nameUser;
+    const isDeveloper = nameUser === 'desarrollador';
+    const id_tenant = req.id_tenant;
+    
+    const cacheKey = `modulos_submodulos_${isDeveloper ? 'dev' : id_tenant}`;
+    
+    // Verificar caché
+    if (queryCache.has(cacheKey)) {
+        const cached = queryCache.get(cacheKey);
+        if (Date.now() - cached.timestamp < CACHE_TTL) {
+            return res.json({
+                success: true,
+                data: cached.data
+            });
+        }
+        queryCache.delete(cacheKey);
+    }
+    
+    let connection;
     try {
-        const connection = await getConnection();
+        connection = await getConnection();
         
-        // Verificar si es desarrollador o administrador de empresa
-        const nameUser = req.user.nameUser;
-        const isDeveloper = nameUser === 'desarrollador';
-        const id_tenant = req.id_tenant;
-        
-        let modulosQuery, submodulosQuery, queryParams;
+        let query, queryParams;
         
         if (isDeveloper) {
-            // Desarrollador ve todos los módulos sin filtro de tenant
-            modulosQuery = `SELECT * FROM modulo ORDER BY id_modulo`;
-            submodulosQuery = `
+            // Desarrollador ve todo en una sola query optimizada
+            query = `
                 SELECT 
+                    m.id_modulo,
+                    m.nombre_modulo,
+                    m.ruta,
                     s.id_submodulo,
-                    s.id_modulo,
                     s.nombre_sub,
                     s.ruta as ruta_submodulo
-                FROM submodulos s
-                ORDER BY s.id_modulo, s.id_submodulo
+                FROM modulo m
+                LEFT JOIN submodulos s ON m.id_modulo = s.id_modulo
+                ORDER BY m.id_modulo, s.id_submodulo
             `;
             queryParams = [];
         } else {
-            // Administrador de empresa ve solo sus módulos del tenant
-            modulosQuery = `SELECT * FROM modulo WHERE id_tenant = ? ORDER BY id_modulo`;
-            submodulosQuery = `
+            // Administrador de empresa ve solo su tenant
+            query = `
                 SELECT 
+                    m.id_modulo,
+                    m.nombre_modulo,
+                    m.ruta,
                     s.id_submodulo,
-                    s.id_modulo,
                     s.nombre_sub,
                     s.ruta as ruta_submodulo
-                FROM submodulos s
-                WHERE s.id_tenant = ?
-                ORDER BY s.id_modulo, s.id_submodulo
+                FROM modulo m
+                LEFT JOIN submodulos s ON m.id_modulo = s.id_modulo AND s.id_tenant = ?
+                WHERE m.id_tenant = ?
+                ORDER BY m.id_modulo, s.id_submodulo
             `;
-            queryParams = [id_tenant];
+            queryParams = [id_tenant, id_tenant];
         }
         
-        const [modulos] = await connection.query(modulosQuery, queryParams);
-        const [submodulos] = await connection.query(submodulosQuery, queryParams);
+        const [rows] = await connection.query(query, queryParams);
         
-        const modulosConSubmodulos = modulos.map(modulo => {
-            const moduloSubmodulos = submodulos.filter(
-                submodulo => submodulo.id_modulo === modulo.id_modulo
-            );
+        // Agrupar resultados de forma eficiente
+        const modulosMap = new Map();
+        
+        for (const row of rows) {
+            const moduloId = row.id_modulo;
             
-            return {
-                id: modulo.id_modulo,
-                nombre: modulo.nombre_modulo,
-                ruta: modulo.ruta,
-                expandible: moduloSubmodulos.length > 0,
-                submodulos: moduloSubmodulos
-            };
+            if (!modulosMap.has(moduloId)) {
+                modulosMap.set(moduloId, {
+                    id: row.id_modulo,
+                    nombre: row.nombre_modulo,
+                    ruta: row.ruta,
+                    submodulos: []
+                });
+            }
+            
+            // Agregar submódulo si existe
+            if (row.id_submodulo) {
+                modulosMap.get(moduloId).submodulos.push({
+                    id_submodulo: row.id_submodulo,
+                    id_modulo: row.id_modulo,
+                    nombre_sub: row.nombre_sub,
+                    ruta_submodulo: row.ruta_submodulo
+                });
+            }
+        }
+        
+        const modulosConSubmodulos = Array.from(modulosMap.values()).map(modulo => ({
+            ...modulo,
+            expandible: modulo.submodulos.length > 0
+        }));
+        
+        // Guardar en caché
+        queryCache.set(cacheKey, {
+            data: modulosConSubmodulos,
+            timestamp: Date.now()
         });
         
         res.json({
@@ -62,104 +117,185 @@ const getModulosConSubmodulos = async (req, res) => {
             data: modulosConSubmodulos
         });
     } catch (error) {
+        console.error('Error en getModulosConSubmodulos:', error);
         res.status(500).json({ 
             success: false, 
-            message: error.message 
+            message: "Error al obtener módulos" 
         });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 };
 
+// OBTENER PERMISOS DE MÓDULO - OPTIMIZADO
 const getPermisosModulo = async (req, res) => {
-    try {
-        const { id_rol } = req.params;
-        const connection = await getConnection();
+    const { id_rol } = req.params;
+    const nameUser = req.user.nameUser;
+    const isDeveloper = nameUser === 'desarrollador';
+    const id_tenant = req.id_tenant;
 
-        // Verificar si es desarrollador
-        const nameUser = req.user.nameUser;
-        const isDeveloper = nameUser === 'desarrollador';
-        const id_tenant = req.id_tenant;
+    if (!id_rol) {
+        return res.status(400).json({ 
+            success: false,
+            message: "El ID del rol es obligatorio" 
+        });
+    }
+
+    let connection;
+    try {
+        connection = await getConnection();
 
         let permisosQuery, queryParams;
 
         if (isDeveloper) {
-            // Desarrollador ve permisos sin filtro de tenant
             permisosQuery = `
-                SELECT m.nombre_modulo, s.nombre_submodulo, p.ver, p.crear, p.editar, p.eliminar, p.desactivar, p.generar
+                SELECT 
+                    m.nombre_modulo, 
+                    s.nombre_submodulo, 
+                    p.ver, 
+                    p.crear, 
+                    p.editar, 
+                    p.eliminar, 
+                    p.desactivar, 
+                    p.generar
                 FROM permisos p
                 INNER JOIN modulo m ON p.id_modulo = m.id_modulo
                 LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
                 WHERE p.id_rol = ?
+                ORDER BY m.nombre_modulo, s.nombre_submodulo
             `;
             queryParams = [id_rol];
         } else {
-            // Administrador de empresa ve solo permisos de su tenant
             permisosQuery = `
-                SELECT m.nombre_modulo, s.nombre_submodulo, p.ver, p.crear, p.editar, p.eliminar, p.desactivar, p.generar
+                SELECT 
+                    m.nombre_modulo, 
+                    s.nombre_submodulo, 
+                    p.ver, 
+                    p.crear, 
+                    p.editar, 
+                    p.eliminar, 
+                    p.desactivar, 
+                    p.generar
                 FROM permisos p
                 INNER JOIN modulo m ON p.id_modulo = m.id_modulo
                 LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
                 WHERE p.id_rol = ? AND p.id_tenant = ?
+                ORDER BY m.nombre_modulo, s.nombre_submodulo
             `;
             queryParams = [id_rol, id_tenant];
         }
 
         const [permisos] = await connection.query(permisosQuery, queryParams);
 
-        res.json(permisos);
+        res.json({
+            success: true,
+            data: permisos
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener permisos", error });
+        console.error('Error en getPermisosModulo:', error);
+        res.status(500).json({ 
+            success: false,
+            message: "Error al obtener permisos" 
+        });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 };
 
+// OBTENER ROLES - OPTIMIZADO CON CACHÉ
 const getRoles = async (req, res) => {
+    const nameUser = req.user.nameUser;
+    const isDeveloper = nameUser === 'desarrollador';
+    const id_tenant = req.id_tenant;
+    
+    const cacheKey = `roles_permisos_${isDeveloper ? 'dev' : id_tenant}`;
+    
+    // Verificar caché
+    if (queryCache.has(cacheKey)) {
+        const cached = queryCache.get(cacheKey);
+        if (Date.now() - cached.timestamp < CACHE_TTL) {
+            return res.json({
+                success: true,
+                data: cached.data
+            });
+        }
+        queryCache.delete(cacheKey);
+    }
+    
+    let connection;
     try {
-        const connection = await getConnection();
-        
-        // Verificar si es desarrollador o administrador de empresa
-        const nameUser = req.user.nameUser;
-        const isDeveloper = nameUser === 'desarrollador';
-        const id_tenant = req.id_tenant;
+        connection = await getConnection();
         
         let rolesQuery, queryParams;
         
         if (isDeveloper) {
-            // Desarrollador ve todos los roles sin filtro de tenant
-            rolesQuery = `SELECT id_rol, nom_rol FROM rol WHERE id_rol!=10 ORDER BY id_rol`;
+            rolesQuery = `
+                SELECT id_rol, nom_rol, estado_rol 
+                FROM rol 
+                WHERE id_rol != 10 
+                ORDER BY nom_rol
+            `;
             queryParams = [];
         } else {
-            // Administrador de empresa ve solo los roles de su tenant
-            rolesQuery = `SELECT id_rol, nom_rol FROM rol WHERE id_rol!=10 AND id_tenant = ? ORDER BY id_rol`;
+            rolesQuery = `
+                SELECT id_rol, nom_rol, estado_rol 
+                FROM rol 
+                WHERE id_rol != 10 AND id_tenant = ? 
+                ORDER BY nom_rol
+            `;
             queryParams = [id_tenant];
         }
         
         const [roles] = await connection.query(rolesQuery, queryParams);
+        
+        // Guardar en caché
+        queryCache.set(cacheKey, {
+            data: roles,
+            timestamp: Date.now()
+        });
         
         res.json({
             success: true,
             data: roles
         });
     } catch (error) {
+        console.error('Error en getRoles:', error);
         res.status(500).json({ 
             success: false, 
-            message: error.message 
+            message: "Error al obtener roles" 
         });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 };
 
+// OBTENER PERMISOS POR ROL - OPTIMIZADO
 const getPermisosByRol = async (req, res) => {
+    const { id_rol } = req.params;
+    const nameUser = req.user.nameUser;
+    const isDeveloper = nameUser === 'desarrollador';
+    const id_tenant = req.id_tenant;
+    
+    if (!id_rol) {
+        return res.status(400).json({ 
+            success: false,
+            message: "El ID del rol es obligatorio" 
+        });
+    }
+    
+    let connection;
     try {
-        const { id_rol } = req.params;
-        const connection = await getConnection();
-        
-        // Verificar si es desarrollador
-        const nameUser = req.user.nameUser;
-        const isDeveloper = nameUser === 'desarrollador';
-        const id_tenant = req.id_tenant;
+        connection = await getConnection();
         
         let permisosQuery, queryParams;
         
         if (isDeveloper) {
-            // Desarrollador ve permisos sin filtro de tenant
             permisosQuery = `
                 SELECT 
                     id_permiso,
@@ -174,10 +310,10 @@ const getPermisosByRol = async (req, res) => {
                     generar
                 FROM permisos
                 WHERE id_rol = ?
+                ORDER BY id_modulo, id_submodulo
             `;
             queryParams = [id_rol];
         } else {
-            // Administrador de empresa ve solo permisos de su tenant
             permisosQuery = `
                 SELECT 
                     id_permiso,
@@ -192,6 +328,7 @@ const getPermisosByRol = async (req, res) => {
                     generar
                 FROM permisos
                 WHERE id_rol = ? AND id_tenant = ?
+                ORDER BY id_modulo, id_submodulo
             `;
             queryParams = [id_rol, id_tenant];
         }
@@ -203,74 +340,109 @@ const getPermisosByRol = async (req, res) => {
             data: permisos
         });
     } catch (error) {
+        console.error('Error en getPermisosByRol:', error);
         res.status(500).json({ 
             success: false, 
-            message: error.message 
+            message: "Error al obtener permisos del rol" 
         });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 };
 
+// GUARDAR PERMISOS - OPTIMIZADO CON BATCH INSERT
 const savePermisos = async (req, res) => {
-    const connection = await getConnection();
-    await connection.beginTransaction();
+    const { id_rol, permisos } = req.body;
+    const nameUser = req.user.nameUser;
+    const isDeveloper = nameUser === 'desarrollador';
+    const id_tenant = req.id_tenant;
     
+    // Validaciones
+    if (!id_rol) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "El ID del rol es obligatorio" 
+        });
+    }
+
+    if (!Array.isArray(permisos)) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Los permisos deben ser un array" 
+        });
+    }
+    
+    let connection;
     try {
-        const { id_rol, permisos } = req.body;
+        connection = await getConnection();
+        await connection.beginTransaction();
         
-        // Verificar si es desarrollador
-        const nameUser = req.user.nameUser;
-        const isDeveloper = nameUser === 'desarrollador';
-        const id_tenant = req.id_tenant;
-        
+        // Eliminar permisos existentes
         if (isDeveloper) {
-            // Desarrollador elimina permisos sin filtro de tenant (todos los tenants)
             await connection.query(
                 'DELETE FROM permisos WHERE id_rol = ?',
                 [id_rol]
             );
         } else {
-            // Administrador de empresa elimina solo permisos de su tenant
             await connection.query(
                 'DELETE FROM permisos WHERE id_rol = ? AND id_tenant = ?',
                 [id_rol, id_tenant]
             );
         }
         
-        if (permisos && permisos.length > 0) {
-            for (const p of permisos) {
-                if (isDeveloper) {
-                    // Desarrollador inserta permisos para todos los tenants
-                    // Obtener todos los tenants existentes
-                    const [tenants] = await connection.query('SELECT DISTINCT id_tenant FROM usuario WHERE id_tenant IS NOT NULL');
+        // Insertar nuevos permisos
+        if (permisos.length > 0) {
+            if (isDeveloper) {
+                // Desarrollador: obtener todos los tenants y preparar batch insert
+                const [tenants] = await connection.query(
+                    'SELECT DISTINCT id_tenant FROM usuario WHERE id_tenant IS NOT NULL'
+                );
+                
+                if (tenants.length > 0) {
+                    // Preparar valores para batch insert
+                    const values = [];
+                    const params = [];
                     
                     for (const tenant of tenants) {
-                        await connection.query(`
-                            INSERT INTO permisos
-                            (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        `, [
-                            id_rol, 
-                            p.id_modulo, 
-                            p.id_submodulo || null, 
-                            p.crear !== undefined ? p.crear : 0,
-                            p.ver !== undefined ? p.ver : 0,
-                            p.editar !== undefined ? p.editar : 0,
-                            p.eliminar !== undefined ? p.eliminar : 0,
-                            p.desactivar !== undefined ? p.desactivar : 0,
-                            p.generar !== undefined ? p.generar : 0,
-                            tenant.id_tenant
-                        ]);
+                        for (const p of permisos) {
+                            values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                            params.push(
+                                id_rol,
+                                p.id_modulo,
+                                p.id_submodulo || null,
+                                p.crear !== undefined ? p.crear : 0,
+                                p.ver !== undefined ? p.ver : 0,
+                                p.editar !== undefined ? p.editar : 0,
+                                p.eliminar !== undefined ? p.eliminar : 0,
+                                p.desactivar !== undefined ? p.desactivar : 0,
+                                p.generar !== undefined ? p.generar : 0,
+                                tenant.id_tenant
+                            );
+                        }
                     }
-                } else {
-                    // Administrador de empresa inserta permisos solo para su tenant
-                    await connection.query(`
+                    
+                    // Batch insert - mucho más eficiente
+                    const batchQuery = `
                         INSERT INTO permisos
                         (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    `, [
-                        id_rol, 
-                        p.id_modulo, 
-                        p.id_submodulo || null, 
+                        VALUES ${values.join(', ')}
+                    `;
+                    
+                    await connection.query(batchQuery, params);
+                }
+            } else {
+                // Administrador de empresa: batch insert para su tenant
+                const values = [];
+                const params = [];
+                
+                for (const p of permisos) {
+                    values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                    params.push(
+                        id_rol,
+                        p.id_modulo,
+                        p.id_submodulo || null,
                         p.crear !== undefined ? p.crear : 0,
                         p.ver !== undefined ? p.ver : 0,
                         p.editar !== undefined ? p.editar : 0,
@@ -278,111 +450,189 @@ const savePermisos = async (req, res) => {
                         p.desactivar !== undefined ? p.desactivar : 0,
                         p.generar !== undefined ? p.generar : 0,
                         id_tenant
-                    ]);
+                    );
                 }
+                
+                // Batch insert
+                const batchQuery = `
+                    INSERT INTO permisos
+                    (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
+                    VALUES ${values.join(', ')}
+                `;
+                
+                await connection.query(batchQuery, params);
             }
         }
         
         await connection.commit();
+        
+        // Limpiar caché
+        queryCache.clear();
         
         res.json({
             success: true,
             message: 'Permisos actualizados correctamente',
             data: {
                 id_rol,
-                permisos_count: permisos ? permisos.length : 0
+                permisos_count: permisos.length,
+                tenant: isDeveloper ? 'todos' : id_tenant
             }
         });
     } catch (error) {
-        await connection.rollback();
+        if (connection) {
+            await connection.rollback();
+        }
+        console.error('Error en savePermisos:', error);
         res.status(500).json({ 
             success: false, 
-            message: `Error al guardar permisos` 
+            message: 'Error al guardar permisos' 
         });
     } finally {
-        connection.release();
+        if (connection) {
+            connection.release();
+        }
     }
 };
 
+// VERIFICAR PERMISO - OPTIMIZADO CON CACHÉ
 const checkPermiso = async (req, res) => {
-  try {
     const idModulo = parseInt(req.query.idModulo);
     const idSubmodulo = req.query.idSubmodulo ? parseInt(req.query.idSubmodulo) : null;
+    const id_tenant = req.id_tenant;
 
+    // Validaciones
     if (isNaN(idModulo)) {
-      return res.status(400).json({
-        hasPermission: false,
-        message: "El parámetro idModulo debe ser un número válido"
-      });
+        return res.status(400).json({
+            hasPermission: false,
+            message: "El parámetro idModulo debe ser un número válido"
+        });
     }
 
-    const nameUser =
-      req.user?.nameUser ||
-      req.user?.usr ||
-      req.user?.usuario ||
-      req.user?.username ||
-      req.nameUser;
+    const nameUser = req.user?.nameUser || 
+                     req.user?.usr || 
+                     req.user?.usuario || 
+                     req.user?.username || 
+                     req.nameUser;
 
     if (!nameUser) {
-      return res.status(400).json({
-        hasPermission: false,
-        message: "Información de usuario incompleta en el token"
-      });
+        return res.status(400).json({
+            hasPermission: false,
+            message: "Información de usuario incompleta en el token"
+        });
     }
 
-      // Si es desarrollador, tiene todos los permisos
-      if (nameUser === 'desarrollador') {
+    // Si es desarrollador, tiene todos los permisos
+    if (nameUser === 'desarrollador') {
         return res.json({ 
-          hasPermission: true,
-          hasCreatePermission: true,
-          hasEditPermission: true,
-          hasDeletePermission: true,
-          hasGeneratePermission: true,
-          hasDeactivatePermission: true
+            hasPermission: true,
+            hasCreatePermission: true,
+            hasEditPermission: true,
+            hasDeletePermission: true,
+            hasGeneratePermission: true,
+            hasDeactivatePermission: true
         });
-      }
-      
-      const connection = await getConnection();
-      
-      const [usuarios] = await connection.query(
-        'SELECT id_usuario, id_rol FROM usuario WHERE usua = ? AND id_tenant = ?',
-        [nameUser, req.id_tenant]
-      );
-      
-      if (!usuarios.length) {
-        return res.json({ hasPermission: false });
-      }
-      
-      const idRol = usuarios[0].id_rol;
-      
-      if (idRol === 10) {  
-        return res.json({ hasPermission: true });
-      }
-      
-      const [permisos] = await connection.query(
-        `SELECT ver, crear, editar, eliminar, desactivar, generar FROM permisos 
-         WHERE id_rol = ? AND id_modulo = ? AND (id_submodulo = ? OR (id_submodulo IS NULL AND ? IS NULL)) AND id_tenant = ?`,
-        [idRol, idModulo, idSubmodulo, idSubmodulo, req.id_tenant]
-      );
-      
-      const hasPermission = permisos.length > 0 && permisos[0].ver === 1;
-      const hasCreatePermission = permisos.length > 0 && permisos[0].crear === 1;
-      const hasEditPermission = permisos.length > 0 && permisos[0].editar === 1;
-      const hasDeletePermission = permisos.length > 0 && permisos[0].eliminar === 1;
-      const hasGeneratePermission = permisos.length > 0 && permisos[0].generar === 1;
-      const hasDeactivatePermission = permisos.length > 0 && permisos[0].desactivar === 1;
+    }
 
-      res.json({ hasPermission, hasCreatePermission, hasEditPermission, hasDeletePermission, hasGeneratePermission, hasDeactivatePermission });
+    const cacheKey = `permiso_${nameUser}_${idModulo}_${idSubmodulo || 'null'}_${id_tenant}`;
+    
+    // Verificar caché
+    if (queryCache.has(cacheKey)) {
+        const cached = queryCache.get(cacheKey);
+        if (Date.now() - cached.timestamp < CACHE_TTL) {
+            return res.json(cached.data);
+        }
+        queryCache.delete(cacheKey);
+    }
+    
+    let connection;
+    try {
+        connection = await getConnection();
+        
+        // Query optimizada que obtiene usuario y permisos en una sola consulta
+        const [resultado] = await connection.query(
+            `SELECT 
+                p.ver, 
+                p.crear, 
+                p.editar, 
+                p.eliminar, 
+                p.desactivar, 
+                p.generar,
+                u.id_rol
+            FROM usuario u
+            LEFT JOIN permisos p ON u.id_rol = p.id_rol 
+                AND p.id_modulo = ? 
+                AND (p.id_submodulo = ? OR (p.id_submodulo IS NULL AND ? IS NULL))
+                AND p.id_tenant = u.id_tenant
+            WHERE u.usua = ? AND u.id_tenant = ?
+            LIMIT 1`,
+            [idModulo, idSubmodulo, idSubmodulo, nameUser, id_tenant]
+        );
+        
+        if (resultado.length === 0) {
+            return res.json({ 
+                hasPermission: false,
+                hasCreatePermission: false,
+                hasEditPermission: false,
+                hasDeletePermission: false,
+                hasGeneratePermission: false,
+                hasDeactivatePermission: false
+            });
+        }
+        
+        const usuario = resultado[0];
+        
+        // Si es rol 10 (superadmin), tiene todos los permisos
+        if (usuario.id_rol === 10) {
+            const allPermissions = {
+                hasPermission: true,
+                hasCreatePermission: true,
+                hasEditPermission: true,
+                hasDeletePermission: true,
+                hasGeneratePermission: true,
+                hasDeactivatePermission: true
+            };
+            
+            // Guardar en caché
+            queryCache.set(cacheKey, {
+                data: allPermissions,
+                timestamp: Date.now()
+            });
+            
+            return res.json(allPermissions);
+        }
+        
+        // Permisos normales
+        const permisos = {
+            hasPermission: usuario.ver === 1,
+            hasCreatePermission: usuario.crear === 1,
+            hasEditPermission: usuario.editar === 1,
+            hasDeletePermission: usuario.eliminar === 1,
+            hasGeneratePermission: usuario.generar === 1,
+            hasDeactivatePermission: usuario.desactivar === 1
+        };
+        
+        // Guardar en caché
+        queryCache.set(cacheKey, {
+            data: permisos,
+            timestamp: Date.now()
+        });
+        
+        res.json(permisos);
     } catch (error) {
-      res.status(500).json({ 
-        hasPermission: false,
-        hasCreatePermission: false,
-        hasEditPermission: false,
-        hasDeletePermission: false,
-        hasGeneratePermission: false,
-        hasDeactivatePermission: false,
-        message: "Error interno del servidor" 
-      });
+        console.error('Error en checkPermiso:', error);
+        res.status(500).json({ 
+            hasPermission: false,
+            hasCreatePermission: false,
+            hasEditPermission: false,
+            hasDeletePermission: false,
+            hasGeneratePermission: false,
+            hasDeactivatePermission: false,
+            message: "Error interno del servidor" 
+        });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 };
 

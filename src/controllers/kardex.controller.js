@@ -1,40 +1,63 @@
 import { getConnection } from "./../database/database.js";
 import ExcelJS from "exceljs";
 
+// Cache para consultas frecuentes
+const queryCache = new Map();
+const CACHE_TTL = 60000; // 1 minuto
+
+// Limpieza periódica del caché
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of queryCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL * 2) {
+            queryCache.delete(key);
+        }
+    }
+}, CACHE_TTL * 2);
+
+// OBTENER PRODUCTOS - OPTIMIZADO
 const getProductos = async (req, res) => {
     const { descripcion = '', almacen = '', idProducto = '', marca = '', cat = '', subcat = '', stock = '' } = req.query;
     const id_tenant = req.id_tenant;
     let connection;
+    
     try {
         connection = await getConnection();
 
-        // Construir filtros de manera dinámica sin usar LIKE
-        const whereClauses = [
-            'i.id_almacen = ?',
-            'p.id_tenant = ?'
-        ];
-        const params = [almacen, id_tenant];
+        // Construir filtros de manera dinámica con búsqueda flexible
+        const whereClauses = ['p.id_tenant = ?'];
+        const params = [id_tenant];
+
+        if (almacen) {
+            whereClauses.push('i.id_almacen = ?');
+            params.push(almacen);
+        }
 
         if (descripcion) {
-            whereClauses.push('p.descripcion = ?');
-            params.push(descripcion);
+            whereClauses.push('p.descripcion LIKE ?');
+            params.push(`%${descripcion}%`);
         }
+        
         if (idProducto) {
             whereClauses.push('p.id_producto = ?');
             params.push(idProducto);
         }
+        
         if (marca) {
             whereClauses.push('m.id_marca = ?');
             params.push(marca);
         }
+        
         if (cat) {
             whereClauses.push('CA.id_categoria = ?');
             params.push(cat);
         }
+        
         if (subcat) {
             whereClauses.push('CA.id_subcategoria = ?');
             params.push(subcat);
         }
+        
         if (stock === 'con_stock') {
             whereClauses.push('i.stock > 0');
         } else if (stock === 'sin_stock') {
@@ -44,8 +67,7 @@ const getProductos = async (req, res) => {
         const where = `WHERE ${whereClauses.join(' AND ')}`;
 
         const [productosResult] = await connection.query(
-            `
-            SELECT 
+            `SELECT 
                 p.id_producto AS codigo, 
                 p.descripcion AS descripcion, 
                 m.nom_marca AS marca, 
@@ -59,13 +81,14 @@ const getProductos = async (req, res) => {
             INNER JOIN inventario i ON p.id_producto = i.id_producto 
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
             ${where}
-            ORDER BY p.id_producto, p.descripcion
-            `,
+            ORDER BY p.descripcion
+            LIMIT 500`,
             params
         );
 
         res.json({ code: 1, data: productosResult });
     } catch (error) {
+        console.error('Error en getProductos:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -74,15 +97,17 @@ const getProductos = async (req, res) => {
     }
 };
 
+// OBTENER PRODUCTOS CON STOCK MENOR A 10 - OPTIMIZADO
 const getProductosMenorStock = async (req, res) => {
     const { sucursal = '' } = req.query;
     const id_tenant = req.id_tenant;
     let connection;
+    
     try {
         connection = await getConnection();
 
-        let whereClauses = ['i.stock < 10', 'p.id_tenant = ?'];
-        let params = [id_tenant];
+        const whereClauses = ['i.stock < 10', 'p.id_tenant = ?'];
+        const params = [id_tenant];
 
         if (sucursal) {
             whereClauses.push('sa.id_sucursal = ?');
@@ -92,8 +117,7 @@ const getProductosMenorStock = async (req, res) => {
         const where = `WHERE ${whereClauses.join(' AND ')}`;
 
         const [result] = await connection.query(
-            `
-            SELECT 
+            `SELECT 
                 p.id_producto AS codigo,
                 p.descripcion AS nombre,
                 m.nom_marca AS marca,
@@ -104,12 +128,13 @@ const getProductosMenorStock = async (req, res) => {
             LEFT JOIN sucursal_almacen sa ON i.id_almacen = sa.id_almacen
             ${where}
             ORDER BY i.stock ASC, p.descripcion ASC
-            `,
+            LIMIT 100`,
             params
         );
 
         res.json({ code: 1, data: result });
     } catch (error) {
+        console.error('Error en getProductosMenorStock:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -118,202 +143,346 @@ const getProductosMenorStock = async (req, res) => {
     }
 };
 
+// OBTENER MOVIMIENTOS DE UN PRODUCTO - OPTIMIZADO
 const getMovimientosProducto = async (req, res) => {
-    let connection;
+    const { id } = req.params;
     const id_tenant = req.id_tenant;
+    let connection;
+    
     try {
-        const { id } = req.params;
         connection = await getConnection();
-        const [result] = await connection.query(`
-                SELECT id_producto, id_marca, SC.id_categoria, PR.id_subcategoria, descripcion, precio, cod_barras, undm, estado_producto
-                FROM producto PR
-                INNER JOIN sub_categoria SC ON PR.id_subcategoria = SC.id_subcategoria
-                WHERE PR.id_producto = ? AND PR.id_tenant = ?`, [id, id_tenant]);
+        
+        const [result] = await connection.query(
+            `SELECT 
+                id_producto, 
+                id_marca, 
+                SC.id_categoria, 
+                PR.id_subcategoria, 
+                descripcion, 
+                precio, 
+                cod_barras, 
+                undm, 
+                estado_producto
+            FROM producto PR
+            INNER JOIN sub_categoria SC ON PR.id_subcategoria = SC.id_subcategoria
+            WHERE PR.id_producto = ? AND PR.id_tenant = ?`, 
+            [id, id_tenant]
+        );
 
         if (result.length === 0) {
-            return res.status(404).json({ data: result, message: "Producto no encontrado" });
+            return res.status(404).json({ 
+                code: 0,
+                data: [], 
+                message: "Producto no encontrado" 
+            });
         }
 
         res.json({ code: 1, data: result, message: "Producto encontrado" });
     } catch (error) {
+        console.error('Error en getMovimientosProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
-    }   finally {
+    } finally {
         if (connection) {
             connection.release();
         }
     }
 };
 
+// OBTENER ALMACENES - OPTIMIZADO CON CACHÉ
 const getAlmacen = async (req, res) => {
-    let connection;
     const id_tenant = req.id_tenant;
+    const cacheKey = `almacenes_${id_tenant}`;
+    
+    // Verificar caché
+    if (queryCache.has(cacheKey)) {
+        const cached = queryCache.get(cacheKey);
+        if (Date.now() - cached.timestamp < CACHE_TTL) {
+            return res.json({ code: 1, data: cached.data, message: "Almacenes listados (caché)" });
+        }
+        queryCache.delete(cacheKey);
+    }
+    
+    let connection;
     try {
-      connection = await getConnection();
-      const [result] = await connection.query(`
-              SELECT a.id_almacen AS id, a.nom_almacen AS almacen, COALESCE(s.nombre_sucursal,'Sin Sucursal') AS sucursal 
-              FROM almacen a 
-              LEFT JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
-              LEFT JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
-              WHERE a.estado_almacen = 1 AND a.id_tenant = ?
-          `, [id_tenant]);
-      res.json({ code: 1, data: result, message: "Almacenes listados" });
+        connection = await getConnection();
+        
+        const [result] = await connection.query(
+            `SELECT 
+                a.id_almacen AS id, 
+                a.nom_almacen AS almacen, 
+                COALESCE(s.nombre_sucursal, 'Sin Sucursal') AS sucursal 
+            FROM almacen a 
+            LEFT JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
+            LEFT JOIN sucursal s ON sa.id_sucursal = s.id_sucursal
+            WHERE a.estado_almacen = 1 AND a.id_tenant = ?
+            ORDER BY a.nom_almacen`, 
+            [id_tenant]
+        );
+        
+        // Guardar en caché
+        queryCache.set(cacheKey, {
+            data: result,
+            timestamp: Date.now()
+        });
+        
+        res.json({ code: 1, data: result, message: "Almacenes listados" });
     } catch (error) {
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
-    }  finally {
+        console.error('Error en getAlmacen:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
         if (connection) {
             connection.release();
         }
     }
-  };
+};
 
+// OBTENER MARCAS - OPTIMIZADO CON CACHÉ
 const getMarcas = async (req, res) => {
-    let connection;
     const id_tenant = req.id_tenant;
-    try {
-      connection = await getConnection();
-      const [result] = await connection.query(`
-                SELECT id_marca AS id, nom_marca AS marca FROM marca
-                WHERE estado_marca = 1 AND id_tenant = ?;
-          `, [id_tenant]);
-      res.json({ code: 1, data: result, message: "Marcas listadas" });
-    } catch (error) {
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
-    }  finally {
-        if (connection) {
-            connection.release();
+    const cacheKey = `marcas_${id_tenant}`;
+    
+    // Verificar caché
+    if (queryCache.has(cacheKey)) {
+        const cached = queryCache.get(cacheKey);
+        if (Date.now() - cached.timestamp < CACHE_TTL) {
+            return res.json({ code: 1, data: cached.data, message: "Marcas listadas (caché)" });
         }
+        queryCache.delete(cacheKey);
     }
-  };
-
-const getSubCategorias= async (req, res) => {
+    
     let connection;
-    const { cat= '' } = req.query;
-    const id_tenant = req.id_tenant;
     try {
-      connection = await getConnection();
-      const [result] = await connection.query(`
-                   SELECT id_subcategoria AS id, nom_subcat AS sub_categoria FROM sub_categoria
-                    WHERE estado_subcat = 1
-                    AND id_categoria = ?
-                    AND id_tenant = ?;
-          `,
-          [cat, id_tenant]);
-      res.json({ code: 1, data: result, message: "Sub categorias listadas" });
+        connection = await getConnection();
+        
+        const [result] = await connection.query(
+            `SELECT id_marca AS id, nom_marca AS marca 
+            FROM marca
+            WHERE estado_marca = 1 AND id_tenant = ?
+            ORDER BY nom_marca`, 
+            [id_tenant]
+        );
+        
+        // Guardar en caché
+        queryCache.set(cacheKey, {
+            data: result,
+            timestamp: Date.now()
+        });
+        
+        res.json({ code: 1, data: result, message: "Marcas listadas" });
     } catch (error) {
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
+        console.error('Error en getMarcas:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();
         }
     }
-  };
+};
 
-const getCategorias= async (req, res) => {
-    let connection;
+// OBTENER SUBCATEGORÍAS - OPTIMIZADO CON CACHÉ
+const getSubCategorias = async (req, res) => {
+    const { cat = '' } = req.query;
     const id_tenant = req.id_tenant;
+    const cacheKey = `subcategorias_${cat}_${id_tenant}`;
+    
+    // Verificar caché
+    if (queryCache.has(cacheKey)) {
+        const cached = queryCache.get(cacheKey);
+        if (Date.now() - cached.timestamp < CACHE_TTL) {
+            return res.json({ code: 1, data: cached.data, message: "Subcategorías listadas (caché)" });
+        }
+        queryCache.delete(cacheKey);
+    }
+    
+    let connection;
     try {
-      connection = await getConnection();
-      const [result] = await connection.query(`
-                      SELECT id_categoria as id, nom_categoria as categoria FROM categoria
-                      WHERE estado_categoria = 1 AND id_tenant = ?;
-          `, [id_tenant]);
-      res.json({ code: 1, data: result, message: "Categorias listadas" });
+        connection = await getConnection();
+        
+        const [result] = await connection.query(
+            `SELECT id_subcategoria AS id, nom_subcat AS sub_categoria 
+            FROM sub_categoria
+            WHERE estado_subcat = 1
+                AND id_categoria = ?
+                AND id_tenant = ?
+            ORDER BY nom_subcat`,
+            [cat, id_tenant]
+        );
+        
+        // Guardar en caché
+        queryCache.set(cacheKey, {
+            data: result,
+            timestamp: Date.now()
+        });
+        
+        res.json({ code: 1, data: result, message: "Subcategorías listadas" });
     } catch (error) {
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
+        console.error('Error en getSubCategorias:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
             connection.release();
         }
     }
-  };
+};
 
+// OBTENER CATEGORÍAS - OPTIMIZADO CON CACHÉ
+const getCategorias = async (req, res) => {
+    const id_tenant = req.id_tenant;
+    const cacheKey = `categorias_${id_tenant}`;
+    
+    // Verificar caché
+    if (queryCache.has(cacheKey)) {
+        const cached = queryCache.get(cacheKey);
+        if (Date.now() - cached.timestamp < CACHE_TTL) {
+            return res.json({ code: 1, data: cached.data, message: "Categorías listadas (caché)" });
+        }
+        queryCache.delete(cacheKey);
+    }
+    
+    let connection;
+    try {
+        connection = await getConnection();
+        
+        const [result] = await connection.query(
+            `SELECT id_categoria as id, nom_categoria as categoria 
+            FROM categoria
+            WHERE estado_categoria = 1 AND id_tenant = ?
+            ORDER BY nom_categoria`, 
+            [id_tenant]
+        );
+        
+        // Guardar en caché
+        queryCache.set(cacheKey, {
+            data: result,
+            timestamp: Date.now()
+        });
+        
+        res.json({ code: 1, data: result, message: "Categorías listadas" });
+    } catch (error) {
+        console.error('Error en getCategorias:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+// OBTENER DETALLE KARDEX - OPTIMIZADO SIN N+1
 const getDetalleKardex = async (req, res) => {
-    let connection;
     const { fechaInicio, fechaFin, idProducto, idAlmacen } = req.query;
     const id_tenant = req.id_tenant;
+    let connection;
 
     try {
         connection = await getConnection();
 
+        // Query principal optimizada con LEFT JOIN para obtener productos en una sola consulta
         const [detalleKardexResult] = await connection.query(
-            `
-                    SELECT
-                        bn.id_bitacora AS id,
-                        DATE_FORMAT(bn.fecha, '%d/%m/%Y') AS fecha,
-                        COALESCE(c.num_comprobante, 'Sin comprobante') AS documento,
-                        COALESCE(n.nom_nota, 'Venta') AS nombre,
-                        bn.entra AS entra,
-                        bn.sale AS sale,
-                        bn.stock_actual AS stock,
-                        p.precio AS precio,
-                        COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa,
-                        bn.hora_creacion
-                    FROM 
-                        bitacora_nota bn
-                    INNER JOIN 
-                        producto p ON bn.id_producto = p.id_producto 
-                    LEFT JOIN 
-                        nota n ON bn.id_nota = n.id_nota
-                    LEFT JOIN 
-                        venta v ON bn.id_venta = v.id_venta
-                    LEFT JOIN 
-                        comprobante c ON COALESCE(n.id_comprobante, v.id_comprobante) = c.id_comprobante 
-                    WHERE 
-                        bn.fecha >= ?
-                        AND bn.fecha < DATE_ADD(?, INTERVAL 1 DAY)
-                        AND bn.id_producto = ?
-                        AND bn.id_almacen = ?
-                        AND bn.id_tenant = ?
-                    ORDER BY 
-                        bn.fecha ASC, bn.hora_creacion DESC;
-            `,
+            `SELECT
+                bn.id_bitacora AS id,
+                bn.fecha,
+                DATE_FORMAT(bn.fecha, '%d/%m/%Y') AS fecha_formateada,
+                COALESCE(c.num_comprobante, 'Sin comprobante') AS documento,
+                COALESCE(n.nom_nota, 'Venta') AS nombre,
+                bn.entra AS entra,
+                bn.sale AS sale,
+                bn.stock_actual AS stock,
+                p.precio AS precio,
+                COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa,
+                bn.hora_creacion,
+                c.num_comprobante as num_comp_raw,
+                -- Productos de nota
+                dn.id_producto AS nota_producto_codigo,
+                pn.descripcion AS nota_producto_descripcion,
+                mn.nom_marca AS nota_producto_marca,
+                dn.cantidad AS nota_producto_cantidad,
+                -- Productos de venta
+                dv.id_producto AS venta_producto_codigo,
+                pv.descripcion AS venta_producto_descripcion,
+                mv.nom_marca AS venta_producto_marca,
+                dv.cantidad AS venta_producto_cantidad
+            FROM bitacora_nota bn
+            INNER JOIN producto p ON bn.id_producto = p.id_producto 
+            LEFT JOIN nota n ON bn.id_nota = n.id_nota
+            LEFT JOIN venta v ON bn.id_venta = v.id_venta
+            LEFT JOIN comprobante c ON COALESCE(n.id_comprobante, v.id_comprobante) = c.id_comprobante
+            -- JOIN para productos de nota
+            LEFT JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+            LEFT JOIN producto pn ON dn.id_producto = pn.id_producto
+            LEFT JOIN marca mn ON pn.id_marca = mn.id_marca
+            -- JOIN para productos de venta
+            LEFT JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+            LEFT JOIN producto pv ON dv.id_producto = pv.id_producto
+            LEFT JOIN marca mv ON pv.id_marca = mv.id_marca
+            WHERE bn.fecha >= ?
+                AND bn.fecha < DATE_ADD(?, INTERVAL 1 DAY)
+                AND bn.id_producto = ?
+                AND bn.id_almacen = ?
+                AND bn.id_tenant = ?
+            ORDER BY bn.fecha ASC, bn.hora_creacion DESC`,
             [fechaInicio, fechaFin, idProducto, idAlmacen, id_tenant]
         );
 
-        for (const detalle of detalleKardexResult) {
-            const documento = detalle.documento;
-            const letraInicial = documento.charAt(0);
-
-            let queryProductos;
-
-            if (letraInicial === 'I' || letraInicial === 'S') {
-                queryProductos = `
-                    SELECT 
-                        dn.id_producto AS codigo,
-                        p.descripcion AS descripcion,
-                        m.nom_marca AS marca,
-                        dn.cantidad AS cantidad
-                    FROM nota n 
-                    INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
-                    INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-                    INNER JOIN producto p ON dn.id_producto = p.id_producto
-                    INNER JOIN marca m ON p.id_marca = m.id_marca
-                    WHERE c.num_comprobante = ? AND n.id_tenant = ?;
-                `;
-            } else if (letraInicial === 'N' || letraInicial === 'B' || letraInicial === 'F') {
-                queryProductos = `
-                    SELECT 
-                        dv.id_producto AS codigo,
-                        p.descripcion AS descripcion,
-                        m.nom_marca AS marca,
-                        dv.cantidad AS cantidad
-                    FROM venta v 
-                    INNER JOIN detalle_venta dv ON v.id_venta = dv.id_venta
-                    INNER JOIN comprobante c ON v.id_comprobante = c.id_comprobante
-                    INNER JOIN producto p ON dv.id_producto = p.id_producto
-                    INNER JOIN marca m ON p.id_marca = m.id_marca
-                    WHERE c.num_comprobante = ? AND v.id_tenant = ? ORDER BY c.id_comprobante DESC LIMIT 1;
-                `;
+        // Agrupar resultados por bitacora eliminando duplicados de productos
+        const kardexMap = new Map();
+        
+        for (const row of detalleKardexResult) {
+            const bitacoraId = row.id;
+            
+            if (!kardexMap.has(bitacoraId)) {
+                kardexMap.set(bitacoraId, {
+                    id: row.id,
+                    fecha: row.fecha_formateada,
+                    documento: row.documento,
+                    nombre: row.nombre,
+                    entra: row.entra,
+                    sale: row.sale,
+                    stock: row.stock,
+                    precio: row.precio,
+                    glosa: row.glosa,
+                    hora_creacion: row.hora_creacion,
+                    productos: []
+                });
             }
-
-            if (queryProductos) {
-                const [productosResult] = await connection.query(queryProductos, [documento, id_tenant]);
-                detalle.productos = productosResult;
+            
+            const kardexItem = kardexMap.get(bitacoraId);
+            
+            // Agregar producto de nota si existe y no está duplicado
+            if (row.nota_producto_codigo) {
+                const exists = kardexItem.productos.some(p => 
+                    p.codigo === row.nota_producto_codigo && p.cantidad === row.nota_producto_cantidad
+                );
+                if (!exists) {
+                    kardexItem.productos.push({
+                        codigo: row.nota_producto_codigo,
+                        descripcion: row.nota_producto_descripcion,
+                        marca: row.nota_producto_marca,
+                        cantidad: row.nota_producto_cantidad
+                    });
+                }
+            }
+            
+            // Agregar producto de venta si existe y no está duplicado
+            if (row.venta_producto_codigo) {
+                const exists = kardexItem.productos.some(p => 
+                    p.codigo === row.venta_producto_codigo && p.cantidad === row.venta_producto_cantidad
+                );
+                if (!exists) {
+                    kardexItem.productos.push({
+                        codigo: row.venta_producto_codigo,
+                        descripcion: row.venta_producto_descripcion,
+                        marca: row.venta_producto_marca,
+                        cantidad: row.venta_producto_cantidad
+                    });
+                }
             }
         }
 
-        res.json({ code: 1, data: detalleKardexResult });
+        const resultado = Array.from(kardexMap.values());
+        res.json({ code: 1, data: resultado });
     } catch (error) {
+        console.error('Error en getDetalleKardex:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -322,63 +491,31 @@ const getDetalleKardex = async (req, res) => {
     }
 };
 
+// OBTENER DETALLE KARDEX ANTERIORES - OPTIMIZADO
 const getDetalleKardexAnteriores = async (req, res) => {
-    const { fecha = '2024-08-01', idProducto ,idAlmacen } = req.query;
+    const { fecha = '2024-08-01', idProducto, idAlmacen } = req.query;
     const id_tenant = req.id_tenant;
     let connection;
+    
     try {
         connection = await getConnection();
 
         const [detalleKardexAnterioresResult] = await connection.query(
-            `
-            SELECT 
+            `SELECT 
                 COUNT(*) AS numero, 
                 COALESCE(SUM(bn.entra), 0) AS entra, 
                 COALESCE(SUM(bn.sale), 0) AS sale
-            FROM 
-                bitacora_nota bn 
-            WHERE 
-                bn.fecha < ?
+            FROM bitacora_nota bn 
+            WHERE bn.fecha < ?
                 AND bn.id_producto = ?
                 AND bn.id_almacen = ?
-                AND bn.id_tenant = ?;
-            `,
+                AND bn.id_tenant = ?`,
             [fecha, idProducto, idAlmacen, id_tenant]
         );
 
         res.json({ code: 1, data: detalleKardexAnterioresResult });
     } catch (error) {
-       res.status(500).json({ code: 0, message: "Error interno del servidor" });
-    } finally {
-        if (connection) {
-            connection.release();
-        }
-    }
-};
-
-const getInfProducto = async (req, res) => {
-    let connection;
-    const { idProducto ,idAlmacen } = req.query;
-    const id_tenant = req.id_tenant;
-    try {
-        connection = await getConnection();
-
-        const [infProductoResult] = await connection.query(
-            `
-            SELECT p.id_producto AS codigo, p.descripcion AS descripcion, m.nom_marca AS marca, i.stock AS stock
-            FROM producto p 
-            INNER JOIN marca m on p.id_marca = m.id_marca
-            INNER JOIN inventario i on p.id_producto = i.id_producto
-            WHERE p.id_producto = ?
-            AND i.id_almacen = ?
-            AND p.id_tenant = ?
-            GROUP BY codigo, descripcion, marca, stock;
-            `,
-            [idProducto, idAlmacen, id_tenant]
-        );
-
-        res.json({ code: 1, data: infProductoResult });
-    } catch (error) {
+        console.error('Error en getDetalleKardexAnteriores:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -387,6 +524,51 @@ const getInfProducto = async (req, res) => {
     }
 };
 
+// OBTENER INFORMACIÓN DE PRODUCTO - OPTIMIZADO
+const getInfProducto = async (req, res) => {
+    const { idProducto, idAlmacen } = req.query;
+    const id_tenant = req.id_tenant;
+    let connection;
+    
+    try {
+        connection = await getConnection();
+
+        const [infProductoResult] = await connection.query(
+            `SELECT 
+                p.id_producto AS codigo, 
+                p.descripcion AS descripcion, 
+                m.nom_marca AS marca, 
+                i.stock AS stock
+            FROM producto p 
+            INNER JOIN marca m ON p.id_marca = m.id_marca
+            INNER JOIN inventario i ON p.id_producto = i.id_producto
+            WHERE p.id_producto = ?
+                AND i.id_almacen = ?
+                AND p.id_tenant = ?
+            LIMIT 1`,
+            [idProducto, idAlmacen, id_tenant]
+        );
+
+        if (infProductoResult.length === 0) {
+            return res.status(404).json({ 
+                code: 0, 
+                data: [], 
+                message: "Producto no encontrado" 
+            });
+        }
+
+        res.json({ code: 1, data: infProductoResult });
+    } catch (error) {
+        console.error('Error en getInfProducto:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+// Funciones auxiliares para Excel
 const limpiarRango = (worksheet, startCol, endCol, row) => {
     for (let col = startCol; col <= endCol; col++) {
         worksheet.getCell(row, col).value = null; 
@@ -404,15 +586,20 @@ const limpiarRango2 = (worksheet, startRow, startCol, endRow, endCol) => {
     }
 };
 
+// GENERAR REPORTE EXCEL POR MES - OPTIMIZADO
 const generateExcelReport = async (req, res) => {
     const { mes, year, almacen } = req.query;
     const id_tenant = req.id_tenant;
     let connection;
+    
     try {
         connection = await getConnection();
 
         if (!mes || !year || !almacen) {
-            return res.status(400).send("Faltan parámetros requeridos (mes, year, almacen).");
+            return res.status(400).json({ 
+                code: 0,
+                message: "Faltan parámetros requeridos (mes, year, almacen)" 
+            });
         }
 
         const [rows] = await connection.query(
@@ -421,7 +608,10 @@ const generateExcelReport = async (req, res) => {
         );
 
         if (!rows || rows.length === 0 || !rows[0]) {
-            return res.status(404).send("No se encontraron datos para los parámetros proporcionados.");
+            return res.status(404).json({ 
+                code: 0,
+                message: "No se encontraron datos para los parámetros proporcionados" 
+            });
         }
 
         const workbook = new ExcelJS.Workbook();
@@ -542,7 +732,11 @@ const generateExcelReport = async (req, res) => {
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {
-        res.status(500).send("Error al generar el reporte Excel.");
+        console.error('Error al generar reporte Excel:', error);
+        res.status(500).json({ 
+            code: 0,
+            message: "Error al generar el reporte Excel" 
+        });
     } finally {
         if (connection) {
             connection.release();
@@ -550,16 +744,20 @@ const generateExcelReport = async (req, res) => {
     }
 };
 
+// GENERAR REPORTE EXCEL POR RANGO DE FECHAS - OPTIMIZADO
 const generateExcelReportByDateRange = async (req, res) => {
-    let connection;
     const { startDate, endDate, almacen } = req.query;
     const id_tenant = req.id_tenant;
+    let connection;
 
     try {
         connection = await getConnection();
 
         if (!startDate || !endDate || !almacen) {
-            return res.status(400).send("Faltan parámetros requeridos (startDate, endDate, almacen).");
+            return res.status(400).json({ 
+                code: 0,
+                message: "Faltan parámetros requeridos (startDate, endDate, almacen)" 
+            });
         }
 
         const [rows] = await connection.query(
@@ -568,7 +766,10 @@ const generateExcelReportByDateRange = async (req, res) => {
         );
 
         if (!rows || rows.length === 0 || !rows[0]) {
-            return res.status(404).send("No se encontraron datos para los parámetros proporcionados.");
+            return res.status(404).json({ 
+                code: 0,
+                message: "No se encontraron datos para los parámetros proporcionados" 
+            });
         }
 
         const workbook = new ExcelJS.Workbook();
@@ -619,16 +820,6 @@ const generateExcelReportByDateRange = async (req, res) => {
 
         worksheet.columns = columns;
 
-        const limpiarRango = (worksheet, startRow, startCol, endRow, endCol) => {
-            for (let row = startRow; row <= endRow; row++) {
-                for (let col = startCol; col <= endCol; col++) {
-                    const cell = worksheet.getCell(row, col);
-                    cell.value = null;
-                    cell.style = {};
-                }
-            }
-        };
-
         const headerRow = worksheet.getRow(8);
         headerRow.values = columns.map((col) => col.header);
 
@@ -647,8 +838,8 @@ const generateExcelReportByDateRange = async (req, res) => {
 
         const dataRows = rows[0];
         let startRow = 9;
-        dataRows.forEach((row, index) => {
-            worksheet.getRow(startRow).values = Object.values(row);
+        dataRows.forEach((_row) => {
+            worksheet.getRow(startRow).values = Object.values(_row);
             startRow++;
         });
 
@@ -665,7 +856,7 @@ const generateExcelReportByDateRange = async (req, res) => {
             }
         });
 
-        limpiarRango2(worksheet, 1, 1, 1 ,37 );
+        limpiarRango2(worksheet, 1, 1, 1, 37);
 
         res.setHeader(
             "Content-Type",
@@ -679,7 +870,11 @@ const generateExcelReportByDateRange = async (req, res) => {
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {
-        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+        console.error('Error al generar reporte Excel por rango:', error);
+        res.status(500).json({ 
+            code: 0,
+            message: "Error al generar el reporte Excel" 
+        });
     } finally {
         if (connection) {
             connection.release();
