@@ -130,8 +130,7 @@ export default function AgregarProveedorModal({ isOpen, onClose, onProveedorAdde
     return !Object.values(newErrors).some((error) => error);
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleSubmit = () => {
     if (handleValidation()) {
       handleGuardarAction();
     }

@@ -127,7 +127,7 @@ export const getDestinatariosIngreso = async () => {
  */
 export const getDocumentosIngreso = async () => {
   try {
-    const response = await axios.get('/nota_ingreso/documento');
+    const response = await axios.get('/nota_ingreso/ndocumento');
     
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };

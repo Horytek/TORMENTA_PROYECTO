@@ -203,6 +203,7 @@ export default function RegistroGuia() {
   const handleSaveUbigeo = (uPart, uDest) => {
     setUbipart(uPart);
     setUbidest(uDest);
+    closeModal();
   };
   const handleSaveTransporte = (data) => {
     setTransporte(data);

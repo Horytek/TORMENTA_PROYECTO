@@ -274,7 +274,7 @@ export const getSucursalesGuia = async () => {
  */
 export const getUbigeosGuia = async () => {
   try {
-    const response = await axios.get('/guia_remision/ubigeos');
+    const response = await axios.get('/guia_remision/ubigeo');
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }

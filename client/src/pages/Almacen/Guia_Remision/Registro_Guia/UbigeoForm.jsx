@@ -38,7 +38,12 @@ const UbigeoForm = ({ modalTitle = 'Ubigeos', onClose, onSave, initialOrigenId, 
     const fetchUbigeos = async () => {
       setLoading(true);
       const result = await getUbigeosGuia();
-      if (result.success) setUbigeos(result.data);
+      if (result.success) {
+        setUbigeos(result.data);
+      } else {
+        console.error('Error al cargar ubigeos');
+        toast.error('No se pudieron cargar los ubigeos');
+      }
       setLoading(false);
     };
     fetchUbigeos();
@@ -150,15 +155,21 @@ const UbigeoForm = ({ modalTitle = 'Ubigeos', onClose, onSave, initialOrigenId, 
 
   const handleSave = () => {
     if (!ready) {
-      toast.error('Complete ambos bloques.');
+      toast.error('Complete ambos bloques (origen y destino)');
       return;
     }
-    const origenId = distritoIdIndex[`${partida.departamento}__${partida.provincia}__${partida.distrito}`];
-    const destinoId = distritoIdIndex[`${destino.departamento}__${destino.provincia}__${destino.distrito}`];
+    
+    const origenKey = `${partida.departamento}__${partida.provincia}__${partida.distrito}`;
+    const destinoKey = `${destino.departamento}__${destino.provincia}__${destino.distrito}`;
+    
+    const origenId = distritoIdIndex[origenKey];
+    const destinoId = distritoIdIndex[destinoKey];
+    
     if (!origenId || !destinoId) {
-      toast.error('No se pudo resolver ID(s) de ubigeo.');
+      toast.error('No se pudo resolver ID(s) de ubigeo. Verifique los datos.');
       return;
     }
+    
     onSave(origenId, destinoId);
     setOpen(false);
     onClose();

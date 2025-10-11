@@ -243,7 +243,7 @@ const getUbigeoGuia = async (req, res) => {
     try {
         connection = await getConnection();
         const [result] = await connection.query(
-            `SELECT id_ubigeo as idubi, codigo_ubigeo as codubi, 
+            `SELECT id_ubigeo as id, codigo_ubigeo as codigo, 
                     departamento, provincia, distrito 
              FROM ubigeo 
              WHERE id_tenant = ?
