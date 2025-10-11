@@ -279,4 +279,82 @@ Adicional: La mayoría de los módulos permiten eliminar y editar registros (seg
     developerExtras: [],
     notes: "El Libro Registro de Ventas muestra los registros oficiales de ventas realizados por la empresa, con filtros por sucursal, fecha y tipo de comprobante. Permite exportar a Excel y visualizar totales."
   },
+    kardex: {
+    required: [
+      "Almacén (filtro)",
+      "Código de producto (filtro)",
+      "Descripción (filtro)",
+      "Línea/Categoría (filtro)",
+      "Sub-línea/Subcategoría (filtro)",
+      "Marca (filtro)",
+      "Inventario de productos: Código, Descripción, Marca, Stock, Estado, Unidad de Medida"
+    ],
+    optional: [
+      "Exportar PDF",
+      "Reporte mensual",
+      "Reporte semanal",
+      "Actualizar listado"
+    ],
+    developerExtras: [],
+    notes: "El Kardex de Movimientos permite consultar el inventario de productos por almacén, con filtros avanzados por código, descripción, línea, sub-línea y marca. Muestra el stock y estado (crítico, bajo, normal, alto) de cada producto. Permite exportar reportes y actualizar la vista. Es identificado también como 'inventario', 'movimientos de almacén' o 'stock'."
+  },
+    historico: {
+    required: [
+      "Producto seleccionado (desde Kardex)",
+      "Almacén",
+      "Rango de fechas",
+      "Transacciones: Fecha, Hora, Documento, Nombre, Entra, Sale, Stock, Precio, Glosa"
+    ],
+    optional: [
+      "Stock inicial",
+      "Stock actual",
+      "Precio unitario",
+      "Valor total",
+      "Entradas y salidas acumuladas",
+      "Rotación de inventario",
+      "Velocidad de venta",
+      "Margen de ganancia",
+      "Próximo pedido",
+      "Exportar PDF"
+    ],
+    developerExtras: [],
+    notes: "El histórico de producto se accede desde el Kardex haciendo clic en el registro de un producto. Permite ver todas las transacciones (entradas, salidas, ventas, compras) asociadas al producto en el almacén seleccionado, con análisis financiero y de inventario. Incluye filtros por fecha y almacén, y opciones para exportar el historial."
+  },
+    clientDetail: {
+    required: [
+      "Información de contacto (email, teléfono, dirección)",
+      "Información adicional (fecha de registro, estado)",
+      "Historial de compras (últimas transacciones realizadas)",
+      "Historial de cambios (registro de modificaciones)"
+    ],
+    optional: [
+      "Estado del cliente (activo/inactivo)",
+      "Tipo de documento y número",
+      "Nombre o razón social"
+    ],
+    developerExtras: [],
+    notes: "El detalle del cliente muestra pestañas para información de contacto, información adicional, historial de compras y registro de cambios. Si no hay datos, se indica que no hay información registrada. Se accede desde la tabla/listado de clientes haciendo clic en el botón de ver o detalle."
+  },
+  salesManagement: {
+    required: [
+      "Listado de ventas con filtros avanzados (número de comprobante, cliente, tipo de comprobante, sucursal, estado, rango de fechas)",
+      "KPIs: Total Ventas, Total Efectivo, Total Pago Electrónico, Cantidad de Ventas",
+      "Tabla con columnas: Serie/Número, Tipo de comprobante, Cliente, Fecha de emisión, IGV, Total, Cajero, Estado",
+      "Icono de opciones (anular venta, generar PDF)",
+      "Icono de impresión (descargar voucher PDF o imprimir voucher)",
+      "Detalle de venta al hacer clic en una fila"
+    ],
+    optional: [
+      "Botón para registrar nueva venta",
+      "Paginación",
+      "Exportar a Excel"
+    ],
+    developerExtras: [],
+    notes: `
+La gestión de ventas permite visualizar, filtrar y administrar todas las ventas de manera centralizada. Los KPIs muestran totales y cantidades relevantes. Cada venta registrada tiene dos iconos de acción:
+- Opciones (engranaje): permite anular la venta o generar el PDF del comprobante.
+- Impresión (impresora): permite descargar el voucher en formato PDF o imprimirlo directamente. Para imprimir, es necesario tener una impresora térmica conectada a la laptop o PC.
+Al hacer clic en una venta, se abre el detalle completo de la venta, mostrando comprobante, cliente, fecha, productos/servicios, información de pago, resumen de totales y observaciones.
+`
+  },
 };

@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Card, Button, Divider, Tooltip, Chip, Textarea, Spinner, Switch, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react";
-import { Bot, Send, X, Settings, MessageCircle, Search } from "lucide-react";
+import { Bot, Send, X, Settings, MessageCircle, Search, Download, 
+FileSpreadsheet, FileText, Printer, Copy, Trash2, Maximize2, Minimize2 } from "lucide-react";
 import CommandDemo from "@/components/ui/command";
 import MessengerWidget from "@/components/MessengerWidget/MessengerWidget";
 import { useUserStore } from "@/store/useStore";
 import { getModulosConSubmodulos } from "@/services/rutas.services";
 import axios from "@/api/axios";
+import downloadExcelReport from "@/pages/Almacen/Kardex/data/generateExcel";
 
 // Prompt rápidos
 const QUICK_PROMPTS = [
@@ -34,6 +36,19 @@ export default function DeepSeekOpenRouterChatbot() {
   const [historySummary, setHistorySummary] = useState("");
   const [systemHash, setSystemHash] = useState("");
   const [modulesLoaded, setModulesLoaded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // NUEVO: controles de densidad y tamaño de texto
+  const [density, setDensity] = useState("comfortable"); // "comfortable" | "compact"
+  const [textScale, setTextScale] = useState("md");      // "sm" | "md" | "lg"
+
+
+  // NUEVO: helpers de clase visual según densidad/tamaño
+  const textSizeClass = textScale === "sm" ? "text-[12px]" : textScale === "lg" ? "text-[14px]" : "text-[13px]";
+  const bubblePadClass = density === "comfortable" ? "px-4 py-2.5" : "px-3 py-2";
+  const gapClass = density === "comfortable" ? "space-y-5" : "space-y-4";
+
 
   // Entrada / envío
   const [input, setInput] = useState("");
@@ -78,6 +93,53 @@ export default function DeepSeekOpenRouterChatbot() {
       return { prompt: "", schema: null };
     }
   }
+    // NUEVO: exportación rápida Libro de Ventas (mes/año actual) a Excel
+  const quickExportLibroVentas = async () => {
+    try {
+      setExporting(true);
+      const now = new Date();
+      const mes = String(now.getMonth() + 1).padStart(2, "0");
+      const ano = String(now.getFullYear());
+      const tipoComprobante = ["Boleta", "Factura", "Nota de venta"].join(",");
+      let url = `/reporte/registro_ventas_sunat?mes=${mes}&ano=${ano}&tipoComprobante=${encodeURIComponent(tipoComprobante)}`;
+      // Si deseas limitar por sucursal, descomenta la siguiente línea:
+      // if (sucursal) url += `&idSucursal=${encodeURIComponent(sucursal)}`;
+
+      const response = await axios.get(url, {
+        responseType: "blob",
+        headers: { Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+      });
+
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.setAttribute("download", `RegistroVentas_${mes}_${ano}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (e) {
+      setErrorMsg("No se pudo exportar el Libro de Ventas.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // NUEVO: exportación rápida Kardex mensual a Excel (almacén "%")
+  const quickExportKardexMesActual = async () => {
+    try {
+      setExporting(true);
+      const now = new Date();
+      const mes = String(now.getMonth() + 1).padStart(2, "0");
+      const year = String(now.getFullYear());
+      await downloadExcelReport(mes, year, "%");
+    } catch {
+      setErrorMsg("No se pudo exportar el Kardex mensual.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   // Unifica la salida del modelo con el formulario real (evita confusiones)
 function mergeWithFormSchema(entity, reply, schemaData) {
@@ -86,13 +148,22 @@ function mergeWithFormSchema(entity, reply, schemaData) {
   const opt = (schemaData.optional || []).map(s => `- ${s}`).join("\n");
   const ex  = (schemaData.extras || []).map(s => `- ${s}`).join("\n");
 
-  // Solo mostrar el bloque si hay al menos un campo
-  if (!req && !opt && !ex) return reply;
+  // Identificadores adicionales para otras entidades
+  const entityLabels = {
+    product: "Campos del formulario de producto detectados:",
+    user: "Campos del formulario de usuario detectados:",
+    permissions: "Campos del formulario de permisos detectados:",
+    inventory: "Campos del formulario de inventario detectados:",
+    purchases: "Campos del formulario de compras detectados:",
+    sales: "Campos del formulario de ventas detectados:",
+    client: "Campos del formulario de cliente detectados:",
+    provider: "Campos del formulario de proveedor detectados:",
+    branch: "Campos del formulario de sucursal detectados:",
+    warehouse: "Campos del formulario de almacén detectados:",
+    seller: "Campos del formulario de vendedor detectados:"
+  };
 
-  const header =
-    entity.type === "product" ? "Campos del formulario de producto detectados:" :
-    entity.type === "user"    ? "Campos del formulario de usuario detectados:" :
-    "Campos del formulario detectados:";
+  const header = entityLabels[entity.type] || "Campos del formulario detectados:";
   const canonical = [
     `\n${header}`,
     req ? `Obligatorios:\n${req}` : null,
@@ -159,6 +230,69 @@ function simplifyResponse(text = "") {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+// Solo adjuntar formulario en flujos de creación/edición
+function shouldAttachSchema(question = "", entity) {
+  if (!entity?.type) return false;
+  const q = (question || "").toLowerCase();
+
+  const isMetricOrList =
+    /\b(total|conteo|cu[aá]nt[oa]s?|lista|listar|mu[eé]strame|top|m[aá]s vendidos|reporte|ingresos?|ganancias?|soles|monto)\b/i.test(q);
+  if (isMetricOrList) return false;
+
+  const wantsForm =
+    /\b(c[oó]mo|como)\b.*\b(registrar|crear|agregar|editar|actualizar|llenar|formulario|campos)\b/i.test(q) ||
+    /\b(registrar|crear|agregar|editar|actualizar|formulario|campos)\b/i.test(q);
+
+  return wantsForm;
+}
+
+// Quitar Markdown visible del modelo (negritas, etc.)
+function stripMarkdown(s = "") {
+  return String(s)
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/_(.*?)_/g, "$1")
+    .replace(/`{1,3}([^`]+)`{1,3}/g, "$1")
+    .trim();
+}
+
+// Limpiar texto del asistente y cortar bloques de formulario si aparecieran
+function normalizeAssistantText(s = "") {
+  let t = stripMarkdown(s);
+  const idx = t.search(/Campos del formulario/i);
+  if (idx > -1) t = t.slice(0, idx);
+  return t.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+// NUEVO: detectar y extraer listas del contenido
+function extractListItems(plain = "") {
+  // líneas que empiezan con “-”, “•”, o “1. ”
+  const lines = plain.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const itemLines = lines.filter(l => /^([-•]\s|\d+\.\s)/.test(l));
+  if (itemLines.length < 2) return null; // no parece lista
+  return itemLines.map(l => l.replace(/^([-•]\s|\d+\.\s)/, "").trim());
+}
+
+// NUEVO: renderizar mensaje del asistente (texto plano o lista)
+function renderAssistantMessage(text = "") {
+  const plain = normalizeAssistantText(text);
+  const items = extractListItems(plain);
+
+  if (items && items.length) {
+    return (
+      <ul className="list-disc pl-5 space-y-1">
+        {items.map((it, i) => (
+          <li key={i} className="leading-snug">{it}</li>
+        ))}
+      </ul>
+    );
+  }
+  // texto plano (se respetan saltos con whitespace-pre-wrap del contenedor)
+  return <span>{plain}</span>;
+}
+
 function enforceConcise(text) {
   if (!conciseMode) return text;
   const words = text.split(/\s+/);
@@ -428,24 +562,32 @@ Historial breve: ${historySummary || "inicio"}.
     setHistorySummary(`Reciente: ${lastPairs.join(" | ")}`);
   }, []);
 
-  // Formato visible
-  function formatVisibleUserContent(raw = "") {
-    if (!raw) return raw;
-    let cleaned = raw
-      .replace(/UI:[^|]+(\|)?/g, "")
-      .replace(/ContextoBD:[^|]+(\|)?/g, "")
-      .replace(/\s+\|\s+\|/g, "|")
-      .replace(/\|\s*\|\s*/g, "|")
-      .replace(/\s{2,}/g, " ")
-      .trim();
-    // Negrita para "Descripción:" (y variantes) en la respuesta
-    cleaned = cleaned.replace(/(\bDescripción\b\s*:)/gi, '<b>$1</b>');
-    const pantallaMatch = cleaned.match(/Pantalla:([^|]+)(\||$)/);
-    const preguntaMatch = cleaned.match(/Pregunta:([^|]+)$/);
-    if (pantallaMatch && preguntaMatch) return `(Pantalla:${pantallaMatch[1].trim()} | Pregunta:${preguntaMatch[1].trim()})`;
-    if (preguntaMatch) return preguntaMatch[1].trim();
-    return cleaned;
-  }
+// Formato visible (solo para el usuario, mantiene HTML-lite)
+function formatVisibleUserContent(raw = "") {
+  if (!raw) return raw;
+  let cleaned = raw
+    .replace(/UI:[^|]+(\|)?/g, "")
+    .replace(/ContextoBD:[^|]+(\|)?/g, "")
+    .replace(/\s+\|\s+\|/g, "|")
+    .replace(/\|\s*\|\s*/g, "|")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  // Markdown-lite a HTML básico SOLO para el usuario
+  cleaned = cleaned
+    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+    .replace(/__(.*?)__/g, "<b>$1</b>")
+    .replace(/\*(.*?)\*/g, "<i>$1</i>")
+    .replace(/_(.*?)_/g, "<i>$1</i>")
+    .replace(/`{1,3}([^`]+)`{1,3}/g, "<code>$1</code>");
+
+  cleaned = cleaned.replace(/(\bDescripción\b\s*:)/gi, '<b>$1</b>');
+  const pantallaMatch = cleaned.match(/Pantalla:([^|]+)(\||$)/);
+  const preguntaMatch = cleaned.match(/Pregunta:([^|]+)$/);
+  if (pantallaMatch && preguntaMatch) return `(Pantalla:${pantallaMatch[1].trim()} | Pregunta:${preguntaMatch[1].trim()})`;
+  if (preguntaMatch) return preguntaMatch[1].trim();
+  return cleaned;
+}
 
 // Construcción del mensaje user (inyecta el contexto del formulario si existe)
 const buildUserMessage = (question, screenDescription, dbContext, formCtx) => {
@@ -511,10 +653,13 @@ const sendMessage = async (rawText) => {
   try {
     const { data } = await axios.post("/chat", { messages: provisional });
     let assistantReply = data?.choices?.[0]?.message?.content || data?.text || "Sin respuesta.";
+
+    // Eliminar Markdown visible
+    assistantReply = stripMarkdown(assistantReply);
     assistantReply = simplifyResponse(assistantReply);
 
-    // Si hay esquema del formulario, añadimos bloque canónico (evita “Nombre/SKU” cuando no existe)
-    if (lastFormSchema || formObj?.schema) {
+    // Adjuntar formulario solo cuando aplique
+    if ((lastFormSchema || formObj?.schema) && shouldAttachSchema(text, entity)) {
       assistantReply = mergeWithFormSchema(entity, assistantReply, formObj?.schema || lastFormSchema);
     }
 
@@ -594,44 +739,77 @@ return (
       </div>
     )}
 
-    {/* Ventana del chat DeepSeek */}
-    {isChatOpen && (
-      <Card className="fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-gray-200/70 dark:border-zinc-800/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200 w-[380px] h-[620px] max-w-[95vw]">
-        {/* HEADER */}
-        <div className="relative px-4 py-4 bg-white/90 dark:bg-zinc-900/90 flex items-center justify-between border-b border-gray-200/70 dark:border-zinc-800/60">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center shadow-sm border border-gray-200/70 dark:border-zinc-700/60">
-              <Bot className="w-5 h-5 text-gray-700 dark:text-zinc-200" />
+      {/* Ventana del chat DeepSeek */}
+      {isChatOpen && (
+        <Card
+          className={`fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-gray-200/70 dark:border-zinc-800/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200
+            ${isExpanded ? "w-[920px] h-[80vh]" : "w-[420px] h=[640px] w-[420px] h-[640px]"} max-w-[95vw]`}
+        >
+          {/* HEADER */}
+          <div className="relative px-4 py-4 bg-white/90 dark:bg-zinc-900/90 flex items-center justify-between border-b border-gray-200/70 dark:border-zinc-800/60">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center shadow-sm border border-gray-200/70 dark:border-zinc-700/60">
+                <Bot className="w-5 h-5 text-gray-700 dark:text-zinc-200" />
+              </div>
+              <div className="leading-tight">
+                <h3 className="text-sm font-semibold tracking-wide text-gray-800 dark:text-zinc-100">
+                  Asistente HoryCore
+                </h3>
+                <p className="text-[10px] text-gray-500 dark:text-zinc-400 font-medium">Conversación contextual</p>
+              </div>
             </div>
-            <div className="leading-tight">
-              <h3 className="text-sm font-semibold tracking-wide text-gray-800 dark:text-zinc-100">
-                Asistente HoryCore
-              </h3>
-              <p className="text-[10px] text-gray-500 dark:text-zinc-400 font-medium">
-                Conversación contextual
-              </p>
+            <div className="flex items-center gap-1">
+              {/* NUEVO: Expandir / Contraer */}
+              <Tooltip content={isExpanded ? "Contraer" : "Expandir"} placement="bottom">
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  className="text-gray-700 dark:text-zinc-300"
+                  onClick={() => setIsExpanded(v => !v)}
+                >
+                  {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </Button>
+              </Tooltip>
+              <Button
+                size="sm"
+                variant="light"
+                className="text-[10px] text-gray-700 dark:text-zinc-300"
+                onClick={() => setShowConfig(v => !v)}
+              >
+                {showConfig ? "Ocultar" : "Config"}
+              </Button>
+              <Button isIconOnly size="sm" variant="light" className="text-gray-600 dark:text-zinc-300" onClick={() => setIsChatOpen(false)}>
+                <X className="w-4 h-4" />
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="light"
-              className="text-[10px] text-gray-700 dark:text-zinc-300"
-              onClick={() => setShowConfig(v => !v)}
-            >
-              {showConfig ? "Ocultar" : "Config"}
-            </Button>
-            <Button
-              isIconOnly
-              size="sm"
-              variant="light"
-              className="text-gray-600 dark:text-zinc-300"
-              onClick={() => setIsChatOpen(false)}
-            >
-              <X className="w-4 h-4" />
-            </Button>
+
+          {/* NUEVO: Barra de acciones internas del chat */}
+          <div className="px-3 py-2 bg-white/80 dark:bg-zinc-900/80 border-b border-gray-200/60 dark:border-zinc-800/60 flex items-center gap-2 flex-wrap">
+            {/* Chat: exportar/copiar/limpiar */}
+            <Tooltip content="Exportar chat a PDF"><Button isIconOnly size="sm" variant="flat" /*onPress={exportPDF}*/><Printer className="w-4 h-4" /></Button></Tooltip>
+            <Tooltip content="Exportar chat a CSV"><Button isIconOnly size="sm" variant="flat" /*onPress={exportCSV}*/><FileSpreadsheet className="w-4 h-4" /></Button></Tooltip>
+            <Tooltip content="Exportar chat a JSON"><Button isIconOnly size="sm" variant="flat" /*onPress={exportJSON}*/><FileText className="w-4 h-4" /></Button></Tooltip>
+            <Tooltip content="Copiar conversación"><Button isIconOnly size="sm" variant="flat" /*onPress={copyTranscript}*/><Copy className="w-4 h-4" /></Button></Tooltip>
+            <Tooltip content="Limpiar conversación"><Button isIconOnly size="sm" variant="flat" /*onPress={clearConversation}*/><Trash2 className="w-4 h-4" /></Button></Tooltip>
+
+            <div className="w-px h-5 bg-gray-200 dark:bg-zinc-700 mx-1" />
+
+            {/* Negocio: exportaciones rápidas */}
+            <Tooltip content="Libro de Ventas (mes actual) – Excel">
+              <Button isIconOnly size="sm" variant="flat" disabled={exporting} onPress={quickExportLibroVentas}>
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              </Button>
+            </Tooltip>
+            <Tooltip content="Kardex (mes actual) – Excel">
+              <Button isIconOnly size="sm" variant="flat" disabled={exporting} onPress={quickExportKardexMesActual}>
+                <FileSpreadsheet className="w-4 h-4 text-green-700" />
+              </Button>
+            </Tooltip>
+
+            {exporting && <span className="ml-1 text-[11px] text-gray-500">Generando…</span>}
           </div>
-        </div>
 
         {/* PANEL CONFIG */}
         {showConfig && (
@@ -640,6 +818,22 @@ return (
               <div className="flex items-center gap-2">
                 <Switch size="sm" isSelected={conciseMode} onValueChange={setConciseMode}>Conciso</Switch>
               </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] opacity-70">Densidad</span>
+                  <Switch
+                    size="sm"
+                    isSelected={density === "comfortable"}
+                    onValueChange={v => setDensity(v ? "comfortable" : "compact")}
+                  >
+                    Cómodo
+                  </Switch>
+                </div>
+                                <div className="flex items-center gap-1">
+                  <span className="text-[10px] opacity-70 mr-1">Texto</span>
+                  <Button size="sm" variant={textScale === "sm" ? "solid" : "light"} onPress={() => setTextScale("sm")}>A-</Button>
+                  <Button size="sm" variant={textScale === "md" ? "solid" : "light"} onPress={() => setTextScale("md")}>A</Button>
+                  <Button size="sm" variant={textScale === "lg" ? "solid" : "light"} onPress={() => setTextScale("lg")}>A+</Button>
+                </div>
               <div className="flex items-center gap-2">
                 <Switch size="sm" isSelected={autoUISnapshot} onValueChange={setAutoUISnapshot}>Auto UI</Switch>
               </div>
@@ -661,42 +855,43 @@ return (
           </div>
         )}
 
-        {/* HISTORIAL */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 custom-scroll relative bg-gradient-to-br from-white/95 via-gray-50/80 to-gray-100/60 dark:from-zinc-900/90 dark:via-zinc-900/80 dark:to-zinc-900/70">
-        {messages
-          .filter((_, i) => i !== 0)
-          .map((m, idx) => {
-            const visible = m.role === "user"
-              ? formatVisibleUserContent(m.content)
-              : <span dangerouslySetInnerHTML={{ __html: formatVisibleUserContent(m.content) }} />;
-            return (
-              <div key={idx} className={`group max-w-full animate-fade-in ${m.role === "user" ? "ml-auto" : "mr-auto"}`}>
-                <div
-                  className={`rounded-2xl px-3 py-2 text-[13px] shadow-sm whitespace-pre-wrap break-words border
-                    ${m.role === "user"
-                      ? "bg-gray-100 text-gray-900 border-gray-200 dark:bg-zinc-700 dark:text-zinc-100 dark:border-zinc-700"
-                      : "bg-white text-gray-800 border-gray-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700"
-                    }`}
-                >
-                  {visible}
-                </div>
+          {/* HISTORIAL */}
+          <div className={`flex-1 overflow-y-auto px-5 py-5 ${gapClass} custom-scroll relative bg-gradient-to-br from-white/95 via-gray-50/80 to-gray-100/60 dark:from-zinc-900/90 dark:via-zinc-900/80 dark:to-zinc-900/70`}>
+            {messages
+              .filter((_, i) => i !== 0)
+              .map((m, idx) => {
+                const isUser = m.role === "user";
+                return (
+                  <div key={idx} className={`group max-w-full animate-fade-in ${isUser ? "ml-auto" : "mr-auto"}`}>
+                    <div
+                      className={`rounded-2xl px-3 py-2 text-[13px] shadow-sm whitespace-pre-wrap break-words border
+                        ${isUser
+                          ? "bg-gray-100 text-gray-900 border-gray-200 dark:bg-zinc-700 dark:text-zinc-100 dark:border-zinc-700"
+                          : "bg-white text-gray-800 border-gray-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700"
+                        }`}
+                    >
+                      {isUser
+                        ? <span dangerouslySetInnerHTML={{ __html: formatVisibleUserContent(m.content) }} />
+                        : normalizeAssistantText(m.content)}
+                    </div>
+                  </div>
+                );
+              })}
+            {loading && (
+              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400 font-medium">
+                <Spinner size="sm" color="default" /> Procesando…
               </div>
-            );
-          })}
-          {loading && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-zinc-400 font-medium">
-              <Spinner size="sm" color="default" /> Procesando…
-            </div>
-          )}
-          {errorMsg && (
-            <div className="text-[11px] text-red-700 bg-red-50/90 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-xl">
-              {errorMsg}
-            </div>
-          )}
-          <div ref={chatEndRef} />
-        </div>
+            )}
+            {errorMsg && (
+              <div className="text-[11px] text-red-700 bg-red-50/90 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-xl">
+                {errorMsg}
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
 
-        <Divider className="m-0 dark:border-zinc-800/60" />
+          <Divider className="m-0 dark:border-zinc-800/60" />
+
 
         {/* INPUT */}
         <div className="px-5 pb-4 pt-3 bg-white/90 dark:bg-zinc-900/85">
