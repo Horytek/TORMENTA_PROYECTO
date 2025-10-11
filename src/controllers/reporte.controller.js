@@ -1,10 +1,32 @@
 import { getConnection } from "./../database/database.js";
-import { startOfWeek, endOfWeek, subWeeks, subMonths, format } from "date-fns";
+import { subMonths, format } from "date-fns";
+import path from "path";
+import ExcelJS from "exceljs";
+import fs from "fs";
+
+// Cache para reportes (TTL más corto porque los datos cambian frecuentemente)
+const queryCache = new Map();
+const CACHE_TTL = 30000; // 30 segundos para reportes
+
+// Limpieza periódica del caché
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of queryCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL * 2) {
+            queryCache.delete(key);
+        }
+    }
+}, CACHE_TTL * 2);
+
+// Función auxiliar para generar clave de caché (para uso futuro en optimizaciones adicionales)
+const _generateCacheKey = (prefix, params) => {
+    return `${prefix}_${JSON.stringify(params)}`;
+};
 
 
 const getTotalProductosVendidos = async (req, res) => {
   let connection;
-  const { id_sucursal, year, month, week, limit } = req.query;
+  const { id_sucursal, year, month, week, limit: _limit } = req.query;
   const id_tenant = req.id_tenant;
 
   try {
@@ -130,6 +152,7 @@ const getTotalProductosVendidos = async (req, res) => {
       message: "Total de productos vendidos obtenido correctamente"
     });
   } catch (error) {
+    console.error('Error en reporte:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -228,6 +251,7 @@ const getTotalSalesRevenue = async (req, res) => {
       message: "Total de ventas obtenidas correctamente"
     });
   } catch (error) {
+    console.error('Error en reporte:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -271,6 +295,7 @@ const getSucursales = async (req, res) => {
     });
     
   } catch (error) {
+    console.error('Error en getSucursales:', error);
     res.status(500).json({ 
       code: 0,
       message: "Error al obtener las sucursales"
@@ -429,6 +454,7 @@ const getProductoMasVendido = async (req, res) => {
       message: "Producto más vendido obtenido correctamente"
     });
   } catch (error) {
+    console.error('Error en reporte:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -570,6 +596,7 @@ const getSucursalMayorRendimiento = async (req, res) => {
       message: "Sucursal con mayor rendimiento obtenida correctamente"
     });
   } catch (error) {
+    console.error('Error en reporte:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -646,10 +673,11 @@ const getCantidadVentasPorSubcategoria = async (req, res) => {
     const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Cantidad de ventas por subcategoría obtenida correctamente" });
   } catch (error) {
+    console.error('Error en reporte:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
-        connection.release();
+      connection.release();
     }
   }
 };
@@ -731,10 +759,11 @@ const getCantidadVentasPorProducto = async (req, res) => {
     const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Cantidad de ventas por producto obtenida correctamente" });
   } catch (error) {
+    console.error('Error en reporte:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   }  finally {
     if (connection) {
-        connection.release();
+      connection.release();
     }
   }
 };
@@ -771,12 +800,13 @@ const getAnalisisGananciasSucursales = async (req, res) => {
 
     res.json({ code: 1, data: result, message: "Análisis de ganancias por sucursal obtenido correctamente" });
   } catch (error) {
+    console.error('Error en getAnalisisGananciasSucursales:', error);
     if (!res.headersSent) {
       res.status(500).json({ code: 0, message: "Error interno del servidor" });
     }
-  }   finally {
+  } finally {
     if (connection) {
-        connection.release();
+      connection.release();
     }
   }
 };
@@ -863,19 +893,16 @@ const getVentasPDF = async (req, res) => {
     res.json({ code: 1, data: result, message: "Reporte de ventas" });
 
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los datos de ventas' });
-  }   finally {
+    console.error('Error en getVentasPDF:', error);
+    res.status(500).json({ code: 0, message: 'Error al obtener los datos de ventas' });
+  } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
   }
 };
 
-
-import path from "path";
-import ExcelJS from "exceljs";
-import fs from "fs";
-
+// Función auxiliar para parsear método de pago
 const parseMetodoPago = (metodoPago) => {
   if (!metodoPago) return { efectivo: 0, electronico: 0 };
   
@@ -1119,10 +1146,11 @@ const exportarRegistroVentas = async (req, res) => {
     res.send(buffer);
 
   } catch (error) {
-    res.status(500).json({ message: "Error al exportar el archivo Excel." });
-  }    finally {
+    console.error('Error en exportarRegistroVentas:', error);
+    res.status(500).json({ code: 0, message: "Error al exportar el archivo Excel" });
+  } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
   }
 };
@@ -1202,7 +1230,8 @@ const obtenerRegistroVentas = async (req, res) => {
 
     res.json({ code: 1, data: registroVentas, message: "Registro de ventas obtenido correctamente" });
   } catch (error) {
-    res.status(500).json({ message: "Error al obtener el registro de ventas" });
+    console.error('Error en obtenerRegistroVentas:', error);
+    res.status(500).json({ code: 0, message: "Error al obtener el registro de ventas" });
   } finally {
     if (connection) connection.release();
   }
@@ -1268,7 +1297,8 @@ const getTendenciaVentas = async (req, res) => {
     const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Tendencia de ventas obtenida correctamente" });
   } catch (error) {
-    res.status(500).send("Tendencia de ventas no obtenida correctamente");
+    console.error('Error en getTendenciaVentas:', error);
+    res.status(500).json({ code: 0, message: "Error al obtener tendencia de ventas" });
   } finally {
     if (connection) connection.release();
   }
@@ -1343,7 +1373,8 @@ const getTopProductosMargen = async (req, res) => {
 
     res.json({ code: 1, data: result, message: "Top productos por margen obtenidos correctamente" });
   } catch (error) {
-    res.status(500).send("Top productos por margen no obtenidos correctamente");
+    console.error('Error en getTopProductosMargen:', error);
+    res.status(500).json({ code: 0, message: "Error al obtener top productos por margen" });
   } finally {
     if (connection) connection.release();
   }

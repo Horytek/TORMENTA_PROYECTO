@@ -1,5 +1,19 @@
 import { getConnection } from "./../database/database.js";
-import { logVentas, logComprobantes, logSunat } from "../utils/logActions.js";
+import { logVentas } from "../utils/logActions.js";
+
+// Cache para datos que no cambian frecuentemente
+const queryCache = new Map();
+const CACHE_TTL = 60000; // 1 minuto
+
+// Limpieza periódica del caché
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of queryCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL * 2) {
+            queryCache.delete(key);
+        }
+    }
+}, CACHE_TTL * 2);
 
 const getVentas = async (req, res) => {
   let connection;
@@ -100,6 +114,7 @@ const getVentas = async (req, res) => {
 
     res.json({ code: 1, data: ventas });
   } catch (error) {
+    console.error('Error en getVentas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
@@ -145,7 +160,7 @@ const generarComprobante = async (req, res) => {
       throw new Error("Comprobante type not found.");
     }
 
-    const { id_tipocomprobante, nom_tipocomp } = comprobanteResult[0];
+    const { nom_tipocomp } = comprobanteResult[0];
     const prefijoBase = nom_tipocomp.charAt(0);
 
     // Obtener la última venta para verificar el estado (filtrando por tenant si existe)
@@ -209,6 +224,7 @@ const generarComprobante = async (req, res) => {
 
     res.json({ nuevoNumComprobante });
   } catch (error) {
+    console.error('Error en generarComprobante:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -245,6 +261,7 @@ const getProductosVentas = async (req, res) => {
     );
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
+    console.error('Error en ventas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -271,6 +288,7 @@ const getEstado = async (req, res) => {
     await connection.commit();
     res.json({ message: "Ventas actualizada correctamente" });
   } catch (error) {
+    console.error('Error en ventas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -280,10 +298,21 @@ const getEstado = async (req, res) => {
 };
 
 const getComprobante = async (req, res) => {
+  const id_tenant = req.id_tenant;
+  const cacheKey = `comprobantes_${id_tenant}`;
+  
+  // Verificar caché
+  if (queryCache.has(cacheKey)) {
+    const cached = queryCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < CACHE_TTL) {
+      return res.json({ code: 1, data: cached.data, message: "Comprobantes listados (caché)" });
+    }
+    queryCache.delete(cacheKey);
+  }
+  
   let connection;
   try {
     connection = await getConnection();
-    const id_tenant = req.id_tenant;
     let query = `
       SELECT id_tipocomprobante AS id, 
         CASE WHEN nom_tipocomp='Nota de venta' THEN 'Nota' ELSE nom_tipocomp END as nombre 
@@ -298,13 +327,23 @@ const getComprobante = async (req, res) => {
       query += " AND id_tenant = ?";
       params.push(id_tenant);
     }
+    query += " ORDER BY nom_tipocomp";
+    
     const [result] = await connection.query(query, params);
-    res.json({ code: 1, data: result, message: "Comprobante listados" });
+    
+    // Guardar en caché
+    queryCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+    
+    res.json({ code: 1, data: result, message: "Comprobantes listados" });
   } catch (error) {
+    console.error('Error en getComprobante:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-      connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
   }
 };
@@ -324,6 +363,7 @@ const getLastVenta = async (req, res) => {
     const [result] = await connection.query(query, params);
     res.json({ code: 1, data: result, message: "Comprobante listados" });
   } catch (error) {
+    console.error('Error en ventas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -333,10 +373,21 @@ const getLastVenta = async (req, res) => {
 };
 
 const getSucursal = async (req, res) => {
+  const id_tenant = req.id_tenant;
+  const cacheKey = `sucursales_ventas_${id_tenant}`;
+  
+  // Verificar caché
+  if (queryCache.has(cacheKey)) {
+    const cached = queryCache.get(cacheKey);
+    if (Date.now() - cached.timestamp < CACHE_TTL) {
+      return res.json({ code: 1, data: cached.data, message: "Sucursales listadas (caché)" });
+    }
+    queryCache.delete(cacheKey);
+  }
+  
   let connection;
   try {
     connection = await getConnection();
-    const id_tenant = req.id_tenant;
     let query = `
       SELECT su.id_sucursal AS id, su.nombre_sucursal AS nombre, su.ubicacion AS ubicacion, usu.usua As usuario, ro.nom_rol AS rol
       FROM sucursal su
@@ -355,9 +406,19 @@ const getSucursal = async (req, res) => {
       query += ` AND su.id_tenant = ?`;
       params.push(id_tenant);
     }
+    query += " ORDER BY su.nombre_sucursal";
+    
     const [result] = await connection.query(query, params);
-    res.json({ code: 1, data: result, message: "Sucursal listados" });
+    
+    // Guardar en caché
+    queryCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+    
+    res.json({ code: 1, data: result, message: "Sucursales listadas" });
   } catch (error) {
+    console.error('Error en ventas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -400,8 +461,16 @@ const getClienteVentas = async (req, res) => {
         cliente_t
     `;
     const [result] = await connection.query(query, params);
-    res.json({ code: 1, data: result, message: "Productos listados" });
+    
+    // Guardar en caché
+    queryCache.set(`clientes_ventas_${id_tenant}`, {
+      data: result,
+      timestamp: Date.now()
+    });
+    
+    res.json({ code: 1, data: result, message: "Clientes listados" });
   } catch (error) {
+    console.error('Error en getClienteVentas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -590,6 +659,12 @@ const addVenta = async (req, res) => {
     const id_venta = ventaResult.insertId;
 
     // Insertar detalles de la venta y actualizar el stock
+    // Preparar datos para batch inserts
+    const detalleVentaValues = [];
+    const detalleVentaParams = [];
+    const bitacoraValues = [];
+    const bitacoraParams = [];
+    
     for (const detalle of detalles) {
       const { id_producto, cantidad, precio, descuento, total } = detalle;
 
@@ -617,25 +692,28 @@ const addVenta = async (req, res) => {
         [stockNuevo, id_producto, id_sucursal]
       );
 
-      // Insertar detalle de la venta
-      await connection.query(
-        "INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total) VALUES (?, ?, ?, ?, ?, ?)",
-        [id_producto, id_venta, cantidad, precio, descuento, total]
-      );
+      // Preparar valores para batch insert de detalles
+      detalleVentaValues.push('(?, ?, ?, ?, ?, ?)');
+      detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total);
 
-      // Insertar bitacora 
+      // Preparar valores para batch insert de bitácora
+      bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?)');
+      bitacoraParams.push(id_producto, id_almacen, cantidad, stockActual, stockNuevo, fecha, id_venta, id_tenant);
+    }
+    
+    // Batch insert de detalles de venta
+    if (detalleVentaValues.length > 0) {
       await connection.query(
-        "INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant) VALUES (? , ? , ? , ? , ? , ? , ?, ?)",
-        [
-          id_producto,
-          id_almacen,
-          cantidad,
-          stockActual,
-          stockNuevo,
-          fecha,
-          id_venta,
-          id_tenant
-        ]
+        `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total) VALUES ${detalleVentaValues.join(', ')}`,
+        detalleVentaParams
+      );
+    }
+    
+    // Batch insert de bitácora
+    if (bitacoraValues.length > 0) {
+      await connection.query(
+        `INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant) VALUES ${bitacoraValues.join(', ')}`,
+        bitacoraParams
       );
     }
 
@@ -651,17 +729,28 @@ const addVenta = async (req, res) => {
       [id_venta_boucher, id_venta]
     );
 
-    // Insertar los detalles de la venta en la tabla 'detalle_venta_boucher'
-    for (const detalle of detalles_b) {
-      const { id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total } = detalle;
-
+    // Insertar los detalles de la venta en la tabla 'detalle_venta_boucher' - BATCH INSERT
+    if (detalles_b && detalles_b.length > 0) {
+      const detalleBoucherValues = [];
+      const detalleBoucherParams = [];
+      
+      for (const detalle of detalles_b) {
+        const { id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total } = detalle;
+        
+        detalleBoucherValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        detalleBoucherParams.push(id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant);
+      }
+      
       await connection.query(
-        "INSERT INTO detalle_venta_boucher (id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant]
+        `INSERT INTO detalle_venta_boucher (id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant) VALUES ${detalleBoucherValues.join(', ')}`,
+        detalleBoucherParams
       );
     }
 
     await connection.commit();
+    
+    // Limpiar caché después de agregar venta
+    queryCache.clear();
 
     // Registrar log de creación de venta
     const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
@@ -682,9 +771,12 @@ const addVenta = async (req, res) => {
       await logVentas.crear(id_venta, usuarioVendedor[0].id_usuario, ip, id_tenant, totalVenta);
     }
 
-    res.json({ message: "Venta y detalles añadidos" });
+    res.json({ code: 1, message: "Venta y detalles añadidos", id_venta });
   } catch (error) {
-    await connection.rollback();
+    console.error('Error en addVenta:', error);
+    if (connection) {
+      await connection.rollback();
+    }
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -742,6 +834,7 @@ const addCliente = async (req, res) => {
 
     res.json({ message: "Cliente añadido correctamente" });
   } catch (error) {
+    console.error('Error en ventas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -918,8 +1011,13 @@ const updateVenta = async (req, res) => {
     }
 
     await connection.commit();
-    res.json({ message: "Venta estado actualizado y stock restaurado." });
+    
+    // Limpiar caché después de anular venta
+    queryCache.clear();
+    
+    res.json({ code: 1, message: "Venta estado actualizado y stock restaurado." });
   } catch (error) {
+    console.error('Error en updateVenta:', error);
     if (connection) {
       try { await connection.rollback(); } catch {}
     }
@@ -999,10 +1097,11 @@ vb.descuento_venta,vb.vuelto,vb.recibido,vb.formadepago, com.num_comprobante
 
     res.json({ code: 1, data: datosVentaComprobante, message: "Datos comprobante listados" });
   } catch (error) {
+    console.error('Error en getVentaById:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
-  }  finally {
+  } finally {
     if (connection) {
-        connection.release();  // Liberamos la conexión si se utilizó un pool de conexiones
+      connection.release();
     }
   }
 };
