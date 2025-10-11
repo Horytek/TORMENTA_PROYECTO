@@ -9,8 +9,7 @@ import { useDestinatariosIngreso, useDocumentosIngreso, useAlmacenesIngreso } fr
 import { useDocumentosSalida } from '@/hooks/useNotaSalida';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
-import useProductosData from './data/data_buscar_producto';
-import { insertNotaIngreso } from '@/services/notaIngreso.services';
+import { getProductosIngreso, insertNotaIngreso } from '@/services/notaIngreso.services';
 import { insertNotaSalida } from '@/services/notaSalida.services';
 import { Toaster, toast } from "react-hot-toast";
 import ConfirmationModal from '../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
@@ -139,8 +138,8 @@ function Registro_Ingresos() {
       return; 
     }
     try {
-      const res = await useProductosData(crit);
-      setProductos(res?.productos || []);
+      const res = await getProductosIngreso(crit);
+      setProductos(res?.data || []);
     } catch {
       setProductos([]);
     }

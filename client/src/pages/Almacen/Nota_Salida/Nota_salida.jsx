@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import TablaSalida from './ComponentsNotaSalida/NotaSalidaTable';
-import getSalidasData from './data/data_salida';
-import useAlmacenData from './data/data_almacen_salida';
+import { getNotasSalida } from '@/services/notaSalida.services';
+import { useAlmacenesSalida } from '@/hooks/useNotaSalida';
 import FiltrosSalida from './ComponentsNotaSalida/FiltrosSalida';
 import ReactToPrint from 'react-to-print';
 import { jsPDF } from 'jspdf';
@@ -11,7 +11,7 @@ import 'jspdf-autotable';
 const Salidas = () => {
   const [filters, setFilters] = useState({});
   const [salidas, setSalidas] = useState([]);
-  const { almacenes } = useAlmacenData();
+  const { almacenes } = useAlmacenesSalida();
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
     const almacenIdGuardado = localStorage.getItem('almacen');
     return almacenIdGuardado && almacenes
@@ -20,8 +20,8 @@ const Salidas = () => {
   });
 
   const fetchSalidas = useCallback(async () => {
-    const data = await getSalidasData(filters);
-    setSalidas(data.salida);
+    const result = await getNotasSalida(filters);
+    setSalidas(result.data || []);
   }, [filters]);
 
   useEffect(() => {

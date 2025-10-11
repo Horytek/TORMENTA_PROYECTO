@@ -11,14 +11,14 @@ import UbigeoForm from './UbigeoForm';
 import TransporteForm from './UndTrans';
 import ClienteForm from './ClienteForm';
 
-import useProductosData from '../../data/data_buscar_producto';
 import { 
   getDestinatariosGuia, 
   getSucursalesGuia, 
   generarDocumentoGuia,
-  insertGuiaRemisionAndDetalle 
+  insertGuiaRemisionAndDetalle,
+  handleGuiaRemisionSunat,
+  buscarProductosGuia
 } from '@/services/guiaRemision.services';
-import { handleGuiaRemisionSunat } from '../../data/add_sunat_guia';
 import ConfirmationModal from './../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
 import {
@@ -161,9 +161,8 @@ export default function RegistroGuia() {
     loadingRef.current = true;
     setLoadingProductos(true);
     try {
-      await useProductosData(normalizado, setProductos);
+      await buscarProductosGuia(normalizado, setProductos);
     } catch (e) {
-      // el hook interno ya hace toast; aquí solo evitamos ruido extra
       console.error('Fallo carga productos:', e?.message);
     } finally {
       setLoadingProductos(false);

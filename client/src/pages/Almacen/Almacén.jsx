@@ -2,13 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { parseDate } from "@internationalized/date";
 import { DateRangePicker } from '@heroui/react';
 import TablaKardex from './Kardex/ComponentsKardex/KardexTable';
-import getSalidaData from './Kardex/data/data_kardex';
-import useAlmacenData from './Kardex/data/data_almacen_kardex';
-import useMarcaData from './Kardex/data/data_marca_kardex';
-import useCategoriaData from './Kardex/data/data_categoria_kardex';
-import useSubCategoriaData from './Kardex/data/data_subcategoria_kardex';
-import downloadExcelReport from './Kardex/data/generateExcel';
-import downloadExcelReportByPeriod from './Kardex/data/generateExcelDates';
+import { getProductosKardex, downloadExcelReporteMes, downloadExcelReporteFechas } from '@/services/kardex.services';
+import { useAlmacenesKardex, useMarcasKardex, useCategoriasKardex, useSubcategoriasKardex } from '@/hooks/useKardex';
 import { Select, SelectItem } from "@heroui/react";
 import { Input } from '@heroui/react';
 import { Toaster, toast } from 'react-hot-toast';
@@ -22,12 +17,12 @@ import { getEmpresaDataByUser } from "@/services/empresa.services";
 
 const Kardex = () => {
 
-    const { almacenes } = useAlmacenData();
+    const { almacenes } = useAlmacenesKardex();
     const [kardex, setKarddex] = useState([]);
-    const { marcas } = useMarcaData();
-    const { categorias } = useCategoriaData();
+    const { marcas } = useMarcasKardex();
+    const { categorias } = useCategoriasKardex();
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
-    const { subcategorias } = useSubCategoriaData(categoriaSeleccionada);
+    const { subcategorias } = useSubcategoriasKardex(categoriaSeleccionada);
 
     // Obtener estado global de Zustand
     const rolUsuario = useUserStore(state => state.rol);
@@ -119,7 +114,8 @@ useEffect(() => {
     }, [almacenSeleccionado]);
 
     const fetchKardex = useCallback(async () => {
-        const data = await getSalidaData(filters);
+        const result = await getProductosKardex(filters);
+        const data = result.data || [];
         setKarddex(data.salida);
     }, [filters]);
 
@@ -296,7 +292,7 @@ const generatePDFKardex = async (kardexItems, almacenSeleccionado) => {
 
     const handleModalSubmit = () => {
         if (modalContent.mes && modalContent.almacen && modalContent.year) {
-            downloadExcelReport(modalContent.mes, modalContent.year, modalContent.almacen);
+            downloadExcelReporteMes(modalContent.mes, modalContent.year, modalContent.almacen);
             resetModalContent();
             setIsModalOpen(false);
         } else {
@@ -352,7 +348,7 @@ const generatePDFKardex = async (kardexItems, almacenSeleccionado) => {
             const startDate = new Date(start).toISOString().split('T')[0];
             const endDate = new Date(end).toISOString().split('T')[0];
 
-            downloadExcelReportByPeriod(startDate, endDate, almacen);
+            downloadExcelReporteFechas(startDate, endDate, almacen);
             handleCloseWeeklyModal();
         }
 

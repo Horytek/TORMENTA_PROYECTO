@@ -1,42 +1,42 @@
 import axios from "@/api/axios";
 
 /**
- * Servicio consolidado para Notas de Salida
- * Todas las llamadas API relacionadas con notas de salida
+ * Servicio consolidado para Notas de Ingreso
+ * Todas las llamadas API relacionadas con notas de ingreso
  */
 
 // ============================================
-// NOTAS DE SALIDA
+// NOTAS DE INGRESO
 // ============================================
 
 /**
- * Obtener lista de notas de salida con filtros
+ * Obtener lista de notas de ingreso con filtros
  */
-export const getNotasSalida = async (filters) => {
+export const getNotasIngreso = async (filters) => {
   try {
-    const response = await axios.get('/nota_salida/', { params: filters });
+    const response = await axios.get('/nota_ingreso', { params: filters });
     
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     } else {
-      console.error('Error al obtener notas de salida:', response.data.message);
+      console.error('Error al obtener notas de ingreso:', response.data.message);
       return { success: false, data: [] };
     }
   } catch (error) {
-    console.error('Error al obtener notas de salida:', error.message);
+    console.error('Error al obtener notas de ingreso:', error.message);
     return { success: false, data: [] };
   }
 };
 
 /**
- * Insertar nueva nota de salida con detalles
+ * Insertar nueva nota de ingreso con detalles
  */
-export const insertNotaSalida = async (data) => {
+export const insertNotaIngreso = async (data) => {
   try {
-    const response = await axios.post('/nota_salida/addNota', data);
+    const response = await axios.post('/nota_ingreso/addNota', data);
     
     if (response.data.code === 1) {
-      return { success: true, message: 'Nota de salida insertada correctamente' };
+      return { success: true, message: 'Nota de ingreso insertada correctamente' };
     } else {
       console.error('Error al insertar nota:', response.data.message);
       return { success: false, message: response.data.message };
@@ -48,11 +48,11 @@ export const insertNotaSalida = async (data) => {
 };
 
 /**
- * Anular una nota de salida
+ * Anular una nota de ingreso
  */
-export const anularNotaSalida = async (notaId, usuario) => {
+export const anularNotaIngreso = async (notaId, usuario) => {
   try {
-    const response = await axios.post('/nota_salida/anular', {
+    const response = await axios.post('/nota_ingreso/anular', {
       notaId,
       usuario,
     });
@@ -74,14 +74,22 @@ export const anularNotaSalida = async (notaId, usuario) => {
 // ============================================
 
 /**
- * Obtener almacenes para notas de salida
+ * Obtener almacenes para notas de ingreso
  */
-export const getAlmacenesSalida = async () => {
+export const getAlmacenesIngreso = async () => {
   try {
-    const response = await axios.get('/nota_salida/almacen');
+    const response = await axios.get('/nota_ingreso/almacen');
     
     if (response.data.code === 1) {
-      return { success: true, data: response.data.data };
+      return { 
+        success: true, 
+        data: response.data.data.map(item => ({
+          id: item.id,
+          almacen: item.almacen,
+          sucursal: item.sucursal,
+          usuario: item.usuario,
+        }))
+      };
     }
     return { success: false, data: [] };
   } catch (error) {
@@ -91,14 +99,21 @@ export const getAlmacenesSalida = async () => {
 };
 
 /**
- * Obtener destinatarios para notas de salida
+ * Obtener destinatarios para notas de ingreso
  */
-export const getDestinatariosSalida = async () => {
+export const getDestinatariosIngreso = async () => {
   try {
-    const response = await axios.get('/nota_salida/destinatario');
+    const response = await axios.get('/nota_ingreso/destinatario');
     
     if (response.data.code === 1) {
-      return { success: true, data: response.data.data };
+      return { 
+        success: true, 
+        data: response.data.data.map(item => ({
+          id: item.id,
+          documento: item.documento,
+          destinatario: item.destinatario,
+        }))
+      };
     }
     return { success: false, data: [] };
   } catch (error) {
@@ -108,11 +123,11 @@ export const getDestinatariosSalida = async () => {
 };
 
 /**
- * Obtener tipos de documento para notas de salida
+ * Obtener tipos de documento para notas de ingreso
  */
-export const getDocumentosSalida = async () => {
+export const getDocumentosIngreso = async () => {
   try {
-    const response = await axios.get('/nota_salida/documento');
+    const response = await axios.get('/nota_ingreso/documento');
     
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
@@ -125,11 +140,11 @@ export const getDocumentosSalida = async () => {
 };
 
 /**
- * Buscar productos para nota de salida
+ * Buscar productos para nota de ingreso
  */
-export const getProductosSalida = async (filters) => {
+export const getProductosIngreso = async (filters) => {
   try {
-    const response = await axios.get('/nota_salida/productos', { params: filters });
+    const response = await axios.get('/nota_ingreso/productos', { params: filters });
     
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
@@ -143,16 +158,16 @@ export const getProductosSalida = async (filters) => {
   }
 };
 
-// Exportación por defecto
-const notaSalidaService = {
-  getNotasSalida,
-  insertNotaSalida,
-  anularNotaSalida,
-  getAlmacenesSalida,
-  getDestinatariosSalida,
-  getDocumentosSalida,
-  getProductosSalida,
+// Exportación por defecto (objeto con todos los servicios)
+const notaIngresoService = {
+  getNotasIngreso,
+  insertNotaIngreso,
+  anularNotaIngreso,
+  getAlmacenesIngreso,
+  getDestinatariosIngreso,
+  getDocumentosIngreso,
+  getProductosIngreso,
 };
 
-export default notaSalidaService;
+export default notaIngresoService;
 

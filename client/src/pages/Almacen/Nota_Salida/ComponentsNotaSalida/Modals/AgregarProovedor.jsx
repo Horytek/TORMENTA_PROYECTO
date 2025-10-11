@@ -9,7 +9,7 @@ import {
   Button,
 } from '@heroui/react';
 import { toast, Toaster } from 'react-hot-toast';
-import insertDestinatario from './data/insert_destinatario';
+import { insertDestinatario } from '@/services/destinatario.services';
 
 export default function AgregarProveedorModal({ isOpen, onClose, onProveedorAdded }) {
   const [dniOrRuc, setDniOrRuc] = useState('');

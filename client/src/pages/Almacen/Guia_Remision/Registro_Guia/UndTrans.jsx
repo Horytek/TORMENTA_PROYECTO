@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Modal,
@@ -18,15 +18,14 @@ import { FaPlus } from "react-icons/fa";
 import { Toaster, toast } from 'react-hot-toast';
 import { ModalTransporte } from './ModalGuias/ModalTransporte';
 import { ModalTransportista } from './ModalGuias/ModalTransportista';
-import useTransPubData from '../../data/data_transpub';
-import useTransPrivData from '../../data/data_transpriv';
+import { getTransportistasPublicos, getTransportistasPrivados } from '@/services/guiaRemision.services';
 
 const TransporteForm = ({ modalTitle, onClose, onSave }) => {
   const [transportePublico, setTransportePublico] = useState(true);
   const [isModalOpenTransporte, setIsModalOpenTransporte] = useState(false);
   const [isModalOpenTransportista, setIsModalOpenTransportista] = useState(false);
-  const { transpublicos } = useTransPubData();
-  const { transprivados } = useTransPrivData();
+  const [transpublicos, setTranspublicos] = useState([]);
+  const [transprivados, setTransprivados] = useState([]);
   const [selectedEmpresa, setSelectedEmpresa] = useState('');
   const [selectedConductor, setSelectedConductor] = useState('');
   const [ruc, setRuc] = useState('');
@@ -34,6 +33,20 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
   const [vehiculo, setVehiculo] = useState('');
   const [telefono, setTelefono] = useState('');
   const [dni, setDni] = useState('');
+  
+  // Cargar transportistas en paralelo
+  useEffect(() => {
+    const fetchTransportistas = async () => {
+      const [publicosRes, privadosRes] = await Promise.all([
+        getTransportistasPublicos(),
+        getTransportistasPrivados()
+      ]);
+      
+      if (publicosRes.success) setTranspublicos(publicosRes.data);
+      if (privadosRes.success) setTransprivados(privadosRes.data);
+    };
+    fetchTransportistas();
+  }, []);
 
   const openModalTransporte = () => setIsModalOpenTransporte(true);
   const closeModalTransporte = () => setIsModalOpenTransporte(false);

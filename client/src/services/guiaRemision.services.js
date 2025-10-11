@@ -58,7 +58,7 @@ export const anularGuia = async (guiaId) => {
  */
 export const generarDocumentoGuia = async () => {
   try {
-    const response = await axios.get('/guia_remision/generarcodigoguia');
+    const response = await axios.get('/guia_remision/num_comprobante');
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     } else {
@@ -80,7 +80,7 @@ export const generarDocumentoGuia = async () => {
  */
 export const getDestinatariosGuia = async () => {
   try {
-    const response = await axios.get('/guia_remision/destinatarios');
+    const response = await axios.get('/guia_remision/clienteguia');
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -96,7 +96,7 @@ export const getDestinatariosGuia = async () => {
  */
 export const addDestinatarioNatural = async (data) => {
   try {
-    const response = await axios.post('/guia_remision/nuevo_destinatario_natural', data);
+    const response = await axios.post('/guia_remision/destnatural', data);
     if (response.data.code === 1) {
       return { success: true, message: 'Destinatario agregado exitosamente' };
     }
@@ -112,7 +112,7 @@ export const addDestinatarioNatural = async (data) => {
  */
 export const addDestinatarioJuridico = async (data) => {
   try {
-    const response = await axios.post('/guia_remision/nuevo_destinatario_juridico', data);
+    const response = await axios.post('/guia_remision/destjuridico', data);
     if (response.data.code === 1) {
       return { success: true, message: 'Destinatario agregado exitosamente' };
     }
@@ -132,7 +132,7 @@ export const addDestinatarioJuridico = async (data) => {
  */
 export const generarCodigoTransportista = async () => {
   try {
-    const response = await axios.get('/guia_remision/generarcodigotrans');
+    const response = await axios.get('/guia_remision/cod_transporte');
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -148,7 +148,7 @@ export const generarCodigoTransportista = async () => {
  */
 export const getTransportistasPublicos = async () => {
   try {
-    const response = await axios.get('/guia_remision/transportepublico');
+    const response = await axios.get('/guia_remision/transpublico');
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -164,7 +164,7 @@ export const getTransportistasPublicos = async () => {
  */
 export const getTransportistasPrivados = async () => {
   try {
-    const response = await axios.get('/guia_remision/transporteprivado');
+    const response = await axios.get('/guia_remision/transprivado');
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -180,7 +180,7 @@ export const getTransportistasPrivados = async () => {
  */
 export const addTransportistaPublico = async (data) => {
   try {
-    const response = await axios.post('/guia_remision/nuevo_transportistapub', data);
+    const response = await axios.post('/guia_remision/nuevo_transportepub', data);
     if (response.data.code === 1) {
       return { success: true, message: 'Transportista agregado exitosamente' };
     }
@@ -196,7 +196,7 @@ export const addTransportistaPublico = async (data) => {
  */
 export const addTransportistaPrivado = async (data) => {
   try {
-    const response = await axios.post('/guia_remision/nuevo_transportistapriv', data);
+    const response = await axios.post('/guia_remision/nuevo_transportepriv', data);
     if (response.data.code === 1) {
       return { success: true, message: 'Transportista agregado exitosamente' };
     }
@@ -216,7 +216,7 @@ export const addTransportistaPrivado = async (data) => {
  */
 export const getVehiculos = async () => {
   try {
-    const response = await axios.get('/guia_remision/vehiculos');
+    const response = await axios.get('/guia_remision/vehiculosguia');
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -258,7 +258,7 @@ export const addVehiculo = async (data, setShowModal) => {
  */
 export const getSucursalesGuia = async () => {
   try {
-    const response = await axios.get('/guia_remision/sucursales');
+    const response = await axios.get('/guia_remision/sucursal');
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -315,12 +315,147 @@ export const buscarProductosGuia = async (searchInput, setProductos) => {
   }
 };
 
+// ============================================
+// INTEGRACIÓN CON SUNAT
+// ============================================
+
+/**
+ * Convertir fecha al formato requerido por SUNAT
+ */
+function convertDateToDesiredFormat(dateString, offsetHours) {
+  const date = new Date(dateString);
+  const offsetMilliseconds = offsetHours * 60 * 60 * 1000;
+  const adjustedDate = new Date(date.getTime() - offsetMilliseconds);
+
+  const year = adjustedDate.getFullYear();
+  const month = String(adjustedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(adjustedDate.getDate()).padStart(2, '0');
+  const hours = String(adjustedDate.getHours()).padStart(2, '0');
+  const minutes = String(adjustedDate.getMinutes()).padStart(2, '0');
+  const seconds = String(adjustedDate.getSeconds()).padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-05:00`;
+}
+
+/**
+ * Enviar guía de remisión a SUNAT
+ */
+async function enviarGuiaRemisionASunat(data, nombre) {
+  const url = 'https://facturacion.apisperu.com/api/v1/despatch/send';
+  
+  // Importar servicios dinámicamente para evitar dependencias circulares
+  const { getClaveSunatByUser } = await import('@/services/clave.services');
+  const token = await getClaveSunatByUser(nombre);
+
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.status === 200) {
+      toast.success('La guía de remisión se ha enviado con éxito a la Sunat');
+      return { success: true, data: response.data };
+    } else {
+      toast.error('Error al enviar la guía de remisión a la Sunat');
+      return { success: false, message: 'Error en respuesta de SUNAT' };
+    }
+  } catch (error) {
+    console.error('Error al enviar a SUNAT:', error.response ? error.response.data : error.message);
+    if (error.response) {
+      toast.error(`Error SUNAT: ${error.response.status} - ${error.response.data}`);
+    } else {
+      toast.error('Error al enviar la guía de remisión a la Sunat');
+    }
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Manejar envío de guía de remisión a SUNAT
+ */
+export async function handleGuiaRemisionSunat(guia, destinata, transportista, detalles, nombre) {
+  // Importar servicios dinámicamente
+  const { getEmpresaDataByUser } = await import('@/services/empresa.services');
+  const empresaData = await getEmpresaDataByUser(nombre);
+  
+  const tipoDoc = "05";
+  const guialetra = "T";
+  const guiaserie = guia.serieNum;
+  const ultimaSerie = guialetra + guiaserie;
+  const isoDate = guia.fechaEmision;
+  const offsetHours = -5;
+  const result = convertDateToDesiredFormat(isoDate, offsetHours);
+  const undPeso = "KGM";
+
+  const data = {
+    version: 2022,
+    tipoDoc: tipoDoc,
+    serie: ultimaSerie.toString(),
+    correlativo: guia.num,
+    fechaEmision: result,
+    company: {
+      ruc: empresaData.ruc,
+      razonSocial: empresaData.razonSocial,
+      nombreComercial: empresaData.nombreComercial,
+      address: {
+        direccion: empresaData.direccion,
+        provincia: empresaData.provincia,
+        departamento: empresaData.departamento,
+        distrito: empresaData.distrito,
+        ubigueo: empresaData.ubigueo,
+      },
+    },
+    destinatario: {
+      numDoc: destinata.documento,
+      rznSocial: destinata.destinatario
+    },
+    observacion: guia.glosa || "",
+    envio: {
+      fecTraslado: result,
+      pesoTotal: guia.peso,
+      undPesoTotal: undPeso,
+      llegada: {
+        ubigueo: guia.id_ubigeo_d,
+        direccion: guia.dir_destino
+      },
+      partida: {
+        ubigueo: guia.id_ubigeo_o,
+        direccion: guia.dir_partida
+      },
+      transportista: {
+        numDoc: guia.docpub || guia.docpriv,
+        rznSocial: guia.transportistapub || guia.transportistapriv,
+        placa: transportista.placa || "",
+      }
+    },
+    details: detalles.map(detalle => ({
+      cantidad: detalle.cantidad,
+      unidad: detalle.um || '',
+      descripcion: detalle.descripcion,
+      codigo: detalle.codigo
+    }))
+  };
+
+  const loadingToastId = toast.loading('Enviando datos a SUNAT...');
+  
+  try {
+    await enviarGuiaRemisionASunat(data, nombre);
+    toast.dismiss(loadingToastId);
+  } catch (_error) {
+    toast.dismiss(loadingToastId);
+  }
+}
+
 // Servicio por defecto (mantiene compatibilidad)
 const guiaRemisionService = {
   // Guías
   insertGuiaRemisionAndDetalle,
   anularGuia,
   generarDocumentoGuia,
+  handleGuiaRemisionSunat,
   
   // Destinatarios
   getDestinatariosGuia,

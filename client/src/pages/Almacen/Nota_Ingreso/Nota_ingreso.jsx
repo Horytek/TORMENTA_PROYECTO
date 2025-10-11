@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import TablaNotasAlmacen from './ComponentsNotaIngreso/NotaIngresoTable';
-import getIngresosData from './data/data_ingreso';
-import getSalidasData from '../Nota_Salida/data/data_salida';
-import useAlmacenData from './data/data_almacen_ingreso';
+import { getNotasIngreso } from '@/services/notaIngreso.services';
+import { getNotasSalida } from '@/services/notaSalida.services';
+import { useAlmacenesIngreso } from '@/hooks/useNotaIngreso';
 import FiltrosIngresos from './ComponentsNotaIngreso/FiltrosIngreso';
 import { Tabs, Tab, Select, SelectItem, Chip } from "@heroui/react";
 import { RoutePermission } from '@/routes';
@@ -13,7 +13,7 @@ const NotasAlmacen = () => {
   const [filtersSalida, setFiltersSalida] = useState({});
   const [ingresos, setIngresos] = useState([]);
   const [salidas, setSalidas] = useState([]);
-  const { almacenes } = useAlmacenData();
+  const { almacenes } = useAlmacenesIngreso();
   const almacenGlobal = useUserStore((state) => state.almacen);
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
     const almacenIdGuardado = almacenGlobal;
@@ -26,17 +26,16 @@ const NotasAlmacen = () => {
 
   // Fetch ingresos
   const fetchIngresos = useCallback(async () => {
-    const data = await getIngresosData({
+    const result = await getNotasIngreso({
       ...filtersIngreso,
-      // Asegurar nombre correcto del parámetro que el backend espera
       almacen: filtersIngreso.almacen || undefined,
     });
-    setIngresos(data.ingresos || []);
+    setIngresos(result.data || []);
   }, [filtersIngreso]);
 
   const fetchSalidas = useCallback(async () => {
-    const data = await getSalidasData(filtersSalida);
-    setSalidas(data.salida || []);
+    const result = await getNotasSalida(filtersSalida);
+    setSalidas(result.data || []);
   }, [filtersSalida]);
 
   useEffect(() => { fetchIngresos(); }, [fetchIngresos]);

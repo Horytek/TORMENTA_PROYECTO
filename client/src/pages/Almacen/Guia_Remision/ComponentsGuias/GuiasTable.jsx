@@ -5,7 +5,7 @@ import { FaFilePdf } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Toaster, toast } from "react-hot-toast";
-import anularGuia from '../../data/anular_guia';
+import { anularGuia } from '@/services/guiaRemision.services';
 import { useUserStore } from "@/store/useStore";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 const itemsPerPageDefault = 10;

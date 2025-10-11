@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { MdOutlineLocalPrintshop } from "react-icons/md";
 import { Card, CardHeader, CardBody, Chip, Button, Divider, Tooltip, Select, SelectItem } from "@heroui/react";
 import { DateRangePicker } from '@heroui/react';
-import useAlmacenData from "../../data/data_almacen_kardex";
+import { useAlmacenesKardex } from '@/hooks/useKardex';
 import { parseDate } from "@internationalized/date";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 
 function HeaderHistorico({ productoData, onDateChange, transactions, previousTransactions, dateRange }) {
-  const { almacenes } = useAlmacenData();
+  const { almacenes } = useAlmacenesKardex();
   const nombre = useUserStore(state => state.nombre);
   const almacenGlobal = useUserStore((state) => state.almacen);
   const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);

@@ -6,7 +6,7 @@ import { Select, SelectItem } from "@heroui/react";
 import { Input } from '@heroui/react';
 
 const FiltrosGuias = ({ onFiltersChange }) => {
-    const { sucursales } = useSucursalData();
+    const [sucursales, setSucursales] = useState([]);
     const [value, setValue] = useState({
         start: parseDate("2024-04-01"),
         end: parseDate("2028-04-08"),
@@ -14,6 +14,15 @@ const FiltrosGuias = ({ onFiltersChange }) => {
     const [sucursalSeleccionado, setSucursalSeleccionado] = useState('');
     const [numGuia, setNumGuia] = useState('');
     const [documento, setDocumento] = useState('');
+    
+    // Cargar sucursales
+    useEffect(() => {
+        const fetchSucursales = async () => {
+            const result = await getSucursalesGuia();
+            if (result.success) setSucursales(result.data);
+        };
+        fetchSucursales();
+    }, []);
 
     const handleNumGuiaChange = (event) => {
         setNumGuia(event.target.value);

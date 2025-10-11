@@ -8,7 +8,7 @@ import { FaBarcode } from "react-icons/fa6";
 import { MdPersonAdd, MdCancelPresentation } from "react-icons/md";
 import AgregarProovedor from '../ComponentsNotaSalida/Modals/AgregarProovedor';
 import NuevaTablaSalida from './ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
-import useProductosData from './data/data_buscar_producto';
+import { getProductosSalida } from '@/services/notaSalida.services';
 import { useDestinatariosSalida, useDocumentosSalida, useAlmacenesSalida } from '@/hooks/useNotaSalida';
 import ConfirmationModal from './../ComponentsNotaSalida/Modals/ConfirmationModal';
 import { insertNotaSalida } from '@/services/notaSalida.services';
@@ -73,8 +73,8 @@ function NuevaSalidas() {
       almacen: almacenId,
       cod_barras: codigoBarras
     };
-    const result = await useProductosData(filters);
-    setProductos(result.productos);
+    const result = await getProductosSalida(filters);
+    setProductos(result.data || []);
   };
 
   const handleGuardarAction = async () => {

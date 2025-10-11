@@ -15,8 +15,7 @@ import {
   CardBody
 } from '@heroui/react';
 import { IoMdClose } from "react-icons/io";
-import useDestNatural from '../../data/add_dest_natural';
-import useDestJuridica from '../../data/add_dest_juridico';
+import { addDestinatarioNatural, addDestinatarioJuridico } from '@/services/guiaRemision.services';
 
 function ClienteForm({ modalTitle, onClose }) {
   const [tab, setTab] = useState('registro');
@@ -83,7 +82,7 @@ function ClienteForm({ modalTitle, onClose }) {
       }
 
       const dataNatural = { dni: dniOrRuc, nombres, apellidos, ubicacion: direccion };
-      const result = await useDestNatural(dataNatural, onClose);
+      const result = await addDestinatarioNatural(dataNatural);
       if (!result.success) {
         toast.error(result.message);
       } else {
@@ -101,7 +100,7 @@ function ClienteForm({ modalTitle, onClose }) {
       }
 
       const dataJuridica = { ruc: dniOrRuc, razon_social: razonSocial, ubicacion: direccion };
-      const result = await useDestJuridica(dataJuridica, onClose);
+      const result = await addDestinatarioJuridico(dataJuridica);
       if (!result.success) {
         toast.error(result.message);
       } else {

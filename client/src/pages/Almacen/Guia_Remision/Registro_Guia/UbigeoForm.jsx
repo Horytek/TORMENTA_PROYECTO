@@ -16,7 +16,7 @@ import {
 } from '@heroui/react';
 import { IoClose, IoCopy, IoRefresh } from 'react-icons/io5';
 import { toast } from 'react-hot-toast';
-import useUbigeoData from '../../data/data_ubigeo_guia';
+import { getUbigeosGuia } from '@/services/guiaRemision.services';
 
 /**
  * Nuevo diseño + lógica:
@@ -29,8 +29,20 @@ import useUbigeoData from '../../data/data_ubigeo_guia';
  */
 
 const UbigeoForm = ({ modalTitle = 'Ubigeos', onClose, onSave, initialOrigenId, initialDestinoId }) => {
-  const { ubigeos, loading } = useUbigeoData(); // Se asume soporte loading (si no, quitar)
+  const [ubigeos, setUbigeos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
+  
+  // Cargar ubigeos
+  useEffect(() => {
+    const fetchUbigeos = async () => {
+      setLoading(true);
+      const result = await getUbigeosGuia();
+      if (result.success) setUbigeos(result.data);
+      setLoading(false);
+    };
+    fetchUbigeos();
+  }, []);
 
   // Estado estructurado
   const [partida, setPartida] = useState({ departamento: '', provincia: '', distrito: '' });
