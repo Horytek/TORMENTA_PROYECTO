@@ -3,7 +3,7 @@ import { FaFilePdf, FaEye } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import ConfirmationModal from './Modals/ConfirmationModal';
-import anularNota from '../data/anular_nota_salida';
+import { anularNotaSalida } from '@/services/notaSalida.services';
 import { Toaster, toast } from "react-hot-toast";
 import { usePermisos } from '@/routes';
 import { jsPDF } from 'jspdf';
@@ -61,7 +61,7 @@ const NotaSalidaTable = forwardRef(({ salidas, onNotaAnulada }, ref)  => {
 
   const handleConfirmAnular = async () => {
     if (notaIdToAnular) {
-      const result = await anularNota(notaIdToAnular);
+      const result = await anularNotaSalida(notaIdToAnular);
       if (result.success) {
         toast.success('Nota anulada');
         // Actualizar el array local en lugar de recargar la página

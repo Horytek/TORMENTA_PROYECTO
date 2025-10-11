@@ -9,8 +9,8 @@ import {
 } from "@heroui/react";
 import { FaFilePdf, FaEye } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
-import anularNotaIngreso from '../data/anular_nota_ingreso';
-import anularNotaSalida from '../../Nota_Salida/data/anular_nota_salida';
+import { anularNotaIngreso } from '@/services/notaIngreso.services';
+import { anularNotaSalida } from '@/services/notaSalida.services';
 import { toast } from "react-hot-toast";
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";

@@ -11,7 +11,9 @@
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
     "dev:fullstack": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"npm run dev\" \"npm run client\"",
     "build:client": "npm --prefix ./client ci && npm --prefix ./client run build",
-    "start": "node index.js"
+    "start": "node index.js",
+    "migrate:passwords": "node migrate-passwords.js",
+    "security:install": "npm install bcryptjs"
   },
   "engines": {
     "node": ">=20"
@@ -20,6 +22,7 @@
     "@botpress/chat": "^0.5.1",
     "@botpress/webchat": "^3.2.7",
     "@heroui/use-theme": "^2.1.10",
+    "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",

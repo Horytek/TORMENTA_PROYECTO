@@ -2,13 +2,13 @@ import HeaderHistorico from './ComponentsHistorico/HeaderHistorico';
 import HistoricoTable from './ComponentsHistorico/HistoricoTable';
 import { useParams } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
-import getAllKardexData from '../data/data_detalle_kardex';
-import useAlmacenData from '../data/data_almacen_kardex';
+import { getDetalleKardexCompleto } from '@/services/kardex.services';
+import { useAlmacenesKardex } from '@/hooks/useKardex';
 import { useUserStore } from "@/store/useStore";
 
 function Historico() {
   const { id } = useParams();
-  const { almacenes } = useAlmacenData();
+  const { almacenes } = useAlmacenesKardex();
   const almacenGlobal = useUserStore((state) => state.almacen);
   const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);
 
@@ -43,10 +43,12 @@ function Historico() {
   });
 
   const fetchKardexData = useCallback(async (filters) => {
-    const data = await getAllKardexData(filters);
-    setKardexData(data.kardex);
-    setPreviousTransactions(data.previousTransactions || []);
-    setProductoData(data.productos);
+    const data = await getDetalleKardexCompleto(filters);
+    if (data.success) {
+      setKardexData(data.kardex);
+      setPreviousTransactions(data.previousTransactions || []);
+      setProductoData(data.productos);
+    }
   }, []);
 
   useEffect(() => {

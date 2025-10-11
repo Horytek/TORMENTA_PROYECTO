@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import useSucursalData from '../../data/data_sucursal_guia';
+import { getSucursalesGuia } from '@/services/guiaRemision.services';
 import { DateRangePicker } from '@heroui/react';
 import { parseDate } from "@internationalized/date";
 import { Select, SelectItem } from "@heroui/react";

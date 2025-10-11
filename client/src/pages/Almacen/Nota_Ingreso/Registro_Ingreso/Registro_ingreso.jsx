@@ -5,15 +5,13 @@ import { Link } from 'react-router-dom';
 import { FiSave } from "react-icons/fi";
 import { FaBarcode } from "react-icons/fa6";
 import { MdPersonAdd, MdCancelPresentation } from "react-icons/md";
-import useDestinatarioData from '../data/data_destinatario_ingreso';
-import useDocumentoData from '../data/data_documento_ingreso';
-import useDocumentoData_S from '../../Nota_Salida/data/data_documento_salida';
-import useAlmacenData from '../data/data_almacen_ingreso';
+import { useDestinatariosIngreso, useDocumentosIngreso, useAlmacenesIngreso } from '@/hooks/useNotaIngreso';
+import { useDocumentosSalida } from '@/hooks/useNotaSalida';
 import RegistroTablaIngreso from './ComponentsRegistroNotaIngreso/RegistroNotaIngresoTable';
 import AgregarProovedor from '../../Nota_Salida/ComponentsNotaSalida/Modals/AgregarProovedor';
 import useProductosData from './data/data_buscar_producto';
-import insertNotaAndDetalleIngreso from '../data/add_nota';
-import insertNotaAndDetalleSalida from '../../Nota_Salida/data/insert_nota_salida';
+import { insertNotaIngreso } from '@/services/notaIngreso.services';
+import { insertNotaSalida } from '@/services/notaSalida.services';
 import { Toaster, toast } from "react-hot-toast";
 import ConfirmationModal from '../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 import { Button, Input, Select, SelectItem, Textarea, Tabs, Tab, Chip, Tooltip, Divider, ScrollShadow } from "@heroui/react";
@@ -59,10 +57,10 @@ function Registro_Ingresos() {
   const [modalTitle, setModalTitle] = useState('');
 
   // Datos externos
-  const { almacenes } = useAlmacenData();
-  const { destinatarios } = useDestinatarioData();
-  const { documentos: documentosIng } = useDocumentoData();
-  const { documentos: documentosSal } = useDocumentoData_S();
+  const { almacenes } = useAlmacenesIngreso();
+  const { destinatarios } = useDestinatariosIngreso();
+  const { documentos: documentosIng } = useDocumentosIngreso();
+  const { documentos: documentosSal } = useDocumentosSalida();
 
   const currentDocumentoIngreso = documentosIng[0]?.nota || '';
   const currentDocumentoSalida = documentosSal[0]?.nota || '';
@@ -266,14 +264,14 @@ function Registro_Ingresos() {
       let resSal = { success: false };
       if (tipoNota === 'conjunto') {
         const [r1, r2] = await Promise.all([
-          insertNotaAndDetalleIngreso(buildPayloadBase(fechaBase, currentDocumentoIngreso, false)),
-          insertNotaAndDetalleSalida(buildPayloadBase(fechaBase, currentDocumentoSalida, true))
+          insertNotaIngreso(buildPayloadBase(fechaBase, currentDocumentoIngreso, false)),
+          insertNotaSalida(buildPayloadBase(fechaBase, currentDocumentoSalida, true))
         ]);
         resIng = r1; resSal = r2;
       } else if (tipoNota === 'ingreso') {
-        resIng = await insertNotaAndDetalleIngreso(buildPayloadBase(fechaBase, currentDocumentoIngreso, false));
+        resIng = await insertNotaIngreso(buildPayloadBase(fechaBase, currentDocumentoIngreso, false));
       } else {
-        resSal = await insertNotaAndDetalleSalida(buildPayloadBase(fechaBase, currentDocumentoSalida, true));
+        resSal = await insertNotaSalida(buildPayloadBase(fechaBase, currentDocumentoSalida, true));
       }
 
       const ok =

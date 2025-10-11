@@ -9,11 +9,9 @@ import { MdPersonAdd, MdCancelPresentation } from "react-icons/md";
 import AgregarProovedor from '../ComponentsNotaSalida/Modals/AgregarProovedor';
 import NuevaTablaSalida from './ComponentsNuevaNotaSalida/NuevaNotaSalidaTable';
 import useProductosData from './data/data_buscar_producto';
-import useDestinatarioData from '../data/data_destinatario_salida';
-import useDocumentoData from '../data/data_documento_salida';
-import useAlmacenData from '../data/data_almacen_salida';
+import { useDestinatariosSalida, useDocumentosSalida, useAlmacenesSalida } from '@/hooks/useNotaSalida';
 import ConfirmationModal from './../ComponentsNotaSalida/Modals/ConfirmationModal';
-import insertNotaAndDetalle from '../data/insert_nota_salida';
+import { insertNotaSalida } from '@/services/notaSalida.services';
 import { Toaster, toast } from "react-hot-toast";
 import { Button, Input, Select, SelectItem, Textarea } from "@heroui/react";
 
@@ -51,9 +49,9 @@ function NuevaSalidas() {
   const [numComprobante, setNumComprobante] = useState('');
   const [observacion, setObservacion] = useState('');
 
-  const { almacenes } = useAlmacenData();
-  const { destinatarios } = useDestinatarioData();
-  const { documentos } = useDocumentoData();
+  const { almacenes } = useAlmacenesSalida();
+  const { destinatarios } = useDestinatariosSalida();
+  const { documentos } = useDocumentosSalida();
   const currentDocumento = documentos.length > 0 ? documentos[0].nota : '';
   // Actualiza el número de comprobante cuando cambia la lista de documentos
   useEffect(() => {
@@ -111,7 +109,7 @@ function NuevaSalidas() {
       nom_usuario: usuario
     };
 
-    const result = await insertNotaAndDetalle(data);
+    const result = await insertNotaSalida(data);
 
     if (result.success) {
       toast.success('Nota y detalle insertados correctamente.');

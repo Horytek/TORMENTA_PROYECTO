@@ -4,7 +4,7 @@ import { Pagination, Tooltip, ScrollShadow, Select, SelectItem } from "@heroui/r
 import TablaGuias from './ComponentsGuias/GuiasTable';
 import FiltrosGuias from './ComponentsGuias/FiltrosGuias';
 import { useNavigate } from "react-router-dom";
-import useGuiasData from '../data/data_guia';
+import useGuiasRemision from '@/hooks/useGuiasRemision';
 import { usePermisos } from '@/routes';
 import { Button } from '@heroui/react';
 
@@ -19,7 +19,7 @@ const Guias = () => {
     guiasPerPage,
     setGuiasPerPage,
     setGuias,
-  } = useGuiasData(filters);
+  } = useGuiasRemision(filters);
 
   const navigate = useNavigate();
   const { hasCreatePermission } = usePermisos();

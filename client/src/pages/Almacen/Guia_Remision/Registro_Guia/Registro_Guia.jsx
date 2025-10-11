@@ -11,11 +11,13 @@ import UbigeoForm from './UbigeoForm';
 import TransporteForm from './UndTrans';
 import ClienteForm from './ClienteForm';
 
-import useClienteData from '../../data/data_cliente_guia';
-import useSucursalData from '../../data/data_sucursal_guia';
-import useDocumentoData from '../../data/generar_doc_guia';
 import useProductosData from '../../data/data_buscar_producto';
-import insertGuiaandDetalle from '../../data/insert_guiaremision';
+import { 
+  getDestinatariosGuia, 
+  getSucursalesGuia, 
+  generarDocumentoGuia,
+  insertGuiaRemisionAndDetalle 
+} from '@/services/guiaRemision.services';
 import { handleGuiaRemisionSunat } from '../../data/add_sunat_guia';
 import ConfirmationModal from './../../Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
 
@@ -46,13 +48,30 @@ const formatDate = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function RegistroGuia() {
-  // Datos externos
-  const { clientes } = useClienteData();
-  const { sucursales } = useSucursalData();
-  const { documentos } = useDocumentoData();
+  // Datos externos - Ahora usando servicios consolidados
+  const [clientes, setClientes] = useState([]);
+  const [sucursales, setSucursales] = useState([]);
+  const [documentos, setDocumentos] = useState([]);
   const nombreUsuario = useUserStore.getState().nombre;
   const lastTermRef = useRef('');
   const loadingRef = useRef(false);
+  
+  // Cargar datos iniciales en paralelo
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const [clientesRes, sucursalesRes, documentoRes] = await Promise.all([
+        getDestinatariosGuia(),
+        getSucursalesGuia(),
+        generarDocumentoGuia()
+      ]);
+      
+      if (clientesRes.success) setClientes(clientesRes.data);
+      if (sucursalesRes.success) setSucursales(sucursalesRes.data);
+      if (documentoRes.success) setDocumentos(documentoRes.data);
+    };
+    
+    fetchInitialData();
+  }, []);
 
   // Estado principal
   const [selectedClienteId, setSelectedClienteId] = useState('');
@@ -276,7 +295,7 @@ export default function RegistroGuia() {
   const handleGuardar = async () => {
     if (!validateBeforeSave()) return;
     try {
-      const resp = await insertGuiaandDetalle(guiaData);
+      const resp = await insertGuiaRemisionAndDetalle(guiaData);
       if (!resp.success) {
         toast.error(resp.message || 'Error al guardar la guía');
         return;
