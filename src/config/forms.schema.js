@@ -6,11 +6,14 @@ export default {
     notes: "Los extras solo aplican para el rol desarrollador."
   },
   product: {
-    // Basado en tu modal “Nuevo Producto” (captura adjunta)
     required: ["Descripción", "Categoría", "Subcategoría", "Marca", "Precio", "Unidad de Medida", "Estado"],
     optional: [],
     developerExtras: [],
-    notes: "Estos son los campos visibles en la pantalla actual de producto."
+    notes: `
+    Estos son los campos visibles en la pantalla actual de producto.
+    - **Unidad de Medida:** No existe un módulo ni una gestión independiente de unidades de medida. Solo puedes seleccionar la unidad de medida al registrar o editar un producto, como un campo obligatorio ligado a la SUNAT (por ejemplo: NIU, KGM, etc.). No se puede modificar ni administrar desde otro lugar del sistema.
+    - **Código de barras:** Se genera automáticamente al crear un producto. No es necesario ingresarlo manualmente, el sistema lo asigna para cada nuevo registro.
+    `
   },
     category: {
     required: ["Nombre de Categoría (nom_categoria)"],
@@ -222,37 +225,64 @@ export default {
     developerExtras: [],
     notes: "El módulo de Análisis de ventas muestra KPIs clave: ganancias, productos vendidos, producto top y sucursal top. Permite comparar con periodos anteriores y filtrar por sucursal y rango de fechas. Es solo visualización, no editable."
   },
-  navigation: {
-    required: [
-      "Breadcrumb (ruta de navegación)",
-      "Switch de modo oscuro",
-      "Sidebar (menú lateral)",
-      "Menú de usuario (NavUser)"
-    ],
-    optional: [
-      "Colapsar sidebar en móvil",
-      "Acceso rápido a módulos según permisos y plan"
-    ],
-    developerExtras: [
-      "Sección Desarrollador (solo para usuarios con rol desarrollador): Desarrollo, Módulos, Permisos Globales"
-    ],
-    notes: `
-Breadcrumb: Componente que muestra la ruta actual (ejemplo: Inicio > Reportes), siempre visible en la parte superior, permite volver a módulos anteriores con un clic.
-Switch de modo oscuro: Permite alternar entre tema claro y oscuro, ubicado junto al breadcrumb, afecta todo el sistema excepto la landing.
-Sidebar: Menú lateral con módulos y submódulos principales, estructura dinámica según permisos y plan. Ejemplo:
-- General: Dashboard (/inicio), Productos (/productos), Ventas (Nueva venta)
-- Reportes: Análisis de ventas, Libro de ventas
-- Terceros: Clientes, Empleados, Proveedores
-- Logística: Kárdex (Nota de Almacén, Guía Remisión), Almacenes, Sucursal
-- Configuración: Usuarios, Roles y permisos, Logs, Negocio, Llamadas
-- Desarrollador: (solo visible para desarrollador) Desarrollo, Módulos, Permisos Globales. Estos exponen configuraciones críticas y herramientas avanzadas, no disponibles para usuarios estándar.
-Menú de usuario (NavUser): En la parte inferior del sidebar o barra superior, clic en avatar/nombre. Opciones: Cuenta, Facturación, Notificaciones, Cerrar sesión.
-¿Cómo llegar?: Breadcrumb y switch siempre arriba; sidebar a la izquierda; menú usuario abajo en sidebar o arriba.
-Resumen: La navegación es clara y contextual. El sidebar muestra módulos según permisos/plan. Los módulos de desarrollador solo aparecen para ese rol. El menú usuario permite gestionar cuenta y cerrar sesión. Breadcrumb y switch mejoran la experiencia y orientación.
+navigation: {
+  required: [
+    "Breadcrumb (ruta de navegación)",
+    "Switch de modo oscuro",
+    "Sidebar (menú lateral)",
+    "Menú de usuario (NavUser)"
+  ],
+  optional: [
+    "Colapsar sidebar en móvil",
+    "Acceso rápido a módulos según permisos y plan",
+    "Opciones rápidas (botón de engranaje)"
+  ],
+  developerExtras: [
+    "Sección Desarrollador (solo para usuarios con rol desarrollador): Desarrollo, Módulos, Permisos Globales"
+  ],
+  notes: `
+**Sinónimos y lenguaje natural para componentes de navegación:**
+
+- **Breadcrumb (ruta de navegación):**
+  - También llamado: "camino de navegación", "barra de ruta", "dónde estoy", "cómo vuelvo atrás", "ruta actual", "barra superior de ubicación".
+  - Ejemplo de pregunta: "¿Cómo regreso a la pantalla anterior?", "¿Dónde veo en qué módulo estoy?"
+
+- **Switch de modo oscuro:**
+  - También llamado: "botón de modo oscuro", "cambiar a modo noche", "activar tema oscuro", "cambiar colores", "oscurecer sistema", "modo claro/oscuro", "tema oscuro".
+  - Ejemplo de pregunta: "¿Dónde cambio el sistema a modo oscuro?", "¿Cómo activo el modo noche?", "¿Cómo cambio los colores del sistema?"
+
+- **Sidebar (menú lateral):**
+  - También llamado: "menú principal", "barra lateral", "menú de módulos", "menú de la izquierda", "panel de navegación", "menú de opciones", "menú vertical".
+  - Ejemplo de pregunta: "¿Dónde están los módulos?", "¿Cómo accedo a ventas?", "¿Dónde está el menú principal?"
+
+- **Menú de usuario (NavUser):**
+  - También llamado: "perfil", "avatar", "menú de cuenta", "opciones de usuario", "cerrar sesión", "mi cuenta", "configuración de usuario".
+  - Ejemplo de pregunta: "¿Dónde cierro sesión?", "¿Cómo cambio mi contraseña?", "¿Dónde veo mi perfil?"
+
+- **Colapsar sidebar en móvil:**
+  - También llamado: "ocultar menú lateral", "cerrar barra lateral", "expandir/cerrar menú", "mostrar/ocultar menú".
+
+- **¿Dónde veo mi rol de usuario?**
+  - El rol asignado aparece en el menú de usuario, ubicado en la parte inferior izquierda del sistema (sidebar). Haz clic en tu nombre o avatar para desplegar el menú, donde verás tu nombre y el rol (por ejemplo, "Administrador") justo debajo.
+  - Desde este menú también puedes acceder a Cuenta, Facturación, Notificaciones y la opción para cerrar sesión.
+
+- **Acceso rápido a módulos:**
+  - También llamado: "búsqueda de módulos", "buscador de pantallas", "ir rápido a un módulo", "acceso directo", "panel de búsqueda".
+
+- **Opciones rápidas (botón de engranaje):**
+  - También llamado: "accesos rápidos", "menú rápido", "botón de configuración", "opciones flotantes", "atajos rápidos".
+  - Este botón (ícono de engranaje) se encuentra en la esquina inferior derecha y al hacer clic despliega accesos directos a funciones clave como: Asistente ERP (chatbot), Buscar en el sistema y Mensajería interna.
+  - Ejemplo de pregunta: "¿Dónde está el menú de accesos rápidos?", "¿Cómo abro el asistente ERP?", "¿Dónde busco en el sistema?", "¿Cómo abro la mensajería interna?"
+
+**Descripción general:**
+La navegación del sistema está pensada para ser intuitiva, permitiendo al usuario moverse entre módulos, cambiar el tema visual (oscuro/claro), ver su ubicación actual y acceder a su perfil o cerrar sesión, usando términos cotidianos o técnicos. El chatbot debe entender preguntas en lenguaje natural y asociarlas con estos componentes, aunque el usuario no use el nombre exacto.
+
+Breadcrumb y switch siempre arriba; sidebar a la izquierda; menú usuario abajo en sidebar o arriba. El botón de opciones rápidas está en la esquina inferior derecha.
+Resumen: La navegación es clara y contextual. El sidebar muestra módulos según permisos/plan. Los módulos de desarrollador solo aparecen para ese rol. El menú usuario permite gestionar cuenta y cerrar sesión. Breadcrumb y switch mejoran la experiencia y orientación. El botón de opciones rápidas facilita el acceso a funciones clave desde cualquier pantalla.
 
 Adicional: La mayoría de los módulos permiten eliminar y editar registros (según permisos del usuario). Además, cada módulo cuenta con su propio repertorio de filtros para facilitar la búsqueda y gestión de la información.
 `
-  },
+},
     salesRegisterExport: {
     required: [
       "Sucursal",

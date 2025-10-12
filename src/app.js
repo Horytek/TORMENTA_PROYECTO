@@ -39,6 +39,7 @@ import valorRoutes from "./routes/valor.routes.js";
 import logsRoutes from "./routes/logs.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import helpRoutes from "./routes/help.routes.js";
+import functionShortcutsRoutes from "./routes/functionShortcuts.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 import { getConnection } from "./database/database.js";
@@ -140,6 +141,7 @@ app.use("/api/valor", valorRoutes);
 app.use("/api/logs", logsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/help", helpRoutes);
+app.use("/api/function-shortcuts", functionShortcutsRoutes);
 
 // Servir archivos estáticos de Vite/React
 app.use(express.static(path.join(__dirname, "../client/dist")));

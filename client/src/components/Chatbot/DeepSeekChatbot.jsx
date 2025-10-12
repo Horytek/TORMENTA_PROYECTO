@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Card, Button, Divider, Tooltip, Chip, Textarea, Spinner, Switch, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react";
-import { Bot, Send, X, Settings, MessageCircle, Search, Download, 
+import { Bot, Send, X, Settings, MessageCircle, Search, Calculator, Zap, Wand2, 
 FileSpreadsheet, FileText, Printer, Copy, Trash2, Maximize2, Minimize2 } from "lucide-react";
 import CommandDemo from "@/components/ui/command";
 import MessengerWidget from "@/components/MessengerWidget/MessengerWidget";
 import { useUserStore } from "@/store/useStore";
 import { getModulosConSubmodulos } from "@/services/rutas.services";
 import axios from "@/api/axios";
+import FunctionShortcuts from "./FunctionShortcuts";
 import downloadExcelReport from "@/pages/Almacen/Kardex/data/generateExcel";
 
 // Prompt rápidos
@@ -38,6 +39,7 @@ export default function DeepSeekOpenRouterChatbot() {
   const [modulesLoaded, setModulesLoaded] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [isFunctionShortcutsOpen, setIsFunctionShortcutsOpen] = useState(false);
 
   // NUEVO: controles de densidad y tamaño de texto
   const [density, setDensity] = useState("comfortable"); // "comfortable" | "compact"
@@ -236,15 +238,33 @@ function shouldAttachSchema(question = "", entity) {
   if (!entity?.type) return false;
   const q = (question || "").toLowerCase();
 
+  // Preguntas que NO deben adjuntar schema (listas, métricas, reportes)
   const isMetricOrList =
     /\b(total|conteo|cu[aá]nt[oa]s?|lista|listar|mu[eé]strame|top|m[aá]s vendidos|reporte|ingresos?|ganancias?|soles|monto)\b/i.test(q);
   if (isMetricOrList) return false;
 
+  // Flujos clásicos de formulario
   const wantsForm =
-    /\b(c[oó]mo|como)\b.*\b(registrar|crear|agregar|editar|actualizar|llenar|formulario|campos)\b/i.test(q) ||
-    /\b(registrar|crear|agregar|editar|actualizar|formulario|campos)\b/i.test(q);
+    /\b(c[oó]mo|como)\b.*\b(registrar|crear|agregar|editar|actualizar|llenar|formulario|campos|requisitos|obligatorio|necesito|qué pide|qué solicita|qué campos|qué datos|qué información|qué debo|qué se requiere|qué se necesita|qué incluye|qué contiene)\b/i.test(q) ||
+    /\b(registrar|crear|agregar|editar|actualizar|formulario|campos|requisitos|obligatorio|necesito|qué pide|qué solicita|qué campos|qué datos|qué información|qué debo|qué se requiere|qué se necesita|qué incluye|qué contiene)\b/i.test(q);
 
-  return wantsForm;
+  // Preguntas sobre unidades de medida (solo para productos)
+  const asksAboutUnidadMedida =
+    /unidad(es)? de medida/i.test(q) && entity.type === "product";
+
+  // Preguntas sobre código de barras (solo para productos)
+  const asksAboutCodigoBarras =
+    /\bc[oó]digo(s)? de barras?\b/i.test(q) && entity.type === "product";
+
+  // Preguntas sobre campos obligatorios, requeridos, opcionales, extras, notas, validaciones, restricciones
+  const asksAboutFields =
+    /\b(obligatorio|requerido|opcional|extra|nota|validaci[oó]n|restricci[oó]n|sólo desarrollador|solo desarrollador|developer|campo|dato|informaci[oó]n)\b/i.test(q);
+
+  // Preguntas sobre gestión de formularios, edición, creación, administración de datos
+  const asksAboutFormManagement =
+    /\b(gestionar|administrar|modificar|actualizar|editar|crear|agregar|eliminar|borrar|alta|baja|cambiar|asignar|definir|configurar)\b.*\b(formulario|campos|datos|registro|producto|cliente|proveedor|usuario|rol|permiso|sucursal|almac[eé]n|nota|gu[ií]a|remisi[oó]n|venta|compra)\b/i.test(q);
+
+  return wantsForm || asksAboutUnidadMedida || asksAboutCodigoBarras || asksAboutFields || asksAboutFormManagement;
 }
 
 // Quitar Markdown visible del modelo (negritas, etc.)
@@ -699,8 +719,15 @@ return (
         </DropdownTrigger>
         <DropdownMenu aria-label="Panel de opciones" className="dark:bg-zinc-900">
           <DropdownItem
+            key="function-shortcuts"
+            startContent={<Zap className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
+            onClick={() => setIsFunctionShortcutsOpen(true)}
+          >
+            Atajos de función
+          </DropdownItem>
+          <DropdownItem
             key="chatbot"
-            startContent={<MessageCircle className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
+            startContent={<Bot className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
             onClick={() => setIsChatOpen(true)}
           >
             Asistente ERP
@@ -722,7 +749,7 @@ return (
         </DropdownMenu>
       </Dropdown>
     </div>
-
+    <FunctionShortcuts open={isFunctionShortcutsOpen} onClose={() => setIsFunctionShortcutsOpen(false)} />
     {/* Modal de búsqueda */}
     {isSearchOpen && (
       <div
@@ -741,10 +768,10 @@ return (
 
       {/* Ventana del chat DeepSeek */}
       {isChatOpen && (
-        <Card
-          className={`fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-gray-200/70 dark:border-zinc-800/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200
-            ${isExpanded ? "w-[920px] h-[80vh]" : "w-[420px] h=[640px] w-[420px] h-[640px]"} max-w-[95vw]`}
-        >
+          <Card
+            className={`fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-gray-200/70 dark:border-zinc-800/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200
+              ${isExpanded ? "w-[920px] h-[80vh]" : "w-[420px] h-[640px]"} max-w-[95vw]`}
+          >
           {/* HEADER */}
           <div className="relative px-4 py-4 bg-white/90 dark:bg-zinc-900/90 flex items-center justify-between border-b border-gray-200/70 dark:border-zinc-800/60">
             <div className="flex items-center gap-3">
@@ -785,70 +812,83 @@ return (
             </div>
           </div>
 
-          {/* NUEVO: Barra de acciones internas del chat */}
-          <div className="px-3 py-2 bg-white/80 dark:bg-zinc-900/80 border-b border-gray-200/60 dark:border-zinc-800/60 flex items-center gap-2 flex-wrap">
-            {/* Chat: exportar/copiar/limpiar */}
-            <Tooltip content="Exportar chat a PDF"><Button isIconOnly size="sm" variant="flat" /*onPress={exportPDF}*/><Printer className="w-4 h-4" /></Button></Tooltip>
-            <Tooltip content="Exportar chat a CSV"><Button isIconOnly size="sm" variant="flat" /*onPress={exportCSV}*/><FileSpreadsheet className="w-4 h-4" /></Button></Tooltip>
-            <Tooltip content="Exportar chat a JSON"><Button isIconOnly size="sm" variant="flat" /*onPress={exportJSON}*/><FileText className="w-4 h-4" /></Button></Tooltip>
-            <Tooltip content="Copiar conversación"><Button isIconOnly size="sm" variant="flat" /*onPress={copyTranscript}*/><Copy className="w-4 h-4" /></Button></Tooltip>
-            <Tooltip content="Limpiar conversación"><Button isIconOnly size="sm" variant="flat" /*onPress={clearConversation}*/><Trash2 className="w-4 h-4" /></Button></Tooltip>
-
-            <div className="w-px h-5 bg-gray-200 dark:bg-zinc-700 mx-1" />
-
-            {/* Negocio: exportaciones rápidas */}
-            <Tooltip content="Libro de Ventas (mes actual) – Excel">
-              <Button isIconOnly size="sm" variant="flat" disabled={exporting} onPress={quickExportLibroVentas}>
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-              </Button>
-            </Tooltip>
-            <Tooltip content="Kardex (mes actual) – Excel">
-              <Button isIconOnly size="sm" variant="flat" disabled={exporting} onPress={quickExportKardexMesActual}>
-                <FileSpreadsheet className="w-4 h-4 text-green-700" />
-              </Button>
-            </Tooltip>
-
-            {exporting && <span className="ml-1 text-[11px] text-gray-500">Generando…</span>}
-          </div>
-
         {/* PANEL CONFIG */}
         {showConfig && (
-          <div className="px-4 py-3 border-b border-gray-200/70 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm space-y-3 text-[11px] text-gray-700 dark:text-zinc-300">
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2">
-                <Switch size="sm" isSelected={conciseMode} onValueChange={setConciseMode}>Conciso</Switch>
+          <div className="space-y-6 px-2 py-4 border-b border-gray-200/70 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm text-[11px] text-gray-700 dark:text-zinc-300">
+            {/* Modos de Visualización */}
+            <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800/60 p-4">
+              <div className="mb-4">
+                <h2 className="text-[13px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Modos de visualización</h2>
+                <p className="text-[11px] text-gray-500 dark:text-zinc-400">Controla cómo se muestra el contenido en la interfaz</p>
               </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] opacity-70">Densidad</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Modo conciso</span>
+                  <Switch size="sm" isSelected={conciseMode} onValueChange={setConciseMode} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Auto UI</span>
+                  <Switch size="sm" isSelected={autoUISnapshot} onValueChange={setAutoUISnapshot} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Mini BD</span>
+                  <Switch size="sm" isSelected={includeDBContext} onValueChange={setIncludeDBContext} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Auto-navegar</span>
+                  <Switch size="sm" isSelected={autoNavigateOnExact} onValueChange={setAutoNavigateOnExact} />
+                </div>
+              </div>
+            </div>
+            {/* Preferencias de texto */}
+            <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800/60 p-4">
+              <div className="mb-4">
+                <h2 className="text-[13px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Preferencias de texto</h2>
+                <p className="text-[11px] text-gray-500 dark:text-zinc-400">Ajusta el tamaño y densidad del texto</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Densidad cómoda</span>
                   <Switch
                     size="sm"
                     isSelected={density === "comfortable"}
                     onValueChange={v => setDensity(v ? "comfortable" : "compact")}
-                  >
-                    Cómodo
-                  </Switch>
+                  />
                 </div>
-                                <div className="flex items-center gap-1">
-                  <span className="text-[10px] opacity-70 mr-1">Texto</span>
-                  <Button size="sm" variant={textScale === "sm" ? "solid" : "light"} onPress={() => setTextScale("sm")}>A-</Button>
-                  <Button size="sm" variant={textScale === "md" ? "solid" : "light"} onPress={() => setTextScale("md")}>A</Button>
-                  <Button size="sm" variant={textScale === "lg" ? "solid" : "light"} onPress={() => setTextScale("lg")}>A+</Button>
+                <div>
+                  <span className="block font-medium mb-1">Tamaño de texto</span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={textScale === "sm" ? "solid" : "light"}
+                      onPress={() => setTextScale("sm")}
+                    >
+                      A-
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={textScale === "md" ? "solid" : "light"}
+                      onPress={() => setTextScale("md")}
+                    >
+                      A
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={textScale === "lg" ? "solid" : "light"}
+                      onPress={() => setTextScale("lg")}
+                    >
+                      A+
+                    </Button>
+                  </div>
                 </div>
-              <div className="flex items-center gap-2">
-                <Switch size="sm" isSelected={autoUISnapshot} onValueChange={setAutoUISnapshot}>Auto UI</Switch>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch size="sm" isSelected={includeDBContext} onValueChange={setIncludeDBContext}>Mini BD</Switch>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch size="sm" isSelected={showScreenDesc} onValueChange={v => setShowScreenDesc(v)}>Descripción manual</Switch>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch size="sm" isSelected={autoNavigateOnExact} onValueChange={setAutoNavigateOnExact}>Auto‑navegar</Switch>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Descripción manual</span>
+                  <Switch size="sm" isSelected={showScreenDesc} onValueChange={setShowScreenDesc} />
+                </div>
               </div>
             </div>
             {autoUISnapshot && (
-              <div className="text-[10px] text-gray-500 dark:text-zinc-400 line-clamp-3">
+              <div className="text-[10px] text-gray-500 dark:text-zinc-400 mt-1 line-clamp-3">
                 Snapshot UI: {uiSnapshot || "capturando..."}
               </div>
             )}
