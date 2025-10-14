@@ -130,84 +130,84 @@ export function ShowCategorias({
                   </span>
                 </td>
                 <td className="py-2 text-center">
-  <span
-    className={
-      categoria.estado_categoria === 1
-        ? "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[13px] font-semibold bg-green-100 text-green-700 border border-green-200"
-        : "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[13px] font-semibold bg-rose-100 text-rose-700 border border-rose-200"
-    }
-  >
-    {categoria.estado_categoria === 1 ? (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
-    ) : (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
-      </svg>
-    )}
-    {categoria.estado_categoria === 1 ? "Activo" : "Inactivo"}
-  </span>
-</td>
-<td className="py-2 text-center">
-  <div className="flex justify-center items-center gap-2">
-    <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
-      <Button
-        isIconOnly
-        variant="light"
-        color={hasEditPermission ? "warning" : "default"}
-        onClick={() =>
-          hasEditPermission
-            ? handleOpenEditModal(
-                categoria.id_categoria,
-                categoria.nom_categoria,
-                categoria.estado_categoria
-              )
-            : null
-        }
-        className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-      >
-        <MdEdit />
-      </Button>
-    </Tooltip>
-    <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
-      <Button
-        isIconOnly
-        variant="light"
-        color={hasDeletePermission ? "danger" : "default"}
-        onClick={() =>
-          hasDeletePermission
-            ? handleOpenConfirmationModal(
-                categoria.nom_categoria,
-                categoria.id_categoria
-              )
-            : null
-        }
-        className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-      >
-        <FaTrash />
-      </Button>
-    </Tooltip>
-    <Tooltip content={hasDeactivatePermission ? "Desactivar" : "No tiene permisos para desactivar"}>
-      <Button
-        isIconOnly
-        variant="light"
-        color={hasDeactivatePermission ? "danger" : "default"}
-        onClick={() =>
-          hasDeactivatePermission
-            ? handleOpenDeactivationModal(
-                categoria.nom_categoria,
-                categoria.id_categoria
-              )
-            : null
-        }
-        className={hasDeactivatePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-      >
-        <MdDoNotDisturbAlt />
-      </Button>
-    </Tooltip>
-  </div>
-</td>
+              <span
+                className={
+                  categoria.estado_categoria === 1
+                    ? "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[13px] font-semibold bg-green-100 text-green-700 border border-green-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700/60"
+                    : "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[13px] font-semibold bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700/60"
+                }
+              >
+                {categoria.estado_categoria === 1 ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                )}
+                {categoria.estado_categoria === 1 ? "Activo" : "Inactivo"}
+              </span>
+              </td>
+              <td className="py-2 text-center">
+                <div className="flex justify-center items-center gap-2">
+                  <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      color={hasEditPermission ? "warning" : "default"}
+                      onClick={() =>
+                        hasEditPermission
+                          ? handleOpenEditModal(
+                              categoria.id_categoria,
+                              categoria.nom_categoria,
+                              categoria.estado_categoria
+                            )
+                          : null
+                      }
+                      className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                    >
+                      <MdEdit />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      color={hasDeletePermission ? "danger" : "default"}
+                      onClick={() =>
+                        hasDeletePermission
+                          ? handleOpenConfirmationModal(
+                              categoria.nom_categoria,
+                              categoria.id_categoria
+                            )
+                          : null
+                      }
+                      className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                    >
+                      <FaTrash />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content={hasDeactivatePermission ? "Desactivar" : "No tiene permisos para desactivar"}>
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      color={hasDeactivatePermission ? "danger" : "default"}
+                      onClick={() =>
+                        hasDeactivatePermission
+                          ? handleOpenDeactivationModal(
+                              categoria.nom_categoria,
+                              categoria.id_categoria
+                            )
+                          : null
+                      }
+                      className={hasDeactivatePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
+                    >
+                      <MdDoNotDisturbAlt />
+                    </Button>
+                  </Tooltip>
+                </div>
+              </td>
               </tr>
             ))
           ) : (

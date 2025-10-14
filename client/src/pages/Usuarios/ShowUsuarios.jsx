@@ -107,36 +107,44 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
         switch (columnKey) {
             case "rol":
                 return usuario.nom_rol;
-case "usuario":
-    return (
-        <Tooltip content={usuario.estado_token == 1 ? "Conectado" : "Desconectado"}>
-            <div className="flex items-center gap-3">
-                <div
-                    className={`
-                        flex items-center justify-center w-9 h-9 rounded-full border-2 shadow-sm
-                        transition-all duration-200
-                        ${usuario.estado_token === 1
-                            ? "border-emerald-300 bg-emerald-50"
-                            : "border-rose-300 bg-rose-50"
-                        }
-                    `}
-                >
-                    {usuario.estado_token === 1 ? (
-                        <PiPlugsConnected className="text-emerald-500 text-xl" />
-                    ) : (
-                        <VscDebugDisconnect className="text-rose-500 text-xl" />
-                    )}
-                </div>
-                <div className="flex flex-col">
-                    <span className="font-semibold text-blue-900 text-[15px] leading-tight">{usuario.usua}</span>
-                    <span className={`text-xs font-medium ${usuario.estado_token === 1 ? "text-emerald-600" : "text-rose-600"} flex items-center gap-1`}>
-                        <span className={`inline-block w-2 h-2 rounded-full ${usuario.estado_token === 1 ? "bg-emerald-400" : "bg-rose-400"}`}></span>
-                        {usuario.estado_token === 1 ? "Conectado" : "Desconectado"}
-                    </span>
-                </div>
-            </div>
-        </Tooltip>
-    );
+            case "usuario":
+                return (
+                    <Tooltip content={usuario.estado_token == 1 ? "Conectado" : "Desconectado"}>
+                        <div className="flex items-center gap-3">
+                            <div
+                                className={`
+                                    flex items-center justify-center w-9 h-9 rounded-full border-2 shadow-sm
+                                    transition-all duration-200
+                                    ${usuario.estado_token === 1
+                                        ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/30"
+                                        : "border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-900/30"
+                                    }
+                                `}
+                            >
+                                {usuario.estado_token === 1 ? (
+                                    <PiPlugsConnected className="text-emerald-500 dark:text-emerald-300 text-xl" />
+                                ) : (
+                                    <VscDebugDisconnect className="text-rose-500 dark:text-rose-300 text-xl" />
+                                )}
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-semibold text-blue-900 dark:text-blue-100 text-[15px] leading-tight">{usuario.usua}</span>
+                                <span className={`text-xs font-medium flex items-center gap-1
+                                    ${usuario.estado_token === 1
+                                        ? "text-emerald-600 dark:text-emerald-200"
+                                        : "text-rose-600 dark:text-rose-200"
+                                    }`}>
+                                    <span className={`inline-block w-2 h-2 rounded-full
+                                        ${usuario.estado_token === 1
+                                            ? "bg-emerald-400 dark:bg-emerald-500"
+                                            : "bg-rose-400 dark:bg-rose-500"
+                                        }`}></span>
+                                    {usuario.estado_token === 1 ? "Conectado" : "Desconectado"}
+                                </span>
+                            </div>
+                        </div>
+                    </Tooltip>
+                );
             case "contraseña":
                 return (
                     <div className="flex">
@@ -147,32 +155,34 @@ case "usuario":
                             <span className="mr-2">
                             {showPassword[usuario.id_usuario] ? usuario.contra : '••••••••'}
                             </span>
-                            <span className='text-gray-500'>
+                            <span className='text-gray-500 dark:text-gray-300'>
                                 {showPassword[usuario.id_usuario] ?  <FaEyeSlash /> : <FaEye />}
                             </span>
                         </button>
                     </div>
                 );
-                    case "estado":
-                        return (
-                        <span className={`
-                            inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
-                            ${usuario.estado_usuario === 'Inactivo'
-                            ? "bg-rose-100 text-rose-700 border border-rose-200"
-                            : "bg-green-100 text-green-700 border border-green-200"}
-                        `}>
-                            {usuario.estado_usuario === 'Inactivo' ? (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                            ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            )}
-                            {usuario.estado_usuario}
-                        </span>
-                        );
+            case "estado":
+                return (
+                    <span className={`
+                        inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
+                        border
+                        ${usuario.estado_usuario === 'Inactivo'
+                            ? "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700/60"
+                            : "bg-green-100 text-green-700 border-green-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700/60"
+                        }
+                    `}>
+                        {usuario.estado_usuario === 'Inactivo' ? (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        )}
+                        {usuario.estado_usuario}
+                    </span>
+                );
             case "acciones":
                 return (
                     <div className="flex items-center justify-center gap-2">
@@ -207,48 +217,50 @@ case "usuario":
 
     return (
   <>
-<div className="bg-white/90 rounded-2xl shadow border border-blue-100 p-0">
-  <div className="p-4 bg-white rounded-2xl">
-    <ScrollShadow hideScrollBar>
-      <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-        <thead>
-          <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
-            <th className="py-2 px-2 text-left">Rol</th>
-            <th className="py-2 px-2 text-left">Usuario</th>
-            <th className="py-2 px-2 text-left">Contraseña</th>
-            <th className="py-2 px-2 text-center">Estado</th>
-            <th className="py-2 px-2 text-center w-32">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentUsuarios.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="py-8 text-center text-gray-400">Sin usuarios para mostrar</td>
-            </tr>
-          ) : (
-            currentUsuarios.map((usuario, idx) => (
-              <tr
-                key={usuario.id_usuario}
-                className={`transition-colors duration-150 ${
-                  idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
-                } hover:bg-blue-100/60`}
-              >
-                {["rol", "usuario", "contraseña", "estado", "acciones"].map((columnKey) => (
-                  <td
-                    key={columnKey}
-                    className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
-                  >
-                    {renderCell(usuario, columnKey)}
-                  </td>
-                ))}
+    <div className="bg-white/90 dark:bg-[#18192b] rounded-2xl shadow border border-blue-100 dark:border-zinc-700 p-0">
+      <div className="p-4 bg-white dark:bg-[#232339] rounded-2xl">
+        <ScrollShadow hideScrollBar>
+          <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+            <thead>
+              <tr className="bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 text-[13px] font-bold">
+                <th className="py-2 px-2 text-left">Rol</th>
+                <th className="py-2 px-2 text-left">Usuario</th>
+                <th className="py-2 px-2 text-left">Contraseña</th>
+                <th className="py-2 px-2 text-center">Estado</th>
+                <th className="py-2 px-2 text-center w-32">Acciones</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </ScrollShadow>
-  </div>
-</div>
+            </thead>
+            <tbody>
+              {currentUsuarios.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-gray-500">Sin usuarios para mostrar</td>
+                </tr>
+              ) : (
+                currentUsuarios.map((usuario, idx) => (
+                  <tr
+                    key={usuario.id_usuario}
+                    className={`transition-colors duration-150 ${
+                      idx % 2 === 0
+                        ? "bg-white dark:bg-[#18192b]"
+                        : "bg-blue-50/40 dark:bg-blue-900/10"
+                    } hover:bg-blue-100/60 dark:hover:bg-blue-900/30`}
+                  >
+                    {["rol", "usuario", "contraseña", "estado", "acciones"].map((columnKey) => (
+                      <td
+                        key={columnKey}
+                        className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
+                      >
+                        {renderCell(usuario, columnKey)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </ScrollShadow>
+      </div>
+    </div>
     <div className="flex justify-between items-center mt-2 px-4 pb-2">
       <Pagination
         showControls

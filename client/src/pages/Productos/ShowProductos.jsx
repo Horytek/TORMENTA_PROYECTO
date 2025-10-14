@@ -125,13 +125,18 @@ const filteredProductos = productos.filter(producto =>
                                         <span className={`
                                             inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
                                             ${producto.estado_producto === 'Inactivo'
-                                                ? "bg-rose-100 text-rose-700 border border-rose-200"
-                                                : "bg-green-100 text-green-700 border border-green-200"}
+                                                ? "bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700/60"
+                                                : "bg-green-100 text-green-700 border border-green-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700/60"
+                                            }
                                         `}>
                                             {producto.estado_producto === 'Inactivo' ? (
-                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" /></svg>
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
+                                                </svg>
                                             ) : (
-                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                </svg>
                                             )}
                                             {producto.estado_producto}
                                         </span>

@@ -54,7 +54,7 @@ function Navbar({ routes }) {
           {/* Izquierda: Sidebar trigger + breadcrumb + darkmode */}
           <div className="flex items-center gap-3 min-w-0">
             <SidebarTrigger
-              className="ml-1 rounded-lg hover:bg-gray-100 transition-all duration-150 h-9 w-9 flex items-center justify-center text-gray-700"
+              className="ml-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-150 h-9 w-9 flex items-center justify-center text-gray-700 dark:text-zinc-100"
             />
             <div className="hidden md:flex items-center gap-3 min-w-0">
               <EnhancedBreadcrumb />

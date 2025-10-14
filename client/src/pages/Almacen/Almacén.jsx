@@ -368,130 +368,137 @@ return (
               <span className="font-medium">Tienda: {almacenSeleccionado?.almacen || "Almacén"}</span>
             </div>
           </div>
-          <div className="flex gap-3">
-                <Button
+            <div className="flex gap-3">
+              <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 transition-colors"
+                className="gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 transition-colors
+                          dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-800 dark:text-blue-200"
                 onClick={fetchKardex}
-                >
-                <RefreshCw className="w-4 h-4 text-blue-500" />
+              >
+                <RefreshCw className="w-4 h-4 text-blue-500 dark:text-blue-300" />
                 Actualizar
-                </Button>
-                <Button
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700 transition-colors"
+                className="gap-2 bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700 transition-colors
+                          dark:bg-rose-900/30 dark:hover:bg-rose-900/50 dark:border-rose-800 dark:text-rose-200"
                 onClick={handleGeneratePDF}
-                >
-                <FaRegFilePdf className="w-4 h-4 text-rose-500" />
+              >
+                <FaRegFilePdf className="w-4 h-4 text-rose-500 dark:text-rose-300" />
                 Exportar PDF
-                </Button>
-                <Button
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 transition-colors"
+                className="gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 transition-colors
+                          dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:border-emerald-800 dark:text-emerald-200"
                 onClick={handleOpenModal}
-                >
-                <FaFileExcel className="w-4 h-4 text-emerald-500" />
+              >
+                <FaFileExcel className="w-4 h-4 text-emerald-500 dark:text-emerald-200" />
                 Rep. Mensual
-                </Button>
-                <Button
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 bg-yellow-50 hover:bg-yellow-100 border-yellow-200 text-yellow-700 transition-colors"
+                className="gap-2 bg-yellow-50 hover:bg-yellow-100 border-yellow-200 text-yellow-700 transition-colors
+                          dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 dark:border-yellow-800 dark:text-yellow-200"
                 onClick={handleOpenWeeklyModal}
-                >
-                <FaFileExcel className="w-4 h-4 text-yellow-500" />
+              >
+                <FaFileExcel className="w-4 h-4 text-yellow-500 dark:text-yellow-200" />
                 Rep. Semanal
-                </Button>
-          </div>
+              </Button>
+            </div>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        <Select
-          id="almacen"
-          className="w-full"
-          onChange={handleAlmacenChange}
-          selectedKeys={[almacenSeleccionado.id?.toString()]}
-          classNames={{
-            trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
-            value: "text-blue-900",
-          }}
-        >
-          {/* Opción por defecto*/}
-          <SelectItem key="%" value="%">Seleccione...</SelectItem>
-          {almacenesFiltrados.map((almacen) => (
-            <SelectItem key={almacen.id} value={almacen.id}>
-              {almacen.almacen}
-            </SelectItem>
-          ))}
-        </Select>
-          <Input
-            startContent={<IoIosSearch className='w-4 h-4 text-blue-400' />}
-            type="text"
-            placeholder="Código"
-            className="w-full border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-            onChange={handleCodigoChange}
-          />
-          <Input
-            startContent={<IoIosSearch className='w-4 h-4 text-blue-400' />}
-            type="text"
-            placeholder="Descripción"
-            className="w-full border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-            onChange={handleDescripcionChange}
-          />
-          <Select
-            className="w-full"
-            onChange={handleCategoriaChange}
-            selectedKeys={[categoriaSeleccionada]}
-            placeholder="Línea"
-            classNames={{
-              trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
-              value: "text-blue-900",
-            }}
-          >
-            {categorias.map((categoria) => (
-              <SelectItem key={categoria.id} value={categoria.id}>
-                {categoria.categoria}
-              </SelectItem>
-            ))}
-          </Select>
-          <Select
-            className="w-full"
-            onChange={handleSubCategoriaChange}
-            placeholder="Sub-línea"
-            classNames={{
-              trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
-              value: "text-blue-900",
-            }}
-          >
-            {subcategorias.map((subcategoria) => (
-              <SelectItem key={subcategoria.id} value={subcategoria.id}>
-                {subcategoria.sub_categoria}
-              </SelectItem>
-            ))}
-          </Select>
-          <Select
-            className="w-full"
-            onChange={handleMarcaChange}
-            placeholder="Marca"
-            classNames={{
-              trigger: "bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500",
-              value: "text-blue-900",
-            }}
-          >
-            {marcas.map((marca) => (
-              <SelectItem key={marca.id} value={marca.id}>
-                {marca.marca}
-              </SelectItem>
-            ))}
-          </Select>
+        <div className="bg-white dark:bg-[#18192b] rounded-xl shadow-sm border border-slate-200 dark:border-zinc-700 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <Select
+              id="almacen"
+              className="w-full"
+              onChange={handleAlmacenChange}
+              selectedKeys={[almacenSeleccionado.id?.toString()]}
+              classNames={{
+                trigger: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 focus:border-blue-500 focus:ring-blue-500",
+                value: "text-blue-900 dark:text-blue-100",
+                listbox: "bg-white dark:bg-zinc-900"
+              }}
+            >
+              <SelectItem key="%" value="%">Seleccione...</SelectItem>
+              {almacenesFiltrados.map((almacen) => (
+                <SelectItem key={almacen.id} value={almacen.id}>
+                  {almacen.almacen}
+                </SelectItem>
+              ))}
+            </Select>
+            <Input
+              startContent={<IoIosSearch className='w-4 h-4 text-blue-400' />}
+              type="text"
+              placeholder="Código"
+              className="w-full border-slate-300 dark:border-zinc-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-zinc-900 text-blue-900 dark:text-blue-100"
+              onChange={handleCodigoChange}
+            />
+            <Input
+              startContent={<IoIosSearch className='w-4 h-4 text-blue-400' />}
+              type="text"
+              placeholder="Descripción"
+              className="w-full border-slate-300 dark:border-zinc-700 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-zinc-900 text-blue-900 dark:text-blue-100"
+              onChange={handleDescripcionChange}
+            />
+            <Select
+              className="w-full"
+              onChange={handleCategoriaChange}
+              selectedKeys={[categoriaSeleccionada]}
+              placeholder="Línea"
+              classNames={{
+                trigger: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 focus:border-blue-500 focus:ring-blue-500",
+                value: "text-blue-900 dark:text-blue-100",
+                listbox: "bg-white dark:bg-zinc-900"
+              }}
+            >
+              {categorias.map((categoria) => (
+                <SelectItem key={categoria.id} value={categoria.id}>
+                  {categoria.categoria}
+                </SelectItem>
+              ))}
+            </Select>
+            <Select
+              className="w-full"
+              onChange={handleSubCategoriaChange}
+              placeholder="Sub-línea"
+              classNames={{
+                trigger: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 focus:border-blue-500 focus:ring-blue-500",
+                value: "text-blue-900 dark:text-blue-100",
+                listbox: "bg-white dark:bg-zinc-900"
+              }}
+            >
+              {subcategorias.map((subcategoria) => (
+                <SelectItem key={subcategoria.id} value={subcategoria.id}>
+                  {subcategoria.sub_categoria}
+                </SelectItem>
+              ))}
+            </Select>
+            <Select
+              className="w-full"
+              onChange={handleMarcaChange}
+              placeholder="Marca"
+              classNames={{
+                trigger: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700 focus:border-blue-500 focus:ring-blue-500",
+                value: "text-blue-900 dark:text-blue-100",
+                listbox: "bg-white dark:bg-zinc-900"
+              }}
+            >
+              {marcas.map((marca) => (
+                <SelectItem key={marca.id} value={marca.id}>
+                  {marca.marca}
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
         </div>
-      </div>
 
       {/* Tabla de Kardex */}
       <div>

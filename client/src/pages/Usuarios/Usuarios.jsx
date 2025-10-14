@@ -80,21 +80,26 @@ function Usuarios() {
         value={searchTerm}
         onChange={handleSearchChange}
       />
-      <Button
-        color="primary"
-        endContent={<FaPlus style={{ fontSize: '25px' }} />}
-        onClick={() => setModalOpen(true)}
-        disabled={!hasCreatePermission}
-        className={!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
-        style={{
-          background: "linear-gradient(to right, #3b82f6, #6366f1)",
-          color: "#fff",
-          fontWeight: "bold",
-          boxShadow: "0 2px 8px rgba(59,130,246,0.08)"
-        }}
-      >
-        Agregar usuario
-      </Button>
+        <Button
+          color="primary"
+          endContent={<FaPlus style={{ fontSize: '25px' }} />}
+          onClick={() => setModalOpen(true)}
+          disabled={!hasCreatePermission}
+          className={`
+            font-bold shadow-md transition-colors
+            ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+            bg-gradient-to-r from-blue-500 to-indigo-500
+            text-white
+            hover:from-blue-600 hover:to-indigo-600
+            dark:from-blue-700 dark:to-indigo-700
+            dark:hover:from-blue-800 dark:hover:to-indigo-800
+          `}
+          style={{
+            boxShadow: "0 2px 8px rgba(59,130,246,0.08)"
+          }}
+        >
+          Agregar usuario
+        </Button>
     </div>
     <ShowUsuarios
       searchTerm={searchTerm}

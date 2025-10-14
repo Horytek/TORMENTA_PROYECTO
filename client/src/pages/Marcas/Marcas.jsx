@@ -68,7 +68,12 @@ return (
         endContent={<FaPlus style={{ fontSize: '22px' }} />}
         onClick={handleModalAdd}
         disabled={!hasCreatePermission}
-        className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`
+          h-10 px-5 font-semibold rounded-lg shadow-sm
+          bg-blue-600 hover:bg-blue-700 text-white transition
+          dark:bg-blue-800 dark:hover:bg-blue-900
+          ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
       >
         Agregar marca
       </Button>
