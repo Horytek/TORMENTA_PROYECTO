@@ -22,21 +22,29 @@ const INTENTS = {
     { key: "promedio_mensual_anio_actual", label: "Promedio mensual (año actual)", hint: "Promedio de cantidad de ventas e ingresos por mes" },
     { key: "tendencia_ultimos_30", label: "Tendencia últimos 30 días", hint: "Días pico y mínimos del mes actual" },
     { key: "top_productos_margen", label: "Top productos por margen", hint: "Productos más rentables (S/ y %)" },
-    { key: "kpis_resumen", label: "KPIs de ventas (año actual)", hint: "Ingresos, productos vendidos y variación" }
+    { key: "kpis_resumen", label: "KPIs de ventas (año actual)", hint: "Ingresos, productos vendidos y variación" },
+    { key: "ventas_top_subcategorias", label: "Top subcategorías por cantidad", hint: "Ranking de subcategorías en el periodo" },
+    { key: "ventas_top_productos_unidades", label: "Top productos por unidades", hint: "Ranking por unidades e ingresos" },
+    { key: "ventas_ticket_promedio", label: "Ticket promedio del periodo", hint: "Promedio por venta (mes o año)" },
+    { key: "ventas_sucursal_destacada", label: "Sucursal destacada del periodo", hint: "Mayor rendimiento" }
   ],
   clientes: [
     { key: "top_clientes_ingresos_anual", label: "Top clientes por ingresos (año actual)", hint: "Ranking de clientes que más compran" },
-    { key: "frecuencia_clientes_anual", label: "Frecuencia de compra (año actual)", hint: "Clientes que más repiten compra" }
+    { key: "frecuencia_clientes_anual", label: "Frecuencia de compra (año actual)", hint: "Clientes que más repiten compra" },
+    { key: "clientes_ticket_promedio", label: "Clientes con mayor ticket promedio", hint: "Top N por ticket promedio" }
   ],
   productos: [
     { key: "top_unidades_ingresos", label: "Top por unidades e ingresos", hint: "Productos más vendidos y su dinero generado" },
-    { key: "top_margen", label: "Top por margen", hint: "Productos más rentables (%)" }
+    { key: "detalle_producto", label: "Detalle de producto", hint: "Línea, sublínea, estado, undm, precio y stock (por nombre o código de barras)" },
+    { key: "top_subcategorias", label: "Top subcategorías (productos)", hint: "Ranking de subcategorías" }
   ],
   almacenes: [
-    { key: "ranking_ventas_por_sucursal_anio", label: "Ranking por sucursal (año actual)", hint: "Sucursales ordenadas por ingresos" }
+    { key: "ranking_ventas_por_sucursal_anio", label: "Ranking por sucursal (año actual)", hint: "Sucursales ordenadas por ingresos" },
+    { key: "sucursal_mayor_rendimiento", label: "Sucursal con mayor rendimiento", hint: "Participación y crecimiento" }
   ],
   kardex: [
-    { key: "stock_critico_resumen", label: "Stock crítico (resumen)", hint: "Productos con menor stock para reponer" }
+    { key: "stock_critico_resumen", label: "Stock crítico (resumen)", hint: "Productos con menor stock para reponer" },
+    { key: "stock_bajo_umbral", label: "Stock bajo (umbral)", hint: "Ej.: stock menor a 5" }
   ],
   reportes: [
     { key: "resumen_ejecutivo", label: "Resumen ejecutivo (ventas)", hint: "KPIs, tendencia y top margen" }
@@ -51,7 +59,9 @@ const INTENTS = {
   ],
   compras: [
     { key: "promedio_mensual_anio_actual", label: "Compras: promedio mensual (año actual)", hint: "Promedio mensual de notas y monto" },
-    { key: "proveedores_frecuentes_anio", label: "Proveedores más frecuentes (año actual)", hint: "Ranking de proveedores por cantidad de notas" }
+    { key: "proveedores_frecuentes_anio", label: "Proveedores más frecuentes (año actual)", hint: "Ranking de proveedores por cantidad de notas" },
+    { key: "compras_top_proveedores_monto", label: "Top proveedores por monto", hint: "Ranking anual por monto" },
+    { key: "compras_tendencia_mes", label: "Tendencia de compras del mes", hint: "Serie diaria del mes" }
   ]
 };
 
@@ -67,7 +77,9 @@ const SUGGESTIONS = {
   ],
   productos: [
     "Productos más vendidos por unidades",
-    "Top productos por margen"
+    "Top productos por margen",
+    "Detalle del producto \"AYLIN\"",
+    "Información del producto con código de serie"
   ],
   almacenes: [
     "Ranking de ventas por sucursal (año actual)"
@@ -322,31 +334,33 @@ export default function FunctionShortcuts({ open, onClose }) {
   if (!open) return null;
 
   // Mensaje contextual para el Textarea según entidad e intent
-  function getInputPlaceholder() {
-    const intent = intentsForEntity.find(i => i.key === selectedIntent);
-    if (!intent) return "Puedes añadir detalles o filtros para este mini-reporte.";
-    if (selectedEntity === "ventas" && selectedIntent === "promedio_mensual_anio_actual")
-      return "Ejemplo: Solo ventas de la sucursal Lima, o solo boletas, o excluye anuladas.";
-    if (selectedEntity === "ventas" && selectedIntent === "tendencia_ultimos_30")
-      return "Ejemplo: Solo ventas de febrero, o solo productos electrónicos.";
-    if (selectedEntity === "clientes" && selectedIntent === "top_clientes_ingresos_anual")
-      return "Ejemplo: Solo clientes de Lima, o solo ventas mayores a S/ 1000.";
-    if (selectedEntity === "productos" && selectedIntent === "top_unidades_ingresos")
-      return "Ejemplo: Solo productos de la categoría Jeans, o solo stock disponible.";
-    if (selectedEntity === "almacenes")
-      return "Puedes pedir ranking solo de ciertas sucursales o filtrar por ubicación.";
-    if (selectedEntity === "kardex")
-      return "Ejemplo: Solo productos con stock menor a 5, o solo almacén principal.";
-    if (selectedEntity === "compras")
-      return "Ejemplo: Solo compras a proveedores nacionales, o solo del primer semestre.";
-    if (selectedEntity === "usuarios")
-      return "Ejemplo: Solo usuarios activos, o solo rol vendedor.";
-    if (selectedEntity === "proveedores")
-      return "Ejemplo: Solo proveedores de Lima, o solo personas jurídicas.";
-    if (selectedEntity === "reportes")
-      return "Puedes pedir que el resumen incluya solo sucursales específicas o un periodo.";
-    return `Puedes añadir detalles o filtros para el reporte: ${intent.label}`;
-  }
+function getInputPlaceholder() {
+  const intent = intentsForEntity.find(i => i.key === selectedIntent);
+  if (!intent) return "Puedes añadir detalles o filtros para este mini-reporte.";
+  if (selectedEntity === "ventas" && selectedIntent === "promedio_mensual_anio_actual")
+    return "Ejemplo: Solo ventas de la sucursal Lima, o solo boletas, o excluye anuladas.";
+  if (selectedEntity === "ventas" && selectedIntent === "tendencia_ultimos_30")
+    return "Ejemplo: Solo ventas de febrero, o solo productos electrónicos.";
+  if (selectedEntity === "clientes" && selectedIntent === "top_clientes_ingresos_anual")
+    return "Ejemplo: Solo clientes de Lima, o solo ventas mayores a S/ 1000.";
+  if (selectedEntity === "productos" && selectedIntent === "top_unidades_ingresos")
+    return "Ejemplo: Solo productos de la categoría Jeans, o solo stock disponible.";
+  if (selectedEntity === "productos" && selectedIntent === "detalle_producto")
+    return "Ejemplo: Detalle del producto \"AYLIN\" o producto con código 7751234567890.";
+  if (selectedEntity === "almacenes")
+    return "Puedes pedir ranking solo de ciertas sucursales o filtrar por ubicación.";
+  if (selectedEntity === "kardex")
+    return "Ejemplo: Solo productos con stock menor a 5, o solo almacén principal.";
+  if (selectedEntity === "compras")
+    return "Ejemplo: Solo compras a proveedores nacionales, o solo del primer semestre.";
+  if (selectedEntity === "usuarios")
+    return "Ejemplo: Solo usuarios activos, o solo rol vendedor.";
+  if (selectedEntity === "proveedores")
+    return "Ejemplo: Solo proveedores de Lima, o solo personas jurídicas.";
+  if (selectedEntity === "reportes")
+    return "Puedes pedir que el resumen incluya solo sucursales específicas o un periodo.";
+  return `Puedes añadir detalles o filtros para el reporte: ${intent.label}`;
+}
 
   return (
         <Card
