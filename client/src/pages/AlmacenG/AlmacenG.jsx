@@ -8,6 +8,7 @@ import { usePermisos } from '@/routes';
 import { Tooltip } from "@heroui/react";
 import BarraSearch from "@/components/Search/Search";
 import { getAlmacenes_A, deleteAlmacen } from '@/services/almacen.services';
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 function Almacenes() {
   const [activeAdd, setModalOpen] = useState(false);
@@ -82,14 +83,17 @@ function Almacenes() {
         onChange={handleSearchChange}
       />
       <Tooltip content={hasCreatePermission ? "Agregar almacén" : "No tiene permisos para agregar almacenes"}>
-        <Button
-          color={hasCreatePermission ? "primary" : "default"}
-          endContent={<FaPlus style={{ fontSize: '25px' }} />}
-          onClick={() => hasCreatePermission ? handleModalAdd() : null}
-          className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          Agregar almacén
-        </Button>
+      <ActionButton
+        color="blue"
+        icon={<FaPlus className="w-4 h-4 text-blue-500" />}
+        onClick={handleModalAdd}
+        disabled={!hasCreatePermission}
+        size="sm"
+        className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+        style={{ boxShadow: "none", border: "none" }}
+      >
+        Agregar almacén
+      </ActionButton>
       </Tooltip>
     </div>
     <ShowAlmacenes

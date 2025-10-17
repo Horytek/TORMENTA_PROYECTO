@@ -4,6 +4,7 @@ import BarraSearch from "@/components/Search/Search";
 import { FaTshirt } from 'react-icons/fa';
 import { IoHome, IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import { GiUnderwearShorts, GiArmoredPants, GiAmpleDress, GiShorts, GiPoloShirt, GiMonclerJacket, GiPassport, GiSkirt, GiShirt, GiTankTop } from 'react-icons/gi';
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 // Categorías de productos con iconos
 const categoryButtons = [
@@ -61,13 +62,16 @@ const ProductSearchSection = ({
         />
         <Dropdown>
           <DropdownTrigger>
-            <Button
-              variant="shadow"
-              className="px-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium hover:from-blue-600 hover:to-blue-700 shadow-lg"
-              startContent={<FaTshirt className="text-lg" />}
+            <ActionButton
+              color="blue"
+             icon={<FaTshirt className="text-lg" />}
+              onClick={() => {}}
+              size="md"
+              className="px-6 h-10 font-semibold rounded-xl border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200"
+              style={{ boxShadow: "none", border: "none" }}
             >
               {selectedMarca || 'Filtrar por marca'}
-            </Button>
+            </ActionButton>
           </DropdownTrigger>
           <DropdownMenu 
             aria-label="Seleccionar marca"
@@ -120,11 +124,14 @@ const ProductSearchSection = ({
               <button
                 key={category || 'all'}
                 onClick={() => setSelectedCategory(category)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-                  selectedCategory === category
-                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105"
-                    : "bg-gray-50 text-gray-700 hover:bg-gray-100 hover:shadow-md border border-gray-200"
-                }`}
+                className={`flex items-center gap-2 mt-1 ml-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap border
+                  ${
+                    selectedCategory === category
+                      ? "bg-blue-50 text-blue-700 border-blue-400 shadow-md scale-105 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-500"
+                      : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-400 hover:shadow-md dark:bg-zinc-800/60 dark:text-blue-200 dark:border-zinc-700 dark:hover:bg-blue-900/30 dark:hover:text-blue-200 dark:hover:border-blue-500"
+                  }`}
+                style={{ minWidth: 110 }}
+                type="button"
               >
                 <Icon className="text-lg flex-shrink-0" />
                 <span className="font-medium">{category || 'Todos'}</span>

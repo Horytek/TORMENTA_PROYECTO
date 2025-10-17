@@ -4,6 +4,9 @@ import { BsCashCoin } from 'react-icons/bs';
 import { BiBarcodeReader } from 'react-icons/bi';
 import { useState, useEffect } from 'react';
 import BarraSearch from "@/components/Search/Search";
+import { ActionButton } from "@/components/Buttons/Buttons";
+import { FiPlus, FiMinus } from "react-icons/fi";
+
 
 const SalesStep1 = ({
   searchTerm,
@@ -153,15 +156,17 @@ const SalesStep1 = ({
             className="max-w-xs"
           />
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              size="sm"
-              variant="flat"
-              color="danger"
+            <ActionButton
+              color="red"
+              icon={null}
               onClick={handleRemoveAllProducts}
-              className="text-xs text-bold text-red-600"
+              disabled={detalles.length === 0}
+              size="sm"
+              className="h-9 px-4 font-semibold rounded-lg border-0 shadow-none bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors dark:bg-rose-900/30 dark:hover:bg-rose-900/50 dark:text-rose-200"
+              style={{ boxShadow: "none", border: "none" }}
             >
               Limpiar todo
-            </Button>
+            </ActionButton>
           </div>
         </div>
       )}
@@ -212,9 +217,9 @@ const SalesStep1 = ({
                             }
                           }}
                           disabled={detalle.cantidad <= 1 || !handleDecrement}
-                          style={{ backgroundColor: '#f3281ddf', color: '#ffffff', opacity: !handleDecrement ? 0.5 : 1 }}
+                          className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 dark:border-blue-800 transition-colors"
                         >
-                          -
+                          <FiMinus className="w-4 h-4" />
                         </Button>
                         <Input
                           value={
@@ -288,9 +293,9 @@ const SalesStep1 = ({
                             }
                           }}
                           disabled={!handleIncrement}
-                          style={{ backgroundColor: '#0077ffff', color: '#ffffff', opacity: !handleIncrement ? 0.5 : 1 }}
+                          className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 dark:border-blue-800 transition-colors"
                         >
-                          +
+                          <FiPlus className="w-4 h-4" />
                         </Button>
                         {/* Input editable para precio */}
                         <Input
@@ -401,24 +406,28 @@ const SalesStep1 = ({
 
           {/* Botones de acción */}
           <div className="grid grid-cols-2 gap-3 mt-2">
-            <Button 
-              className="bg-green-600/80 hover:bg-green-600 text-white font-medium" 
-              onClick={() => handlePrint(true)} 
-              disabled={detalles.length === 0} 
-              variant="shadow"
-              startContent={<GrDocumentPerformance />}
+            <ActionButton
+              color="green"
+              icon={<GrDocumentPerformance className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />}
+              onClick={() => handlePrint(true)}
+              disabled={detalles.length === 0}
+              size="md"
+              className="h-11 font-semibold rounded-xl border-0 shadow-none bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-200"
+              style={{ boxShadow: "none", border: "none" }}
             >
               Cotizar
-            </Button>
+            </ActionButton>
 
-            <Button 
-              className="bg-[#379AE6] hover:bg-[#1f7db9] text-white font-medium" 
-              onClick={Comprobar_mayor_499} 
-              variant="shadow"
-              startContent={<BsCashCoin />}
+            <ActionButton
+              color="blue"
+              icon={<BsCashCoin className="w-5 h-5 text-blue-500 dark:text-blue-300" />}
+              onClick={Comprobar_mayor_499}
+              size="md"
+              className="h-11 font-semibold rounded-xl border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200"
+              style={{ boxShadow: "none", border: "none" }}
             >
               Continuar al cobro
-            </Button>
+            </ActionButton>
           </div>
         </>
       )}

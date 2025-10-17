@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import useGuiasRemision from '@/hooks/useGuiasRemision';
 import { usePermisos } from '@/routes';
 import { Button } from '@heroui/react';
+import { ActionButton } from "@/components/Buttons/Buttons";
+
 
 const Guias = () => {
   const [filters, setFilters] = useState({});
@@ -57,15 +59,17 @@ const Guias = () => {
               : 'No tiene permisos para crear guías'
           }
         >
-          <Button
-            color="primary"
-            endContent={<MdAddCircleOutline style={{ fontSize: '22px' }} />}
+          <ActionButton
+            color="blue"
+            icon={<MdAddCircleOutline className="w-5 h-5 text-blue-500" />}
             onClick={() => hasCreatePermission ? navigate('/almacen/guia_remision/registro_guia') : null}
             disabled={!hasCreatePermission}
-            className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+            size="sm"
+            className={`h-10 px-5 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={{ boxShadow: "none", border: "none" }}
           >
             Nueva guía
-          </Button>
+          </ActionButton>
         </Tooltip>
       </div>
       <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">

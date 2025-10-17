@@ -1,6 +1,7 @@
 import React from 'react';
-import { Button, Tooltip } from '@heroui/react';
+import { Tooltip } from '@heroui/react';
 import { FaSave, FaUndo } from 'react-icons/fa';
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 export default function FormActions({ 
   hasChanges, 
@@ -9,31 +10,31 @@ export default function FormActions({
   onSubmit 
 }) {
   return (
-    <div className="flex flex-wrap gap-3">
-      <Tooltip content="Revertir cambios no guardados" color="primary" offset={8}>
-        <Button
+    <div className="flex flex-wrap gap-4 items-center mt-8">
+        <ActionButton
           type="button"
-          variant="flat"
-          color="primary"
-          startContent={<FaUndo />}
+          color="blue"
+          icon={<FaUndo className="w-5 h-5 text-blue-500" />}
           onClick={resetChanges}
-          isDisabled={!hasChanges || saving}
-          className="font-semibold"
+          disabled={!hasChanges || saving}
+          size="md"
+          className="font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl px-6 py-3 shadow-none transition-colors"
         >
           Revertir
-        </Button>
-      </Tooltip>
-      <Button
+        </ActionButton>
+      <ActionButton
         type="submit"
-        color="primary"
-        startContent={<FaSave />}
-        isDisabled={!hasChanges}
+        color="blue"
+        icon={<FaSave className="w-5 h-5 text-blue-500" />}
+        disabled={!hasChanges}
+        size="md"
         isLoading={saving}
-        className="font-semibold shadow-sm"
+        className="font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl px-6 py-3 shadow-none transition-colors"
         onClick={onSubmit}
+        style={{ minWidth: 180 }}
       >
         Guardar cambios
-      </Button>
+      </ActionButton>
     </div>
   );
 }

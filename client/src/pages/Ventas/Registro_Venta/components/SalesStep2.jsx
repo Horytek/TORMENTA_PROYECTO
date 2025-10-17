@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, Tabs, Tab, Select, SelectItem, Input, Switch, Divider, Autocomplete, AutocompleteItem } from '@heroui/react';
 import AddClientModal from '../../../Clientes/ComponentsClientes/AddClient';
 import { FaPlus } from 'react-icons/fa';
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 const SalesStep2 = ({
   selectedDocumentType,
@@ -368,7 +369,7 @@ const SalesStep2 = ({
                 }
               }}
               className="w-full"
-              variant="bordered"
+              variant="flat"
               isClearable
               isInvalid={showValidations && errors.cliente}
               errorMessage={showValidations && errors.cliente ? "Cliente es requerido" : ""}
@@ -388,14 +389,16 @@ const SalesStep2 = ({
             </Autocomplete>
           </div>
           
-          <Button
-            color="primary"
-            startContent={<FaPlus style={{ fontSize: '25px' }} />}
+          <ActionButton
+            color="blue"
+            icon={<FaPlus className="w-4 h-4 text-blue-500" />}
             onClick={() => setShowNuevoCliente(true)}
-            style={{ boxShadow: 'inset 0 1px 0 hsl(224, 84%, 74%), 0 1px 3px hsl(0, 0%, 0%, 0.2)' }}
+            size="sm"
+            className="h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200"
+            style={{ boxShadow: "none", border: "none" }}
           >
             Agregar cliente
-          </Button>
+          </ActionButton>
           
           
         </div>
@@ -779,19 +782,20 @@ const SalesStep2 = ({
       />
 
     {/* Botón continuar */}
-    <div className="flex flex-col items-center space-y-2 pt-6 border-t">
-      <Button 
-        className="w-full xl:w-96 text-white font-semibold py-3" 
+    <div className="flex flex-col items-center space-y-2 pt-6">
+      <ActionButton
+        color="blue"
+        icon={null}
         onClick={handleContinueClick}
-        variant="shadow"
         size="lg"
-        style={{ backgroundColor: '#338CF1' }}
+        className="w-full xl:w-96 text-blue-700 font-semibold py-3 bg-blue-50 hover:bg-blue-100 rounded-xl border-0 shadow-none transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200"
+        style={{ backgroundColor: undefined, boxShadow: "none", border: "none" }}
       >
         {faltanteFinal > 0
           ? 'Continuar' 
           : 'Revisar y confirmar venta'
         }
-      </Button>
+      </ActionButton>
       
       {/* Información de validación */}
       

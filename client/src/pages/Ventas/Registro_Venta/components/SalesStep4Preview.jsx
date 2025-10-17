@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { handleCobrar } from '@/services/data/add_venta';
 import { useUserStore } from '@/store/useStore';
 import useSucursalData from '@/services/data/data_sucursal_venta';
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 const SalesStep4Preview = ({
   cobrarState,
@@ -273,13 +274,13 @@ const SalesStep4Preview = ({
       {/* Mostrar mensaje de venta exitosa */}
       {ventaExitosa ? (
         <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-500 animate-pulse" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-              <circle className="stroke-current text-green-300" cx="26" cy="26" r="25" fill="none" strokeWidth="2"/>
-              <path className="stroke-current text-green-500" fill="none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" d="M14 26l10 10 14-14" />
+          <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg border-4 border-emerald-200 dark:border-emerald-800">
+            <svg className="w-10 h-10 text-emerald-500 animate-pulse" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+              <circle className="stroke-current text-emerald-300" cx="26" cy="26" r="25" fill="none" strokeWidth="2"/>
+              <path className="stroke-current text-emerald-500" fill="none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" d="M14 26l10 10 14-14" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-green-600 mb-2">¡Venta procesada exitosamente!</h3>
+          <h3 className="text-xl font-semibold text-emerald-600 mb-2">¡Venta procesada exitosamente!</h3>
           <p className="text-base text-gray-600">
             Redirigiendo en unos segundos...
           </p>
@@ -297,8 +298,8 @@ const SalesStep4Preview = ({
       ) : (
         <>
           <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <BsCashCoin className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-blue-200 dark:border-blue-800 shadow">
+              <BsCashCoin className="w-8 h-8 text-blue-600 dark:text-blue-300" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">¿Confirmar la venta?</h3>
             <p className="text-base text-gray-600">
@@ -372,26 +373,26 @@ const SalesStep4Preview = ({
 
           {/* Botones finales */}
           <div className="grid grid-cols-2 gap-4">
-            <Button 
-              variant="flat"
-              color='primary'
+            <ActionButton
+              color="blue"
+              icon={null}
               size="lg"
-              className="px-6"
+              className="px-6 h-12 font-semibold rounded-xl border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200"
               onClick={handleVolver}
               disabled={procesandoVenta}
             >
               Volver atrás
-            </Button>
-            
-            <Button 
-              className="bg-green-600 hover:bg-green-700 text-white font-medium px-8" 
-              variant="shadow"
+            </ActionButton>
+            <ActionButton
+              color="green"
+              icon={<BsCashCoin className="w-6 h-6 text-emerald-600 dark:text-emerald-300" />}
               size="lg"
+              className="h-12 font-semibold rounded-xl border-0 shadow-none bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-200"
               onClick={procesarVenta}
               disabled={procesandoVenta}
             >
               {procesandoVenta ? 'Procesando...' : 'Cobrar e imprimir'}
-            </Button>
+            </ActionButton>
           </div>
         </>
       )}

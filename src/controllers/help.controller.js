@@ -52,12 +52,44 @@ export const helpSearch = async (req, res) => {
 export const helpMiniContext = async (req, res) => {
   const entity = String(req.query.entity || "").toLowerCase();
   try {
+    // Catálogo ampliado de entidades del sistema
     if (entity === "inventory") return res.json({ ok: true, text: "Inventario: notas de ingreso/salida y Kardex están en Almacén." });
-    if (entity === "purchases") return res.json({ ok: true, text: "Compras: proveedores, documentos y estados vinculados." });
-    if (entity === "permissions") return res.json({ ok: true, text: "Permisos: suelen estar en Configuración → Roles y permisos." });
-    if (entity === "sales") return res.json({ ok: true, text: "Ventas: emisión de boletas/facturas y reportes." });
-    if (entity === "product") return res.json({ ok: true, text: "Producto: usa el formulario con los campos visibles en tu UI." });
+    if (entity === "kardex") return res.json({ ok: true, text: "Kardex: historial de movimientos de productos en almacén." });
+    if (entity === "warehouse") return res.json({ ok: true, text: "Almacén: gestión de almacenes, stock y movimientos." });
+    if (entity === "warehouse_note") return res.json({ ok: true, text: "Nota de almacén: registro de entradas y salidas de productos." });
+    if (entity === "remission") return res.json({ ok: true, text: "Guía de remisión: traslado de productos entre almacenes o clientes." });
+    if (entity === "client") return res.json({ ok: true, text: "Cliente: personas o empresas a quienes se venden productos o servicios." });
+    if (entity === "provider") return res.json({ ok: true, text: "Proveedor: empresas o personas que suministran productos o servicios." });
+    if (entity === "product") return res.json({ ok: true, text: "Producto: gestión de productos, stock, precios y códigos de barras." });
+    if (entity === "brand") return res.json({ ok: true, text: "Marca: agrupación de productos bajo una marca comercial." });
+    if (entity === "category") return res.json({ ok: true, text: "Categoría: clasificación principal de productos." });
+    if (entity === "subcategory") return res.json({ ok: true, text: "Subcategoría: clasificación secundaria de productos." });
+    if (entity === "sales") return res.json({ ok: true, text: "Ventas: emisión de comprobantes, registro y reportes de ventas." });
+    if (entity === "sales_register") return res.json({ ok: true, text: "Registro de ventas: listado oficial de ventas para SUNAT." });
+    if (entity === "sales_analysis") return res.json({ ok: true, text: "Análisis de ventas: KPIs, comparativos y reportes de ventas." });
     if (entity === "user") return res.json({ ok: true, text: "Usuarios: Rol, Usuario, Contraseña y Estado son requeridos." });
+    if (entity === "role") return res.json({ ok: true, text: "Rol: define permisos y accesos de los usuarios." });
+    if (entity === "permissions") return res.json({ ok: true, text: "Permisos: configuración de accesos por rol y módulo." });
+    if (entity === "module") return res.json({ ok: true, text: "Módulo: agrupación funcional del sistema (ventas, almacén, etc)." });
+    if (entity === "submodule") return res.json({ ok: true, text: "Submódulo: funcionalidad específica dentro de un módulo." });
+    if (entity === "branch") return res.json({ ok: true, text: "Sucursal: ubicación física de la empresa." });
+    if (entity === "seller") return res.json({ ok: true, text: "Vendedor: usuarios encargados de las ventas." });
+    if (entity === "destination") return res.json({ ok: true, text: "Destinatario: persona o empresa que recibe productos en una guía." });
+    if (entity === "vehicle") return res.json({ ok: true, text: "Vehículo: transporte usado en guías de remisión." });
+    if (entity === "transporter") return res.json({ ok: true, text: "Transportista: empresa o persona encargada del traslado de productos." });
+    if (entity === "log") return res.json({ ok: true, text: "Logs: registro de acciones y eventos del sistema." });
+    if (entity === "plan") return res.json({ ok: true, text: "Plan de pago: configuración de planes y suscripciones." });
+    if (entity === "company") return res.json({ ok: true, text: "Empresa: datos generales de la empresa y configuración fiscal." });
+    if (entity === "route") return res.json({ ok: true, text: "Ruta: configuración de rutas para repartos o visitas." });
+    if (entity === "note") return res.json({ ok: true, text: "Nota: documento interno de almacén para movimientos de stock." });
+    if (entity === "comprobante") return res.json({ ok: true, text: "Comprobante: documento fiscal de venta (boleta, factura, etc)." });
+    if (entity === "detalle_venta") return res.json({ ok: true, text: "Detalle de venta: productos y cantidades vendidos en cada comprobante." });
+    if (entity === "detalle_nota") return res.json({ ok: true, text: "Detalle de nota: productos y cantidades en cada nota de almacén." });
+    if (entity === "logs") return res.json({ ok: true, text: "Logs: historial de acciones de usuarios y sistema." });
+    if (entity === "global_permissions") return res.json({ ok: true, text: "Permisos globales: configuración avanzada de accesos para todos los roles." });
+    if (entity === "sunat") return res.json({ ok: true, text: "SUNAT: integración y reportes para la autoridad tributaria peruana." });
+
+    // Fallback genérico
     return res.json({ ok: true, text: "" });
   } catch {
     return res.json({ ok: true, text: "" });

@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import { FRONTEND_URL } from "./config.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -55,6 +56,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Middlewares
 app.use(morgan("dev"));
+app.use(helmet());
 const norm = u => { 
   try { 
     const {protocol,host}=new URL(u); 

@@ -4,7 +4,8 @@ import { Button, Tooltip } from '@heroui/react';
 import { FaPlus } from "react-icons/fa";
 import ShowUsuarios from '@/pages/Roles/ShowUsuarios';
 import { usePermisos } from '@/routes';
-import UsuariosForm from '../UsuariosForm'; // Asegúrate de importar el formulario
+import UsuariosForm from '../UsuariosForm'; 
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 export default function TablaRoles({ searchTerm: initialSearchTerm, externalData, skipApiCall = false }) {
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
@@ -26,14 +27,17 @@ return (
                 onChange={handleSearchChange}
             />
             <Tooltip content={hasCreatePermission ? "Agregar rol" : "No tiene permisos para agregar roles"}>
-                <Button
-                    color={hasCreatePermission ? "primary" : "default"}
-                    endContent={<FaPlus style={{ fontSize: '22px' }} />}
-                    onClick={() => hasCreatePermission ? handleModalAdd() : null}
-                    className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+                <ActionButton
+                    color="blue"
+                    icon={<FaPlus className="w-4 h-4 text-blue-500" />}
+                    onClick={handleModalAdd}
+                    disabled={!hasCreatePermission}
+                    size="sm"
+                    className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    style={{ boxShadow: "none", border: "none" }}
                 >
                     Agregar rol
-                </Button>
+                </ActionButton>
             </Tooltip>
         </div>
         <ShowUsuarios searchTerm={searchTerm} />

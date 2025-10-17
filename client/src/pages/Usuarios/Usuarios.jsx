@@ -7,6 +7,7 @@ import { Button } from '@heroui/react';
 import { usePermisos } from '@/routes';
 import BarraSearch from "@/components/Search/Search";
 import { getUsuarios } from '@/services/usuario.services';
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -80,26 +81,17 @@ function Usuarios() {
         value={searchTerm}
         onChange={handleSearchChange}
       />
-        <Button
-          color="primary"
-          endContent={<FaPlus style={{ fontSize: '25px' }} />}
-          onClick={() => setModalOpen(true)}
-          disabled={!hasCreatePermission}
-          className={`
-            font-bold shadow-md transition-colors
-            ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}
-            bg-gradient-to-r from-blue-500 to-indigo-500
-            text-white
-            hover:from-blue-600 hover:to-indigo-600
-            dark:from-blue-700 dark:to-indigo-700
-            dark:hover:from-blue-800 dark:hover:to-indigo-800
-          `}
-          style={{
-            boxShadow: "0 2px 8px rgba(59,130,246,0.08)"
-          }}
-        >
-          Agregar usuario
-        </Button>
+      <ActionButton
+        color="blue"
+        icon={<FaPlus className="w-4 h-4 text-blue-500" />}
+        onClick={() => setModalOpen(true)}
+        disabled={!hasCreatePermission}
+        size="sm"
+        className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+        style={{ boxShadow: "none", border: "none" }}
+      >
+        Agregar usuario
+      </ActionButton>
     </div>
     <ShowUsuarios
       searchTerm={searchTerm}

@@ -11,6 +11,7 @@ import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 import { toast } from "react-hot-toast";
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, onRefresh, ingresos, almacenSseleccionado }) => {
   const navigate = useNavigate();
@@ -437,23 +438,28 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, onR
         </Dropdown>
 
         {hasCreatePermission ? (
-          <Button
-            color="primary"
-            endContent={<FaPlus style={{ fontSize: '22px' }} />}
+          <ActionButton
+            color="blue"
+            icon={<FaPlus className="w-4 h-4 text-blue-500" />}
             onClick={handleNavigation}
-            className="h-10"
+            disabled={!hasCreatePermission}
+            size="sm"
+            className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200`}
+            style={{ boxShadow: "none", border: "none" }}
           >
             Nota de almacen
-          </Button>
+          </ActionButton>
         ) : (
-          <Button
-            color="primary"
-            endContent={<FaPlus style={{ fontSize: '22px' }} />}
+          <ActionButton
+            color="blue"
+            icon={<FaPlus className="w-4 h-4 text-blue-500" />}
             disabled
-            className="h-10 opacity-50 cursor-not-allowed"
+            size="sm"
+            className="h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 text-blue-700 opacity-50 cursor-not-allowed"
+            style={{ boxShadow: "none", border: "none" }}
           >
             Nota de almacen
-          </Button>
+          </ActionButton>
         )}
       </div>
 

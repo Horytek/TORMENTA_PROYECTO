@@ -19,6 +19,8 @@ import { usePermisos } from '@/routes';
 import { Button } from '@heroui/react';
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
+import { ActionButton } from "@/components/Buttons/Buttons";
+
 
 const FiltrosVentas = ({ onFiltersChange }) => {
   const { comprobantes } = useComprobanteData();
@@ -336,23 +338,28 @@ const FiltrosVentas = ({ onFiltersChange }) => {
             </Dropdown>
 
             {hasCreatePermission ? (
-              <Button
-                color="primary"
-                endContent={<MdAddCircleOutline style={{ fontSize: "22px" }} />}
+              <ActionButton
+                color="blue"
+                icon={<MdAddCircleOutline className="w-5 h-5 text-blue-500" />}
                 onClick={handleNavigation}
-                className="h-10 shadow-sm bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                disabled={!hasCreatePermission}
+                size="sm"
+                className="h-10 px-5 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200"
+                style={{ boxShadow: "none", border: "none" }}
               >
                 Nueva venta
-              </Button>
+              </ActionButton>
             ) : (
-              <Button
-                color="primary"
-                endContent={<MdAddCircleOutline style={{ fontSize: "22px" }} />}
+              <ActionButton
+                color="blue"
+                icon={<MdAddCircleOutline className="w-5 h-5 text-blue-500" />}
                 disabled
-                className="h-10 opacity-50 cursor-not-allowed"
+                size="sm"
+                className="h-10 px-5 font-semibold rounded-lg border-0 shadow-none bg-blue-50 text-blue-700 opacity-50 cursor-not-allowed"
+                style={{ boxShadow: "none", border: "none" }}
               >
                 Nueva venta
-              </Button>
+              </ActionButton>
             )}
           </div>
         </div>
