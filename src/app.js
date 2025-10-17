@@ -57,6 +57,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Middlewares
 app.use(morgan("dev"));
 app.use(helmet());
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      imgSrc: ["'self'", "data:", "https://gc.kis.v2.scr.kaspersky-labs.com", "wss://gc.kis.v2.scr.kaspersky-labs.com", "https://i.ibb.co"]
+    }
+  })
+);
 const norm = u => { 
   try { 
     const {protocol,host}=new URL(u); 
