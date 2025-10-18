@@ -710,6 +710,54 @@ export const actualizarEstadoEspera = async (req, res) => {
   }
 };
 
+export const getNotificaciones = async (req, res) => {
+  let connection;
+  const id_tenant = req.id_tenant;
+
+  if (!id_tenant) {
+    return res.status(400).json({ code: 0, message: "Falta id_tenant" });
+  }
+
+  try {
+    connection = await getConnection();
+
+    const [rows] = await connection.query(
+      `SELECT 
+         id_log,
+         accion,
+         id_modulo,
+         id_usuario,
+         fecha,
+         descripcion,
+         recurso
+       FROM log_sistema
+       WHERE id_tenant = ?
+       ORDER BY fecha DESC
+       LIMIT 20`,
+      [id_tenant]
+    );
+
+    const notificaciones = rows.map((l) => {
+      const moduloTxt = l.id_modulo != null ? `módulo ${l.id_modulo}` : "módulo N/D";
+      const recursoTxt = l.recurso ? ` / ${l.recurso}` : "";
+      const usuarioTxt = l.id_usuario != null ? `Usuario ${l.id_usuario}` : "Usuario N/D";
+      const desc = l.descripcion ?? "";
+
+      return {
+        id: l.id_log,
+        mensaje: `${usuarioTxt} realizó "${l.accion}" en ${moduloTxt}${recursoTxt}: ${desc}`.trim(),
+        fecha: l.fecha
+      };
+    });
+
+    res.json({ code: 1, data: notificaciones, message: "Notificaciones listadas" });
+  } catch (error) {
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 export const methods = {
   getProductoMasVendido,
   getTotalVentas,
@@ -720,5 +768,6 @@ export const methods = {
   getUserRolController,
   getVentasPorSucursalPeriodo,
   getNotasPendientes,
-  actualizarEstadoEspera
+  actualizarEstadoEspera,
+  getNotificaciones 
 };

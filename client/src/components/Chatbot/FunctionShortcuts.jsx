@@ -194,77 +194,79 @@ export default function FunctionShortcuts({ open, onClose }) {
 
   const showRawDataHint = showRaw && !isExpanded;
 
-  function formatToHtml(text = "") {
-    const safe = escapeHtml(text);
-    const lines = safe.split(/\r?\n/);
+function formatToHtml(text = "") {
+  const safe = escapeHtml(text);
+  const lines = safe.split(/\r?\n/);
 
-    const { html: monthlyTable, skip } = extractMonthlyTable(lines);
+  const { html: monthlyTable, skip } = extractMonthlyTable(lines);
 
-    let html = "";
-    let inList = false;
+  let html = "";
+  let inList = false;
 
-    const openList = () => { if (!inList) { html += `<ul class="fc-list">`; inList = true; } };
-    const closeList = () => { if (inList) { html += `</ul>`; inList = false; } };
+  const openList = () => { if (!inList) { html += `<ul class="fc-list">`; inList = true; } };
+  const closeList = () => { if (inList) { html += `</ul>`; inList = false; } };
 
-    for (let i = 0; i < lines.length; i++) {
-      if (skip.has(i)) continue;
-      const l = lines[i];
+  for (let i = 0; i < lines.length; i++) {
+    if (skip.has(i)) continue;
+    const l = lines[i];
 
-      if (/^\s*$/.test(l)) { closeList(); continue; }
+    if (/^\s*$/.test(l)) { closeList(); continue; }
 
-      const h = l.match(/^(\#{1,6})\s+(.*)$/);
-      if (h) {
-        closeList();
-        const level = Math.min(h[1].length, 3);
-        const content = h[2].replace(/\*\*(.*?)\*\*/g,"<b>$1</b>").replace(/__(.*?)__/g,"<b>$1</b>").replace(/\*(.*?)\*/g,"<i>$1</i>").replace(/_(.*?)_/g,"<i>$1</i>");
-        html += `<h${level} class="fc-h${level}">${content}</h${level}>`;
-        continue;
-      }
-
-      if (/^\s*-\s+/.test(l)) {
-        openList();
-        const item = l.replace(/^\s*-\s+/, "")
-          .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
-          .replace(/__(.*?)__/g,"<b>$1</b>")
-          .replace(/\*(.*?)\*/g,"<i>$1</i>")
-          .replace(/_(.*?)_/g,"<i>$1</i>");
-        html += `<li>${item}</li>`;
-        continue;
-      }
-
+    const h = l.match(/^(\#{1,6})\s+(.*)$/);
+    if (h) {
       closeList();
-      const p = l
+      const level = Math.min(h[1].length, 3);
+      const content = h[2]
         .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
         .replace(/__(.*?)__/g,"<b>$1</b>")
         .replace(/\*(.*?)\*/g,"<i>$1</i>")
         .replace(/_(.*?)_/g,"<i>$1</i>");
-      html += `<p>${p}</p>`;
+      html += `<h${level} class="fc-h${level}">${content}</h${level}>`;
+      continue;
     }
-    closeList();
 
-    const styles = `
-      <style>
-        .fc-root { color:#0f172a; }
-        .dark .fc-root { color:#e5e7eb; }
-        .fc-h1,.fc-h2,.fc-h3 { font-weight:700; margin:8px 0 6px; }
-        .fc-h1 { font-size:1.1rem; }
-        .fc-h2 { font-size:1rem; }
-        .fc-h3 { font-size:0.95rem; }
-        .fc-list { margin:6px 0 8px; padding-left:1.1rem; }
-        .fc-list li { margin:2px 0; }
-        .fc-section { margin:6px 0 10px; }
-        .fc-title { font-weight:700; margin-bottom:4px; }
-        .fc-table { width:100%; border-collapse:collapse; table-layout:fixed; background:rgba(255,255,255,.8); }
-        .dark .fc-table { background:rgba(24,24,27,.4); }
-        .fc-table th, .fc-table td { border:1px solid rgba(148,163,184,.4); padding:6px 8px; font-size:.9em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .fc-table th { background:#eef2ff; color:#1e293b; }
-        .dark .fc-table th { background:rgba(30,58,138,.25); color:#e5e7eb; }
-        .fc-table td.num { text-align:right; }
-        .fc-note { font-size:.85em; opacity:.75; margin-top:6px; }
-      </style>
-    `;
-    return `${styles}${monthlyTable}${html}`;
+    if (/^\s*-\s+/.test(l)) {
+      openList();
+      const item = l.replace(/^\s*-\s+/, "")
+        .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
+        .replace(/__(.*?)__/g,"<b>$1</b>")
+        .replace(/\*(.*?)\*/g,"<i>$1</i>")
+        .replace(/_(.*?)_/g,"<i>$1</i>");
+      html += `<li>${item}</li>`;
+      continue;
+    }
+
+    closeList();
+    const p = l
+      .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
+      .replace(/__(.*?)__/g,"<b>$1</b>")
+      .replace(/\*(.*?)\*/g,"<i>$1</i>")
+      .replace(/_(.*?)_/g,"<i>$1</i>");
+    html += `<p>${p}</p>`;
   }
+  closeList();
+
+  const styles = `
+    <style>
+      .fc-root { color:#222; font-family:'Inter',Arial,sans-serif; background:#fff; }
+      .fc-h1,.fc-h2,.fc-h3 { font-weight:600; margin:12px 0 8px; letter-spacing:0.01em; }
+      .fc-h1 { font-size:1.25rem; border-bottom:1px solid #e5e7eb; padding-bottom:2px; }
+      .fc-h2 { font-size:1.1rem; }
+      .fc-h3 { font-size:1rem; }
+      .fc-list { margin:8px 0 12px; padding-left:1.2rem; }
+      .fc-list li { margin:3px 0; font-size:0.97em; }
+      .fc-section { margin:10px 0 16px; }
+      .fc-title { font-weight:600; margin-bottom:6px; font-size:1.05em; color:#2563eb; }
+      .fc-table { width:100%; border-collapse:collapse; table-layout:fixed; background:#f8fafc; border-radius:8px; overflow:hidden; box-shadow:0 1px 4px 0 #e5e7eb; }
+      .fc-table th, .fc-table td { border: none; padding:10px 12px; font-size:0.95em; }
+      .fc-table th { background:#e0e7ff; color:#2563eb; font-weight:600; }
+      .fc-table td { background:#fff; color:#222; }
+      .fc-table td.num { text-align:right; }
+      .fc-note { font-size:.88em; opacity:.7; margin-top:10px; color:#64748b; }
+    </style>
+  `;
+  return `${styles}${monthlyTable}${html}`;
+}
 
   const handleRun = async () => {
     if (!selectedEntity || !selectedIntent) {

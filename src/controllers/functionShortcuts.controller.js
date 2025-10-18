@@ -34,13 +34,18 @@ const GETS = {
     tendenciaVentas: "/api/reporte/tendencia_ventas",
     topProductosMargen: "/api/reporte/top_productos_margen"
   },
-  // Kardex / Almacenes
   kardex: {
     productos: "/api/kardex",
     almacenes: "/api/kardex/almacen",
     categorias: "/api/kardex/categoria",
     subcategorias: "/api/kardex/subcategoria",
-    producto: "/api/kardex/producto"
+    producto: "/api/kardex/producto",
+    stockCritico: "/api/kardex/stock_critico",
+    stockBajoUmbral: "/api/kardex/stock_bajo_umbral",
+    productosSinMovimiento: "/api/kardex/productos_sin_movimiento",
+    productosMayorRotacion: "/api/kardex/productos_mayor_rotacion",
+    inventarioValorizado: "/api/kardex/inventario_valorizado",
+    historialMovimientos: "/api/kardex/historial_movimientos"
   },
   reportes: {
     ganancias: "/api/reporte/ganancias",
@@ -49,32 +54,56 @@ const GETS = {
     topProductosMargen: "/api/reporte/top_productos_margen",
     analisisSucursales: "/api/reporte/analisis_ganancias_sucursales",
     sucursales: "/api/reporte/sucursales",
-    libroVentasSunat: "/api/reporte/libro_ventas_sunat"
+    libroVentasSunat: "/api/reporte/libro_ventas_sunat",
+    resumenEjecutivo: "/api/reporte/resumen_ejecutivo"
   },
-  // NUEVO: entidades adicionales basadas en controladores y servicios existentes
   usuarios: {
     list: "/api/usuario",
-    roles: "/api/rol"
+    roles: "/api/rol",
+    resumen: "/api/usuario/resumen",
+    distribucionPorRol: "/api/usuario/distribucion_rol",
+    activos: "/api/usuario/activos",
+    inactivos: "/api/usuario/inactivos",
+    masVentas: "/api/usuario/mas_ventas",
+    masRegistros: "/api/usuario/mas_registros"
   },
   proveedores: {
-    list: "/api/destinatario"
+    list: "/api/destinatario",
+    resumen: "/api/destinatario/resumen",
+    topUbicaciones: "/api/destinatario/top_ubicaciones"
   },
   compras: {
     notasIngreso: "/api/nota_ingreso",
-    destinatarios: "/api/nota_ingreso/destinatario"
+    destinatarios: "/api/nota_ingreso/destinatario",
+    promedioMensual: "/api/nota_ingreso/promedio_mensual",
+    proveedoresFrecuentes: "/api/nota_ingreso/proveedores_frecuentes",
+    topProveedoresMonto: "/api/nota_ingreso/top_proveedores_monto",
+    tendenciaMes: "/api/nota_ingreso/tendencia_mes"
   },
-  // “Clientes” y “Productos” usan endpoints de reporte
   clientes: {
     registroVentasSunat: "/api/reporte/registro_ventas_sunat",
-    libroVentasSunat: "/api/reporte/libro_ventas_sunat"
+    libroVentasSunat: "/api/reporte/libro_ventas_sunat",
+    topIngresos: "/api/clientes/top_ingresos",
+    frecuenciaCompra: "/api/clientes/frecuencia_compra",
+    ticketPromedio: "/api/clientes/ticket_promedio",
+    nuevosMes: "/api/clientes/nuevos_mes",
+    inactivos: "/api/clientes/inactivos",
+    ubicacion: "/api/clientes/ubicacion"
   },
   productos: {
     cantidadPorProducto: "/api/reporte/cantidad_por_producto",
-    topProductosMargen: "/api/reporte/top_productos_margen"
+    topProductosMargen: "/api/reporte/top_productos_margen",
+    detalle: "/api/productos/detalle",
+    topSubcategorias: "/api/productos/top_subcategorias"
   },
   almacenes: {
     analisisSucursales: "/api/reporte/analisis_ganancias_sucursales",
-    sucursales: "/api/reporte/sucursales"
+    sucursales: "/api/reporte/sucursales",
+    rankingVentas: "/api/almacen/ranking_ventas",
+    mayorRendimiento: "/api/almacen/mayor_rendimiento",
+    mayorCrecimiento: "/api/almacen/mayor_crecimiento",
+    menorStock: "/api/almacen/menor_stock",
+    mayorVariedad: "/api/almacen/mayor_variedad"
   }
 };
 
