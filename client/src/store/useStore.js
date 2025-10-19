@@ -25,6 +25,7 @@ const normalizeUser = (raw) => {
     roleId,
     sucursal: raw.sucursal || raw.nombre_sucursal || raw.sur || "",
     id_tenant: raw.id_tenant || raw.idTenant || null,
+    plan_pago: raw.plan_pago || raw.planPago || null, // <-- Añadido aquí
     original: raw
   };
 };
@@ -37,6 +38,7 @@ export const useUserStore = create((set) => ({
   sur: "",
   almacen: "",
   id_tenant: "",
+  plan_pago: "", // <-- Añadido aquí
   // Nuevo objeto normalizado
   user: null,
 
@@ -47,6 +49,7 @@ export const useUserStore = create((set) => ({
   setSur: (sur) => set({ sur }),
   setAlmacen: (almacen) => set({ almacen }),
   setIdTenant: (id_tenant) => set({ id_tenant }),
+  setPlanPago: (plan_pago) => set({ plan_pago }), // <-- Añadido aquí
 
   // NUEVO: asignar usuario crudo y normalizar
   setUserRaw: (raw) => {
@@ -58,7 +61,8 @@ export const useUserStore = create((set) => ({
         usuario: "",
         rol: "",
         sur: "",
-        id_tenant: ""
+        id_tenant: "",
+        plan_pago: ""
       });
       return;
     }
@@ -68,7 +72,8 @@ export const useUserStore = create((set) => ({
       usuario: u.username,
       rol: u.roleId,
       sur: u.sucursal,
-      id_tenant: u.id_tenant
+      id_tenant: u.id_tenant,
+      plan_pago: u.plan_pago || ""
     });
   },
 
@@ -86,6 +91,7 @@ export const useUserStore = create((set) => ({
       rol: "",
       sur: "",
       almacen: "",
-      id_tenant: ""
+      id_tenant: "",
+      plan_pago: ""
     })
 }));

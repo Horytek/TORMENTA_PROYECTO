@@ -27,7 +27,7 @@ const TARGET_SUMMARY_TRIGGER = 12000;
 const CONCISE_HARD_LIMIT = 180;
 
 export default function DeepSeekOpenRouterChatbot() {
-  const { nombre: usuario, rol, id_tenant, id_empresa, sur: sucursal } = useUserStore();
+  const { nombre: usuario, rol, id_tenant, id_empresa, sur: sucursal, plan_pago } = useUserStore();
 
   // Estado general
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -228,22 +228,14 @@ function mergeWithFormSchema(entity, reply, schemaData) {
     }
   }
 
-    useEffect(() => {
-    // Centraliza la consulta de funciones permitidas
-    async function fetchFeatureAccess() {
-      try {
-        const { data } = await axios.get("/dashboard/funcionesPlan", { params: { usuario } });
-        // data: { funciones: [1,2,3,4,...] }
-        setFeaturesAllowed({
-          chatbot: data.funciones?.includes(3), // id 3 = chatbot
-          shortcuts: data.funciones?.includes(4), // id 4 = atajos/mensajería/log
-        });
-      } catch {
-        setFeaturesAllowed({ chatbot: false, shortcuts: false });
-      }
+  useEffect(() => {
+    // Plan 1 = enterprise/premium, Plan 2 = pro, Plan 3 = basic
+    if (parseInt(plan_pago) === 1) {
+      setFeaturesAllowed({ chatbot: true, shortcuts: true });
+    } else {
+      setFeaturesAllowed({ chatbot: false, shortcuts: false });
     }
-    fetchFeatureAccess();
-  }, [usuario]);
+  }, [plan_pago]);
 
   // Handler genérico para mostrar toast si no tiene acceso
   const handleNoAccess = (feature) => {

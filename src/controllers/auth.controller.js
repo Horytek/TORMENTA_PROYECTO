@@ -70,7 +70,7 @@ const login = async (req, res) => {
             userValid = rows;
         } else {
             const [rows] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant, usu.plan_pago
                  FROM usuario usu
                  LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
                  LEFT JOIN sucursal su ON su.dni = ven.dni
@@ -212,6 +212,7 @@ const login = async (req, res) => {
                 usuario: userbd.usua,
                 sucursal: userbd.nombre_sucursal || null,
                 id_tenant: userbd.id_tenant || null,
+                plan_pago: userbd.plan_pago || null,
                 defaultPage: defaultRedirect
             }
         });
@@ -289,7 +290,7 @@ const verifyToken = async (req, res) => {
         let userFound;
         if (id_tenant) {
             [userFound] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.estado_usuario, usu.estado_token, su.nombre_sucursal, usu.id_tenant
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.estado_usuario, usu.estado_token, su.nombre_sucursal, usu.id_tenant, usu.plan_pago
                  FROM usuario usu
                  LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
                  LEFT JOIN sucursal su ON su.dni = ven.dni
@@ -332,7 +333,8 @@ const verifyToken = async (req, res) => {
             rol: userbd.id_rol,
             usuario: userbd.usua,
             sucursal: userbd.nombre_sucursal || null,
-            id_tenant: userbd.id_tenant || null
+            id_tenant: userbd.id_tenant || null,
+            plan_pago: userbd.plan_pago || null,
         });
     } catch (error) {
         console.error('[SECURITY] Error en verifyToken:', error);
