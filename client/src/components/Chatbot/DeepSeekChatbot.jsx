@@ -9,6 +9,7 @@ import { getModulosConSubmodulos } from "@/services/rutas.services";
 import axios from "@/api/axios";
 import FunctionShortcuts from "./FunctionShortcuts";
 import downloadExcelReport from "@/pages/Almacen/Kardex/data/generateExcel";
+import { toast } from "react-hot-toast";
 
 // Prompt rápidos
 const QUICK_PROMPTS = [
@@ -40,6 +41,8 @@ export default function DeepSeekOpenRouterChatbot() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [isFunctionShortcutsOpen, setIsFunctionShortcutsOpen] = useState(false);
+  const [featuresAllowed, setFeaturesAllowed] = useState({ chatbot: true, shortcuts: true });
+
 
   // NUEVO: controles de densidad y tamaño de texto
   const [density, setDensity] = useState("comfortable"); // "comfortable" | "compact"
@@ -224,6 +227,30 @@ function mergeWithFormSchema(entity, reply, schemaData) {
       return "";
     }
   }
+
+    useEffect(() => {
+    // Centraliza la consulta de funciones permitidas
+    async function fetchFeatureAccess() {
+      try {
+        const { data } = await axios.get("/dashboard/funcionesPlan", { params: { usuario } });
+        // data: { funciones: [1,2,3,4,...] }
+        setFeaturesAllowed({
+          chatbot: data.funciones?.includes(3), // id 3 = chatbot
+          shortcuts: data.funciones?.includes(4), // id 4 = atajos/mensajería/log
+        });
+      } catch {
+        setFeaturesAllowed({ chatbot: false, shortcuts: false });
+      }
+    }
+    fetchFeatureAccess();
+  }, [usuario]);
+
+  // Handler genérico para mostrar toast si no tiene acceso
+  const handleNoAccess = (feature) => {
+    toast.error(
+      `⛔ No tienes acceso a ${feature} por tu plan actual. Consulta con el administrador o revisa los planes disponibles en Configuración.`
+    );
+  };
 
   // Limpieza de texto
 function simplifyResponse(text = "") {
@@ -718,17 +745,29 @@ return (
           </Button>
         </DropdownTrigger>
         <DropdownMenu aria-label="Panel de opciones" className="dark:bg-zinc-900">
-          <DropdownItem
-            key="function-shortcuts"
-            startContent={<Zap className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
-            onClick={() => setIsFunctionShortcutsOpen(true)}
-          >
-            Atajos de función
-          </DropdownItem>
+            <DropdownItem
+              key="function-shortcuts"
+              startContent={<Zap className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
+              onClick={() =>
+                featuresAllowed.shortcuts
+                  ? setIsFunctionShortcutsOpen(true)
+                  : handleNoAccess("Atajos de función")
+              }
+              isDisabled={!featuresAllowed.shortcuts}
+              className={!featuresAllowed.shortcuts ? "opacity-60 pointer-events-none" : ""}
+            >
+              Atajos de función
+            </DropdownItem>
           <DropdownItem
             key="chatbot"
             startContent={<Bot className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
-            onClick={() => setIsChatOpen(true)}
+            onClick={() =>
+              featuresAllowed.chatbot
+                ? setIsChatOpen(true)
+                : handleNoAccess("Chatbot")
+            }
+            isDisabled={!featuresAllowed.chatbot}
+            className={!featuresAllowed.chatbot ? "opacity-60 pointer-events-none" : ""}
           >
             Asistente ERP
           </DropdownItem>

@@ -1,17 +1,19 @@
 import { Router } from "express";
 import { methods as sucursalController } from "./../controllers/sucursal.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
+import { checkFeatureAccess } from "../middlewares/featureAccess.js";
 
 const router = Router();
 
-// Aplica el middleware de autenticación a todas las rutas de productos
 router.use(auth);
-
 
 router.get("/inicio", sucursalController.getSucursalInicio);
 router.get("/", sucursalController.getSucursales);
 router.get("/vendedores", sucursalController.getVendedores);
-router.post("/addsucursal", sucursalController.insertSucursal);
+
+// Limita creación de sucursales según el plan
+router.post("/addsucursal", checkFeatureAccess("multiples_sucursales", { checkLimit: true }), sucursalController.insertSucursal);
+
 router.post("/updatesucursal", sucursalController.updateSucursal);
 router.delete("/delete/:id", sucursalController.deleteSucursal);
 
