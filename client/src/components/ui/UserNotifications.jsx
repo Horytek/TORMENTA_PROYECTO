@@ -108,11 +108,12 @@ export default function UserNotifications({ open, onClose }) {
                   isIconOnly
                   variant="light"
                   color="danger"
+                  size="sm"
                   className="rounded-full shadow hover:shadow-md"
                   onPress={() => handleClose(internalClose)}
                   aria-label="Cerrar"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
             </DrawerHeader>

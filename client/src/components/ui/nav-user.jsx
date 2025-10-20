@@ -33,12 +33,17 @@ import { useAuth } from "@/context/Auth/AuthProvider";
 import { getRoles } from "@/services/rol.services";
 import { getNotificaciones } from "@/services/dashboard.services";
 import { Badge } from "@heroui/react";
+import BillingDrawer from "@/components/ui/BillingDrawer";
+import AccountDrawer from "@/components/ui/AccountDrawer";
 
 export function NavUser() {
   const { isMobile, state } = useSidebar();
   const { user, logout } = useAuth();
   const [roles, setRoles] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showBilling, setShowBilling] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
+  const [billingData, setBillingData] = useState(null);
 
   // nuevo: contador de notificaciones
   const [notifCount, setNotifCount] = useState(0);
@@ -80,6 +85,19 @@ export function NavUser() {
     };
   }, [showNotifications]);
 
+  useEffect(() => {
+    if (showBilling) {
+      // Aquí deberías hacer la petición real, ejemplo:
+      setBillingData({
+        empresa: user?.empresa || "Empresa S.A.C.",
+        correo: user?.correo || user?.email || "correo@empresa.com",
+        costo: user?.plan_pago === "1" ? "S/ 120" : user?.plan_pago === "2" ? "S/ 60" : "S/ 30",
+        vencimiento: user?.fecha_vencimiento || "2024-12-31",
+        estado: "Activo"
+      });
+    }
+  }, [showBilling, user]);
+
   if (!user) return null;
 
   const formatRoleName = (name) => {
@@ -106,6 +124,8 @@ export function NavUser() {
   return (
     <>
       <UserNotifications open={showNotifications} onClose={() => setShowNotifications(false)} />
+      <BillingDrawer open={showBilling} onClose={() => setShowBilling(false)} billingData={billingData} />
+      <AccountDrawer open={showAccount} onClose={() => setShowAccount(false)} accountData={billingData} /> 
       <SidebarMenu>
         <SidebarMenuItem>
           <DropdownMenu>
@@ -168,11 +188,17 @@ export function NavUser() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg">
+                <DropdownMenuItem
+                  className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg"
+                  onClick={() => setShowAccount(true)} // abre el drawer de cuenta
+                >
                   <BadgeCheck className="mr-2 text-blue-400" />
                   Cuenta
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg">
+                <DropdownMenuItem
+                  className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg"
+                  onClick={() => setShowBilling(true)}
+                >
                   <CreditCard className="mr-2 text-blue-400" />
                   Facturación
                 </DropdownMenuItem>
