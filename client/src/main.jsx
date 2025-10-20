@@ -21,6 +21,7 @@ const EmpleoPage = lazy(() => import("./pages/Landing/EmpleoPage"));
 const ContactanosPage = lazy(() => import("./pages/Landing/ContactanosPage"));
 const BlogPage = lazy(() => import("./pages/Landing/BlogPage"));
 const RegistroLicenciaPage = lazy(() => import("./pages/Landing/RegistroLicenciaPage"));
+const RegistroPage = lazy(() => import("./pages/Landing/RegistroPage"));
 const AppSidebar = lazy(() =>
   import("./components/Sidebar/AppSidebar").then((module) => ({
     default: module.AppSidebar,
@@ -103,6 +104,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="/landing/contactanos" element={<ContactanosPage />} />
               <Route path="/landing/blog" element={<BlogPage />} />
               <Route path="/landing/registro-licencia" element={<RegistroLicenciaPage />} />
+              <Route path="/landing/registro" element={<RegistroPage />} />
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/article" element={<BlogPage />} />
               <Route element={<ProtectedRoute />}>

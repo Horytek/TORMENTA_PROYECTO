@@ -15,13 +15,13 @@ export const Pricing = () => {
   };
 
   const handlePlanSelection = (planName, price, period) => {
-    // Redirigir a la página de registro de licencia con parámetros del plan
+    // Redirigir a la nueva página de registro con parámetros del plan
     const searchParams = new URLSearchParams({
       plan: planName,
       price: price,
       period: period
     });
-    navigate(`/landing/registro-licencia?${searchParams.toString()}`);
+    navigate(`/landing/registro?${searchParams.toString()}`);
   };
 
   return (
