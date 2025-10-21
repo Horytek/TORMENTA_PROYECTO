@@ -62,8 +62,20 @@ app.use(helmet());
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
-      imgSrc: ["'self'", "data:", "https://gc.kis.v2.scr.kaspersky-labs.com", "wss://gc.kis.v2.scr.kaspersky-labs.com", "https://i.ibb.co"]
-    }
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "https://sdk.mercadopago.com", // Permite Mercado Pago SDK
+        "https://gc.kis.v2.scr.kaspersky-labs.com",
+        "wss://gc.kis.v2.scr.kaspersky-labs.com"
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "https://gc.kis.v2.scr.kaspersky-labs.com",
+        "wss://gc.kis.v2.scr.kaspersky-labs.com",
+        "https://i.ibb.co"
+      ]
   })
 );
 const norm = u => { 
