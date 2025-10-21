@@ -76,6 +76,7 @@ app.use(
         "wss://gc.kis.v2.scr.kaspersky-labs.com",
         "https://i.ibb.co"
       ]
+    }
   })
 );
 const norm = u => { 
