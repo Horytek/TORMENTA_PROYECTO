@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
+import { createPreference } from "@/services/payment.services";
+
 
 // 🔥 IMPORTANTE: Ahora recibe planInfo y userData como props
 export default function WalletButton({ planInfo, userData }) {
@@ -7,7 +9,6 @@ export default function WalletButton({ planInfo, userData }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   // Usar variable de entorno para la API en Azure o local
-  const API_URL = import.meta.env.VITE_API_URL;
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
   const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 
@@ -49,22 +50,15 @@ export default function WalletButton({ planInfo, userData }) {
         };
 
 
-        const response = await fetch(`${API_URL}/create_preference`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(paymentData)
-        });
+      const result = await createPreference(paymentData);
+      if (result.success) {
+        setPreferenceId(result.id);
+      } else {
+        setError("No se pudo crear la preferencia");
+      }
 
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Error al crear preferencia");
-        }
-
-        const data = await response.json();
-        setPreferenceId(data.id);
       } catch (err) {
-        setError("No se pudo crear la preferencia: " + err.message);
+        setError("No se pudo crear la preferencia");
       } finally {
         setLoading(false);
       }
