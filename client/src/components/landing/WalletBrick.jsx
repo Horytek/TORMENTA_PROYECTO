@@ -56,8 +56,7 @@ export default function WalletButton({ planInfo, userData }) {
           },
         };
 
-        const result = await createPreferenceService(paymentData); // ← usa el service importado
-        if (!alive) return;
+        const result = await createPreferenceService(paymentData);
 
         if (result?.success) {
           setPreferenceId(result.id);
@@ -68,8 +67,16 @@ export default function WalletButton({ planInfo, userData }) {
         }
       } catch (err) {
         if (!alive) return;
+        // Log completo del error y la respuesta
         console.error("Error al crear preferencia:", err);
-        setError("No se pudo crear la preferencia: " + (err.message || "Error desconocido"));
+        if (err.response) {
+          console.error("Respuesta del backend:", err.response.data);
+          setError(
+            `No se pudo crear la preferencia: ${err.response.data?.message || JSON.stringify(err.response.data)}`
+          );
+        } else {
+          setError("No se pudo crear la preferencia: " + (err.message || "Error desconocido"));
+        }
       } finally {
         if (alive) setLoading(false);
       }
