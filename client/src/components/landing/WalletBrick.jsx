@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import { createPreference as createPreferenceService } from "@/services/payment.services";
 
-// 🔥 IMPORTANTE: Ahora recibe planInfo y userData como props
 export default function WalletButton({ planInfo, userData }) {
   const [preferenceId, setPreferenceId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,7 +10,6 @@ export default function WalletButton({ planInfo, userData }) {
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
   const MP_PUBLIC_KEY = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
 
-  // 1) Inicializa Mercado Pago una sola vez (cuando haya public key)
   useEffect(() => {
     if (!MP_PUBLIC_KEY) {
       setError("Clave pública de Mercado Pago no configurada");
@@ -21,18 +19,12 @@ export default function WalletButton({ planInfo, userData }) {
     initMercadoPago(MP_PUBLIC_KEY, { locale: "es-PE" });
   }, [MP_PUBLIC_KEY]);
 
-  // 2) Crea la preferencia cuando cambian los datos requeridos
   useEffect(() => {
     let alive = true;
-
     async function setupPreference() {
       try {
         setLoading(true);
-
-        // Validaciones mínimas
-        const priceString = planInfo?.price || "S/ 0";
-        const priceNumber = parseFloat(priceString.replace(/[^\d.]/g, "")) || 0;
-
+        const priceNumber = parseFloat((planInfo?.price || "0").replace(/[^\d.]/g, "")) || 0;
         const paymentData = {
           items: [
             {
@@ -55,9 +47,8 @@ export default function WalletButton({ planInfo, userData }) {
             pending: `${FRONTEND_URL}/pending`,
           },
         };
-
         const result = await createPreferenceService(paymentData);
-
+        if (!alive) return;
         if (result?.success) {
           setPreferenceId(result.id);
           setError(null);
@@ -67,27 +58,16 @@ export default function WalletButton({ planInfo, userData }) {
         }
       } catch (err) {
         if (!alive) return;
-        // Log completo del error y la respuesta
-        console.error("Error al crear preferencia:", err);
-        if (err.response) {
-          console.error("Respuesta del backend:", err.response.data);
-          setError(
-            `No se pudo crear la preferencia: ${err.response.data?.message || JSON.stringify(err.response.data)}`
-          );
-        } else {
-          setError("No se pudo crear la preferencia: " + (err.message || "Error desconocido"));
-        }
+        setError("No se pudo crear la preferencia: " + (err.message || "Error desconocido"));
       } finally {
         if (alive) setLoading(false);
       }
     }
-
     if (planInfo && userData) {
       setupPreference();
     } else {
       setLoading(false);
     }
-
     return () => {
       alive = false;
     };
