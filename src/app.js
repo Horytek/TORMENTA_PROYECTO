@@ -65,17 +65,23 @@ app.use(
       defaultSrc: ["'self'"],
       scriptSrc: [
         "'self'",
-        "https://sdk.mercadopago.com", // Permite Mercado Pago SDK
-        "https://gc.kis.v2.scr.kaspersky-labs.com",
-        "wss://gc.kis.v2.scr.kaspersky-labs.com"
-      ],
-      imgSrc: [
-        "'self'",
-        "data:",
+        "https://sdk.mercadopago.com",
         "https://gc.kis.v2.scr.kaspersky-labs.com",
         "wss://gc.kis.v2.scr.kaspersky-labs.com",
-        "https://i.ibb.co"
-      ]
+        // Añade los dominios requeridos por Mercado Pago:
+        "https://http2.mlstatic.com",
+        "https://mercadopago.com",
+        "https://www.mercadopago.com",
+        "https://op-cho-bricks.mercadopago.com",
+      ],
+      connectSrc: [
+        "'self'",
+        "https://sdk.mercadopago.com",
+        "https://api.mercadopago.com",
+        "https://http2.mlstatic.com",
+        "https://op-cho-bricks.mercadopago.com",
+      ],
+      // ...otras directivas...
     }
   })
 );
