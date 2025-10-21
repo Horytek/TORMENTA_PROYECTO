@@ -9,7 +9,7 @@ export default function WalletButton({ planInfo, userData }) {
   const [error, setError] = useState(null);
 
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
-  const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
+  const MP_PUBLIC_KEY = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
 
   // 1) Inicializa Mercado Pago una sola vez (cuando haya public key)
   useEffect(() => {
