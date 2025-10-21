@@ -1,80 +1,97 @@
 import React, { useEffect, useState } from "react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
-import { createPreference } from "@/services/payment.services";
-
+import { createPreference as createPreferenceService } from "@/services/payment.services";
 
 // 🔥 IMPORTANTE: Ahora recibe planInfo y userData como props
 export default function WalletButton({ planInfo, userData }) {
   const [preferenceId, setPreferenceId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Usar variable de entorno para la API en Azure o local
-  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
+
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
   const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 
+  // 1) Inicializa Mercado Pago una sola vez (cuando haya public key)
   useEffect(() => {
-  // Inicializa Mercado Pago con la clave pública desde .env
-  initMercadoPago(MP_PUBLIC_KEY, {
-    locale: "es-PE",
-  });
+    if (!MP_PUBLIC_KEY) {
+      setError("Clave pública de Mercado Pago no configurada");
+      setLoading(false);
+      return;
+    }
+    initMercadoPago(MP_PUBLIC_KEY, { locale: "es-PE" });
+  }, [MP_PUBLIC_KEY]);
 
-    // Crea la preferencia en tu backend
-    const createPreference = async () => {
+  // 2) Crea la preferencia cuando cambian los datos requeridos
+  useEffect(() => {
+    let alive = true;
+
+    async function setupPreference() {
       try {
-        // Extraer el precio numérico del string (ej: "S/ 30" -> 30)
-        const priceString = planInfo?.price || "S/ 0";
-        const priceNumber = parseFloat(priceString.replace(/[^\d.]/g, '')) || 0;
+        setLoading(true);
 
-        // Construir datos del pago con la información REAL del frontend
+        // Validaciones mínimas
+        const priceString = planInfo?.price || "S/ 0";
+        const priceNumber = parseFloat(priceString.replace(/[^\d.]/g, "")) || 0;
+
         const paymentData = {
-          items: [{
-            id: "PLAN_" + Date.now(),
-            title: planInfo?.plan || "Plan de suscripción",
-            quantity: 1,
-            unit_price: priceNumber,
-            description: `${planInfo?.plan || "Plan"} - ${planInfo?.period || 'Suscripción'}`
-          }],
+          items: [
+            {
+              id: "PLAN_" + Date.now(),
+              title: planInfo?.plan || "Plan de suscripción",
+              quantity: 1,
+              unit_price: priceNumber,
+              description: `${planInfo?.plan || "Plan"} - ${planInfo?.period || "Suscripción"}`,
+            },
+          ],
           payer: {
             name: userData?.nombre || "",
             surname: userData?.apellido || "",
             email: userData?.email || "cliente@ejemplo.com",
-            phone: {
-              number: userData?.telefono || ""
-            }
+            phone: { number: userData?.telefono || "" },
           },
           back_urls: {
-              success: `${FRONTEND_URL}/success`,
-              failure: `${FRONTEND_URL}/failure`,
-              pending: `${FRONTEND_URL}/pending`
-          }
+            success: `${FRONTEND_URL}/success`,
+            failure: `${FRONTEND_URL}/failure`,
+            pending: `${FRONTEND_URL}/pending`,
+          },
         };
 
+        const result = await createPreferenceService(paymentData); // ← usa el service importado
+        if (!alive) return;
 
-      const result = await createPreference(paymentData);
-      if (result.success) {
-        setPreferenceId(result.id);
-      } else {
-        setError("No se pudo crear la preferencia");
-      }
-
+        if (result?.success) {
+          setPreferenceId(result.id);
+          setError(null);
+        } else {
+          setPreferenceId(null);
+          setError(result?.message || "No se pudo crear la preferencia");
+        }
       } catch (err) {
-        setError("No se pudo crear la preferencia");
+        if (!alive) return;
+        console.error("Error al crear preferencia:", err);
+        setError("No se pudo crear la preferencia: " + (err.message || "Error desconocido"));
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
-    };
+    }
 
-    createPreference();
-  }, [planInfo, userData]);
+    if (planInfo && userData) {
+      setupPreference();
+    } else {
+      setLoading(false);
+    }
+
+    return () => {
+      alive = false;
+    };
+  }, [planInfo, userData, FRONTEND_URL]);
 
   if (loading) return <p className="text-gray-400">🕐 Cargando botón de pago...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-2 text-primary-text">
-        💳 Pagar con Mercado Pago
-      </h2>
+      <h2 className="text-lg font-semibold mb-2 text-primary-text">💳 Pagar con Mercado Pago</h2>
       {preferenceId ? (
         <div id="wallet_container">
           <Wallet

@@ -1,5 +1,11 @@
-import axios from "./axios";
+import axios from "@/api/axios";
 
-// Crea preferencia de pago en el backend
-export const createPreferenceRequest = (paymentData) =>
-  axios.post("/payment/create_preference", paymentData);
+export async function createPreferenceRequest(paymentData) {
+  try {
+    const { data } = await axios.post("/create_preference", paymentData);
+    return { success: true, id: data?.id };
+  } catch (e) {
+    const msg = e?.response?.data?.message || e.message || "Error al crear preferencia";
+    return { success: false, message: msg };
+  }
+}
