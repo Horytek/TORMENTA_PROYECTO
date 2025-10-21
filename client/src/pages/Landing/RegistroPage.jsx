@@ -48,12 +48,12 @@ export default function RegistroPage() {
         
         <section className="py-16 md:py-20 lg:py-24">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-primary-text mb-6">
+            <div className="w-full md:w-10/12 lg:w-[1200px] mx-auto">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center text-primary-text mb-6 mt-8 md:mt-10 lg:mt-12">
                 Registro para {planInfo.plan}
               </h1>
               <p className="text-lg text-secondary-text text-center mb-12">
-                Complete el formulario a continuación para comenzar su suscripción al {planInfo.plan} por {planInfo.price}/{planInfo.period}
+                Complete el formulario a continuación para comenzar su suscripción al {planInfo.plan}
               </p>
 
               <RegistroForm planInfo={planInfo} />

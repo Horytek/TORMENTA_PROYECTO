@@ -8,9 +8,6 @@ export const RegistroForm = ({ planInfo }) => {
     email: '',
     telefono: '',
     empresa: '',
-    direccion: '',
-    ciudad: '',
-    pais: '',
     aceptaTerminos: false
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -18,229 +15,210 @@ export const RegistroForm = ({ planInfo }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value
-    });
-    
-    // Limpiar error al cambiar el valor
-    if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
-    }
+    }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const validateForm = () => {
-    let formErrors = {};
+    const formErrors = {};
     let isValid = true;
-
-    if (!formData.nombre.trim()) {
-      formErrors.nombre = 'El nombre es obligatorio';
-      isValid = false;
-    }
-
-    if (!formData.apellido.trim()) {
-      formErrors.apellido = 'El apellido es obligatorio';
-      isValid = false;
-    }
-
-    if (!formData.email.trim()) {
-      formErrors.email = 'El email es obligatorio';
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      formErrors.email = 'El email no es válido';
-      isValid = false;
-    }
-
-    if (!formData.telefono.trim()) {
-      formErrors.telefono = 'El teléfono es obligatorio';
-      isValid = false;
-    }
-
-    if (!formData.aceptaTerminos) {
-      formErrors.aceptaTerminos = 'Debe aceptar los términos y condiciones';
-      isValid = false;
-    }
-
+    if (!formData.nombre.trim()) { formErrors.nombre = 'El nombre es obligatorio'; isValid = false; }
+    if (!formData.apellido.trim()) { formErrors.apellido = 'El apellido es obligatorio'; isValid = false; }
+    if (!formData.email.trim()) { formErrors.email = 'El email es obligatorio'; isValid = false; }
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) { formErrors.email = 'Email inválido'; isValid = false; }
+    if (!formData.telefono.trim()) { formErrors.telefono = 'El teléfono es obligatorio'; isValid = false; }
+    if (!formData.aceptaTerminos) { formErrors.aceptaTerminos = 'Debes aceptar los términos'; isValid = false; }
     setErrors(formErrors);
     return isValid;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (validateForm()) {
-      // Solo mostramos el botón de pago al enviar el formulario
-      setFormSubmitted(true);
-    }
+    if (validateForm()) setFormSubmitted(true);
   };
 
   return (
-    <div 
-      className="rounded-3xl p-6 md:p-8" 
-      style={{
-        backgroundColor: 'rgba(48, 49, 54, 0.7)',
-        backdropFilter: 'blur(4px)',
-      }}
-    >
-      <div className="mb-6">
-        <h3 className="text-xl md:text-2xl font-semibold mb-2 text-primary-text">Detalles del plan</h3>
-        <div className="flex flex-wrap items-center gap-2 p-4 rounded-lg bg-gray-800/50">
-          <div className="flex-1">
-            <p className="font-medium text-lg text-primary-text">{planInfo.plan}</p>
-            <p className="text-gray-400">{planInfo.price} / {planInfo.period}</p>
+    <div className="rounded-2xl p-6 md:p-8 w-full">
+      <div className="max-w-[1200px] w-full mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+        {/* Form card */}
+  <div className="lg:col-span-2 bg-card-bg border border-gray-700/20 rounded-3xl p-10 md:p-12 shadow-xl min-h-[520px]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-2xl font-semibold text-primary-text">Registro</h3>
+              <p className="text-sm text-gray-400">Completa los datos para activar tu suscripción</p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-400">Plan</div>
+              <div className="text-lg font-semibold text-primary-text">{planInfo.plan}</div>
+              <div className="text-sm text-gray-400">{planInfo.price} / {planInfo.period}</div>
+            </div>
           </div>
-          <div className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-sm font-medium">
-            {planInfo.price === 'S/ 0' ? 'Gratis' : 'Premium'}
+
+              {!formSubmitted ? (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label htmlFor="nombre" className="block text-base md:text-lg font-medium text-primary-text mb-1">Nombre</label>
+                  <input
+                    id="nombre"
+                    name="nombre"
+                    value={formData.nombre}
+                    onChange={handleChange}
+                    placeholder="Tu nombre"
+                    className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.nombre ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary-color/40`}
+                  />
+                  {errors.nombre && <p className="mt-1 text-xs text-red-500">{errors.nombre}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="apellido" className="block text-base md:text-lg font-medium text-primary-text mb-1">Apellido</label>
+                  <input
+                    id="apellido"
+                    name="apellido"
+                    value={formData.apellido}
+                    onChange={handleChange}
+                    placeholder="Tu apellido"
+                    className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.apellido ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary-color/40`}
+                  />
+                  {errors.apellido && <p className="mt-1 text-xs text-red-500">{errors.apellido}</p>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="email" className="block text-base md:text-lg font-medium text-primary-text mb-1">Email</label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="tu@email.com"
+                    className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.email ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary-color/40`}
+                  />
+                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="telefono" className="block text-base md:text-lg font-medium text-primary-text mb-1">Teléfono</label>
+                  <input
+                    id="telefono"
+                    name="telefono"
+                    value={formData.telefono}
+                    onChange={handleChange}
+                    placeholder="Tu teléfono"
+                    className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.telefono ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary-color/40`}
+                  />
+                  {errors.telefono && <p className="mt-1 text-xs text-red-500">{errors.telefono}</p>}
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="empresa" className="block text-base md:text-lg font-medium text-primary-text mb-1">Empresa (opcional)</label>
+                <input
+                  id="empresa"
+                  name="empresa"
+                  value={formData.empresa}
+                  onChange={handleChange}
+                  placeholder="Nombre de la empresa"
+                  className="w-full px-6 py-4 rounded-2xl bg-transparent border border-gray-200/10 text-primary-text placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary-color/40"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="aceptaTerminos" className="flex items-center gap-3 cursor-pointer select-none">
+                  <input id="aceptaTerminos" name="aceptaTerminos" type="checkbox" checked={formData.aceptaTerminos} onChange={handleChange} className="sr-only peer" />
+                  <span className="w-5 h-5 rounded-lg border border-gray-600 flex items-center justify-center bg-transparent transition-colors duration-150 peer-checked:bg-secondary-color peer-checked:border-transparent">
+                    <svg className="hidden w-3 h-3 text-white peer-checked:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 12l4 4L20 6" />
+                    </svg>
+                  </span>
+                  <span className="text-base text-gray-300">Acepto los <span className="text-secondary-color underline cursor-pointer">términos y condiciones</span></span>
+                </label>
+              </div>
+              {errors.aceptaTerminos && <p className="mt-1 text-xs text-red-500">{errors.aceptaTerminos}</p>}
+
+              <div className="pt-3">
+                <button type="submit" className="w-full inline-flex items-center justify-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-secondary-color to-primary-color text-white font-semibold shadow-xl hover:scale-[1.02] transition-transform">Continuar con el pago</button>
+              </div>
+            </form>
+          ) : (
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold text-primary-text mb-4 text-center">Resumen y pago</h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Contact card */}
+                <div className="p-6 rounded-2xl bg-card-bg border border-gray-700/20 shadow-sm">
+                  <div className="text-sm text-gray-400 mb-3">Contacto</div>
+                  <dl className="space-y-3">
+                    <div>
+                      <dt className="text-xs text-gray-400">Nombre</dt>
+                      <dd className="text-primary-text font-medium">{formData.nombre} {formData.apellido}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-gray-400">Email</dt>
+                      <dd className="text-primary-text">{formData.email}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-gray-400">Teléfono</dt>
+                      <dd className="text-primary-text">{formData.telefono}</dd>
+                    </div>
+                    {formData.empresa && (
+                      <div>
+                        <dt className="text-xs text-gray-400">Empresa</dt>
+                        <dd className="text-primary-text">{formData.empresa}</dd>
+                      </div>
+                    )}
+                  </dl>
+                </div>
+
+                {/* Plan & payment card */}
+                <div className="p-6 rounded-2xl bg-card-bg border border-gray-700/20 shadow-lg flex flex-col justify-between">
+                  <div>
+                    <div className="text-sm text-gray-400">Plan seleccionado</div>
+                    <div className="mt-2 text-2xl font-bold text-primary-text">{planInfo.plan}</div>
+                    <div className="text-xl text-primary-text mt-1">{planInfo.price} <span className="text-sm text-gray-400">/ {planInfo.period}</span></div>
+
+                    <ul className="mt-4 space-y-2 text-sm text-gray-300">
+                      <li className="flex items-center gap-3"><span className="w-5 h-5 rounded-full bg-secondary-color/20 flex items-center justify-center text-secondary-color">✓</span> Soporte técnico</li>
+                      <li className="flex items-center gap-3"><span className="w-5 h-5 rounded-full bg-secondary-color/20 flex items-center justify-center text-secondary-color">✓</span> Módulos esenciales</li>
+                      <li className="flex items-center gap-3"><span className="w-5 h-5 rounded-full bg-secondary-color/20 flex items-center justify-center text-secondary-color">✓</span> Reportes y KPIs</li>
+                    </ul>
+                  </div>
+
+                  <div className="mt-6">
+                    <div className="w-full">
+                      <WalletBrick planInfo={planInfo} userData={formData} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Side summary */}
+        <aside className="lg:col-span-1">
+          <div className="bg-card-bg border border-gray-700/20 rounded-3xl p-8 md:p-10 shadow-lg sticky top-8 min-h-[360px]">
+            <div className="mb-4">
+              <div className="text-sm text-gray-400">Resumen del plan</div>
+              <div className="text-2xl font-bold text-primary-text">{planInfo.plan}</div>
+              <div className="text-gray-400">{planInfo.price} / {planInfo.period}</div>
+            </div>
+            <ul className="space-y-3 text-sm text-gray-300">
+              <li className="flex items-start gap-3"><span className="w-6 h-6 rounded-full bg-secondary-color/20 flex items-center justify-center text-secondary-color">✓</span> Soporte técnico</li>
+              <li className="flex items-start gap-3"><span className="w-6 h-6 rounded-full bg-secondary-color/20 flex items-center justify-center text-secondary-color">✓</span> Módulos esenciales</li>
+              <li className="flex items-start gap-3"><span className="w-6 h-6 rounded-full bg-secondary-color/20 flex items-center justify-center text-secondary-color">✓</span> Reportes y KPIs</li>
+            </ul>
+            <div className="mt-6 text-xs text-gray-400">Una vez enviado el pago, revisaremos los datos y activaremos la cuenta en 24 horas.</div>
           </div>
+        </aside>
         </div>
       </div>
-
-      {!formSubmitted ? (
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label htmlFor="nombre" className="block text-sm font-medium text-primary-text mb-1">
-                Nombre
-              </label>
-              <input
-                type="text"
-                id="nombre"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 rounded-lg bg-gray-800/50 border ${
-                  errors.nombre ? 'border-red-500' : 'border-gray-700'
-                } text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                placeholder="Tu nombre"
-              />
-              {errors.nombre && <p className="mt-1 text-xs text-red-500">{errors.nombre}</p>}
-            </div>
-            <div>
-              <label htmlFor="apellido" className="block text-sm font-medium text-primary-text mb-1">
-                Apellido
-              </label>
-              <input
-                type="text"
-                id="apellido"
-                name="apellido"
-                value={formData.apellido}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 rounded-lg bg-gray-800/50 border ${
-                  errors.apellido ? 'border-red-500' : 'border-gray-700'
-                } text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                placeholder="Tu apellido"
-              />
-              {errors.apellido && <p className="mt-1 text-xs text-red-500">{errors.apellido}</p>}
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-primary-text mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 rounded-lg bg-gray-800/50 border ${
-                  errors.email ? 'border-red-500' : 'border-gray-700'
-                } text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                placeholder="tu@email.com"
-              />
-              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
-            </div>
-            <div>
-              <label htmlFor="telefono" className="block text-sm font-medium text-primary-text mb-1">
-                Teléfono
-              </label>
-              <input
-                type="tel"
-                id="telefono"
-                name="telefono"
-                value={formData.telefono}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 rounded-lg bg-gray-800/50 border ${
-                  errors.telefono ? 'border-red-500' : 'border-gray-700'
-                } text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                placeholder="Tu teléfono"
-              />
-              {errors.telefono && <p className="mt-1 text-xs text-red-500">{errors.telefono}</p>}
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <label htmlFor="empresa" className="block text-sm font-medium text-primary-text mb-1">
-              Nombre de la empresa (opcional)
-            </label>
-            <input
-              type="text"
-              id="empresa"
-              name="empresa"
-              value={formData.empresa}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700 text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nombre de tu empresa"
-            />
-          </div>
-
-          <div className="mb-6">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="aceptaTerminos"
-                name="aceptaTerminos"
-                checked={formData.aceptaTerminos}
-                onChange={handleChange}
-                className="h-4 w-4 text-blue-500 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="aceptaTerminos" className="ml-2 block text-sm text-gray-300">
-                Acepto los <span className="text-blue-400 hover:underline cursor-pointer">términos y condiciones</span>
-              </label>
-            </div>
-            {errors.aceptaTerminos && <p className="mt-1 text-xs text-red-500">{errors.aceptaTerminos}</p>}
-          </div>
-
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-violet-500 hover:from-blue-700 hover:to-violet-600 text-white font-medium rounded-xl transition duration-300 ease-in-out transform hover:scale-105"
-            >
-              Continuar con el pago
-            </button>
-          </div>
-        </form>
-      ) : (
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4 text-primary-text text-center">Realizar pago</h3>
-          <p className="text-gray-400 mb-6 text-center">
-            Por favor, complete el pago para finalizar su registro
-          </p>
-          
-          <div className="max-w-md mx-auto bg-gray-800/30 p-6 rounded-xl border border-gray-700">
-            <div className="mb-6">
-              <div className="text-sm text-gray-400 mb-1">Datos de contacto:</div>
-              <p className="text-primary-text">{formData.nombre} {formData.apellido}</p>
-              <p className="text-primary-text">{formData.email}</p>
-              <p className="text-primary-text">{formData.telefono}</p>
-              {formData.empresa && <p className="text-primary-text">Empresa: {formData.empresa}</p>}
-            </div>
-            
-            <div className="mb-6">
-              <div className="text-sm text-gray-400 mb-1">Detalles del plan:</div>
-              <p className="text-primary-text font-medium">{planInfo.plan}</p>
-              <p className="text-primary-text">{planInfo.price} / {planInfo.period}</p>
-            </div>
-            
-            <div className="mt-8">
-              {/* 🔥 Aquí se pasan las props al WalletBrick */}
-              <WalletBrick planInfo={planInfo} userData={formData} />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

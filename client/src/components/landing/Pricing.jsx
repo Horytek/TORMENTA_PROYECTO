@@ -50,10 +50,10 @@ export const Pricing = () => {
                 Selecciona el plan que se adapte a tus necesidades y benefíciate de nuestras
                 herramientas de análisis.
               </p>
-              <label className="mx-auto bg-bgDark3 relative flex justify-between items-center group text-xl w-44 h-12 rounded-lg pr-36 pl-1 cursor-pointer">
+              <label className="mx-auto bg-bgDark3 relative flex justify-between items-center group text-xl w-44 h-12 rounded-lg pr-36 pl-1 cursor-pointer pricing-toggle">
                 <input
                   type="checkbox"
-                  className="peer appearance-none"
+                  className="peer appearance-none pricing-toggle-checkbox"
                   checked={!isMonthly}
                   onChange={handleChange}
                 />

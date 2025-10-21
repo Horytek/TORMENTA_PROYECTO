@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+// Importar estilos específicos de landing
+import '../../styles/landing/index.css';
 
 
 // Importa los componentes migrados

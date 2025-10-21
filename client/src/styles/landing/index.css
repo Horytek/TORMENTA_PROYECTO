@@ -31,6 +31,20 @@
     /* Scroll behavior suave */
     scroll-behavior: smooth;
   }
+
+  /* Sutil oscurecimiento para la página 'Sobre Nosotros' */
+  /* Aplicar mismo overlay oscuro a páginas listadas en el footer */
+  .landing-page[data-theme="sobre-nosotros"],
+  .landing-page[data-theme="servicios"],
+  .landing-page[data-theme="equipo"],
+  .landing-page[data-theme="actualizaciones"],
+  .landing-page[data-theme="terminos"],
+  .landing-page[data-theme="privacidad"],
+  .landing-page[data-theme="empleos"],
+  .landing-page[data-theme="contacto"],
+  .landing-page[data-theme="blog"] {
+    background-color: rgba(38, 39, 43, 0.72);
+  }
   
   /* Reset styles dentro de landing page para prevenir herencia del ERP */
   .landing-page * {
@@ -38,11 +52,28 @@
   }
   
   /* Override potenciales conflictos del main.css - Reset más específico */
-  .landing-page input,
+  /* Do not unset checkboxes/radios — keep their native appearance */
+  .landing-page input:not([type='checkbox']):not([type='radio']),
   .landing-page textarea {
     all: unset;
     display: revert;
     box-sizing: border-box;
+  }
+
+  /* Ensure checkboxes and radios keep native appearance and use landing accent color */
+  .landing-page input[type='checkbox'],
+  .landing-page input[type='radio'] {
+    -webkit-appearance: auto;
+    appearance: auto;
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    vertical-align: middle;
+    background-color: transparent;
+    border-radius: 0.25rem;
+    /* Use the landing theme accent color for the control fill where supported */
+    accent-color: var(--color-secondary-color);
   }
   
   /* EXPERIMENTO: Sin reset específico para botones */
@@ -52,5 +83,32 @@
     background-color: var(--color-bg-dark-2);
     overflow-x: hidden;
     scroll-behavior: smooth !important;
+  }
+
+  /* Fondo sólido para cards dentro de landing */
+  .bg-card-bg {
+    /* Tonalidad y desenfoque similar a las secciones de Features */
+    background-color: rgba(38, 39, 43, 0.55); /* var(--color-bg-dark-2) con opacidad */
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    background-clip: padding-box;
+    border: 1px solid rgba(255,255,255,0.04);
+    /* sombra sutil para elevar */
+    box-shadow: 0 10px 30px rgba(3,6,23,0.45);
+  }
+
+  /* Ocultar visualmente solo el checkbox del toggle de pricing (no afecta otros checkboxes) */
+  .pricing-toggle .pricing-toggle-checkbox {
+    /* keep it in the DOM for accessibility and state, but visually hide it */
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(1px, 1px, 1px, 1px) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
