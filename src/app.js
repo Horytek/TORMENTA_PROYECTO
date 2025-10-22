@@ -81,6 +81,11 @@ app.use(
         "https://http2.mlstatic.com",
         "https://op-cho-bricks.mercadopago.com",
       ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "https://i.ibb.co"
+      ],
       // ...otras directivas...
     }
   })
