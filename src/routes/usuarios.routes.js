@@ -1,18 +1,21 @@
 import { Router } from "express";
 import { methods as usuariosController } from "./../controllers/usuarios.controller.js";
 import { checkFeatureAccess } from "../middlewares/featureAccess.js";
+import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", usuariosController.getUsuarios);
-router.get("/:id", usuariosController.getUsuario);
-//router.get("/empresa_u/:id", usuariosController.getUsuario_1);
+router.get("/", auth, usuariosController.getUsuarios);
+router.get("/:id", auth,  usuariosController.getUsuario);
 
-// Limita creación de usuarios según el plan
-router.post("/", checkFeatureAccess("usuarios_ilimitados", { checkLimit: true }), usuariosController.addUsuario);
+// Ruta protegida por plan (ERP normal)
+router.post("/", auth, usuariosController.addUsuario);
 
-router.put("/:id", usuariosController.updateUsuario);
+// Ruta especial para landing (sin restricciones de plan)
+router.post("/landing", usuariosController.addUsuarioLanding);
+
+router.put("/:id", auth, usuariosController.updateUsuario);
 router.put("/plan/:id", usuariosController.updateUsuarioPlan);
-router.delete("/:id", usuariosController.deleteUsuario);
+router.delete("/:id", auth, usuariosController.deleteUsuario);
 
 export default router;

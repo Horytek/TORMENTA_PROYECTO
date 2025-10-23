@@ -1,9 +1,23 @@
 import { getEmpresasRequest, getEmpresaRequest, addEmpresaRequest,
   updateEmpresaRequest, deleteEmpresaRequest, updateEmpresaMonedasRequest } 
 from '@/api/api.empresa';
+import { addUsuarioLandingRequest } from '@/api/api.usuario'; // usamos la API directa para obtener respuesta
 import { getUsuario_1 } from "@/services/usuario.services";
 import { toast } from "react-hot-toast";
 import { useUserStore } from "@/store/useStore";
+
+// Utilidades simples para credenciales
+function randomString(len = 10) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$";
+  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+function slug(str) {
+  return String(str || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 10);
+}
 
 const getEmpresas = async () => {
   try {
@@ -31,14 +45,14 @@ const getEmpresa = async (id) => {
   }
 };
 
-const addEmpresa = async (producto) => {
+const addEmpresa = async (empresa) => {
   try {
-    const response = await addEmpresaRequest(producto);
+    const response = await addEmpresaRequest(empresa);
     if (response.data.code === 1) {
-      toast.success("Producto añadido con éxito");
+      toast.success("Empresa añadida con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al guardar el producto");
+      toast.error(response.data.message || "Ocurrió un error al guardar la empresa");
       return false;
     }
   } catch (error) {
@@ -50,10 +64,10 @@ const updateEmpresa = async (id, newFields) => {
   try {
     const response = await updateEmpresaRequest(id, newFields);
     if (response.data.code === 1) {
-      toast.success("Producto actualizado con éxito");
+      toast.success("Empresa actualizada con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al actualizar el producto");
+      toast.error(response.data.message || "Ocurrió un error al actualizar la empresa");
       return false;
     }
   } catch (error) {
@@ -65,13 +79,13 @@ const deleteEmpresa = async (id) => {
   try {
     const response = await deleteEmpresaRequest(id);
     if (response.data.code === 2) {
-      toast.success("Producto dado de baja con éxito");
+      toast.success("Empresa dada de baja con éxito");
     }
     if (response.data.code === 1) {
-      toast.success("Producto eliminado con éxito");
+      toast.success("Empresa eliminada con éxito");
     }
     if (response.status === 404) {
-      toast.error("Ocurrió un error al eliminar el producto");
+      toast.error("Ocurrió un error al eliminar la empresa");
     }
   } catch (error) {
     toast.error("Error en el servidor interno");
@@ -115,5 +129,39 @@ const updateEmpresaMonedas = async (id, monedas, pais) => {
   }
 };
 
+// Crea empresa y luego un usuario administrador vinculado a esa empresa
+const createEmpresaAndAdmin = async (empresa) => {
+  try {
+    // 1) Crear Empresa
+    const { data } = await addEmpresaRequest(empresa);
+    if (!(data?.code === 1 && data?.id_empresa)) {
+      return { success: false, message: data?.message || "No se pudo crear la empresa" };
+    }
+    const id_empresa = data.id_empresa;
+
+    // 2) Generar credenciales aleatorias para el admin
+    const base = slug(empresa?.nombreComercial || empresa?.razonSocial || "admin");
+    const usua = `${base}${Math.floor(1000 + Math.random() * 9000)}`;
+    const contra = randomString(12);
+
+    // 3) Crear usuario administrador (id_rol=1) activo y asociado a la empresa creada
+    const { data: userResp } = await addUsuarioLandingRequest({
+      id_rol: 1,
+      usua,
+      contra,
+      estado_usuario: 1,
+      id_empresa,
+      plan_pago: empresa.plan_pago
+    });
+    if (userResp?.code !== 1) {
+      return { success: false, message: userResp?.message || "No se pudo crear el usuario administrador" };
+    }
+
+    return { success: true, id_empresa, admin: { usua, contra } };
+  } catch (e) {
+    return { success: false, message: e?.response?.data?.message || e.message };
+  }
+};
+
 export { getEmpresas, getEmpresa, addEmpresa, 
-  updateEmpresa, deleteEmpresa, getEmpresaDataByUser, updateEmpresaMonedas };
+  updateEmpresa, deleteEmpresa, getEmpresaDataByUser, updateEmpresaMonedas, createEmpresaAndAdmin };

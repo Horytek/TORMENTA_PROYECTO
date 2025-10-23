@@ -1,4 +1,4 @@
-import { getUsuariosRequest, getUsuarioRequest, getUsuarioRequest_1, addUsuarioRequest, updateUsuarioRequest,updateUsuarioPlanRequest, deleteUsuarioRequest } 
+import { getUsuariosRequest, getUsuarioRequest, getUsuarioRequest_1, addUsuarioRequest, addUsuarioLandingRequest, updateUsuarioRequest, updateUsuarioPlanRequest, deleteUsuarioRequest } 
 from '@/api/api.usuario';
 import { toast } from "react-hot-toast";
 import { transformData } from '@/utils/usuario';
@@ -110,4 +110,25 @@ const deleteUsuario = async (id) => {
   }
 };
 
-export { getUsuarios, getUsuario, addUsuario, updateUsuario, deleteUsuario, updateUsuarioPlan, getUsuario_1 };
+const addUsuarioLanding = async (user) => {
+  try {
+    const response = await addUsuarioLandingRequest(user);
+    if (response.data.code === 1) {
+      return true;
+    } else {
+      console.error('Error adding user (landing):', response.data.message);
+      return false;
+    }
+  } catch (error) {
+    console.error('Error in addUsuarioLanding service:', error);
+    if (error.response?.status === 400) {
+      toast.error(`Datos incompletos: ${error.response?.data?.message || 'Verifique los campos requeridos'}`);
+    } else {
+      toast.error("Error en el servidor interno");
+    }
+    return false;
+  }
+};
+
+
+export { getUsuarios, getUsuario, addUsuario, addUsuarioLanding, updateUsuario, deleteUsuario, updateUsuarioPlan, getUsuario_1 };

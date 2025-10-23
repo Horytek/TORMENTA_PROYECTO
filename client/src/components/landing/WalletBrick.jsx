@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import { createPreference as createPreferenceService } from "@/services/payment.services";
+import { createEmpresaAndAdmin } from '@/services/empresa.services';
 
 export default function WalletButton({ planInfo, userData }) {
   const [preferenceId, setPreferenceId] = useState(null);

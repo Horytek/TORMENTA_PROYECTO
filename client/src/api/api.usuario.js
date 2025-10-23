@@ -20,3 +20,6 @@ export const updateUsuarioPlanRequest = async (id, newFields) =>
 
 export const deleteUsuarioRequest = async (id) =>
   await axios.delete(`/usuario/${id}`);
+
+export const addUsuarioLandingRequest = async (user) =>
+  await axios.post("/usuario/landing", user);

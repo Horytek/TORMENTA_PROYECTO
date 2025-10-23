@@ -21,15 +21,23 @@ import { VscDebugDisconnect } from "react-icons/vsc";
 import { PiPlugsConnected } from "react-icons/pi";
 import { usePermisos } from '@/routes';
 
+// Utilidad para mostrar el hash visualmente (solo para frontend)
+function fakeBcryptHash(password) {
+  // Si ya es hash, retorna igual
+  if (/^\$2[aby]\$\d{2}\$.{53}$/.test(password)) return password;
+  // Simula hash visual (no real, solo para mostrar)
+  return `$2b$12$${btoa(password).slice(0, 22)}${'x'.repeat(31)}`;
+}
+
 export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLocal, removeUsuario }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [showPassword, setShowPassword] = useState({});
     const usuariosPerPage = 10;
 
     // Filtrar usuarios localmente
-    const filteredUsuarios = usuarios.filter(usuario =>
-        usuario.usua.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredUsuarios = Array.isArray(usuarios) ? usuarios.filter(usuario =>
+    usuario.usua.toLowerCase().includes(searchTerm.toLowerCase())
+    ) : [];
 
     // Usuarios a mostrar en la página actual
     const indexOfLastUsuario = currentPage * usuariosPerPage;
@@ -83,13 +91,21 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
     };
 
     const handleSuccessEdit = (id_usuario, updatedData) => {
-        updateUsuarioLocal(id_usuario, updatedData);
+        const usuarioVisual = {
+        ...updatedData,
+        contra: fakeBcryptHash(updatedData.contra)
+        };
+        updateUsuarioLocal(id_usuario, usuarioVisual);
         setActiveEdit(false);
         setInitialData(null);
     };
 
     const handleSuccessAdd = (nuevoUsuario) => {
-        addUsuario(nuevoUsuario);
+        const usuarioVisual = {
+        ...nuevoUsuario,
+        contra: fakeBcryptHash(nuevoUsuario.contra)
+        };
+        addUsuario(usuarioVisual);
         setActiveEdit(false);
         setInitialData(null);
     };
@@ -199,7 +215,8 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
                         </Tooltip>
                         <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
                             <Button 
-                                isIconOnly 
+                                isIconOnly
+                                isDisabled={!hasDeletePermission}
                                 variant="light" 
                                 color={hasDeletePermission ? "danger" : "default"}
                                 onClick={() => hasDeletePermission ? handleOpenConfirmationModal(usuario.usua, usuario.id_usuario) : null}

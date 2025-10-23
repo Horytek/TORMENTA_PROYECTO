@@ -33,22 +33,64 @@ const getEmpresa = async (req, res) => {
 };
 
 const addEmpresa = async (req, res) => {
-    let connection;
-    try {
-        const { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email, logotipo } = req.body;
+  let connection;
+  try {
+    const {
+      ruc, razonSocial, nombreComercial, direccion,
+      distrito, provincia, departamento, codigoPostal,
+      telefono, email, logotipo, moneda, pais
+    } = req.body;
 
-        if (!ruc) return res.status(400).json({ message: "El campo RUC es obligatorio." });
-
-        const empresa = { ruc, razonSocial, nombreComercial, direccion, distrito, provincia, departamento, codigoPostal, telefono, email, logotipo };
-        connection = await getConnection();
-        await connection.query("INSERT INTO empresa SET ?", empresa);
-
-        res.json({ code: 1, message: "Empresa añadida" });
-    } catch (error) {
-        res.status(500).json({ code: 0, message: "Error interno del servidor" });
-    } finally {
-        if (connection) connection.release();
+    // Validaciones mínimas
+    if (!ruc || !razonSocial || !direccion || !pais) {
+      return res.status(400).json({ code: 0, message: "Campos requeridos: ruc, razonSocial, direccion, pais" });
     }
+
+    const rucTrim = String(ruc).trim();
+    if (!/^\d{11}$/.test(rucTrim)) {
+      return res.status(400).json({ code: 0, message: "RUC inválido (11 dígitos numéricos)" });
+    }
+
+    // Normalización básica
+    const sanitize = (v) => (typeof v === "string" ? v.trim() : v ?? null);
+    const isHttpUrl = (u) => typeof u === "string" && /^https?:\/\//i.test(u);
+
+    connection = await getConnection();
+
+    // Evitar duplicado por RUC
+    const [dup] = await connection.query(
+      "SELECT id_empresa FROM empresa WHERE ruc = ? LIMIT 1",
+      [rucTrim]
+    );
+    if (dup.length > 0) {
+      return res.status(400).json({ code: 0, message: "Ya existe una empresa registrada con ese RUC" });
+    }
+
+    const empresa = {
+      ruc: rucTrim,
+      razonSocial: sanitize(razonSocial),
+      nombreComercial: sanitize(nombreComercial),
+      direccion: sanitize(direccion),
+      distrito: sanitize(distrito),
+      provincia: sanitize(provincia),
+      departamento: sanitize(departamento),
+      codigoPostal: sanitize(codigoPostal),
+      telefono: sanitize(telefono),
+      email: sanitize(email),
+      // Guardar logotipo como texto (URL) o null si no es http/https
+      logotipo: isHttpUrl(logotipo) ? sanitize(logotipo) : null,
+      moneda: sanitize(moneda) || null,
+      pais: sanitize(pais)
+      //id_tenant: req.id_tenant || null, // habilítalo si decides enlazar al tenant
+    };
+
+    const [result] = await connection.query("INSERT INTO empresa SET ?", empresa);
+    return res.json({ code: 1, message: "Empresa añadida", id_empresa: result.insertId });
+  } catch (error) {
+    return res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
 };
 
 const updateEmpresa = async (req, res) => {

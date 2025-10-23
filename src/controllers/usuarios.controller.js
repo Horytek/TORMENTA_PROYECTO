@@ -1,5 +1,6 @@
 import { getConnection } from "./../database/database.js";
 import { logAcceso } from "../utils/logActions.js";
+import { hashPassword } from "../utils/passwordUtil.js";
 
 // Cache para queries repetitivas
 const queryCache = new Map();
@@ -190,29 +191,27 @@ const addUsuario = async (req, res) => {
 
         connection = await getConnection();
 
-        let id_tenant = req.id_tenant;
+        let id_tenant;
 
-        // 1. Si el rol es "administrador", crear un nuevo tenant
-        // (Asegúrate que el id_rol de administrador es 1, si no, ajusta el valor)
         if (id_rol === 1) {
-            // Obtener el último id_tenant
+            // Si es administrador, crear nuevo tenant
             const [lastTenant] = await connection.query("SELECT MAX(id_tenant) as lastId FROM tenant");
             const newIdTenant = (lastTenant[0].lastId || 0) + 1;
-
-            // Insertar nuevo tenant
-            await connection.query(
-                "INSERT INTO tenant (id_tenant) VALUES (?)",
-                [newIdTenant]
-            );
-
+            await connection.query("INSERT INTO tenant (id_tenant) VALUES (?)", [newIdTenant]);
             id_tenant = newIdTenant;
+        } else {
+            // Si no es administrador, usar el id_tenant actual de la sesión
+            id_tenant = req.id_tenant;
         }
+
+        // Encriptar la contraseña antes de guardar
+        const hashedPassword = await hashPassword(contra.trim());
 
         // Solo agrega id_empresa si viene definido
         const usuario = {
             id_rol,
             usua: usua.trim(),
-            contra: contra.trim(),
+            contra: hashedPassword,
             estado_usuario
         };
         if (id_empresa !== undefined) usuario.id_empresa = id_empresa;
@@ -259,7 +258,13 @@ const updateUsuario = async (req, res) => {
             return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
         }
 
-        const usuario = { id_rol, usua: usua.trim(), contra: contra.trim(), estado_usuario };
+        // Encriptar la contraseña solo si cambió
+        let nuevaContra = contra.trim();
+        if (currentUser[0].contra !== nuevaContra) {
+            nuevaContra = await hashPassword(nuevaContra);
+        }
+
+        const usuario = { id_rol, usua: usua.trim(), contra: nuevaContra, estado_usuario };
         let query = "UPDATE usuario SET ? WHERE id_usuario = ?";
         let params = [usuario, id];
         if (req.id_tenant) {
@@ -358,6 +363,7 @@ const deleteUsuario = async (req, res) => {
         const isUserInUse = verify.length > 0;
 
         if (isUserInUse) {
+            // Solo desactiva el usuario
             let query = "UPDATE usuario SET estado_usuario = 0 WHERE id_usuario = ?";
             let params = [id];
             if (req.id_tenant) {
@@ -370,32 +376,107 @@ const deleteUsuario = async (req, res) => {
                 return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
             }
 
-            // Limpiar caché
             queryCache.clear();
-
-            res.json({ code: 2, message: "Usuario dado de baja" });
+            return res.json({ code: 2, message: "Usuario dado de baja" });
         } else {
+            // Intenta eliminar el usuario
             let query = "DELETE FROM usuario WHERE id_usuario = ?";
             let params = [id];
             if (req.id_tenant) {
                 query += " AND id_tenant = ?";
                 params.push(req.id_tenant);
             }
-            const [result] = await connection.query(query, params);
+            try {
+                const [result] = await connection.query(query, params);
 
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
+                }
+
+                queryCache.clear();
+                return res.json({ code: 1, message: "Usuario eliminado" });
+            } catch (error) {
+                // Si hay error de integridad referencial, desactiva el usuario
+                if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+                    let query = "UPDATE usuario SET estado_usuario = 0 WHERE id_usuario = ?";
+                    let params = [id];
+                    if (req.id_tenant) {
+                        query += " AND id_tenant = ?";
+                        params.push(req.id_tenant);
+                    }
+                    const [Updateresult] = await connection.query(query, params);
+
+                    if (Updateresult.affectedRows === 0) {
+                        return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
+                    }
+
+                    queryCache.clear();
+                    return res.status(400).json({
+                        code: 2,
+                        message: "No se puede eliminar el usuario porque tiene datos relacionados. Se ha dado de baja."
+                    });
+                }
+                throw error;
             }
-
-            // Limpiar caché
-            queryCache.clear();
-
-            res.json({ code: 1, message: "Usuario eliminado" });
         }
-
     } catch (error) {
         console.error('Error en deleteUsuario:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+const addUsuarioLanding = async (req, res) => {
+    let connection;
+    try {
+        const { id_rol, usua, contra, estado_usuario, id_empresa, plan_pago } = req.body;
+
+        if (id_rol === undefined || usua === undefined || contra === undefined || estado_usuario === undefined) {
+            return res.status(400).json({ message: "Bad Request. Please fill all field." });
+        }
+
+        connection = await getConnection();
+
+        // Si el rol es "administrador", crear un nuevo tenant
+        let id_tenant = undefined;
+        if (id_rol === 1) {
+            const [lastTenant] = await connection.query("SELECT MAX(id_tenant) as lastId FROM tenant");
+            const newIdTenant = (lastTenant[0].lastId || 0) + 1;
+            await connection.query("INSERT INTO tenant (id_tenant) VALUES (?)", [newIdTenant]);
+            id_tenant = newIdTenant;
+        }
+
+        // Encriptar la contraseña antes de guardar
+        const hashedPassword = await hashPassword(contra.trim());
+
+        // Construir usuario sin restricciones
+        const usuario = {
+            id_rol,
+            usua: usua.trim(),
+            contra: hashedPassword,
+            estado_usuario
+        };
+        if (id_empresa !== undefined) usuario.id_empresa = id_empresa;
+        if (id_tenant) usuario.id_tenant = id_tenant;
+        if (plan_pago !== undefined) usuario.plan_pago = plan_pago;
+
+        await connection.query("INSERT INTO usuario SET ? ", usuario);
+
+        // Si se creó un nuevo tenant y hay empresa, actualizar la empresa con el id_tenant
+        if (id_tenant && id_empresa) {
+            await connection.query(
+                "UPDATE empresa SET id_tenant = ? WHERE id_empresa = ?",
+                [id_tenant, id_empresa]
+            );
+        }
+
+        res.json({ code: 1, message: "Usuario añadido (landing)" });
+    } catch (error) {
+        console.error('Error en addUsuarioLanding:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor (landing)" });
     } finally {
         if (connection) {
             connection.release();
@@ -410,5 +491,6 @@ export const methods = {
     updateUsuario,
     getUsuario_1,
     deleteUsuario,
-    updateUsuarioPlan
+    updateUsuarioPlan,
+    addUsuarioLanding
 };

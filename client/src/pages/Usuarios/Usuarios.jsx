@@ -22,11 +22,10 @@ function Usuarios() {
   useEffect(() => {
     const fetchUsuarios = async () => {
       const data = await getUsuarios();
-      setUsuarios(data);
-
+      setUsuarios(Array.isArray(data) ? data : []);
       // Construir diccionario de roles dinámicamente
       const dict = {};
-      data.forEach(u => {
+      (Array.isArray(data) ? data : []).forEach(u => {
         if (u.id_rol && u.nom_rol) {
           dict[u.id_rol] = u.nom_rol;
         }
