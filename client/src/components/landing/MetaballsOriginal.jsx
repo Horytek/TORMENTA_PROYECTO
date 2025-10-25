@@ -339,7 +339,7 @@ export const MetaballsOriginal = () => {
       const container = containerRef.current;
       if (!container) return;
 
-      console.log('Initializing Original Metaballs...');
+      //console.log('Initializing Original Metaballs...');
 
       // Escena
       scene = new THREE.Scene();
@@ -380,9 +380,9 @@ export const MetaballsOriginal = () => {
         `;
         container.appendChild(canvas);
 
-        console.log('Metaballs renderer created successfully');
+        //console.log('Metaballs renderer created successfully');
       } catch (error) {
-        console.error('Error creating metaballs renderer:', error);
+        console.error('Error creating metaballs renderer');
         return;
       }
 
@@ -435,13 +435,13 @@ export const MetaballsOriginal = () => {
         const mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
 
-        console.log('Metaballs shaders compiled successfully');
+        //console.log('Metaballs shaders compiled successfully');
       } catch (error) {
-        console.error('Error creating metaballs shaders:', error);
+        console.error('Error creating metaballs shaders');
         return;
       }
 
-      console.log('Original Metaballs initialized successfully');
+      //console.log('Original Metaballs initialized successfully');
     };
 
     // Función screenToWorld igual que en el original
@@ -526,7 +526,7 @@ export const MetaballsOriginal = () => {
       init();
       animate();
     } catch (error) {
-      console.error('Error initializing Original Metaballs:', error);
+      console.error('Error initializing Original Metaballs');
     }
 
     // Event listeners
@@ -549,7 +549,7 @@ export const MetaballsOriginal = () => {
           containerRef.current.removeChild(renderer.domElement);
           renderer.dispose();
         } catch (error) {
-          console.warn('Error disposing metaballs renderer:', error);
+          console.warn('Error disposing metaballs renderer');
         }
       }
       
