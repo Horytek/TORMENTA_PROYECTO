@@ -44,7 +44,8 @@ import functionShortcutsRoutes from "./routes/functionShortcuts.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 import { getConnection } from "./database/database.js";
-
+import emailRoutes from "./routes/email.routes.js";
+import credencialRoutes from "./routes/credenciales.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 
 const app = express();
@@ -90,6 +91,10 @@ app.use(
     }
   })
 );
+
+app.use(express.json({ limit: '2mb' })); // o más si lo necesitas
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
 const norm = u => { 
   try { 
     const {protocol,host}=new URL(u); 
@@ -177,7 +182,8 @@ app.use("/api/logs", logsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/help", helpRoutes);
 app.use("/api/function-shortcuts", functionShortcutsRoutes);
-
+app.use("/api", emailRoutes);
+app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);
 
 // Servir archivos estáticos de Vite/React

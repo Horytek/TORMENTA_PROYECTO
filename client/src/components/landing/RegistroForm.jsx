@@ -1,8 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import WalletBrick from './WalletBrick';
 import { createEmpresaAndAdmin } from '@/services/empresa.services';
-import { Button, Tooltip, Card } from "@heroui/react";
+import { Button, Tooltip, Card, Input } from "@heroui/react";
 import { HelpCircle } from "lucide-react";
+import { FileKey, Image as ImageIcon } from "lucide-react";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty";
+import { sendResendEmail, sendCredencialesEmail } from '@/services/resend.services';
+
 
 // Popover minimalista estilo HeroUI/Shadcn para ayuda de logotipo
 function LogotipoPopoverInfo() {
@@ -88,7 +99,11 @@ export const RegistroForm = ({ planInfo }) => {
     telefonoEmpresa: '',
     emailEmpresa: '',
     logotipo: '',
-    pais: ''
+    pais: '',
+    certificadoSunat: null, // Certificado PFX/P12 para SUNAT
+    logoSunat: null,        // Logo para SUNAT (archivo)
+    sunat_client_id: '',
+    sunat_client_secret: ''
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
@@ -101,6 +116,17 @@ export const RegistroForm = ({ planInfo }) => {
       {label}
     </div>
   );
+
+    // Manejar archivos para certificado y logo SUNAT
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (files && files.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: files[0]
+      }));
+    }
+  };
   
 
 const extractImgbbUrl = (input) => {
@@ -156,14 +182,44 @@ const handleChange = (e) => {
       formErrors.logotipo = 'El logotipo debe ser una URL válida de imgbb (https://i.ibb.co/xxx.jpg)';
       isValid = false;
     }
+    if (!formData.certificadoSunat) { formErrors.certificadoSunat = 'El certificado es obligatorio'; isValid = false; }
+    if (!formData.logoSunat) { formErrors.logoSunat = 'El logo SUNAT es obligatorio'; isValid = false; }
+    if (!formData.sunat_client_id.trim()) { formErrors.sunat_client_id = 'El client_id SUNAT es obligatorio'; isValid = false; }
+    if (!formData.sunat_client_secret.trim()) { formErrors.sunat_client_secret = 'El client_secret SUNAT es obligatorio'; isValid = false; }
 
     setErrors(formErrors);
     return isValid;
   };
 
+  function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Solo el string base64, sin el prefijo data:...
+      const result = reader.result;
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
+
+  setCreating(true);
+
+  // Enviar archivos a /send-resend (certificado y logo)
+  const formDataToSend = new FormData();
+  formDataToSend.append('certificado', formData.certificadoSunat);
+  formDataToSend.append('logo', formData.logoSunat);
+  formDataToSend.append('sunat_client_id', formData.sunat_client_id);
+  formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
+
+  await sendResendEmail(formDataToSend);
 
   // Determinar el plan_pago int según el plan seleccionado
   const plan_pago = getPlanPagoInt(planInfo.plan);
@@ -192,6 +248,15 @@ const handleSubmit = async (e) => {
   if (!result?.success) {
     alert(result?.message || "No se pudo completar el registro");
     return;
+  }
+
+  // Enviar credenciales al correo de la empresa
+  if (result.admin && formData.emailEmpresa) {
+    await sendCredencialesEmail({
+      to: formData.emailEmpresa,
+      usuario: result.admin.usua,
+      contrasena: result.admin.contra
+    });
   }
 
   setAdminCreds(result.admin);
@@ -341,7 +406,88 @@ const handleSubmit = async (e) => {
                         placeholder="Perú"
                         className={`w-full px-4 py-3 rounded-xl bg-transparent border ${errors.pais ? 'border-red-500' : 'border-gray-700'} text-primary-text`} />
                       {errors.pais && <p className="mt-1 text-xs text-red-500">{errors.pais}</p>}
-                    </div>
+                    </div>                
+                      {/* Certificado SUNAT */}
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <FileKey className="text-blue-500" />
+                          </EmptyMedia>
+                          <EmptyTitle>Certificado SUNAT <span className="text-red-500">*</span></EmptyTitle>
+                          <EmptyDescription>
+                            Haga click aquí o arrastre y suelte su certificado en formato P12 o PFX
+                          </EmptyDescription>
+                        </EmptyHeader>
+                        <EmptyContent>
+                          <input
+                            id="certificadoSunat"
+                            name="certificadoSunat"
+                            type="file"
+                            accept=".pfx,.p12"
+                            onChange={handleFileChange}
+                            className="w-full mt-2 cursor-pointer"
+                          />
+                          {errors.certificadoSunat && (
+                            <p className="mt-1 text-xs text-red-500">{errors.certificadoSunat}</p>
+                          )}
+                        </EmptyContent>
+                      </Empty>
+
+                      {/* Logo SUNAT */}
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <ImageIcon className="text-blue-500" />
+                          </EmptyMedia>
+                          <EmptyTitle>Logo SUNAT <span className="text-red-500">*</span></EmptyTitle>
+                          <EmptyDescription>
+                            Haga click aquí o arrastre y suelte su logo en .png - máximo 100KB
+                          </EmptyDescription>
+                        </EmptyHeader>
+                        <EmptyContent>
+                          <input
+                            id="logoSunat"
+                            name="logoSunat"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="w-full mt-2 cursor-pointer"
+                          />
+                          {errors.logoSunat && (
+                            <p className="mt-1 text-xs text-red-500">{errors.logoSunat}</p>
+                          )}
+                        </EmptyContent>
+                      </Empty>
+
+                    {/* Credenciales SUNAT */}
+                      <div className="col-span-1">
+                        <label htmlFor="sunat_client_id" className="block text-sm font-medium text-primary-text mb-1">
+                          Credenciales de API SUNAT (client_id)
+                        </label>
+                        <input
+                          id="sunat_client_id"
+                          name="sunat_client_id"
+                          value={formData.sunat_client_id}
+                          onChange={handleChange}
+                          placeholder="Credenciales client_id"
+                          className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text"
+                        />
+                        {errors.sunat_client_id && <p className="mt-1 text-xs text-red-500">{errors.sunat_client_id}</p>}
+                      </div>
+                      <div className="col-span-1">
+                        <label htmlFor="sunat_client_secret" className="block text-sm font-medium text-primary-text mb-1">
+                          Credenciales de API SUNAT (client_secret)
+                        </label>
+                        <input
+                          id="sunat_client_secret"
+                          name="sunat_client_secret"
+                          value={formData.sunat_client_secret}
+                          onChange={handleChange}
+                          placeholder="Credenciales client_secret"
+                          className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text"
+                        />
+                        {errors.sunat_client_secret && <p className="mt-1 text-xs text-red-500">{errors.sunat_client_secret}</p>}
+                      </div>
                   </div>
                 </div>
 
@@ -373,10 +519,16 @@ const handleSubmit = async (e) => {
                 <h4 className="text-lg font-semibold text-primary-text mb-4 text-center">Resumen y pago</h4>
                 {adminCreds && (
                   <div className="p-4 mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
-                    <div className="font-semibold mb-1">Usuario administrador generado</div>
-                    <div className="text-sm">Usuario: <span className="font-mono">{adminCreds.usua}</span></div>
-                    <div className="text-sm">Contraseña: <span className="font-mono">{adminCreds.contra}</span></div>
-                    <div className="text-xs opacity-80 mt-1">Guárdalas en un lugar seguro.</div>
+                    <div className="font-semibold mb-1">¡Revisa tu correo!</div>
+                    <div className="text-sm">
+                      Hemos enviado las credenciales de acceso a tu correo electrónico. Por favor, revisa tu bandeja de entrada en Gmail, Outlook u otro proveedor.
+                    </div>
+                    <div className="text-xs opacity-80 mt-2">
+                      Si no ves el correo en unos minutos, revisa también la carpeta de spam o correo no deseado.<br />
+                      <span className="block mt-2">
+                        <b>Importante:</b> Espera unos minutos mientras activamos el modo producción para la facturación electrónica en SUNAT.
+                      </span>
+                    </div>
                   </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
