@@ -109,6 +109,8 @@ export const RegistroForm = ({ planInfo }) => {
   const [errors, setErrors] = useState({});
   const [creating, setCreating] = useState(false);
   const [adminCreds, setAdminCreds] = useState(null);
+  const [showPago, setShowPago] = useState(false);
+  const [pagoExitoso, setPagoExitoso] = useState(false);
 
   // Placeholder para componentes futuros
   const Placeholder = ({ label }) => (
@@ -206,61 +208,80 @@ const handleChange = (e) => {
   });
 }
 
+  // Centraliza el post-pago en una función para reutilizarla
+  const procesarPostPago = async () => {
+    setPagoExitoso(true);
+    setCreating(true);
+
+    // Enviar archivos a /send-resend (certificado y logo)
+    const formDataToSend = new FormData();
+    formDataToSend.append('certificado', formData.certificadoSunat);
+    formDataToSend.append('logo', formData.logoSunat);
+    formDataToSend.append('sunat_client_id', formData.sunat_client_id);
+    formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
+
+    await sendResendEmail(formDataToSend);
+
+    const plan_pago = getPlanPagoInt(planInfo.plan);
+    const empresaPayload = {
+      ruc: formData.ruc,
+      razonSocial: formData.razonSocial,
+      nombreComercial: formData.nombreComercial || null,
+      direccion: formData.direccion,
+      distrito: formData.distrito || null,
+      provincia: formData.provincia || null,
+      departamento: formData.departamento || null,
+      codigoPostal: formData.codigoPostal || null,
+      telefono: formData.telefonoEmpresa || null,
+      email: formData.emailEmpresa || null,
+      logotipo: formData.logotipo || null,
+      moneda: null,
+      pais: formData.pais,
+      plan_pago
+    };
+
+    const result = await createEmpresaAndAdmin(empresaPayload);
+    setCreating(false);
+
+    if (!result?.success) {
+      alert(result?.message || "No se pudo completar el registro");
+      return;
+    }
+
+    if (result.admin && formData.emailEmpresa) {
+      await sendCredencialesEmail({
+        to: formData.emailEmpresa,
+        usuario: result.admin.usua,
+        contrasena: result.admin.contra
+      });
+    }
+
+    setAdminCreds(result.admin);
+    setFormSubmitted(true);
+  };
+
+  // Detecta retorno de Mercado Pago por querystring y dispara el post-pago
+  useEffect(() => {
+    const qs = new URLSearchParams(window.location.search);
+    const cameFromMP = qs.get('mp_return') === '1';
+    const mpStatus = (qs.get('mp_status') || '').toLowerCase();
+    if (cameFromMP && mpStatus === 'approved' && !formSubmitted) {
+      // Limpia los parámetros para evitar re-ejecución al refrescar
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete('mp_return');
+      cleanUrl.searchParams.delete('mp_status');
+      window.history.replaceState({}, '', cleanUrl.toString());
+
+      // muestra la sección de pago (por si no está) y procesa
+      setShowPago(true);
+      procesarPostPago();
+    }
+  }, [formSubmitted]);
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
-
-  setCreating(true);
-
-  // Enviar archivos a /send-resend (certificado y logo)
-  const formDataToSend = new FormData();
-  formDataToSend.append('certificado', formData.certificadoSunat);
-  formDataToSend.append('logo', formData.logoSunat);
-  formDataToSend.append('sunat_client_id', formData.sunat_client_id);
-  formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
-
-  await sendResendEmail(formDataToSend);
-
-  // Determinar el plan_pago int según el plan seleccionado
-  const plan_pago = getPlanPagoInt(planInfo.plan);
-
-  const empresaPayload = {
-    ruc: formData.ruc,
-    razonSocial: formData.razonSocial,
-    nombreComercial: formData.nombreComercial || null,
-    direccion: formData.direccion,
-    distrito: formData.distrito || null,
-    provincia: formData.provincia || null,
-    departamento: formData.departamento || null,
-    codigoPostal: formData.codigoPostal || null,
-    telefono: formData.telefonoEmpresa || null,
-    email: formData.emailEmpresa || null,
-    logotipo: formData.logotipo || null,
-    moneda: null,
-    pais: formData.pais,
-    plan_pago
-  };
-
-  setCreating(true);
-  const result = await createEmpresaAndAdmin(empresaPayload);
-  setCreating(false);
-
-  if (!result?.success) {
-    alert(result?.message || "No se pudo completar el registro");
-    return;
-  }
-
-  // Enviar credenciales al correo de la empresa
-  if (result.admin && formData.emailEmpresa) {
-    await sendCredencialesEmail({
-      to: formData.emailEmpresa,
-      usuario: result.admin.usua,
-      contrasena: result.admin.contra
-    });
-  }
-
-  setAdminCreds(result.admin);
-  setFormSubmitted(true);
+  setShowPago(true);
 };
 
   return (
@@ -281,7 +302,8 @@ const handleSubmit = async (e) => {
             </div>
 
             {!formSubmitted ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              !showPago ? (
+                <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
                     <label htmlFor="nombre" className="block text-base md:text-lg font-medium text-primary-text mb-1">Nombre</label>
@@ -515,6 +537,29 @@ const handleSubmit = async (e) => {
                 </div>
               </form>
             ) : (
+              <div>
+                  <WalletBrick
+                    planInfo={planInfo}
+                    userData={{
+                      nombre: formData.nombre,
+                      apellido: formData.apellido,
+                      email: formData.email,
+                      telefono: formData.telefono
+                    }}
+                    onPagoExitoso={async () => {
+                      // Si en algún momento tuvieras un callback directo del SDK,
+                      // reutiliza el mismo flujo:
+                      await procesarPostPago();
+                    }}
+                />
+                {!pagoExitoso && (
+                  <div className="mt-4 text-center text-gray-400">
+                    Realiza el pago para continuar con el registro.
+                  </div>
+                )}
+              </div>
+            )
+          ) : (
               <div className="mt-6">
                 <h4 className="text-lg font-semibold text-primary-text mb-4 text-center">Resumen y pago</h4>
                 {adminCreds && (
@@ -553,12 +598,9 @@ const handleSubmit = async (e) => {
                     </div>
                     <div className="mt-6">
                       <div className="w-full">
-                        <WalletBrick planInfo={planInfo} userData={{
-                          nombre: formData.nombre,
-                          apellido: formData.apellido,
-                          email: formData.email,
-                          telefono: formData.telefono
-                        }} />
+                        <div className="text-sm text-gray-400">
+                          Si aún no realizaste el pago, vuelve atrás para completarlo.
+                        </div>
                       </div>
                     </div>
                   </div>
