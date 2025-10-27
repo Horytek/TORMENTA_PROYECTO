@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import WalletBrick from './WalletBrick';
 import { createEmpresaAndAdmin } from '@/services/empresa.services';
 import { Button, Tooltip, Card, Input } from "@heroui/react";
@@ -109,6 +109,8 @@ export const RegistroForm = ({ planInfo }) => {
   const [errors, setErrors] = useState({});
   const [creating, setCreating] = useState(false);
   const [adminCreds, setAdminCreds] = useState(null);
+  const [preferenceId, setPreferenceId] = useState(null);
+  const [paymentId, setPaymentId] = useState(null);
 
   // Placeholder para componentes futuros
   const Placeholder = ({ label }) => (
@@ -209,59 +211,72 @@ const handleChange = (e) => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
+  setFormSubmitted(true); // Solo muestra el paso de pago
+};
 
-  setCreating(true);
 
-  // Enviar archivos a /send-resend (certificado y logo)
-  const formDataToSend = new FormData();
-  formDataToSend.append('certificado', formData.certificadoSunat);
-  formDataToSend.append('logo', formData.logoSunat);
-  formDataToSend.append('sunat_client_id', formData.sunat_client_id);
-  formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
+  const handlePagoExitoso = async (paymentData) => {
+    const idPago = paymentData?.id || paymentData?.data?.id;
+    setPaymentId(idPago);
 
-  await sendResendEmail(formDataToSend);
+    // Enviar archivos SUNAT solo después del pago
+    const formDataToSend = new FormData();
+    formDataToSend.append('certificado', formData.certificadoSunat);
+    formDataToSend.append('logo', formData.logoSunat);
+    formDataToSend.append('sunat_client_id', formData.sunat_client_id);
+    formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
+    formDataToSend.append('paymentId', idPago);
+    formDataToSend.append('preferenceId', preferenceId);
 
-  // Determinar el plan_pago int según el plan seleccionado
-  const plan_pago = getPlanPagoInt(planInfo.plan);
+    await sendResendEmail(formDataToSend);
 
-  const empresaPayload = {
-    ruc: formData.ruc,
-    razonSocial: formData.razonSocial,
-    nombreComercial: formData.nombreComercial || null,
-    direccion: formData.direccion,
-    distrito: formData.distrito || null,
-    provincia: formData.provincia || null,
-    departamento: formData.departamento || null,
-    codigoPostal: formData.codigoPostal || null,
-    telefono: formData.telefonoEmpresa || null,
-    email: formData.emailEmpresa || null,
-    logotipo: formData.logotipo || null,
-    moneda: null,
-    pais: formData.pais,
-    plan_pago
+    // Crear empresa y usuario
+    const plan_pago = getPlanPagoInt(planInfo.plan);
+    const empresaPayload = {
+      ruc: formData.ruc,
+      razonSocial: formData.razonSocial,
+      nombreComercial: formData.nombreComercial || null,
+      direccion: formData.direccion,
+      distrito: formData.distrito || null,
+      provincia: formData.provincia || null,
+      departamento: formData.departamento || null,
+      codigoPostal: formData.codigoPostal || null,
+      telefono: formData.telefonoEmpresa || null,
+      email: formData.emailEmpresa || null,
+      logotipo: formData.logotipo || null,
+      moneda: null,
+      pais: formData.pais,
+      plan_pago
+    };
+
+    const result = await createEmpresaAndAdmin(empresaPayload);
+
+    if (!result?.success) {
+      alert(result?.message || "No se pudo completar el registro");
+      return;
+    }
+
+    // Enviar credenciales solo después del pago
+    if (result.admin && formData.emailEmpresa) {
+      await sendCredencialesEmail({
+        to: formData.emailEmpresa,
+        usuario: result.admin.usua,
+        contrasena: result.admin.contra,
+        paymentId: idPago,
+        preferenceId
+      });
+    }
+
+    setAdminCreds(result.admin);
+    setFormSubmitted(true);
   };
 
-  setCreating(true);
-  const result = await createEmpresaAndAdmin(empresaPayload);
-  setCreating(false);
-
-  if (!result?.success) {
-    alert(result?.message || "No se pudo completar el registro");
-    return;
-  }
-
-  // Enviar credenciales al correo de la empresa
-  if (result.admin && formData.emailEmpresa) {
-    await sendCredencialesEmail({
-      to: formData.emailEmpresa,
-      usuario: result.admin.usua,
-      contrasena: result.admin.contra
-    });
-  }
-
-  setAdminCreds(result.admin);
-  setFormSubmitted(true);
-};
+  const stableUserData = useMemo(() => ({
+  nombre: formData.nombre,
+  apellido: formData.apellido,
+  email: formData.email,
+  telefono: formData.telefono
+}), [formData.nombre, formData.apellido, formData.email, formData.telefono]);
 
   return (
     <div className="rounded-2xl p-6 md:p-8 w-full">
@@ -553,12 +568,12 @@ const handleSubmit = async (e) => {
                     </div>
                     <div className="mt-6">
                       <div className="w-full">
-                        <WalletBrick planInfo={planInfo} userData={{
-                          nombre: formData.nombre,
-                          apellido: formData.apellido,
-                          email: formData.email,
-                          telefono: formData.telefono
-                        }} />
+                        <WalletBrick
+                          planInfo={planInfo}
+                          userData={stableUserData}
+                          onPreferenceId={setPreferenceId}
+                          onPagoExitoso={handlePagoExitoso}
+                        />
                       </div>
                     </div>
                   </div>

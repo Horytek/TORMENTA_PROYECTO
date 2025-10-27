@@ -15,7 +15,7 @@ export const createPreference = async (req, res) => {
           id: "PLAN_DEFAULT",
           title: "Plan de suscripción",
           quantity: 1,
-          unit_price: 0,
+          unit_price: 30,
         }];
 
     const payer = req.body?.payer?.email
@@ -68,10 +68,6 @@ export const paymentWebhook = async (req, res) => {
       { headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } }
     );
     if (!payment || payment.status !== "approved") return res.status(200).send("ok");
-
-    // Aquí tu lógica para enviar correos y crear empresa
-    console.log("---------Pago exitoso--------------");
-    localStorage("Pago exitoso: Si");
 
     return res.status(200).json({ success: true });
   } catch (err) {
