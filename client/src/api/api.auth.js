@@ -22,3 +22,6 @@ export const nameRequest = async (usua) =>
 export const logoutRequest = async () => {
     return await axios.post('/auth/logout');
 };
+
+export const sendAuthCodeRequest = async (data) =>
+  await axios.post("/auth/auth-code", data);

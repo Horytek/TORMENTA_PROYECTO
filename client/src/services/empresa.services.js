@@ -149,7 +149,7 @@ const createEmpresaAndAdmin = async (empresa) => {
       id_rol: 1,
       usua,
       contra,
-      estado_usuario: 1,
+      estado_usuario: 0,
       id_empresa,
       plan_pago: empresa.plan_pago
     });

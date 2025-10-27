@@ -1,53 +1,38 @@
 import { Resend } from 'resend';
-import axios from "axios";
+import { getConnection } from '../database/database.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendCredencialesEmail = async (req, res) => {
+  let connection;
   try {
-    const { to, usuario, contrasena, paymentId, preferenceId } = req.body;
-    if (!to || !usuario || !contrasena || !(paymentId || preferenceId)) {
+    const { to, usuario, contrasena } = req.body;
+    if (!to || !usuario || !contrasena) {
       return res.status(400).json({ ok: false, message: 'Faltan campos requeridos' });
     }
 
-    // Verificar pago en Mercado Pago
-    let pagoAprobado = false;
-    let payment_id = paymentId;
+    // Generar clave de 4 dígitos
+    const claveAcceso = Math.floor(1000 + Math.random() * 9000).toString();
 
-    if (!payment_id && preferenceId) {
-      const { data } = await axios.get(
-        `https://api.mercadopago.com/v1/payments/search?external_reference=${preferenceId}`,
-        { headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } }
-      );
-      const pago = data.results?.find(p => p.status === "approved");
-      if (pago) {
-        pagoAprobado = true;
-        payment_id = pago.id;
-      }
-    } else if (payment_id) {
-      const { data } = await axios.get(
-        `https://api.mercadopago.com/v1/payments/${payment_id}`,
-        { headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } }
-      );
-      if (data.status === "approved") {
-        pagoAprobado = true;
-      }
-    }
+    // Guardar la clave en el usuario (campo clave_acceso)
+    connection = await getConnection();
+    await connection.query(
+      "UPDATE usuario SET clave_acceso = ? WHERE usua = ? LIMIT 1",
+      [claveAcceso, usuario]
+    );
 
-    if (!pagoAprobado) {
-      return res.status(400).json({ ok: false, message: "El pago no está aprobado o no existe" });
-    }
-
+    // Enviar correo SOLO con usuario y contraseña, indicando que falta la clave
     const { data, error } = await resend.emails.send({
-      from: 'HoryCore <no-reply@send.horycore.online>',
+      from: 'HoryCore <soporte@send.horycore.online>', // evita no-reply
       to,
       subject: 'Credenciales de acceso a HoryCore',
+      reply_to: 'soporte@horycore.online',              // permite respuestas reales
       html: `
         <h2>Usuario administrador generado</h2>
         <p>Usuario: <b>${usuario}</b></p>
         <p>Contraseña: <b>${contrasena}</b></p>
-        <p style="font-size:13px;color:#888;">Guárdalas en un lugar seguro.</p>
-        <p>ID de pago: <b>${payment_id}</b></p>
+        <p style="color:#d97706;"><b>Importante:</b> Para activar tu cuenta y acceder, recibirás una clave de activación de 4 dígitos una vez confirmado tu pago.</p>
+        <p style="font-size:13px;color:#888;">Guarda estos datos en un lugar seguro.</p>
       `
     });
 
@@ -58,5 +43,7 @@ export const sendCredencialesEmail = async (req, res) => {
     res.json({ ok: true, message: 'Correo enviado', data });
   } catch (err) {
     res.status(500).json({ ok: false, message: 'Error interno', error: err.message });
+  } finally {
+    if (connection) connection.release();
   }
 };

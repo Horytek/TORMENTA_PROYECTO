@@ -5,35 +5,34 @@ import { TOKEN_SECRET } from "../config.js";
 import { logAcceso } from "../utils/logActions.js";
 import { verifyPassword, isBcryptHash } from "../utils/passwordUtil.js";
 import { recordFailedAttempt, clearAttempts } from "../middlewares/rateLimiter.middleware.js";
-
+import { Resend } from 'resend';
+const resend = new Resend(process.env.RESEND_API_KEY);
 // Cache para rutas por defecto (se consulta en cada login)
 const routeCache = new Map();
 const CACHE_TTL = 60000; // 1 minuto
-
+const otpStore = {};
 // LOGIN - OPTIMIZADO Y SEGURO
 const login = async (req, res) => {
     let connection;
     try {
-        const { usuario, password } = req.body;
-        
-        // Validaciones mejoradas
+        const { usuario, password} = req.body;
+
         if (!usuario || !password) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Usuario y contraseña son requeridos" 
+            return res.status(400).json({
+                success: false,
+                message: "Usuario y contraseña son requeridos"
             });
         }
 
         if (typeof usuario !== 'string' || typeof password !== 'string') {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Credenciales inválidas" 
+            return res.status(400).json({
+                success: false,
+                message: "Credenciales inválidas"
             });
         }
-
-        const user = { usuario: usuario.trim(), password: password.trim() };
         connection = await getConnection();
 
+        const user = { usuario: usuario.trim(), password: password.trim() };
         // Verificar que el usuario existe y está activo
         const [userFound] = await connection.query(
             "SELECT 1 FROM usuario WHERE usua = ? AND estado_usuario = 1 LIMIT 1",
@@ -491,9 +490,98 @@ const updateUsuarioName = async (req, res) => {
     }
 };
 
+
+// AUTENTICAR CUENTA Y ENVIAR CÓDIGO
+const sendAuthCode = async (req, res) => {
+    let connection;
+    try {
+        const { usuario, password, clave_acceso } = req.body;
+        if (!usuario || !password || !clave_acceso) {
+            return res.status(400).json({ success: false, message: "Usuario, contraseña y clave de acceso requeridos" });
+        }
+
+        connection = await getConnection();
+        const [userRows] = await connection.query(
+            "SELECT id_usuario, usua, contra, id_empresa, estado_usuario, clave_acceso FROM usuario WHERE usua = ? LIMIT 1",
+            [usuario.trim()]
+        );
+        if (userRows.length === 0) {
+            return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+        }
+        const user = userRows[0];
+
+        let passwordMatch = false;
+        if (isBcryptHash(user.contra)) {
+            passwordMatch = await verifyPassword(password, user.contra);
+        } else {
+            passwordMatch = password === user.contra;
+        }
+        if (!passwordMatch) {
+            return res.status(401).json({ success: false, message: "Contraseña incorrecta" });
+        }
+
+        // Validar clave de acceso y que el usuario esté inactivo
+        if (!user.clave_acceso || user.clave_acceso !== clave_acceso) {
+            return res.status(401).json({ success: false, message: "Clave de acceso incorrecta o expirada" });
+        }
+        if (user.estado_usuario === 1 || user.estado_usuario === "1") {
+            return res.status(400).json({ success: false, message: "La cuenta ya está activada" });
+        }
+
+        // Cambiar estado_usuario a 1 (activo)
+        await connection.query(
+            "UPDATE usuario SET estado_usuario = 1 WHERE id_usuario = ?",
+            [user.id_usuario]
+        );
+
+        // Obtener email de la empresa
+        if (!user.id_empresa) {
+            return res.status(400).json({ success: false, message: "El usuario no tiene empresa asociada" });
+        }
+        const [empresaRows] = await connection.query(
+            "SELECT email FROM empresa WHERE id_empresa = ? LIMIT 1",
+            [user.id_empresa]
+        );
+        if (empresaRows.length === 0 || !empresaRows[0].email) {
+            return res.status(404).json({ success: false, message: "No se encontró el email de la empresa" });
+        }
+        const email = empresaRows[0].email;
+
+        // Enviar correo de éxito de autenticación
+        const { error } = await resend.emails.send({
+            from: 'HoryCore <no-reply@send.horycore.online>',
+            to: email,
+            subject: 'Autenticación exitosa de cuenta',
+            html: `
+                <h2>¡Cuenta autenticada correctamente!</h2>
+                <p>Tu cuenta ha sido activada y ahora puedes iniciar sesión normalmente en el sistema.</p>
+                <p style="font-size:13px;color:#888;">Si tienes dudas, contacta a soporte.</p>
+            `
+        });
+
+        if (error) {
+            return res.status(500).json({ success: false, message: "No se pudo enviar el correo de autenticación", error });
+        }
+
+        // Borrar clave_acceso del usuario (por seguridad)
+        await connection.query(
+            "UPDATE usuario SET clave_acceso = NULL WHERE id_usuario = ?",
+            [user.id_usuario]
+        );
+
+        return res.json({ success: true, message: "Cuenta autenticada correctamente. Ya puedes iniciar sesión." });
+    } catch (error) {
+        console.error('[AUTH] Error en sendAuthCode:', error);
+        return res.status(500).json({ success: false, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 export const methods = {
     login,
     verifyToken,
     logout,
-    updateUsuarioName
+    updateUsuarioName,
+    sendAuthCode 
 };

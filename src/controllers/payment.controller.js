@@ -1,11 +1,14 @@
 import axios from "axios";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import dotenv from "dotenv";
+import { getConnection } from "../database/database.js";
+import { Resend } from "resend";
 dotenv.config();
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.ACCESS_TOKEN,
 });
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const createPreference = async (req, res) => {
   try {
@@ -15,7 +18,7 @@ export const createPreference = async (req, res) => {
           id: "PLAN_DEFAULT",
           title: "Plan de suscripción",
           quantity: 1,
-          unit_price: 30,
+          unit_price: 0,
         }];
 
     const payer = req.body?.payer?.email
@@ -33,9 +36,13 @@ export const createPreference = async (req, res) => {
       pending: `${origin}/pending`,
     };
 
-    const notification_url =
-      process.env.MP_NOTIFICATION_URL ||
-      "https://horytek-auc6e6d2c0efg5at.westus3-01.azurewebsites.net/api/payment/webhook?source_news=webhooks"; // Cambia por tu dominio real
+    // URL pública del webhook:
+    // 1) Usa env si existe (recomendado en prod)
+    // 2) Por defecto usa tu ngrok actual
+    const baseWebhook =
+      (process.env.WEBHOOK_PUBLIC_URL)
+        .replace(/\/$/, "");
+    const notification_url = `${baseWebhook}/api/webhook`;
 
     const preference = new Preference(client);
     const result = await preference.create({
@@ -43,7 +50,8 @@ export const createPreference = async (req, res) => {
         items,
         payer,
         back_urls,
-        notification_url, 
+        notification_url,
+        external_reference: req.body.external_reference || (payer && payer.email) || "",
       },
     });
 
@@ -57,20 +65,121 @@ export const createPreference = async (req, res) => {
   }
 };
 
+// Utilidad para extraer type + id desde body o query
+function parseMPEvent(req) {
+  // Nuevo formato: POST body { type, action, data: { id }, live_mode, ... }
+  const b = req.body || {};
+  // Query que a veces manda MP en pruebas: ?type=payment&data.id=123
+  const q = req.query || {};
+
+  // Formatos posibles:
+  // 1) Nuevo: type=payment, data.id=...
+  let type = b.type || q.type || b.topic || q.topic; // 'payment', 'subscription', etc.
+  // 2) ID en body.data.id, o en query 'data.id', o en 'id'
+  let id = (b.data && b.data.id) || q["data.id"] || b.id || q.id;
+
+  return { type, id, live_mode: Boolean(b.live_mode), action: b.action || q.action };
+}
+
 export const paymentWebhook = async (req, res) => {
+  let connection;
   try {
-    const paymentId = req.body?.data?.id || req.query?.id;
-    if (!paymentId) return res.status(200).send("ok");
+    const { type, id, live_mode, action } = parseMPEvent(req);
 
-    // Consulta el pago en Mercado Pago
-    const { data: payment } = await axios.get(
-      `https://api.mercadopago.com/v1/payments/${paymentId}`,
-      { headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } }
-    );
-    if (!payment || payment.status !== "approved") return res.status(200).send("ok");
+    if (req.method === "GET" && !type && !id) return res.sendStatus(200);
+    if (!type || !id) return res.sendStatus(200);
+    if (!live_mode && String(id).match(/^(12345|test|dummy)/i)) return res.sendStatus(200);
 
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    return res.status(200).send("ok");
+    // Solo procesar una vez el evento de pago aprobado
+    if (type === "payment") {
+      try {
+        const { data: payment } = await axios.get(
+          `https://api.mercadopago.com/v1/payments/${id}`,
+          { headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } }
+        );
+
+        // Solo loguear y enviar correo si es la primera vez (action: 'payment.created')
+        if (payment.status === "approved" && action === "payment.created") {
+          /*console.log("=== Pago vía webhook ===", {
+            id: payment.id,
+            status: payment.status,
+            status_detail: payment.status_detail,
+            amount: payment.transaction_amount,
+            email: payment.payer?.email,
+            pref: payment.order?.id,
+            references: payment.external_reference,
+            action,
+            live_mode,
+          });*/
+
+          connection = await getConnection();
+
+          const externalReference = payment.external_reference;
+          if (!externalReference) {
+            console.warn("No se encontró email del pagador en el pago aprobado.");
+            return res.sendStatus(200);
+          }
+          const [empresas] = await connection.query(
+            "SELECT id_empresa, id_tenant FROM empresa WHERE email = ? LIMIT 1",
+            [externalReference]
+          );
+          if (!empresas.length) {
+            console.warn("No se encontró empresa para el email");
+            return res.sendStatus(200);
+          }
+          const empresa = empresas[0];
+
+          const [usuarios] = await connection.query(
+            "SELECT id_usuario, usua, clave_acceso FROM usuario WHERE id_tenant = ? AND id_rol = 1 LIMIT 1",
+            [empresa.id_tenant]
+          );
+          if (!usuarios.length) {
+            console.warn("No se encontró usuario administrador para id_tenant");
+            return res.sendStatus(200);
+          }
+          const usuario = usuarios[0];
+
+          const { error } = await resend.emails.send({
+            from: 'HoryCore <no-reply@send.horycore.online>',
+            to: externalReference,
+            subject: 'Clave de acceso inicial a HoryCore',
+            html: `
+              <h2>¡Pago recibido!</h2>
+              <p>Tu pago ha sido aprobado correctamente.</p>
+              <p><b>Clave de acceso inicial:</b> <span style="font-size:1.5rem;letter-spacing:0.2em;">${usuario.clave_acceso}</span></p>
+              <p>Esta es tu clave de acceso. Cuando autentiques tu cuenta, recibirás un nuevo correo que indique si el proceso de activación fue exitoso.</p>
+              <p style="font-size:13px;color:#888;">Si tienes dudas, contacta a soporte.</p>
+            `
+          });
+
+          if (error) {
+            console.error("Error enviando correo de clave inicial");
+          } else {
+            //console.log("Correo de clave inicial enviado");
+          }
+        }
+      } catch (err) {
+        const code = err?.response?.status;
+        const body = err?.response?.data;
+        if (code === 404) {
+          console.warn("Payment aún no existe en la API (404). Reintentar con cola/backoff.", { id });
+          return res.sendStatus(200);
+        }
+        console.error("Error consultando payment:", { code, body });
+        return res.sendStatus(200);
+      } finally {
+        if (connection) connection.release();
+      }
+    } else {
+      // Solo loguear eventos no payment una vez
+      if (action === "payment.created" || !action) {
+        console.log("Evento no 'payment' recibido:", { type, id, action });
+      }
+    }
+
+    return res.sendStatus(200);
+  } catch (error) {
+    console.error("Error general en webhook MP:", error);
+    return res.sendStatus(200);
   }
 };

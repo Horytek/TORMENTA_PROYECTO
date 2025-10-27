@@ -1,7 +1,7 @@
 import { AuthContext } from "./AuthContext";
 import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
-import { loginRequest, logoutRequest, verifyTokenRequest } from "../../api/api.auth";
+import { loginRequest, logoutRequest, verifyTokenRequest, sendAuthCodeRequest } from "../../api/api.auth";
 import { useUserStore } from "@/store/useStore";
 import { setAuthReady } from "@/api/axios";
 
@@ -82,6 +82,16 @@ export const AuthProvider = ({ children }) => {
     redirect('/');
   };
 
+  // Nueva función para solicitar código de autenticación
+const sendAuthCode = async ({ usuario, password, clave_acceso }) => {
+  try {
+    const { data } = await sendAuthCodeRequest({ usuario, password, clave_acceso });
+    return data;
+  } catch (error) {
+    return { success: false, message: error?.response?.data?.message || "Error autenticando cuenta" };
+  }
+};
+
   return (
     <AuthContext.Provider
       value={{
@@ -89,7 +99,8 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         loading,
         login,
-        logout
+        logout,
+        sendAuthCode
       }}
     >
       {children}

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import { createPreference as createPreferenceService } from "@/services/payment.services";
+import { createEmpresaAndAdmin } from '@/services/empresa.services';
 
-export default function WalletBrick({ planInfo, userData, onPreferenceId, onPagoExitoso }) {
+export default function WalletButton({ planInfo, userData }) {
   const [preferenceId, setPreferenceId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,6 +42,7 @@ export default function WalletBrick({ planInfo, userData, onPreferenceId, onPago
             email: userData?.email || "cliente@ejemplo.com",
             phone: { number: userData?.telefono || "" },
           },
+          external_reference: userData?.email || "", 
           back_urls: {
             success: `${FRONTEND_URL}/success`,
             failure: `${FRONTEND_URL}/failure`,
@@ -52,7 +54,6 @@ export default function WalletBrick({ planInfo, userData, onPreferenceId, onPago
         if (result?.success) {
           setPreferenceId(result.id);
           setError(null);
-          if (onPreferenceId) onPreferenceId(result.id); // Notifica al padre
         } else {
           setPreferenceId(null);
           setError(result?.message || "No se pudo crear la preferencia");
@@ -69,18 +70,10 @@ export default function WalletBrick({ planInfo, userData, onPreferenceId, onPago
     } else {
       setLoading(false);
     }
-    return () => { alive = false; };
-    // Solo depende de los campos primitivos
-  }, [
-    planInfo?.plan,
-    planInfo?.price,
-    planInfo?.period,
-    userData?.nombre,
-    userData?.apellido,
-    userData?.email,
-    userData?.telefono,
-    FRONTEND_URL
-  ]);
+    return () => {
+      alive = false;
+    };
+  }, [planInfo, userData, FRONTEND_URL]);
 
   if (loading) return <p className="text-gray-400">🕐 Cargando botón de pago...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;

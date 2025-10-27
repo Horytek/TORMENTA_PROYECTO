@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import WalletBrick from './WalletBrick';
 import { createEmpresaAndAdmin } from '@/services/empresa.services';
 import { Button, Tooltip, Card, Input } from "@heroui/react";
@@ -85,8 +85,6 @@ export const RegistroForm = ({ planInfo }) => {
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
-    email: '',
-    telefono: '',
     aceptaTerminos: false,
     ruc: '',
     razonSocial: '',
@@ -100,8 +98,8 @@ export const RegistroForm = ({ planInfo }) => {
     emailEmpresa: '',
     logotipo: '',
     pais: '',
-    certificadoSunat: null, // Certificado PFX/P12 para SUNAT
-    logoSunat: null,        // Logo para SUNAT (archivo)
+    certificadoSunat: null,
+    logoSunat: null,
     sunat_client_id: '',
     sunat_client_secret: ''
   });
@@ -109,8 +107,6 @@ export const RegistroForm = ({ planInfo }) => {
   const [errors, setErrors] = useState({});
   const [creating, setCreating] = useState(false);
   const [adminCreds, setAdminCreds] = useState(null);
-  const [preferenceId, setPreferenceId] = useState(null);
-  const [paymentId, setPaymentId] = useState(null);
 
   // Placeholder para componentes futuros
   const Placeholder = ({ label }) => (
@@ -172,9 +168,6 @@ const handleChange = (e) => {
 
     if (!formData.nombre.trim()) { formErrors.nombre = 'El nombre es obligatorio'; isValid = false; }
     if (!formData.apellido.trim()) { formErrors.apellido = 'El apellido es obligatorio'; isValid = false; }
-    if (!formData.email.trim()) { formErrors.email = 'El email es obligatorio'; isValid = false; }
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) { formErrors.email = 'Email inválido'; isValid = false; }
-    if (!formData.telefono.trim()) { formErrors.telefono = 'El teléfono es obligatorio'; isValid = false; }
     if (!formData.aceptaTerminos) { formErrors.aceptaTerminos = 'Debes aceptar los términos'; isValid = false; }
     if (!formData.ruc.trim()) { formErrors.ruc = 'RUC es obligatorio'; isValid = false; }
     if (!formData.razonSocial.trim()) { formErrors.razonSocial = 'Razón Social es obligatoria'; isValid = false; }
@@ -211,72 +204,59 @@ const handleChange = (e) => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
-  setFormSubmitted(true); // Solo muestra el paso de pago
-};
 
+  setCreating(true);
 
-  const handlePagoExitoso = async (paymentData) => {
-    const idPago = paymentData?.id || paymentData?.data?.id;
-    setPaymentId(idPago);
+  // Enviar archivos a /send-resend (certificado y logo)
+  const formDataToSend = new FormData();
+  formDataToSend.append('certificado', formData.certificadoSunat);
+  formDataToSend.append('logo', formData.logoSunat);
+  formDataToSend.append('sunat_client_id', formData.sunat_client_id);
+  formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
 
-    // Enviar archivos SUNAT solo después del pago
-    const formDataToSend = new FormData();
-    formDataToSend.append('certificado', formData.certificadoSunat);
-    formDataToSend.append('logo', formData.logoSunat);
-    formDataToSend.append('sunat_client_id', formData.sunat_client_id);
-    formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
-    formDataToSend.append('paymentId', idPago);
-    formDataToSend.append('preferenceId', preferenceId);
+  await sendResendEmail(formDataToSend);
 
-    await sendResendEmail(formDataToSend);
+  // Determinar el plan_pago int según el plan seleccionado
+  const plan_pago = getPlanPagoInt(planInfo.plan);
 
-    // Crear empresa y usuario
-    const plan_pago = getPlanPagoInt(planInfo.plan);
-    const empresaPayload = {
-      ruc: formData.ruc,
-      razonSocial: formData.razonSocial,
-      nombreComercial: formData.nombreComercial || null,
-      direccion: formData.direccion,
-      distrito: formData.distrito || null,
-      provincia: formData.provincia || null,
-      departamento: formData.departamento || null,
-      codigoPostal: formData.codigoPostal || null,
-      telefono: formData.telefonoEmpresa || null,
-      email: formData.emailEmpresa || null,
-      logotipo: formData.logotipo || null,
-      moneda: null,
-      pais: formData.pais,
-      plan_pago
-    };
-
-    const result = await createEmpresaAndAdmin(empresaPayload);
-
-    if (!result?.success) {
-      alert(result?.message || "No se pudo completar el registro");
-      return;
-    }
-
-    // Enviar credenciales solo después del pago
-    if (result.admin && formData.emailEmpresa) {
-      await sendCredencialesEmail({
-        to: formData.emailEmpresa,
-        usuario: result.admin.usua,
-        contrasena: result.admin.contra,
-        paymentId: idPago,
-        preferenceId
-      });
-    }
-
-    setAdminCreds(result.admin);
-    setFormSubmitted(true);
+  const empresaPayload = {
+    ruc: formData.ruc,
+    razonSocial: formData.razonSocial,
+    nombreComercial: formData.nombreComercial || null,
+    direccion: formData.direccion,
+    distrito: formData.distrito || null,
+    provincia: formData.provincia || null,
+    departamento: formData.departamento || null,
+    codigoPostal: formData.codigoPostal || null,
+    telefono: formData.telefonoEmpresa || null,
+    email: formData.emailEmpresa || null,
+    logotipo: formData.logotipo || null,
+    moneda: null,
+    pais: formData.pais,
+    plan_pago
   };
 
-  const stableUserData = useMemo(() => ({
-  nombre: formData.nombre,
-  apellido: formData.apellido,
-  email: formData.email,
-  telefono: formData.telefono
-}), [formData.nombre, formData.apellido, formData.email, formData.telefono]);
+  setCreating(true);
+  const result = await createEmpresaAndAdmin(empresaPayload);
+  setCreating(false);
+
+  if (!result?.success) {
+    alert(result?.message || "No se pudo completar el registro");
+    return;
+  }
+
+  // Enviar credenciales al correo de la empresa
+  if (result.admin && formData.emailEmpresa) {
+    await sendCredencialesEmail({
+      to: formData.emailEmpresa,
+      usuario: result.admin.usua,
+      contrasena: result.admin.contra
+    });
+  }
+
+  setAdminCreds(result.admin);
+  setFormSubmitted(true);
+};
 
   return (
     <div className="rounded-2xl p-6 md:p-8 w-full">
@@ -311,23 +291,6 @@ const handleSubmit = async (e) => {
                       placeholder="Tu apellido"
                       className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.apellido ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500`} />
                     {errors.apellido && <p className="mt-1 text-xs text-red-500">{errors.apellido}</p>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="email" className="block text-base md:text-lg font-medium text-primary-text mb-1">Email</label>
-                    <input id="email" name="email" type="email" value={formData.email} onChange={handleChange}
-                      placeholder="tu@email.com"
-                      className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.email ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500`} />
-                    {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="telefono" className="block text-base md:text-lg font-medium text-primary-text mb-1">Teléfono</label>
-                    <input id="telefono" name="telefono" value={formData.telefono} onChange={handleChange}
-                      placeholder="Tu teléfono"
-                      className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.telefono ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500`} />
-                    {errors.telefono && <p className="mt-1 text-xs text-red-500">{errors.telefono}</p>}
                   </div>
                 </div>
 
@@ -532,20 +495,34 @@ const handleSubmit = async (e) => {
             ) : (
               <div className="mt-6">
                 <h4 className="text-lg font-semibold text-primary-text mb-4 text-center">Resumen y pago</h4>
-                {adminCreds && (
-                  <div className="p-4 mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
-                    <div className="font-semibold mb-1">¡Revisa tu correo!</div>
-                    <div className="text-sm">
-                      Hemos enviado las credenciales de acceso a tu correo electrónico. Por favor, revisa tu bandeja de entrada en Gmail, Outlook u otro proveedor.
+                  {adminCreds && (
+                    <div className="p-4 mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
+                      <div className="font-semibold mb-1">¡Revisa tu correo!</div>
+                      <div className="text-sm">
+                        Hemos enviado las credenciales de acceso a tu correo electrónico. Por favor, revisa tu bandeja de entrada en Gmail, Outlook u otro proveedor.
+                      </div>
+                      <div className="text-xs opacity-80 mt-2">
+                        <b>Paso 1:</b> <span className="text-white">Primero debes realizar el pago en Mercado Pago usando el botón de abajo.</span><br />
+                        <b>Paso 2:</b> <span className="text-white">
+                          Luego, ingresa a la ruta{" "}
+                          <a
+                            href="/login"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline text-secondary-color hover:text-primary-color transition-colors"
+                          >
+                            /login
+                          </a>{" "}
+                          para activar tu cuenta y acceder al sistema.
+                        </span>
+                        <br />
+                        <span className="block mt-2">
+                          <b>Importante:</b> Si no ves el correo en unos minutos, revisa también la carpeta de spam o correo no deseado.<br />
+                          Espera unos minutos mientras activamos el modo producción para la facturación electrónica en SUNAT.
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-xs opacity-80 mt-2">
-                      Si no ves el correo en unos minutos, revisa también la carpeta de spam o correo no deseado.<br />
-                      <span className="block mt-2">
-                        <b>Importante:</b> Espera unos minutos mientras activamos el modo producción para la facturación electrónica en SUNAT.
-                      </span>
-                    </div>
-                  </div>
-                )}
+                  )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="p-6 rounded-2xl bg-card-bg border border-gray-700/20 shadow-sm">
                     <div className="text-sm text-gray-400 mb-3">Contacto</div>
@@ -568,12 +545,12 @@ const handleSubmit = async (e) => {
                     </div>
                     <div className="mt-6">
                       <div className="w-full">
-                        <WalletBrick
-                          planInfo={planInfo}
-                          userData={stableUserData}
-                          onPreferenceId={setPreferenceId}
-                          onPagoExitoso={handlePagoExitoso}
-                        />
+                        <WalletBrick planInfo={planInfo} userData={{
+                          nombre: formData.nombre,
+                          apellido: formData.apellido,
+                          email: formData.emailEmpresa,
+                          telefono: formData.telefonoEmpresa
+                        }} />
                       </div>
                     </div>
                   </div>
