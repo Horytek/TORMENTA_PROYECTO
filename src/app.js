@@ -80,12 +80,13 @@ app.use(
         "https://api.mercadopago.com",
         "https://http2.mlstatic.com",
         "https://op-cho-bricks.mercadopago.com",
-        "https://api.mercadolibre.com", // <-- Añadido para Mercado Pago tracking
+        "https://api.mercadolibre.com", 
       ],
       frameSrc: [
         "'self'",
-        "https://mercadopago.com.pe",    
+        "https://mercadopago.com.pe",
         "https://www.mercadopago.com",
+        "https://www.mercadopago.com.pe",
       ],
       imgSrc: [
         "'self'",
