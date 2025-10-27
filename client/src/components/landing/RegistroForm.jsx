@@ -13,7 +13,7 @@ import {
   EmptyContent,
 } from "@/components/ui/empty";
 import { sendResendEmail, sendCredencialesEmail } from '@/services/resend.services';
-
+import { useRegistroTemp } from "@/store/useRegistroTemp";
 
 // Popover minimalista estilo HeroUI/Shadcn para ayuda de logotipo
 function LogotipoPopoverInfo() {
@@ -209,18 +209,40 @@ const handleChange = (e) => {
 }
 
   // Centraliza el post-pago en una función para reutilizarla
-  const procesarPostPago = async () => {
-    setPagoExitoso(true);
-    setCreating(true);
+const procesarPostPago = async () => {
+  setPagoExitoso(true);
+  setCreating(true);
 
-    // Enviar archivos a /send-resend (certificado y logo)
-    const formDataToSend = new FormData();
-    formDataToSend.append('certificado', formData.certificadoSunat);
-    formDataToSend.append('logo', formData.logoSunat);
-    formDataToSend.append('sunat_client_id', formData.sunat_client_id);
-    formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
+  // Recupera archivos/campos SUNAT de Zustand si no están en formData
+  let { certificadoSunat, logoSunat, sunat_client_id, sunat_client_secret } = formData;
+  if (!certificadoSunat || !logoSunat || !sunat_client_id || !sunat_client_secret) {
+    const temp = useRegistroTemp.getState().sunatFiles;
+    if (temp) {
+      certificadoSunat = certificadoSunat || temp.certificadoSunat;
+      logoSunat = logoSunat || temp.logoSunat;
+      sunat_client_id = sunat_client_id || temp.sunat_client_id;
+      sunat_client_secret = sunat_client_secret || temp.sunat_client_secret;
+    }
+  }
 
-    await sendResendEmail(formDataToSend);
+  // Si aún falta algo, muestra error
+  if (!certificadoSunat || !logoSunat || !sunat_client_id || !sunat_client_secret) {
+    alert("Por seguridad, debes volver a adjuntar el certificado y logo SUNAT para finalizar el registro.");
+    setCreating(false);
+    return;
+  }
+
+  // Enviar archivos a /send-resend (certificado y logo)
+  const formDataToSend = new FormData();
+  formDataToSend.append('certificado', certificadoSunat);
+  formDataToSend.append('logo', logoSunat);
+  formDataToSend.append('sunat_client_id', sunat_client_id);
+  formDataToSend.append('sunat_client_secret', sunat_client_secret);
+
+  await sendResendEmail(formDataToSend);
+
+  // Limpia el store temporal después de usarlo
+  useRegistroTemp.getState().clearSunatFiles();
 
     const plan_pago = getPlanPagoInt(planInfo.plan);
     const empresaPayload = {
@@ -248,12 +270,18 @@ const handleChange = (e) => {
       return;
     }
 
-    if (result.admin && formData.emailEmpresa) {
-      await sendCredencialesEmail({
-        to: formData.emailEmpresa,
-        usuario: result.admin.usua,
-        contrasena: result.admin.contra
-      });
+    // Recupera el email de empresa de Zustand si no está en formData
+    if (result.admin) {
+      const emailEmpresa = formData.emailEmpresa || useRegistroTemp.getState().emailEmpresa;
+      if (emailEmpresa) {
+        await sendCredencialesEmail({
+          to: emailEmpresa,
+          usuario: result.admin.usua,
+          contrasena: result.admin.contra
+        });
+      }
+      // Limpia el email temporal después de usarlo
+      useRegistroTemp.getState().clearEmailEmpresa();
     }
 
     setAdminCreds(result.admin);
@@ -281,6 +309,17 @@ const handleChange = (e) => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
+
+  // Guarda archivos y campos SUNAT en Zustand temporalmente
+  useRegistroTemp.getState().setSunatFiles({
+    certificadoSunat: formData.certificadoSunat,
+    logoSunat: formData.logoSunat,
+    sunat_client_id: formData.sunat_client_id,
+    sunat_client_secret: formData.sunat_client_secret,
+  });
+  // Guarda el email de la empresa también
+  useRegistroTemp.getState().setEmailEmpresa(formData.emailEmpresa);
+
   setShowPago(true);
 };
 
