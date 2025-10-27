@@ -73,6 +73,7 @@ app.use(
         "https://mercadopago.com",
         "https://www.mercadopago.com",
         "https://op-cho-bricks.mercadopago.com",
+        "'sha256-m7IJ+wWU57KuxY8Byp8Cq6F39R/uj0Dv7A1+xM1bXMQ='",
       ],
       connectSrc: [
         "'self'",
