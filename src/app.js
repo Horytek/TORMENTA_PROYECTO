@@ -69,7 +69,6 @@ app.use(
         "https://sdk.mercadopago.com",
         "https://gc.kis.v2.scr.kaspersky-labs.com",
         "wss://gc.kis.v2.scr.kaspersky-labs.com",
-        // Añade los dominios requeridos por Mercado Pago:
         "https://http2.mlstatic.com",
         "https://mercadopago.com",
         "https://www.mercadopago.com",
@@ -81,6 +80,12 @@ app.use(
         "https://api.mercadopago.com",
         "https://http2.mlstatic.com",
         "https://op-cho-bricks.mercadopago.com",
+        "https://api.mercadolibre.com", // <-- Añadido para Mercado Pago tracking
+      ],
+      frameSrc: [
+        "'self'",
+        "https://mercadopago.com.pe",    
+        "https://www.mercadopago.com",
       ],
       imgSrc: [
         "'self'",
