@@ -50,14 +50,15 @@ const addClave = async (producto) => {
   try {
     const response = await addClaveRequest(producto);
     if (response.data.code === 1) {
-      toast.success("Producto añadido con éxito");
+      toast.success("Clave guardada con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al guardar el producto");
+      toast.error(response.data.message || "Error al guardar la clave");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    toast.error(error.response?.data?.message || "Error en el servidor interno");
+    return false;
   }
 };
 

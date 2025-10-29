@@ -86,23 +86,64 @@ const getClave = async (req, res) => {
 const addClave = async (req, res) => {
   let connection;
   try {
-    const { id_empresa, tipo, valor, estado_clave } = req.body;
-    if (!id_empresa) return res.status(400).json({ message: "El campo id_empresa es obligatorio." });
+    const { id_empresa, tipo = 'Sunat', valor, estado_clave = 1 } = req.body;
+    if (!id_empresa) return res.status(400).json({ code: 0, message: "El campo id_empresa es obligatorio." });
+    if (!valor)      return res.status(400).json({ code: 0, message: "El campo valor (token) es obligatorio." });
 
-    const clave = {
-      id_empresa,
-      tipo,
-      valor: encrypt(valor),
-      estado_clave,
-      id_tenant: req.id_tenant
-    };
+    const developer = isDeveloperUser(req);
+    const valorEncriptado = encrypt(valor);
 
     connection = await getConnection();
-    await connection.query("INSERT INTO clave SET ?", clave);
+    await connection.beginTransaction();
 
-    res.json({ code: 1, message: "Clave añadida" });
+    // 1) Verificar si ya existe la clave Sunat de esa empresa (y tenant)
+    let selectQuery = `
+      SELECT id_clave 
+      FROM clave 
+      WHERE id_empresa = ? AND tipo = ?
+    `;
+    const selectParams = [id_empresa, tipo];
+    if (!developer) {
+      selectQuery += " AND id_tenant = ?";
+      selectParams.push(req.id_tenant);
+    }
+    const [rows] = await connection.query(selectQuery, selectParams);
+
+    let result;
+    if (rows.length > 0) {
+      // 2) Actualizar si existe
+      [result] = await connection.query(
+        "UPDATE clave SET valor = ?, estado_clave = ? WHERE id_clave = ?",
+        [valorEncriptado, estado_clave, rows[0].id_clave]
+      );
+    } else {
+      // 3) Insertar si no existe
+      const clave = {
+        id_empresa,
+        tipo,
+        valor: valorEncriptado,
+        estado_clave,
+        id_tenant: req.id_tenant
+      };
+      [result] = await connection.query("INSERT INTO clave SET ? ", clave);
+    }
+
+    await connection.commit();
+    return res.json({ code: 1, message: "Clave guardada correctamente" });
   } catch (error) {
-    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    if (connection) await connection.rollback();
+    console.error('Error en addClave:', { code: error.code, msg: error.sqlMessage || error.message });
+
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ code: 0, message: "Ya existe una clave Sunat para esta empresa" });
+    }
+    if ((error.sqlMessage || "").includes("Data too long")) {
+      return res.status(400).json({ 
+        code: 0, 
+        message: "El token es demasiado largo para la columna 'valor'. Aumenta el tamaño a TEXT/LONGTEXT." 
+      });
+    }
+    return res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
   }

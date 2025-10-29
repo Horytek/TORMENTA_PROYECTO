@@ -3,7 +3,6 @@ import WalletBrick from './WalletBrick';
 import { createEmpresaAndAdmin } from '@/services/empresa.services';
 import { Button, Tooltip, Card, Input } from "@heroui/react";
 import { HelpCircle } from "lucide-react";
-import { FileKey, Image as ImageIcon } from "lucide-react";
 import {
   Empty,
   EmptyHeader,
@@ -12,7 +11,7 @@ import {
   EmptyDescription,
   EmptyContent,
 } from "@/components/ui/empty";
-import { sendResendEmail, sendCredencialesEmail } from '@/services/resend.services';
+import { sendCredencialesEmail } from '@/services/resend.services';
 
 
 // Popover minimalista estilo HeroUI/Shadcn para ayuda de logotipo
@@ -97,11 +96,7 @@ export const RegistroForm = ({ planInfo }) => {
     telefonoEmpresa: '',
     emailEmpresa: '',
     logotipo: '',
-    pais: '',
-    certificadoSunat: null,
-    logoSunat: null,
-    sunat_client_id: '',
-    sunat_client_secret: ''
+    pais: ''
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
@@ -177,10 +172,6 @@ const handleChange = (e) => {
       formErrors.logotipo = 'El logotipo debe ser una URL válida de imgbb (https://i.ibb.co/xxx.jpg)';
       isValid = false;
     }
-    if (!formData.certificadoSunat) { formErrors.certificadoSunat = 'El certificado es obligatorio'; isValid = false; }
-    if (!formData.logoSunat) { formErrors.logoSunat = 'El logo SUNAT es obligatorio'; isValid = false; }
-    if (!formData.sunat_client_id.trim()) { formErrors.sunat_client_id = 'El client_id SUNAT es obligatorio'; isValid = false; }
-    if (!formData.sunat_client_secret.trim()) { formErrors.sunat_client_secret = 'El client_secret SUNAT es obligatorio'; isValid = false; }
 
     setErrors(formErrors);
     return isValid;
@@ -202,61 +193,52 @@ const handleChange = (e) => {
 }
 
 const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  setCreating(true);
+    setCreating(true);
 
-  // Enviar archivos a /send-resend (certificado y logo)
-  const formDataToSend = new FormData();
-  formDataToSend.append('certificado', formData.certificadoSunat);
-  formDataToSend.append('logo', formData.logoSunat);
-  formDataToSend.append('sunat_client_id', formData.sunat_client_id);
-  formDataToSend.append('sunat_client_secret', formData.sunat_client_secret);
+    // Determinar el plan_pago int según el plan seleccionado
+    const plan_pago = getPlanPagoInt(planInfo.plan);
 
-  await sendResendEmail(formDataToSend);
+    const empresaPayload = {
+      ruc: formData.ruc,
+      razonSocial: formData.razonSocial,
+      nombreComercial: formData.nombreComercial || null,
+      direccion: formData.direccion,
+      distrito: formData.distrito || null,
+      provincia: formData.provincia || null,
+      departamento: formData.departamento || null,
+      codigoPostal: formData.codigoPostal || null,
+      telefono: formData.telefonoEmpresa || null,
+      email: formData.emailEmpresa || null,
+      logotipo: formData.logotipo || null,
+      moneda: null,
+      pais: formData.pais,
+      plan_pago
+    };
 
-  // Determinar el plan_pago int según el plan seleccionado
-  const plan_pago = getPlanPagoInt(planInfo.plan);
+    setCreating(true);
+    const result = await createEmpresaAndAdmin(empresaPayload);
+    setCreating(false);
 
-  const empresaPayload = {
-    ruc: formData.ruc,
-    razonSocial: formData.razonSocial,
-    nombreComercial: formData.nombreComercial || null,
-    direccion: formData.direccion,
-    distrito: formData.distrito || null,
-    provincia: formData.provincia || null,
-    departamento: formData.departamento || null,
-    codigoPostal: formData.codigoPostal || null,
-    telefono: formData.telefonoEmpresa || null,
-    email: formData.emailEmpresa || null,
-    logotipo: formData.logotipo || null,
-    moneda: null,
-    pais: formData.pais,
-    plan_pago
+    if (!result?.success) {
+      alert(result?.message || "No se pudo completar el registro");
+      return;
+    }
+
+    // Enviar credenciales al correo de la empresa (solo usuario y contraseña)
+    if (result.admin && formData.emailEmpresa) {
+      await sendCredencialesEmail({
+        to: formData.emailEmpresa,
+        usuario: result.admin.usua,
+        contrasena: result.admin.contra
+      });
+    }
+
+    setAdminCreds(result.admin);
+    setFormSubmitted(true);
   };
-
-  setCreating(true);
-  const result = await createEmpresaAndAdmin(empresaPayload);
-  setCreating(false);
-
-  if (!result?.success) {
-    alert(result?.message || "No se pudo completar el registro");
-    return;
-  }
-
-  // Enviar credenciales al correo de la empresa
-  if (result.admin && formData.emailEmpresa) {
-    await sendCredencialesEmail({
-      to: formData.emailEmpresa,
-      usuario: result.admin.usua,
-      contrasena: result.admin.contra
-    });
-  }
-
-  setAdminCreds(result.admin);
-  setFormSubmitted(true);
-};
 
   return (
     <div className="rounded-2xl p-6 md:p-8 w-full">
@@ -384,88 +366,7 @@ const handleSubmit = async (e) => {
                         placeholder="Perú"
                         className={`w-full px-4 py-3 rounded-xl bg-transparent border ${errors.pais ? 'border-red-500' : 'border-gray-700'} text-primary-text`} />
                       {errors.pais && <p className="mt-1 text-xs text-red-500">{errors.pais}</p>}
-                    </div>                
-                      {/* Certificado SUNAT */}
-                      <Empty>
-                        <EmptyHeader>
-                          <EmptyMedia variant="icon">
-                            <FileKey className="text-blue-500" />
-                          </EmptyMedia>
-                          <EmptyTitle>Certificado SUNAT <span className="text-red-500">*</span></EmptyTitle>
-                          <EmptyDescription>
-                            Haga click aquí o arrastre y suelte su certificado en formato P12 o PFX
-                          </EmptyDescription>
-                        </EmptyHeader>
-                        <EmptyContent>
-                          <input
-                            id="certificadoSunat"
-                            name="certificadoSunat"
-                            type="file"
-                            accept=".pfx,.p12"
-                            onChange={handleFileChange}
-                            className="w-full mt-2 cursor-pointer"
-                          />
-                          {errors.certificadoSunat && (
-                            <p className="mt-1 text-xs text-red-500">{errors.certificadoSunat}</p>
-                          )}
-                        </EmptyContent>
-                      </Empty>
-
-                      {/* Logo SUNAT */}
-                      <Empty>
-                        <EmptyHeader>
-                          <EmptyMedia variant="icon">
-                            <ImageIcon className="text-blue-500" />
-                          </EmptyMedia>
-                          <EmptyTitle>Logo SUNAT <span className="text-red-500">*</span></EmptyTitle>
-                          <EmptyDescription>
-                            Haga click aquí o arrastre y suelte su logo en .png - máximo 100KB
-                          </EmptyDescription>
-                        </EmptyHeader>
-                        <EmptyContent>
-                          <input
-                            id="logoSunat"
-                            name="logoSunat"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="w-full mt-2 cursor-pointer"
-                          />
-                          {errors.logoSunat && (
-                            <p className="mt-1 text-xs text-red-500">{errors.logoSunat}</p>
-                          )}
-                        </EmptyContent>
-                      </Empty>
-
-                    {/* Credenciales SUNAT */}
-                      <div className="col-span-1">
-                        <label htmlFor="sunat_client_id" className="block text-sm font-medium text-primary-text mb-1">
-                          Credenciales de API SUNAT (client_id)
-                        </label>
-                        <input
-                          id="sunat_client_id"
-                          name="sunat_client_id"
-                          value={formData.sunat_client_id}
-                          onChange={handleChange}
-                          placeholder="Credenciales client_id"
-                          className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text"
-                        />
-                        {errors.sunat_client_id && <p className="mt-1 text-xs text-red-500">{errors.sunat_client_id}</p>}
-                      </div>
-                      <div className="col-span-1">
-                        <label htmlFor="sunat_client_secret" className="block text-sm font-medium text-primary-text mb-1">
-                          Credenciales de API SUNAT (client_secret)
-                        </label>
-                        <input
-                          id="sunat_client_secret"
-                          name="sunat_client_secret"
-                          value={formData.sunat_client_secret}
-                          onChange={handleChange}
-                          placeholder="Credenciales client_secret"
-                          className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text"
-                        />
-                        {errors.sunat_client_secret && <p className="mt-1 text-xs text-red-500">{errors.sunat_client_secret}</p>}
-                      </div>
+                    </div>
                   </div>
                 </div>
 

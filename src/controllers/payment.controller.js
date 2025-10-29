@@ -173,13 +173,13 @@ export const paymentWebhook = async (req, res) => {
     } else {
       // Solo loguear eventos no payment una vez
       if (action === "payment.created" || !action) {
-        console.log("Evento no 'payment' recibido:", { type, id, action });
+        //console.log("Evento no 'payment' recibido:", { type, id, action });
       }
     }
 
     return res.sendStatus(200);
   } catch (error) {
-    console.error("Error general en webhook MP:", error);
+    console.error("Error general en webhook MP");
     return res.sendStatus(200);
   }
 };
