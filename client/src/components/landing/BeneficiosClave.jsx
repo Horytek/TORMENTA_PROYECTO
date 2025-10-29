@@ -20,7 +20,7 @@ export const BeneficiosClave = () => {
         </svg>
       ),
       titulo: "Cumplimiento Legal",
-      descripcion: "100% compatible con normativas peruanas (SUNAT, PLAME, etc.)",
+      descripcion: "100% compatible con normativas peruanas (SUNAT, etc.)",
       color: "from-secondary-color to-primary-color",
       stat: "Certificado"
     },
@@ -90,7 +90,7 @@ export const BeneficiosClave = () => {
           
           <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 max-w-4xl mx-auto">
             <p className="text-lg leading-relaxed text-secondary-text">
-              Descubre por qué más de <span className="text-secondary-color font-semibold">500+ empresas confían en HoryCore</span> para transformar su <span className="text-white font-medium">gestión empresarial</span>.
+              Descubre por qué más de <span className="text-secondary-color font-semibold">20+ empresas confían en HoryCore</span> para transformar su <span className="text-white font-medium">gestión empresarial</span>.
             </p>
           </div>
         </motion.div>

@@ -13,11 +13,11 @@ export const ActualizacionesContent = () => {
           >
             <div className="flex items-center mb-6">
               <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-              <h2 className="text-3xl font-bold text-white">Versión Actual - 4.2.0</h2>
+              <h2 className="text-3xl font-bold text-white">Versión Actual - 2.0</h2>
               <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
             </div>
             <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-6">
-              <p className="text-lg leading-relaxed text-secondary-text">La versión más avanzada con <span className="text-secondary-color font-semibold">IA Predictiva</span> y nuevas integraciones para una <span className="text-white font-medium">gestión empresarial inteligente</span>. Lanzada en septiembre de 2025.</p>
+              <p className="text-lg leading-relaxed text-secondary-text">La versión más avanzada con <span className="text-secondary-color font-semibold">Chatbot Inteligente con IA</span> y nuevas integraciones para una <span className="text-white font-medium">gestión empresarial asistida</span>. Lanzada en octubre de 2025.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6 mb-8">
@@ -30,10 +30,10 @@ export const ActualizacionesContent = () => {
                         <div className="w-4 h-4 bg-white rounded-sm"></div>
                       </div>
                     </div>
-                    <h4 className="text-xl font-bold text-white group-hover:text-secondary-color transition-colors duration-300">IA Predictiva</h4>
+                    <h4 className="text-xl font-bold text-white group-hover:text-secondary-color transition-colors duration-300">Chatbot Inteligente</h4>
                   </div>
                   <div className="w-30 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mb-4 rounded-full"></div>
-                  <p className="text-secondary-text leading-relaxed">Análisis predictivo para demanda y stock usando inteligencia artificial avanzada.</p>
+                  <p className="text-secondary-text leading-relaxed">Asistente virtual con IA que te ayuda en tiempo real con consultas, navegación y soporte en toda la plataforma.</p>
                 </div>
               </div>
               

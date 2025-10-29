@@ -76,7 +76,7 @@ export const ContactoServicios = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
             <div className="text-center bg-bgDark2/50 p-6 rounded-xl border border-gray-600/30">
-              <div className="text-4xl font-bold text-white mb-2">7,500+</div>
+              <div className="text-4xl font-bold text-white mb-2">20+</div>
               <div className="text-secondary-text">Empresas confían en nosotros</div>
             </div>
             <div className="text-center bg-bgDark2/50 p-6 rounded-xl border border-gray-600/30">
@@ -84,7 +84,7 @@ export const ContactoServicios = () => {
               <div className="text-secondary-text">Satisfacción del cliente</div>
             </div>
             <div className="text-center bg-bgDark2/50 p-6 rounded-xl border border-gray-600/30">
-              <div className="text-4xl font-bold text-white mb-2">15+</div>
+              <div className="text-4xl font-bold text-white mb-2">1+</div>
               <div className="text-secondary-text">Años de experiencia</div>
             </div>
           </div>

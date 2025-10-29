@@ -25,7 +25,7 @@ export const Pricing = () => {
   };
 
   return (
-    <section 
+    <section
       className="w-screen flex justify-center relative"
       style={{
         backgroundColor: 'rgba(38, 39, 43, 0.5)',
@@ -70,76 +70,77 @@ export const Pricing = () => {
                 </div>
               </label>
             </div>
-            <div className="flex flex-wrap flex-col lg:flex-row -mx-4 items-center mt-20">
-              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0">
-                <div 
-                  className="p-8 rounded-3xl"
+            <div className="flex flex-wrap flex-col lg:flex-row -mx-4 items-stretch mt-20">
+              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0 flex">
+                <div
+                  className="p-8 rounded-3xl flex flex-col w-full"
                   style={{
                     backgroundColor: 'rgba(48, 49, 54, 0.7)',
                     backdropFilter: 'blur(4px)',
                   }}
                 >
                   <h3 className="mb-2 text-xl font-bold font-heading text-primary-text text-left">
-                    Plan Básico
+                    Básico
                   </h3>
                   <div className="flex justify-start items-end">
                     <div className="text-4xl sm:text-5xl font-bold text-primary-text text-left mt-4 mr-2">
-                      S/ 0
+                      {isMonthly ? "S/ 85" : "S/ 850"}
                     </div>
                     <div className="text-gray-500">
                       {isMonthly ? "/ mes" : "/ año"}
                     </div>
                   </div>
-                  <p className="mt-4 mb-6 2xl:mb-10 text-gray-500 leading-loose text-left">
-                    Comienza a digitalizar tu negocio con acceso gratuito al innovador módulo de ventas.
+                  <p className="mt-4 mb-6 text-gray-500 leading-loose text-left">
+                    Comienza a digitalizar tu negocio con acceso al innovador módulo de ventas.
                   </p>
-                  <ul className="mb-2 2xl:mb-6 text-primary-text">
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Módulo de ventas</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Visualización de reportes básicos</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Soporte limitado por correo</span></li>
+                  <ul className="mb-6 text-primary-text flex-grow">
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Acceso al módulo de Ventas</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Reportes básicos (Análisis de ventas, Libro de ventas)</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Gestión de clientes</span></li>
                   </ul>
                   <button
-                    className="inline-block text-center py-2 px-4 w-full rounded-xl rounded-t-xl contained-button font-bold leading-loose mt-16"
-                    onClick={() => handlePlanSelection('Plan Básico', 'S/ 0', isMonthly ? 'mes' : 'año')}
+                    className="inline-block text-center py-2 px-4 w-full rounded-xl rounded-t-xl contained-button font-bold leading-loose"
+                    onClick={() => handlePlanSelection('Básico', isMonthly ? 'S/ 85' : 'S/ 850', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar
                   </button>
                 </div>
               </div>
-              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0 relative">
+              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0 relative flex">
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-xs font-semibold px-4 py-1 rounded-full shadow z-10">
                   Popular
                 </div>
-                <div 
-                  className="px-8 py-8 rounded-3xl border border-orange-500"
+                <div
+                  className="px-8 py-8 rounded-3xl border border-orange-500 flex flex-col w-full"
                   style={{
                     backgroundColor: 'rgba(48, 49, 54, 0.7)',
                     backdropFilter: 'blur(4px)',
                   }}
                 >
                   <h3 className="mb-2 2xl:mb-4 text-2xl font-bold font-heading text-primary-text text-left">
-                    Plan Empresarial
+                    Pro
                   </h3>
                   <div className="flex justify-start items-end">
                     <div className="text-4xl sm:text-5xl font-bold text-primary-text text-left mt-4 mr-2">
-                      {isMonthly ? "S/ 30" : "S/ 320"}
+                      {isMonthly ? "S/ 135" : "S/ 1,350"}
                     </div>
                     <div className="text-gray-500">
                       {isMonthly ? "/ mes" : "/ año"}
                     </div>
                   </div>
-                  <p className="mt-8 mb-8 2xl:mb-12 text-gray-500 leading-loose text-left">
+                  <p className="mt-8 mb-8 text-gray-500 leading-loose text-left">
                     Para negocios que necesitan control total de ventas, almacén y compras.
                   </p>
-                  <ul className="mb-14 text-primary-text">
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Módulos: Ventas, Almacén y Compras</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Paneles con KPIs y métricas</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Soporte técnico en horario comercial</span></li>
+                  <ul className="mb-6 text-primary-text flex-grow">
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Acceso a todos los módulos</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Usuarios ilimitados</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Múltiples sucursales</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Uso de Chatbot y Atajo de funciones</span></li>
                   </ul>
                   <button
-                    className="inline-block text-center py-2 px-4 w-full contained-button leading-loose transition duration-200 mt-20"
-                    onClick={() => handlePlanSelection('Plan Empresarial', isMonthly ? 'S/ 30' : 'S/ 300', isMonthly ? 'mes' : 'año')}
+                    className="inline-block text-center py-2 px-4 w-full contained-button leading-loose transition duration-200"
+                    onClick={() => handlePlanSelection('Pro', isMonthly ? 'S/ 135' : 'S/ 1,350', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar
@@ -147,36 +148,38 @@ export const Pricing = () => {
                 </div>
               </div>
 
-              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0">
-                <div 
-                  className="p-8 rounded-3xl"
+              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0 flex">
+                <div
+                  className="p-8 rounded-3xl flex flex-col w-full"
                   style={{
                     backgroundColor: 'rgba(48, 49, 54, 0.7)',
                     backdropFilter: 'blur(4px)',
                   }}
                 >
                   <h3 className="mb-2 text-xl font-bold font-heading text-primary-text text-left">
-                    Plan Corporativo
+                    Enterprise
                   </h3>
                   <div className="flex justify-start items-end">
                     <div className="text-4xl sm:text-5xl font-bold text-primary-text text-left mt-4 mr-2">
-                      {isMonthly ? "S/ 70" : "S/ 800"}
+                      {isMonthly ? "S/ 240" : "S/ 2,400"}
                     </div>
                     <div className="text-gray-500">
                       {isMonthly ? "/ mes" : "/ año"}
                     </div>
                   </div>
-                  <p className="mt-4 mb-6 2xl:mb-10 text-gray-500 leading-loose text-left">
+                  <p className="mt-4 mb-6 text-gray-500 leading-loose text-left">
                     La solución completa para empresas que requieren personalización y escalabilidad.
                   </p>
-                  <ul className="mb-2 2xl:mb-6 text-primary-text">
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Todos los módulos disponibles</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Integración con sistemas externos</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Soporte premium y onboarding</span></li>
+                  <ul className="mb-6 text-primary-text flex-grow">
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Usuarios ilimitados</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Múltiples sucursales</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Uso de Chatbot y Atajo de funciones</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Uso del log, mensajería y videollamadas internas</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Sucursales ilimitadas</span></li>
                   </ul>
                   <button
-                    className="inline-block text-center py-2 px-4 w-full rounded-xl rounded-t-xl contained-button font-bold leading-loose mt-16"
-                    onClick={() => handlePlanSelection('Plan Corporativo', isMonthly ? 'S/ 70' : 'S/ 700', isMonthly ? 'mes' : 'año')}
+                    className="inline-block text-center py-2 px-4 w-full rounded-xl rounded-t-xl contained-button font-bold leading-loose"
+                    onClick={() => handlePlanSelection('Enterprise', isMonthly ? 'S/ 240' : 'S/ 2,400', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar

@@ -49,8 +49,8 @@ export const InformacionContacto = () => {
         </svg>
       ),
       title: "Sede Principal",
-      primary: "Galería Central",
-      secondary: "AV. ARICA 1028 INT 22",
+      primary: "Sin dirección fija temporalmente",
+      secondary: "Oficinas en remodelación",
       description: "Chiclayo, Perú",
       color: "secondary-color",
       gradient: "from-secondary-color/20 to-primary-color/20"

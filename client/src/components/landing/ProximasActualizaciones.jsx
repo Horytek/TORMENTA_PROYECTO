@@ -47,7 +47,7 @@ export const ProximasActualizaciones = () => {
             
             <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-6">
               <p className="text-lg leading-relaxed text-secondary-text">
-                Estamos desarrollando una versión revolucionaria con <span className="text-primary-color font-semibold">IA conversacional</span> y <span className="text-white font-medium">tecnologías blockchain</span> para transformar tu experiencia.
+                Estamos desarrollando una versión revolucionaria con <span className="text-primary-color font-semibold">Reportes Generados por IA</span> para transformar la forma en que visualizas y analizas tus datos empresariales.
               </p>
             </div>
 
@@ -59,23 +59,23 @@ export const ProximasActualizaciones = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="bg-bgDark2/50 p-4 rounded-xl border border-primary-color/20 hover:border-primary-color/40 transition-colors duration-300">
-                  <h5 className="text-lg font-semibold text-white mb-2">IA Conversacional</h5>
-                  <p className="text-secondary-text text-sm">Asistente virtual inteligente para consultas y soporte en tiempo real con capacidad para entender el contexto de tu negocio.</p>
+                  <h5 className="text-lg font-semibold text-white mb-2">Reportes con IA</h5>
+                  <p className="text-secondary-text text-sm">Solicita cualquier reporte escribiendo en lenguaje natural. La IA comprenderá tu solicitud y generará automáticamente el reporte personalizado que necesitas.</p>
                 </div>
                 
                 <div className="bg-bgDark2/50 p-4 rounded-xl border border-secondary-color/20 hover:border-secondary-color/40 transition-colors duration-300">
-                  <h5 className="text-lg font-semibold text-white mb-2">Blockchain</h5>
-                  <p className="text-secondary-text text-sm">Trazabilidad inmutable de productos y transacciones con certificación digital para mayor transparencia.</p>
+                  <h5 className="text-lg font-semibold text-white mb-2">Análisis Inteligente</h5>
+                  <p className="text-secondary-text text-sm">La IA analizará tus datos y te sugerirá insights relevantes, tendencias y recomendaciones automáticamente.</p>
                 </div>
                 
                 <div className="bg-bgDark2/50 p-4 rounded-xl border border-primary-color/20 hover:border-primary-color/40 transition-colors duration-300">
-                  <h5 className="text-lg font-semibold text-white mb-2">IoT Integration</h5>
-                  <p className="text-secondary-text text-sm">Conexión con sensores y dispositivos inteligentes para monitoreo en tiempo real de inventarios y equipos.</p>
+                  <h5 className="text-lg font-semibold text-white mb-2">Visualización Dinámica</h5>
+                  <p className="text-secondary-text text-sm">Gráficos y tablas generados automáticamente según tu solicitud, con opciones de personalización inteligentes.</p>
                 </div>
                 
                 <div className="bg-bgDark2/50 p-4 rounded-xl border border-secondary-color/20 hover:border-secondary-color/40 transition-colors duration-300">
-                  <h5 className="text-lg font-semibold text-white mb-2">Marketplace</h5>
-                  <p className="text-secondary-text text-sm">Plataforma de extensiones y complementos desarrollados por terceros para personalizar tu experiencia.</p>
+                  <h5 className="text-lg font-semibold text-white mb-2">Exportación Flexible</h5>
+                  <p className="text-secondary-text text-sm">Exporta tus reportes en múltiples formatos (PDF, Excel, PowerPoint) con formato profesional automático.</p>
                 </div>
               </div>
             </div>

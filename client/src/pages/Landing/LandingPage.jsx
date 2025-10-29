@@ -45,7 +45,7 @@ export default function LandingPage() {
         <FeaturesDiagonal />
         <Pricing />
         <Brands />
-        <Testimonials />
+        {/* <Testimonials /> */}
         <Blog />
         <FAQ />
         <Footer />

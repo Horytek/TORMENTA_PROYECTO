@@ -54,7 +54,7 @@ export const EstadisticasAdopcion = () => {
               </div>
               
               <p className="text-lg text-secondary-color font-medium mt-1">Satisfacción del Cliente</p>
-              <p className="text-sm text-secondary-text mt-2">Basado en encuestas trimestrales a más de 5,000 usuarios activos del sistema.</p>
+              <p className="text-sm text-secondary-text mt-2">Basado en encuestas trimestrales a una gran cantidad de usuarios activos del sistema.</p>
             </div>
           </div>
           
@@ -71,7 +71,7 @@ export const EstadisticasAdopcion = () => {
               </div>
               
               <div className="flex items-baseline">
-                <span className="text-4xl font-bold text-white">7,500</span>
+                <span className="text-4xl font-bold text-white">20</span>
                 <span className="text-2xl font-bold text-primary-color ml-1">+</span>
               </div>
               

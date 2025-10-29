@@ -212,7 +212,7 @@ export const TerminosResponsabilidad = () => {
                     </svg>
                   </div>
                   <h4 className="text-secondary-color font-semibold mb-2 text-lg">Dirección</h4>
-                  <p className="text-secondary-text text-sm">Lima, Perú</p>
+                  <p className="text-secondary-text text-sm">Chiclayo, Perú</p>
                 </div>
               </div>
               
