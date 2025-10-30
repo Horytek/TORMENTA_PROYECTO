@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Importa los componentes de servicios migrados
 import { Navbar } from '../../components/landing/Navbar';
@@ -9,11 +9,18 @@ import { ServiciosAdicionales } from '../../components/landing/ServiciosAdiciona
 import { ContactoServicios } from '../../components/landing/ContactoServicios';
 import { Footer } from '../../components/landing/Footer';
 import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
+import { ContactModal } from '../../components/landing/ContactModal';
 
 // Importar estilos específicos de servicios aislados
 import '../../styles/landing/index.css';
 
 const ServiciosPage = () => {
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    type: 'demo'
+  });
+
   // Añade/remueve una clase al body para aislar estilos
   useEffect(() => {
     document.body.classList.add('landing-body');
@@ -21,6 +28,14 @@ const ServiciosPage = () => {
       document.body.classList.remove('landing-body');
     };
   }, []);
+
+  const openModal = (title, type) => {
+    setModalConfig({ isOpen: true, title, type });
+  };
+
+  const closeModal = () => {
+    setModalConfig({ ...modalConfig, isOpen: false });
+  };
 
 
   return (
@@ -32,22 +47,30 @@ const ServiciosPage = () => {
       <ServiciosHero />
       
       {/* Módulos principales del ERP */}
-      <ModulosPrincipales />
+      <ModulosPrincipales onOpenModal={() => openModal('Solicitar Demostración', 'demo')} />
       
       {/* Beneficios clave */}
-      <BeneficiosClave />
+      <BeneficiosClave onOpenModal={() => openModal('Solicitar Demo - HoryCore', 'demo')} />
       
       {/* Servicios adicionales */}
-      <ServiciosAdicionales />
+      <ServiciosAdicionales onOpenModal={() => openModal('Solicitar Cotización', 'contact')} />
       
       {/* Contacto para servicios */}
-      <ContactoServicios />
+      <ContactoServicios onOpenModal={() => openModal('Solicitar Demo - HoryCore', 'demo')} />
       
       {/* Footer */}
       <Footer />
       
       {/* Botón de scroll */}
       <ScrollUpButton />
+
+      {/* Modal de contacto */}
+      <ContactModal 
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        type={modalConfig.type}
+      />
     </div>
   );
 };

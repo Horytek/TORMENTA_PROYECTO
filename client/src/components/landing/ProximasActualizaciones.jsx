@@ -79,29 +79,6 @@ export const ProximasActualizaciones = () => {
                 </div>
               </div>
             </div>
-            
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-secondary-color/20 to-primary-color/20 blur-lg rounded-2xl"></div>
-              <div className="relative bg-bgDark2 p-6 rounded-xl border border-secondary-color/30">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-secondary-color/20 to-primary-color/20 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-6 h-6 text-secondary-color" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h5 className="text-lg font-semibold text-white">¿Quieres probar las nuevas funciones?</h5>
-                    <p className="text-secondary-text text-sm">Únete al programa beta y sé el primero en experimentar la innovación</p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end mt-4">
-                  <button className="px-4 py-2 bg-gradient-to-r from-secondary-color to-primary-color text-white rounded-lg text-sm font-medium hover:from-secondary-color/90 hover:to-primary-color/90 transition-colors duration-300">
-                    Unirse al Programa Beta
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
           </motion.div>
         </div>

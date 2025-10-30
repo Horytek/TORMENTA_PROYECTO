@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-export const ServiciosAdicionales = () => {
+export const ServiciosAdicionales = ({ onOpenModal }) => {
   const servicios = [
     {
       icon: (
@@ -270,12 +270,12 @@ export const ServiciosAdicionales = () => {
               <p className="text-secondary-text mb-6 text-lg">
                 Nuestro equipo de expertos está listo para diseñar una solución a medida para tu negocio
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="bg-gradient-to-r from-secondary-color to-primary-color text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:shadow-secondary-color/30 transition-all duration-300">
+              <div className="flex justify-center">
+                <button 
+                  onClick={onOpenModal}
+                  className="bg-gradient-to-r from-secondary-color to-primary-color text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:shadow-secondary-color/30 transition-all duration-300"
+                >
                   Solicitar cotización
-                </button>
-                <button className="border border-secondary-color/40 text-secondary-color px-8 py-3 rounded-full font-medium hover:bg-secondary-color/10 transition-all duration-300">
-                  Ver demostración
                 </button>
               </div>
             </div>

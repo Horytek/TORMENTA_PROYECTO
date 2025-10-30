@@ -25,27 +25,28 @@ export const PorQueElegir = () => {
           viewport={{ once: true }}
           className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8"
         >
-          {/* Card 1: Satisfacción del cliente */}
+          {/* Card 1: Módulos Implementados */}
           <div className="group relative bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/20 hover:border-secondary-color/50 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary-color/15 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="relative z-10 text-center">
-              {/* Círculo decorativo */}
-              <div className="relative mx-auto w-24 h-24 mb-6">
-                <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/20 to-primary-color/20 rounded-full border-2 border-secondary-color/30"></div>
-                <div className="absolute inset-2 bg-gradient-to-br from-secondary-color to-primary-color rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-2xl">98</span>
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-secondary-color rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">%</span>
+              {/* Gráfico de módulos apilados */}
+              <div className="relative mx-auto w-24 h-24 mb-6 flex flex-col items-center justify-center space-y-1.5">
+                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color to-primary-color rounded-md shadow-lg"></div>
+                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color/90 to-primary-color/90 rounded-md shadow-lg"></div>
+                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color/80 to-primary-color/80 rounded-md shadow-lg"></div>
+                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color/70 to-primary-color/70 rounded-md shadow-lg"></div>
+                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color/60 to-primary-color/60 rounded-md shadow-lg"></div>
+                <div className="absolute -top-2 -right-2 bg-gradient-to-br from-secondary-color to-primary-color text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg border-2 border-bgDark1">
+                  +5
                 </div>
               </div>
               
               <h4 className="text-lg font-bold text-white mb-3 group-hover:text-secondary-color transition-colors duration-300">
-                Satisfacción del Cliente
+                Módulos Implementados
               </h4>
               <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-3"></div>
               <p className="text-secondary-text text-sm leading-relaxed">
-                Nuestros clientes confirman la calidad y eficiencia de HoryCore
+                Amplia gama de módulos y funcionalidades para tu negocio
               </p>
             </div>
           </div>

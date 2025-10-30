@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-export const BeneficiosClave = () => {
+export const BeneficiosClave = ({ onOpenModal }) => {
   const beneficios = [
     {
       icon: (
@@ -90,7 +90,7 @@ export const BeneficiosClave = () => {
           
           <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 max-w-4xl mx-auto">
             <p className="text-lg leading-relaxed text-secondary-text">
-              Descubre por qué más de <span className="text-secondary-color font-semibold">20+ empresas confían en HoryCore</span> para transformar su <span className="text-white font-medium">gestión empresarial</span>.
+              Descubre por qué las empresas <span className="text-secondary-color font-semibold">confían en HoryCore</span> para transformar su <span className="text-white font-medium">gestión empresarial</span>.
             </p>
           </div>
         </motion.div>
@@ -146,33 +146,6 @@ export const BeneficiosClave = () => {
           viewport={{ once: true }}
           className="mt-16"
         >
-          <div className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-2xl border border-gray-600/20 hover:border-secondary-color/40 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary-color/10 overflow-hidden max-w-4xl mx-auto">
-            {/* Elementos decorativos sutiles */}
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-secondary-color/10 to-transparent rounded-full blur-3xl"></div>
-            
-            <div className="relative z-10 text-center">
-              <div className="inline-flex items-center bg-secondary-color/10 px-4 py-2 rounded-full text-secondary-color text-sm mb-6 border border-secondary-color/30">
-                <span className="w-2 h-2 bg-secondary-color rounded-full mr-2 animate-pulse"></span>
-                Transformación empresarial garantizada
-              </div>
-              <h3 className="text-2xl md:text-3xl font-bold text-white group-hover:text-secondary-color transition-colors duration-300 mb-4">
-                Optimiza tu empresa con <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary-color to-primary-color">tecnología de vanguardia</span>
-              </h3>
-              <div className="w-24 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mb-6 rounded-full mx-auto"></div>
-              <p className="text-lg text-secondary-text mb-8">
-                Únete a las empresas líderes que ya transformaron su gestión con HoryCore ERP
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="bg-gradient-to-r from-secondary-color to-primary-color text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:shadow-secondary-color/30 transition-all duration-300">
-                  Solicitar Demo Gratuita
-                </button>
-                <button className="border border-secondary-color/40 text-secondary-color px-8 py-3 rounded-full font-medium hover:bg-secondary-color/10 transition-all duration-300">
-                  Ver Casos de Éxito
-                </button>
-              </div>
-            </div>
-          </div>
         </motion.div>
         </div>
       </div>

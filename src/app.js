@@ -47,6 +47,7 @@ import { getConnection } from "./database/database.js";
 import emailRoutes from "./routes/email.routes.js";
 import credencialRoutes from "./routes/credenciales.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import landingRoutes from "./routes/landing.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -194,6 +195,7 @@ app.use("/api/function-shortcuts", functionShortcutsRoutes);
 app.use("/api", emailRoutes);
 app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);
+app.use("/api/landing", landingRoutes);
 
 // Servir archivos estáticos de Vite/React
 app.use(express.static(path.join(__dirname, "../client/dist")));

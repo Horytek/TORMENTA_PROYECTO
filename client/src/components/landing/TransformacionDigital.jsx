@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-export const TransformacionDigital = () => {
+export const TransformacionDigital = ({ onOpenModal }) => {
   return (
     <section className="w-full py-12 bg-gradient-to-b from-bgDark1 to-bgDark2">
       <div className="max-w-6xl mx-auto px-8">
@@ -96,8 +96,8 @@ export const TransformacionDigital = () => {
               
               {/* Lado derecho: Botón de acción */}
               <div className="flex-shrink-0">
-                <a 
-                  href="/contacto" 
+                <button 
+                  onClick={onOpenModal}
                   className="group/btn relative inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-secondary-color to-primary-color text-white font-bold text-lg rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-secondary-color/30 hover:scale-105 active:scale-95"
                 >
                   {/* Efecto de brillo al hover */}
@@ -110,7 +110,7 @@ export const TransformacionDigital = () => {
                   <div className="relative z-10 w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center group-hover/btn:bg-white/30 transition-colors duration-300">
                     <div className="w-2.5 h-2.5 border-r-2 border-t-2 border-white transform rotate-45 group-hover/btn:translate-x-0.5 transition-transform duration-300"></div>
                   </div>
-                </a>
+                </button>
               </div>
             </div>
           </div>

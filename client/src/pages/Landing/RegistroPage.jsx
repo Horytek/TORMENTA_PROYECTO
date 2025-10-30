@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Importar componentes de landing
 import { Navbar } from '../../components/landing/Navbar';
@@ -8,11 +8,15 @@ import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
 import { RegistroForm } from '../../components/landing/RegistroForm';
 import { MetaballsOriginal } from '../../components/landing/MetaballsOriginal';
 
+// Importar configuración de planes
+import { getPlanPrice, isValidPlan, isValidPeriod, getDefaultPlanInfo } from '../../config/plans.config';
+
 // Importar estilos específicos de landing aislados
 import '../../styles/landing/index.css';
 
 export default function RegistroPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [planInfo, setPlanInfo] = useState({
     plan: '',
     price: '',
@@ -22,12 +26,37 @@ export default function RegistroPage() {
   // Extraer información del plan de la URL
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
+    let planName = searchParams.get('plan') || '';
+    let period = searchParams.get('period') || '';
+    
+    // Validar plan y período
+    const isPlanValid = isValidPlan(planName);
+    const isPeriodValid = isValidPeriod(period);
+    
+    // Si alguno es inválido, redirigir con valores por defecto
+    if (!isPlanValid || !isPeriodValid) {
+      const defaults = getDefaultPlanInfo();
+      const newSearchParams = new URLSearchParams({
+        plan: defaults.plan,
+        period: defaults.period
+      });
+      
+      // Redirigir a la URL correcta
+      navigate(`/landing/registro?${newSearchParams.toString()}`, { replace: true });
+      return;
+    }
+    
+    // Obtener el precio de forma segura desde la configuración
+    const priceInfo = getPlanPrice(planName, period);
+    
     setPlanInfo({
-      plan: searchParams.get('plan') || 'Plan Básico',
-      price: searchParams.get('price') || 'S/ 0',
-      period: searchParams.get('period') || 'mes'
+      plan: planName,
+      price: priceInfo.formattedPrice,
+      period: period,
+      priceValue: priceInfo.price, // Precio numérico para cálculos
+      currency: priceInfo.currency
     });
-  }, [location.search]);
+  }, [location.search, navigate]);
 
   // Añade/remueve una clase al body para aislar estilos
   useEffect(() => {

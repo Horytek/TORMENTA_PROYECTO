@@ -14,11 +14,11 @@ export const Pricing = () => {
     setIsMonthly(!isMonthly);
   };
 
-  const handlePlanSelection = (planName, price, period) => {
-    // Redirigir a la nueva página de registro con parámetros del plan
+  const handlePlanSelection = (planName, period) => {
+    // Redirigir a la nueva página de registro solo con el plan y período
+    // El precio se calculará de forma segura en el componente de destino
     const searchParams = new URLSearchParams({
       plan: planName,
-      price: price,
       period: period
     });
     navigate(`/landing/registro?${searchParams.toString()}`);
@@ -99,8 +99,8 @@ export const Pricing = () => {
                     <li className="mb-4 flex"><CheckArrowIcon /><span>Gestión de clientes</span></li>
                   </ul>
                   <button
-                    className="inline-block text-center py-2 px-4 w-full rounded-xl rounded-t-xl contained-button font-bold leading-loose"
-                    onClick={() => handlePlanSelection('Básico', isMonthly ? 'S/ 85' : 'S/ 850', isMonthly ? 'mes' : 'año')}
+                    className="inline-block text-center py-2 px-4 w-full rounded-xl text-white bg-primary-color hover:bg-primary-color/80 font-bold leading-loose transition"
+                    onClick={() => handlePlanSelection('Básico', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar
@@ -136,11 +136,11 @@ export const Pricing = () => {
                     <li className="mb-4 flex"><CheckArrowIcon /><span>Acceso a todos los módulos</span></li>
                     <li className="mb-4 flex"><CheckArrowIcon /><span>Usuarios ilimitados</span></li>
                     <li className="mb-4 flex"><CheckArrowIcon /><span>Múltiples sucursales</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Uso de Chatbot y Atajo de funciones</span></li>
+                    <li className="mb-4 flex"><CheckArrowIcon /><span>Uso de Chatbot</span></li>
                   </ul>
                   <button
-                    className="inline-block text-center py-2 px-4 w-full contained-button leading-loose transition duration-200"
-                    onClick={() => handlePlanSelection('Pro', isMonthly ? 'S/ 135' : 'S/ 1,350', isMonthly ? 'mes' : 'año')}
+                    className="inline-block text-center py-2 px-4 w-full rounded-xl text-white bg-primary-color hover:bg-primary-color/80 font-bold leading-loose transition"
+                    onClick={() => handlePlanSelection('Pro', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar
@@ -178,8 +178,8 @@ export const Pricing = () => {
                     <li className="mb-4 flex"><CheckArrowIcon /><span>Sucursales ilimitadas</span></li>
                   </ul>
                   <button
-                    className="inline-block text-center py-2 px-4 w-full rounded-xl rounded-t-xl contained-button font-bold leading-loose"
-                    onClick={() => handlePlanSelection('Enterprise', isMonthly ? 'S/ 240' : 'S/ 2,400', isMonthly ? 'mes' : 'año')}
+                    className="inline-block text-center py-2 px-4 w-full rounded-xl text-white bg-primary-color hover:bg-primary-color/80 font-bold leading-loose transition"
+                    onClick={() => handlePlanSelection('Enterprise', isMonthly ? 'mes' : 'año')}
                     aria-label="Comenzar"
                   >
                     Comenzar

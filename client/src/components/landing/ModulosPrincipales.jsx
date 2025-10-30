@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-export const ModulosPrincipales = () => {
+export const ModulosPrincipales = ({ onOpenModal }) => {
   const modulos = [
     {
       icon: (
@@ -212,7 +212,10 @@ export const ModulosPrincipales = () => {
             <p className="text-secondary-text mb-6">
               Cada módulo puede personalizarse según las necesidades específicas de tu empresa
             </p>
-            <button className="bg-gradient-to-r from-secondary-color to-primary-color text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:shadow-secondary-color/30 transition-all duration-300">
+            <button 
+              onClick={onOpenModal}
+              className="bg-gradient-to-r from-secondary-color to-primary-color text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:shadow-secondary-color/30 transition-all duration-300"
+            >
               Solicitar demostración
             </button>
           </div>

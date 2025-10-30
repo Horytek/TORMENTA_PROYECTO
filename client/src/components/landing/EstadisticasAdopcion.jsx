@@ -44,17 +44,16 @@ export const EstadisticasAdopcion = () => {
             <div className="relative z-10">
               <div className="w-16 h-16 bg-gradient-to-br from-secondary-color/20 to-primary-color/20 rounded-2xl border border-secondary-color/30 flex items-center justify-center mb-4">
                 <svg className="w-10 h-10 text-secondary-color" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                 </svg>
               </div>
               
               <div className="flex items-baseline">
-                <span className="text-4xl font-bold text-white">98.5</span>
-                <span className="text-2xl font-bold text-secondary-color ml-1">%</span>
+                <span className="text-4xl font-bold text-white">+5</span>
               </div>
               
-              <p className="text-lg text-secondary-color font-medium mt-1">Satisfacción del Cliente</p>
-              <p className="text-sm text-secondary-text mt-2">Basado en encuestas trimestrales a una gran cantidad de usuarios activos del sistema.</p>
+              <p className="text-lg text-secondary-color font-medium mt-1">Módulos Implementados</p>
+              <p className="text-sm text-secondary-text mt-2">Amplia variedad de módulos y funcionalidades desarrolladas para optimizar tu gestión empresarial.</p>
             </div>
           </div>
           
@@ -66,17 +65,12 @@ export const EstadisticasAdopcion = () => {
             <div className="relative z-10">
               <div className="w-16 h-16 bg-gradient-to-br from-primary-color/30 to-primary-color/10 rounded-2xl border border-primary-color/40 flex items-center justify-center mb-4">
                 <svg className="w-10 h-10 text-primary-color" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
+                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
                 </svg>
               </div>
               
-              <div className="flex items-baseline">
-                <span className="text-4xl font-bold text-white">20</span>
-                <span className="text-2xl font-bold text-primary-color ml-1">+</span>
-              </div>
-              
-              <p className="text-lg text-primary-color font-medium mt-1">Empresas Activas</p>
-              <p className="text-sm text-secondary-text mt-2">Negocios que confían en HoryCore para su gestión diaria en todo el Perú.</p>
+              <p className="text-2xl font-bold text-primary-color mt-4 mb-2">Tecnología en evolución</p>
+              <p className="text-sm text-secondary-text mt-2">Estamos construyendo el futuro de la gestión empresarial con herramientas inteligentes para negocios del Perú.</p>
             </div>
           </div>
           

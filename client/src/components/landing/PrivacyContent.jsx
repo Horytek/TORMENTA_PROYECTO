@@ -273,10 +273,6 @@ export const PrivacyContent = () => {
           </li>
           <li className="flex items-start">
             <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Dirección:</strong> AV. ARICA 1028 INT 22</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
             <span><strong className="text-white">Horario de atención:</strong> Lunes a Viernes, 9:00 AM - 6:00 PM</span>
           </li>
         </ul>

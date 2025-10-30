@@ -2,11 +2,13 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 
 import { InvitationModal } from "./InvitationModal";
+import { ContactModal } from "./ContactModal";
 import dashboard from "../../assets/images/dashboard2.jpg";
 import styles from "../../styles/landing.module.css";
 
 export const Hero = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
     // Scroll suave a la sección de Precios
     const handleScrollToPricing = () => {
@@ -74,15 +76,13 @@ export const Hero = () => {
                         >
                             Empezar
                         </button>
-                        <a
-                            href="https://horytek-auc6e6d2c0efg5at.westus3-01.azurewebsites.net/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-64 sm:w-52 h-12 rounded-xl font-bold text-primary-text border border-solid flex justify-center items-center cursor-pointer bg-bg-dark-2 hover:bg-bg-dark-3 border-primary-color transition text-center no-underline"
+                        <button
+                            onClick={() => setIsContactModalOpen(true)}
+                            className="w-64 sm:w-52 h-12 rounded-xl font-bold text-primary-text border border-solid flex justify-center items-center cursor-pointer bg-bg-dark-2 hover:bg-bg-dark-3 border-primary-color transition text-center"
                             aria-label="Live demo"
                         >
                             Live demo
-                        </a>
+                        </button>
                     </div>
                 </motion.div>
                 <motion.div
@@ -126,6 +126,14 @@ export const Hero = () => {
             {isModalOpen && (
                 <InvitationModal isOpen={isModalOpen} setIsOpen={setIsModalOpen} />
             )}
+            
+            {/* Modal de contacto para Live Demo */}
+            <ContactModal 
+                isOpen={isContactModalOpen} 
+                onClose={() => setIsContactModalOpen(false)}
+                title="Solicitar Demo - HoryCore"
+                type="demo"
+            />
         </section>
     );
 };

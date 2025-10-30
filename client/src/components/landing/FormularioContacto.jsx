@@ -68,7 +68,7 @@ export const FormularioContacto = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="nombre" className="block text-gray-300 font-medium text-sm mb-2">
+                  <label htmlFor="nombre" className="landing-form-label">
                     Nombre completo *
                   </label>
                   <input
@@ -78,20 +78,13 @@ export const FormularioContacto = () => {
                     value={formData.nombre}
                     onChange={handleInputChange}
                     required
-                    className="!w-full !display-block px-4 py-3 bg-gradient-to-r from-bgDark3/80 via-bgDark2/60 to-bgDark3/80 rounded-xl text-white placeholder-gray-400 focus:border-secondary-color focus:shadow-xl focus:shadow-secondary-color/30 focus:bg-gradient-to-r focus:from-secondary-color/10 focus:via-bgDark2/80 focus:to-primary-color/10 focus:outline-none focus:ring-2 focus:ring-secondary-color/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-bgDark2/90 hover:to-bgDark3/90 !box-border"
-                    style={{
-                      width: '100% !important',
-                      display: 'block !important',
-                      boxSizing: 'border-box !important',
-                      border: '3px solid rgba(107, 114, 128, 0.6) !important',
-                      boxShadow: '0 10px 15px -3px rgba(31, 41, 55, 0.3) !important'
-                    }}
+                    className="landing-form-input"
                     placeholder="Ingresa tu nombre completo"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="email" className="block text-gray-300 font-medium text-sm mb-2">
+                  <label htmlFor="email" className="landing-form-label">
                     Email corporativo *
                   </label>
                   <input
@@ -101,14 +94,7 @@ export const FormularioContacto = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="!w-full !display-block px-4 py-3 bg-gradient-to-r from-bgDark3/80 via-bgDark2/60 to-bgDark3/80 rounded-xl text-white placeholder-gray-400 focus:border-secondary-color focus:shadow-xl focus:shadow-secondary-color/30 focus:bg-gradient-to-r focus:from-secondary-color/10 focus:via-bgDark2/80 focus:to-primary-color/10 focus:outline-none focus:ring-2 focus:ring-secondary-color/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-bgDark2/90 hover:to-bgDark3/90 !box-border"
-                    style={{
-                      width: '100% !important',
-                      display: 'block !important',
-                      boxSizing: 'border-box !important',
-                      border: '3px solid rgba(107, 114, 128, 0.6) !important',
-                      boxShadow: '0 10px 15px -3px rgba(31, 41, 55, 0.3) !important'
-                    }}
+                    className="landing-form-input"
                     placeholder="correo@empresa.com"
                   />
                 </div>
@@ -116,7 +102,7 @@ export const FormularioContacto = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="empresa" className="block text-gray-300 font-medium text-sm mb-2">
+                  <label htmlFor="empresa" className="landing-form-label">
                     Nombre de la empresa
                   </label>
                   <input
@@ -125,20 +111,13 @@ export const FormularioContacto = () => {
                     name="empresa"
                     value={formData.empresa}
                     onChange={handleInputChange}
-                    className="!w-full !display-block px-4 py-3 bg-gradient-to-r from-bgDark3/80 via-bgDark2/60 to-bgDark3/80 rounded-xl text-white placeholder-gray-400 focus:border-primary-color focus:shadow-xl focus:shadow-primary-color/30 focus:bg-gradient-to-r focus:from-primary-color/10 focus:via-bgDark2/80 focus:to-secondary-color/10 focus:outline-none focus:ring-2 focus:ring-primary-color/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-bgDark2/90 hover:to-bgDark3/90 !box-border"
-                    style={{
-                      width: '100% !important',
-                      display: 'block !important',
-                      boxSizing: 'border-box !important',
-                      border: '3px solid rgba(107, 114, 128, 0.6) !important',
-                      boxShadow: '0 10px 15px -3px rgba(31, 41, 55, 0.3) !important'
-                    }}
+                    className="landing-form-input"
                     placeholder="Nombre de tu empresa"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="telefono" className="block text-gray-300 font-medium text-sm mb-2">
+                  <label htmlFor="telefono" className="landing-form-label">
                     Teléfono de contacto
                   </label>
                   <input
@@ -147,52 +126,37 @@ export const FormularioContacto = () => {
                     name="telefono"
                     value={formData.telefono}
                     onChange={handleInputChange}
-                    className="!w-full !display-block px-4 py-3 bg-gradient-to-r from-bgDark3/80 via-bgDark2/60 to-bgDark3/80 rounded-xl text-white placeholder-gray-400 focus:border-primary-color focus:shadow-xl focus:shadow-primary-color/30 focus:bg-gradient-to-r focus:from-primary-color/10 focus:via-bgDark2/80 focus:to-secondary-color/10 focus:outline-none focus:ring-2 focus:ring-primary-color/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-bgDark2/90 hover:to-bgDark3/90 !box-border"
-                    style={{
-                      width: '100% !important',
-                      display: 'block !important',
-                      boxSizing: 'border-box !important',
-                      border: '3px solid rgba(107, 114, 128, 0.6) !important',
-                      boxShadow: '0 10px 15px -3px rgba(31, 41, 55, 0.3) !important'
-                    }}
+                    className="landing-form-input"
                     placeholder="+51 961 797 720"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="tipoConsulta" className="block text-gray-300 font-medium text-sm mb-2">
+                <label htmlFor="tipoConsulta" className="landing-form-label">
                   Tipo de consulta *
                 </label>
-                <div className="relative">
-                  <select
-                    id="tipoConsulta"
-                    name="tipoConsulta"
-                    value={formData.tipoConsulta}
-                    onChange={handleInputChange}
-                    required
-                    className="!w-full !display-block px-4 py-3 bg-gradient-to-r from-bgDark3/80 via-bgDark2/60 to-bgDark3/80 border-3 border-gray-500/60 shadow-lg shadow-gray-800/30 rounded-xl text-white focus:border-secondary-color focus:shadow-xl focus:shadow-secondary-color/30 focus:bg-gradient-to-r focus:from-secondary-color/10 focus:via-bgDark2/80 focus:to-primary-color/10 focus:outline-none focus:ring-2 focus:ring-secondary-color/20 transition-all duration-300 hover:border-secondary-color/70 hover:shadow-lg hover:shadow-gray-700/40 hover:bg-gradient-to-r hover:from-bgDark2/90 hover:to-bgDark3/90 appearance-none cursor-pointer !box-border"
-                  >
-                    <option value="" className="bg-bgDark3 text-gray-400">Selecciona el tipo de consulta</option>
-                    <option value="implementacion" className="bg-bgDark3 text-white">Implementación completa</option>
-                    <option value="migracion" className="bg-bgDark3 text-white">Migración de sistema actual</option>
-                    <option value="consultoria" className="bg-bgDark3 text-white">Consultoría y asesoría</option>
-                    <option value="soporte" className="bg-bgDark3 text-white">Soporte técnico</option>
-                    <option value="personalizacion" className="bg-bgDark3 text-white">Personalización de módulos</option>
-                    <option value="capacitacion" className="bg-bgDark3 text-white">Capacitación del equipo</option>
-                    <option value="demo" className="bg-bgDark3 text-white">Demo del sistema</option>
-                  </select>
-                  
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
+                <select
+                  id="tipoConsulta"
+                  name="tipoConsulta"
+                  value={formData.tipoConsulta}
+                  onChange={handleInputChange}
+                  required
+                  className="landing-form-select"
+                >
+                  <option value="" className="bg-bgDark3 text-gray-400">Selecciona el tipo de consulta</option>
+                  <option value="implementacion" className="bg-bgDark3 text-white">Implementación completa</option>
+                  <option value="migracion" className="bg-bgDark3 text-white">Migración de sistema actual</option>
+                  <option value="consultoria" className="bg-bgDark3 text-white">Consultoría y asesoría</option>
+                  <option value="soporte" className="bg-bgDark3 text-white">Soporte técnico</option>
+                  <option value="personalizacion" className="bg-bgDark3 text-white">Personalización de módulos</option>
+                  <option value="capacitacion" className="bg-bgDark3 text-white">Capacitación del equipo</option>
+                  <option value="demo" className="bg-bgDark3 text-white">Demo del sistema</option>
+                </select>
               </div>
 
               <div className="w-full">
-                <label htmlFor="mensaje" className="block text-gray-300 font-medium text-sm mb-2">
+                <label htmlFor="mensaje" className="landing-form-label">
                   Describe tu proyecto *
                 </label>
                 <textarea
@@ -202,14 +166,7 @@ export const FormularioContacto = () => {
                   onChange={handleInputChange}
                   required
                   rows={4}
-                  className="!w-full !max-w-none !display-block px-6 py-4 bg-gradient-to-br from-bgDark3/80 via-bgDark2/60 via-bgDark3/70 to-bgDark2/80 rounded-xl text-white placeholder-gray-400 focus:border-secondary-color focus:shadow-xl focus:shadow-secondary-color/30 focus:bg-gradient-to-br focus:from-secondary-color/10 focus:via-bgDark2/80 focus:via-bgDark3/90 focus:to-primary-color/10 focus:outline-none focus:ring-2 focus:ring-secondary-color/20 transition-all duration-300 hover:bg-gradient-to-br hover:from-bgDark2/90 hover:via-bgDark3/95 hover:to-bgDark2/90 resize-vertical min-h-[100px] text-base leading-relaxed !box-border"
-                  style={{
-                    width: '100% !important',
-                    display: 'block !important',
-                    boxSizing: 'border-box !important',
-                    border: '3px solid rgba(107, 114, 128, 0.6) !important',
-                    boxShadow: '0 10px 15px -3px rgba(31, 41, 55, 0.3) !important'
-                  }}
+                  className="landing-form-textarea"
                   placeholder="Cuéntanos detalladamente sobre tu empresa, necesidades específicas, número de usuarios, procesos actuales que necesitas automatizar con Horycore..."
                 />
               </div>
@@ -218,7 +175,7 @@ export const FormularioContacto = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-secondary-color to-primary-color hover:from-primary-color hover:to-secondary-color text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-secondary-color/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="landing-form-button"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center">

@@ -1,4 +1,4 @@
-export const ContactoServicios = () => {
+export const ContactoServicios = ({ onOpenModal }) => {
   return (
     <section className="w-full py-16 bg-gradient-to-br from-bgDark2 via-bgDark1 to-bgDark2">
       <div className="flex justify-center px-2 sm:px-4">
@@ -62,12 +62,12 @@ export const ContactoServicios = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="bg-gradient-to-r from-secondary-color to-primary-color text-white px-10 py-4 rounded-xl font-semibold hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-xl">
-                  Solicitar Demo Gratuita
-                </button>
-                <button className="border border-gray-600/50 text-white px-10 py-4 rounded-xl font-semibold hover:bg-bgDark2 transition-all duration-300">
-                  Agendar Reunión
+              <div className="flex justify-center">
+                <button 
+                  onClick={onOpenModal}
+                  className="bg-gradient-to-r from-secondary-color to-primary-color text-white px-10 py-4 rounded-xl font-semibold hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-xl"
+                >
+                  Solicitar Demo - HoryCore
                 </button>
               </div>
             </div>
@@ -76,12 +76,12 @@ export const ContactoServicios = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
             <div className="text-center bg-bgDark2/50 p-6 rounded-xl border border-gray-600/30">
-              <div className="text-4xl font-bold text-white mb-2">20+</div>
-              <div className="text-secondary-text">Empresas confían en nosotros</div>
+              <div className="text-4xl font-bold text-white mb-2">+5</div>
+              <div className="text-secondary-text">Módulos implementados</div>
             </div>
             <div className="text-center bg-bgDark2/50 p-6 rounded-xl border border-gray-600/30">
-              <div className="text-4xl font-bold text-white mb-2">98.5%</div>
-              <div className="text-secondary-text">Satisfacción del cliente</div>
+              <div className="text-4xl font-bold text-white mb-2">100%</div>
+              <div className="text-secondary-text">Enfoque de innovación</div>
             </div>
             <div className="text-center bg-bgDark2/50 p-6 rounded-xl border border-gray-600/30">
               <div className="text-4xl font-bold text-white mb-2">1+</div>

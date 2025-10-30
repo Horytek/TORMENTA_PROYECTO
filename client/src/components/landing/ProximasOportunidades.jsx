@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-export const ProximasOportunidades = () => {
+export const ProximasOportunidades = ({ onOpenModal }) => {
   return (
     <section className="w-full py-24 bg-gradient-to-b from-bgDark2 to-bgDark1">
       <div className="max-w-6xl mx-auto px-8">
@@ -45,7 +45,10 @@ export const ProximasOportunidades = () => {
 
           <div className="mt-8">
             <p className="text-secondary-color font-semibold mb-4">¿Quieres ser notificado sobre nuevas oportunidades?</p>
-            <button className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-primary-color/20 to-secondary-color/20 text-white font-semibold rounded-xl border border-secondary-color/30 hover:bg-gradient-to-r hover:from-primary-color/30 hover:to-secondary-color/30 transition-all duration-300">
+            <button 
+              onClick={onOpenModal}
+              className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-primary-color/20 to-secondary-color/20 text-white font-semibold rounded-xl border border-secondary-color/30 hover:bg-gradient-to-r hover:from-primary-color/30 hover:to-secondary-color/30 transition-all duration-300"
+            >
               <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>

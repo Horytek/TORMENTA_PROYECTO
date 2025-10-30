@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Importa los componentes migrados
 import { Navbar } from '../../components/landing/Navbar';
@@ -10,11 +10,14 @@ import { PorQueElegir } from '../../components/landing/PorQueElegir';
 import { TransformacionDigital } from '../../components/landing/TransformacionDigital';
 import { Footer } from '../../components/landing/Footer';
 import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
+import { ContactModal } from '../../components/landing/ContactModal';
 
 // Importar estilos específicos
 import '../../styles/landing/index.css';
 
 const SobreNosotrosPage = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // Añade/remueve una clase al body para aislar estilos
   useEffect(() => {
     document.body.classList.add('landing-body');
@@ -31,9 +34,17 @@ const SobreNosotrosPage = () => {
       <QueEsHorycore />
       <NuestrosValores />
       <PorQueElegir />
-      <TransformacionDigital />
+      <TransformacionDigital onOpenModal={() => setIsModalOpen(true)} />
       <Footer />
       <ScrollUpButton />
+      
+      {/* Modal de contacto */}
+      <ContactModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Solicitar Demo - HoryCore"
+        type="demo"
+      />
     </div>
   );
 };

@@ -132,3 +132,159 @@
 .hover\:bg-bgDark3:hover         { background-color: var(--color-bg-dark-3); }
 .hover\:bg-bgDark3Hover:hover    { background-color: var(--color-bg-dark-3-hover); }
 .hover\:text-secondaryText:hover { color: var(--color-secondary-text); }
+
+/* Contact Modal - Estilos aislados del ERP con diseño de landing-form-input */
+.contact-modal-input,
+.contact-modal-textarea {
+  all: unset;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 0.75rem !important;
+  background: linear-gradient(135deg, rgba(48, 49, 54, 0.8) 0%, rgba(38, 39, 43, 0.6) 50%, rgba(48, 49, 54, 0.8) 100%) !important;
+  border: 2px solid rgba(107, 114, 128, 0.4) !important;
+  color: white !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+.contact-modal-input::placeholder,
+.contact-modal-textarea::placeholder {
+  color: rgb(156, 163, 175) !important;
+  opacity: 1 !important;
+}
+
+.contact-modal-input:hover,
+.contact-modal-textarea:hover {
+  background: linear-gradient(135deg, rgba(38, 39, 43, 0.9) 0%, rgba(48, 49, 54, 0.9) 100%) !important;
+  border-color: rgba(161, 163, 247, 0.3) !important;
+}
+
+.contact-modal-input:focus,
+.contact-modal-textarea:focus {
+  outline: none !important;
+  border-color: rgb(161, 163, 247) !important;
+  background: linear-gradient(135deg, rgba(161, 163, 247, 0.1) 0%, rgba(38, 39, 43, 0.8) 50%, rgba(99, 102, 241, 0.1) 100%) !important;
+  box-shadow: 0 0 0 3px rgba(161, 163, 247, 0.2), 0 10px 15px -3px rgba(161, 163, 247, 0.1) !important;
+}
+
+.contact-modal-textarea {
+  resize: none !important;
+  min-height: 100px !important;
+}
+
+.contact-modal-label {
+  display: block !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: rgb(209, 213, 219) !important;
+  margin-bottom: 0.5rem !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+}
+
+/* Landing Contact Form - Estilos aislados para formularios de contacto */
+.landing-form-input,
+.landing-form-textarea,
+.landing-form-select {
+  all: unset;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgba(48, 49, 54, 0.8) 0%, rgba(38, 39, 43, 0.6) 50%, rgba(48, 49, 54, 0.8) 100%);
+  border: 2px solid rgba(107, 114, 128, 0.4);
+  color: white;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.landing-form-input::placeholder,
+.landing-form-textarea::placeholder {
+  color: rgb(156, 163, 175);
+  opacity: 1;
+}
+
+.landing-form-input:hover,
+.landing-form-textarea:hover,
+.landing-form-select:hover {
+  background: linear-gradient(135deg, rgba(38, 39, 43, 0.9) 0%, rgba(48, 49, 54, 0.9) 100%);
+  border-color: rgba(161, 163, 247, 0.3);
+}
+
+.landing-form-input:focus,
+.landing-form-textarea:focus,
+.landing-form-select:focus {
+  outline: none;
+  border-color: rgb(161, 163, 247);
+  background: linear-gradient(135deg, rgba(161, 163, 247, 0.1) 0%, rgba(38, 39, 43, 0.8) 50%, rgba(99, 102, 241, 0.1) 100%);
+  box-shadow: 0 0 0 3px rgba(161, 163, 247, 0.2), 0 10px 15px -3px rgba(161, 163, 247, 0.1);
+}
+
+.landing-form-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.landing-form-select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgb(156, 163, 175)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25rem;
+}
+
+.landing-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(209, 213, 219);
+  margin-bottom: 0.5rem;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.landing-form-button {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 2rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgb(99, 102, 241) 0%, rgb(161, 163, 247) 100%);
+  color: white;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-form-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, rgb(114, 116, 243) 0%, rgb(161, 163, 247) 100%);
+}
+
+.landing-form-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.landing-form-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
