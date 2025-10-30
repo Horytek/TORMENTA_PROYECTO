@@ -270,32 +270,13 @@ export const paymentWebhook = async (req, res) => {
       { headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } }
     );
 
-    const payerEmail = payment?.payer?.email || null;
     const externalReference = payment.external_reference || null;
+    if (!externalReference) return res.sendStatus(200);
 
-    // Detectar si el pago proviene de suscripción (campos directos)
-    let isSubscriptionPayment = Boolean(
+    // Detectar si el pago proviene de suscripción
+    const isSubscriptionPayment = Boolean(
       payment?.metadata?.preapproval_id || payment?.preapproval_id || payment?.subscription_id
     );
-
-    // Fallback: si no hay flag directo, consulta preapprovals por email del pagador
-    if (!isSubscriptionPayment && payerEmail) {
-      try {
-        const { data: search } = await axios.get(
-          "https://api.mercadopago.com/preapproval/search",
-          {
-            headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` },
-            params: { payer_email: payerEmail }
-          }
-        );
-        const results = Array.isArray(search?.results) ? search.results : [];
-        isSubscriptionPayment = results.some(r => String(r?.status || "").toLowerCase() === "authorized");
-      } catch { /* noop */ }
-    }
-
-    // Mapear empresa por email de referencia o email del pagador (suscripciones)
-    const emailToMap = externalReference || payerEmail;
-    if (!emailToMap) return res.sendStatus(200);
 
     if (String(payment.status).toLowerCase() === "approved") {
       connection = await getConnection();
@@ -320,7 +301,7 @@ export const paymentWebhook = async (req, res) => {
 
         const [empresas] = await connection.query(
           "SELECT id_empresa, id_tenant FROM empresa WHERE email = ? LIMIT 1",
-          [emailToMap]
+          [externalReference]
         );
         if (!empresas.length) { await connection.rollback(); return res.sendStatus(200); }
         empresa = empresas[0];
