@@ -7,6 +7,6 @@ const router = Router();
 router.use(auth);
 
 // Solo permite acceso si el plan tiene la función chatbot
-router.post("/", checkFeatureAccess("chatbot"), chat);
+router.post("/", chat);
 
 export default router;

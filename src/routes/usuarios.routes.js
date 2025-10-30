@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { methods as usuariosController } from "./../controllers/usuarios.controller.js";
-import { checkFeatureAccess } from "../middlewares/featureAccess.js";
 import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();

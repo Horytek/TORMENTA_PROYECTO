@@ -12,7 +12,7 @@ import {
   EmptyContent,
 } from "@/components/ui/empty";
 import { sendCredencialesEmail } from '@/services/resend.services';
-
+import { Toaster, toast } from "react-hot-toast";
 
 // Popover minimalista estilo HeroUI/Shadcn para ayuda de logotipo
 function LogotipoPopoverInfo() {
@@ -193,55 +193,78 @@ const handleChange = (e) => {
 }
 
 const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    setCreating(true);
+  // Validación extra: no permitir envío si algún campo requerido está vacío
+  const requiredFields = [
+    'nombre',
+    'apellido',
+    'ruc',
+    'razonSocial',
+    'direccion',
+    'pais',
+    'emailEmpresa',
+    'telefonoEmpresa'
+  ];
+  const emptyField = requiredFields.find(
+    (field) => !formData[field] || String(formData[field]).trim() === ""
+  );
+  if (emptyField) {
+    setErrors((prev) => ({
+      ...prev,
+      [emptyField]: 'Este campo es obligatorio'
+    }));
+    toast.error('Por favor, completa todos los campos obligatorios antes de continuar.');
+    return;
+  }
 
-    // Determinar el plan_pago int según el plan seleccionado
-    const plan_pago = getPlanPagoInt(planInfo.plan);
+  setCreating(true);
 
-    const empresaPayload = {
-      ruc: formData.ruc,
-      razonSocial: formData.razonSocial,
-      nombreComercial: formData.nombreComercial || null,
-      direccion: formData.direccion,
-      distrito: formData.distrito || null,
-      provincia: formData.provincia || null,
-      departamento: formData.departamento || null,
-      codigoPostal: formData.codigoPostal || null,
-      telefono: formData.telefonoEmpresa || null,
-      email: formData.emailEmpresa || null,
-      logotipo: formData.logotipo || null,
-      moneda: null,
-      pais: formData.pais,
-      plan_pago
-    };
+  // Determinar el plan_pago int según el plan seleccionado
+  const plan_pago = getPlanPagoInt(planInfo.plan);
 
-    setCreating(true);
-    const result = await createEmpresaAndAdmin(empresaPayload);
-    setCreating(false);
-
-    if (!result?.success) {
-      alert(result?.message || "No se pudo completar el registro");
-      return;
-    }
-
-    // Enviar credenciales al correo de la empresa (solo usuario y contraseña)
-    if (result.admin && formData.emailEmpresa) {
-      await sendCredencialesEmail({
-        to: formData.emailEmpresa,
-        usuario: result.admin.usua,
-        contrasena: result.admin.contra
-      });
-    }
-
-    setAdminCreds(result.admin);
-    setFormSubmitted(true);
+  const empresaPayload = {
+    ruc: formData.ruc,
+    razonSocial: formData.razonSocial,
+    nombreComercial: formData.nombreComercial || null,
+    direccion: formData.direccion,
+    distrito: formData.distrito || null,
+    provincia: formData.provincia || null,
+    departamento: formData.departamento || null,
+    codigoPostal: formData.codigoPostal || null,
+    telefono: formData.telefonoEmpresa || null,
+    email: formData.emailEmpresa || null,
+    logotipo: formData.logotipo || null,
+    moneda: null,
+    pais: formData.pais,
+    plan_pago
   };
+
+  const result = await createEmpresaAndAdmin(empresaPayload);
+  setCreating(false);
+
+  if (!result?.success) {
+    toast.error(result?.message || "No se pudo completar el registro");
+    return;
+  }
+
+  // Enviar credenciales al correo de la empresa (solo usuario y contraseña)
+  if (result.admin && formData.emailEmpresa) {
+    await sendCredencialesEmail({
+      to: formData.emailEmpresa,
+      usuario: result.admin.usua,
+      contrasena: result.admin.contra
+    });
+  }
+
+  setAdminCreds(result.admin);
+  setFormSubmitted(true);
+};
 
   return (
     <div className="rounded-2xl p-6 md:p-8 w-full">
+      <Toaster position="top-center" />
       <div className="max-w-[1200px] w-full mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
           <div className="lg:col-span-2 bg-card-bg border border-gray-700/20 rounded-3xl p-10 md:p-12 shadow-xl min-h-[520px]">

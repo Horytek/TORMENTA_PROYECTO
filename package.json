@@ -40,6 +40,7 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.10",
     "openai": "^6.2.0",
+    "pdfkit": "^0.17.2",
     "react-google-places-autocomplete": "^4.1.0",
     "resend": "^6.2.2",
     "sequelize": "^6.37.5",

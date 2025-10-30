@@ -553,9 +553,39 @@ const sendAuthCode = async (req, res) => {
             to: email,
             subject: 'Autenticación exitosa de cuenta',
             html: `
-                <h2>¡Cuenta autenticada correctamente!</h2>
-                <p>Tu cuenta ha sido activada y ahora puedes iniciar sesión normalmente en el sistema.</p>
-                <p style="font-size:13px;color:#888;">Si tienes dudas, contacta a soporte.</p>
+                <div style="background:#0b1020;padding:24px 12px;">
+                  <div style="max-width:680px;margin:0 auto;background:#0f172a;border-radius:16px;overflow:hidden;border:1px solid rgba(148,163,184,.2);color:#e2e8f0">
+                    <div style="background:linear-gradient(135deg,#16a34a,#22c55e);padding:18px 20px;display:flex;align-items:center;gap:12px">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="white" style="opacity:.95">
+                        <path d="M5 13L9 17L19 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <div style="font-weight:800;font-size:16px;letter-spacing:.2px">¡Cuenta autenticada correctamente!</div>
+                      <span style="margin-left:auto;background:rgba(255,255,255,.18);color:#fff;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700">HoryCore</span>
+                    </div>
+                    <div style="padding:22px">
+                      <div style="font-size:15px;color:#cbd5e1;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:#16a34a">
+                          <path d="M12 2l7 3v6c0 5.55-3.84 10.74-7 12-3.16-1.26-7-6.45-7-12V5l7-3z"/>
+                        </svg>
+                        ¡Bienvenido a HoryCore!
+                      </div>
+                      <div style="margin-bottom:18px;color:#e2e8f0;font-size:15px">
+                        Tu cuenta ha sido activada y ahora puedes iniciar sesión normalmente en el sistema.
+                      </div>
+                      <div style="color:#cbd5e1;font-size:15px;margin-bottom:10px">
+                        Si tienes dudas, contacta a soporte.<br>
+                        <span style="color:#60a5fa">soporte@horycore.com</span>
+                      </div>
+                    </div>
+                    <div style="padding:18px 20px;border-top:1px solid rgba(148,163,184,.2);background:#0b1220;color:#94a3b8;text-align:center">
+                      <div style="font-weight:800;color:#e2e8f0">Horytek ERP</div>
+                      <div style="font-size:12px">Sistema de Gestión Empresarial</div>
+                      <div style="margin-top:6px;font-size:12px;color:#64748b">
+                        Este correo fue enviado automáticamente desde la plataforma. Responde directamente para contactar a soporte.
+                      </div>
+                    </div>
+                  </div>
+                </div>
             `
         });
 

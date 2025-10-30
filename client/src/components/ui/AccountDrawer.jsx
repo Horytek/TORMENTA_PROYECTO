@@ -355,7 +355,7 @@ const handleSave = async () => {
   const vencimiento = fechaPago || empresaData?.fecha_vencimiento || user?.original?.fecha_vencimiento || null;
   const costo =
     empresaData?.costo ||
-    (String(plan_pago) === "1" ? "S/ 120" : String(plan_pago) === "2" ? "S/ 60" : "S/ 30");
+    (String(plan_pago) === "1" ? "S/ 240" : String(plan_pago) === "2" ? "S/ 135" : "S/ 85");
   const estado = empresaData?.estado || "Activo";
   const puedeEditar = user?.roleId === 1 || user?.roleId === "admin";
 
