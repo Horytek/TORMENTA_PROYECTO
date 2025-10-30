@@ -232,6 +232,8 @@ function mergeWithFormSchema(entity, reply, schemaData) {
     // Plan 1 = enterprise/premium, Plan 2 = pro, Plan 3 = basic
     if (parseInt(plan_pago) === 1) {
       setFeaturesAllowed({ chatbot: true, shortcuts: true });
+    } else if (parseInt(plan_pago) === 2) {
+      setFeaturesAllowed({ chatbot: true, shortcuts: false });
     } else {
       setFeaturesAllowed({ chatbot: false, shortcuts: false });
     }

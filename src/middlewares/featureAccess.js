@@ -1,16 +1,13 @@
 import { getConnection } from "../database/database.js";
 
-// Mapea los nombres clave a los id_funciones reales y sus límites
+// Solo mapea almacenes y sucursales
 const featureMap = {
-  "usuarios_ilimitados": { id: 1, max: 5 }, // máximo 5 usuarios para plan básico
   "multiples_sucursales": { id: 2, max: 3 }, // máximo 3 sucursales para plan básico/pro
-  "chatbot": { id: 3 },
-  "log_mensajeria_videollamadas": { id: 4 },
   "sucursales_ilimitadas": { id: 5, max: 3 }, // máximo 3 sucursales si no tiene ilimitadas
   "almacenes": { id: 6, max: 3 } // ejemplo: máximo 3 almacenes
 };
 
-// Middleware extendido
+// Middleware solo para almacenes y sucursales
 export const checkFeatureAccess = (featureKey, opts = {}) => async (req, res, next) => {
   try {
     const id_tenant = req.id_tenant;
@@ -54,14 +51,6 @@ export const checkFeatureAccess = (featureKey, opts = {}) => async (req, res, ne
     if (feature.max && opts.checkLimit) {
       let count = 0;
       switch (featureKey) {
-        case "usuarios_ilimitados":
-          // Contar usuarios activos del tenant
-          [[{ total }]] = await connection.query(
-            "SELECT COUNT(*) AS total FROM usuario WHERE id_tenant = ? AND estado_usuario = 1",
-            [id_tenant]
-          );
-          count = total;
-          break;
         case "almacenes":
           [[{ total }]] = await connection.query(
             "SELECT COUNT(*) AS total FROM almacen WHERE id_tenant = ?",
@@ -77,15 +66,11 @@ export const checkFeatureAccess = (featureKey, opts = {}) => async (req, res, ne
           );
           count = total;
           break;
-        // Puedes agregar más casos según tu modelo
       }
       if (count >= feature.max) {
         return res.status(403).json({ message: `Límite alcanzado para ${featureKey}: máximo ${feature.max}` });
       }
     }
-
-    // Si es acceso a chatbot, atajos, mensajería, log, solo verifica acceso
-    // (ya validado arriba por funciones.includes(feature.id))
 
     next();
   } catch (error) {

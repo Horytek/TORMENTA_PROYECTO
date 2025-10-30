@@ -7,6 +7,6 @@ const router = Router();
 router.use(auth);
 
 // Solo permite acceso si el plan tiene la función de atajos/mensajería/log
-router.post("/ask", checkFeatureAccess("log_mensajeria_videollamadas"), functionShortcutsAsk);
+router.post("/ask", functionShortcutsAsk);
 
 export default router;
