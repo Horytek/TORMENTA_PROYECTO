@@ -101,20 +101,13 @@ export const Navbar = () => {
             exit={{ opacity: 0 }}
           >
           <div className="grow basis-0 justify-end hidden lg:flex items-center gap-4 lg:ms-7">
-            <Link
-              to="/login"
-              className="text-white lg:text-base text-2xl cursor-pointer font-normal lg:font-medium whitespace-nowrap flex items-center"
-              aria-label="Iniciar sesión"
-            >
-              Iniciar sesión
-            </Link>
 
             <Link
-              to="/register"
+              to="/login"
               className="text-sm text-white bg-primary-color hover:bg-primary-color/80 px-4 py-2 ps-6 rounded-full flex items-center gap-2 transition whitespace-nowrap"
               aria-label="Registrarse"
             >
-              Registrarse
+              Iniciar Sesión
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4"

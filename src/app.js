@@ -81,7 +81,8 @@ app.use(
         "https://api.mercadopago.com",
         "https://http2.mlstatic.com",
         "https://op-cho-bricks.mercadopago.com",
-        "https://api.mercadolibre.com", 
+        "https://api.mercadolibre.com",
+        "https://facturacion.apisperu.com/api"
       ],
       frameSrc: [
         "'self'",
@@ -92,7 +93,8 @@ app.use(
       imgSrc: [
         "'self'",
         "data:",
-        "https://i.ibb.co"
+        "https://i.ibb.co",
+        "https://facturacion.apisperu.com/api"
       ],
       // ...otras directivas...
     }

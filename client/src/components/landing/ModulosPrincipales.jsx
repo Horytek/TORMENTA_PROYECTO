@@ -89,7 +89,7 @@ export const ModulosPrincipales = () => {
         "Cálculo automático de planillas",
         "Gestión de vacaciones y permisos",
         "Evaluación de desempeño",
-        "Reportes laborales PLAME"
+        "Reportes laborales"
       ]
     },
     {

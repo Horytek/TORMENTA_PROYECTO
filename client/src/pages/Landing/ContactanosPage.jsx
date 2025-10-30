@@ -27,7 +27,7 @@ const ContactoPage = () => {
       <ContactoHero />
       <FormularioContacto />
       <InformacionContacto />
-      <UbicacionOficinas />
+      {/* <UbicacionOficinas /> */}
       <Footer />
       <ScrollUpButton />
     </div>

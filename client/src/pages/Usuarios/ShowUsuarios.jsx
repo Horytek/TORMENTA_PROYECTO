@@ -216,7 +216,6 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
                         <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
                             <Button 
                                 isIconOnly
-                                isDisabled 
                                 variant="light" 
                                 color={hasDeletePermission ? "danger" : "default"}
                                 onClick={() => hasDeletePermission ? handleOpenConfirmationModal(usuario.usua, usuario.id_usuario) : null}
