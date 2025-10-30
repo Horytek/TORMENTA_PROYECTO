@@ -261,17 +261,17 @@ const handleSubmit = async (e) => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
-                    <label htmlFor="nombre" className="block text-base md:text-lg font-medium text-primary-text mb-1">Nombre</label>
+                    <label htmlFor="nombre" className="landing-form-label">Nombre</label>
                     <input id="nombre" name="nombre" value={formData.nombre} onChange={handleChange}
                       placeholder="Tu nombre"
-                      className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.nombre ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500`} />
+                      className={`landing-form-input ${errors.nombre ? '!border-red-500' : ''}`} />
                     {errors.nombre && <p className="mt-1 text-xs text-red-500">{errors.nombre}</p>}
                   </div>
                   <div>
-                    <label htmlFor="apellido" className="block text-base md:text-lg font-medium text-primary-text mb-1">Apellido</label>
+                    <label htmlFor="apellido" className="landing-form-label">Apellido</label>
                     <input id="apellido" name="apellido" value={formData.apellido} onChange={handleChange}
                       placeholder="Tu apellido"
-                      className={`w-full px-6 py-4 rounded-2xl bg-transparent border ${errors.apellido ? 'border-red-500' : 'border-gray-700'} text-primary-text placeholder-gray-500`} />
+                      className={`landing-form-input ${errors.apellido ? '!border-red-500' : ''}`} />
                     {errors.apellido && <p className="mt-1 text-xs text-red-500">{errors.apellido}</p>}
                   </div>
                 </div>
@@ -280,71 +280,71 @@ const handleSubmit = async (e) => {
                   <h4 className="text-lg font-semibold text-primary-text mb-2">Datos de la empresa</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="ruc" className="block text-sm font-medium text-primary-text mb-1">RUC</label>
+                      <label htmlFor="ruc" className="landing-form-label">RUC</label>
                       <input id="ruc" name="ruc" value={formData.ruc} onChange={handleChange}
                         placeholder="11 dígitos"
-                        className={`w-full px-4 py-3 rounded-xl bg-transparent border ${errors.ruc ? 'border-red-500' : 'border-gray-700'} text-primary-text`} />
+                        className={`landing-form-input ${errors.ruc ? '!border-red-500' : ''}`} />
                       {errors.ruc && <p className="mt-1 text-xs text-red-500">{errors.ruc}</p>}
                     </div>
                     <div>
-                      <label htmlFor="razonSocial" className="block text-sm font-medium text-primary-text mb-1">Razón Social</label>
+                      <label htmlFor="razonSocial" className="landing-form-label">Razón Social</label>
                       <input id="razonSocial" name="razonSocial" value={formData.razonSocial} onChange={handleChange}
                         placeholder="Empresa S.A.C."
-                        className={`w-full px-4 py-3 rounded-xl bg-transparent border ${errors.razonSocial ? 'border-red-500' : 'border-gray-700'} text-primary-text`} />
+                        className={`landing-form-input ${errors.razonSocial ? '!border-red-500' : ''}`} />
                       {errors.razonSocial && <p className="mt-1 text-xs text-red-500">{errors.razonSocial}</p>}
                     </div>
                     <div>
-                      <label htmlFor="nombreComercial" className="block text-sm font-medium text-primary-text mb-1">Nombre Comercial</label>
+                      <label htmlFor="nombreComercial" className="landing-form-label">Nombre Comercial</label>
                       <input id="nombreComercial" name="nombreComercial" value={formData.nombreComercial} onChange={handleChange}
                         placeholder="Marca o nombre comercial"
-                        className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text" />
+                        className="landing-form-input" />
                     </div>
                     <div>
-                      <label htmlFor="direccion" className="block text-sm font-medium text-primary-text mb-1">Dirección</label>
+                      <label htmlFor="direccion" className="landing-form-label">Dirección</label>
                       <input id="direccion" name="direccion" value={formData.direccion} onChange={handleChange}
                         placeholder="Calle, número, distrito"
-                        className={`w-full px-4 py-3 rounded-xl bg-transparent border ${errors.direccion ? 'border-red-500' : 'border-gray-700'} text-primary-text`} />
+                        className={`landing-form-input ${errors.direccion ? '!border-red-500' : ''}`} />
                       {errors.direccion && <p className="mt-1 text-xs text-red-500">{errors.direccion}</p>}
                     </div>
                     <div>
-                      <label htmlFor="distrito" className="block text-sm font-medium text-primary-text mb-1">Distrito</label>
+                      <label htmlFor="distrito" className="landing-form-label">Distrito</label>
                       <input id="distrito" name="distrito" value={formData.distrito} onChange={handleChange}
                         placeholder="Ejemplo: Miraflores"
-                        className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text" />
+                        className="landing-form-input" />
                     </div>
                     <div>
-                      <label htmlFor="provincia" className="block text-sm font-medium text-primary-text mb-1">Provincia</label>
+                      <label htmlFor="provincia" className="landing-form-label">Provincia</label>
                       <input id="provincia" name="provincia" value={formData.provincia} onChange={handleChange}
                         placeholder="Ejemplo: Lima"
-                        className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text" />
+                        className="landing-form-input" />
                     </div>
                     <div>
-                      <label htmlFor="departamento" className="block text-sm font-medium text-primary-text mb-1">Departamento</label>
+                      <label htmlFor="departamento" className="landing-form-label">Departamento</label>
                       <input id="departamento" name="departamento" value={formData.departamento} onChange={handleChange}
                         placeholder="Ejemplo: Lima"
-                        className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text" />
+                        className="landing-form-input" />
                     </div>
                     <div>
-                      <label htmlFor="codigoPostal" className="block text-sm font-medium text-primary-text mb-1">Código Postal</label>
+                      <label htmlFor="codigoPostal" className="landing-form-label">Código Postal</label>
                       <input id="codigoPostal" name="codigoPostal" value={formData.codigoPostal} onChange={handleChange}
                         placeholder="Ejemplo: 15047"
-                        className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text" />
+                        className="landing-form-input" />
                     </div>
                     <div>
-                      <label htmlFor="telefonoEmpresa" className="block text-sm font-medium text-primary-text mb-1">Teléfono Empresa</label>
+                      <label htmlFor="telefonoEmpresa" className="landing-form-label">Teléfono Empresa</label>
                       <input id="telefonoEmpresa" name="telefonoEmpresa" value={formData.telefonoEmpresa} onChange={handleChange}
                         placeholder="Ejemplo: +51 961 797 720"
-                        className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text" />
+                        className="landing-form-input" />
                     </div>
                     <div>
-                      <label htmlFor="emailEmpresa" className="block text-sm font-medium text-primary-text mb-1">Email Empresa</label>
+                      <label htmlFor="emailEmpresa" className="landing-form-label">Email Empresa</label>
                       <input id="emailEmpresa" name="emailEmpresa" type="email" value={formData.emailEmpresa} onChange={handleChange}
                         placeholder="empresa@email.com"
-                        className="w-full px-4 py-3 rounded-xl bg-transparent border border-gray-700 text-primary-text" />
+                        className="landing-form-input" />
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label htmlFor="logotipo" className="block text-sm font-medium text-primary-text">
+                        <label htmlFor="logotipo" className="landing-form-label">
                           Logotipo
                         </label>
                         <LogotipoPopoverInfo />
@@ -356,15 +356,15 @@ const handleSubmit = async (e) => {
                         onChange={handleChange}
                         onPaste={handleLogotipoPaste}
                         placeholder="Pega aquí la URL https://i.ibb.co/xxx.jpg"
-                        className={`w-full px-4 py-3 rounded-xl bg-transparent border ${errors.logotipo ? 'border-red-500' : 'border-gray-700'} text-primary-text`}
+                        className={`landing-form-input ${errors.logotipo ? '!border-red-500' : ''}`}
                       />
                       {errors.logotipo && <p className="mt-1 text-xs text-red-500">{errors.logotipo}</p>}
                     </div>
                     <div>
-                      <label htmlFor="pais" className="block text-sm font-medium text-primary-text mb-1">País</label>
+                      <label htmlFor="pais" className="landing-form-label">País</label>
                       <input id="pais" name="pais" value={formData.pais} onChange={handleChange}
                         placeholder="Perú"
-                        className={`w-full px-4 py-3 rounded-xl bg-transparent border ${errors.pais ? 'border-red-500' : 'border-gray-700'} text-primary-text`} />
+                        className={`landing-form-input ${errors.pais ? '!border-red-500' : ''}`} />
                       {errors.pais && <p className="mt-1 text-xs text-red-500">{errors.pais}</p>}
                     </div>
                   </div>

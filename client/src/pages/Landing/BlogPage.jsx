@@ -160,9 +160,6 @@ const BlogPage = () => {
                 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-secondary-text">Por {post.author}</span>
-                  <button className="bg-gradient-to-r from-secondary-color to-primary-color hover:from-primary-color hover:to-secondary-color text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:shadow-lg hover:shadow-secondary-color/25">
-                    Leer más
-                  </button>
                 </div>
               </motion.article>
             ))}

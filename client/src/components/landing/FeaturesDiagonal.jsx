@@ -39,7 +39,7 @@ export const FeaturesDiagonal = () => {
               Nuestra plataforma te permite lanzar tus proyectos orientados a datos con facilidad. Aumenta la productividad y logra mejores resultados. Potencia tu toma de decisiones con analítica avanzada
             </p>
             <button
-              className="w-[210px] h-12 contained-button mr-10 "
+              className="inline-block text-center py-2 px-4 w-[210px] rounded-xl text-white bg-primary-color hover:bg-primary-color/80 font-bold leading-loose transition"
               onClick={handleScrollToPricing}
               aria-label="Comenzar"
             >
