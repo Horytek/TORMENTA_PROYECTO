@@ -15,18 +15,13 @@ export const Pricing = () => {
   };
 
   const handlePlanSelection = (planName, period) => {
-    // Guardar los datos del plan en sessionStorage de forma segura
-    const planData = {
+    // Redirigir a la nueva página de registro solo con el plan y período
+    // El precio se calculará de forma segura en el componente de destino
+    const searchParams = new URLSearchParams({
       plan: planName,
-      period: period,
-      timestamp: Date.now() // Para validar que no sea muy antiguo
-    };
-    
-    // Guardar en sessionStorage (solo disponible en esta sesión del navegador)
-    sessionStorage.setItem('selectedPlan', JSON.stringify(planData));
-    
-    // Navegar a la página de registro sin parámetros en la URL
-    navigate('/landing/registro');
+      period: period
+    });
+    navigate(`/landing/registro?${searchParams.toString()}`);
   };
 
   return (

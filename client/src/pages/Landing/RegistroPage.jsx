@@ -23,37 +23,11 @@ export default function RegistroPage() {
     period: ''
   });
 
-  // Extraer información del plan de la URL o sessionStorage
+  // Extraer información del plan de la URL
   useEffect(() => {
-    // Primero intentar obtener datos desde sessionStorage
-    const storedPlanData = sessionStorage.getItem('selectedPlan');
-    let planName = '';
-    let period = '';
-    
-    if (storedPlanData) {
-      try {
-        const parsed = JSON.parse(storedPlanData);
-        // Validar que los datos no sean muy antiguos (menos de 1 hora)
-        const isRecent = parsed.timestamp && (Date.now() - parsed.timestamp < 3600000);
-        
-        if (isRecent && parsed.plan && parsed.period) {
-          planName = parsed.plan;
-          period = parsed.period;
-          
-          // Limpiar los datos después de usarlos (seguridad adicional)
-          sessionStorage.removeItem('selectedPlan');
-        }
-      } catch (error) {
-        console.error('Error al leer datos del plan:', error);
-      }
-    }
-    
-    // Si no hay datos en sessionStorage, intentar desde URL (fallback)
-    if (!planName || !period) {
-      const searchParams = new URLSearchParams(location.search);
-      planName = searchParams.get('plan') || '';
-      period = searchParams.get('period') || '';
-    }
+    const searchParams = new URLSearchParams(location.search);
+    let planName = searchParams.get('plan') || '';
+    let period = searchParams.get('period') || '';
     
     // Validar plan y período
     const isPlanValid = isValidPlan(planName);
@@ -62,16 +36,13 @@ export default function RegistroPage() {
     // Si alguno es inválido, redirigir con valores por defecto
     if (!isPlanValid || !isPeriodValid) {
       const defaults = getDefaultPlanInfo();
-      
-      // Guardar en sessionStorage y redirigir sin parámetros
-      sessionStorage.setItem('selectedPlan', JSON.stringify({
+      const newSearchParams = new URLSearchParams({
         plan: defaults.plan,
-        period: defaults.period,
-        timestamp: Date.now()
-      }));
+        period: defaults.period
+      });
       
-      // Redirigir a la URL sin parámetros
-      navigate('/landing/registro', { replace: true });
+      // Redirigir a la URL correcta
+      navigate(`/landing/registro?${newSearchParams.toString()}`, { replace: true });
       return;
     }
     
