@@ -11,7 +11,7 @@ import {
 import { FaRegCreditCard } from "react-icons/fa";
 import { CheckCircle, XCircle, X, DownloadCloud, AlertTriangle } from "lucide-react";
 import { useUserStore } from "@/store/useStore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getMpPayments, requestPlanChange, createPreapproval } from "@/services/payment.services";
 import { getUsuario } from "@/services/usuario.services";
@@ -50,6 +50,9 @@ export default function BillingDrawer({ open, onClose }) {
   const [subActive, setSubActive] = useState(false);
   const [subNextPayment, setSubNextPayment] = useState(null);
   const [subChecking, setSubChecking] = useState(false);
+
+  // Referencia para el intervalo de polling
+  const pollingIntervalRef = useRef(null);
 
   useEffect(() => {
     if (open && nombre) {
@@ -127,15 +130,25 @@ export default function BillingDrawer({ open, onClose }) {
     // Helper: consulta estado de suscripción
   const fetchSubscriptionStatus = async () => {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(correo || "").trim());
-    if (!emailOk) return;
+    if (!emailOk) {
+      console.log("⚠️ Email no válido para verificar suscripción:", correo);
+      return;
+    }
     try {
       setSubChecking(true);
+      console.log("🔄 Verificando estado de suscripción para:", correo, "Plan:", planLabel);
       const res = await createPreapproval({ plan: planLabel, email: correo });
       const data = res?.data || res;
-      // Solo mostrar “Activa” si MP confirma (estricto)
-      setSubActive(Boolean(data?.active_strict ?? data?.active));
+      console.log("📊 Respuesta de suscripción:", data);
+      
+      // Solo mostrar "Activa" si MP confirma (estricto)
+      const isActive = Boolean(data?.active_strict ?? data?.active);
+      setSubActive(isActive);
       setSubNextPayment(data?.preapproval?.next_payment_date || null);
-    } catch {
+      
+      console.log(isActive ? "✅ Suscripción ACTIVA" : "❌ Suscripción NO activa");
+    } catch (err) {
+      console.error("❌ Error al verificar suscripción:", err);
       setSubActive(false);
       setSubNextPayment(null);
     } finally {
@@ -148,18 +161,37 @@ export default function BillingDrawer({ open, onClose }) {
     fetchSubscriptionStatus();
   }, [open, planLabel, correo]);
 
-    // Re-check al volver del tab/ventana
+  // Re-check al volver del tab/ventana
   useEffect(() => {
     if (!open) return;
-    const onFocus = () => fetchSubscriptionStatus();
+    
+    const onFocus = () => {
+      console.log("🔍 Usuario regresó a la ventana, verificando suscripción...");
+      fetchSubscriptionStatus();
+    };
+    
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("👁️ Pestaña visible, verificando suscripción...");
+        fetchSubscriptionStatus();
+      }
+    };
+    
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [open, planLabel, correo]);
 
   // Preapproval (renovación automática)
   const handleEnableAutoRenew = async () => {
     try {
       setAutoRenewLoading(true);
+      console.log("🚀 Iniciando proceso de activación de renovación automática");
+      
       const res = await createPreapproval({
         plan: planLabel,
         amount: Number(String(costo).replace(/[^\d.]/g, "")) || 0,
@@ -167,19 +199,89 @@ export default function BillingDrawer({ open, onClose }) {
         nombre: empresa,
       });
       const data = res?.data || res;
+      console.log("📦 Respuesta inicial de preapproval:", data);
+      
       if (data?.init_point) {
-        window.open(data.init_point, "_blank");
-        // refrescar luego
-        setTimeout(fetchSubscriptionStatus, 4000);
+        // Abrir ventana de MercadoPago
+        console.log("🌐 Abriendo ventana de MercadoPago:", data.init_point);
+        const mpWindow = window.open(data.init_point, "_blank");
+        
+        // Limpiar cualquier polling anterior
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+        }
+        
+        // Iniciar polling inteligente
+        let attempts = 0;
+        const maxAttempts = 40; // 2 minutos (40 * 3 segundos)
+        
+        console.log("⏰ Iniciando polling cada 3 segundos (máx 2 minutos)");
+        
+        pollingIntervalRef.current = setInterval(async () => {
+          attempts++;
+          console.log(`🔍 Polling intento ${attempts}/${maxAttempts}`);
+          
+          // Verificar estado de suscripción
+          try {
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(correo || "").trim());
+            if (!emailOk) {
+              console.log("⚠️ Email no válido, deteniendo polling");
+              clearInterval(pollingIntervalRef.current);
+              return;
+            }
+            
+            const checkRes = await createPreapproval({ plan: planLabel, email: correo });
+            const checkData = checkRes?.data || checkRes;
+            const isActive = Boolean(checkData?.active_strict ?? checkData?.active);
+            
+            console.log(`📊 Intento ${attempts}: isActive=${isActive}, source=${checkData?.source}`);
+            
+            if (isActive) {
+              // ¡Suscripción activada!
+              console.log("🎉 ¡SUSCRIPCIÓN ACTIVADA! Deteniendo polling");
+              setSubActive(true);
+              setSubNextPayment(checkData?.preapproval?.next_payment_date || null);
+              clearInterval(pollingIntervalRef.current);
+              toast.success("¡Suscripción activada correctamente!");
+              
+              // Cerrar ventana de MP si aún está abierta
+              if (mpWindow && !mpWindow.closed) {
+                console.log("🪟 Cerrando ventana de MercadoPago");
+                mpWindow.close();
+              }
+            } else if (attempts >= maxAttempts) {
+              // Tiempo agotado
+              console.log("⏱️ Tiempo agotado, deteniendo polling");
+              clearInterval(pollingIntervalRef.current);
+              toast("Verifica tu correo para confirmar el pago", { icon: "⏳" });
+            }
+          } catch (err) {
+            console.error("❌ Error en polling:", err);
+            if (attempts >= maxAttempts) {
+              clearInterval(pollingIntervalRef.current);
+            }
+          }
+        }, 3000);
       } else {
+        console.error("❌ No se recibió init_point");
         toast.error(data?.message || "No se pudo generar la suscripción automática");
       }
-    } catch {
+    } catch (err) {
+      console.error("❌ Error al crear preapproval:", err);
       toast.error("Error al crear la suscripción automática");
     } finally {
       setAutoRenewLoading(false);
     }
   };
+  
+  // Limpiar polling al desmontar o cerrar
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Enviar solicitud de cambio de plan (Resend)
   const handleRequestPlanChange = async () => {
@@ -410,15 +512,17 @@ useEffect(() => {
                             {subActive ? "Activa" : "No activa"}
                           </Chip>
                         )}
-                        <Button
-                          size="sm"
-                          color="primary"
-                          isLoading={autoRenewLoading}
-                          onPress={handleEnableAutoRenew}
-                          isDisabled={subChecking}
-                        >
-                          {subActive ? "Gestionar" : "Activar"}
-                        </Button>
+                        {!subActive && (
+                          <Button
+                            size="sm"
+                            color="primary"
+                            isLoading={autoRenewLoading}
+                            onPress={handleEnableAutoRenew}
+                            isDisabled={subChecking}
+                          >
+                            Activar
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
