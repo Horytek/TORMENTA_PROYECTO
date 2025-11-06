@@ -307,13 +307,20 @@ const savePermisosGlobales = async (req, res) => {
 
     const planObjetivo = plan_seleccionado ? parseInt(plan_seleccionado) : 1;
 
-    await connection.query(
-      'DELETE FROM permisos WHERE id_rol = ? AND id_plan = ?',
-      [id_rol, planObjetivo]
+    // Eliminar solo para tenants con ese plan
+    const [tenants] = await connection.query(
+      'SELECT DISTINCT id_tenant FROM usuario WHERE plan_pago = ? AND id_tenant IS NOT NULL',
+      [planObjetivo]
     );
 
+    for (const tenant of tenants) {
+      await connection.query(
+        'DELETE FROM permisos WHERE id_rol = ? AND id_plan = ? AND id_tenant = ?',
+        [id_rol, planObjetivo, tenant.id_tenant]
+      );
+    }
+
     if (permisos && permisos.length > 0) {
-      const [tenants] = await connection.query('SELECT DISTINCT id_tenant FROM usuario WHERE id_tenant IS NOT NULL');
       for (const tenant of tenants) {
         for (const p of permisos) {
           await connection.query(`
@@ -342,7 +349,7 @@ const savePermisosGlobales = async (req, res) => {
 
     return res.json({
       success: true,
-      message: `Permisos globales para rol ${id_rol} y plan ${planObjetivo} actualizados para todos los tenants`,
+      message: `Permisos globales para rol ${id_rol} y plan ${planObjetivo} actualizados solo para tenants con ese plan`,
       data: {
         id_rol,
         plan_seleccionado: planObjetivo,
