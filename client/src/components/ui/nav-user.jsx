@@ -107,6 +107,7 @@ export function NavUser() {
 
   const userRole = formatRoleName(
     roles.find((role) => String(role.id_rol) === String(user.rol))?.nom_rol
+    || (String(user.rol) === "1" ? "Administrador" : "Rol desconocido")
   );
 
   const displayName = user.usuario || user.name || "Usuario";

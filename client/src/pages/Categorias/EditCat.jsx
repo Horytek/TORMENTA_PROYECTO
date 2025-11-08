@@ -18,7 +18,7 @@ import {
 import {useEditCat} from '@/services/categoria.services';
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
-  const { editCat, loading } = useEditCat();
+  // Elimina el hook que llama API: const { editCat, loading } = useEditCat();
   const {
     register,
     handleSubmit,
@@ -40,9 +40,9 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
         id_categoria: initialData.id_categoria,
         estado_categoria: parseInt(data.estado_categoria, 10),
       };
-      await editCat(updatedData);
+      // Ya no llamamos a la API aquí.
+      if (onSuccess) await onSuccess(updatedData); // padre hará la API y actualizará el estado local
       toast.success("Categoría actualizada con éxito");
-      if (onSuccess) onSuccess(updatedData);
       onClose();
     } catch (error) {
       toast.error("Error al actualizar la categoría");
@@ -63,9 +63,7 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
                 label="Nombre de la categoría"
                 defaultValue={initialData?.nom_categoria || ""}
                 color={errors.nom_categoria ? "danger" : "default"}
-                errorMessage={
-                  errors.nom_categoria && "Este campo es obligatorio"
-                }
+                errorMessage={errors.nom_categoria && "Este campo es obligatorio"}
                 isRequired
               />
               <Select
@@ -74,29 +72,18 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
                 placeholder="Seleccione un estado"
                 defaultValue={initialData?.estado_categoria?.toString() || "1"}
                 color={errors.estado_categoria ? "danger" : "default"}
-                errorMessage={
-                  errors.estado_categoria && "Seleccione un estado"
-                }
+                errorMessage={errors.estado_categoria && "Seleccione un estado"}
                 isRequired
               >
-                <SelectItem key="1" value="1">
-                  Activo
-                </SelectItem>
-                <SelectItem key="0" value="0">
-                  Inactivo
-                </SelectItem>
+                <SelectItem key="1" value="1">Activo</SelectItem>
+                <SelectItem key="0" value="0">Inactivo</SelectItem>
               </Select>
             </div>
             <ModalFooter>
-              <Button
-                color="danger"
-                variant="light"
-                onPress={onClose}
-                className="mr-2"
-              >
+              <Button color="danger" variant="light" onPress={onClose} className="mr-2">
                 Cancelar
               </Button>
-              <Button color="primary" type="submit" isLoading={loading}>
+              <Button color="primary" type="submit">
                 Guardar
               </Button>
             </ModalFooter>

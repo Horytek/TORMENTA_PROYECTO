@@ -5,7 +5,8 @@ import { transformData } from '@/utils/usuario';
 
 const getUsuarios = async () => {
   try {
-    const response = await getUsuariosRequest();
+    // Elimina el límite para traer todos los usuarios
+    const response = await getUsuariosRequest({ sortDir: 'asc' });
     if (response.data.code === 1) {
       return transformData(response.data.data);
     } else {

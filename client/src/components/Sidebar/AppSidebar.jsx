@@ -85,6 +85,7 @@ const SIDEBAR_DATA = {
 
 export function AppSidebar(props) {
   const id_tenant = useUserStore(state => state.id_tenant);
+  const plan_pago = useUserStore(state => state.plan_pago);
   const [empresasTenant, setEmpresasTenant] = useState([]);
   const [planes, setPlanes] = useState([]);
   const data = useMemo(() => SIDEBAR_DATA, []);
@@ -119,7 +120,7 @@ export function AppSidebar(props) {
 
   // Busca el plan por id_tenant y retorna la descripción capitalizada
   const getPlanDescripcion = (planId) => {
-    const plan = planes.find(p => String(p.id_tenant) === String(planId));
+    const plan = planes.find(p => String(p.id_plan) === String(planId));
     return plan ? capitalize(plan.descripcion_plan) : "Desconocido";
   };
 
@@ -129,7 +130,7 @@ export function AppSidebar(props) {
       ? [{
           name: empresaPrincipal.razonSocial || empresaPrincipal.nombreComercial || "Empresa",
           logo: empresaPrincipal.logotipo || GalleryVerticalEnd,
-          plan: getPlanDescripcion(empresaPrincipal.id_tenant),
+          plan: getPlanDescripcion(plan_pago), // <-- usa el plan del usuario
         }]
       : []),
     ...empresasTenant
@@ -137,7 +138,7 @@ export function AppSidebar(props) {
       .map(emp => ({
         name: emp.razonSocial || emp.nombreComercial || "Empresa",
         logo: emp.logotipo || GalleryVerticalEnd,
-        plan: getPlanDescripcion(emp.id_tenant),
+        plan: getPlanDescripcion(plan_pago), // <-- usa el plan del usuario
       })),
     ...SIDEBAR_DATA.teams,
   ];

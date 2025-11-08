@@ -44,10 +44,11 @@ const PlanUsers = () => {
 
   const fetchUsers = async () => {
     const data = await getUsuarios();
-    const filteredUsuarios = data.filter((usuario) => usuario.id_rol === 1);
+    // Mostrar solo administradores (id_rol = 1)
+    const filteredUsuarios = (Array.isArray(data) ? data : []).filter(u => String(u.id_rol) === "1");
     setUsers(filteredUsuarios);
   };
-
+  
   const fetchEmpresas = async () => {
     const data = await getEmpresas();
     setEmpresas(data);

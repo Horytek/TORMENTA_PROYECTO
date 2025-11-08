@@ -13,7 +13,7 @@ import {
 } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
-import { getRoles, deleteRol, getRol } from '@/services/rol.services';
+import { getRoles, deleteRol, getRol, addRol, updateRol } from '@/services/rol.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import UsuariosForm from './UsuariosForm';
 import { usePermisos } from '@/routes';
@@ -22,7 +22,6 @@ export function ShowUsuarios({ searchTerm }) {
   // Estados de listado de usuarios
   const [usuarios, setUsuarios] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showPassword, setShowPassword] = useState({});
   const usuariosPerPage = 10;
 
   useEffect(() => {
@@ -47,22 +46,24 @@ export function ShowUsuarios({ searchTerm }) {
   const indexOfFirstUsuario = indexOfLastUsuario - usuariosPerPage;
   const currentUsuarios = filteredUsuarios.slice(indexOfFirstUsuario, indexOfLastUsuario);
 
-  // Eliminar usuario mediante API
+  // Eliminar usuario del array local
   const deleteUser = async (id) => {
-    await deleteRol(id);
-    getUsers();
+    const success = await deleteRol(id);
+    if (success) {
+      setUsuarios(prev => prev.filter(u => u.id_rol !== id));
+    }
   };
 
   // Estado de Modal de Edición de Producto
   const [activeEdit, setActiveEdit] = useState(false);
   const [initialData, setInitialData] = useState(null);
 
-  const handleModalEdit = async (id_usuario) => {
-    const data = await getRol(id_usuario);
-    if (data && data[0]) {
+  const handleModalEdit = async (id_rol) => {
+    const data = await getRol(id_rol);
+    if (data) {
       setInitialData({
-        id_rol: parseInt(id_usuario),
-        data: data[0]
+        id_rol: parseInt(id_rol),
+        data: data
       });
       setActiveEdit(true);
     }
@@ -73,9 +74,9 @@ export function ShowUsuarios({ searchTerm }) {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
 
-  const handleOpenConfirmationModal = (row, id_usuario) => {
+  const handleOpenConfirmationModal = (row, id_rol) => {
     setSelectedRow(row);
-    setSelectedId(id_usuario);
+    setSelectedId(id_rol);
     setIsConfirmationModalOpen(true);
   };
   const handleCloseConfirmationModal = () => {
@@ -93,6 +94,41 @@ export function ShowUsuarios({ searchTerm }) {
     setInitialData(null);
   };
 
+  // Modal de registro de rol
+  const [activeAdd, setActiveAdd] = useState(false);
+
+  const handleModalAdd = () => {
+    setActiveAdd(true);
+  };
+  const handleCloseAddModal = () => {
+    setActiveAdd(false);
+  };
+
+  // Agregar rol al array local
+  const handleAddRolLocal = async (data) => {
+    const result = await addRol(data);
+    if (result && result.id) {
+      setUsuarios(prev => [{ ...data, id_rol: result.id, estado_rol: data.estado_rol === 1 ? "Activo" : "Inactivo" }, ...prev]);
+      setActiveAdd(false);
+    }
+  };
+
+  // Actualizar rol en el array local
+  const handleUpdateRolLocal = async (id_rol, updatedData) => {
+    const result = await updateRol(id_rol, updatedData);
+    if (result) {
+      setUsuarios(prev =>
+        prev.map(u =>
+          u.id_rol === id_rol
+            ? { ...u, ...updatedData, estado_rol: updatedData.estado_rol === 1 ? "Activo" : "Inactivo" }
+            : u
+        )
+      );
+      setActiveEdit(false);
+      setInitialData(null);
+    }
+  };
+
   const { hasEditPermission, hasDeletePermission } = usePermisos();
 
   const renderCell = useCallback((usuario, columnKey) => {
@@ -107,7 +143,7 @@ export function ShowUsuarios({ searchTerm }) {
             inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-[13px] font-semibold
             ${usuario.estado_rol === 'Inactivo'
               ? "bg-rose-100 text-rose-700 border border-rose-200"
-              : "bg-emerald-100 text-emerald-700 border border-emerald-200"}
+              : "bg-emerald-100 text-emerald-700 border-emerald-200"}
           `}>
             {usuario.estado_rol === 'Inactivo' ? (
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -155,6 +191,9 @@ export function ShowUsuarios({ searchTerm }) {
 
   return (
   <>
+    {/* Botón para agregar rol */}
+
+
     {/* Modals */}
     {isConfirmationModalOpen && (
       <ConfirmationModal
@@ -169,51 +208,60 @@ export function ShowUsuarios({ searchTerm }) {
         modalTitle={'Editar Rol'}
         onClose={handleCloseModal}
         initialData={initialData}
+        onSuccess={handleUpdateRolLocal}
+      />
+    )}
+
+    {activeAdd && (
+      <UsuariosForm
+        modalTitle={'Nuevo Rol'}
+        onClose={handleCloseAddModal}
+        onSuccess={handleAddRolLocal}
       />
     )}
 
     {/* Tabla de roles */}
-<div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
-  <div className="p-4 bg-white rounded-2xl">
-    <ScrollShadow hideScrollBar className="rounded-2xl">
-      <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-        <thead>
-          <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
-            <th className="py-2 px-2 text-left">ID</th>
-            <th className="py-2 px-2 text-left">ROL</th>
-            <th className="py-2 px-2 text-center">ESTADO</th>
-            <th className="py-2 px-2 text-center w-32">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentUsuarios.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="py-8 text-center text-gray-400">Sin roles para mostrar</td>
-            </tr>
-          ) : (
-            currentUsuarios.map((usuario, idx) => (
-              <tr
-                key={usuario.id_rol}
-                className={`transition-colors duration-150 ${
-                  idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
-                } hover:bg-blue-100/60`}
-              >
-                {["id", "rol", "estado", "acciones"].map((columnKey) => (
-                  <td
-                    key={columnKey}
-                    className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
-                  >
-                    {renderCell(usuario, columnKey)}
-                  </td>
-                ))}
+    <div className="bg-white/90 border border-blue-100 rounded-2xl shadow-sm p-0">
+      <div className="p-4 bg-white rounded-2xl">
+        <ScrollShadow hideScrollBar className="rounded-2xl">
+          <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
+            <thead>
+              <tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
+                <th className="py-2 px-2 text-left">ID</th>
+                <th className="py-2 px-2 text-left">ROL</th>
+                <th className="py-2 px-2 text-center">ESTADO</th>
+                <th className="py-2 px-2 text-center w-32">ACCIONES</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </ScrollShadow>
-  </div>
-</div>
+            </thead>
+            <tbody>
+              {currentUsuarios.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-gray-400">Sin roles para mostrar</td>
+                </tr>
+              ) : (
+                currentUsuarios.map((usuario, idx) => (
+                  <tr
+                    key={usuario.id_rol}
+                    className={`transition-colors duration-150 ${
+                      idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
+                    } hover:bg-blue-100/60`}
+                  >
+                    {["id", "rol", "estado", "acciones"].map((columnKey) => (
+                      <td
+                        key={columnKey}
+                        className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" ? "text-center" : ""}`}
+                      >
+                        {renderCell(usuario, columnKey)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </ScrollShadow>
+      </div>
+    </div>
     <div className="flex justify-between items-center mt-2 px-4 pb-2">
       <Pagination
         showControls
@@ -226,7 +274,7 @@ export function ShowUsuarios({ searchTerm }) {
       <div />
     </div>
   </>
-);
+  );
 }
 
 export default ShowUsuarios;

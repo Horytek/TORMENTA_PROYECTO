@@ -1,7 +1,7 @@
 import axios from "./axios";
 
-export const getUsuariosRequest = async () =>
-  await axios.get("/usuario");
+export const getUsuariosRequest = async (params = {}) =>
+  await axios.get("/usuario", { params });
 
 export const getUsuarioRequest = async (id) =>
   await axios.get(`/usuario/${id}`);

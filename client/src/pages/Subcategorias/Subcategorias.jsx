@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
@@ -7,70 +7,61 @@ import ShowSubcategorias from "./ShowSubcategoria";
 import { usePermisos } from '@/routes';
 import { Button } from '@heroui/react';
 import {
-  useSubcategoriasConCategoria as getSubcategoriasConCategoria,
   addSubcategoria,
   updateSubcategoria,
   useDeleteSubcategoria,
   useDeactivateSubcategoria
 } from "@/services/subcategoria.services";
-import { useCategorias } from '@/context/Categoria/CategoriaProvider';
+
 import EditForm from "./EditSubcat";
 
 function Subcategorias({ 
-  subcategoriasData = null, 
-  categoriasData = null,
+  subcategoriasData = [], 
+  categoriasData = [],  // categorías provenientes del padre
   onAdd = null, 
   onUpdate = null, 
   onDelete = null, 
   skipApiCall = false 
 }) {
-  // Solo usar el hook si no tenemos datos externos
-  const { subcategorias: subcategoriasApi, loading } = skipApiCall ? 
-    { subcategorias: [], loading: false } : 
-    getSubcategoriasConCategoria();
-    
-  const [subcategorias, setSubcategorias] = useState(subcategoriasData || []);
-  const { categorias, loadCategorias } = useCategorias();
+  const [subcategorias, setSubcategorias] = useState(subcategoriasData);
   const [activeAdd, setModalOpen] = useState(false);
   const [editModal, setEditModal] = useState({ open: false, data: null });
   const { deleteSubcategoria } = useDeleteSubcategoria();
   const { deactivateSubcategoria } = useDeactivateSubcategoria();
   const { hasCreatePermission } = usePermisos();
-
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Si cambian datos externos, sincronizar una sola vez
+  useEffect(() => {
+    setSubcategorias(subcategoriasData);
+  }, [subcategoriasData]);
+
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
   const handleClearSearch = () => setSearchTerm("");
 
-  useEffect(() => {
-    if (skipApiCall && subcategoriasData) {
-      // Usar datos externos
-      setSubcategorias(subcategoriasData);
-    } else if (!loading && subcategorias.length === 0 && Array.isArray(subcategoriasApi)) {
-      // Usar datos de la API
-      setSubcategorias(subcategoriasApi);
-    }
-    // eslint-disable-next-line
-  }, [loading, subcategoriasApi, skipApiCall, subcategoriasData]);
+  // Utilidad para obtener nombre de categoría
+  const getCategoriaNombre = (id_categoria) => {
+    const cat = categoriasData.find(c => parseInt(c.id_categoria) === parseInt(id_categoria));
+    return cat ? cat.nom_categoria : "";
+  };
 
-  useEffect(() => {
-    if (!skipApiCall) {
-      loadCategorias();
-    }
-  }, [skipApiCall]);
-
-  // Agregar subcategoría localmente
+  // Agregar subcategoría (API + local + callback padre)
   const handleAddSubcategoria = async (newSubcat) => {
     const [ok, id] = await addSubcategoria(newSubcat);
     if (ok) {
-      setSubcategorias(prev => [
-        { ...newSubcat, id_subcategoria: id, nom_categoria: getCategoriaNombre(newSubcat.id_categoria), estado_subcat: 1 },
-        ...prev
-      ]);
+      const created = { 
+        ...newSubcat, 
+        id_subcategoria: id, 
+        nom_categoria: getCategoriaNombre(newSubcat.id_categoria),
+        estado_subcat: 1
+      };
+      setSubcategorias(prev => [created, ...prev]);
+      onAdd && onAdd(created);
       setModalOpen(false);
     }
   };
 
-  // Editar subcategoría localmente
+  // Editar subcategoría
   const handleEditSubcategoria = async (updatedData) => {
     const ok = await updateSubcategoria(updatedData.id_subcategoria, updatedData);
     if (ok) {
@@ -86,20 +77,21 @@ function Subcategorias({
             : subcat
         )
       );
+      onUpdate && onUpdate(updatedData.id_subcategoria, updatedData);
       setEditModal({ open: false, data: null });
     }
   };
 
-  // Eliminar subcategoría localmente
+  // Eliminar
   const handleDeleteSubcategoria = async (id) => {
     const ok = await deleteSubcategoria(id);
     if (ok) {
-      setSubcategorias(prev =>
-        prev.filter(subcat => subcat.id_subcategoria !== id)
-      );
+      setSubcategorias(prev => prev.filter(subcat => subcat.id_subcategoria !== id));
+      onDelete && onDelete(id);
     }
   };
 
+  // Desactivar
   const handleDeactivateSubcategoria = async (id) => {
     const ok = await deactivateSubcategoria(id);
     if (ok) {
@@ -110,13 +102,8 @@ function Subcategorias({
             : subcat
         )
       );
+      onUpdate && onUpdate(id, { estado_subcat: 0 });
     }
-  };
-
-  // Utilidad para obtener el nombre de la categoría por id_categoria
-  const getCategoriaNombre = (id_categoria) => {
-    const cat = categorias.find(c => parseInt(c.id_categoria) === parseInt(id_categoria));
-    return cat ? cat.nom_categoria : "";
   };
 
   // Filtro visual
@@ -129,6 +116,7 @@ function Subcategorias({
       <Toaster />
       <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Gestión de subcategorías</h1>
       <p className="text-base text-blue-700/80 mb-4">Administra y busca subcategorías fácilmente.</p>
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <BarraSearch
           value={searchTerm}
@@ -148,29 +136,32 @@ function Subcategorias({
           Agregar subcategoría
         </Button>
       </div>
+
       <ShowSubcategorias
         searchTerm={searchTerm}
-        subcategorias={subcategorias}
+        subcategorias={filteredSubcategorias}
         onEdit={(data) => setEditModal({ open: true, data })}
         onDelete={handleDeleteSubcategoria}
         onDeactivate={handleDeactivateSubcategoria}
       />
+
       {activeAdd && (
         <SubcategoriaForm
           modalTitle={"Nueva subcategoría"}
-          closeModal={() => setModalOpen(false)}
+            closeModal={() => setModalOpen(false)}
           onSuccess={handleAddSubcategoria}
-          categorias={categorias}
+          categorias={categoriasData}
         />
       )}
-      {editModal.open && (
+
+      {editModal.open && editModal.data && (
         <EditForm
           isOpen={editModal.open}
-          modalTitle="Editar Subcategoría"
           onClose={() => setEditModal({ open: false, data: null })}
           initialData={editModal.data}
+          modalTitle={"Editar subcategoría"}
           onSuccess={handleEditSubcategoria}
-          categorias={categorias}
+          categorias={categoriasData}
         />
       )}
     </div>

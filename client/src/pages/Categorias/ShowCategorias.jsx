@@ -55,10 +55,25 @@ export function ShowCategorias({
 
   // Editar categoría (API + local)
   const handleEditCategoria = async (updatedData) => {
-    await apiEditCategoria(updatedData);
-    onEdit(updatedData.id_categoria, updatedData);
-    setIsEditModalOpen(false);
-    setSelectedRow(null);
+    try {
+      // Construir payload explícito (no enviar el objeto entero en la URL)
+      const payload = {
+        nom_categoria: updatedData.nom_categoria,
+        estado_categoria: updatedData.estado_categoria
+      };
+
+      // Llamada correcta: id primero, payload segundo
+      const ok = await apiEditCategoria(updatedData.id_categoria, payload);
+
+      if (ok) {
+        // Actualizar array local vía callback del padre
+        onEdit && onEdit(updatedData.id_categoria, payload);
+        setIsEditModalOpen(false);
+        setSelectedRow(null);
+      }
+    } catch (error) {
+      console.error("Error al actualizar categoría en ShowCategorias:", error);
+    }
   };
 
   const handleOpenEditModal = (id_categoria, nom_categoria, estado_categoria) => {

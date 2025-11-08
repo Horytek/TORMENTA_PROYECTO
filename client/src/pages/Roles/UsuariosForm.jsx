@@ -1,18 +1,22 @@
 import { useEffect, useState, useRef } from 'react';
+import { useForm, Controller } from "react-hook-form";
 import PropTypes from 'prop-types';
 import { IoMdClose } from "react-icons/io";
 import { Toaster, toast } from "react-hot-toast";
-import { useForm } from "react-hook-form";
 import { addRol, updateRol } from '@/services/rol.services';
 import { Modal, ModalContent, ModalHeader, ModalBody,
 ModalFooter, Button, Input, Select, SelectItem } from '@heroui/react';
 
-const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
-    const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
-        defaultValues: initialData?.data || {
-            nom_rol: '',
-            estado_rol: '',
-        }
+const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
+    const { control, handleSubmit, formState: { errors }, reset, watch } = useForm({
+        defaultValues: initialData?.data
+            ? {
+                nom_rol: initialData.data.nom_rol || '',
+                estado_rol: (initialData.data.estado_rol !== undefined && initialData.data.estado_rol !== null)
+                  ? String(initialData.data.estado_rol)
+                  : '1'
+              }
+            : { nom_rol: '', estado_rol: '1' }
     });
 
     const [isSaveDisabled, setIsSaveDisabled] = useState(false);
@@ -61,26 +65,19 @@ const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
 
     const onSubmit = handleSubmit(async (data) => {
         try {
-            const { nom_rol, estado_rol } = data;
+            const nom_rol = data.nom_rol?.trim();
+            const estadoNum = parseInt(data.estado_rol, 10);
             const newUser = {
                 nom_rol,
-                estado_rol: parseInt(estado_rol)
+                estado_rol: Number.isNaN(estadoNum) ? 1 : estadoNum
             };
-
-            let result;
-            if (initialData) {
-                result = await updateRol(initialData?.id_rol, newUser); 
+            if (initialData && initialData.id_rol) {
+                await onSuccess(initialData.id_rol, newUser);
             } else {
-                result = await addRol(newUser); 
+                await onSuccess(newUser);
             }
-
-            if (result) {
-                onClose();
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            }
-        } catch (error) {
+            onClose();
+        } catch {
             toast.error("Error al realizar la gestión del rol");
         }
     });
@@ -101,27 +98,44 @@ const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700">Rol:</label>
-                                    <Input
-                                        {...register('nom_rol', { required: true })}
-                                        aria-label="Rol"
-                                        className={`w-full ${errors.nom_rol ? 'border-red-600' : 'border-gray-300'} rounded-lg p-2`}
-                                        placeholder="Ingrese el nombre del rol"
+                                    <Controller
+                                      name="nom_rol"
+                                      control={control}
+                                      rules={{ required: "Campo obligatorio" }}
+                                      render={({ field }) => (
+                                        <Input
+                                          {...field}
+                                          aria-label="Rol"
+                                          placeholder="Ingrese el nombre del rol"
+                                          className={`w-full ${errors.nom_rol ? 'border-red-600' : 'border-gray-300'} rounded-lg p-2`}
+                                        />
+                                      )}
                                     />
-                                    {errors.nom_rol && <p className="text-xs text-red-600">Este campo es obligatorio</p>}
+                                    {errors.nom_rol && <p className="text-xs text-red-600">{errors.nom_rol.message}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700">Estado:</label>
-                                    <Select
-                                        {...register('estado_rol', { required: true })}
-                                        aria-label="Estado"
-                                        className={`w-full ${errors.estado_rol ? 'border-red-600' : 'border-gray-300'} rounded-lg p-2`}
-                                    >
-                                        <SelectItem value="">Seleccione...</SelectItem>
-                                        <SelectItem value={1}>Activo</SelectItem>
-                                        <SelectItem value={0}>Inactivo</SelectItem>
-                                    </Select>
-                                    {errors.estado_rol && <p className="text-xs text-red-600">Este campo es obligatorio</p>}
+                                    <Controller
+                                      name="estado_rol"
+                                      control={control}
+                                      rules={{ required: "Campo obligatorio" }}
+                                      render={({ field }) => (
+                                        <Select
+                                          aria-label="Estado"
+                                          selectedKeys={new Set([String(field.value)])}
+                                          onSelectionChange={(keys) => {
+                                            const val = Array.from(keys)[0];
+                                            field.onChange(val);
+                                          }}
+                                          className={`w-full ${errors.estado_rol ? 'border-red-600' : 'border-gray-300'} rounded-lg p-2`}
+                                        >
+                                          <SelectItem key="1" value="1">Activo</SelectItem>
+                                          <SelectItem key="0" value="0">Inactivo</SelectItem>
+                                        </Select>
+                                      )}
+                                    />
+                                    {errors.estado_rol && <p className="text-xs text-red-600">{errors.estado_rol.message}</p>}
                                 </div>
                             </div>
                         </ModalBody>

@@ -1,5 +1,5 @@
+// Ajustar Select para asegurar claves string y prevenir problemas de selección.
 import PropTypes from "prop-types";
-import { IoMdClose } from "react-icons/io";
 import { Toaster, toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
 import {
@@ -44,20 +44,20 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
         reset();
         closeModal();
       }
-    } catch (error) {
+    } catch {
       toast.error("Error al realizar la gestión de la subcategoría");
     }
   };
 
   return (
     <Modal isOpen={true} onClose={closeModal} size="sm">
+      <Toaster />
       <ModalContent>
         <ModalHeader>
           <h3 className="text-lg font-bold">{modalTitle}</h3>
         </ModalHeader>
         <ModalBody>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Categoría */}
             {categorias.length === 0 ? (
               <div className="text-red-500 text-sm">No hay categorías disponibles.</div>
             ) : (
@@ -67,17 +67,22 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
                 rules={{ required: "Seleccione una categoría" }}
                 render={({ field }) => (
                   <Select
-                    {...field}
                     label="Categoría"
                     placeholder="Seleccione una categoría"
                     color={errors.id_categoria ? "danger" : "default"}
                     errorMessage={errors.id_categoria?.message}
                     isRequired
                     selectedKeys={field.value ? [String(field.value)] : []}
-                    onChange={e => field.onChange(e.target.value)}
+                    onSelectionChange={(keys) => {
+                      const val = Array.from(keys)[0];
+                      field.onChange(val);
+                    }}
                   >
                     {categorias.map((categoria) => (
-                      <SelectItem key={categoria.id_categoria} value={categoria.id_categoria}>
+                      <SelectItem
+                        key={String(categoria.id_categoria)}
+                        value={String(categoria.id_categoria)}
+                      >
                         {categoria.nom_categoria.toUpperCase()}
                       </SelectItem>
                     ))}
@@ -86,7 +91,6 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
               />
             )}
 
-            {/* Subcategoría */}
             <Controller
               name="nom_subcat"
               control={control}

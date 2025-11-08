@@ -24,24 +24,25 @@ const CategoriasForm = ({ modalTitle, onClose, onSuccess }) => {
     },
   });
 
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      const { nom_categoria } = data;
-      const newCategory = {
-        nom_categoria: nom_categoria.toUpperCase().trim(),
-        estado_categoria: 1,
-      };
+const onSubmit = handleSubmit(async (data) => {
+  try {
+    const { nom_categoria } = data;
+    const newCategory = {
+      nom_categoria: nom_categoria.toUpperCase().trim(),
+      estado_categoria: 1,
+    };
 
-      const result = await createCategoria(newCategory);
+    const result = await createCategoria(newCategory);
 
-      if (result && result.id_categoria) {
-        if (onSuccess) onSuccess({ ...newCategory, id_categoria: result.id_categoria });
-        onClose();
-      }
-    } catch (error) {
-      // Manejo de error opcional
+    // result es [true, id_categoria] si fue exitoso
+    if (Array.isArray(result) && result[0] && result[1]) {
+      if (onSuccess) onSuccess({ ...newCategory, id_categoria: result[1] });
+      onClose();
     }
-  });
+  } catch (error) {
+    // Manejo de error opcional
+  }
+});
 
   return (
     <Modal isOpen={true} onClose={onClose} size="sm">

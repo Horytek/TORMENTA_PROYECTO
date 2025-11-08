@@ -160,63 +160,27 @@ function Productos() {
     estado_producto: producto.estado_producto === 1 || producto.estado_producto === "1" ? "Activo" : "Inactivo",
   });
 
-  // Agregar producto localmente
-  const addProductoLocal = (nuevoProducto) => {
-    setProductos(prev => [nuevoProducto, ...prev]);
-  };
+  // Funciones para actualizar arrays locales (persistentes)
+  const addProductoLocal = (nuevoProducto) => setProductos(prev => [nuevoProducto, ...prev]);
+  const updateProductoLocal = (id, updatedData) =>
+    setProductos(prev => prev.map(p => p.id_producto === id ? { ...p, ...updatedData } : p));
+  const removeProducto = (id) => setProductos(prev => prev.filter(p => p.id_producto !== id));
 
-  // Editar producto localmente
-  const updateProductoLocal = (id, updatedData) => {
-    setProductos(prev =>
-      prev.map(p =>
-        p.id_producto === id ? { ...p, ...transformProducto(updatedData) } : p
-      )
-    );
-  };
+  const addMarcaLocal = (nuevaMarca) => setMarcas(prev => [nuevaMarca, ...prev]);
+  const updateMarcaLocal = (id, updatedData) =>
+    setMarcas(prev => prev.map(m => m.id_marca === id ? { ...m, ...updatedData } : m));
+  const removeMarcaLocal = (id) => setMarcas(prev => prev.filter(m => m.id_marca !== id));
 
-  // Eliminar producto localmente
-  const removeProducto = (id) => {
-    setProductos(prev => prev.filter(p => p.id_producto !== id));
-  };
+  const addCategoriaLocal = (nuevaCategoria) => setCategorias(prev => [nuevaCategoria, ...prev]);
+  const updateCategoriaLocal = (id, updatedData) =>
+    setCategorias(prev => prev.map(c => c.id_categoria === id ? { ...c, ...updatedData } : c));
+  const removeCategoriaLocal = (id) => setCategorias(prev => prev.filter(c => c.id_categoria !== id));
 
-  // Funciones para actualizar marcas localmente
-  const addMarcaLocal = (nuevaMarca) => {
-    setMarcas(prev => [nuevaMarca, ...prev]);
-  };
+  const addSubcategoriaLocal = (nuevaSubcategoria) => setSubcategorias(prev => [nuevaSubcategoria, ...prev]);
+  const updateSubcategoriaLocal = (id, updatedData) =>
+    setSubcategorias(prev => prev.map(s => s.id_subcategoria === id ? { ...s, ...updatedData } : s));
+  const removeSubcategoriaLocal = (id) => setSubcategorias(prev => prev.filter(s => s.id_subcategoria !== id));
 
-  const updateMarcaLocal = (id, updatedData) => {
-    setMarcas(prev => prev.map(marca => marca.id_marca === id ? { ...marca, ...updatedData } : marca));
-  };
-
-  const removeMarcaLocal = (id) => {
-    setMarcas(prev => prev.filter(marca => marca.id_marca !== id));
-  };
-
-  // Funciones para actualizar categorías localmente
-  const addCategoriaLocal = (nuevaCategoria) => {
-    setCategorias(prev => [nuevaCategoria, ...prev]);
-  };
-
-  const updateCategoriaLocal = (id, updatedData) => {
-    setCategorias(prev => prev.map(cat => cat.id_categoria === id ? { ...cat, ...updatedData } : cat));
-  };
-
-  const removeCategoriaLocal = (id) => {
-    setCategorias(prev => prev.filter(cat => cat.id_categoria !== id));
-  };
-
-  // Funciones para actualizar subcategorías localmente
-  const addSubcategoriaLocal = (nuevaSubcategoria) => {
-    setSubcategorias(prev => [nuevaSubcategoria, ...prev]);
-  };
-
-  const updateSubcategoriaLocal = (id, updatedData) => {
-    setSubcategorias(prev => prev.map(subcat => subcat.id_subcategoria === id ? { ...subcat, ...updatedData } : subcat));
-  };
-
-  const removeSubcategoriaLocal = (id) => {
-    setSubcategorias(prev => prev.filter(subcat => subcat.id_subcategoria !== id));
-  };
 
   // Abrir modal de edición
   const handleEdit = (producto) => {
