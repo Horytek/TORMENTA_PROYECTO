@@ -82,7 +82,8 @@ const getUsuarios = async (req, res) => {
         const dataSQL = `
             SELECT 
                 U.id_usuario, U.id_rol, R.nom_rol, U.usua, U.contra, U.estado_usuario, U.estado_token, 
-                U.id_empresa, pp.descripcion_plan AS plan_pago_1, U.fecha_pago AS fecha_pago
+                U.id_empresa, pp.descripcion_plan AS plan_pago_1, U.fecha_pago AS fecha_pago,
+                U.estado_prueba
             FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol
             LEFT JOIN plan_pago pp ON pp.id_plan = U.plan_pago
@@ -119,7 +120,9 @@ const getUsuario = async (req, res) => {
         const { id } = req.params;
         connection = await getConnection();
         let query = `
-            SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, id_empresa, pp.descripcion_plan as plan_pago_1, U.fecha_pago AS fecha_pago
+            SELECT id_usuario, U.id_rol, nom_rol, usua, contra, estado_usuario, estado_token, 
+                   id_empresa, pp.descripcion_plan as plan_pago_1, U.fecha_pago AS fecha_pago,
+                   U.estado_prueba
             FROM usuario U
             INNER JOIN rol R ON U.id_rol = R.id_rol
             LEFT JOIN plan_pago pp ON pp.id_plan=U.plan_pago
@@ -234,84 +237,120 @@ const addUsuario = async (req, res) => {
 };
 
 const updateUsuario = async (req, res) => {
-    let connection;
-    try {
-        const { id } = req.params;
-        const { id_rol, usua, contra, estado_usuario } = req.body;
+  let connection;
+  try {
+    const { id } = req.params;
 
-        if (id_rol === undefined || usua === undefined || contra === undefined || estado_usuario === undefined) {
-            return res.status(400).json({ message: "Bad Request. Please fill all field." });
-        }
+    // Campos opcionales: cualquiera puede venir de forma individual
+    const {
+      id_rol,
+      usua,
+      contra,
+      estado_usuario,
+      estado_prueba // <-- NUEVO campo soportado para actualización parcial
+    } = req.body;
 
-        connection = await getConnection();
-        
-        // Obtener el estado actual del usuario para comparar cambios
-        let querySelect = "SELECT estado_usuario, contra FROM usuario WHERE id_usuario = ?";
-        let paramsSelect = [id];
-        if (req.id_tenant) {
-            querySelect += " AND id_tenant = ?";
-            paramsSelect.push(req.id_tenant);
-        }
-        const [currentUser] = await connection.query(querySelect, paramsSelect);
-        
-        if (currentUser.length === 0) {
-            return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
-        }
-
-        // Encriptar la contraseña solo si cambió
-        let nuevaContra = contra.trim();
-        if (currentUser[0].contra !== nuevaContra) {
-            nuevaContra = await hashPassword(nuevaContra);
-        }
-
-        const usuario = { id_rol, usua: usua.trim(), contra: nuevaContra, estado_usuario };
-        let query = "UPDATE usuario SET ? WHERE id_usuario = ?";
-        let params = [usuario, id];
-        if (req.id_tenant) {
-            query += " AND id_tenant = ?";
-            params.push(req.id_tenant);
-        }
-        const [result] = await connection.query(query, params);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
-        }
-
-        // Registrar logs de cambios importantes
-        const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                  (req.connection.socket ? req.connection.socket.remoteAddress : null);
-        
-        const currentUserData = currentUser[0];
-        
-        // Log de cambio de estado (bloqueo/desbloqueo)
-        if (currentUserData.estado_usuario !== estado_usuario && req.id_tenant) {
-            if (estado_usuario === 0) {
-                // Usuario bloqueado
-                await logAcceso.bloquearUsuario(id, req.id_usuario, ip, req.id_tenant);
-            } else if (estado_usuario === 1) {
-                // Usuario desbloqueado
-                await logAcceso.desbloquearUsuario(id, req.id_usuario, ip, req.id_tenant);
-            }
-        }
-        
-        // Log de cambio de contraseña
-        if (currentUserData.contra !== contra.trim() && req.id_tenant) {
-            const esAdministrador = req.id_usuario !== parseInt(id);
-            await logAcceso.cambiarContrasena(id, ip, req.id_tenant, esAdministrador);
-        }
-
-        // Limpiar caché
-        queryCache.clear();
-
-        res.json({ code: 1, message: "Usuario modificado" });
-    } catch (error) {
-        console.error('Error en updateUsuario:', error);
-        res.status(500).json({ code: 0, message: "Error interno del servidor" });
-    } finally {
-        if (connection) {
-            connection.release();
-        }
+    // Si no vino ningún campo actualizable, retorna 400
+    if (
+      typeof id_rol === "undefined" &&
+      typeof usua === "undefined" &&
+      typeof contra === "undefined" &&
+      typeof estado_usuario === "undefined" &&
+      typeof estado_prueba === "undefined"
+    ) {
+      return res.status(400).json({ code: 0, message: "No hay campos para actualizar" });
     }
+
+    connection = await getConnection();
+
+    // Traer datos actuales para comparar (logs y hash)
+    let selectSQL = "SELECT estado_usuario, contra, estado_prueba FROM usuario WHERE id_usuario = ?";
+    const selectParams = [id];
+    if (req.id_tenant) {
+      selectSQL += " AND id_tenant = ?";
+      selectParams.push(req.id_tenant);
+    }
+    const [currentRows] = await connection.query(selectSQL, selectParams);
+    if (currentRows.length === 0) {
+      return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
+    }
+    const currentUser = currentRows[0];
+
+    // Construir update dinámico
+    const updates = [];
+    const params = [];
+
+    if (typeof id_rol !== "undefined") {
+      updates.push("id_rol = ?");
+      params.push(id_rol);
+    }
+    if (typeof usua !== "undefined") {
+      updates.push("usua = ?");
+      params.push(String(usua).trim());
+    }
+    if (typeof contra !== "undefined") {
+      // Encriptar solo si se envió una nueva contraseña
+      let nuevaContra = String(contra).trim();
+      if (currentUser.contra !== nuevaContra) {
+        nuevaContra = await hashPassword(nuevaContra);
+      }
+      updates.push("contra = ?");
+      params.push(nuevaContra);
+    }
+    if (typeof estado_usuario !== "undefined") {
+      updates.push("estado_usuario = ?");
+      params.push(estado_usuario);
+    }
+    if (typeof estado_prueba !== "undefined") {
+      updates.push("estado_prueba = ?");
+      params.push(estado_prueba);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ code: 0, message: "No hay cambios para aplicar" });
+    }
+
+    let updateSQL = `UPDATE usuario SET ${updates.join(", ")} WHERE id_usuario = ?`;
+    params.push(id);
+    if (req.id_tenant) {
+      updateSQL += " AND id_tenant = ?";
+      params.push(req.id_tenant);
+    }
+
+    const [result] = await connection.query(updateSQL, params);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ code: 0, message: "Usuario no encontrado" });
+    }
+
+    // Logs (solo si se envió ese campo)
+    const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress ||
+      (req.connection?.socket ? req.connection.socket.remoteAddress : null);
+
+    if (typeof estado_usuario !== "undefined" && req.id_tenant && currentUser.estado_usuario !== estado_usuario) {
+      if (estado_usuario === 0) {
+        await logAcceso.bloquearUsuario(id, req.id_usuario, ip, req.id_tenant);
+      } else if (estado_usuario === 1) {
+        await logAcceso.desbloquearUsuario(id, req.id_usuario, ip, req.id_tenant);
+      }
+    }
+
+    if (typeof contra !== "undefined" && req.id_tenant && currentUser.contra !== String(contra).trim()) {
+      const esAdministrador = req.id_usuario !== parseInt(id);
+      await logAcceso.cambiarContrasena(id, ip, req.id_tenant, esAdministrador);
+    }
+
+    // Limpiar caché
+    queryCache.clear();
+
+    return res.json({ code: 1, message: "Usuario modificado" });
+  } catch (error) {
+    console.error("Error en updateUsuario:", error);
+    return res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
 };
 
 const updateUsuarioPlan = async (req, res) => {
