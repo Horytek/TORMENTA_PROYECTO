@@ -167,12 +167,17 @@ export function ShowUsuarios({ searchTerm, usuarios, addUsuario, updateUsuarioLo
                         <button 
                             className="flex justify-center items-center gap-x-1.5"
                             onClick={() => togglePasswordVisibility(usuario.id_usuario)}
+                            tabIndex={-1}
+                            aria-label="Mostrar/ocultar contraseña"
                         >
-                            <span className="mr-2">
-                            {showPassword[usuario.id_usuario] ? usuario.contra : '••••••••'}
+                            <span className="mr-2 font-mono tracking-widest select-none">
+                                {/* Nunca mostrar la contraseña real, solo puntos */}
+                                {showPassword[usuario.id_usuario]
+                                    ? "●●●●●●●●"
+                                    : "●●●●●●●●"}
                             </span>
                             <span className='text-gray-500 dark:text-gray-300'>
-                                {showPassword[usuario.id_usuario] ?  <FaEyeSlash /> : <FaEye />}
+                                {showPassword[usuario.id_usuario] ? <FaEyeSlash /> : <FaEye />}
                             </span>
                         </button>
                     </div>

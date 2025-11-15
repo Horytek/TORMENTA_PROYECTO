@@ -11,7 +11,7 @@ export function transformData(usuarios) {
         estado_token: usuario.estado_token,
         id_empresa: usuario.id_empresa,
         plan_pago: usuario.plan_pago_1,
-        fecha_pago: usuario.fecha_pago
+        fecha_pago: usuario.fecha_pago,
     }));
   
     return usuariosTransformados;
