@@ -15,5 +15,6 @@ router.get("/:id", productosController.getProducto);
 router.post("/", productosController.addProducto);
 router.put("/:id", productosController.updateProducto);
 router.delete("/:id", productosController.deleteProducto);
+router.post("/import/excel", productosController.importExcel);
 
 export default router;

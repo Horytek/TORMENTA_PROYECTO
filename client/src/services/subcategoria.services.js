@@ -8,7 +8,8 @@ import {
   deleteSubcategoriaRequest,
   deactivateSubcategoriaRequest,
   getSubcategoriaRequest,
-  getSubcategoriasConCategoriaRequest
+  getSubcategoriasConCategoriaRequest,
+  importExcelRequest
 } from '@/api/api.subcategoria';
 import { toast } from "react-hot-toast";
 
@@ -119,37 +120,37 @@ const addSubcategoria = async (subcategoria) => {
 
 // Actualizar subcategoría
 const useEditSubCategoria = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const editSubCategoria = async ({ id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria }) => {
-        setLoading(true);
-        setError(null);
+  const editSubCategoria = async ({ id_subcategoria, id_categoria, nom_subcat, estado_subcat, nom_categoria, estado_categoria }) => {
+    setLoading(true);
+    setError(null);
 
-        try {
-            const response = await updateSubcategoriaRequest(id_subcategoria, {
-                id_subcategoria,
-                id_categoria,
-                nom_subcat,
-                estado_subcat,
-                nom_categoria,
-                estado_categoria
-            });
+    try {
+      const response = await updateSubcategoriaRequest(id_subcategoria, {
+        id_subcategoria,
+        id_categoria,
+        nom_subcat,
+        estado_subcat,
+        nom_categoria,
+        estado_categoria
+      });
 
-            // Handle response without console.log
-            if (response.data && response.data.message) {
-                
-            } else {
-            }
-        } catch (err) {
-            
-            setError(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+      // Handle response without console.log
+      if (response.data && response.data.message) {
 
-    return { editSubCategoria, loading, error };
+      } else {
+      }
+    } catch (err) {
+
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { editSubCategoria, loading, error };
 };
 
 // Eliminar subcategoría
@@ -237,6 +238,27 @@ const updateSubcategoria = async (id, subcategoria) => {
   }
 };
 
+const importExcel = async (data) => {
+  try {
+    const response = await importExcelRequest(data);
+    if (response.data.code === 1) {
+      toast.success(response.data.message);
+      if (response.data.errors && response.data.errors.length > 0) {
+        console.warn("Import warnings:", response.data.errors);
+        toast.error(`Importado con ${response.data.errors.length} errores. Revisa la consola.`);
+      }
+      return true;
+    } else {
+      toast.error(response.data.message || "Error al importar");
+      return false;
+    }
+  } catch (error) {
+    console.error("Import error:", error);
+    toast.error(error.response?.data?.message || "Error en el servidor");
+    return false;
+  }
+};
+
 export {
   getSubcategorias,
   getSubcategoriasForCategoria,
@@ -247,5 +269,6 @@ export {
   useEditSubCategoria,
   useDeleteSubcategoria,
   useDeactivateSubcategoria,
-  updateSubcategoria
+  updateSubcategoria,
+  importExcel
 };

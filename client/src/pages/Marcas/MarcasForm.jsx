@@ -70,7 +70,7 @@ export const MarcasForm = ({ modalTitle, onClose, isVisible, onAddMarca }) => {
                   <Input
                     {...field}
                     label="Marca"
-                    variant="bordered"
+                    variant="flat"
                     placeholder="Nombre de Marca"
                     color={errors.nom_marca ? "danger" : "default"}
                     errorMessage={errors.nom_marca?.message}

@@ -14,5 +14,6 @@ router.post("/", categoriaController.addCategoria);
 router.put("/update/:id", categoriaController.updateCategoria);
 router.put("/deactivate/:id", categoriaController.deactivateCategoria);
 router.delete("/:id", categoriaController.deleteCategoria);
+router.post("/import/excel", categoriaController.importExcel);
 
 export default router;

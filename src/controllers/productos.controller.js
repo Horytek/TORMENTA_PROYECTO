@@ -35,13 +35,13 @@ const getProductos = async (req, res) => {
         const sortDir = (String(req.query.sortDir || 'DESC').toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
 
         const {
-          id_marca,
-          id_subcategoria,
-          id_categoria,
-          estado,
-          descripcion,
-          id_producto,
-          cod_barras
+            id_marca,
+            id_subcategoria,
+            id_categoria,
+            estado,
+            descripcion,
+            id_producto,
+            cod_barras
         } = req.query;
 
         const whereClauses = ['PR.id_tenant = ?'];
@@ -93,7 +93,7 @@ const getUltimoIdProducto = async (req, res) => {
         const [result] = await connection.query(`
                 SELECT MAX(id_producto+1) AS ultimo_id FROM producto WHERE id_tenant = ?;
             `, [req.id_tenant]);
-        res.json({code:1, data: result});
+        res.json({ code: 1, data: result });
     } catch (error) {
         console.error('Error en getUltimoIdProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -115,12 +115,12 @@ const getProducto = async (req, res) => {
                 INNER JOIN sub_categoria SC ON PR.id_subcategoria = SC.id_subcategoria
                 WHERE PR.id_producto = ? AND PR.id_tenant = ?
                 LIMIT 1`, [id, req.id_tenant]);
-        
+
         if (result.length === 0) {
-            return res.status(404).json({data: result, message: "Producto no encontrado"});
+            return res.status(404).json({ data: result, message: "Producto no encontrado" });
         }
 
-        res.json({code: 1 ,data: result, message: "Producto encontrado"});
+        res.json({ code: 1, data: result, message: "Producto encontrado" });
     } catch (error) {
         console.error('Error en getProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -147,7 +147,7 @@ const addProducto = async (req, res) => {
         // Limpiar caché
         queryCache.clear();
 
-        res.json({code: 1, id_producto: result.insertId, message: "Producto añadido" });
+        res.json({ code: 1, id_producto: result.insertId, message: "Producto añadido" });
     } catch (error) {
         console.error('Error en addProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -169,39 +169,39 @@ const updateProducto = async (req, res) => {
         }
 
         connection = await getConnection();
-        
+
         // Obtener el precio actual para comparar
         const [currentProduct] = await connection.query(
-            "SELECT precio FROM producto WHERE id_producto = ? AND id_tenant = ? LIMIT 1", 
+            "SELECT precio FROM producto WHERE id_producto = ? AND id_tenant = ? LIMIT 1",
             [id, req.id_tenant]
         );
-        
+
         if (currentProduct.length === 0) {
-            return res.status(404).json({code: 0, message: "Producto no encontrado"});
+            return res.status(404).json({ code: 0, message: "Producto no encontrado" });
         }
 
         const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
         const [result] = await connection.query("UPDATE producto SET ? WHERE id_producto = ? AND id_tenant = ?", [producto, id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({code: 0, message: "Producto no encontrado"});
+            return res.status(404).json({ code: 0, message: "Producto no encontrado" });
         }
 
         // Registrar log de cambio de precio si hubo cambio
         const precioAnterior = parseFloat(currentProduct[0].precio);
         const precioNuevo = parseFloat(precio);
-        
+
         if (precioAnterior !== precioNuevo && req.id_usuario) {
-            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
-            
+            const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
+                (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
             await logProductos.cambioPrecio(id, req.id_usuario, ip, req.id_tenant, precioAnterior, precioNuevo);
         }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({code: 1 ,message: "Producto modificado"});
+        res.json({ code: 1, message: "Producto modificado" });
     } catch (error) {
         console.error('Error en updateProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -217,8 +217,8 @@ const deleteProducto = async (req, res) => {
     try {
         const { id } = req.params;
         connection = await getConnection();
-        
-        // Verificar si el producto est en uso en otras tablas (consultas en paralelo)
+
+        // Verificar si el producto est  en uso en otras tablas (consultas en paralelo)
         const [verify1Res, verify2Res, verify3Res] = await Promise.all([
             connection.query("SELECT 1 FROM detalle_venta WHERE id_producto = ? LIMIT 1", [id]),
             connection.query("SELECT 1 FROM detalle_envio WHERE id_producto = ? LIMIT 1", [id]),
@@ -230,26 +230,26 @@ const deleteProducto = async (req, res) => {
             const [Updateresult] = await connection.query("UPDATE producto SET estado_producto = 0 WHERE id_producto = ? AND id_tenant = ?", [id, req.id_tenant]);
 
             if (Updateresult.affectedRows === 0) {
-                return res.status(404).json({code: 0, message: "Producto no encontrado"});
+                return res.status(404).json({ code: 0, message: "Producto no encontrado" });
             }
 
             // Limpiar caché
             queryCache.clear();
 
-            res.json({code: 2 ,message: "Producto dado de baja"});
+            res.json({ code: 2, message: "Producto dado de baja" });
         } else {
             const [result] = await connection.query("DELETE FROM producto WHERE id_producto = ? AND id_tenant = ?", [id, req.id_tenant]);
-                
+
             if (result.affectedRows === 0) {
-                return res.status(404).json({code: 0, message: "Producto no encontrado"});
+                return res.status(404).json({ code: 0, message: "Producto no encontrado" });
             }
 
             // Limpiar caché
             queryCache.clear();
 
-            res.json({code: 1 ,message: "Producto eliminado"});
+            res.json({ code: 1, message: "Producto eliminado" });
         }
-        
+
     } catch (error) {
         console.error('Error en deleteProducto:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -260,11 +260,78 @@ const deleteProducto = async (req, res) => {
     }
 };
 
+const importExcel = async (req, res) => {
+    let connection;
+    try {
+        const { data } = req.body;
+
+        if (!Array.isArray(data) || data.length === 0) {
+            return res.status(400).json({ message: "No data provided or invalid format" });
+        }
+
+        if (data.length > 500) {
+            return res.status(400).json({ message: "Limit exceeded. Max 500 rows allowed." });
+        }
+
+        connection = await getConnection();
+        await connection.beginTransaction();
+
+        let insertedCount = 0;
+        let errors = [];
+
+        for (const [index, item] of data.entries()) {
+            // Basic validation
+            if (!item.descripcion || !item.id_marca || !item.id_subcategoria || !item.undm || !item.precio) {
+                errors.push(`Row ${index + 1}: Missing required fields`);
+                continue;
+            }
+
+            const producto = {
+                id_marca: item.id_marca,
+                id_subcategoria: item.id_subcategoria,
+                descripcion: item.descripcion,
+                undm: item.undm,
+                precio: item.precio,
+                cod_barras: item.cod_barras || '-',
+                estado_producto: item.estado_producto !== undefined ? item.estado_producto : 1,
+                id_tenant: req.id_tenant
+            };
+
+            try {
+                await connection.query("INSERT INTO producto SET ?", producto);
+                insertedCount++;
+            } catch (err) {
+                errors.push(`Row ${index + 1}: ${err.message}`);
+            }
+        }
+
+        await connection.commit();
+
+        // Clear cache
+        queryCache.clear();
+
+        res.json({
+            code: 1,
+            message: `Import completed. ${insertedCount} inserted.`,
+            inserted: insertedCount,
+            errors: errors.length > 0 ? errors : null
+        });
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error('Error en importExcel:', error);
+        res.status(500).json({ code: 0, message: "Internal Server Error" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 export const methods = {
     getProductos,
     getUltimoIdProducto,
     getProducto,
     addProducto,
     updateProducto,
-    deleteProducto
+    deleteProducto,
+    importExcel
 };

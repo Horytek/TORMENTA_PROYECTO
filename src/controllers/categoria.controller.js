@@ -6,12 +6,12 @@ const CACHE_TTL = 60000; // 1 minuto
 
 // Limpiar caché periódicamente
 setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of queryCache.entries()) {
-        if (now - value.timestamp > CACHE_TTL * 2) {
-            queryCache.delete(key);
-        }
+  const now = Date.now();
+  for (const [key, value] of queryCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL * 2) {
+      queryCache.delete(key);
     }
+  }
 }, CACHE_TTL * 2);
 
 const getCategorias = async (req, res) => {
@@ -72,10 +72,10 @@ const addCategoria = async (req, res) => {
     await connection.query("INSERT INTO categoria SET ?", [categoria]);
 
     const [result] = await connection.query("SELECT LAST_INSERT_ID() AS id");
-    
+
     // Limpiar caché
     queryCache.clear();
-    
+
     res.status(201).json({ code: 1, message: "Categoría añadida con éxito", id: result[0].id });
   } catch (error) {
     console.error('Error en addCategoria:', error);
@@ -162,6 +162,66 @@ const deleteCategoria = async (req, res) => {
   }
 };
 
+const importExcel = async (req, res) => {
+  let connection;
+  try {
+    const { data } = req.body;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ message: "No data provided or invalid format" });
+    }
+
+    if (data.length > 500) {
+      return res.status(400).json({ message: "Limit exceeded. Max 500 rows allowed." });
+    }
+
+    connection = await getConnection();
+    await connection.beginTransaction();
+
+    let insertedCount = 0;
+    let errors = [];
+
+    for (const [index, item] of data.entries()) {
+      if (!item.nom_categoria) {
+        errors.push(`Row ${index + 1}: Missing required fields`);
+        continue;
+      }
+
+      const categoria = {
+        nom_categoria: item.nom_categoria.trim(),
+        estado_categoria: item.estado_categoria !== undefined ? item.estado_categoria : 1,
+        id_tenant: req.id_tenant
+      };
+
+      try {
+        await connection.query("INSERT INTO categoria SET ?", categoria);
+        insertedCount++;
+      } catch (err) {
+        errors.push(`Row ${index + 1}: ${err.message}`);
+      }
+    }
+
+    await connection.commit();
+
+    // Clear cache
+    queryCache.clear();
+
+    res.json({
+      code: 1,
+      message: `Import completed. ${insertedCount} inserted.`,
+      inserted: insertedCount,
+      errors: errors.length > 0 ? errors : null
+    });
+
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error('Error en importExcel:', error);
+    res.status(500).json({ code: 0, message: "Internal Server Error" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 export const methods = {
   getCategorias,
   getCategoria,
@@ -169,4 +229,5 @@ export const methods = {
   updateCategoria,
   deactivateCategoria,
   deleteCategoria,
+  importExcel
 };

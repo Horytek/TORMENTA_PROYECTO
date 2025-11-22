@@ -1,335 +1,446 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import ProductosForm from './ProductosForm';
-import { Toaster } from "react-hot-toast";
-import { ShowProductos } from './ShowProductos';
-import { FaPlus } from "react-icons/fa";
-import { Button, Tabs, Tab } from "@heroui/react";
+import { Toaster, toast } from "react-hot-toast";
+import { FaPlus, FaFileExcel, FaFileExport } from "react-icons/fa";
+import {
+  Button, Tabs, Tab, Modal, ModalContent, ModalHeader,
+  ModalBody, ModalFooter, Dropdown, DropdownTrigger,
+  DropdownMenu, DropdownItem
+} from "@heroui/react";
+import * as XLSX from 'xlsx';
+
+// Rutas y Servicios
 import { usePermisos } from '@/routes';
+import { getProductos, importExcel as importProductos } from '@/services/productos.services';
+import { getMarcas, importExcel as importMarcas } from '@/services/marca.services';
+import { getCategorias, importExcel as importCategorias } from '@/services/categoria.services';
+import { getSubcategoriaNomCategoria, importExcel as importSubcategorias } from '@/services/subcategoria.services';
+import { generateExcel, generateExcelTemplate } from '@/utils/excelExport';
+
+// Componentes
 import BarraSearch from "@/components/Search/Search";
-import { getProductos } from '@/services/productos.services';
-import { getMarcas } from '@/services/marca.services';
-import { getCategorias } from '@/services/categoria.services';
-import { getSubcategoriaNomCategoria } from '@/services/subcategoria.services';
+import ProductosForm from './ProductosForm';
+import { ShowProductos } from './ShowProductos';
 import Marcas from '../Marcas/Marcas';
 import Categorias from '../Categorias/Categorias';
 import Subcategorias from '../Subcategorias/Subcategorias';
 
+// --- 1. CUSTOM HOOK: Manejo de Datos ---
+const useInventoryData = () => {
+  const [data, setData] = useState({
+    productos: [],
+    marcas: [],
+    categorias: [],
+    subcategorias: []
+  });
+  const [loaded, setLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Carga inicial de datos (Optimizada)
+  useEffect(() => {
+    if (loaded) return;
+
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+
+        // 1. Cargar Productos (Prioridad para mostrar la UI rápido)
+        const prod = await getProductos();
+        setData(prev => ({ ...prev, productos: prod || [] }));
+        setIsLoading(false); // Desbloquear UI inmediatamente
+
+        // 2. Cargar el resto en segundo plano
+        const [marc, cat, sub] = await Promise.all([
+          getMarcas(),
+          getCategorias(),
+          getSubcategoriaNomCategoria()
+        ]);
+
+        setData(prev => ({
+          ...prev,
+          marcas: marc || [],
+          categorias: cat || [],
+          subcategorias: sub || []
+        }));
+
+        setLoaded(true);
+      } catch (error) {
+        console.error("Error cargando inventario:", error);
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [loaded]);
+
+  // Helpers para actualizar estado local (CRUD optimista)
+  const createOperations = (key, idField) => ({
+    add: (item) => setData(prev => ({ ...prev, [key]: [item, ...prev[key]] })),
+    update: (id, item) => setData(prev => ({
+      ...prev,
+      [key]: prev[key].map(el => el[idField] === id ? { ...el, ...item } : el)
+    })),
+    remove: (id) => setData(prev => ({
+      ...prev,
+      [key]: prev[key].filter(el => el[idField] !== id)
+    }))
+  });
+
+  return {
+    data,
+    isLoading,
+    ops: {
+      productos: createOperations('productos', 'id_producto'),
+      marcas: createOperations('marcas', 'id_marca'),
+      categorias: createOperations('categorias', 'id_categoria'),
+      subcategorias: createOperations('subcategorias', 'id_subcategoria'),
+    },
+    reloadData: () => setLoaded(false) // Force reload
+  };
+};
+
+// --- 2. COMPONENTE: Modal de Importación ---
+const ImportDataModal = ({ isOpen, onClose, type, onImport }) => (
+  <Modal isOpen={isOpen} onClose={onClose} size="md" className="dark:bg-gray-900 dark:text-white">
+    <ModalContent>
+      <ModalHeader className="flex items-center gap-2 dark:border-b dark:border-gray-700">
+        <FaFileExcel className="text-green-600 w-6 h-6" />
+        Importar {type ? type.charAt(0).toUpperCase() + type.slice(1) : ''}
+      </ModalHeader>
+      <ModalBody>
+        <div className="flex flex-col items-center justify-center gap-4 py-2 text-center">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            Selecciona el archivo Excel con la plantilla correspondiente.<br />
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Asegúrate de que el archivo contenga datos válidos (Max 500 filas).<br />
+              <strong>Nota:</strong> Para el campo "Estado", usa 1 (Activo) o 0 (Inactivo).
+            </span>
+          </p>
+          <input id="import-file-input" type="file" accept=".xlsx,.xls" className="block w-full max-w-xs border border-gray-300 rounded-lg p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white" />
+          <Button
+            color="primary"
+            variant="light"
+            className="text-blue-600 underline text-xs dark:text-blue-400"
+            onClick={() => generateExcelTemplate(type)}
+          >
+            Descargar plantilla de ejemplo
+          </Button>
+        </div>
+      </ModalBody>
+      <ModalFooter className="dark:border-t dark:border-gray-700">
+        <Button color="danger" variant="light" onPress={onClose}>Cancelar</Button>
+        <Button color="success" onPress={onImport}>Importar</Button>
+      </ModalFooter>
+    </ModalContent>
+  </Modal>
+);
+
+// --- 3. COMPONENTE PRINCIPAL ---
 function Productos() {
   const { hasCreatePermission } = usePermisos();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Determinar la pestaña activa basada en la ruta actual
-  const getCurrentTab = useMemo(() => {
+  // Hooks de datos y UI
+  const { data, isLoading, ops, reloadData } = useInventoryData();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null); // null = no editando
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Estado Importación
+  const [importModal, setImportModal] = useState({ open: false, type: null });
+
+  // -- Lógica de Pestañas --
+  const activeTab = useMemo(() => {
     const path = location.pathname;
     if (path.endsWith('/marcas')) return 'marcas';
     if (path.endsWith('/categorias')) return 'categorias';
     if (path.endsWith('/subcategorias')) return 'subcategorias';
-    return 'productos'; // por defecto
+    return 'productos';
   }, [location.pathname]);
 
-  const [activeTab, setActiveTab] = useState(getCurrentTab);
+  const handleTabChange = (key) => {
+    if (key === activeTab) return;
+    const routes = {
+      productos: '/productos',
+      marcas: '/productos/marcas',
+      categorias: '/productos/categorias',
+      subcategorias: '/productos/subcategorias'
+    };
+    navigate(routes[key] || '/productos');
+  };
 
-  // Sincronizar activeTab con la URL cuando cambie la ruta
-  useEffect(() => {
-    const newTab = getCurrentTab;
-    if (newTab !== activeTab) {
-      setActiveTab(newTab);
+  // -- Lógica de Edición --
+  const handleEditOpen = (producto) => setEditingProduct(producto);
+  const handleEditClose = () => setEditingProduct(null);
+
+  // -- Lógica de Exportación --
+  const handleExport = async (type) => {
+    const dataToExport = data[type];
+    if (!dataToExport || dataToExport.length === 0) {
+      toast.error(`No hay datos de ${type} para exportar.`);
+      return;
     }
-  }, [getCurrentTab, activeTab]);
-
-  // Función para cambiar pestaña y navegar a la ruta correspondiente
-  const handleTabChange = (newTab) => {
-    // Solo navegar si la pestaña es diferente
-    if (newTab === activeTab) return;
-    
-    setActiveTab(newTab);
-    
-    switch (newTab) {
-      case 'productos':
-        navigate('/productos');
-        break;
-      case 'marcas':
-        navigate('/productos/marcas');
-        break;
-      case 'categorias':
-        navigate('/productos/categorias');
-        break;
-      case 'subcategorias':
-        navigate('/productos/subcategorias');
-        break;
-      default:
-        navigate('/productos');
+    try {
+      await generateExcel(type, dataToExport);
+      toast.success(`Exportación de ${type} completada.`);
+    } catch (error) {
+      console.error("Error exportando:", error);
+      toast.error("Error al generar el archivo Excel.");
     }
   };
 
-  // Estado de productos
-  const [productos, setProductos] = useState([]);
-  const [activeAdd, setModalOpen] = useState(false);
+  // -- Lógica de Importación --
+  const handleImport = async () => {
+    const fileInput = document.getElementById('import-file-input');
+    const file = fileInput?.files[0];
 
-  // Estados para los datos compartidos (evitar llamadas masivas a APIs)
-  const [marcas, setMarcas] = useState([]);
-  const [categorias, setCategorias] = useState([]);
-  const [subcategorias, setSubcategorias] = useState([]);
-  const [dataLoaded, setDataLoaded] = useState({
-    productos: false,
-    marcas: false,
-    categorias: false,
-    subcategorias: false
-  });
-  const [isLoadingData, setIsLoadingData] = useState(true);
+    if (!file) {
+      toast.error("Por favor selecciona un archivo.");
+      return;
+    }
 
-  // Estado de edición
-  const [activeEdit, setActiveEdit] = useState(false);
-  const [editData, setEditData] = useState(null);
-
-  // Input de búsqueda de productos
-  const [searchTerm, setSearchTerm] = useState('');
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
-  const handleClearSearch = () => setSearchTerm('');
-
-  // Cargar todos los datos solo una vez
-  useEffect(() => {
-    const fetchAllData = async () => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
       try {
-        const promises = [];
-        
-        // Cargar productos
-        if (!dataLoaded.productos) {
-          promises.push(
-            getProductos().then(data => {
-              setProductos(data || []);
-              setDataLoaded(prev => ({ ...prev, productos: true }));
-            })
-          );
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (jsonData.length === 0) {
+          toast.error("El archivo está vacío.");
+          return;
         }
 
-        // Cargar marcas
-        if (!dataLoaded.marcas) {
-          promises.push(
-            getMarcas().then(data => {
-              setMarcas(data || []);
-              setDataLoaded(prev => ({ ...prev, marcas: true }));
-            })
-          );
+        const type = importModal.type;
+        let mappedData = [];
+
+        // Helper para parsear estado
+        const parseEstado = (val) => {
+          if (val === 1 || val === '1' || val === true || String(val).toLowerCase() === 'activo') return 1;
+          if (val === 0 || val === '0' || val === false || String(val).toLowerCase() === 'inactivo') return 0;
+          return 1; // Default a activo si no se especifica o es inválido
+        };
+
+        // Mapeo de columnas (Headers del Excel -> Keys del Backend)
+        if (type === 'productos') {
+          mappedData = jsonData.map(row => ({
+            descripcion: row['Descripción'],
+            id_marca: row['Marca'],
+            id_subcategoria: row['Subcategoría'],
+            undm: row['Unidad Medida'],
+            precio: row['Precio'],
+            cod_barras: row['Código Barras'],
+            estado_producto: parseEstado(row['Estado'])
+          }));
+        } else if (type === 'marcas') {
+          mappedData = jsonData.map(row => ({
+            nom_marca: row['Nombre Marca'],
+            estado_marca: parseEstado(row['Estado'])
+          }));
+        } else if (type === 'categorias') {
+          mappedData = jsonData.map(row => ({
+            nom_categoria: row['Nombre Categoría'],
+            estado_categoria: parseEstado(row['Estado'])
+          }));
+        } else if (type === 'subcategorias') {
+          mappedData = jsonData.map(row => ({
+            nom_subcat: row['Nombre Subcategoría'],
+            id_categoria: row['Categoría'],
+            estado_subcat: parseEstado(row['Estado'])
+          }));
         }
 
-        // Cargar categorías
-        if (!dataLoaded.categorias) {
-          promises.push(
-            getCategorias().then(data => {
-              setCategorias(data || []);
-              setDataLoaded(prev => ({ ...prev, categorias: true }));
-            })
-          );
+        let success = false;
+        if (type === 'productos') success = await importProductos(mappedData);
+        else if (type === 'marcas') success = await importMarcas(mappedData);
+        else if (type === 'categorias') success = await importCategorias(mappedData);
+        else if (type === 'subcategorias') success = await importSubcategorias(mappedData);
+
+        if (success) {
+          setImportModal({ ...importModal, open: false });
+          reloadData(); // Recargar datos para ver los cambios
         }
 
-        // Cargar subcategorías
-        if (!dataLoaded.subcategorias) {
-          promises.push(
-            getSubcategoriaNomCategoria().then(data => {
-              setSubcategorias(data || []);
-              setDataLoaded(prev => ({ ...prev, subcategorias: true }));
-            })
-          );
-        }
-
-        // Ejecutar todas las promesas en paralelo
-        await Promise.all(promises);
-        setIsLoadingData(false);
       } catch (error) {
-        console.error('Error cargando datos:', error);
-        setIsLoadingData(false);
+        console.error(error);
+        toast.error("Error al procesar el archivo.");
       }
     };
-
-    // Solo cargar si hay datos pendientes
-    const hasPendingData = !dataLoaded.productos || !dataLoaded.marcas || 
-                          !dataLoaded.categorias || !dataLoaded.subcategorias;
-    
-    if (hasPendingData) {
-      fetchAllData();
-    } else {
-      setIsLoadingData(false);
-    }
-  }, []); // Solo ejecutar una vez al montar el componente
-
-  const transformProducto = (producto) => ({
-    ...producto,
-    estado_producto: producto.estado_producto === 1 || producto.estado_producto === "1" ? "Activo" : "Inactivo",
-  });
-
-  // Funciones para actualizar arrays locales (persistentes)
-  const addProductoLocal = (nuevoProducto) => setProductos(prev => [nuevoProducto, ...prev]);
-  const updateProductoLocal = (id, updatedData) =>
-    setProductos(prev => prev.map(p => p.id_producto === id ? { ...p, ...updatedData } : p));
-  const removeProducto = (id) => setProductos(prev => prev.filter(p => p.id_producto !== id));
-
-  const addMarcaLocal = (nuevaMarca) => setMarcas(prev => [nuevaMarca, ...prev]);
-  const updateMarcaLocal = (id, updatedData) =>
-    setMarcas(prev => prev.map(m => m.id_marca === id ? { ...m, ...updatedData } : m));
-  const removeMarcaLocal = (id) => setMarcas(prev => prev.filter(m => m.id_marca !== id));
-
-  const addCategoriaLocal = (nuevaCategoria) => setCategorias(prev => [nuevaCategoria, ...prev]);
-  const updateCategoriaLocal = (id, updatedData) =>
-    setCategorias(prev => prev.map(c => c.id_categoria === id ? { ...c, ...updatedData } : c));
-  const removeCategoriaLocal = (id) => setCategorias(prev => prev.filter(c => c.id_categoria !== id));
-
-  const addSubcategoriaLocal = (nuevaSubcategoria) => setSubcategorias(prev => [nuevaSubcategoria, ...prev]);
-  const updateSubcategoriaLocal = (id, updatedData) =>
-    setSubcategorias(prev => prev.map(s => s.id_subcategoria === id ? { ...s, ...updatedData } : s));
-  const removeSubcategoriaLocal = (id) => setSubcategorias(prev => prev.filter(s => s.id_subcategoria !== id));
-
-
-  // Abrir modal de edición
-  const handleEdit = (producto) => {
-    setEditData(producto);
-    setActiveEdit(true);
+    reader.readAsArrayBuffer(file);
   };
 
-  // Cerrar modal de edición
-  const handleCloseEdit = () => {
-    setEditData(null);
-    setActiveEdit(false);
-  };
-
-  // Función para renderizar el contenido según la pestaña activa
-  const renderTabContent = () => {
+  // -- Renderizado de Contenido Dinámico --
+  const renderContent = useCallback(() => {
     switch (activeTab) {
       case 'productos':
         return (
           <>
-            <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1 mt-2">Gestión de productos</h1>
-            <p className="text-base text-blue-700/80 mb-4">Administra y busca productos fácilmente.</p>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-              <BarraSearch
-                placeholder="Ingrese un producto"
-                isClearable={true}
-                className="h-10 text-sm w-full md:w-72"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                onClear={handleClearSearch}
-              />
-              <Button
-                color="primary"
-                endContent={<FaPlus style={{ fontSize: '22px' }} />}
-                onClick={() => setModalOpen(true)}
-                disabled={!hasCreatePermission}
-                className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                Agregar producto
-              </Button>
+            <div className="mb-6">
+              <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-400 tracking-tight mb-1">Gestión de productos</h1>
+              <p className="text-blue-700/80 dark:text-blue-300/80 mb-4">Administra y busca productos fácilmente.</p>
+
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <BarraSearch
+                  placeholder="Buscar producto..."
+                  isClearable
+                  className="h-10 text-sm w-full md:w-72 dark:bg-gray-800 dark:text-white"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onClear={() => setSearchTerm('')}
+                />
+                <Button
+                  color="primary"
+                  endContent={<FaPlus size={18} />}
+                  onClick={() => setIsCreateModalOpen(true)}
+                  isDisabled={!hasCreatePermission}
+                  className="bg-blue-600 hover:bg-blue-700 font-semibold shadow-lg shadow-blue-500/30 dark:shadow-blue-900/20"
+                >
+                  Agregar producto
+                </Button>
+              </div>
             </div>
+
             <ShowProductos
               searchTerm={searchTerm}
-              productos={productos}
-              onEdit={handleEdit}
-              onDelete={removeProducto}
-              updateProductoLocal={updateProductoLocal}
+              productos={data.productos}
+              onEdit={handleEditOpen}
+              onDelete={ops.productos.remove}
+              updateProductoLocal={ops.productos.update}
             />
-            {activeAdd && (
+
+            {/* Modales de Producto */}
+            {isCreateModalOpen && (
               <ProductosForm
-                modalTitle={'Nuevo Producto'}
-                onClose={() => setModalOpen(false)}
-                onSuccess={addProductoLocal}
+                modalTitle="Nuevo Producto"
+                onClose={() => setIsCreateModalOpen(false)}
+                onSuccess={ops.productos.add}
               />
             )}
-            {activeEdit && (
+            {editingProduct && (
               <ProductosForm
-                modalTitle={'Editar Producto'}
-                onClose={handleCloseEdit}
-                initialData={editData}
-                onSuccess={(updatedData) => {
-                  updateProductoLocal(updatedData.id_producto, updatedData);
-                  handleCloseEdit();
+                modalTitle="Editar Producto"
+                initialData={editingProduct}
+                onClose={handleEditClose}
+                onSuccess={(updated) => {
+                  ops.productos.update(updated.id_producto, updated);
+                  handleEditClose();
                 }}
               />
             )}
           </>
         );
       case 'marcas':
-        return (
-          <Marcas 
-            marcasData={marcas}
-            onAdd={addMarcaLocal}
-            onUpdate={updateMarcaLocal}
-            onDelete={removeMarcaLocal}
-            skipApiCall={true}
-          />
-        );
+        return <Marcas marcasData={data.marcas} onAdd={ops.marcas.add} onUpdate={ops.marcas.update} onDelete={ops.marcas.remove} skipApiCall />;
       case 'categorias':
-        return (
-          <Categorias 
-            categoriasData={categorias}
-            onAdd={addCategoriaLocal}
-            onUpdate={updateCategoriaLocal}
-            onDelete={removeCategoriaLocal}
-            skipApiCall={true}
-          />
-        );
+        return <Categorias categoriasData={data.categorias} onAdd={ops.categorias.add} onUpdate={ops.categorias.update} onDelete={ops.categorias.remove} skipApiCall />;
       case 'subcategorias':
-        return (
-          <Subcategorias 
-            subcategoriasData={subcategorias}
-            categoriasData={categorias}
-            onAdd={addSubcategoriaLocal}
-            onUpdate={updateSubcategoriaLocal}
-            onDelete={removeSubcategoriaLocal}
-            skipApiCall={true}
-          />
-        );
+        return <Subcategorias subcategoriasData={data.subcategorias} categoriasData={data.categorias} onAdd={ops.subcategorias.add} onUpdate={ops.subcategorias.update} onDelete={ops.subcategorias.remove} skipApiCall />;
       default:
         return null;
     }
-  };
+  }, [activeTab, data, searchTerm, hasCreatePermission, isCreateModalOpen, editingProduct, ops]);
 
-return (
-  <div className="m-4">
-    <Toaster />
-    
-    {/* Indicador de carga global */}
-    {isLoadingData && (
-      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center gap-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          <span className="text-blue-700">Cargando datos del sistema...</span>
+  return (
+    <div className="m-4 p-2">
+      <Toaster position="top-center" />
+
+      {/* Header de Tabs y Herramientas */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+        <div className="flex-1 overflow-x-auto w-full sm:w-auto">
+          <Tabs
+            selectedKey={activeTab}
+            onSelectionChange={handleTabChange}
+            variant="light"
+            color="primary"
+            classNames={{
+              tabList: "gap-4 p-1",
+              tab: "h-10 px-6 text-sm font-semibold transition-all duration-300 rounded-full",
+              cursor: "bg-blue-600 shadow-md shadow-blue-500/30 rounded-full",
+              tabContent: "group-data-[selected=true]:text-white text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+            }}
+            radius="full"
+          >
+            <Tab key="productos" title="Productos" />
+            <Tab key="marcas" title="Marcas" />
+            <Tab key="categorias" title="Categorías" />
+            <Tab key="subcategorias" title="Subcategorías" />
+          </Tabs>
+        </div>
+
+        {/* Herramientas: Importar / Exportar */}
+        <div className="flex gap-2 mt-4 sm:mt-0">
+          {/* Dropdown Exportar */}
+          <Dropdown>
+            <DropdownTrigger>
+              <Button
+                color="primary"
+                variant="flat"
+                className="bg-blue-50 text-blue-600 font-medium hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/30"
+                startContent={<FaFileExport />}
+              >
+                Exportar
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Exportar datos" className="dark:bg-gray-800 dark:border dark:border-gray-700">
+              {['productos', 'marcas', 'categorias', 'subcategorias'].map((type) => (
+                <DropdownItem
+                  key={type}
+                  onClick={() => handleExport(type)}
+                  className="text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  startContent={<FaFileExcel className="text-green-600" />}
+                >
+                  Exportar {type.charAt(0).toUpperCase() + type.slice(1)}
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+
+          {/* Dropdown Importar */}
+          <Dropdown>
+            <DropdownTrigger>
+              <Button isIconOnly color="success" variant="flat" className="bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-900/20 dark:border-green-800 dark:hover:bg-green-900/30">
+                <FaFileExcel className="text-green-600 text-xl dark:text-green-400" />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Importar datos" className="dark:bg-gray-800 dark:border dark:border-gray-700">
+              {['productos', 'marcas', 'categorias', 'subcategorias'].map((type) => (
+                <DropdownItem
+                  key={type}
+                  onClick={() => setImportModal({ open: true, type })}
+                  className="text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  Importar {type.charAt(0).toUpperCase() + type.slice(1)}
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
         </div>
       </div>
-    )}
-    
-    <Tabs 
-      selectedKey={activeTab}
-      onSelectionChange={handleTabChange}
-      classNames={{
-        tabList: "bg-transparent flex gap-4",
-        tab: "rounded-lg px-6 py-3 font-semibold text-base transition-colors text-blue-700 data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-blue-100 data-[selected=true]:to-blue-50 data-[selected=true]:text-blue-900 data-[selected=true]:shadow data-[selected=true]:border data-[selected=true]:border-blue-200",
-      }}>
-      <Tab key="productos" title="Productos">
-        {/* El contenido se renderiza abajo */}
-      </Tab>
-      <Tab key="marcas" title="Marcas">
-        {/* El contenido se renderiza abajo */}
-      </Tab>
-      <Tab key="categorias" title="Categorías">
-        {/* El contenido se renderiza abajo */}
-      </Tab>
-      <Tab key="subcategorias" title="Subcategorías">
-        {/* El contenido se renderiza abajo */}
-      </Tab>
-    </Tabs>
-    
-    {/* Contenido dinámico según la pestaña activa */}
-    <div className="mt-4">
-      {!isLoadingData ? renderTabContent() : (
-        <div className="text-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Preparando datos...</p>
-        </div>
-      )}
+
+      {/* Área de Contenido Principal */}
+      <div className="min-h-[400px]">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-64 space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+            <span className="text-blue-600 font-medium animate-pulse">Cargando inventario...</span>
+          </div>
+        ) : (
+          renderContent()
+        )}
+      </div>
+
+      {/* Modal de Importación Global */}
+      <ImportDataModal
+        isOpen={importModal.open}
+        onClose={() => setImportModal({ ...importModal, open: false })}
+        type={importModal.type}
+        onImport={handleImport}
+      />
     </div>
-  </div>
-);
+  );
 }
 
 export default Productos;

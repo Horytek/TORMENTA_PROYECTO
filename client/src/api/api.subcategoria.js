@@ -35,3 +35,6 @@ export const getSubcategoriaRequest = async (id) =>
 // Obtener subcategorías con datos de categoría (lista extendida)
 export const getSubcategoriasConCategoriaRequest = async () =>
   await axios.get("/subcategorias/subcategoria_list");
+
+export const importExcelRequest = async (data) =>
+  await axios.post("/subcategorias/import/excel", { data });

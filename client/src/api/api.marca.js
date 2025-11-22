@@ -18,3 +18,6 @@ export const updateMarcaRequest = async (id, marca) =>
 
 export const deactivateMarcaRequest = async (id) =>
   await axios.put(`/marcas/deactivate/${id}`);
+
+export const importExcelRequest = async (data) =>
+  await axios.post("/marcas/import/excel", { data });

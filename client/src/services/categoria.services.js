@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { 
-  getCategoriasRequest, 
+import {
+  getCategoriasRequest,
   getCategoriaRequest,
-  addCategoriaRequest, 
-  deleteCategoriaRequest, 
-  deactivateCategoriaRequest, 
-  updateCategoriaRequest 
+  addCategoriaRequest,
+  deleteCategoriaRequest,
+  deactivateCategoriaRequest,
+  updateCategoriaRequest,
+  importExcelRequest
 } from '@/api/api.categoria';
 import { toast } from "react-hot-toast";
 
@@ -90,34 +91,55 @@ const updateCategoria = async (id, categoria) => {
 }
 
 const useEditCat = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const editCat = async ({ id_categoria, nom_categoria , estado_categoria }) => {
-        setLoading(true);
-        setError(null);
+  const editCat = async ({ id_categoria, nom_categoria, estado_categoria }) => {
+    setLoading(true);
+    setError(null);
 
-        try {
-            const response = await updateCategoriaRequest(id_categoria, {
-                id_categoria, 
-                nom_categoria, 
-                estado_categoria 
-            });
+    try {
+      const response = await updateCategoriaRequest(id_categoria, {
+        id_categoria,
+        nom_categoria,
+        estado_categoria
+      });
 
-            if (response.data && response.data.message) {
-               // toast.success(response.data.message);
-            } else {
-              //  toast.success("Categoría actualizada con éxito");
-            }
-        } catch (err) {
-            setError(err);
-           // toast.error("Error al actualizar la categoria");
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (response.data && response.data.message) {
+        // toast.success(response.data.message);
+      } else {
+        //  toast.success("Categoría actualizada con éxito");
+      }
+    } catch (err) {
+      setError(err);
+      // toast.error("Error al actualizar la categoria");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return { editCat, loading, error };
+  return { editCat, loading, error };
+};
+
+const importExcel = async (data) => {
+  try {
+    const response = await importExcelRequest(data);
+    if (response.data.code === 1) {
+      toast.success(response.data.message);
+      if (response.data.errors && response.data.errors.length > 0) {
+        console.warn("Import warnings:", response.data.errors);
+        toast.error(`Importado con ${response.data.errors.length} errores. Revisa la consola.`);
+      }
+      return true;
+    } else {
+      toast.error(response.data.message || "Error al importar");
+      return false;
+    }
+  } catch (error) {
+    console.error("Import error:", error);
+    toast.error(error.response?.data?.message || "Error en el servidor");
+    return false;
+  }
 };
 
 export {
@@ -127,5 +149,6 @@ export {
   deleteCategoria,
   deactivateCategoria,
   useEditCat,
-  updateCategoria
+  updateCategoria,
+  importExcel
 };

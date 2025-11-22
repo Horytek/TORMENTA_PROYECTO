@@ -67,7 +67,7 @@ const getMarca = async (req, res) => {
             FROM marca
             WHERE id_marca = ? AND id_tenant = ?
             LIMIT 1`, [id, req.id_tenant]);
-        
+
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Marca no encontrada" });
         }
@@ -181,7 +181,7 @@ const deleteMarca = async (req, res) => {
         const { id } = req.params;
         connection = await getConnection();
         const [result] = await connection.query("DELETE FROM marca WHERE id_marca = ? AND id_tenant = ?", [id, req.id_tenant]);
-                
+
         if (result.affectedRows === 0) {
             return res.status(404).json({ code: 0, message: "Marca no encontrada" });
         }
@@ -202,11 +202,72 @@ const deleteMarca = async (req, res) => {
     }
 };
 
+const importExcel = async (req, res) => {
+    let connection;
+    try {
+        const { data } = req.body;
+
+        if (!Array.isArray(data) || data.length === 0) {
+            return res.status(400).json({ message: "No data provided or invalid format" });
+        }
+
+        if (data.length > 500) {
+            return res.status(400).json({ message: "Limit exceeded. Max 500 rows allowed." });
+        }
+
+        connection = await getConnection();
+        await connection.beginTransaction();
+
+        let insertedCount = 0;
+        let errors = [];
+
+        for (const [index, item] of data.entries()) {
+            if (!item.nom_marca) {
+                errors.push(`Row ${index + 1}: Missing required fields`);
+                continue;
+            }
+
+            const marca = {
+                nom_marca: item.nom_marca.trim(),
+                estado_marca: item.estado_marca !== undefined ? item.estado_marca : 1,
+                id_tenant: req.id_tenant
+            };
+
+            try {
+                await connection.query("INSERT INTO marca SET ?", marca);
+                insertedCount++;
+            } catch (err) {
+                errors.push(`Row ${index + 1}: ${err.message}`);
+            }
+        }
+
+        await connection.commit();
+
+        // Clear cache
+        queryCache.clear();
+
+        res.json({
+            code: 1,
+            message: `Import completed. ${insertedCount} inserted.`,
+            inserted: insertedCount,
+            errors: errors.length > 0 ? errors : null
+        });
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error('Error en importExcel:', error);
+        res.status(500).json({ code: 0, message: "Internal Server Error" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 export const methods = {
     getMarcas,
     getMarca,
     addMarca,
     updateMarca,
     deactivateMarca,
-    deleteMarca
+    deleteMarca,
+    importExcel
 };

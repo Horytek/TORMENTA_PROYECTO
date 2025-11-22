@@ -1,5 +1,5 @@
-import { getProductosRequest, getProductoRequest, addProductosRequest, updateProductoRequest, deleteProductosRequest, getLastIdProductoRequest } 
-from '@/api/api.productos';
+import { getProductosRequest, getProductoRequest, addProductosRequest, updateProductoRequest, deleteProductosRequest, getLastIdProductoRequest, importExcelRequest }
+  from '@/api/api.productos';
 import { transformData } from '@/utils/producto';
 import { toast } from "react-hot-toast";
 
@@ -89,4 +89,25 @@ const deleteProducto = async (id) => {
   }
 };
 
-export { getProductos, getLastIdProducto, getProducto, addProducto, updateProducto, deleteProducto };
+const importExcel = async (data) => {
+  try {
+    const response = await importExcelRequest(data);
+    if (response.data.code === 1) {
+      toast.success(response.data.message);
+      if (response.data.errors && response.data.errors.length > 0) {
+        console.warn("Import warnings:", response.data.errors);
+        toast.error(`Importado con ${response.data.errors.length} errores. Revisa la consola.`);
+      }
+      return true;
+    } else {
+      toast.error(response.data.message || "Error al importar");
+      return false;
+    }
+  } catch (error) {
+    console.error("Import error:", error);
+    toast.error(error.response?.data?.message || "Error en el servidor");
+    return false;
+  }
+};
+
+export { getProductos, getLastIdProducto, getProducto, addProducto, updateProducto, deleteProducto, importExcel };

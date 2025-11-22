@@ -13,7 +13,10 @@ export const addProductosRequest = async (producto) =>
   await axios.post("/productos", producto);
 
 export const updateProductoRequest = async (id, newFields) =>
-  await axios.put(`/productos/${id}`, newFields); 
+  await axios.put(`/productos/${id}`, newFields);
 
 export const deleteProductosRequest = async (id) =>
   await axios.delete(`/productos/${id}`);
+
+export const importExcelRequest = async (data) =>
+  await axios.post("/productos/import/excel", { data });

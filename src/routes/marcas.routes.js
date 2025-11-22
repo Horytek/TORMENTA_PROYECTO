@@ -14,5 +14,6 @@ router.post("/", marcasController.addMarca);
 router.put("/update/:id", marcasController.updateMarca);
 router.put("/deactivate/:id", marcasController.deactivateMarca);
 router.delete("/:id", marcasController.deleteMarca);
+router.post("/import/excel", marcasController.importExcel);
 
 export default router;

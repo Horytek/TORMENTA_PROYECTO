@@ -52,7 +52,7 @@ const getSubcategoriesForCategory = async (req, res) => {
         `, [id, req.id_tenant]);
 
         if (result.length === 0) {
-            return res.status(404).json({code: 0, data: result, message: "Subcategorías de categoría no encontradas" });
+            return res.status(404).json({ code: 0, data: result, message: "Subcategorías de categoría no encontradas" });
         }
 
         res.json({ code: 1, data: result, message: "Subcategorías de categoría listadas" });
@@ -78,7 +78,7 @@ const getSubCategoria = async (req, res) => {
             FROM sub_categoria
             WHERE id_subcategoria = ? AND id_tenant = ?
             LIMIT 1`, [id, req.id_tenant]);
-        
+
         if (result.length === 0) {
             return res.status(404).json({ data: result, message: "Subcategoría no encontrada" });
         }
@@ -144,7 +144,7 @@ const updateSubCategoria = async (req, res) => {
         }
 
         connection = await getConnection();
-        
+
         const [resultSubCat] = await connection.query(`
             UPDATE sub_categoria 
             SET id_categoria = ?, nom_subcat = ?, estado_subcat = ?
@@ -202,7 +202,7 @@ const deactivateSubCategoria = async (req, res) => {
         if (connection) {
             connection.release();
         }
-    } 
+    }
 };
 
 const deleteSubCategoria = async (req, res) => {
@@ -232,15 +232,15 @@ const deleteSubCategoria = async (req, res) => {
         if (connection) {
             connection.release();
         }
-    } 
+    }
 };
 
 const getSubcategoriasConCategoria = async (req, res) => {
     let connection;
     try {
-      connection = await getConnection();
-  
-      const query = `
+        connection = await getConnection();
+
+        const query = `
         SELECT 
           sc.id_subcategoria, 
           sc.nom_subcat, 
@@ -255,18 +255,79 @@ const getSubcategoriasConCategoria = async (req, res) => {
           sc.id_categoria = c.id_categoria
         WHERE sc.id_tenant = ? AND c.id_tenant = ?
       `;
-  
-      const [result] = await connection.query(query, [req.id_tenant, req.id_tenant]);
-      res.json(result);
+
+        const [result] = await connection.query(query, [req.id_tenant, req.id_tenant]);
+        res.json(result);
     } catch (error) {
-      console.error('Error en getSubcategoriasConCategoria:', error);
-      res.status(500).json({ message: "Error al obtener las subcategorías con sus categorías"});
+        console.error('Error en getSubcategoriasConCategoria:', error);
+        res.status(500).json({ message: "Error al obtener las subcategorías con sus categorías" });
     } finally {
         if (connection) {
             connection.release();
         }
-    } 
-  };
+    }
+};
+
+const importExcel = async (req, res) => {
+    let connection;
+    try {
+        const { data } = req.body;
+
+        if (!Array.isArray(data) || data.length === 0) {
+            return res.status(400).json({ message: "No data provided or invalid format" });
+        }
+
+        if (data.length > 500) {
+            return res.status(400).json({ message: "Limit exceeded. Max 500 rows allowed." });
+        }
+
+        connection = await getConnection();
+        await connection.beginTransaction();
+
+        let insertedCount = 0;
+        let errors = [];
+
+        for (const [index, item] of data.entries()) {
+            if (!item.nom_subcat || !item.id_categoria) {
+                errors.push(`Row ${index + 1}: Missing required fields`);
+                continue;
+            }
+
+            const subcategoria = {
+                id_categoria: item.id_categoria,
+                nom_subcat: item.nom_subcat.trim(),
+                estado_subcat: item.estado_subcat !== undefined ? item.estado_subcat : 1,
+                id_tenant: req.id_tenant
+            };
+
+            try {
+                await connection.query("INSERT INTO sub_categoria SET ?", subcategoria);
+                insertedCount++;
+            } catch (err) {
+                errors.push(`Row ${index + 1}: ${err.message}`);
+            }
+        }
+
+        await connection.commit();
+
+        // Clear cache
+        queryCache.clear();
+
+        res.json({
+            code: 1,
+            message: `Import completed. ${insertedCount} inserted.`,
+            inserted: insertedCount,
+            errors: errors.length > 0 ? errors : null
+        });
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error('Error en importExcel:', error);
+        res.status(500).json({ code: 0, message: "Internal Server Error" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
 
 export const methods = {
     getSubCategorias,
@@ -276,5 +337,6 @@ export const methods = {
     addSubCategoria,
     updateSubCategoria,
     deactivateSubCategoria,
-    deleteSubCategoria
+    deleteSubCategoria,
+    importExcel
 };
