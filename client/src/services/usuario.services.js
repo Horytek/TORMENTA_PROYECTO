@@ -1,5 +1,16 @@
-import { getUsuariosRequest, getUsuarioRequest, getUsuarioRequest_1, addUsuarioRequest, addUsuarioLandingRequest, updateUsuarioRequest, updateUsuarioPlanRequest, deleteUsuarioRequest } 
-from '@/api/api.usuario';
+import {
+  getUsuariosRequest,
+  deleteUsuarioRequest,
+  getUsuarioRequest,
+  getUsuarioRequest_1,
+  addUsuarioRequest,
+  addUsuarioLandingRequest,
+  updateUsuarioRequest,
+  updateUsuarioPlanRequest,
+  bulkUpdateUsuariosRequest,
+  importUsuariosRequest,
+  exportUsuariosRequest
+} from "../api/api.usuario";
 import { toast } from "react-hot-toast";
 import { transformData } from '@/utils/usuario';
 
@@ -43,7 +54,7 @@ const getUsuario_1 = async (id) => {
   }
 };
 
-const addUsuario= async (user) => {
+const addUsuario = async (user) => {
   try {
     const response = await addUsuarioRequest(user);
     if (response.data.code === 1) {
@@ -131,5 +142,85 @@ const addUsuarioLanding = async (user) => {
   }
 };
 
+const bulkUpdateUsuarios = async (action, ids) => {
+  try {
+    const response = await bulkUpdateUsuariosRequest({ action, ids });
+    if (response.data.code === 1) {
+      toast.success(response.data.message);
+      return true;
+    } else {
+      toast.error(response.data.message || "Error al realizar la operación masiva");
+      return false;
+    }
+  } catch (error) {
+    console.error('Error in bulkUpdateUsuarios service:', error);
+    if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error("Error en el servidor interno");
+    }
+    return false;
+  }
+};
 
-export { getUsuarios, getUsuario, addUsuario, addUsuarioLanding, updateUsuario, deleteUsuario, updateUsuarioPlan, getUsuario_1 };
+export const importUsuarios = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await importUsuariosRequest(formData);
+    if (response.data.code === 1) {
+      toast.success(response.data.message);
+      return { success: true, details: response.data.details };
+    }
+    return { success: false, message: response.data.message };
+  } catch (error) {
+    const message = error.response?.data?.message || "Error al importar usuarios";
+    const details = error.response?.data?.details;
+    toast.error(message);
+    return { success: false, message, details };
+  }
+};
+
+export const exportUsuarios = async (filters = {}) => {
+  try {
+    const response = await exportUsuariosRequest(filters);
+
+    // Crear blob y descargar
+    const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `usuarios_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    toast.success("Exportación completada");
+    return true;
+  } catch (error) {
+    console.error("Error export:", error);
+    toast.error("Error al exportar usuarios");
+    return false;
+  }
+};
+
+export const toggleEstadoUsuario = async (id_usuario, nuevoEstado) => {
+  try {
+    const body = { estado_usuario: nuevoEstado };
+    const response = await updateUsuarioRequest(id_usuario, body);
+    if (response.data.code === 1) {
+      toast.success(nuevoEstado === 1 ? "Usuario activado" : "Usuario desactivado");
+      return true;
+    } else {
+      toast.error("No se pudo cambiar el estado del usuario");
+      return false;
+    }
+  } catch (e) {
+    toast.error("Error al cambiar estado");
+    return false;
+  }
+};
+
+export { getUsuarios, getUsuario, addUsuario, addUsuarioLanding, updateUsuario, deleteUsuario, updateUsuarioPlan, getUsuario_1, bulkUpdateUsuarios };

@@ -20,15 +20,15 @@ const getSucursalIdForUser = async (usuario, connection, id_tenant) => {
 
 const getSucursalInicio = async (req, res) => {
   let connection;
-  const { nombre = '' } = req.query; 
+  const { nombre = '' } = req.query;
   const id_tenant = req.id_tenant;
 
   try {
-      connection = await getConnection();
-      if (!connection) throw new Error("Error en la conexión con la base de datos.");
+    connection = await getConnection();
+    if (!connection) throw new Error("Error en la conexión con la base de datos.");
 
-      // Consulta SQL para obtener solo el nombre de las sucursales
-      const query = `
+    // Consulta SQL para obtener solo el nombre de las sucursales
+    const query = `
                 SELECT 
               s.id_sucursal AS id,
               s.nombre_sucursal AS nombre,
@@ -40,17 +40,17 @@ const getSucursalInicio = async (req, res) => {
           LIMIT 50
       `;
 
-      const params = [`${nombre}%`, id_tenant];
+    const params = [`${nombre}%`, id_tenant];
 
-      const [result] = await connection.query(query, params);
+    const [result] = await connection.query(query, params);
 
-      // Enviar la respuesta con los resultados
-      res.json({ code: 1, data: result, message: "Sucursales listadas" });
+    // Enviar la respuesta con los resultados
+    res.json({ code: 1, data: result, message: "Sucursales listadas" });
 
   } catch (error) {
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
-      if (connection) connection.release(); 
+    if (connection) connection.release();
   }
 };
 
@@ -75,11 +75,11 @@ const getUserRolController = async (req, res) => {
   try {
     connection = await getConnection();
     const { usuario } = req.query;
-    
+
     if (!usuario) {
       return res.status(400).json({ message: "Falta el parámetro usuario" });
     }
-    
+
     // Consulta para obtener el id_rol
     const [rolResult] = await connection.query(
       `SELECT u.id_rol as rol_id 
@@ -88,11 +88,11 @@ const getUserRolController = async (req, res) => {
        LIMIT 1`,
       [usuario, id_tenant]
     );
-    
+
     if (rolResult.length === 0) {
       return res.status(404).json({ message: "No se encontró el usuario" });
     }
-    
+
     res.json({ code: 1, rol_id: rolResult[0].rol_id, message: "Rol obtenido correctamente" });
   } catch (error) {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -152,7 +152,7 @@ const getProductoMasVendido = async (req, res) => {
         WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_tenant = ?
       `;
       params = [fechaInicioISO, fechaFinISO, id_tenant];
-      if(sucursal) {
+      if (sucursal) {
         query += " AND v.id_sucursal = ?";
         params.push(sucursal);
       }
@@ -723,35 +723,27 @@ export const getNotificaciones = async (req, res) => {
 
     const [rows] = await connection.query(
       `SELECT 
-         id_log,
-         accion,
-         id_modulo,
-         id_usuario,
-         fecha,
-         descripcion,
-         recurso
-       FROM log_sistema
-       WHERE id_tenant = ?
-       ORDER BY fecha DESC
-       LIMIT 20`,
+         l.id_log,
+         l.accion,
+         l.id_modulo,
+         l.id_usuario,
+         u.usua as nombre_usuario,
+         l.fecha,
+         l.descripcion,
+         l.recurso
+       FROM log_sistema l
+       LEFT JOIN usuario u ON l.id_usuario = u.id_usuario
+       WHERE l.id_tenant = ?
+       ORDER BY l.fecha DESC
+       LIMIT 50`,
       [id_tenant]
     );
 
-    const notificaciones = rows.map((l) => {
-      const moduloTxt = l.id_modulo != null ? `módulo ${l.id_modulo}` : "módulo N/D";
-      const recursoTxt = l.recurso ? ` / ${l.recurso}` : "";
-      const usuarioTxt = l.id_usuario != null ? `Usuario ${l.id_usuario}` : "Usuario N/D";
-      const desc = l.descripcion ?? "";
-
-      return {
-        id: l.id_log,
-        mensaje: `${usuarioTxt} realizó "${l.accion}" en ${moduloTxt}${recursoTxt}: ${desc}`.trim(),
-        fecha: l.fecha
-      };
-    });
-
-    res.json({ code: 1, data: notificaciones, message: "Notificaciones listadas" });
+    // Devolvemos la data cruda para que el frontend decida cómo mostrarla
+    // (iconos, colores, agrupación, etc.)
+    res.json({ code: 1, data: rows, message: "Notificaciones listadas" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
@@ -769,5 +761,5 @@ export const methods = {
   getVentasPorSucursalPeriodo,
   getNotasPendientes,
   actualizarEstadoEspera,
-  getNotificaciones 
+  getNotificaciones
 };

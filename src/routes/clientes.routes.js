@@ -15,5 +15,7 @@ router.get("/getCliente/:id", clientesController.getCliente);
 router.put("/updateCliente", clientesController.updateCliente); 
 router.delete("/deleteCliente/:id", clientesController.deleteCliente);
 router.put("/deactivateCliente/:id", clientesController.deactivateCliente);
+router.get("/compras", clientesController.getComprasCliente);
+router.get("/historial", clientesController.getHistorialCliente);
 
 export default router;

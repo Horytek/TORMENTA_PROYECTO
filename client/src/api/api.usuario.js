@@ -13,13 +13,21 @@ export const addUsuarioRequest = async (user) =>
   await axios.post("/usuario", user);
 
 export const updateUsuarioRequest = async (id, newFields) =>
-  await axios.put(`/usuario/${id}`, newFields); 
+  await axios.put(`/usuario/${id}`, newFields);
 
 export const updateUsuarioPlanRequest = async (id, newFields) =>
-  await axios.put(`/usuario/plan/${id}`, newFields); 
+  await axios.put(`/usuario/plan/${id}`, newFields);
 
 export const deleteUsuarioRequest = async (id) =>
   await axios.delete(`/usuario/${id}`);
 
 export const addUsuarioLandingRequest = async (user) =>
   await axios.post("/usuario/landing", user);
+
+export const bulkUpdateUsuariosRequest = (data) => axios.post('/usuario/bulk-update', data);
+
+export const importUsuariosRequest = (formData) => axios.post('/usuario/import', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+
+export const exportUsuariosRequest = () => axios.get('/usuario/export', { responseType: 'blob' });

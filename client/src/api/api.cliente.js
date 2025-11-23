@@ -17,3 +17,7 @@ export const deleteClienteRequest = (id) => axios.delete(`/clientes/deleteClient
 
 // Desactivar cliente (por ID)
 export const deactivateClienteRequest = (id) => axios.put(`/clientes/deactivateCliente/${id}`);
+
+export const getComprasClienteRequest = (params) => axios.get("/clientes/compras", { params });
+
+export const getHistorialClienteRequest = (params) => axios.get("/clientes/historial", { params });

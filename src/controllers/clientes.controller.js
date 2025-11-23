@@ -692,11 +692,76 @@ const deactivateCliente = async (req, res) => {
     }
 };
 
+const getComprasCliente = async (req, res) => {
+  let connection;
+  const { id_cliente, limit = 10 } = req.query;
+  const id_tenant = req.id_tenant;
+  if (!id_cliente) return res.status(400).json({ code: 0, message: "Falta id_cliente" });
+
+  try {
+    connection = await getConnection();
+    const [rows] = await connection.query(
+      `
+      SELECT 
+        v.id_venta AS id,
+        DATE_FORMAT(v.f_venta,'%Y-%m-%d') AS fecha,
+        SUM(dv.total) AS total,
+        COUNT(dv.id_producto) AS items
+      FROM venta v
+      INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
+      WHERE v.id_cliente = ? AND v.estado_venta != 0 AND v.id_tenant = ?
+      GROUP BY v.id_venta, v.f_venta
+      ORDER BY v.f_venta DESC
+      LIMIT ?
+      `,
+      [id_cliente, id_tenant, Number(limit)]
+    );
+    res.json({ code: 1, data: rows, message: "Compras del cliente listadas" });
+  } catch (e) {
+    res.status(500).json({ code: 0, message: "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+const getHistorialCliente = async (req, res) => {
+  let connection;
+  const { id_cliente, limit = 15 } = req.query;
+  const id_tenant = req.id_tenant;
+  if (!id_cliente) return res.status(400).json({ code: 0, message: "Falta id_cliente" });
+
+  try {
+    connection = await getConnection();
+    const [rows] = await connection.query(
+      `
+      SELECT 
+        id_log,
+        accion,
+        fecha,
+        descripcion,
+        recurso
+      FROM log_sistema
+      WHERE id_tenant = ? AND recurso = 'cliente' AND descripcion LIKE CONCAT('%', ?, '%')
+      ORDER BY fecha DESC
+      LIMIT ?
+      `,
+      [id_tenant, id_cliente, Number(limit)]
+    );
+    res.json({ code: 1, data: rows, message: "Historial del cliente listado" });
+  } catch (e) {
+    res.status(500).json({ code: 0, message: "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 export const methods = {
     getClientes,
     getCliente,
     addCliente,
     updateCliente,
     deleteCliente,
-    deactivateCliente
+    deactivateCliente,
+    getComprasCliente,
+    getHistorialCliente
 };

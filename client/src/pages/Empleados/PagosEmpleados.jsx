@@ -9,7 +9,7 @@ import { Store, Trash2, AlertCircle, CheckCircle, Clock, Info } from "lucide-rea
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { useUserStore } from "../../store/useStore";
-import { getEmpresaRequest } from "../../api/api.empresa";
+import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getPagosRequest, getPagosDashboardRequest, addPagoRequest, updatePagoRequest, deletePagoRequest } from "../../api/api.pagos";
 
 // Card KPI compacto y moderno
@@ -58,20 +58,26 @@ export default function PagosEmpleados({ vendedores = [] }) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure(); // Para el manual
 
   const id_tenant = useUserStore((state) => state.id_tenant);
+  const nombre = useUserStore((state) => state.nombre);
+
 
   useEffect(() => {
-    if (id_tenant) {
+    if (id_tenant && nombre) {
       fetchEmpresa();
       fetchPagos();
       fetchDashboard();
     }
-  }, [id_tenant]);
+  }, [id_tenant, nombre]);
 
   const fetchEmpresa = async () => {
     try {
-      const res = await getEmpresaRequest(id_tenant);
-      if (res.data) setEmpresa(res.data);
-    } catch (error) { console.error(error); }
+      // Antes: const res = await getEmpresaRequest(id_tenant);
+      const data = await getEmpresaDataByUser(nombre);
+      if (data) setEmpresa(data);
+    } catch (error) {
+      console.error(error);
+      setEmpresa(null);
+    }
   };
 
   const fetchPagos = async () => {
@@ -346,7 +352,6 @@ export default function PagosEmpleados({ vendedores = [] }) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Formulario */}
           <Card className="lg:col-span-1 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-none px-6 py-6 h-fit">
             <h2 className="font-bold text-lg text-zinc-900 dark:text-blue-100 mb-3">Programar Pago</h2>
             <Divider className="mb-3" />
@@ -369,38 +374,50 @@ export default function PagosEmpleados({ vendedores = [] }) {
                   label="Monto Neto"
                   placeholder="0.00"
                   value={form.monto_neto}
-                  onValueChange={(val) => setForm(f => ({ ...f, monto_neto: val }))}
+                  onValueChange={(val) => setForm(f => ({ ...f, monto_neto: Math.max(0, Number(val) || 0) }))}
+                  min={0}
                   startContent={
                     <div className="pointer-events-none flex items-center">
                       <span className="text-default-400 text-small">S/</span>
                     </div>
                   }
+                  onKeyDown={e => {
+                    if (e.key === '-' || e.key === 'Subtract') e.preventDefault();
+                  }}
                 />
                 <NumberInput
                   label="Aportes"
                   placeholder="0.00"
                   value={form.monto_aportes}
-                  onValueChange={(val) => setForm(f => ({ ...f, monto_aportes: val }))}
+                  onValueChange={(val) => setForm(f => ({ ...f, monto_aportes: Math.max(0, Number(val) || 0) }))}
+                  min={0}
                   startContent={
                     <div className="pointer-events-none flex items-center">
                       <span className="text-default-400 text-small">S/</span>
                     </div>
                   }
+                  onKeyDown={e => {
+                    if (e.key === '-' || e.key === 'Subtract') e.preventDefault();
+                  }}
                 />
               </div>
               <NumberInput
                 label="Bonos / Beneficios"
                 placeholder="0.00"
                 value={form.monto_beneficios}
-                onValueChange={(val) => setForm(f => ({ ...f, monto_beneficios: val }))}
+                onValueChange={(val) => setForm(f => ({ ...f, monto_beneficios: Math.max(0, Number(val) || 0) }))}
+                min={0}
                 startContent={
                   <div className="pointer-events-none flex items-center">
                     <span className="text-default-400 text-small">S/</span>
                   </div>
                 }
+                onKeyDown={e => {
+                  if (e.key === '-' || e.key === 'Subtract') e.preventDefault();
+                }}
               />
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg flex justify-between items-center">
+              <div className="bg-blue-50 dark:bg-zinc-900/20 p-3 rounded-lg flex justify-between items-center">
                 <div>
                   <p className="text-xs text-blue-600 dark:text-blue-300 font-semibold">Costo Total Estimado</p>
                   <p className="text-xs text-blue-400 dark:text-blue-400">Neto + Aportes + Bonos</p>
@@ -445,13 +462,25 @@ export default function PagosEmpleados({ vendedores = [] }) {
                       <SelectItem key={fr} value={fr}>{fr}</SelectItem>
                     ))}
                   </Select>
-                  <Input
-                    label="Día habitual"
-                    type="number"
-                    placeholder="Ej. 30"
-                    value={form.dia_habitual_pago}
-                    onChange={e => setForm(f => ({ ...f, dia_habitual_pago: e.target.value }))}
-                  />
+                    <Input
+                      label="Día habitual"
+                      type="number"
+                      placeholder="Ej. 30"
+                      value={form.dia_habitual_pago}
+                      min={1}
+                      max={31}
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        // Solo permitir valores entre 1 y 31
+                        let num = Number(val);
+                        if (num < 1) num = '';
+                        if (num > 31) num = 31;
+                        setForm(f => ({ ...f, dia_habitual_pago: num }));
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === '-' || e.key === 'Subtract') e.preventDefault();
+                      }}
+                    />
                 </div>
               )}
 
