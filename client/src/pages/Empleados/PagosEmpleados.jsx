@@ -1,9 +1,16 @@
-import { useState, useMemo } from "react";
-import { Button, Input, Card, CardBody, Divider, Select, SelectItem, Chip, Progress, Tooltip } from "@heroui/react";
-import { FaFilePdf, FaPrint, FaPlus, FaUser } from "react-icons/fa";
-import { DollarSign, Package, TrendingUp, Store, Trash2, RefreshCw } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import {
+  Button, Input, Card, CardBody, Divider, Select, SelectItem, Chip,
+  Tooltip, Checkbox, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
+  useDisclosure, Accordion, AccordionItem, NumberInput
+} from "@heroui/react";
+import { FaFilePdf, FaPlus, FaUser, FaFileInvoiceDollar, FaQuestionCircle, FaBook } from "react-icons/fa";
+import { Store, Trash2, AlertCircle, CheckCircle, Clock, Info } from "lucide-react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { useUserStore } from "../../store/useStore";
+import { getEmpresaRequest } from "../../api/api.empresa";
+import { getPagosRequest, getPagosDashboardRequest, addPagoRequest, updatePagoRequest, deletePagoRequest } from "../../api/api.pagos";
 
 // Card KPI compacto y moderno
 function MetricCardKPI({ icon, title, value, change, gradient, iconColor, borderColor, children }) {
@@ -31,381 +38,510 @@ function MetricCardKPI({ icon, title, value, change, gradient, iconColor, border
 
 export default function PagosEmpleados({ vendedores = [] }) {
   const [pagos, setPagos] = useState([]);
+  const [dashboard, setDashboard] = useState({ compromisos_mes: 0, pagos_atrasados: 0, total_pagado_mes: 0 });
   const [form, setForm] = useState({
-    empleado: "",
-    monto: "",
-    tipo: "Sueldo",
-    fecha: new Date().toISOString().slice(0, 10),
+    dni_vendedor: "",
+    monto_neto: 0,
+    monto_aportes: 0,
+    monto_beneficios: 0,
+    tipo_pago: "SUELDO",
+    fecha_programada: new Date().toISOString().slice(0, 10),
+    es_recurrente: false,
+    frecuencia: "MENSUAL",
+    dia_habitual_pago: "",
     observacion: "",
   });
   const [search, setSearch] = useState("");
-  const [tipoFiltro, setTipoFiltro] = useState("Todos");
+  const [tipoFiltro, setTipoFiltro] = useState("TODOS");
+  const [empresa, setEmpresa] = useState(null);
 
-  // Métricas
-  const totalPagado = useMemo(() => pagos.reduce((acc, p) => acc + Number(p.monto || 0), 0), [pagos]);
-  const empleadosUnicos = useMemo(() => [...new Set(pagos.map(p => p.empleado))].length, [pagos]);
-  const ultimoPago = pagos.length > 0 ? pagos[pagos.length - 1] : null;
-  const promedio = useMemo(() => pagos.length ? totalPagado / pagos.length : 0, [totalPagado, pagos]);
-  const pagosFiltrados = useMemo(() => {
-    let arr = pagos;
-    if (search) arr = arr.filter(p => p.empleado.toLowerCase().includes(search.toLowerCase()));
-    if (tipoFiltro !== "Todos") arr = arr.filter(p => p.tipo === tipoFiltro);
-    return arr;
-  }, [pagos, search, tipoFiltro]);
-  
+  const { isOpen, onOpen, onOpenChange } = useDisclosure(); // Para el manual
 
-  // Añadir pago
-  const handleAddPago = () => {
-    if (!form.empleado || !form.monto) return;
-    setPagos([...pagos, { ...form, id: Date.now() }]);
-    setForm({
-      empleado: "",
-      monto: "",
-      tipo: "Sueldo",
-      fecha: new Date().toISOString().slice(0, 10),
-      observacion: "",
-    });
+  const id_tenant = useUserStore((state) => state.id_tenant);
+
+  useEffect(() => {
+    if (id_tenant) {
+      fetchEmpresa();
+      fetchPagos();
+      fetchDashboard();
+    }
+  }, [id_tenant]);
+
+  const fetchEmpresa = async () => {
+    try {
+      const res = await getEmpresaRequest(id_tenant);
+      if (res.data) setEmpresa(res.data);
+    } catch (error) { console.error(error); }
   };
 
-  // Eliminar pago
-  const handleRemovePago = (id) => {
-    setPagos(pagos.filter(p => p.id !== id));
+  const fetchPagos = async () => {
+    try {
+      const res = await getPagosRequest({ estado: tipoFiltro === 'TODOS' ? null : tipoFiltro });
+      if (res.data.code === 1) setPagos(res.data.data);
+    } catch (error) { console.error(error); }
   };
 
-  // PDF
-  const handleDownloadPDF = () => {
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("Reporte de Pagos de Empleados", 15, 18);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Fecha de generación: ${new Date().toLocaleDateString("es-PE")}`, 15, 26);
+  const fetchDashboard = async () => {
+    const now = new Date();
+    try {
+      const res = await getPagosDashboardRequest(now.getMonth() + 1, now.getFullYear());
+      if (res.data.code === 1) setDashboard(res.data.data);
+    } catch (error) { console.error(error); }
+  };
 
-    // Métricas
-    doc.setFontSize(10.5);
-    doc.setTextColor(40, 40, 40);
-    doc.text(`Total pagado: S/ ${totalPagado.toFixed(2)}`, 15, 33);
-    doc.text(`Empleados: ${empleadosUnicos}`, 70, 33);
-    doc.text(`Promedio: S/ ${promedio.toFixed(2)}`, 120, 33);
+  useEffect(() => {
+    if (id_tenant) fetchPagos();
+  }, [tipoFiltro]);
 
-    // Tabla
-    const tableData = pagosFiltrados.map((p, idx) => [
-      idx + 1,
-      p.empleado,
-      p.tipo,
-      `S/ ${Number(p.monto).toFixed(2)}`,
-      p.fecha,
-      p.observacion || "-",
-    ]);
-    doc.autoTable({
-      head: [["#", "Empleado", "Tipo", "Monto", "Fecha", "Observación"]],
-      body: tableData,
-      startY: 40,
-      theme: "grid",
-      styles: { fontSize: 10, cellPadding: 2 },
-      headStyles: { fillColor: [30, 64, 175], textColor: [255,255,255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 247, 250] },
-      margin: { left: 15, right: 15 }
-    });
+  const costoTotalEstimado = useMemo(() => {
+    return Number(form.monto_neto || 0) + Number(form.monto_aportes || 0) + Number(form.monto_beneficios || 0);
+  }, [form.monto_neto, form.monto_aportes, form.monto_beneficios]);
 
-    // Footer
-    const totalPages = doc.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(130);
-      doc.text(`Página ${i} de ${totalPages}`, doc.internal.pageSize.getWidth() - 18, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+  const handleAddPago = async () => {
+    if (!form.dni_vendedor || !form.monto_neto) return;
+    try {
+      const res = await addPagoRequest(form);
+      if (res.data.code === 1) {
+        fetchPagos();
+        fetchDashboard();
+        setForm({
+          dni_vendedor: "",
+          monto_neto: 0,
+          monto_aportes: 0,
+          monto_beneficios: 0,
+          tipo_pago: "SUELDO",
+          fecha_programada: new Date().toISOString().slice(0, 10),
+          es_recurrente: false,
+          frecuencia: "MENSUAL",
+          dia_habitual_pago: "",
+          observacion: "",
+        });
+      }
+    } catch (error) {
+      console.error("Error al añadir pago", error);
+    }
+  };
+
+  const handleRemovePago = async (id) => {
+    if (confirm("¿Estás seguro de eliminar este pago?")) {
+      await deletePagoRequest(id);
+      fetchPagos();
+      fetchDashboard();
+    }
+  };
+
+  const handleMarcarPagado = async (pago) => {
+    if (confirm(`¿Confirmar pago de S/ ${pago.costo_total} a ${pago.nombre_vendedor}?`)) {
+      await updatePagoRequest(pago.id_pago, {
+        estado_pago: 'PAGADO',
+        fecha_pagada: new Date().toISOString().slice(0, 10)
+      });
+      fetchPagos();
+      fetchDashboard();
+    }
+  };
+
+  const generatePayslip = (pago) => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a5" });
+
+    if (empresa?.logo) {
+      try { doc.addImage(empresa.logo, "PNG", 10, 10, 25, 25); } catch (e) { }
     }
 
-    doc.save("pagos_empleados.pdf");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(empresa?.razonSocial || "EMPRESA", 40, 18);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(empresa?.direccion || "Dirección no registrada", 40, 24);
+    doc.text(`RUC: ${empresa?.ruc || "-"}`, 40, 29);
+
+    doc.setDrawColor(200);
+    doc.line(10, 35, 138, 35);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("BOLETA DE PAGO", 74, 45, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.text("Empleado:", 15, 55);
+    doc.setFont("helvetica", "normal");
+    doc.text(pago.nombre_vendedor, 45, 55);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Fecha Prog.:", 15, 62);
+    doc.setFont("helvetica", "normal");
+    doc.text(pago.fecha_programada.slice(0, 10), 45, 62);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Tipo:", 15, 69);
+    doc.setFont("helvetica", "normal");
+    doc.text(pago.tipo_pago, 45, 69);
+
+    doc.autoTable({
+      startY: 80,
+      head: [["Concepto", "Monto"]],
+      body: [
+        ["Sueldo Neto", `S/ ${Number(pago.monto_neto).toFixed(2)}`],
+        ["Aportes (Empresa)", `S/ ${Number(pago.monto_aportes).toFixed(2)}`],
+        ["Beneficios/Bonos", `S/ ${Number(pago.monto_beneficios).toFixed(2)}`],
+        ["Observaciones", pago.observacion || "-"]
+      ],
+      theme: "plain",
+      styles: { fontSize: 10, cellPadding: 3 },
+      headStyles: { fillColor: [240, 240, 240], textColor: 50, fontStyle: 'bold' },
+      columnStyles: { 1: { halign: 'right' } }
+    });
+
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("COSTO TOTAL:", 80, finalY);
+    doc.text(`S/ ${Number(pago.costo_total).toFixed(2)}`, 130, finalY, { align: "right" });
+
+    doc.setLineWidth(0.5);
+    doc.line(20, 160, 60, 160);
+    doc.line(88, 160, 128, 160);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("EMPRESA", 40, 165, { align: "center" });
+    doc.text("RECIBÍ CONFORME", 108, 165, { align: "center" });
+    doc.text(pago.nombre_vendedor, 108, 170, { align: "center" });
+
+    doc.save(`Boleta_${pago.nombre_vendedor}_${pago.fecha_programada}.pdf`);
   };
 
-  // Imprimir PDF
-  const handlePrintPDF = () => {
-    handleDownloadPDF();
-    setTimeout(() => window.print(), 500);
+  const generateGeneralReport = () => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    if (empresa?.logo) {
+      try { doc.addImage(empresa.logo, "PNG", 15, 10, 20, 20); } catch (e) { }
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(30, 58, 138);
+    doc.text("REPORTE DE PAGOS", 40, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.setFont("helvetica", "normal");
+    doc.text(empresa?.razonSocial || "EMPRESA", 40, 26);
+    doc.text(`Generado el: ${new Date().toLocaleDateString("es-PE")}`, 40, 31);
+
+    doc.setFillColor(245, 247, 250);
+    doc.roundedRect(15, 40, 180, 25, 3, 3, "F");
+
+    doc.setFontSize(9);
+    doc.setTextColor(80);
+    doc.text("COMPROMISOS MES", 30, 48);
+    doc.text("ATRASADOS", 90, 48);
+    doc.text("PAGADO MES", 150, 48);
+
+    doc.setFontSize(14);
+    doc.setTextColor(30);
+    doc.setFont("helvetica", "bold");
+    doc.text(`S/ ${Number(dashboard.compromisos_mes).toFixed(2)}`, 30, 58);
+    doc.text(`S/ ${Number(dashboard.pagos_atrasados).toFixed(2)}`, 90, 58);
+    doc.text(`S/ ${Number(dashboard.total_pagado_mes).toFixed(2)}`, 150, 58);
+
+    const tableData = pagos.map((p, idx) => [
+      idx + 1,
+      p.nombre_vendedor,
+      p.tipo_pago,
+      `S/ ${Number(p.costo_total).toFixed(2)}`,
+      p.fecha_programada.slice(0, 10),
+      p.estado_pago,
+    ]);
+
+    doc.autoTable({
+      head: [["#", "Empleado", "Tipo", "Costo Total", "Fecha Prog.", "Estado"]],
+      body: tableData,
+      startY: 75,
+      theme: "grid",
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold' },
+    });
+
+    doc.save("reporte_pagos_empleados.pdf");
   };
 
-  // Gradientes y colores para cada card
   const gradients = [
     "from-emerald-400/30 via-emerald-200/20 to-transparent",
-    "from-violet-400/30 via-violet-200/20 to-transparent",
+    "from-rose-400/30 via-rose-200/20 to-transparent",
     "from-blue-400/30 via-blue-200/20 to-transparent",
     "from-amber-400/30 via-yellow-200/20 to-transparent",
   ];
   const iconColors = [
     "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
-    "bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
+    "bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400",
     "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400",
     "bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
   ];
-  const borderColors = [
-    "border-emerald-200/50 dark:border-emerald-800/50",
-    "border-violet-200/50 dark:border-violet-800/50",
-    "border-blue-200/50 dark:border-blue-800/50",
-    "border-amber-200/50 dark:border-amber-800/50",
-  ];
-
-  // Botón moderno para exportar/imprimir
-function ActionButton({ color, icon, children, ...props }) {
-  // Mapeo de estilos por color
-  const colorStyles = {
-    blue: "bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-800 dark:text-blue-200",
-    purple: "bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:border-purple-800 dark:text-purple-200",
-    cyan: "bg-cyan-50 hover:bg-cyan-100 border-cyan-200 text-cyan-700 dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 dark:border-cyan-800 dark:text-cyan-200",
-    green: "bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:border-emerald-800 dark:text-emerald-200",
-    red: "bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 dark:border-rose-800 dark:text-rose-200",
-    yellow: "bg-yellow-50 hover:bg-yellow-100 border-yellow-200 text-yellow-700 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 dark:border-yellow-800 dark:text-yellow-200",
-    default: "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-700 dark:bg-zinc-800/30 dark:hover:bg-zinc-800/50 dark:border-zinc-700 dark:text-zinc-200"
-  };
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      className={`gap-2 font-semibold px-4 py-2 rounded-lg transition-colors ${colorStyles[color] || colorStyles.default}`}
-      {...props}
-    >
-      {icon}
-      <span>{children}</span>
-    </Button>
-  );
-}
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#18192b] px-4 py-6">
       <div className="max-w-[1600px] mx-auto space-y-6">
-        {/* Header y métricas */}
-        <header className="mb-2">
-          <h1 className="text-3xl font-extrabold tracking-wide text-zinc-900 dark:text-blue-100">
-            Gestión de Pagos
-          </h1>
-          <p className="text-base text-blue-700/80 dark:text-blue-200/80 mt-2">
-            Administra los pagos de tus empleados de forma eficiente
-          </p>
+        <header className="mb-2 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-wide text-zinc-900 dark:text-blue-100">
+              Gestión de Pagos
+            </h1>
+            <p className="text-base text-blue-700/80 dark:text-blue-200/80 mt-2">
+              Control de nómina, pagos recurrentes y proyección de caja.
+            </p>
+          </div>
+          <Button
+            color="primary"
+            variant="flat"
+            startContent={<FaBook />}
+            onPress={onOpen}
+          >
+            Manual de Usuario
+          </Button>
         </header>
 
-        {/* KPIs compactos y bien distribuidos */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        {/* KPIs Dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <MetricCardKPI
-            icon={<DollarSign className="h-5 w-5" />}
-            title="Total Pagado"
-            value={`S/. ${totalPagado.toFixed(2)}`}
-            gradient={gradients[0]}
-            iconColor={iconColors[0]}
-            borderColor={borderColors[0]}
-          />
-          <MetricCardKPI
-            icon={<Package className="h-5 w-5" />}
-            title="Empleados"
-            value={empleadosUnicos}
-            gradient={gradients[1]}
-            iconColor={iconColors[1]}
-            borderColor={borderColors[1]}
-          />
-          <MetricCardKPI
-            icon={<TrendingUp className="h-5 w-5" />}
-            title="Promedio"
-            value={`S/. ${promedio.toFixed(2)}`}
-            gradient={gradients[2]}
-            iconColor={iconColors[2]}
-            borderColor={borderColors[2]}
-          />
-          <MetricCardKPI
-            icon={<Store className="h-5 w-5" />}
-            title="Pagos"
-            value={pagos.length}
+            icon={<Clock className="h-5 w-5" />}
+            title="Compromisos del Mes"
+            value={`S/. ${Number(dashboard.compromisos_mes).toFixed(2)}`}
             gradient={gradients[3]}
             iconColor={iconColors[3]}
-            borderColor={borderColors[3]}
-          />
-          {/* KPI adicional: Último pago realizado */}
-          <MetricCardKPI
-            icon={<FaPlus className="h-5 w-5" />}
-            title="Último Pago"
-            value={
-              ultimoPago
-                ? `S/. ${Number(ultimoPago.monto).toFixed(2)}`
-                : "Sin pagos"
-            }
-            gradient="from-cyan-400/30 via-cyan-200/20 to-transparent"
-            iconColor="bg-cyan-100 text-cyan-600 dark:bg-cyan-950 dark:text-cyan-400"
-            borderColor="border-cyan-200/50 dark:border-cyan-800/50"
+            borderColor="border-amber-200/50"
           >
-            {ultimoPago && (
-              <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                {ultimoPago.empleado} <br />
-                <span className="font-medium">{ultimoPago.fecha}</span>
-              </div>
-            )}
+            <p className="text-[10px] text-zinc-500 mt-1">Pendientes + Atrasados (Mes actual)</p>
           </MetricCardKPI>
+
+          <MetricCardKPI
+            icon={<AlertCircle className="h-5 w-5" />}
+            title="Pagos Atrasados"
+            value={`S/. ${Number(dashboard.pagos_atrasados).toFixed(2)}`}
+            gradient={gradients[1]}
+            iconColor={iconColors[1]}
+            borderColor="border-rose-200/50"
+          >
+            <p className="text-[10px] text-zinc-500 mt-1">Total histórico vencido</p>
+          </MetricCardKPI>
+
+          <MetricCardKPI
+            icon={<CheckCircle className="h-5 w-5" />}
+            title="Pagado este Mes"
+            value={`S/. ${Number(dashboard.total_pagado_mes).toFixed(2)}`}
+            gradient={gradients[0]}
+            iconColor={iconColors[0]}
+            borderColor="border-emerald-200/50"
+          />
+
+          <MetricCardKPI
+            icon={<Store className="h-5 w-5" />}
+            title="Total Registros"
+            value={pagos.length}
+            gradient={gradients[2]}
+            iconColor={iconColors[2]}
+            borderColor="border-blue-200/50"
+          />
         </div>
 
-        {/* Panel principal con mejor distribución */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Panel izquierdo: Añadir pago */}
-          <Card className="rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-none px-8 py-8 flex flex-col justify-between min-h-[420px]">
-            <h2 className="font-bold text-lg text-zinc-900 dark:text-blue-100 mb-3">Añadir Pago</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Formulario */}
+          <Card className="lg:col-span-1 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-none px-6 py-6 h-fit">
+            <h2 className="font-bold text-lg text-zinc-900 dark:text-blue-100 mb-3">Programar Pago</h2>
             <Divider className="mb-3" />
             <div className="space-y-4">
               <Select
-                label="Empleado"
-                selectedKeys={form.empleado ? [form.empleado] : []}
-                onSelectionChange={keys => setForm(f => ({ ...f, empleado: Array.from(keys)[0] || "" }))}
-                className="mb-3"
-                placeholder="Selecciona empleado"
-                classNames={{
-                  trigger: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700",
-                  value: "text-blue-900 dark:text-blue-100",
-                  listbox: "bg-white dark:bg-zinc-900"
-                }}
+                label="Vendedor"
+                selectedKeys={form.dni_vendedor ? [form.dni_vendedor] : []}
+                onSelectionChange={keys => setForm(f => ({ ...f, dni_vendedor: Array.from(keys)[0] || "" }))}
+                placeholder="Selecciona vendedor"
               >
                 {vendedores.map(v => (
-                  <SelectItem key={v.nombre} value={v.nombre}>
+                  <SelectItem key={v.dni} value={v.dni} textValue={v.nombre}>
                     {v.nombre}
                   </SelectItem>
                 ))}
               </Select>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Monto</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-green-600 dark:text-green-400 font-bold text-lg">S/</span>
+
+              <div className="grid grid-cols-2 gap-2">
+                <NumberInput
+                  label="Monto Neto"
+                  placeholder="0.00"
+                  value={form.monto_neto}
+                  onValueChange={(val) => setForm(f => ({ ...f, monto_neto: val }))}
+                  startContent={
+                    <div className="pointer-events-none flex items-center">
+                      <span className="text-default-400 text-small">S/</span>
+                    </div>
+                  }
+                />
+                <NumberInput
+                  label="Aportes"
+                  placeholder="0.00"
+                  value={form.monto_aportes}
+                  onValueChange={(val) => setForm(f => ({ ...f, monto_aportes: val }))}
+                  startContent={
+                    <div className="pointer-events-none flex items-center">
+                      <span className="text-default-400 text-small">S/</span>
+                    </div>
+                  }
+                />
+              </div>
+              <NumberInput
+                label="Bonos / Beneficios"
+                placeholder="0.00"
+                value={form.monto_beneficios}
+                onValueChange={(val) => setForm(f => ({ ...f, monto_beneficios: val }))}
+                startContent={
+                  <div className="pointer-events-none flex items-center">
+                    <span className="text-default-400 text-small">S/</span>
+                  </div>
+                }
+              />
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300 font-semibold">Costo Total Estimado</p>
+                  <p className="text-xs text-blue-400 dark:text-blue-400">Neto + Aportes + Bonos</p>
+                </div>
+                <p className="text-xl font-bold text-blue-800 dark:text-blue-100">S/ {costoTotalEstimado.toFixed(2)}</p>
+              </div>
+
+              <Select
+                label="Tipo de Pago"
+                selectedKeys={[form.tipo_pago]}
+                onSelectionChange={keys => setForm(f => ({ ...f, tipo_pago: Array.from(keys)[0] }))}
+              >
+                {["SUELDO", "BONO", "COMISION", "OTRO"].map(tp => (
+                  <SelectItem key={tp} value={tp}>{tp}</SelectItem>
+                ))}
+              </Select>
+
+              <Input
+                label="Fecha Programada"
+                type="date"
+                value={form.fecha_programada}
+                onChange={e => setForm(f => ({ ...f, fecha_programada: e.target.value }))}
+              />
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  isSelected={form.es_recurrente}
+                  onValueChange={v => setForm(f => ({ ...f, es_recurrente: v }))}
+                >
+                  Pago Recurrente
+                </Checkbox>
+              </div>
+
+              {form.es_recurrente && (
+                <div className="grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-2">
+                  <Select
+                    label="Frecuencia"
+                    selectedKeys={[form.frecuencia]}
+                    onSelectionChange={keys => setForm(f => ({ ...f, frecuencia: Array.from(keys)[0] }))}
+                  >
+                    {["MENSUAL", "QUINCENAL", "SEMANAL", "ANUAL"].map(fr => (
+                      <SelectItem key={fr} value={fr}>{fr}</SelectItem>
+                    ))}
+                  </Select>
                   <Input
+                    label="Día habitual"
                     type="number"
-                    min={0}
-                    value={form.monto}
-                    onChange={e => setForm(f => ({ ...f, monto: e.target.value }))}
-                    placeholder="0.00"
-                    className="w-full"
-                    classNames={{
-                      input: "text-blue-900 dark:text-blue-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
-                      inputWrapper: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700"
-                    }}
+                    placeholder="Ej. 30"
+                    value={form.dia_habitual_pago}
+                    onChange={e => setForm(f => ({ ...f, dia_habitual_pago: e.target.value }))}
                   />
                 </div>
-              </div>
-              <Select
-                label="Tipo de pago"
-                selectedKeys={[form.tipo]}
-                onSelectionChange={keys => setForm(f => ({ ...f, tipo: Array.from(keys)[0] }))}
-                className="mb-3"
-                classNames={{
-                  trigger: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700",
-                  value: "text-blue-900 dark:text-blue-100",
-                  listbox: "bg-white dark:bg-zinc-900"
-                }}
+              )}
+
+              <Button
+                color="primary"
+                onClick={handleAddPago}
+                className="w-full font-bold"
+                isDisabled={!form.dni_vendedor || !form.monto_neto}
               >
-                {["Sueldo", "Bono", "Comisión", "Extra"].map(tp => (
-                  <SelectItem key={tp} value={tp}>{tp}</SelectItem>
-                ))}
-              </Select>
-              <Input
-                label="Fecha"
-                type="date"
-                value={form.fecha}
-                onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
-                className="mb-3"
-                classNames={{
-                  input: "text-blue-900 dark:text-blue-100",
-                  inputWrapper: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700"
-                }}
-              />
-              <Input
-                label="Observación"
-                value={form.observacion}
-                onChange={e => setForm(f => ({ ...f, observacion: e.target.value }))}
-                className="mb-3"
-                classNames={{
-                  input: "text-blue-900 dark:text-blue-100",
-                  inputWrapper: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700"
-                }}
-                placeholder="Comentario opcional"
-              />
+                Programar Pago
+              </Button>
             </div>
-            <Button
-            variant="outline"
-            size="md"
-            color="blue"
-            endContent={<FaPlus className="w-4 h-4 text-blue-500 dark:text-blue-300" />}
-            onClick={handleAddPago}
-            className="w-full mt-6 font-semibold gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 transition-colors
-                dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:border-blue-800 dark:text-blue-200"
-            disabled={!form.empleado || !form.monto}
-            >
-            Añadir pago
-            </Button>
           </Card>
 
-          {/* Panel derecho: Pagos registrados */}
-          <Card className="rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-none px-8 py-8 flex flex-col min-h-[420px]">
-            <h2 className="font-bold text-lg text-zinc-900 dark:text-blue-100 mb-3">Pagos Registrados</h2>
-            <Divider className="mb-3" />
-            <div className="flex flex-col md:flex-row gap-2 mb-4 items-center">
-              <Input
-                type="text"
-                placeholder="Buscar empleado..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full md:w-2/3"
-                classNames={{
-                  input: "text-blue-900 dark:text-blue-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
-                  inputWrapper: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700"
-                }}
-                startContent={<FaUser className="text-blue-400" />}
-              />
-              <Select
-                selectedKeys={[tipoFiltro]}
-                onSelectionChange={keys => setTipoFiltro(Array.from(keys)[0])}
-                className="w-full md:w-1/3"
-                classNames={{
-                  trigger: "bg-white dark:bg-zinc-900 border-slate-300 dark:border-zinc-700",
-                  value: "text-blue-900 dark:text-blue-100",
-                  listbox: "bg-white dark:bg-zinc-900"
-                }}
-              >
-                <SelectItem key="Todos" value="Todos">Todos los tipos</SelectItem>
-                {["Sueldo", "Bono", "Comisión", "Extra"].map(tp => (
-                  <SelectItem key={tp} value={tp}>{tp}</SelectItem>
-                ))}
-              </Select>
+          {/* Tabla de Pagos */}
+          <Card className="lg:col-span-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-none px-6 py-6 min-h-[500px]">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-bold text-lg text-zinc-900 dark:text-blue-100">Historial de Pagos</h2>
+              <div className="flex gap-2">
+                <Select
+                  className="w-40"
+                  size="sm"
+                  selectedKeys={[tipoFiltro]}
+                  onSelectionChange={keys => setTipoFiltro(Array.from(keys)[0])}
+                >
+                  <SelectItem key="TODOS">Todos</SelectItem>
+                  <SelectItem key="PENDIENTE">Pendientes</SelectItem>
+                  <SelectItem key="PAGADO">Pagados</SelectItem>
+                  <SelectItem key="ATRASADO">Atrasados</SelectItem>
+                </Select>
+                <Button size="sm" variant="flat" onClick={generateGeneralReport} startContent={<FaFilePdf />}>
+                  Reporte
+                </Button>
+              </div>
             </div>
-            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80">
+
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100">
-                    <th className="py-2 px-2 text-left">Empleado</th>
-                    <th className="py-2 px-2 text-center">Tipo</th>
-                    <th className="py-2 px-2 text-center">Monto</th>
-                    <th className="py-2 px-2 text-center">Fecha</th>
-                    <th className="py-2 px-2 text-center">Observación</th>
-                    <th className="py-2 px-2 text-center">Acciones</th>
+                  <tr className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                    <th className="py-2 px-3 text-left">Empleado</th>
+                    <th className="py-2 px-3 text-center">Tipo</th>
+                    <th className="py-2 px-3 text-center">Costo Total</th>
+                    <th className="py-2 px-3 text-center">Fecha Prog.</th>
+                    <th className="py-2 px-3 text-center">Estado</th>
+                    <th className="py-2 px-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pagosFiltrados.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-gray-400 dark:text-gray-500">No hay pagos registrados.</td>
-                    </tr>
+                  {pagos.length === 0 ? (
+                    <tr><td colSpan={6} className="text-center py-8 text-zinc-400">No hay pagos registrados</td></tr>
                   ) : (
-                    pagosFiltrados.map(p => (
-                      <tr key={p.id} className="transition-colors duration-150 bg-white dark:bg-zinc-900 hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                        <td className="py-2 px-2 font-semibold text-blue-900 dark:text-blue-100">{p.empleado}</td>
-                        <td className="py-2 px-2 text-center">
-                          <Chip color="primary" variant="flat" size="sm">{p.tipo}</Chip>
+                    pagos.map(p => (
+                      <tr key={p.id_pago} className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                        <td className="py-3 px-3 font-medium">{p.nombre_vendedor}</td>
+                        <td className="py-3 px-3 text-center text-xs">{p.tipo_pago}</td>
+                        <td className="py-3 px-3 text-center font-bold text-zinc-700 dark:text-zinc-200">
+                          S/ {Number(p.costo_total).toFixed(2)}
                         </td>
-                        <td className="py-2 px-2 text-center font-bold text-green-700 dark:text-green-300">S/ {Number(p.monto).toFixed(2)}</td>
-                        <td className="py-2 px-2 text-center">{p.fecha}</td>
-                        <td className="py-2 px-2 text-center text-gray-700 dark:text-gray-300">{p.observacion || "-"}</td>
-                        <td className="py-2 px-2 text-center">
-                          <Tooltip content="Eliminar" color="danger" placement="top">
-                            <Button
-                              color="danger"
-                              size="sm"
-                              variant="light"
-                              isIconOnly
-                              onClick={() => handleRemovePago(p.id)}
-                              className="font-semibold"
-                            >
+                        <td className="py-3 px-3 text-center text-xs">
+                          {p.fecha_programada.slice(0, 10)}
+                          {p.es_recurrente === 1 && <span className="ml-1 text-[10px] bg-blue-100 text-blue-700 px-1 rounded">Recurrente</span>}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <Chip
+                            size="sm"
+                            variant="flat"
+                            color={
+                              p.estado_pago === 'PAGADO' ? "success" :
+                                p.estado_pago === 'ATRASADO' ? "danger" : "warning"
+                            }
+                          >
+                            {p.estado_pago}
+                          </Chip>
+                        </td>
+                        <td className="py-3 px-3 text-center flex justify-center gap-2">
+                          {p.estado_pago !== 'PAGADO' && (
+                            <Tooltip content="Marcar Pagado">
+                              <Button isIconOnly size="sm" color="success" variant="light" onClick={() => handleMarcarPagado(p)}>
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                          )}
+                          <Tooltip content="Boleta">
+                            <Button isIconOnly size="sm" color="primary" variant="light" onClick={() => generatePayslip(p)}>
+                              <FaFileInvoiceDollar className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Eliminar">
+                            <Button isIconOnly size="sm" color="danger" variant="light" onClick={() => handleRemovePago(p.id_pago)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </Tooltip>
@@ -416,28 +552,80 @@ function ActionButton({ color, icon, children, ...props }) {
                 </tbody>
               </table>
             </div>
-            <Divider className="my-4" />
-            <div className="flex flex-wrap gap-3 justify-end">
-              <ActionButton
-                color="blue"
-                icon={<FaFilePdf className="w-4 h-4 text-blue-500 dark:text-blue-300" />}
-                onClick={handleDownloadPDF}
-                disabled={pagosFiltrados.length === 0}
-              >
-                Exportar PDF
-              </ActionButton>
-              <ActionButton
-                color="purple"
-                icon={<FaPrint className="w-4 h-4 text-purple-500 dark:text-purple-300" />}
-                onClick={handlePrintPDF}
-                disabled={pagosFiltrados.length === 0}
-              >
-                Imprimir
-              </ActionButton>
-            </div>
           </Card>
         </div>
       </div>
+
+      {/* Manual de Usuario Modal */}
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" scrollBehavior="inside">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <FaBook className="text-blue-600" />
+                  <span>Manual de Usuario - Gestión de Pagos</span>
+                </div>
+                <span className="text-sm font-normal text-zinc-500">Guía rápida para maximizar el uso del módulo</span>
+              </ModalHeader>
+              <ModalBody>
+                <Accordion selectionMode="multiple" variant="splitted">
+                  <AccordionItem key="1" aria-label="Conceptos" title="Conceptos Básicos de Costos">
+                    <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
+                      <p><strong>Monto Neto:</strong> Es el dinero líquido que recibe el vendedor en su cuenta o mano.</p>
+                      <p><strong>Aportes:</strong> Gastos que asume la empresa (Essalud, SCTR, etc.) que no van al empleado pero son costo.</p>
+                      <p><strong>Bonos/Beneficios:</strong> Gratificaciones, bonos por meta, etc.</p>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-100 dark:border-blue-800">
+                        <strong>Costo Total =</strong> Neto + Aportes + Beneficios. Este es el valor real que sale de la caja de la empresa.
+                      </div>
+                    </div>
+                  </AccordionItem>
+                  <AccordionItem key="2" aria-label="Recurrencia" title="Pagos Recurrentes (Automatización)">
+                    <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
+                      <p>Si activas la casilla <strong>"Pago Recurrente"</strong>, el sistema automatizará la creación del siguiente pago.</p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Programas el pago inicial (ej. para el 30 de este mes).</li>
+                        <li>Cuando llegue el día y marques ese pago como <strong>PAGADO</strong> (botón verde), el sistema creará automáticamente el pago del <strong>siguiente mes</strong> con estado PENDIENTE.</li>
+                        <li>Esto te ahorra tener que registrar manualmente los sueldos fijos cada mes.</li>
+                      </ul>
+                    </div>
+                  </AccordionItem>
+                  <AccordionItem key="3" aria-label="Estados" title="Estados y Semáforo">
+                    <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
+                      <div className="flex items-center gap-2">
+                        <Chip size="sm" color="warning" variant="flat">PENDIENTE</Chip>
+                        <span>El pago está programado pero aún no se ha desembolsado.</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Chip size="sm" color="danger" variant="flat">ATRASADO</Chip>
+                        <span>La fecha programada ya pasó y aún no se ha marcado como pagado.</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Chip size="sm" color="success" variant="flat">PAGADO</Chip>
+                        <span>El pago ya fue realizado.</span>
+                      </div>
+                    </div>
+                  </AccordionItem>
+                  <AccordionItem key="4" aria-label="Reportes" title="Reportes y Boletas">
+                    <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
+                      <p><strong>Boleta Individual:</strong> Haz clic en el icono de factura (📄$) en cada fila para descargar un PDF A5 con el detalle del pago y líneas de firma.</p>
+                      <p><strong>Reporte General:</strong> Usa el botón "Reporte" arriba de la tabla para descargar un PDF A4 con todos los pagos filtrados actualmente, ideal para contabilidad.</p>
+                    </div>
+                  </AccordionItem>
+                </Accordion>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Cerrar
+                </Button>
+                <Button color="primary" onPress={onClose}>
+                  Entendido
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
