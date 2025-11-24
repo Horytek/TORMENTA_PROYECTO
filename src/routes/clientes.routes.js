@@ -12,10 +12,11 @@ router.use(logMiddleware);
 router.get("/", clientesController.getClientes);
 router.post("/", clientesController.addCliente);
 router.get("/getCliente/:id", clientesController.getCliente);
-router.put("/updateCliente", clientesController.updateCliente); 
+router.put("/updateCliente", clientesController.updateCliente);
 router.delete("/deleteCliente/:id", clientesController.deleteCliente);
 router.put("/deactivateCliente/:id", clientesController.deactivateCliente);
 router.get("/compras", clientesController.getComprasCliente);
 router.get("/historial", clientesController.getHistorialCliente);
+router.get("/stats", clientesController.getClientStats);
 
 export default router;

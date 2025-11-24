@@ -225,10 +225,10 @@ const addCliente = async (req, res) => {
         // Registrar log de creación de cliente
         if (req.log && req.id_usuario) {
             try {
-                const nombreCliente = clientName 
-                    ? `${clientName} ${clientLastName}` 
+                const nombreCliente = clientName
+                    ? `${clientName} ${clientLastName}`
                     : businessName || 'Sin nombre';
-                    
+
                 await req.log(LOG_ACTIONS.CLIENTE_CREAR, MODULOS.CLIENTES, {
                     recurso: `cliente_id:${result.insertId}`,
                     descripcion: `Cliente creado: ${nombreCliente} (Doc: ${documentNumber})`
@@ -249,7 +249,7 @@ const addCliente = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en addCliente:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
             res.status(400).json({
                 code: 0,
@@ -272,7 +272,7 @@ const addCliente = async (req, res) => {
 const getCliente = async (req, res) => {
     const { id } = req.params;
     const id_tenant = req.id_tenant;
-    
+
     if (!id) {
         return res.status(400).json({
             code: 0,
@@ -281,7 +281,7 @@ const getCliente = async (req, res) => {
     }
 
     const cacheKey = `cliente_${id}_${id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
@@ -593,7 +593,7 @@ const deleteCliente = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en deleteCliente:', error);
-        
+
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
             res.status(400).json({
                 code: 0,
@@ -693,17 +693,18 @@ const deactivateCliente = async (req, res) => {
 };
 
 const getComprasCliente = async (req, res) => {
-  let connection;
-  const { id_cliente, limit = 10 } = req.query;
-  const id_tenant = req.id_tenant;
-  if (!id_cliente) return res.status(400).json({ code: 0, message: "Falta id_cliente" });
+    let connection;
+    const { id_cliente, limit = 10 } = req.query;
+    const id_tenant = req.id_tenant;
+    if (!id_cliente) return res.status(400).json({ code: 0, message: "Falta id_cliente" });
 
-  try {
-    connection = await getConnection();
-    const [rows] = await connection.query(
-      `
+    try {
+        connection = await getConnection();
+        const [rows] = await connection.query(
+            `
       SELECT 
         v.id_venta AS id,
+        v.id_venta_boucher AS id_venta_boucher,
         DATE_FORMAT(v.f_venta,'%Y-%m-%d') AS fecha,
         SUM(dv.total) AS total,
         COUNT(dv.id_producto) AS items
@@ -714,45 +715,80 @@ const getComprasCliente = async (req, res) => {
       ORDER BY v.f_venta DESC
       LIMIT ?
       `,
-      [id_cliente, id_tenant, Number(limit)]
-    );
-    res.json({ code: 1, data: rows, message: "Compras del cliente listadas" });
-  } catch (e) {
-    res.status(500).json({ code: 0, message: "Error interno" });
-  } finally {
-    if (connection) connection.release();
-  }
+            [id_cliente, id_tenant, Number(limit)]
+        );
+        res.json({ code: 1, data: rows, message: "Compras del cliente listadas" });
+    } catch (e) {
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
 };
 
 const getHistorialCliente = async (req, res) => {
-  let connection;
-  const { id_cliente, limit = 15 } = req.query;
-  const id_tenant = req.id_tenant;
-  if (!id_cliente) return res.status(400).json({ code: 0, message: "Falta id_cliente" });
+    let connection;
+    const { id_cliente, limit = 15 } = req.query;
+    const id_tenant = req.id_tenant;
+    if (!id_cliente) return res.status(400).json({ code: 0, message: "Falta id_cliente" });
 
-  try {
-    connection = await getConnection();
-    const [rows] = await connection.query(
-      `
+    try {
+        connection = await getConnection();
+        // El recurso se guarda como "cliente_id:123"
+        const recursoBusqueda = `cliente_id:${id_cliente}`;
+
+        const [rows] = await connection.query(
+            `
       SELECT 
         id_log,
         accion,
         fecha,
         descripcion,
-        recurso
-      FROM log_sistema
-      WHERE id_tenant = ? AND recurso = 'cliente' AND descripcion LIKE CONCAT('%', ?, '%')
-      ORDER BY fecha DESC
+        recurso,
+        u.usua as usuario
+      FROM log_sistema l
+      LEFT JOIN usuario u ON l.id_usuario = u.id_usuario
+      WHERE l.id_tenant = ? AND l.recurso = ?
+      ORDER BY l.fecha DESC
       LIMIT ?
       `,
-      [id_tenant, id_cliente, Number(limit)]
-    );
-    res.json({ code: 1, data: rows, message: "Historial del cliente listado" });
-  } catch (e) {
-    res.status(500).json({ code: 0, message: "Error interno" });
-  } finally {
-    if (connection) connection.release();
-  }
+            [id_tenant, recursoBusqueda, Number(limit)]
+        );
+        res.json({ code: 1, data: rows, message: "Historial del cliente listado" });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+const getClientStats = async (req, res) => {
+    let connection;
+    const id_tenant = req.id_tenant;
+    try {
+        connection = await getConnection();
+
+        const [rows] = await connection.query(`
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN estado_cliente = 1 THEN 1 ELSE 0 END) as activos,
+                SUM(CASE WHEN estado_cliente = 0 THEN 1 ELSE 0 END) as inactivos,
+                SUM(CASE WHEN MONTH(f_creacion) = MONTH(CURRENT_DATE()) AND YEAR(f_creacion) = YEAR(CURRENT_DATE()) THEN 1 ELSE 0 END) as nuevos_mes
+            FROM cliente
+            WHERE id_tenant = ?
+        `, [id_tenant]);
+
+        res.json({
+            code: 1,
+            data: rows[0],
+            message: "Estadísticas obtenidas"
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ code: 0, message: "Error al obtener estadísticas" });
+    } finally {
+        if (connection) connection.release();
+    }
 };
 
 export const methods = {
@@ -763,5 +799,6 @@ export const methods = {
     deleteCliente,
     deactivateCliente,
     getComprasCliente,
-    getHistorialCliente
+    getHistorialCliente,
+    getClientStats
 };

@@ -21,3 +21,5 @@ export const deactivateClienteRequest = (id) => axios.put(`/clientes/deactivateC
 export const getComprasClienteRequest = (params) => axios.get("/clientes/compras", { params });
 
 export const getHistorialClienteRequest = (params) => axios.get("/clientes/historial", { params });
+
+export const getClientStatsRequest = () => axios.get("/clientes/stats");

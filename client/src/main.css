@@ -1111,3 +1111,37 @@ html.dark body:not(.landing-body) #root {
   background-color: #232339 !important;
   color: #e6eef8 !important;
 }
+
+.dark .kpi-card {
+  background: linear-gradient(135deg, #232339 0%, #18192b 100%) !important;
+  border-radius: 18px !important;
+  border: 1.5px solid rgba(255,255,255,0.06) !important;
+  box-shadow: 0 4px 24px 0 rgba(31,38,135,0.18) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: #f8fafc !important;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.dark .kpi-card .kpi-icon {
+  background: rgba(255,255,255,0.04) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px 0 rgba(31,38,135,0.10) !important;
+  color: inherit !important;
+}
+
+.dark .kpi-card .kpi-title,
+.dark .kpi-card .kpi-value {
+  color: #fff !important;
+}
+
+.dark .kpi-card .kpi-note {
+  color: #cbd5e1 !important;
+}
+
+/* Bordes de color para cada KPI */
+.dark .kpi-card.kpi-blue { border-color: #2563eb80 !important; }
+.dark .kpi-card.kpi-purple { border-color: #7c3aed80 !important; }
+.dark .kpi-card.kpi-emerald { border-color: #05966980 !important; }
+.dark .kpi-card.kpi-cyan { border-color: #06b6d480 !important; }
+.dark .kpi-card.kpi-rose { border-color: #e11d4880 !important; }

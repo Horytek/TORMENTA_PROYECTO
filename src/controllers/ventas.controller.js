@@ -1043,14 +1043,27 @@ const getVentaById = async (req, res) => {
     connection = await getConnection();
     // Consulta para obtener los datos de la venta (filtrando por id_tenant)
     const [venta] = await connection.query(
-      `SELECT vb.id_venta_boucher,vb.fecha,vb.nombre_cliente,vb.documento_cliente,
-vb.direccion_cliente,vb.igv,total_t,vb.comprobante_pago,vb.totalImporte_venta,
-vb.descuento_venta,vb.vuelto,vb.recibido,vb.formadepago, com.num_comprobante
- FROM venta_boucher vb 
- INNER JOIN venta v ON vb.id_venta_boucher=v.id_venta_boucher 
- INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
- INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
- WHERE vb.id_venta_boucher= ? AND vb.id_tenant = ?`,
+      `SELECT vb.id_venta_boucher,
+              vb.fecha,
+              vb.nombre_cliente,
+              vb.documento_cliente,
+              vb.direccion_cliente,
+              vb.igv,
+              vb.total_t,
+              vb.comprobante_pago,
+              vb.totalImporte_venta,
+              vb.descuento_venta,
+              vb.vuelto,
+              vb.recibido,
+              vb.formadepago,
+              com.num_comprobante,
+              v.estado_venta AS estado_venta,
+              v.id_venta
+       FROM venta_boucher vb 
+       INNER JOIN venta v ON vb.id_venta_boucher = v.id_venta_boucher 
+       INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
+       INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
+       WHERE vb.id_venta_boucher = ? AND vb.id_tenant = ?`,
       [id_venta_boucher, id_tenant]
     );
 
