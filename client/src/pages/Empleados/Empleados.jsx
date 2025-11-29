@@ -181,7 +181,10 @@ const KpiCard = ({ icon, value, title, note, gradient, border, iconColor }) => (
                   onClick={() => setModalOpen(true)}
                   disabled={!hasCreatePermission}
                   size="sm"
-                  className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none 
+                    bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors 
+                    dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 
+                    ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   Nuevo Empleado
                 </ActionButton>

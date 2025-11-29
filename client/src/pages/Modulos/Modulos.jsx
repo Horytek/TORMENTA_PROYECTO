@@ -10,7 +10,7 @@ import BarraSearch from "@/components/Search/Search";
 function Modulos() {
     const [activeAdd, setModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // Get all data and functions from the hook
     const { modulos, submodulos, loading, error, getSubmodulosByModuloId, refreshModulos } = useGetModulos();
 
@@ -23,42 +23,43 @@ function Modulos() {
     };
 
     return (
-        <div>
+        <div className="mx-2 md:mx-6 my-4">
             <Toaster />
-            
-            <hr className="mb-3" />
-            <h1 className="text-4xl font-extrabold">Módulos y submódulos</h1>
-            <div className="flex items-center justify-between mt-5 mb-4">
-                <div id="barcode-scanner" hidden style={{ width: '100%', height: '400px' }}></div>
-                <h6 className="font-bold">Lista de Módulos</h6>
-                <BarraSearch
-                    placeholder="Ingrese nombre del módulo"
-                    isClearable={true}
-                    className="h-9 text-sm w-2/4"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                />
-                <div className="flex gap-5">
+
+            <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+                <div>
+                    <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Módulos y Submódulos</h1>
+                    <p className="text-sm text-gray-500 mt-1">Gestiona la estructura de navegación del sistema</p>
+                </div>
+                <div className="flex gap-3 w-full md:w-auto">
+                    <BarraSearch
+                        placeholder="Buscar módulo..."
+                        isClearable={true}
+                        className="w-full md:w-64"
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
                     <Button
                         color="primary"
-                        endContent={<FaPlus style={{ fontSize: '25px' }} />}
-                        onClick={handleModalAdd}
+                        endContent={<FaPlus />}
+                        onPress={handleModalAdd}
+                        className="font-semibold"
                     >
-                        Agregar módulo
+                        Nuevo Módulo
                     </Button>
                 </div>
             </div>
-            <div>
-                <TablaModulos
-                    modulos={modulos}
-                    submodulos={submodulos}
-                    loading={loading}
-                    error={error}
-                    searchTerm={searchTerm}
-                    getSubmodulosByModuloId={getSubmodulosByModuloId}
-                    refreshModulos={refreshModulos}
-                />
-            </div>
+
+            <TablaModulos
+                modulos={modulos}
+                submodulos={submodulos}
+                loading={loading}
+                error={error}
+                searchTerm={searchTerm}
+                getSubmodulosByModuloId={getSubmodulosByModuloId}
+                refreshModulos={refreshModulos}
+            />
+
             <AddModuloModal
                 open={activeAdd}
                 onClose={handleModalAdd}

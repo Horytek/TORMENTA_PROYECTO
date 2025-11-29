@@ -1,10 +1,16 @@
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { MdEdit, MdDoNotDisturbAlt } from "react-icons/md";
-import { FaTrash } from "react-icons/fa";
-import Pagination from "@/components/Pagination/Pagination";
+import { FaTrash, FaCheck, FaTimes } from "react-icons/fa";
+import { Tooltip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button, Pagination, Chip } from "@heroui/react";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import { Tooltip, Button } from "@heroui/react";
 import { usePermisos } from "@/routes";
+
+const columns = [
+  { name: "CÓDIGO", uid: "id_subcategoria" },
+  { name: "NOMBRE", uid: "nom_subcat" },
+  { name: "ESTADO", uid: "estado_subcat" },
+  { name: "ACCIONES", uid: "acciones" },
+];
 
 export function ShowSubcategorias({
   searchTerm,
@@ -13,13 +19,27 @@ export function ShowSubcategorias({
   onDelete,
   onDeactivate,
 }) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
+
   const [isDeactivationModalOpen, setIsDeactivationModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const productosPerPage = 10;
 
   const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
+
+  const filteredItems = useMemo(() => {
+    return subcategorias.filter((sub_categoria) =>
+      sub_categoria.nom_subcat.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [subcategorias, searchTerm]);
+
+  const pages = Math.ceil(filteredItems.length / rowsPerPage);
+  const items = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredItems.slice(start, end);
+  }, [page, filteredItems]);
 
   const handleOpenEditModal = (subcat) => {
     onEdit(subcat);
@@ -59,132 +79,150 @@ export function ShowSubcategorias({
     }
   };
 
-  const filteredSubcategorias = subcategorias.filter((sub_categoria) =>
-    sub_categoria.nom_subcat.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const renderCell = useCallback((sub_categoria, columnKey) => {
+    const cellValue = sub_categoria[columnKey];
 
-  const indexOfLastSubcategoria = currentPage * productosPerPage;
-  const indexOfFirstSubcategoria = indexOfLastSubcategoria - productosPerPage;
-  const currentSubcategorias = filteredSubcategorias.slice(
-    indexOfFirstSubcategoria,
-    indexOfLastSubcategoria
-  );
+    switch (columnKey) {
+      case "id_subcategoria":
+        return (
+          <div className="flex flex-col">
+            <p className="text-bold text-sm text-slate-700 dark:text-slate-200">{cellValue}</p>
+          </div>
+        );
+      case "nom_subcat":
+        return (
+          <div className="flex flex-col">
+            <p className="text-bold text-sm capitalize text-slate-700 dark:text-slate-200">{cellValue}</p>
+          </div>
+        );
+      case "estado_subcat":
+        const isActive = cellValue === 1;
+        return (
+          <Chip
+            className="capitalize border-none gap-1 text-default-600"
+            color={isActive ? "success" : "danger"}
+            size="sm"
+            variant="flat"
+            startContent={isActive ? <FaCheck size={10} /> : <FaTimes size={10} />}
+          >
+            {isActive ? "Activo" : "Inactivo"}
+          </Chip>
+        );
+      case "acciones":
+        return (
+          <div className="relative flex items-center gap-2 justify-center">
+            <Tooltip content={hasEditPermission ? "Editar" : "Sin permiso"}>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="flat"
+                radius="full"
+                color="primary"
+                onClick={() => hasEditPermission && handleOpenEditModal(sub_categoria)}
+                isDisabled={!hasEditPermission}
+                className="text-lg cursor-pointer active:opacity-50 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
+              >
+                <MdEdit />
+              </Button>
+            </Tooltip>
+            <Tooltip color="danger" content={hasDeletePermission ? "Eliminar" : "Sin permiso"}>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="flat"
+                radius="full"
+                color="danger"
+                onClick={() => hasDeletePermission && handleOpenConfirmationModal(sub_categoria)}
+                isDisabled={!hasDeletePermission}
+                className="text-lg cursor-pointer active:opacity-50 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
+              >
+                <FaTrash />
+              </Button>
+            </Tooltip>
+            <Tooltip color="danger" content={hasDeactivatePermission ? "Desactivar" : "Sin permiso"}>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="flat"
+                radius="full"
+                color="danger"
+                onClick={() => hasDeactivatePermission && handleOpenDeactivationModal(sub_categoria)}
+                isDisabled={!hasDeactivatePermission}
+                className="text-lg cursor-pointer active:opacity-50 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
+              >
+                <MdDoNotDisturbAlt />
+              </Button>
+            </Tooltip>
+          </div>
+        );
+      default:
+        return cellValue;
+    }
+  }, [hasEditPermission, hasDeletePermission, hasDeactivatePermission]);
 
   return (
-  <>
-    <div className="bg-white/90 border border-blue-100 rounded-2xl shadow p-4">
-      <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[15px]">
-        <thead>
-          <tr className="bg-blue-50 text-blue-900 text-[14px] font-bold">
-            <th className="py-3 px-3 text-center rounded-tl-2xl">CÓDIGO</th>
-            <th className="py-3 px-3 text-center">NOMBRE</th>
-            <th className="py-3 px-3 text-center">ESTADO</th>
-            <th className="py-3 px-3 text-center rounded-tr-2xl">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentSubcategorias.length > 0 ? (
-            currentSubcategorias.map((sub_categoria, idx) => (
-              <tr
-                className={`transition-colors duration-150 ${
-                  idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"
-                } hover:bg-blue-100/60`}
-                key={sub_categoria.id_subcategoria}
+    <>
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
+        <Table
+          aria-label="Tabla de Subcategorías"
+          isHeaderSticky
+          bottomContent={
+            pages > 0 ? (
+              <div className="flex w-full justify-center mt-4">
+                <Pagination
+                  isCompact
+                  showControls
+                  showShadow
+                  color="primary"
+                  page={page}
+                  total={pages}
+                  onChange={(page) => setPage(page)}
+                />
+              </div>
+            ) : null
+          }
+          classNames={{
+            wrapper: "min-h-[400px] shadow-none p-0 bg-transparent",
+            th: "bg-blue-50/50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 font-bold text-xs uppercase",
+            td: "py-3 border-b border-slate-100 dark:border-zinc-800/50",
+          }}
+        >
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn
+                key={column.uid}
+                align={column.uid === "acciones" || column.uid === "id_subcategoria" || column.uid === "estado_subcat" ? "center" : "start"}
               >
-                <td className="py-4 text-center text-blue-900 font-bold text-[16px]">{sub_categoria.id_subcategoria}</td>
-                <td className="py-4 text-center">
-                  <span className="inline-block px-4 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-700 text-[15px] font-semibold shadow-sm">
-                    {sub_categoria.nom_subcat}
-                  </span>
-                </td>
-                <td className="py-4 text-center">
-                  <span
-                    className={
-                      sub_categoria.estado_subcat === 1
-                        ? "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[14px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200"
-                        : "inline-flex items-center gap-x-1 py-1 px-3 rounded-full text-[14px] font-semibold bg-rose-100 text-rose-700 border border-rose-200"
-                    }
-                  >
-                    {sub_categoria.estado_subcat === 1 ? (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" /></svg>
-                    )}
-                    {sub_categoria.estado_subcat === 1 ? "Activo" : "Inactivo"}
-                  </span>
-                </td>
-                <td className="py-4 text-center">
-                  <div className="flex items-center justify-center gap-3">
-                    <Tooltip content={hasEditPermission ? "Editar" : "No tiene permisos para editar"}>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        color={hasEditPermission ? "warning" : "default"}
-                        onClick={() => hasEditPermission ? handleOpenEditModal(sub_categoria) : null}
-                        className={hasEditPermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                      >
-                        <MdEdit />
-                      </Button>
-                    </Tooltip>
-                    <Tooltip content={hasDeletePermission ? "Eliminar" : "No tiene permisos para eliminar"}>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        color={hasDeletePermission ? "danger" : "default"}
-                        onClick={() => hasDeletePermission ? handleOpenConfirmationModal(sub_categoria) : null}
-                        className={hasDeletePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                      >
-                        <FaTrash />
-                      </Button>
-                    </Tooltip>
-                    <Tooltip content={hasDeactivatePermission ? "Desactivar" : "No tiene permisos para desactivar"}>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        color={hasDeactivatePermission ? "danger" : "default"}
-                        onClick={() => hasDeactivatePermission ? handleOpenDeactivationModal(sub_categoria) : null}
-                        className={hasDeactivatePermission ? "cursor-pointer" : "cursor-not-allowed opacity-50"}
-                      >
-                        <MdDoNotDisturbAlt />
-                      </Button>
-                    </Tooltip>
-                  </div>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5" className="py-6 text-center text-slate-400 text-[15px]">
-                No hay subcategorias correspondientes/existentes.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-    <div className="flex justify-start mt-4 px-4 pb-2">
-      <Pagination
-        currentPage={currentPage}
-        totalPages={Math.ceil(filteredSubcategorias.length / productosPerPage)}
-        onPageChange={setCurrentPage}
-      />
-    </div>
-    {isConfirmationModalOpen && selectedRow && (
-      <ConfirmationModal
-        message={`¿Estás seguro que deseas eliminar "${selectedRow.nom_subcat}"?`}
-        onClose={handleCloseConfirmationModal}
-        onConfirm={handleConfirmDelete}
-      />
-    )}
-    {isDeactivationModalOpen && selectedRow && (
-      <ConfirmationModal
-        message={`¿Estas seguro que deseas dar de baja a "${selectedRow.nom_subcat}"?`}
-        onClose={handleCloseDeactivationModal}
-        onConfirm={handleConfirmDeactivate}
-      />
-    )}
-  </>
-);
+                {column.name}
+              </TableColumn>
+            )}
+          </TableHeader>
+          <TableBody items={items} emptyContent={"No hay subcategorías correspondientes/existentes."}>
+            {(item) => (
+              <TableRow key={item.id_subcategoria} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {isConfirmationModalOpen && selectedRow && (
+        <ConfirmationModal
+          message={`¿Estás seguro que deseas eliminar "${selectedRow.nom_subcat}"?`}
+          onClose={handleCloseConfirmationModal}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
+      {isDeactivationModalOpen && selectedRow && (
+        <ConfirmationModal
+          message={`¿Estas seguro que deseas dar de baja a "${selectedRow.nom_subcat}"?`}
+          onClose={handleCloseDeactivationModal}
+          onConfirm={handleConfirmDeactivate}
+        />
+      )}
+    </>
+  );
 }
 
 export default ShowSubcategorias;

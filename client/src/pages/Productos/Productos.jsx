@@ -16,7 +16,7 @@ import { getMarcas, importExcel as importMarcas } from '@/services/marca.service
 import { getCategorias, importExcel as importCategorias } from '@/services/categoria.services';
 import { getSubcategoriaNomCategoria, importExcel as importSubcategorias } from '@/services/subcategoria.services';
 import { generateExcel, generateExcelTemplate } from '@/utils/excelExport';
-
+import { ActionButton } from "@/components/Buttons/Buttons";
 // Componentes
 import BarraSearch from "@/components/Search/Search";
 import ProductosForm from './ProductosForm';
@@ -291,15 +291,15 @@ function Productos() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onClear={() => setSearchTerm('')}
                 />
-                <Button
+                <ActionButton
                   color="primary"
                   endContent={<FaPlus size={18} />}
                   onClick={() => setIsCreateModalOpen(true)}
                   isDisabled={!hasCreatePermission}
-                  className="bg-blue-600 hover:bg-blue-700 font-semibold shadow-lg shadow-blue-500/30 dark:shadow-blue-900/20"
+                  className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   Agregar producto
-                </Button>
+                </ActionButton>
               </div>
             </div>
 
@@ -348,77 +348,50 @@ function Productos() {
       <Toaster position="top-center" />
 
       {/* Header de Tabs y Herramientas */}
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
-        <div className="flex-1 overflow-x-auto w-full sm:w-auto">
-          <Tabs
-            selectedKey={activeTab}
-            onSelectionChange={handleTabChange}
-            variant="light"
-            color="primary"
-            classNames={{
-              tabList: "gap-4 p-1",
-              tab: "h-10 px-6 text-sm font-semibold transition-all duration-300 rounded-full",
-              cursor: "bg-blue-600 shadow-md shadow-blue-500/30 rounded-full",
-              tabContent: "group-data-[selected=true]:text-white text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"
-            }}
-            radius="full"
-          >
-            <Tab key="productos" title="Productos" />
-            <Tab key="marcas" title="Marcas" />
-            <Tab key="categorias" title="Categorías" />
-            <Tab key="subcategorias" title="Subcategorías" />
-          </Tabs>
-        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+          <div className="flex-1 overflow-x-auto w-full sm:w-auto">
+            <Tabs
+              selectedKey={activeTab}
+              onSelectionChange={handleTabChange}
+              variant="light"
+              color="primary"
+              classNames={{
+                tabList: "gap-4 p-1",
+                tab: "h-10 px-6 text-sm font-semibold transition-all duration-300 rounded-full",
+                cursor: "bg-blue-600 shadow-md shadow-blue-500/30 rounded-full",
+                tabContent: "group-data-[selected=true]:text-white text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+              }}
+              radius="full"
+            >
+              <Tab key="productos" title="Productos" />
+              <Tab key="marcas" title="Marcas" />
+              <Tab key="categorias" title="Categorías" />
+              <Tab key="subcategorias" title="Subcategorías" />
+            </Tabs>
+          </div>
 
-        {/* Herramientas: Importar / Exportar */}
-        <div className="flex gap-2 mt-4 sm:mt-0">
-          {/* Dropdown Exportar */}
-          <Dropdown>
-            <DropdownTrigger>
-              <Button
-                color="primary"
-                variant="flat"
-                className="bg-blue-50 text-blue-600 font-medium hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/30"
-                startContent={<FaFileExport />}
-              >
-                Exportar
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu aria-label="Exportar datos" className="dark:bg-gray-800 dark:border dark:border-gray-700">
-              {['productos', 'marcas', 'categorias', 'subcategorias'].map((type) => (
-                <DropdownItem
-                  key={type}
-                  onClick={() => handleExport(type)}
-                  className="text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  startContent={<FaFileExcel className="text-green-600" />}
-                >
-                  Exportar {type.charAt(0).toUpperCase() + type.slice(1)}
-                </DropdownItem>
-              ))}
-            </DropdownMenu>
-          </Dropdown>
-
-          {/* Dropdown Importar */}
-          <Dropdown>
-            <DropdownTrigger>
-              <Button isIconOnly color="success" variant="flat" className="bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-900/20 dark:border-green-800 dark:hover:bg-green-900/30">
-                <FaFileExcel className="text-green-600 text-xl dark:text-green-400" />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu aria-label="Importar datos" className="dark:bg-gray-800 dark:border dark:border-gray-700">
-              {['productos', 'marcas', 'categorias', 'subcategorias'].map((type) => (
-                <DropdownItem
-                  key={type}
-                  onClick={() => setImportModal({ open: true, type })}
-                  className="text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                >
-                  Importar {type.charAt(0).toUpperCase() + type.slice(1)}
-                </DropdownItem>
-              ))}
-            </DropdownMenu>
-          </Dropdown>
+          {/* Herramientas: Importar / Exportar */}
+          <div className="flex gap-4 mt-4 sm:mt-0">
+            {/* Botón Importar */}
+            <Button
+              onClick={() => setImportModal({ open: true, type: activeTab })}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-green-700 bg-green-50 hover:bg-green-100 shadow-none border-0
+                dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-900/40 transition-all"
+              startContent={<FaFileExcel className="text-green-700 text-2xl dark:text-green-300" />}
+            >
+              Importar
+            </Button>
+            {/* Botón Exportar */}
+            <Button
+              onClick={() => handleExport(activeTab)}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 shadow-none border-0
+                dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/40 transition-all"
+              startContent={<FaFileExport className="text-indigo-700 text-2xl dark:text-indigo-300" />}
+            >
+              Exportar
+            </Button>
+          </div>
         </div>
-      </div>
 
       {/* Área de Contenido Principal */}
       <div className="min-h-[400px]">

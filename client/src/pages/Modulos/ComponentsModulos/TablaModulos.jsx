@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
     Table,
     TableHeader,
@@ -6,10 +6,13 @@ import {
     TableBody,
     TableRow,
     TableCell,
+    Tooltip,
+    Button,
+    Chip
 } from "@heroui/react";
-import { FaEdit, FaTrash, FaEye, FaEyeSlash } from "react-icons/fa";
-import { toast, Toaster } from "react-hot-toast";
+import { FaEdit, FaTrash, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { MdOutlineAddCircleOutline } from "react-icons/md";
+import { toast, Toaster } from "react-hot-toast";
 import AddSubModuloModal from "./AddSubModulo"
 import EditModuloModal from "./EditModulo";
 import EditSubModuloModal from "./EditSubModulo";
@@ -17,16 +20,16 @@ import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import useDeleteModulo from "../data/dltModulo";
 import useDeleteSubModulo from "../data/dltSubModulo";
 
-const TablaModulos = ({ 
-    modulos, 
-    submodulos, 
-    loading, 
-    error, 
-    
-    getSubmodulosByModuloId, 
-    refreshModulos 
+const TablaModulos = ({
+    modulos,
+    submodulos,
+    loading,
+    error,
+    searchTerm,
+    getSubmodulosByModuloId,
+    refreshModulos
 }) => {
-   
+
     const [openEditModal, setOpenEditModal] = useState(false);
     const [openAddSubModal, setOpenAddSubModal] = useState(false);
     const [selectedModulo, setSelectedModulo] = useState(null);
@@ -40,29 +43,19 @@ const TablaModulos = ({
     const [openEditSubModal, setOpenEditSubModal] = useState(false);
     const [selectedSubModulo, setSelectedSubModulo] = useState(null);
 
+    // Initialize expanded state
     useEffect(() => {
-        if (!loading && !error) {
-            const updatedExpandedState = { ...expandedModulos };
-            let changed = false;
-            
-            Object.keys(updatedExpandedState).forEach(moduloId => {
-                if (updatedExpandedState[moduloId]) {
-                    const moduleSubmodulos = getSubmodulosByModuloId(Number(moduloId)) || [];
-                    if (moduleSubmodulos.length === 0) {
-                        updatedExpandedState[moduloId] = false;
-                        changed = true;
-                    }
+        if (!loading && !error && modulos.length > 0) {
+            const initialExpanded = {};
+            modulos.forEach(m => {
+                // Auto-expand if search term is active
+                if (searchTerm) {
+                    initialExpanded[m.id_modulo] = true;
                 }
             });
-            
-            if (changed) {
-                setExpandedModulos(updatedExpandedState);
-            }
+            if (searchTerm) setExpandedModulos(initialExpanded);
         }
-    }, [modulos, submodulos, loading]);
-
-    if (loading) return <p>Cargando datos...</p>;
-    if (error) return <p>Error al cargar los datos: {error}</p>;
+    }, [modulos, searchTerm, loading, error]);
 
     const toggleExpand = (moduloId) => {
         setExpandedModulos(prev => ({
@@ -71,129 +64,42 @@ const TablaModulos = ({
         }));
     };
 
-    const renderCell = (modulo, columnKey) => {
-        switch (columnKey) {
-            case "nombre":
-                return modulo.nombre_modulo;
-            case "ruta":
-                return modulo.ruta;
-            case "acciones":
-                return (
-                    <div className="flex gap-1">
-                        <span
-                            onClick={() => toggleExpand(modulo.id_modulo)}
-                            className="px-1 py-0.5 text-xl text-blue-700 cursor-pointer hover:text-blue-500"
-                            title={expandedModulos[modulo.id_modulo] ? "Ocultar submódulos" : "Ver submódulos"}
-                        >
-                            {expandedModulos[modulo.id_modulo] ?
-                                <FaEyeSlash className="h-6 w-4" /> :
-                                <FaEye className="h-6 w-4" />
-                            }
-                        </span>
+    const filteredModulos = useMemo(() => {
+        if (!searchTerm) return modulos;
+        return modulos.filter(m =>
+            m.nombre_modulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            m.ruta.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [modulos, searchTerm]);
 
-                        <span
-                            onClick={() => {
-                                setSelectedModulo(modulo);
-                                setOpenEditModal(true);
-                            }}
-                            className="px-1 py-0.5 text-xl text-yellow-400 cursor-pointer hover:text-yellow-500"
-                            title="Editar módulo"
-                        >
-                            <FaEdit className="h-6 w-4" />
-                        </span>
-                        <span
-                            onClick={() => {
-                                setTargetModulo(modulo);
-                                setOpenConfirmModal(true);
-                            }}
-                            className="px-1 py-0.5 text-xl text-red-500 cursor-pointer hover:text-red-600"
-                            title="Eliminar módulo"
-                        >
-                            <FaTrash className="h-6 w-4" />
-                        </span>
-                        <span
-                            onClick={() => {
-                                setSelectedModulo(modulo);
-                                setOpenAddSubModal(true);
-                            }}
-                            className="px-1 py-0.5 text-xl text-green-500 cursor-pointer hover:text-green-600"
-                            title="Agregar submódulo"
-                        >
-                            <MdOutlineAddCircleOutline className="h-6 w-5" />
-                        </span>
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
+    // Flatten data for table
+    const tableItems = useMemo(() => {
+        const items = [];
+        filteredModulos.forEach(modulo => {
+            items.push({ type: 'module', ...modulo, key: `mod-${modulo.id_modulo}` });
 
-    const rows = [];
-    try {
-        modulos.forEach(modulo => {
-            if (!modulo || typeof modulo !== 'object' || !modulo.id_modulo) return;
-            
-            rows.push({
-                id: `module-${modulo.id_modulo}`,
-                type: 'module',
-                data: modulo
-            });
-
-            if (expandedModulos[modulo.id_modulo]) {
-                try {
-                    const moduleSubmodulos = Array.isArray(getSubmodulosByModuloId(modulo.id_modulo)) 
-                        ? getSubmodulosByModuloId(modulo.id_modulo) 
-                        : [];
-                    
-                    if (moduleSubmodulos.length === 0) {
-                        rows.push({
-                            id: `empty-${modulo.id_modulo}`,
-                            type: 'empty-submodule',
-                            parentId: modulo.id_modulo
-                        });
-                    } else {
-                        moduleSubmodulos.forEach(submodulo => {
-                            if (!submodulo || !submodulo.id_submodulo) return;
-                            
-                            rows.push({
-                                id: `submodule-${submodulo.id_submodulo}`,
-                                type: 'submodule',
-                                data: submodulo,
-                                parentId: modulo.id_modulo
-                            });
-                        });
-                    }
-                } catch (err) {
-                    console.error("Error processing submodulos:", err);
-                    rows.push({
-                        id: `error-${modulo.id_modulo}`,
-                        type: 'empty-submodule',
-                        parentId: modulo.id_modulo
+            if (expandedModulos[modulo.id_modulo] || searchTerm) {
+                const subs = getSubmodulosByModuloId(modulo.id_modulo) || [];
+                if (subs.length > 0) {
+                    subs.forEach(sub => {
+                        items.push({ type: 'submodule', ...sub, parentId: modulo.id_modulo, key: `sub-${sub.id_submodulo}` });
                     });
+                } else {
+                    items.push({ type: 'empty', parentId: modulo.id_modulo, key: `empty-${modulo.id_modulo}` });
                 }
             }
         });
-    } catch (err) {
-        console.error("Error generating rows:", err);
-    }
-
-    const columns = [
-        { name: "NOMBRE", uid: "nombre" },
-        { name: "RUTA / URL", uid: "ruta" },
-        { name: "ACCIONES", uid: "acciones" },
-    ];
-    const centeredColumns = ["acciones"];
+        return items;
+    }, [filteredModulos, expandedModulos, searchTerm, getSubmodulosByModuloId]);
 
     const handleConfirmAction = async () => {
         if (!targetModulo) return;
-
         try {
-            const result = await deleteModulo(targetModulo.id_modulo);
+            await deleteModulo(targetModulo.id_modulo);
             toast.success("Módulo eliminado exitosamente");
             refreshModulos();
         } catch (err) {
             toast.error("Error al eliminar: " + err.message);
-            console.error("Error al eliminar:", err);
         }
         setOpenConfirmModal(false);
         setTargetModulo(null);
@@ -201,159 +107,138 @@ const TablaModulos = ({
 
     const handleConfirmSubModuleDeletion = async () => {
         if (!targetSubModulo) return;
-        
         try {
-            // Store the parent module ID before any operations
-            const parentModuleId = targetSubModulo.id_modulo;
-            
-            // Close modal and reset state BEFORE any operations
-            setOpenConfirmSubModal(false);
-            setTargetSubModulo(null);
-            
-            // First close the expanded view
-            setExpandedModulos(prev => ({
-                ...prev,
-                [parentModuleId]: false
-            }));
-            
-            // Small delay to ensure UI updates before deletion
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // Then delete and refresh
             await deleteSubModulo(targetSubModulo.id_submodulo);
             toast.success("Submódulo eliminado exitosamente");
-            await refreshModulos();
+            refreshModulos();
         } catch (err) {
-            toast.error("Error al eliminar submódulo: " + (err.message || "Error desconocido"));
-            console.error("Error al eliminar submódulo:", err);
+            toast.error("Error al eliminar submódulo: " + err.message);
         }
+        setOpenConfirmSubModal(false);
+        setTargetSubModulo(null);
     };
 
+    const columns = [
+        { name: "NOMBRE", uid: "nombre" },
+        { name: "RUTA / URL", uid: "ruta" },
+        { name: "ACCIONES", uid: "acciones" },
+    ];
+
+    const renderCell = useCallback((item, columnKey) => {
+        switch (columnKey) {
+            case "nombre":
+                if (item.type === 'module') {
+                    return (
+                        <div className="flex items-center gap-2">
+                            <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                onClick={() => toggleExpand(item.id_modulo)}
+                                className="text-gray-500 min-w-unit-6 w-unit-6 h-unit-6"
+                            >
+                                {expandedModulos[item.id_modulo] || searchTerm ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+                            </Button>
+                            <span className="font-bold text-blue-900">{item.nombre_modulo}</span>
+                            <Chip size="sm" variant="flat" color="primary" className="ml-2 h-5 text-[10px]">MÓDULO</Chip>
+                        </div>
+                    );
+                } else if (item.type === 'submodule') {
+                    return (
+                        <div className="pl-10 flex items-center gap-2 relative">
+                            <div className="absolute left-4 top-1/2 w-4 h-[1px] bg-gray-300"></div>
+                            <div className="absolute left-4 top-[-50%] bottom-1/2 w-[1px] bg-gray-300"></div>
+                            <span className="text-gray-700">{item.nombre_sub}</span>
+                        </div>
+                    );
+                } else {
+                    return <div className="pl-10 text-gray-400 italic text-sm">Sin submódulos</div>;
+                }
+            case "ruta":
+                if (item.type === 'empty') return null;
+                return (
+                    <code className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                        {item.type === 'module' ? item.ruta : item.ruta_submodulo}
+                    </code>
+                );
+            case "acciones":
+                if (item.type === 'empty') return null;
+
+                if (item.type === 'module') {
+                    return (
+                        <div className="flex items-center justify-center gap-2">
+                            <Tooltip content="Agregar Submódulo">
+                                <Button isIconOnly size="sm" variant="flat" color="success" radius="full" onClick={() => { setSelectedModulo(item); setOpenAddSubModal(true); }}>
+                                    <MdOutlineAddCircleOutline size={18} />
+                                </Button>
+                            </Tooltip>
+                            <Tooltip content="Editar Módulo">
+                                <Button isIconOnly size="sm" variant="flat" color="warning" radius="full" onClick={() => { setSelectedModulo(item); setOpenEditModal(true); }}>
+                                    <FaEdit size={16} />
+                                </Button>
+                            </Tooltip>
+                            <Tooltip content="Eliminar Módulo" color="danger">
+                                <Button isIconOnly size="sm" variant="flat" color="danger" radius="full" onClick={() => { setTargetModulo(item); setOpenConfirmModal(true); }}>
+                                    <FaTrash size={14} />
+                                </Button>
+                            </Tooltip>
+                        </div>
+                    );
+                } else {
+                    return (
+                        <div className="flex items-center justify-center gap-2">
+                            <Tooltip content="Editar Submódulo">
+                                <Button isIconOnly size="sm" variant="flat" color="warning" radius="full" onClick={() => { setSelectedSubModulo(item); setOpenEditSubModal(true); }}>
+                                    <FaEdit size={16} />
+                                </Button>
+                            </Tooltip>
+                            <Tooltip content="Eliminar Submódulo" color="danger">
+                                <Button isIconOnly size="sm" variant="flat" color="danger" radius="full" onClick={() => { setTargetSubModulo(item); setOpenConfirmSubModal(true); }}>
+                                    <FaTrash size={14} />
+                                </Button>
+                            </Tooltip>
+                        </div>
+                    );
+                }
+            default:
+                return null;
+        }
+    }, [expandedModulos, searchTerm]);
+
+    if (loading) return <div className="p-4 text-center">Cargando módulos...</div>;
+    if (error) return <div className="p-4 text-center text-red-500">Error: {error}</div>;
+
     return (
-        <div className="space-y-4">
-            <Toaster />
-            <Table aria-label="Tabla de Módulos" isStriped>
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
+            <Table
+                aria-label="Tabla de Módulos"
+                removeWrapper
+                classNames={{
+                    th: "bg-blue-50/50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 font-bold text-xs uppercase",
+                    td: "py-2 border-b border-slate-100 dark:border-zinc-800/50",
+                }}
+            >
                 <TableHeader columns={columns}>
                     {(column) => (
-                        <TableColumn key={column.uid} align={centeredColumns.includes(column.uid) ? "center" : "start"}>
+                        <TableColumn key={column.uid} align={column.uid === "acciones" ? "center" : "start"}>
                             {column.name}
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody>
-                    {rows.map(row => {
-                        if (row.type === 'module') {
-                            return (
-                                <TableRow key={row.id}>
-                                    <TableCell>{row.data.nombre_modulo}</TableCell>
-                                    <TableCell>{row.data.ruta}</TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="flex items-center justify-center space-x-1">
-                                            <span
-                                                onClick={() => toggleExpand(row.data.id_modulo)}
-                                                className="px-1 py-0.5 text-xl text-blue-700 cursor-pointer hover:text-blue-500"
-                                                title={expandedModulos[row.data.id_modulo] ? "Ocultar submódulos" : "Ver submódulos"}
-                                            >
-                                                {expandedModulos[row.data.id_modulo] ?
-                                                    <FaEyeSlash className="h-6 w-4" /> :
-                                                    <FaEye className="h-6 w-4" />
-                                                }
-                                            </span>
-
-                                            <span
-                                                onClick={() => {
-                                                    setSelectedModulo(row.data);
-                                                    setOpenAddSubModal(true);
-                                                }}
-                                                className="px-1 py-0.5 text-xl text-green-400 cursor-pointer hover:text-green-500"
-                                                title="Agregar submódulo"
-                                            >
-                                                <MdOutlineAddCircleOutline className="h-6 w-4" />
-                                            </span>
-
-                                            <span
-                                                onClick={() => {
-                                                    setSelectedModulo(row.data);
-                                                    setOpenEditModal(true);
-                                                }}
-                                                className="px-1 py-0.5 text-xl text-yellow-400 cursor-pointer hover:text-yellow-500"
-                                                title="Editar módulo"
-                                            >
-                                                <FaEdit className="h-6 w-4" />
-                                            </span>
-                                            <span
-                                                onClick={() => {
-                                                    setTargetModulo(row.data);
-                                                    setOpenConfirmModal(true);
-                                                }}
-                                                className="px-1 py-0.5 text-xl text-red-500 cursor-pointer hover:text-red-600"
-                                                title="Eliminar módulo"
-                                            >
-                                                <FaTrash className="h-6 w-4" />
-                                            </span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        } else if (row.type === 'submodule') {
-                            return (
-                                <TableRow key={row.id} className="bg-gray-50">
-                                    <TableCell className="pl-8">➤ {row.data.nombre_sub}</TableCell>
-                                    <TableCell>{row.data.ruta_submodulo}</TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="flex gap-1 justify-center">
-                                            <span
-                                                onClick={() => {
-                                                    setSelectedSubModulo(row.data);
-                                                    setOpenEditSubModal(true);
-                                                }}
-                                                className="px-1 py-0.5 text-xl text-yellow-400 cursor-pointer hover:text-yellow-500"
-                                                title="Editar submódulo"
-                                            >
-                                                <FaEdit className="h-6 w-4" />
-                                            </span>
-                                            <span
-                                                onClick={() => {
-                                                    setTargetSubModulo(row.data);
-                                                    setOpenConfirmSubModal(true);
-                                                }}
-                                                className="px-1 py-0.5 text-xl text-red-500 cursor-pointer hover:text-red-600"
-                                                title="Eliminar submódulo"
-                                            >
-                                                <FaTrash className="h-6 w-4" />
-                                            </span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        } else if (row.type === 'empty-submodule') {
-                            return (
-                                <TableRow key={row.id} className="bg-gray-50">
-                                    <TableCell className="text-center text-gray-500 italic">
-                                        No hay submódulos para este módulo
-                                    </TableCell>
-                                    <TableCell className="text-center text-gray-500 italic">
-                                        
-                                    </TableCell>
-                                    <TableCell className="text-center text-gray-500 italic">
-                                        
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        } else {
-                            return null;
-                        }
-                    })}
+                <TableBody items={tableItems} emptyContent="No se encontraron módulos">
+                    {(item) => (
+                        <TableRow key={item.key} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                        </TableRow>
+                    )}
                 </TableBody>
             </Table>
 
+            {/* Modals */}
             {openConfirmModal && targetModulo && (
                 <ConfirmationModal
-                    message="¿Estás seguro de eliminar este módulo?"
-                    onClose={() => {
-                        setOpenConfirmModal(false);
-                        setTargetModulo(null);
-                    }}
+                    message={`¿Estás seguro de eliminar el módulo "${targetModulo.nombre_modulo}"?`}
+                    onClose={() => { setOpenConfirmModal(false); setTargetModulo(null); }}
                     onConfirm={handleConfirmAction}
                     loading={deleteloading}
                 />
@@ -361,11 +246,8 @@ const TablaModulos = ({
 
             {openConfirmSubModal && targetSubModulo && (
                 <ConfirmationModal
-                    message="¿Estás seguro de eliminar este submódulo?"
-                    onClose={() => {
-                        setOpenConfirmSubModal(false);
-                        setTargetSubModulo(null);
-                    }}
+                    message={`¿Estás seguro de eliminar el submódulo "${targetSubModulo.nombre_sub}"?`}
+                    onClose={() => { setOpenConfirmSubModal(false); setTargetSubModulo(null); }}
                     onConfirm={handleConfirmSubModuleDeletion}
                     loading={deleteSubModuloLoading}
                 />
@@ -380,7 +262,6 @@ const TablaModulos = ({
                 moduleName={selectedModulo?.nombre_modulo}
             />
 
-            {/* Add the EditModuloModal here */}
             <EditModuloModal
                 open={openEditModal}
                 onClose={() => setOpenEditModal(false)}

@@ -65,11 +65,13 @@ function Dashboard() {
       routes.forEach(module => {
         if (!module) return;
 
-        const Component = moduleComponentMap[module.id];
+        // Try to find component by route first, then by ID (Hybrid approach)
+        const Component = moduleComponentMap[module.ruta] || moduleComponentMap[module.id];
+
         if (Component && module.ruta) {
           // Normaliza la ruta
           const normalizedPath = module.ruta.startsWith('/') ? module.ruta : `/${module.ruta}`;
-          
+
           // Si es el módulo de productos (ID 2), agregar wildcard para subrutas
           const routePath = module.id === 2 ? `${normalizedPath}/*` : normalizedPath;
 
@@ -90,7 +92,9 @@ function Dashboard() {
           module.submodulos.forEach(submodule => {
             if (!submodule) return;
 
-            const SubComponent = submoduleComponentMap[submodule.id_submodulo];
+            // Try to find component by route first, then by ID (Hybrid approach)
+            const SubComponent = submoduleComponentMap[submodule.ruta] || submoduleComponentMap[submodule.id_submodulo];
+
             if (SubComponent && submodule.ruta) {
               const normalizedSubPath = submodule.ruta.startsWith('/') ? submodule.ruta : `/${submodule.ruta}`;
 
@@ -159,7 +163,7 @@ function Dashboard() {
       />
     );
 
-        dynamicRoutes.push(
+    dynamicRoutes.push(
       <Route
         key="roles-permisos"
         path="/configuracion/roles/permisos"
@@ -181,7 +185,7 @@ function Dashboard() {
         }
       />
     );
-    
+
 
     dynamicRoutes.push(
       <Route
@@ -197,37 +201,37 @@ function Dashboard() {
 
     dynamicRoutes.push(
       <Route
-      key="logs"
-      path="/configuracion/logs"
-      element={
-        <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
-          <Logs />
-        </RouteProtectedRol>
-      }
-      />
-    );
-
-     dynamicRoutes.push(
-      <Route
-      key="negocio"
-      path="/configuracion/negocio"
-      element={
-        <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
-          <Negocio />
-        </RouteProtectedRol>
-      }
+        key="logs"
+        path="/configuracion/logs"
+        element={
+          <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+            <Logs />
+          </RouteProtectedRol>
+        }
       />
     );
 
     dynamicRoutes.push(
       <Route
-      key="historial-llamadas"
-      path="/configuracion/llamadas"
-      element={
-        <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
-          <HistorialLlamadas />
-        </RouteProtectedRol>
-      }
+        key="negocio"
+        path="/configuracion/negocio"
+        element={
+          <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
+            <Negocio />
+          </RouteProtectedRol>
+        }
+      />
+    );
+
+    dynamicRoutes.push(
+      <Route
+        key="historial-llamadas"
+        path="/configuracion/llamadas"
+        element={
+          <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
+            <HistorialLlamadas />
+          </RouteProtectedRol>
+        }
       />
     );
 
@@ -291,7 +295,7 @@ function Dashboard() {
         </div>
 
         {/* Widget global del chatbot (siempre visible sobre el contenido) */}
-        
+
         <DeepSeekOpenRouterChatbot routes={routes} />
       </div>
     </div>

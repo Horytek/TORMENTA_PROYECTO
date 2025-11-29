@@ -12,6 +12,7 @@ import {
   useDeleteSubcategoria,
   useDeactivateSubcategoria
 } from "@/services/subcategoria.services";
+import { ActionButton } from "@/components/Buttons/Buttons";
 
 import EditForm from "./EditSubcat";
 
@@ -126,15 +127,18 @@ function Subcategorias({
           onClear={handleClearSearch}
           className="h-10 text-sm w-full md:w-72"
         />
-        <Button
+        <ActionButton
           color="primary"
           endContent={<FaPlus style={{ fontSize: '22px' }} />}
           onClick={() => setModalOpen(true)}
           disabled={!hasCreatePermission}
-          className={`h-10 px-5 font-semibold rounded-lg shadow-sm bg-blue-600 hover:bg-blue-700 text-white transition ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none 
+          bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors 
+          dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 
+          ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           Agregar subcategoría
-        </Button>
+        </ActionButton>
       </div>
 
       <ShowSubcategorias
