@@ -3,6 +3,10 @@ import { subMonths, format } from "date-fns";
 import path from "path";
 import ExcelJS from "exceljs";
 import fs from "fs";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Cache para reportes (TTL más corto porque los datos cambian frecuentemente)
 const queryCache = new Map();
@@ -10,17 +14,17 @@ const CACHE_TTL = 30000; // 30 segundos para reportes
 
 // Limpieza periódica del caché
 setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of queryCache.entries()) {
-        if (now - value.timestamp > CACHE_TTL * 2) {
-            queryCache.delete(key);
-        }
+  const now = Date.now();
+  for (const [key, value] of queryCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL * 2) {
+      queryCache.delete(key);
     }
+  }
 }, CACHE_TTL * 2);
 
 // Función auxiliar para generar clave de caché (para uso futuro en optimizaciones adicionales)
 const _generateCacheKey = (prefix, params) => {
-    return `${prefix}_${JSON.stringify(params)}`;
+  return `${prefix}_${JSON.stringify(params)}`;
 };
 
 
@@ -287,16 +291,16 @@ const getSucursales = async (req, res) => {
     }
 
     const [sucursales] = await connection.query(query, params);
-    
-    res.json({ 
-      code: 1, 
+
+    res.json({
+      code: 1,
       data: sucursales,
-      message: "Sucursales obtenidas correctamente" 
+      message: "Sucursales obtenidas correctamente"
     });
-    
+
   } catch (error) {
     console.error('Error en getSucursales:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       code: 0,
       message: "Error al obtener las sucursales"
     });
@@ -675,7 +679,7 @@ const getCantidadVentasPorSubcategoria = async (req, res) => {
   } catch (error) {
     console.error('Error en reporte:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
-  }  finally {
+  } finally {
     if (connection) {
       connection.release();
     }
@@ -761,7 +765,7 @@ const getCantidadVentasPorProducto = async (req, res) => {
   } catch (error) {
     console.error('Error en reporte:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
-  }  finally {
+  } finally {
     if (connection) {
       connection.release();
     }
@@ -816,7 +820,42 @@ const getVentasPDF = async (req, res) => {
   try {
     connection = await getConnection();
     const id_tenant = req.id_tenant;
-    const { startDate, endDate, id_sucursal, limit } = req.query;
+    const { startDate, endDate, id_sucursal, limit, year, month, week } = req.query;
+
+    let fechaInicio, fechaFin;
+
+    // Priorizar startDate/endDate si existen
+    if (startDate && endDate) {
+      fechaInicio = startDate;
+      fechaFin = endDate;
+    } else {
+      // Lógica de cálculo de fechas basada en year, month, week (igual que otros endpoints)
+      const now = new Date();
+      const y = year ? parseInt(year) : now.getFullYear();
+      const m = month ? parseInt(month) - 1 : now.getMonth();
+
+      let fechaInicioActual, fechaFinActual;
+
+      if (week && week !== "all" && month) {
+        const diasEnMes = new Date(y, m + 1, 0).getDate();
+        const weekNumber = parseInt(week.replace(/\D/g, ""));
+        const startDay = (weekNumber - 1) * 7 + 1;
+        const endDay = Math.min(weekNumber * 7, diasEnMes);
+
+        fechaInicioActual = new Date(y, m, startDay);
+        fechaFinActual = new Date(y, m, endDay);
+      } else if (month) {
+        fechaInicioActual = new Date(y, m, 1);
+        fechaFinActual = new Date(y, m + 1, 0);
+      } else {
+        fechaInicioActual = new Date(y, 0, 1);
+        fechaFinActual = new Date(y, 11, 31);
+      }
+
+      const f = (d) => format(d, "yyyy-MM-dd");
+      fechaInicio = f(fechaInicioActual);
+      fechaFin = f(fechaFinActual);
+    }
 
     let query = `
       SELECT 
@@ -845,7 +884,17 @@ const getVentasPDF = async (req, res) => {
           v.estado_sunat, 
           vb.id_venta_boucher, 
           usu.usua, 
-          v.observacion
+          v.observacion,
+          JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'cantidad', dv.cantidad,
+              'precio', dv.precio,
+              'total', dv.total,
+              'producto', p.descripcion,
+              'marca', m.nom_marca,
+              'categoria', sc.nom_subcat
+            )
+          ) as detalles
       FROM 
           venta v
       INNER JOIN 
@@ -856,6 +905,12 @@ const getVentasPDF = async (req, res) => {
           cliente cl ON cl.id_cliente = v.id_cliente
       INNER JOIN 
           detalle_venta dv ON dv.id_venta = v.id_venta
+      INNER JOIN 
+          producto p ON dv.id_producto = p.id_producto
+      INNER JOIN 
+          marca m ON p.id_marca = m.id_marca
+      INNER JOIN 
+          sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
       INNER JOIN 
           sucursal s ON s.id_sucursal = v.id_sucursal
       INNER JOIN 
@@ -871,15 +926,17 @@ const getVentasPDF = async (req, res) => {
       query += ' AND v.id_sucursal = ?';
       params.push(id_sucursal);
     }
-    if (startDate && endDate) {
-      query += ' AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)';
-      params.push(startDate, endDate);
-    }
+
+    // Aplicar filtro de fechas
+    query += ' AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)';
+    params.push(fechaInicio, fechaFin);
 
     query += `
       GROUP BY 
           id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, 
-          DATE_FORMAT(v.f_venta, '%Y-%m-%d'), igv, cajero, cajeroId, estado
+          DATE_FORMAT(v.f_venta, '%Y-%m-%d'), igv, cajero, cajeroId, estado,
+          s.nombre_sucursal, s.ubicacion, cl.direccion, v.fecha_iso, v.metodo_pago,
+          v.estado_sunat, vb.id_venta_boucher, usu.usua, v.observacion
       ORDER BY 
           v.id_venta DESC`;
     const limitNum = limit ? Math.max(parseInt(limit, 10) || 0, 0) : 0;
@@ -905,7 +962,7 @@ const getVentasPDF = async (req, res) => {
 // Función auxiliar para parsear método de pago
 const parseMetodoPago = (metodoPago) => {
   if (!metodoPago) return { efectivo: 0, electronico: 0 };
-  
+
   const metodos = metodoPago.split(',').map(metodo => metodo.trim());
   let montoEfectivo = 0;
   let montoElectronico = 0;
@@ -1092,10 +1149,10 @@ const exportarRegistroVentas = async (req, res) => {
     for (let col = 1; col <= totalColumns; col++) {
       const cell = worksheet.getCell(totalsRow, col);
       cell.border = {
-        top: {style:'thin'},
-        left: {style:'thin'},
-        bottom: {style:'thin'},
-        right: {style:'thin'}
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
       };
       cell.alignment = {
         vertical: 'middle',
@@ -1130,14 +1187,14 @@ const exportarRegistroVentas = async (req, res) => {
     worksheet.getCell(`S${totalsRow}`).value = totales.efectivo.toFixed(2);
     worksheet.getCell(`T${totalsRow}`).value = totales.electronico.toFixed(2);
 
-    ['K','O','Q','S','T'].forEach(col => {
+    ['K', 'O', 'Q', 'S', 'T'].forEach(col => {
       const cell = worksheet.getCell(`${col}${totalsRow}`);
       cell.font = { bold: true, size: 11 };
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
 
-    const fileName = idSucursal 
+    const fileName = idSucursal
       ? `RegistroVentasSUNAT-${nombreSucursal.replace(/\s+/g, '_')}-${mes}-${ano}.xlsx`
       : `RegistroVentasSUNAT-${mes}-${ano}.xlsx`;
 
@@ -1155,7 +1212,7 @@ const exportarRegistroVentas = async (req, res) => {
   }
 };
 
-const obtenerRegistroVentas = async (req, res) => { 
+const obtenerRegistroVentas = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();

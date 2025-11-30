@@ -11,7 +11,8 @@ import {
   SelectItem,
   Tooltip,
   Card,
-  CardBody
+  CardBody,
+  Chip
 } from "@heroui/react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -32,21 +33,20 @@ const BASE_COLUMNS = [
   { name: "DOCUMENTO", uid: "documento_cliente", align: "center" },
   { name: "CLIENTE", uid: "nombre_cliente" },
   { name: "COMPROBANTE", uid: "num_comprobante", align: "center" },
-  { name: "MONTO", uid: "importe", align: "end" },
+  { name: "MONTO BASE", uid: "importe", align: "end" },
   { name: "IGV", uid: "igv", align: "end" },
   { name: "TOTAL", uid: "total", align: "end" }
 ];
 
 const TablaLibro = ({
   ventas = [],
-  totales = {},
   loading = false,
   error = null,
   metadata = {},
   page = 1,
   limit = 10,
-  changePage = () => {},
-  changeLimit = () => {},
+  changePage = () => { },
+  changeLimit = () => { },
   onEdit,
   onDelete,
   onDeactivate,
@@ -76,26 +76,32 @@ const TablaLibro = ({
   const renderDataCell = (venta, columnKey) => {
     switch (columnKey) {
       case "numero_correlativo":
-        return venta.numero_correlativo || "-";
+        return <span className="text-xs font-mono text-slate-500">{venta.numero_correlativo || "-"}</span>;
       case "fecha":
-        return formatDate(venta.fecha);
+        return <span className="text-slate-700 dark:text-slate-300">{formatDate(venta.fecha)}</span>;
       case "documento_cliente":
-        return venta.documento_cliente || "-";
+        return <span className="text-xs font-mono">{venta.documento_cliente || "-"}</span>;
       case "nombre_cliente":
         return (
-          <span className="inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-medium bg-slate-100/70 border border-slate-200 text-slate-700 dark:bg-slate-700/40 dark:text-slate-100 dark:border-slate-600/60 backdrop-blur-sm">
-            {venta.nombre_cliente || "-"}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px]">
+              {venta.nombre_cliente || "Cliente General"}
+            </span>
+          </div>
         );
       case "num_comprobante":
-        return venta.num_comprobante || "-";
+        return (
+          <Chip size="sm" variant="flat" color="primary" className="h-6 text-xs">
+            {venta.num_comprobante || "-"}
+          </Chip>
+        );
       case "importe":
-        return venta.importe != null ? nf.format(venta.importe) : "0.00";
+        return <span className="text-slate-600 dark:text-slate-400">{venta.importe != null ? nf.format(venta.importe) : "0.00"}</span>;
       case "igv":
-        return venta.igv != null ? nf.format(venta.igv) : "0.00";
+        return <span className="text-slate-600 dark:text-slate-400">{venta.igv != null ? nf.format(venta.igv) : "0.00"}</span>;
       case "total":
         return (
-          <span className="font-semibold text-blue-700 dark:text-blue-300">
+          <span className="font-bold text-blue-700 dark:text-blue-300">
             {venta.total != null ? nf.format(venta.total) : "0.00"}
           </span>
         );
@@ -105,34 +111,34 @@ const TablaLibro = ({
   };
 
   const renderActions = (venta) => (
-    <div className="flex justify-center items-center gap-2">
+    <div className="flex justify-center items-center gap-1">
       {hasEditPermission && (
-        <Tooltip content="Editar" delay={200}>
+        <Tooltip content="Editar" delay={200} closeDelay={0}>
           <button
             onClick={() => onEdit?.(venta)}
-            className="p-1.5 rounded-md bg-amber-100/70 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 transition"
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-amber-600 dark:text-slate-400 dark:hover:bg-zinc-800 dark:hover:text-amber-400 transition-colors"
           >
-            <MdEdit size={16} />
+            <MdEdit size={18} />
           </button>
         </Tooltip>
       )}
       {hasDeletePermission && (
-        <Tooltip content="Eliminar" delay={200}>
+        <Tooltip content="Eliminar" delay={200} closeDelay={0}>
           <button
             onClick={() => onDelete?.(venta)}
-            className="p-1.5 rounded-md bg-rose-100/70 dark:bg-rose-500/20 hover:bg-rose-200 dark:hover:bg-rose-500/30 text-rose-700 dark:text-rose-300 transition"
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-zinc-800 dark:hover:text-rose-400 transition-colors"
           >
-            <FaTrash size={15} />
+            <FaTrash size={16} />
           </button>
         </Tooltip>
       )}
       {hasDeactivatePermission && (
-        <Tooltip content="Desactivar" delay={200}>
+        <Tooltip content="Anular" delay={200} closeDelay={0}>
           <button
             onClick={() => onDeactivate?.(venta)}
-            className="p-1.5 rounded-md bg-slate-200/70 dark:bg-slate-600/30 hover:bg-slate-300 dark:hover:bg-slate-600/50 text-slate-700 dark:text-slate-200 transition"
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-zinc-800 dark:hover:text-slate-200 transition-colors"
           >
-            <MdDoNotDisturbAlt size={16} />
+            <MdDoNotDisturbAlt size={18} />
           </button>
         </Tooltip>
       )}
@@ -142,50 +148,43 @@ const TablaLibro = ({
   // Estados de carga / error
   if (loading) {
     return (
-      <Card radius="lg" className="border border-blue-100/60 dark:border-blue-900/40 bg-white/70 dark:bg-[#18212b]/70 backdrop-blur-md">
-        <CardBody className="text-center text-sm text-blue-700 dark:text-blue-200 py-6">
-          Cargando datos...
-        </CardBody>
+      <Card className="w-full h-[400px] flex items-center justify-center bg-white/50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 shadow-none">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-500">Cargando registros...</p>
+        </div>
       </Card>
     );
   }
   if (error) {
     return (
-      <Card radius="lg" className="border border-rose-200/70 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-900/20 backdrop-blur-md">
-        <CardBody className="text-center text-sm text-rose-600 dark:text-rose-300 py-6">
-          Error al cargar los datos: {error}
-        </CardBody>
+      <Card className="w-full p-8 flex items-center justify-center bg-rose-50/50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 shadow-none">
+        <p className="text-rose-600 dark:text-rose-400">Error al cargar los datos: {error}</p>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card
+        className="border border-blue-100 dark:border-zinc-800 bg-white dark:bg-[#18192b] shadow-sm"
+        shadow="none"
         radius="lg"
-        className="relative overflow-hidden border border-blue-100/70 dark:border-blue-900/40 bg-white/85 dark:bg-[#18212b]/80 backdrop-blur-md"
       >
-        <div className="pointer-events-none absolute inset-0 hidden dark:block">
-          <div className="absolute -top-10 -right-6 w-40 h-40 bg-[radial-gradient(circle_at_70%_30%,rgba(56,189,248,0.16),transparent_70%)] blur-2xl" />
-          <div className="absolute bottom-[-30px] left-[-20px] w-48 h-48 bg-[radial-gradient(circle_at_30%_70%,rgba(99,102,241,0.18),transparent_75%)] blur-2xl" />
-          <div className="absolute inset-0 ring-1 ring-white/5 rounded-2xl" />
-        </div>
-
-        <CardBody className="p-0">
+        <CardBody className="p-0 overflow-hidden">
           <Table
             aria-label="Libro de Ventas"
             removeWrapper
             className="min-w-full"
             shadow="none"
             classNames={{
-              base: "rounded-2xl",
+              base: "min-w-full",
               table: "min-w-full",
               thead: "sticky top-0 z-10",
-              th: "bg-gradient-to-r from-blue-50/90 to-blue-100/70 dark:from-[#202c38]/90 dark:to-[#202c38]/90 border-b border-blue-100 dark:border-blue-800/60 text-blue-900 dark:text-blue-100 text-[11px] font-semibold uppercase tracking-wide",
-              tr: "transition-colors",
-              tbody: "divide-y divide-blue-50/60 dark:divide-blue-800/40",
-              td: "text-[12px] md:text-[13px] py-2 px-2 text-slate-700 dark:text-slate-100",
-              wrapper: "max-h-[520px] overflow-y-auto scrollbar-thin"
+              th: "bg-slate-50 dark:bg-[#202c38] border-b border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wider h-10",
+              tr: "hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors border-b border-slate-100 dark:border-zinc-800/50 last:border-0",
+              td: "py-3 px-3 text-[13px]",
+              wrapper: "max-h-[600px]"
             }}
           >
             <TableHeader columns={columns}>
@@ -201,18 +200,14 @@ const TablaLibro = ({
 
             <TableBody
               items={items}
-              emptyContent="No se encontraron registros con los filtros aplicados."
+              emptyContent={
+                <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                  <p>No se encontraron registros</p>
+                </div>
+              }
             >
               {(item) => (
-                <TableRow
-                  key={item.key}
-                  className={`
-                    ${(items.indexOf(item) % 2 === 0)
-                      ? "bg-white/90 dark:bg-[#1d2732]/60"
-                      : "bg-blue-50/60 dark:bg-[#223142]/55"}
-                    hover:bg-blue-100/70 dark:hover:bg-blue-900/30
-                  `}
-                >
+                <TableRow key={item.key}>
                   {(columnKey) => (
                     <TableCell
                       className={
@@ -235,61 +230,42 @@ const TablaLibro = ({
         </CardBody>
       </Card>
 
-      {/* Paginación + selector */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <Pagination
-          page={page}
-          total={metadata?.total_pages || 1}
-          onChange={changePage}
-          showControls
-          color="primary"
-          className="dark:text-blue-200"
-        />
-        <Select
-          aria-label="Registros por página"
-          selectedKeys={[String(limit)]}
-          onSelectionChange={(keys) => changeLimit(Number([...keys][0]))}
-          className="w-40"
-          size="sm"
-          variant="flat"
-          classNames={{
-            trigger: "h-10 bg-white/80 dark:bg-[#1e2a36]/70 border border-blue-100/70 dark:border-blue-800/50 rounded-lg text-blue-900 dark:text-blue-100 text-xs font-medium backdrop-blur-sm",
-            popover: "bg-white/95 dark:bg-[#18212b]/90 border border-blue-100 dark:border-blue-800/60 backdrop-blur-md",
-            listbox: "text-blue-900 dark:text-blue-100 text-xs",
-            item: "data-[hover=true]:bg-blue-50 dark:data-[hover=true]:bg-blue-900/30"
-          }}
-        >
-          <SelectItem key="5" value={5}>5 / pág.</SelectItem>
-            <SelectItem key="10" value={10}>10 / pág.</SelectItem>
-            <SelectItem key="20" value={20}>20 / pág.</SelectItem>
-            <SelectItem key="100000" value={100000}>Todos</SelectItem>
-        </Select>
-      </div>
+      {/* Footer: Paginación */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          Mostrando {items.length} registros
+        </span>
 
-      {/* Total General */}
-<div className="flex justify-end">
-        <div className="relative flex flex-col items-end overflow-hidden rounded-2xl border
-                        border-blue-200/70 dark:border-blue-900/50
-                        bg-gradient-to-br from-blue-50/85 via-white/90 to-blue-100/70
-                        dark:from-[#1c2532]/90 dark:via-[#1b2430]/85 dark:to-[#202e3d]/90
-                        backdrop-blur-md px-8 py-6 shadow-md min-w-[300px]">
-          <div className="pointer-events-none absolute inset-0 hidden dark:block">
-            <div className="absolute -top-8 -right-8 w-32 h-32 bg-[radial-gradient(circle_at_70%_30%,rgba(56,189,248,0.20),transparent_65%)] blur-2xl" />
-            <div className="absolute bottom-[-20px] left-[-10px] w-36 h-36 bg-[radial-gradient(circle_at_30%_70%,rgba(99,102,241,0.22),transparent_70%)] blur-2xl" />
-            <div className="absolute inset-0 ring-1 ring-white/5 rounded-2xl" />
-          </div>
-          <span className="relative z-10 text-[11px] font-semibold tracking-widest text-blue-700 dark:text-blue-300 mb-1 uppercase">
-            Total General
-          </span>
-          <div className="relative z-10 flex items-end gap-2">
-            <span className="text-blue-700 dark:text-blue-300 text-lg font-bold">S/</span>
-            <span className="text-3xl md:text-4xl font-extrabold text-blue-900 dark:text-blue-100 tabular-nums tracking-tight">
-              {totales?.total_general?.toFixed(2)}
-            </span>
-          </div>
-          <span className="relative z-10 mt-2 text-[11px] text-blue-500/80 dark:text-blue-300/70 font-medium">
-            Registros filtrados
-          </span>
+        <div className="flex items-center gap-4">
+          <Select
+            aria-label="Registros por página"
+            selectedKeys={[String(limit)]}
+            onSelectionChange={(keys) => changeLimit(Number([...keys][0]))}
+            className="w-32"
+            size="sm"
+            variant="bordered"
+            classNames={{
+              trigger: "h-8 min-h-8 border-slate-200 dark:border-zinc-700",
+              value: "text-xs"
+            }}
+          >
+            <SelectItem key="10" value={10}>10 filas</SelectItem>
+            <SelectItem key="20" value={20}>20 filas</SelectItem>
+            <SelectItem key="50" value={50}>50 filas</SelectItem>
+            <SelectItem key="100" value={100}>100 filas</SelectItem>
+          </Select>
+
+          <Pagination
+            page={page}
+            total={metadata?.total_pages || 1}
+            onChange={changePage}
+            showControls
+            size="sm"
+            color="primary"
+            classNames={{
+              cursor: "bg-blue-600 text-white font-bold",
+            }}
+          />
         </div>
       </div>
     </div>
@@ -298,9 +274,8 @@ const TablaLibro = ({
 
 TablaLibro.propTypes = {
   ventas: PropTypes.array,
-  totales: PropTypes.object,
   loading: PropTypes.bool,
-  error: PropTypes.any,
+  error: PropTypes.string,
   metadata: PropTypes.object,
   page: PropTypes.number,
   limit: PropTypes.number,

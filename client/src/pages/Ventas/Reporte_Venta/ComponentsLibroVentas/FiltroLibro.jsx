@@ -5,22 +5,34 @@ import useSucursalData from '@/services/data/data_sucursal_venta';
 
 const FiltroLibro = ({ onFilter, filters }) => {
     const { sucursales } = useSucursalData();
-    const [dateRange, setDateRange] = useState(
-        filters.startDate && filters.endDate
-            ? {
-                start: {
-                    year: Number(filters.startDate.split('-')[0]),
-                    month: Number(filters.startDate.split('-')[1]),
-                    day: Number(filters.startDate.split('-')[2])
-                },
-                end: {
-                    year: Number(filters.endDate.split('-')[0]),
-                    month: Number(filters.endDate.split('-')[1]),
-                    day: Number(filters.endDate.split('-')[2])
+
+    // Inicialización segura del rango de fechas
+    const [dateRange, setDateRange] = useState(() => {
+        if (filters.startDate && filters.endDate) {
+            try {
+                const startParts = filters.startDate.split('-');
+                const endParts = filters.endDate.split('-');
+                if (startParts.length === 3 && endParts.length === 3) {
+                    return {
+                        start: {
+                            year: Number(startParts[0]),
+                            month: Number(startParts[1]),
+                            day: Number(startParts[2])
+                        },
+                        end: {
+                            year: Number(endParts[0]),
+                            month: Number(endParts[1]),
+                            day: Number(endParts[2])
+                        }
+                    };
                 }
+            } catch (e) {
+                console.error("Error parsing dates in FiltroLibro:", e);
             }
-            : null
-    );
+        }
+        return null;
+    });
+
     const [tipoComprobante, setTipoComprobante] = useState(
         new Set(Array.isArray(filters.tipoComprobante) ? filters.tipoComprobante : [])
     );
@@ -35,15 +47,20 @@ const FiltroLibro = ({ onFilter, filters }) => {
     ];
 
     const formatDateSafely = useCallback((dateObj) => {
-        if (!dateObj?.year) return null;
-        const jsDate = new Date(dateObj.year, dateObj.month - 1, dateObj.day);
-        return isValid(jsDate) ? format(jsDate, "yyyy-MM-dd") : null;
+        if (!dateObj?.year || !dateObj?.month || !dateObj?.day) return null;
+        try {
+            const jsDate = new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+            return isValid(jsDate) ? format(jsDate, "yyyy-MM-dd") : null;
+        } catch (e) {
+            console.error("Error formatting date:", e);
+            return null;
+        }
     }, []);
 
-const applyFilters = useCallback((newDateRange, newTipoComprobante, newSucursal) => {
-        const selectedComprobante = Array.from(newTipoComprobante);
+    const applyFilters = useCallback((newDateRange, newTipoComprobante, newSucursal) => {
+        const selectedComprobante = Array.from(newTipoComprobante || []);
         // Siempre string o vacío
-        const selectedSucursal = Array.from(newSucursal)[0];
+        const selectedSucursal = Array.from(newSucursal || [])[0];
         let idSucursal = selectedSucursal !== undefined && selectedSucursal !== null ? String(selectedSucursal) : "";
         let startDate = null;
         let endDate = null;
@@ -92,7 +109,7 @@ const applyFilters = useCallback((newDateRange, newTipoComprobante, newSucursal)
                 selectedKeys={sucursal1}
                 onSelectionChange={handleSucursalChange}
             >
-                {sucursales.map((suc) => (
+                {(sucursales || []).map((suc) => (
                     <SelectItem key={suc.id} value={suc.id}>
                         {suc.nombre}
                     </SelectItem>

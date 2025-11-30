@@ -58,7 +58,7 @@ const useLibroVentasSunatData = (filters) => {
     if (filters.tipoComprobante) {
       let comprobantes = [];
       if (Array.isArray(filters.tipoComprobante)) {
-        comprobantes = filters.tipoComprobante.map(tc => String(tc).toLowerCase());
+        comprobantes = filters.tipoComprobante.map(tc => String(tc).trim().toLowerCase());
       } else if (typeof filters.tipoComprobante === 'string') {
         comprobantes = filters.tipoComprobante
           .split(',')
@@ -67,16 +67,21 @@ const useLibroVentasSunatData = (filters) => {
       }
       if (comprobantes.length > 0) {
         filtradas = filtradas.filter(
-          v => comprobantes.includes(String(v.tipo_comprobante).toLowerCase())
+          v => comprobantes.includes(String(v.tipo_comprobante || v.comprobante || "").toLowerCase())
         );
       }
     }
 
-    // Filtro por fechas
+    // Filtro por fechas (comparación YYYY-MM-DD)
     if (filters.startDate && filters.endDate) {
-      filtradas = filtradas.filter(v =>
-        v.fecha >= filters.startDate && v.fecha <= filters.endDate
-      );
+      const start = filters.startDate;
+      const end = filters.endDate;
+      filtradas = filtradas.filter(v => {
+        if (!v.fecha) return false;
+        // Asumimos que v.fecha es ISO string o Date object. Cortamos a 10 chars para YYYY-MM-DD
+        const fechaVenta = String(v.fecha).slice(0, 10);
+        return fechaVenta >= start && fechaVenta <= end;
+      });
     }
 
     // Totales
@@ -119,7 +124,7 @@ const useLibroVentasSunatData = (filters) => {
     changePage,
     changeLimit,
     updateFilters,
-    refetch: () => {} // Ya no es necesario, pero puedes dejarlo vacío
+    refetch: () => { } // Ya no es necesario, pero puedes dejarlo vacío
   };
 };
 
