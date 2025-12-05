@@ -54,12 +54,12 @@ async function testLogSystem() {
             `, [testLogData.descripcion]);
             
             if (newLog.length > 0) {
-                console.log('✅ Log encontrado en la base de datos:', newLog[0]);
+                //console.log('✅ Log encontrado en la base de datos:', newLog[0]);
             } else {
-                console.log('❌ Log no encontrado en la base de datos');
+                //console.log('❌ Log no encontrado en la base de datos');
             }
         } catch (error) {
-            console.error('❌ Error registrando log:', error);
+            //console.error('❌ Error registrando log:', error);
         }
         
         // 4. Verificar LOG_ACTIONS
@@ -73,7 +73,7 @@ async function testLogSystem() {
         //console.log('AUTH:', MODULOS.AUTH);
         
     } catch (error) {
-        console.error('❌ Error en diagnóstico:', error);
+        //console.error('❌ Error en diagnóstico:', error);
     } finally {
         if (connection) connection.release();
         //console.log('\n🏁 Diagnóstico completado');

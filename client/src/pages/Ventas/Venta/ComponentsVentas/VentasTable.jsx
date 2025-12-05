@@ -19,6 +19,8 @@ import { FaUser, FaCalendarAlt, FaFileInvoice, FaMoneyBillWave, FaCalculator, Fa
 import IntercambioModal from './Modals/IntercambioModal';
 import { exchangeVenta } from '@/services/exchange_venta';
 import { toast } from "react-hot-toast";
+import { handleSunatUnique } from "@/services/data/add_sunat_unique";
+import { handleUpdate } from "@/services/data/update_venta";
 
 const ESTADO_STYLES = {
   Aceptada: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-200', icon: 'fa-check-circle' },
@@ -114,11 +116,21 @@ const TablaVentas = ({
     setModalIntercambioOpen(true);
   };
 
+
   const handleConfirmIntercambio = async (data) => {
     try {
       const res = await exchangeVenta(data);
       if (res.code === 1) {
         toast.success("Intercambio realizado correctamente.");
+
+
+        // Si hay datos para sunat, enviar
+        if (res.data?.sunatData) {
+          handleSunatUnique(res.data.sunatData, nombre);
+          // Actualizar estado_sunat en BD local
+          handleUpdate({ id: res.data.id_venta_nueva });
+        }
+
         setModalIntercambioOpen(false);
         if (refreshVentas) refreshVentas();
       } else {
@@ -128,6 +140,7 @@ const TablaVentas = ({
       toast.error("Error de conexión o servidor");
     }
   };
+
 
   const handlePrint = async () => {
     try {

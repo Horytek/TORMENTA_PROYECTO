@@ -64,7 +64,7 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
     const downloadBarcode = (producto) => {
         const svg = document.querySelector(`#barcode-${producto.id_producto} svg`);
         if (!svg) {
-            console.error('SVG element not found');
+            //console.error('SVG element not found');
             return;
         }
         const serializer = new XMLSerializer();

@@ -108,7 +108,7 @@ const adaptInitialData = (data) => {
             const barcode = `P${lastId.toString().padStart(11, '0')}`;
             setValue('cod_barras', barcode);
           } catch (error) {
-            console.error("Error generating barcode:", error);
+            //console.error("Error generating barcode");
           }
         }
       };

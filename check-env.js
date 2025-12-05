@@ -12,15 +12,15 @@ import { createConnection } from 'mysql2/promise';
 // Cargar variables de entorno
 config();
 
-console.log('🔍 Verificando configuración del entorno...\n');
+//console.log('🔍 Verificando configuración del entorno...\n');
 
 // Verificar si existe el archivo .env
 const envExists = fs.existsSync('.env');
 if (!envExists) {
-    console.error('❌ El archivo .env NO existe');
-    console.log('   Por favor, crea un archivo .env siguiendo las instrucciones en CONFIGURACION_ENV.md\n');
+    //console.error('❌ El archivo .env NO existe');
+    //console.log('   Por favor, crea un archivo .env siguiendo las instrucciones en CONFIGURACION_ENV.md\n');
 } else {
-    console.log('✅ Archivo .env encontrado\n');
+    //console.log('✅ Archivo .env encontrado\n');
 }
 
 // Variables requeridas
@@ -38,15 +38,15 @@ const requiredVars = [
 let hasErrors = false;
 let hasWarnings = false;
 
-console.log('📋 Verificando variables de entorno:\n');
+//console.log('📋 Verificando variables de entorno:\n');
 
 requiredVars.forEach(({ name, value, critical }) => {
     if (!value || value === '' || value === 'tu_contraseña_mysql' || value === 'tu_clave_secreta_aqui_cambiar_en_produccion' || value.includes('xxx')) {
         if (critical) {
-            console.error(`❌ ${name}: NO configurada (REQUERIDA)`);
+            //console.error(`❌ ${name}: NO configurada (REQUERIDA)`);
             hasErrors = true;
         } else {
-            console.warn(`⚠️  ${name}: NO configurada (opcional pero recomendada)`);
+            //console.warn(`⚠️  ${name}: NO configurada (opcional pero recomendada)`);
             hasWarnings = true;
         }
     } else {
@@ -59,7 +59,7 @@ requiredVars.forEach(({ name, value, critical }) => {
     }
 });
 
-console.log('\n📊 Verificando conexión a la base de datos...\n');
+//console.log('\n📊 Verificando conexión a la base de datos...\n');
 
 // Verificar conexión a la base de datos
 if (process.env.DB_HOST && process.env.DB_USERNAME && process.env.DB_DATABASE) {
@@ -72,58 +72,58 @@ if (process.env.DB_HOST && process.env.DB_USERNAME && process.env.DB_DATABASE) {
             port: process.env.DB_PORT || 3306
         });
         
-        console.log('✅ Conexión a MySQL exitosa');
+        //console.log('✅ Conexión a MySQL exitosa');
         
         // Verificar si la base de datos existe
         const [rows] = await connection.execute('SELECT DATABASE() as db');
-        console.log(`✅ Base de datos activa: ${rows[0].db}`);
+        //console.log(`✅ Base de datos activa: ${rows[0].db}`);
         
         await connection.end();
     } catch (error) {
-        console.error('❌ Error al conectar con MySQL:', error.message);
+        //console.error('❌ Error al conectar con MySQL:', error.message);
         if (error.code === 'ER_BAD_DB_ERROR') {
-            console.log('   La base de datos especificada no existe. Créala con:');
-            console.log(`   CREATE DATABASE ${process.env.DB_DATABASE};`);
+            //console.log('   La base de datos especificada no existe. Créala con:');
+            //console.log(`   CREATE DATABASE ${process.env.DB_DATABASE};`);
         } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-            console.log('   Credenciales incorrectas. Verifica DB_USERNAME y DB_PASSWORD');
+            //console.log('   Credenciales incorrectas. Verifica DB_USERNAME y DB_PASSWORD');
         } else if (error.code === 'ECONNREFUSED') {
-            console.log('   MySQL no está ejecutándose o el host/puerto son incorrectos');
+            //console.log('   MySQL no está ejecutándose o el host/puerto son incorrectos');
         }
         hasErrors = true;
     }
 } else {
-    console.error('❌ Faltan configuraciones de base de datos');
+    //console.error('❌ Faltan configuraciones de base de datos');
     hasErrors = true;
 }
 
 // Verificar OpenAI
-console.log('\n🤖 Verificando configuración de OpenAI...\n');
+//console.log('\n🤖 Verificando configuración de OpenAI...\n');
 
 if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.includes('xxx')) {
-    console.warn('⚠️  OpenAI API key NO configurada');
-    console.log('   El servicio de chat no estará disponible');
-    console.log('   Obtén tu API key en: https://platform.openai.com/api-keys');
+    //console.warn('⚠️  OpenAI API key NO configurada');
+    //console.log('   El servicio de chat no estará disponible');
+    //console.log('   Obtén tu API key en: https://platform.openai.com/api-keys');
 } else {
-    console.log('✅ OpenAI API key configurada');
-    console.log(`✅ Modelo configurado: ${process.env.OPENAI_MODEL || 'gpt-4o-mini'}`);
+    //console.log('✅ OpenAI API key configurada');
+    //console.log(`✅ Modelo configurado: ${process.env.OPENAI_MODEL || 'gpt-4o-mini'}`);
 }
 
 // Resumen final
-console.log('\n' + '='.repeat(50));
-console.log('📈 RESUMEN DE CONFIGURACIÓN');
-console.log('='.repeat(50));
+//console.log('\n' + '='.repeat(50));
+//console.log('📈 RESUMEN DE CONFIGURACIÓN');
+//console.log('='.repeat(50));
 
 if (hasErrors) {
-    console.error('\n❌ Hay errores críticos en la configuración');
-    console.log('   Por favor, revisa el archivo CONFIGURACION_ENV.md');
+    //console.error('\n❌ Hay errores críticos en la configuración');
+    //console.log('   Por favor, revisa el archivo CONFIGURACION_ENV.md');
     process.exit(1);
 } else if (hasWarnings) {
-    console.warn('\n⚠️  La configuración tiene advertencias pero es funcional');
-    console.log('   Algunos servicios pueden no estar disponibles');
+    //console.warn('\n⚠️  La configuración tiene advertencias pero es funcional');
+    //console.log('   Algunos servicios pueden no estar disponibles');
 } else {
-    console.log('\n✅ ¡Configuración completa y correcta!');
-    console.log('   Puedes iniciar el servidor con: npm run dev');
+    //console.log('\n✅ ¡Configuración completa y correcta!');
+    //console.log('   Puedes iniciar el servidor con: npm run dev');
 }
 
-console.log('\n');
+//console.log('\n');
 

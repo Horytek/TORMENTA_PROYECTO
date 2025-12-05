@@ -65,7 +65,7 @@ const useInventoryData = () => {
 
         setLoaded(true);
       } catch (error) {
-        console.error("Error cargando inventario:", error);
+        console.error("Error cargando inventario");
         setIsLoading(false);
       }
     };
@@ -185,7 +185,7 @@ function Productos() {
       await generateExcel(type, dataToExport);
       toast.success(`Exportación de ${type} completada.`);
     } catch (error) {
-      console.error("Error exportando:", error);
+      console.error("Error exportando");
       toast.error("Error al generar el archivo Excel.");
     }
   };
@@ -265,7 +265,7 @@ function Productos() {
         }
 
       } catch (error) {
-        console.error(error);
+        //console.error(error);
         toast.error("Error al procesar el archivo.");
       }
     };

@@ -4,7 +4,7 @@ const createTable = async () => {
     let connection;
     try {
         connection = await getConnection();
-        console.log("Creating table pago_vendedor...");
+        //console.log("Creating table pago_vendedor...");
         await connection.query(`
       CREATE TABLE IF NOT EXISTS pago_vendedor (
         id_pago INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -38,9 +38,9 @@ const createTable = async () => {
         CONSTRAINT fk_pago_vendedor_vendedor FOREIGN KEY (dni_vendedor) REFERENCES vendedor (dni) ON UPDATE CASCADE ON DELETE RESTRICT
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
-        console.log("Table pago_vendedor created successfully.");
+        //console.log("Table pago_vendedor created successfully.");
     } catch (error) {
-        console.error("Error creating table:", error);
+        //console.error("Error creating table:", error);
     } finally {
         if (connection) connection.release();
         process.exit();

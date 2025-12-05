@@ -64,7 +64,7 @@ const enviarVentaASunat = async (data, nombre) => {
   //const token = import.meta.env.VITE_TOKEN_SUNAT || '';
   const token = await getClaveSunatByUser(nombre);
 
-  console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
+  //console.log('Payload enviado:', JSON.stringify(data, null, 2)); // Añadir esto para verificar los datos
 
   try {
     const response = await axios.post(url, data, {
@@ -74,7 +74,7 @@ const enviarVentaASunat = async (data, nombre) => {
       }
     });
 
-    console.log('Respuesta de la API:', response.data);
+    //console.log('Respuesta de la API:', response.data);
 
     if (response.status === 200) {
       toast.success(`Los datos se han enviado con éxito a la Sunat.`);
@@ -215,10 +215,10 @@ export const handleSunatUnique = async (venta, nombre) => {
 
         enviarVentaASunat(data, nombre)
             .then(() => {
-                console.log(`Venta ${nuevaSerie_t}-${nuevoCorrelativo} enviada con éxito.`);
+                //console.log(`Venta ${nuevaSerie_t}-${nuevoCorrelativo} enviada con éxito.`);
             })
             .catch((error) => {
-                console.error(`Error al enviar la venta ${nuevaSerie_t}-${nuevoCorrelativo}:`, error);
+                //console.error(`Error al enviar la venta ${nuevaSerie_t}-${nuevoCorrelativo}:`, error);
             });
 
     //toast.dismiss(loadingToastId);

@@ -161,7 +161,7 @@ const ProveedoresImportModal = ({ isOpen, onClose, onSuccess }) => {
                 }
 
             } catch (error) {
-                console.error(error);
+                //console.error(error);
                 setResult({ success: false, message: "Error al procesar el archivo." });
             } finally {
                 setIsLoading(false);

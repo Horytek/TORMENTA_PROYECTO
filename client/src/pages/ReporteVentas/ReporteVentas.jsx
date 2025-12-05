@@ -91,7 +91,7 @@ const ReporteVentas = () => {
           setSucursales(filteredSucursales || []);
         }
       } catch (error) {
-        console.error("Error al cargar sucursales:", error);
+        //console.error("Error al cargar sucursales:", error);
         setSucursales([]);
       } finally {
         setLoading(false);
@@ -155,7 +155,7 @@ const ReporteVentas = () => {
       const html = generateReportePDF(ventas, { startDate, endDate, sucursalName }, reportType);
       await exportHtmlToPdf(html, `reporte_ventas_${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (e) {
-      console.error('Error exportando PDF:', e);
+      //.error('Error exportando PDF:', e);
       alert('Error al exportar PDF.');
     }
   };

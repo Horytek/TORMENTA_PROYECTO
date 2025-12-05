@@ -24,7 +24,7 @@ const useGetModulos = () => {
                 setSubmodulos([]);
             }
         } catch (error) {
-            console.error('Error al cargar módulos:', error);
+            console.error('Error al cargar módulos');
             setError(error.response?.data?.message || error.message || 'Error al cargar los módulos');
             // Provide empty arrays as fallback
             setModulos([]);

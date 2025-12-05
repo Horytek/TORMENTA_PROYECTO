@@ -12,7 +12,7 @@ function walk(dir){
       if (/from ['"]axios['"]/.test(code) && !/['"]@\/api\/axios['"]/.test(code)){
         code = code.replace(/from ['"]axios['"]/g,"from '@/api/axios'");
         fs.writeFileSync(full,code,'utf8');
-        console.log('Reemplazado:', full);
+        //console.log('Reemplazado:', full);
       }
     }
   }

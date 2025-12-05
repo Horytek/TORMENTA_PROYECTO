@@ -1175,8 +1175,69 @@ const exchangeProducto = async (req, res) => {
 
     const newVentaId = await createVentaInternal(connection, newSaleData, id_tenant, ip);
 
+    // Preparar datos para SUNAT (Si es Boleta o Factura)
+    let sunatData = null;
+    if (newSaleData.id_comprobante === 'Boleta' || newSaleData.id_comprobante === 'Factura') {
+      // Necesitamos recuperar el número de comprobante generado
+      const [ventaGenerada] = await connection.query("SELECT v.id_venta, c.num_comprobante FROM venta v INNER JOIN comprobante c ON v.id_comprobante=c.id_comprobante WHERE v.id_venta=?", [newVentaId]);
+      const numComp = ventaGenerada[0].num_comprobante.split('-');
+
+      sunatData = {
+        detalles: nuevosDetalles.map(d => {
+          // Necesitamos nombre y undm. Los tenemos en data? No en nuevosDetalles.
+          // Hay que sacarlos de `detallesOriginales` o `newProductData`.
+          let prodInfo;
+          if (d.id_producto === id_producto_nuevo) {
+            prodInfo = newProductData; // Del query anterior
+          } else {
+            // Buscar en detallesOriginales (pero ojo, detallesOriginales es detalle_venta row, no tiene descripción/undm si no hicimos join antes)
+            // ERROR POTENCIAL: detallesOriginales query original era 'SELECT * FROM detalle_venta'. No tiene nombre/undm.
+            // Solución: Necesitamos hacer un query extra o mejorar el previo.
+            // Vamos a hacer map rápido abajo con queries o mejoramos el query original de detalles.
+            return d; // Placeholder, see fix below
+          }
+          // ...
+          // Re-pensando: Mejor hacer un query final de la nueva venta con todos los joins para armar el objeto limpio.
+          return d;
+        }),
+        // ...
+      };
+
+      // MEJOR APROXIMACIÓN:
+      // Reutilizar getVentaById lógica o similar para devolver la estructura completa que espera el frontend.
+      // El frontend espera: detalles (con nombre, undm, precio...), tipoComprobante, num, serieNum, ruc, cliente, fecha_iso...
+
+      // Vamos a construirlo manualmente con los datos que ya tenemos + queries auxiliares.
+      // 1. Obtener detalles completos de la NUEVA venta (con joins a producto)
+      const [detallesFull] = await connection.query(`
+            SELECT dv.*, p.descripcion as nombre, p.undm 
+            FROM detalle_venta dv 
+            INNER JOIN producto p ON dv.id_producto = p.id_producto 
+            WHERE dv.id_venta = ?`,
+        [newVentaId]
+      );
+
+      sunatData = {
+        detalles: detallesFull.map(d => ({
+          codigo: d.id_producto,
+          cantidad: d.cantidad,
+          precio: Number(d.precio),
+          descuento: Number(d.descuento),
+          subtotal: d.total, // OJO: el frontend a veces usa total o subtotal
+          nombre: d.nombre,
+          undm: d.undm
+        })),
+        tipoComprobante: newSaleData.id_comprobante,
+        num: numComp[1],
+        serieNum: numComp[0], // B001
+        ruc: newSaleData.documento_cliente,
+        cliente: newSaleData.nombre_cliente,
+        fecha_iso: newSaleData.fecha_iso
+      };
+    }
+
     await connection.commit();
-    res.json({ code: 1, message: "Intercambio realizado con éxito", data: { id_venta_nueva: newVentaId } });
+    res.json({ code: 1, message: "Intercambio realizado con éxito", data: { id_venta_nueva: newVentaId, sunatData } });
 
   } catch (error) {
     console.error("Error en exchangeProducto:", error);

@@ -113,7 +113,7 @@ export const useNegocio = () => {
       }
       setLogo(null); // Limpiamos file en memoria
     } catch (err) {
-      console.error(err);
+      //console.error(err);
       toast.error('Error al guardar');
     } finally {
       setSaving(false);

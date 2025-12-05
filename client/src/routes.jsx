@@ -148,8 +148,8 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
         });
       }
     } catch (error) {
-      console.error("Error verificando permisos:", error);
-      console.error("Detalles del error:", error.response?.data || error.message);
+      //console.error("Error verificando permisos:", error);
+      //console.error("Detalles del error:", error.response?.data || error.message);
       setHasAccess(false);
       setPermissions({
         hasPermission: false,
