@@ -62,65 +62,81 @@ const OptionsModal = ({
       if (d_venta.tipoComprobante === 'Nota') {
         toast.error('Error, no se puede usar esta opción');
       } else {
-        handleSunatPDF(d_venta, detalles,nombre);
+        handleSunatPDF(d_venta, detalles, nombre);
       }
     }
     // Eliminar venta se maneja por ConfirmationModal y onDeleteVenta
   };
 
   return (
-    <Modal 
-      isOpen={modalOpen} 
+    <Modal
+      isOpen={modalOpen}
       onClose={closeModal}
-      placement="center"
+      backdrop="opaque"
+      motionProps={{
+        variants: {
+          enter: { y: 0, opacity: 1, transition: { duration: 0.2, ease: "easeOut" } },
+          exit: { y: -20, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } },
+        }
+      }}
+      classNames={{ backdrop: "bg-[#27272A]/10 backdrop-opacity-4" }}
     >
-      <ModalContent className="bg-white rounded-lg">
-        <ModalHeader className="flex items-center gap-2 border-b pb-2">
-          <IoMdOptions className="text-xl" />
-          <span>Opciones</span>
-        </ModalHeader>
-        
-        <ModalBody className="py-4">
-          <div className="grid space-y-4">
-            <Checkbox
-              isSelected={sendToSunat}
-              onValueChange={() => handleCheckboxChange('sendToSunat')}
-              isDisabled={d_venta.estado === "Aceptada" || d_venta.tipoComprobante === 'Nota' || ver_rol != 1}
-            >
-              Enviar datos a la Sunat
-            </Checkbox>
-            
-            <Checkbox
-              isSelected={deleteOptionSelected}
-              onValueChange={() => handleCheckboxChange('deleteOption')}
-              isDisabled={ver_rol != 1}
-            >
-              Eliminar la Venta
-            </Checkbox>
-            
-            <Checkbox
-              isSelected={generatePdfSelected}
-              onValueChange={() => handleCheckboxChange('generatePdf')}
-              isDisabled={d_venta.tipoComprobante === 'Nota'}
-            >
-              Generar PDF
-            </Checkbox>
-          </div>
-        </ModalBody>
-        
-        <ModalFooter>
-          <Button color="default" variant="light" onPress={closeModal} className="mr-2">
-            Cancelar
-          </Button>
-          <Button 
-            color="success" 
-            variant="shadow" 
-            onPress={handleAccept} 
-            isDisabled={(!sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado === "Aceptada")}
-          >
-            Aceptar
-          </Button>
-        </ModalFooter>
+      <ModalContent>
+        {(onClose) => (
+          <>
+            <ModalHeader className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <IoMdOptions className="text-xl" />
+                <span>Opciones Avanzadas</span>
+              </div>
+            </ModalHeader>
+
+            <ModalBody>
+              <div className="flex flex-col gap-3">
+                <Checkbox
+                  isSelected={sendToSunat}
+                  onValueChange={() => handleCheckboxChange('sendToSunat')}
+                  isDisabled={d_venta.estado === "Aceptada" || d_venta.tipoComprobante === 'Nota' || ver_rol != 1}
+                  color="primary"
+                >
+                  Enviar datos a la Sunat
+                </Checkbox>
+
+                <Checkbox
+                  isSelected={deleteOptionSelected}
+                  onValueChange={() => handleCheckboxChange('deleteOption')}
+                  isDisabled={ver_rol != 1}
+                  color="danger"
+                >
+                  Eliminar la Venta
+                </Checkbox>
+
+                <Checkbox
+                  isSelected={generatePdfSelected}
+                  onValueChange={() => handleCheckboxChange('generatePdf')}
+                  isDisabled={d_venta.tipoComprobante === 'Nota'}
+                  color="secondary"
+                >
+                  Generar PDF
+                </Checkbox>
+              </div>
+            </ModalBody>
+
+            <ModalFooter>
+              <Button color="danger" variant="shadow" onPress={onClose}>
+                Cancelar
+              </Button>
+              <Button
+                color="primary"
+                variant="shadow"
+                onPress={handleAccept}
+                isDisabled={(!sendToSunat && !generatePdfSelected) || (sendToSunat && d_venta.estado === "Aceptada")}
+              >
+                Aceptar
+              </Button>
+            </ModalFooter>
+          </>
+        )}
       </ModalContent>
     </Modal>
   );

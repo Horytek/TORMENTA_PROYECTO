@@ -17,27 +17,27 @@ import { Button, Input, Select, SelectItem, Textarea, Tabs, Tab, Chip, Tooltip, 
 import { useUserStore } from "@/store/useStore";
 
 const GLOSAS = [
-  "COMPRA EN EL PAIS","COMPRA EN EL EXTERIOR","RESERVADO",
-  "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA","DEVOLUCION","CLIENTE",
-  "MERCAD DEVOLUCIÓN (PRUEBA)","PROD.DESVOLUCIÓN (M.P.)",
-  "ING. PRODUCCIÓN(P.T.)","AJUSTE INVENTARIO","OTROS INGRESOS",
-  "DESARROLLO CONSUMO INTERNO","INGRESO DIFERIDO"
+  "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "RESERVADO",
+  "TRANSFERENCIA ENTRE ESTABLECIMIENTO<->CIA", "DEVOLUCION", "CLIENTE",
+  "MERCAD DEVOLUCIÓN (PRUEBA)", "PROD.DESVOLUCIÓN (M.P.)",
+  "ING. PRODUCCIÓN(P.T.)", "AJUSTE INVENTARIO", "OTROS INGRESOS",
+  "DESARROLLO CONSUMO INTERNO", "INGRESO DIFERIDO", "CAMBIO DE PRENDA"
 ];
 
 const TIPO_NOTA = [
   { value: 'ingreso', label: 'Nota de Ingreso' },
-  { value: 'salida',  label: 'Nota de Salida' },
-  { value: 'conjunto', label: 'Conjunto (Ingreso y Salida)' }
+  { value: 'salida', label: 'Nota de Salida' },
+  { value: 'conjunto', label: 'Conjunto' }
 ];
 
 // Utilidades
 const formatDate = (d = new Date()) =>
-  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 const nowDate = formatDate();
 
 // Debounce simple
-const useDebounce = (fn, delay=350) => {
+const useDebounce = (fn, delay = 350) => {
   const t = useRef();
   const fnRef = useRef(fn);
   fnRef.current = fn;
@@ -50,6 +50,7 @@ const useDebounce = (fn, delay=350) => {
 function Registro_Ingresos() {
   // Modales
   const [isModalBuscar, setIsModalBuscar] = useState(false);
+  const [isModalBuscarVenta, setIsModalBuscarVenta] = useState(false);
   const [isModalProducto, setIsModalProducto] = useState(false);
   const [isModalProveedor, setIsModalProveedor] = useState(false);
   const [isModalGuardar, setIsModalGuardar] = useState(false);
@@ -61,13 +62,14 @@ function Registro_Ingresos() {
   const { documentos: documentosIng } = useDocumentosIngreso();
   const { documentos: documentosSal } = useDocumentosSalida();
 
-  const currentDocumentoIngreso = documentosIng[0]?.nota || '';
-  const currentDocumentoSalida = documentosSal[0]?.nota || '';
+  // FIX: Access the correct property from the backend response
+  const currentDocumentoIngreso = documentosIng[0]?.nuevo_numero_de_nota || documentosIng[0]?.nota || '';
+  const currentDocumentoSalida = documentosSal[0]?.nuevo_numero_de_nota || documentosSal[0]?.nota || '';
 
   // Usuario global
   const sucursalSeleccionada = useUserStore(s => s.sur);
   const rolUsuario = useUserStore(s => s.rol);
-  const usuario = useUserStore(s => s.nombre);
+  const usuario = useUserStore(s => s.nombre); // Nombre de usuario (usua)
 
   // Form state
   const [tipoNota, setTipoNota] = useState('ingreso');
@@ -86,14 +88,24 @@ function Registro_Ingresos() {
   const [codigoBarras, setCodigoBarras] = useState('');
   const [productosSeleccionados, setProductosSeleccionados] = useState([]);
 
-    // Validaciones memo
+  // Validaciones memo
   const isValid = useMemo(() => {
     if (!usuario) return false;
     if (!almacenDestino || !destinatario || !glosa || !fecha || !nota) return false;
-    if ((tipoNota === 'ingreso' || tipoNota === 'conjunto') && !currentDocumentoIngreso) return false;
-    if ((tipoNota === 'salida' || tipoNota === 'conjunto') && !currentDocumentoSalida) return false;
+
+    const needsIngreso = tipoNota === 'ingreso' || tipoNota === 'conjunto';
+    const needsSalida = tipoNota === 'salida' || tipoNota === 'conjunto';
+
+    if (needsIngreso && !currentDocumentoIngreso) return false;
+    if (needsSalida && !currentDocumentoSalida) return false;
+
     if (!productosSeleccionados.length) return false;
-    if (productosSeleccionados.some(p => p.cantidad > p.stock)) return false;
+
+    // Validate stock for Salida items
+    if (tipoNota === 'salida' || tipoNota === 'conjunto') {
+      if (productosSeleccionados.some(p => p.cantidad > p.stock)) return false;
+    }
+
     return true;
   }, [
     usuario, almacenDestino, destinatario, glosa, fecha, nota,
@@ -109,7 +121,7 @@ function Registro_Ingresos() {
   const almacenesOrigenFiltrados = useMemo(() => {
     if (rolUsuario === 1) return almacenes;
     if (tipoNota === 'salida') {
-      // salida: origen restringido a sucursal
+      // salida (parte salida): origen restringido a sucursal
       return almacenes.filter(a => a.sucursal === sucursalSeleccionada);
     }
     return almacenes;
@@ -118,7 +130,7 @@ function Registro_Ingresos() {
   const almacenesDestinoFiltrados = useMemo(() => {
     if (rolUsuario === 1) return almacenes;
     if (tipoNota === 'ingreso') {
-      // ingreso: destino restringido a sucursal
+      // ingreso (parte ingreso): destino restringido a sucursal
       return almacenes.filter(a => a.sucursal === sucursalSeleccionada);
     }
     return almacenes;
@@ -133,9 +145,9 @@ function Registro_Ingresos() {
   // Debounced búsqueda productos al cambiar criterios
   const debouncedBuscar = useDebounce(async (crit) => {
     // Permitir búsqueda sin almacén sólo en notas de ingreso
-    if (!almacenOrigen && tipoNota !== 'ingreso') { 
-      setProductos([]); 
-      return; 
+    if (!almacenOrigen && tipoNota !== 'ingreso') {
+      setProductos([]);
+      return;
     }
     try {
       const res = await getProductosIngreso(crit);
@@ -146,10 +158,10 @@ function Registro_Ingresos() {
   }, 400);
 
   useEffect(() => {
-    if (isModalBuscar && almacenOrigen) {
+    if (isModalBuscar && (almacenOrigen || tipoNota === 'ingreso')) {
       debouncedBuscar({ descripcion: searchInput, almacen: almacenOrigen, cod_barras: codigoBarras });
     }
-  }, [searchInput, codigoBarras, almacenOrigen, isModalBuscar, debouncedBuscar]);
+  }, [searchInput, codigoBarras, almacenOrigen, isModalBuscar, debouncedBuscar, tipoNota]);
 
   // Atajo guardar (Ctrl+S)
   useEffect(() => {
@@ -168,7 +180,7 @@ function Registro_Ingresos() {
     setProductosSeleccionados(prev =>
       prev.length ? [] : prev
     );
-  }, [almacenOrigen]);
+  }, [almacenOrigen, tipoNota]);
 
 
   // Métricas productos
@@ -201,31 +213,39 @@ function Registro_Ingresos() {
 
   const agregarProducto = useCallback((producto, cantidad) => {
     setProductosSeleccionados(prev => {
-      const agregadoPrev = prev
-        .filter(p => p.codigo === producto.codigo)
-        .reduce((a, p) => a + p.cantidad, 0);
-      const nuevoTotal = agregadoPrev + cantidad;
-      if (nuevoTotal > producto.stock) {
-        const restante = producto.stock - agregadoPrev;
-        if (restante > 0) {
-          toast.error(`Stock máximo ${producto.stock}. Solo puedes añadir ${restante} más.`);
-        } else {
-          toast.error('Stock máximo alcanzado.');
+      // Validaciones de stock
+      if ((tipoNota === 'salida' || tipoNota === 'conjunto') && !producto.origen) { // Only checking stock for store items
+        const agregadoPrev = prev
+          .filter(p => p.codigo === producto.codigo && !p.origen)
+          .reduce((a, p) => a + p.cantidad, 0);
+        const nuevoTotal = agregadoPrev + cantidad;
+        if (nuevoTotal > producto.stock) {
+          const restante = producto.stock - agregadoPrev;
+          if (restante > 0) {
+            toast.error(`Stock máximo ${producto.stock}. Solo puedes añadir ${restante} más.`);
+          } else {
+            toast.error('Stock máximo alcanzado.');
+          }
+          return prev;
         }
-        return prev;
       }
-      const existe = prev.find(p => p.codigo === producto.codigo);
+
+      const existe = prev.find(p => p.codigo === producto.codigo && p.origen === producto.origen);
+      let newProds;
       if (existe) {
-        return prev.map(p =>
-          p.codigo === producto.codigo
+        newProds = prev.map(p =>
+          (p.codigo === producto.codigo && p.origen === producto.origen)
             ? { ...p, cantidad: p.cantidad + cantidad }
             : p
         );
+      } else {
+        newProds = [...prev, { ...producto, cantidad }];
       }
-      return [...prev, { ...producto, cantidad }];
+
+      return newProds;
     });
     closeModalBuscarProducto();
-  }, []);
+  }, [tipoNota]);
 
   const handleCancel = () => {
     setProductosSeleccionados([]);
@@ -234,22 +254,36 @@ function Registro_Ingresos() {
   const buildFechaCompleta = () => {
     const d = new Date();
     const tz = d.getTimezoneOffset() * 60000;
-    return new Date(d.getTime() - tz).toISOString().slice(0, 19).replace('T',' ');
+    return new Date(d.getTime() - tz).toISOString().slice(0, 19).replace('T', ' ');
   };
 
-  const buildPayloadBase = (fechaBase, doc, isSalida = false) => ({
-    almacenO: almacenOrigen,
-    almacenD: almacenDestino,
-    destinatario,
-    glosa,
-    nota,
-    fecha: fechaBase,
-    producto: productosSeleccionados.map(p => p.codigo),
-    numComprobante: doc,
-    cantidad: productosSeleccionados.map(p => p.cantidad),
-    observacion,
-    ...(isSalida ? { nom_usuario: usuario } : { usuario })
-  });
+  const buildPayloadBase = (fechaBase, doc, isSalida = false) => {
+    // Filter products based on Note Type
+    let prodsToSubmit = productosSeleccionados;
+
+    if (tipoNota === 'ingreso') {
+      prodsToSubmit = productosSeleccionados;
+    } else if (tipoNota === 'salida') {
+      prodsToSubmit = productosSeleccionados;
+    } else {
+      // Conjunto normal: Both share same list? Usually yes in existing logic
+      prodsToSubmit = productosSeleccionados;
+    }
+
+    return {
+      almacenO: almacenOrigen,
+      almacenD: almacenDestino,
+      destinatario,
+      glosa,
+      nota,
+      fecha: fechaBase,
+      producto: prodsToSubmit.map(p => p.codigo),
+      numComprobante: doc,
+      cantidad: prodsToSubmit.map(p => p.cantidad),
+      observacion,
+      ...(isSalida ? { nom_usuario: usuario } : { usuario })
+    };
+  };
 
   const handleGuardar = async () => {
     if (!isValid) {
@@ -261,6 +295,7 @@ function Registro_Ingresos() {
     try {
       let resIng = { success: false };
       let resSal = { success: false };
+
       if (tipoNota === 'conjunto') {
         const [r1, r2] = await Promise.all([
           insertNotaIngreso(buildPayloadBase(fechaBase, currentDocumentoIngreso, false)),
@@ -274,8 +309,8 @@ function Registro_Ingresos() {
       }
 
       const ok =
-        (tipoNota === 'ingreso'  && resIng.success) ||
-        (tipoNota === 'salida'   && resSal.success) ||
+        (tipoNota === 'ingreso' && resIng.success) ||
+        (tipoNota === 'salida' && resSal.success) ||
         (tipoNota === 'conjunto' && resIng.success && resSal.success);
 
       if (ok) {
@@ -315,10 +350,11 @@ function Registro_Ingresos() {
         <Tabs
           aria-label="Tipo de nota"
           selectedKey={tipoNota}
-            onSelectionChange={(k) => {
-              setTipoNota(k);
-              setProductosSeleccionados([]);
-            }}
+          onSelectionChange={(k) => {
+            setTipoNota(k);
+            setProductosSeleccionados([]);
+            setObservacion('');
+          }}
           color="primary"
           variant="solid"
           classNames={{
@@ -332,19 +368,21 @@ function Registro_Ingresos() {
             <Tab
               key={t.value}
               title={t.label}
-              isDisabled={t.value === "conjunto" && rolUsuario !== 1}
+              isDisabled={(t.value === "conjunto") && rolUsuario !== 1}
             />
           ))}
         </Tabs>
 
         <Divider />
 
-        <div className="flex flex-wrap gap-2">
-          <Chip size="sm" variant="flat" color="primary" className="text-[11px]">Productos: {totalItems}</Chip>
-          <Chip size="sm" variant="flat" color="secondary" className="text-[11px]">Unidades: {totalUnidades}</Chip>
-          <Chip size="sm" variant="flat" color={isValid ? 'success' : 'danger'} className="text-[11px]">
-            {isValid ? 'Listo para guardar' : 'Incompleto'}
-          </Chip>
+        <div className="flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex gap-2">
+            <Chip size="sm" variant="flat" color="primary" className="text-[11px]">Productos: {totalItems}</Chip>
+            <Chip size="sm" variant="flat" color="secondary" className="text-[11px]">Unidades: {totalUnidades}</Chip>
+            <Chip size="sm" variant="flat" color={isValid ? 'success' : 'danger'} className="text-[11px]">
+              {isValid ? 'Listo para guardar' : 'Incompleto'}
+            </Chip>
+          </div>
         </div>
 
         <form className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -399,7 +437,7 @@ function Registro_Ingresos() {
           </div>
 
           {/* Columna derecha */}
-            <div className="space-y-5">
+          <div className="space-y-5">
             <div className="grid grid-cols-3 gap-4">
               <Input
                 label="Fecha Documento"
@@ -458,7 +496,7 @@ function Registro_Ingresos() {
               variant="flat"
               startContent={<FaBarcode />}
               onPress={openModalBuscarProducto}
-              isDisabled={tipoNota !== 'ingreso' && !almacenOrigen}
+              isDisabled={!almacenOrigen && tipoNota !== 'ingreso'}
             >
               Productos
             </Button>
@@ -506,8 +544,9 @@ function Registro_Ingresos() {
         productos={productos}
         agregarProducto={agregarProducto}
         setCodigoBarras={setCodigoBarras}
-        hideStock={!almacenOrigen}
+        hideStock={!almacenOrigen && tipoNota !== 'ingreso'}
       />
+
       {isModalProducto && (
         <ProductosModal modalTitle={modalTitle} onClose={() => setIsModalProducto(false)} />
       )}

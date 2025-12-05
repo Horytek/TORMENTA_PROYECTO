@@ -10,7 +10,7 @@ const ConfirmationModal = ({ confirmDeleteModalOpen, handleDeleteVenta, setConfi
       placement="center"
     >
       <ModalContent className="bg-white rounded-lg">
-        <ModalHeader className="flex items-center gap-2 border-b pb-2">
+        <ModalHeader className="flex items-center gap-2 pb-2">
           <IoMdOptions className="text-xl" />
           <span>Confirmación</span>
         </ModalHeader>

@@ -99,22 +99,6 @@
 .landing-root *,
 .landing-root *::before,
 .landing-root *::after {
-  box-sizing: border-box;
-  border-color: var(--border);
-  outline-color: var(--ring);
-}
-
-/* Estilos para contenido sobre animación de fondo */
-.landing-page {
-  position: relative;
-  overflow-x: hidden;
-  background: #020203 !important;
-  min-height: 100vh;
-}
-
-.landing-page > div:last-child {
-  position: relative;
-  z-index: 10;
 }
 
 /* Forzar fondo para landing */

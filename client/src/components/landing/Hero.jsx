@@ -53,124 +53,93 @@ export const Hero = () => {
 
     return (
         <section
-            className={`landing-hero w-full min-h-[90vh] flex justify-center items-center pb-20 pt-28 md:pt-32 lg:pt-40 px-4 sm:px-8 md:px-12 lg:px-20 xl:px-28 2xl:px-40`}
+            className={`landing-hero w-full min-h-[90vh] flex flex-col justify-center items-center pb-20 pt-28 md:pt-32 lg:pt-40 px-4 sm:px-8 md:px-12 lg:px-20 xl:px-28 2xl:px-40`}
             id="home"
             style={{
                 background: 'transparent',
             }}
         >
-            <div className="w-full max-w-[1400px] flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
+            {/* Contenido Centralizado */}
+            <div className="w-full flex flex-col items-center text-center z-20 mt-8 mb-12">
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-6"
+                >
+                    <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-gray-300 text-xs font-medium backdrop-blur-sm flex items-center gap-2 hover:bg-white/10 transition-colors">
+                        <Bot size={14} className="text-primary-color" />
+                        Potenciado por IA
+                    </span>
+                </motion.div>
 
-                {/* Columna Izquierda: Texto, Botones y Características */}
-                <div className="w-full lg:w-1/2 flex flex-col items-start text-left">
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <h3 className="text-secondary-color text-sm sm:text-base mb-4 font-bold uppercase tracking-wider">
-                            Descubre un nuevo flujo empresarial
-                        </h3>
-                    </motion.div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.05 }}
-                    >
-                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-primary-text leading-tight mb-6">
-                            Solución integral con <span className="text-primary-color">reportes dinámicos</span>
-                        </h1>
-                    </motion.div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
-                        className="mb-10"
-                    >
-                        <h2 className="text-secondary-text text-base sm:text-lg md:text-xl max-w-2xl">
-                            Integra, controla y optimiza todos los procesos de tu empresa. Potenciado por un asistente inteligente para decisiones en tiempo real.
-                        </h2>
-                    </motion.div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.15 }}
-                        className="flex flex-wrap gap-4 mb-12"
-                    >
-                        <button
-                            className="px-8 h-12 rounded-xl font-bold bg-primary-color text-primary-text flex justify-center items-center cursor-pointer transition hover:bg-primary-color/90 shadow-lg shadow-primary-color/20"
-                            onClick={handleScrollToPricing}
-                            aria-label="Empezar"
-                        >
-                            Empezar
-                        </button>
-                        <button
-                            onClick={() => setIsContactModalOpen(true)}
-                            className="px-8 h-12 rounded-xl font-bold text-primary-text border border-primary-color/30 flex justify-center items-center cursor-pointer bg-bg-dark-2 hover:bg-bg-dark-3 hover:border-primary-color transition text-center backdrop-blur-sm"
-                            aria-label="Live demo"
-                        >
-                            Live demo
-                        </button>
-                    </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.05 }}
+                    className="max-w-4xl mx-auto"
+                >
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight mb-6">
+                        Control total. <br />
+                        <span className="text-gray-400">Crecimiento sin límites.</span>
+                    </h1>
+                </motion.div>
 
-                    {/* Nuevas Tarjetas de Características */}
-                    <div className="flex flex-col sm:flex-row gap-6 w-full max-w-2xl">
-                        <FeatureCard
-                            icon={Zap}
-                            label="Atajos de función"
-                            description="Accede rápidamente a cálculos y mini-reportes sin perder el foco."
-                            delay={0.2}
-                            onClick={() => setSelectedFeature({
-                                icon: Zap,
-                                label: "Atajos de función",
-                                description: "Optimiza tu flujo de trabajo con accesos directos inteligentes. Realiza cálculos rápidos, consulta mini-reportes y accede a funciones clave sin navegar fuera de tu pantalla actual. Diseñado para la máxima eficiencia operativa.",
-                                image: heroShortcuts
-                            })}
-                        />
-                        <FeatureCard
-                            icon={Bot}
-                            label="Asistente IA"
-                            description="Tu copiloto inteligente. Pregunta y obtén respuestas al instante."
-                            delay={0.25}
-                            onClick={() => setSelectedFeature({
-                                icon: Bot,
-                                label: "Asistente IA",
-                                description: "Potencia tu toma de decisiones con nuestro asistente basado en inteligencia artificial. Analiza tendencias, predice inventarios y responde consultas complejas sobre tu negocio en lenguaje natural.",
-                                image: heroChatbot
-                            })}
-                        />
-                    </div>
-                </div>
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="mb-8 max-w-2xl mx-auto"
+                >
+                    <h2 className="text-gray-400 text-base sm:text-lg leading-relaxed font-light">
+                        Centraliza operaciones, ventas y finanzas en una plataforma viva.
+                        Deja que la IA de HoryCore se encargue de los datos.
+                    </h2>
+                </motion.div>
 
-                {/* Columna Derecha: Imagen del Dashboard */}
-                <div className="w-full lg:w-1/2 relative mt-12 lg:mt-0">
-                    <motion.div
-                        initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                        transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
-                        className="relative z-10"
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.15 }}
+                    className="flex flex-wrap justify-center gap-4"
+                >
+                    <button
+                        className="px-6 py-2.5 rounded-lg font-medium bg-white text-black hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm"
+                        onClick={handleScrollToPricing}
+                        aria-label="Comienza Gratis"
                     >
-                        <div className={`absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary-color to-secondary-color opacity-30 blur-xl transition-all duration-500 group-hover:opacity-50 ${styles.heroDashboardBorderGradient}`}></div>
-                        <img
-                            src={currentDashboard}
-                            alt="Dashboard image"
-                            className={`w-full rounded-xl border border-main-border/20 relative z-10 shadow-2xl shadow-primary-color/10 transition-all duration-500 hover:scale-[1.02]`}
-                        />
-
-                        {/* Theme Toggle */}
-                        <button
-                            onClick={() => setIsDarkPreview(!isDarkPreview)}
-                            className="absolute top-4 right-4 z-30 p-2 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white hover:bg-black/50 transition-colors flex items-center gap-2"
-                            aria-label="Toggle dashboard theme"
-                        >
-                            {isDarkPreview ? <Moon size={18} /> : <Sun size={18} />}
-                        </button>
-                    </motion.div>
-
-                    {/* Elementos decorativos de fondo */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary-color/5 blur-[100px] rounded-full -z-10"></div>
-                </div>
+                        Comienza Gratis <ExternalLink size={16} />
+                    </button>
+                    <button
+                        onClick={() => setIsContactModalOpen(true)}
+                        className="px-6 py-2.5 rounded-lg font-medium text-white border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-2 text-sm"
+                        aria-label="Agendar un Demo"
+                    >
+                        <div className="w-4 h-4 rounded-full border border-white flex items-center justify-center">
+                            <div className="w-0 h-0 border-t-[3px] border-t-transparent border-l-[5px] border-l-white border-b-[3px] border-b-transparent ml-0.5"></div>
+                        </div>
+                        Ver Demo
+                    </button>
+                </motion.div>
             </div>
+
+            {/* Imagen del Dashboard Minimalista */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="w-full max-w-[1000px] relative z-10 mt-4"
+            >
+                <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black/50">
+                    <img
+                        src={dashboardDark}
+                        alt="Dashboard HoryCore Dark Mode"
+                        className="w-full h-auto"
+                    />
+                    {/* Sutil gradiente inferior */}
+                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent opacity-80"></div>
+                </div>
+            </motion.div>
 
             {isModalOpen && (
                 <InvitationModal isOpen={isModalOpen} setIsOpen={setIsModalOpen} />

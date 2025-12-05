@@ -5,15 +5,158 @@ import { logVentas } from "../utils/logActions.js";
 const queryCache = new Map();
 const CACHE_TTL = 60000; // 1 minuto
 
-// Limpieza periódica del caché
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of queryCache.entries()) {
-        if (now - value.timestamp > CACHE_TTL * 2) {
-            queryCache.delete(key);
-        }
+// --- INTERNAL HELPER FUNCTIONS ---
+
+
+
+const createVentaInternal = async (connection, saleData, id_tenant, ip) => {
+  const {
+    id_sucursal, id_almacen, id_comprobante, id_cliente, estado_venta,
+    f_venta, igv, detalles, fecha_iso, metodo_pago, fecha,
+    nombre_cliente, documento_cliente, direccion_cliente, igv_b, total_t,
+    comprobante_pago, totalImporte_venta, descuento_venta, vuelto, recibido,
+    formadepago, detalles_b, observacion, estado_sunat, id_usuario
+  } = saleData;
+
+  // 1. Generar Correlativo
+  const [comprobanteResult] = await connection.query(
+    "SELECT id_tipocomprobante, nom_tipocomp FROM tipo_comprobante WHERE nom_tipocomp=?",
+    [id_comprobante] // id_comprobante aquí es el NOMBRE del tipo (e.g. 'Boleta')
+  );
+  if (comprobanteResult.length === 0) throw new Error("Tipo de comprobante no encontrado.");
+  const { id_tipocomprobante, nom_tipocomp } = comprobanteResult[0];
+  const prefijoBase = nom_tipocomp.charAt(0);
+
+  let nuevoNumComprobante;
+  // Lógica simplificada de correlativo (asumiendo que siempre genera uno nuevo para intercambio/nueva venta)
+  // Reutilizamos la lógica de "último comprobante"
+  let ultimoComprobanteQuery = `
+    SELECT num_comprobante 
+    FROM comprobante c 
+    INNER JOIN tipo_comprobante tp ON c.id_tipocomprobante=tp.id_tipocomprobante 
+    INNER JOIN sucursal s ON s.id_sucursal = ?
+    WHERE tp.nom_tipocomp = ? AND num_comprobante LIKE ?`;
+  let ultimoComprobanteParams = [id_sucursal, id_comprobante, `${prefijoBase}${id_sucursal}%`];
+  if (id_tenant) {
+    ultimoComprobanteQuery += " AND s.id_tenant = ?";
+    ultimoComprobanteParams.push(id_tenant);
+  }
+  ultimoComprobanteQuery += " ORDER BY num_comprobante DESC LIMIT 1";
+  const [ultimoComprobanteResult] = await connection.query(ultimoComprobanteQuery, ultimoComprobanteParams);
+
+  if (ultimoComprobanteResult.length > 0) {
+    const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
+    const partes = ultimoNumComprobante.split("-");
+    const serie = partes[0].substring(1);
+    const numero = parseInt(partes[1], 10) + 1;
+    if (numero > 99999999) {
+      const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
+      nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
+    } else {
+      nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
     }
-}, CACHE_TTL * 2);
+  } else {
+    nuevoNumComprobante = `${prefijoBase}${id_sucursal}00-00000001`;
+  }
+
+  // 2. Insertar Comprobante
+  const [nuevoComprobanteResult] = await connection.query(
+    "INSERT INTO comprobante (id_tipocomprobante, num_comprobante, id_tenant) VALUES (?, ?, ?)",
+    [id_tipocomprobante, nuevoNumComprobante, id_tenant]
+  );
+  const id_comprobante_final = nuevoComprobanteResult.insertId;
+
+  // 3. Insertar Venta
+  const id_anular = 4;
+  const id_anular_b = 5;
+  const [ventaResult] = await connection.query(
+    "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular, id_anular_b, observacion, estado_sunat, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [id_comprobante_final, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular, id_anular_b, observacion, estado_sunat, id_tenant]
+  );
+  const id_venta = ventaResult.insertId;
+
+  // 4. Insertar Detalles y Actualizar Stock
+  const detalleVentaValues = [];
+  const detalleVentaParams = [];
+  const bitacoraValues = [];
+  const bitacoraParams = [];
+
+  for (const detalle of detalles) {
+    const { id_producto, cantidad, precio, descuento, total } = detalle;
+
+    // Verificar Stock
+    const [inventarioResult] = await connection.query(
+      "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
+      [id_producto, id_almacen]
+    );
+    if (inventarioResult.length === 0) throw new Error(`No stock found for product ID ${id_producto}.`);
+    const stockActual = Number(inventarioResult[0].stock);
+    if (stockActual < cantidad) throw new Error(`Not enough stock for product ID ${id_producto}.`);
+
+    const stockNuevo = stockActual - cantidad;
+
+    // Update Stock
+    await connection.query(
+      "UPDATE inventario SET stock = ? WHERE id_producto = ? AND id_almacen = ?",
+      [stockNuevo, id_producto, id_almacen]
+    );
+
+    detalleVentaValues.push('(?, ?, ?, ?, ?, ?)');
+    detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total);
+
+    bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?)');
+    bitacoraParams.push(id_producto, id_almacen, cantidad, stockActual, stockNuevo, fecha, id_venta, id_tenant);
+  }
+
+  if (detalleVentaValues.length > 0) {
+    await connection.query(
+      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total) VALUES ${detalleVentaValues.join(', ')}`,
+      detalleVentaParams
+    );
+  }
+
+  if (bitacoraValues.length > 0) {
+    await connection.query(
+      `INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant) VALUES ${bitacoraValues.join(', ')}`,
+      bitacoraParams
+    );
+  }
+
+  // 5. Insertar Venta Boucher
+  const [ventaResult_b] = await connection.query(
+    "INSERT INTO venta_boucher (fecha, nombre_cliente, documento_cliente, direccion_cliente, igv, total_t, comprobante_pago, totalImporte_venta, descuento_venta, vuelto, recibido, formadepago, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [fecha, nombre_cliente, documento_cliente, direccion_cliente, igv_b, total_t, comprobante_pago, totalImporte_venta, descuento_venta, vuelto, recibido, formadepago, id_tenant]
+  );
+  const id_venta_boucher = ventaResult_b.insertId;
+
+  await connection.query(
+    "UPDATE venta SET id_venta_boucher = ? WHERE id_venta= ?",
+    [id_venta_boucher, id_venta]
+  );
+
+  // 6. Insertar Detalles Boucher
+  if (detalles_b && detalles_b.length > 0) {
+    const detalleBoucherValues = [];
+    const detalleBoucherParams = [];
+    for (const detalle of detalles_b) {
+      const { id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total } = detalle;
+      detalleBoucherValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+      detalleBoucherParams.push(id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant);
+    }
+    await connection.query(
+      `INSERT INTO detalle_venta_boucher (id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant) VALUES ${detalleBoucherValues.join(', ')}`,
+      detalleBoucherParams
+    );
+  }
+
+  // 7. Log
+  if (id_usuario) {
+    await logVentas.crear(id_venta, id_usuario, ip, id_tenant, parseFloat(total_t || 0));
+  }
+
+  return id_venta;
+};
+
 
 const getVentas = async (req, res) => {
   let connection;
@@ -55,6 +198,7 @@ const getVentas = async (req, res) => {
         ve.dni AS cajeroId,
         v.estado_venta AS estado,
         s.nombre_sucursal,
+        s.id_sucursal,
         s.ubicacion,
         cl.direccion,
         v.fecha_iso,
@@ -239,6 +383,38 @@ const getProductosVentas = async (req, res) => {
     const { id_sucursal } = req.query;
     const id_tenant = req.id_tenant;
     connection = await getConnection();
+
+    let userCondition = 'AND us.usua=?';
+    let queryParams = [req.query.usua || req.user?.username || '', id_tenant]; // Default params
+
+    if (id_sucursal) {
+      userCondition = 'AND su.id_sucursal=?';
+      queryParams = [id_sucursal, id_tenant];
+    } else {
+      // Si no hay id_sucursal, usamos el usuario de la request (token)
+      // Nota: req.user.username debe estar disponible desde el middleware auth
+      // Si el frontend manda 'id_sucursal' como nombre de usuario (como estaba antes), 
+      // mantenemos la compatibilidad revisando si es numérico o string, 
+      // pero la lógica anterior asignaba req.query.id_sucursal a us.usua.
+      // Para ser más robustos:
+      const param = id_sucursal || req.user?.username;
+      // Pero el frontend actual manda { id_sucursal: nombre } en el caso legacy.
+      // Vamos a asumir que si recibimos un id_sucursal numérico es ID, si no, es usuario?
+      // Mejor: El frontend mandará explícitamente id_sucursal cuando sea ID.
+      // Si el frontend manda el nombre en el campo id_sucursal (como hacía antes), lo manejamos.
+
+      // Lógica anterior: AND us.usua=? con [id_sucursal]
+      // Nueva lógica: Si id_sucursal es un número, usamos su.id_sucursal. Si es string, us.usua.
+
+      if (!isNaN(id_sucursal)) {
+        userCondition = 'AND su.id_sucursal=?';
+        queryParams = [id_sucursal, id_tenant];
+      } else {
+        userCondition = 'AND us.usua=?';
+        queryParams = [id_sucursal, id_tenant];
+      }
+    }
+
     const [result] = await connection.query(
       `
       SELECT PR.id_producto AS codigo, PR.descripcion AS nombre, 
@@ -254,10 +430,10 @@ const getProductosVentas = async (req, res) => {
         INNER JOIN usuario us ON us.id_usuario=ven.id_usuario
       WHERE PR.estado_producto=1 
         AND inv.stock > 0 
-        AND us.usua=? 
+        ${userCondition}
         AND PR.id_tenant = ?
       `,
-      [id_sucursal, id_tenant]
+      queryParams
     );
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
@@ -300,7 +476,7 @@ const getEstado = async (req, res) => {
 const getComprobante = async (req, res) => {
   const id_tenant = req.id_tenant;
   const cacheKey = `comprobantes_${id_tenant}`;
-  
+
   // Verificar caché
   if (queryCache.has(cacheKey)) {
     const cached = queryCache.get(cacheKey);
@@ -309,7 +485,7 @@ const getComprobante = async (req, res) => {
     }
     queryCache.delete(cacheKey);
   }
-  
+
   let connection;
   try {
     connection = await getConnection();
@@ -328,15 +504,15 @@ const getComprobante = async (req, res) => {
       params.push(id_tenant);
     }
     query += " ORDER BY nom_tipocomp";
-    
+
     const [result] = await connection.query(query, params);
-    
+
     // Guardar en caché
     queryCache.set(cacheKey, {
       data: result,
       timestamp: Date.now()
     });
-    
+
     res.json({ code: 1, data: result, message: "Comprobantes listados" });
   } catch (error) {
     console.error('Error en getComprobante:', error);
@@ -375,7 +551,7 @@ const getLastVenta = async (req, res) => {
 const getSucursal = async (req, res) => {
   const id_tenant = req.id_tenant;
   const cacheKey = `sucursales_ventas_${id_tenant}`;
-  
+
   // Verificar caché
   if (queryCache.has(cacheKey)) {
     const cached = queryCache.get(cacheKey);
@@ -384,7 +560,7 @@ const getSucursal = async (req, res) => {
     }
     queryCache.delete(cacheKey);
   }
-  
+
   let connection;
   try {
     connection = await getConnection();
@@ -407,15 +583,15 @@ const getSucursal = async (req, res) => {
       params.push(id_tenant);
     }
     query += " ORDER BY su.nombre_sucursal";
-    
+
     const [result] = await connection.query(query, params);
-    
+
     // Guardar en caché
     queryCache.set(cacheKey, {
       data: result,
       timestamp: Date.now()
     });
-    
+
     res.json({ code: 1, data: result, message: "Sucursales listadas" });
   } catch (error) {
     console.error('Error en ventas:', error);
@@ -461,13 +637,13 @@ const getClienteVentas = async (req, res) => {
         cliente_t
     `;
     const [result] = await connection.query(query, params);
-    
+
     // Guardar en caché
     queryCache.set(`clientes_ventas_${id_tenant}`, {
       data: result,
       timestamp: Date.now()
     });
-    
+
     res.json({ code: 1, data: result, message: "Clientes listados" });
   } catch (error) {
     console.error('Error en getClienteVentas:', error);
@@ -481,307 +657,68 @@ const getClienteVentas = async (req, res) => {
 
 const addVenta = async (req, res) => {
   let connection;
-  connection = await getConnection();
-
   try {
-    const {
-      usuario,
-      id_comprobante,
-      id_cliente,
-      estado_venta,
-      estado_sunat,
-      f_venta,
-      igv,
-      detalles,
-      fecha_iso,
-      metodo_pago,
-      fecha,
-      nombre_cliente,
-      documento_cliente,
-      direccion_cliente,
-      igv_b,
-      total_t,
-      comprobante_pago,
-      totalImporte_venta,
-      descuento_venta,
-      vuelto,
-      recibido,
-      formadepago,
-      detalles_b,
-      observacion
-    } = req.body;
-
+    connection = await getConnection();
+    const body = req.body;
     const id_tenant = req.id_tenant;
+    const { usuario, id_comprobante, id_cliente, detalles } = body;
 
-    if (
-      usuario === undefined ||
-      id_comprobante === undefined ||
-      id_cliente === undefined ||
-      estado_venta === undefined ||
-      f_venta === undefined ||
-      igv === undefined ||
-      !Array.isArray(detalles) ||
-      detalles.length === 0
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Bad Request. Please fill all fields correctly." });
+    if (!usuario || !id_comprobante || !id_cliente || !detalles || detalles.length === 0) {
+      return res.status(400).json({ message: "Faltan datos requeridos." });
     }
 
     await connection.beginTransaction();
 
-    // Obtener id_sucursal basado en el usuario y tenant
-    let sucursalQuery = "SELECT id_sucursal FROM sucursal su INNER JOIN vendedor ve ON ve.dni=su.dni INNER JOIN usuario u ON u.id_usuario=ve.id_usuario WHERE u.usua=?";
+    // Obtener datos de sucursal y cliente para preparar saleData
+    // Sucursal
+    let sucursalQuery = "SELECT id_sucursal, u.id_usuario FROM sucursal su INNER JOIN vendedor ve ON ve.dni=su.dni INNER JOIN usuario u ON u.id_usuario=ve.id_usuario WHERE u.usua=?";
     let sucursalParams = [usuario];
     if (id_tenant) {
       sucursalQuery += " AND su.id_tenant = ?";
       sucursalParams.push(id_tenant);
     }
     const [sucursalResult] = await connection.query(sucursalQuery, sucursalParams);
+    if (sucursalResult.length === 0) throw new Error("Sucursal not found.");
+    const { id_sucursal, id_usuario } = sucursalResult[0];
 
-    if (sucursalResult.length === 0) {
-      throw new Error("Sucursal not found for the given user.");
-    }
-
-    const id_sucursal = sucursalResult[0].id_sucursal;
-
-    // ALMACENES AGREGADOS
-    const [almacenResult] = await connection.query(
-      "SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal =?",
-      [id_sucursal]
-    );
+    // Almacen
+    const [almacenResult] = await connection.query("SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal =?", [id_sucursal]);
     const id_almacen = almacenResult[0].id_almacen;
 
-    // Obtener id_tipocomprobante y nom_tipocomp basado en el nombre del comprobante
-    const [comprobanteResult] = await connection.query(
-      "SELECT id_tipocomprobante, nom_tipocomp FROM tipo_comprobante WHERE nom_tipocomp=?",
-      [id_comprobante]
-    );
-
-    if (comprobanteResult.length === 0) {
-      throw new Error("Comprobante type not found.");
-    }
-
-    const { id_tipocomprobante, nom_tipocomp } = comprobanteResult[0];
-    const prefijoBase = nom_tipocomp.charAt(0);
-
-    // Obtener la última venta para verificar el estado (filtrando por tenant)
-    let ultimaVentaQuery = `
-      SELECT num_comprobante, estado_venta, estado_sunat 
-      FROM venta v 
-      INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante 
-      INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante=c.id_tipocomprobante 
-      INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
-      WHERE tp.nom_tipocomp= ? AND v.id_sucursal = ?`;
-    let ultimaVentaParams = [id_comprobante, id_sucursal];
-    if (id_tenant) {
-      ultimaVentaQuery += " AND s.id_tenant = ?";
-      ultimaVentaParams.push(id_tenant);
-    }
-    ultimaVentaQuery += " ORDER BY v.id_venta DESC LIMIT 1";
-    const [ultimaVentaResult] = await connection.query(ultimaVentaQuery, ultimaVentaParams);
-
-    let nuevoNumComprobante;
-
-    if (ultimaVentaResult.length > 0) {
-      const ultimaVenta = ultimaVentaResult[0];
-      if (ultimaVenta.estado_venta === 0 && ultimaVenta.estado_sunat != 1) {
-        nuevoNumComprobante = ultimaVenta.num_comprobante;
-      } else {
-        // Obtener el último número de comprobante y generar el siguiente (filtrando por tenant)
-        let ultimoComprobanteQuery = `
-          SELECT num_comprobante 
-          FROM comprobante c 
-          INNER JOIN tipo_comprobante tp ON c.id_tipocomprobante=tp.id_tipocomprobante 
-          INNER JOIN sucursal s ON s.id_sucursal = ?
-          WHERE tp.nom_tipocomp = ? AND num_comprobante LIKE ?`;
-        let ultimoComprobanteParams = [id_sucursal, id_comprobante, `${prefijoBase}${id_sucursal}%`];
-        if (id_tenant) {
-          ultimoComprobanteQuery += " AND s.id_tenant = ?";
-          ultimoComprobanteParams.push(id_tenant);
-        }
-        ultimoComprobanteQuery += " ORDER BY num_comprobante DESC LIMIT 1";
-        const [ultimoComprobanteResult] = await connection.query(ultimoComprobanteQuery, ultimoComprobanteParams);
-
-        if (ultimoComprobanteResult.length > 0) {
-          const ultimoNumComprobante = ultimoComprobanteResult[0].num_comprobante;
-          const partes = ultimoNumComprobante.split("-");
-          const serie = partes[0].substring(1);
-          const numero = parseInt(partes[1], 10) + 1;
-
-          if (numero > 99999999) {
-            const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
-            nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
-          } else {
-            nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
-          }
-        } else {
-          nuevoNumComprobante = `${prefijoBase}${id_sucursal}00-00000001`;
-        }
-      }
-    } else {
-      nuevoNumComprobante = `${prefijoBase}${id_sucursal}00-00000001`;
-    }
-
-    // Insertar el nuevo comprobante y obtener su id_comprobante
-    const [nuevoComprobanteResult] = await connection.query(
-      "INSERT INTO comprobante (id_tipocomprobante, num_comprobante, id_tenant) VALUES (?, ?, ?)",
-      [id_tipocomprobante, nuevoNumComprobante, id_tenant]
-    );
-    const id_comprobante_final = nuevoComprobanteResult.insertId;
-
-    // Obtener id_cliente basado en el nombre completo o razón social y tenant
-    let clienteQuery = `
-      SELECT id_cliente, COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS cliente_t 
-      FROM cliente 
-      WHERE (CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?)`;
+    // Cliente
+    let clienteQuery = `SELECT id_cliente FROM cliente WHERE (CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?)`;
     let clienteParams = [id_cliente, id_cliente];
     if (id_tenant) {
       clienteQuery += " AND id_tenant = ?";
       clienteParams.push(id_tenant);
     }
-    clienteQuery += ` ORDER BY (CASE WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 ELSE 1 END), cliente_t`;
     const [clienteResult] = await connection.query(clienteQuery, clienteParams);
-
-    if (clienteResult.length === 0) {
-      throw new Error("Cliente not found.");
-    }
-
+    if (clienteResult.length === 0) throw new Error("Cliente not found.");
     const id_cliente_final = clienteResult[0].id_cliente;
-    const id_anular = 4;
-    const id_anular_b = 5;
 
-    // Insertar venta (con id_tenant)
-    const [ventaResult] = await connection.query(
-      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular, id_anular_b, observacion, estado_sunat, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [id_comprobante_final, id_cliente_final, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular, id_anular_b, observacion, estado_sunat, id_tenant]
-    );
-    const id_venta = ventaResult.insertId;
+    const ip = req.ip || req.connection.remoteAddress;
 
-    // Insertar detalles de la venta y actualizar el stock
-    // Preparar datos para batch inserts
-    const detalleVentaValues = [];
-    const detalleVentaParams = [];
-    const bitacoraValues = [];
-    const bitacoraParams = [];
-    
-    for (const detalle of detalles) {
-      const { id_producto, cantidad, precio, descuento, total } = detalle;
+    // Preparar saleData
+    const saleData = {
+      ...body,
+      id_sucursal,
+      id_almacen,
+      id_cliente: id_cliente_final,
+      id_usuario // Para el log
+    };
 
-      // Verificar y descontar stock
-      const [inventarioResult] = await connection.query(
-        "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = (SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ? LIMIT 1)",
-        [id_producto, id_sucursal]
-      );
-
-      if (inventarioResult.length === 0) {
-        throw new Error(`No stock found for product ID ${id_producto} in the current store.`);
-      }
-
-      const stockActual = inventarioResult[0].stock;
-
-      if (stockActual < cantidad) {
-        throw new Error(`Not enough stock for product ID ${id_producto}.`);
-      }
-
-      const stockNuevo = stockActual - cantidad;
-
-      // Actualizar el stock en la tabla inventario
-      await connection.query(
-        "UPDATE inventario SET stock = ? WHERE id_producto = ? AND id_almacen = (SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ? LIMIT 1)",
-        [stockNuevo, id_producto, id_sucursal]
-      );
-
-      // Preparar valores para batch insert de detalles
-      detalleVentaValues.push('(?, ?, ?, ?, ?, ?)');
-      detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total);
-
-      // Preparar valores para batch insert de bitácora
-      bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?)');
-      bitacoraParams.push(id_producto, id_almacen, cantidad, stockActual, stockNuevo, fecha, id_venta, id_tenant);
-    }
-    
-    // Batch insert de detalles de venta
-    if (detalleVentaValues.length > 0) {
-      await connection.query(
-        `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total) VALUES ${detalleVentaValues.join(', ')}`,
-        detalleVentaParams
-      );
-    }
-    
-    // Batch insert de bitácora
-    if (bitacoraValues.length > 0) {
-      await connection.query(
-        `INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant) VALUES ${bitacoraValues.join(', ')}`,
-        bitacoraParams
-      );
-    }
-
-    // Insertar la venta en la tabla 'venta_boucher' (con id_tenant)
-    const [ventaResult_b] = await connection.query(
-      "INSERT INTO venta_boucher (fecha, nombre_cliente, documento_cliente, direccion_cliente, igv, total_t, comprobante_pago, totalImporte_venta, descuento_venta, vuelto, recibido, formadepago, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [fecha, nombre_cliente, documento_cliente, direccion_cliente, igv_b, total_t, comprobante_pago, totalImporte_venta, descuento_venta, vuelto, recibido, formadepago, id_tenant]
-    );
-    const id_venta_boucher = ventaResult_b.insertId;
-
-    await connection.query(
-      `UPDATE venta SET id_venta_boucher = ? WHERE id_venta= ?`,
-      [id_venta_boucher, id_venta]
-    );
-
-    // Insertar los detalles de la venta en la tabla 'detalle_venta_boucher' - BATCH INSERT
-    if (detalles_b && detalles_b.length > 0) {
-      const detalleBoucherValues = [];
-      const detalleBoucherParams = [];
-      
-      for (const detalle of detalles_b) {
-        const { id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total } = detalle;
-        
-        detalleBoucherValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        detalleBoucherParams.push(id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant);
-      }
-      
-      await connection.query(
-        `INSERT INTO detalle_venta_boucher (id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant) VALUES ${detalleBoucherValues.join(', ')}`,
-        detalleBoucherParams
-      );
-    }
+    const id_venta = await createVentaInternal(connection, saleData, id_tenant, ip);
 
     await connection.commit();
-    
-    // Limpiar caché después de agregar venta
     queryCache.clear();
+    res.json({ code: 1, message: "Venta añadida", id_venta });
 
-    // Registrar log de creación de venta
-    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-              (req.connection.socket ? req.connection.socket.remoteAddress : null);
-    
-    const totalVenta = parseFloat(total_t || 0);
-    
-    // Obtener ID del usuario desde el vendedor de la sucursal
-    const [usuarioVendedor] = await connection.query(
-      `SELECT u.id_usuario FROM usuario u 
-       INNER JOIN vendedor v ON v.id_usuario = u.id_usuario 
-       INNER JOIN sucursal s ON s.dni = v.dni 
-       WHERE s.id_sucursal = ? AND s.id_tenant = ?`,
-      [id_sucursal, id_tenant]
-    );
-    
-    if (usuarioVendedor.length > 0) {
-      await logVentas.crear(id_venta, usuarioVendedor[0].id_usuario, ip, id_tenant, totalVenta);
-    }
-
-    res.json({ code: 1, message: "Venta y detalles añadidos", id_venta });
   } catch (error) {
     console.error('Error en addVenta:', error);
-    if (connection) {
-      await connection.rollback();
-    }
-    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    if (connection) await connection.rollback();
+    res.status(500).json({ code: 0, message: error.message });
   } finally {
-    if (connection) {
-      connection.release();
-    }
+    if (connection) connection.release();
   }
 };
 
@@ -978,9 +915,9 @@ const updateVenta = async (req, res) => {
     );
 
     // Registrar log de anulación de venta
-    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-              (req.connection.socket ? req.connection.socket.remoteAddress : null);
-    
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
+      (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
     const motivoAnulacion = `Anulación solicitada por usuario. Estado SUNAT: ${estadoSunat}, Comprobante: ${comprobante}`;
     await logVentas.anular(id_venta, id_usuario, ip, id_tenant, motivoAnulacion);
 
@@ -1011,15 +948,15 @@ const updateVenta = async (req, res) => {
     }
 
     await connection.commit();
-    
+
     // Limpiar caché después de anular venta
     queryCache.clear();
-    
+
     res.json({ code: 1, message: "Venta estado actualizado y stock restaurado." });
   } catch (error) {
     console.error('Error en updateVenta:', error);
     if (connection) {
-      try { await connection.rollback(); } catch {}
+      try { await connection.rollback(); } catch { }
     }
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
@@ -1119,6 +1056,10 @@ const getVentaById = async (req, res) => {
   }
 };
 
+
+
+
+
 export const methods = {
   getVentas,
   getProductosVentas,
@@ -1132,4 +1073,5 @@ export const methods = {
   getEstado,
   getVentaById,
   getLastVenta,
+
 };
