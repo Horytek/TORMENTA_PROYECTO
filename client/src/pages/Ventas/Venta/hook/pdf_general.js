@@ -1,25 +1,26 @@
 import { useState, useEffect } from "react";
-import axios from '@/api/axios';
+import axios from "@/api/axios";
 
 const useVentasPDF = () => {
-  const [data, setData] = useState([]); 
-  const [loading, setLoading] = useState(true); 
-  const [error, setError] = useState(null); 
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchVentas = async () => {
       try {
-        const response = await axios.get("http://localhost:4000/api/reporte/ventas_pdf");
-        setData(response.data.data); 
+        // Usa ruta relativa; el proxy/baseURL se encarga del host
+        const response = await axios.get("/reporte/ventas_pdf");
+        setData(response.data?.data || []);
       } catch (err) {
         console.error("Error al obtener los datos de ventas:", err);
-        setError(err); 
+        setError(err?.response?.data || err.message);
       } finally {
-        setLoading(false); 
+        setLoading(false);
       }
     };
 
-    fetchVentas(); 
+    fetchVentas();
   }, []);
 
   return { data, loading, error };

@@ -8,7 +8,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:4000',
+        // Usa VITE_API_URL si existe; fallback a localhost:4000
+        target: (process.env.VITE_API_URL || 'http://localhost:4000').replace(/\/+api\/?$/, ''),
         changeOrigin: true,
         secure: false
       }

@@ -7,7 +7,124 @@ const CACHE_TTL = 60000; // 1 minuto
 
 // --- INTERNAL HELPER FUNCTIONS ---
 
+const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, ip, comprobante, estadoSunat) => {
+  // 1) Obtener detalles sin usar id_tenant en detalle_venta (usa JOIN con venta)
+  const [detallesResult] = await connection.query(
+    `
+    SELECT dv.id_producto, dv.cantidad
+    FROM detalle_venta dv
+    INNER JOIN venta v ON v.id_venta = dv.id_venta
+    WHERE dv.id_venta = ? AND v.id_tenant = ?
+    `,
+    [id_venta, id_tenant]
+  );
 
+  if (detallesResult.length === 0) {
+    throw new Error("No hay detalles para la venta o no pertenece a este tenant");
+  }
+
+  // 2) Obtener sucursal y fecha
+  const [ventaResult] = await connection.query(
+    `
+    SELECT id_sucursal, f_venta
+    FROM venta
+    WHERE id_venta = ? AND id_tenant = ?
+    `,
+    [id_venta, id_tenant]
+  );
+  if (ventaResult.length === 0) {
+    throw new Error("Venta no encontrada");
+  }
+  const id_sucursal = ventaResult[0].id_sucursal;
+  const f_venta = ventaResult[0].f_venta;
+
+  // 3) Almacén de la sucursal
+  const [almacenResult] = await connection.query(
+    `SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ?`,
+    [id_sucursal]
+  );
+  if (almacenResult.length === 0) {
+    throw new Error("No se encontró almacén para la sucursal");
+  }
+  const id_almacen = almacenResult[0].id_almacen;
+
+  // 4) Restaurar stock para cada detalle
+  for (const detalle of detallesResult) {
+    const { id_producto, cantidad } = detalle;
+
+    // Stock actual del inventario del producto en el almacén de la venta
+    const [[stockRow]] = await connection.query(
+      `
+      SELECT I.stock AS stockActual
+      FROM inventario I
+      WHERE I.id_producto = ? 
+        AND I.id_almacen = ?
+      `,
+      [id_producto, id_almacen]
+    );
+
+    const stockActual = Number(stockRow?.stockActual ?? 0);
+
+    await connection.query(
+      `
+      UPDATE inventario
+      SET stock = ?
+      WHERE id_producto = ?
+        AND id_almacen = ?
+      `,
+      [stockActual + cantidad, id_producto, id_almacen]
+    );
+
+    // Bitácora de entrada
+    await connection.query(
+      `
+      INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta, id_tenant)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta, id_venta, id_tenant]
+    );
+  }
+
+  // 5) Anular venta
+  await connection.query(
+    `
+    UPDATE venta
+    SET estado_venta = ?, u_modifica = ?, fecha_anulacion = NOW()
+    WHERE id_venta = ? AND id_tenant = ?
+    `,
+    [0, id_usuario, id_venta, id_tenant]
+  );
+
+  // Registrar log de anulación de venta
+  const motivoAnulacion = `Anulación solicitada por usuario. Estado SUNAT: ${estadoSunat}, Comprobante: ${comprobante}`;
+  await logVentas.anular(id_venta, id_usuario, ip, id_tenant, motivoAnulacion);
+
+  // 6) Contadores SUNAT por tenant (solo si fue aceptada por SUNAT)
+  if (estadoSunat === 1 && comprobante === 'Factura') {
+    const [r1] = await connection.query(
+      `UPDATE anular_sunat SET anular = anular + 1 WHERE id_tenant = ?`,
+      [id_tenant]
+    );
+    if (r1.affectedRows === 0) {
+      await connection.query(
+        `INSERT INTO anular_sunat (anular, id_tenant) VALUES (1, ?)`,
+        [id_tenant]
+      );
+    }
+  }
+  if (estadoSunat === 1 && comprobante === 'Boleta') {
+    const [r2] = await connection.query(
+      `UPDATE anular_sunat_b SET anular_b = anular_b + 1 WHERE id_tenant = ?`,
+      [id_tenant]
+    );
+    if (r2.affectedRows === 0) {
+      await connection.query(
+        `INSERT INTO anular_sunat_b (anular_b, id_tenant) VALUES (1, ?)`,
+        [id_tenant]
+      );
+    }
+  }
+};
 
 const createVentaInternal = async (connection, saleData, id_tenant, ip) => {
   const {
@@ -799,152 +916,33 @@ const updateVenta = async (req, res) => {
 
     await connection.beginTransaction();
 
-    // 1) Obtener detalles sin usar id_tenant en detalle_venta (usa JOIN con venta)
-    const [detallesResult] = await connection.query(
-      `
-      SELECT dv.id_producto, dv.cantidad
-      FROM detalle_venta dv
-      INNER JOIN venta v ON v.id_venta = dv.id_venta
-      WHERE dv.id_venta = ? AND v.id_tenant = ?
-      `,
-      [id_venta, id_tenant]
-    );
-
-    if (detallesResult.length === 0) {
-      await connection.rollback();
-      return res.status(404).json({ message: "No hay detalles para la venta o no pertenece a este tenant" });
-    }
-
-    // 2) Obtener id_usuario
-    const [usuarioResult] = await connection.query(
-      `SELECT id_usuario FROM usuario WHERE usua = ?`,
-      [usua]
-    );
-    if (usuarioResult.length === 0) {
-      await connection.rollback();
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-    const id_usuario = usuarioResult[0].id_usuario;
-
-    // 3) Obtener sucursal y fecha
-    const [ventaResult] = await connection.query(
-      `
-      SELECT id_sucursal, f_venta
-      FROM venta
-      WHERE id_venta = ? AND id_tenant = ?
-      `,
-      [id_venta, id_tenant]
-    );
-    if (ventaResult.length === 0) {
-      await connection.rollback();
-      return res.status(404).json({ message: "Venta no encontrada" });
-    }
-    const id_sucursal = ventaResult[0].id_sucursal;
-    const f_venta = ventaResult[0].f_venta;
-
-    // 4) Almacén de la sucursal
-    const [almacenResult] = await connection.query(
-      `SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ?`,
-      [id_sucursal]
-    );
-    if (almacenResult.length === 0) {
-      await connection.rollback();
-      return res.status(404).json({ message: "No se encontró almacén para la sucursal" });
-    }
-    const id_almacen = almacenResult[0].id_almacen;
-
-    // 5) Restaurar stock para cada detalle (tu lógica actual)
-    for (const detalle of detallesResult) {
-      const { id_producto, cantidad } = detalle;
-
-      // Stock actual del inventario del producto en el almacén de la venta
-      const [[stockRow]] = await connection.query(
-        `
-        SELECT I.stock AS stockActual
-        FROM inventario I
-        WHERE I.id_producto = ? 
-          AND I.id_almacen = (
-            SELECT id_almacen
-            FROM sucursal_almacen
-            WHERE id_sucursal = (
-              SELECT id_sucursal FROM venta WHERE id_venta = ? AND id_tenant = ?
-            )
-            LIMIT 1
-          )
-        `,
-        [id_producto, id_venta, id_tenant]
-      );
-
-      const stockActual = Number(stockRow?.stockActual ?? 0);
-
-      await connection.query(
-        `
-        UPDATE inventario
-        SET stock = ?
-        WHERE id_producto = ?
-          AND id_almacen = (
-            SELECT id_almacen
-            FROM sucursal_almacen
-            WHERE id_sucursal = (
-              SELECT id_sucursal FROM venta WHERE id_venta = ? AND id_tenant = ?
-            )
-            LIMIT 1
-          )
-        `,
-        [stockActual + cantidad, id_producto, id_venta, id_tenant]
-      );
-
-      // Bitácora de entrada
-      await connection.query(
-        `
-        INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta, id_tenant)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta, id_venta, id_tenant]
-      );
-    }
-
-    // 6) Anular venta
-    await connection.query(
-      `
-      UPDATE venta
-      SET estado_venta = ?, u_modifica = ?
-      WHERE id_venta = ? AND id_tenant = ?
-      `,
-      [0, id_usuario, id_venta, id_tenant]
-    );
-
-    // Registrar log de anulación de venta
-    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
-      (req.connection.socket ? req.connection.socket.remoteAddress : null);
-
-    const motivoAnulacion = `Anulación solicitada por usuario. Estado SUNAT: ${estadoSunat}, Comprobante: ${comprobante}`;
-    await logVentas.anular(id_venta, id_usuario, ip, id_tenant, motivoAnulacion);
-
-    // 7) Contadores SUNAT por tenant (solo si fue aceptada por SUNAT)
-    if (estadoSunat === 1 && comprobante === 'Factura') {
-      const [r1] = await connection.query(
-        `UPDATE anular_sunat SET anular = anular + 1 WHERE id_tenant = ?`,
-        [id_tenant]
-      );
-      if (r1.affectedRows === 0) {
-        await connection.query(
-          `INSERT INTO anular_sunat (anular, id_tenant) VALUES (1, ?)`,
-          [id_tenant]
-        );
+    // Obtener id_usuario si se pasó el nombre de usuario (usua)
+    let id_usuario = null;
+    if (usua) {
+      const [userResult] = await connection.query("SELECT id_usuario FROM usuario WHERE usua = ?", [usua]);
+      if (userResult.length > 0) {
+        id_usuario = userResult[0].id_usuario;
       }
     }
-    if (estadoSunat === 1 && comprobante === 'Boleta') {
-      const [r2] = await connection.query(
-        `UPDATE anular_sunat_b SET anular_b = anular_b + 1 WHERE id_tenant = ?`,
-        [id_tenant]
-      );
-      if (r2.affectedRows === 0) {
-        await connection.query(
-          `INSERT INTO anular_sunat_b (anular_b, id_tenant) VALUES (1, ?)`,
-          [id_tenant]
-        );
+
+    // Usar annulVentaInternal para la lógica de anulación
+    // Si el frontend manda estado_venta = 0, es anulación.
+    const { estado_venta } = req.body; // Asegurarnos de recibir esto si es relevante
+    if (estado_venta === 0 || estado_venta === '0') {
+      const ip = req.ip || req.connection.remoteAddress;
+      // Necesitamos id_usuario para el log y u_modifica. Si no vino usua, intentar sacarlo de la sesión o error?
+      // Por ahora usaremos id_usuario si existe, sino null (aunque annulVentaInternal lo usa).
+      if (!id_usuario) {
+        // Fallback: intentar obtenerlo del token si está disponible en req.user
+        if (req.user && req.user.id) id_usuario = req.user.id;
       }
+      await annulVentaInternal(connection, id_venta, id_usuario, id_tenant, ip, comprobante, estadoSunat);
+    } else {
+      // Actualización estándar (no anulación)
+      await connection.query(
+        `UPDATE venta SET estado_venta = ?, estado_sunat = ?, u_modifica = ? WHERE id_venta = ? AND id_tenant = ?`,
+        [req.body.estado_venta || 1, estadoSunat, id_usuario, id_venta, id_tenant]
+      );
     }
 
     await connection.commit();
@@ -1058,6 +1056,137 @@ const getVentaById = async (req, res) => {
 
 
 
+const exchangeProducto = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const { id_venta, id_detalle, id_producto_nuevo, cantidad, id_sucursal, usuario } = req.body;
+    const id_tenant = req.id_tenant;
+    const ip = req.ip || req.connection.remoteAddress;
+
+    if (!id_venta || !id_detalle || !id_producto_nuevo || !cantidad || !usuario) {
+      return res.status(400).json({ code: 0, message: "Faltan datos requeridos" });
+    }
+
+    await connection.beginTransaction();
+
+    // 1. Obtener datos de la venta original incluyendo num_comprobante
+    const [ventaOriginal] = await connection.query(
+      "SELECT v.*, tc.nom_tipocomp, c.num_comprobante FROM venta v INNER JOIN comprobante c ON v.id_comprobante = c.id_comprobante INNER JOIN tipo_comprobante tc ON c.id_tipocomprobante = tc.id_tipocomprobante WHERE v.id_venta = ? AND v.id_tenant = ?",
+      [id_venta, id_tenant]
+    );
+    if (ventaOriginal.length === 0) throw new Error("Venta original no encontrada");
+    const oldSale = ventaOriginal[0];
+
+    // 2. Obtener usuario (quien realiza el cambio)
+    const [userResult] = await connection.query("SELECT id_usuario FROM usuario WHERE usua = ?", [usuario]);
+    if (userResult.length === 0) throw new Error("Usuario no encontrado");
+    const id_usuario = userResult[0].id_usuario;
+
+    // 3. Anular la venta original (usando helper)
+    await annulVentaInternal(connection, id_venta, id_usuario, id_tenant, ip, oldSale.nom_tipocomp, oldSale.estado_sunat);
+
+    // 4. Preparar datos para la nueva venta
+    // Necesitamos los detalles originales, reemplazar el producto cambiado, y recalcular totales.
+    const [detallesOriginales] = await connection.query(
+      "SELECT * FROM detalle_venta WHERE id_venta = ?",
+      [id_venta]
+    );
+
+    // Obtener info del nuevo producto
+    const [nuevoProd] = await connection.query(
+      "SELECT * FROM producto WHERE id_producto = ? AND id_tenant = ?",
+      [id_producto_nuevo, id_tenant]
+    );
+    if (nuevoProd.length === 0) throw new Error("Nuevo producto no encontrado");
+    const newProductData = nuevoProd[0];
+    const precioNuevo = Number(newProductData.precio);
+
+    let nuevosDetalles = [];
+    let totalNuevo = 0;
+    let igvNuevo = 0;
+    let diferenciaTexto = "";
+
+    // Convertir id_detalle a número para comparación segura
+    const targetIdDetalle = Number(id_detalle);
+
+    for (const det of detallesOriginales) {
+      // Usar comparación flexible O estricta con casting. id_detalle es PK de detalle_venta.
+      if (det.id_detalle === targetIdDetalle) {
+        // Este es el item a cambiar
+        const subtotalNuevo = precioNuevo * cantidad;
+        nuevosDetalles.push({
+          id_producto: id_producto_nuevo,
+          cantidad: cantidad,
+          precio: precioNuevo,
+          descuento: 0,
+          total: subtotalNuevo
+        });
+        totalNuevo += subtotalNuevo;
+
+        // Info para observación
+        diferenciaTexto = `Cambio: Prod ID ${det.id_producto} -> ID ${id_producto_nuevo}.`;
+      } else {
+        // Mantener item original
+        nuevosDetalles.push({
+          id_producto: det.id_producto,
+          cantidad: det.cantidad,
+          precio: det.precio,
+          descuento: det.descuento,
+          total: det.total
+        });
+        totalNuevo += Number(det.total);
+      }
+    }
+
+    // Recalcular IGV
+    igvNuevo = totalNuevo - (totalNuevo / 1.18);
+
+    // Datos de la nueva venta
+    const newSaleData = {
+      id_sucursal: oldSale.id_sucursal,
+      id_almacen: (await connection.query("SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal=?", [oldSale.id_sucursal]))[0][0].id_almacen,
+      id_comprobante: oldSale.nom_tipocomp,
+      id_cliente: oldSale.id_cliente,
+      estado_venta: 1, // Aceptada
+      f_venta: new Date().toISOString().split('T')[0],
+      igv: igvNuevo,
+      detalles: nuevosDetalles,
+      fecha_iso: new Date().toISOString(),
+      metodo_pago: oldSale.metodo_pago,
+      fecha: new Date().toISOString().split('T')[0],
+      // Datos cliente para boucher
+      nombre_cliente: (await connection.query("SELECT COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) as n FROM cliente WHERE id_cliente=?", [oldSale.id_cliente]))[0][0].n,
+      documento_cliente: (await connection.query("SELECT COALESCE(NULLIF(dni, ''), ruc) as d FROM cliente WHERE id_cliente=?", [oldSale.id_cliente]))[0][0].d,
+      direccion_cliente: (await connection.query("SELECT direccion FROM cliente WHERE id_cliente=?", [oldSale.id_cliente]))[0][0].direccion,
+      igv_b: igvNuevo,
+      total_t: totalNuevo,
+      comprobante_pago: "Recibo",
+      totalImporte_venta: totalNuevo,
+      descuento_venta: 0,
+      vuelto: 0,
+      recibido: totalNuevo,
+      formadepago: oldSale.metodo_pago,
+      detalles_b: [],
+      observacion: `Intercambio realizado. Venta anterior: ${oldSale.num_comprobante}. ${diferenciaTexto}`,
+      estado_sunat: 0,
+      id_usuario: id_usuario
+    };
+
+    const newVentaId = await createVentaInternal(connection, newSaleData, id_tenant, ip);
+
+    await connection.commit();
+    res.json({ code: 1, message: "Intercambio realizado con éxito", data: { id_venta_nueva: newVentaId } });
+
+  } catch (error) {
+    console.error("Error en exchangeProducto:", error);
+    if (connection) await connection.rollback();
+    res.status(500).json({ code: 0, message: error.message });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 
 
 export const methods = {
@@ -1073,5 +1202,5 @@ export const methods = {
   getEstado,
   getVentaById,
   getLastVenta,
-
+  exchangeProducto,
 };

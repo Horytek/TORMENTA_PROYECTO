@@ -15,7 +15,10 @@ import useBoucher from '@/services/data/data_boucher';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
-import { FaUser, FaCalendarAlt, FaFileInvoice, FaMoneyBillWave, FaCalculator } from "react-icons/fa";
+import { FaUser, FaCalendarAlt, FaFileInvoice, FaMoneyBillWave, FaCalculator, FaExchangeAlt } from "react-icons/fa";
+import IntercambioModal from './Modals/IntercambioModal';
+import { exchangeVenta } from '@/services/exchange_venta';
+import { toast } from "react-hot-toast";
 
 const ESTADO_STYLES = {
   Aceptada: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-200', icon: 'fa-check-circle' },
@@ -52,6 +55,11 @@ const TablaVentas = ({
   // Nuevo: Estado para el comprobante por venta
   const [comprobantePorVenta, setComprobantePorVenta] = useState({});
   const [ventaActualId, setVentaActualId] = useState(null);
+
+  // Estado para Intercambio
+  const [modalIntercambioOpen, setModalIntercambioOpen] = useState(false);
+  const [selectedVentaForIntercambio, setSelectedVentaForIntercambio] = useState(null);
+  //const { toast } = useToast();
 
   // Zustand: setter y selectores
   const setVentaSeleccionada = useVentaSeleccionadaStore((state) => state.setVentaSeleccionada);
@@ -99,6 +107,26 @@ const TablaVentas = ({
     setVentaSeleccionada(venta);
     setVentaActualId(venta.id);
     onOpen();
+  };
+
+  const handleIntercambioClick = (venta) => {
+    setSelectedVentaForIntercambio(venta);
+    setModalIntercambioOpen(true);
+  };
+
+  const handleConfirmIntercambio = async (data) => {
+    try {
+      const res = await exchangeVenta(data);
+      if (res.code === 1) {
+        toast.success("Intercambio realizado correctamente.");
+        setModalIntercambioOpen(false);
+        if (refreshVentas) refreshVentas();
+      } else {
+        toast.error(res.message || "Error al realizar intercambio");
+      }
+    } catch (error) {
+      toast.error("Error de conexión o servidor");
+    }
   };
 
   const handlePrint = async () => {
@@ -254,6 +282,14 @@ const TablaVentas = ({
                   color="danger"
                 >
                   Opciones Avanzadas
+                </DropdownItem>
+                <DropdownItem
+                  startContent={<FaExchangeAlt className="text-orange-500 text-lg" />}
+                  onPress={() => handleIntercambioClick(venta)}
+                  className="text-warning"
+                  color="warning"
+                >
+                  Intercambio
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
@@ -588,6 +624,14 @@ const TablaVentas = ({
           )}
         </ModalContent>
       </Modal>
+
+      {/* Modal Intercambio */}
+      <IntercambioModal
+        isOpen={modalIntercambioOpen}
+        onClose={() => setModalIntercambioOpen(false)}
+        venta={selectedVentaForIntercambio}
+        onConfirm={handleConfirmIntercambio}
+      />
 
     </div>
   );
