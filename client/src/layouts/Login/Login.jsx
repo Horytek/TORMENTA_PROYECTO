@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaUser, FaLock, FaShieldAlt } from "react-icons/fa";
 import { useUserStore } from "@/store/useStore";
 import {
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
   Input,
   Button,
   Tabs,
   Tab,
-  InputOtp
+  InputOtp,
+  Link,
+  Divider,
 } from '@heroui/react';
 import { useAuth } from "@/context/Auth/AuthProvider";
 import AlertModal from "@/components/Modals/AlertModal";
@@ -48,7 +46,6 @@ function Login() {
     setLoaded(true);
   }, [isAuthenticated, navigate]);
 
-  // Maneja el evento de inicio de sesión normal
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!usuario || !password) {
@@ -72,7 +69,6 @@ function Login() {
     }
   };
 
-  // Verificar código OTP y autenticar
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setAuthError("");
@@ -97,220 +93,253 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row w-full bg-[#f6f9ff] dark:bg-[#10131a]">
-      {/* Lado izquierdo (Branding) */}
-      <div className={`hidden md:flex items-center justify-center w-1/2 bg-gradient-to-br from-primary to-secondary transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="px-8 md:px-12 py-10 text-center text-white">
-          <h2 className="text-3xl font-bold mb-6">Una plataforma para administrar todo su negocio</h2>
-          <div className="grid grid-cols-2 gap-6 mt-10">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">
-              <h3 className="text-lg font-semibold mb-2">Adaptable</h3>
-              <p className="text-white/80 text-sm">Personalizable para cualquier industria o tamaño de negocio</p>
+    <div className="min-h-screen w-full flex items-center justify-center bg-zinc-950 relative overflow-hidden p-4 sm:p-6">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900/30 via-zinc-950 to-zinc-950 z-0" />
+      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] z-0 animate-pulse" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] z-0" />
+
+      {/* Main Card Container */}
+      <div className={`relative z-10 w-full max-w-5xl bg-zinc-900/60 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 transition-all duration-700 ease-out transform ${loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+
+        {/* Left Side: Branding */}
+        <div className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden bg-gradient-to-br from-white/5 to-transparent">
+          <div className="absolute inset-0 bg-noise opacity-5 pointer-events-none"></div>
+
+          {/* Decorative circles inside card */}
+          <div className="absolute top-10 left-10 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl"></div>
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="bg-white/10 backdrop-blur-md p-2 rounded-lg border border-white/10">
+                <img src="/horycore.png" alt="HoryCore Logo" className="w-10 h-10 object-contain" />
+              </div>
+              <span className="text-xl font-bold text-white tracking-wide">HoryCore</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">
-              <h3 className="text-lg font-semibold mb-2">Completo</h3>
-              <p className="text-white/80 text-sm">Gestión integral de ventas, compras, inventario y contabilidad</p>
+
+            <h1 className="text-4xl font-bold text-white mb-6 leading-tight">
+              Gestión inteligente para potenciar tu negocio
+            </h1>
+            <p className="text-zinc-400 text-lg leading-relaxed">
+              Administra ventas, inventario y contabilidad desde una única plataforma segura, escalable y diseñada para la eficiencia.
+            </p>
+          </div>
+
+          <div className="relative z-10 grid grid-cols-2 gap-6 mt-12">
+            <div className="space-y-1">
+              <h3 className="text-white font-semibold">100% Cloud</h3>
+              <p className="text-sm text-zinc-500">Acceso desde cualquier lugar</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">
-              <h3 className="text-lg font-semibold mb-2">Seguro</h3>
-              <p className="text-white/80 text-sm">Arquitectura multi-tenancy con aislamiento total de datos</p>
+            <div className="space-y-1">
+              <h3 className="text-white font-semibold">Seguridad Total</h3>
+              <p className="text-sm text-zinc-500">Datos encriptados</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-5 text-left">
-              <h3 className="text-lg font-semibold mb-2">Escalable</h3>
-              <p className="text-white/80 text-sm">Crece con su negocio sin comprometer el rendimiento</p>
+            <div className="space-y-1">
+              <h3 className="text-white font-semibold">Soporte 24/7</h3>
+              <p className="text-sm text-zinc-500">Siempre disponibles</p>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-white font-semibold">Actualizaciones</h3>
+              <p className="text-sm text-zinc-500">Mejora continua</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Form */}
+        <div className="bg-white dark:bg-[#0c0c0e] p-8 sm:p-12 lg:p-16 flex flex-col justify-center relative">
+          {/* Logo always visible on mobile/tablet or just centered */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="lg:hidden mb-4">
+              <img src="/horycore.png" alt="HoryCore" className="w-12 h-12 rounded-lg shadow-sm" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+              {activeTab === 'login' ? 'Iniciar sesión' : 'Autenticar cuenta'}
+            </h2>
+            <p className="text-sm text-gray-500 text-center">
+              {activeTab === 'login' ? 'Ingrese sus credenciales para continuar' : 'Ingrese el código de seguridad'}
+            </p>
+          </div>
+
+          <div className="max-w-[380px] w-full mx-auto">
+            <Tabs
+              aria-label="Opciones de acceso"
+              selectedKey={activeTab}
+              onSelectionChange={setActiveTab}
+              variant="solid"
+              color="primary"
+              className="w-full mb-6"
+              classNames={{
+                tabList: "w-full p-1 bg-gray-100 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700/50",
+                cursor: "w-full shadow-sm rounded-lg",
+                tab: "h-9 text-sm font-medium",
+                tabContent: "group-data-[selected=true]:text-white text-gray-500 dark:text-gray-400"
+              }}
+            >
+              <Tab key="login" title="Iniciar Sesión" />
+              <Tab key="auth" title="Autenticar Cuenta" />
+            </Tabs>
+
+            <div className="mt-2">
+              {activeTab === 'login' ? (
+                <form onSubmit={handleLogin} className="space-y-5">
+                  {/* Usuario Input - Gray Background Style */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                      Usuario
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Ingrese su usuario"
+                      value={usuario}
+                      onChange={(e) => setUsuario(e.target.value)}
+                      // Removed startContent to match simple original aesthetic if preferred, but user said "diseño de campos originales".
+                      // Original had no icons inside input in the screenshot provided? Actually screenshot shows "Usuario" label and simple input.
+                      // I will keep it simple without icon inside to match "original".
+                      variant="flat"
+                      radius="md"
+                      classNames={{
+                        input: "text-base",
+                        inputWrapper: "h-12 bg-gray-100 dark:bg-zinc-800/80 hover:bg-gray-200/70 dark:hover:bg-zinc-800 border-transparent transition-colors shadow-none",
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                      Contraseña
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="********"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        variant="flat"
+                        radius="md"
+                        endContent={
+                          <button className="focus:outline-none" type="button" onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? (
+                              <FaEyeSlash className="text-lg text-gray-400" />
+                            ) : (
+                              <FaEye className="text-lg text-gray-400" />
+                            )}
+                          </button>
+                        }
+                        classNames={{
+                          input: "text-base",
+                          inputWrapper: "h-12 bg-gray-100 dark:bg-zinc-800/80 hover:bg-gray-200/70 dark:hover:bg-zinc-800 border-transparent transition-colors shadow-none",
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-end pt-1">
+                      <Link href="#" size="sm" className="text-primary font-medium hover:text-primary-dark cursor-pointer text-xs">
+                        ¿Olvidó su contraseña?
+                      </Link>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    color="primary"
+                    className="w-full h-12 font-bold text-base shadow-lg shadow-blue-500/20"
+                    radius="md"
+                  >
+                    Iniciar sesión
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp} className="space-y-6">
+                  <div className="flex justify-center mb-4">
+                    <InputOtp
+                      length={4}
+                      value={otpValue}
+                      onValueChange={setOtpValue}
+                      classNames={{
+                        // Adapting OTP to look more like the original gray boxes if possible, or keeping standard OTP but fitting the theme
+                        segmentWrapper: "gap-x-3",
+                        segment: "w-14 h-14 text-2xl bg-gray-100 dark:bg-zinc-800 border-transparent rounded-lg data-[active=true]:ring-2 ring-primary data-[active=true]:bg-white dark:data-[active=true]:bg-zinc-700"
+                      }}
+                    />
+                  </div>
+
+                  <p className="text-center text-xs text-gray-500 dark:text-gray-400 px-2 leading-relaxed">
+                    Ingrese el código de acceso de 4 dígitos enviado a su correo.
+                  </p>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                        Usuario
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Ingrese su usuario"
+                        value={authUser}
+                        onChange={(e) => setAuthUser(e.target.value)}
+                        variant="flat"
+                        radius="md"
+                        classNames={{
+                          input: "text-base",
+                          inputWrapper: "h-11 bg-gray-100 dark:bg-zinc-800/80 hover:bg-gray-200/70 transition-colors shadow-none",
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                        Contraseña
+                      </label>
+                      <Input
+                        type="password"
+                        placeholder="Ingrese su contraseña"
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        variant="flat"
+                        radius="md"
+                        classNames={{
+                          input: "text-base",
+                          inputWrapper: "h-11 bg-gray-100 dark:bg-zinc-800/80 hover:bg-gray-200/70 transition-colors shadow-none",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {authError && (
+                    <div className="p-3 bg-red-50 dark:bg-red-900/10 text-red-600 text-xs rounded-lg text-center font-semibold">
+                      {authError}
+                    </div>
+                  )}
+
+                  {authSuccess && (
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 text-xs rounded-lg text-center font-semibold">
+                      ¡Verificado correctamente!
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 font-bold text-base bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                    radius="md"
+                    isLoading={otpLoading}
+                  >
+                    Verificar y activar cuenta
+                  </Button>
+                </form>
+              )}
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800 text-center">
+              <p className="text-xs text-gray-400">
+                ¿No tiene cuenta? <span className="text-primary hover:underline cursor-pointer font-medium">Contacte a su administrador</span>
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Login & Auth Tabs */}
-      <div className="flex items-center justify-center w-full md:w-1/2 p-4 sm:p-6 transition-opacity duration-500">
-        <div className="w-full flex flex-col items-center justify-center">
-          {/* Branding */}
-          <div className="w-full flex flex-col items-center mb-4 sm:mb-6">
-            <div className="flex items-center gap-3">
-              <img
-                src="/horycore.png"
-                alt="HoryCore"
-                className="hidden sm:block w-10 h-10 rounded-lg"
-              />
-              <span className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent tracking-tight">
-                HoryCore
-              </span>
-            </div>
-            <span className="mt-1 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold tracking-wider">
-              ERP Empresarial
-            </span>
-          </div>
-
-          {/* Contenedor centrado y ancho fijo para Tabs y Cards */}
-          <div className="w-full flex flex-col items-center justify-center">
-            <div className="w-full flex flex-col items-center justify-center">
-              <Tabs
-                selectedKey={activeTab}
-                onSelectionChange={setActiveTab}
-                variant="bordered"
-                color="primary"
-                className="mb-4 sm:mb-6 w-full max-w-[350px] mx-auto"
-                classNames={{
-                  tabList: "bg-white/80 dark:bg-zinc-900/80 rounded-xl shadow border border-blue-100/30 dark:border-zinc-700/30 px-1.5 py-1 flex gap-1.5 sm:gap-2 justify-center",
-                  tab: "px-4 sm:px-6 py-2 text-sm sm:text-base font-semibold rounded-lg transition-colors",
-                  tabContent: "py-0"
-                }}
-              >
-                <Tab key="login" title="Iniciar sesión">
-                  <div className="flex justify-center w-full">
-                    <Card className="w-full max-w-[420px] mx-auto" style={{ boxShadow: '0 10px 32px 0 #e0e7ef44' }}>
-                      <CardHeader className="flex flex-col items-center space-y-1 mt-2 mb-2 ">
-                        <h2 className="text-2xl font-semibold text-center">Iniciar sesión</h2>
-                        <p className="text-small text-default-400" style={{ fontSize: "14px", userSelect: "none", marginTop: "2px" }}>
-                          Ingrese sus credenciales para continuar
-                        </p>
-                      </CardHeader>
-                      <CardBody className="space-y-4">
-                        <form onSubmit={handleLogin} className="space-y-4">
-                          <div className="space-y-2">
-                            <label htmlFor="usuario" className="text-sm font-semibold block">Usuario</label>
-                            <Input
-                              id="usuario"
-                              type="text"
-                              placeholder="Ingrese su usuario"
-                              value={usuario}
-                              onChange={(e) => setUsuario(e.target.value)}
-                              className="w-full border border-gray-300 rounded-md"
-                              aria-label="Usuario"
-                              required
-                              autoComplete="username"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <label htmlFor="password" className="text-sm font-semibold">Contraseña</label>
-                            </div>
-                            <div className="relative">
-                              <Input
-                                id="password"
-                                type={showPassword ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="********"
-                                className="w-full border border-gray-300 rounded-md pr-10"
-                                aria-label="Contraseña"
-                                required
-                                autoComplete="current-password"
-                              />
-                              <div
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
-                                onClick={() => setShowPassword(!showPassword)}
-                                aria-label="Mostrar/ocultar contraseña"
-                              >
-                                {showPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            type="submit"
-                            className="w-full bg-primary text-white hover:bg-primary-dark"
-                            aria-label="Iniciar sesión"
-                          >
-                            Iniciar sesión
-                          </Button>
-                        </form>
-                      </CardBody>
-                      <CardFooter className="flex flex-col space-y-2">
-                        <p className="text-xs text-center text-gray-500 w-full">
-                          ¿No tiene cuenta? Contacte con su administrador
-                        </p>
-                      </CardFooter>
-                    </Card>
-                  </div>
-                </Tab>
-                <Tab key="auth" title="Autenticar cuenta">
-                  <div className="flex justify-center w-full">
-                    <Card className="w-full max-w-[420px] mx-auto" style={{ boxShadow: '0 10px 32px 0 #e0e7ef44' }}>
-                      <CardHeader className="flex flex-col items-center space-y-1 mt-2 mb-2 ">
-                        <h2 className="text-2xl font-semibold text-center">Autenticar cuenta</h2>
-                        <p className="text-small text-default-400 text-center" style={{ fontSize: "14px", userSelect: "none", marginTop: "2px" }}>
-                          Ingresa tu usuario, contraseña y el <b>código de 4 dígitos</b> que recibiste por correo tras realizar el pago.<br />
-                          <span className="text-emerald-500 font-semibold">Importante:</span> Si no tienes el código, revisa tu correo o contacta a soporte.
-                        </p>
-                      </CardHeader>
-                      <CardBody className="space-y-4">
-                        <form onSubmit={handleVerifyOtp} className="space-y-4">
-                          <div className="space-y-2 flex flex-col items-center">
-                            <label htmlFor="otp" className="text-sm font-semibold block text-center">Código de autenticación (4 dígitos)</label>
-                            <InputOtp
-                              length={4}
-                              value={otpValue}
-                              onValueChange={setOtpValue}
-                              containerClassName="justify-center"
-                              className="mx-auto"
-                              inputClassName="w-12 h-12 text-2xl font-mono border-2 border-secondary-color rounded-lg mx-1 bg-white dark:bg-zinc-900 text-secondary-color focus:ring-2 focus:ring-secondary-color transition-all"
-                            />
-                          </div>
-                          <div className="space-y-2 w-full max-w-[340px] mx-auto">
-                            <label htmlFor="authUser" className="text-sm font-semibold block">Usuario</label>
-                            <Input
-                              id="authUser"
-                              type="text"
-                              placeholder="Ingrese su usuario"
-                              value={authUser}
-                              onChange={(e) => setAuthUser(e.target.value)}
-                              className="w-full border border-gray-300 rounded-md"
-                              aria-label="Usuario"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2 w-full max-w-[340px] mx-auto">
-                            <label htmlFor="authPassword" className="text-sm font-semibold block">Contraseña</label>
-                            <Input
-                              id="authPassword"
-                              type="password"
-                              placeholder="Ingrese su contraseña"
-                              value={authPassword}
-                              onChange={(e) => setAuthPassword(e.target.value)}
-                              className="w-full border border-gray-300 rounded-md"
-                              aria-label="Contraseña"
-                              required
-                            />
-                          </div>
-                          {authError && <div className="text-xs text-red-500 text-center">{authError}</div>}
-                          {authSuccess && (
-                            <div className="text-center text-secondary-color font-semibold py-2 text-lg">
-                              ¡Cuenta autenticada correctamente! Redirigiendo...
-                            </div>
-                          )}
-                          <Button
-                            type="submit"
-                            className="w-full bg-secondary-color text-white hover:bg-secondary-color/90"
-                            aria-label="Verificar código"
-                            isLoading={otpLoading}
-                          >
-                            Verificar y activar cuenta
-                          </Button>
-                        </form>
-                        <div className="text-xs text-gray-500 text-center mt-2">
-                          Si no tienes el código, revisa tu correo (incluyendo spam) o solicita soporte.
-                        </div>
-                      </CardBody>
-                      <CardFooter className="flex flex-col space-y-2">
-                        <p className="text-xs text-center text-gray-500 w-full">
-                          Si tienes problemas, contacta a soporte.
-                        </p>
-                      </CardFooter>
-                    </Card>
-                  </div>
-                </Tab>
-              </Tabs>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal de alerta en caso de error */}
+      {/* Alert Modal */}
       {showAlert && (
         <AlertModal
-          message="Usuario o contraseña incorrectos"
+          message="Credenciales incorrectas. Por favor verifique sus datos."
           onClose={() => setShowAlert(false)}
         />
       )}

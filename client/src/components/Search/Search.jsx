@@ -15,11 +15,11 @@ const styles = {
     "focus:ring-0",
     "py-2",
     "leading-normal",
-    "w-full",            
-    "overflow-hidden",   
-    "text-ellipsis",     
+    "w-full",
+    "overflow-hidden",
+    "text-ellipsis",
   ],
-  innerWrapper: "bg-transparent flex items-center",   
+  innerWrapper: "bg-transparent flex items-center",
   inputWrapper: [
     "shadow-none",
     "border-none",
@@ -75,14 +75,42 @@ const BarraSearch = forwardRef((props, ref) => {
 
   const labelContent = <label {...getLabelProps()}>{label}</label>;
 
-  const onClear = () => {
+  const handleClear = (e) => {
+    // Evitar propagación si es necesario
+    e?.stopPropagation();
+
+    // 1. Limpiar estado interno
     setValue("");
+
+    // 2. Notificar cambio de valor al padre (esencial para formularios controlados)
+    if (props.onValueChange) {
+      props.onValueChange("");
+    }
+
+    // 3. Notificar evento de limpieza específico
+    if (props.onClear) {
+      props.onClear();
+    }
+
+    // 4. Enfocar el input nuevamente para UX fluida
+    domRef.current?.focus();
   };
 
   const end = React.useMemo(() => {
     if (isClearable) {
+      // Combinar props del hook con nuestro manejador personalizado
+      const clearProps = getClearButtonProps();
       return (
-        <span {...getClearButtonProps()} onClick={onClear}>
+        <span
+          {...clearProps}
+          onClick={(e) => {
+            // Ejecutar lógica del hook si existe
+            clearProps?.onClick?.(e);
+            // Ejecutar nuestra lógica completa
+            handleClear(e);
+          }}
+          className="cursor-pointer text-default-400 hover:text-default-500 active:opacity-70 transition-opacity"
+        >
           <CloseFilledIcon />
         </span>
       );
@@ -90,7 +118,7 @@ const BarraSearch = forwardRef((props, ref) => {
       return endContent;
     }
     return null;
-  }, [isClearable, getClearButtonProps, endContent]);
+  }, [isClearable, getClearButtonProps, endContent, props.onValueChange, props.onClear]);
 
   const innerWrapper = React.useMemo(() => {
     return (
