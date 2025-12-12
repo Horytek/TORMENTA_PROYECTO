@@ -267,7 +267,7 @@ const verifyToken = async (req, res) => {
         let userFound;
         if (id_tenant) {
             [userFound] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.estado_usuario, usu.estado_token, su.nombre_sucursal, usu.id_tenant, usu.plan_pago
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.estado_usuario, usu.estado_token, su.nombre_sucursal, usu.id_tenant, usu.plan_pago, usu.fecha_pago
                  FROM usuario usu
                  LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
                  LEFT JOIN sucursal su ON su.dni = ven.dni
@@ -294,6 +294,30 @@ const verifyToken = async (req, res) => {
         }
 
         const userbd = userFound[0];
+
+        // ---------------------------------------------------------
+        // VALIDACIÓN DE SUSCRIPCIÓN (EXPIRACIÓN)
+        // ---------------------------------------------------------
+        if (userbd.id_tenant && userbd.fecha_pago) {
+            const today = new Date();
+            const expiration = new Date(userbd.fecha_pago);
+            today.setHours(0, 0, 0, 0);
+
+            if (expiration < today) {
+                try {
+                    await connection.query(
+                        "UPDATE usuario SET estado_usuario = 0 WHERE id_tenant = ?",
+                        [userbd.id_tenant]
+                    );
+                    userbd.estado_usuario = 0;
+                    return res.status(401).json({
+                        success: false,
+                        message: "Suscripción vencida"
+                    });
+                } catch (e) { }
+            }
+        }
+        // ---------------------------------------------------------
 
         // Verificar que el token esté activo (previene uso después de logout)
         if (userbd.estado_token === 0) {
