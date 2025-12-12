@@ -15,7 +15,7 @@ const otpStore = {};
 const login = async (req, res) => {
     let connection;
     try {
-        const { usuario, password} = req.body;
+        const { usuario, password } = req.body;
 
         if (!usuario || !password) {
             return res.status(400).json({
@@ -33,102 +33,89 @@ const login = async (req, res) => {
         connection = await getConnection();
 
         const user = { usuario: usuario.trim(), password: password.trim() };
-        // Verificar que el usuario existe y está activo
-        const [userFound] = await connection.query(
-            "SELECT 1 FROM usuario WHERE usua = ? AND estado_usuario = 1 LIMIT 1",
+
+        // Verificar que el usuario existe (quitamos filtro estricto de estado_usuario=1 aquí para manejar mensaje personalizado)
+        const [rows] = await connection.query(
+            "SELECT id_usuario, id_rol, usua, contra, estado_usuario, id_tenant, fecha_pago, plan_pago FROM usuario WHERE usua = ? LIMIT 1",
             [user.usuario]
         );
 
-        if (userFound.length === 0) {
+        if (rows.length === 0) {
             const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
-            
-            // Registrar intento fallido
             recordFailedAttempt(req);
-            
-            try {
-                await logAcceso.loginFail(user.usuario, ip, null, "Usuario no existe o está deshabilitado");
-            } catch (eLog) {
-                console.error('[SECURITY] Error al registrar login fallido:', eLog);
-            }
-            
-            return res.status(401).json({ 
-                success: false, 
-                message: "Credenciales incorrectas" 
-            });
+            try { await logAcceso.loginFail(user.usuario, ip, null, "Usuario no existe"); } catch (e) { }
+            return res.status(401).json({ success: false, message: "Credenciales incorrectas" });
         }
 
-        let userValid = null;
-        let userbd = null;
+        let userbd = rows[0];
 
-        // Obtener datos del usuario con su contraseña hasheada
-        if (user.usuario === "desarrollador") {
-            const [rows] = await connection.query(
-                "SELECT id_usuario, id_rol, usua, contra, estado_usuario, id_tenant FROM usuario WHERE usua = ? LIMIT 1",
-                [user.usuario]
-            );
-            userValid = rows;
-        } else {
-            const [rows] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant, usu.plan_pago
-                 FROM usuario usu
-                 LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
-                 LEFT JOIN sucursal su ON su.dni = ven.dni
-                 WHERE usu.usua = ? AND usu.estado_usuario = 1
-                 LIMIT 1`,
-                [user.usuario]
-            );
-            userValid = rows;
-        }
-
-        if (userValid.length === 0) {
-            const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
-            
-            recordFailedAttempt(req);
-            
-            try {
-                await logAcceso.loginFail(user.usuario, ip, null, "Credenciales incorrectas");
-            } catch (eLog) {
-                console.error('[SECURITY] Error al registrar login fallido:', eLog);
-            }
-            
-            return res.status(401).json({ 
-                success: false, 
-                message: "Credenciales incorrectas" 
-            });
-        }
-
-        userbd = userValid[0];
-        
-        // Verificar contraseña con bcrypt si está hasheada, sino comparar texto plano (compatibilidad)
+        // Verificar contraseña
         let passwordMatch = false;
-        
         if (isBcryptHash(userbd.contra)) {
-            // Contraseña hasheada con bcrypt (segura)
             passwordMatch = await verifyPassword(user.password, userbd.contra);
         } else {
-            // Contraseña en texto plano (modo compatibilidad - INSEGURO)
-            console.warn(`[SECURITY] Usuario "${user.usuario}" tiene contraseña en texto plano. Considere migrar a bcrypt.`);
+            console.warn(`[SECURITY] Usuario "${user.usuario}" tiene contraseña en texto plano.`);
             passwordMatch = user.password === userbd.contra;
         }
 
         if (!passwordMatch) {
             const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
-            
             recordFailedAttempt(req);
-            
-            try {
-                await logAcceso.loginFail(user.usuario, ip, userbd?.id_tenant ?? null, "Contraseña incorrecta");
-            } catch (eLog) {
-                console.error('[SECURITY] Error al registrar login fallido:', eLog);
-            }
-            
-            return res.status(401).json({ 
-                success: false, 
-                message: "Credenciales incorrectas" 
-            });
+            try { await logAcceso.loginFail(user.usuario, ip, userbd.id_tenant, "Contraseña incorrecta"); } catch (e) { }
+            return res.status(401).json({ success: false, message: "Credenciales incorrectas" });
         }
 
-        // Login exitoso - Limpiar intentos fallidos
+        // ---------------------------------------------------------
+        // VALIDACIÓN DE SUSCRIPCIÓN (EXPIRACIÓN)
+        // ---------------------------------------------------------
+        if (userbd.id_tenant && userbd.fecha_pago) {
+            const today = new Date();
+            const expiration = new Date(userbd.fecha_pago);
+            today.setHours(0, 0, 0, 0); // Normalizar a medianoche
+
+            // Si la fecha de pago es AYER o antes (expirado)
+            if (expiration < today) {
+                // Bloquear usuario actual Y TODOS los usuarios del mismo tenant
+                try {
+                    await connection.query(
+                        "UPDATE usuario SET estado_usuario = 0 WHERE id_tenant = ?",
+                        [userbd.id_tenant]
+                    );
+                    userbd.estado_usuario = 0; // Actualizar en memoria local
+                    console.log(`[SUBSCRIPTION] Tenant ${userbd.id_tenant} expirado (${userbd.fecha_pago}). Usuarios bloqueados.`);
+                } catch (eExp) {
+                    console.error("[SUBSCRIPTION] Error desactivando usuarios expirados:", eExp);
+                }
+            }
+        }
+        // ---------------------------------------------------------
+
+        // Ahora verificar estado actual
+        if (userbd.estado_usuario !== 1) {
+            const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
+            recordFailedAttempt(req);
+
+            const msg = userbd.fecha_pago && new Date(userbd.fecha_pago) < new Date()
+                ? "Tu suscripción ha vencido. Contacta al administrador."
+                : "Tu cuenta está desactivada.";
+
+            return res.status(403).json({ success: false, message: msg });
+        }
+
+        // Si es rol normal, traer más datos
+        if (userbd.id_rol !== 1 && user.usuario !== "desarrollador") {
+            const [extra] = await connection.query(
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant, usu.plan_pago
+                 FROM usuario usu
+                 LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
+                 LEFT JOIN sucursal su ON su.dni = ven.dni
+                 WHERE usu.id_usuario = ? LIMIT 1`,
+                [userbd.id_usuario]
+            );
+            if (extra.length > 0) userbd = { ...userbd, ...extra[0] };
+        }
+
+        // Login exitoso
         clearAttempts(req);
 
         // Crear token JWT seguro
@@ -141,7 +128,7 @@ const login = async (req, res) => {
         // Resolver ruta por defecto usando caché
         let defaultRedirect = "/inicio";
         const cacheKey = `route_${userbd.id_rol}`;
-        
+
         if (routeCache.has(cacheKey)) {
             const cached = routeCache.get(cacheKey);
             if (Date.now() - cached.timestamp < CACHE_TTL) {
@@ -150,13 +137,13 @@ const login = async (req, res) => {
                 routeCache.delete(cacheKey);
             }
         }
-        
+
         if (defaultRedirect === "/inicio") {
             const [rolData] = await connection.query(
                 "SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ? LIMIT 1",
                 [userbd.id_rol]
             );
-            
+
             if (rolData[0]?.id_submodulo) {
                 const [submoduleData] = await connection.query(
                     "SELECT ruta FROM submodulos WHERE id_submodulo = ? LIMIT 1",
@@ -166,7 +153,7 @@ const login = async (req, res) => {
                     defaultRedirect = submoduleData[0].ruta;
                 }
             }
-            
+
             if (defaultRedirect === "/inicio" && rolData[0]?.id_modulo) {
                 const [moduleData] = await connection.query(
                     "SELECT ruta FROM modulo WHERE id_modulo = ? LIMIT 1",
@@ -176,22 +163,13 @@ const login = async (req, res) => {
                     defaultRedirect = moduleData[0].ruta;
                 }
             }
-            
-            // Guardar en caché
-            routeCache.set(cacheKey, {
-                route: defaultRedirect,
-                timestamp: Date.now()
-            });
+            routeCache.set(cacheKey, { route: defaultRedirect, timestamp: Date.now() });
         }
 
         // Registrar login exitoso
         const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
         if (userbd.id_tenant) {
-            try {
-                await logAcceso.loginOk(userbd.id_usuario, ip, userbd.id_tenant);
-            } catch (eLog) {
-                console.error('[AUTH] Error al registrar login exitoso:', eLog);
-            }
+            try { await logAcceso.loginOk(userbd.id_usuario, ip, userbd.id_tenant); } catch (e) { }
         }
 
         // Configuración segura de cookie
@@ -219,7 +197,7 @@ const login = async (req, res) => {
         // Actualizar estado del token en BD
         try {
             await connection.query(
-                "UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", 
+                "UPDATE usuario SET estado_token = ? WHERE id_usuario = ?",
                 [1, userbd.id_usuario]
             );
         } catch (eUpd) {
@@ -228,22 +206,22 @@ const login = async (req, res) => {
 
     } catch (error) {
         console.error('[SECURITY] Error en login:', error);
-        
+
         // NO exponer detalles del error en producción
         if (process.env.DEBUG_AUTH === "1") {
             return res.status(500).json({
                 code: 0,
-                debug: { 
-                    code: error.code || null, 
-                    msg: error.sqlMessage || error.message || "unknown" 
+                debug: {
+                    code: error.code || null,
+                    msg: error.sqlMessage || error.message || "unknown"
                 }
             });
         }
-        
-        return res.status(500).json({ 
+
+        return res.status(500).json({
             success: false,
-            code: 0, 
-            message: "Error interno del servidor" 
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -256,25 +234,25 @@ const login = async (req, res) => {
 const verifyToken = async (req, res) => {
     // Validar cookie y JWT primero (sin DB)
     const token = req.cookies?.token;
-    
+
     if (!token) {
-        return res.status(401).json({ 
+        return res.status(401).json({
             success: false,
-            message: "No autenticado" 
+            message: "No autenticado"
         });
     }
 
     let decoded;
     try {
-        decoded = jwt.verify(token, TOKEN_SECRET, { 
-            audience: "horytek-erp", 
-            issuer: "horytek-backend" 
+        decoded = jwt.verify(token, TOKEN_SECRET, {
+            audience: "horytek-erp",
+            issuer: "horytek-backend"
         });
     } catch (error) {
         console.warn('[SECURITY] Token inválido:', error.message);
-        return res.status(401).json({ 
+        return res.status(401).json({
             success: false,
-            message: "Token inválido o expirado" 
+            message: "Token inválido o expirado"
         });
     }
 
@@ -309,20 +287,20 @@ const verifyToken = async (req, res) => {
 
         if (!userFound || userFound.length === 0) {
             console.warn('[SECURITY] Usuario no encontrado en verifyToken:', usuario);
-            return res.status(401).json({ 
+            return res.status(401).json({
                 success: false,
-                message: "Usuario no encontrado" 
+                message: "Usuario no encontrado"
             });
         }
 
         const userbd = userFound[0];
-        
+
         // Verificar que el token esté activo (previene uso después de logout)
         if (userbd.estado_token === 0) {
             console.warn('[SECURITY] Token inactivo para usuario:', usuario);
-            return res.status(401).json({ 
+            return res.status(401).json({
                 success: false,
-                message: "Sesión inválida" 
+                message: "Sesión inválida"
             });
         }
 
@@ -337,10 +315,10 @@ const verifyToken = async (req, res) => {
         });
     } catch (error) {
         console.error('[SECURITY] Error en verifyToken:', error);
-        return res.status(500).json({ 
+        return res.status(500).json({
             success: false,
-            code: 0, 
-            message: "Error al verificar token" 
+            code: 0,
+            message: "Error al verificar token"
         });
     } finally {
         if (connection) {
@@ -352,19 +330,19 @@ const verifyToken = async (req, res) => {
 // LOGOUT - OPTIMIZADO
 const logout = async (req, res) => {
     const token = req.cookies?.token;
-    
+
     if (!token) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             success: false,
-            message: "No hay sesión activa" 
+            message: "No hay sesión activa"
         });
     }
 
     let decoded;
     try {
-        decoded = jwt.verify(token, TOKEN_SECRET, { 
-            audience: "horytek-erp", 
-            issuer: "horytek-backend" 
+        decoded = jwt.verify(token, TOKEN_SECRET, {
+            audience: "horytek-erp",
+            issuer: "horytek-backend"
         });
     } catch (error) {
         console.warn('[SECURITY] Token inválido en logout:', error.message);
@@ -385,10 +363,10 @@ const logout = async (req, res) => {
 
         const usuario = decoded.usr ?? decoded.nameUser;
         const [userFound] = await connection.query(
-            "SELECT id_usuario, id_tenant FROM usuario WHERE usua = ? LIMIT 1", 
+            "SELECT id_usuario, id_tenant FROM usuario WHERE usua = ? LIMIT 1",
             [usuario]
         );
-        
+
         if (userFound.length === 0) {
             console.warn('[SECURITY] Usuario no encontrado en logout:', usuario);
             return res.sendStatus(401);
@@ -399,8 +377,8 @@ const logout = async (req, res) => {
 
         // Registrar logout
         if (userbd.id_tenant) {
-            try { 
-                await logAcceso.logout(userbd.id_usuario, ip, userbd.id_tenant); 
+            try {
+                await logAcceso.logout(userbd.id_usuario, ip, userbd.id_tenant);
             } catch (eLog) {
                 console.error('[AUTH] Error al registrar logout:', eLog);
             }
@@ -408,7 +386,7 @@ const logout = async (req, res) => {
 
         // Invalidar token en BD
         await connection.query(
-            "UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", 
+            "UPDATE usuario SET estado_token = ? WHERE id_usuario = ?",
             [0, userbd.id_usuario]
         );
 
@@ -421,16 +399,16 @@ const logout = async (req, res) => {
             expires: new Date(0),
         });
 
-        return res.json({ 
+        return res.json({
             success: true,
-            message: "Sesión cerrada correctamente" 
+            message: "Sesión cerrada correctamente"
         });
     } catch (error) {
         console.error('[SECURITY] Error en logout:', error);
-        return res.status(500).json({ 
+        return res.status(500).json({
             success: false,
-            code: 0, 
-            message: "Error al cerrar sesión" 
+            code: 0,
+            message: "Error al cerrar sesión"
         });
     } finally {
         if (connection) {
@@ -444,44 +422,44 @@ const updateUsuarioName = async (req, res) => {
     let connection;
     try {
         const { usua } = req.body;
-        
+
         if (!usua) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "El usuario es requerido" 
+                message: "El usuario es requerido"
             });
         }
 
         connection = await getConnection();
-        
+
         const [userResult] = await connection.query(
-            `SELECT id_usuario FROM usuario WHERE usua = ? LIMIT 1`, 
+            `SELECT id_usuario FROM usuario WHERE usua = ? LIMIT 1`,
             [usua]
         );
 
         if (userResult.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                message: "Usuario no encontrado" 
+                message: "Usuario no encontrado"
             });
         }
 
         const userbd = userResult[0];
-        
+
         await connection.query(
-            "UPDATE usuario SET estado_token = ? WHERE id_usuario = ?", 
+            "UPDATE usuario SET estado_token = ? WHERE id_usuario = ?",
             [0, userbd.id_usuario]
         );
 
-        res.json({ 
-            code: 1, 
-            message: "Estado de token actualizado" 
+        res.json({
+            code: 1,
+            message: "Estado de token actualizado"
         });
     } catch (error) {
         console.error('Error en updateUsuarioName:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             code: 0,
-            message: "Error interno del servidor" 
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -613,5 +591,5 @@ export const methods = {
     verifyToken,
     logout,
     updateUsuarioName,
-    sendAuthCode 
+    sendAuthCode
 };

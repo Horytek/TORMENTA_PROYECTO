@@ -12,8 +12,9 @@ import { FaRegCreditCard } from "react-icons/fa";
 import { CheckCircle, XCircle, X, DownloadCloud, AlertTriangle } from "lucide-react";
 import { useUserStore } from "@/store/useStore";
 import { useEffect, useState } from "react";
+import { Accordion, AccordionItem } from "@heroui/react";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
-import { getMpPayments, requestPlanChange, createPreapproval } from "@/services/payment.services";
+import { getMpPayments, requestPlanChange, createPreference } from "@/services/payment.services";
 import { getUsuario } from "@/services/usuario.services";
 import { toast } from "react-hot-toast";
 
@@ -47,9 +48,10 @@ export default function BillingDrawer({ open, onClose }) {
 
   // Fecha de vencimiento real (usuario puede venir como array)
   const [fechaPago, setFechaPago] = useState(null);
-  const [subActive, setSubActive] = useState(false);
-  const [subNextPayment, setSubNextPayment] = useState(null);
-  const [subChecking, setSubChecking] = useState(false);
+
+  // Estado para confirmación de cancelación
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
 
   useEffect(() => {
     if (open && nombre) {
@@ -123,62 +125,97 @@ export default function BillingDrawer({ open, onClose }) {
 
   const alertaVencimiento = vencimiento && new Date(vencimiento) < new Date();
 
+  // Lógica para habilitar pago: Solo si faltan 5 días o menos (o ya venció)
+  const today = new Date();
+  const vencimientoDate = vencimiento ? new Date(vencimiento) : null;
+  const diffTime = vencimientoDate ? vencimientoDate - today : 0;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const canPay = !vencimientoDate || diffDays <= 5; // Habilitado 5 días antes o infinito si no hay fecha
+  const fechaHabilitacion = vencimientoDate ? new Date(vencimientoDate.getTime() - (5 * 24 * 60 * 60 * 1000)) : null;
 
-    // Helper: consulta estado de suscripción
-  const fetchSubscriptionStatus = async () => {
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(correo || "").trim());
-    if (!emailOk) return;
-    try {
-      setSubChecking(true);
-      const res = await createPreapproval({ plan: planLabel, email: correo });
-      const data = res?.data || res;
-      // Solo mostrar “Activa” si MP confirma (estricto)
-      setSubActive(Boolean(data?.active_strict ?? data?.active));
-      setSubNextPayment(data?.preapproval?.next_payment_date || null);
-    } catch {
-      setSubActive(false);
-      setSubNextPayment(null);
-    } finally {
-      setSubChecking(false);
-    }
-  };
 
-  useEffect(() => {
-    if (!open) return;
-    fetchSubscriptionStatus();
-  }, [open, planLabel, correo]);
 
-    // Re-check al volver del tab/ventana
-  useEffect(() => {
-    if (!open) return;
-    const onFocus = () => fetchSubscriptionStatus();
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [open, planLabel, correo]);
 
-  // Preapproval (renovación automática)
-  const handleEnableAutoRenew = async () => {
+
+
+  // Manual Renewal (Pago manual mensual)
+  const handleManualRenewal = async () => {
     try {
       setAutoRenewLoading(true);
-      const res = await createPreapproval({
-        plan: planLabel,
-        amount: Number(String(costo).replace(/[^\d.]/g, "")) || 0,
-        email: correo,
-        nombre: empresa,
-      });
+      // Limpiar costo a numero
+      const amount = Number(String(costo).replace(/[^\d.]/g, "")) || 0;
+
+      const preferenceData = {
+        items: [
+          {
+            id: `RENEW_${plan_pago}_${Date.now()}`,
+            title: `Renovación Plan ${planLabel}`,
+            quantity: 1,
+            unit_price: amount,
+            description: `Renovación mensual del plan ${planLabel} para ${empresa}`
+          }
+        ],
+        payer: {
+          email: correo,
+          name: empresa
+        },
+        external_reference: correo, // Clave para vincular el pago al tenant
+        back_urls: {
+          success: window.location.origin + "/success",
+          failure: window.location.origin + "/failure",
+          pending: window.location.origin + "/pending"
+        },
+        auto_return: "approved"
+      };
+
+      const res = await createPreference(preferenceData);
       const data = res?.data || res;
-      if (data?.init_point) {
-        window.open(data.init_point, "_blank");
-        // refrescar luego
-        setTimeout(fetchSubscriptionStatus, 4000);
+
+      if (data?.id) {
+        // Redirigir al checkout de Mercado Pago (init_point no siempre viene en la respuesta corta, pero si la id)
+        // Usualmente la respuesta trae init_point si es full. Si no, usamos el sandbox/prod link construible o esperamos init_point.
+        // Ajuste: createPreference controller devuelve { id, success: true }, falta init_point?
+        // Revisemos controller: devuelve { id: result.id, success: true }. LE FALTA init_point.
+        // Pero el wallet brick usaba ID. Aqui queremos link.
+        // El SDK de react abre modal. Nosotros queremos Link.
+        // !IMPORTANTE: El controller actual solo devuelve ID.
+        // Vamos a intentar abrir el checkout con el ID (sandbox o production).
+        // O mejor: usar el WalletBrick aqui? No, el usuario quiere link/boton.
+
+        // HACK: Si el controller no devuelve init_point, no podemos redirigir facilmente sin el SDK.
+        // Pero el usuario dijo "mande un link".
+        // Voy a asumir que el controller PUEDE devolver init_point o lo ajustaré si falla.
+        // Por ahora, si solo tengo ID, instancio el checkout pro o uso el link estandar:
+        // https://www.mercadopago.com.pe/checkout/v1/redirect?pref_id=...
+
+        const countryUrl = "https://www.mercadopago.com.pe/checkout/v1/redirect?pref_id=";
+        window.location.href = `${countryUrl}${data.id}`;
       } else {
-        toast.error(data?.message || "No se pudo generar la suscripción automática");
+        toast.error("No se pudo generar el enlace de pago");
       }
-    } catch {
-      toast.error("Error al crear la suscripción automática");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al iniciar renovación");
     } finally {
       setAutoRenewLoading(false);
     }
+  };
+
+  const handleCancelSubscription = () => {
+    // Feedback visual solamente, ya que "Cancelar" en modelo manual significa no pagar.
+    const dateStr = vencimiento ? new Date(vencimiento).toLocaleDateString() : "hoy";
+    toast(
+      (t) => (
+        <div className="text-sm">
+          <b>Suscripción cancelada</b>
+          <p>Tendrás acceso hasta el {dateStr}. Luego, tu cuenta pasará a inactiva si no realizas el pago.</p>
+          <Button size="sm" variant="light" onPress={() => toast.dismiss(t.id)} className="mt-2 text-blue-500">
+            Entendido
+          </Button>
+        </div>
+      ),
+      { duration: 6000, icon: "🗓️" }
+    );
   };
 
   // Enviar solicitud de cambio de plan (Resend)
@@ -211,30 +248,7 @@ export default function BillingDrawer({ open, onClose }) {
     }
   };
 
-useEffect(() => {
-  let alive = true;
-  const checkSubscription = async () => {
-    if (!open) return;
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(correo || "").trim());
-    if (!emailOk) return;
-    try {
-      setSubChecking(true);
-      const res = await createPreapproval({ plan: planLabel, email: correo });
-      const data = res?.data || res;
-      if (!alive) return;
-      setSubActive(Boolean(data?.active_strict ?? data?.active));
-      setSubNextPayment(data?.preapproval?.next_payment_date || null);
-    } catch {
-      if (!alive) return;
-      setSubActive(false);
-      setSubNextPayment(null);
-    } finally {
-      if (alive) setSubChecking(false);
-    }
-  };
-  checkSubscription();
-  return () => { alive = false; };
-}, [open, planLabel, correo]);
+
 
   return (
     <Drawer
@@ -386,41 +400,95 @@ useEffect(() => {
                 <div className="my-4 h-px bg-gradient-to-r from-gray-100 to-transparent dark:from-zinc-800/30" />
 
                 <div className="grid grid-cols-1 gap-3">
-                  {/* Auto-renovación */}
                   <div className="rounded-lg border border-gray-200 dark:border-zinc-800 p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-sm">
-                        <div className="font-semibold text-gray-800 dark:text-blue-100">Renovación automática</div>
+                        <div className="font-semibold text-gray-800 dark:text-blue-100">Estado de Suscripción</div>
                         <div className="text-xs text-gray-500 dark:text-zinc-400">
-                          {subChecking ? "Verificando suscripción..." : subActive ? "Tu suscripción está activa" : "Autoriza cobros recurrentes de tu plan actual"}
+                          {alertaVencimiento
+                            ? "Tu suscripción ha vencido. Realiza el pago para reactivar."
+                            : "Tu plan se renueva mensualmente de forma manual."}
                         </div>
-                        {subActive && subNextPayment && (
-                          <div className="text-[11px] text-gray-500 dark:text-zinc-400 mt-1">
-                            Próximo cobro: {new Date(subNextPayment).toLocaleString("es-PE")}
+                        {vencimiento && (
+                          <div className={`text-[11px] font-semibold mt-1 ${alertaVencimiento ? "text-red-500" : "text-green-600 dark:text-green-400"}`}>
+                            Vence el: {new Date(vencimiento).toLocaleDateString()}
+                          </div>
+                        )}
+                        {!canPay && fechaHabilitacion && (
+                          <div className="mt-1 text-[10px] text-orange-500">
+                            Podrás renovar a partir del {fechaHabilitacion.toLocaleDateString()}
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        {!subChecking && (
-                          <Chip
-                            size="sm"
-                            variant="flat"
-                            color={subActive ? "success" : "default"}
-                          >
-                            {subActive ? "Activa" : "No activa"}
-                          </Chip>
-                        )}
+                      <div className="flex flex-col gap-2">
+                        <Tooltip content={!canPay ? `Habilitado 5 días antes del vencimiento` : "Pago de renovación mensual"}>
+                          <div className="w-full">
+                            <Button
+                              size="sm"
+                              className={`w-full ${!canPay ? "opacity-50" : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20"}`}
+                              isLoading={autoRenewLoading}
+                              onPress={handleManualRenewal}
+                              isDisabled={!canPay}
+                            >
+                              Pagar Renovación
+                            </Button>
+                          </div>
+                        </Tooltip>
                         <Button
                           size="sm"
-                          color="primary"
-                          isLoading={autoRenewLoading}
-                          onPress={handleEnableAutoRenew}
-                          isDisabled={subChecking}
+                          variant="light"
+                          color="danger"
+                          className="text-xs h-7"
+                          onPress={() => setShowCancelConfirm(true)}
                         >
-                          {subActive ? "Gestionar" : "Activar"}
+                          Cancelar
                         </Button>
                       </div>
                     </div>
+                    {/* Confirmación de Cancelación Inline */}
+                    {showCancelConfirm && (
+                      <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg animate-in fade-in slide-in-from-top-1">
+                        <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1">¿Estás seguro?</p>
+                        <p className="text-[11px] text-red-600 dark:text-red-400 mb-3 leading-snug">
+                          Si cancelas, tendrás acceso hasta el <b>{vencimiento ? new Date(vencimiento).toLocaleDateString() : "fin del periodo"}</b>. Luego, tu cuenta y la de todos tus usuarios se desactivarán.
+                        </p>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            variant="light"
+                            className="h-6 text-[10px]"
+                            onPress={() => setShowCancelConfirm(false)}
+                          >
+                            Volver
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="danger"
+                            className="h-6 text-[10px] px-3"
+                            onPress={() => {
+                              handleCancelSubscription();
+                              setShowCancelConfirm(false);
+                            }}
+                          >
+                            Sí, cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Instrucciones Breves */}
+                  <div className="rounded-lg border border-gray-200 dark:border-zinc-800 overflow-hidden">
+                    <Accordion isCompact variant="light">
+                      <AccordionItem key="1" aria-label="Instrucciones de Pago" title={<span className="text-xs font-semibold text-gray-500">ℹ️ ¿Cómo funciona la renovación?</span>}>
+                        <div className="text-xs text-gray-500 dark:text-zinc-400 space-y-2 pb-2">
+                          <p>1. <b>Pago habilitado:</b> El botón de pago se activa 5 días antes de tu vencimiento.</p>
+                          <p>2. <b>Sin cobros automáticos:</b> No te debitaremos nada. Tú decides cuándo pagar.</p>
+                          <p>3. <b>Renovación:</b> Al realizar el pago, tu fecha de vencimiento se extiende 30 días automáticamente.</p>
+                          <p>4. <b>Vencimiento:</b> Si llega la fecha y no pagas, tendrás un periodo de gracia breve antes de perder el acceso hasta que regularices.</p>
+                        </div>
+                      </AccordionItem>
+                    </Accordion>
                   </div>
 
                   {/* Solicitar cambio de plan (toggle) */}

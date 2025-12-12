@@ -18,15 +18,15 @@ export const createPreference = async (req, res) => {
     //console.log('CREANDO PREFERENCIA DE PAGO');
     //console.log('────────────────────────────────────────────────────────');
     //console.log('Body recibido:', JSON.stringify(req.body, null, 2));
-    
+
     const items = Array.isArray(req.body?.items) && req.body.items.length > 0
       ? req.body.items
       : [{
-          id: "PLAN_DEFAULT",
-          title: "Plan de suscripción",
-          quantity: 1,
-          unit_price: 0,
-        }];
+        id: "PLAN_DEFAULT",
+        title: "Plan de suscripción",
+        quantity: 1,
+        unit_price: 0,
+      }];
 
     const payer = req.body?.payer?.email
       ? req.body.payer
@@ -52,7 +52,7 @@ export const createPreference = async (req, res) => {
     const notification_url = `${baseWebhook}/api/webhook`;
     // External reference: Email de la empresa para vincular el pago
     const external_reference = req.body.external_reference || (payer && payer.email) || "";
-    
+
     /*console.log('\Datos de la preferencia:');
     console.log('- Items:', items.length, 'producto(s)');
     console.log('- Precio total:', items[0]?.unit_price || 0);
@@ -254,7 +254,7 @@ export const paymentWebhook = async (req, res) => {
                   </div>
                 `
               });
-            } 
+            }
           } catch { /* noop */ }
         }
       } catch { /* noop */ }
@@ -270,13 +270,34 @@ export const paymentWebhook = async (req, res) => {
       { headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } }
     );
 
-    const externalReference = payment.external_reference || null;
-    if (!externalReference) return res.sendStatus(200);
+    let externalReference = payment.external_reference || null;
 
     // Detectar si el pago proviene de suscripción
     const isSubscriptionPayment = Boolean(
       payment?.metadata?.preapproval_id || payment?.preapproval_id || payment?.subscription_id
     );
+
+    // Si es suscripción y NO vino external_reference en el objeto payment,
+    // intentamos buscar la suscripción (preapproval) para obtener el email (payer_email).
+    if (isSubscriptionPayment && !externalReference) {
+      try {
+        const preId = payment?.metadata?.preapproval_id || payment?.preapproval_id || payment?.subscription_id;
+        const { data: preInfo } = await axios.get(
+          `https://api.mercadopago.com/preapproval/${preId}`,
+          { headers: { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } }
+        );
+        // Usamos el email del payer como referencia si existe
+        if (preInfo?.payer_email) {
+          externalReference = preInfo.payer_email;
+          // Actualizamos el payment object en memoria para que saveMPPayment tenga el dato
+          payment.external_reference = externalReference;
+        }
+      } catch (err) {
+        console.error("Error recuperando external_reference de preapproval:", err.message);
+      }
+    }
+
+    if (!externalReference) return res.sendStatus(200);
 
     if (String(payment.status).toLowerCase() === "approved") {
       connection = await getConnection();
@@ -297,7 +318,7 @@ export const paymentWebhook = async (req, res) => {
         const alreadyApproved = String(locked?.status || "").toLowerCase() === "approved";
 
         shouldSendInitialCode = !isSubscriptionPayment && !alreadyApproved;
-        shouldRenewAccess    =  isSubscriptionPayment && !alreadyApproved; // SOLO suscripción suma +30 días
+        shouldRenewAccess = isSubscriptionPayment && !alreadyApproved; // SOLO suscripción suma +30 días
 
         const [empresas] = await connection.query(
           "SELECT id_empresa, id_tenant FROM empresa WHERE email = ? LIMIT 1",
@@ -307,7 +328,7 @@ export const paymentWebhook = async (req, res) => {
         empresa = empresas[0];
 
         // Guardar/actualizar el pago
-        try { await saveMPPayment(connection, empresa.id_tenant, payment); } catch {}
+        try { await saveMPPayment(connection, empresa.id_tenant, payment); } catch { }
 
         if (shouldRenewAccess) {
           // Suscripción: sumar +30 días solo una vez por cobro
@@ -328,7 +349,7 @@ export const paymentWebhook = async (req, res) => {
 
         await connection.commit();
       } catch {
-        try { await connection.rollback(); } catch {}
+        try { await connection.rollback(); } catch { }
         return res.sendStatus(200);
       }
 
@@ -373,7 +394,7 @@ export const paymentWebhook = async (req, res) => {
                     </div>
                     </div>
                   </div>`
-              });
+            });
           }
         } catch { /* noop */ }
       }
@@ -435,18 +456,18 @@ export const createPreapproval = async (req, res) => {
     const p = String(plan).toLowerCase();
     const PLAN_KEY =
       p.includes("enterprise") ? "Enterprise" :
-      p.includes("pro") ? "Pro" : "Basic";
+        p.includes("pro") ? "Pro" : "Basic";
 
     const PLAN_IDS = {
       Enterprise: process.env.MP_PLAN_ID_ENTERPRISE,
-      Pro:        process.env.MP_PLAN_ID_PRO,
-      Basic:      process.env.MP_PLAN_ID_BASIC,
+      Pro: process.env.MP_PLAN_ID_PRO,
+      Basic: process.env.MP_PLAN_ID_BASIC,
     };
     const base = process.env.MP_SUBS_BASE_URL || "https://www.mercadopago.com.pe/subscriptions/checkout";
     const planId = PLAN_IDS[PLAN_KEY];
 
     const init_point = planId
-      ? `${base}?preapproval_plan_id=${planId}${email ? `&payer_email=${encodeURIComponent(email)}` : ""}`
+      ? `${base}?preapproval_plan_id=${planId}${email ? `&payer_email=${encodeURIComponent(email)}&external_reference=${encodeURIComponent(email)}` : ""}`
       : null;
 
     // Estado estricto desde Mercado Pago
@@ -677,105 +698,128 @@ export const requestPlanChange = async (req, res) => {
   }
 };
 
-// Generar comprobante PDF improvisado de un pago Mercado Pago
+// Generar comprobante PDF profesional (A4)
 export const downloadPaymentReceipt = async (req, res) => {
   const { id } = req.params;
   let connection;
   try {
     connection = await getConnection();
-    const [[payment]] = await connection.query(
-      "SELECT * FROM mp_payments WHERE id = ? LIMIT 1",
-      [id]
-    );
+
+    // Obtener pago y datos de la empresa vinculada
+    const sql = `
+      SELECT p.*, e.razonSocial, e.ruc, e.email as email_empresa, e.direccion 
+      FROM mp_payments p
+      LEFT JOIN empresa e ON p.id_tenant = e.id_tenant
+      WHERE p.id = ? 
+      LIMIT 1
+    `;
+    const [[payment]] = await connection.query(sql, [id]);
+
     if (!payment) return res.status(404).send("Pago no encontrado");
 
-    // Formatos
-    const fmtMoney = (amt, cur = payment.currency_id || "PEN") =>
-      new Intl.NumberFormat("es-PE", { style: "currency", currency: cur }).format(Number(amt || 0));
-    const fmtDate = (d) =>
-      d ? new Date(d).toLocaleString("es-PE", { timeZone: "America/Lima", hour12: true }) : "-";
+    // Configuración del documento
+    const doc = new PDFDocument({ size: "A4", margin: 50 });
 
-    // Headers
+    // Headers de respuesta
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="voucher_pago_${payment.id}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="Comprobante_HoryCore_${payment.mp_payment_id}.pdf"`);
 
-    // Documento (80mm térmico alto dinámico)
-    const doc = new PDFDocument({
-      size: [240, 680],
-      margins: { top: 22, left: 16, right: 16, bottom: 22 }
-    });
-    doc.pipe(res); // pipe SIEMPRE antes de escribir
+    doc.pipe(res);
 
-    const pageW = doc.page.width;
-    const x0 = doc.page.margins.left;
-    const x1 = pageW - doc.page.margins.right;
-
-    // Encabezado minimalista
-    doc.save();
-    doc.rect(0, 0, pageW, 48).fill("#1d4ed8");
-    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(16).text("HoryCore ERP", 0, 14, { align: "center" });
-    doc.fontSize(10).text("COMPROBANTE DE PAGO", { align: "center" });
-    doc.restore();
-    doc.moveDown(1.6);
-
-    // Separador fino
-    doc.lineWidth(0.6).strokeColor("#e5e7eb").moveTo(x0, doc.y).lineTo(x1, doc.y).stroke();
-    doc.moveDown(0.6);
-
-    // Badge de estado
-    const approved = String(payment.status || "").toLowerCase() === "approved";
-    const statusText = approved ? "PAGO APROBADO" : (payment.status || "PENDIENTE").toUpperCase();
-    const badgeW = doc.widthOfString(statusText, { font: "Helvetica-Bold", size: 9 }) + 20;
-    const badgeX = (pageW - badgeW) / 2;
-    const badgeY = doc.y;
-    doc.roundedRect(badgeX, badgeY, badgeW, 18, 9).fill(approved ? "#16a34a" : "#f59e0b");
-    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(9).text(statusText, badgeX, badgeY + 4, { width: badgeW, align: "center" });
-    doc.fillColor("#111827").moveDown(1.2);
-
-    // Utilitario: par etiqueta/valor alineado
-    const labelColor = "#6b7280";
-    const drawKV = (label, value) => {
-      doc.font("Helvetica").fontSize(9).fillColor(labelColor).text(label.toUpperCase(), x0, doc.y, { width: 86 });
-      doc.font("Helvetica-Bold").fillColor("#111827").text(String(value || "-"), x0 + 92);
-      doc.moveDown(0.3);
+    // --- Estilos y Helpers ---
+    const colors = {
+      primary: "#1d4ed8", // Blue 700
+      secondary: "#64748b", // Slate 500
+      text: "#1e293b", // Slate 800
+      lightBg: "#f8fafc", // Slate 50
+      line: "#e2e8f0"
     };
 
-    // Bloque Detalle
-    doc.font("Helvetica-Bold").fontSize(11).fillColor("#111827").text("Detalle del pago");
-    doc.moveDown(0.4);
-    doc.lineWidth(0.6).strokeColor("#eef2f7").moveTo(x0, doc.y).lineTo(x1, doc.y).stroke();
-    doc.moveDown(0.6);
+    const fmtMoney = (amt) =>
+      new Intl.NumberFormat("es-PE", { style: "currency", currency: payment.currency_id || "PEN" }).format(Number(amt || 0));
 
-    drawKV("ID Pago", payment.mp_payment_id);
-    drawKV("Estado", (payment.status || "").toUpperCase());
-    drawKV("Monto", fmtMoney(payment.transaction_amount));
-    drawKV("Moneda", payment.currency_id || "PEN");
-    drawKV("Fecha", fmtDate(payment.date_created));
-    drawKV("Aprobado", fmtDate(payment.date_approved));
-    drawKV("Referencia", payment.external_reference || "-");
-    if (payment.mp_preference_id) drawKV("Preference ID", payment.mp_preference_id);
-    if (payment.mp_preapproval_id) drawKV("Preapproval ID", payment.mp_preapproval_id);
+    const fmtDate = (d) =>
+      d ? new Date(d).toLocaleDateString("es-PE", { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "-";
 
-    // Línea final
-    doc.moveDown(0.6);
-    doc.lineWidth(0.6).strokeColor("#eef2f7").moveTo(x0, doc.y).lineTo(x1, doc.y).stroke();
+    // --- Header ---
+    doc.rect(0, 0, 595.28, 120).fill(colors.lightBg); // Fondo cabecera
 
-    // Totales/resumen mínimo
-    doc.moveDown(0.8);
-    doc.font("Helvetica").fontSize(9).fillColor("#374151");
-    doc.text("Total pagado", x0, doc.y, { continued: true });
-    doc.font("Helvetica-Bold").fillColor("#111827").text(`  ${fmtMoney(payment.transaction_amount)}`, { align: "right" });
+    // Logo / Marca
+    doc.fontSize(24).font("Helvetica-Bold").fillColor(colors.primary).text("HoryCore", 50, 45);
+    doc.fontSize(10).font("Helvetica").fillColor(colors.secondary).text("ERP Management System", 50, 75);
 
-    // Mensaje y marca
-    doc.moveDown(1.2);
-    doc.font("Helvetica").fontSize(9).fillColor("#6b7280").text("Gracias por su preferencia.", { align: "center" });
-    doc.moveDown(0.2);
-    doc.text("Este comprobante fue generado automáticamente por HoryCore.", { align: "center" });
-    doc.moveDown(0.2);
-    doc.fontSize(8).fillColor("#9ca3af").text("www.horycore.com", { align: "center" });
+    // Título del documento
+    const isApproved = String(payment.status).toLowerCase() === "approved";
+    const statusLabel = isApproved ? "PAGADO" : "PENDIENTE";
+
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(isApproved ? "#16a34a" : "#f59e0b")
+      .text(statusLabel, 0, 45, { align: "right" });
+    doc.fontSize(20).font("Helvetica").fillColor(colors.text)
+      .text("RECIBO DE PAGO", 0, 60, { align: "right" });
+
+    // ID y Fecha
+    doc.fontSize(9).font("Helvetica").fillColor(colors.secondary)
+      .text(`ID Transacción: ${payment.mp_payment_id}`, 0, 85, { align: "right" });
+    doc.text(`Fecha: ${fmtDate(payment.date_created)}`, 0, 98, { align: "right" });
+
+    // --- Info Secciones (Emisor y Receptor) ---
+    const yInfo = 150;
+
+    // Emisor (Nosotros)
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(colors.text).text("De:", 50, yInfo);
+    doc.font("Helvetica").fontSize(9).fillColor(colors.secondary)
+      .text("Horytek Solutions", 50, yInfo + 15)
+      .text("soporte@horycore.online")
+      .text("Lima, Perú");
+
+    // Receptor (Cliente)
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(colors.text).text("Para:", 300, yInfo);
+    doc.font("Helvetica").fontSize(9).fillColor(colors.secondary)
+      .text(payment.razonSocial || "Cliente", 300, yInfo + 15)
+      .text(`RUC: ${payment.ruc || "-"}`)
+      .text(payment.email_empresa || payment.external_reference || "-")
+      .text(payment.direccion || "");
+
+    // --- Tabla de Detalles ---
+    const yTable = 240;
+    doc.rect(50, yTable, 495, 25).fill(colors.line); // Header bg
+    doc.fillColor(colors.text).font("Helvetica-Bold").fontSize(9);
+    doc.text("DESCRIPCIÓN", 60, yTable + 8);
+    doc.text("MONTO", 450, yTable + 8, { width: 90, align: "right" });
+
+    // Item 1
+    const yRow = yTable + 35;
+    const desc = payment.mp_preapproval_id
+      ? `Suscripción Mensual (ID: ${payment.mp_preapproval_id})`
+      : "Servicio de Software ERP";
+
+    doc.fillColor(colors.text).font("Helvetica").fontSize(9);
+    doc.text(desc, 60, yRow);
+    doc.text(fmtMoney(payment.transaction_amount), 450, yRow, { width: 90, align: "right" });
+
+    // Línea separadora
+    doc.moveTo(50, yRow + 20).lineTo(545, yRow + 20).strokeColor(colors.line).stroke();
+
+    // --- Totales ---
+    const yTotal = yRow + 40;
+    doc.font("Helvetica-Bold").fontSize(11).fillColor(colors.text);
+    doc.text("TOTAL PAGADO", 350, yTotal, { width: 100, align: "right" });
+    doc.fontSize(14).fillColor(colors.primary);
+    doc.text(fmtMoney(payment.transaction_amount), 460, yTotal - 2, { width: 85, align: "right" });
+
+    // --- Footer ---
+    const pageHeight = 841.89; // A4 height
+    doc.fontSize(8).fillColor(colors.secondary);
+
+    // Nota legal
+    doc.text("Este documento es un comprobante de pago interno del sistema y no reemplaza a una factura electrónica SUNAT salvo que se indique lo contrario.", 50, pageHeight - 80, { align: "center", width: 495 });
+
+    // Website
+    doc.fillColor(colors.primary).text("www.horycore.online", 50, pageHeight - 50, { align: "center" });
 
     doc.end();
   } catch (e) {
+    console.error(e);
     res.status(500).send("Error generando comprobante PDF");
   } finally {
     if (connection) connection.release();
