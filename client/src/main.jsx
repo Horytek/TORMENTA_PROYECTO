@@ -12,7 +12,6 @@ import { useTheme } from "@heroui/use-theme";
 
 const Login = lazy(() => import("./layouts/Login/Login"));
 const Dashboard = lazy(() => import("./layouts/Dashboard/Dashboard"));
-const Messenger = lazy(() => import("./pages/Messenger/Messenger"));
 const LandingPage = lazy(() => import("./pages/Landing/LandingPage"));
 const ServiciosPage = lazy(() => import("./pages/Landing/ServiciosPage"));
 const AboutPage = lazy(() => import("./pages/Landing/AboutPage"));
@@ -114,7 +113,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <Route path="/blog/article" element={<BlogPage />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/*" element={<ProtectedLayout />} />
-                  <Route path="/messenger" element={<Messenger />} />
                 </Route>
               </Routes>
             </Suspense>

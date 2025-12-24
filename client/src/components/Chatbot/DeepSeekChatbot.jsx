@@ -3,7 +3,6 @@ import { Card, Button, Divider, Tooltip, Chip, Textarea, Spinner, Switch, Dropdo
 import { Bot, Send, X, Settings, MessageCircle, Search, Calculator, Zap, Wand2, 
 FileSpreadsheet, FileText, Printer, Copy, Trash2, Maximize2, Minimize2 } from "lucide-react";
 import CommandDemo from "@/components/ui/command";
-import MessengerWidget from "@/components/MessengerWidget/MessengerWidget";
 import { useUserStore } from "@/store/useStore";
 import { getModulosConSubmodulos } from "@/services/rutas.services";
 import axios from "@/api/axios";
@@ -772,13 +771,6 @@ return (
           >
             Buscar en el sistema
           </DropdownItem>
-          <DropdownItem
-            key="messenger"
-            startContent={<MessageCircle className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
-            onClick={() => setIsMessengerOpen(true)}
-          >
-            Mensajería interna
-          </DropdownItem>
         </DropdownMenu>
       </Dropdown>
     </div>
@@ -1066,11 +1058,6 @@ return (
           .animate-fade-in { animation: fade-in .3s ease; }
         `}</style>
       </Card>
-    )}
-
-    {/* Ventana Messenger */}
-    {isMessengerOpen && (
-      <MessengerWidget open={isMessengerOpen} onClose={() => setIsMessengerOpen(false)} />
     )}
   </>
 );

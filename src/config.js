@@ -8,3 +8,8 @@ export const PASSWORD = process.env.DB_PASSWORD || "";
 export const PORT_DB = process.env.DB_PORT || "3306";
 export const TOKEN_SECRET = process.env.TOKEN_SECRET || "";
 export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:4000";
+
+// Exportar el certificado SSL para la base de datos
+export const DB_SSL_CA = process.env.DB_SSL_CA
+  ? process.env.DB_SSL_CA.replace(/\\n/g, "\n")
+  : undefined;

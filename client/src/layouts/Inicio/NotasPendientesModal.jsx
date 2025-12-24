@@ -1,19 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Modal, ModalContent, ModalHeader, ModalFooter, ModalBody, Card, CardBody, Button, Tooltip, ScrollShadow } from "@heroui/react";
 import { FaExchangeAlt, FaTrashAlt, FaPlusCircle } from "react-icons/fa";
 import { AlertTriangle, Info } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import insertNotaAndDetalleIngreso from '@/pages/Almacen/Nota_Ingreso/data/add_nota_D';
-import insertNotaAndDetalleSalida from '@/pages/Almacen/Nota_Salida/data/insert_nota_salida_D';
-import anularNotaIngreso from '@/pages/Almacen/Nota_Ingreso/data/anular_nota_ingreso_D';
-import anularNotaSalida from '@/pages/Almacen/Nota_Salida/data/anular_nota_salida_D';
+import { insertNotaIngreso, anularNotaIngreso, getDocumentosIngreso } from '@/services/notaIngreso.services';
+import { insertNotaSalida, anularNotaSalida, getDocumentosSalida } from '@/services/notaSalida.services';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Tabs, Tab, Select, SelectItem } from "@heroui/react";
-import useDocumentoData from '@/pages/Almacen/Nota_Ingreso/data/data_documento_ingreso';
-import useDocumentoData_S from '@/pages/Almacen/Nota_Salida/data/data_documento_salida';
 import useActualizarEspera from './hooks/actualizar_espera';
 import { useUserStore } from "@/store/useStore";
 
@@ -24,12 +20,43 @@ function NotasPendientesModal({ open, onClose, notas, refetchNotas }) {
 
   const nombre = useUserStore((state) => state.nombre);
 
-  // Obtener nuevo número de comprobante y fecha actual
-  const { documentos: documentosIngreso } = useDocumentoData();
-  const { documentos: documentosSalida } = useDocumentoData_S();
+  // Estados para documentos
+  const [documentosIngreso, setDocumentosIngreso] = useState([]);
+  const [documentosSalida, setDocumentosSalida] = useState([]);
 
-  const { getNuevoNumeroNotaIngreso } = useDocumentoData();
-  const { getNuevoNumeroNotaSalida } = useDocumentoData_S();
+  // Cargar documentos al montar
+  useEffect(() => {
+    let mounted = true;
+    const fetchDocs = async () => {
+      try {
+        const [resIng, resSal] = await Promise.all([
+          getDocumentosIngreso(),
+          getDocumentosSalida()
+        ]);
+        if (mounted) {
+          if (resIng.success) setDocumentosIngreso(resIng.data);
+          if (resSal.success) setDocumentosSalida(resSal.data);
+        }
+      } catch (e) {
+        console.error("Error fetching docs", e);
+      }
+    };
+    if (open) fetchDocs();
+    return () => { mounted = false; };
+  }, [open]);
+
+  // Funciones para obtener nuevo número (simuladas, basadas en data actual fetch)
+  const getNuevoNumeroNotaIngreso = async () => {
+    const res = await getDocumentosIngreso();
+    if (res.success && res.data.length > 0) return res.data[0].nota || res.data[0].nuevo_numero_de_nota;
+    return "-";
+  };
+
+  const getNuevoNumeroNotaSalida = async () => {
+    const res = await getDocumentosSalida();
+    if (res.success && res.data.length > 0) return res.data[0].nota || res.data[0].nuevo_numero_de_nota;
+    return "-";
+  };
 
   const { actualizarEstadoEspera } = useActualizarEspera();
 
@@ -38,7 +65,6 @@ function NotasPendientesModal({ open, onClose, notas, refetchNotas }) {
   const [activeTab, setActiveTab] = useState("falta-salida");
   const [miniModal, setMiniModal] = useState({ open: false, nota: null, action: null, onConfirm: null });
   const navigate = useNavigate();
-
 
   const getCurrentFecha = () => {
     const now = new Date();
@@ -57,138 +83,142 @@ function NotasPendientesModal({ open, onClose, notas, refetchNotas }) {
   };
 
   // Registrar contraparte usando el número de comprobante para actualizar estado_espera
-const handleRegistrarContraparte = async (nota) => {
-  try {
-    let result;
-    const productos = nota.detalles?.map(d => d.id_producto) || [nota.id_producto];
-    const cantidades = nota.detalles?.map(d => d.cantidad) || [nota.cantidad];
-    const nombre_u = nombre;
+  const handleRegistrarContraparte = async (nota) => {
+    try {
+      let result;
+      const productos = nota.detalles?.map(d => d.id_producto) || [nota.id_producto];
+      const cantidades = nota.detalles?.map(d => d.cantidad) || [nota.cantidad];
+      const nombre_u = nombre;
 
-    if (!nota.id_destinatario) {
-      toast.error("La nota no tiene destinatario asignado. No se puede registrar la contraparte.");
-      return;
+      if (!nota.id_destinatario) {
+        toast.error("La nota no tiene destinatario asignado. No se puede registrar la contraparte.");
+        return;
+      }
+      if (!productos.length || !cantidades.length) {
+        toast.error("La nota no tiene productos válidos.");
+        return;
+      }
+
+      let nuevoNumComprobante = "-";
+      if (nota.tipo === "Falta ingreso") {
+        // Obtenemos el numero fresco
+        nuevoNumComprobante = await getNuevoNumeroNotaIngreso();
+
+        result = await insertNotaIngreso({
+          almacenO: nota.id_almacenO,
+          almacenD: nota.id_almacenD,
+          destinatario: nota.id_destinatario,
+          glosa: nota.concepto || "-",
+          nota: "INGRESO",
+          fecha: getCurrentFecha(),
+          producto: productos,
+          numComprobante: nuevoNumComprobante,
+          cantidad: cantidades,
+          observacion: nota.observacion || "",
+          usuario: nombre_u,
+        });
+      } else {
+        nuevoNumComprobante = await getNuevoNumeroNotaSalida();
+
+        result = await insertNotaSalida({
+          almacenO: nota.id_almacenO,
+          almacenD: nota.id_almacenD,
+          destinatario: nota.id_destinatario,
+          glosa: nota.concepto || "-",
+          nota: "SALIDA",
+          fecha: getCurrentFecha(),
+          producto: productos,
+          numComprobante: nuevoNumComprobante,
+          cantidad: cantidades,
+          observacion: nota.observacion || "",
+          nom_usuario: nombre_u,
+        });
+      }
+
+      if (result && result.success) {
+        // 1. Actualiza estado_espera de la nota original por número de comprobante
+        await actualizarEstadoEspera(nota.documento);
+
+        // 2. Actualiza estado_espera de la contraparte generada por su número de comprobante
+        await actualizarEstadoEspera(nuevoNumComprobante);
+
+        // 3. Refresca la lista de notas pendientes
+        if (refetchNotas) await refetchNotas();
+
+        toast.success("Contraparte registrada correctamente.");
+      } else {
+        toast.error(result?.message || "No se pudo registrar la contraparte. Verifique los datos o intente más tarde.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Ocurrió un problema al registrar la contraparte. Intente nuevamente.");
     }
-    if (!productos.length || !cantidades.length) {
-      toast.error("La nota no tiene productos válidos.");
-      return;
+  };
+
+  const handleRegistrarTodasContrapartes = async (notasFiltradas) => {
+    setIsProcessing(true);
+    const notasOrdenadas = [...notasFiltradas].sort((a, b) => {
+      const fechaA = new Date(`${a.fecha}T${a.hora_creacion || "00:00:00"}`);
+      const fechaB = new Date(`${b.fecha}T${b.hora_creacion || "00:00:00"}`);
+      return fechaA - fechaB;
+    });
+
+    for (const nota of notasOrdenadas) {
+      let nuevoNumComprobante = "-";
+      let result = null;
+      const productos = nota.detalles?.map(d => d.id_producto) || [nota.id_producto];
+      const cantidades = nota.detalles?.map(d => d.cantidad) || [nota.cantidad];
+      const nombre_u = nombre;
+
+      if (!nota.id_destinatario || !productos.length || !cantidades.length) {
+        toast.error("Datos incompletos en una nota. Se omite.");
+        continue;
+      }
+
+      if (nota.tipo === "Falta ingreso") {
+        nuevoNumComprobante = await getNuevoNumeroNotaIngreso();
+        result = await insertNotaIngreso({
+          almacenO: nota.id_almacenO,
+          almacenD: nota.id_almacenD,
+          destinatario: nota.id_destinatario,
+          glosa: nota.concepto || "-",
+          nota: "INGRESO",
+          fecha: getCurrentFecha(),
+          producto: productos,
+          numComprobante: nuevoNumComprobante,
+          cantidad: cantidades,
+          observacion: nota.observacion || "",
+          usuario: nombre_u,
+        });
+      } else {
+        nuevoNumComprobante = await getNuevoNumeroNotaSalida();
+        result = await insertNotaSalida({
+          almacenO: nota.id_almacenO,
+          almacenD: nota.id_almacenD,
+          destinatario: nota.id_destinatario,
+          glosa: nota.concepto || "-",
+          nota: "SALIDA",
+          fecha: getCurrentFecha(),
+          producto: productos,
+          numComprobante: nuevoNumComprobante,
+          cantidad: cantidades,
+          observacion: nota.observacion || "",
+          nom_usuario: nombre_u,
+        });
+      }
+
+      if (result && result.success) {
+        await actualizarEstadoEspera(nota.documento);
+        await actualizarEstadoEspera(nuevoNumComprobante);
+        toast.success(`Contraparte registrada para ${nota.documento}`);
+      } else {
+        toast.error(result?.message || "No se pudo registrar la contraparte. Verifique los datos o intente más tarde.");
+      }
     }
 
-    let nuevoNumComprobante = "-";
-    if (nota.tipo === "Falta ingreso") {
-      nuevoNumComprobante = documentosIngreso[0]?.nota || "-";
-      result = await insertNotaAndDetalleIngreso({
-        almacenO: nota.id_almacenO,
-        almacenD: nota.id_almacenD,
-        destinatario: nota.id_destinatario,
-        glosa: nota.concepto || "-",
-        nota: "INGRESO",
-        fecha: getCurrentFecha(),
-        producto: productos,
-        numComprobante: nuevoNumComprobante,
-        cantidad: cantidades,
-        observacion: nota.observacion || "",
-        usuario: nombre_u,
-      });
-    } else {
-      nuevoNumComprobante = documentosSalida[0]?.nota || "-";
-      result = await insertNotaAndDetalleSalida({
-        almacenO: nota.id_almacenO,
-        almacenD: nota.id_almacenD,
-        destinatario: nota.id_destinatario,
-        glosa: nota.concepto || "-",
-        nota: "SALIDA",
-        fecha: getCurrentFecha(),
-        producto: productos,
-        numComprobante: nuevoNumComprobante,
-        cantidad: cantidades,
-        observacion: nota.observacion || "",
-        nom_usuario: nombre_u,
-      });
-    }
-
-    if (result && result.success) {
-      // 1. Actualiza estado_espera de la nota original por número de comprobante
-      await actualizarEstadoEspera(nota.documento);
-
-      // 2. Actualiza estado_espera de la contraparte generada por su número de comprobante
-      await actualizarEstadoEspera(nuevoNumComprobante);
-
-      // 3. Refresca la lista de notas pendientes
-      if (refetchNotas) await refetchNotas();
-
-      toast.success("Contraparte registrada correctamente.");
-    } else {
-      toast.error(result?.message || "No se pudo registrar la contraparte. Verifique los datos o intente más tarde.");
-    }
-  } catch (error) {
-    toast.error("Ocurrió un problema al registrar la contraparte. Intente nuevamente.");
-  }
-};
-
-const handleRegistrarTodasContrapartes = async (notasFiltradas) => {
-  setIsProcessing(true);
-  const notasOrdenadas = [...notasFiltradas].sort((a, b) => {
-    const fechaA = new Date(`${a.fecha}T${a.hora_creacion || "00:00:00"}`);
-    const fechaB = new Date(`${b.fecha}T${b.hora_creacion || "00:00:00"}`);
-    return fechaA - fechaB;
-  });
-
-  for (const nota of notasOrdenadas) {
-    let nuevoNumComprobante = "-";
-    let result = null;
-    const productos = nota.detalles?.map(d => d.id_producto) || [nota.id_producto];
-    const cantidades = nota.detalles?.map(d => d.cantidad) || [nota.cantidad];
-    const nombre_u = nombre;
-
-    if (!nota.id_destinatario || !productos.length || !cantidades.length) {
-      toast.error("Datos incompletos en una nota. Se omite.");
-      continue;
-    }
-
-    if (nota.tipo === "Falta ingreso") {
-      nuevoNumComprobante = await getNuevoNumeroNotaIngreso();
-      result = await insertNotaAndDetalleIngreso({
-        almacenO: nota.id_almacenO,
-        almacenD: nota.id_almacenD,
-        destinatario: nota.id_destinatario,
-        glosa: nota.concepto || "-",
-        nota: "INGRESO",
-        fecha: getCurrentFecha(),
-        producto: productos,
-        numComprobante: nuevoNumComprobante,
-        cantidad: cantidades,
-        observacion: nota.observacion || "",
-        usuario: nombre_u,
-      });
-    } else {
-      nuevoNumComprobante = await getNuevoNumeroNotaSalida();
-      result = await insertNotaAndDetalleSalida({
-        almacenO: nota.id_almacenO,
-        almacenD: nota.id_almacenD,
-        destinatario: nota.id_destinatario,
-        glosa: nota.concepto || "-",
-        nota: "SALIDA",
-        fecha: getCurrentFecha(),
-        producto: productos,
-        numComprobante: nuevoNumComprobante,
-        cantidad: cantidades,
-        observacion: nota.observacion || "",
-        nom_usuario: nombre_u,
-      });
-    }
-
-    if (result && result.success) {
-      await actualizarEstadoEspera(nota.documento);
-      await actualizarEstadoEspera(nuevoNumComprobante);
-      toast.success(`Contraparte registrada para ${nota.documento}`);
-    } else {
-      toast.error(result?.message || "No se pudo registrar la contraparte. Verifique los datos o intente más tarde.");
-    }
-  }
-
-  if (refetchNotas) await refetchNotas();
-  setIsProcessing(false);
-};
+    if (refetchNotas) await refetchNotas();
+    setIsProcessing(false);
+  };
 
   // Minimodal de confirmación de eliminación
   const handleEliminarNota = (nota) => {
@@ -201,9 +231,9 @@ const handleRegistrarTodasContrapartes = async (notasFiltradas) => {
           try {
             let result;
             if (nota.tipo === "Falta ingreso") {
-              result = await anularNotaSalida(nota.id_nota,nombre);
+              result = await anularNotaSalida(nota.id_nota, nombre);
             } else {
-              result = await anularNotaIngreso(nota.id_nota,nombre);
+              result = await anularNotaIngreso(nota.id_nota, nombre);
             }
             if (result && result.success) {
               toast.success("Nota anulada correctamente.");

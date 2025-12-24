@@ -23,7 +23,6 @@ const PermisosGlobales = lazy(() => import('@/pages/Global/PermisosGlobales/Tabl
 const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
 const Logs = lazy(() => import('@/pages/SystemLogs/Logs'));
 const Negocio = lazy(() => import('@/pages/Negocio/Negocio'));
-const HistorialLlamadas = lazy(() => import('@/pages/HistorialLlamadas/HistorialLlamadas'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
@@ -39,7 +38,20 @@ function Dashboard() {
         const modulesData = await getModulosConSubmodulos();
 
         if (Array.isArray(modulesData)) {
-          setRoutes(modulesData);
+          // Override routes for Nota Almacen refactoring (Submodules)
+          const processedRoutes = modulesData.map(m => {
+            if (m.submodulos && m.submodulos.length > 0) {
+              const newSubmodulos = m.submodulos.map(sub => {
+                if (sub.id_submodulo === 10 || sub.id_submodulo === 11) {
+                  return { ...sub, ruta: '/nota_almacen' };
+                }
+                return sub;
+              });
+              return { ...m, submodulos: newSubmodulos };
+            }
+            return m;
+          });
+          setRoutes(processedRoutes);
         } else {
           setRoutes([]);
         }
@@ -218,18 +230,6 @@ function Dashboard() {
         element={
           <RouteProtectedRol allowedRoles={[ADMIN_ROL]}>
             <Negocio />
-          </RouteProtectedRol>
-        }
-      />
-    );
-
-    dynamicRoutes.push(
-      <Route
-        key="historial-llamadas"
-        path="/configuracion/llamadas"
-        element={
-          <RouteProtectedRol allowedRoles={[ADMIN_ROL, EMP_ROL]}>
-            <HistorialLlamadas />
           </RouteProtectedRol>
         }
       />

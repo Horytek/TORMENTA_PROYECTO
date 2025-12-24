@@ -7,7 +7,6 @@ import {
   ModalFooter,
   Input,
   Button,
-  NumberInput,
   Chip,
   Spinner
 } from '@heroui/react';
@@ -15,7 +14,7 @@ import { ScrollShadow } from '@heroui/react';
 import { IoMdAdd } from "react-icons/io";
 import { FiSearch } from "react-icons/fi";
 import { RiRefreshLine } from "react-icons/ri";
-import ProductosForm from '../../../../Productos/ProductosForm';
+import ProductosForm from '@/pages/Productos/ProductosForm';
 import { toast } from "react-hot-toast";
 
 const DEBOUNCE_MS = 380;
@@ -153,35 +152,35 @@ const ModalBuscarProducto = ({
       size="4xl"
       backdrop="blur"
       classNames={{
-        backdrop: "bg-black/40 backdrop-blur-md",
+        backdrop: "bg-slate-900/40 backdrop-blur-md",
         wrapper: "z-[9999]",
-        base: "bg-white/90 dark:bg-zinc-950/90 border border-blue-100/40 dark:border-zinc-700/60 rounded-2xl shadow-2xl"
+        base: "bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-3xl shadow-2xl"
       }}
       motionProps={{
         variants: {
           enter: { y: 0, opacity: 1, scale: 1 },
-          exit: { y: 14, opacity: 0, scale: 0.98 }
+          exit: { y: 10, opacity: 0, scale: 0.98 }
         }
       }}
     >
       <ModalContent>
         <>
-          <ModalHeader className="flex flex-col gap-2 pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <h2 className="text-lg font-bold text-blue-900 dark:text-blue-100 tracking-tight">
+          <ModalHeader className="flex flex-col gap-1 pb-4 pt-6 px-8 bg-slate-50/50 dark:bg-zinc-900/20 border-b border-slate-100 dark:border-zinc-800/50">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-2xl font-extrabold text-blue-900 dark:text-blue-100 tracking-tight">
                   Buscar producto
                 </h2>
-                <span className="text-[11px] font-medium text-blue-600/70 dark:text-blue-300/60">
+                <span className="text-xs font-semibold text-blue-500/80 dark:text-blue-400/70">
                   Filtra por descripción o código de barras
                 </span>
               </div>
               <div className="flex gap-2">
-                <Chip size="sm" variant="flat" color="primary" className="text-[10px]">
+                <Chip size="sm" variant="flat" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold h-7 px-1">
                   Total: {totalProductos}
                 </Chip>
                 {!hideStock && (
-                  <Chip size="sm" variant="flat" color="success" className="text-[10px]">
+                  <Chip size="sm" variant="flat" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-bold h-7 px-1">
                     Con stock: {totalConStock}
                   </Chip>
                 )}
@@ -189,12 +188,12 @@ const ModalBuscarProducto = ({
             </div>
           </ModalHeader>
 
-          <ModalBody className="pt-1">
-            <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_auto_auto] gap-3 mb-4 items-stretch">
+          <ModalBody className="pt-6 px-8">
+            <div className="grid grid-cols-1 md:grid-cols-[2fr_1.5fr_auto_auto] gap-3 mb-6 items-center">
               <Input
                 ref={firstInputRef}
                 placeholder="Descripción / palabra clave"
-                startContent={<FiSearch className="text-blue-500" />}
+                startContent={<FiSearch className="text-blue-500 text-lg" />}
                 value={searchInputValue}
                 onChange={(e) => {
                   setSearchInputValue(e.target.value);
@@ -203,7 +202,8 @@ const ModalBuscarProducto = ({
                 onKeyDown={(e) => { if (e.key === 'Enter') triggerSearch(); }}
                 variant="flat"
                 classNames={{
-                  inputWrapper: "bg-white/70 dark:bg-zinc-900/70 border border-blue-100/60 dark:border-zinc-700/60 hover:border-blue-300 focus-within:border-blue-400"
+                  inputWrapper: "bg-slate-100 dark:bg-zinc-800 shadow-none hover:bg-slate-200/50 dark:hover:bg-zinc-700 transition-colors h-11 rounded-xl",
+                  input: "text-sm"
                 }}
               />
               <Input
@@ -216,99 +216,91 @@ const ModalBuscarProducto = ({
                 onKeyDown={(e) => { if (e.key === 'Enter') triggerSearch(); }}
                 variant="flat"
                 classNames={{
-                  inputWrapper: "bg-white/70 dark:bg-zinc-900/70 border border-blue-100/60 dark:border-zinc-700/60 hover:border-blue-300 focus-within:border-blue-400"
+                  inputWrapper: "bg-slate-100 dark:bg-zinc-800 shadow-none hover:bg-slate-200/50 dark:hover:bg-zinc-700 transition-colors h-11 rounded-xl",
+                  input: "text-sm"
                 }}
               />
               <Button
-                color="secondary"
+                className="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 font-bold h-11 rounded-xl px-6"
                 variant="flat"
-                startContent={<RiRefreshLine />}
+                startContent={<RiRefreshLine size={18} />}
                 onPress={resetFiltros}
               >
                 Reset
               </Button>
               <Button
-                color="success"
-                startContent={<IoMdAdd />}
+                className="bg-emerald-500 text-white font-bold h-11 rounded-xl px-6 shadow-md shadow-emerald-500/20"
+                startContent={<IoMdAdd size={20} />}
                 onPress={handleModalAdd}
-                className="w-full"
               >
                 Nuevo
               </Button>
             </div>
 
-            <div className="rounded-xl border border-blue-100/50 dark:border-zinc-700/60 bg-white/60 dark:bg-zinc-900/50 backdrop-blur-sm shadow-inner">
-              <ScrollShadow hideScrollBar className="max-h-[420px]">
+            <div className="rounded-2xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
+              <ScrollShadow hideScrollBar className="max-h-[450px]">
                 <table className="min-w-full text-sm">
-                  <thead className="sticky top-0 z-10 bg-white/90 dark:bg-zinc-950/85 backdrop-blur-sm border-b border-blue-100/60 dark:border-zinc-700/60 text-blue-700 dark:text-blue-300">
+                  <thead className="sticky top-0 z-20 bg-white dark:bg-zinc-900 border-b border-slate-100 dark:border-zinc-800">
                     <tr className="text-left">
-                      <th className="py-3 px-4 font-semibold">Código</th>
-                      <th className="py-3 px-4 font-semibold">Descripción</th>
-                      <th className="py-3 px-4 font-semibold">Marca</th>
-                      {!hideStock && <th className="py-3 px-4 font-semibold">Stock</th>}
-                      <th className="py-3 px-4 font-semibold w-32">Cantidad</th>
-                      <th className="py-3 px-4 font-semibold w-14 text-center">Añadir</th>
+                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider">Código</th>
+                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider">Descripción</th>
+                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider">Marca</th>
+                      {!hideStock && <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider text-center">Stock</th>}
+                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider text-center w-32">Cantidad</th>
+                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider text-center w-20">Añadir</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
                     {productos.length === 0 && emptyState}
                     {productos.map((producto, idx) => {
                       const lowStock = !hideStock && producto.stock <= 0;
                       return (
                         <tr
                           key={producto.codigo}
-                          className={`group transition-colors ${
-                            idx % 2 === 0
-                              ? "bg-white/70 dark:bg-zinc-900/40"
-                              : "bg-white/50 dark:bg-zinc-900/30"
-                          } hover:bg-blue-50/70 dark:hover:bg-zinc-800/60`}
+                          className="bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group"
                         >
-                          <td className="py-2.5 px-4 font-mono text-[12px] text-blue-800 dark:text-blue-200">
+                          <td className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs">
                             {producto.codigo}
                           </td>
-                          <td className="py-2.5 px-4 text-zinc-800 dark:text-zinc-100 leading-tight">
+                          <td className="py-4 px-6 text-slate-700 dark:text-slate-300 font-medium text-sm">
                             {highlight(producto.descripcion)}
                           </td>
-                          <td className="py-2.5 px-4 text-zinc-600 dark:text-zinc-300">
-                            {producto.marca || <span className="italic text-gray-400">—</span>}
+                          <td className="py-4 px-6 text-slate-500 dark:text-slate-400 text-xs font-medium">
+                            {producto.marca || '-'}
                           </td>
                           {!hideStock && (
-                            <td className="py-2.5 px-4">
-                              <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${
-                                lowStock
-                                  ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/40"
-                                  : "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/40"
-                              }`}>
-                                {producto.stock}
-                              </span>
+                            <td className="py-4 px-6 text-center">
+                              <div className={`inline-flex items-center justify-center h-8 px-3 rounded-full border ${lowStock
+                                ? "bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800"
+                                : "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"
+                                }`}>
+                                <span className="text-xs font-bold">{producto.stock}</span>
+                              </div>
                             </td>
                           )}
-                          <td className="py-2.5 px-4">
-                            <NumberInput
+                          <td className="py-4 px-6">
+                            <Input
+                              type="number"
                               min={1}
-                              value={cantidades[producto.codigo]}
+                              value={String(cantidades[producto.codigo] || 1)}
                               onValueChange={(value) => handleCantidadChange(producto.codigo, value)}
                               size="sm"
                               classNames={{
-                                base: "max-w-[90px]",
-                                inputWrapper: "bg-white/70 dark:bg-zinc-900/70 border border-blue-100/60 dark:border-zinc-700/60"
+                                inputWrapper: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 h-9 shadow-sm hover:border-blue-400 focus-within:border-blue-500 transition-colors",
+                                input: "text-center font-bold text-slate-700 dark:text-white"
                               }}
                               isDisabled={lowStock}
                             />
                           </td>
-                          <td className="py-2.5 px-3">
+                          <td className="py-4 px-6 text-center">
                             <Button
-                              color="success"
+                              className="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 min-w-8 w-9 h-9 rounded-lg"
                               isIconOnly
                               size="sm"
-                              radius="sm"
-                              variant="flat"
                               onPress={() => handleAgregarProducto(producto)}
                               isDisabled={lowStock}
-                              className="opacity-90 hover:opacity-100"
-                              aria-label="Agregar producto"
                             >
-                              <IoMdAdd />
+                              <IoMdAdd size={18} />
                             </Button>
                           </td>
                         </tr>
@@ -320,14 +312,13 @@ const ModalBuscarProducto = ({
             </div>
           </ModalBody>
 
-          <ModalFooter className="pt-2">
-            <div className="flex w-full justify-between items-center">
-              <span className="text-[11px] text-blue-600/70 dark:text-blue-300/60 font-medium">
-                {isSearching ? 'Actualizando resultados…' : 'Listo'}
+          <ModalFooter className="px-8 pb-8 pt-4">
+            <div className="flex w-full justify-between items-center bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                {isSearching ? 'Buscando resultados...' : `${productos.length} resultados encontrados`}
               </span>
               <Button
-                color="default"
-                variant="flat"
+                className="font-bold bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-zinc-800 dark:text-slate-300 dark:hover:bg-zinc-700"
                 onPress={onClose}
               >
                 Cerrar

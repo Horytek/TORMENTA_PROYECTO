@@ -56,7 +56,7 @@ const SIDEBAR_DATA = {
       url: "/almacen",
       icon: Warehouse,
       items: [
-        { title: "Nota de Almacen", url: "/almacen/nota_ingreso" },
+        { title: "Nota de Almacen", url: "/nota_almacen" },
         { title: "Guía Remisión", url: "/almacen/guia_remision" },
       ],
     },
@@ -128,10 +128,10 @@ export function AppSidebar(props) {
   const teams = [
     ...(empresaPrincipal
       ? [{
-          name: empresaPrincipal.razonSocial || empresaPrincipal.nombreComercial || "Empresa",
-          logo: empresaPrincipal.logotipo || GalleryVerticalEnd,
-          plan: getPlanDescripcion(plan_pago), // <-- usa el plan del usuario
-        }]
+        name: empresaPrincipal.razonSocial || empresaPrincipal.nombreComercial || "Empresa",
+        logo: empresaPrincipal.logotipo || GalleryVerticalEnd,
+        plan: getPlanDescripcion(plan_pago), // <-- usa el plan del usuario
+      }]
       : []),
     ...empresasTenant
       .slice(1)
