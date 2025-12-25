@@ -150,11 +150,11 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
                                 variant="flat"
                                 radius="full"
                                 color="primary"
-                                onClick={() => hasEditPermission ? onEdit(producto) : null}
+                                onPress={() => hasEditPermission ? onEdit(producto) : null}
                                 isDisabled={!hasEditPermission}
-                                className="text-lg cursor-pointer active:opacity-50 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
+                                className="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
                             >
-                                <MdEdit />
+                                <MdEdit size={18} />
                             </Button>
                         </Tooltip>
                         <Tooltip color="danger" content={hasDeletePermission ? "Eliminar producto" : "No tiene permisos"}>
@@ -164,11 +164,11 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
                                 variant="flat"
                                 radius="full"
                                 color="danger"
-                                onClick={() => hasDeletePermission ? handleOpenConfirmationModal(producto.descripcion, producto.id_producto) : null}
+                                onPress={() => hasDeletePermission ? handleOpenConfirmationModal(producto.descripcion, producto.id_producto) : null}
                                 isDisabled={!hasDeletePermission}
-                                className="text-lg cursor-pointer active:opacity-50 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
+                                className="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
                             >
-                                <FaTrash />
+                                <FaTrash size={16} />
                             </Button>
                         </Tooltip>
                     </div>
@@ -179,51 +179,53 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
     }, [hasEditPermission, hasDeletePermission, onEdit]);
 
     return (
-        <>
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
-                <Table
-                    aria-label="Tabla de productos con paginación"
-                    isHeaderSticky
-                    bottomContent={
-                        pages > 0 ? (
-                            <div className="flex w-full justify-center mt-4">
-                                <Pagination
-                                    isCompact
-                                    showControls
-                                    showShadow
-                                    color="primary"
-                                    page={page}
-                                    total={pages}
-                                    onChange={(page) => setPage(page)}
-                                />
-                            </div>
-                        ) : null
-                    }
-                    classNames={{
-                        wrapper: "min-h-[400px] shadow-none p-0 bg-transparent",
-                        th: "bg-blue-50/50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 font-bold text-xs uppercase",
-                        td: "py-3 border-b border-slate-100 dark:border-zinc-800/50",
-                    }}
-                >
-                    <TableHeader columns={columns}>
-                        {(column) => (
-                            <TableColumn
-                                key={column.uid}
-                                align={column.uid === "acciones" || column.uid === "cod_barras" || column.uid === "precio" ? "center" : "start"}
-                            >
-                                {column.name}
-                            </TableColumn>
-                        )}
-                    </TableHeader>
-                    <TableBody items={items} emptyContent={"No se encontraron productos"}>
-                        {(item) => (
-                            <TableRow key={item.id_producto} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
-                                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+        <div className="w-full">
+            <Table
+                aria-label="Tabla de productos con paginación"
+                removeWrapper
+                isHeaderSticky
+                bottomContent={
+                    pages > 0 ? (
+                        <div className="flex w-full justify-center mt-4 border-t border-slate-100 dark:border-zinc-800 pt-3">
+                            <Pagination
+                                isCompact
+                                showControls
+                                color="primary"
+                                page={page}
+                                total={pages}
+                                onChange={(page) => setPage(page)}
+                                classNames={{
+                                    cursor: "bg-blue-600 shadow-md",
+                                }}
+                            />
+                        </div>
+                    ) : null
+                }
+                classNames={{
+                    base: "max-h-[600px] overflow-scroll",
+                    th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-10 border-b border-slate-200 dark:border-zinc-800",
+                    td: "py-3 border-b border-slate-100 dark:border-zinc-800/50 text-slate-700 dark:text-slate-300",
+                    tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
+                }}
+            >
+                <TableHeader columns={columns}>
+                    {(column) => (
+                        <TableColumn
+                            key={column.uid}
+                            align={column.uid === "acciones" || column.uid === "cod_barras" || column.uid === "precio" ? "center" : "start"}
+                        >
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody items={items} emptyContent={"No se encontraron productos"}>
+                    {(item) => (
+                        <TableRow key={item.id_producto}>
+                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
 
             {/* Modal de Confirmación para eliminar Producto */}
             {isConfirmationModalOpen && (
@@ -233,7 +235,7 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
                     onConfirm={handleConfirmDelete}
                 />
             )}
-        </>
+        </div>
     );
 }
 

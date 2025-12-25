@@ -8,19 +8,19 @@ import { usePermisos } from '@/routes';
 import { Button } from '@heroui/react';
 import { ActionButton } from "@/components/Buttons/Buttons";
 
-function Categorias({ 
-  categoriasData = [], 
-  onAdd = null, 
-  onUpdate = null, 
-  onDelete = null, 
-  skipApiCall = false 
+function Categorias({
+  categoriasData = [],
+  onAdd = null,
+  onUpdate = null,
+  onDelete = null,
+  skipApiCall = false
 }) {
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => setModalOpen(!activeAdd);
 
   const [searchTerm, setSearchTerm] = useState("");
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
-  const handleClearSearch = () => setSearchTerm(""); 
+  const handleClearSearch = () => setSearchTerm("");
   const { hasCreatePermission } = usePermisos();
 
   // Usar directamente el array recibido del padre (persistente)
@@ -35,22 +35,22 @@ function Categorias({
   };
 
   return (
-    <div className="m-4">      
+    <div className="m-4">
       <Toaster />
-      <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Gestión de categorías</h1>
-      <p className="text-base text-blue-700/80 mb-4">Administra y busca categorías fácilmente.</p>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+      <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-400 tracking-tight mb-1">Gestión de categorías</h1>
+      <p className="text-base text-blue-700/80 dark:text-blue-300/80 mb-6">Administra y busca categorías fácilmente.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <BarraSearch
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Ingrese la categoría a buscar"
+          placeholder="Buscar categoría..."
           isClearable={true}
           onClear={handleClearSearch}
-          className="h-10 text-sm w-full md:w-72"
+          className="h-10 text-sm w-full md:w-72 dark:bg-gray-800 dark:text-white"
         />
         <ActionButton
           color="primary"
-          endContent={<FaPlus style={{ fontSize: '22px' }} />}
+          endContent={<FaPlus size={18} />}
           onClick={handleModalAdd}
           disabled={!hasCreatePermission}
           className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none 

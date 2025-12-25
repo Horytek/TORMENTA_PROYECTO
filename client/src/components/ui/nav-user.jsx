@@ -126,7 +126,7 @@ export function NavUser() {
     <>
       <UserNotifications open={showNotifications} onClose={() => setShowNotifications(false)} />
       <BillingDrawer open={showBilling} onClose={() => setShowBilling(false)} billingData={billingData} />
-      <AccountDrawer open={showAccount} onClose={() => setShowAccount(false)} accountData={billingData} /> 
+      <AccountDrawer open={showAccount} onClose={() => setShowAccount(false)} accountData={billingData} />
       <SidebarMenu>
         <SidebarMenuItem>
           <DropdownMenu>
@@ -134,35 +134,36 @@ export function NavUser() {
               <SidebarMenuButton
                 size="lg"
                 className={`
-                  ${collapsed ? "sidebar-icon-btn" : ""}
-                  data-[state=open]:bg-blue-50/80 data-[state=open]:text-blue-900
-                  hover:bg-blue-50/60 transition-all duration-150
-                  px-2 py-2 rounded-xl
+                  ${collapsed ? "sidebar-icon-btn justify-center" : ""}
+                  w-full
+                  data-[state=open]:bg-slate-100 dark:data-[state=open]:bg-zinc-800
+                  hover:bg-slate-50 dark:hover:bg-zinc-800/50 
+                  transition-all duration-200
+                  px-3 py-2.5 rounded-xl
                   flex items-center gap-3
-                  shadow-none border border-gray-100
-                  bg-white/80
+                  outline-none
                 `}
                 style={{
                   minHeight: collapsed ? "40px" : "48px",
-                  minWidth: collapsed ? "40px" : 0,
-                  width: collapsed ? "40px" : undefined,
-                  boxShadow: "0 1px 4px 0 rgba(59,130,246,0.04)",
+                  width: collapsed ? "40px" : "100%",
                 }}
               >
-                <Avatar className={`rounded-lg shadow-sm ring-1 ring-gray-200 ${collapsed ? "h-8 w-8" : "h-9 w-9"}`}>
+                <Avatar className={`rounded-lg transition-all duration-200 ${collapsed ? "h-8 w-8 ring-0" : "h-9 w-9 ring-2 ring-white dark:ring-zinc-900 shadow-sm"}`}>
                   {user.avatar ? (
                     <AvatarImage src={user.avatar} alt={displayName} />
                   ) : (
-                    <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 font-bold">
+                      {initials}
+                    </AvatarFallback>
                   )}
                 </Avatar>
                 {showText && (
-                  <div className="sidebar-user-text grid flex-1 text-left text-[15px] leading-tight">
-                    <span className="truncate font-semibold text-blue-900">{displayName}</span>
-                    <span className="truncate text-xs text-blue-500">{userRole}</span>
+                  <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+                    <span className="truncate font-bold text-slate-800 dark:text-slate-100">{displayName}</span>
+                    <span className="truncate text-xs text-slate-500 font-medium">{userRole}</span>
                   </div>
                 )}
-                <ChevronsUpDown className={`ml-auto size-4 text-blue-400 ${!showText ? "hidden" : ""}`} />
+                {showText && <ChevronsUpDown className="ml-auto size-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />}
               </SidebarMenuButton>
             </DropdownMenuTrigger>
 

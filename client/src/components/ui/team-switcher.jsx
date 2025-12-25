@@ -39,21 +39,21 @@ export function TeamSwitcher({ teams, nameClassName = "" }) {
               size="lg"
               className={`
                 ${collapsed ? "sidebar-icon-btn" : ""}
-                data-[state=open]:bg-blue-50/80 data-[state=open]:text-blue-900
-                hover:bg-blue-50/60 transition-all duration-150
+                data-[state=open]:bg-slate-100 dark:data-[state=open]:bg-zinc-800
+                hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all duration-200
                 px-2 py-2 rounded-xl
                 flex items-center gap-3
-                shadow-none border border-gray-100
-                bg-white/80
+                shadow-sm border border-slate-200 dark:border-zinc-800
+                bg-white dark:bg-zinc-900
               `}
               style={{
                 minHeight: collapsed ? "40px" : "48px",
                 minWidth: collapsed ? "40px" : 0,
                 width: collapsed ? "40px" : undefined,
-                boxShadow: "0 1px 4px 0 rgba(59,130,246,0.04)",
+                boxShadow: "none",
               }}
             >
-              <div className={`flex aspect-square items-center justify-center rounded-lg shadow-sm border border-blue-100/60 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 ${collapsed ? "size-7" : "size-8"}`}>
+              <div className={`flex aspect-square items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 ${collapsed ? "size-7" : "size-8"}`}>
                 {typeof activeTeam.logo === "string"
                   ? (
                     <img
@@ -69,34 +69,34 @@ export function TeamSwitcher({ teams, nameClassName = "" }) {
                 }
               </div>
               {!collapsed && (
-                <div className="grid flex-1 text-left text-[15px] leading-tight">
-                  <span className={`truncate font-semibold text-blue-900 ${nameClassName}`}>{activeTeam.name}</span>
-                  <span className="truncate text-xs text-blue-500">{activeTeam.plan}</span>
+                <div className="grid flex-1 text-left text-[14px] leading-tight">
+                  <span className={`truncate font-bold text-slate-800 dark:text-white ${nameClassName}`}>{activeTeam.name}</span>
+                  <span className="truncate text-xs font-medium text-slate-500">{activeTeam.plan}</span>
                 </div>
               )}
               {!collapsed && (
-                <ChevronsUpDown className="ml-auto size-4 text-blue-400" />
+                <ChevronsUpDown className="ml-auto size-4 text-slate-400" />
               )}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="z-[9999] bg-white/95 text-blue-900 shadow-xl border border-blue-100/60 min-w-56 rounded-xl p-1"
+            className="z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl min-w-56 rounded-xl p-2"
             align="start"
             side={isMobile ? "bottom" : "right"}
-            sideOffset={4}
+            sideOffset={8}
           >
-            <DropdownMenuLabel className="text-xs text-blue-400 px-2 py-1">Equipos</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 py-1.5">Equipos</DropdownMenuLabel>
             {teams.map((team, index) => (
               <DropdownMenuItem
                 key={team.name}
                 onClick={() => setActiveTeam(team)}
                 className={`
-                  gap-2 p-2 rounded-lg transition-colors
-                  hover:bg-blue-50/80 focus:bg-blue-100/80
-                  text-blue-900
+                  gap-3 p-2 rounded-lg transition-colors cursor-pointer
+                  hover:bg-slate-50 dark:hover:bg-zinc-800
+                  text-slate-700 dark:text-slate-300
                 `}
               >
-                <div className="flex size-6 items-center justify-center rounded-md border border-blue-100/60 bg-blue-50/60">
+                <div className="flex size-8 items-center justify-center rounded-lg border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                   {typeof team.logo === "string"
                     ? (
                       <img
@@ -107,20 +107,22 @@ export function TeamSwitcher({ teams, nameClassName = "" }) {
                       />
                     )
                     : (
-                      <team.logo className="size-4 shrink-0 text-blue-500" />
+                      <team.logo className="size-4 shrink-0 text-slate-500" />
                     )
                   }
                 </div>
-                <span className="flex-1">{team.name}</span>
-                <DropdownMenuShortcut className="text-xs text-blue-400">⌘{index + 1}</DropdownMenuShortcut>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">{team.name}</span>
+                  <span className="text-[10px] text-slate-400">{team.plan}</span>
+                </div>
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2 rounded-lg hover:bg-blue-50/80 focus:bg-blue-100/80 text-blue-900">
-              <div className="flex size-6 items-center justify-center rounded-md border border-blue-100/60 bg-blue-50/60">
-                <Plus className="size-4 text-blue-400" />
+            <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800 my-1" />
+            <DropdownMenuItem className="gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer text-slate-600 dark:text-slate-400">
+              <div className="flex size-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                <Plus className="size-4" />
               </div>
-              <div className="font-medium text-blue-400">Agregar equipo</div>
+              <div className="font-medium text-sm">Agregar equipo</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

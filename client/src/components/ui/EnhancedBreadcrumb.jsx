@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  Breadcrumb, 
-  BreadcrumbList, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator
 } from './breadcrumb';
 import { moduleComponentMap, submoduleComponentMap } from '../../utils/componentMapping';
 
@@ -50,15 +50,15 @@ const createComponentNameMap = () => {
 const createPathNameMap = () => {
   const { moduleNames, submoduleNames } = createComponentNameMap();
   const pathMap = {};
-  
+
   Object.entries(moduleNames).forEach(([id, { name, path }]) => {
     pathMap[path] = name;
   });
-  
+
   Object.entries(submoduleNames).forEach(([id, { name, path }]) => {
     pathMap[path] = name;
   });
-  
+
   return pathMap;
 };
 
@@ -67,40 +67,51 @@ const pathNameMap = createPathNameMap();
 const EnhancedBreadcrumb = () => {
   const location = useLocation();
   const [breadcrumbItems, setBreadcrumbItems] = useState([]);
-  
+
   useEffect(() => {
     const { pathname } = location;
     const pathSegments = pathname.split('/').filter(Boolean);
-    
+
     const items = [];
-    let currentPath = '';
-    
+    const seenNames = new Set();
+
+    // Always add Home
     items.push({
       name: 'Inicio',
       path: '/',
       isLast: pathSegments.length === 0
     });
-    
+    seenNames.add('Inicio');
+
+    let currentPath = '';
+
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       const isLast = index === pathSegments.length - 1;
-      
+
       let name = pathNameMap[currentPath];
-      
+
+      // Fallback for dynamic paths (e.g. IDs)
       if (!name) {
+        // Skip if it looks like an ID (numeric or long random string)
+        if (!isNaN(segment) || segment.length > 20) return;
+
         name = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
       }
-      
-      items.push({
-        name,
-        path: currentPath,
-        isLast
-      });
+
+      if (!seenNames.has(name)) {
+        seenNames.add(name);
+        items.push({
+          name,
+          path: currentPath,
+          isLast
+        });
+      }
     });
-    
+
     setBreadcrumbItems(items);
   }, [location]);
-  
+
   return (
     <Breadcrumb>
       <BreadcrumbList>

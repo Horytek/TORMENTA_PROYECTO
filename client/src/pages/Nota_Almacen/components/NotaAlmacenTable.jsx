@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
-import ConfirmationModal from './modals/ConfirmationModal';
+import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import {
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Pagination, Chip, Button, Tooltip, Select, SelectItem

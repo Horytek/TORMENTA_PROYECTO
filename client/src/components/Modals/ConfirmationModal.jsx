@@ -7,20 +7,21 @@ import {
   ModalFooter,
   Button
 } from '@heroui/react';
+import { AlertCircle } from 'lucide-react';
 
-const ConfirmationModal = ({ message, onClose, onConfirm }) => {
+const ConfirmationModal = ({ isOpen, title, message, onClose, onConfirm }) => {
   return (
     <Modal
-      isOpen={true}
+      isOpen={isOpen}
       onClose={onClose}
       size="md"
       backdrop="blur"
       classNames={{
-        backdrop: "bg-black/40 backdrop-blur-sm",
-        base: "rounded-2xl border border-blue-100 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 shadow-xl",
-        header: "px-6 pt-5 pb-2",
-        body: "px-6 py-2",
-        footer: "px-6 pb-5 pt-2"
+        backdrop: "bg-slate-900/40 backdrop-blur-sm",
+        base: "rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl",
+        header: "px-6 pt-6 pb-2",
+        body: "px-6 py-3",
+        footer: "px-6 pb-6 pt-4"
       }}
       motionProps={{
         variants: {
@@ -30,12 +31,15 @@ const ConfirmationModal = ({ message, onClose, onConfirm }) => {
       }}
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
-          <h3 className="text-xl font-bold text-blue-700 dark:text-blue-200">Confirmación</h3>
+        <ModalHeader className="flex flex-col gap-1 items-center text-center">
+          <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full mb-2">
+            <AlertCircle size={28} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-white">{title || "Confirmación"}</h3>
         </ModalHeader>
 
-        <ModalBody>
-          <p className="text-base text-gray-700 dark:text-gray-300 text-center">
+        <ModalBody className="text-center">
+          <p className="text-base font-medium text-slate-500 dark:text-slate-400">
             {message}
           </p>
         </ModalBody>
@@ -43,15 +47,14 @@ const ConfirmationModal = ({ message, onClose, onConfirm }) => {
         <ModalFooter className="justify-center gap-3">
           <Button
             variant="flat"
-            color="danger"
-            className="bg-rose-50 dark:bg-rose-900/30"
+            className="bg-slate-100 text-slate-600 font-bold dark:bg-zinc-800 dark:text-slate-300 rounded-xl px-6"
             onPress={onClose}
           >
-            Cerrar
+            Cancelar
           </Button>
           <Button
-            color="success"
-            className="text-white"
+            color="danger"
+            className="font-bold shadow-lg shadow-red-500/20 rounded-xl px-6"
             onPress={onConfirm}
           >
             Confirmar
@@ -62,7 +65,11 @@ const ConfirmationModal = ({ message, onClose, onConfirm }) => {
   );
 };
 
+
+
 ConfirmationModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  title: PropTypes.string,
   message: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,

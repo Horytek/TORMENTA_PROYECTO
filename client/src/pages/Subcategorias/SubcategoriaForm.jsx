@@ -7,11 +7,11 @@ import {
   Button,
 } from "@heroui/react";
 import {
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter, 
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Select,
   SelectItem
 } from '@heroui/react';
@@ -50,11 +50,30 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
   };
 
   return (
-    <Modal isOpen={true} onClose={closeModal} size="sm">
+    <Modal
+      isOpen={true}
+      onClose={closeModal}
+      size="md"
+      backdrop="blur"
+      classNames={{
+        backdrop: "bg-slate-900/40 backdrop-blur-md z-[10005]",
+        wrapper: "z-[10006]",
+        base: "z-[10007] rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl",
+        header: "border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/20 py-4 px-6",
+        body: "py-6 px-6",
+        footer: "border-t border-slate-100 dark:border-zinc-800 py-4 px-6 bg-slate-50/30 dark:bg-zinc-900/10"
+      }}
+      motionProps={{
+        variants: {
+          enter: { y: 0, opacity: 1, scale: 1 },
+          exit: { y: 10, opacity: 0, scale: 0.98 }
+        }
+      }}
+    >
       <Toaster />
       <ModalContent>
-        <ModalHeader>
-          <h3 className="text-lg font-bold">{modalTitle}</h3>
+        <ModalHeader className="flex flex-col gap-1">
+          <span className="text-xl font-bold text-slate-800 dark:text-white">{modalTitle}</span>
         </ModalHeader>
         <ModalBody>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -68,7 +87,14 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
                 render={({ field }) => (
                   <Select
                     label="Categoría"
+                    variant="flat"
+                    labelPlacement="outside"
                     placeholder="Seleccione una categoría"
+                    classNames={{
+                      trigger: "bg-slate-100 dark:bg-zinc-800 shadow-none hover:bg-slate-200/50 dark:hover:bg-zinc-700 transition-colors",
+                      value: "text-slate-800 dark:text-slate-200",
+                      label: "text-slate-600 dark:text-slate-400 font-semibold mb-2"
+                    }}
                     color={errors.id_categoria ? "danger" : "default"}
                     errorMessage={errors.id_categoria?.message}
                     isRequired
@@ -99,7 +125,14 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
                 <Input
                   {...field}
                   label="Subcategoría"
+                  variant="flat"
+                  labelPlacement="outside"
                   placeholder="Nombre de la subcategoría"
+                  classNames={{
+                    inputWrapper: "bg-slate-100 dark:bg-zinc-800 shadow-none hover:bg-slate-200/50 dark:hover:bg-zinc-700 transition-colors",
+                    input: "text-slate-800 dark:text-slate-200",
+                    label: "text-slate-600 dark:text-slate-400 font-semibold mb-2"
+                  }}
                   color={errors.nom_subcat ? "danger" : "default"}
                   errorMessage={errors.nom_subcat?.message}
                   isRequired
@@ -108,17 +141,16 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
             />
           </form>
         </ModalBody>
-        <ModalFooter>
+        <ModalFooter className="flex justify-end gap-3 mt-4">
           <Button
-            color="danger"
-            variant="light"
+            variant="flat"
+            className="bg-slate-100 text-slate-600 font-bold dark:bg-zinc-800 dark:text-slate-300 rounded-xl px-4"
             onPress={closeModal}
-            className="mr-2"
           >
             Cancelar
           </Button>
           <Button
-            color="primary"
+            className="bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/20 rounded-xl px-4"
             onPress={handleSubmit(onSubmit)}
           >
             Guardar

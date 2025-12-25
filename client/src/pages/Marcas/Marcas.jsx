@@ -9,12 +9,12 @@ import { Button } from '@heroui/react';
 import { getMarcas } from "@/services/marca.services";
 import { ActionButton } from "@/components/Buttons/Buttons";
 
-function Marcas({ 
-  marcasData = null, 
-  onAdd = null, 
-  onUpdate = null, 
-  onDelete = null, 
-  skipApiCall = false 
+function Marcas({
+  marcasData = null,
+  onAdd = null,
+  onUpdate = null,
+  onDelete = null,
+  skipApiCall = false
 }) {
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => setModalOpen(!activeAdd);
@@ -50,42 +50,42 @@ function Marcas({
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
   const handleClearSearch = () => setSearchTerm("");
 
-return (
-  <div className="m-4">
-    <Toaster />
-    <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Gestión de marcas</h1>
-    <p className="text-base text-blue-700/80 mb-4">Administra y busca marcas fácilmente.</p>
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-      <BarraSearch
-        value={searchTerm}
-        onChange={handleSearchChange}
-        placeholder="Ingrese la marca a buscar"
-        isClearable={true}
-        onClear={handleClearSearch}
-        className="h-10 text-sm w-full md:w-72"
+  return (
+    <div className="m-4">
+      <Toaster />
+      <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-400 tracking-tight mb-1">Gestión de marcas</h1>
+      <p className="text-base text-blue-700/80 dark:text-blue-300/80 mb-6">Administra y busca marcas fácilmente.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <BarraSearch
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Buscar marca..."
+          isClearable={true}
+          onClear={handleClearSearch}
+          className="h-10 text-sm w-full md:w-72 dark:bg-gray-800 dark:text-white"
+        />
+        <ActionButton
+          color="primary"
+          endContent={<FaPlus size={18} />}
+          onClick={handleModalAdd}
+          disabled={!hasCreatePermission}
+          className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none 
+            bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors 
+            dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 
+            ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
+        >
+          Agregar marca
+        </ActionButton>
+      </div>
+      <ShowMarcas searchTerm={searchTerm} marcas={marcas} setMarcas={setMarcas} />
+      <MarcasForm
+        modalTitle={'Nueva marca'}
+        isVisible={activeAdd}
+        onClose={handleModalAdd}
+        onAddMarca={handleAddMarca}
       />
-      <ActionButton
-        color="primary"
-        endContent={<FaPlus style={{ fontSize: '22px' }} />}
-        onClick={handleModalAdd}
-        disabled={!hasCreatePermission}
-        className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none 
-          bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors 
-          dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 
-          ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
-      >
-        Agregar marca
-      </ActionButton>
     </div>
-    <ShowMarcas searchTerm={searchTerm} marcas={marcas} setMarcas={setMarcas} />
-    <MarcasForm 
-      modalTitle={'Nueva marca'} 
-      isVisible={activeAdd}
-      onClose={handleModalAdd}
-      onAddMarca={handleAddMarca}
-    />
-  </div>
-);
+  );
 }
 
 export default Marcas;

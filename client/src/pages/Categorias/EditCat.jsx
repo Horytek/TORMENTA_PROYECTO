@@ -7,15 +7,15 @@ import {
   Button,
 } from "@heroui/react";
 import {
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter, 
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Select,
   SelectItem
 } from '@heroui/react';
-import {useEditCat} from '@/services/categoria.services';
+import { useEditCat } from '@/services/categoria.services';
 
 const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
   // Elimina el hook que llama API: const { editCat, loading } = useEditCat();
@@ -50,10 +50,29 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="md"
+      backdrop="blur"
+      classNames={{
+        backdrop: "bg-slate-900/40 backdrop-blur-md z-[10005]",
+        wrapper: "z-[10006]",
+        base: "z-[10007] rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl",
+        header: "border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/20 py-4 px-6",
+        body: "py-6 px-6",
+        footer: "border-t border-slate-100 dark:border-zinc-800 py-4 px-6 bg-slate-50/30 dark:bg-zinc-900/10"
+      }}
+      motionProps={{
+        variants: {
+          enter: { y: 0, opacity: 1, scale: 1 },
+          exit: { y: 10, opacity: 0, scale: 0.98 }
+        }
+      }}
+    >
       <ModalContent>
-        <ModalHeader>
-          <h3 className="text-lg font-bold">{modalTitle}</h3>
+        <ModalHeader className="flex flex-col gap-1">
+          <span className="text-xl font-bold text-slate-800 dark:text-white">{modalTitle}</span>
         </ModalHeader>
         <ModalBody>
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -61,7 +80,14 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
               <Input
                 {...register("nom_categoria", { required: true })}
                 label="Nombre de la categoría"
+                variant="flat"
+                labelPlacement="outside"
                 defaultValue={initialData?.nom_categoria || ""}
+                classNames={{
+                  inputWrapper: "bg-slate-100 dark:bg-zinc-800 shadow-none hover:bg-slate-200/50 dark:hover:bg-zinc-700 transition-colors",
+                  input: "text-slate-800 dark:text-slate-200",
+                  label: "text-slate-600 dark:text-slate-400 font-semibold mb-2"
+                }}
                 color={errors.nom_categoria ? "danger" : "default"}
                 errorMessage={errors.nom_categoria && "Este campo es obligatorio"}
                 isRequired
@@ -69,7 +95,14 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
               <Select
                 {...register("estado_categoria", { required: true })}
                 label="Estado de la categoría"
+                variant="flat"
+                labelPlacement="outside"
                 placeholder="Seleccione un estado"
+                classNames={{
+                  trigger: "bg-slate-100 dark:bg-zinc-800 shadow-none hover:bg-slate-200/50 dark:hover:bg-zinc-700 transition-colors",
+                  value: "text-slate-800 dark:text-slate-200",
+                  label: "text-slate-600 dark:text-slate-400 font-semibold mb-2"
+                }}
                 defaultValue={initialData?.estado_categoria?.toString() || "1"}
                 color={errors.estado_categoria ? "danger" : "default"}
                 errorMessage={errors.estado_categoria && "Seleccione un estado"}
@@ -79,11 +112,18 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess }) => {
                 <SelectItem key="0" value="0">Inactivo</SelectItem>
               </Select>
             </div>
-            <ModalFooter>
-              <Button color="danger" variant="light" onPress={onClose} className="mr-2">
+            <ModalFooter className="flex justify-end gap-3 mt-4">
+              <Button
+                variant="flat"
+                className="bg-slate-100 text-slate-600 font-bold dark:bg-zinc-800 dark:text-slate-300 rounded-xl px-4"
+                onPress={onClose}
+              >
                 Cancelar
               </Button>
-              <Button color="primary" type="submit">
+              <Button
+                className="bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/20 rounded-xl px-4"
+                type="submit"
+              >
                 Guardar
               </Button>
             </ModalFooter>

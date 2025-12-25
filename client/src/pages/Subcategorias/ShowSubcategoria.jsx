@@ -118,11 +118,11 @@ export function ShowSubcategorias({
                 variant="flat"
                 radius="full"
                 color="primary"
-                onClick={() => hasEditPermission && handleOpenEditModal(sub_categoria)}
+                onPress={() => hasEditPermission && handleOpenEditModal(sub_categoria)}
                 isDisabled={!hasEditPermission}
-                className="text-lg cursor-pointer active:opacity-50 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
+                className="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
               >
-                <MdEdit />
+                <MdEdit size={18} />
               </Button>
             </Tooltip>
             <Tooltip color="danger" content={hasDeletePermission ? "Eliminar" : "Sin permiso"}>
@@ -132,13 +132,14 @@ export function ShowSubcategorias({
                 variant="flat"
                 radius="full"
                 color="danger"
-                onClick={() => hasDeletePermission && handleOpenConfirmationModal(sub_categoria)}
+                onPress={() => hasDeletePermission && handleOpenConfirmationModal(sub_categoria)}
                 isDisabled={!hasDeletePermission}
-                className="text-lg cursor-pointer active:opacity-50 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
+                className="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
               >
-                <FaTrash />
+                <FaTrash size={16} />
               </Button>
             </Tooltip>
+            {/*
             <Tooltip color="danger" content={hasDeactivatePermission ? "Desactivar" : "Sin permiso"}>
               <Button
                 isIconOnly
@@ -146,13 +147,14 @@ export function ShowSubcategorias({
                 variant="flat"
                 radius="full"
                 color="danger"
-                onClick={() => hasDeactivatePermission && handleOpenDeactivationModal(sub_categoria)}
+                onPress={() => hasDeactivatePermission && handleOpenDeactivationModal(sub_categoria)}
                 isDisabled={!hasDeactivatePermission}
-                className="text-lg cursor-pointer active:opacity-50 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
+                className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300"
               >
-                <MdDoNotDisturbAlt />
+                <MdDoNotDisturbAlt size={18} />
               </Button>
             </Tooltip>
+            */}
           </div>
         );
       default:
@@ -162,29 +164,33 @@ export function ShowSubcategorias({
 
   return (
     <>
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
+      <div className="w-full">
         <Table
           aria-label="Tabla de Subcategorías"
+          removeWrapper
           isHeaderSticky
           bottomContent={
             pages > 0 ? (
-              <div className="flex w-full justify-center mt-4">
+              <div className="flex w-full justify-center mt-4 border-t border-slate-100 dark:border-zinc-800 pt-3">
                 <Pagination
                   isCompact
                   showControls
-                  showShadow
                   color="primary"
                   page={page}
                   total={pages}
                   onChange={(page) => setPage(page)}
+                  classNames={{
+                    cursor: "bg-blue-600 shadow-md",
+                  }}
                 />
               </div>
             ) : null
           }
           classNames={{
-            wrapper: "min-h-[400px] shadow-none p-0 bg-transparent",
-            th: "bg-blue-50/50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 font-bold text-xs uppercase",
-            td: "py-3 border-b border-slate-100 dark:border-zinc-800/50",
+            base: "max-h-[600px] overflow-scroll",
+            th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-10 border-b border-slate-200 dark:border-zinc-800",
+            td: "py-3 border-b border-slate-100 dark:border-zinc-800/50 text-slate-700 dark:text-slate-300",
+            tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
           }}
         >
           <TableHeader columns={columns}>
@@ -199,7 +205,7 @@ export function ShowSubcategorias({
           </TableHeader>
           <TableBody items={items} emptyContent={"No hay subcategorías correspondientes/existentes."}>
             {(item) => (
-              <TableRow key={item.id_subcategoria} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+              <TableRow key={item.id_subcategoria}>
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
               </TableRow>
             )}

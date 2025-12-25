@@ -12,7 +12,7 @@ import {
   Button,
   Chip
 } from '@heroui/react';
-import ConfirmationModal from '@/pages/Almacen/Nota_Salida/ComponentsNotaSalida/Modals/ConfirmationModal';
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 const EMPTY_MSG = "No hay productos añadidos";
 
@@ -30,13 +30,13 @@ const NuevaTablaGuia = ({ guias = [], setProductosSeleccionados }) => {
 
   const filas = useMemo(() => Array.isArray(guias)
     ? guias.map((p, i) => ({
-        id: p.codigo ?? `row-${i}`,
-        codigo: p.codigo ?? '-',
-        descripcion: p.descripcion ?? p.nombre ?? '—',
-        marca: p.marca ?? p.nombre_marca ?? '—',
-        cantidad: p.cantidad ?? 0,
-        raw: p
-      }))
+      id: p.codigo ?? `row-${i}`,
+      codigo: p.codigo ?? '-',
+      descripcion: p.descripcion ?? p.nombre ?? '—',
+      marca: p.marca ?? p.nombre_marca ?? '—',
+      cantidad: p.cantidad ?? 0,
+      raw: p
+    }))
     : [], [guias]);
 
   const totalUnidades = useMemo(

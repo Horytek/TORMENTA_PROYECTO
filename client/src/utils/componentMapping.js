@@ -18,8 +18,8 @@ const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'
 const Nota_Almacen = lazy(() => import('@/pages/Nota_Almacen/Nota_Almacen'));
 const Nueva_Nota_Ingreso = lazy(() => import('@/pages/Nota_Almacen/registration/RegistroNota'));
 const Nueva_Nota_Salida = lazy(() => import('@/pages/Nota_Almacen/registration/RegistroNota'));
-const Guia_Remision = lazy(() => import('@/pages/Almacen/Guia_Remision/Guia_Remision'));
-const RegistroGuia = lazy(() => import('@/pages/Almacen/Guia_Remision/Registro_Guia/Registro_Guia'));
+const Guia_Remision = lazy(() => import('@/pages/Guia_Remision/Guia_Remision'));
+const RegistroGuia = lazy(() => import('@/pages/Guia_Remision/Registro_Guia/Registro_Guia'));
 const ReporteVentas = lazy(() => import('@/pages/ReporteVentas/ReporteVentas'));
 const Usuarios = lazy(() => import('@/pages/Usuarios/Usuarios'));
 const Roles = lazy(() => import('@/pages/Roles/Roles'));

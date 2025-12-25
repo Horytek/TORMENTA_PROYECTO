@@ -16,13 +16,13 @@ import { ActionButton } from "@/components/Buttons/Buttons";
 
 import EditForm from "./EditSubcat";
 
-function Subcategorias({ 
-  subcategoriasData = [], 
+function Subcategorias({
+  subcategoriasData = [],
   categoriasData = [],  // categorías provenientes del padre
-  onAdd = null, 
-  onUpdate = null, 
-  onDelete = null, 
-  skipApiCall = false 
+  onAdd = null,
+  onUpdate = null,
+  onDelete = null,
+  skipApiCall = false
 }) {
   const [subcategorias, setSubcategorias] = useState(subcategoriasData);
   const [activeAdd, setModalOpen] = useState(false);
@@ -50,9 +50,9 @@ function Subcategorias({
   const handleAddSubcategoria = async (newSubcat) => {
     const [ok, id] = await addSubcategoria(newSubcat);
     if (ok) {
-      const created = { 
-        ...newSubcat, 
-        id_subcategoria: id, 
+      const created = {
+        ...newSubcat,
+        id_subcategoria: id,
         nom_categoria: getCategoriaNombre(newSubcat.id_categoria),
         estado_subcat: 1
       };
@@ -70,11 +70,11 @@ function Subcategorias({
         prev.map(subcat =>
           subcat.id_subcategoria === updatedData.id_subcategoria
             ? {
-                ...subcat,
-                ...updatedData,
-                nom_categoria: getCategoriaNombre(updatedData.id_categoria),
-                estado_subcat: updatedData.estado_subcat
-              }
+              ...subcat,
+              ...updatedData,
+              nom_categoria: getCategoriaNombre(updatedData.id_categoria),
+              estado_subcat: updatedData.estado_subcat
+            }
             : subcat
         )
       );
@@ -115,21 +115,21 @@ function Subcategorias({
   return (
     <div className="m-4">
       <Toaster />
-      <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">Gestión de subcategorías</h1>
-      <p className="text-base text-blue-700/80 mb-4">Administra y busca subcategorías fácilmente.</p>
+      <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-400 tracking-tight mb-1">Gestión de subcategorías</h1>
+      <p className="text-base text-blue-700/80 dark:text-blue-300/80 mb-6">Administra y busca subcategorías fácilmente.</p>
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <BarraSearch
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Ingrese la subcategoría a buscar"
+          placeholder="Buscar subcategoría..."
           isClearable={true}
           onClear={handleClearSearch}
-          className="h-10 text-sm w-full md:w-72"
+          className="h-10 text-sm w-full md:w-72 dark:bg-gray-800 dark:text-white"
         />
         <ActionButton
           color="primary"
-          endContent={<FaPlus style={{ fontSize: '22px' }} />}
+          endContent={<FaPlus size={18} />}
           onClick={() => setModalOpen(true)}
           disabled={!hasCreatePermission}
           className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none 
@@ -152,7 +152,7 @@ function Subcategorias({
       {activeAdd && (
         <SubcategoriaForm
           modalTitle={"Nueva subcategoría"}
-            closeModal={() => setModalOpen(false)}
+          closeModal={() => setModalOpen(false)}
           onSuccess={handleAddSubcategoria}
           categorias={categoriasData}
         />

@@ -17,7 +17,7 @@ import { ScrollShadow } from '@heroui/react';
 import { IoMdAdd } from "react-icons/io";
 import { FaBarcode, FaSearch } from 'react-icons/fa';
 import { toast } from "react-hot-toast";
-import ProductosForm from '../../../../Productos/ProductosForm';
+import ProductosForm from '../../../Productos/ProductosForm';
 
 const EMPTY_MSG = "No hay productos cargados";
 const NO_MATCHES_MSG = "No hay coincidencias con el filtro actual";
@@ -50,7 +50,7 @@ const ModalBuscarProducto = ({
       setInternalLoading(false);
       // Focus en primer input tras animación
       setTimeout(() => {
-        try { firstInputRef.current?.focus(); } catch {}
+        try { firstInputRef.current?.focus(); } catch { }
       }, 60);
     } else {
       setSearchDescripcion('');
@@ -198,7 +198,7 @@ const ModalBuscarProducto = ({
                     {listStatus === 'loading' && (
                       <tr>
                         <td colSpan={6} className="py-10 text-center">
-                          <Spinner size="sm" color="primary" /> 
+                          <Spinner size="sm" color="primary" />
                           <span className="ml-2 text-blue-600 dark:text-blue-300 text-xs">Cargando...</span>
                         </td>
                       </tr>
@@ -286,8 +286,8 @@ const ModalBuscarProducto = ({
 
       {showNuevoProducto && (
         <ProductosForm
-            modalTitle="Nuevo Producto"
-            onClose={closeNuevoProducto}
+          modalTitle="Nuevo Producto"
+          onClose={closeNuevoProducto}
         />
       )}
     </>

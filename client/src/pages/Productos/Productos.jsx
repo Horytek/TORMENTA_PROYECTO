@@ -348,50 +348,47 @@ function Productos() {
       <Toaster position="top-center" />
 
       {/* Header de Tabs y Herramientas */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
-          <div className="flex-1 overflow-x-auto w-full sm:w-auto">
-            <Tabs
-              selectedKey={activeTab}
-              onSelectionChange={handleTabChange}
-              variant="light"
-              color="primary"
-              classNames={{
-                tabList: "gap-4 p-1",
-                tab: "h-10 px-6 text-sm font-semibold transition-all duration-300 rounded-full",
-                cursor: "bg-blue-600 shadow-md shadow-blue-500/30 rounded-full",
-                tabContent: "group-data-[selected=true]:text-white text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"
-              }}
-              radius="full"
-            >
-              <Tab key="productos" title="Productos" />
-              <Tab key="marcas" title="Marcas" />
-              <Tab key="categorias" title="Categorías" />
-              <Tab key="subcategorias" title="Subcategorías" />
-            </Tabs>
-          </div>
-
-          {/* Herramientas: Importar / Exportar */}
-          <div className="flex gap-4 mt-4 sm:mt-0">
-            {/* Botón Importar */}
-            <Button
-              onClick={() => setImportModal({ open: true, type: activeTab })}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-green-700 bg-green-50 hover:bg-green-100 shadow-none border-0
-                dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-900/40 transition-all"
-              startContent={<FaFileExcel className="text-green-700 text-2xl dark:text-green-300" />}
-            >
-              Importar
-            </Button>
-            {/* Botón Exportar */}
-            <Button
-              onClick={() => handleExport(activeTab)}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 shadow-none border-0
-                dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/40 transition-all"
-              startContent={<FaFileExport className="text-indigo-700 text-2xl dark:text-indigo-300" />}
-            >
-              Exportar
-            </Button>
-          </div>
+      {/* Header de Tabs y Herramientas */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+        <div className="flex-1 w-full sm:w-auto">
+          <Tabs
+            selectedKey={activeTab}
+            onSelectionChange={handleTabChange}
+            variant="light"
+            classNames={{
+              tabList: "bg-slate-100 dark:bg-zinc-800 p-1 rounded-2xl gap-2",
+              cursor: "bg-white dark:bg-zinc-950 shadow-sm rounded-xl",
+              tab: "h-9 px-4 rounded-xl text-slate-500 font-medium data-[selected=true]:text-blue-600 dark:data-[selected=true]:text-blue-400 transition-all",
+              tabContent: "font-semibold"
+            }}
+          >
+            <Tab key="productos" title="Productos" />
+            <Tab key="marcas" title="Marcas" />
+            <Tab key="categorias" title="Categorías" />
+            <Tab key="subcategorias" title="Subcategorías" />
+          </Tabs>
         </div>
+
+        {/* Herramientas: Importar / Exportar */}
+        <div className="flex gap-3 mt-4 sm:mt-0">
+          <Button
+            onClick={() => setImportModal({ open: true, type: activeTab })}
+            variant="flat"
+            className="px-5 h-10 rounded-xl font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400"
+            startContent={<FaFileExcel size={18} />}
+          >
+            Importar
+          </Button>
+          <Button
+            onClick={() => handleExport(activeTab)}
+            variant="flat"
+            className="px-5 h-10 rounded-xl font-bold text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400"
+            startContent={<FaFileExport size={18} />}
+          >
+            Exportar
+          </Button>
+        </div>
+      </div>
 
       {/* Área de Contenido Principal */}
       <div className="min-h-[400px]">

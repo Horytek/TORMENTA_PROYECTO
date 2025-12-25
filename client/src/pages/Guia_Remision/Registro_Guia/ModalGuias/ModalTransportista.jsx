@@ -11,26 +11,27 @@ import {
 } from '@heroui/react';
 import { IoMdClose } from "react-icons/io";
 import { FaRegPlusSquare } from "react-icons/fa";
-import useCodigoData from '../../../data/generar_cod_trans';
+import { generarCodigoTransportista, addTransportistaPublico } from '@/services/guiaRemision.services';
 import ModalVehiculo from './ModalVehiculo';
-import addTransportistaPrivado from '../../../data/add_transportistapriv';
 import toast from 'react-hot-toast';
 
-export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }) => {
-  const { codigos } = useCodigoData();
+export const ModalTransportista = ({ modalTitle, closeModel, onTransportistaAdded }) => {
   const [isVehiculoModalOpen, setVehiculoModalOpen] = useState(false);
   const [vehiculoPlaca, setVehiculoPlaca] = useState('');
-  const [dni, setDni] = useState('');
-  const [apellidos, setApellidos] = useState('');
-  const [nombres, setNombres] = useState('');
+  const [ruc, setRuc] = useState('');
+  const [empresa, setEmpresa] = useState('');
   const [telefono, setTelefono] = useState('');
   const [id, setId] = useState('');
 
   useEffect(() => {
-    if (codigos.length > 0) {
-      setId(codigos[0].codtrans);
+    const fetchCodigo = async () => {
+      const response = await generarCodigoTransportista();
+      if (response.success && response.data && response.data.length > 0) {
+        setId(response.data[0].codtrans); // Asumiendo que retorna un array con un objeto {codtrans: ...}
+      }
     }
-  }, [codigos]);
+    fetchCodigo();
+  }, []);
 
   const openVehiculoModal = () => setVehiculoModalOpen(true);
   const closeVehiculoModal = () => setVehiculoModalOpen(false);
@@ -40,31 +41,30 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
     closeVehiculoModal();
   };
 
-const handleSave = async () => {
-  const data = {
-    id,
-    placa: vehiculoPlaca,
-    dni,
-    apellidos,
-    nombres,
-    telefono,
-  };
+  const handleSave = async () => {
+    const data = {
+      id,
+      placa: vehiculoPlaca,
+      ruc,
+      razon_social: empresa,
+      telefono,
+    };
 
-  const result = await addTransportistaPrivado(data);
-  if (result.success) {
-    toast.success('Transportista guardado con éxito');
-    if (onTransportistaAdded) onTransportistaAdded(); // Solo actualiza datos, no cierra modal
-    closeModel(); // Solo aquí se cierra el modal
-  } else {
-    toast.error(`Error al guardar el transportista: ${result.message}`);
-  }
-};
+    const result = await addTransportistaPublico(data);
+    if (result.success) {
+      toast.success('Transportista guardado con éxito');
+      if (onTransportistaAdded) onTransportistaAdded();
+      closeModel();
+    } else {
+      toast.error(`Error al guardar el transportista: ${result.message}`);
+    }
+  };
 
   return (
     <Modal isOpen={true} onClose={closeModel} size="lg">
       <ModalContent>
         <ModalHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center w-full">
             <h2 className="text-xl font-bold">{modalTitle}</h2>
             <Button isIconOnly variant="light" onPress={closeModel}>
               <IoMdClose className="text-xl" />
@@ -79,37 +79,35 @@ const handleSave = async () => {
               value={id}
               isReadOnly
               className="bg-gray-200"
+              variant="flat"
             />
             <Input
-              label="DNI"
-              placeholder="Ingrese el DNI"
-              value={dni}
-              onChange={(e) => setDni(e.target.value)}
+              label="RUC"
+              placeholder="Ingrese el RUC"
+              value={ruc}
+              onChange={(e) => setRuc(e.target.value)}
+              variant="flat"
             />
             <Input
-              label="Apellidos"
-              placeholder="Ingrese los apellidos"
-              value={apellidos}
-              onChange={(e) => setApellidos(e.target.value)}
-            />
-            <Input
-              label="Nombres"
-              placeholder="Ingrese los nombres"
-              value={nombres}
-              onChange={(e) => setNombres(e.target.value)}
+              label="Empresa"
+              placeholder="Ingrese el nombre de la empresa"
+              value={empresa}
+              onChange={(e) => setEmpresa(e.target.value)}
+              variant="flat"
             />
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
                 Placa (Opcional)
               </label>
               <div className="flex items-center gap-2">
                 <Input
                   value={vehiculoPlaca}
                   isReadOnly
-                  className="bg-gray-200 flex-grow"
+                  className="flex-grow"
+                  variant="flat"
                 />
                 <Button
-                  variant="light"
+                  variant="flat"
                   onPress={openVehiculoModal}
                   startContent={<FaRegPlusSquare className="text-xl" />}
                 >
@@ -122,12 +120,13 @@ const handleSave = async () => {
               placeholder="Ingrese el teléfono"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
+              variant="flat"
             />
           </div>
         </ModalBody>
 
         <ModalFooter>
-          <Button variant="light" onPress={closeModel}>
+          <Button variant="flat" onPress={closeModel}>
             Cancelar
           </Button>
           <Button color="primary" onPress={handleSave}>
@@ -147,10 +146,10 @@ const handleSave = async () => {
   );
 };
 
-ModalTransporte.propTypes = {
+ModalTransportista.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   closeModel: PropTypes.func.isRequired,
   onTransportistaAdded: PropTypes.func.isRequired,
 };
 
-export default ModalTransporte;
+export default ModalTransportista;

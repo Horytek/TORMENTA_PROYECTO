@@ -79,8 +79,11 @@ export function LineChartComponent() {
         index="date"
         yAxisWidth={65}
         categories={['Año 2023', 'Año 2024']}
-        colors={['indigo', 'cyan']}
+        colors={['blue', 'indigo']}
         valueFormatter={valueFormatter}
+        curveType="monotone"
+        showAnimation={true}
+        showGridLines={false}
       />
     </>
   );
