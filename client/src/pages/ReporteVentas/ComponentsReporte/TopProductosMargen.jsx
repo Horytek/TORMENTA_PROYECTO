@@ -7,82 +7,66 @@ export default function TopProductosMargen({ idSucursal, year, month, week, limi
     const { data, loading, error } = useTopProductosMargen(idSucursal, year, month, week, limit);
 
     // Gradientes y colores para los indicadores
-    const gradients = [
-        "from-emerald-400/30 via-emerald-200/20 to-transparent",
-        "from-blue-400/30 via-blue-200/20 to-transparent",
-        "from-amber-400/30 via-yellow-200/20 to-transparent",
-        "from-purple-400/30 via-purple-200/20 to-transparent",
-        "from-pink-400/30 via-pink-200/20 to-transparent",
-    ];
     const dotColors = [
-        "bg-emerald-500",
+        "bg-indigo-500",
         "bg-blue-500",
-        "bg-amber-500",
-        "bg-purple-500",
-        "bg-pink-500",
+        "bg-sky-500",
+        "bg-cyan-500",
+        "bg-teal-500",
     ];
 
     return (
-        <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white dark:bg-zinc-900 transition-all sm:mx-auto sm:max-w-lg p-6">
-            {/* Fondo decorativo sutil */}
-            <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-100/60 to-blue-200/40 rounded-full blur-2xl"></div>
-                <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-amber-100/40 to-purple-100/30 rounded-full blur-xl"></div>
-            </div>
-            <CardHeader className="flex items-center gap-3 mb-1 bg-transparent">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-400/80 to-blue-500/80 shadow">
-                    <TrendingUp className="h-5 w-5 text-white" />
+        <Card className="w-full h-full p-2 rounded-3xl shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
+            <CardHeader className="flex flex-col items-start gap-1 pb-2">
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        <TrendingUp size={18} />
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-white">Top Margen</h2>
                 </div>
-                <div>
-                    <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Top Productos por Margen</h2>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Productos con mayor margen de ganancia
-                    </p>
-                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Productos con mayor rentabilidad
+                </p>
             </CardHeader>
-            <Divider />
-            <CardBody className="py-3 px-4">
+            <Divider className="bg-slate-100 dark:bg-zinc-800" />
+            <CardBody className="py-2">
                 {loading ? (
-                    <div className="flex justify-center py-8"><Spinner /></div>
+                    <div className="flex justify-center py-8"><Spinner size="lg" color="success" /></div>
                 ) : error ? (
-                    <div className="text-center text-red-500 py-8">{error}</div>
+                    <div className="text-center text-rose-500 py-8 text-sm">{error}</div>
                 ) : !data || data.length === 0 ? (
-                    <div className="p-6 text-center bg-white/60 dark:bg-zinc-800/60 rounded-xl">
-                        <p className="text-zinc-500 dark:text-zinc-400">No hay productos con margen en este periodo</p>
+                    <div className="p-6 text-center text-slate-400">
+                        <p className="text-sm">No hay datos disponibles</p>
                     </div>
                 ) : (
-                    <ul className="divide-y divide-emerald-50 dark:divide-emerald-900">
+                    <div className="flex flex-col gap-2">
                         {data.map((product, i) => (
-                            <li key={i} className="py-2 flex items-center gap-3">
-                                <div className="flex-1">
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
-                                        <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate mb-1 sm:mb-0">
-                                            {product.nombre || product.name}
-                                        </span>
-                                        <Chip
-                                            color="primary"
-                                            variant="flat"
-                                            className="font-bold text-xs px-2 py-0.5 ml-0 sm:ml-4 mt-1 sm:mt-0"
-                                        >
-                                            S/. {product.ventas?.toLocaleString() ?? product.sales}
-                                        </Chip>
+                            <div key={i} className="flex flex-col p-3 rounded-2xl bg-slate-50/50 dark:bg-zinc-800/30 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-zinc-700">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start gap-3 overflow-hidden">
+                                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${dotColors[i % dotColors.length]}`}></div>
+                                        <div className="flex flex-col overflow-hidden">
+                                            <span className="font-bold text-sm text-slate-800 dark:text-gray-100 truncate leading-snug">
+                                                {product.nombre || product.name}
+                                            </span>
+                                            <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                Ventas: S/. {product.ventas?.toLocaleString() ?? product.sales}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <span className={`inline-block w-2 h-2 rounded-full ${dotColors[i % dotColors.length]}`}></span>
-                                        <span className="text-xs text-zinc-400">
-                                            Margen: {product.margen ?? product.margin}%
-                                        </span>
-                                    </div>
+                                    <Chip
+                                        size="sm"
+                                        variant="flat"
+                                        className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-bold border border-emerald-200/50 dark:border-emerald-800/30"
+                                    >
+                                        {product.margen ?? product.margin}%
+                                    </Chip>
                                 </div>
-                            </li>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 )}
             </CardBody>
-            <Divider />
-            <CardFooter>
-                <p className="text-sm text-default-500">Datos actualizados diariamente.</p>
-            </CardFooter>
         </Card>
     );
 }

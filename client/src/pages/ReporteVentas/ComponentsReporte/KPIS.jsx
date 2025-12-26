@@ -86,7 +86,7 @@ const SalesCard = ({
     ];
 
     return (
-        <div className="flex flex-row flex-wrap gap-6 px-4 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
             {/* Total de Ganancias */}
             <MetricCardKPI
                 icon={<DollarSign className="h-5 w-5" />}

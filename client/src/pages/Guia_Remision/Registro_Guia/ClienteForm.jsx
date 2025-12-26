@@ -111,95 +111,138 @@ function ClienteForm({ modalTitle, onClose }) {
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} size="lg">
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      size="lg"
+      backdrop="blur"
+      classNames={{
+        backdrop: "z-[1200] bg-white/10",
+        base: "z-[1210] pointer-events-auto bg-white/80 dark:bg-zinc-900/80 supports-[backdrop-filter]:backdrop-blur-xl border border-blue-100/40 dark:border-zinc-700/50 shadow-2xl rounded-2xl",
+        header: "px-6 py-4 border-b border-blue-100/30 dark:border-zinc-700/40",
+        body: "px-6 pb-4 pt-4",
+        footer: "px-6 py-4 border-t border-blue-100/30 dark:border-zinc-700/40"
+      }}
+      motionProps={{
+        variants: {
+          enter: { opacity: 1, y: 0, scale: 1 },
+          exit: { opacity: 0, y: 12, scale: 0.97 }
+        }
+      }}
+    >
       <Toaster />
       <ModalContent>
         <ModalHeader>
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold">{modalTitle}</h2>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-blue-100">{modalTitle}</h2>
+            <p className="text-xs text-slate-500 font-normal">Ingrese los datos del destinatario para la guía</p>
           </div>
         </ModalHeader>
         <ModalBody>
-          <Tabs aria-label="Tipo de Cliente" selectedKey={tab} onSelectionChange={setTab}>
+          <Tabs
+            aria-label="Tipo de Cliente"
+            selectedKey={tab}
+            onSelectionChange={setTab}
+            variant="underlined"
+            color="primary"
+            classNames={{
+              tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+              cursor: "w-full bg-blue-500",
+              tab: "max-w-fit px-0 h-12",
+              tabContent: "group-data-[selected=true]:text-blue-600 font-medium"
+            }}
+          >
             <Tab key="registro" title="Persona Natural">
-              <Card>
-                <CardBody>
-                  <form onSubmit={handleSave} className="space-y-4">
+              <div className="mt-4 space-y-4">
+                <form onSubmit={handleSave} className="space-y-4">
+                  <Input
+                    variant="flat"
+                    label="DNI"
+                    id="ruc-dni"
+                    value={dniOrRuc}
+                    onChange={handleInputChange}
+                    placeholder="Ingrese el DNI"
+                    isRequired
+                    classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+                  />
+                  <div className="grid grid-cols-2 gap-3">
                     <Input
-                      label="DNI"
-                      id="ruc-dni"
-                      value={dniOrRuc}
-                      onChange={handleInputChange}
-                      placeholder="Ingrese el DNI"
-                      isRequired
-                    />
-                    <Input
+                      variant="flat"
                       label="Nombres"
                       id="nombres"
                       value={nombres}
                       onChange={(e) => setNombres(e.target.value)}
                       placeholder="Ingrese los nombres"
                       isRequired
+                      classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
                     />
                     <Input
+                      variant="flat"
                       label="Apellidos"
                       id="apellidos"
                       value={apellidos}
                       onChange={(e) => setApellidos(e.target.value)}
                       placeholder="Ingrese los apellidos"
                       isRequired
+                      classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
                     />
-                    <Input
-                      label="Dirección"
-                      id="direccion"
-                      value={direccion}
-                      onChange={(e) => setDireccion(e.target.value)}
-                      placeholder="Ingrese la dirección"
-                      isRequired
-                    />
-                  </form>
-                </CardBody>
-              </Card>
+                  </div>
+                  <Input
+                    variant="flat"
+                    label="Dirección"
+                    id="direccion"
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
+                    placeholder="Ingrese la dirección"
+                    isRequired
+                    classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+                  />
+                </form>
+              </div>
             </Tab>
             <Tab key="otros" title="Persona Jurídica">
-              <Card>
-                <CardBody>
-                  <form onSubmit={handleSave} className="space-y-4">
-                    <Input
-                      label="RUC"
-                      id="ruc-dni"
-                      value={dniOrRuc}
-                      onChange={handleInputChange}
-                      placeholder="Ingrese el RUC"
-                      isRequired
-                    />
-                    <Input
-                      label="Razón Social"
-                      id="razonSocial"
-                      value={razonSocial}
-                      onChange={(e) => setRazonSocial(e.target.value)}
-                      placeholder="Ingrese la razón social"
-                      isRequired
-                    />
-                    <Input
-                      label="Dirección"
-                      id="direccion"
-                      value={direccion}
-                      onChange={(e) => setDireccion(e.target.value)}
-                      placeholder="Ingrese la dirección"
-                      isRequired
-                    />
-                  </form>
-                </CardBody>
-              </Card>
+              <div className="mt-4 space-y-4">
+                <form onSubmit={handleSave} className="space-y-4">
+                  <Input
+                    variant="flat"
+                    label="RUC"
+                    id="ruc-dni"
+                    value={dniOrRuc}
+                    onChange={handleInputChange}
+                    placeholder="Ingrese el RUC"
+                    isRequired
+                    classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+                  />
+                  <Input
+                    variant="flat"
+                    label="Razón Social"
+                    id="razonSocial"
+                    value={razonSocial}
+                    onChange={(e) => setRazonSocial(e.target.value)}
+                    placeholder="Ingrese la razón social"
+                    isRequired
+                    classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+                  />
+                  <Input
+                    variant="flat"
+                    label="Dirección"
+                    id="direccion"
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
+                    placeholder="Ingrese la dirección"
+                    isRequired
+                    classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+                  />
+                </form>
+              </div>
             </Tab>
           </Tabs>
         </ModalBody>
         <ModalFooter>
-          <Button variant="light" onPress={onClose}>
+          <Button variant="flat" color="default" onPress={onClose}>
             Cancelar
           </Button>
-          <Button color="primary" onPress={handleSave}>
+          <Button color="primary" onPress={handleSave} className="shadow-lg shadow-blue-500/20">
             Guardar
           </Button>
         </ModalFooter>

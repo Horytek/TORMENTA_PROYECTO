@@ -1,5 +1,15 @@
 import React from 'react';
-import { Chip, Tooltip } from '@heroui/react';
+import {
+	Table,
+	TableHeader,
+	TableColumn,
+	TableBody,
+	TableRow,
+	TableCell,
+	Chip,
+	Tooltip,
+	Spinner
+} from '@heroui/react';
 import PropTypes from 'prop-types';
 import { LOG_ACTIONS } from '../../../utils/logActions';
 
@@ -26,78 +36,101 @@ const ACTION_STYLES = {
 	[LOG_ACTIONS.PRODUCTO_CAMBIO_PRECIO]: { color: 'warning', label: 'Cambio de precio', duplicateControl: true }
 };
 
+const columns = [
+	{ name: "FECHA/HORA", uid: "fecha" },
+	{ name: "USUARIO", uid: "usuario", align: "center" },
+	{ name: "ACCIÓN", uid: "accion", align: "center" },
+	{ name: "DESCRIPCIÓN", uid: "descripcion" },
+	{ name: "IP", uid: "ip", align: "center" },
+];
+
 const TablaLogs = ({ logs, loading }) => {
-	return (
-		<div className="bg-white rounded-2xl shadow border border-blue-100 p-4">
-			{/* Leyenda informativa */}
-			
-			
-			<div className="overflow-auto rounded-2xl">
-				<table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-					<thead>
-						<tr className="bg-blue-50 text-blue-900 text-[13px] font-bold">
-							<th className="py-2 px-2 text-left">Fecha/Hora</th>
-							<th className="py-2 px-2 text-center">Usuario</th>
-							<th className="py-2 px-2 text-center">Acción</th>
-							<th className="py-2 px-2 text-center">Descripción</th>
-							<th className="py-2 px-2 text-center">IP</th>
-						</tr>
-					</thead>
-					<tbody>
-						{logs.map((l, idx) => (
-							<tr
-								key={l.id_log}
-								className={`transition-colors duration-150 ${idx % 2 === 0 ? "bg-white" : "bg-blue-50/40"} hover:bg-blue-100/60`}
-							>
-								<td className="py-1.5 px-2 whitespace-nowrap text-left">
-									<span className="font-bold text-[13px] block">
-										{new Date(l.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
-									</span>
-									<span className="text-xs text-gray-500 block">
-										{new Date(l.fecha).toLocaleDateString()}
-									</span>
-								</td>
-								<td className="py-1.5 px-2 text-center">
-									<Chip color="primary" variant="flat" size="sm">{l.usua || l.id_usuario || 'Sistema'}</Chip>
-								</td>
-								<td className="py-1.5 px-2 text-center">
-									{(() => {
-										const style = ACTION_STYLES[l.accion] || { color: 'secondary', label: l.accion, duplicateControl: false };
-										return (
-											<div className="flex items-center justify-center gap-1">
-												<Chip color={style.color} variant="flat" size="sm">{style.label}</Chip>
-												{style.duplicateControl && (
-													<Tooltip content="Control de duplicados activo">
-														<span className="text-green-500 text-xs">🛡️</span>
-													</Tooltip>
-												)}
-											</div>
-										);
-									})()}
-								</td>
-									
-								<td className="py-1.5 px-2 text-left max-w-sm truncate" title={l.descripcion}>
-									<Tooltip content={l.descripcion || '-'}>{l.descripcion || '-'}</Tooltip>
-								</td>
-								<td className="py-1.5 px-2 text-center">
-									<Chip color="default" variant="flat" size="sm">{l.ip || '-'}</Chip>
-								</td>
-							</tr>
-						))}
-						{!loading && !logs.length && (
-							<tr>
-								<td colSpan={6} className="text-center py-6 text-gray-500">Sin resultados</td>
-							</tr>
+
+	const renderCell = (log, columnKey) => {
+		switch (columnKey) {
+			case "fecha":
+				return (
+					<div className="flex flex-col">
+						<span className="font-bold text-sm text-slate-800 dark:text-slate-100">
+							{new Date(log.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+						</span>
+						<span className="text-xs text-slate-400 dark:text-slate-500">
+							{new Date(log.fecha).toLocaleDateString()}
+						</span>
+					</div>
+				);
+			case "usuario":
+				return (
+					<Chip color="primary" variant="flat" size="sm">
+						{log.usua || log.id_usuario || 'Sistema'}
+					</Chip>
+				);
+			case "accion":
+				const style = ACTION_STYLES[log.accion] || { color: 'secondary', label: log.accion, duplicateControl: false };
+				return (
+					<div className="flex items-center justify-center gap-1">
+						<Chip color={style.color} variant="flat" size="sm">{style.label}</Chip>
+						{style.duplicateControl && (
+							<Tooltip content="Control de duplicados activo">
+								<span className="text-green-500 text-xs">🛡️</span>
+							</Tooltip>
 						)}
-						{loading && (
-							<tr>
-								<td colSpan={6} className="text-center py-6 text-gray-400">Cargando...</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
+					</div>
+				);
+			case "descripcion":
+				return (
+					<Tooltip content={log.descripcion || '-'}>
+						<span className="text-sm text-slate-600 dark:text-slate-300 truncate max-w-[200px] block">
+							{log.descripcion || '-'}
+						</span>
+					</Tooltip>
+				);
+			case "ip":
+				return (
+					<Chip color="default" variant="flat" size="sm">
+						{log.ip || '-'}
+					</Chip>
+				);
+			default:
+				return null;
+		}
+	};
+
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center py-12">
+				<Spinner size="lg" color="primary" />
 			</div>
-		</div>
+		);
+	}
+
+	return (
+		<Table
+			aria-label="Tabla de logs del sistema"
+			removeWrapper
+			classNames={{
+				base: "max-h-[calc(100vh-450px)] overflow-y-auto",
+				table: "min-w-full",
+				th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-11 first:rounded-l-lg last:rounded-r-lg shadow-none border-b border-slate-200 dark:border-zinc-800",
+				td: "py-3 border-b border-slate-100 dark:border-zinc-800 group-data-[first=true]:first:before:rounded-none group-data-[first=true]:last:before:rounded-none",
+				tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors shadow-none",
+			}}
+		>
+			<TableHeader columns={columns}>
+				{(column) => (
+					<TableColumn key={column.uid} align={column.align || "start"}>
+						{column.name}
+					</TableColumn>
+				)}
+			</TableHeader>
+			<TableBody items={logs} emptyContent={"Sin resultados"}>
+				{(item) => (
+					<TableRow key={item.id_log}>
+						{(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+					</TableRow>
+				)}
+			</TableBody>
+		</Table>
 	);
 };
 
@@ -107,4 +140,3 @@ TablaLogs.propTypes = {
 };
 
 export default TablaLogs;
-

@@ -15,6 +15,7 @@ import {
   Select,
   SelectItem
 } from '@heroui/react';
+import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 
 const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }) => {
   const {
@@ -142,19 +143,8 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
           </form>
         </ModalBody>
         <ModalFooter className="flex justify-end gap-3 mt-4">
-          <Button
-            variant="flat"
-            className="bg-slate-100 text-slate-600 font-bold dark:bg-zinc-800 dark:text-slate-300 rounded-xl px-4"
-            onPress={closeModal}
-          >
-            Cancelar
-          </Button>
-          <Button
-            className="bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/20 rounded-xl px-4"
-            onPress={handleSubmit(onSubmit)}
-          >
-            Guardar
-          </Button>
+          <ButtonClose onPress={closeModal} />
+          <ButtonSave onPress={handleSubmit(onSubmit)} />
         </ModalFooter>
       </ModalContent>
     </Modal>

@@ -1,22 +1,30 @@
 import { useEffect, useState, useMemo } from 'react';
 import VendedoresForm from './VendedoresForm';
 import { Toaster } from "react-hot-toast";
-import { FaPlus, FaUsers, FaUserCheck, FaUserTimes, FaInfoCircle, FaBookOpen } from "react-icons/fa";
-import { Button, Tabs, Tab, Card, CardBody, Chip, Select, SelectItem, Tooltip,
-Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Accordion, AccordionItem } from '@heroui/react';
+import { FaPlus, FaUsers, FaUserCheck, FaUserTimes, FaBookOpen, FaSearch } from "react-icons/fa";
+import {
+  Button, Tabs, Tab, Card, CardBody, Chip, Tooltip, Input,
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Accordion, AccordionItem
+} from '@heroui/react';
 import { usePermisos } from '@/routes';
-import BarraSearch from "@/components/Search/Search";
 import { getVendedores } from '@/services/vendedor.services';
 import PagosEmpleados from './PagosEmpleados';
-import { ActionButton } from "@/components/Buttons/Buttons";
 import TablaEmpleado from './Components/TablaEmpleado';
+import BulkActionsToolbar from "@/components/Shared/BulkActionsToolbar";
+
+// Estilos Glass Clean
+const glassInputClasses = {
+  inputWrapper: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl h-10 data-[hover=true]:border-blue-400 focus-within:!border-blue-500",
+  input: "text-slate-700 dark:text-slate-200 text-sm",
+};
 
 function Vendedores() {
   const [vendedores, setVendedores] = useState([]);
   const [activeAdd, setModalOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
-  const [showManual, setShowManual] = useState (false);
   const { hasCreatePermission } = usePermisos();
+
+  const [selectedKeys, setSelectedKeys] = useState(new Set());
 
   const transformVendedor = (vendedor) => ({
     ...vendedor,
@@ -27,14 +35,10 @@ function Vendedores() {
     nombre: (vendedor.nombres || "") + (vendedor.apellidos ? " " + vendedor.apellidos : ""),
   });
 
-  // Input de búsqueda de vendedores
   const [searchTerm, setSearchTerm] = useState('');
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
-  // Filtro de estado
   const [statusFilter, setStatusFilter] = useState("all");
-
-  // Tab activo
   const [selectedTab, setSelectedTab] = useState("empleados");
 
   useEffect(() => {
@@ -45,12 +49,10 @@ function Vendedores() {
     fetchVendedores();
   }, []);
 
-  // Al agregar vendedor
   const addVendedor = (nuevoVendedor) => {
     setVendedores(prev => [transformVendedor(nuevoVendedor), ...prev]);
   };
 
-  // Al actualizar vendedor
   const updateVendedorLocal = (dni, updatedData) => {
     setVendedores(prev =>
       prev.map(v =>
@@ -59,12 +61,10 @@ function Vendedores() {
     );
   };
 
-  // Eliminar vendedor del array local
   const removeVendedor = (dni) => {
     setVendedores(prev => prev.filter(v => v.dni !== dni));
   };
 
-  // Filtrado
   const filteredVendedores = useMemo(() => {
     return vendedores.filter(v => {
       const matchesSearch = (v.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,7 +76,6 @@ function Vendedores() {
     });
   }, [vendedores, searchTerm, statusFilter]);
 
-  // Stats Calculation
   const stats = useMemo(() => {
     const total = vendedores.length;
     const active = vendedores.filter(v => v.estado_vendedor === "Activo").length;
@@ -84,216 +83,158 @@ function Vendedores() {
     return { total, active, inactive };
   }, [vendedores]);
 
-  // KPI Card Component
-const gradients = [
-  "from-blue-50 to-white dark:from-blue-900/40 dark:to-[#232339]",
-  "from-emerald-50 to-white dark:from-emerald-900/40 dark:to-[#232339]",
-  "from-rose-50 to-white dark:from-rose-900/40 dark:to-[#232339]",
-  "from-indigo-50 to-white dark:from-indigo-900/40 dark:to-[#232339]"
-];
-const borders = [
-  "border-blue-200/50 dark:border-blue-900/40",
-  "border-emerald-200/50 dark:border-emerald-900/40",
-  "border-rose-200/50 dark:border-rose-900/40",
-  "border-indigo-200/50 dark:border-indigo-900/40"
-];
-const iconBg = [
-  "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-300",
-  "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300",
-  "bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-300",
-  "bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300"
-];
-
-const KpiCard = ({ icon, value, title, note, gradient, border, iconColor }) => (
-  <Card className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${gradient} ${border} shadow-sm backdrop-blur-md`}>
-    <CardBody className="p-4">
-      <div className="flex flex-col">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold mb-3 shadow-sm ${iconColor}`}>
-          {icon}
+  // KPI Card - Clean White
+  const KpiCard = ({ icon: Icon, value, title, note, iconBgClass, iconTextClass }) => (
+    <Card className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl">
+      <CardBody className="flex flex-row items-center gap-4 p-4">
+        <div className={`p-3 rounded-xl flex items-center justify-center ${iconBgClass}`}>
+          <Icon className={`w-6 h-6 ${iconTextClass}`} />
         </div>
-        <div className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
-          {typeof value === "number" ? value : (value ?? 0)}
+        <div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{title}</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-white">{value}</p>
+          {note && <p className="text-[10px] text-slate-400 mt-1">{note}</p>}
         </div>
-        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mt-1">{title}</p>
-        {note && (
-          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">{note}</p>
-        )}
-      </div>
-      {/* Fondo decorativo extra para modo oscuro */}
-      <div className="pointer-events-none absolute inset-0 hidden dark:block">
-        <div className={`absolute inset-0 rounded-xl opacity-40 bg-gradient-to-br ${gradient}`}></div>
-      </div>
-    </CardBody>
-  </Card>
-);
+      </CardBody>
+    </Card>
+  );
 
-  const quickSet = (key) => setStatusFilter(key);
+  // Bulk Actions
+  const handleBulkActivate = () => alert("Activar masivo próximamente");
+  const handleBulkDeactivate = () => alert("Desactivar masivo próximamente");
+  const handleBulkDelete = () => alert("Eliminar masivo próximamente");
 
   return (
-    <>
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
       <Toaster />
-      <div className="mx-2 md:mx-6 my-4 space-y-6">
-        <Tabs
-          selectedKey={selectedTab}
-          onSelectionChange={setSelectedTab}
-          color="primary"
-          className="mb-2"
-        >
-          <Tab key="empleados" title="Empleados" />
-          <Tab key="pagos" title="Pagos de empleados" />
-        </Tabs>
+      <Tabs
+        selectedKey={selectedTab}
+        onSelectionChange={setSelectedTab}
+        color="primary"
+        classNames={{
+          cursor: "bg-blue-600",
+          tab: "data-[selected=true]:text-blue-600"
+        }}
+      >
+        <Tab key="empleados" title="Empleados" />
+        <Tab key="pagos" title="Pagos de empleados" />
+      </Tabs>
 
-        {selectedTab === "empleados" && (
-          <>
-            {/* Header + Search + Action */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-100 tracking-tight mb-1">
-                  Gestión de empleados
-                </h1>
-                <p className="text-base text-blue-700/80 dark:text-blue-300/80">
-                  Administra tu equipo de ventas y personal.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Botón Manual de Usuario discreto */}
-                <Tooltip content="Ver guía rápida del módulo" placement="bottom">
-                  <Button
-                    size="sm"
-                    variant="flat"
-                    className="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-200 font-semibold h-10 rounded-xl px-4 flex items-center gap-2"
-                    onPress={() => setManualOpen(true)}
-                  >
-                    <FaBookOpen className="w-4 h-4" />
-                    Manual de Usuario
-                  </Button>
-                </Tooltip>
-                <BarraSearch
-                  placeholder="Buscar empleado..."
-                  isClearable
-                  className="h-10 text-sm w-full md:w-72"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-                <ActionButton
-                  color="blue"
-                  icon={<FaPlus className="w-4 h-4 text-blue-500" />}
-                  onClick={() => setModalOpen(true)}
-                  disabled={!hasCreatePermission}
+      {selectedTab === "empleados" && (
+        <>
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Gestión de Empleados
+              </h1>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+                Administra tu equipo de ventas y personal.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Tooltip content="Ver guía rápida del módulo" placement="bottom">
+                <Button
                   size="sm"
-                  className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none 
-                    bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors 
-                    dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 
-                    ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
+                  variant="flat"
+                  className="bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-200 font-semibold h-10 rounded-xl px-4 flex items-center gap-2"
+                  onPress={() => setManualOpen(true)}
                 >
-                  Nuevo Empleado
-                </ActionButton>
+                  <FaBookOpen className="w-4 h-4" />
+                  Manual
+                </Button>
+              </Tooltip>
+              <Button
+                className="bg-blue-600 text-white font-bold shadow-blue-500/30"
+                startContent={<FaPlus />}
+                onPress={() => setModalOpen(true)}
+                isDisabled={!hasCreatePermission}
+              >
+                Nuevo Empleado
+              </Button>
+            </div>
+          </div>
+
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <KpiCard icon={FaUsers} value={stats.total} title="Total Empleados" note="Registrados" iconBgClass="bg-blue-100 dark:bg-blue-900/30" iconTextClass="text-blue-600 dark:text-blue-400" />
+            <KpiCard icon={FaUserCheck} value={stats.active} title="Activos" note="Habilitados" iconBgClass="bg-emerald-100 dark:bg-emerald-900/30" iconTextClass="text-emerald-600 dark:text-emerald-400" />
+            <KpiCard icon={FaUserTimes} value={stats.inactive} title="Inactivos" note="Deshabilitados" iconBgClass="bg-rose-100 dark:bg-rose-900/30" iconTextClass="text-rose-600 dark:text-rose-400" />
+          </div>
+
+          {/* Filters & Table Wrapper */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4 space-y-4">
+            <div className="flex flex-col xl:flex-row items-center justify-between gap-4">
+              <Input
+                placeholder="Buscar empleado..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                startContent={<FaSearch className="text-slate-400" />}
+                classNames={glassInputClasses}
+                isClearable
+                onClear={() => setSearchTerm('')}
+                className="w-full xl:max-w-xs"
+                size="sm"
+              />
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-slate-500 uppercase mr-2">Estado:</span>
+                <Chip
+                  variant={statusFilter === 'all' ? "solid" : "flat"}
+                  color={statusFilter === 'all' ? "primary" : "default"}
+                  onClick={() => setStatusFilter("all")}
+                  size="sm" className="cursor-pointer"
+                >Todos</Chip>
+                <Chip
+                  variant={statusFilter === 'active' ? "solid" : "flat"}
+                  color="success"
+                  onClick={() => setStatusFilter("active")}
+                  size="sm" className="cursor-pointer"
+                >Activos</Chip>
+                <Chip
+                  variant={statusFilter === 'inactive' ? "solid" : "flat"}
+                  color="danger"
+                  onClick={() => setStatusFilter("inactive")}
+                  size="sm" className="cursor-pointer"
+                >Inactivos</Chip>
               </div>
             </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <KpiCard
-                icon={<FaUsers className="w-5 h-5" />}
-                value={stats.total}
-                title="Total Empleados"
-                note="Personal registrado"
-                gradient={gradients[0]}
-                border={borders[0]}
-                iconColor={iconBg[0]}
-              />
-              <KpiCard
-                icon={<FaUserCheck className="w-5 h-5" />}
-                value={stats.active}
-                title="Activos"
-                note="Personal activo"
-                gradient={gradients[1]}
-                border={borders[1]}
-                iconColor={iconBg[1]}
-              />
-              <KpiCard
-                icon={<FaUserTimes className="w-5 h-5" />}
-                value={stats.inactive}
-                title="Inactivos"
-                note="Personal inactivo"
-                gradient={gradients[2]}
-                border={borders[2]}
-                iconColor={iconBg[2]}
-              />
-            </div>
+            <TablaEmpleado
+              vendedores={filteredVendedores}
+              addVendedor={addVendedor}
+              updateVendedorLocal={updateVendedorLocal}
+              removeVendedor={removeVendedor}
+              selectedKeys={selectedKeys}
+              onSelectionChange={setSelectedKeys}
+            />
+          </div>
 
-            {/* (Se eliminó el bloque expandible anterior del manual) */}
+          {activeAdd && (
+            <VendedoresForm
+              modalTitle={'Nuevo Vendedor'}
+              onClose={() => setModalOpen(false)}
+              onSuccess={addVendedor}
+            />
+          )}
+        </>
+      )}
 
-            {/* Filters */}
-            <div className="rounded-2xl bg-white/90 dark:bg-[#18192b]/90 border border-blue-100 dark:border-zinc-700 p-4 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-                  <div className="p-1.5 bg-blue-100 dark:bg-blue-800 rounded-lg">
-                    <FaUsers className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-bold">Filtros Avanzados</span>
-                </div>
+      {selectedTab === "pagos" && (
+        <Card>
+          <CardBody>
+            <PagosEmpleados vendedores={vendedores} />
+          </CardBody>
+        </Card>
+      )}
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">
-                    Estado:
-                  </span>
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    className={`cursor-pointer hover:opacity-80 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 ${statusFilter === "all" ? "ring-2 ring-blue-400" : ""}`}
-                    onClick={() => quickSet("all")}
-                  >
-                    Todos
-                  </Chip>
-                  <Chip
-                    size="sm"
-                    color="success"
-                    variant="flat"
-                    className={`cursor-pointer hover:opacity-80 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 ${statusFilter === "active" ? "ring-2 ring-emerald-400" : ""}`}
-                    onClick={() => quickSet("active")}
-                  >
-                    Activos
-                  </Chip>
-                  <Chip
-                    size="sm"
-                    color="danger"
-                    variant="flat"
-                    className={`cursor-pointer hover:opacity-80 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-700 dark:text-rose-300 ${statusFilter === "inactive" ? "ring-2 ring-rose-400" : ""}`}
-                    onClick={() => quickSet("inactive")}
-                  >
-                    Inactivos
-                  </Chip>
-                </div>
-              </div>
-
-              {/* Table */}
-              <TablaEmpleado
-                vendedores={filteredVendedores}
-                addVendedor={addVendedor}
-                updateVendedorLocal={updateVendedorLocal}
-                removeVendedor={removeVendedor}
-              />
-            </div>
-
-            {activeAdd && (
-              <VendedoresForm
-                modalTitle={'Nuevo Vendedor'}
-                onClose={() => setModalOpen(false)}
-                onSuccess={addVendedor}
-              />
-            )}
-          </>
-        )}
-
-        {selectedTab === "pagos" && (
-          <Card className="mt-2">
-            <CardBody>
-              <PagosEmpleados vendedores={vendedores} />
-            </CardBody>
-          </Card>
-        )}
-      </div>
+      <BulkActionsToolbar
+        selectedCount={selectedKeys === "all" ? filteredVendedores.length : selectedKeys.size}
+        onActivate={handleBulkActivate}
+        onDeactivate={handleBulkDeactivate}
+        onDelete={handleBulkDelete}
+        onClearSelection={() => setSelectedKeys(new Set())}
+      />
 
       {/* Modal Manual de Usuario */}
       <Modal
@@ -306,9 +247,9 @@ const KpiCard = ({ icon, value, title, note, gradient, border, iconColor }) => (
         <ModalContent>
           <>
             <ModalHeader className="flex flex-col gap-1">
-              <span className="flex items-center gap-2 text-blue-900 dark:text-blue-100 font-bold text-lg">
-                <FaBookOpen className="w-4 h-4 text-blue-600 dark:text-blue-300" />
-                Manual de Usuario - Gestión de Empleados
+              <span className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-lg">
+                <FaBookOpen className="w-4 h-4 text-blue-600" />
+                Manual de Usuario - Empleados
               </span>
               <span className="text-[11px] text-gray-500 dark:text-gray-400">
                 Guía rápida para maximizar el uso del módulo
@@ -354,24 +295,13 @@ const KpiCard = ({ icon, value, title, note, gradient, border, iconColor }) => (
               </Accordion>
             </ModalBody>
             <ModalFooter>
-              <Button
-                variant="light"
-                color="danger"
-                onPress={() => setManualOpen(false)}
-              >
-                Cerrar
-              </Button>
-              <Button
-                color="primary"
-                onPress={() => setManualOpen(false)}
-              >
-                Entendido
-              </Button>
+              <Button variant="light" color="danger" onPress={() => setManualOpen(false)}>Cerrar</Button>
+              <Button color="primary" onPress={() => setManualOpen(false)}>Entendido</Button>
             </ModalFooter>
           </>
         </ModalContent>
       </Modal>
-    </>
+    </div>
   );
 }
 

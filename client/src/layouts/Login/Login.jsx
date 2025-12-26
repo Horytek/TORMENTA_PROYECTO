@@ -146,16 +146,16 @@ function Login() {
         </div>
 
         {/* Right Side: Form */}
-        <div className="bg-white dark:bg-[#0c0c0e] p-8 sm:p-12 lg:p-16 flex flex-col justify-center relative">
+        <div className="bg-zinc-900/20 p-8 sm:p-12 lg:p-16 flex flex-col justify-center relative">
           {/* Logo always visible on mobile/tablet or just centered */}
           <div className="flex flex-col items-center mb-8">
             <div className="lg:hidden mb-4">
               <img src="/horycore.png" alt="HoryCore" className="w-12 h-12 rounded-lg shadow-sm" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            <h2 className="text-2xl font-bold text-white mb-1">
               {activeTab === 'login' ? 'Iniciar sesión' : 'Autenticar cuenta'}
             </h2>
-            <p className="text-sm text-gray-500 text-center">
+            <p className="text-sm text-zinc-400 text-center">
               {activeTab === 'login' ? 'Ingrese sus credenciales para continuar' : 'Ingrese el código de seguridad'}
             </p>
           </div>
@@ -169,10 +169,10 @@ function Login() {
               color="primary"
               className="w-full mb-6"
               classNames={{
-                tabList: "w-full p-1 bg-gray-100 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700/50",
-                cursor: "w-full shadow-sm rounded-lg",
+                tabList: "w-full p-1 bg-zinc-800/40 rounded-xl border border-white/5",
+                cursor: "w-full shadow-sm rounded-lg bg-zinc-700",
                 tab: "h-9 text-sm font-medium",
-                tabContent: "group-data-[selected=true]:text-white text-gray-500 dark:text-gray-400"
+                tabContent: "group-data-[selected=true]:text-white text-zinc-400"
               }}
             >
               <Tab key="login" title="Iniciar Sesión" />
@@ -184,7 +184,7 @@ function Login() {
                 <form onSubmit={handleLogin} className="space-y-5">
                   {/* Usuario Input - Gray Background Style */}
                   <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                    <label className="text-sm font-semibold text-zinc-300 ml-1">
                       Usuario
                     </label>
                     <Input
@@ -198,14 +198,14 @@ function Login() {
                       variant="flat"
                       radius="md"
                       classNames={{
-                        input: "text-base",
-                        inputWrapper: "h-12 bg-gray-100 dark:bg-zinc-800/80 hover:bg-gray-200/70 dark:hover:bg-zinc-800 border-transparent transition-colors shadow-none",
+                        input: "!text-white placeholder:!text-zinc-400 text-base",
+                        inputWrapper: "h-12 bg-zinc-800/50 hover:bg-zinc-800/80 border-white/5 transition-colors shadow-none data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800/80",
                       }}
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                    <label className="text-sm font-semibold text-zinc-300 ml-1">
                       Contraseña
                     </label>
                     <div className="relative">
@@ -219,20 +219,20 @@ function Login() {
                         endContent={
                           <button className="focus:outline-none" type="button" onClick={() => setShowPassword(!showPassword)}>
                             {showPassword ? (
-                              <FaEyeSlash className="text-lg text-gray-400" />
+                              <FaEyeSlash className="text-lg text-zinc-400" />
                             ) : (
-                              <FaEye className="text-lg text-gray-400" />
+                              <FaEye className="text-lg text-zinc-400" />
                             )}
                           </button>
                         }
                         classNames={{
-                          input: "text-base",
-                          inputWrapper: "h-12 bg-gray-100 dark:bg-zinc-800/80 hover:bg-gray-200/70 dark:hover:bg-zinc-800 border-transparent transition-colors shadow-none",
+                          input: "!text-white placeholder:!text-zinc-400 text-base",
+                          inputWrapper: "h-12 bg-zinc-800/50 hover:bg-zinc-800/80 border-white/5 transition-colors shadow-none data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800/80",
                         }}
                       />
                     </div>
                     <div className="flex justify-end pt-1">
-                      <Link href="#" size="sm" className="text-primary font-medium hover:text-primary-dark cursor-pointer text-xs">
+                      <Link href="#" size="sm" className="text-blue-400 font-medium hover:text-blue-300 cursor-pointer text-xs">
                         ¿Olvidó su contraseña?
                       </Link>
                     </div>
@@ -257,18 +257,18 @@ function Login() {
                       classNames={{
                         // Adapting OTP to look more like the original gray boxes if possible, or keeping standard OTP but fitting the theme
                         segmentWrapper: "gap-x-3",
-                        segment: "w-14 h-14 text-2xl bg-gray-100 dark:bg-zinc-800 border-transparent rounded-lg data-[active=true]:ring-2 ring-primary data-[active=true]:bg-white dark:data-[active=true]:bg-zinc-700"
+                        segment: "w-14 h-14 text-2xl bg-zinc-800/50 border-white/5 text-white rounded-lg data-[active=true]:ring-2 ring-primary data-[active=true]:bg-zinc-800"
                       }}
                     />
                   </div>
 
-                  <p className="text-center text-xs text-gray-500 dark:text-gray-400 px-2 leading-relaxed">
+                  <p className="text-center text-xs text-zinc-400 px-2 leading-relaxed">
                     Ingrese el código de acceso de 4 dígitos enviado a su correo.
                   </p>
 
                   <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                      <label className="text-sm font-semibold text-zinc-300 ml-1">
                         Usuario
                       </label>
                       <Input
@@ -279,13 +279,13 @@ function Login() {
                         variant="flat"
                         radius="md"
                         classNames={{
-                          input: "text-base",
-                          inputWrapper: "h-11 bg-gray-100 dark:bg-zinc-800/80 hover:bg-gray-200/70 transition-colors shadow-none",
+                          input: "!text-white placeholder:!text-zinc-400 text-base",
+                          inputWrapper: "h-11 bg-zinc-800/50 hover:bg-zinc-800/80 border-white/5 transition-colors shadow-none data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800/80",
                         }}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                      <label className="text-sm font-semibold text-zinc-300 ml-1">
                         Contraseña
                       </label>
                       <Input
@@ -296,21 +296,21 @@ function Login() {
                         variant="flat"
                         radius="md"
                         classNames={{
-                          input: "text-base",
-                          inputWrapper: "h-11 bg-gray-100 dark:bg-zinc-800/80 hover:bg-gray-200/70 transition-colors shadow-none",
+                          input: "!text-white placeholder:!text-zinc-400 text-base",
+                          inputWrapper: "h-11 bg-zinc-800/50 hover:bg-zinc-800/80 border-white/5 transition-colors shadow-none data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800/80",
                         }}
                       />
                     </div>
                   </div>
 
                   {authError && (
-                    <div className="p-3 bg-red-50 dark:bg-red-900/10 text-red-600 text-xs rounded-lg text-center font-semibold">
+                    <div className="p-3 bg-red-900/20 border border-red-500/20 text-red-500 text-xs rounded-lg text-center font-semibold">
                       {authError}
                     </div>
                   )}
 
                   {authSuccess && (
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 text-xs rounded-lg text-center font-semibold">
+                    <div className="p-3 bg-emerald-900/20 border border-emerald-500/20 text-emerald-500 text-xs rounded-lg text-center font-semibold">
                       ¡Verificado correctamente!
                     </div>
                   )}
@@ -327,9 +327,9 @@ function Login() {
               )}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800 text-center">
-              <p className="text-xs text-gray-400">
-                ¿No tiene cuenta? <span className="text-primary hover:underline cursor-pointer font-medium">Contacte a su administrador</span>
+            <div className="mt-8 pt-6 border-t border-white/5 text-center">
+              <p className="text-xs text-zinc-500">
+                ¿No tiene cuenta? <span className="text-blue-400 hover:text-blue-300 cursor-pointer font-medium hover:underline">Contacte a su administrador</span>
               </p>
             </div>
           </div>

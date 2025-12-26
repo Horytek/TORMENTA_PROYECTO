@@ -15,11 +15,13 @@ import {
 } from "@heroui/react";
 import UsuariosForm from './UsuariosForm';
 import UserProfileModal from './UserProfileModal';
-import BulkActionsToolbar from './components/BulkActionsToolbar';
+import BulkActionsToolbar from '@/components/Shared/BulkActionsToolbar';
 import { MdEdit } from "react-icons/md";
 import { FaTrash, FaEye, FaEyeSlash, FaUser } from "react-icons/fa";
-import { getUsuarios, deleteUsuario, getUsuario,
-  bulkUpdateUsuarios, toggleEstadoUsuario } from '@/services/usuario.services';
+import {
+  getUsuarios, deleteUsuario, getUsuario,
+  bulkUpdateUsuarios, toggleEstadoUsuario
+} from '@/services/usuario.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import { VscDebugDisconnect } from "react-icons/vsc";
 import { PiPlugsConnected } from "react-icons/pi";
@@ -170,13 +172,13 @@ export function ShowUsuarios({ searchTerm, activeFilters = {}, usuarios, addUsua
   };
 
   const handleToggleEstado = async (usuario) => {
-  const estadoActual = (usuario.estado_usuario === 1 || usuario.estado_usuario === '1');
-  const nuevoEstado = estadoActual ? 0 : 1;
-  const ok = await toggleEstadoUsuario(usuario.id_usuario, nuevoEstado);
-  if (ok) {
-    updateUsuarioLocal(usuario.id_usuario, { estado_usuario: nuevoEstado });
-  }
-};
+    const estadoActual = (usuario.estado_usuario === 1 || usuario.estado_usuario === '1');
+    const nuevoEstado = estadoActual ? 0 : 1;
+    const ok = await toggleEstadoUsuario(usuario.id_usuario, nuevoEstado);
+    if (ok) {
+      updateUsuarioLocal(usuario.id_usuario, { estado_usuario: nuevoEstado });
+    }
+  };
 
   const handleDeleteFromModal = async (usuario) => {
     // Reutiliza lógica existente de confirmación masiva para consistencia visual
@@ -187,29 +189,16 @@ export function ShowUsuarios({ searchTerm, activeFilters = {}, usuarios, addUsua
   };
 
   // Handlers para selección masiva
-  const handleSelectionChange = (id) => {
-    setSelectedIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
-
-  const handleSelectAll = () => {
-    if (selectedIds.size === currentUsuarios.length) {
-      setSelectedIds(new Set());
-    } else {
-      const allIds = new Set(currentUsuarios.map(u => u.id_usuario));
-      setSelectedIds(allIds);
+  const getSelectedIdsArray = () => {
+    if (selectedIds === "all") {
+      return filteredUsuarios.map(u => u.id_usuario);
     }
+    return Array.from(selectedIds);
   };
 
   const handleBulkAction = async (action) => {
-    if (selectedIds.size === 0) return;
+    const ids = getSelectedIdsArray();
+    if (ids.length === 0) return;
 
     if (action === 'delete') {
       setIsBulkDeleteModalOpen(true);
@@ -220,7 +209,7 @@ export function ShowUsuarios({ searchTerm, activeFilters = {}, usuarios, addUsua
   };
 
   const executeBulkAction = async (action) => {
-    const idsArray = Array.from(selectedIds);
+    const idsArray = getSelectedIdsArray();
     const success = await bulkUpdateUsuarios(action, idsArray);
 
     if (success) {
@@ -238,186 +227,157 @@ export function ShowUsuarios({ searchTerm, activeFilters = {}, usuarios, addUsua
     if (action === 'delete') setIsBulkDeleteModalOpen(false);
   };
 
+  const columns = [
+    { name: "USUARIO", uid: "usuario" },
+    { name: "ROL", uid: "rol", sortable: true },
+    { name: "CONTRASEÑA", uid: "contraseña" },
+    { name: "ESTADO", uid: "estado", sortable: true },
+    { name: "ACCIONES", uid: "acciones", align: "center" },
+  ];
+
   const renderCell = useCallback((usuario, columnKey) => {
     switch (columnKey) {
-      case "select":
-        return (
-          <Checkbox
-            isSelected={selectedIds.has(usuario.id_usuario)}
-            onValueChange={() => handleSelectionChange(usuario.id_usuario)}
-            aria-label="Seleccionar usuario"
-          />
-        );
       case "rol":
-        return usuario.nom_rol;
+        return (
+          <Chip size="sm" variant="flat" color="primary" className="font-bold">
+            {usuario.nom_rol}
+          </Chip>
+        );
       case "usuario":
         return (
-          <Tooltip content={usuario.estado_token == 1 ? "Conectado" : "Desconectado"}>
-            <div className="flex items-center gap-3">
-              <div
-                className={`
-                                    flex items-center justify-center w-9 h-9 rounded-full border-2 shadow-sm
-                                    transition-all duration-200
-                                    ${usuario.estado_token === 1
-                    ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/30"
-                    : "border-rose-300 bg-rose-50 dark:border-rose-700 dark:bg-rose-900/30"
-                  }
-                                `}
-              >
-                {usuario.estado_token === 1 ? (
-                  <PiPlugsConnected className="text-emerald-500 dark:text-emerald-300 text-xl" />
-                ) : (
-                  <VscDebugDisconnect className="text-rose-500 dark:text-rose-300 text-xl" />
-                )}
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-blue-900 dark:text-blue-100 text-[15px] leading-tight">{usuario.usua}</span>
-                <span className={`text-xs font-medium flex items-center gap-1
-                                    ${usuario.estado_token === 1
-                    ? "text-emerald-600 dark:text-emerald-200"
-                    : "text-rose-600 dark:text-rose-200"
-                  }`}>
-                  <span className={`inline-block w-2 h-2 rounded-full
-                                        ${usuario.estado_token === 1
-                      ? "bg-emerald-400 dark:bg-emerald-500"
-                      : "bg-rose-400 dark:bg-rose-500"
-                    }`}></span>
-                  {usuario.estado_token === 1 ? "Conectado" : "Desconectado"}
-                </span>
-              </div>
+          <div className="flex items-center gap-3">
+            <div
+              className={`
+                    flex items-center justify-center w-8 h-8 rounded-lg border shadow-sm
+                    transition-all duration-200
+                    ${usuario.estado_token === 1
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : "border-slate-200 bg-slate-50 text-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-slate-500"
+                }
+                `}
+            >
+              <FaUser size={14} />
             </div>
-          </Tooltip>
+            <div className="flex flex-col">
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{usuario.usua}</span>
+              <span className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1
+                                ${usuario.estado_token === 1
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-slate-400 dark:text-slate-500"
+                }`}>
+                <span className={`inline-block w-1.5 h-1.5 rounded-full
+                                    ${usuario.estado_token === 1
+                    ? "bg-emerald-500"
+                    : "bg-slate-400"
+                  }`}></span>
+                {usuario.estado_token === 1 ? "Conectado" : "Offline"}
+              </span>
+            </div>
+          </div>
         );
       case "contraseña":
         return (
-          <div className="flex">
-            <button
-              className="flex justify-center items-center gap-x-1.5"
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs text-slate-500 dark:text-slate-400 tracking-widest">
+              {showPassword[usuario.id_usuario] ? usuario.contra : "••••••••"}
+            </span>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               onClick={() => togglePasswordVisibility(usuario.id_usuario)}
-              tabIndex={-1}
-              aria-label="Mostrar/ocultar contraseña"
             >
-              <span className="mr-2 font-mono tracking-widest select-none">
-                {/* Nunca mostrar la contraseña real, solo puntos */}
-                {showPassword[usuario.id_usuario]
-                  ? "●●●●●●●●"
-                  : "●●●●●●●●"}
-              </span>
-              <span className='text-gray-500 dark:text-gray-300'>
-                {showPassword[usuario.id_usuario] ? <FaEyeSlash /> : <FaEye />}
-              </span>
-            </button>
+              {showPassword[usuario.id_usuario] ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+            </Button>
           </div>
         );
       case "estado":
+        const isActive = usuario.estado_usuario === 1 || usuario.estado_usuario === "1" || usuario.estado_usuario === "Activo";
         return (
-          <span className={`
-                        inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
-                        border
-                        ${usuario.estado_usuario === 'Inactivo'
-              ? "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700/60"
-              : "bg-green-100 text-green-700 border-green-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700/60"
+          <Chip
+            className="gap-1 border-none capitalize"
+            color={isActive ? "success" : "danger"}
+            size="sm"
+            variant="flat"
+            startContent={
+              <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>
             }
-                    `}>
-            {usuario.estado_usuario === 'Inactivo' ? (
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-            {usuario.estado_usuario}
-          </span>
+          >
+            {isActive ? "Activo" : "Inactivo"}
+          </Chip>
         );
       case "acciones":
         return (
-          <div className="flex items-center justify-center">
-            <Tooltip content="Ver detalle usuario">
-              <Button
-                isIconOnly
-                variant="light"
-                color="primary"
-                onClick={() => handleViewProfile(usuario)}
-                className="cursor-pointer"
-              >
+          <div className="relative flex items-center justify-center gap-2">
+            <Tooltip content="Ver perfil">
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50" onClick={() => handleViewProfile(usuario)}>
                 <FaUser />
-              </Button>
+              </span>
             </Tooltip>
           </div>
         );
       default:
         return usuario[columnKey];
     }
-  }, [showPassword, hasEditPermission, hasDeletePermission, handleViewProfile, selectedIds, handleSelectionChange]);
+  }, [showPassword, hasEditPermission, hasDeletePermission, handleViewProfile]);
 
   return (
     <>
-      <div className="bg-white/90 dark:bg-[#18192b] rounded-2xl shadow border border-blue-100 dark:border-zinc-700 p-0">
-        <div className="p-4 bg-white dark:bg-[#232339] rounded-2xl">
-          <ScrollShadow hideScrollBar>
-            <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-              <thead>
-                <tr className="bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 text-[13px] font-bold">
-                  <th className="py-2 px-2 text-center w-10">
-                    <Checkbox
-                      isSelected={selectedIds.size === currentUsuarios.length && currentUsuarios.length > 0}
-                      isIndeterminate={selectedIds.size > 0 && selectedIds.size < currentUsuarios.length}
-                      onValueChange={handleSelectAll}
-                      aria-label="Seleccionar todos"
-                    />
-                  </th>
-                  <th className="py-2 px-2 text-left">Rol</th>
-                  <th className="py-2 px-2 text-left">Usuario</th>
-                  <th className="py-2 px-2 text-left">Contraseña</th>
-                  <th className="py-2 px-2 text-center">Estado</th>
-                  <th className="py-2 px-2 text-center w-24">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentUsuarios.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-400 dark:text-gray-500">Sin usuarios para mostrar</td>
-                  </tr>
-                ) : (
-                  currentUsuarios.map((usuario, idx) => (
-                    <tr
-                      key={usuario.id_usuario}
-                      className={`transition-colors duration-150 ${idx % 2 === 0
-                        ? "bg-white dark:bg-[#18192b]"
-                        : "bg-blue-50/40 dark:bg-blue-900/10"
-                        } hover:bg-blue-100/60 dark:hover:bg-blue-900/30`}
-                    >
-                      {["select", "rol", "usuario", "contraseña", "estado", "acciones"].map((columnKey) => (
-                        <td
-                          key={columnKey}
-                          className={`py-1.5 px-2 ${columnKey === "estado" || columnKey === "acciones" || columnKey === "select" ? "text-center" : ""}`}
-                        >
-                          {renderCell(usuario, columnKey)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </ScrollShadow>
-        </div>
+      <div className="w-full">
+        <Table
+          aria-label="Tabla de usuarios"
+          selectionMode="multiple"
+          selectedKeys={selectedIds}
+          onSelectionChange={setSelectedIds}
+          removeWrapper
+          classNames={{
+            base: "max-h-[calc(100vh-300px)] overflow-y-auto",
+            table: "min-w-full",
+            th: "bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider h-10 first:rounded-l-lg last:rounded-r-lg",
+            td: "py-3 border-b border-slate-100 dark:border-zinc-800",
+            tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors",
+            thead: "[&>tr]:first:shadow-none",
+          }}
+          bottomContent={
+            <div className="flex w-full justify-between items-center mt-4">
+              <span className="text-small text-default-400">
+                {selectedIds === "all"
+                  ? "Todos los items seleccionados"
+                  : `${selectedIds.size} de ${filteredUsuarios.length} seleccionados`}
+              </span>
+              <Pagination
+                isCompact
+                showControls
+                showShadow
+                color="primary"
+                page={currentPage}
+                total={Math.ceil(filteredUsuarios.length / usuariosPerPage) || 1}
+                onChange={setCurrentPage}
+              />
+              <span className="text-small text-default-400 w-[20%] text-right">
+                {currentUsuarios.length} de {filteredUsuarios.length} usuarios
+              </span>
+            </div>
+          }
+        >
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn key={column.uid} align={column.uid === "acciones" ? "center" : "start"}>
+                {column.name}
+              </TableColumn>
+            )}
+          </TableHeader>
+          <TableBody items={currentUsuarios} emptyContent={"No se encontraron usuarios"}>
+            {(item) => (
+              <TableRow key={item.id_usuario}>
+                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
-      <div className="flex justify-between items-center mt-2 px-4 pb-2">
-        <Pagination
-          showControls
-          page={currentPage}
-          total={Math.ceil(filteredUsuarios.length / usuariosPerPage) || 1}
-          onChange={(page) => setCurrentPage(page)}
-          color="primary"
-          size="sm"
-        />
-        <div className="text-xs text-gray-400">
-          Mostrando {currentUsuarios.length} de {filteredUsuarios.length} usuarios
-        </div>
-      </div>
+
       {/* Modal de Confirmación para eliminar Producto */}
       {isConfirmationModalOpen && (
         <ConfirmationModal
@@ -456,13 +416,15 @@ export function ShowUsuarios({ searchTerm, activeFilters = {}, usuarios, addUsua
         />
       )}
 
-      <BulkActionsToolbar
-        selectedCount={selectedIds.size}
-        onActivate={() => handleBulkAction('activate')}
-        onDeactivate={() => handleBulkAction('deactivate')}
-        onDelete={() => handleBulkAction('delete')}
-        onClearSelection={() => setSelectedIds(new Set())}
-      />
+      {selectedIds.size > 0 && (
+        <BulkActionsToolbar
+          selectedCount={selectedIds === "all" ? filteredUsuarios.length : selectedIds.size}
+          onActivate={() => handleBulkAction('activate')}
+          onDeactivate={() => handleBulkAction('deactivate')}
+          onDelete={() => handleBulkAction('delete')}
+          onClearSelection={() => setSelectedIds(new Set())}
+        />
+      )}
     </>
   );
 }

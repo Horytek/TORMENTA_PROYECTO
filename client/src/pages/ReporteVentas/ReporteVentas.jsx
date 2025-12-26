@@ -7,7 +7,7 @@ import CategoriaProducto from "./ComponentsReporte/CategoriaProducto";
 import KPIS from "./ComponentsReporte/KPIS";
 import Comparativa from "./ComponentsReporte/Comparativa";
 import TendenciaVentas from "./ComponentsReporte/TendenciaVentas";
-import TopProductosMargen from "./ComponentsReporte/TopProductosMargen";
+
 import { MdClear, MdToday } from "react-icons/md";
 import { ActionButton } from "@/components/Buttons/Buttons";
 import { exportHtmlToPdf } from '@/utils/pdf/exportHtmlToPdf';
@@ -163,112 +163,103 @@ const ReporteVentas = () => {
 
   return (
     <ScrollShadow hideScrollBar className="h-[calc(100vh-40px)] w-full">
-      <div className="min-h-screen py-6 px-2 sm:px-6 print:p-0 print:bg-white">
-        <div className="max-w-[1600px] mx-auto space-y-4 print:space-y-4">
+      <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] py-6 px-4 sm:px-6 print:p-0 print:bg-white font-inter">
+        <div className="max-w-[1920px] mx-auto space-y-6 print:space-y-4">
 
-          {/* Compact Header */}
-          <div className="print:hidden">
-            <h1 className="font-extrabold text-3xl text-blue-900 dark:text-blue-100 tracking-tight mb-1">
-              Reporte de Ventas
-            </h1>
-            <p className="text-sm text-blue-700/80 dark:text-blue-300/80 mb-3">
-              Analiza el rendimiento de ventas y productos por sucursal.
-            </p>
-
-            {/* Tabs and Actions in one row */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-3">
-              <div className="bg-white/90 dark:bg-[#18192b] rounded-xl shadow-sm border border-blue-100 dark:border-zinc-700 p-2 flex-1">
-                {/* Evita desbordes en móvil con scroll horizontal */}
-                <div className="overflow-x-auto -mx-2 px-2">
-                  <Tabs
-                    aria-label="Sucursales"
-                    selectedKey={selectedTab}
-                    onSelectionChange={setSelectedTab}
-                    classNames={{
-                      tabList: "gap-1 min-w-max",
-                      cursor: "bg-blue-50 dark:bg-blue-900/30 rounded-lg",
-                      tab: "h-9 px-3 text-blue-600 dark:text-blue-200 data-[selected=true]:text-blue-900 dark:data-[selected=true]:text-blue-100 font-medium text-sm",
-                      tabContent: "group-data-[selected=true]:font-bold"
-                    }}
-                    variant="light"
-                  >
-                    <Tab key="todas" title="Todas" />
-                    {Array.isArray(sucursales) &&
-                      sucursales.map((sucursal) => (
-                        <Tab
-                          key={sucursal.id_sucursal}
-                          title={sucursal.nombre}
-                        />
-                      ))}
-                  </Tabs>
-                </div>
+          {/* Header & Controls */}
+          <div className="flex flex-col gap-6 print:hidden">
+            {/* Title & Top Actions */}
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <h1 className="font-extrabold text-3xl text-slate-800 dark:text-white tracking-tight mb-1">
+                  Reporte de Ventas
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm max-w-2xl">
+                  Analiza el rendimiento de ventas, tendencias y productos por sucursal.
+                </p>
               </div>
-
-              {/* Acciones: Exportar PDF + Excel (SUNAT) con props */}
-              <div className="flex items-center gap-3 w-full lg:w-auto">
-                <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-1">
-                    <Select
-                      className="min-w-[180px] h-8 px-2 text-sm bg-transparent border-none focus:ring-0 text-gray-700 dark:text-gray-200 font-medium cursor-pointer outline-none"
-                      selectedKeys={[reportType]}
-                      onSelectionChange={(keys) => setReportType(Array.from(keys)[0])}
-                      size="sm"
-                      variant="bordered"
-                    >
-                      <SelectItem key="executive" value="executive">Resumen Ejecutivo</SelectItem>
-                      <SelectItem key="detailed" value="detailed">Detalle de Operaciones</SelectItem>
-                      <SelectItem key="clients" value="clients">Análisis de Clientes</SelectItem>
-                    </Select>
-                  <div className="h-4 w-[1px] bg-gray-300 dark:bg-zinc-600 mx-1"></div>
-                  <ActionButton
-                    color="blue"
-                    icon={MdToday}
-                    onClick={handleExportPdf}
+              <div className="flex items-center gap-3">
+                {/* Report Type & PDF Export */}
+                <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-700 p-1 shadow-sm">
+                  <Select
+                    className="min-w-[180px]"
+                    classNames={{
+                      trigger: "bg-transparent shadow-none border-none data-[hover=true]:bg-slate-50",
+                      value: "text-slate-700 dark:text-slate-200 font-medium text-sm"
+                    }}
+                    selectedKeys={[reportType]}
+                    onSelectionChange={(keys) => setReportType(Array.from(keys)[0])}
                     size="sm"
-                    className="h-8 px-3 font-semibold rounded-md border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200"
-                    style={{ boxShadow: "none", border: "none" }}
                   >
-                    PDF
-                  </ActionButton>
+                    <SelectItem key="executive" value="executive">Resumen Ejecutivo</SelectItem>
+                    <SelectItem key="detailed" value="detailed">Detalle de Operaciones</SelectItem>
+                    <SelectItem key="clients" value="clients">Análisis de Clientes</SelectItem>
+                  </Select>
+                  <div className="h-5 w-[1px] bg-slate-200 dark:bg-zinc-700 mx-1"></div>
+                  <Button
+                    isIconOnly
+                    variant="light"
+                    onPress={handleExportPdf}
+                    className="text-slate-500 hover:text-blue-600"
+                    size="sm"
+                  >
+                    <MdToday className="text-xl" />
+                  </Button>
                 </div>
               </div>
             </div>
 
-            {/* Compact Filters */}
-            <div className="bg-white/90 dark:bg-[#18192b] rounded-xl shadow-sm border border-blue-100 dark:border-zinc-700 p-2.5">
-              {/* Etiqueta */}
-              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-200 text-xs font-medium mb-2">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                <span>Filtros:</span>
-              </div>
+            {/* Filters Row: Tabs + Date Selects */}
+            <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
+              {/* Tabs - Now cleaner without box */}
+              <Tabs
+                aria-label="Sucursales"
+                selectedKey={selectedTab}
+                onSelectionChange={setSelectedTab}
+                classNames={{
+                  tabList: "bg-white dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm gap-2",
+                  cursor: "w-full bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20",
+                  tab: "h-9 px-4 text-slate-500 dark:text-slate-400 data-[selected=true]:text-white font-semibold text-sm transition-all",
+                  tabContent: "group-data-[selected=true]:text-white"
+                }}
+                variant="light"
+              >
+                <Tab key="todas" title="Todas las Sucursales" />
+                {Array.isArray(sucursales) &&
+                  sucursales.map((sucursal) => (
+                    <Tab
+                      key={sucursal.id_sucursal}
+                      title={sucursal.nombre}
+                    />
+                  ))}
+              </Tabs>
 
-              {/* Contenedor con scroll horizontal para pantallas pequeñas */}
-              <div className="overflow-x-auto -mx-1 px-1">
-                <div className="grid grid-cols-[repeat(3,minmax(110px,1fr))] sm:grid-cols-[repeat(5,minmax(110px,1fr))] gap-2 min-w-[380px]">
-                  {/* Semana */}
+              {/* Date Filters - Clean Row */}
+              <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-zinc-800 p-1 rounded-xl border border-slate-200 dark:border-zinc-700 shadow-sm">
+                {/* Semana */}
+                <div className="w-32">
                   <Select
-                    className="w-full"
-                    isDisabled={!selectedMonth.length}
                     placeholder="Semana"
                     selectedKeys={selectedWeek}
                     onSelectionChange={(keys) => setSelectedWeek(Array.from(keys))}
+                    isDisabled={!selectedMonth.length}
                     classNames={{
-                      trigger: "bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 h-8",
-                      value: "text-xs"
+                      trigger: "bg-transparent shadow-none border-none hover:bg-slate-50 h-9",
+                      value: "text-xs font-medium"
                     }}
                     size="sm"
-                    variant="bordered"
                   >
                     <SelectItem key="all" value="all">Todo el mes</SelectItem>
                     {weeks.map((week) => (
                       <SelectItem key={week} value={week}>{week}</SelectItem>
                     ))}
                   </Select>
+                </div>
+                <div className="w-[1px] h-5 bg-slate-200 dark:bg-zinc-700"></div>
 
-                  {/* Mes */}
+                {/* Mes */}
+                <div className="w-32">
                   <Select
-                    className="w-full"
                     placeholder="Mes"
                     selectedKeys={selectedMonth}
                     onSelectionChange={(keys) => {
@@ -276,20 +267,21 @@ const ReporteVentas = () => {
                       setSelectedWeek([]);
                     }}
                     classNames={{
-                      trigger: "bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 h-8",
-                      value: "text-xs"
+                      trigger: "bg-transparent shadow-none border-none hover:bg-slate-50 h-9",
+                      value: "text-xs font-medium"
                     }}
                     size="sm"
-                    variant="bordered"
                   >
                     {months.map((month) => (
                       <SelectItem key={month.key} value={month.key}>{month.name}</SelectItem>
                     ))}
                   </Select>
+                </div>
+                <div className="w-[1px] h-5 bg-slate-200 dark:bg-zinc-700"></div>
 
-                  {/* Año */}
+                {/* Año */}
+                <div className="w-24">
                   <Select
-                    className="w-full"
                     placeholder="Año"
                     selectedKeys={selectedYear}
                     onSelectionChange={(keys) => {
@@ -300,40 +292,26 @@ const ReporteVentas = () => {
                       }
                     }}
                     classNames={{
-                      trigger: "bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 h-8",
-                      value: "text-xs"
+                      trigger: "bg-transparent shadow-none border-none hover:bg-slate-50 h-9",
+                      value: "text-xs font-medium"
                     }}
                     size="sm"
-                    variant="bordered"
                   >
                     {years.map((year) => (
                       <SelectItem key={year} value={year}>{year}</SelectItem>
                     ))}
                   </Select>
+                </div>
 
-                  {/* Limpiar */}
-                  <Tooltip content="Limpiar filtros" placement="top">
-                    <Button
-                      isIconOnly
-                      variant="flat"
-                      onPress={handleClearFilters}
-                      className="h-8 w-full rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/20 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition"
-                      size="sm"
-                    >
-                      <MdClear className="text-base" />
+                <div className="flex gap-1 ml-1 pl-1 border-l border-slate-200 dark:border-zinc-700">
+                  <Tooltip content="Limpiar" closeDelay={0}>
+                    <Button isIconOnly size="sm" variant="light" onPress={handleClearFilters} className="text-slate-400 hover:text-rose-500">
+                      <MdClear className="text-lg" />
                     </Button>
                   </Tooltip>
-
-                  {/* Hoy */}
-                  <Tooltip content="Ir a hoy" placement="top">
-                    <Button
-                      isIconOnly
-                      variant="flat"
-                      onPress={handleTodayFilters}
-                      className="h-8 w-full rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition"
-                      size="sm"
-                    >
-                      <MdToday className="text-base" />
+                  <Tooltip content="Hoy" closeDelay={0}>
+                    <Button isIconOnly size="sm" variant="light" onPress={handleTodayFilters} className="text-slate-400 hover:text-blue-500">
+                      <MdToday className="text-lg" />
                     </Button>
                   </Tooltip>
                 </div>
@@ -341,7 +319,7 @@ const ReporteVentas = () => {
             </div>
           </div>
 
-          {/* KPIS */}
+          {/* KPIS Section */}
           <div className="print:mb-4">
             <KPIS
               idSucursal={selectedTab !== "todas" ? selectedTab : null}
@@ -360,27 +338,29 @@ const ReporteVentas = () => {
             />
           </div>
 
-          {/* Tendencia de Ventas */}
-          <div className="w-full print:break-inside-avoid">
-            <TendenciaVentas
-              year={selectedYear[0] || undefined}
-              month={selectedMonth[0] || undefined}
-              week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
-            />
-          </div>
+          {/* Charts Layout - Optimized 8/4 Split */}
+          <div className="grid grid-cols-12 gap-6 w-full">
+            {/* Left Column: Primary Charts (Time & Comparison) */}
+            <div className="col-span-12 xl:col-span-8 flex flex-col gap-6 print:break-inside-avoid">
+              <TendenciaVentas
+                year={selectedYear[0] || undefined}
+                month={selectedMonth[0] || undefined}
+                week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
+              />
+              <Comparativa
+                idSucursal={selectedTab !== "todas" ? selectedTab : null}
+              />
+            </div>
 
-          {/* Desglose Detallado - Grid con altura uniforme */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 print:grid-cols-2 print:gap-4">
-            <div className="flex print:break-inside-avoid">
+            {/* Right Column: Secondary Metrics (Distribution, Rankings, Summary) */}
+            <div className="col-span-12 xl:col-span-4 flex flex-col gap-6 print:break-inside-avoid">
               <TablaGanancias
                 idSucursal={selectedTab !== "todas" ? selectedTab : null}
                 year={selectedYear[0] || undefined}
                 month={selectedMonth[0] || undefined}
                 week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
               />
-            </div>
 
-            <div className="flex print:break-inside-avoid">
               <CategoriaProducto
                 idSucursal={selectedTab !== "todas" ? selectedTab : null}
                 year={selectedYear[0] || undefined}
@@ -388,21 +368,6 @@ const ReporteVentas = () => {
                 week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
               />
             </div>
-
-            <div className="flex print:break-inside-avoid">
-              <TopProductosMargen
-                year={selectedYear[0] || undefined}
-                month={selectedMonth[0] || undefined}
-                week={selectedWeek.length && selectedWeek[0] !== "all" ? selectedWeek[0] : undefined}
-              />
-            </div>
-          </div>
-
-          {/* Comparativa */}
-          <div className="w-full print:break-inside-avoid">
-            <Comparativa
-              idSucursal={selectedTab !== "todas" ? selectedTab : null}
-            />
           </div>
         </div>
       </div>

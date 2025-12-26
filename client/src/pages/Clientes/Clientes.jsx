@@ -1,39 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Toaster } from "react-hot-toast";
-import { FaPlus, FaUsers, FaUserCheck, FaUserTimes, FaChartLine } from "react-icons/fa";
-import { Button, Card, CardBody, Tabs, Tab, Chip, Select, SelectItem, Input } from "@heroui/react";
+import { FaPlus, FaUsers, FaUserCheck, FaUserTimes, FaChartLine, FaSearch } from "react-icons/fa";
+import { Button, Card, CardBody, Chip, Select, SelectItem, Input, Pagination } from "@heroui/react";
 import TablaCliente from '@/pages/Clientes/ComponentsClientes/TablaCliente';
 import useGetClientes from "@/services/client_data/getClientes";
 import AddClientModal from './ComponentsClientes/AddClient';
 import { usePermisos } from '@/routes';
-import BarraSearch from "@/components/Search/Search";
-import { ActionButton } from "@/components/Buttons/Buttons";
 import { getClientStatsRequest } from "@/api/api.cliente";
+import BulkActionsToolbar from "@/components/Shared/BulkActionsToolbar";
+
+// Estilos Glass Clean
+const glassInputClasses = {
+  inputWrapper: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl h-10 data-[hover=true]:border-blue-400 focus-within:!border-blue-500",
+  input: "text-slate-700 dark:text-slate-200 text-sm",
+};
 
 function Clientes() {
   const { hasCreatePermission } = usePermisos();
 
-  // Estado de Modal de Agregar Cliente
   const [activeAdd, setModalOpen] = useState(false);
   const handleModalAdd = () => setModalOpen(!activeAdd);
 
   // Filtros y paginación
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState(10);
   const [docType, setDocType] = useState("");
   const [docNumber, setDocNumber] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // all, active, inactive
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const [selectedKeys, setSelectedKeys] = useState(new Set());
 
   // Stats
   const [stats, setStats] = useState({ total: 0, activos: 0, inactivos: 0, nuevos_mes: 0 });
 
-  // Hook que solo consulta la BD una vez, el resto es local
   const { clientes, metadata, loading, error, refetch, setAllClientes } = useGetClientes();
 
   useEffect(() => {
     loadStats();
-  }, [clientes]); // Recargar stats cuando cambian los clientes
+  }, [clientes]);
 
   const loadStats = async () => {
     try {
@@ -46,25 +51,17 @@ function Clientes() {
     }
   };
 
-  // Refetch seguro (normaliza docType)
   const safeRefetch = (p = 1, l = limit, dt = docType, dn = docNumber, st = searchTerm) => {
-    const normalized = (dt || "").toLowerCase(); // backend espera 'dni' | 'ruc' | ''
+    const normalized = (dt || "").toLowerCase();
     refetch(p, l, normalized, dn, st);
   };
 
+  // Search Logic
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
     setPage(1);
     safeRefetch(1, limit, docType, docNumber, value);
-  };
-
-  const handleFilterChange = (filterData) => {
-    const { docType: newDocType, newDocNumber } = filterData;
-    setDocType(newDocType);
-    setDocNumber(newDocNumber);
-    setPage(1);
-    refetch(1, limit, newDocType, newDocNumber, searchTerm);
   };
 
   const changePage = (newPage) => {
@@ -78,7 +75,6 @@ function Clientes() {
     safeRefetch(1, newLimit);
   };
 
-  // Filtrado local por estado para los tabs
   const filteredClientes = clientes.filter(c => {
     if (statusFilter === "all") return true;
     if (statusFilter === "active") return c.estado === 1 || c.estado === "1";
@@ -86,163 +82,127 @@ function Clientes() {
     return true;
   });
 
-  // NUEVO: estilo KPI compacto (como imagen de referencia)
-const gradients = [
-  "from-blue-50 to-white dark:from-blue-900/40 dark:to-[#232339]",
-  "from-emerald-50 to-white dark:from-emerald-900/40 dark:to-[#232339]",
-  "from-rose-50 to-white dark:from-rose-900/40 dark:to-[#232339]",
-  "from-indigo-50 to-white dark:from-indigo-900/40 dark:to-[#232339]"
-];
-const borders = [
-  "border-blue-200/50 dark:border-blue-900/40",
-  "border-emerald-200/50 dark:border-emerald-900/40",
-  "border-rose-200/50 dark:border-rose-900/40",
-  "border-indigo-200/50 dark:border-indigo-900/40"
-];
-const iconBg = [
-  "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-300",
-  "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300",
-  "bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-300",
-  "bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300"
-];
-
-const KpiCard = ({ icon, value, title, note, gradient, border, iconColor }) => (
-  <Card className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${gradient} ${border} shadow-sm backdrop-blur-md`}>
-    <CardBody className="p-4">
-      <div className="flex flex-col">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold mb-3 shadow-sm ${iconColor}`}>
-          {icon}
+  // KPI Card - Clean White
+  const KpiCard = ({ icon: Icon, value, title, note, iconBgClass, iconTextClass }) => (
+    <Card className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl">
+      <CardBody className="flex flex-row items-center gap-4 p-4">
+        <div className={`p-3 rounded-xl flex items-center justify-center ${iconBgClass}`}>
+          <Icon className={`w-6 h-6 ${iconTextClass}`} />
         </div>
-        <div className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
-          {typeof value === "number" ? value : (value ?? 0)}
+        <div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{title}</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-white">{value}</p>
+          {note && <p className="text-[10px] text-slate-400 mt-1">{note}</p>}
         </div>
-        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mt-1">{title}</p>
-        {note && (
-          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1">{note}</p>
-        )}
-      </div>
-      {/* Fondo decorativo extra para modo oscuro */}
-      <div className="pointer-events-none absolute inset-0 hidden dark:block">
-        <div className={`absolute inset-0 rounded-xl opacity-40 bg-gradient-to-br ${gradient}`}></div>
-      </div>
-    </CardBody>
-  </Card>
-);
+      </CardBody>
+    </Card>
+  );
 
-  // Quick filters estilo Usuarios (chips)
-  const quickSet = (key) => {
-    setStatusFilter(key);
-  };
-
+  // Bulk Actions
+  const handleBulkActivate = () => alert("Activar masivo próximamente");
+  const handleBulkDeactivate = () => alert("Desactivar masivo próximamente");
+  const handleBulkDelete = () => alert("Eliminar masivo próximamente");
 
   return (
-    <>
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
       <Toaster />
-      <div className="mx-2 md:mx-6 my-4 space-y-6">
-        {/* Header simplificado + búsqueda + acción (igual a Usuarios) */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-100 tracking-tight mb-1">
-              Gestión de clientes
-            </h1>
-            <p className="text-base text-blue-700/80 dark:text-blue-300/80">
-              Administra tu cartera y visualiza su actividad.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <BarraSearch
-              placeholder="Buscar por cliente..."
-              isClearable
-              className="h-10 text-sm w-full md:w-72"
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Gestión de Clientes
+          </h1>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+            Administra tu cartera y visualiza su actividad en tiempo real.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            className="bg-blue-600 text-white font-bold shadow-blue-500/30"
+            startContent={<FaPlus />}
+            onPress={handleModalAdd}
+            isDisabled={!hasCreatePermission}
+          >
+            Nuevo Cliente
+          </Button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          icon={FaUsers}
+          value={stats.total}
+          title="Total Clientes"
+          note="Registrados"
+          iconBgClass="bg-blue-100 dark:bg-blue-900/30"
+          iconTextClass="text-blue-600 dark:text-blue-400"
+        />
+        <KpiCard
+          icon={FaUserCheck}
+          value={stats.activos}
+          title="Activos"
+          note="Habilitados"
+          iconBgClass="bg-emerald-100 dark:bg-emerald-900/30"
+          iconTextClass="text-emerald-600 dark:text-emerald-400"
+        />
+        <KpiCard
+          icon={FaUserTimes}
+          value={stats.inactivos}
+          title="Inactivos"
+          note="Deshabilitados"
+          iconBgClass="bg-rose-100 dark:bg-rose-900/30"
+          iconTextClass="text-rose-600 dark:text-rose-400"
+        />
+        <KpiCard
+          icon={FaChartLine}
+          value={stats.nuevos_mes}
+          title="Nuevos (Mes)"
+          note="Alta reciente"
+          iconBgClass="bg-indigo-100 dark:bg-indigo-900/30"
+          iconTextClass="text-indigo-600 dark:text-indigo-400"
+        />
+      </div>
+
+      {/* Filters & Table Wrapper */}
+      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4 space-y-4">
+
+        {/* Filters */}
+        <div className="flex flex-col xl:flex-row items-center justify-between gap-4">
+
+          <div className="w-full xl:w-auto flex flex-col sm:flex-row gap-2">
+            <Input
+              placeholder="Buscar cliente..."
               value={searchTerm}
               onChange={handleSearchChange}
-            />
-            <ActionButton
-              color="blue"
-              icon={<FaPlus className="w-4 h-4 text-blue-500" />}
-              onClick={handleModalAdd}
-              disabled={!hasCreatePermission}
+              startContent={<FaSearch className="text-slate-400" />}
+              classNames={glassInputClasses}
+              isClearable
+              onClear={() => setSearchTerm('')}
+              className="w-full sm:w-64"
               size="sm"
-              className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-            >
-              Nuevo Cliente
-            </ActionButton>
-          </div>
-        </div>
-
-        {/* KPI Cards (nuevo estilo) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard
-            icon={<FaUsers className="w-5 h-5" />}
-            value={stats.total}
-            title="Total Clientes"
-            note="Clientes registrados"
-            gradient={gradients[0]}
-            border={borders[0]}
-            iconColor={iconBg[0]}
-          />
-          <KpiCard
-            icon={<FaUserCheck className="w-5 h-5" />}
-            value={stats.activos}
-            title="Activos"
-            note="Con estado activo"
-            gradient={gradients[1]}
-            border={borders[1]}
-            iconColor={iconBg[1]}
-          />
-          <KpiCard
-            icon={<FaUserTimes className="w-5 h-5" />}
-            value={stats.inactivos}
-            title="Inactivos"
-            note="Sin actividad"
-            gradient={gradients[2]}
-            border={borders[2]}
-            iconColor={iconBg[2]}
-          />
-          <KpiCard
-            icon={<FaChartLine className="w-5 h-5" />}
-            value={stats.nuevos_mes}
-            title="Nuevos este Mes"
-            note="Alta reciente"
-            gradient={gradients[3]}
-            border={borders[3]}
-            iconColor={iconBg[3]}
-          />
-        </div>
-
-        {/* Filtros avanzados estilo Usuarios */}
-        <div className="rounded-2xl bg-white/90 dark:bg-[#18192b]/90 border border-blue-100 dark:border-zinc-700 p-4 space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-              <div className="p-1.5 bg-blue-100 dark:bg-blue-800 rounded-lg">
-                <FaUsers className="w-4 h-4" />
-              </div>
-              <span className="text-sm font-bold">Filtros Avanzados</span>
-            </div>
-            <div className="flex flex-wrap gap-3">
+            />
+            <div className="flex gap-2">
               <Select
-                label="Tipo Doc."
-                placeholder="Todos"
+                placeholder="Doc."
                 size="sm"
                 selectedKeys={docType ? [docType] : []}
-                onSelectionChange={(keys) => {
-                  const raw = Array.from(keys)[0] || "";
-                  const v = raw.toLowerCase(); // asegurar minúsculas
+                onChange={(e) => {
+                  const v = e.target.value.toLowerCase();
                   setDocType(v);
                   setPage(1);
                   safeRefetch(1, limit, v, docNumber);
                 }}
-                className="w-32"
+                className="w-24"
+                classNames={{ trigger: glassInputClasses.inputWrapper, value: glassInputClasses.input }}
               >
-                <SelectItem key="">Todos</SelectItem>
                 <SelectItem key="dni">DNI</SelectItem>
                 <SelectItem key="ruc">RUC</SelectItem>
               </Select>
               <Input
-                label="Nro. Doc."
+                placeholder="Nro Doc."
                 size="sm"
-                placeholder={docType === "ruc" ? "Ingrese RUC" : docType === "dni" ? "Ingrese DNI" : "Número"}
                 value={docNumber}
                 onChange={(e) => {
                   const v = e.target.value.trim();
@@ -250,92 +210,127 @@ const KpiCard = ({ icon, value, title, note, gradient, border, iconColor }) => (
                   setPage(1);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    safeRefetch(1, limit, docType, e.target.value.trim());
-                  }
+                  if (e.key === 'Enter') safeRefetch(1, limit, docType, e.target.value.trim());
                 }}
-                className="w-40"
+                className="w-32"
+                classNames={glassInputClasses}
               />
-            </div>
-
-            {/* Divider */}
-            <div className="h-px bg-gray-200 dark:bg-blue-800/30 w-full" />
-
-            {/* Quick filters */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">
-                Vistas rápidas:
-              </span>
-              <Chip
-                size="sm"
-                variant="flat"
-                className={`cursor-pointer hover:opacity-80 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 ${statusFilter === "all"
-                    ? "ring-2 ring-blue-400"
-                    : ""
-                  }`}
-                onClick={() => quickSet("all")}
-              >
-                Todos
-              </Chip>
-              <Chip
-                size="sm"
-                color="success"
-                variant="flat"
-                className={`cursor-pointer hover:opacity-80 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 ${statusFilter === "active"
-                    ? "ring-2 ring-emerald-400"
-                    : ""
-                  }`}
-                onClick={() => quickSet("active")}
-              >
-                Solo Activos
-              </Chip>
-              <Chip
-                size="sm"
-                color="danger"
-                variant="flat"
-                className={`cursor-pointer hover:opacity-80 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-700 dark:text-rose-300 ${statusFilter === "inactive"
-                    ? "ring-2 ring-rose-400"
-                    : ""
-                  }`}
-                onClick={() => quickSet("inactive")}
-              >
-                Solo Inactivos
-              </Chip>
             </div>
           </div>
 
-          {/* Tabla */}
-          <TablaCliente
-            clientes={filteredClientes}
-            loading={loading}
-            error={error}
-            metadata={metadata}
-            page={page}
-            limit={limit}
-            changePage={changePage}
-            changeLimit={changeLimit}
-            onDelete={() => {
-              safeRefetch(page);
-              loadStats();
-            }}
-            onEdit={() => {
-              safeRefetch(page);
-              loadStats();
-            }}
-            setAllClientes={setAllClientes}
-          />
-          <AddClientModal
-            open={activeAdd}
-            onClose={handleModalAdd}
-            refetch={() => {
-              safeRefetch(page);
-              loadStats();
-            }}
-            setAllClientes={setAllClientes}
-          />
+          {/* Quick Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-slate-500 uppercase mr-2">Estado:</span>
+            <Chip
+              classname="cursor-pointer transition-all hover:scale-105"
+              variant={statusFilter === 'all' ? "solid" : "flat"}
+              color={statusFilter === 'all' ? "primary" : "default"}
+              onClick={() => setStatusFilter("all")}
+              size="sm"
+              className="cursor-pointer"
+            >
+              Todos
+            </Chip>
+            <Chip
+              variant={statusFilter === 'active' ? "solid" : "flat"}
+              color="success"
+              onClick={() => setStatusFilter("active")}
+              size="sm"
+              className="cursor-pointer"
+            >
+              Activos
+            </Chip>
+            <Chip
+              variant={statusFilter === 'inactive' ? "solid" : "flat"}
+              color="danger"
+              onClick={() => setStatusFilter("inactive")}
+              size="sm"
+              className="cursor-pointer"
+            >
+              Inactivos
+            </Chip>
+          </div>
         </div>
-      </div> {/* Cierra contenedor principal */}
-    </>
+
+        <TablaCliente
+          clientes={filteredClientes}
+          loading={loading}
+          error={error}
+          metadata={metadata}
+          page={page}
+          limit={limit}
+          changePage={changePage}
+          changeLimit={changeLimit}
+          onDelete={() => {
+            safeRefetch(page);
+            loadStats();
+          }}
+          onEdit={() => {
+            safeRefetch(page);
+            loadStats();
+          }}
+          setAllClientes={setAllClientes}
+          selectedKeys={selectedKeys}
+          onSelectionChange={setSelectedKeys}
+        />
+      </div>
+
+      {/* Pagination Footer - Outside Table Container */}
+      <div className="flex w-full justify-between items-center px-2 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
+        <div className="flex gap-2 items-center">
+          <span className="text-[12px] text-slate-400 dark:text-slate-500">
+            {metadata?.total || metadata?.total_records || 0} clientes
+          </span>
+          <Select
+            size="sm"
+            className="w-20"
+            selectedKeys={[`${limit}`]}
+            onChange={(e) => changeLimit(Number(e.target.value))}
+            aria-label="Filas por página"
+            classNames={{
+              trigger: "min-h-8 h-8 bg-slate-50 dark:bg-zinc-800",
+              value: "text-[12px]"
+            }}
+          >
+            <SelectItem key="5">5</SelectItem>
+            <SelectItem key="10">10</SelectItem>
+            <SelectItem key="15">15</SelectItem>
+            <SelectItem key="20">20</SelectItem>
+          </Select>
+        </div>
+
+        <Pagination
+          isCompact
+          showControls
+          showShadow
+          color="primary"
+          page={page}
+          total={metadata?.pages || metadata?.total_pages || 1}
+          onChange={changePage}
+          classNames={{
+            cursor: "bg-blue-600 text-white font-bold"
+          }}
+        />
+      </div>
+
+      <BulkActionsToolbar
+        selectedCount={selectedKeys === "all" ? filteredClientes.length : selectedKeys.size}
+        onActivate={handleBulkActivate}
+        onDeactivate={handleBulkDeactivate}
+        onDelete={handleBulkDelete}
+        onClearSelection={() => setSelectedKeys(new Set())}
+      />
+
+      <AddClientModal
+        open={activeAdd}
+        onClose={handleModalAdd}
+        refetch={() => {
+          safeRefetch(page);
+          loadStats();
+        }}
+        setAllClientes={setAllClientes}
+      />
+    </div>
   );
 }
 

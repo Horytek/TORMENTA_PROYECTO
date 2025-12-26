@@ -363,18 +363,26 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
                           }
                         >
                           <Chip
-                            variant="flat"
+                            className="gap-1 border-none capitalize cursor-help"
+                            color="danger"
                             size="sm"
-                            className="gap-1 border-none capitalize font-semibold bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 cursor-help"
+                            variant="flat"
+                            startContent={
+                              <span className="w-1 h-1 rounded-full bg-danger-600 ml-1"></span>
+                            }
                           >
                             Anulado
                           </Chip>
                         </Tooltip>
                       ) : (
                         <Chip
-                          variant="flat"
+                          className="gap-1 border-none capitalize"
+                          color="success"
                           size="sm"
-                          className="gap-1 border-none capitalize font-semibold bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                          variant="flat"
+                          startContent={
+                            <span className="w-1 h-1 rounded-full bg-success-600 ml-1"></span>
+                          }
                         >
                           Activo
                         </Chip>

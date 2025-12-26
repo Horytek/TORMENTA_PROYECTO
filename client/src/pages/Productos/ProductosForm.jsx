@@ -17,6 +17,7 @@ import {
   Button,
   ButtonGroup
 } from "@heroui/react";
+import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 
 import {
   Modal,
@@ -499,19 +500,8 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     disabled
                   />
                   <ModalFooter className="flex justify-end gap-3 mt-6">
-                    <Button
-                      variant="flat"
-                      className="bg-slate-100 text-slate-600 font-bold dark:bg-zinc-800 dark:text-slate-300 rounded-xl px-6"
-                      onPress={handleCloseModal}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/20 rounded-xl px-6"
-                    >
-                      Guardar
-                    </Button>
+                    <ButtonClose onPress={handleCloseModal} />
+                    <ButtonSave type="submit" />
                   </ModalFooter>
                 </form>
               </ModalBody>

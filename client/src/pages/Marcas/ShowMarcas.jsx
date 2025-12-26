@@ -130,28 +130,29 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
         const isActive = cellValue === 1;
         return (
           <Chip
-            className="capitalize border-none gap-1 text-default-600"
+            className="gap-1 border-none capitalize"
             color={isActive ? "success" : "danger"}
             size="sm"
             variant="flat"
-            startContent={isActive ? <FaCheck size={10} /> : <FaTimes size={10} />}
+            startContent={
+              <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>
+            }
           >
             {isActive ? "Activo" : "Inactivo"}
           </Chip>
         );
       case "acciones":
         return (
-          <div className="relative flex items-center gap-2 justify-center">
+          <div className="flex gap-1 justify-center">
             <Tooltip content={hasEditPermission ? "Editar" : "Sin permiso"}>
               <Button
                 isIconOnly
                 size="sm"
-                variant="flat"
-                radius="full"
+                variant="light"
                 color="primary"
                 onPress={() => hasEditPermission && handleOpenEditModal(marca.id_marca, marca.nom_marca, marca.estado_marca)}
                 isDisabled={!hasEditPermission}
-                className="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
+                className="text-slate-400 hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-400"
               >
                 <MdEdit size={18} />
               </Button>
@@ -160,12 +161,11 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
               <Button
                 isIconOnly
                 size="sm"
-                variant="flat"
-                radius="full"
+                variant="light"
                 color="danger"
                 onPress={() => hasDeletePermission && handleOpenConfirmationModal(marca.nom_marca, marca.id_marca)}
                 isDisabled={!hasDeletePermission}
-                className="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
+                className="text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
               >
                 <FaTrash size={16} />
               </Button>
@@ -219,7 +219,7 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
           }
           classNames={{
             base: "max-h-[600px] overflow-scroll",
-            th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-10 border-b border-slate-200 dark:border-zinc-800",
+            th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
             td: "py-3 border-b border-slate-100 dark:border-zinc-800/50 text-slate-700 dark:text-slate-300",
             tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
           }}

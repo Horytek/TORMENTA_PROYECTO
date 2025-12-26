@@ -10,6 +10,7 @@ import {
   Input,
   Button,
 } from "@heroui/react";
+import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 
 const CategoriasForm = ({ modalTitle, onClose, onSuccess }) => {
   const { createCategoria } = useCategorias();
@@ -91,19 +92,8 @@ const CategoriasForm = ({ modalTitle, onClose, onSuccess }) => {
               />
             </div>
             <ModalFooter className="flex justify-end gap-3 mt-4">
-              <Button
-                variant="flat"
-                className="bg-slate-100 text-slate-600 font-bold dark:bg-zinc-800 dark:text-slate-300 rounded-xl px-4"
-                onPress={onClose}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/20 rounded-xl px-4"
-                type="submit"
-              >
-                Guardar
-              </Button>
+              <ButtonClose onPress={onClose} />
+              <ButtonSave type="submit" />
             </ModalFooter>
           </form>
         </ModalBody>

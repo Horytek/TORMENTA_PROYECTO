@@ -24,8 +24,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: [
-      'html2pdf.js',
-      'html2pdf.js/dist/html2pdf.bundle.js',
       '@botpress/webchat',
       '@botpress/chat'
     ]

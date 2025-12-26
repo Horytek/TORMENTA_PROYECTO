@@ -45,7 +45,7 @@ const normalizeClient = (raw) => {
   const type = (raw.razon_social && raw.razon_social.trim() !== "") ? "business" : "personal";
   const status = (raw.estado === 1 || raw.estado === "1") ? "active" : "inactive";
   const createdAt = raw.f_creacion || null;
-  
+
 
   return {
     id: raw.id_cliente || raw.id,
@@ -211,11 +211,17 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
                       <h2 className="text-xl font-bold text-blue-900 dark:text-blue-100">{data.name}</h2>
-                      {data.status === "active" ? (
-                        <Chip size="sm" color="success" variant="flat" className="h-5 text-[11px]">Activo</Chip>
-                      ) : (
-                        <Chip size="sm" color="danger" variant="flat" className="h-5 text-[11px]">Inactivo</Chip>
-                      )}
+                      <Chip
+                        className="gap-1 border-none capitalize h-5 text-[11px]"
+                        color={data.status === "active" ? "success" : "danger"}
+                        size="sm"
+                        variant="flat"
+                        startContent={
+                          <span className={`w-1 h-1 rounded-full ${data.status === "active" ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>
+                        }
+                      >
+                        {data.status === "active" ? "Activo" : "Inactivo"}
+                      </Chip>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-zinc-400 flex items-center gap-2">
                       <FaFileAlt className="w-3 h-3" />

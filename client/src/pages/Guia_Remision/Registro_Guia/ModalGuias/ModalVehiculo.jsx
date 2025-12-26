@@ -3,8 +3,16 @@ import '../ModalGuias.css';
 import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
-import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
+import { ButtonSave } from '@/components/Buttons/Buttons';
 import { addVehiculo } from '@/services/guiaRemision.services';
+import {
+    Modal,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    Button
+} from '@heroui/react';
 
 export const ModalVehiculo = ({ modalTitle, closeModel, onVehiculoSaved }) => {
     const { register, handleSubmit, formState: { errors } } = useForm({
@@ -35,49 +43,81 @@ export const ModalVehiculo = ({ modalTitle, closeModel, onVehiculoSaved }) => {
     });
 
     return (
-        <form onSubmit={onSubmit}>
+        <Modal
+            isOpen={true}
+            onClose={closeModel}
+            size="md"
+            backdrop="blur"
+            classNames={{
+                backdrop: "z-[1200] bg-white/10",
+                base: "z-[1210] pointer-events-auto bg-white/80 dark:bg-zinc-900/80 supports-[backdrop-filter]:backdrop-blur-xl border border-blue-100/40 dark:border-zinc-700/50 shadow-2xl rounded-2xl",
+                header: "px-6 py-4 border-b border-blue-100/30 dark:border-zinc-700/40",
+                body: "px-6 pb-4 pt-4",
+                footer: "px-6 py-4 border-t border-blue-100/30 dark:border-zinc-700/40"
+            }}
+            motionProps={{
+                variants: {
+                    enter: { opacity: 1, y: 0, scale: 1 },
+                    exit: { opacity: 0, y: 12, scale: 0.97 }
+                }
+            }}
+        >
             <Toaster />
-            <div className="modal-overlay">
-                <div className="modal">
-                    <div className='content-modal'>
-                        <div className="modal-header">
-                            <h3 className="modal-title">{modalTitle}</h3>
-                            <button className="modal-close" onClick={closeModel}>
-                                <IoMdClose className='text-3xl' />
-                            </button>
+            <ModalContent>
+                <form onSubmit={onSubmit} className="flex flex-col h-full w-full">
+                    <ModalHeader>
+                        <div className="flex flex-col gap-1">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-blue-100">{modalTitle}</h2>
+                            <p className="text-xs text-slate-500 font-normal">Registre un nuevo vehículo</p>
                         </div>
-                        <div className='modal-body'>
-                            <div className='w-full text-start mb-5'>
-                                <label htmlFor="placa" className='text-sm font-bold text-black'>Placa:</label>
+                    </ModalHeader>
+                    <ModalBody>
+                        <div className="space-y-4">
+                            <div className="w-full">
+                                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 mb-1 block">Placa</label>
                                 <input
                                     {...register('placa', { required: true })}
                                     type="text"
-                                    name='placa'
-                                    className={`w-full bg-gray-50 ${errors.placa ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2 text-sm`}
-                                    placeholder='Placa del Vehículo'
+                                    className={`w-full px-3 py-2 text-sm bg-white/50 dark:bg-zinc-800/50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.placa
+                                            ? 'border-red-400 focus:ring-red-200 text-red-700 placeholder:text-red-300'
+                                            : 'border-slate-200/50 focus:border-blue-400 focus:ring-blue-100 text-slate-800'
+                                        }`}
+                                    placeholder="Ej: ABC-123"
                                 />
+                                {errors.placa && <span className="text-[10px] text-red-500 ml-1 mt-1">Campo requerido</span>}
                             </div>
 
-                            <div className='w-full text-start mb-5'>
-                                <label htmlFor="tipo" className='text-sm font-bold text-black'>Tipo:</label>
+                            <div className="w-full">
+                                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 mb-1 block">Tipo</label>
                                 <input
                                     {...register('tipo', { required: true })}
                                     type="text"
-                                    name='tipo'
-                                    className={`w-full bg-gray-50 ${errors.tipo ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-gray-300'} text-gray-900 rounded-lg border p-2 text-sm`}
-                                    placeholder='Tipo de Vehículo'
+                                    className={`w-full px-3 py-2 text-sm bg-white/50 dark:bg-zinc-800/50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.tipo
+                                            ? 'border-red-400 focus:ring-red-200 text-red-700 placeholder:text-red-300'
+                                            : 'border-slate-200/50 focus:border-blue-400 focus:ring-blue-100 text-slate-800'
+                                        }`}
+                                    placeholder="Ej: Furgón, Camión..."
                                 />
-                            </div>
-
-                            <div className='modal-buttons flex justify-between'>
-                                <ButtonClose onClick={closeModel} />
-                                <ButtonSave type="submit" />
+                                {errors.tipo && <span className="text-[10px] text-red-500 ml-1 mt-1">Campo requerido</span>}
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </form>
+                    </ModalBody>
+                    <ModalFooter>
+                        <div className='flex justify-end gap-2 w-full'>
+                            <Button
+                                variant="flat"
+                                color="default"
+                                onPress={closeModel}
+                                className="font-medium"
+                            >
+                                Cancelar
+                            </Button>
+                            <ButtonSave type="submit" label="Guardar Vehículo" className="shadow-lg shadow-blue-500/20" />
+                        </div>
+                    </ModalFooter>
+                </form>
+            </ModalContent>
+        </Modal>
     );
 };
 

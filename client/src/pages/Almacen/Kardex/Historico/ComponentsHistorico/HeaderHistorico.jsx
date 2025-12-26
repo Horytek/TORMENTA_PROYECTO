@@ -26,7 +26,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
     };
   }
 
-    // Inicializar el rango de fechas al rango de la semana actual
+  // Inicializar el rango de fechas al rango de la semana actual
   const initialWeekRange = getCurrentWeekRange();
 
   const [selectedAlmacen, setSelectedAlmacen] = useState(almacenGlobal || "");
@@ -87,9 +87,9 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
     setSelectedAlmacen(selectedId);
     setAlmacenGlobal(selectedId); // Actualiza el almacén global en Zustand
   }, [setAlmacenGlobal]);
-  
+
   // ADAPTADO: Usa datos de empresa dinámicos
-    const generatePDFKardex = async (productoData, transactions = [], previousTransactions = [], dateRange = {}) => {
+  const generatePDFKardex = async (productoData, transactions = [], previousTransactions = [], dateRange = {}) => {
     try {
       const jspdfModule = await import(/* @vite-ignore */ 'jspdf');
       await import(/* @vite-ignore */ 'jspdf-autotable');
@@ -100,12 +100,12 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
       let cursorY = 14;
 
       // Logo
-     try { if (logoBase64) doc.addImage(logoBase64, 'PNG', 12, cursorY - 2, 28, 28); } catch {}
+      try { if (logoBase64) doc.addImage(logoBase64, 'PNG', 12, cursorY - 2, 28, 28); } catch { }
 
       // Encabezado empresa (respetando espacio derecho)
       const xText = logoBase64 ? 46 : 16;
-     doc.setFontSize(13); doc.setFont('helvetica', 'bold');
-     doc.text(empresaData?.nombreComercial || 'TORMENTA JEANS', xText, cursorY);
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.text(empresaData?.nombreComercial || 'TORMENTA JEANS', xText, cursorY);
       doc.setFontSize(9); doc.setFont('helvetica', 'normal');
       cursorY += 6;
       const boxW = 72;
@@ -124,7 +124,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
       doc.rect(boxX, 12, boxW, 36);
       doc.setFontSize(10.5); doc.setFont('helvetica', 'bold');
       doc.text(`RUC ${empresaData?.ruc || '20610588981'}`, boxX + boxW / 2, 18, { align: 'center' });
-      doc.setFillColor(191,219,254); doc.rect(boxX, 24, boxW, 11, 'F');
+      doc.setFillColor(191, 219, 254); doc.rect(boxX, 24, boxW, 11, 'F');
       doc.setFontSize(10.5);
       doc.text('HISTÓRICO', boxX + boxW / 2, 30, { align: 'center' });
 
@@ -142,33 +142,33 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
 
       // Tabla transacciones
       const rows = (transactions || []).map(item => [
-       item.fecha ? new Date(item.fecha).toLocaleDateString() : '',
+        item.fecha ? new Date(item.fecha).toLocaleDateString() : '',
         item.documento || '',
         item.nombre || '',
-       item.entra != null ? String(item.entra) : '0',
-       item.sale != null ? String(item.sale) : '0',
+        item.entra != null ? String(item.entra) : '0',
+        item.sale != null ? String(item.sale) : '0',
         item.stock != null ? String(item.stock) : '',
         item.precio != null ? String(item.precio) : '',
         (item.glosa || '').replace(/\r?\n/g, ' ')
-     ]);
+      ]);
 
       doc.autoTable({
-       head: [['Fecha','Documento','Nombre','Entra','Sale','Stock','Precio','Glosa']],
-       body: rows,
-       startY: cursorY,
+        head: [['Fecha', 'Documento', 'Nombre', 'Entra', 'Sale', 'Stock', 'Precio', 'Glosa']],
+        body: rows,
+        startY: cursorY,
         styles: { fontSize: 8, cellPadding: 3 },
-       headStyles: { fillColor: [191,219,254], textColor: [15,23,42], fontStyle: 'bold' },
-       columnStyles: {
-         0: { cellWidth: 24 },
-         1: { cellWidth: 36 },
-         2: { cellWidth: 46 },
+        headStyles: { fillColor: [191, 219, 254], textColor: [15, 23, 42], fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 24 },
+          1: { cellWidth: 36 },
+          2: { cellWidth: 46 },
           3: { cellWidth: 18, halign: 'right' },
           4: { cellWidth: 18, halign: 'right' },
           5: { cellWidth: 18, halign: 'right' },
-         6: { cellWidth: 20, halign: 'right' },
-         7: { cellWidth: 46 }
-       },
-       tableWidth: 'auto'
+          6: { cellWidth: 20, halign: 'right' },
+          7: { cellWidth: 46 }
+        },
+        tableWidth: 'auto'
       });
 
       // Footer / paginación
@@ -177,7 +177,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
         doc.setPage(i);
         doc.setFontSize(8); doc.setTextColor(120);
         doc.text(`Página ${i} de ${totalPages}`, pageWidth - 20, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
-     }
+      }
 
       doc.save(`kardex_movimientos.pdf`);
       // feedback
@@ -204,16 +204,15 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
     }
   };
 
-return (
-    <Card className="relative overflow-hidden rounded-2xl shadow-xl bg-white dark:bg-zinc-900 transition-all mb-4">
-      <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-blue-50/80 to-cyan-50/60 dark:from-blue-900/40 dark:to-cyan-900/20 rounded-t-2xl">
+  return (
+    <Card className="relative overflow-hidden rounded-2xl shadow-sm border border-blue-100 dark:border-zinc-700 bg-white dark:bg-zinc-900 transition-all mb-4">
+      <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-t-2xl border-b border-blue-100 dark:border-zinc-700">
         <div className="flex items-center gap-4">
           {logoBase64 && (
             <img
               src={logoBase64}
               alt="Logo empresa"
-              className="w-20 h-20 object-contain rounded-lg border-gray-200 bg-white"
-              style={{ background: "#fff" }}
+              className="w-20 h-20 object-contain rounded-lg border border-gray-200 dark:border-zinc-700 bg-white p-1"
             />
           )}
           <div>
@@ -243,9 +242,11 @@ return (
             onSelectionChange={(keys) => handleAlmacenChange([...keys][0])}
             disabled={almacenes.length === 0}
             className="w-60"
+            variant="bordered"
+            size="sm"
             classNames={{
-              trigger: "bg-white",
-              value: "text-black",
+              trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700",
+              value: "text-slate-900 dark:text-zinc-100",
             }}
           >
             {almacenes.map((almacen) => (
@@ -257,22 +258,30 @@ return (
         </div>
       </CardHeader>
       <Divider />
-      <CardBody className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <CardBody className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6">
         <div>
-          <p className="text-gray-700">
-            Producto: {productoData.length > 0 ? `${productoData[0].descripcion} - ${productoData[0].marca}` : "Producto no registrado en el almacén seleccionado."}
+          <p className="text-slate-700 dark:text-zinc-300 font-medium text-lg">
+            {productoData.length > 0 ? productoData[0].descripcion : "Producto no encontrado"}
           </p>
-          <p className="text-gray-700">
-            COD: {productoData.length > 0 ? productoData[0].codigo : "Cargando..."} / 
-            Stock Actual: {productoData.length > 0 ? productoData[0].stock : "Cargando..."} UND / 
-            Marca: {productoData.length > 0 ? productoData[0].marca : "Cargando..."}
-          </p>
+          <div className="flex flex-wrap gap-2 text-sm text-slate-500 dark:text-zinc-400 mt-1">
+            <span className="font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
+              {productoData.length > 0 ? productoData[0].codigo : "---"}
+            </span>
+            <span>•</span>
+            <span>Stock: <strong className="text-blue-600 dark:text-blue-400">{productoData.length > 0 ? productoData[0].stock : "0"}</strong> UND</span>
+            <span>•</span>
+            <span>Marca: {productoData.length > 0 ? productoData[0].marca : "---"}</span>
+          </div>
         </div>
         <div className="flex items-center gap-2 mt-2">
-          <h6 className="font-bold mb-0">Fecha:</h6>
+          <h6 className="font-bold mb-0 text-slate-700 dark:text-zinc-300">Fecha:</h6>
           <DateRangePicker
             className="w-64"
-            classNames={{ inputWrapper: "bg-white" }}
+            variant="bordered"
+            size="sm"
+            classNames={{
+              inputWrapper: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700"
+            }}
             value={value}
             onChange={handleDateChange}
           />

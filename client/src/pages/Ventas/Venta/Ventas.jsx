@@ -65,6 +65,7 @@ const Ventas = () => {
       ubicacion: found?.ubicacion || '',
     };
   }, [sucursales, sur]);
+
   // Guarda el total de ventas en Zustand cada vez que cambian
   useEffect(() => {
     setTotalVentas(ventas);
@@ -141,110 +142,75 @@ const Ventas = () => {
     setCurrentPage(1); // Resetear la página actual al cambiar filtros
   }, [setCurrentPage]);
 
+  // Clean White Classes & KPI Component
+  const cardClass = "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl";
+
+  const KpiCard = ({ title, value, icon: Icon, colorClass }) => (
+    <Card className={`${cardClass} border-none shadow-sm`}>
+      <CardBody className="flex flex-row items-center gap-4 p-4">
+        <div className={`p-3 rounded-xl ${colorClass} bg-opacity-10 text-opacity-100`}>
+          <Icon className={`text-2xl ${colorClass.replace('bg-', 'text-').replace('/10', '')}`} />
+        </div>
+        <div>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{title}</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-white">{value}</p>
+        </div>
+      </CardBody>
+    </Card>
+  );
+
   return (
-    <div className="min-h-screen py-8 px-2 sm:px-6">
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-6 md:p-8 font-inter">
       <Toaster />
 
-      <div className="max-w-[1600px] mx-auto space-y-6">
+      <div className="max-w-[1920px] mx-auto space-y-6">
         {/* Header principal */}
-        <div className="bg-white/80 border border-blue-100 rounded-2xl shadow-sm p-6 mb-4">
-          <h1 className="font-extrabold text-4xl text-blue-900 tracking-tight mb-1">
-            Gestión de ventas
-          </h1>
-          <p className="text-base text-blue-700/80 mb-2">
-            Visualiza, filtra y administra todas tus ventas de manera eficiente y centralizada.
-          </p>
-        </div>
-
-        {/* KPIs */}
-        <div className="w-full mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="relative overflow-hidden border border-rose-200/40 bg-white/90 dark:bg-[#232339cc] dark:border-rose-800/40 rounded-2xl shadow-none backdrop-blur-md transition-all">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-rose-100/80 via-white to-white dark:from-rose-900/40 dark:via-rose-800/20 dark:to-transparent rounded-full blur-2xl"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-rose-200/70 to-white dark:from-rose-900/30 dark:to-transparent rounded-full blur-xl"></div>
-            </div>
-            <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-3 rounded-xl bg-rose-200 dark:bg-rose-900/70 shadow">
-                  <FaShoppingBag className="text-2xl text-rose-500 dark:text-rose-300" />
-                </span>
-              </div>
-              <div>
-                <span className="text-3xl font-extrabold text-zinc-900 dark:text-white">
-                  S/. {totalRecaudado ? totalRecaudado : "0.00"}
-                </span>
-                <div className="text-sm text-zinc-600 dark:text-zinc-300 font-medium">Total Ventas</div>
-              </div>
-            </CardBody>
-          </Card>
-          <Card className="relative overflow-hidden border border-violet-200/40 bg-white/90 dark:bg-[#232339cc] dark:border-violet-800/40 rounded-2xl shadow-none backdrop-blur-md transition-all">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-violet-100/80 via-white to-white dark:from-violet-900/40 dark:via-violet-800/20 dark:to-transparent rounded-full blur-2xl"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-violet-200/70 to-white dark:from-violet-900/30 dark:to-transparent rounded-full blur-xl"></div>
-            </div>
-            <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-3 rounded-xl bg-violet-200 dark:bg-violet-900/70 shadow">
-                  <FaMoneyBillWave className="text-2xl text-violet-500 dark:text-violet-300" />
-                </span>
-              </div>
-              <div>
-                <span className="text-3xl font-extrabold text-zinc-900 dark:text-white">
-                  {totalEfectivo ? totalEfectivo : "0.00"}
-                </span>
-                <div className="text-sm text-zinc-600 dark:text-zinc-300 font-medium">Total Efectivo</div>
-              </div>
-            </CardBody>
-          </Card>
-          <Card className="relative overflow-hidden border border-emerald-200/40 bg-white/90 dark:bg-[#232339cc] dark:border-emerald-800/40 rounded-2xl shadow-none backdrop-blur-md transition-all">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-emerald-100/80 via-white to-white dark:from-emerald-900/40 dark:via-emerald-800/20 dark:to-transparent rounded-full blur-2xl"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-200/70 to-white dark:from-emerald-900/30 dark:to-transparent rounded-full blur-xl"></div>
-            </div>
-            <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-3 rounded-xl bg-emerald-200 dark:bg-emerald-900/70 shadow">
-                  <FaCreditCard className="text-2xl text-emerald-500 dark:text-emerald-300" />
-                </span>
-              </div>
-              <div>
-                <span className="text-3xl font-extrabold text-zinc-900 dark:text-white">
-                  {totalPagoElectronico ? totalPagoElectronico : "0.00"}
-                </span>
-                <div className="text-sm text-zinc-600 dark:text-zinc-300 font-medium">Total Pago Electrónico</div>
-              </div>
-            </CardBody>
-          </Card>
-          <Card className="relative overflow-hidden border border-blue-200/40 bg-white/90 dark:bg-[#232339cc] dark:border-blue-800/40 rounded-2xl shadow-none backdrop-blur-md transition-all">
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-100/80 via-white to-white dark:from-blue-900/40 dark:via-blue-800/20 dark:to-transparent rounded-full blur-2xl"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-200/70 to-white dark:from-blue-900/30 dark:to-transparent rounded-full blur-xl"></div>
-            </div>
-            <CardBody className="flex flex-col justify-between h-full p-5 relative z-10">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-3 rounded-xl bg-blue-200 dark:bg-blue-900/70 shadow">
-                  <FaCalculator className="text-2xl text-blue-500 dark:text-blue-300" />
-                </span>
-              </div>
-              <div>
-                <span className="text-3xl font-extrabold text-zinc-900 dark:text-white">
-                  {ventas && ventas.length ? ventas.length : "0"}
-                </span>
-                <div className="text-sm text-zinc-600 dark:text-zinc-300 font-medium">Cantidad de Ventas</div>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-
-        {/* Filtros */}
-        <div className="bg-white/90 border border-blue-100 rounded-xl shadow-sm p-0 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex-1 p-4">
-            <FiltrosVentas onFiltersChange={handleFilterChange} />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-[#1e293b] dark:text-white tracking-tight">
+              Gestión de Ventas
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">
+              Visualiza y administra todas tus ventas de manera eficiente.
+            </p>
           </div>
         </div>
 
+        {/* KPIs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            title="Total Ventas"
+            value={`S/. ${totalRecaudado ? totalRecaudado : "0.00"}`}
+            icon={FaShoppingBag}
+            colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
+          />
+          <KpiCard
+            title="Total Efectivo"
+            value={totalEfectivo ? totalEfectivo : "0.00"}
+            icon={FaMoneyBillWave}
+            colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+          />
+          <KpiCard
+            title="Total Electrónico"
+            value={totalPagoElectronico ? totalPagoElectronico : "0.00"}
+            icon={FaCreditCard}
+            colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+          />
+          <KpiCard
+            title="Cantidad Ventas"
+            value={ventas && ventas.length ? ventas.length : "0"}
+            icon={FaCalculator}
+            colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+          />
+        </div>
+
+        {/* Filtros */}
+        <div className="space-y-4">
+          <FiltrosVentas onFiltersChange={handleFilterChange} />
+        </div>
+
         {/* Tabla de ventas con ScrollShadow */}
-        <ScrollShadow hideScrollBar className="rounded-xl mt-6 w-full overflow-x-auto overflow-y-hidden">
+        <ScrollShadow hideScrollBar className="rounded-xl w-full overflow-x-auto overflow-y-hidden">
           <div className="min-w-[900px]">
             <TablaVentas
               ventas={ventas || []}

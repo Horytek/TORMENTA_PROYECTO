@@ -1,41 +1,53 @@
-import React, { useState } from "react";
+import React from "react";
 import {
-    Pagination,
-    Select,
-    SelectItem,
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
     Tooltip,
-    Button,
-    ScrollShadow
+    Chip
 } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { deleteAlmacen } from '@/services/almacen.services';
 import { usePermisos } from '@/routes';
-import AlmacenesForm from '../AlmacenesForm';
 
 const TablaAlmacen = ({
     almacenes,
     updateAlmacenLocal,
     removeAlmacen,
-    onEdit
+    onEdit,
+    selectedKeys,
+    onSelectionChange,
+    page,
+    limit,
+    setPage,
+    setLimit
 }) => {
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
-
-    const [openConfirmModal, setOpenConfirmModal] = useState(false);
-    const [selectedId, setSelectedId] = useState(null);
-    const [selectedRow, setSelectedRow] = useState(null);
+    const [openConfirmModal, setOpenConfirmModal] = React.useState(false);
+    const [selectedId, setSelectedId] = React.useState(null);
+    const [selectedRow, setSelectedRow] = React.useState(null);
 
     const { hasDeletePermission, hasEditPermission } = usePermisos();
 
-    // Pagination Logic
     const pages = Math.ceil(almacenes.length / limit);
     const items = React.useMemo(() => {
         const start = (page - 1) * limit;
         const end = start + limit;
         return almacenes.slice(start, end);
     }, [page, limit, almacenes]);
+
+    const columns = [
+        { name: "ID", uid: "id" },
+        { name: "ALMACÉN", uid: "almacen" },
+        { name: "SUCURSAL", uid: "sucursal" },
+        { name: "UBICACIÓN", uid: "ubicacion" },
+        { name: "ESTADO", uid: "estado", align: "center" },
+        { name: "ACCIONES", uid: "acciones", align: "center" },
+    ];
 
     const handleOpenConfirmationModal = (row, id) => {
         setSelectedRow(row);
@@ -56,50 +68,43 @@ const TablaAlmacen = ({
         setSelectedRow(null);
     };
 
-    const renderEstado = (estado) => (
-        <span className={`
-            inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
-            ${estado === 'Inactivo'
-                ? "bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800"
-                : "bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"}
-        `}>
-            {estado === 'Inactivo' ? (
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
-                </svg>
-            ) : (
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-            )}
-            {estado}
-        </span>
-    );
-
     const renderCell = (almacen, columnKey) => {
         switch (columnKey) {
             case "id":
-                return <span className="text-gray-500 dark:text-gray-400">#{almacen.id_almacen}</span>;
+                return <span className="text-slate-500 dark:text-slate-400">#{almacen.id_almacen}</span>;
             case "almacen":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small text-blue-900 dark:text-blue-100 font-semibold">{almacen.nom_almacen}</p>
+                        <p className="text-bold text-small text-slate-900 dark:text-slate-100 font-semibold">{almacen.nom_almacen}</p>
                     </div>
                 );
             case "sucursal":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small text-gray-600 dark:text-gray-300">{almacen.nombre_sucursal || "-"}</p>
+                        <p className="text-bold text-small text-slate-600 dark:text-slate-300">{almacen.nombre_sucursal || "-"}</p>
                     </div>
                 );
             case "ubicacion":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small text-gray-600 dark:text-gray-300">{almacen.ubicacion || "-"}</p>
+                        <p className="text-bold text-small text-slate-600 dark:text-slate-300">{almacen.ubicacion || "-"}</p>
                     </div>
                 );
             case "estado":
-                return renderEstado(almacen.estado_almacen);
+                const isActive = almacen.estado_almacen === 'Activo';
+                return (
+                    <Chip
+                        className="gap-1 border-none capitalize"
+                        color={isActive ? "success" : "danger"}
+                        size="sm"
+                        variant="flat"
+                        startContent={
+                            <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>
+                        }
+                    >
+                        {almacen.estado_almacen}
+                    </Chip>
+                );
             case "acciones":
                 return (
                     <div className="flex items-center justify-center gap-2">
@@ -108,9 +113,9 @@ const TablaAlmacen = ({
                                 role="button"
                                 tabIndex={0}
                                 onClick={() => hasEditPermission && onEdit(almacen)}
-                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors ${hasEditPermission
-                                        ? "bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/30"
-                                        : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
+                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors cursor-pointer ${hasEditPermission
+                                    ? "bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/30"
+                                    : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
                                     }`}
                             >
                                 <MdEdit className="w-4 h-4" />
@@ -121,9 +126,9 @@ const TablaAlmacen = ({
                                 role="button"
                                 tabIndex={0}
                                 onClick={() => hasDeletePermission && handleOpenConfirmationModal(almacen.nom_almacen, almacen.id_almacen)}
-                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors ${hasDeletePermission
-                                        ? "bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/20 dark:hover:bg-rose-900/30"
-                                        : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
+                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors cursor-pointer ${hasDeletePermission
+                                    ? "bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/20 dark:hover:bg-rose-900/30"
+                                    : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
                                     }`}
                             >
                                 <FaTrash className="w-3.5 h-3.5" />
@@ -138,79 +143,35 @@ const TablaAlmacen = ({
 
     return (
         <>
-            <div className="bg-white/90 dark:bg-[#18192b] rounded-2xl shadow border border-blue-100 dark:border-zinc-700 p-0">
-                <div className="p-4 bg-white dark:bg-[#232339] rounded-2xl">
-                    <ScrollShadow hideScrollBar>
-                        <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-                            <thead>
-                                <tr className="bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 text-[13px] font-bold">
-                                    <th className="py-2 px-4 text-left align-middle">ID</th>
-                                    <th className="py-2 px-4 text-left align-middle">Almacén</th>
-                                    <th className="py-2 px-4 text-left align-middle">Sucursal</th>
-                                    <th className="py-2 px-4 text-left align-middle">Ubicación</th>
-                                    <th className="py-2 px-4 text-center align-middle">Estado</th>
-                                    <th className="py-2 px-4 text-center align-middle">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {items.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="py-8 text-center text-gray-400 dark:text-gray-500">No se encontraron almacenes</td>
-                                    </tr>
-                                ) : (
-                                    items.map((almacen, idx) => (
-                                        <tr
-                                            key={almacen.id_almacen}
-                                            className={`transition-colors duration-150 ${idx % 2 === 0
-                                                ? "bg-white dark:bg-[#18192b]"
-                                                : "bg-blue-50/40 dark:bg-blue-900/10"
-                                                } hover:bg-blue-100/60 dark:hover:bg-blue-900/30`}
-                                        >
-                                            <td className="py-2 px-4 align-middle">{renderCell(almacen, "id")}</td>
-                                            <td className="py-2 px-4 align-middle">{renderCell(almacen, "almacen")}</td>
-                                            <td className="py-2 px-4 align-middle">{renderCell(almacen, "sucursal")}</td>
-                                            <td className="py-2 px-4 align-middle">{renderCell(almacen, "ubicacion")}</td>
-                                            <td className="py-2 px-4 text-center align-middle">{renderCell(almacen, "estado")}</td>
-                                            <td className="py-2 px-4 text-center align-middle">{renderCell(almacen, "acciones")}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </ScrollShadow>
-                </div>
-            </div>
-
-            <div className="flex justify-between items-center mt-2 px-4 pb-2">
-                <Pagination
-                    showControls
-                    page={page}
-                    total={pages || 1}
-                    onChange={setPage}
-                    color="primary"
-                    size="sm"
-                />
-                <div className="flex gap-3 items-center">
-                    <span className="text-[12px] text-default-400">
-                        {almacenes.length} almacenes
-                    </span>
-                    <Select
-                        size="sm"
-                        className="w-24"
-                        selectedKeys={[`${limit}`]}
-                        onChange={(e) => {
-                            setLimit(Number(e.target.value));
-                            setPage(1);
-                        }}
-                        aria-label="Filas por página"
-                    >
-                        <SelectItem key="5">5</SelectItem>
-                        <SelectItem key="10">10</SelectItem>
-                        <SelectItem key="15">15</SelectItem>
-                        <SelectItem key="20">20</SelectItem>
-                    </Select>
-                </div>
-            </div>
+            <Table
+                aria-label="Tabla de almacenes"
+                selectionMode="multiple"
+                selectedKeys={selectedKeys}
+                onSelectionChange={onSelectionChange}
+                removeWrapper
+                classNames={{
+                    base: "",
+                    table: "min-w-full",
+                    th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-11 first:rounded-l-lg last:rounded-r-lg shadow-none border-b border-slate-200 dark:border-zinc-800",
+                    td: "py-3 border-b border-slate-100 dark:border-zinc-800 group-data-[first=true]:first:before:rounded-none group-data-[first=true]:last:before:rounded-none",
+                    tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors shadow-none",
+                }}
+            >
+                <TableHeader columns={columns}>
+                    {(column) => (
+                        <TableColumn key={column.uid} align={column.uid === "acciones" || column.uid === "estado" ? "center" : "start"}>
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody items={items} emptyContent={"No se encontraron almacenes"}>
+                    {(item) => (
+                        <TableRow key={item.id_almacen}>
+                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
 
             {openConfirmModal && (
                 <ConfirmationModal

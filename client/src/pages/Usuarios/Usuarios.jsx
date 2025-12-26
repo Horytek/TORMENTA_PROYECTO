@@ -114,79 +114,79 @@ function Usuarios() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-2 sm:px-6">
-      <Toaster />
-      <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-100 tracking-tight mb-2">
-        Gestión de usuarios
-      </h1>
-      <p className="text-base text-blue-700/80 dark:text-blue-300/80 mb-6">
-        Visualiza, filtra y administra todos los usuarios de tu empresa.
-      </p>
+    <div className="w-full min-h-screen p-6 flex flex-col gap-6 bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-200">
+      <Toaster position="top-center" reverseOrder={false} />
 
-      {/* Search and Add Button */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-        <BarraSearch
-          placeholder="Buscar por usuario..."
-          isClearable={true}
-          className="h-9 text-sm w-full md:w-72"
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          Gestión de usuarios
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+          Visualiza, filtra y administra todos los usuarios de tu empresa, sus roles y permisos.
+        </p>
+      </div>
 
-        <div className="flex items-center gap-2">
+      {/* Toolbar */}
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800">
+        <div className="w-full sm:w-80">
+          <BarraSearch
+            placeholder="Buscar por nombre de usuario..."
+            isClearable={true}
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <ActionButton
             color="green"
-            icon={<FaFileExcel className="w-4 h-4" />}
+            icon={<FaFileExcel size={18} />}
             onClick={() => setImportModalOpen(true)}
             disabled={!hasCreatePermission}
-            size="sm"
-            className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-green-50 hover:bg-green-100 text-green-700 transition-colors dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-200 ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            style={{ boxShadow: "none", border: "none" }}
+            className="flex-1 sm:flex-none"
           >
             Importar
           </ActionButton>
           <ActionButton
-            color="blue"
-            icon={<FaFileExport className="w-4 h-4" />}
+            color="indigo"
+            icon={<FaFileExport size={18} />}
             onClick={handleExport}
-            size="sm"
-            className="h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-200"
-            style={{ boxShadow: "none", border: "none" }}
+            className="flex-1 sm:flex-none"
           >
             Exportar
           </ActionButton>
           <ActionButton
             color="blue"
-            icon={<FaPlus className="w-4 h-4 text-blue-500" />}
+            icon={<FaPlus size={18} />}
             onClick={() => setModalOpen(true)}
             disabled={!hasCreatePermission}
-            size="sm"
-            className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            style={{ boxShadow: "none", border: "none" }}
+            className="flex-1 sm:flex-none"
           >
-            Agregar usuario
+            Nuevo usuario
           </ActionButton>
         </div>
       </div>
 
-      {/* Advanced Filters */}
-      <div className="mb-6">
-        <FilterControls
-          roles={uniqueRoles}
-          onFilterChange={setActiveFilters}
+      {/* Advanced Filters & Table */}
+      <div className="flex flex-col gap-4">
+        {uniqueRoles.length > 0 && (
+          <FilterControls
+            roles={uniqueRoles}
+            onFilterChange={setActiveFilters}
+            activeFilters={activeFilters}
+          />
+        )}
+
+        <ShowUsuarios
+          searchTerm={searchTerm}
           activeFilters={activeFilters}
+          usuarios={usuarios}
+          addUsuario={addUsuario}
+          updateUsuarioLocal={updateUsuarioLocal}
+          removeUsuario={removeUsuario}
         />
       </div>
-
-      {/* Users Table */}
-      <ShowUsuarios
-        searchTerm={searchTerm}
-        activeFilters={activeFilters}
-        usuarios={usuarios}
-        addUsuario={addUsuario}
-        updateUsuarioLocal={updateUsuarioLocal}
-        removeUsuario={removeUsuario}
-      />
 
       {/* Add User Modal */}
       {activeAdd && (

@@ -4,6 +4,7 @@ import ExportarExcel from './ComponentsLibroVentas/ExportarExcel';
 import FiltroLibro from './ComponentsLibroVentas/FiltroLibro';
 import useLibroVentasSunatData from '@/services/data/getLibroVenta';
 import { Card, CardBody } from "@heroui/react";
+import { FaCalculator, FaMoneyBillWave, FaFileInvoice, FaPercent } from "react-icons/fa";
 
 const LibroVentas = () => {
     const [filters, setFilters] = useState({
@@ -54,97 +55,101 @@ const LibroVentas = () => {
         return presets;
     }, [filters]);
 
-    return (
-        <div className="max-w-[1600px] mx-auto p-4 space-y-6">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div>
-                    <h1 className="font-extrabold text-3xl text-blue-900 dark:text-blue-100 tracking-tight mb-1">
-                        Libro Registro de Ventas
-                    </h1>
-                    <p className="text-sm text-blue-700/80 dark:text-blue-300/80 max-w-2xl">
-                        Registro oficial de ventas y comprobantes electrónicos. Visualiza, filtra y exporta la información contable de acuerdo a los requerimientos de SUNAT.
-                    </p>
-                </div>
-                <div className="flex-shrink-0">
-                    <ExportarExcel {...exportPresets} />
-                </div>
-            </div>
+    // Auxiliar imports for Icons
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <SummaryCard
-                    title="Total General"
-                    value={totales?.total_general}
-                    color="blue"
-                    loading={loading}
-                />
-                <SummaryCard
-                    title="Base Imponible"
-                    value={totales?.total_base}
-                    color="slate"
-                    loading={loading}
-                />
-                <SummaryCard
-                    title="Total IGV"
-                    value={totales?.total_igv}
-                    color="slate"
-                    loading={loading}
-                />
-                <SummaryCard
-                    title="Registros"
-                    value={metadata?.total_items || 0}
-                    isCurrency={false}
-                    color="slate"
-                    loading={loading}
-                />
-            </div>
 
-            {/* Filters */}
-            <div className="bg-white/90 dark:bg-[#18192b] border border-blue-100 dark:border-zinc-700 rounded-2xl shadow-sm p-4">
-                <FiltroLibro onFilter={handleFilter} filters={filters} />
-            </div>
-
-            {/* Table */}
-            <TablaLibro
-                ventas={ventas}
-                totales={totales}
-                loading={loading}
-                error={error}
-                metadata={metadata}
-                page={page}
-                limit={limit}
-                changePage={changePage}
-                changeLimit={changeLimit}
-            />
-        </div>
-    );
-};
-
-// Componente auxiliar para tarjetas de resumen
-const SummaryCard = ({ title, value, color = "blue", isCurrency = true, loading = false }) => {
-    const formattedValue = loading
-        ? "..."
-        : isCurrency
+    // KPI Card Component
+    const cardClass = "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl";
+    const KpiCard = ({ title, value, icon: Icon, colorClass, isCurrency = true }) => {
+        const formattedValue = isCurrency
             ? `S/ ${(value || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             : value;
 
-    const colorStyles = {
-        blue: "bg-blue-50/50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300",
-        slate: "bg-slate-50/50 dark:bg-zinc-900/30 border-slate-100 dark:border-zinc-800 text-slate-600 dark:text-slate-400",
-        emerald: "bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300",
+        return (
+            <Card className={`${cardClass} border-none shadow-sm`}>
+                <CardBody className="flex flex-row items-center gap-4 p-4">
+                    <div className={`p-3 rounded-xl ${colorClass} bg-opacity-10 text-opacity-100`}>
+                        <Icon className={`text-2xl ${colorClass.replace('bg-', 'text-').replace('/10', '')}`} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{title}</p>
+                        <p className="text-2xl font-bold text-slate-800 dark:text-white">{formattedValue}</p>
+                    </div>
+                </CardBody>
+            </Card>
+        );
     };
 
+    // ... inside component ...
+
     return (
-        <Card className={`border shadow-sm ${colorStyles[color] || colorStyles.slate}`} shadow="none">
-            <CardBody className="py-3 px-4">
-                <p className="text-xs font-medium opacity-80 uppercase tracking-wider mb-1">{title}</p>
-                <p className={`text-2xl font-bold ${color === 'blue' ? 'text-blue-900 dark:text-blue-100' : 'text-slate-900 dark:text-slate-100'}`}>
-                    {formattedValue}
-                </p>
-            </CardBody>
-        </Card>
+        <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-6 md:p-8 font-inter">
+            <div className="max-w-[1920px] mx-auto space-y-6">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div>
+                        <h1 className="font-extrabold text-3xl text-[#1e293b] dark:text-white tracking-tight mb-1">
+                            Libro Registro de Ventas
+                        </h1>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1 max-w-2xl">
+                            Registro oficial de ventas y comprobantes electrónicos. Visualiza, filtra y exporta la información contable.
+                        </p>
+                    </div>
+                    <div className="flex-shrink-0">
+                        <ExportarExcel {...exportPresets} />
+                    </div>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard
+                        title="Total General"
+                        value={totales?.total_general}
+                        icon={FaCalculator}
+                        colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                    />
+                    <KpiCard
+                        title="Base Imponible"
+                        value={totales?.total_base}
+                        icon={FaMoneyBillWave}
+                        colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    />
+                    <KpiCard
+                        title="Total IGV"
+                        value={totales?.total_igv}
+                        icon={FaPercent}
+                        colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+                    />
+                    <KpiCard
+                        title="Registros"
+                        value={metadata?.total_items || 0}
+                        icon={FaFileInvoice}
+                        colorClass="bg-slate-100 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400"
+                        isCurrency={false}
+                    />
+                </div>
+
+                {/* Filters */}
+                <div className="space-y-4">
+                    <FiltroLibro onFilter={handleFilter} filters={filters} />
+                </div>
+
+                {/* Table */}
+                <TablaLibro
+                    ventas={ventas}
+                    totales={totales}
+                    loading={loading}
+                    error={error}
+                    metadata={metadata}
+                    page={page}
+                    limit={limit}
+                    changePage={changePage}
+                    changeLimit={changeLimit}
+                />
+            </div>
+        </div>
     );
+
 };
 
 export default LibroVentas;

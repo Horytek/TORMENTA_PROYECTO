@@ -181,7 +181,7 @@ const TablaLibro = ({
               base: "min-w-full",
               table: "min-w-full",
               thead: "sticky top-0 z-10",
-              th: "bg-slate-50 dark:bg-[#202c38] border-b border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wider h-10",
+              th: "bg-slate-50 dark:bg-[#202c38] border-b border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wider h-10",
               tr: "hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors border-b border-slate-100 dark:border-zinc-800/50 last:border-0",
               td: "py-3 px-3 text-[13px]",
               wrapper: "max-h-[600px]"

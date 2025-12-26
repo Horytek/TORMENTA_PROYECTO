@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';                // ← add useEffect
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
+
 import { useMarcas } from '@/context/Marca/MarcaProvider';
 import { Toaster, toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
@@ -103,19 +105,8 @@ export const MarcasForm = ({ modalTitle, onClose, isVisible, onAddMarca }) => {
                 </div>
               </ModalBody>
               <ModalFooter className="flex justify-end gap-3 mt-4">
-                <Button
-                  variant="flat"
-                  className="bg-slate-100 text-slate-600 font-bold dark:bg-zinc-800 dark:text-slate-300 rounded-xl px-4"
-                  onPress={handleCloseModal}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  className="bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/20 rounded-xl px-4"
-                  onPress={handleSubmit(onSubmit)}
-                >
-                  Guardar
-                </Button>
+                <ButtonClose onPress={handleCloseModal} />
+                <ButtonSave onPress={handleSubmit(onSubmit)} />
               </ModalFooter>
             </>
           )}

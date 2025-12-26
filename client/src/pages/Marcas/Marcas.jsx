@@ -51,11 +51,9 @@ function Marcas({
   const handleClearSearch = () => setSearchTerm("");
 
   return (
-    <div className="m-4">
+    <div>
       <Toaster />
-      <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-400 tracking-tight mb-1">Gestión de marcas</h1>
-      <p className="text-base text-blue-700/80 dark:text-blue-300/80 mb-6">Administra y busca marcas fácilmente.</p>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <BarraSearch
           value={searchTerm}
           onChange={handleSearchChange}

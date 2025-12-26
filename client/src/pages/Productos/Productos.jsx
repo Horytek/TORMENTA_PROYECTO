@@ -278,29 +278,24 @@ function Productos() {
       case 'productos':
         return (
           <>
-            <div className="mb-6">
-              <h1 className="font-extrabold text-4xl text-blue-900 dark:text-blue-400 tracking-tight mb-1">Gestión de productos</h1>
-              <p className="text-blue-700/80 dark:text-blue-300/80 mb-4">Administra y busca productos fácilmente.</p>
-
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <BarraSearch
-                  placeholder="Buscar producto..."
-                  isClearable
-                  className="h-10 text-sm w-full md:w-72 dark:bg-gray-800 dark:text-white"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onClear={() => setSearchTerm('')}
-                />
-                <ActionButton
-                  color="primary"
-                  endContent={<FaPlus size={18} />}
-                  onClick={() => setIsCreateModalOpen(true)}
-                  isDisabled={!hasCreatePermission}
-                  className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  Agregar producto
-                </ActionButton>
-              </div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+              <BarraSearch
+                placeholder="Buscar producto..."
+                isClearable
+                className="h-10 text-sm w-full md:w-72 dark:bg-gray-800 dark:text-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClear={() => setSearchTerm('')}
+              />
+              <ActionButton
+                color="primary"
+                endContent={<FaPlus size={18} />}
+                onClick={() => setIsCreateModalOpen(true)}
+                isDisabled={!hasCreatePermission}
+                className={`h-10 px-4 font-semibold rounded-lg border-0 shadow-none bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-200 ${!hasCreatePermission ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                Agregar producto
+              </ActionButton>
             </div>
 
             <ShowProductos
@@ -344,22 +339,49 @@ function Productos() {
   }, [activeTab, data, searchTerm, hasCreatePermission, isCreateModalOpen, editingProduct, ops]);
 
   return (
-    <div className="m-4 p-2">
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-6 md:p-8 font-inter">
       <Toaster position="top-center" />
+      <div className="max-w-[1920px] mx-auto space-y-6">
 
-      {/* Header de Tabs y Herramientas */}
-      {/* Header de Tabs y Herramientas */}
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
-        <div className="flex-1 w-full sm:w-auto">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-[#1e293b] dark:text-white tracking-tight">
+              Gestión de Productos
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">
+              Administra el catálogo completo, marcas, categorías y subcategorías.
+            </p>
+          </div>
+          <div className="flex gap-3 mt-4 sm:mt-0">
+            <ActionButton
+              color="green"
+              icon={<FaFileExcel size={18} />}
+              onClick={() => setImportModal({ open: true, type: activeTab })}
+            >
+              Importar
+            </ActionButton>
+            <ActionButton
+              color="indigo"
+              icon={<FaFileExport size={18} />}
+              onClick={() => handleExport(activeTab)}
+            >
+              Exportar
+            </ActionButton>
+          </div>
+        </div>
+
+        {/* Tabs Section */}
+        <div className="w-full">
           <Tabs
             selectedKey={activeTab}
             onSelectionChange={handleTabChange}
             variant="light"
             classNames={{
-              tabList: "bg-slate-100 dark:bg-zinc-800 p-1 rounded-2xl gap-2",
-              cursor: "bg-white dark:bg-zinc-950 shadow-sm rounded-xl",
-              tab: "h-9 px-4 rounded-xl text-slate-500 font-medium data-[selected=true]:text-blue-600 dark:data-[selected=true]:text-blue-400 transition-all",
-              tabContent: "font-semibold"
+              tabList: "bg-white dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm gap-2",
+              cursor: "w-full bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20",
+              tab: "h-9 px-4 text-slate-500 dark:text-slate-400 data-[selected=true]:text-white font-semibold text-sm transition-all",
+              tabContent: "group-data-[selected=true]:text-white"
             }}
           >
             <Tab key="productos" title="Productos" />
@@ -369,37 +391,17 @@ function Productos() {
           </Tabs>
         </div>
 
-        {/* Herramientas: Importar / Exportar */}
-        <div className="flex gap-3 mt-4 sm:mt-0">
-          <Button
-            onClick={() => setImportModal({ open: true, type: activeTab })}
-            variant="flat"
-            className="px-5 h-10 rounded-xl font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400"
-            startContent={<FaFileExcel size={18} />}
-          >
-            Importar
-          </Button>
-          <Button
-            onClick={() => handleExport(activeTab)}
-            variant="flat"
-            className="px-5 h-10 rounded-xl font-bold text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400"
-            startContent={<FaFileExport size={18} />}
-          >
-            Exportar
-          </Button>
+        {/* Content Area */}
+        <div className="min-h-[400px]">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+              <span className="text-blue-600 font-medium animate-pulse">Cargando inventario...</span>
+            </div>
+          ) : (
+            renderContent()
+          )}
         </div>
-      </div>
-
-      {/* Área de Contenido Principal */}
-      <div className="min-h-[400px]">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-64 space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-            <span className="text-blue-600 font-medium animate-pulse">Cargando inventario...</span>
-          </div>
-        ) : (
-          renderContent()
-        )}
       </div>
 
       {/* Modal de Importación Global */}

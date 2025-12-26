@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import {
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
     Pagination,
     Select,
     SelectItem,
     Tooltip,
-    Button,
     User,
-    ScrollShadow
+    Chip
 } from "@heroui/react";
-import { MdEdit, MdDelete, MdVisibility } from "react-icons/md";
+import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { deactivateVendedor, getVendedor } from '@/services/vendedor.services';
@@ -19,7 +24,9 @@ const TablaEmpleado = ({
     vendedores,
     addVendedor,
     updateVendedorLocal,
-    removeVendedor
+    removeVendedor,
+    selectedKeys,
+    onSelectionChange
 }) => {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
@@ -33,13 +40,19 @@ const TablaEmpleado = ({
 
     const { hasDeletePermission, hasEditPermission } = usePermisos();
 
-    // Pagination Logic
     const pages = Math.ceil(vendedores.length / limit);
     const items = React.useMemo(() => {
         const start = (page - 1) * limit;
         const end = start + limit;
         return vendedores.slice(start, end);
     }, [page, limit, vendedores]);
+
+    const columns = [
+        { name: "EMPLEADO", uid: "datos" },
+        { name: "CONTACTO", uid: "contacto" },
+        { name: "ESTADO", uid: "estado", align: "center" },
+        { name: "ACCIONES", uid: "acciones", align: "center" },
+    ];
 
     const handleOpenConfirmationModal = (row, dni) => {
         setSelectedRow(row);
@@ -84,8 +97,8 @@ const TablaEmpleado = ({
                         description={vendedor.usua}
                         name={vendedor.nombre}
                         classNames={{
-                            name: "text-blue-900 dark:text-blue-100 font-semibold",
-                            description: "text-blue-400 dark:text-blue-300"
+                            name: "text-slate-900 dark:text-slate-100 font-semibold",
+                            description: "text-slate-400 dark:text-slate-500"
                         }}
                     >
                         {vendedor.usua}
@@ -94,32 +107,24 @@ const TablaEmpleado = ({
             case "contacto":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize text-gray-600 dark:text-gray-300">{vendedor.telefono || "Sin teléfono"}</p>
-                        <p className="text-tiny text-gray-400 dark:text-gray-500">{vendedor.dni}</p>
+                        <p className="text-bold text-small capitalize text-slate-600 dark:text-slate-300">{vendedor.telefono || "Sin teléfono"}</p>
+                        <p className="text-tiny text-slate-400 dark:text-slate-500">{vendedor.dni}</p>
                     </div>
                 );
             case "estado":
                 const isActive = vendedor.estado_vendedor === "Activo";
                 return (
-                    <span className={`
-                        inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
-                        border
-                        ${!isActive
-                            ? "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700/60"
-                            : "bg-green-100 text-green-700 border-green-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700/60"
+                    <Chip
+                        className="gap-1 border-none capitalize"
+                        color={isActive ? "success" : "danger"}
+                        size="sm"
+                        variant="flat"
+                        startContent={
+                            <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>
                         }
-                    `}>
-                        {!isActive ? (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                        ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                        )}
+                    >
                         {vendedor.estado_vendedor}
-                    </span>
+                    </Chip>
                 );
             case "acciones":
                 return (
@@ -129,7 +134,7 @@ const TablaEmpleado = ({
                                 role="button"
                                 tabIndex={0}
                                 onClick={() => hasEditPermission && handleEditModal(vendedor.dni)}
-                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors ${hasEditPermission
+                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors cursor-pointer ${hasEditPermission
                                     ? "bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/30"
                                     : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
                                     }`}
@@ -142,7 +147,7 @@ const TablaEmpleado = ({
                                 role="button"
                                 tabIndex={0}
                                 onClick={() => hasDeletePermission && handleOpenConfirmationModal(vendedor.nombre, vendedor.dni)}
-                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors ${hasDeletePermission
+                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors cursor-pointer ${hasDeletePermission
                                     ? "bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/20 dark:hover:bg-rose-900/30"
                                     : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
                                     }`}
@@ -159,75 +164,76 @@ const TablaEmpleado = ({
 
     return (
         <>
-            <div className="bg-white/90 dark:bg-[#18192b] rounded-2xl shadow border border-blue-100 dark:border-zinc-700 p-0">
-                <div className="p-4 bg-white dark:bg-[#232339] rounded-2xl">
-                    <ScrollShadow hideScrollBar>
-                        <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-                            <thead>
-                                <tr className="bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 text-[13px] font-bold">
-                                    <th className="py-2 px-4 text-left align-middle">Empleado</th>
-                                    <th className="py-2 px-4 text-left align-middle">Contacto</th>
-                                    <th className="py-2 px-4 text-center align-middle">Estado</th>
-                                    <th className="py-2 px-4 text-center align-middle">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {items.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="py-8 text-center text-gray-400 dark:text-gray-500">No se encontraron empleados</td>
-                                    </tr>
-                                ) : (
-                                    items.map((vendedor, idx) => (
-                                        <tr
-                                            key={vendedor.dni}
-                                            className={`transition-colors duration-150 ${idx % 2 === 0
-                                                ? "bg-white dark:bg-[#18192b]"
-                                                : "bg-blue-50/40 dark:bg-blue-900/10"
-                                                } hover:bg-blue-100/60 dark:hover:bg-blue-900/30`}
-                                        >
-                                            <td className="py-2 px-4 align-middle">{renderCell(vendedor, "datos")}</td>
-                                            <td className="py-2 px-4 align-middle">{renderCell(vendedor, "contacto")}</td>
-                                            <td className="py-2 px-4 text-center align-middle">{renderCell(vendedor, "estado")}</td>
-                                            <td className="py-2 px-4 text-center align-middle">{renderCell(vendedor, "acciones")}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </ScrollShadow>
-                </div>
-            </div>
+            <Table
+                aria-label="Tabla de empleados"
+                selectionMode="multiple"
+                selectedKeys={selectedKeys}
+                onSelectionChange={onSelectionChange}
+                removeWrapper
+                classNames={{
+                    base: "max-h-[calc(100vh-400px)] overflow-y-auto",
+                    table: "min-w-full",
+                    th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-11 first:rounded-l-lg last:rounded-r-lg shadow-none border-b border-slate-200 dark:border-zinc-800",
+                    td: "py-3 border-b border-slate-100 dark:border-zinc-800 group-data-[first=true]:first:before:rounded-none group-data-[first=true]:last:before:rounded-none",
+                    tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors shadow-none",
+                }}
+                bottomContent={
+                    <div className="flex w-full justify-between items-center mt-4 px-2">
+                        <div className="flex gap-2 items-center">
+                            <span className="text-[12px] text-slate-400 dark:text-slate-500">
+                                {vendedores.length} empleados
+                            </span>
+                            <Select
+                                size="sm"
+                                className="w-20"
+                                selectedKeys={[`${limit}`]}
+                                onChange={(e) => {
+                                    setLimit(Number(e.target.value));
+                                    setPage(1);
+                                }}
+                                aria-label="Filas por página"
+                                classNames={{
+                                    trigger: "min-h-8 h-8",
+                                    value: "text-[12px]"
+                                }}
+                            >
+                                <SelectItem key="5">5</SelectItem>
+                                <SelectItem key="10">10</SelectItem>
+                                <SelectItem key="15">15</SelectItem>
+                                <SelectItem key="20">20</SelectItem>
+                            </Select>
+                        </div>
 
-            <div className="flex justify-between items-center mt-2 px-4 pb-2">
-                <Pagination
-                    showControls
-                    page={page}
-                    total={pages || 1}
-                    onChange={setPage}
-                    color="primary"
-                    size="sm"
-                />
-                <div className="flex gap-3 items-center">
-                    <span className="text-[12px] text-default-400">
-                        {vendedores.length} empleados
-                    </span>
-                    <Select
-                        size="sm"
-                        className="w-24"
-                        selectedKeys={[`${limit}`]}
-                        onChange={(e) => {
-                            setLimit(Number(e.target.value));
-                            setPage(1);
-                        }}
-                        aria-label="Filas por página"
-                    >
-                        <SelectItem key="5">5</SelectItem>
-                        <SelectItem key="10">10</SelectItem>
-                        <SelectItem key="15">15</SelectItem>
-                        <SelectItem key="20">20</SelectItem>
-                    </Select>
-                </div>
-            </div>
+                        <Pagination
+                            isCompact
+                            showControls
+                            showShadow
+                            color="primary"
+                            page={page}
+                            total={pages || 1}
+                            onChange={setPage}
+                            classNames={{
+                                cursor: "bg-blue-600 text-white font-bold"
+                            }}
+                        />
+                    </div>
+                }
+            >
+                <TableHeader columns={columns}>
+                    {(column) => (
+                        <TableColumn key={column.uid} align={column.uid === "acciones" || column.uid === "estado" ? "center" : "start"}>
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody items={items} emptyContent={"No se encontraron empleados"}>
+                    {(item) => (
+                        <TableRow key={item.dni}>
+                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
 
             {openConfirmModal && (
                 <ConfirmationModal

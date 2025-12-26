@@ -43,14 +43,12 @@ export function TeamSwitcher({ teams, nameClassName = "" }) {
                 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all duration-200
                 px-2 py-2 rounded-xl
                 flex items-center gap-3
-                shadow-sm border border-slate-200 dark:border-zinc-800
                 bg-white dark:bg-zinc-900
               `}
               style={{
                 minHeight: collapsed ? "40px" : "48px",
                 minWidth: collapsed ? "40px" : 0,
                 width: collapsed ? "40px" : undefined,
-                boxShadow: "none",
               }}
             >
               <div className={`flex aspect-square items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 ${collapsed ? "size-7" : "size-8"}`}>

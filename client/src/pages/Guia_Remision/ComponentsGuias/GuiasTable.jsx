@@ -207,11 +207,15 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
                   return (
                     <TableCell>
                       <Chip
-                        variant="flat"
+                        className="gap-1 border-none capitalize"
+                        color={item.estado === 'Activo' ? "success" : "danger"}
                         size="sm"
-                        className={`capitalize font-semibold ${item.estado === 'Activo' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}
+                        variant="flat"
+                        startContent={
+                          <span className={`w-1 h-1 rounded-full ${item.estado === 'Activo' ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>
+                        }
                       >
-                        {item.estado}
+                        {item.estado === 'Activo' ? "Activo" : "Inactivo"}
                       </Chip>
                     </TableCell>
                   );

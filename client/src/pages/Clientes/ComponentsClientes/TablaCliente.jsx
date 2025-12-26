@@ -1,17 +1,21 @@
 import React, { useState } from "react";
 import {
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
     Pagination,
     Select,
     SelectItem,
     Tooltip,
-    Button,
     Chip,
     User,
-    ScrollShadow,
     Checkbox
 } from "@heroui/react";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { MdEdit, MdDelete, MdRemoveCircleOutline, MdVisibility } from "react-icons/md";
+import { MdEdit, MdVisibility } from "react-icons/md";
+import { FaTrash } from "react-icons/fa";
 import EditClientModal from "./EditClient.jsx";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import useCliente from "@/services/client_data/useCliente";
@@ -32,7 +36,9 @@ const TablaCliente = ({
     changeLimit,
     onEdit,
     onDelete,
-    setAllClientes
+    setAllClientes,
+    selectedKeys,
+    onSelectionChange
 }) => {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -51,6 +57,13 @@ const TablaCliente = ({
     if (loading) return <div className="p-8 text-center text-gray-500">Cargando datos...</div>;
     if (error) return <div className="p-8 text-center text-red-500">Error al cargar los datos: {error}</div>;
 
+    const columns = [
+        { name: "CLIENTE", uid: "datos" },
+        { name: "DIRECCIÓN", uid: "direccion" },
+        { name: "ESTADO", uid: "estado", align: "center" },
+        { name: "ACCIONES", uid: "acciones", align: "center" },
+    ];
+
     const renderCell = (cliente, columnKey) => {
         switch (columnKey) {
             case "datos":
@@ -60,8 +73,8 @@ const TablaCliente = ({
                         description={cliente.dniRuc}
                         name={cliente.razon_social || `${cliente.nombres} ${cliente.apellidos}`}
                         classNames={{
-                            name: "text-blue-900 dark:text-blue-100 font-semibold",
-                            description: "text-blue-400 dark:text-blue-300"
+                            name: "text-slate-900 dark:text-slate-100 font-semibold",
+                            description: "text-slate-400 dark:text-slate-500"
                         }}
                     >
                         {cliente.dniRuc}
@@ -70,35 +83,28 @@ const TablaCliente = ({
             case "direccion":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize text-gray-600 dark:text-gray-300">{cliente.direccion || "Sin dirección"}</p>
+                        <p className="text-bold text-small capitalize text-slate-600 dark:text-slate-300">{cliente.direccion || "Sin dirección"}</p>
                     </div>
                 );
             case "estado":
                 const isActive = cliente.estado === 1 || cliente.estado === "1";
                 return (
-                    <span className={`
-                        inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-[12px] font-semibold
-                        border
-                        ${!isActive
-                            ? "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700/60"
-                            : "bg-green-100 text-green-700 border-green-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700/60"
+                    <Chip
+                        className="gap-1 border-none capitalize"
+                        color={isActive ? "success" : "danger"}
+                        size="sm"
+                        variant="flat"
+                        startContent={
+                            <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}
+                            ></span>
                         }
-                    `}>
-                        {!isActive ? (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                        ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                        )}
+                    >
                         {isActive ? "Activo" : "Inactivo"}
-                    </span>
+                    </Chip>
                 );
             case "acciones":
                 return (
-                    <div className="flex items-center justify-center h-full">
+                    <div className="flex items-center justify-center gap-2">
                         <Tooltip content="Ver detalle cliente" placement="top">
                             <ViewClientModal
                                 client={cliente}
@@ -107,7 +113,7 @@ const TablaCliente = ({
                                         role="button"
                                         tabIndex={0}
                                         aria-label="Ver detalle cliente"
-                                        className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors shadow-sm"
+                                        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors shadow-sm cursor-pointer"
                                     >
                                         <MdVisibility className="w-5 h-5" />
                                     </span>
@@ -160,13 +166,11 @@ const TablaCliente = ({
                 if (setAllClientes) {
                     setAllClientes(prev => prev.map(c => c.id === targetClient.id ? { ...c, estado: 0 } : c));
                 }
-                if (onDelete) onDelete(targetClient.id); // Trigger refresh if needed
+                if (onDelete) onDelete(targetClient.id);
             } else {
                 toast.error("Error al desactivar: " + result.error);
             }
         } else if (actionType === "reactivate") {
-            // Prepare data for update - assuming we need to send at least ID and new status
-            // We'll try to send what we have to be safe, but focusing on status
             const clientData = {
                 id_cliente: targetClient.id,
                 dni: targetClient.dni,
@@ -175,7 +179,7 @@ const TablaCliente = ({
                 apellidos: targetClient.apellidos,
                 razon_social: targetClient.razon_social,
                 direccion: targetClient.direccion,
-                estado: 1 // Reactivate
+                estado: 1
             };
 
             const result = await updateClient(clientData);
@@ -184,7 +188,7 @@ const TablaCliente = ({
                 if (setAllClientes) {
                     setAllClientes(prev => prev.map(c => c.id === targetClient.id ? { ...c, estado: 1 } : c));
                 }
-                if (onDelete) onDelete(targetClient.id); // Trigger refresh
+                if (onDelete) onDelete(targetClient.id);
             } else {
                 toast.error("Error al reactivar: " + (result.error?.message || result.error || "Error desconocido"));
             }
@@ -212,74 +216,36 @@ const TablaCliente = ({
     return (
         <>
             <Toaster />
-            <div className="bg-white/90 dark:bg-[#18192b] rounded-2xl shadow border border-blue-100 dark:border-zinc-700 p-0">
-                <div className="p-4 bg-white dark:bg-[#232339] rounded-2xl">
-                    <ScrollShadow hideScrollBar>
-                        <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-                            <thead>
-                                <tr className="bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 text-[13px] font-bold">
-                                    <th className="py-2 px-4 text-left align-middle">Cliente</th>
-                                    <th className="py-2 px-4 text-left align-middle">Dirección</th>
-                                    <th className="py-2 px-4 text-center align-middle">Estado</th>
-                                    <th className="py-2 px-4 text-center align-middle">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {clientes.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="py-8 text-center text-gray-400 dark:text-gray-500">No se encontraron clientes</td>
-                                    </tr>
-                                ) : (
-                                    clientes.map((cliente, idx) => (
-                                        <tr
-                                            key={cliente.id}
-                                            className={`transition-colors duration-150 ${idx % 2 === 0
-                                                ? "bg-white dark:bg-[#18192b]"
-                                                : "bg-blue-50/40 dark:bg-blue-900/10"
-                                                } hover:bg-blue-100/60 dark:hover:bg-blue-900/30`}
-                                        >
-                                            <td className="py-2 px-4 align-middle">{renderCell(cliente, "datos")}</td>
-                                            <td className="py-2 px-4 align-middle">{renderCell(cliente, "direccion")}</td>
-                                            <td className="py-2 px-4 text-center align-middle">{renderCell(cliente, "estado")}</td>
-                                            <td className="py-2 px-4 text-center align-middle">{renderCell(cliente, "acciones")}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </ScrollShadow>
-                </div>
-            </div>
 
-            <div className="flex justify-between items-center mt-2 px-4 pb-2">
-                {/* Paginación a la izquierda */}
-                <Pagination
-                    showControls
-                    page={page}
-                    total={metadata?.pages || metadata?.total_pages || 1}
-                    onChange={changePage}
-                    color="primary"
-                    size="sm"
-                />
-                {/* Totales + selector a la derecha */}
-                <div className="flex gap-3 items-center">
-                    <span className="text-[12px] text-default-400">
-                        {metadata?.total || metadata?.total_records || 0} clientes
-                    </span>
-                    <Select
-                        size="sm"
-                        className="w-24"
-                        selectedKeys={[`${limit}`]}
-                        onChange={(e) => changeLimit(Number(e.target.value))}
-                        aria-label="Filas por página"
-                    >
-                        <SelectItem key="5">5</SelectItem>
-                        <SelectItem key="10">10</SelectItem>
-                        <SelectItem key="15">15</SelectItem>
-                        <SelectItem key="20">20</SelectItem>
-                    </Select>
-                </div>
-            </div>
+            <Table
+                aria-label="Tabla de clientes"
+                selectionMode="multiple"
+                selectedKeys={selectedKeys}
+                onSelectionChange={onSelectionChange}
+                removeWrapper
+                classNames={{
+                    base: "",
+                    table: "min-w-full",
+                    th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-11 first:rounded-l-lg last:rounded-r-lg shadow-none border-b border-slate-200 dark:border-zinc-800",
+                    td: "py-3 border-b border-slate-100 dark:border-zinc-800 group-data-[first=true]:first:before:rounded-none group-data-[first=true]:last:before:rounded-none",
+                    tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors shadow-none",
+                }}
+            >
+                <TableHeader columns={columns}>
+                    {(column) => (
+                        <TableColumn key={column.uid} align={column.uid === "acciones" || column.uid === "estado" ? "center" : "start"}>
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody items={clientes} emptyContent={"No se encontraron clientes"}>
+                    {(item) => (
+                        <TableRow key={item.id}>
+                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
 
             {selectedClient && (
                 <EditClientModal
@@ -294,7 +260,7 @@ const TablaCliente = ({
                         if (setAllClientes && updatedClient) {
                             setAllClientes(prev => prev.map(c => c.id === updatedClient.id ? { ...c, ...updatedClient } : c));
                         }
-                        onEdit();
+                        if (onEdit) onEdit();
                         setOpenEditModal(false);
                         setSelectedClient(null);
                     }}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { ButtonSave, ButtonClose } from "@/components/Buttons/Buttons";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { Toaster, toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
@@ -235,19 +236,8 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios })
                                 </form>
                             </ModalBody>
                             <ModalFooter>
-                                <Button
-                                    color="danger"
-                                    variant="light"
-                                    onPress={handleCloseModal}
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    color="primary"
-                                    onPress={handleSubmit(onSubmit)}
-                                >
-                                    Guardar
-                                </Button>
+                                <ButtonClose onPress={handleCloseModal} />
+                                <ButtonSave onPress={handleSubmit(onSubmit)} />
                             </ModalFooter>
                         </>
                     )}

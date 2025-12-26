@@ -1,25 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
+    Table,
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell,
     Pagination,
     Select,
     SelectItem,
     Tooltip,
-    Button,
     User,
-    ScrollShadow
+    Chip
 } from "@heroui/react";
-import { MdEdit, MdDelete, MdVisibility } from "react-icons/md";
+import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { deleteDestinatario } from '@/services/destinatario.services';
 import { usePermisos } from '@/routes';
-import DestinatariosForm from '../DestinatariosForm';
 
 const TablaProveedor = ({
     destinatarios,
     updateDestinatarioLocal,
     removeDestinatario,
-    onEdit
+    onEdit,
+    selectedKeys,
+    onSelectionChange
 }) => {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
@@ -32,7 +38,7 @@ const TablaProveedor = ({
 
     // Pagination Logic
     const pages = Math.ceil(destinatarios.length / limit);
-    const items = React.useMemo(() => {
+    const items = useMemo(() => {
         const start = (page - 1) * limit;
         const end = start + limit;
         return destinatarios.slice(start, end);
@@ -53,6 +59,14 @@ const TablaProveedor = ({
         setSelectedRow(null);
     };
 
+    const columns = [
+        { name: "PROVEEDOR", uid: "datos" },
+        { name: "UBICACIÓN", uid: "ubicacion" },
+        { name: "CONTACTO", uid: "contacto" },
+        { name: "ESTADO", uid: "estado", align: "center" },
+        { name: "ACCIONES", uid: "acciones", align: "center" },
+    ];
+
     const renderCell = (destinatario, columnKey) => {
         switch (columnKey) {
             case "datos":
@@ -62,8 +76,8 @@ const TablaProveedor = ({
                         description={destinatario.documento}
                         name={destinatario.destinatario}
                         classNames={{
-                            name: "text-blue-900 dark:text-blue-100 font-semibold",
-                            description: "text-blue-400 dark:text-blue-300"
+                            name: "text-slate-900 dark:text-slate-100 font-semibold",
+                            description: "text-slate-400 dark:text-slate-500"
                         }}
                     >
                         {destinatario.destinatario}
@@ -72,16 +86,33 @@ const TablaProveedor = ({
             case "ubicacion":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize text-gray-600 dark:text-gray-300">{destinatario.ubicacion || "Sin ubicación"}</p>
-                        <p className="text-tiny text-gray-400 dark:text-gray-500">{destinatario.direccion}</p>
+                        <p className="text-bold text-small capitalize text-slate-600 dark:text-slate-300">{destinatario.ubicacion || "Sin ubicación"}</p>
+                        <p className="text-tiny text-slate-400 dark:text-slate-500">{destinatario.direccion}</p>
                     </div>
                 );
             case "contacto":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small text-gray-600 dark:text-gray-300">{destinatario.email || "-"}</p>
-                        <p className="text-tiny text-gray-400 dark:text-gray-500">{destinatario.telefono || "-"}</p>
+                        <p className="text-bold text-small text-slate-600 dark:text-slate-300">{destinatario.email || "-"}</p>
+                        <p className="text-tiny text-slate-400 dark:text-slate-500">{destinatario.telefono || "-"}</p>
                     </div>
+                );
+            case "estado":
+                const estadoRaw = destinatario.estado || destinatario.estado_destinatario || destinatario.estado_proveedor;
+                const isActive = estadoRaw === 1 || estadoRaw === "1" || estadoRaw === "Activo" || estadoRaw === true;
+                return (
+                    <Chip
+                        className="gap-1 border-none capitalize"
+                        color={isActive ? "success" : "danger"}
+                        size="sm"
+                        variant="flat"
+                        startContent={
+                            <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}
+                            ></span>
+                        }
+                    >
+                        {isActive ? "Activo" : "Inactivo"}
+                    </Chip>
                 );
             case "acciones":
                 return (
@@ -92,8 +123,8 @@ const TablaProveedor = ({
                                 tabIndex={0}
                                 onClick={() => hasEditPermission && onEdit(destinatario)}
                                 className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors ${hasEditPermission
-                                        ? "bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/30"
-                                        : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
+                                    ? "bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-slate-200"
+                                    : "opacity-50 cursor-not-allowed bg-slate-50 text-slate-400"
                                     }`}
                             >
                                 <MdEdit className="w-4 h-4" />
@@ -105,8 +136,8 @@ const TablaProveedor = ({
                                 tabIndex={0}
                                 onClick={() => hasDeletePermission && handleOpenConfirmationModal(destinatario.destinatario, destinatario.id)}
                                 className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors ${hasDeletePermission
-                                        ? "bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/20 dark:hover:bg-rose-900/30"
-                                        : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
+                                    ? "bg-rose-50 hover:bg-rose-100 text-rose-500 dark:bg-rose-900/20 dark:hover:bg-rose-900/30"
+                                    : "opacity-50 cursor-not-allowed bg-slate-50 text-slate-400"
                                     }`}
                             >
                                 <FaTrash className="w-3.5 h-3.5" />
@@ -121,75 +152,76 @@ const TablaProveedor = ({
 
     return (
         <>
-            <div className="bg-white/90 dark:bg-[#18192b] rounded-2xl shadow border border-blue-100 dark:border-zinc-700 p-0">
-                <div className="p-4 bg-white dark:bg-[#232339] rounded-2xl">
-                    <ScrollShadow hideScrollBar>
-                        <table className="min-w-full border-collapse rounded-2xl overflow-hidden text-[13px]">
-                            <thead>
-                                <tr className="bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 text-[13px] font-bold">
-                                    <th className="py-2 px-4 text-left align-middle">Proveedor</th>
-                                    <th className="py-2 px-4 text-left align-middle">Ubicación</th>
-                                    <th className="py-2 px-4 text-left align-middle">Contacto</th>
-                                    <th className="py-2 px-4 text-center align-middle">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {items.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="py-8 text-center text-gray-400 dark:text-gray-500">No se encontraron proveedores</td>
-                                    </tr>
-                                ) : (
-                                    items.map((destinatario, idx) => (
-                                        <tr
-                                            key={destinatario.id}
-                                            className={`transition-colors duration-150 ${idx % 2 === 0
-                                                ? "bg-white dark:bg-[#18192b]"
-                                                : "bg-blue-50/40 dark:bg-blue-900/10"
-                                                } hover:bg-blue-100/60 dark:hover:bg-blue-900/30`}
-                                        >
-                                            <td className="py-2 px-4 align-middle">{renderCell(destinatario, "datos")}</td>
-                                            <td className="py-2 px-4 align-middle">{renderCell(destinatario, "ubicacion")}</td>
-                                            <td className="py-2 px-4 align-middle">{renderCell(destinatario, "contacto")}</td>
-                                            <td className="py-2 px-4 text-center align-middle">{renderCell(destinatario, "acciones")}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </ScrollShadow>
-                </div>
-            </div>
+            <Table
+                aria-label="Tabla de proveedores"
+                selectionMode="multiple"
+                selectedKeys={selectedKeys}
+                onSelectionChange={onSelectionChange}
+                removeWrapper
+                classNames={{
+                    base: "max-h-[calc(100vh-400px)] overflow-y-auto",
+                    table: "min-w-full",
+                    th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-11 first:rounded-l-lg last:rounded-r-lg shadow-none border-b border-slate-200 dark:border-zinc-800",
+                    td: "py-3 border-b border-slate-100 dark:border-zinc-800 group-data-[first=true]:first:before:rounded-none group-data-[first=true]:last:before:rounded-none",
+                    tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors shadow-none",
+                }}
+                bottomContent={
+                    <div className="flex w-full justify-between items-center mt-4 px-2">
+                        <div className="flex gap-2 items-center">
+                            <span className="text-[12px] text-slate-400 dark:text-slate-500">
+                                {destinatarios.length} proveedores
+                            </span>
+                            <Select
+                                size="sm"
+                                className="w-20"
+                                selectedKeys={[`${limit}`]}
+                                onChange={(e) => {
+                                    setLimit(Number(e.target.value));
+                                    setPage(1);
+                                }}
+                                aria-label="Filas por página"
+                                classNames={{
+                                    trigger: "min-h-8 h-8",
+                                    value: "text-[12px]"
+                                }}
+                            >
+                                <SelectItem key="5">5</SelectItem>
+                                <SelectItem key="10">10</SelectItem>
+                                <SelectItem key="15">15</SelectItem>
+                                <SelectItem key="20">20</SelectItem>
+                            </Select>
+                        </div>
 
-            <div className="flex justify-between items-center mt-2 px-4 pb-2">
-                <Pagination
-                    showControls
-                    page={page}
-                    total={pages || 1}
-                    onChange={setPage}
-                    color="primary"
-                    size="sm"
-                />
-                <div className="flex gap-3 items-center">
-                    <span className="text-[12px] text-default-400">
-                        {destinatarios.length} proveedores
-                    </span>
-                    <Select
-                        size="sm"
-                        className="w-24"
-                        selectedKeys={[`${limit}`]}
-                        onChange={(e) => {
-                            setLimit(Number(e.target.value));
-                            setPage(1);
-                        }}
-                        aria-label="Filas por página"
-                    >
-                        <SelectItem key="5">5</SelectItem>
-                        <SelectItem key="10">10</SelectItem>
-                        <SelectItem key="15">15</SelectItem>
-                        <SelectItem key="20">20</SelectItem>
-                    </Select>
-                </div>
-            </div>
+                        <Pagination
+                            isCompact
+                            showControls
+                            showShadow
+                            color="primary"
+                            page={page}
+                            total={pages || 1}
+                            onChange={setPage}
+                            classNames={{
+                                cursor: "bg-blue-600 text-white font-bold"
+                            }}
+                        />
+                    </div>
+                }
+            >
+                <TableHeader columns={columns}>
+                    {(column) => (
+                        <TableColumn key={column.uid} align={column.uid === "acciones" || column.uid === "estado" ? "center" : "start"}>
+                            {column.name}
+                        </TableColumn>
+                    )}
+                </TableHeader>
+                <TableBody items={items} emptyContent={"No se encontraron proveedores"}>
+                    {(item) => (
+                        <TableRow key={item.id}>
+                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
 
             {openConfirmModal && (
                 <ConfirmationModal
