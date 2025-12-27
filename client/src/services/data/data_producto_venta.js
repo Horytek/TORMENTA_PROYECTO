@@ -5,18 +5,30 @@ import { useUserStore } from "@/store/useStore";
 import {
   getProductosVentasRequest
 } from "@/api/api.ventas";
+import useSucursalData from './data_sucursal_venta';
 
 
 const useProductosData = () => {
   const [productos, setProductos] = useState([]);
-  const nombre = useUserStore((state) => state.nombre);
+  const sur = useUserStore((state) => state.sur);
+  const { sucursales } = useSucursalData();
+
   useEffect(() => {
+    // Wait for store name AND sucursal list to be ready
+    if (!sur || sucursales.length === 0) return;
+
+    // Resolve ID from Name
+    const foundSucursal = sucursales.find(s => s.nombre === sur);
+    const id_to_send = foundSucursal ? foundSucursal.id : sur;
+    // If not found, fallback to sending 'sur' (name) -> backend treats as username (legacy compat?)
+    // But primarily we want the ID.
+
     const fetchProductos = async () => {
       try {
         const response = await getProductosVentasRequest({
-            id_sucursal: nombre,
+          id_sucursal: id_to_send,
         });
-        
+
         if (response.data.code === 1) {
           const productos = response.data.data.map(item => ({
             codigo: item.codigo,
@@ -38,9 +50,9 @@ const useProductosData = () => {
     };
 
     fetchProductos();
-  }, []);
+  }, [sur, sucursales]); // Re-run if store changes or list loads
 
-  return {productos, setProductos};
+  return { productos, setProductos };
 };
 
 export default useProductosData;

@@ -6,9 +6,6 @@ import {
     TableBody,
     TableRow,
     TableCell,
-    Pagination,
-    Select,
-    SelectItem,
     Tooltip,
     User,
     Chip
@@ -25,10 +22,10 @@ const TablaProveedor = ({
     removeDestinatario,
     onEdit,
     selectedKeys,
-    onSelectionChange
+    onSelectionChange,
+    page = 1,
+    limit = 10
 }) => {
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
 
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
@@ -159,53 +156,12 @@ const TablaProveedor = ({
                 onSelectionChange={onSelectionChange}
                 removeWrapper
                 classNames={{
-                    base: "max-h-[calc(100vh-400px)] overflow-y-auto",
+                    base: "",
                     table: "min-w-full",
                     th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-11 first:rounded-l-lg last:rounded-r-lg shadow-none border-b border-slate-200 dark:border-zinc-800",
                     td: "py-3 border-b border-slate-100 dark:border-zinc-800 group-data-[first=true]:first:before:rounded-none group-data-[first=true]:last:before:rounded-none",
                     tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors shadow-none",
                 }}
-                bottomContent={
-                    <div className="flex w-full justify-between items-center mt-4 px-2">
-                        <div className="flex gap-2 items-center">
-                            <span className="text-[12px] text-slate-400 dark:text-slate-500">
-                                {destinatarios.length} proveedores
-                            </span>
-                            <Select
-                                size="sm"
-                                className="w-20"
-                                selectedKeys={[`${limit}`]}
-                                onChange={(e) => {
-                                    setLimit(Number(e.target.value));
-                                    setPage(1);
-                                }}
-                                aria-label="Filas por página"
-                                classNames={{
-                                    trigger: "min-h-8 h-8",
-                                    value: "text-[12px]"
-                                }}
-                            >
-                                <SelectItem key="5">5</SelectItem>
-                                <SelectItem key="10">10</SelectItem>
-                                <SelectItem key="15">15</SelectItem>
-                                <SelectItem key="20">20</SelectItem>
-                            </Select>
-                        </div>
-
-                        <Pagination
-                            isCompact
-                            showControls
-                            showShadow
-                            color="primary"
-                            page={page}
-                            total={pages || 1}
-                            onChange={setPage}
-                            classNames={{
-                                cursor: "bg-blue-600 text-white font-bold"
-                            }}
-                        />
-                    </div>
-                }
             >
                 <TableHeader columns={columns}>
                     {(column) => (

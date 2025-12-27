@@ -803,8 +803,9 @@ const addVenta = async (req, res) => {
     const id_almacen = almacenResult[0].id_almacen;
 
     // Cliente
-    let clienteQuery = `SELECT id_cliente FROM cliente WHERE (CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?)`;
-    let clienteParams = [id_cliente, id_cliente];
+    // Cliente
+    let clienteQuery = `SELECT id_cliente FROM cliente WHERE (id_cliente = ? OR CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?)`;
+    let clienteParams = [id_cliente, id_cliente, id_cliente];
     if (id_tenant) {
       clienteQuery += " AND id_tenant = ?";
       clienteParams.push(id_tenant);

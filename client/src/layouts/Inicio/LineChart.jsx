@@ -299,7 +299,7 @@ export function LineChartComponent({ sucursal }) {
               className="mt-4 h-[300px]"
               data={chartData}
               index="date"
-              yAxisWidth={60}
+              yAxisWidth={70}
               categories={["Ventas Totales"]}
               colors={COLORS}
               valueFormatter={valueFormatter}
@@ -307,7 +307,9 @@ export function LineChartComponent({ sucursal }) {
               yAxisLabel=""
               showAnimation
               showLegend={false}
-              showGridLines={false}
+              showGridLines={true}
+              showYAxis={true}
+              startEndOnly={false}
               curveType="monotone"
               connectNulls
               minValue={0}

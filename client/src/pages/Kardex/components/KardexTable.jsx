@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   Table,
   TableHeader,
@@ -7,9 +7,6 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Pagination,
-  Select,
-  SelectItem,
   Chip,
 } from "@heroui/react";
 import { CheckCircle, AlertTriangle, Package } from "lucide-react";
@@ -22,9 +19,7 @@ function getStockStatus(stock) {
   return "high";
 }
 
-const KardexTable = ({ kardex }) => {
-  const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay productos en el inventario" }) => {
   const navigate = useNavigate();
 
   const handleRowClick = (producto) => {
@@ -36,13 +31,11 @@ const KardexTable = ({ kardex }) => {
   // Asegurar que kardex sea un array válido
   const safeKardex = kardex || [];
 
-  const pages = Math.ceil(safeKardex.length / rowsPerPage);
-
   const items = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
+    const start = (page - 1) * limit;
+    const end = start + limit;
     return safeKardex.slice(start, end);
-  }, [page, rowsPerPage, safeKardex]);
+  }, [page, limit, safeKardex]);
 
   const renderCell = (item, columnKey) => {
     switch (columnKey) {
@@ -126,67 +119,23 @@ const KardexTable = ({ kardex }) => {
     }
   };
 
-  const onRowsPerPageChange = (e) => {
-    setRowsPerPage(Number(e.target.value));
-    setPage(1);
-  };
-
-  const bottomContent = useMemo(() => {
-    return (
-      <div className="flex justify-between items-center px-2 py-2">
-        <Pagination
-          showControls
-          classNames={{
-            cursor: "bg-blue-600 text-white",
-          }}
-          color="primary"
-          isDisabled={false}
-          page={page}
-          total={pages || 1}
-          variant="light"
-          onChange={setPage}
-        />
-        <div className="flex gap-3 items-center">
-          <span className="text-small text-default-400">
-            {items.length} de {safeKardex.length} items
-          </span>
-          <Select
-            label="Filas"
-            className="w-24"
-            size="sm"
-            selectedKeys={[String(rowsPerPage)]}
-            onChange={onRowsPerPageChange}
-          >
-            <SelectItem key="5" value="5">5</SelectItem>
-            <SelectItem key="10" value="10">10</SelectItem>
-            <SelectItem key="20" value="20">20</SelectItem>
-            <SelectItem key="50" value="50">50</SelectItem>
-          </Select>
-        </div>
-      </div>
-    );
-  }, [page, pages, rowsPerPage, items.length, safeKardex.length]);
-
   return (
     <div className="w-full">
-      <div className="mb-4 px-2">
-        <h2 className="text-2xl font-extrabold text-blue-900 dark:text-blue-100 tracking-tight">
-          Inventario de Productos
-        </h2>
-      </div>
       <Table
         aria-label="Tabla de inventario kardex"
         isHeaderSticky
-        bottomContent={bottomContent}
-        bottomContentPlacement="outside"
+        removeWrapper
         classNames={{
-          wrapper: "max-h-[600px] shadow-none border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#18192b] rounded-xl",
-          th: "bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 font-bold",
-          td: "group-data-[first=true]:first:before:rounded-none group-data-[last=true]:last:before:rounded-none",
+          base: "max-h-[calc(100vh-350px)] overflow-y-auto",
+          table: "min-w-full",
+          th: "bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider h-10 first:rounded-l-lg last:rounded-r-lg",
+          td: "py-3 border-b border-slate-100 dark:border-zinc-800",
+          tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer",
+          thead: "[&>tr]:first:shadow-none",
         }}
         selectionMode="single"
         onRowAction={(key) => {
-          const item = items.find(i => i.codigo === key);
+          const item = items.find(i => String(i.codigo) === String(key));
           if (item) handleRowClick(item);
         }}
       >
@@ -198,9 +147,9 @@ const KardexTable = ({ kardex }) => {
           <TableColumn key="estado" align="center">Estado</TableColumn>
           <TableColumn key="um" align="center">UM</TableColumn>
         </TableHeader>
-        <TableBody emptyContent={"No hay productos en el inventario"} items={items}>
+        <TableBody emptyContent={emptyText} items={items}>
           {(item) => (
-            <TableRow key={item.codigo} className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors">
+            <TableRow key={item.codigo}>
               {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
             </TableRow>
           )}
@@ -212,6 +161,9 @@ const KardexTable = ({ kardex }) => {
 
 KardexTable.propTypes = {
   kardex: PropTypes.array,
+  page: PropTypes.number,
+  limit: PropTypes.number,
+  emptyText: PropTypes.string,
 };
 
 export default KardexTable;

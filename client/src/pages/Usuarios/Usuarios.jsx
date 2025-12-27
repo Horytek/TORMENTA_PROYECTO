@@ -5,12 +5,15 @@ import { FaPlus } from "react-icons/fa";
 import { ShowUsuarios } from '@/pages/Usuarios/ShowUsuarios';
 import { usePermisos } from '@/routes';
 import BarraSearch from "@/components/Search/Search";
-import { getUsuarios } from '@/services/usuario.services';
+import { getUsuarios, bulkUpdateUsuarios } from '@/services/usuario.services';
 import { ActionButton } from "@/components/Buttons/Buttons";
 import FilterControls from './components/FilterControls';
 import { FaFileExport, FaFileExcel } from "react-icons/fa";
 import { exportUsuariosLocal, filterUsuariosForExport } from '@/utils/exportUsuarios';
 import UserImportModal from './UserImportModal';
+import { Pagination, Select, SelectItem } from "@heroui/react";
+import BulkActionsToolbar from '@/components/Shared/BulkActionsToolbar';
+import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -18,6 +21,12 @@ function Usuarios() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [rolesDict, setRolesDict] = useState({});
   const { hasCreatePermission } = usePermisos();
+
+  // Pagination & Selection State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [selectedKeys, setSelectedKeys] = useState(new Set());
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
 
   // Input de búsqueda de usuarios
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,6 +122,75 @@ function Usuarios() {
     fetchUsuarios(); // Recargar lista
   };
 
+  // Filtered Logic Lifted from ShowUsuarios
+  const filteredUsuarios = useMemo(() => {
+    if (!Array.isArray(usuarios)) return [];
+
+    return usuarios.filter(usuario => {
+      // Filtro de búsqueda
+      const matchesSearch = usuario.usua.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!matchesSearch) return false;
+
+      // Filtro de rol
+      if (activeFilters.role && usuario.id_rol != activeFilters.role) {
+        return false;
+      }
+
+      // Filtro de estado
+      if (activeFilters.status !== undefined && activeFilters.status !== '') {
+        const isActive = usuario.estado_usuario === 1 || usuario.estado_usuario === "1" || usuario.estado_usuario === "Activo";
+        const filterActive = activeFilters.status === "1";
+        if (isActive !== filterActive) return false;
+      }
+
+      // Filtro de conexión
+      if (activeFilters.connection !== undefined && activeFilters.connection !== '') {
+        const filterConnected = activeFilters.connection === "1";
+        if (usuario.estado_token != (filterConnected ? 1 : 0)) return false;
+      }
+
+      return true;
+    });
+  }, [usuarios, searchTerm, activeFilters]);
+
+  // Bulk Actions Logic
+  const getSelectedIdsArray = () => {
+    if (selectedKeys === "all") {
+      return filteredUsuarios.map(u => u.id_usuario);
+    }
+    return Array.from(selectedKeys);
+  };
+
+  const handleBulkAction = async (action) => {
+    const ids = getSelectedIdsArray();
+    if (ids.length === 0) return;
+
+    if (action === 'delete') {
+      setIsBulkDeleteModalOpen(true);
+      return;
+    }
+
+    executeBulkAction(action);
+  };
+
+  const executeBulkAction = async (action) => {
+    const idsArray = getSelectedIdsArray();
+    const success = await bulkUpdateUsuarios(action, idsArray);
+
+    if (success) {
+      if (action === 'delete') {
+        idsArray.forEach(id => removeUsuario(id));
+      } else {
+        const numericValue = action === 'activate' ? 1 : 0;
+        idsArray.forEach(id => {
+          updateUsuarioLocal(id, { estado_usuario: numericValue });
+        });
+      }
+      setSelectedKeys(new Set());
+    }
+    if (action === 'delete') setIsBulkDeleteModalOpen(false);
+  };
+
   return (
     <div className="w-full min-h-screen p-6 flex flex-col gap-6 bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-200">
       <Toaster position="top-center" reverseOrder={false} />
@@ -178,14 +256,60 @@ function Usuarios() {
           />
         )}
 
-        <ShowUsuarios
-          searchTerm={searchTerm}
-          activeFilters={activeFilters}
-          usuarios={usuarios}
-          addUsuario={addUsuario}
-          updateUsuarioLocal={updateUsuarioLocal}
-          removeUsuario={removeUsuario}
-        />
+        {/* Table Wrapper */}
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4 space-y-4">
+          <ShowUsuarios
+            usuarios={filteredUsuarios}
+            addUsuario={addUsuario}
+            updateUsuarioLocal={updateUsuarioLocal}
+            removeUsuario={removeUsuario}
+            selectedKeys={selectedKeys}
+            onSelectionChange={setSelectedKeys}
+            page={page}
+            limit={limit}
+          />
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="flex w-full justify-between items-center px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
+          <div className="flex gap-2 items-center">
+            <span className="text-[12px] text-slate-400 dark:text-slate-500">
+              {filteredUsuarios.length} usuarios
+            </span>
+            <Select
+              size="sm"
+              className="w-20"
+              selectedKeys={[`${limit}`]}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1);
+              }}
+              aria-label="Filas por página"
+              classNames={{
+                trigger: "min-h-8 h-8 bg-slate-50 dark:bg-zinc-800",
+                value: "text-[12px]"
+              }}
+            >
+              <SelectItem key="5">5</SelectItem>
+              <SelectItem key="10">10</SelectItem>
+              <SelectItem key="15">15</SelectItem>
+              <SelectItem key="20">20</SelectItem>
+            </Select>
+          </div>
+
+          <Pagination
+            isCompact
+            showControls
+            showShadow
+            color="primary"
+            page={page}
+            total={Math.ceil(filteredUsuarios.length / limit) || 1}
+            onChange={setPage}
+            classNames={{
+              cursor: "bg-blue-600 text-white font-bold"
+            }}
+          />
+        </div>
       </div>
 
       {/* Add User Modal */}
@@ -203,6 +327,23 @@ function Usuarios() {
         isOpen={importModalOpen}
         onClose={() => setImportModalOpen(false)}
         onSuccess={handleImportSuccess}
+      />
+
+      {/* Bulk Delete Modal */}
+      {isBulkDeleteModalOpen && (
+        <ConfirmationModal
+          message={`¿Estás seguro que deseas eliminar ${selectedKeys.size} usuarios seleccionados? Esta acción no se puede deshacer.`}
+          onClose={() => setIsBulkDeleteModalOpen(false)}
+          onConfirm={() => executeBulkAction('delete')}
+        />
+      )}
+
+      <BulkActionsToolbar
+        selectedCount={selectedKeys === "all" ? filteredUsuarios.length : selectedKeys.size}
+        onActivate={() => handleBulkAction('activate')}
+        onDeactivate={() => handleBulkAction('deactivate')}
+        onDelete={() => handleBulkAction('delete')}
+        onClearSelection={() => setSelectedKeys(new Set())}
       />
     </div>
   );

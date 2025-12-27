@@ -4,7 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { FaPlus, FaUsers, FaUserCheck, FaUserTimes, FaBookOpen, FaSearch } from "react-icons/fa";
 import {
   Button, Tabs, Tab, Card, CardBody, Chip, Tooltip, Input,
-  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Accordion, AccordionItem
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Accordion, AccordionItem, Pagination, Select, SelectItem
 } from '@heroui/react';
 import { usePermisos } from '@/routes';
 import { getVendedores } from '@/services/vendedor.services';
@@ -25,6 +25,8 @@ function Vendedores() {
   const { hasCreatePermission } = usePermisos();
 
   const [selectedKeys, setSelectedKeys] = useState(new Set());
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const transformVendedor = (vendedor) => ({
     ...vendedor,
@@ -207,6 +209,49 @@ function Vendedores() {
               removeVendedor={removeVendedor}
               selectedKeys={selectedKeys}
               onSelectionChange={setSelectedKeys}
+              page={page}
+              limit={limit}
+            />
+          </div>
+
+          {/* Pagination Footer - Outside Table Container */}
+          <div className="flex w-full justify-between items-center px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
+            <div className="flex gap-2 items-center">
+              <span className="text-[12px] text-slate-400 dark:text-slate-500">
+                {filteredVendedores.length} empleados
+              </span>
+              <Select
+                size="sm"
+                className="w-20"
+                selectedKeys={[`${limit}`]}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1);
+                }}
+                aria-label="Filas por página"
+                classNames={{
+                  trigger: "min-h-8 h-8 bg-slate-50 dark:bg-zinc-800",
+                  value: "text-[12px]"
+                }}
+              >
+                <SelectItem key="5">5</SelectItem>
+                <SelectItem key="10">10</SelectItem>
+                <SelectItem key="15">15</SelectItem>
+                <SelectItem key="20">20</SelectItem>
+              </Select>
+            </div>
+
+            <Pagination
+              isCompact
+              showControls
+              showShadow
+              color="primary"
+              page={page}
+              total={Math.ceil(filteredVendedores.length / limit) || 1}
+              onChange={setPage}
+              classNames={{
+                cursor: "bg-blue-600 text-white font-bold"
+              }}
             />
           </div>
 

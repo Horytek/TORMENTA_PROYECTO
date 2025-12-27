@@ -13,20 +13,24 @@ function Historico() {
   const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);
 
   // Estado local para el almacén seleccionado
-  const [almacenSeleccionado, setAlmacenSeleccionado] = useState(almacenGlobal || "");
+  const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
+    if (almacenGlobal && almacenGlobal !== "%") return almacenGlobal;
+    return "";
+  });
 
-  // Sincroniza el estado local con Zustand si cambia
+  // Sincroniza el estado local con Zustand si cambia (solo si es ID válido)
   useEffect(() => {
-    if (almacenGlobal && almacenGlobal !== almacenSeleccionado) {
+    if (almacenGlobal && almacenGlobal !== "%" && almacenGlobal !== almacenSeleccionado) {
       setAlmacenSeleccionado(almacenGlobal);
     }
   }, [almacenGlobal]);
 
-  // Si no hay almacén seleccionado y hay almacenes, selecciona el primero
+  // Si no hay almacén seleccionado (o es %) y hay almacenes, selecciona el primero
   useEffect(() => {
-    if (!almacenSeleccionado && almacenes.length > 0) {
-      setAlmacenSeleccionado(almacenes[0].id.toString());
-      setAlmacenGlobal(almacenes[0].id.toString());
+    if ((!almacenSeleccionado || almacenSeleccionado === "%") && almacenes.length > 0) {
+      const firstId = almacenes[0].id.toString();
+      setAlmacenSeleccionado(firstId);
+      setAlmacenGlobal(firstId);
     }
   }, [almacenes, almacenSeleccionado, setAlmacenGlobal]);
 
@@ -72,7 +76,7 @@ function Historico() {
   }, [almacenSeleccionado, setAlmacenGlobal]);
 
   return (
-    <div className="w-full">
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-300">
       <HeaderHistorico
         productId={id}
         productoData={productoData}
@@ -82,12 +86,11 @@ function Historico() {
         dateRange={dateRange}
         almacenSeleccionado={almacenSeleccionado}
       />
-      <br />
       <HistoricoTable
-  transactions={kardexData}
-  previousTransactions={previousTransactions}
-  productoData={productoData}
-/>
+        transactions={kardexData}
+        previousTransactions={previousTransactions}
+        productoData={productoData}
+      />
     </div>
   );
 }

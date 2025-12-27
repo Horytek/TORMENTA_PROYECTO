@@ -20,7 +20,7 @@ const Sunat = lazy(() => import('@/pages/Sunat/Sunat'));
 const Modulo = lazy(() => import('@/pages/Modulos/Modulos'));
 const Permisos = lazy(() => import('@/pages/Roles/Roles'));
 const PermisosGlobales = lazy(() => import('@/pages/Global/PermisosGlobales/TablaPermisosGlobales'));
-const Historico = lazy(() => import('@/pages/Almacen/Kardex/Historico/Historico'));
+const Historico = lazy(() => import('@/pages/Kardex/Historico/Historico'));
 const Logs = lazy(() => import('@/pages/SystemLogs/Logs'));
 const Negocio = lazy(() => import('@/pages/Negocio/Negocio'));
 

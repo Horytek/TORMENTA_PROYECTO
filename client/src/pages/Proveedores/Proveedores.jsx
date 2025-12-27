@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import DestinatariosForm from './DestinatariosForm';
 import { Toaster } from "react-hot-toast";
-import { Button, Card, CardBody, Chip, Input } from '@heroui/react';
+import { Button, Card, CardBody, Chip, Input, Pagination, Select, SelectItem } from '@heroui/react';
 import { FaPlus, FaTruck, FaCheckCircle, FaTimesCircle, FaFileExcel, FaFileExport, FaSearch } from "react-icons/fa";
 import { usePermisos } from '@/routes';
 import { getDestinatarios } from '@/services/destinatario.services';
@@ -23,6 +23,8 @@ function Proveedores() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
   const [selectedKeys, setSelectedKeys] = useState(new Set());
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const { hasCreatePermission } = usePermisos();
 
@@ -267,6 +269,49 @@ function Proveedores() {
           onEdit={handleEdit}
           selectedKeys={selectedKeys}
           onSelectionChange={setSelectedKeys}
+          page={page}
+          limit={limit}
+        />
+      </div>
+
+      {/* Pagination Footer - Outside Table Container */}
+      <div className="flex w-full justify-between items-center px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
+        <div className="flex gap-2 items-center">
+          <span className="text-[12px] text-slate-400 dark:text-slate-500">
+            {filteredDestinatarios.length} proveedores
+          </span>
+          <Select
+            size="sm"
+            className="w-20"
+            selectedKeys={[`${limit}`]}
+            onChange={(e) => {
+              setLimit(Number(e.target.value));
+              setPage(1);
+            }}
+            aria-label="Filas por página"
+            classNames={{
+              trigger: "min-h-8 h-8 bg-slate-50 dark:bg-zinc-800",
+              value: "text-[12px]"
+            }}
+          >
+            <SelectItem key="5">5</SelectItem>
+            <SelectItem key="10">10</SelectItem>
+            <SelectItem key="15">15</SelectItem>
+            <SelectItem key="20">20</SelectItem>
+          </Select>
+        </div>
+
+        <Pagination
+          isCompact
+          showControls
+          showShadow
+          color="primary"
+          page={page}
+          total={Math.ceil(filteredDestinatarios.length / limit) || 1}
+          onChange={setPage}
+          classNames={{
+            cursor: "bg-blue-600 text-white font-bold"
+          }}
         />
       </div>
 

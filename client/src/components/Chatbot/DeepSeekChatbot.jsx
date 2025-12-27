@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Card, Button, Divider, Tooltip, Chip, Textarea, Spinner, Switch, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react";
-import { Bot, Send, X, Settings, MessageCircle, Search, Calculator, Zap, Wand2, 
-FileSpreadsheet, FileText, Printer, Copy, Trash2, Maximize2, Minimize2 } from "lucide-react";
+import {
+  Bot, Send, X, Settings, MessageCircle, Search, Calculator, Zap, Wand2,
+  FileSpreadsheet, FileText, Printer, Copy, Trash2, Maximize2, Minimize2
+} from "lucide-react";
 import CommandDemo from "@/components/ui/command";
 import { useUserStore } from "@/store/useStore";
 import { getModulosConSubmodulos } from "@/services/rutas.services";
 import axios from "@/api/axios";
 import FunctionShortcuts from "./FunctionShortcuts";
-import downloadExcelReport from "@/pages/Almacen/Kardex/data/generateExcel";
+import { downloadExcelReporteMes } from "@/services/kardex.services";
 import { toast } from "react-hot-toast";
 
 // Prompt rápidos
@@ -90,14 +92,14 @@ export default function DeepSeekOpenRouterChatbot() {
       if (!data?.ok) return { prompt: "", schema: null };
       const req = Array.isArray(data.required) && data.required.length ? `Obligatorios: ${data.required.join(", ")}` : "";
       const opt = Array.isArray(data.optional) && data.optional.length ? `Opcionales: ${data.optional.join(", ")}` : "";
-      const ex  = Array.isArray(data.extras)   && data.extras.length   ? `Solo desarrollador: ${data.extras.join(", ")}` : "";
+      const ex = Array.isArray(data.extras) && data.extras.length ? `Solo desarrollador: ${data.extras.join(", ")}` : "";
       const parts = [req, opt, ex, data.notes].filter(Boolean).join(" | ");
       return { prompt: parts ? `EsquemaFormulario(${kind.type}): ${parts}` : "", schema: data };
     } catch {
       return { prompt: "", schema: null };
     }
   }
-    // NUEVO: exportación rápida Libro de Ventas (mes/año actual) a Excel
+  // NUEVO: exportación rápida Libro de Ventas (mes/año actual) a Excel
   const quickExportLibroVentas = async () => {
     try {
       setExporting(true);
@@ -136,7 +138,7 @@ export default function DeepSeekOpenRouterChatbot() {
       const now = new Date();
       const mes = String(now.getMonth() + 1).padStart(2, "0");
       const year = String(now.getFullYear());
-      await downloadExcelReport(mes, year, "%");
+      await downloadExcelReporteMes(mes, year, "%");
     } catch {
       setErrorMsg("No se pudo exportar el Kardex mensual.");
     } finally {
@@ -146,37 +148,37 @@ export default function DeepSeekOpenRouterChatbot() {
 
 
   // Unifica la salida del modelo con el formulario real (evita confusiones)
-function mergeWithFormSchema(entity, reply, schemaData) {
-  if (!schemaData || !entity?.type) return reply;
-  const req = (schemaData.required || []).map(s => `- ${s}`).join("\n");
-  const opt = (schemaData.optional || []).map(s => `- ${s}`).join("\n");
-  const ex  = (schemaData.extras || []).map(s => `- ${s}`).join("\n");
+  function mergeWithFormSchema(entity, reply, schemaData) {
+    if (!schemaData || !entity?.type) return reply;
+    const req = (schemaData.required || []).map(s => `- ${s}`).join("\n");
+    const opt = (schemaData.optional || []).map(s => `- ${s}`).join("\n");
+    const ex = (schemaData.extras || []).map(s => `- ${s}`).join("\n");
 
-  // Identificadores adicionales para otras entidades
-  const entityLabels = {
-    product: "Campos del formulario de producto detectados:",
-    user: "Campos del formulario de usuario detectados:",
-    permissions: "Campos del formulario de permisos detectados:",
-    inventory: "Campos del formulario de inventario detectados:",
-    purchases: "Campos del formulario de compras detectados:",
-    sales: "Campos del formulario de ventas detectados:",
-    client: "Campos del formulario de cliente detectados:",
-    provider: "Campos del formulario de proveedor detectados:",
-    branch: "Campos del formulario de sucursal detectados:",
-    warehouse: "Campos del formulario de almacén detectados:",
-    seller: "Campos del formulario de vendedor detectados:"
-  };
+    // Identificadores adicionales para otras entidades
+    const entityLabels = {
+      product: "Campos del formulario de producto detectados:",
+      user: "Campos del formulario de usuario detectados:",
+      permissions: "Campos del formulario de permisos detectados:",
+      inventory: "Campos del formulario de inventario detectados:",
+      purchases: "Campos del formulario de compras detectados:",
+      sales: "Campos del formulario de ventas detectados:",
+      client: "Campos del formulario de cliente detectados:",
+      provider: "Campos del formulario de proveedor detectados:",
+      branch: "Campos del formulario de sucursal detectados:",
+      warehouse: "Campos del formulario de almacén detectados:",
+      seller: "Campos del formulario de vendedor detectados:"
+    };
 
-  const header = entityLabels[entity.type] || "Campos del formulario detectados:";
-  const canonical = [
-    `\n${header}`,
-    req ? `Obligatorios:\n${req}` : null,
-    opt ? `Opcionales:\n${opt}` : null,
-    ex  ? `Solo desarrollador:\n${ex}` : null
-  ].filter(Boolean).join("\n\n");
+    const header = entityLabels[entity.type] || "Campos del formulario detectados:";
+    const canonical = [
+      `\n${header}`,
+      req ? `Obligatorios:\n${req}` : null,
+      opt ? `Opcionales:\n${opt}` : null,
+      ex ? `Solo desarrollador:\n${ex}` : null
+    ].filter(Boolean).join("\n\n");
 
-  return `${reply}\n${canonical}`;
-}
+    return `${reply}\n${canonical}`;
+  }
 
   useEffect(() => {
     try {
@@ -188,7 +190,7 @@ function mergeWithFormSchema(entity, reply, schemaData) {
         .map((el) => (el.textContent || "").trim())
         .filter(Boolean);
       setActiveCrumbs(crumbs.slice(0, 8));
-    } catch {}
+    } catch { }
   }, [isChatOpen]); // al abrir el chat basta
 
   // Utils
@@ -246,99 +248,99 @@ function mergeWithFormSchema(entity, reply, schemaData) {
   };
 
   // Limpieza de texto
-function simplifyResponse(text = "") {
-  return String(text || "")
-    .replace(/<\|.*?\|>/g, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-// Solo adjuntar formulario en flujos de creación/edición
-function shouldAttachSchema(question = "", entity) {
-  if (!entity?.type) return false;
-  const q = (question || "").toLowerCase();
-
-  // Preguntas que NO deben adjuntar schema (listas, métricas, reportes)
-  const isMetricOrList =
-    /\b(total|conteo|cu[aá]nt[oa]s?|lista|listar|mu[eé]strame|top|m[aá]s vendidos|reporte|ingresos?|ganancias?|soles|monto)\b/i.test(q);
-  if (isMetricOrList) return false;
-
-  // Flujos clásicos de formulario
-  const wantsForm =
-    /\b(c[oó]mo|como)\b.*\b(registrar|crear|agregar|editar|actualizar|llenar|formulario|campos|requisitos|obligatorio|necesito|qué pide|qué solicita|qué campos|qué datos|qué información|qué debo|qué se requiere|qué se necesita|qué incluye|qué contiene)\b/i.test(q) ||
-    /\b(registrar|crear|agregar|editar|actualizar|formulario|campos|requisitos|obligatorio|necesito|qué pide|qué solicita|qué campos|qué datos|qué información|qué debo|qué se requiere|qué se necesita|qué incluye|qué contiene)\b/i.test(q);
-
-  // Preguntas sobre unidades de medida (solo para productos)
-  const asksAboutUnidadMedida =
-    /unidad(es)? de medida/i.test(q) && entity.type === "product";
-
-  // Preguntas sobre código de barras (solo para productos)
-  const asksAboutCodigoBarras =
-    /\bc[oó]digo(s)? de barras?\b/i.test(q) && entity.type === "product";
-
-  // Preguntas sobre campos obligatorios, requeridos, opcionales, extras, notas, validaciones, restricciones
-  const asksAboutFields =
-    /\b(obligatorio|requerido|opcional|extra|nota|validaci[oó]n|restricci[oó]n|sólo desarrollador|solo desarrollador|developer|campo|dato|informaci[oó]n)\b/i.test(q);
-
-  // Preguntas sobre gestión de formularios, edición, creación, administración de datos
-  const asksAboutFormManagement =
-    /\b(gestionar|administrar|modificar|actualizar|editar|crear|agregar|eliminar|borrar|alta|baja|cambiar|asignar|definir|configurar)\b.*\b(formulario|campos|datos|registro|producto|cliente|proveedor|usuario|rol|permiso|sucursal|almac[eé]n|nota|gu[ií]a|remisi[oó]n|venta|compra)\b/i.test(q);
-
-  return wantsForm || asksAboutUnidadMedida || asksAboutCodigoBarras || asksAboutFields || asksAboutFormManagement;
-}
-
-// Quitar Markdown visible del modelo (negritas, etc.)
-function stripMarkdown(s = "") {
-  return String(s)
-    .replace(/\*\*(.*?)\*\*/g, "$1")
-    .replace(/__(.*?)__/g, "$1")
-    .replace(/\*(.*?)\*/g, "$1")
-    .replace(/_(.*?)_/g, "$1")
-    .replace(/`{1,3}([^`]+)`{1,3}/g, "$1")
-    .trim();
-}
-
-// Limpiar texto del asistente y cortar bloques de formulario si aparecieran
-function normalizeAssistantText(s = "") {
-  let t = stripMarkdown(s);
-  const idx = t.search(/Campos del formulario/i);
-  if (idx > -1) t = t.slice(0, idx);
-  return t.replace(/\n{3,}/g, "\n\n").trim();
-}
-
-// NUEVO: detectar y extraer listas del contenido
-function extractListItems(plain = "") {
-  // líneas que empiezan con “-”, “•”, o “1. ”
-  const lines = plain.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  const itemLines = lines.filter(l => /^([-•]\s|\d+\.\s)/.test(l));
-  if (itemLines.length < 2) return null; // no parece lista
-  return itemLines.map(l => l.replace(/^([-•]\s|\d+\.\s)/, "").trim());
-}
-
-// NUEVO: renderizar mensaje del asistente (texto plano o lista)
-function renderAssistantMessage(text = "") {
-  const plain = normalizeAssistantText(text);
-  const items = extractListItems(plain);
-
-  if (items && items.length) {
-    return (
-      <ul className="list-disc pl-5 space-y-1">
-        {items.map((it, i) => (
-          <li key={i} className="leading-snug">{it}</li>
-        ))}
-      </ul>
-    );
+  function simplifyResponse(text = "") {
+    return String(text || "")
+      .replace(/<\|.*?\|>/g, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
-  // texto plano (se respetan saltos con whitespace-pre-wrap del contenedor)
-  return <span>{plain}</span>;
-}
 
-function enforceConcise(text) {
-  if (!conciseMode) return text;
-  const words = text.split(/\s+/);
-  if (words.length <= CONCISE_HARD_LIMIT) return text;
-  return words.slice(0, CONCISE_HARD_LIMIT).join(" ") + " …";
-}
+  // Solo adjuntar formulario en flujos de creación/edición
+  function shouldAttachSchema(question = "", entity) {
+    if (!entity?.type) return false;
+    const q = (question || "").toLowerCase();
+
+    // Preguntas que NO deben adjuntar schema (listas, métricas, reportes)
+    const isMetricOrList =
+      /\b(total|conteo|cu[aá]nt[oa]s?|lista|listar|mu[eé]strame|top|m[aá]s vendidos|reporte|ingresos?|ganancias?|soles|monto)\b/i.test(q);
+    if (isMetricOrList) return false;
+
+    // Flujos clásicos de formulario
+    const wantsForm =
+      /\b(c[oó]mo|como)\b.*\b(registrar|crear|agregar|editar|actualizar|llenar|formulario|campos|requisitos|obligatorio|necesito|qué pide|qué solicita|qué campos|qué datos|qué información|qué debo|qué se requiere|qué se necesita|qué incluye|qué contiene)\b/i.test(q) ||
+      /\b(registrar|crear|agregar|editar|actualizar|formulario|campos|requisitos|obligatorio|necesito|qué pide|qué solicita|qué campos|qué datos|qué información|qué debo|qué se requiere|qué se necesita|qué incluye|qué contiene)\b/i.test(q);
+
+    // Preguntas sobre unidades de medida (solo para productos)
+    const asksAboutUnidadMedida =
+      /unidad(es)? de medida/i.test(q) && entity.type === "product";
+
+    // Preguntas sobre código de barras (solo para productos)
+    const asksAboutCodigoBarras =
+      /\bc[oó]digo(s)? de barras?\b/i.test(q) && entity.type === "product";
+
+    // Preguntas sobre campos obligatorios, requeridos, opcionales, extras, notas, validaciones, restricciones
+    const asksAboutFields =
+      /\b(obligatorio|requerido|opcional|extra|nota|validaci[oó]n|restricci[oó]n|sólo desarrollador|solo desarrollador|developer|campo|dato|informaci[oó]n)\b/i.test(q);
+
+    // Preguntas sobre gestión de formularios, edición, creación, administración de datos
+    const asksAboutFormManagement =
+      /\b(gestionar|administrar|modificar|actualizar|editar|crear|agregar|eliminar|borrar|alta|baja|cambiar|asignar|definir|configurar)\b.*\b(formulario|campos|datos|registro|producto|cliente|proveedor|usuario|rol|permiso|sucursal|almac[eé]n|nota|gu[ií]a|remisi[oó]n|venta|compra)\b/i.test(q);
+
+    return wantsForm || asksAboutUnidadMedida || asksAboutCodigoBarras || asksAboutFields || asksAboutFormManagement;
+  }
+
+  // Quitar Markdown visible del modelo (negritas, etc.)
+  function stripMarkdown(s = "") {
+    return String(s)
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/__(.*?)__/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/_(.*?)_/g, "$1")
+      .replace(/`{1,3}([^`]+)`{1,3}/g, "$1")
+      .trim();
+  }
+
+  // Limpiar texto del asistente y cortar bloques de formulario si aparecieran
+  function normalizeAssistantText(s = "") {
+    let t = stripMarkdown(s);
+    const idx = t.search(/Campos del formulario/i);
+    if (idx > -1) t = t.slice(0, idx);
+    return t.replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  // NUEVO: detectar y extraer listas del contenido
+  function extractListItems(plain = "") {
+    // líneas que empiezan con “-”, “•”, o “1. ”
+    const lines = plain.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const itemLines = lines.filter(l => /^([-•]\s|\d+\.\s)/.test(l));
+    if (itemLines.length < 2) return null; // no parece lista
+    return itemLines.map(l => l.replace(/^([-•]\s|\d+\.\s)/, "").trim());
+  }
+
+  // NUEVO: renderizar mensaje del asistente (texto plano o lista)
+  function renderAssistantMessage(text = "") {
+    const plain = normalizeAssistantText(text);
+    const items = extractListItems(plain);
+
+    if (items && items.length) {
+      return (
+        <ul className="list-disc pl-5 space-y-1">
+          {items.map((it, i) => (
+            <li key={i} className="leading-snug">{it}</li>
+          ))}
+        </ul>
+      );
+    }
+    // texto plano (se respetan saltos con whitespace-pre-wrap del contenedor)
+    return <span>{plain}</span>;
+  }
+
+  function enforceConcise(text) {
+    if (!conciseMode) return text;
+    const words = text.split(/\s+/);
+    if (words.length <= CONCISE_HARD_LIMIT) return text;
+    return words.slice(0, CONCISE_HARD_LIMIT).join(" ") + " …";
+  }
 
   // Snapshot UI helpers
   const MAX_UI_CHARS = 900;
@@ -377,7 +379,7 @@ function enforceConcise(text) {
     }
   }
 
-    // Buscar en backend (módulos/submódulos visibles para tu tenant)
+  // Buscar en backend (módulos/submódulos visibles para tu tenant)
   const searchSystemForKeyword = useCallback(async (qText) => {
     try {
       const { data } = await axios.get("/help/search", { params: { q: qText } });
@@ -393,7 +395,7 @@ function enforceConcise(text) {
     }
   }, []);
 
-   // --- FAQs locales canónicas (sin llamar a la IA) ---
+  // --- FAQs locales canónicas (sin llamar a la IA) ---
   const hasVisualContext = useCallback(() => {
     return Boolean(screenDesc?.trim()) || (autoUISnapshot && uiSnapshot);
   }, [screenDesc, autoUISnapshot, uiSnapshot]);
@@ -465,7 +467,7 @@ function enforceConcise(text) {
     // Intentos de “¿dónde está X?” genérico
     const navLike = /(d[oó]nde|donde|en que|en qué|no encuentro|no aparece)/i.test(text || "");
     if (navLike) {
-      const keywords = ["venta","ventas","almac","kardex","cliente","proveedor","sunat","roles","permis","finanzas","contabilidad"];
+      const keywords = ["venta", "ventas", "almac", "kardex", "cliente", "proveedor", "sunat", "roles", "permis", "finanzas", "contabilidad"];
       const lowered = (text || "").toLowerCase();
       const kw = keywords.find(k => lowered.includes(k));
       if (kw) {
@@ -493,7 +495,7 @@ function enforceConcise(text) {
     return null;
   };
 
-    // util para permitir que handleLocalFaqs devuelva promesas sin romper la llamada
+  // util para permitir que handleLocalFaqs devuelva promesas sin romper la llamada
   function awaitable(fn) {
     return { __awaitable: true, run: fn };
   }
@@ -524,7 +526,7 @@ function enforceConcise(text) {
         setUiSnapshot(snap);
         setUiSnapshotHash(h);
       }
-    } catch {}
+    } catch { }
   }, [isChatOpen, autoUISnapshot, uiSnapshotHash]);
 
   // System prompt (estable, sin timestamp cambiante)
@@ -575,9 +577,9 @@ Historial breve: ${historySummary || "inicio"}.
     const main = { name: m.nombre || m.ruta || m.path || "Sin nombre", path: m.ruta || m.path || "/" };
     const subs = Array.isArray(m.submodulos)
       ? m.submodulos.map(sub => ({
-          name: sub.nombre_sub ? `${m.nombre} > ${sub.nombre_sub}` : sub.ruta || sub.ruta_submodulo || sub.path || "Sin nombre",
-          path: sub.ruta || sub.ruta_submodulo || sub.path || "/"
-        }))
+        name: sub.nombre_sub ? `${m.nombre} > ${sub.nombre_sub}` : sub.ruta || sub.ruta_submodulo || sub.path || "Sin nombre",
+        path: sub.ruta || sub.ruta_submodulo || sub.path || "/"
+      }))
       : [];
     return [main, ...subs];
   });
@@ -602,142 +604,142 @@ Historial breve: ${historySummary || "inicio"}.
     setHistorySummary(`Reciente: ${lastPairs.join(" | ")}`);
   }, []);
 
-// Formato visible (solo para el usuario, mantiene HTML-lite)
-function formatVisibleUserContent(raw = "") {
-  if (!raw) return raw;
-  let cleaned = raw
-    .replace(/UI:[^|]+(\|)?/g, "")
-    .replace(/ContextoBD:[^|]+(\|)?/g, "")
-    .replace(/\s+\|\s+\|/g, "|")
-    .replace(/\|\s*\|\s*/g, "|")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  // Formato visible (solo para el usuario, mantiene HTML-lite)
+  function formatVisibleUserContent(raw = "") {
+    if (!raw) return raw;
+    let cleaned = raw
+      .replace(/UI:[^|]+(\|)?/g, "")
+      .replace(/ContextoBD:[^|]+(\|)?/g, "")
+      .replace(/\s+\|\s+\|/g, "|")
+      .replace(/\|\s*\|\s*/g, "|")
+      .replace(/\s{2,}/g, " ")
+      .trim();
 
-  // Markdown-lite a HTML básico SOLO para el usuario
-  cleaned = cleaned
-    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-    .replace(/__(.*?)__/g, "<b>$1</b>")
-    .replace(/\*(.*?)\*/g, "<i>$1</i>")
-    .replace(/_(.*?)_/g, "<i>$1</i>")
-    .replace(/`{1,3}([^`]+)`{1,3}/g, "<code>$1</code>");
+    // Markdown-lite a HTML básico SOLO para el usuario
+    cleaned = cleaned
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+      .replace(/__(.*?)__/g, "<b>$1</b>")
+      .replace(/\*(.*?)\*/g, "<i>$1</i>")
+      .replace(/_(.*?)_/g, "<i>$1</i>")
+      .replace(/`{1,3}([^`]+)`{1,3}/g, "<code>$1</code>");
 
-  cleaned = cleaned.replace(/(\bDescripción\b\s*:)/gi, '<b>$1</b>');
-  const pantallaMatch = cleaned.match(/Pantalla:([^|]+)(\||$)/);
-  const preguntaMatch = cleaned.match(/Pregunta:([^|]+)$/);
-  if (pantallaMatch && preguntaMatch) return `(Pantalla:${pantallaMatch[1].trim()} | Pregunta:${preguntaMatch[1].trim()})`;
-  if (preguntaMatch) return preguntaMatch[1].trim();
-  return cleaned;
-}
-
-// Construcción del mensaje user (inyecta el contexto del formulario si existe)
-const buildUserMessage = (question, screenDescription, dbContext, formCtx) => {
-  const parts = [];
-  if (screenDescription?.trim()) parts.push(`Pantalla:${screenDescription.trim()}`);
-  else if (autoUISnapshot && uiSnapshot) parts.push(`UI:${uiSnapshot}`);
-  if (dbContext) parts.push(`ContextoBD:${dbContext}`);
-  if (formCtx) parts.push(`ContextoBD:${formCtx}`);
-  parts.push(`Pregunta:${question.trim()}`);
-  return { role: "user", content: parts.join(" | ") };
-};
-
-// Envío
-const sendMessage = async (rawText) => {
-  const text = (rawText ?? input).trim();
-  if (!text || loading) return;
-  setLoading(true);
-  setErrorMsg("");
-
-  const local = handleLocalFaqs(text);
-  if (local) {
-    if (local.__awaitable) {
-      const reply = await local.run();
-      setMessages(prev => [...prev, { role: "user", content: text }, { role: "assistant", content: reply }]);
-    } else {
-      setMessages(prev => [...prev, { role: "user", content: text }, { role: "assistant", content: local }]);
-    }
-    setLoading(false);
-    setInput("");
-    return;
+    cleaned = cleaned.replace(/(\bDescripción\b\s*:)/gi, '<b>$1</b>');
+    const pantallaMatch = cleaned.match(/Pantalla:([^|]+)(\||$)/);
+    const preguntaMatch = cleaned.match(/Pregunta:([^|]+)$/);
+    if (pantallaMatch && preguntaMatch) return `(Pantalla:${pantallaMatch[1].trim()} | Pregunta:${preguntaMatch[1].trim()})`;
+    if (preguntaMatch) return preguntaMatch[1].trim();
+    return cleaned;
   }
 
-  if (!hasVisualContext() && needsVisualContext(text) && Date.now() - visualTipCooldownRef.current > 90_000) {
-    setShowScreenDesc(true);
-    const tip = "Sugerencia: para orientarme mejor, añade una breve descripción visual y reenvía tu pregunta.";
-    setMessages(prev => [...prev, { role: "assistant", content: tip }]);
-    setLoading(false);
-    visualTipCooldownRef.current = Date.now();
-    return;
-  }
+  // Construcción del mensaje user (inyecta el contexto del formulario si existe)
+  const buildUserMessage = (question, screenDescription, dbContext, formCtx) => {
+    const parts = [];
+    if (screenDescription?.trim()) parts.push(`Pantalla:${screenDescription.trim()}`);
+    else if (autoUISnapshot && uiSnapshot) parts.push(`UI:${uiSnapshot}`);
+    if (dbContext) parts.push(`ContextoBD:${dbContext}`);
+    if (formCtx) parts.push(`ContextoBD:${formCtx}`);
+    parts.push(`Pregunta:${question.trim()}`);
+    return { role: "user", content: parts.join(" | ") };
+  };
 
-  ensureSystemMessage();
+  // Envío
+  const sendMessage = async (rawText) => {
+    const text = (rawText ?? input).trim();
+    if (!text || loading) return;
+    setLoading(true);
+    setErrorMsg("");
 
-  // Contextos
-  const entity = detectEntity(text);
-  const [dbContext, formObj] = await Promise.all([
-    fetchDBContext(entity),
-    fetchFormSchema(entity)
-  ]);
-  setLastFormSchema(formObj?.schema || null);
-
-  const userMsg = buildUserMessage(text, screenDesc, dbContext, formObj?.prompt || "");
-  const base = messages.filter(Boolean);
-  const provisional = pruneHistory([
-    ...base.filter(m => m.role === "system"),
-    ...base.filter(m => m.role !== "system"),
-    userMsg
-  ]);
-
-  setMessages(prev => [...prev, userMsg]);
-  if (screenDesc) setScreenDesc("");
-
-  try {
-    const { data } = await axios.post("/chat", { messages: provisional });
-    let assistantReply = data?.choices?.[0]?.message?.content || data?.text || "Sin respuesta.";
-
-    // Eliminar Markdown visible
-    assistantReply = stripMarkdown(assistantReply);
-    assistantReply = simplifyResponse(assistantReply);
-
-    // Adjuntar formulario solo cuando aplique
-    if ((lastFormSchema || formObj?.schema) && shouldAttachSchema(text, entity)) {
-      assistantReply = mergeWithFormSchema(entity, assistantReply, formObj?.schema || lastFormSchema);
+    const local = handleLocalFaqs(text);
+    if (local) {
+      if (local.__awaitable) {
+        const reply = await local.run();
+        setMessages(prev => [...prev, { role: "user", content: text }, { role: "assistant", content: reply }]);
+      } else {
+        setMessages(prev => [...prev, { role: "user", content: text }, { role: "assistant", content: local }]);
+      }
+      setLoading(false);
+      setInput("");
+      return;
     }
 
-    assistantReply = enforceConcise(assistantReply);
-    setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
-    summarizeIfNeeded([...base, userMsg, { role: "assistant", content: assistantReply }]);
-    scrollToEnd();
-  } catch (e) {
-    setErrorMsg(e?.response?.data?.error || e.message || "Error al conectar.");
-    setMessages(prev => [...prev, { role: "assistant", content: "Ocurrió un error procesando la solicitud." }]);
-  } finally {
-    setLoading(false);
-    setInput("");
-  }
-};
+    if (!hasVisualContext() && needsVisualContext(text) && Date.now() - visualTipCooldownRef.current > 90_000) {
+      setShowScreenDesc(true);
+      const tip = "Sugerencia: para orientarme mejor, añade una breve descripción visual y reenvía tu pregunta.";
+      setMessages(prev => [...prev, { role: "assistant", content: tip }]);
+      setLoading(false);
+      visualTipCooldownRef.current = Date.now();
+      return;
+    }
+
+    ensureSystemMessage();
+
+    // Contextos
+    const entity = detectEntity(text);
+    const [dbContext, formObj] = await Promise.all([
+      fetchDBContext(entity),
+      fetchFormSchema(entity)
+    ]);
+    setLastFormSchema(formObj?.schema || null);
+
+    const userMsg = buildUserMessage(text, screenDesc, dbContext, formObj?.prompt || "");
+    const base = messages.filter(Boolean);
+    const provisional = pruneHistory([
+      ...base.filter(m => m.role === "system"),
+      ...base.filter(m => m.role !== "system"),
+      userMsg
+    ]);
+
+    setMessages(prev => [...prev, userMsg]);
+    if (screenDesc) setScreenDesc("");
+
+    try {
+      const { data } = await axios.post("/chat", { messages: provisional });
+      let assistantReply = data?.choices?.[0]?.message?.content || data?.text || "Sin respuesta.";
+
+      // Eliminar Markdown visible
+      assistantReply = stripMarkdown(assistantReply);
+      assistantReply = simplifyResponse(assistantReply);
+
+      // Adjuntar formulario solo cuando aplique
+      if ((lastFormSchema || formObj?.schema) && shouldAttachSchema(text, entity)) {
+        assistantReply = mergeWithFormSchema(entity, assistantReply, formObj?.schema || lastFormSchema);
+      }
+
+      assistantReply = enforceConcise(assistantReply);
+      setMessages(prev => [...prev, { role: "assistant", content: assistantReply }]);
+      summarizeIfNeeded([...base, userMsg, { role: "assistant", content: assistantReply }]);
+      scrollToEnd();
+    } catch (e) {
+      setErrorMsg(e?.response?.data?.error || e.message || "Error al conectar.");
+      setMessages(prev => [...prev, { role: "assistant", content: "Ocurrió un error procesando la solicitud." }]);
+    } finally {
+      setLoading(false);
+      setInput("");
+    }
+  };
 
   // =================== UI ===================
-return (
-  <>
-    {/* Botón flotante compacto con dropdown de opciones */}
-    <div style={{ position: "fixed", right: 20, bottom: 20, zIndex: 9998 }}>
-      <Dropdown>
-        <DropdownTrigger>
-          <Button
-            isIconOnly
-            size="md"
-            variant="flat"
-            color="default"
-            className="rounded-full shadow border border-gray-200/70 dark:border-zinc-800/70 bg-white/90 dark:bg-zinc-900/90 w-11 h-11 flex items-center justify-center"
-            aria-label="Panel de opciones"
-            tabIndex={0}
-          >
-            <Tooltip content="Opciones rápidas" placement="left">
-              <Settings className="w-6 h-6 text-gray-700 dark:text-zinc-200" />
-            </Tooltip>
-          </Button>
-        </DropdownTrigger>
-        <DropdownMenu aria-label="Panel de opciones" className="dark:bg-zinc-900">
+  return (
+    <>
+      {/* Botón flotante compacto con dropdown de opciones */}
+      <div style={{ position: "fixed", right: 20, bottom: 20, zIndex: 9998 }}>
+        <Dropdown>
+          <DropdownTrigger>
+            <Button
+              isIconOnly
+              size="md"
+              variant="flat"
+              color="default"
+              className="rounded-full shadow border border-gray-200/70 dark:border-zinc-800/70 bg-white/90 dark:bg-zinc-900/90 w-11 h-11 flex items-center justify-center"
+              aria-label="Panel de opciones"
+              tabIndex={0}
+            >
+              <Tooltip content="Opciones rápidas" placement="left">
+                <Settings className="w-6 h-6 text-gray-700 dark:text-zinc-200" />
+              </Tooltip>
+            </Button>
+          </DropdownTrigger>
+          <DropdownMenu aria-label="Panel de opciones" className="dark:bg-zinc-900">
             <DropdownItem
               key="function-shortcuts"
               startContent={<Zap className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
@@ -751,52 +753,52 @@ return (
             >
               Atajos de función
             </DropdownItem>
-          <DropdownItem
-            key="chatbot"
-            startContent={<Bot className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
-            onClick={() =>
-              featuresAllowed.chatbot
-                ? setIsChatOpen(true)
-                : handleNoAccess("Chatbot")
-            }
-            isDisabled={!featuresAllowed.chatbot}
-            className={!featuresAllowed.chatbot ? "opacity-60 pointer-events-none" : ""}
-          >
-            Asistente ERP
-          </DropdownItem>
-          <DropdownItem
-            key="search"
-            startContent={<Search className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
-            onClick={() => setIsSearchOpen(true)}
-          >
-            Buscar en el sistema
-          </DropdownItem>
-        </DropdownMenu>
-      </Dropdown>
-    </div>
-    <FunctionShortcuts open={isFunctionShortcutsOpen} onClose={() => setIsFunctionShortcutsOpen(false)} />
-    {/* Modal de búsqueda */}
-    {isSearchOpen && (
-      <div
-        id="command-modal-bg"
-        className="fixed inset-0 bg-black/40 dark:bg-black/70 flex items-center justify-center z-[10000]"
-        onClick={() => setIsSearchOpen(false)}
-      >
-        <div
-          className="bg-white/95 dark:bg-zinc-900/95 rounded-xl shadow-2xl p-4 border border-gray-200/70 dark:border-zinc-800/70 transition-colors duration-200"
-          onClick={e => e.stopPropagation()}
-        >
-          <CommandDemo routes={effectiveRoutes} onClose={() => setIsSearchOpen(false)} />
-        </div>
+            <DropdownItem
+              key="chatbot"
+              startContent={<Bot className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
+              onClick={() =>
+                featuresAllowed.chatbot
+                  ? setIsChatOpen(true)
+                  : handleNoAccess("Chatbot")
+              }
+              isDisabled={!featuresAllowed.chatbot}
+              className={!featuresAllowed.chatbot ? "opacity-60 pointer-events-none" : ""}
+            >
+              Asistente ERP
+            </DropdownItem>
+            <DropdownItem
+              key="search"
+              startContent={<Search className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
+              onClick={() => setIsSearchOpen(true)}
+            >
+              Buscar en el sistema
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
       </div>
-    )}
+      <FunctionShortcuts open={isFunctionShortcutsOpen} onClose={() => setIsFunctionShortcutsOpen(false)} />
+      {/* Modal de búsqueda */}
+      {isSearchOpen && (
+        <div
+          id="command-modal-bg"
+          className="fixed inset-0 bg-black/40 dark:bg-black/70 flex items-center justify-center z-[10000]"
+          onClick={() => setIsSearchOpen(false)}
+        >
+          <div
+            className="bg-white/95 dark:bg-zinc-900/95 rounded-xl shadow-2xl p-4 border border-gray-200/70 dark:border-zinc-800/70 transition-colors duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <CommandDemo routes={effectiveRoutes} onClose={() => setIsSearchOpen(false)} />
+          </div>
+        </div>
+      )}
 
       {/* Ventana del chat DeepSeek */}
       {isChatOpen && (
-          <Card
-            className={`fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-gray-200/70 dark:border-zinc-800/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200
+        <Card
+          className={`fixed bottom-6 right-6 z-[9998] overflow-hidden p-0 shadow-2xl border border-gray-200/70 dark:border-zinc-800/60 rounded-2xl bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md transition-all duration-200
               ${isExpanded ? "w-[920px] h-[80vh]" : "w-[420px] h-[640px]"} max-w-[95vw]`}
-          >
+        >
           {/* HEADER */}
           <div className="relative px-4 py-4 bg-white/90 dark:bg-zinc-900/90 flex items-center justify-between border-b border-gray-200/70 dark:border-zinc-800/60">
             <div className="flex items-center gap-3">
@@ -837,88 +839,88 @@ return (
             </div>
           </div>
 
-        {/* PANEL CONFIG */}
-        {showConfig && (
-          <div className="space-y-6 px-2 py-4 border-b border-gray-200/70 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm text-[11px] text-gray-700 dark:text-zinc-300">
-            {/* Modos de Visualización */}
-            <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800/60 p-4">
-              <div className="mb-4">
-                <h2 className="text-[13px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Modos de visualización</h2>
-                <p className="text-[11px] text-gray-500 dark:text-zinc-400">Controla cómo se muestra el contenido en la interfaz</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Modo conciso</span>
-                  <Switch size="sm" isSelected={conciseMode} onValueChange={setConciseMode} />
+          {/* PANEL CONFIG */}
+          {showConfig && (
+            <div className="space-y-6 px-2 py-4 border-b border-gray-200/70 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm text-[11px] text-gray-700 dark:text-zinc-300">
+              {/* Modos de Visualización */}
+              <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800/60 p-4">
+                <div className="mb-4">
+                  <h2 className="text-[13px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Modos de visualización</h2>
+                  <p className="text-[11px] text-gray-500 dark:text-zinc-400">Controla cómo se muestra el contenido en la interfaz</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Auto UI</span>
-                  <Switch size="sm" isSelected={autoUISnapshot} onValueChange={setAutoUISnapshot} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Mini BD</span>
-                  <Switch size="sm" isSelected={includeDBContext} onValueChange={setIncludeDBContext} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Auto-navegar</span>
-                  <Switch size="sm" isSelected={autoNavigateOnExact} onValueChange={setAutoNavigateOnExact} />
-                </div>
-              </div>
-            </div>
-            {/* Preferencias de texto */}
-            <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800/60 p-4">
-              <div className="mb-4">
-                <h2 className="text-[13px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Preferencias de texto</h2>
-                <p className="text-[11px] text-gray-500 dark:text-zinc-400">Ajusta el tamaño y densidad del texto</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Densidad cómoda</span>
-                  <Switch
-                    size="sm"
-                    isSelected={density === "comfortable"}
-                    onValueChange={v => setDensity(v ? "comfortable" : "compact")}
-                  />
-                </div>
-                <div>
-                  <span className="block font-medium mb-1">Tamaño de texto</span>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant={textScale === "sm" ? "solid" : "light"}
-                      onPress={() => setTextScale("sm")}
-                    >
-                      A-
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={textScale === "md" ? "solid" : "light"}
-                      onPress={() => setTextScale("md")}
-                    >
-                      A
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={textScale === "lg" ? "solid" : "light"}
-                      onPress={() => setTextScale("lg")}
-                    >
-                      A+
-                    </Button>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Modo conciso</span>
+                    <Switch size="sm" isSelected={conciseMode} onValueChange={setConciseMode} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Auto UI</span>
+                    <Switch size="sm" isSelected={autoUISnapshot} onValueChange={setAutoUISnapshot} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Mini BD</span>
+                    <Switch size="sm" isSelected={includeDBContext} onValueChange={setIncludeDBContext} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Auto-navegar</span>
+                    <Switch size="sm" isSelected={autoNavigateOnExact} onValueChange={setAutoNavigateOnExact} />
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Descripción manual</span>
-                  <Switch size="sm" isSelected={showScreenDesc} onValueChange={setShowScreenDesc} />
+              </div>
+              {/* Preferencias de texto */}
+              <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800/60 p-4">
+                <div className="mb-4">
+                  <h2 className="text-[13px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Preferencias de texto</h2>
+                  <p className="text-[11px] text-gray-500 dark:text-zinc-400">Ajusta el tamaño y densidad del texto</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Densidad cómoda</span>
+                    <Switch
+                      size="sm"
+                      isSelected={density === "comfortable"}
+                      onValueChange={v => setDensity(v ? "comfortable" : "compact")}
+                    />
+                  </div>
+                  <div>
+                    <span className="block font-medium mb-1">Tamaño de texto</span>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={textScale === "sm" ? "solid" : "light"}
+                        onPress={() => setTextScale("sm")}
+                      >
+                        A-
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={textScale === "md" ? "solid" : "light"}
+                        onPress={() => setTextScale("md")}
+                      >
+                        A
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={textScale === "lg" ? "solid" : "light"}
+                        onPress={() => setTextScale("lg")}
+                      >
+                        A+
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Descripción manual</span>
+                    <Switch size="sm" isSelected={showScreenDesc} onValueChange={setShowScreenDesc} />
+                  </div>
                 </div>
               </div>
+              {autoUISnapshot && (
+                <div className="text-[10px] text-gray-500 dark:text-zinc-400 mt-1 line-clamp-3">
+                  Snapshot UI: {uiSnapshot || "capturando..."}
+                </div>
+              )}
             </div>
-            {autoUISnapshot && (
-              <div className="text-[10px] text-gray-500 dark:text-zinc-400 mt-1 line-clamp-3">
-                Snapshot UI: {uiSnapshot || "capturando..."}
-              </div>
-            )}
-          </div>
-        )}
+          )}
 
           {/* HISTORIAL */}
           <div className={`flex-1 overflow-y-auto px-5 py-5 ${gapClass} custom-scroll relative bg-gradient-to-br from-white/95 via-gray-50/80 to-gray-100/60 dark:from-zinc-900/90 dark:via-zinc-900/80 dark:to-zinc-900/70`}>
@@ -958,96 +960,96 @@ return (
           <Divider className="m-0 dark:border-zinc-800/60" />
 
 
-        {/* INPUT */}
-        <div className="px-5 pb-4 pt-3 bg-white/90 dark:bg-zinc-900/85">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
-              {historySummary ? "Resumen aplicado" : "Nuevo contexto"}
-            </span>
-            <button
-              type="button"
-              className="text-[11px] text-gray-700 dark:text-zinc-300 hover:underline"
-              onClick={() => setShowScreenDesc(s => !s)}
-            >
-              {showScreenDesc ? "Ocultar descripción visual" : "Añadir descripción visual"}
-            </button>
-          </div>
+          {/* INPUT */}
+          <div className="px-5 pb-4 pt-3 bg-white/90 dark:bg-zinc-900/85">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
+                {historySummary ? "Resumen aplicado" : "Nuevo contexto"}
+              </span>
+              <button
+                type="button"
+                className="text-[11px] text-gray-700 dark:text-zinc-300 hover:underline"
+                onClick={() => setShowScreenDesc(s => !s)}
+              >
+                {showScreenDesc ? "Ocultar descripción visual" : "Añadir descripción visual"}
+              </button>
+            </div>
 
-          {showScreenDesc && (
+            {showScreenDesc && (
+              <Textarea
+                size="sm"
+                minRows={2}
+                maxRows={4}
+                value={screenDesc}
+                onChange={e => setScreenDesc(e.target.value)}
+                placeholder="Describe lo que ves: «menú lateral con Inicio y Ventas; pestaña Ventas abierta; botón Nueva venta arriba; tabla con columnas Cliente/Fecha/Total»"
+                className="mb-2 font-medium rounded-xl border border-gray-200/70 dark:border-zinc-700 bg-white/90 dark:bg-zinc-800/70 text-gray-800 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
+                disabled={loading}
+              />
+            )}
+
             <Textarea
               size="sm"
-              minRows={2}
+              minRows={1}
               maxRows={4}
-              value={screenDesc}
-              onChange={e => setScreenDesc(e.target.value)}
-              placeholder="Describe lo que ves: «menú lateral con Inicio y Ventas; pestaña Ventas abierta; botón Nueva venta arriba; tabla con columnas Cliente/Fecha/Total»"
-              className="mb-2 font-medium rounded-xl border border-gray-200/70 dark:border-zinc-700 bg-white/90 dark:bg-zinc-800/70 text-gray-800 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage(input);
+                }
+              }}
+              placeholder={hasVisualContext()
+                ? "Escribe tu duda o proceso (Enter para enviar, Shift+Enter para nueva línea)"
+                : "Haz tu pregunta. Para más precisión, añade una descripción visual (botón arriba)."}
+              className="mb-2 font-medium rounded-xl border border-gray-200/70 dark:border-zinc-700 bg-white/95 dark:bg-zinc-800/70 text-gray-800 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
               disabled={loading}
             />
-          )}
 
-          <Textarea
-            size="sm"
-            minRows={1}
-            maxRows={4}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage(input);
-              }
-            }}
-            placeholder={hasVisualContext()
-              ? "Escribe tu duda o proceso (Enter para enviar, Shift+Enter para nueva línea)"
-              : "Haz tu pregunta. Para más precisión, añade una descripción visual (botón arriba)."}
-            className="mb-2 font-medium rounded-xl border border-gray-200/70 dark:border-zinc-700 bg-white/95 dark:bg-zinc-800/70 text-gray-800 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
-            disabled={loading}
-          />
-
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex flex-wrap gap-1">
-              {QUICK_PROMPTS.map(q => (
-                <Chip
-                  key={q}
-                  size="sm"
-                  className="cursor-pointer bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 font-medium border border-gray-200 dark:border-zinc-700 hover:shadow"
-                  onClick={() => { setInput(q); setTimeout(() => sendMessage(q), 40); }}
-                >
-                  {q}
-                </Chip>
-              ))}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-1">
+                {QUICK_PROMPTS.map(q => (
+                  <Chip
+                    key={q}
+                    size="sm"
+                    className="cursor-pointer bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 font-medium border border-gray-200 dark:border-zinc-700 hover:shadow"
+                    onClick={() => { setInput(q); setTimeout(() => sendMessage(q), 40); }}
+                  >
+                    {q}
+                  </Chip>
+                ))}
+              </div>
+              <Button
+                color="default"
+                variant="flat"
+                endContent={<Send className="w-4 h-4" />}
+                onPress={() => sendMessage(input)}
+                isDisabled={!input.trim() || loading}
+                className="rounded-lg px-5 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+              >
+                Enviar
+              </Button>
             </div>
-            <Button
-              color="default"
-              variant="flat"
-              endContent={<Send className="w-4 h-4" />}
-              onPress={() => sendMessage(input)}
-              isDisabled={!input.trim() || loading}
-              className="rounded-lg px-5 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-            >
-              Enviar
-            </Button>
+
+            {/* Ayudas contextuales */}
+            <div className="mt-2 text-[10px] text-gray-500 dark:text-zinc-400 flex flex-col gap-1 font-medium">
+              {!hasVisualContext() ? (
+                <span>
+                  Consejo: añade una descripción visual para respuestas más precisas.{" "}
+                  <button type="button" className="underline" onClick={() => setShowScreenDesc(true)}>
+                    Añadir descripción visual
+                  </button>
+                  .
+                </span>
+              ) : (
+                <span>Atajo: Enter envía, Shift+Enter inserta salto de línea.</span>
+              )}
+              <span className="opacity-80">Evita datos sensibles en la descripción.</span>
+            </div>
           </div>
 
-          {/* Ayudas contextuales */}
-          <div className="mt-2 text-[10px] text-gray-500 dark:text-zinc-400 flex flex-col gap-1 font-medium">
-            {!hasVisualContext() ? (
-              <span>
-                Consejo: añade una descripción visual para respuestas más precisas.{" "}
-                <button type="button" className="underline" onClick={() => setShowScreenDesc(true)}>
-                  Añadir descripción visual
-                </button>
-                .
-              </span>
-            ) : (
-              <span>Atajo: Enter envía, Shift+Enter inserta salto de línea.</span>
-            )}
-            <span className="opacity-80">Evita datos sensibles en la descripción.</span>
-          </div>
-        </div>
-
-        <style>{`
+          <style>{`
           .custom-scroll::-webkit-scrollbar { width: 6px; }
           .custom-scroll::-webkit-scrollbar-track { background: transparent; }
           .custom-scroll::-webkit-scrollbar-thumb {
@@ -1057,8 +1059,8 @@ return (
           @keyframes fade-in { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
           .animate-fade-in { animation: fade-in .3s ease; }
         `}</style>
-      </Card>
-    )}
-  </>
-);
+        </Card>
+      )}
+    </>
+  );
 }
