@@ -24,16 +24,6 @@ const ContactanosPage = lazy(() => import("./pages/Landing/ContactanosPage"));
 const BlogPage = lazy(() => import("./pages/Landing/BlogPage"));
 const RegistroLicenciaPage = lazy(() => import("./pages/Landing/RegistroLicenciaPage"));
 const RegistroPage = lazy(() => import("./pages/Landing/RegistroPage"));
-const AppSidebar = lazy(() =>
-  import("./components/Sidebar/AppSidebar").then((module) => ({
-    default: module.AppSidebar,
-  }))
-);
-const SidebarProvider = lazy(() =>
-  import("@/components/ui/Sidebar").then((module) => ({
-    default: module.SidebarProvider,
-  }))
-);
 
 const ChatbotClientWidget = lazy(() =>
   import("@/components/Chatbot/DeepSeekChatbot")
@@ -46,8 +36,6 @@ function ThemeClassSync() {
   }, [theme]);
   return null;
 }
-
-
 
 function ProtectedLayout() {
   const [widgetsReady, setWidgetsReady] = useState(false);
@@ -71,19 +59,14 @@ function ProtectedLayout() {
   }, [widgetsReady]);
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-screen overflow-hidden">
-        <AppSidebar />
-        <ScrollShadow hideScrollBar className="flex-1 h-full">
-          <Dashboard />
-          {widgetsReady && (
-            <Suspense fallback={null}>
-              <ChatbotClientWidget />
-            </Suspense>
-          )}
-        </ScrollShadow>
-      </div>
-    </SidebarProvider>
+    <div className="flex h-screen w-screen overflow-hidden flex-col bg-transparent text-slate-900 dark:text-zinc-100">
+      <Dashboard />
+      {widgetsReady && (
+        <Suspense fallback={null}>
+          <ChatbotClientWidget />
+        </Suspense>
+      )}
+    </div>
   );
 }
 

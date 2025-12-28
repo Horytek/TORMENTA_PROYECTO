@@ -36,7 +36,7 @@ export default function FilterControls({
     const hasActiveFilters = selectedRole || selectedStatus || selectedConnection;
 
     return (
-        <div className="flex flex-col gap-3 p-4 bg-gray-50 dark:bg-blue-900/10 rounded-xl border border-gray-200 dark:border-blue-800/30">
+        <div className="flex flex-col gap-3 p-4 bg-slate-50 dark:bg-zinc-900/50 rounded-xl border border-slate-200 dark:border-zinc-800">
             {/* Header & Dropdowns */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-1 md:mb-0">

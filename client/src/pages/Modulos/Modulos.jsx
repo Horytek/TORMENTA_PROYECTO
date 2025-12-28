@@ -23,7 +23,7 @@ function Modulos() {
     };
 
     return (
-        <div className="mx-2 md:mx-6 my-4">
+        <div className="w-full my-4">
             <Toaster />
 
             <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">

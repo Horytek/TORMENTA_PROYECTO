@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 
 // Services
 import { getModulosConSubmodulos } from '@/services/rutas.services';
+import { ScrollShadow } from "@heroui/react";
 
 import { moduleComponentMap, submoduleComponentMap } from '@/utils/componentMapping';
 import DeepSeekOpenRouterChatbot from "@/components/Chatbot/DeepSeekChatbot";
@@ -276,28 +277,30 @@ function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full">
+    <div className="h-full w-full bg-transparent">
       <Toaster position="top-center" reverseOrder={true} />
-      <div className="flex flex-col transition-all duration-300">
-        <Navbar routes={routes} />
-        <div className="p-4 contenido-cambiante">
-          <SubcategoriaContextProvider>
-            <CategoriaContextProvider>
-              <MarcaContextProvider>
-                <Suspense fallback={<div>Cargando componentes...</div>}>
-                  <Routes>
-                    {renderDynamicRoutes()}
-                  </Routes>
-                </Suspense>
-              </MarcaContextProvider>
-            </CategoriaContextProvider>
-          </SubcategoriaContextProvider>
+      <ScrollShadow className="h-full w-full" hideScrollBar>
+        <div className="flex flex-col min-h-screen transition-all duration-300">
+          <Navbar routes={routes} />
+          <div className="w-full px-0 sm:px-4 contenido-cambiante flex-1">
+            <SubcategoriaContextProvider>
+              <CategoriaContextProvider>
+                <MarcaContextProvider>
+                  <Suspense fallback={<div>Cargando componentes...</div>}>
+                    <Routes>
+                      {renderDynamicRoutes()}
+                    </Routes>
+                  </Suspense>
+                </MarcaContextProvider>
+              </CategoriaContextProvider>
+            </SubcategoriaContextProvider>
+          </div>
+
         </div>
+      </ScrollShadow>
 
-        {/* Widget global del chatbot (siempre visible sobre el contenido) */}
-
-        <DeepSeekOpenRouterChatbot routes={routes} />
-      </div>
+      {/* Widget global del chatbot (siempre visible sobre el contenido) */}
+      <DeepSeekOpenRouterChatbot routes={routes} />
     </div>
   );
 }

@@ -172,17 +172,14 @@ const login = async (req, res) => {
             try { await logAcceso.loginOk(userbd.id_usuario, ip, userbd.id_tenant); } catch (e) { }
         }
 
-        // Configuración segura de cookie
-        const isProd = process.env.NODE_ENV === "production";
-        res.cookie("token", token, {
-            httpOnly: true,        // Previene acceso desde JavaScript
-            secure: isProd,        // Solo HTTPS en producción
-            sameSite: isProd ? "none" : "lax", // Protección CSRF
-            maxAge: 1000 * 60 * 60 * 8 // 8 horas
-        });
+        // NOTA DE SEGURIDAD: Se remueve la cookie y se envía el token en el cuerpo
+        // para almacenamiento en cliente (localStorage/Memory) según solicitud.
+        // const isProd = process.env.NODE_ENV === "production";
+        // res.cookie("token", token, { ... });
 
         res.json({
             success: true,
+            token: token, // Enviamos el token al cliente
             data: {
                 id: userbd.id_usuario,
                 rol: userbd.id_rol,
@@ -232,8 +229,14 @@ const login = async (req, res) => {
 
 // VERIFY TOKEN - OPTIMIZADO
 const verifyToken = async (req, res) => {
-    // Validar cookie y JWT primero (sin DB)
-    const token = req.cookies?.token;
+    // Validar token de Header (o cookie fallback)
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+    } else {
+        token = req.cookies?.token;
+    }
 
     if (!token) {
         return res.status(401).json({
@@ -353,7 +356,15 @@ const verifyToken = async (req, res) => {
 
 // LOGOUT - OPTIMIZADO
 const logout = async (req, res) => {
-    const token = req.cookies?.token;
+    // Leer token de cabecera Authorization (Bearer token)
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+    } else {
+        // Fallback a cookie por si acaso
+        token = req.cookies?.token;
+    }
 
     if (!token) {
         return res.status(400).json({
@@ -364,13 +375,14 @@ const logout = async (req, res) => {
 
     let decoded;
     try {
-        decoded = jwt.verify(token, TOKEN_SECRET, {
-            audience: "horytek-erp",
-            issuer: "horytek-backend"
+        decoded = jwt.verify(token, TOKEN_SECRET, (err, decoded) => {
+            // Si expiro, igual intentamos decodificar para el log si es posible, o simplemente seguimos
+            if (err) throw err;
+            return decoded;
         });
     } catch (error) {
         console.warn('[SECURITY] Token inválido en logout:', error.message);
-        // Limpiar cookie de todos modos
+        // Intentar limpiar cookie por si acaso existía
         const isProd = process.env.NODE_ENV === "production";
         res.cookie("token", "", {
             httpOnly: true,
@@ -414,7 +426,7 @@ const logout = async (req, res) => {
             [0, userbd.id_usuario]
         );
 
-        // Limpiar cookie
+        // Limpiar cookie por si acaso
         const isProd = process.env.NODE_ENV === "production";
         res.cookie("token", "", {
             httpOnly: true,

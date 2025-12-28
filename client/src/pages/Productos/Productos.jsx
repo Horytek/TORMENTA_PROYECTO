@@ -3,10 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Toaster, toast } from "react-hot-toast";
 import { FaPlus, FaFileExcel, FaFileExport } from "react-icons/fa";
 import {
-  Button, Tabs, Tab, Modal, ModalContent, ModalHeader,
-  ModalBody, ModalFooter, Dropdown, DropdownTrigger,
-  DropdownMenu, DropdownItem
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Dropdown, DropdownTrigger,
+  DropdownMenu, DropdownItem, Tabs, Tab
 } from "@heroui/react";
+import { motion } from "framer-motion";
+import TableSkeleton from "@/components/Skeletons/TableSkeleton";
 import * as XLSX from 'xlsx';
 
 // Rutas y Servicios
@@ -339,7 +340,12 @@ function Productos() {
   }, [activeTab, data, searchTerm, hasCreatePermission, isCreateModalOpen, editingProduct, ops]);
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-6 md:p-8 font-inter">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-6 md:p-8 font-inter"
+    >
       <Toaster position="top-center" />
       <div className="max-w-[1920px] mx-auto space-y-6">
 
@@ -394,10 +400,7 @@ function Productos() {
         {/* Content Area */}
         <div className="min-h-[400px]">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-64 space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-              <span className="text-blue-600 font-medium animate-pulse">Cargando inventario...</span>
-            </div>
+            <TableSkeleton rows={10} />
           ) : (
             renderContent()
           )}
@@ -411,7 +414,7 @@ function Productos() {
         type={importModal.type}
         onImport={handleImport}
       />
-    </div>
+    </motion.div>
   );
 }
 

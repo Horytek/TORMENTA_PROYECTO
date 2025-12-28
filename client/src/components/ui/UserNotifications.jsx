@@ -132,130 +132,127 @@ export default function UserNotifications({ open, onClose }) {
       <DrawerContent>
         {(internalClose) => (
           <>
-          <DrawerHeader className="flex flex-col gap-4 px-6 py-4 border-b border-gray-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-10">
-            {/* --- FILA SUPERIOR: Título y Botón Cerrar --- */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">
-                  <Bell className="w-5 h-5" />
+            <DrawerHeader className="flex flex-col gap-4 px-6 py-4 border-b border-slate-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl sticky top-0 z-10">
+              {/* --- FILA SUPERIOR: Título y Botón Cerrar --- */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-300">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <h3 className="font-bold text-base text-slate-800 dark:text-white leading-tight">
+                      Notificaciones
+                    </h3>
+                    <p className="text-xs font-medium text-slate-400 dark:text-zinc-500">
+                      Actividad reciente del sistema
+                    </p>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="font-semibold text-lg leading-none text-gray-900 dark:text-white">
-                    Notificaciones
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-                    Actividad reciente del sistema
-                  </p>
-                </div>
+                <Button
+                  isIconOnly
+                  variant="light"
+                  size="sm"
+                  onPress={() => handleClose(internalClose)}
+                  className="text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                isIconOnly
-                variant="light"
-                radius="full"
-                size="sm"
-                onPress={() => handleClose(internalClose)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
 
-            {/* --- FILA INFERIOR: Buscador y Tabs unificados --- */}
-            <div className="flex flex-col sm:flex-row gap-3 items-center w-full">
-              <Input
-                placeholder="Buscar..."
-                size="sm"
-                radius="lg"
-                variant="bordered"
-                startContent={<Filter className="w-3.5 h-3.5 text-gray-400" />}
-                value={search}
-                onValueChange={setSearch}
-                classNames={{
-                  inputWrapper: "bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 shadow-sm hover:border-primary-400 transition-colors",
-                  input: "text-sm",
-                }}
-                className="w-full sm:max-w-[200px]" // Ajustamos el ancho en desktop para que no sea enorme
-              />
-              
-              {/* Tabs con estilo sólido para equilibrar el Input */}
-              <Tabs
-                aria-label="Filtros"
-                size="sm"
-                radius="lg"
-                variant="solid" 
-                color="primary"
-                selectedKey={filter}
-                onSelectionChange={setFilter}
-                classNames={{
-                  base: "w-full sm:w-auto",
-                  tabList: "w-full sm:w-auto bg-gray-100 dark:bg-zinc-800 p-1 gap-1",
-                  cursor: "bg-white dark:bg-zinc-700 shadow-sm", // Efecto tarjeta flotante
-                  tab: "h-7 px-3 text-gray-500 dark:text-zinc-400",
-                  tabContent: "group-data-[selected=true]:text-gray-900 dark:group-data-[selected=true]:text-white font-medium"
-                }}
-              >
-                <Tab key="all" title="Todas" />
-                <Tab key="login" title="Accesos" />
-                <Tab key="changes" title="Cambios" />
-                <Tab key="errors" title="Alertas" />
-              </Tabs>
-            </div>
-          </DrawerHeader>
+              {/* --- FILA INFERIOR: Buscador y Tabs unificados --- */}
+              <div className="flex flex-col sm:flex-row gap-3 items-center w-full">
+                <Input
+                  placeholder="Buscar..."
+                  size="sm"
+                  variant="bordered"
+                  startContent={<Filter className="w-3.5 h-3.5 text-slate-400" />}
+                  value={search}
+                  onValueChange={setSearch}
+                  classNames={{
+                    inputWrapper: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm hover:border-indigo-400 transition-colors h-9",
+                    input: "text-xs",
+                  }}
+                  className="w-full sm:max-w-[200px]"
+                />
 
-            <DrawerBody className="p-0 bg-gray-50/50 dark:bg-zinc-900/50">
+                <Tabs
+                  aria-label="Filtros"
+                  size="sm"
+                  variant="light"
+                  color="primary"
+                  selectedKey={filter}
+                  onSelectionChange={setFilter}
+                  classNames={{
+                    base: "w-full sm:w-auto",
+                    tabList: "w-full sm:w-auto bg-slate-100/50 dark:bg-zinc-800/50 p-1 gap-1 rounded-lg",
+                    cursor: "bg-white dark:bg-zinc-700 shadow-sm rounded-md",
+                    tab: "h-7 px-3 text-slate-500 dark:text-zinc-400 text-[11px] font-medium",
+                    tabContent: "group-data-[selected=true]:text-slate-800 dark:group-data-[selected=true]:text-white"
+                  }}
+                >
+                  <Tab key="all" title="Todas" />
+                  <Tab key="login" title="Accesos" />
+                  <Tab key="changes" title="Cambios" />
+                  <Tab key="errors" title="Alertas" />
+                </Tabs>
+              </div>
+            </DrawerHeader>
+
+            <DrawerBody className="p-0 bg-white dark:bg-zinc-950">
               {loading ? (
                 <div className="flex flex-col items-center justify-center h-64 gap-3">
-                  <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-gray-500">Cargando actividad...</p>
+                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs text-slate-400 font-medium">Cargando actividad...</p>
                 </div>
               ) : error ? (
                 <div className="p-8 text-center">
                   <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
                     <AlertTriangle className="w-6 h-6" />
                   </div>
-                  <p className="text-red-500 text-sm">{error}</p>
+                  <p className="text-red-500 text-xs font-medium">{error}</p>
                 </div>
               ) : filteredNotifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center p-6">
-                  <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-                    <Bell className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
+                  <div className="w-16 h-16 bg-slate-50 dark:bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 text-slate-300 dark:text-zinc-700">
+                    <Bell className="w-8 h-8" />
                   </div>
-                  <h4 className="text-gray-900 dark:text-gray-100 font-medium mb-1">Sin notificaciones</h4>
-                  <p className="text-sm text-gray-500 dark:text-zinc-400 max-w-[200px]">
+                  <h4 className="text-slate-800 dark:text-slate-200 font-medium text-sm mb-1">Sin notificaciones</h4>
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 max-w-[200px]">
                     No hay actividad reciente que coincida con tus filtros.
                   </p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+                <div className="divide-y divide-slate-50 dark:divide-zinc-900">
                   {filteredNotifications.map((n) => (
                     <div
                       key={n.id_log}
-                      className="p-4 hover:bg-white dark:hover:bg-zinc-800/50 transition-colors group relative"
+                      className="px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors group relative"
                     >
-                      <div className="flex gap-3">
-                        <div className="mt-1 shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center shadow-sm">
+                      <div className="flex gap-4">
+                        <div className="mt-0.5 shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 flex items-center justify-center">
                             {getIcon(n.accion)}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-0.5">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
                               {getTitle(n)}
                             </p>
-                            <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">
+                            <span className="text-[10px] text-slate-400 whitespace-nowrap shrink-0 font-medium bg-slate-50 dark:bg-zinc-800 px-1.5 py-0.5 rounded-md">
                               {formatTime(n.fecha)}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-600 dark:text-zinc-400 line-clamp-2 mb-1.5">
+                          <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-2 mb-2 leading-relaxed">
                             {n.descripcion || "Sin descripción"}
                           </p>
                           <div className="flex items-center gap-2">
-                            <Chip size="sm" variant="flat" className="h-5 text-[10px] px-1 bg-gray-100 dark:bg-zinc-800 text-gray-500">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-zinc-600" />
                               {n.nombre_usuario || "Sistema"}
-                            </Chip>
+                            </span>
                             {n.id_modulo && (
-                              <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                              <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                 • Módulo {n.id_modulo}
                               </span>
                             )}

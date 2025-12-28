@@ -4,38 +4,30 @@ import { SearchIcon } from "./SearchIcon";
 import { CloseFilledIcon } from "./CloseFilledIcon";
 
 const styles = {
-  label: "text-black/50 dark:text-white/90",
+  label: "text-slate-500 dark:text-slate-400 font-medium",
   input: [
     "bg-transparent",
-    "text-black/90 dark:text-white/90",
-    "placeholder:text-default-700/50 dark:placeholder:text-white/60",
+    "text-sm text-slate-700 dark:text-slate-200",
+    "font-medium",
+    "placeholder:text-slate-400 dark:placeholder:text-slate-500",
     "focus:outline-none",
     "border-none",
     "shadow-none",
     "focus:ring-0",
-    "py-2",
-    "leading-normal",
-    "w-full",
-    "overflow-hidden",
-    "text-ellipsis",
+    "h-full"
   ],
-  innerWrapper: "bg-transparent flex items-center",
+  innerWrapper: "bg-transparent flex items-center h-full gap-2",
   inputWrapper: [
+    "h-11", // Height 11 (2.75rem)
+    "bg-slate-50 dark:bg-zinc-800/50", // Light/Dark bg
+    "border border-slate-200 dark:border-zinc-700/50", // Border
+    "hover:bg-white dark:hover:bg-zinc-800", // Hover
+    "transition-all duration-200",
+    "rounded-xl", // Rounded
     "shadow-none",
-    "border-none",
-    "bg-default-200/50",
-    "dark:bg-default/60",
-    "backdrop-blur-xl",
-    "backdrop-saturate-200",
-    "hover:bg-default-200/70",
-    "focus-within:bg-default-200/50",
-    "dark:hover:bg-default/70",
-    "dark:focus-within:bg-default/60",
+    "px-3",
     "!cursor-text",
-    "flex",
-    "items-center",
-    "px-5",
-    "w-full",
+    "flex items-center"
   ],
 };
 

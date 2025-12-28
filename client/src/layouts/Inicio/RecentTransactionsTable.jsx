@@ -235,17 +235,17 @@ export function RecentTransactionsTable({ className }) {
 
     return (
         <>
-            <Card className={`h-full border border-slate-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden ${className || ""}`}>
-                <CardHeader className="flex justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800">
+            <Card className={`h-full border-none shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 rounded-2xl overflow-hidden ${className || ""}`}>
+                <CardHeader className="flex justify-between items-center px-6 py-5 border-b border-slate-50 dark:border-zinc-800/50">
                     <div>
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Transacciones Recientes</h3>
-                        <p className="text-xs text-slate-500 font-medium">Últimos movimientos registrados</p>
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">Transacciones Recientes</h3>
+                        <p className="text-[10px] text-slate-400 font-medium">Últimos movimientos</p>
                     </div>
                     <Button
                         size="sm"
                         variant="light"
-                        className="text-blue-600 font-medium"
-                        endContent={<ArrowUpRight size={16} />}
+                        className="text-blue-600 font-semibold text-xs px-3 min-w-[auto] h-8 bg-blue-50/50 hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-800 rounded-lg"
+                        endContent={<ArrowUpRight size={14} strokeWidth={2.5} />}
                         onPress={() => navigate('/ventas')}
                     >
                         Ver todas

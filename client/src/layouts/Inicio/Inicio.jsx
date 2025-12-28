@@ -17,63 +17,62 @@ import { RecentTransactionsTable } from "./RecentTransactionsTable";
 
 function StockCard({ productos }) {
   return (
-    <Card className="h-full border border-slate-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden relative group">
-      {/* Background Decorator */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-rose-50/50 dark:bg-rose-900/10 rounded-full blur-3xl -z-10 pointer-events-none group-hover:bg-rose-100/60 transition-all duration-500"></div>
-
-      <CardHeader className="flex gap-4 px-6 pt-6 pb-2 z-10">
-        <div className="p-3 rounded-xl bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-900/20 dark:to-orange-900/20 border border-rose-100 dark:border-rose-800/30 text-rose-600 dark:text-rose-400 shadow-sm">
-          <AlertTriangle size={22} className="drop-shadow-sm" />
-        </div>
+    <Card className="h-full border-none shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 rounded-2xl overflow-hidden">
+      <CardHeader className="flex justify-between items-center px-5 py-4 border-b border-slate-50 dark:border-zinc-800/50">
         <div>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Stock Crítico</h2>
-          <p className="text-xs text-slate-500 font-medium">Atención requerida en inventario</p>
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">Stock Crítico</h2>
+          <p className="text-[10px] text-slate-400 font-medium">Atención requerida</p>
+        </div>
+        <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">
+          <AlertTriangle size={14} strokeWidth={2.5} />
         </div>
       </CardHeader>
 
-      <Divider className="my-2 bg-slate-100 dark:bg-zinc-800/50 mx-6 w-auto" />
-
-      <CardBody className="px-6 pb-6 pt-2 z-10">
-        <ScrollShadow hideScrollBar className="max-h-[300px] w-full pr-2">
+      <CardBody className="px-0 py-2">
+        <ScrollShadow hideScrollBar className="max-h-[300px] w-full">
           {productos.length > 0 ? (
-            <ul className="space-y-3">
-              {productos.map((prod, idx) => {
-                const urgencyLevel = 6 - Number.parseInt(prod.stock);
-                const isCritical = urgencyLevel > 4;
-                const isWarning = urgencyLevel > 2 && !isCritical;
+            <div className="w-full">
+              <table className="w-full text-left text-xs">
+                <thead className="text-[10px] text-slate-400 font-semibold bg-slate-50/50 dark:bg-zinc-800/50 uppercase tracking-wider sticky top-0 z-10">
+                  <tr>
+                    <th className="px-5 py-2">Producto</th>
+                    <th className="px-4 py-2 text-center">Stock</th>
+                    <th className="px-4 py-2 text-right">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-zinc-800/50">
+                  {productos.map((prod, idx) => {
+                    const urgencyLevel = 6 - Number.parseInt(prod.stock);
+                    const isCritical = urgencyLevel > 4;
+                    const isWarning = urgencyLevel > 2 && !isCritical;
 
-                const colorClass = isCritical ? "bg-rose-50 text-rose-700 border-rose-200" : isWarning ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-yellow-50 text-yellow-700 border-yellow-200";
-                const dotClass = isCritical ? "bg-rose-500" : isWarning ? "bg-orange-500" : "bg-yellow-500";
-
-                return (
-                  <li key={idx} className="flex justify-between items-center p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 border border-transparent hover:border-slate-100 dark:hover:border-zinc-700 transition-all duration-200 group/item">
-                    <div className="min-w-0 flex-1 pr-3">
-                      <p className="font-semibold text-sm text-slate-700 dark:text-slate-200 truncate group-hover/item:text-blue-600 transition-colors">{prod.nombre}</p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className={`w-2 h-2 rounded-full ${dotClass} shadow-sm animate-pulse`}></span>
-                        <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-                          {isCritical ? "Crítico" : "Bajo"}
-                        </span>
-                      </div>
-                    </div>
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      className={`font-bold border ${colorClass} min-w-[60px] justify-center shadow-sm`}
-                    >
-                      {prod.stock} und.
-                    </Chip>
-                  </li>
-                )
-              })}
-            </ul>
+                    return (
+                      <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-default group">
+                        <td className="px-5 py-2.5 max-w-[140px]">
+                          <p className="font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 transition-colors">{prod.nombre}</p>
+                          <p className="text-[9px] text-slate-400">{prod.codigo || 'S/C'}</p>
+                        </td>
+                        <td className="px-4 py-2.5 text-center font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                          {prod.stock}
+                        </td>
+                        <td className="px-4 py-2.5 text-right">
+                          <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md ${isCritical ? "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400" :
+                            isWarning ? "bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400" :
+                              "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400"
+                            }`}>
+                            {isCritical ? "Crítico" : "Bajo"}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-48 text-slate-400 bg-slate-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-slate-200 dark:border-zinc-700 mx-2">
-              <div className="p-4 bg-white dark:bg-zinc-800 rounded-full shadow-sm mb-3">
-                <Package size={28} className="text-emerald-500 opacity-80" />
-              </div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-300">¡Todo en orden!</p>
-              <p className="text-xs">No hay alertas de stock</p>
+            <div className="flex flex-col items-center justify-center py-10 text-slate-400 bg-slate-50/30 mx-4 rounded-xl border border-dashed border-slate-100">
+              <Package size={24} className="mb-2 opacity-50" />
+              <p className="text-xs font-medium">Todo en orden</p>
             </div>
           )}
         </ScrollShadow>
@@ -86,26 +85,21 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
   const colors = ["bg-blue-500", "bg-indigo-500", "bg-violet-500", "bg-fuchsia-500"];
 
   return (
-    <Card className="h-full border border-slate-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden relative group">
-      {/* Background Decorator */}
-      <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-50/50 dark:bg-blue-900/10 rounded-full blur-3xl -z-10 pointer-events-none group-hover:bg-blue-100/60 transition-all duration-500"></div>
-
-      <CardHeader className="flex gap-4 px-6 pt-6 pb-2 z-10">
-        <div className="p-3 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/30 text-blue-600 dark:text-blue-400 shadow-sm">
-          <TrendingUp size={22} className="drop-shadow-sm" />
-        </div>
+    <Card className="h-full border-none shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 rounded-2xl overflow-hidden">
+      <CardHeader className="flex justify-between items-center px-5 py-4 border-b border-slate-50 dark:border-zinc-800/50">
         <div>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Rendimiento Sucursales</h2>
-          <p className="text-xs text-slate-500 font-medium">Comparativa de ventas</p>
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">Rendimiento</h2>
+          <p className="text-[10px] text-slate-400 font-medium">Ventas por sucursal</p>
+        </div>
+        <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+          <TrendingUp size={14} strokeWidth={2.5} />
         </div>
       </CardHeader>
 
-      <Divider className="my-2 bg-slate-100 dark:bg-zinc-800/50 mx-6 w-auto" />
-
-      <CardBody className="px-6 pb-6 pt-2 z-10">
-        <ScrollShadow hideScrollBar className="max-h-[300px] w-full pr-2">
+      <CardBody className="px-5 py-4">
+        <ScrollShadow hideScrollBar className="max-h-[300px] w-full">
           {sucursales.length > 0 ? (
-            <ul className="space-y-5">
+            <ul className="space-y-4">
               {sucursales.map((branch, index) => {
                 const sales = branch.ventas || branch.sales || 0;
                 const maxSales = 15000; // Objetivo demo
@@ -113,65 +107,86 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
                 const barColor = colors[index % colors.length];
 
                 return (
-                  <li key={index} className="space-y-2 group/bar">
-                    <div className="flex justify-between items-end text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${barColor}`}></div>
-                        <span className="font-semibold text-slate-700 dark:text-slate-200 group-hover/bar:text-blue-600 transition-colors">{branch.nombre || branch.name}</span>
-                      </div>
-                      <span className="font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-zinc-800 px-2 py-0.5 rounded-md text-xs">S/. {sales.toLocaleString()}</span>
+                  <li key={index} className="space-y-1.5 group">
+                    <div className="flex justify-between items-end text-xs">
+                      <span className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-blue-600 transition-colors">{branch.nombre || branch.name}</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-100 tabular-nums">S/. {sales.toLocaleString()}</span>
                     </div>
-                    <div className="h-2.5 w-full bg-slate-100 dark:bg-zinc-800/50 rounded-full overflow-hidden shadow-inner">
+                    <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${barColor} transition-all duration-1000 ease-out relative`}
+                        className={`h-full rounded-full ${barColor} transition-all duration-1000 ease-out`}
                         style={{ width: `${percent}%` }}
-                      >
-                        <div className="absolute inset-0 bg-white/20"></div>
-                      </div>
+                      ></div>
                     </div>
                   </li>
                 )
               })}
             </ul>
           ) : (
-            <div className="flex flex-col items-center justify-center h-48 text-slate-400 bg-slate-50/50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-slate-200 dark:border-zinc-700 mx-2">
-              <Monitor size={32} className="mb-2 opacity-50" />
-              <p className="text-sm">Sin datos de ventas</p>
+            <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+              <p className="text-xs">Sin datos</p>
             </div>
           )}
         </ScrollShadow>
-        <div className="mt-6 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white dark:from-zinc-800/50 dark:to-zinc-800/30 p-4 rounded-xl border border-slate-100 dark:border-zinc-700/50 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Promedio General</span>
-          <span className="text-lg font-black text-slate-800 dark:text-white tracking-tight">S/. {promedioGeneral?.toLocaleString()}</span>
+        <div className="mt-5 pt-4 border-t border-slate-50 dark:border-zinc-800 flex justify-between items-center">
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Promedio</span>
+          <span className="text-sm font-bold text-slate-800 dark:text-white tabular-nums">S/. {promedioGeneral?.toLocaleString()}</span>
         </div>
       </CardBody>
     </Card>
   );
 }
 
-function MetricCard({ icon, title, value, change, isPositive, extra, bgClass, borderColor }) {
+function MetricCard({ icon, title, value, change, isPositive, extra, variant = "default" }) {
+  const variants = {
+    default: "text-slate-600 bg-slate-50 dark:text-slate-300 dark:bg-zinc-800",
+    success: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20",
+    primary: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20",
+    secondary: "text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20",
+    warning: "text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20",
+  };
+
+  const iconStyle = variants[variant] || variants.default;
+
   return (
-    <Card className={`border border-slate-200 dark:border-zinc-800 shadow-sm rounded-2xl p-4 overflow-hidden relative group hover:shadow-md transition-all duration-300 ${bgClass || 'bg-white dark:bg-zinc-900'}`}>
-      <div className="flex flex-col h-full justify-between gap-4">
+    <Card className="border border-slate-100 dark:border-zinc-800 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04)] dark:shadow-none dark:bg-zinc-900 rounded-2xl p-6 h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-white">
+      <div className="flex flex-col justify-between h-full gap-4">
+
+        {/* Header: Icon & Trend */}
         <div className="flex justify-between items-start">
-          {/* Icon Box */}
-          <div className={`p-3 rounded-2xl bg-white dark:bg-zinc-800 border-2 ${borderColor || 'border-slate-50 dark:border-zinc-700'} shadow-sm`}>
+          <div className={`p-3 rounded-xl ${iconStyle} transition-colors`}>
             {icon}
           </div>
-          {/* Change Pill */}
           {(change || change === 0) && (
-            <div className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border shadow-sm ${isPositive ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+            <Chip
+              size="sm"
+              variant="flat"
+              color={isPositive ? "success" : "danger"}
+              classNames={{
+                base: "h-6 px-1",
+                content: "font-semibold text-[10px] flex items-center gap-1"
+              }}
+            >
               {isPositive ? <ArrowUp size={10} strokeWidth={3} /> : <ArrowDown size={10} strokeWidth={3} />}
               {change}
-            </div>
+            </Chip>
           )}
           {extra}
         </div>
 
+        {/* Content */}
         <div>
-          {/* Value */}
-          <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none mb-2">{value}</h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</p>
+          <h3 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight tabular-nums mt-2">
+            {value}
+          </h3>
+          <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
+            {title}
+          </p>
+
+          {/* Optional Progress Bar for Visual Flair - Minimal */}
+          <div className="w-full bg-slate-100 dark:bg-zinc-800 h-1 mt-4 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full ${isPositive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-600'} w-2/3`}></div>
+          </div>
         </div>
       </div>
     </Card>
@@ -237,14 +252,14 @@ function Inicio() {
   const periodoLabel = getPeriodoLabel(selectedTab);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#09090b] p-4 md:p-8 font-inter">
-      <div className="max-w-[1920px] mx-auto space-y-8">
+    <div className="w-full font-inter">
+      <div className="w-full space-y-8">
 
         {/* Header Dashboard */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-slate-200 dark:border-zinc-800">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">Panel Principal</h1>
-            <p className="text-slate-500 font-medium text-base">Visión general del rendimiento de tu negocio.</p>
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 mt-2">
+          <div className="space-y-1.5">
+            <h1 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Panel Principal</h1>
+            <p className="text-slate-500 font-medium text-sm">Visión general del rendimiento de tu negocio.</p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
@@ -254,27 +269,28 @@ function Inicio() {
               onSelectionChange={(k) => setSelectedSucursal(Array.from(k)[0] || "")}
               className="w-full sm:w-56"
               size="sm"
-              variant="faded"
-              startContent={<Monitor size={16} className="text-slate-500" />}
+              variant="flat"
+              startContent={<Monitor size={14} className="text-slate-500" />}
               classNames={{
-                trigger: "bg-white dark:bg-zinc-900 shadow-sm border border-slate-200 dark:border-zinc-700 h-10 rounded-xl",
-                value: "text-slate-700 dark:text-slate-200"
+                trigger: "bg-white dark:bg-zinc-900 shadow-sm hover:bg-slate-50 transition-colors h-9 rounded-lg",
+                value: "text-slate-600 dark:text-slate-300 font-medium text-xs scale-100"
               }}
             >
               {sucursales.map((s) => <SelectItem key={s.id.toString()} value={s.id.toString()}>{s.nombre}</SelectItem>)}
             </Select>
 
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl p-1 shadow-sm flex items-center">
+            <div className="bg-slate-100/50 dark:bg-zinc-800/50 p-1 rounded-lg">
               <Tabs
                 selectedKey={selectedTab}
                 onSelectionChange={setSelectedTab}
                 color="primary"
                 variant="light"
-                radius="lg"
+                radius="md"
                 classNames={{
-                  tabList: "gap-1",
-                  tab: "h-8 px-3 text-xs font-medium",
-                  cursor: "shadow-sm bg-blue-500 text-white"
+                  tabList: "gap-0.5",
+                  tab: "h-7 px-3 text-[11px] font-semibold text-slate-500",
+                  cursor: "bg-white shadow-sm dark:bg-zinc-700",
+                  tabContent: "group-data-[selected=true]:text-slate-800 dark:group-data-[selected=true]:text-white"
                 }}
               >
                 <Tab key="24h" title="24H" />
@@ -297,52 +313,50 @@ function Inicio() {
         {/* KPI Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <MetricCard
-            icon={<ShoppingBag size={24} className="text-blue-600" />}
+            icon={<ShoppingBag size={22} />}
             title="Ventas Totales"
             value={`S/. ${ventasTotal}`}
             change={`${percentageChange > 0 ? "+" : ""}${percentageChange.toFixed(1)}%`}
             isPositive={percentageChange >= 0}
-            bgClass="bg-blue-50/50 dark:bg-blue-900/10"
-            borderColor="border-blue-100 dark:border-blue-900/30"
+            variant="success"
           />
           <MetricCard
-            icon={<Users size={24} className="text-violet-600" />}
+            icon={<Users size={22} />}
             title="Nuevos Clientes"
             value={totalRegistros}
             change={`${cambioNuevosClientes > 0 ? "+" : ""}${cambioNuevosClientes.toFixed(1)}%`}
             isPositive={cambioNuevosClientes >= 0}
-            bgClass="bg-violet-50/50 dark:bg-violet-900/10"
-            borderColor="border-violet-100 dark:border-violet-900/30"
+            variant="primary"
           />
           <MetricCard
-            icon={<Package size={24} className="text-emerald-600" />}
+            icon={<Package size={22} />}
             title="Productos Vendidos"
             value={totalProductsSold}
             change={`${percentageChangeProducts > 0 ? "+" : ""}${percentageChangeProducts.toFixed(1)}%`}
             isPositive={percentageChangeProducts >= 0}
-            bgClass="bg-emerald-50/50 dark:bg-emerald-900/10"
-            borderColor="border-emerald-100 dark:border-emerald-900/30"
+            variant="secondary"
           />
           <MetricCard
-            icon={<LayoutGrid size={24} className="text-rose-600" />}
+            icon={<LayoutGrid size={22} />}
             title="Notas Pendientes"
             value={cantidadPendientes}
-            // change={cantidadPendientes === 0 ? "Al día" : `${cantidadPendientes} pendientes`}
-            // isPositive={cantidadPendientes === 0} 
+            variant="warning"
             extra={cantidadPendientes === 0 ? (
-              <div className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm bg-emerald-50 text-emerald-600 border-emerald-100">
-                <ArrowUp size={10} /> Al día
-              </div>
+              <Chip size="sm" color="success" variant="flat" classNames={{ content: "text-[10px] font-bold" }}>Al día</Chip>
             ) : (
               <Tooltip content="Ver pendientes">
-                <div className="cursor-pointer flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-sm bg-rose-50 text-rose-600 border-rose-100" onClick={() => setModalNotasOpen(true)}>
-                  <Info size={12} /> Pendientes
-                </div>
+                <Chip
+                  size="sm"
+                  color="danger"
+                  variant="flat"
+                  className="cursor-pointer"
+                  onClick={() => setModalNotasOpen(true)}
+                  classNames={{ content: "text-[10px] font-bold flex gap-1 items-center" }}
+                >
+                  Pendientes
+                </Chip>
               </Tooltip>
-            )
-            }
-            bgClass="bg-rose-50/50 dark:bg-rose-900/10"
-            borderColor="border-rose-100 dark:border-rose-900/30"
+            )}
           />
         </div>
 

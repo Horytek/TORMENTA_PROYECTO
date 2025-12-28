@@ -66,6 +66,7 @@
     "file-saver": "^2.0.5",
     "framer-motion": "^12.23.3",
     "html2pdf.js": "^0.10.2",
+    "idb-keyval": "^6.2.2",
     "input-otp": "^1.4.2",
     "js-cookie": "^3.0.5",
     "jsbarcode": "^3.11.6",

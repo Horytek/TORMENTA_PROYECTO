@@ -262,46 +262,46 @@ export default function BillingDrawer({ open, onClose }) {
       <DrawerContent>
         {(internalClose) => (
           <>
-            <DrawerHeader className="sticky top-0 z-10 px-6 py-4 pr-14 border-b border-blue-100/30 dark:border-zinc-700/30 bg-gradient-to-r from-white/80 via-white/60 to-transparent dark:from-zinc-900/80 dark:via-zinc-900/70 dark:to-transparent backdrop-blur-md">
+            <DrawerHeader className="sticky top-0 z-10 px-6 py-4 border-b border-slate-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl">
               <div className="flex items-center gap-3 w-full">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-400/10 border border-blue-100/30 dark:border-zinc-700/30">
-                  <FaRegCreditCard className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-300">
+                  <FaRegCreditCard className="w-5 h-5" />
                 </div>
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-base text-gray-900 dark:text-blue-100 truncate">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-base text-slate-800 dark:text-white leading-tight">
                     Facturación
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400">Detalles de tu plan y pagos</p>
+                  <p className="text-xs font-medium text-slate-400 dark:text-zinc-500">Plan y métodos de pago</p>
                 </div>
-                <div className="ml-auto flex items-center gap-2 mr-2">
+                <div className="flex items-center gap-2">
                   <Chip
-                    color={planColor}
                     size="sm"
                     variant="flat"
-                    className="font-semibold text-[12px] py-0.5 px-2 bg-white/80 dark:bg-zinc-800/70 text-gray-800 dark:text-blue-100 border border-gray-200 dark:border-zinc-700/30 min-w-[72px] text-center"
-                    aria-label={`Plan ${planLabel}`}
+                    className={`font-semibold text-[10px] h-6 px-2 border ${String(plan_pago) === "1" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                        String(plan_pago) === "2" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                          "bg-slate-50 text-slate-600 border-slate-200"
+                      }`}
                   >
                     {planLabel}
                   </Chip>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    className="text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg"
+                    onPress={() => {
+                      internalClose?.();
+                      onClose?.();
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  className="absolute right-4 top-4 text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 z-20"
-                  onPress={() => {
-                    internalClose?.();
-                    onClose?.();
-                  }}
-                  aria-label="Cerrar facturación"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
               </div>
             </DrawerHeader>
 
-            <DrawerBody className="px-6 py-5 bg-transparent">
-              <div className="rounded-2xl bg-gradient-to-br from-bgDark1/80 via-bgDark2/80 to-bgDark1/80 dark:from-zinc-900/80 dark:via-zinc-900/70 dark:to-zinc-900/80 border border-gray-100/20 dark:border-zinc-700/30 shadow-sm p-5">
+            <DrawerBody className="px-5 py-6 bg-slate-50/50 dark:bg-zinc-950/50">
+              <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 shadow-sm p-5">
                 <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-blue-100 mb-2">
                   <div>
                     <span className="text-xs text-gray-500 dark:text-zinc-400">Empresa</span>

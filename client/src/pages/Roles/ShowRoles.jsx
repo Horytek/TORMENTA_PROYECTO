@@ -170,7 +170,7 @@ export default function ShowRoles({ searchTerm }) {
                   variant="light"
                   color="primary"
                   size="sm"
-                  onClick={() => hasEditPermission ? handleModalEdit(usuario.id_rol) : null}
+                  onClick={(e) => { e.stopPropagation(); hasEditPermission ? handleModalEdit(usuario.id_rol) : null; }}
                   isDisabled={!hasEditPermission}
                 >
                   <MdEdit size={18} />
@@ -184,7 +184,7 @@ export default function ShowRoles({ searchTerm }) {
                   variant="light"
                   color="danger"
                   size="sm"
-                  onClick={() => hasDeletePermission ? handleOpenConfirmationModal(usuario.nom_rol, usuario.id_rol) : null}
+                  onClick={(e) => { e.stopPropagation(); hasDeletePermission ? handleOpenConfirmationModal(usuario.nom_rol, usuario.id_rol) : null; }}
                   isDisabled={!hasDeletePermission}
                 >
                   <FaTrash size={16} />

@@ -5,7 +5,13 @@ export const auth = (req, res, next) => {
   try {
     let token = null;
 
-    if (req.cookies?.token) {
+    // Prioridad: Header Authorization Bearer
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+    // Fallback: Cookie (para compatibilidad o si se revierte)
+    else if (req.cookies?.token) {
       token = req.cookies.token;
     }
 

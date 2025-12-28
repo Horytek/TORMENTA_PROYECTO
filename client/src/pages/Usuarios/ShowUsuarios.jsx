@@ -8,7 +8,8 @@ import {
   TableCell,
   Tooltip,
   Button,
-  Chip
+  Chip,
+  User
 } from "@heroui/react";
 import UsuariosForm from './UsuariosForm';
 import UserProfileModal from './UserProfileModal';
@@ -19,6 +20,7 @@ import {
   bulkUpdateUsuarios, toggleEstadoUsuario
 } from '@/services/usuario.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
+import EmptyState from "@/components/Shared/EmptyState";
 import { usePermisos } from '@/routes';
 
 
@@ -139,21 +141,9 @@ export function ShowUsuarios({
         );
       case "usuario":
         return (
-          <div className="flex items-center gap-3">
-            <div
-              className={`
-                    flex items-center justify-center w-8 h-8 rounded-lg border shadow-sm
-                    transition-all duration-200
-                    ${usuario.estado_token === 1
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
-                  : "border-slate-200 bg-slate-50 text-slate-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-slate-500"
-                }
-                `}
-            >
-              <FaUser size={14} />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{usuario.usua}</span>
+          <User
+            avatarProps={{ radius: "lg", src: null, name: usuario.usua[0]?.toUpperCase(), classNames: { base: usuario.estado_token === 1 ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500" } }}
+            description={
               <span className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1
                                 ${usuario.estado_token === 1
                   ? "text-emerald-600 dark:text-emerald-400"
@@ -166,8 +156,13 @@ export function ShowUsuarios({
                   }`}></span>
                 {usuario.estado_token === 1 ? "Conectado" : "Offline"}
               </span>
-            </div>
-          </div>
+            }
+            name={usuario.usua}
+            classNames={{
+              name: "text-sm font-bold text-slate-900 dark:text-slate-100",
+              description: "mt-0.5"
+            }}
+          />
         );
 
       case "estado":
@@ -189,7 +184,7 @@ export function ShowUsuarios({
         return (
           <div className="relative flex items-center justify-center gap-2">
             <Tooltip content="Ver perfil">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50" onClick={() => handleViewProfile(usuario)}>
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50" onClick={(e) => { e.stopPropagation(); handleViewProfile(usuario); }}>
                 <FaUser />
               </span>
             </Tooltip>
@@ -212,7 +207,7 @@ export function ShowUsuarios({
           classNames={{
             base: "",
             table: "min-w-full",
-            th: "bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider h-10 first:rounded-l-lg last:rounded-r-lg",
+            th: "bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider h-10 border-b border-slate-100 dark:border-zinc-800",
             td: "py-3 border-b border-slate-100 dark:border-zinc-800",
             tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors",
             thead: "[&>tr]:first:shadow-none",
@@ -225,7 +220,7 @@ export function ShowUsuarios({
               </TableColumn>
             )}
           </TableHeader>
-          <TableBody items={currentUsuarios} emptyContent={"No se encontraron usuarios"}>
+          <TableBody items={currentUsuarios} emptyContent={<EmptyState title="No se encontraron usuarios" description="Intenta ajustar tus filtros de búsqueda." />}>
             {(item) => (
               <TableRow key={item.id_usuario}>
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

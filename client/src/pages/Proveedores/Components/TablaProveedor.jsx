@@ -15,6 +15,7 @@ import { FaTrash } from "react-icons/fa";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { deleteDestinatario } from '@/services/destinatario.services';
 import { usePermisos } from '@/routes';
+import EmptyState from "@/components/Shared/EmptyState";
 
 const TablaProveedor = ({
     destinatarios,
@@ -69,7 +70,7 @@ const TablaProveedor = ({
             case "datos":
                 return (
                     <User
-                        avatarProps={{ radius: "lg", src: null, name: (destinatario.destinatario || "?")[0] }}
+                        avatarProps={{ radius: "xl", src: null, name: (destinatario.destinatario || "?")[0] }}
                         description={destinatario.documento}
                         name={destinatario.destinatario}
                         classNames={{
@@ -118,7 +119,7 @@ const TablaProveedor = ({
                             <span
                                 role="button"
                                 tabIndex={0}
-                                onClick={() => hasEditPermission && onEdit(destinatario)}
+                                onClick={(e) => { e.stopPropagation(); hasEditPermission && onEdit(destinatario); }}
                                 className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors ${hasEditPermission
                                     ? "bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-slate-200"
                                     : "opacity-50 cursor-not-allowed bg-slate-50 text-slate-400"
@@ -131,7 +132,7 @@ const TablaProveedor = ({
                             <span
                                 role="button"
                                 tabIndex={0}
-                                onClick={() => hasDeletePermission && handleOpenConfirmationModal(destinatario.destinatario, destinatario.id)}
+                                onClick={(e) => { e.stopPropagation(); hasDeletePermission && handleOpenConfirmationModal(destinatario.destinatario, destinatario.id); }}
                                 className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors ${hasDeletePermission
                                     ? "bg-rose-50 hover:bg-rose-100 text-rose-500 dark:bg-rose-900/20 dark:hover:bg-rose-900/30"
                                     : "opacity-50 cursor-not-allowed bg-slate-50 text-slate-400"
@@ -170,7 +171,7 @@ const TablaProveedor = ({
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody items={items} emptyContent={"No se encontraron proveedores"}>
+                <TableBody items={items} emptyContent={<EmptyState title="No se encontraron proveedores" description="Intenta ajustar tus filtros de búsqueda." />}>
                     {(item) => (
                         <TableRow key={item.id}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

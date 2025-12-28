@@ -14,9 +14,12 @@ import UserImportModal from './UserImportModal';
 import { Pagination, Select, SelectItem } from "@heroui/react";
 import BulkActionsToolbar from '@/components/Shared/BulkActionsToolbar';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
+import { motion } from "framer-motion";
+import TableSkeleton from "@/components/Skeletons/TableSkeleton";
 
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeAdd, setModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [rolesDict, setRolesDict] = useState({});
@@ -47,6 +50,7 @@ function Usuarios() {
   }, [usuarios]);
 
   const fetchUsuarios = async () => {
+    setLoading(true);
     const data = await getUsuarios();
     setUsuarios(Array.isArray(data) ? data : []);
     // Construir diccionario de roles dinámicamente
@@ -57,6 +61,7 @@ function Usuarios() {
       }
     });
     setRolesDict(dict);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -192,7 +197,12 @@ function Usuarios() {
   };
 
   return (
-    <div className="w-full min-h-screen p-6 flex flex-col gap-6 bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-200">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="w-full min-h-screen p-6 flex flex-col gap-6 bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-200"
+    >
       <Toaster position="top-center" reverseOrder={false} />
 
       {/* Header */}
@@ -258,16 +268,20 @@ function Usuarios() {
 
         {/* Table Wrapper */}
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4 space-y-4">
-          <ShowUsuarios
-            usuarios={filteredUsuarios}
-            addUsuario={addUsuario}
-            updateUsuarioLocal={updateUsuarioLocal}
-            removeUsuario={removeUsuario}
-            selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
-            page={page}
-            limit={limit}
-          />
+          {loading ? (
+            <TableSkeleton rows={6} />
+          ) : (
+            <ShowUsuarios
+              usuarios={filteredUsuarios}
+              addUsuario={addUsuario}
+              updateUsuarioLocal={updateUsuarioLocal}
+              removeUsuario={removeUsuario}
+              selectedKeys={selectedKeys}
+              onSelectionChange={setSelectedKeys}
+              page={page}
+              limit={limit}
+            />
+          )}
         </div>
 
         {/* Pagination Footer */}
@@ -345,7 +359,7 @@ function Usuarios() {
         onDelete={() => handleBulkAction('delete')}
         onClearSelection={() => setSelectedKeys(new Set())}
       />
-    </div>
+    </motion.div>
   );
 }
 

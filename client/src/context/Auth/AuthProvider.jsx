@@ -1,3 +1,4 @@
+import { setToken, getToken, removeToken } from "@/utils/authStorage";
 import { AuthContext } from "./AuthContext";
 import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
@@ -30,10 +31,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const { data } = await loginRequest(credentials); // El backend debe enviar la cookie HTTPOnly aquí
-      if (data?.success && data.data) {
-        // No guardar token, solo usuario
-        //sessionStorage.setItem("user", JSON.stringify(data.data));
+      const { data } = await loginRequest(credentials);
+      if (data?.success && data.token) {
+        await setToken(data.token); // Guardar en IndexedDB
         setUser(data.data);
         setUserRaw(data.data);
         setIsAuthenticated(true);
@@ -47,21 +47,30 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkLogin = async () => {
-      // No leer token, solo pedir verificación al backend
+      // Verificar si hay token en IndexedDB
+      const token = await getToken();
+      if (!token) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        setAuthReady(true);
+        return;
+      }
+
       try {
-        const res = await verifyTokenRequest(); // El backend debe leer la cookie
+        const res = await verifyTokenRequest();
         if (res?.data) {
-          //sessionStorage.setItem("user", JSON.stringify(res.data));
           setIsAuthenticated(true);
           setUser(res.data);
           setUserRaw(res.data);
         } else {
           setIsAuthenticated(false);
           clearUserStore();
+          await removeToken();
         }
       } catch {
         setIsAuthenticated(false);
         clearUserStore();
+        await removeToken();
         sessionStorage.removeItem("user");
       } finally {
         setLoading(false);
@@ -73,8 +82,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await logoutRequest(); // El backend debe limpiar la cookie
+      await logoutRequest();
     } catch { /* noop */ }
+    await removeToken(); // Limpiar de IndexedDB
     sessionStorage.clear();
     clearUserStore();
     setIsAuthenticated(false);
@@ -83,14 +93,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Nueva función para solicitar código de autenticación
-const sendAuthCode = async ({ usuario, password, clave_acceso }) => {
-  try {
-    const { data } = await sendAuthCodeRequest({ usuario, password, clave_acceso });
-    return data;
-  } catch (error) {
-    return { success: false, message: error?.response?.data?.message || "Error autenticando cuenta" };
-  }
-};
+  const sendAuthCode = async ({ usuario, password, clave_acceso }) => {
+    try {
+      const { data } = await sendAuthCodeRequest({ usuario, password, clave_acceso });
+      return data;
+    } catch (error) {
+      return { success: false, message: error?.response?.data?.message || "Error autenticando cuenta" };
+    }
+  };
 
   return (
     <AuthContext.Provider

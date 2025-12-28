@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import DestinatariosForm from './DestinatariosForm';
 import { Toaster } from "react-hot-toast";
 import { Button, Card, CardBody, Chip, Input, Pagination, Select, SelectItem } from '@heroui/react';
+import { motion } from "framer-motion";
 import { FaPlus, FaTruck, FaCheckCircle, FaTimesCircle, FaFileExcel, FaFileExport, FaSearch } from "react-icons/fa";
 import { usePermisos } from '@/routes';
 import { getDestinatarios } from '@/services/destinatario.services';
@@ -9,6 +10,7 @@ import TablaProveedor from './Components/TablaProveedor';
 import { exportProveedoresLocal, filterProveedoresForExport } from '@/utils/exportProveedores';
 import ProveedoresImportModal from './ProveedoresImportModal';
 import BulkActionsToolbar from '@/components/Shared/BulkActionsToolbar';
+import TableSkeleton from "@/components/Skeletons/TableSkeleton";
 
 // Estilos Glass Clean
 const glassInputClasses = {
@@ -18,6 +20,7 @@ const glassInputClasses = {
 
 function Proveedores() {
   const [destinatarios, setDestinatarios] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeAdd, setModalOpen] = useState(false);
   const [activeEdit, setActiveEdit] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -40,8 +43,10 @@ function Proveedores() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const fetchDestinatarios = async () => {
+    setLoading(true);
     const data = await getDestinatarios();
     setDestinatarios(data || []);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -143,7 +148,12 @@ function Proveedores() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200"
+    >
       <Toaster />
 
       {/* Header & Actions Wrapper */}
@@ -262,16 +272,20 @@ function Proveedores() {
           </div>
         </div>
 
-        <TablaProveedor
-          destinatarios={filteredDestinatarios}
-          updateDestinatarioLocal={updateDestinatarioLocal}
-          removeDestinatario={removeDestinatario}
-          onEdit={handleEdit}
-          selectedKeys={selectedKeys}
-          onSelectionChange={setSelectedKeys}
-          page={page}
-          limit={limit}
-        />
+        {loading ? (
+          <TableSkeleton rows={6} />
+        ) : (
+          <TablaProveedor
+            destinatarios={filteredDestinatarios}
+            updateDestinatarioLocal={updateDestinatarioLocal}
+            removeDestinatario={removeDestinatario}
+            onEdit={handleEdit}
+            selectedKeys={selectedKeys}
+            onSelectionChange={setSelectedKeys}
+            page={page}
+            limit={limit}
+          />
+        )}
       </div>
 
       {/* Pagination Footer - Outside Table Container */}
@@ -347,7 +361,7 @@ function Proveedores() {
         onClose={() => setImportModalOpen(false)}
         onSuccess={handleImportSuccess}
       />
-    </div>
+    </motion.div>
   );
 }
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Toaster } from "react-hot-toast";
 import { FaPlus, FaUsers, FaUserCheck, FaUserTimes, FaChartLine, FaSearch } from "react-icons/fa";
 import { Button, Card, CardBody, Chip, Select, SelectItem, Input, Pagination } from "@heroui/react";
+import { motion } from "framer-motion";
 import TablaCliente from '@/pages/Clientes/ComponentsClientes/TablaCliente';
 import useGetClientes from "@/services/client_data/getClientes";
 import AddClientModal from './ComponentsClientes/AddClient';
@@ -104,7 +105,12 @@ function Clientes() {
   const handleBulkDelete = () => alert("Eliminar masivo próximamente");
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200"
+    >
       <Toaster />
 
       {/* Header */}
@@ -222,12 +228,11 @@ function Clientes() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold text-slate-500 uppercase mr-2">Estado:</span>
             <Chip
-              classname="cursor-pointer transition-all hover:scale-105"
+              className="cursor-pointer transition-all hover:scale-105"
               variant={statusFilter === 'all' ? "solid" : "flat"}
               color={statusFilter === 'all' ? "primary" : "default"}
               onClick={() => setStatusFilter("all")}
               size="sm"
-              className="cursor-pointer"
             >
               Todos
             </Chip>
@@ -330,7 +335,7 @@ function Clientes() {
         }}
         setAllClientes={setAllClientes}
       />
-    </div>
+    </motion.div>
   );
 }
 

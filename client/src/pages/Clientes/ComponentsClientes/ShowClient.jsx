@@ -170,7 +170,7 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
   return (
     <>
       {trigger ? (
-        <div onClick={() => setIsOpen(true)}>{trigger}</div>
+        <div onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}>{trigger}</div>
       ) : (
         <Tooltip content="Ver detalles">
           <Button

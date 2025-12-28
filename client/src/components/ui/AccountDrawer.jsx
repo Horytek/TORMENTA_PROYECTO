@@ -226,73 +226,64 @@ export default function AccountDrawer({ open, onClose }) {
         <DrawerContent>
           {internalClose => (
             <>
-              <DrawerHeader className="sticky top-0 z-10 px-6 py-4 pr-14 border-b border-blue-100/30 dark:border-zinc-700/30 bg-gradient-to-r from-white/80 via-white/60 to-transparent dark:from-zinc-900/80 dark:via-zinc-900/70 dark:to-transparent backdrop-blur-md">
-                <div className="flex items-center gap-3 w-full flex-wrap">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-400/10 border border-blue-100/30 dark:border-zinc-700/30">
-                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+              <DrawerHeader className="sticky top-0 z-10 px-6 py-4 border-b border-slate-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-300">
+                    <Info className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base text-gray-900 dark:text-blue-100 truncate">Cuenta</h3>
-                    <p className="text-xs text-gray-500 dark:text-zinc-400">Datos de la empresa y beneficios</p>
+                    <h3 className="font-bold text-base text-slate-800 dark:text-white leading-tight">Cuenta</h3>
+                    <p className="text-xs font-medium text-slate-400 dark:text-zinc-500">Información y configuración</p>
                   </div>
-                  <div className="w-full md:w-auto md:ml-auto mt-2 md:mt-0 mr-2 flex items-center gap-2 justify-start md:justify-end">
+                  <div className="flex items-center gap-2">
                     {trialInfo.loading ? (
-                      <Chip size="sm" variant="flat" className="animate-pulse bg-gray-100">Cargando...</Chip>
+                      <Chip size="sm" variant="flat" className="bg-slate-100 text-slate-400 h-6 text-[10px]">...</Chip>
                     ) : trialInfo.isTrial ? (
                       <Chip
                         size="sm"
-                        color="warning"
                         variant="flat"
-                        className="font-semibold text-[12px] py-0.5 px-2 bg-yellow-50 text-yellow-700 border border-yellow-200"
+                        className="font-semibold text-[10px] h-6 px-2 bg-amber-50 text-amber-700 border border-amber-100"
                       >
-                        Periodo de prueba • {trialInfo.daysLeft}d
+                        Prueba • {trialInfo.daysLeft}d
                       </Chip>
                     ) : (
                       <Chip
                         size="sm"
-                        color="success"
                         variant="flat"
-                        className="font-semibold text-[12px] py-0.5 px-2 bg-green-50 text-green-700 border border-green-200"
+                        className="font-semibold text-[10px] h-6 px-2 bg-emerald-50 text-emerald-700 border border-emerald-100"
                       >
                         Producción
                       </Chip>
                     )}
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      className="font-semibold text-[12px] py-0.5 px-2 bg-white/80 dark:bg-zinc-800/70 text-gray-800 dark:text-blue-100 border border-gray-200 dark:border-zinc-700/30"
-                      aria-label={`Plan ${String(plan_pago) || "-"}`}
-                    >
-                      Plan {String(plan_pago) || "-"}
-                    </Chip>
+
                     {puedeEditar && (
-                      <Tooltip content="Editar datos Sunat">
+                      <Tooltip content="Editar datos Sunat" closeDelay={0}>
                         <Button
                           isIconOnly
                           size="sm"
                           variant="light"
-                          className="text-blue-600 dark:text-blue-300"
+                          className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-800 rounded-lg"
                           onPress={() => setIsEditing(true)}
                         >
                           <UserCog className="w-4 h-4" />
                         </Button>
                       </Tooltip>
                     )}
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="light"
+                      className="text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg"
+                      onPress={() => { internalClose?.(); onClose?.(); }}
+                      aria-label="Cerrar"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    className="absolute right-4 top-4 text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 z-20"
-                    onPress={() => { internalClose?.(); onClose?.(); }}
-                    aria-label="Cerrar cuenta"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
                 </div>
               </DrawerHeader>
 
-              <DrawerBody className="px-6 py-5 bg-transparent">
+              <DrawerBody className="px-0 bg-slate-50/50 dark:bg-zinc-950/50 p-5">
                 {!isEditing ? (
                   <AccountInfo
                     empresa={empresa}

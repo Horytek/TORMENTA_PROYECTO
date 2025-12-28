@@ -3,7 +3,7 @@ import { Card, CardHeader, CardBody, CardFooter, Divider, Chip, Tooltip, Input, 
 import { Calendar, Sparkles } from "lucide-react";
 import useComparacionTotal from "@/layouts/Inicio/hooks/comparacion_ventas";
 import useTendenciaVentas from "@/services/reports/data_tendencia_ventas";
-import { LineChart } from "@tremor/react";
+import { AreaChart } from "@tremor/react";
 
 const valueFormatter = (number) =>
   "S/. " +
@@ -57,6 +57,8 @@ export function LineChartComponent({ sucursal }) {
   const [scaleFloor, setScaleFloor] = useState("auto");
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [lastRangeKey, setLastRangeKey] = useState(null);
+
+  const selectedRange = quickRanges.find(r => r.key === lastRangeKey);
 
   const fechaInicio = value?.start ? toISODate(value.start) : null;
   const fechaFin = value?.end ? toISODate(value.end) : null;
@@ -182,151 +184,94 @@ export function LineChartComponent({ sucursal }) {
         (Number.isInteger(row.__m) && row.__y ? fmtMonth(row.__m, row.__y) : payload[0]?.payload?.date || "");
 
     return (
-      <Card shadow="md" radius="md" className="min-w-[220px] max-w-[340px] border border-default-200 bg-white/95 dark:bg-zinc-900/95 px-3 py-2 shadow-xl">
-        <CardBody className="space-y-1 p-0">
-          <div className="font-semibold text-xs text-default-900 dark:text-white mb-1">{label}</div>
+      <div className="min-w-[220px] max-w-[340px] rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/95 z-50">
+        <div className="space-y-1">
+          <div className="font-semibold text-xs text-slate-800 dark:text-white mb-1">{label}</div>
           {unique.map((entry, idx) => (
             <div key={`${entry.dataKey}-${idx}`} className="flex items-center gap-2 py-0.5">
-              <span className="inline-block w-3 h-3 rounded-full border border-default-200" style={{ backgroundColor: "#6366F1", minWidth: 12, minHeight: 12 }}></span>
-              <span className="font-medium text-xs text-default-800 dark:text-white">{entry.dataKey}</span>
-              <span className="ml-auto font-bold text-xs text-default-900 dark:text-white">
+              <span className="inline-block w-3 h-3 rounded-full border border-slate-200" style={{ backgroundColor: "#6366F1", minWidth: 12, minHeight: 12 }}></span>
+              <span className="font-medium text-xs text-slate-600 dark:text-slate-300">{entry.dataKey}</span>
+              <span className="ml-auto font-bold text-xs text-slate-900 dark:text-white">
                 {valueFormatter(Number.isFinite(entry.value) ? entry.value : 0)}
               </span>
             </div>
           ))}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     );
   };
 
   return (
-    <Card className="relative overflow-hidden rounded-2xl shadow-sm
-                     bg-white dark:bg-zinc-900
-                     border border-slate-200 dark:border-zinc-800 transition-all">
-      <style>{`
-        .dark .recharts-cartesian-axis-tick text,
-        .dark .recharts-legend-item text,
-        .dark .recharts-text tspan { fill: #e2e8f0 !important; }
-        .dark .recharts-cartesian-grid line { stroke: #2c3240 !important; }
-        .dark .recharts-tooltip-wrapper { filter: drop-shadow(0 4px 14px rgba(0,0,0,.45)); }
-      `}</style>
+    <Card className="h-full border-none shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 rounded-2xl overflow-hidden p-6 relative">
+      <div className="flex justify-between items-start mb-6 z-10 relative">
+        <div>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wide flex items-center gap-2">
+            Tendencia de Ventas
+          </h3>
+          <p className="text-[10px] text-slate-400 font-medium mt-1">Evolución en el tiempo</p>
+        </div>
 
-      <CardHeader className="flex flex-col gap-4 p-5 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 transition-colors">
-        {/* Top Row: Title + Controls */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 z-10 w-full">
-          {/* Title Section */}
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-50 dark:bg-zinc-800 text-blue-600 dark:text-blue-400">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">Tendencia de Ventas</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Evolución en el tiempo</p>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <Select
+            selectedKeys={[scaleFloor]}
+            onChange={(e) => setScaleFloor(e.target.value)}
+            className="w-24"
+            size="sm"
+            variant="flat"
+            aria-label="Escala"
+            classNames={{
+              trigger: "bg-slate-50 dark:bg-zinc-800 shadow-none hover:bg-slate-100 transition-colors h-8 min-h-8 rounded-lg",
+              value: "text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase"
+            }}
+          >
+            <SelectItem key="auto" value="auto">AUTO</SelectItem>
+            <SelectItem key="0" value="0">MIN 0</SelectItem>
+            <SelectItem key="1000" value="1000">MIN 1K</SelectItem>
+          </Select>
 
-          {/* Controls Section */}
-          <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
-            <Select
-              aria-label="Escala mínima"
-              className="w-32"
-              size="sm"
-              selectedKeys={new Set([scaleFloor])}
-              onSelectionChange={(keys) => setScaleFloor(keys.values().next().value)}
-              classNames={{
-                trigger: "bg-slate-50 dark:bg-zinc-800 border-transparent hover:border-slate-200 dark:hover:border-zinc-700 shadow-none transition-all",
-                value: "text-xs font-medium"
-              }}
-            >
-              <SelectItem key="auto" value="auto">Auto</SelectItem>
-              <SelectItem key="10000" value="10000">Min 10k</SelectItem>
-              <SelectItem key="50000" value="50000">Min 50k</SelectItem>
-            </Select>
-
-            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-              <PopoverTrigger>
+          <Popover placement="bottom-end" isOpen={popoverOpen} onOpenChange={setPopoverOpen}>
+            <PopoverTrigger>
+              <Button size="sm" variant="flat" className="h-8 min-h-8 bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold text-[10px] uppercase rounded-lg dark:bg-zinc-800 dark:text-slate-300">
+                <Calendar size={12} className="mr-1.5" />
+                {selectedRange?.label || "Rango"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-1 w-48">
+              {quickRanges.map((r) => (
                 <Button
-                  size="sm"
-                  variant="flat"
-                  className="bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 font-medium min-w-32"
-                  startContent={<Calendar className="w-3.5 h-3.5 text-slate-400" />}
-                  onClick={() => setPopoverOpen(true)}
+                  key={r.key}
+                  variant="light"
+                  className="w-full justify-start text-[10px] font-bold uppercase h-8"
+                  onPress={() => { setValue(r.getRange()); setLastRangeKey(r.key); setPopoverOpen(false); }}
                 >
-                  {value?.start && value?.end
-                    ? `${value.start.toLocaleDateString("es-PE")} - ${value.end.toLocaleDateString("es-PE")}`
-                    : "Filtrar Fechas"}
+                  {r.label}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 rounded-xl shadow-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 w-auto min-w-[200px]">
-                <div className="p-3 border-b border-default-100">
-                  <span className="text-xs font-semibold text-default-500">Periodos Rápidos</span>
-                </div>
-                <div className="p-2 grid grid-cols-1 gap-1">
-                  {quickRanges.map((range) => (
-                    <Button
-                      key={range.key}
-                      size="sm"
-                      variant="light"
-                      className="justify-start h-8 text-xs"
-                      onClick={() => handleQuickRange(range)}
-                    >
-                      {range.label}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
+      </div>
 
-        {/* Bottom Row: Stats Chips */}
-        <div className="flex flex-wrap gap-2 mt-1 z-10 w-full pt-2">
-          <Chip size="sm" variant="flat" className="bg-blue-50 text-blue-700 font-semibold border-0">
-            Total: {valueFormatter(total)}
-          </Chip>
-          <Chip size="sm" variant="flat" className="bg-indigo-50 text-indigo-700 font-semibold border-0">
-            Promedio: {valueFormatter(promedio)}
-          </Chip>
-        </div>
-      </CardHeader>
-
-      <CardBody className="relative bg-white dark:bg-zinc-900 transition-colors px-6 pb-6">
-        {loading ? (
-          <div className="relative z-10 text-center py-8 text-slate-400">Cargando...</div>
-        ) : (
-          <div className="relative z-10 px-2">
-            <LineChart
-              className="mt-4 h-[300px]"
-              data={chartData}
-              index="date"
-              yAxisWidth={70}
-              categories={["Ventas Totales"]}
-              colors={COLORS}
-              valueFormatter={valueFormatter}
-              xAxisLabel={xAxisLabel}
-              yAxisLabel=""
-              showAnimation
-              showLegend={false}
-              showGridLines={true}
-              showYAxis={true}
-              startEndOnly={false}
-              curveType="monotone"
-              connectNulls
-              minValue={0}
-              maxValue={maxVentas}
-              customTooltip={renderTooltip}
-            />
-          </div>
-        )}
-      </CardBody>
-
-      <Divider className="dark:border-blue-800/40" />
-
-      <CardFooter className="bg-white/90 dark:bg-[#131722]/90 backdrop-blur-sm">
-        <span className="text-xs text-default-500 dark:text-zinc-400">
-          Datos actualizados según el rango seleccionado.
-        </span>
-      </CardFooter>
+      <div className="h-72 w-full">
+        <AreaChart
+          data={chartData}
+          index="date"
+          categories={["Ventas Totales"]}
+          colors={COLORS}
+          valueFormatter={valueFormatter}
+          yAxisWidth={50}
+          showLegend={false}
+          showGridLines={true}
+          showAnimation={true}
+          showGradient={true}
+          customTooltip={renderTooltip}
+          curveType="monotone"
+          minValue={scaleFloor === "auto" ? undefined : Number(scaleFloor)}
+          autoMinValue={scaleFloor === "auto"}
+          connectNulls={true}
+          className="h-full -ml-2 font-inter text-xs"
+        />
+      </div>
     </Card>
   );
 }

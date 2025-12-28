@@ -23,6 +23,8 @@ import deactivateCliente from "@/services/client_data/deactivateCliente";
 import useUpdateClient from "@/services/client_data/updateCliente";
 import { toast, Toaster } from "react-hot-toast";
 import ViewClientModal from "./ShowClient";
+import TableSkeleton from "@/components/Skeletons/TableSkeleton";
+import EmptyState from "@/components/Shared/EmptyState";
 import { usePermisos } from '@/routes';
 
 const TablaCliente = ({
@@ -54,7 +56,7 @@ const TablaCliente = ({
     const { darDeBajaCliente, deleteLoading: deactivateLoading } = deactivateClienteHook;
     const { updateClient, isLoading: updateLoading } = useUpdateClient();
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Cargando datos...</div>;
+    if (loading) return <TableSkeleton rows={8} />;
     if (error) return <div className="p-8 text-center text-red-500">Error al cargar los datos: {error}</div>;
 
     const columns = [
@@ -69,7 +71,7 @@ const TablaCliente = ({
             case "datos":
                 return (
                     <User
-                        avatarProps={{ radius: "lg", src: null, name: (cliente.nombres || cliente.razon_social || "?")[0] }}
+                        avatarProps={{ radius: "xl", src: null, name: (cliente.nombres || cliente.razon_social || "?")[0] }}
                         description={cliente.dniRuc}
                         name={cliente.razon_social || `${cliente.nombres} ${cliente.apellidos}`}
                         classNames={{
@@ -105,10 +107,10 @@ const TablaCliente = ({
             case "acciones":
                 return (
                     <div className="flex items-center justify-center gap-2">
-                        <Tooltip content="Ver detalle cliente" placement="top">
-                            <ViewClientModal
-                                client={cliente}
-                                trigger={
+                        <ViewClientModal
+                            client={cliente}
+                            trigger={
+                                <Tooltip content="Ver detalle cliente">
                                     <span
                                         role="button"
                                         tabIndex={0}
@@ -117,38 +119,38 @@ const TablaCliente = ({
                                     >
                                         <MdVisibility className="w-5 h-5" />
                                     </span>
+                                </Tooltip>
+                            }
+                            onEdit={() => hasEditPermission && (setSelectedClient(cliente), setOpenEditModal(true))}
+                            onDeactivate={() => {
+                                const isInactive = cliente.estado === 0 || cliente.estado === "0";
+                                if (hasDeactivatePermission && !isInactive) {
+                                    setActionType("deactivate");
+                                    setTargetClient(cliente);
+                                    setOpenConfirmModal(true);
                                 }
-                                onEdit={() => hasEditPermission && (setSelectedClient(cliente), setOpenEditModal(true))}
-                                onDeactivate={() => {
-                                    const isInactive = cliente.estado === 0 || cliente.estado === "0";
-                                    if (hasDeactivatePermission && !isInactive) {
-                                        setActionType("deactivate");
-                                        setTargetClient(cliente);
-                                        setOpenConfirmModal(true);
-                                    }
-                                }}
-                                onReactivate={() => {
-                                    const isInactive = cliente.estado === 0 || cliente.estado === "0";
-                                    if (hasDeactivatePermission && isInactive) {
-                                        setActionType("reactivate");
-                                        setTargetClient(cliente);
-                                        setOpenConfirmModal(true);
-                                    }
-                                }}
-                                onDelete={() => {
-                                    if (hasDeletePermission) {
-                                        setActionType("delete");
-                                        setTargetClient(cliente);
-                                        setOpenConfirmModal(true);
-                                    }
-                                }}
-                                permissions={{
-                                    hasEditPermission,
-                                    hasDeletePermission,
-                                    hasDeactivatePermission
-                                }}
-                            />
-                        </Tooltip>
+                            }}
+                            onReactivate={() => {
+                                const isInactive = cliente.estado === 0 || cliente.estado === "0";
+                                if (hasDeactivatePermission && isInactive) {
+                                    setActionType("reactivate");
+                                    setTargetClient(cliente);
+                                    setOpenConfirmModal(true);
+                                }
+                            }}
+                            onDelete={() => {
+                                if (hasDeletePermission) {
+                                    setActionType("delete");
+                                    setTargetClient(cliente);
+                                    setOpenConfirmModal(true);
+                                }
+                            }}
+                            permissions={{
+                                hasEditPermission,
+                                hasDeletePermission,
+                                hasDeactivatePermission
+                            }}
+                        />
                     </div>
                 );
             default:
@@ -238,7 +240,7 @@ const TablaCliente = ({
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody items={clientes} emptyContent={"No se encontraron clientes"}>
+                <TableBody items={clientes} emptyContent={<EmptyState title="No se encontraron clientes" description="Intenta ajustar tus filtros de búsqueda." />}>
                     {(item) => (
                         <TableRow key={item.id}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

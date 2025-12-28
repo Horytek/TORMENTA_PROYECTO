@@ -15,28 +15,49 @@ import useProductoTop from "@/services/reports/data_top";
 import useVentasSucursal from "@/services/reports/data_ventas_sucursal";
 
 // Card métrica reutilizable con fondo degradado y diseño consistente
-function MetricCardKPI({ icon, title, value, change, gradient, iconColor, borderColor, children }) {
+function MetricCardKPI({ icon, title, value, change, variant = "default", children }) {
+    const variants = {
+        default: "text-slate-600 bg-slate-50 dark:text-slate-300 dark:bg-zinc-800",
+        success: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20",
+        primary: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20",
+        secondary: "text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20",
+        warning: "text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20",
+    };
+
+    const iconStyle = variants[variant] || variants.default;
+
     return (
-        <Card className={`relative overflow-hidden border ${borderColor} bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm min-w-[280px] max-w-[400px] flex-1`}>
-            <CardBody className="p-6 relative">
-                <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50 pointer-events-none`}></div>
-                <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className={`p-3 rounded-xl ${iconColor} shadow-lg`}>{icon}</div>
-                        {change !== undefined && (
-                            <div className="flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-white/80 dark:bg-zinc-800/80 px-2 py-1 rounded-full backdrop-blur-sm">
-                                <ArrowUp className="h-3 w-3 mr-1" />
-                                {change} <span className="text-zinc-500 dark:text-zinc-400 ml-1">desde ayer</span>
-                            </div>
-                        )}
+        <Card className="border border-slate-100 dark:border-zinc-800 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04)] dark:shadow-none dark:bg-zinc-900 rounded-2xl p-6 h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-white">
+            <div className="flex flex-col justify-between h-full gap-4">
+                <div className="flex justify-between items-start">
+                    <div className={`p-3 rounded-xl ${iconStyle} transition-colors`}>
+                        {icon}
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{value}</p>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">{title}</p>
-                    </div>
+                    {change !== undefined && (
+                        <Chip
+                            size="sm"
+                            variant="flat"
+                            color={change && change.toString().includes('+') ? "success" : "default"}
+                            classNames={{
+                                base: "h-6 px-1",
+                                content: "font-semibold text-[10px] flex items-center gap-1"
+                            }}
+                        >
+                            {change}
+                        </Chip>
+                    )}
+                </div>
+
+                <div>
+                    <h3 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight tabular-nums mt-2">
+                        {value}
+                    </h3>
+                    <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                        {title}
+                    </p>
                     {children}
                 </div>
-            </CardBody>
+            </div>
         </Card>
     );
 }
@@ -86,7 +107,7 @@ const SalesCard = ({
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 w-full">
             {/* Total de Ganancias */}
             <MetricCardKPI
                 icon={<DollarSign className="h-5 w-5" />}
@@ -97,25 +118,8 @@ const SalesCard = ({
                         ? `${porcentajeGanancias > 0 ? "+" : ""}${porcentajeGanancias || 0}%`
                         : undefined
                 }
-                gradient={gradients[0]}
-                iconColor={iconColors[0]}
-                borderColor={borderColors[0]}
+                variant="success"
             >
-                <div className="flex items-center space-x-2 mt-2">
-                    <Chip
-                        color={porcentajeGanancias >= 0 ? "success" : "danger"}
-                        className="text-xs px-2 py-1 flex items-center gap-1 leading-none"
-                    >
-                        {porcentajeGanancias >= 0 ? (
-                            <ArrowUpRight className="h-3 w-3 mr-1 inline-block relative top-[0.5px]" />
-                        ) : (
-                            <ArrowDownRight className="h-3 w-3 mr-1 inline-block relative top-[0.5px]" />
-                        )}
-                        {porcentajeGanancias > 0 ? "+" : ""}
-                        {porcentajeGanancias || 0}%
-                    </Chip>
-                    <span className="text-xs text-muted-foreground">{periodoTexto}</span>
-                </div>
                 {/* Meta y progreso */}
                 <div className="mt-3">
                     {(() => {
@@ -142,15 +146,16 @@ const SalesCard = ({
                         return (
                             <>
                                 <div className="mt-4">
-                                    <div className="flex items-center justify-between text-xs mb-1">
+                                    <div className="flex items-center justify-between text-xs mb-1 text-slate-500">
                                         <span>{metaLabel}: S/. {meta}</span>
-                                        <span className="font-medium">{porcentajeMeta.toFixed(0)}%</span>
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">{porcentajeMeta.toFixed(0)}%</span>
                                     </div>
                                     <Progress
                                         value={porcentajeMeta}
-                                        className="h-2 rounded-full"
+                                        className="h-1.5 rounded-full"
                                         color="success"
                                         aria-label="Progreso de meta de ganancias"
+                                        classNames={{ indicator: "bg-emerald-500" }}
                                     />
                                 </div>
                             </>
@@ -169,25 +174,8 @@ const SalesCard = ({
                         ? `${porcentajeProductos > 0 ? "+" : ""}${porcentajeProductos || 0}%`
                         : undefined
                 }
-                gradient={gradients[1]}
-                iconColor={iconColors[1]}
-                borderColor={borderColors[1]}
+                variant="secondary"
             >
-                <div className="flex items-center space-x-2 mt-2">
-                    <Chip
-                        color={porcentajeProductos >= 0 ? "success" : "danger"}
-                        className="text-xs px-2 py-1 flex items-center gap-1 leading-none"
-                    >
-                        {porcentajeProductos >= 0 ? (
-                            <ArrowUpRight className="h-3 w-3 mr-1 inline-block relative top-[0.5px]" />
-                        ) : (
-                            <ArrowDownRight className="h-3 w-3 mr-1 inline-block relative top-[0.5px]" />
-                        )}
-                        {porcentajeProductos > 0 ? "+" : ""}
-                        {porcentajeProductos || 0}%
-                    </Chip>
-                    <span className="text-xs text-muted-foreground">{periodoTexto}</span>
-                </div>
                 <div className="mt-3">
                     {(() => {
                         let meta = 0;
@@ -213,15 +201,16 @@ const SalesCard = ({
                         return (
                             <>
                                 <div className="mt-4">
-                                    <div className="flex items-center justify-between text-xs mb-1">
+                                    <div className="flex items-center justify-between text-xs mb-1 text-slate-500">
                                         <span>{metaLabel}: {meta}</span>
-                                        <span className="font-medium">{porcentajeMeta.toFixed(0)}%</span>
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">{porcentajeMeta.toFixed(0)}%</span>
                                     </div>
                                     <Progress
                                         value={porcentajeMeta}
-                                        className="h-2 rounded-full"
+                                        className="h-1.5 rounded-full"
                                         color="secondary"
                                         aria-label="Progreso de meta de productos"
+                                        classNames={{ indicator: "bg-purple-500" }}
                                     />
                                 </div>
                             </>
@@ -235,50 +224,14 @@ const SalesCard = ({
                 icon={<TrendingUp className="h-5 w-5" />}
                 title="Producto Más Vendido"
                 value={productoTop?.descripcion || "No disponible"}
-                gradient={gradients[2]}
-                iconColor={iconColors[2]}
-                borderColor={borderColors[2]}
+                variant="primary"
             >
-                <div className="mt-2 flex items-center text-xs">
+                <div className="mt-2 flex items-center text-xs text-slate-500">
                     <div className="flex items-center mr-3">
-                        <span className="font-medium mr-1">Unidades:</span> {productoTop?.unidades || "0"}
+                        <span className="font-medium mr-1 text-slate-700 dark:text-slate-300">Unidades:</span> {productoTop?.unidades || "0"}
                     </div>
                     <div className="flex items-center">
-                        <span className="font-medium mr-1">Ingresos:</span> S/. {productoTop?.ingresos || "0.00"}
-                    </div>
-                </div>
-                <div className="mt-3">
-                    <div className="flex items-center gap-2 mt-2">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                        <div className="text-xs flex items-center gap-1">
-                            {productoTop?.porcentajeSobreTotal !== undefined && productoTop?.porcentajeSobreTotal !== null
-                                ? (
-                                    <>
-                                        <span className="font-semibold">
-                                            {Number(productoTop.porcentajeSobreTotal).toFixed(2)}%
-                                        </span>
-                                        <span>del total de ventas</span>
-                                    </>
-                                )
-                                : "0% del total de ventas"}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                        <div className={`h-2 w-2 rounded-full ${Number(productoTop?.porcentajeCrecimiento) > 0 ? "bg-blue-500" : Number(productoTop?.porcentajeCrecimiento) < 0 ? "bg-red-500" : "bg-gray-400"}`}></div>
-                        <div className={`text-xs flex items-center gap-1 ${Number(productoTop?.porcentajeCrecimiento) > 0 ? "text-blue-600" : Number(productoTop?.porcentajeCrecimiento) < 0 ? "text-red-600" : "text-gray-500"}`}>
-                            {productoTop?.porcentajeCrecimiento !== undefined && productoTop?.porcentajeCrecimiento !== null
-                                ? (
-                                    <>
-                                        {Number(productoTop.porcentajeCrecimiento) > 0 && <ArrowUpRight className="inline h-3 w-3" />}
-                                        {Number(productoTop.porcentajeCrecimiento) < 0 && <ArrowDownRight className="inline h-3 w-3" />}
-                                        <span className="font-semibold">
-                                            {Number(productoTop.porcentajeCrecimiento).toFixed(2)}%
-                                        </span>
-                                        <span>de {Number(productoTop?.porcentajeCrecimiento) >= 0 ? "incremento" : "decremento"} vs. periodo anterior</span>
-                                    </>
-                                )
-                                : "0% de incremento vs. periodo anterior"}
-                        </div>
+                        <span className="font-medium mr-1 text-slate-700 dark:text-slate-300">Ingresos:</span> S/. {productoTop?.ingresos || "0.00"}
                     </div>
                 </div>
             </MetricCardKPI>
@@ -288,41 +241,25 @@ const SalesCard = ({
                 icon={<Store className="h-5 w-5" />}
                 title="Sucursal con Mayor Rendimiento"
                 value={sucursalTop?.nombre || "No disponible"}
-                gradient={gradients[3]}
-                iconColor={iconColors[3]}
-                borderColor={borderColors[3]}
+                variant="warning"
             >
-                <div className="flex items-center space-x-2 mt-2">
-                    <Chip
-                        color={sucursalTop?.porcentajeCrecimiento >= 0 ? "success" : "danger"}
-                        className="text-xs px-2 py-1 flex items-center gap-1 leading-none"
-                    >
-                        {sucursalTop?.porcentajeCrecimiento >= 0 ? (
-                            <ArrowUpRight className="h-3 w-3 mr-1 inline-block relative top-[0.5px]" />
-                        ) : (
-                            <ArrowDownRight className="h-3 w-3 mr-1 inline-block relative top-[0.5px]" />
-                        )}
-                        {sucursalTop?.porcentajeCrecimiento > 0 ? "+" : ""}
-                        {sucursalTop?.porcentajeCrecimiento || 0}%
-                    </Chip>
-                    <span className="text-xs text-muted-foreground">{periodoTexto}</span>
-                </div>
                 <div className="mt-4">
-                    <div className="flex items-center justify-between text-xs mb-1">
+                    <div className="flex items-center justify-between text-xs mb-1 text-slate-500">
                         <span>
                             Ventas: S/. {sucursalTop?.totalVentas ? Number(sucursalTop.totalVentas).toFixed(2) : "0.00"}
                         </span>
-                        <span className="font-medium">
+                        <span className="font-medium text-slate-700 dark:text-slate-300">
                             {sucursalTop?.porcentajeSobreTotal
-                                ? `${sucursalTop?.porcentajeSobreTotal}% del total`
-                                : "0% del total"}
+                                ? `${sucursalTop?.porcentajeSobreTotal}%`
+                                : "0%"}
                         </span>
                     </div>
                     <Progress
                         value={sucursalTop?.porcentajeSobreTotal || 0}
-                        className="h-2 rounded-full"
+                        className="h-1.5 rounded-full"
                         color="warning"
                         aria-label="Progreso de sucursal"
+                        classNames={{ indicator: "bg-orange-500" }}
                     />
                 </div>
             </MetricCardKPI>

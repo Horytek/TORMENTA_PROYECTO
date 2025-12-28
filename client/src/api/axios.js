@@ -12,7 +12,7 @@ export function setAuthReady(value = true) {
 }
 
 const base = (() => {
-  const raw = (import.meta.env.VITE_API_URL || "").replace(/\/+$/,"");
+  const raw = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
   if (raw) return raw.endsWith("/api") ? raw : raw + "/api";
   if (typeof window !== "undefined") return window.location.origin + "/api";
   return "/api";
@@ -33,10 +33,17 @@ function waitForAuth() {
   });
 }
 
-// Ya no se usa token en headers, solo cookies HTTPOnly
+import { getToken } from "../utils/authStorage";
+
+// Token en header usando IndexedDB (más seguro que localStorage)
 api.interceptors.request.use(async cfg => {
   await waitForAuth();
-  // No añadir Authorization, el backend debe leer la cookie
+
+  const token = await getToken();
+  if (token) {
+    cfg.headers.Authorization = `Bearer ${token}`;
+  }
+
   return cfg;
 });
 

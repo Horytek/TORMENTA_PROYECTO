@@ -163,66 +163,68 @@ const ReporteVentas = () => {
 
   return (
     <ScrollShadow hideScrollBar className="h-[calc(100vh-40px)] w-full">
-      <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] py-6 px-4 sm:px-6 print:p-0 print:bg-white font-inter">
-        <div className="max-w-[1920px] mx-auto space-y-6 print:space-y-4">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] py-6 px-4 sm:px-6 print:p-0 print:bg-white font-inter">
+        <div className="max-w-[1920px] mx-auto space-y-8 print:space-y-4">
 
           {/* Header & Controls */}
           <div className="flex flex-col gap-6 print:hidden">
             {/* Title & Top Actions */}
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <h1 className="font-extrabold text-3xl text-slate-800 dark:text-white tracking-tight mb-1">
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight mb-1">
                   Reporte de Ventas
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm max-w-2xl">
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
                   Analiza el rendimiento de ventas, tendencias y productos por sucursal.
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                {/* Report Type & PDF Export */}
-                <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-700 p-1 shadow-sm">
-                  <Select
-                    className="min-w-[180px]"
-                    classNames={{
-                      trigger: "bg-transparent shadow-none border-none data-[hover=true]:bg-slate-50",
-                      value: "text-slate-700 dark:text-slate-200 font-medium text-sm"
-                    }}
-                    selectedKeys={[reportType]}
-                    onSelectionChange={(keys) => setReportType(Array.from(keys)[0])}
-                    size="sm"
-                  >
-                    <SelectItem key="executive" value="executive">Resumen Ejecutivo</SelectItem>
-                    <SelectItem key="detailed" value="detailed">Detalle de Operaciones</SelectItem>
-                    <SelectItem key="clients" value="clients">Análisis de Clientes</SelectItem>
-                  </Select>
-                  <div className="h-5 w-[1px] bg-slate-200 dark:bg-zinc-700 mx-1"></div>
+                <Select
+                  selectedKeys={[reportType]}
+                  onSelectionChange={(keys) => setReportType(Array.from(keys)[0])}
+                  className="w-44"
+                  size="sm"
+                  variant="flat"
+                  classNames={{
+                    trigger: "bg-white dark:bg-zinc-900 shadow-sm hover:bg-slate-50 transition-colors h-9 rounded-lg",
+                    value: "text-slate-600 dark:text-slate-300 font-medium text-xs scale-100"
+                  }}
+                >
+                  <SelectItem key="executive" value="executive">Resumen Ejecutivo</SelectItem>
+                  <SelectItem key="detailed" value="detailed">Detalle de Operaciones</SelectItem>
+                  <SelectItem key="clients" value="clients">Análisis de Clientes</SelectItem>
+                </Select>
+
+                <Tooltip content="Exportar PDF">
                   <Button
                     isIconOnly
-                    variant="light"
+                    variant="flat"
+                    color="primary"
                     onPress={handleExportPdf}
-                    className="text-slate-500 hover:text-blue-600"
+                    className="bg-blue-600 text-white shadow-md shadow-blue-500/20"
                     size="sm"
                   >
-                    <MdToday className="text-xl" />
+                    <MdToday className="text-lg" />
                   </Button>
-                </div>
+                </Tooltip>
               </div>
             </div>
 
             {/* Filters Row: Tabs + Date Selects */}
-            <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
-              {/* Tabs - Now cleaner without box */}
+            <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between bg-white dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
               <Tabs
                 aria-label="Sucursales"
                 selectedKey={selectedTab}
                 onSelectionChange={setSelectedTab}
-                classNames={{
-                  tabList: "bg-white dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm gap-2",
-                  cursor: "w-full bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20",
-                  tab: "h-9 px-4 text-slate-500 dark:text-slate-400 data-[selected=true]:text-white font-semibold text-sm transition-all",
-                  tabContent: "group-data-[selected=true]:text-white"
-                }}
+                color="primary"
                 variant="light"
+                radius="lg"
+                classNames={{
+                  tabList: "gap-1",
+                  cursor: "bg-white shadow-sm dark:bg-zinc-800",
+                  tab: "h-8 px-4 text-slate-500 dark:text-slate-400 font-medium text-xs transition-all",
+                  tabContent: "group-data-[selected=true]:text-slate-800 dark:group-data-[selected=true]:text-white"
+                }}
               >
                 <Tab key="todas" title="Todas las Sucursales" />
                 {Array.isArray(sucursales) &&
@@ -235,17 +237,18 @@ const ReporteVentas = () => {
               </Tabs>
 
               {/* Date Filters - Clean Row */}
-              <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-zinc-800 p-1 rounded-xl border border-slate-200 dark:border-zinc-700 shadow-sm">
+              <div className="flex items-center gap-2">
                 {/* Semana */}
-                <div className="w-32">
+                <div className="w-28">
                   <Select
                     placeholder="Semana"
                     selectedKeys={selectedWeek}
                     onSelectionChange={(keys) => setSelectedWeek(Array.from(keys))}
                     isDisabled={!selectedMonth.length}
+                    variant="flat"
                     classNames={{
-                      trigger: "bg-transparent shadow-none border-none hover:bg-slate-50 h-9",
-                      value: "text-xs font-medium"
+                      trigger: "bg-transparent shadow-none hover:bg-slate-50 h-8 min-h-unit-8",
+                      value: "text-xs font-medium text-slate-600"
                     }}
                     size="sm"
                   >
@@ -255,10 +258,10 @@ const ReporteVentas = () => {
                     ))}
                   </Select>
                 </div>
-                <div className="w-[1px] h-5 bg-slate-200 dark:bg-zinc-700"></div>
+                <div className="w-[1px] h-4 bg-slate-200 dark:bg-zinc-700"></div>
 
                 {/* Mes */}
-                <div className="w-32">
+                <div className="w-28">
                   <Select
                     placeholder="Mes"
                     selectedKeys={selectedMonth}
@@ -266,9 +269,10 @@ const ReporteVentas = () => {
                       setSelectedMonth(Array.from(keys));
                       setSelectedWeek([]);
                     }}
+                    variant="flat"
                     classNames={{
-                      trigger: "bg-transparent shadow-none border-none hover:bg-slate-50 h-9",
-                      value: "text-xs font-medium"
+                      trigger: "bg-transparent shadow-none hover:bg-slate-50 h-8 min-h-unit-8",
+                      value: "text-xs font-medium text-slate-600"
                     }}
                     size="sm"
                   >
@@ -277,10 +281,10 @@ const ReporteVentas = () => {
                     ))}
                   </Select>
                 </div>
-                <div className="w-[1px] h-5 bg-slate-200 dark:bg-zinc-700"></div>
+                <div className="w-[1px] h-4 bg-slate-200 dark:bg-zinc-700"></div>
 
                 {/* Año */}
-                <div className="w-24">
+                <div className="w-20">
                   <Select
                     placeholder="Año"
                     selectedKeys={selectedYear}
@@ -291,9 +295,10 @@ const ReporteVentas = () => {
                         setSelectedWeek([]);
                       }
                     }}
+                    variant="flat"
                     classNames={{
-                      trigger: "bg-transparent shadow-none border-none hover:bg-slate-50 h-9",
-                      value: "text-xs font-medium"
+                      trigger: "bg-transparent shadow-none hover:bg-slate-50 h-8 min-h-unit-8",
+                      value: "text-xs font-medium text-slate-600"
                     }}
                     size="sm"
                   >
@@ -305,18 +310,20 @@ const ReporteVentas = () => {
 
                 <div className="flex gap-1 ml-1 pl-1 border-l border-slate-200 dark:border-zinc-700">
                   <Tooltip content="Limpiar" closeDelay={0}>
-                    <Button isIconOnly size="sm" variant="light" onPress={handleClearFilters} className="text-slate-400 hover:text-rose-500">
-                      <MdClear className="text-lg" />
+                    <Button isIconOnly size="sm" variant="light" onPress={handleClearFilters} className="text-slate-400 hover:text-rose-500 min-w-8 w-8 h-8">
+                      <MdClear className="text-sm" />
                     </Button>
                   </Tooltip>
                   <Tooltip content="Hoy" closeDelay={0}>
-                    <Button isIconOnly size="sm" variant="light" onPress={handleTodayFilters} className="text-slate-400 hover:text-blue-500">
-                      <MdToday className="text-lg" />
+                    <Button isIconOnly size="sm" variant="light" onPress={handleTodayFilters} className="text-slate-400 hover:text-blue-500 min-w-8 w-8 h-8">
+                      <MdToday className="text-sm" />
                     </Button>
                   </Tooltip>
                 </div>
               </div>
             </div>
+
+            <div className="h-px w-full bg-slate-200 dark:bg-zinc-800/50"></div>
           </div>
 
           {/* KPIS Section */}

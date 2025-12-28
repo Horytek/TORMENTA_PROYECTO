@@ -1,64 +1,64 @@
 <!doctype html>
 <html lang="es">
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="./src/assets/horytek_icon.ico" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Horytek ERP</title>
-  <meta name="theme-color" content="#2563eb" />
-  <meta name="description" content="Sistema ERP de Horytek: gestión de ventas, almacén, reportes y más." />
-  <!-- Optimización de fuentes -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    </noscript>
-    <style>
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
-      body {
-        min-height: 100vh;
-        min-width: 100vw;
-        font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-        /* Fondo degradado pálido y suave */
-        background: linear-gradient(
-          180deg,
-          #fff 0%,
-          #f6faff 20%,
-          #e6f0ff 100%
-        );
-        background-attachment: fixed;
-        color: #222;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        transition: background 0.3s;
-      }
-      /* Solo para la landing */
-      body.landing-body {
-        font-family: 'Inter', sans-serif !important;
-        background: #020203 !important;
-        background-image: none !important;
-        background-attachment: initial !important;
-        transition: background 0.3s;
-      }
-      
-      /* Asegurar que el root también use el fondo correcto para landing */
-      body.landing-body #root {
-        background: #020203 !important;
-        background-image: none !important;
-      }
-      #root {
-        min-height: 100vh;
-        min-width: 100vw;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./src/main.jsx"></script>
-  </body>
+<meta charset="UTF-8" />
+<link rel="icon" type="image/svg+xml" href="./src/assets/horytek_icon.ico" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Horytek ERP</title>
+<meta name="theme-color" content="#2563eb" />
+<meta name="description" content="Sistema ERP de Horytek: gestión de ventas, almacén, reportes y más." />
+<!-- Optimización de fuentes -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+  rel="stylesheet">
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+</noscript>
+<style>
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    min-height: 100vh;
+    min-width: 100vw;
+    font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    background-color: #f8fafc;
+    /* Fallback slate-50 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Dark mode fallback if JS hasn't loaded */
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #09090b;
+      /* Fallback zinc-950 */
+      color: #f8fafc;
+    }
+  }
+
+  /* Solo para la landing */
+  body.landing-body {
+    font-family: 'Inter', sans-serif !important;
+    background: #020203 !important;
+  }
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
+  }
+</style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="./src/main.jsx"></script>
+</body>
+
 </html>
