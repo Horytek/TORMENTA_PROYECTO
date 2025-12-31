@@ -766,13 +766,7 @@ Historial breve: ${historySummary || "inicio"}.
             >
               Asistente ERP
             </DropdownItem>
-            <DropdownItem
-              key="search"
-              startContent={<Search className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
-              onClick={() => setIsSearchOpen(true)}
-            >
-              Buscar en el sistema
-            </DropdownItem>
+
           </DropdownMenu>
         </Dropdown>
       </div>

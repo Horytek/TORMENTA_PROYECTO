@@ -15,6 +15,7 @@ export default defineConfig({
       }
     }
   },
+  envDir: '..',
   resolve: { alias: { '@': resolve('./src') } },
   css: {
     modules: {

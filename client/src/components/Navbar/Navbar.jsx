@@ -57,8 +57,8 @@ function Navbar() {
               </div>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:ml-6 md:flex md:items-center md:space-x-1">
+            {/* Desktop Navigation Centered */}
+            <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
               <NavLinks />
             </div>
           </div>

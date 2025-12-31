@@ -106,7 +106,7 @@ export default function NavCompany() {
                         )}
                     </div>
 
-                    <div className="grid flex-1 text-left text-sm leading-tight hidden sm:block mr-2 max-w-[200px] gap-0.5">
+                    <div className="grid flex-1 text-left text-sm leading-tight hidden sm:block mr-2 w-auto min-w-[140px] gap-0.5">
                         <span className="truncate font-bold text-slate-800 dark:text-slate-100 group-hover:text-black dark:group-hover:text-white transition-colors">
                             {activeTeam.name}
                         </span>
