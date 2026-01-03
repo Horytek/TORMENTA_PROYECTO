@@ -15,7 +15,7 @@ import {
 } from "@heroui/react";
 import { FaTrash, FaBroom } from 'react-icons/fa';
 import { FiBox } from 'react-icons/fi';
-import ConfirmationModal from '../../components/modals/ConfirmationModal';
+import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 
 const RegistroNotaTable = ({
     productos,
