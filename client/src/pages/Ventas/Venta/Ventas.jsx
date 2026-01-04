@@ -12,6 +12,8 @@ import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { Card, CardBody, ScrollShadow } from "@heroui/react";
 import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator } from "react-icons/fa";
 import useSucursalData from '@/services/data/data_sucursal_venta';
+import { Tabs, Tab } from "@heroui/react";
+import InventoryCalendar from './ComponentsVentas/InventoryCalendar/InventoryCalendar';
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
@@ -34,8 +36,8 @@ const Ventas = () => {
     totalEfectivo,
     totalPagoElectronico,
     updateVenta,
-    refreshVentas
-
+    refreshVentas,
+    allVentas
   } = useVentasData(filters);
 
   // Zustand: obtener y setear datos globales
@@ -176,56 +178,68 @@ const Ventas = () => {
           </div>
         </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard
-            title="Total Ventas"
-            value={`S/. ${totalRecaudado ? totalRecaudado : "0.00"}`}
-            icon={FaShoppingBag}
-            colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
-          />
-          <KpiCard
-            title="Total Efectivo"
-            value={totalEfectivo ? totalEfectivo : "0.00"}
-            icon={FaMoneyBillWave}
-            colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
-          />
-          <KpiCard
-            title="Total Electrónico"
-            value={totalPagoElectronico ? totalPagoElectronico : "0.00"}
-            icon={FaCreditCard}
-            colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-          />
-          <KpiCard
-            title="Cantidad Ventas"
-            value={ventas && ventas.length ? ventas.length : "0"}
-            icon={FaCalculator}
-            colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-          />
-        </div>
+        {/* Tabs Navigation */}
+        <Tabs aria-label="Vistas de Ventas" color="primary" variant="underlined">
+          <Tab key="ventas" title="Listado de Ventas">
+            <div className="space-y-6 mt-4">
+              {/* KPIs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <KpiCard
+                  title="Total Ventas"
+                  value={`S/. ${totalRecaudado ? totalRecaudado : "0.00"}`}
+                  icon={FaShoppingBag}
+                  colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
+                />
+                <KpiCard
+                  title="Total Efectivo"
+                  value={totalEfectivo ? totalEfectivo : "0.00"}
+                  icon={FaMoneyBillWave}
+                  colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+                />
+                <KpiCard
+                  title="Total Electrónico"
+                  value={totalPagoElectronico ? totalPagoElectronico : "0.00"}
+                  icon={FaCreditCard}
+                  colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                />
+                <KpiCard
+                  title="Cantidad Ventas"
+                  value={ventas && ventas.length ? ventas.length : "0"}
+                  icon={FaCalculator}
+                  colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                />
+              </div>
 
-        {/* Filtros */}
-        <div className="space-y-4">
-          <FiltrosVentas onFiltersChange={handleFilterChange} />
-        </div>
+              {/* Filtros */}
+              <div className="space-y-4">
+                <FiltrosVentas onFiltersChange={handleFilterChange} />
+              </div>
 
-        {/* Tabla de ventas con ScrollShadow */}
-        <ScrollShadow hideScrollBar className="rounded-xl w-full overflow-x-auto overflow-y-hidden">
-          <div className="min-w-[900px]">
-            <TablaVentas
-              ventas={ventas || []}
-              modalOpen={modalOpen}
-              deleteOptionSelected={deleteOptionSelected}
-              openModal={openModal}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              setCurrentPage={setCurrentPage}
-              ventasPerPage={ventasPerPage}
-              setVentasPerPage={setVentasPerPage}
-              refreshVentas={refreshVentas}
-            />
-          </div>
-        </ScrollShadow>
+              {/* Tabla de ventas con ScrollShadow */}
+              <ScrollShadow hideScrollBar className="rounded-xl w-full overflow-x-auto overflow-y-hidden">
+                <div className="min-w-[900px]">
+                  <TablaVentas
+                    ventas={ventas || []}
+                    modalOpen={modalOpen}
+                    deleteOptionSelected={deleteOptionSelected}
+                    openModal={openModal}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    setCurrentPage={setCurrentPage}
+                    ventasPerPage={ventasPerPage}
+                    setVentasPerPage={setVentasPerPage}
+                    refreshVentas={refreshVentas}
+                  />
+                </div>
+              </ScrollShadow>
+            </div>
+          </Tab>
+          <Tab key="inventario" title="Inventario y Calendario">
+            <div className="mt-4">
+              <InventoryCalendar ventas={allVentas} />
+            </div>
+          </Tab>
+        </Tabs>
 
         {/* Modal para opciones */}
         <OptionsModal

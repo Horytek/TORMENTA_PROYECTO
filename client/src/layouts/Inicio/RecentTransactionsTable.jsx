@@ -287,7 +287,7 @@ export function RecentTransactionsTable({ className }) {
                                                 {formatCurrency(sale.total)}
                                             </td>
                                             <td className="px-6 py-3.5">
-                                                <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <Tooltip content="Ver detalles">
                                                         <button
                                                             className="text-slate-400 hover:text-blue-600 transition-colors"

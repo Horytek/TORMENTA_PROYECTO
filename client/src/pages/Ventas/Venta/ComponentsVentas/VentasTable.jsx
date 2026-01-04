@@ -269,8 +269,8 @@ const TablaVentas = ({
             variant="flat"
             startContent={
               <span className={`w-1 h-1 rounded-full ml-1 ${['Aceptada', 'Activo'].includes(venta.estado) ? 'bg-success-600' :
-                  ['En proceso'].includes(venta.estado) ? 'bg-warning-600' :
-                    ['Anulada', 'Anulado'].includes(venta.estado) ? 'bg-danger-600' : 'bg-slate-600'
+                ['En proceso'].includes(venta.estado) ? 'bg-warning-600' :
+                  ['Anulada', 'Anulado'].includes(venta.estado) ? 'bg-danger-600' : 'bg-slate-600'
                 }`}></span>
             }
           >
@@ -285,32 +285,32 @@ const TablaVentas = ({
                   <BsThreeDotsVertical className="text-default-500 text-xl" />
                 </Button>
               </DropdownTrigger>
-              <DropdownMenu aria-label="Opciones de venta">
+              <DropdownMenu aria-label="Opciones de venta" variant="faded">
                 <DropdownItem
-                  startContent={<FaEye className="text-blue-500" />}
+                  key="detail"
+                  startContent={<FaEye className="text-default-500 text-xl" />}
                   onPress={() => handleViewDetail(venta)}
                 >
                   Ver Detalles
                 </DropdownItem>
                 <DropdownItem
-                  startContent={<TiPrinter className="text-gray-500 text-lg" />}
+                  key="print"
+                  startContent={<TiPrinter className="text-default-500 text-xl" />}
                   onPress={() => handlePrintIconClick(venta)}
                 >
                   Imprimir
                 </DropdownItem>
                 <DropdownItem
-                  startContent={<IoMdOptions className="text-red-500 text-lg" />}
+                  key="options"
+                  startContent={<IoMdOptions className="text-default-500 text-xl" />}
                   onPress={() => openModal(venta.id, venta.estado)}
-                  className="text-danger"
-                  color="danger"
                 >
                   Opciones Avanzadas
                 </DropdownItem>
                 <DropdownItem
-                  startContent={<FaExchangeAlt className="text-orange-500 text-lg" />}
+                  key="exchange"
+                  startContent={<FaExchangeAlt className="text-default-500 text-xl" />}
                   onPress={() => handleIntercambioClick(venta)}
-                  className="text-warning"
-                  color="warning"
                 >
                   Intercambio
                 </DropdownItem>

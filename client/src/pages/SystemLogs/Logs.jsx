@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import TablaLogs from './ComponentsLogs/TablaLogs';
-import { Pagination, Card, CardBody, Tabs, Tab } from '@heroui/react';
+import { Pagination, Card, CardBody, Tabs, Tab, Input } from '@heroui/react';
 import { getSystemLogs } from '../../api/api.logs';
 import { FaClipboardList, FaUserCheck, FaExclamationTriangle } from "react-icons/fa";
+import { Search as SearchIcon } from 'lucide-react';
 
 export default function LogsPage() {
   const [allLogs, setAllLogs] = useState([]);
@@ -12,12 +13,13 @@ export default function LogsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [timeFilter, setTimeFilter] = useState("24h");
+  const [filterValue, setFilterValue] = useState("");
 
   const load = async () => {
     try {
       setLoading(true);
       // Load more logs to enable client-side filtering
-      const data = await getSystemLogs(1, 500);
+      const data = await getSystemLogs(1, 1000); // 1. Increased limit to 1000 for better search range
       const logsArray = Array.isArray(data.data?.data) ? data.data.data : [];
       setAllLogs(logsArray);
       setTotal(data.data?.total || logsArray.length);
@@ -37,7 +39,7 @@ export default function LogsPage() {
     load();
   }, []);
 
-  // Filter logs by time period
+  // Filter logs by time period and text
   const filteredLogs = useMemo(() => {
     const now = new Date();
     let cutoffDate = new Date();
@@ -59,11 +61,23 @@ export default function LogsPage() {
         cutoffDate.setHours(cutoffDate.getHours() - 24);
     }
 
-    return allLogs.filter(log => {
+    let logs = allLogs.filter(log => {
       const logDate = new Date(log.fecha);
       return logDate >= cutoffDate && logDate <= now;
     });
-  }, [allLogs, timeFilter]);
+
+    if (filterValue) {
+      const lowerFilter = filterValue.toLowerCase();
+      logs = logs.filter(log =>
+        (log.usua || log.id_usuario || '').toLowerCase().includes(lowerFilter) ||
+        (log.accion || '').toLowerCase().includes(lowerFilter) ||
+        (log.descripcion || '').toLowerCase().includes(lowerFilter) ||
+        (log.ip || '').toLowerCase().includes(lowerFilter)
+      );
+    }
+
+    return logs;
+  }, [allLogs, timeFilter, filterValue]);
 
   // Paginated logs
   const paginatedLogs = useMemo(() => {
@@ -155,24 +169,42 @@ export default function LogsPage() {
       {/* Main Content */}
       <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4 space-y-4">
 
-        {/* Time Filter Tabs */}
-        <Tabs
-          aria-label="Filtro de tiempo"
-          selectedKey={timeFilter}
-          onSelectionChange={(key) => setTimeFilter(key)}
-          variant="light"
-          classNames={{
-            base: "w-full max-w-md",
-            tabList: "bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg gap-0",
-            tab: "px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 rounded-md data-[selected=true]:bg-white data-[selected=true]:text-slate-900 data-[selected=true]:shadow-sm dark:data-[selected=true]:bg-zinc-700 dark:data-[selected=true]:text-white",
-            cursor: "hidden",
-          }}
-        >
-          <Tab key="24h" title="Ult. 24hrs" />
-          <Tab key="semana" title="Ult. Semana" />
-          <Tab key="mes" title="Ult. mes" />
-          <Tab key="anio" title="Ult. año" />
-        </Tabs>
+        {/* Time Filter Tabs and Search */}
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+          <Tabs
+            aria-label="Filtro de tiempo"
+            selectedKey={timeFilter}
+            onSelectionChange={(key) => setTimeFilter(key)}
+            variant="light"
+            classNames={{
+              base: "w-full md:w-auto",
+              tabList: "bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg gap-0",
+              tab: "px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 rounded-md data-[selected=true]:bg-white data-[selected=true]:text-slate-900 data-[selected=true]:shadow-sm dark:data-[selected=true]:bg-zinc-700 dark:data-[selected=true]:text-white",
+              cursor: "hidden",
+            }}
+          >
+            <Tab key="24h" title="Ult. 24hrs" />
+            <Tab key="semana" title="Ult. Semana" />
+            <Tab key="mes" title="Ult. mes" />
+            <Tab key="anio" title="Ult. año" />
+          </Tabs>
+
+          <Input
+            classNames={{
+              base: "max-w-full sm:max-w-[15rem] h-10",
+              mainWrapper: "h-full",
+              input: "text-small",
+              inputWrapper: "h-full font-normal text-default-500 bg-slate-100 dark:bg-zinc-800 dark:border-zinc-700/50",
+            }}
+            placeholder="Buscar por usuario, acción..."
+            size="sm"
+            startContent={<SearchIcon size={18} />}
+            value={filterValue}
+            onValueChange={setFilterValue}
+            isClearable
+            onClear={() => setFilterValue("")}
+          />
+        </div>
 
         <TablaLogs
           logs={paginatedLogs}

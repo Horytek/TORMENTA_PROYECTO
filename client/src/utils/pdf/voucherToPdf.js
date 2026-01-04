@@ -24,11 +24,16 @@ export function exportVoucherToPdf(content, options = {}) {
     lineHeight = 4.2,
     receiptWidth = 80,
     openInNewTab = false,
+    returnBlobUrl = false,
+    logo = null, // Base64 string or URL (if supported by jsPDF environment)
   } = options;
 
   const lines = (content || '').split('\n');
+
+  // Estimate height - Logo adds space
+  const logoHeight = logo ? 25 : 0;
   const estimatedHeight = Math.max(
-    marginTop + marginBottom + lines.length * lineHeight,
+    marginTop + marginBottom + lines.length * lineHeight + logoHeight,
     120
   );
 
@@ -42,11 +47,28 @@ export function exportVoucherToPdf(content, options = {}) {
   const pageHeight = doc.internal.pageSize.getHeight();
   const usableWidth = pageWidth - marginLeft - marginRight;
 
+  // Render Logo if exists
+  let cursorY = marginTop;
+  if (logo) {
+    try {
+      const imgProps = doc.getImageProperties(logo);
+      const imgRatio = imgProps.width / imgProps.height;
+      // Max width 60% of receipt, max height 25mm
+      const targetWidth = Math.min(usableWidth * 0.6, 40);
+      const targetHeight = targetWidth / imgRatio;
+
+      const x = (pageWidth - targetWidth) / 2; // Center
+      doc.addImage(logo, 'PNG', x, cursorY, targetWidth, targetHeight);
+      cursorY += targetHeight + 2; // Padding
+    } catch (e) {
+      console.error("Error adding logo to PDF", e);
+    }
+  }
+
   // Fuente monoespaciada para conservar columnas
   doc.setFont('courier', 'normal');
   doc.setFontSize(fontSize);
 
-  let cursorY = marginTop;
   const cursorX = marginLeft;
 
   lines.forEach((line) => {
@@ -61,6 +83,10 @@ export function exportVoucherToPdf(content, options = {}) {
       cursorY += lineHeight;
     });
   });
+
+  if (returnBlobUrl) {
+    return doc.output('bloburl');
+  }
 
   if (openInNewTab && typeof window !== 'undefined' && window?.open) {
     const blobUrl = doc.output('bloburl');

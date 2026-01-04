@@ -235,6 +235,7 @@ const useVentasData = (filters = {}) => {
     totalRecaudado,
     totalEfectivo,
     totalPagoElectronico,
+    allVentas,
     refreshVentas: fetchVentas
   };
 };

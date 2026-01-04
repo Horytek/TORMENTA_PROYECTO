@@ -48,12 +48,13 @@ import emailRoutes from "./routes/email.routes.js";
 import credencialRoutes from "./routes/credenciales.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import landingRoutes from "./routes/landing.routes.js";
+import negocioRoutes from "./routes/negocio.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
 
 // Settings
-const port = process.env.PORT || 4000 ;
+const port = process.env.PORT || 4000;
 app.set("port", port);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -95,7 +96,9 @@ app.use(
         "'self'",
         "data:",
         "https://i.ibb.co",
-        "https://facturacion.apisperu.com/api"
+        "https://facturacion.apisperu.com/api",
+        "'self'", // Allow self for uploads
+        "blob:"
       ],
       // ...otras directivas...
     }
@@ -105,24 +108,24 @@ app.use(
 app.use(express.json({ limit: '2mb' })); // o más si lo necesitas
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-const norm = u => { 
-  try { 
-    const {protocol,host}=new URL(u); 
-    return `${protocol}//${host}`.toLowerCase(); 
-  } catch { 
-    return null; 
-  } 
+const norm = u => {
+  try {
+    const { protocol, host } = new URL(u);
+    return `${protocol}//${host}`.toLowerCase();
+  } catch {
+    return null;
+  }
 };
 
 const ALLOW = new Set(
   [process.env.FRONTEND_URL, process.env.FRONTEND_URL_BACKUP]
     .filter(Boolean)
     .flatMap(u => {
-      const n = norm(u); 
+      const n = norm(u);
       if (!n) return [];
-      return n.startsWith('http://') 
-        ? [n, n.replace('http://','https://')]
-        : [n, n.replace('https://','http://')];
+      return n.startsWith('http://')
+        ? [n, n.replace('http://', 'https://')]
+        : [n, n.replace('https://', 'http://')];
     })
 );
 
@@ -142,9 +145,9 @@ const allowedOrigin = (origin, cb) => {
 };
 
 app.use(cors({
-    origin: allowedOrigin,
-    methods: "GET,POST,PUT,DELETE,OPTIONS",
-    credentials: true
+  origin: allowedOrigin,
+  methods: "GET,POST,PUT,DELETE,OPTIONS",
+  credentials: true
 }));
 // habilita pre‑flight OPTIONS en todas las rutas
 app.options(/.*/, cors({
@@ -192,10 +195,14 @@ app.use("/api/logs", logsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/help", helpRoutes);
 app.use("/api/function-shortcuts", functionShortcutsRoutes);
+app.use("/api/negocio", negocioRoutes);
 app.use("/api", emailRoutes);
 app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api/landing", landingRoutes);
+
+// Servir archivos estáticos (uploads)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Servir archivos estáticos de Vite/React
 app.use(express.static(path.join(__dirname, "../client/dist")));

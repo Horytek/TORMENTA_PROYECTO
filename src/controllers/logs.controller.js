@@ -4,16 +4,16 @@ export const addLog = async ({ id_usuario, accion, id_modulo, id_submodulo = nul
   let connection;
   try {
     connection = await getConnection();
-    const log = { 
-      id_tenant, 
-      id_usuario, 
-      id_modulo, 
-      id_submodulo, 
-      accion, 
-      recurso, 
-      descripcion, 
-      ip, 
-      fecha: new Date() 
+    const log = {
+      id_tenant,
+      id_usuario,
+      id_modulo,
+      id_submodulo,
+      accion,
+      recurso,
+      descripcion,
+      ip,
+      fecha: new Date()
     };
     await connection.query("INSERT INTO log_sistema SET ?", log);
   } catch (e) {
@@ -31,52 +31,52 @@ export const cleanOldLogs = async (daysToKeep = 90, criticalDaysToKeep = 180) =>
   let connection;
   try {
     connection = await getConnection();
-    
+
     // Logs críticos que se mantienen más tiempo
     const criticalActions = [
-      'LOGIN_FAIL', 
-      'USUARIO_BLOQUEAR', 
+      'LOGIN_FAIL',
+      'USUARIO_BLOQUEAR',
       'USUARIO_DESBLOQUEAR',
       'VENTA_ANULAR',
       'SUNAT_RECHAZADA',
       'NOTA_ANULAR',
       'GUIA_ANULAR'
     ];
-    
+
     // Eliminar logs no críticos antiguos
     const normalCutoffDate = new Date();
     normalCutoffDate.setDate(normalCutoffDate.getDate() - daysToKeep);
-    
+
     const [normalResult] = await connection.query(
       `DELETE FROM log_sistema 
        WHERE fecha < ? 
        AND accion NOT IN (${criticalActions.map(() => '?').join(',')})`,
       [normalCutoffDate, ...criticalActions]
     );
-    
+
     // Eliminar logs críticos muy antiguos
     const criticalCutoffDate = new Date();
     criticalCutoffDate.setDate(criticalCutoffDate.getDate() - criticalDaysToKeep);
-    
+
     const [criticalResult] = await connection.query(
       `DELETE FROM log_sistema 
        WHERE fecha < ? 
        AND accion IN (${criticalActions.map(() => '?').join(',')})`,
       [criticalCutoffDate, ...criticalActions]
     );
-    
+
     const totalDeleted = normalResult.affectedRows + criticalResult.affectedRows;
-    
+
     if (totalDeleted > 0) {
       console.log(`🗑️  Logs limpiados: ${normalResult.affectedRows} normales, ${criticalResult.affectedRows} críticos. Total: ${totalDeleted}`);
     }
-    
-    return { 
-      normalDeleted: normalResult.affectedRows, 
-      criticalDeleted: criticalResult.affectedRows, 
-      totalDeleted 
+
+    return {
+      normalDeleted: normalResult.affectedRows,
+      criticalDeleted: criticalResult.affectedRows,
+      totalDeleted
     };
-    
+
   } catch (error) {
     console.error('❌ Error limpiando logs antiguos:', error);
     throw error;
@@ -92,15 +92,15 @@ export const getLogStats = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    
+
     let tenantFilter = "";
     let params = [];
-    
+
     if (req.id_tenant) {
       tenantFilter = "WHERE id_tenant = ?";
       params.push(req.id_tenant);
     }
-    
+
     const [stats] = await connection.query(`
       SELECT 
         COUNT(*) as total_logs,
@@ -114,7 +114,7 @@ export const getLogStats = async (req, res) => {
       FROM log_sistema 
       ${tenantFilter}
     `, params);
-    
+
     const [actionStats] = await connection.query(`
       SELECT 
         accion, 
@@ -126,7 +126,7 @@ export const getLogStats = async (req, res) => {
       ORDER BY count DESC 
       LIMIT 10
     `, params);
-    
+
     res.json({
       code: 1,
       data: {
@@ -134,7 +134,7 @@ export const getLogStats = async (req, res) => {
         topActions: actionStats
       }
     });
-    
+
   } catch (error) {
     console.error('❌ Error obteniendo estadísticas de logs:', error);
     res.status(500).json({ code: 0, message: "Error obteniendo estadísticas" });
@@ -146,49 +146,49 @@ export const getLogStats = async (req, res) => {
 export const getLogs = async (req, res) => {
   let connection;
   try {
-    console.log('🔍 getLogs called with query:', req.query);
+
     const { from, to, usuario, accion, modulo, page = 1, limit = 25 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const filtros = [];
     const params = [];
 
     // Agregar filtro por tenant
-    if (req.id_tenant) { 
-      filtros.push("l.id_tenant = ?"); 
-      params.push(req.id_tenant); 
-      console.log('🏢 Filtro tenant:', req.id_tenant);
+    if (req.id_tenant) {
+      filtros.push("l.id_tenant = ?");
+      params.push(req.id_tenant);
+
     }
 
     // Filtros de fecha
-    if (from) { 
-      filtros.push("l.fecha >= ?"); 
-      params.push(from + " 00:00:00"); 
+    if (from) {
+      filtros.push("l.fecha >= ?");
+      params.push(from + " 00:00:00");
     }
-    if (to) { 
-      filtros.push("l.fecha <= ?"); 
-      params.push(to + " 23:59:59"); 
+    if (to) {
+      filtros.push("l.fecha <= ?");
+      params.push(to + " 23:59:59");
     }
 
     // Filtros por campos específicos
-    if (usuario) { 
-      filtros.push("l.id_usuario = ?"); 
-      params.push(usuario); 
+    if (usuario) {
+      filtros.push("l.id_usuario = ?");
+      params.push(usuario);
     }
-    if (accion) { 
-      filtros.push("l.accion LIKE ?"); 
-      params.push(`%${accion}%`); 
+    if (accion) {
+      filtros.push("l.accion LIKE ?");
+      params.push(`%${accion}%`);
     }
-    if (modulo) { 
-      filtros.push("l.id_modulo = ?"); 
-      params.push(modulo); 
+    if (modulo) {
+      filtros.push("l.id_modulo = ?");
+      params.push(modulo);
     }
 
     const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
-    console.log('📝 WHERE clause:', where);
-    console.log('🔧 Params:', params);
-    
+
+
+
     connection = await getConnection();
-    
+
     // Query principal con JOINs para obtener nombres de usuario y módulo
     const query = `
       SELECT SQL_CALC_FOUND_ROWS 
@@ -213,20 +213,20 @@ export const getLogs = async (req, res) => {
       LIMIT ? OFFSET ?
     `;
 
-    console.log('📊 Executing query:', query);
+
     const [rows] = await connection.query(query, [...params, parseInt(limit), offset]);
     const [totalRows] = await connection.query("SELECT FOUND_ROWS() AS total");
-    
-    console.log('📈 Found rows:', rows.length);
-    console.log('📊 Total:', totalRows[0].total);
-    console.log('🎯 Sample data:', rows[0]);
-    
-    res.json({ 
-      code: 1, 
-      data: rows, 
-      total: totalRows[0].total, 
-      page: parseInt(page), 
-      limit: parseInt(limit) 
+
+
+
+
+
+    res.json({
+      code: 1,
+      data: rows,
+      total: totalRows[0].total,
+      page: parseInt(page),
+      limit: parseInt(limit)
     });
   } catch (e) {
     console.error('❌ Error obteniendo logs:', e);
@@ -241,7 +241,7 @@ export const getLog = async (req, res) => {
   try {
     const { id } = req.params;
     connection = await getConnection();
-    
+
     let query = `
       SELECT 
         l.*,
@@ -254,20 +254,20 @@ export const getLog = async (req, res) => {
       LEFT JOIN submodulos s ON l.id_submodulo = s.id_submodulo
       WHERE l.id_log = ?
     `;
-    
+
     const params = [id];
-    
-    if (req.id_tenant) { 
-      query += " AND l.id_tenant = ?"; 
-      params.push(req.id_tenant); 
+
+    if (req.id_tenant) {
+      query += " AND l.id_tenant = ?";
+      params.push(req.id_tenant);
     }
-    
+
     const [rows] = await connection.query(query, params);
-    
+
     if (!rows.length) {
       return res.status(404).json({ code: 0, message: "Log no encontrado" });
     }
-    
+
     res.json({ code: 1, data: rows[0] });
   } catch (e) {
     console.error('Error obteniendo log:', e);

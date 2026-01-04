@@ -37,10 +37,10 @@ function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 w-full transition-all duration-300 border-b border-slate-200/60 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md" id="main-navbar">
-        <nav className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <nav className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
 
           {/* Left Section: Mobile Menu, Company Info & Branding */}
-          <div className="flex items-center gap-3 flex-1 justify-start">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Mobile Toggle */}
             <MobileNav />
 
@@ -52,19 +52,19 @@ function Navbar() {
 
             {/* Branding / Breadcrumbs */}
             <div className="flex items-center gap-3">
-              <div className="hidden md:block">
+              <div className="hidden lg:block">
                 <EnhancedBreadcrumb />
               </div>
             </div>
+          </div>
 
-            {/* Desktop Navigation Centered */}
-            <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-              <NavLinks />
-            </div>
+          {/* Desktop Navigation Centered (Flexible) */}
+          <div className="hidden md:flex flex-1 justify-center min-w-0">
+            <NavLinks />
           </div>
 
           {/* Right Section: Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0 ml-auto md:ml-0">
             <div className="hidden md:block">
               <DarkModeSwitch />
             </div>

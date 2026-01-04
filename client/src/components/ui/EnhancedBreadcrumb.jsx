@@ -8,61 +8,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from './breadcrumb';
-import { moduleComponentMap, submoduleComponentMap } from '../../utils/componentMapping';
-
-const createComponentNameMap = () => {
-  const moduleNames = {
-    1: { name: 'Inicio', path: '/' },
-    2: { name: 'Productos', path: '/productos' },
-    3: { name: 'Almacenes', path: '/almacenes' },
-    4: { name: 'Clientes', path: '/clientes' },
-    5: { name: 'Empleados', path: '/empleados' },
-    6: { name: 'Ventas', path: '/ventas' },
-    7: { name: 'Reportes de Ventas', path: '/reportes-ventas' },
-    8: { name: 'Sucursal', path: '/sucursal' },
-    10: { name: 'Almacen', path: '/almacen' },
-    12: { name: 'Proveedores', path: '/proveedores' },
-    13: { name: 'SUNAT', path: '/sunat' }
-  };
-
-  const submoduleNames = {
-    1: { name: 'Marcas', path: '/marcas', parent: 2 },
-    2: { name: 'Categorías', path: '/categorias', parent: 2 },
-    3: { name: 'Subcategorías', path: '/subcategorias', parent: 2 },
-    4: { name: 'Registro de Venta', path: '/ventas/registro', parent: 6 },
-    5: { name: 'Libro de Ventas', path: '/ventas/libro', parent: 6 },
-    6: { name: 'Usuarios', path: '/usuarios', parent: null },
-    7: { name: 'Roles', path: '/roles', parent: null },
-    8: { name: 'Módulos', path: '/modulos', parent: null },
-    9: { name: 'Historial', path: '/ventas/historial', parent: 6 },
-    10: { name: 'Nota de Ingreso', path: '/almacen/nota-ingreso', parent: 10 },
-    11: { name: 'Nota de Salida', path: '/almacen/nota-salida', parent: 10 },
-    12: { name: 'Nueva Nota de Salida', path: '/almacen/nota-salida/nueva', parent: 11 },
-    13: { name: 'Guía de Remisión', path: '/almacen/guia-remision', parent: 10 },
-    14: { name: 'Registro de Guía', path: '/almacen/guia-remision/registro', parent: 13 },
-    15: { name: 'Nueva Nota de Ingreso', path: '/almacen/nota-ingreso/nueva', parent: 10 },
-    16: { name: 'Histórico', path: '/almacen/kardex/historico', parent: 10 }
-  };
-
-  return { moduleNames, submoduleNames };
-};
-
-const createPathNameMap = () => {
-  const { moduleNames, submoduleNames } = createComponentNameMap();
-  const pathMap = {};
-
-  Object.entries(moduleNames).forEach(([id, { name, path }]) => {
-    pathMap[path] = name;
-  });
-
-  Object.entries(submoduleNames).forEach(([id, { name, path }]) => {
-    pathMap[path] = name;
-  });
-
-  return pathMap;
-};
-
-const pathNameMap = createPathNameMap();
+import { NAVIGATION_DATA } from '../Navbar/NavigationData';
 
 const EnhancedBreadcrumb = () => {
   const location = useLocation();
@@ -70,44 +16,96 @@ const EnhancedBreadcrumb = () => {
 
   useEffect(() => {
     const { pathname } = location;
-    const pathSegments = pathname.split('/').filter(Boolean);
-
     const items = [];
-    const seenNames = new Set();
 
-    // Always add Home
+    // 1. Always add Inicio
     items.push({
       name: 'Inicio',
-      path: '/',
-      isLast: pathSegments.length === 0
+      path: '/inicio', // Changed from '/' to match Dashboard url usually, or '/'
+      isLast: pathname === '/inicio' || pathname === '/'
     });
-    seenNames.add('Inicio');
 
-    let currentPath = '';
+    if (pathname === '/' || pathname === '/inicio') {
+      setBreadcrumbItems(items);
+      return;
+    }
 
-    pathSegments.forEach((segment, index) => {
-      currentPath += `/${segment}`;
-      const isLast = index === pathSegments.length - 1;
+    // 2. Find Category and Item from NAVIGATION_DATA
+    let foundCategory = null;
+    let foundItem = null;
 
-      let name = pathNameMap[currentPath];
-
-      // Fallback for dynamic paths (e.g. IDs)
-      if (!name) {
-        // Skip if it looks like an ID (numeric or long random string)
-        if (!isNaN(segment) || segment.length > 20) return;
-
-        name = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+    // Search in NAVIGATION_DATA
+    Object.entries(NAVIGATION_DATA).forEach(([key, category]) => {
+      // Check top level
+      if (category.url && pathname.startsWith(category.url) && category.url !== '/inicio') {
+        foundCategory = category;
       }
 
-      if (!seenNames.has(name)) {
-        seenNames.add(name);
+      // Check items
+      if (category.items) {
+        const match = category.items.find(item => pathname.startsWith(item.url));
+        if (match) {
+          foundCategory = category;
+          foundItem = match;
+        }
+      }
+    });
+
+    // 3. Construct Breadcrumb
+    // Add Category if found and it's not "Inicio" (Dashboard)
+    if (foundCategory && foundCategory.title !== 'Dashboard') {
+      items.push({
+        name: foundCategory.title,
+        path: foundCategory.url || '#', // Some categories don't have a URL
+        isClickable: !!foundCategory.url,
+        isLast: !foundItem && pathname === foundCategory.url
+      });
+    }
+
+    // Add Item if found
+    if (foundItem) {
+      // If the current path is exactly the item URL
+      items.push({
+        name: foundItem.title,
+        path: foundItem.url,
+        isLast: pathname === foundItem.url
+      });
+
+      // If path is deeper (e.g. /ventas/registro_venta/details), add simple segments?
+      // For this specific 'register_venta' case, it matches foundItem.url usually.
+    } else if (!foundCategory) {
+      // Fallback: Use segments if no match in NavigationData
+      const pathSegments = pathname.split('/').filter(Boolean);
+      let currentPath = '';
+      pathSegments.forEach((segment) => {
+        // skip 'inicio' if it was part of path
+        if (segment === 'inicio') return;
+
+        currentPath += `/${segment}`;
         items.push({
-          name,
+          name: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ').replace(/_/g, ' '),
           path: currentPath,
-          isLast
+          isLast: currentPath === pathname
         });
-      }
-    });
+      });
+    }
+
+    // If we found an item but there are still segments left (deeper navigation)
+    // E.g. foundItem = "Nueva Venta" (/ventas/registro_venta), but path is /ventas/registro_venta/123
+    if (foundItem && pathname.length > foundItem.url.length) {
+      const remainingPath = pathname.slice(foundItem.url.length);
+      const segments = remainingPath.split('/').filter(Boolean);
+      let currentPath = foundItem.url;
+
+      segments.forEach((segment, idx) => {
+        currentPath += `/${segment}`;
+        items.push({
+          name: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
+          path: currentPath,
+          isLast: idx === segments.length - 1
+        });
+      });
+    }
 
     setBreadcrumbItems(items);
   }, [location]);
@@ -122,9 +120,13 @@ const EnhancedBreadcrumb = () => {
               {item.isLast ? (
                 <BreadcrumbPage>{item.name}</BreadcrumbPage>
               ) : (
-                <BreadcrumbLink asChild>
-                  <Link to={item.path}>{item.name}</Link>
-                </BreadcrumbLink>
+                item.isClickable !== false ? (
+                  <BreadcrumbLink asChild>
+                    <Link to={item.path}>{item.name}</Link>
+                  </BreadcrumbLink>
+                ) : (
+                  <span className="font-medium hover:text-foreground transition-colors opacity-50 cursor-default">{item.name}</span>
+                )
               )}
             </BreadcrumbItem>
           </React.Fragment>

@@ -204,6 +204,7 @@ const VoucherPdf = ({ datosVentaComprobante, datosVenta }) => {
   const observacion = useVentaSeleccionadaStore(state => state.observacion);
   const nombre = useUserStore(state => state.nombre);
   const [content, setContent] = useState('');
+  const [logoUrl, setLogoUrl] = useState(null);
 
   useEffect(() => {
     const build = async () => {
@@ -217,18 +218,45 @@ const VoucherPdf = ({ datosVentaComprobante, datosVenta }) => {
         empresaData
       );
       setContent(text);
+      if (empresaData?.logotipo) {
+        setLogoUrl(empresaData.logotipo);
+      }
     };
     build();
   }, [datosVentaComprobante, datosVenta, comprobante1, observacion, nombre]);
 
-  const downloadPdf = () => {
-    if (!content) return;
-    exportVoucherToPdf(content, { filename: 'comprobante.pdf' });
+  const getBase64ImageFromUrl = async (imageUrl) => {
+    try {
+      const res = await fetch(imageUrl);
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.error("Error converting image to base64", e);
+      return null;
+    }
   };
 
-  const viewPdf = () => {
+  const downloadPdf = async () => {
     if (!content) return;
-    exportVoucherToPdf(content, { filename: 'comprobante.pdf', openInNewTab: true });
+    let logoBase64 = null;
+    if (logoUrl) {
+      logoBase64 = await getBase64ImageFromUrl(logoUrl);
+    }
+    exportVoucherToPdf(content, { filename: 'comprobante.pdf', logo: logoBase64 });
+  };
+
+  const viewPdf = async () => {
+    if (!content) return;
+    let logoBase64 = null;
+    if (logoUrl) {
+      logoBase64 = await getBase64ImageFromUrl(logoUrl);
+    }
+    exportVoucherToPdf(content, { filename: 'comprobante.pdf', openInNewTab: true, logo: logoBase64 });
   };
 
   return (
