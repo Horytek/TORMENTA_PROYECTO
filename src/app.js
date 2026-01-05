@@ -51,6 +51,7 @@ import paymentRoutes from "./routes/payment.routes.js";
 import landingRoutes from "./routes/landing.routes.js";
 import negocioRoutes from "./routes/negocio.routes.js";
 import healthRoutes from "./routes/health.routes.js";
+import developerRoutes from "./routes/developer.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -198,6 +199,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/help", helpRoutes);
 app.use("/api/function-shortcuts", functionShortcutsRoutes);
 app.use("/api/negocio", negocioRoutes);
+app.use("/api/developer", developerRoutes);
 app.use("/api", emailRoutes);
 app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);

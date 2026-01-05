@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState } from "react";
 import {
   AudioWaveform, BookOpen, Bot, Command, Frame, GalleryVerticalEnd, Map, PieChart, Settings2, SquareTerminal,
-  Home, Tags, Warehouse, Users, User, LineChart, Building2, FileBarChart2, UserCog, Phone
+  Home, Tags, Warehouse, Users, User, LineChart, Building2, FileBarChart2, UserCog, Phone, Database
 } from "lucide-react";
 import { ScrollShadow } from "@heroui/react";
 import { NavMain } from "@/components/ui/nav-main";
@@ -74,6 +74,7 @@ const SIDEBAR_DATA = {
     { title: "Desarrollo", url: "/desarrollador", icon: Bot },
     { title: "Módulos", url: "/modulos", icon: SquareTerminal },
     { title: "Permisos Globales", url: "/desarrollador/permisos-globales", icon: Settings2 },
+    { title: "Limpiador DB", url: "/desarrollador/database-cleaner", icon: Database },
     { title: "Inf. empresas", url: "/sunat", icon: BookOpen },
   ],
   projects: [

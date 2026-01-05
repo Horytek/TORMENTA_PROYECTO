@@ -14,6 +14,7 @@ import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator } from "reac
 import useSucursalData from '@/services/data/data_sucursal_venta';
 import { Tabs, Tab } from "@heroui/react";
 import InventoryCalendar from './ComponentsVentas/InventoryCalendar/InventoryCalendar';
+import VentasStats from './ComponentsVentas/VentasStats';
 
 const Ventas = () => {
   // Estado para manejar la lista de ventas
@@ -238,6 +239,9 @@ const Ventas = () => {
             <div className="mt-4">
               <InventoryCalendar ventas={allVentas} />
             </div>
+          </Tab>
+          <Tab key="estadisticas" title="Estadísticas">
+            <VentasStats />
           </Tab>
         </Tabs>
 

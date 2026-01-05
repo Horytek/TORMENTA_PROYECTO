@@ -1,5 +1,5 @@
 import {
-  Home, Tags, LineChart, FileBarChart2, User, Users, Warehouse, Building2, UserCog, Phone, Bot, SquareTerminal, Settings2, BookOpen, Frame, PieChart, Map
+  Home, Tags, LineChart, FileBarChart2, User, Users, Warehouse, Building2, UserCog, Phone, Bot, SquareTerminal, Settings2, BookOpen, Frame, PieChart, Map, Database
 } from "lucide-react";
 
 export const NAVIGATION_DATA = {
@@ -63,6 +63,7 @@ export const NAVIGATION_DATA = {
       { title: "Panel Desarrollo", url: "/desarrollador", icon: Bot },
       { title: "Gestor Módulos", url: "/modulos", icon: SquareTerminal },
       { title: "Permisos Globales", url: "/desarrollador/permisos-globales", icon: Settings2 },
+      { title: "Limpiador DB", url: "/desarrollador/database-cleaner", icon: Database },
       { title: "Consulta RUC/DNI", url: "/sunat", icon: BookOpen },
     ]
   }

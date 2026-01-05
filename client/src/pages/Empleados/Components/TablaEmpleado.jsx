@@ -69,8 +69,8 @@ const TablaEmpleado = ({
     const handleEditModal = async (dni) => {
         try {
             const data = await getVendedor(dni);
-            if (!data || data.length === 0) return;
-            setInitialData(data[0]);
+            if (!data) return;
+            setInitialData(data);
             setIsEditModalOpen(true);
         } catch (error) { }
     };
