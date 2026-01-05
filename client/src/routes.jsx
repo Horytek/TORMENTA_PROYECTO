@@ -21,7 +21,7 @@ export const usePermisos = () => useContext(PermisosContext);
 
 export const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (!isAuthenticated && !loading) return <Navigate to="/" replace />;
   return <Outlet />;
 };
@@ -62,11 +62,17 @@ export function RouteProtectedRol({ children, allowedRoles }) {
   return children;
 }
 
+import { useUserStore } from "@/store/useStore";
+
 export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
   const { user, isAuthenticated } = useAuth();
+  const permissions = useUserStore(state => state.permissions);
   const [hasAccess, setHasAccess] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [permissions, setPermissions] = useState({
+  // Remove inner loading state because permissions should be loaded with AuthProvider
+  // However, if we want to be safe, we might check if permissions are empty but user is logged in?
+  // But for now, let's assume AuthProvider handles the "loading" of app until auth check is done.
+
+  const [computedPermissions, setComputedPermissions] = useState({
     hasPermission: false,
     hasCreatePermission: false,
     hasEditPermission: false,
@@ -75,116 +81,90 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null }) {
     hasDeactivatePermission: false,
   });
 
-  const checkPermission = debounce(async () => {
+  useEffect(() => {
     if (!isAuthenticated || !user) {
       setHasAccess(false);
-      setPermissions({
-        hasPermission: false,
-        hasCreatePermission: false,
-        hasEditPermission: false,
-        hasDeletePermission: false,
-        hasGeneratePermission: false,
-        hasDeactivatePermission: false,
-      });
-      setLoading(false);
       return;
     }
 
-        // Evitar llamadas inválidas
-    if (!idModulo || isNaN(Number(idModulo))) {
-      setHasAccess(false);
-      setPermissions({
-        hasPermission: false,
-        hasCreatePermission: false,
-        hasEditPermission: false,
-        hasDeletePermission: false,
-        hasGeneratePermission: false,
-        hasDeactivatePermission: false,
+    // Developer Overwrite
+    // Note: user.rol, user.role, etc. Standardize with user store?
+    // user store has "rol".
+    if (user.rol === 10) {
+      setHasAccess(true);
+      setComputedPermissions({
+        hasPermission: true,
+        hasCreatePermission: true,
+        hasEditPermission: true,
+        hasDeletePermission: true,
+        hasGeneratePermission: true,
+        hasDeactivatePermission: true,
       });
-      setLoading(false);
       return;
     }
-    
-    try {
-      if (user.rol === 10) {
-        setHasAccess(true);
-        setPermissions({
-          hasPermission: true,
-          hasCreatePermission: true,
-          hasEditPermission: true,
-          hasDeletePermission: true,
-          hasGeneratePermission: true,
-          hasDeactivatePermission: true,
-        });
-        setLoading(false);
-        return;
-      }
 
-      // Ya no se usa token, el backend lee la cookie HTTPOnly
-      const response = await axios.get(
-        `/permisos/check?idModulo=${Number(idModulo)}${idSubmodulo ? `&idSubmodulo=${Number(idSubmodulo)}` : ''}`
-      );
-      
-      const hasAccess = response.data.hasPermission;
-      setHasAccess(hasAccess);
-      setPermissions({
-        hasPermission: hasAccess,
-        hasCreatePermission: response.data.hasCreatePermission || false,
-        hasEditPermission: response.data.hasEditPermission || false,
-        hasDeletePermission: response.data.hasDeletePermission || false,
-        hasGeneratePermission: response.data.hasGeneratePermission || false,
-        hasDeactivatePermission: response.data.hasDeactivatePermission || false,
-      });
-      
-      if (!hasAccess) {
-        toast.error("No tienes permisos para acceder a esta página", {
-          duration: 2000,
-          position: 'top-right',
-          style: {
-            background: '#FFF5F4',
-            color: '#FF3838',
-          },
-          icon: '🚫',
-        });
-      }
-    } catch (error) {
-      //console.error("Error verificando permisos:", error);
-      //console.error("Detalles del error:", error.response?.data || error.message);
+    if (!idModulo) {
       setHasAccess(false);
-      setPermissions({
-        hasPermission: false,
-        hasCreatePermission: false,
-        hasEditPermission: false,
-        hasDeletePermission: false,
-        hasGeneratePermission: false,
-        hasDeactivatePermission: false,
-      });
-      
-      toast.error("Error al verificar permisos", {
-        duration: 2000,
-        position: 'top-right',
-      });
-    } finally {
-      setLoading(false);
+      return;
     }
-  }, 100);
 
-  useEffect(() => {
-    checkPermission();
-  }, [user, idModulo, idSubmodulo]);
+    // Check against store permissions
+    // Permissions structure: [{ id_modulo, id_submodulo, ver, crear... }]
+    // Note: ensure loose comparison if strings vs numbers
+    /* const perm = permissions?.find(p =>
+      String(p.id_modulo) === String(idModulo) &&
+      (idSubmodulo ? String(p.id_submodulo) === String(idSubmodulo) : true)
+    ); */
 
-  if (loading) {
-    return <div className="flex justify-center items-center min-h-20">
-      <span>Verificando permisos...</span>
-    </div>;
-  }
+    // If submodulo is specified but permission entry has submodulo null, that might be a broader permission? 
+    // Usually backend returns specific rows. 
+    // If idSubmodulo is provided, we MUST find a match with that submodulo.
+    // If idSubmodulo is NOT provided (null), we look for a match where id_submodulo is null (or check if any exists?)
+    // Based on backend: getPermisosByRol returns a list.
+
+    // Logic:
+    // If We ask for Modulo X, Submodulo Y:
+    // We look for a permission entry with id_modulo=X AND id_submodulo=Y.
+    // If We ask for Modulo X (no submodulo):
+    // We look for a permission entry with id_modulo=X (and submodulo usually null or we take the first one? usually main module permission)
+
+    // Refinement:
+    // Backend "checkPermiso" logic: 
+    // AND (p.id_submodulo = ? OR (p.id_submodulo IS NULL AND ? IS NULL))
+
+    const found = permissions?.find(p => {
+      const sameModule = String(p.id_modulo) === String(idModulo);
+      const sameSub = idSubmodulo
+        ? String(p.id_submodulo) === String(idSubmodulo)
+        : (p.id_submodulo === null || p.id_submodulo === undefined);
+      return sameModule && sameSub;
+    });
+
+    if (found && found.ver === 1) {
+      setHasAccess(true);
+      setComputedPermissions({
+        hasPermission: true,
+        hasCreatePermission: found.crear === 1,
+        hasEditPermission: found.editar === 1,
+        hasDeletePermission: found.eliminar === 1,
+        hasGeneratePermission: found.generar === 1,
+        hasDeactivatePermission: found.desactivar === 1,
+      });
+    } else {
+      setHasAccess(false);
+      // Toast only if we are sure it's not just a "loading" glitch? 
+      // With sync check, it's immediate.
+    }
+
+  }, [user, permissions, idModulo, idSubmodulo, isAuthenticated]);
 
   if (!hasAccess) {
+    // Optional: Render "Unauthorized" placeholder or null
     return null;
   }
 
   return (
-    <PermisosContext.Provider value={permissions}>
+    <PermisosContext.Provider value={computedPermissions}>
       {children}
     </PermisosContext.Provider>
   );

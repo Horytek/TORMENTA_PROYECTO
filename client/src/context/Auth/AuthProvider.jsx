@@ -3,6 +3,7 @@ import { AuthContext } from "./AuthContext";
 import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
 import { loginRequest, logoutRequest, verifyTokenRequest, sendAuthCodeRequest } from "../../api/api.auth";
+import { getPermisosByRol } from "@/services/permisos.services";
 import { useUserStore } from "@/store/useStore";
 import { setAuthReady } from "@/api/axios";
 
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const setUserRaw = useUserStore(state => state.setUserRaw);
+  const setPermissions = useUserStore(state => state.setPermissions);
   const hydrateFromSession = useUserStore(state => state.hydrateFromSession);
   const clearUserStore = useUserStore(state => state.clearUser);
 
@@ -29,6 +31,27 @@ export const AuthProvider = ({ children }) => {
     hydrateFromSession();
   }, [hydrateFromSession]);
 
+  const loadPermissions = async (roleId) => {
+    try {
+      if (roleId === 10) { // Desarrollador
+        // For developer, we might want to fetch everything or just allow all.
+        // Assuming backend returns all permissions for dev or we handle it.
+        const response = await getPermisosByRol(roleId);
+        // data might be in response.data or response directly if service extracted it (which it didn't)
+        // Service returns response.data (body). Body has .data property.
+        const permissionsList = Array.isArray(response) ? response : (response?.data || []);
+        setPermissions(permissionsList);
+      } else {
+        const response = await getPermisosByRol(roleId);
+        const permissionsList = Array.isArray(response) ? response : (response?.data || []);
+        setPermissions(permissionsList);
+      }
+    } catch (error) {
+      console.error("Error loading permissions", error);
+      setPermissions([]);
+    }
+  };
+
   const login = async (credentials) => {
     try {
       const { data } = await loginRequest(credentials);
@@ -36,6 +59,13 @@ export const AuthProvider = ({ children }) => {
         await setToken(data.token); // Guardar en IndexedDB
         setUser(data.data);
         setUserRaw(data.data);
+
+        // Fetch permissions immediately
+        if (data.data.roleId || data.data.rol || data.data.id_rol) {
+          const roleId = data.data.roleId || data.data.rol || data.data.id_rol;
+          await loadPermissions(roleId);
+        }
+
         setIsAuthenticated(true);
         return { success: true, data: data.data };
       }
@@ -62,6 +92,13 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true);
           setUser(res.data);
           setUserRaw(res.data);
+
+          // Fetch permissions on verify
+          if (res.data.id_rol || res.data.rol || res.data.roleId) {
+            const roleId = res.data.id_rol || res.data.rol || res.data.roleId;
+            await loadPermissions(roleId);
+          }
+
         } else {
           setIsAuthenticated(false);
           clearUserStore();
@@ -86,7 +123,7 @@ export const AuthProvider = ({ children }) => {
     } catch { /* noop */ }
     await removeToken(); // Limpiar de IndexedDB
     sessionStorage.clear();
-    clearUserStore();
+    clearUserStore(); // This clears permissions too
     setIsAuthenticated(false);
     setUser(null);
     redirect('/');

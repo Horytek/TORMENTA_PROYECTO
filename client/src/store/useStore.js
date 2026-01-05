@@ -39,6 +39,7 @@ export const useUserStore = create((set) => ({
   almacen: "",
   id_tenant: "",
   plan_pago: "", // <-- Añadido aquí
+  permissions: [], // <-- Cache de permisos
   // Nuevo objeto normalizado
   user: null,
 
@@ -50,6 +51,7 @@ export const useUserStore = create((set) => ({
   setAlmacen: (almacen) => set({ almacen }),
   setIdTenant: (id_tenant) => set({ id_tenant }),
   setPlanPago: (plan_pago) => set({ plan_pago }), // <-- Añadido aquí
+  setPermissions: (permissions) => set({ permissions }),
 
   // NUEVO: asignar usuario crudo y normalizar
   setUserRaw: (raw) => {
@@ -92,6 +94,7 @@ export const useUserStore = create((set) => ({
       sur: "",
       almacen: "",
       id_tenant: "",
-      plan_pago: ""
+      plan_pago: "",
+      permissions: []
     })
 }));
