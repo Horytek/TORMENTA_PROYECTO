@@ -5,7 +5,7 @@ import { Toaster } from 'react-hot-toast';
 
 // Services
 import { getModulosConSubmodulos } from '@/services/rutas.services';
-import { ScrollShadow } from "@heroui/react";
+import { ScrollShadow, Spinner } from "@heroui/react";
 
 import { moduleComponentMap, submoduleComponentMap, COMPONENT_REGISTRY } from "@/utils/componentRegistry";
 import DeepSeekOpenRouterChatbot from "@/components/Chatbot/DeepSeekChatbot";
@@ -69,7 +69,22 @@ function Dashboard() {
 
   const renderDynamicRoutes = () => {
     if (loading) {
-      return [<Route key="loading" path="*" element={<div>Cargando rutas...</div>} />];
+      return [
+        <Route
+          key="loading"
+          path="*"
+          element={
+            <div className="flex flex-col items-center justify-center w-full h-[70vh]">
+              <div className="flex flex-col items-center justify-center gap-4 p-8 bg-white/50 dark:bg-zinc-900/50 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm backdrop-blur-md">
+                <Spinner size="lg" color="primary" />
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
+                  Cargando rutas...
+                </p>
+              </div>
+            </div>
+          }
+        />
+      ];
     }
 
     const dynamicRoutes = [];
@@ -314,7 +329,18 @@ function Dashboard() {
             <SubcategoriaContextProvider>
               <CategoriaContextProvider>
                 <MarcaContextProvider>
-                  <Suspense fallback={<div>Cargando componentes...</div>}>
+                  <Suspense
+                    fallback={
+                      <div className="flex flex-col items-center justify-center w-full h-[70vh]">
+                        <div className="flex flex-col items-center justify-center gap-4 p-8 bg-white/50 dark:bg-zinc-900/50 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm backdrop-blur-md">
+                          <Spinner size="lg" color="primary" />
+                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
+                            Cargando componentes...
+                          </p>
+                        </div>
+                      </div>
+                    }
+                  >
                     <Routes>
                       {renderDynamicRoutes()}
                     </Routes>
