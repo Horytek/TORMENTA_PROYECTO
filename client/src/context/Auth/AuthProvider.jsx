@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
 
   const setUserRaw = useUserStore(state => state.setUserRaw);
   const setPermissions = useUserStore(state => state.setPermissions);
+  const setCapabilities = useUserStore(state => state.setCapabilities);
   const hydrateFromSession = useUserStore(state => state.hydrateFromSession);
   const clearUserStore = useUserStore(state => state.clearUser);
 
@@ -33,22 +34,43 @@ export const AuthProvider = ({ children }) => {
 
   const loadPermissions = async (roleId) => {
     try {
-      if (roleId === 10) { // Desarrollador
-        // For developer, we might want to fetch everything or just allow all.
-        // Assuming backend returns all permissions for dev or we handle it.
-        const response = await getPermisosByRol(roleId);
-        // data might be in response.data or response directly if service extracted it (which it didn't)
-        // Service returns response.data (body). Body has .data property.
-        const permissionsList = Array.isArray(response) ? response : (response?.data || []);
-        setPermissions(permissionsList);
-      } else {
-        const response = await getPermisosByRol(roleId);
-        const permissionsList = Array.isArray(response) ? response : (response?.data || []);
-        setPermissions(permissionsList);
+      const response = await getPermisosByRol(roleId);
+      // data might be in response.data or response directly
+      const permissionsList = Array.isArray(response) ? response : (response?.data || []);
+
+      // Generate Capabilities Set (Flattened)
+      const caps = new Set();
+
+      permissionsList.forEach(p => {
+        // Base slug from route (e.g., 'inventory', 'products')
+        const slug = p.submodulo_ruta || p.modulo_ruta;
+        if (!slug) return;
+
+        const base = slug.toLowerCase();
+
+        // Standard Actions
+        if (p.ver) caps.add(`${base}.view`);
+        if (p.crear) caps.add(`${base}.create`);
+        if (p.editar) caps.add(`${base}.edit`);
+        if (p.eliminar) caps.add(`${base}.delete`);
+
+        // Custom Actions
+        if (p.desactivar) caps.add(`${base}.deactivate`);
+        if (p.generar) caps.add(`${base}.generate`);
+      });
+
+      // Grant 'admin' * capability for role 10
+      if (Number(roleId) === 10) {
+        caps.add('*');
+        caps.add('admin');
       }
+
+      setCapabilities(caps);
+      setPermissions(permissionsList);
     } catch (error) {
       console.error("Error loading permissions", error);
       setPermissions([]);
+      setCapabilities(new Set());
     }
   };
 

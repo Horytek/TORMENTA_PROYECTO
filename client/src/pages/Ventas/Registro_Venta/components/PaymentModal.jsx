@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Select, SelectItem, Chip } from "@heroui/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Select, SelectItem, Chip, Textarea } from "@heroui/react";
 import { Printer, Plus, Trash2, CreditCard, Banknote, Smartphone } from "lucide-react";
 import { toast } from 'react-hot-toast';
 
@@ -259,13 +259,14 @@ const PaymentModal = ({ isOpen, onClose, total, onConfirm, documentType }) => {
                         )}
 
                         <div className="mt-auto pt-4">
-                            <Input
+                            <Textarea
                                 label="Observación (Opcional)"
                                 placeholder="Nota adicional..."
                                 value={observacion}
                                 onValueChange={setObservacion}
                                 variant="bordered"
-                                size="sm"
+                                minRows={2}
+                                maxRows={4}
                             />
                         </div>
                     </div>

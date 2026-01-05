@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { NuqsAdapter } from 'nuqs/adapters/react-router';
 import "./main.css";
 // Import landing styles early to ensure landing-specific rules (backgrounds, landing-body) are available
 import "./styles/landing/index.css";
@@ -13,6 +14,7 @@ import { useTheme } from "@heroui/use-theme";
 const Login = lazy(() => import("./layouts/Login/Login"));
 const Dashboard = lazy(() => import("./layouts/Dashboard/Dashboard"));
 const LandingPage = lazy(() => import("./pages/Landing/LandingPage"));
+const StatusPage = lazy(() => import("./pages/Status/StatusPage"));
 const ServiciosPage = lazy(() => import("./pages/Landing/ServiciosPage"));
 const AboutPage = lazy(() => import("./pages/Landing/AboutPage"));
 const EquipoPage = lazy(() => import("./pages/Landing/EquipoPage"));
@@ -73,36 +75,39 @@ function ProtectedLayout() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Router>
-      <AuthProvider>
-        <HeroUIProvider>
-          <LoaderProvider>
-            <ThemeClassSync />
-            <Suspense fallback={<SuspenseFallbackTrigger />}>
-              <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/landing" element={<LandingPage />} />
-                <Route path="/landing/servicios" element={<ServiciosPage />} />
-                <Route path="/landing/about" element={<AboutPage />} />
-                <Route path="/landing/team" element={<EquipoPage />} />
-                <Route path="/landing/actualizaciones" element={<ActualizacionesPage />} />
-                <Route path="/landing/terminos-y-condiciones" element={<TerminosCondicionesPage />} />
-                <Route path="/landing/politica-de-privacidad" element={<PoliticaPrivacidadPage />} />
-                <Route path="/landing/empleos" element={<EmpleoPage />} />
-                <Route path="/landing/contactanos" element={<ContactanosPage />} />
-                <Route path="/landing/blog" element={<BlogPage />} />
-                <Route path="/landing/registro-licencia" element={<RegistroLicenciaPage />} />
-                <Route path="/landing/registro" element={<RegistroPage />} />
-                <Route path="/blog" element={<BlogPage />} />
-                <Route path="/blog/article" element={<BlogPage />} />
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/*" element={<ProtectedLayout />} />
-                </Route>
-              </Routes>
-            </Suspense>
-            <LoaderOverlay />
-          </LoaderProvider>
-        </HeroUIProvider>
-      </AuthProvider>
+      <NuqsAdapter>
+        <AuthProvider>
+          <HeroUIProvider>
+            <LoaderProvider>
+              <ThemeClassSync />
+              <Suspense fallback={<SuspenseFallbackTrigger />}>
+                <Routes>
+                  <Route path="/" element={<Login />} />
+                  <Route path="/status" element={<StatusPage />} />
+                  <Route path="/landing" element={<LandingPage />} />
+                  <Route path="/landing/servicios" element={<ServiciosPage />} />
+                  <Route path="/landing/about" element={<AboutPage />} />
+                  <Route path="/landing/team" element={<EquipoPage />} />
+                  <Route path="/landing/actualizaciones" element={<ActualizacionesPage />} />
+                  <Route path="/landing/terminos-y-condiciones" element={<TerminosCondicionesPage />} />
+                  <Route path="/landing/politica-de-privacidad" element={<PoliticaPrivacidadPage />} />
+                  <Route path="/landing/empleos" element={<EmpleoPage />} />
+                  <Route path="/landing/contactanos" element={<ContactanosPage />} />
+                  <Route path="/landing/blog" element={<BlogPage />} />
+                  <Route path="/landing/registro-licencia" element={<RegistroLicenciaPage />} />
+                  <Route path="/landing/registro" element={<RegistroPage />} />
+                  <Route path="/blog" element={<BlogPage />} />
+                  <Route path="/blog/article" element={<BlogPage />} />
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/*" element={<ProtectedLayout />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+              <LoaderOverlay />
+            </LoaderProvider>
+          </HeroUIProvider>
+        </AuthProvider>
+      </NuqsAdapter>
     </Router>
   </React.StrictMode>
 );

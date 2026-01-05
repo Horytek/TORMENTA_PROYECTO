@@ -23,6 +23,7 @@
     "@botpress/webchat": "^3.2.7",
     "@react-email/components": "^0.5.7",
     "@react-email/render": "^1.4.0",
+    "@scalar/express-api-reference": "^0.8.30",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -43,6 +44,7 @@
     "resend": "^6.2.2",
     "sequelize": "^6.37.5",
     "socket.io": "^4.8.1",
+    "swagger-jsdoc": "^6.2.8",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },

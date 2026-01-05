@@ -3,6 +3,7 @@ import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import { apiReference } from '@scalar/express-api-reference';
 import { FRONTEND_URL } from "./config.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -49,6 +50,7 @@ import credencialRoutes from "./routes/credenciales.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import landingRoutes from "./routes/landing.routes.js";
 import negocioRoutes from "./routes/negocio.routes.js";
+import healthRoutes from "./routes/health.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -200,9 +202,49 @@ app.use("/api", emailRoutes);
 app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api/landing", landingRoutes);
+app.use("/api/health", healthRoutes);
+
 
 // Servir archivos estáticos (uploads)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Documentación API (Scalar)
+app.use(
+  '/api-docs',
+  apiReference({
+    spec: {
+      content: {
+        openapi: '3.1.0',
+        info: {
+          title: 'Tormenta Project API',
+          version: '1.0.0',
+        },
+        paths: {
+          '/api/status': {
+            get: {
+              description: 'Check API Status',
+              responses: {
+                200: {
+                  description: 'OK',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'object',
+                        properties: {
+                          status: { type: 'string', example: 'ok' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+);
 
 // Servir archivos estáticos de Vite/React
 app.use(express.static(path.join(__dirname, "../client/dist")));

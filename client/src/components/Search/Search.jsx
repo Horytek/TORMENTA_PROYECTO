@@ -31,7 +31,12 @@ const styles = {
   ],
 };
 
+import { useQueryState, parseAsString } from 'nuqs';
+
 const BarraSearch = forwardRef((props, ref) => {
+  // Use nuqs to sync with URL 'q' parameter
+  const [query, setQuery] = useQueryState('q', parseAsString.withDefault('').withOptions({ shallow: false }));
+
   const {
     Component,
     label,
@@ -56,6 +61,8 @@ const BarraSearch = forwardRef((props, ref) => {
   } = useInput({
     ...props,
     ref,
+    value: query, // Bind to URL state
+    onValueChange: setQuery, // Update URL on type
     type: "search",
     startContent: (
       <SearchIcon className="text-black/50 mb-0.5 dark:text-white/90 text-slate-400 pointer-events-none flex-shrink-0" />
@@ -71,8 +78,8 @@ const BarraSearch = forwardRef((props, ref) => {
     // Evitar propagación si es necesario
     e?.stopPropagation();
 
-    // 1. Limpiar estado interno
-    setValue("");
+    // 1. Limpiar estado interno y URL
+    setQuery(null); // or ""
 
     // 2. Notificar cambio de valor al padre (esencial para formularios controlados)
     if (props.onValueChange) {

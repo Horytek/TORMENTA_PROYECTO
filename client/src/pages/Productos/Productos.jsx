@@ -12,6 +12,7 @@ import * as XLSX from 'xlsx';
 
 // Rutas y Servicios
 import { usePermisos } from '@/routes';
+import { useQueryState, parseAsString } from 'nuqs';
 import { getProductos, importExcel as importProductos } from '@/services/productos.services';
 import { getMarcas, importExcel as importMarcas } from '@/services/marca.services';
 import { getCategorias, importExcel as importCategorias } from '@/services/categoria.services';
@@ -146,7 +147,9 @@ function Productos() {
   const { data, isLoading, ops, reloadData } = useInventoryData();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null); // null = no editando
-  const [searchTerm, setSearchTerm] = useState('');
+
+  // Refactor: Use nuqs for search term (URL state)
+  const [searchTerm, setSearchTerm] = useQueryState('q', parseAsString.withDefault(''));
 
   // Estado Importación
   const [importModal, setImportModal] = useState({ open: false, type: null });
@@ -284,9 +287,6 @@ function Productos() {
                 placeholder="Buscar producto..."
                 isClearable
                 className="h-10 text-sm w-full md:w-72 dark:bg-gray-800 dark:text-white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onClear={() => setSearchTerm('')}
               />
               <ActionButton
                 color="primary"

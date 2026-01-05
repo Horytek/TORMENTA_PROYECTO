@@ -7,7 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { getModulosConSubmodulos } from '@/services/rutas.services';
 import { ScrollShadow } from "@heroui/react";
 
-import { moduleComponentMap, submoduleComponentMap } from '@/utils/componentMapping';
+import { moduleComponentMap, submoduleComponentMap, COMPONENT_REGISTRY } from "@/utils/componentRegistry";
 import DeepSeekOpenRouterChatbot from "@/components/Chatbot/DeepSeekChatbot";
 // Contexts
 import { CategoriaContextProvider } from '@/context/Categoria/CategoriaProvider';
@@ -78,14 +78,24 @@ function Dashboard() {
       routes.forEach(module => {
         if (!module) return;
 
-        // Try to find component by route first, then by ID (Hybrid approach)
-        const Component = moduleComponentMap[module.ruta] || moduleComponentMap[module.id];
+        // Hybrid Approach:
+        // 1. Try Registry (Scalable, Route-based)
+        // 2. Try ID Map (Legacy, Fallback)
+        let Component = COMPONENT_REGISTRY[module.ruta];
+
+        if (!Component && module.id) {
+          Component = moduleComponentMap[module.id];
+          if (Component && process.env.NODE_ENV === 'development') {
+            console.warn(`Module used Legacy ID fallback: ${module.nombre_modulo} (ID: ${module.id}). Add '${module.ruta}' to COMPONENT_REGISTRY.`);
+          }
+        }
 
         if (Component && module.ruta) {
           // Normaliza la ruta
           const normalizedPath = module.ruta.startsWith('/') ? module.ruta : `/${module.ruta}`;
 
           // Si es el módulo de productos (ID 2), agregar wildcard para subrutas
+          // Note: Ideally, specific logic like ID 2 check should be moved to metadata too, but keeping for now.
           const routePath = module.id === 2 ? `${normalizedPath}/*` : normalizedPath;
 
           dynamicRoutes.push(
@@ -105,8 +115,12 @@ function Dashboard() {
           module.submodulos.forEach(submodule => {
             if (!submodule) return;
 
-            // Try to find component by route first, then by ID (Hybrid approach)
-            const SubComponent = submoduleComponentMap[submodule.ruta] || submoduleComponentMap[submodule.id_submodulo];
+            // Hybrid Approach for Submodules
+            let SubComponent = COMPONENT_REGISTRY[submodule.ruta];
+
+            if (!SubComponent && submodule.id_submodulo) {
+              SubComponent = submoduleComponentMap[submodule.id_submodulo];
+            }
 
             if (SubComponent && submodule.ruta) {
               const normalizedSubPath = submodule.ruta.startsWith('/') ? submodule.ruta : `/${submodule.ruta}`;

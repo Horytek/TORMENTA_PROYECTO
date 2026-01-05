@@ -59,7 +59,7 @@ function Navbar() {
           </div>
 
           {/* Desktop Navigation Centered (Flexible) */}
-          <div className="hidden md:flex flex-1 justify-center min-w-0">
+          <div className="hidden lg:flex flex-1 justify-center min-w-0">
             <NavLinks />
           </div>
 

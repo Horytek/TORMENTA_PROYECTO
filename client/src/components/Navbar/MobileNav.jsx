@@ -1,102 +1,163 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@heroui/react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Button, Switch } from "@heroui/react";
+import { Menu, X, ChevronDown, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 import { useNavPermissions } from "./useNavPermissions";
+import { useTheme } from "@heroui/use-theme";
 
 export default function MobileNav() {
+    const navData = useNavPermissions();
     const [isOpen, setIsOpen] = useState(false);
+    const [expandedSections, setExpandedSections] = useState({});
     const location = useLocation();
-    const filteredNav = useNavPermissions();
+    const { theme, setTheme } = useTheme();
 
-    // Track expanded sections in mobile menu
-    const [expandedKeys, setExpandedKeys] = useState([]);
+    const entries = useMemo(() => {
+        if (!navData) return [];
+        return Object.entries(navData);
+    }, [navData]);
+
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+            setExpandedSections({});
+        }
+        return () => {
+            document.body.style.overflow = "unset";
+        };
+    }, [isOpen]);
+
+    const isActive = (path) =>
+        location.pathname === path || location.pathname.startsWith(path + "/");
 
     const toggleSection = (key) => {
-        setExpandedKeys(prev =>
-            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-        );
+        setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const isActive = (path) => location.pathname.startsWith(path);
+    const drawer = (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsOpen(false)}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
+                    />
 
-    return (
-        <div className="md:hidden">
-            <Button
-                isIconOnly
-                variant="light"
-                onPress={() => setIsOpen(true)}
-            >
-                <Menu size={24} className="text-slate-700 dark:text-slate-200" />
-            </Button>
+                    <motion.div
+                        initial={{ x: "-100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "-100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 220 }}
+                        className="fixed top-0 left-0 h-full w-[300px] bg-white dark:bg-zinc-950 shadow-2xl z-[9999] overflow-y-auto border-r border-slate-200 dark:border-zinc-800"
+                    >
+                        <div className="flex flex-col h-full">
+                            <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-10">
+                                <div className="flex flex-col leading-tight">
+                                    <span className="font-extrabold text-slate-900 dark:text-white">
+                                        Menú
+                                    </span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                        Navegación
+                                    </span>
+                                </div>
 
-            {/* Drawer */}
-            <AnimatePresence>
-                {isOpen && (
-                    <>
-                        {/* Backdrop */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 bg-black/20 z-[90] backdrop-blur-sm"
-                        />
-
-                        {/* Panel */}
-                        <motion.div
-                            initial={{ x: "100%" }}
-                            animate={{ x: 0 }}
-                            exit={{ x: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="fixed inset-y-0 right-0 w-[85%] max-w-sm bg-white dark:bg-zinc-950 shadow-2xl z-[100] border-l border-slate-200 dark:border-zinc-800 flex flex-col"
-                        >
-                            <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50/50 dark:bg-zinc-900/50 backdrop-blur-md">
-                                <span className="font-bold text-lg text-slate-800 dark:text-white">Menú</span>
-                                <Button isIconOnly size="sm" variant="light" onPress={() => setIsOpen(false)}>
-                                    <X size={20} />
-                                </Button>
+                                <div className="flex items-center gap-3">
+                                    <Switch
+                                        isSelected={theme === "dark"}
+                                        onValueChange={(v) => setTheme(v ? "dark" : "light")}
+                                        color="secondary"
+                                        size="sm"
+                                        thumbIcon={({ isSelected, className }) =>
+                                            isSelected ? (<Sun className={className} size={14} />) : (<Moon className={className} size={14} />)
+                                        }
+                                        aria-label="Cambiar modo oscuro"
+                                    />
+                                    <Button
+                                        isIconOnly
+                                        variant="light"
+                                        size="sm"
+                                        onClick={() => setIsOpen(false)}
+                                        aria-label="Cerrar menú"
+                                    >
+                                        <X size={18} />
+                                    </Button>
+                                </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                                {Object.entries(filteredNav).map(([key, data]) => {
-                                    const isExpanded = expandedKeys.includes(key);
+                            <div className="flex-1 p-3 space-y-2">
+                                {entries.map(([key, data]) => {
+                                    const Icon = data.icon;
 
-                                    if (!data.items) {
+                                    // Link simple
+                                    if (!data.items || data.items.length === 0) {
+                                        const active = data.url ? isActive(data.url) : false;
+
                                         return (
                                             <Link
                                                 key={key}
                                                 to={data.url}
                                                 onClick={() => setIsOpen(false)}
-                                                className={`flex items-center gap-3 p-4 rounded-xl transition-all font-medium ${isActive(data.url)
-                                                    ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                                                    : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-zinc-900"
+                                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors border ${active
+                                                        ? "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/25 dark:text-blue-300 dark:border-blue-900/30"
+                                                        : "text-slate-800 border-transparent hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-zinc-900"
                                                     }`}
                                             >
-                                                {data.icon && <data.icon size={22} />}
-                                                {data.title}
+                                                {Icon && <Icon size={18} className="opacity-80" />}
+                                                <span className="font-semibold">{data.title}</span>
                                             </Link>
                                         );
                                     }
 
+                                    // Grupo
+                                    const isExpanded = !!expandedSections[key];
+                                    const hasActiveChild = Array.isArray(data.items)
+                                        ? data.items.some((sub) => sub?.url && isActive(sub.url))
+                                        : false;
+
                                     return (
-                                        <div key={key} className="border border-slate-100 dark:border-zinc-800 rounded-xl overflow-hidden">
+                                        <div
+                                            key={key}
+                                            className={`rounded-xl border overflow-hidden ${hasActiveChild
+                                                    ? "border-blue-100 bg-blue-50/30 dark:border-blue-900/30 dark:bg-blue-900/10"
+                                                    : "border-slate-100 dark:border-zinc-800"
+                                                }`}
+                                        >
                                             <button
                                                 onClick={() => toggleSection(key)}
-                                                className="w-full flex items-center justify-between p-4 bg-slate-50/50 dark:bg-zinc-900/50 hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors"
+                                                aria-label={data.title}
+                                                className="w-full flex items-center justify-between px-3 py-3 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
                                             >
-                                                <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                                                    {/* Optional: Add icon here if needed */}
+                                                <span
+                                                    className={`font-bold text-sm flex items-center gap-3 ${hasActiveChild
+                                                            ? "text-blue-700 dark:text-blue-300"
+                                                            : "text-slate-900 dark:text-slate-100"
+                                                        }`}
+                                                >
+                                                    {Icon && (
+                                                        <Icon
+                                                            size={18}
+                                                            className={
+                                                                hasActiveChild ? "text-blue-500" : "text-slate-500"
+                                                            }
+                                                        />
+                                                    )}
                                                     {data.title}
                                                 </span>
                                                 <ChevronDown
-                                                    size={18}
-                                                    className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                                                    size={16}
+                                                    className={`text-slate-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""
+                                                        }`}
                                                 />
                                             </button>
 
-                                            <AnimatePresence>
+                                            <AnimatePresence initial={false}>
                                                 {isExpanded && (
                                                     <motion.div
                                                         initial={{ height: 0, opacity: 0 }}
@@ -104,23 +165,30 @@ export default function MobileNav() {
                                                         exit={{ height: 0, opacity: 0 }}
                                                         className="overflow-hidden"
                                                     >
-                                                        <div className="p-2 space-y-1 bg-white dark:bg-zinc-950">
-                                                            {data.items.map((item, idx) => (
-                                                                <Link
-                                                                    key={idx}
-                                                                    to={item.url}
-                                                                    onClick={() => setIsOpen(false)}
-                                                                    className={`flex items-center gap-3 p-3.5 rounded-lg transition-all ${isActive(item.url)
-                                                                        ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                                                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-zinc-900"
-                                                                        }`}
-                                                                >
-                                                                    <div className={`p-1.5 rounded-md ${isActive(item.url) ? "bg-white dark:bg-zinc-900" : "bg-slate-100 dark:bg-zinc-900"}`}>
-                                                                        {item.icon && <item.icon size={16} />}
-                                                                    </div>
-                                                                    <span className="text-sm font-medium">{item.title}</span>
-                                                                </Link>
-                                                            ))}
+                                                        <div className="px-2 pb-2 space-y-1">
+                                                            {data.items.map((item, idx) => {
+                                                                const active = item.url ? isActive(item.url) : false;
+
+                                                                return (
+                                                                    <Link
+                                                                        key={`${key}-${idx}`}
+                                                                        to={item.url}
+                                                                        onClick={() => setIsOpen(false)}
+                                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${active
+                                                                                ? "bg-blue-100/70 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200"
+                                                                                : "text-slate-700 hover:bg-white dark:text-slate-300 dark:hover:bg-zinc-900"
+                                                                            }`}
+                                                                    >
+                                                                        <span
+                                                                            className={`w-1.5 h-1.5 rounded-full ${active
+                                                                                    ? "bg-blue-500"
+                                                                                    : "bg-slate-300 dark:bg-zinc-700"
+                                                                                }`}
+                                                                        />
+                                                                        <span className="font-medium">{item.title}</span>
+                                                                    </Link>
+                                                                );
+                                                            })}
                                                         </div>
                                                     </motion.div>
                                                 )}
@@ -129,10 +197,29 @@ export default function MobileNav() {
                                     );
                                 })}
                             </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-        </div>
+
+                            <div className="p-3 border-t border-slate-100 dark:border-zinc-800 text-[11px] text-center text-slate-400">
+                                v2.0.0
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+
+    return (
+        <>
+            <Button
+                isIconOnly
+                variant="light"
+                onClick={() => setIsOpen(true)}
+                className="lg:hidden text-slate-700 dark:text-slate-200"
+                aria-label="Abrir menú"
+            >
+                <Menu size={22} />
+            </Button>
+            {createPortal(drawer, document.body)}
+        </>
     );
 }
