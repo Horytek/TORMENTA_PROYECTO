@@ -177,7 +177,11 @@ const useDeleteSubcategoria = () => {
       }
     } catch (err) {
       setError(err.message);
-      toast.error("Error en el servidor interno");
+      if (err.response && err.response.data && err.response.data.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Error en el servidor interno");
+      }
       return false;
     } finally {
       setLoading(false);

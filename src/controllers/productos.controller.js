@@ -219,12 +219,12 @@ const deleteProducto = async (req, res) => {
         connection = await getConnection();
 
         // Verificar si el producto est  en uso en otras tablas (consultas en paralelo)
-        const [verify1Res, verify2Res, verify3Res] = await Promise.all([
-            connection.query("SELECT 1 FROM detalle_venta WHERE id_producto = ? LIMIT 1", [id]),
-            connection.query("SELECT 1 FROM detalle_envio WHERE id_producto = ? LIMIT 1", [id]),
-            connection.query("SELECT 1 FROM detalle_nota WHERE id_producto = ? LIMIT 1", [id])
-        ]);
-        const isProductInUse = verify1Res[0].length > 0 || verify2Res[0].length > 0 || verify3Res[0].length > 0;
+        // Verificar si el producto está en uso (Consultas secuenciales para evitar race conditions en la misma conexión)
+        const [verify1Res] = await connection.query("SELECT 1 FROM detalle_venta WHERE id_producto = ? LIMIT 1", [id]);
+        const [verify2Res] = await connection.query("SELECT 1 FROM detalle_envio WHERE id_producto = ? LIMIT 1", [id]);
+        const [verify3Res] = await connection.query("SELECT 1 FROM detalle_nota WHERE id_producto = ? LIMIT 1", [id]);
+
+        const isProductInUse = (verify1Res.length > 0) || (verify2Res.length > 0) || (verify3Res.length > 0);
 
         if (isProductInUse) {
             const [Updateresult] = await connection.query("UPDATE producto SET estado_producto = 0 WHERE id_producto = ? AND id_tenant = ?", [id, req.id_tenant]);

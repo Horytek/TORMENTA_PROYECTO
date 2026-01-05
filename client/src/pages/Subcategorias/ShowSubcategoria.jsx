@@ -241,6 +241,7 @@ export function ShowSubcategorias({
 
       {isConfirmationModalOpen && selectedRow && (
         <ConfirmationModal
+          isOpen={true}
           message={`¿Estás seguro que deseas eliminar "${selectedRow.nom_subcat}"?`}
           onClose={handleCloseConfirmationModal}
           onConfirm={handleConfirmDelete}
@@ -250,6 +251,7 @@ export function ShowSubcategorias({
       {
         isDeactivationModalOpen && selectedRow && (
           <ConfirmationModal
+            isOpen={true}
             message={`¿Estas seguro que deseas dar de baja a "${selectedRow.nom_subcat}"?`}
             onClose={handleCloseDeactivationModal}
             onConfirm={handleConfirmDeactivate}

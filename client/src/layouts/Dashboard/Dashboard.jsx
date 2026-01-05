@@ -75,7 +75,7 @@ function Dashboard() {
           path="*"
           element={
             <div className="flex flex-col items-center justify-center w-full h-[70vh]">
-              <div className="flex flex-col items-center justify-center gap-4 p-8 bg-white/50 dark:bg-zinc-900/50 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm backdrop-blur-md">
+              <div className="flex flex-col items-center justify-center gap-4">
                 <Spinner size="lg" color="primary" />
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
                   Cargando rutas...
@@ -321,7 +321,7 @@ function Dashboard() {
 
   return (
     <div className="h-full w-full bg-transparent">
-      <Toaster position="top-center" reverseOrder={true} />
+      <Toaster position="top-center" reverseOrder={true} containerStyle={{ zIndex: 99999 }} />
       <ScrollShadow className="h-full w-full" hideScrollBar>
         <div className="flex flex-col min-h-screen transition-all duration-300">
           <Navbar routes={routes} />
@@ -332,7 +332,7 @@ function Dashboard() {
                   <Suspense
                     fallback={
                       <div className="flex flex-col items-center justify-center w-full h-[70vh]">
-                        <div className="flex flex-col items-center justify-center gap-4 p-8 bg-white/50 dark:bg-zinc-900/50 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm backdrop-blur-md">
+                        <div className="flex flex-col items-center justify-center gap-4">
                           <Spinner size="lg" color="primary" />
                           <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
                             Cargando componentes...

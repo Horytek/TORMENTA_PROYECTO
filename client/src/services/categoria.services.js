@@ -55,7 +55,11 @@ const deleteCategoria = async (id) => {
     toast.error("No se pudo eliminar");
     return false;
   } catch (error) {
-    toast.error("Error en el servidor");
+    if (error.response && error.response.data && error.response.data.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error("Error en el servidor");
+    }
     return false;
   }
 };

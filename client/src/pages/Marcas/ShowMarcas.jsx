@@ -271,6 +271,7 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
       {
         isConfirmationModalOpen && (
           <ConfirmationModal
+            isOpen={true}
             message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
             onClose={handleCloseConfirmationModal}
             onConfirm={handleConfirmDelete}
@@ -291,6 +292,7 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
       {
         deactivateBrand && (
           <ConfirmationModal
+            isOpen={true}
             message={`¿Estás seguro que deseas dar de baja a "${selectedRow}"?`}
             onClose={handleCloseDeactivationModal}
             onConfirm={handleConfirmDeactivate}

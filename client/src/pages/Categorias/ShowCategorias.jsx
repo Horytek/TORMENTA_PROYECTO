@@ -51,8 +51,10 @@ export function ShowCategorias({
   }, [page, filteredItems, rowsPerPage]);
 
   const deleteProduct = async (id) => {
-    await deleteCategoria(id);
-    onDelete(id);
+    const success = await deleteCategoria(id);
+    if (success) {
+      onDelete(id);
+    }
   };
 
   const deactivateCategoria = async (id) => {
@@ -279,6 +281,7 @@ export function ShowCategorias({
 
       {isConfirmationModalOpen && (
         <ConfirmationModal
+          isOpen={true}
           message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
           onClose={handleCloseConfirmationModal}
           onConfirm={handleConfirmDelete}
@@ -299,6 +302,7 @@ export function ShowCategorias({
       {
         deactivateCat && (
           <ConfirmationModal
+            isOpen={true}
             message={`¿Estás seguro que deseas dar de baja a "${selectedRow}"?`}
             onClose={handleCloseDeactivationModal}
             onConfirm={handleConfirmDeactivate}

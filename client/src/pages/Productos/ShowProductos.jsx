@@ -57,8 +57,10 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
     };
 
     const handleConfirmDelete = async () => {
-        await deleteProducto(selectedId);
-        onDelete(selectedId);
+        const success = await deleteProducto(selectedId);
+        if (success) {
+            onDelete(selectedId);
+        }
         handleCloseConfirmationModal();
     };
 
@@ -256,6 +258,7 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
             {
                 isConfirmationModalOpen && (
                     <ConfirmationModal
+                        isOpen={true}
                         message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
                         onClose={handleCloseConfirmationModal}
                         onConfirm={handleConfirmDelete}

@@ -77,15 +77,20 @@ const deleteProducto = async (id) => {
     const response = await deleteProductosRequest(id);
     if (response.data.code === 2) {
       toast.success("Producto dado de baja con éxito");
+      return true;
     }
     if (response.data.code === 1) {
       toast.success("Producto eliminado con éxito");
+      return true;
     }
     if (response.status === 404) {
       toast.error("Ocurrió un error al eliminar el producto");
+      return false;
     }
+    return false;
   } catch (error) {
     toast.error("Error en el servidor interno");
+    return false;
   }
 };
 

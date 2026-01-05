@@ -56,7 +56,11 @@ const deleteMarca = async (id) => {
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    if (error.response && error.response.data && error.response.data.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error("Error en el servidor interno");
+    }
   }
 }
 

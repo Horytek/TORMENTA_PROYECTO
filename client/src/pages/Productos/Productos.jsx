@@ -346,7 +346,7 @@ function Productos() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-6 md:p-8 font-inter"
     >
-      <Toaster position="top-center" />
+
       <div className="max-w-[1920px] mx-auto space-y-6">
 
         {/* Header Section */}

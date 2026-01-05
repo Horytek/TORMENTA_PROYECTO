@@ -114,7 +114,7 @@ function Subcategorias({
 
   return (
     <div>
-      <Toaster />
+
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <BarraSearch

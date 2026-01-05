@@ -144,6 +144,14 @@ const deleteCategoria = async (req, res) => {
   try {
     const { id } = req.params;
     connection = await getConnection();
+
+    // Check for dependencies in 'sub_categoria'
+    const [subcats] = await connection.query("SELECT 1 FROM sub_categoria WHERE id_categoria = ? AND id_tenant = ? LIMIT 1", [id, req.id_tenant]);
+
+    if (subcats.length > 0) {
+      return res.status(409).json({ code: 0, message: "No se puede eliminar la categoría porque tiene subcategorías asociadas." });
+    }
+
     const [result] = await connection.query("DELETE FROM categoria WHERE id_categoria = ? AND id_tenant = ?", [id, req.id_tenant]);
 
     if (result.affectedRows === 0) {
