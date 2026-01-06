@@ -12,7 +12,7 @@ import EditCat from "./EditCat";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 
-import { bulkUpdateCategorias } from "@/services/categoria.services";
+
 
 
 const columns = [

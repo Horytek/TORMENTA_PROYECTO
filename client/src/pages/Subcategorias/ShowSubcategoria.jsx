@@ -6,7 +6,7 @@ import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { usePermisos } from "@/routes";
 
 
-import { bulkUpdateSubcategorias } from "@/services/subcategoria.services";
+
 
 
 const columns = [
@@ -274,18 +274,7 @@ export function ShowSubcategorias({
       }
 
       {/* Bulk Action Confirmation Modal */}
-      {isConfirmOpen && (
-        <ConfirmationModal
-          isOpen={isConfirmOpen}
-          message={confirmMessage}
-          onClose={closeConfirm}
-          onConfirm={async () => {
-            await executeAction(filteredItems);
-            setSelectedKeys(new Set());
-          }}
-          loading={isProcessing}
-        />
-      )}
+
     </>
 
   );

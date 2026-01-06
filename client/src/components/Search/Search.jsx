@@ -19,15 +19,17 @@ const styles = {
   innerWrapper: "bg-transparent flex items-center h-full gap-2",
   inputWrapper: [
     "h-11", // Height 11 (2.75rem)
-    "bg-slate-50 dark:bg-zinc-800/50", // Light/Dark bg
-    "border border-slate-200 dark:border-zinc-700/50", // Border
+    "bg-slate-50 dark:bg-zinc-900", // Darker background to blend
+    "border border-slate-200 dark:border-transparent", // No border in dark mode
     "hover:bg-white dark:hover:bg-zinc-800", // Hover
     "transition-all duration-200",
     "rounded-xl", // Rounded
-    "shadow-none",
+    "!shadow-none dark:!shadow-none", // Force no shadow
     "px-3",
     "!cursor-text",
-    "flex items-center"
+    "flex items-center",
+    "group-data-[focus=true]:!ring-0", // Prevent focus ring
+    "group-data-[focus=true]:!ring-offset-0"
   ],
 };
 

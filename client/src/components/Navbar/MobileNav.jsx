@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Button, Switch } from "@heroui/react";
-import { Menu, X, ChevronDown, Sun, Moon } from "lucide-react";
+import { Button } from "@heroui/react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useNavPermissions } from "./useNavPermissions";
-import { useTheme } from "@heroui/use-theme";
+import DarkModeSwitch from "@/components/DarkMode/DarkModeSwitch";
 
 export default function MobileNav() {
     const navData = useNavPermissions();
     const [isOpen, setIsOpen] = useState(false);
     const [expandedSections, setExpandedSections] = useState({});
     const location = useLocation();
-    const { theme, setTheme } = useTheme();
+
 
     const entries = useMemo(() => {
         if (!navData) return [];
@@ -69,16 +69,7 @@ export default function MobileNav() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    <Switch
-                                        isSelected={theme === "dark"}
-                                        onValueChange={(v) => setTheme(v ? "dark" : "light")}
-                                        color="secondary"
-                                        size="sm"
-                                        thumbIcon={({ isSelected, className }) =>
-                                            isSelected ? (<Sun className={className} size={14} />) : (<Moon className={className} size={14} />)
-                                        }
-                                        aria-label="Cambiar modo oscuro"
-                                    />
+                                    <DarkModeSwitch />
                                     <Button
                                         isIconOnly
                                         variant="light"
@@ -105,8 +96,8 @@ export default function MobileNav() {
                                                 to={data.url}
                                                 onClick={() => setIsOpen(false)}
                                                 className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors border ${active
-                                                        ? "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/25 dark:text-blue-300 dark:border-blue-900/30"
-                                                        : "text-slate-800 border-transparent hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-zinc-900"
+                                                    ? "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/25 dark:text-blue-300 dark:border-blue-900/30"
+                                                    : "text-slate-800 border-transparent hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-zinc-900"
                                                     }`}
                                             >
                                                 {Icon && <Icon size={18} className="opacity-80" />}
@@ -125,8 +116,8 @@ export default function MobileNav() {
                                         <div
                                             key={key}
                                             className={`rounded-xl border overflow-hidden ${hasActiveChild
-                                                    ? "border-blue-100 bg-blue-50/30 dark:border-blue-900/30 dark:bg-blue-900/10"
-                                                    : "border-slate-100 dark:border-zinc-800"
+                                                ? "border-blue-100 bg-blue-50/30 dark:border-blue-900/30 dark:bg-blue-900/10"
+                                                : "border-slate-100 dark:border-zinc-800"
                                                 }`}
                                         >
                                             <button
@@ -136,8 +127,8 @@ export default function MobileNav() {
                                             >
                                                 <span
                                                     className={`font-bold text-sm flex items-center gap-3 ${hasActiveChild
-                                                            ? "text-blue-700 dark:text-blue-300"
-                                                            : "text-slate-900 dark:text-slate-100"
+                                                        ? "text-blue-700 dark:text-blue-300"
+                                                        : "text-slate-900 dark:text-slate-100"
                                                         }`}
                                                 >
                                                     {Icon && (
@@ -175,14 +166,14 @@ export default function MobileNav() {
                                                                         to={item.url}
                                                                         onClick={() => setIsOpen(false)}
                                                                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${active
-                                                                                ? "bg-blue-100/70 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200"
-                                                                                : "text-slate-700 hover:bg-white dark:text-slate-300 dark:hover:bg-zinc-900"
+                                                                            ? "bg-blue-100/70 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200"
+                                                                            : "text-slate-700 hover:bg-white dark:text-slate-300 dark:hover:bg-zinc-900"
                                                                             }`}
                                                                     >
                                                                         <span
                                                                             className={`w-1.5 h-1.5 rounded-full ${active
-                                                                                    ? "bg-blue-500"
-                                                                                    : "bg-slate-300 dark:bg-zinc-700"
+                                                                                ? "bg-blue-500"
+                                                                                : "bg-slate-300 dark:bg-zinc-700"
                                                                                 }`}
                                                                         />
                                                                         <span className="font-medium">{item.title}</span>

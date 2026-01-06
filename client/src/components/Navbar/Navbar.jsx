@@ -1,37 +1,10 @@
-import { useTheme } from "@heroui/use-theme";
-import { Switch } from "@heroui/react";
-import { useCallback } from "react";
 import EnhancedBreadcrumb from "@/components/ui/EnhancedBreadcrumb";
 import DeepSeekChatbot from "@/components/Chatbot/DeepSeekChatbot";
-import { Moon, Sun } from "lucide-react";
 import NavLinks from "./NavLinks";
 import MobileNav from "./MobileNav";
 import NavProfile from "./NavProfile";
 import NavCompany from "./NavCompany";
-
-// Componente optimizado para el switch de modo oscuro
-function DarkModeSwitch() {
-  const { theme, setTheme } = useTheme();
-
-  const handleThemeChange = useCallback((isSelected) => {
-    setTheme(isSelected ? "dark" : "light");
-  }, [setTheme]);
-
-  return (
-    <div className="flex items-center">
-      <Switch
-        isSelected={theme === "dark"}
-        onValueChange={handleThemeChange}
-        color="secondary"
-        size="sm"
-        thumbIcon={({ isSelected, className }) =>
-          isSelected ? (<Sun className={className} />) : (<Moon className={className} />)
-        }
-        aria-label="Cambiar modo oscuro"
-      />
-    </div>
-  );
-}
+import DarkModeSwitch from "@/components/DarkMode/DarkModeSwitch";
 
 function Navbar() {
   return (

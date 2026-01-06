@@ -56,13 +56,13 @@ export function RecentTransactionsTable({ className }) {
         // estado_venta: 1 = Activo (Aceptada), 0 = Anulado (Inactiva)
         // Adjust based on your API response. If 'estado' is numeric:
         if (estado === 1) {
-            return <Chip size="sm" variant="flat" className="bg-emerald-50 text-emerald-600 font-bold border-0">Activo</Chip>;
+            return <Chip size="sm" variant="flat" className="bg-emerald-50 text-emerald-600 font-bold border-0 dark:bg-emerald-900/40 dark:text-emerald-400">Activo</Chip>;
         }
         if (estado === 0) {
-            return <Chip size="sm" variant="flat" className="bg-rose-50 text-rose-600 font-bold border-0">Anulado</Chip>;
+            return <Chip size="sm" variant="flat" className="bg-rose-50 text-rose-600 font-bold border-0 dark:bg-rose-900/40 dark:text-rose-400">Anulado</Chip>;
         }
         // If string:
-        return <Chip size="sm" variant="flat" className="bg-slate-100 text-slate-600 font-bold border-0">{estado}</Chip>;
+        return <Chip size="sm" variant="flat" className="bg-slate-100 text-slate-600 font-bold border-0 dark:bg-slate-800 dark:text-slate-300">{estado}</Chip>;
     };
 
     const handleViewDetail = (transaction) => {
@@ -235,7 +235,7 @@ export function RecentTransactionsTable({ className }) {
 
     return (
         <>
-            <Card className={`h-full border-none shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 rounded-2xl overflow-hidden ${className || ""}`}>
+            <Card className={`h-full border-none shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-zinc-950 dark:border dark:border-zinc-800/50 rounded-2xl overflow-hidden ${className || ""}`}>
                 <CardHeader className="flex justify-between items-center px-6 py-5 border-b border-slate-50 dark:border-zinc-800/50">
                     <div>
                         <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">Transacciones Recientes</h3>
@@ -254,7 +254,7 @@ export function RecentTransactionsTable({ className }) {
                 <CardBody className="p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 dark:bg-zinc-800/50 text-slate-500 border-b border-slate-100 dark:border-zinc-800">
+                            <thead className="bg-slate-50 dark:bg-zinc-800/50 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-zinc-800">
                                 <tr>
                                     <th className="px-6 py-3 font-semibold">Estado</th>
                                     <th className="px-6 py-3 font-semibold">Cliente</th>

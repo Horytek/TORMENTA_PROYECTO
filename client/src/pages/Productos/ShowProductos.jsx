@@ -9,8 +9,6 @@ import EmptyState from "@/components/Shared/EmptyState";
 import { usePermisos } from '@/routes';
 
 
-import { bulkUpdateProductos } from "@/services/productos.services";
-
 
 const columns = [
     { name: "DESCRIPCIÓN", uid: "descripcion" },
@@ -280,23 +278,7 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete, updateP
             }
 
             {/* Bulk Action Confirmation Modal */}
-            {isConfirmOpen && (
-                <ConfirmationModal
-                    isOpen={isConfirmOpen}
-                    message={confirmMessage}
-                    onClose={closeConfirm}
-                    onConfirm={async () => {
-                        await executeAction(filteredItems);
-                        // Note: We are relying on optimistic updates passed to onDelete for local state
-                        // If that's not enough, we might need to trigger a reload from parent
-                        setSelectedKeys(new Set());
-                        // Force refresh? Products.js uses useInventoryData which doesn't auto-refresh from child operations unless we call reloadData.
-                        // But we passed onDelete={ops.productos.remove} to ShowProductos.
-                        // The executeAction callback calls onDelete for each ID. So local state should update.
-                    }}
-                    loading={isProcessing}
-                />
-            )}
+
 
         </div >
     );

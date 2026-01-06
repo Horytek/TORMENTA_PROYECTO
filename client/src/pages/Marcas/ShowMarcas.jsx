@@ -11,7 +11,7 @@ import EditForm from "./EditMarca";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 
-import { bulkUpdateMarcas } from "@/services/marca.services";
+
 
 
 const columns = [
@@ -312,19 +312,7 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas, onUpdate, onDelete }
       }
 
 
-      {/* Bulk Action Confirmation Modal */}
-      {isConfirmOpen && (
-        <ConfirmationModal
-          isOpen={isConfirmOpen}
-          message={confirmMessage}
-          onClose={closeConfirm}
-          onConfirm={async () => {
-            await executeAction(filteredItems);
-            setSelectedKeys(new Set());
-          }}
-          loading={isProcessing}
-        />
-      )}
+
     </>
   );
 }
