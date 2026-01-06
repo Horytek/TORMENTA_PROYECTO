@@ -3,7 +3,7 @@ import axios from "axios";
 import { Modal, ModalContent, ModalHeader, ModalFooter, ModalBody, Card, CardBody, Button, Tooltip, ScrollShadow } from "@heroui/react";
 import { FaExchangeAlt, FaTrashAlt, FaPlusCircle } from "react-icons/fa";
 import { AlertTriangle, Info } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { insertNotaIngreso, anularNotaIngreso, getDocumentosIngreso } from '@/services/notaIngreso.services';
 import { insertNotaSalida, anularNotaSalida, getDocumentosSalida } from '@/services/notaSalida.services';
@@ -361,7 +361,6 @@ function NotasPendientesModal({ open, onClose, notas, refetchNotas }) {
 
   return (
     <>
-      <Toaster position="top-right" />
       <Modal isOpen={open} onClose={onClose} size="md">
         <ModalContent>
           <ModalHeader className="flex items-center gap-2">

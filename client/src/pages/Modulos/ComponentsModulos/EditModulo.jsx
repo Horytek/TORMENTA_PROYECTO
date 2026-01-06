@@ -9,7 +9,7 @@ import {
     Input,
 } from "@heroui/react";
 import { useUpdateModulo } from "../data/updModulo";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 export default function EditModuloModal({ open, onClose, onModuloUpdated, refetch, modulo }) {
     const [moduloNombre, setModuloNombre] = useState("");
@@ -36,7 +36,7 @@ export default function EditModuloModal({ open, onClose, onModuloUpdated, refetc
             };
 
             const response = await updateModulo(modulo.id_modulo, moduleData);
-            
+
             toast.success("Módulo actualizado exitosamente");
             onModuloUpdated?.(response.data);
             refetch?.();
@@ -54,7 +54,6 @@ export default function EditModuloModal({ open, onClose, onModuloUpdated, refetc
 
     return (
         <>
-            <Toaster />
             <Modal
                 backdrop="opaque"
                 isOpen={open}

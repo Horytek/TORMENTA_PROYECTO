@@ -8,7 +8,7 @@ import {
   Input,
   Button,
 } from '@heroui/react';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { insertDestinatario } from '@/services/destinatario.services';
 
 export default function AgregarProveedorModal({ isOpen, onClose, onProveedorAdded }) {
@@ -27,9 +27,9 @@ export default function AgregarProveedorModal({ isOpen, onClose, onProveedorAdde
   });
 
   // Definir el título del modal
-  const titulo = tipoCliente === 'Natural' ? 'Cliente Natural' : 
-                 tipoCliente === 'Juridico' ? 'Cliente Jurídico' : 
-                 'Destinatario';
+  const titulo = tipoCliente === 'Natural' ? 'Cliente Natural' :
+    tipoCliente === 'Juridico' ? 'Cliente Jurídico' :
+      'Destinatario';
 
   const handleGuardarAction = async () => {
     const data = {
@@ -153,7 +153,6 @@ export default function AgregarProveedorModal({ isOpen, onClose, onProveedorAdde
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <Toaster />
       <ModalContent>
         <ModalHeader>
           <h2 className="text-xl font-bold">Agregar {titulo}</h2>

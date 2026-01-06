@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FaPlus } from "react-icons/fa";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { ModalMarca } from './ModalForms/ModalMarca';
 import { ModalCategoria } from './ModalForms/ModalCategoria';
 import { ModalSubCategoria } from './ModalForms/ModalSubCategoria';
@@ -215,7 +215,6 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
 
   return (
     <div>
-      <Toaster />
       <Modal
         isOpen={isOpen}
         onClose={handleModalOnClose}

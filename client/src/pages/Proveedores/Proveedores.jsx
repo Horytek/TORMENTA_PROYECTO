@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import DestinatariosForm from './DestinatariosForm';
-import { Toaster } from "react-hot-toast";
 import { Button, Card, CardBody, Chip, Input, Pagination, Select, SelectItem } from '@heroui/react';
 import { motion } from "framer-motion";
 import { FaPlus, FaTruck, FaCheckCircle, FaTimesCircle, FaFileExcel, FaFileExport, FaSearch } from "react-icons/fa";
@@ -147,7 +146,6 @@ function Proveedores() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200"
     >
-      <Toaster />
 
       {/* Header & Actions Wrapper */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">

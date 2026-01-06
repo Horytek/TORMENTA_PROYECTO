@@ -11,6 +11,7 @@ import { AuthProvider } from "@/context/Auth/AuthProvider";
 import { ProtectedRoute } from "./routes";
 import { useTheme } from "@heroui/use-theme";
 import GlobalErrorBoundary from "@/components/GlobalErrorBoundary";
+import { Toaster } from "react-hot-toast";
 
 const Login = lazy(() => import("./layouts/Login/Login"));
 const Dashboard = lazy(() => import("./layouts/Dashboard/Dashboard"));
@@ -106,6 +107,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   </Routes>
                 </Suspense>
                 <LoaderOverlay />
+                <Toaster position="top-center" reverseOrder={true} containerStyle={{ zIndex: 99999 }} />
               </LoaderProvider>
             </HeroUIProvider>
           </AuthProvider>

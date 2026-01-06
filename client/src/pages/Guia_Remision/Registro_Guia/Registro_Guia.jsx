@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { IoMdPin, IoMdCar } from 'react-icons/io';
 import { MdPersonAdd, MdSave, MdArrowBack } from "react-icons/md";
 import { FaBarcode, FaBoxOpen, FaTruck, FaMapMarkerAlt, FaFileAlt } from "react-icons/fa";
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import ModalBuscarProducto from './ComponentsRegGuias/BuscarProdGuiaForm';
@@ -297,7 +297,6 @@ export default function RegistroGuia() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-6 font-inter">
-      <Toaster />
 
       {/* Top Bar */}
       <div className="flex justify-between items-center mb-6">

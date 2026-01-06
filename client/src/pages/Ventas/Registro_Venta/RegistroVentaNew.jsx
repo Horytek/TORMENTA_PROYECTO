@@ -3,7 +3,6 @@ import { Card, CardBody } from "@heroui/react";
 import { usePOS } from './hooks/usePOS';
 import ProductCatalog from './components/ProductCatalog';
 import POSCart from './components/POSCart';
-import { Toaster } from 'react-hot-toast';
 import { LayoutGrid } from 'lucide-react';
 
 const RegistroVentaNew = () => {
@@ -11,8 +10,6 @@ const RegistroVentaNew = () => {
 
     return (
         <div className="h-[calc(100vh-6rem)] w-full bg-[#F3F4F6] dark:bg-zinc-950 p-2 md:p-4 gap-4 flex flex-col overflow-hidden">
-            <Toaster position="top-right" />
-
             {/* Header */}
             <div className="flex items-center gap-2 mb-2 px-1">
                 <div className="bg-white dark:bg-zinc-900 p-2 rounded-lg shadow-sm border border-slate-200 dark:border-zinc-800">

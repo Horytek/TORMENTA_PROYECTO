@@ -11,7 +11,7 @@ import RegistroNotaTable from './components/RegistroNotaTable';
 import AgregarProovedor from '../components/modals/AgregarProovedor';
 import { getProductosIngreso, insertNotaIngreso } from '@/services/notaIngreso.services';
 import { getProductosSalida, insertNotaSalida } from '@/services/notaSalida.services';
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import { Button, Input, Select, SelectItem, Textarea, Tabs, Tab, Chip, Divider } from "@heroui/react";
 import { useUserStore } from "@/store/useStore";
@@ -306,7 +306,6 @@ function RegistroNota() {
 
     return (
         <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#09090b] p-6 lg:p-10 font-inter tracking-tight">
-            <Toaster />
 
             <div className="max-w-[1600px] mx-auto space-y-6">
                 {/* Top Navigation */}

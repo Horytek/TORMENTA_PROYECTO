@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useForm, Controller } from "react-hook-form";
 import PropTypes from 'prop-types';
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import {
     Modal, ModalContent, ModalHeader, ModalBody,
     ModalFooter, Input, Select, SelectItem
@@ -85,7 +85,6 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
 
     return (
         <div>
-            <Toaster />
             <Modal isOpen={true} onClose={onClose} backdrop="blur">
                 <ModalContent>
                     <ModalHeader className="flex flex-col gap-1 text-slate-900 dark:text-slate-100">

@@ -20,7 +20,7 @@ import {
 import TablaKardex from './components/KardexTable';
 import { getProductosKardex, downloadExcelReporteMes, downloadExcelReporteFechas } from '@/services/kardex.services';
 import { useAlmacenesKardex, useMarcasKardex, useCategoriasKardex, useSubcategoriasKardex } from '@/hooks/useKardex';
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { FaRegFilePdf, FaFileExcel } from "react-icons/fa";
 import { RefreshCw, Calendar, Download } from 'lucide-react';
 import { IoIosSearch } from "react-icons/io";
@@ -286,7 +286,6 @@ const Kardex = () => {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
-      <Toaster position="top-center" reverseOrder={false} />
 
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">

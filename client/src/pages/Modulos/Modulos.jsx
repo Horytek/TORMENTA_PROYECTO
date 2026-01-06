@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import { Button } from '@heroui/react';
 import TablaModulos from '@/pages/Modulos/ComponentsModulos/TablaModulos';
@@ -24,7 +23,6 @@ function Modulos() {
 
     return (
         <div className="w-full my-4">
-            <Toaster />
 
             <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
                 <div>

@@ -4,7 +4,7 @@ import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
 import { useVentasData } from "@/services/ventas.services";
-import { Toaster } from "react-hot-toast";
+
 
 import { useUserStore } from "@/store/useStore";
 import { handleDelete, anularVentaEnSunatF, anularVentaEnSunatB } from "@/services/ventas.services";
@@ -164,7 +164,6 @@ const Ventas = () => {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-6 md:p-8 font-inter">
-      <Toaster />
 
       <div className="max-w-[1920px] mx-auto space-y-6">
         {/* Header principal */}

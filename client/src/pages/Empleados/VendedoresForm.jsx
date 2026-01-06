@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FaPlus } from "react-icons/fa";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
 import { addVendedor, updateVendedor } from '@/services/vendedor.services';
 import { getUsuarios, addUsuario, getUsuario_1 } from '@/services/usuario.services';
@@ -9,7 +9,7 @@ import { getVendedores } from '@/services/vendedor.services';
 import { getRoles } from '@/services/rol.services';
 import { getEmpresas } from '@/services/empresa.services';
 import { useUserStore } from '@/store/useStore';
-import { 
+import {
   Input,
   Button,
   Tooltip,
@@ -17,14 +17,14 @@ import {
 } from "@heroui/react";
 
 import {
-    Modal, 
-    ModalContent, 
-    ModalHeader, 
-    ModalBody, 
-    ModalFooter, 
-    Select,
-    SelectItem
-  } from '@heroui/react';
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Select,
+  SelectItem
+} from '@heroui/react';
 
 const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
   const [usuarios, setUsuarios] = useState([]);
@@ -91,16 +91,16 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
           userEmpresaId = empresasData[0].id_empresa;
           setCurrentUserEmpresa(userEmpresaId);
         }
-        
+
         // Buscar automáticamente el rol de "Empleados"
-        const empleadoRole = rolesData.find(rol => 
-          rol.nom_rol.toLowerCase().includes('empleado') || 
+        const empleadoRole = rolesData.find(rol =>
+          rol.nom_rol.toLowerCase().includes('empleado') ||
           rol.nom_rol.toLowerCase().includes('vendedor')
         );
-        
+
         // Actualizar newUserData con la empresa válida y el rol detectado
-        setNewUserData(prev => ({ 
-          ...prev, 
+        setNewUserData(prev => ({
+          ...prev,
           id_rol: empleadoRole ? empleadoRole.id_rol.toString() : '',
           id_empresa: userEmpresaId ? userEmpresaId.toString() : ''
         }));
@@ -171,19 +171,19 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
     try {
       console.log('Datos a enviar:', newUserData);
       const success = await addUsuario(newUserData);
-      
+
       if (success) {
         toast.success("Usuario creado correctamente");
         setShowMiniModal(false);
         // Resetear formulario manteniendo empresa y rol detectados automáticamente
-        setNewUserData(prev => ({ 
-          usua: '', 
-          contra: '', 
-          estado_usuario: '1', 
+        setNewUserData(prev => ({
+          usua: '',
+          contra: '',
+          estado_usuario: '1',
           id_rol: prev.id_rol, // Mantener el rol detectado
           id_empresa: prev.id_empresa // Mantener la empresa detectada
         }));
-        
+
         // Recargar usuarios
         const usuariosData = await getUsuarios();
         setUsuarios(usuariosData);
@@ -198,9 +198,8 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
 
   return (
     <>
-      <Toaster />
-      <Modal 
-        isOpen={isOpen} 
+      <Modal
+        isOpen={isOpen}
         onClose={handleCloseModal}
         size="2xl"
       >
@@ -253,8 +252,8 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                               <SelectItem
                                 key={usuario.id_usuario.toString()}
                                 value={usuario.id_usuario.toString()}
-                                isDisabled={vendedores.some((vendedor) => 
-                                  vendedor.id_usuario === usuario.id_usuario) && 
+                                isDisabled={vendedores.some((vendedor) =>
+                                  vendedor.id_usuario === usuario.id_usuario) &&
                                   initialData?.id_usuario !== usuario.id_usuario}
                               >
                                 {usuario.usua}
@@ -361,15 +360,15 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button 
-                  color="danger" 
-                  variant="light" 
+                <Button
+                  color="danger"
+                  variant="light"
                   onPress={handleCloseModal}
                 >
                   Cancelar
                 </Button>
-                <Button 
-                  color="primary" 
+                <Button
+                  color="primary"
                   onPress={handleSubmit(onSubmit)}
                 >
                   Guardar
@@ -381,8 +380,8 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
       </Modal>
 
       {/* Mini Modal para crear usuario */}
-      <Modal 
-        isOpen={showMiniModal} 
+      <Modal
+        isOpen={showMiniModal}
         onClose={() => setShowMiniModal(false)}
         size="md"
       >
@@ -399,8 +398,8 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                   <div>
                     <span className="font-semibold">Rol asignado:</span> Empleados
                   </div>
-                 
-                  
+
+
                   <Input
                     label="Usuario"
                     variant="bordered"
@@ -416,7 +415,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     onChange={(e) => setNewUserData(prev => ({ ...prev, contra: e.target.value }))}
                     isRequired
                   />
-                
+
                   <Select
                     label="Estado"
                     variant="bordered"
@@ -429,16 +428,16 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button 
-                  color="danger" 
-                  variant="light" 
+                <Button
+                  color="danger"
+                  variant="light"
                   onPress={() => {
                     setShowMiniModal(false);
                     // Resetear formulario manteniendo empresa y rol detectados automáticamente
-                    setNewUserData(prev => ({ 
-                      usua: '', 
-                      contra: '', 
-                      estado_usuario: '1', 
+                    setNewUserData(prev => ({
+                      usua: '',
+                      contra: '',
+                      estado_usuario: '1',
                       id_rol: prev.id_rol, // Mantener el rol detectado
                       id_empresa: prev.id_empresa // Mantener la empresa detectada
                     }));
@@ -446,8 +445,8 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                 >
                   Cancelar
                 </Button>
-                <Button 
-                  color="primary" 
+                <Button
+                  color="primary"
                   onPress={handleCreateUser}
                   isDisabled={!newUserData.usua || !newUserData.contra || !newUserData.id_empresa}
                 >

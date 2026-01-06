@@ -1,6 +1,5 @@
 import { useState } from "react";
 import CategoriasForm from "./CategoriasForm";
-import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import { ShowCategorias } from "./ShowCategorias";

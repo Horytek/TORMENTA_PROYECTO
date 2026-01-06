@@ -15,7 +15,7 @@ import {
     SelectItem
 } from '@heroui/react';
 import { IoIosSearch } from "react-icons/io";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useUpdateClient } from "@/services/clientes.services";
 
 const inputStyles = {
@@ -185,7 +185,6 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
     const isRadioDisabled = !!client?.id;
     return (
         <>
-            <Toaster />
             <Modal
                 backdrop="opaque"
                 isOpen={open}

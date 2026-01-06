@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
 import VendedoresForm from './VendedoresForm';
-import { Toaster } from "react-hot-toast";
 import { FaPlus, FaUsers, FaUserCheck, FaUserTimes, FaBookOpen, FaSearch } from "react-icons/fa";
 import {
   Button, Tabs, Tab, Card, CardBody, Chip, Tooltip, Input,
@@ -110,7 +109,7 @@ function Vendedores() {
   return (
 
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
-      <Toaster />
+
       <Tabs
         selectedKey={selectedTab}
         onSelectionChange={setSelectedTab}

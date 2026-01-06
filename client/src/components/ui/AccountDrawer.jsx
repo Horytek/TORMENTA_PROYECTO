@@ -6,7 +6,7 @@ import { Info, X, UserCog } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUserStore } from "@/store/useStore";
 import { addClave } from "@/services/clave.services";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 // Hooks
 import { useAccountData } from "@/hooks/useAccountData";
@@ -214,7 +214,6 @@ export default function AccountDrawer({ open, onClose }) {
 
   return (
     <>
-      <Toaster position="top-center" />
       <Drawer
         isOpen={open}
         onOpenChange={v => { if (!v) onClose?.(); }}

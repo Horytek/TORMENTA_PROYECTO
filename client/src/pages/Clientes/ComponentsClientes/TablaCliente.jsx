@@ -19,7 +19,7 @@ import { FaTrash } from "react-icons/fa";
 import EditClientModal from "./EditClient.jsx";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { useCliente, useDeactivateCliente, useUpdateClient } from "@/services/clientes.services";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import ViewClientModal from "./ShowClient";
 import TableSkeleton from "@/components/Skeletons/TableSkeleton";
 import EmptyState from "@/components/Shared/EmptyState";
@@ -218,8 +218,6 @@ const TablaCliente = ({
 
     return (
         <>
-            <Toaster />
-
             <Table
                 aria-label="Tabla de clientes"
 

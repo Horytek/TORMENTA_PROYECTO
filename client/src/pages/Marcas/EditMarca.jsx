@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useForm, Controller } from "react-hook-form";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import {
   Input,
   Button,
@@ -75,7 +75,6 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onMarcaEdit }) => 
 
   return (
     <>
-      <Toaster />
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

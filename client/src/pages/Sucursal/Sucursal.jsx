@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Toaster } from "react-hot-toast";
 import { Button, Card, CardBody, Chip, Input, Pagination, Select, SelectItem } from '@heroui/react';
 import { FaPlus, FaStore, FaCheckCircle, FaTimesCircle, FaFileExcel, FaFileExport, FaSearch } from "react-icons/fa";
 import { usePermisos } from '@/routes';
@@ -125,7 +124,6 @@ function Sucursal() {
   return (
 
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
-      <Toaster />
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">

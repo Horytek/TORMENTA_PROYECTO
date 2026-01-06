@@ -11,11 +11,10 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@
 import { CgOptions } from "react-icons/cg";
 import { Input } from '@heroui/react';
 import { handleSunatMultiple, handleUpdateMultiple } from "@/services/ventas.services";
-import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
 import PDFModal from "../hook/PDFModal";
 import { usePermisos } from '@/routes';
-import { Button } from '@heroui/react';
+
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { ActionButton } from "@/components/Buttons/Buttons";
@@ -135,7 +134,7 @@ const FiltrosVentas = ({ onFiltersChange }) => {
 
   return (
     <>
-      <Toaster />
+
       {/* Contenedor filtros - Clean white style updates */}
       <div className="w-full">
         <div className="flex flex-col lg:flex-row gap-4">

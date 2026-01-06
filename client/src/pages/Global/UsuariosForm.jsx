@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose, IoMdEye, IoMdEyeOff } from "react-icons/io";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
 import { useForm } from "react-hook-form";
 import { addUsuario, updateUsuario } from '@/services/usuario.services';
@@ -66,7 +66,6 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
 
   return (
     <div>
-      <Toaster />
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
         <form
           onSubmit={onSubmit}

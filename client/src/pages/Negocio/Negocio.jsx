@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Toaster } from 'react-hot-toast';
 import { useNegocio } from './ComponentsNegocio/useNegocio';
 import PageHeader from './ComponentsNegocio/PageHeader';
 import LoadingSpinner from './ComponentsNegocio/LoadingSpinner';
@@ -98,7 +97,6 @@ TOTAL A PAGAR:                      118.00
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="m-4 md:m-6 space-y-6 max-w-[1600px] mx-auto"
     >
-      <Toaster />
       <PageHeader title="Configuración del negocio" subtitle="Actualiza los datos visibles en tus comprobantes, documentos y panel." />
 
       {loading ? (

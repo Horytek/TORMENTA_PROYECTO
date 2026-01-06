@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import RolesForm from './RolesForm';
-import { Toaster } from "react-hot-toast";
 import TablaRoles from './ComponentsRoles/TablaRoles';
 import TablaPermisos from './ComponentsRoles/TablaPermisos';
 import TablaAsignacion from './ComponentsRoles/TablaAsignacion';
@@ -137,7 +136,6 @@ function Roles() {
 
   return (
     <div className="w-full min-h-screen p-6 flex flex-col gap-6 bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-200">
-      <Toaster position="top-center" reverseOrder={false} />
 
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">

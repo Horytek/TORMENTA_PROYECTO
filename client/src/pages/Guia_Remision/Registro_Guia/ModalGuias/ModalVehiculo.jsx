@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import '../ModalGuias.css';
 import { IoMdClose } from "react-icons/io";
 import { useForm } from "react-hook-form";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { ButtonSave } from '@/components/Buttons/Buttons';
 import { addVehiculo } from '@/services/guiaRemision.services';
 import {
@@ -62,7 +62,6 @@ export const ModalVehiculo = ({ modalTitle, closeModel, onVehiculoSaved }) => {
                 }
             }}
         >
-            <Toaster />
             <ModalContent>
                 <form onSubmit={onSubmit} className="flex flex-col h-full w-full">
                     <ModalHeader>
@@ -79,8 +78,8 @@ export const ModalVehiculo = ({ modalTitle, closeModel, onVehiculoSaved }) => {
                                     {...register('placa', { required: true })}
                                     type="text"
                                     className={`w-full px-3 py-2 text-sm bg-white/50 dark:bg-zinc-800/50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.placa
-                                            ? 'border-red-400 focus:ring-red-200 text-red-700 placeholder:text-red-300'
-                                            : 'border-slate-200/50 focus:border-blue-400 focus:ring-blue-100 text-slate-800'
+                                        ? 'border-red-400 focus:ring-red-200 text-red-700 placeholder:text-red-300'
+                                        : 'border-slate-200/50 focus:border-blue-400 focus:ring-blue-100 text-slate-800'
                                         }`}
                                     placeholder="Ej: ABC-123"
                                 />
@@ -93,8 +92,8 @@ export const ModalVehiculo = ({ modalTitle, closeModel, onVehiculoSaved }) => {
                                     {...register('tipo', { required: true })}
                                     type="text"
                                     className={`w-full px-3 py-2 text-sm bg-white/50 dark:bg-zinc-800/50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.tipo
-                                            ? 'border-red-400 focus:ring-red-200 text-red-700 placeholder:text-red-300'
-                                            : 'border-slate-200/50 focus:border-blue-400 focus:ring-blue-100 text-slate-800'
+                                        ? 'border-red-400 focus:ring-red-200 text-red-700 placeholder:text-red-300'
+                                        : 'border-slate-200/50 focus:border-blue-400 focus:ring-blue-100 text-slate-800'
                                         }`}
                                     placeholder="Ej: Furgón, Camión..."
                                 />

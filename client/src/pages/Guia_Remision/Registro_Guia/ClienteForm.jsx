@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import {
   Modal,
   ModalContent,
@@ -130,7 +130,6 @@ function ClienteForm({ modalTitle, onClose }) {
         }
       }}
     >
-      <Toaster />
       <ModalContent>
         <ModalHeader>
           <div className="flex flex-col gap-1">

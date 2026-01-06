@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { useForm, Controller } from "react-hook-form";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import {
   Input,
   Button,
@@ -86,7 +86,6 @@ const EditForm = ({ isOpen, onClose, initialData, modalTitle, onSuccess, categor
         }
       }}
     >
-      <Toaster />
       <ModalContent>
         <ModalHeader>
           <span className="text-xl font-bold text-slate-800 dark:text-white">{modalTitle}</span>

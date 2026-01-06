@@ -9,27 +9,27 @@ import {
     Input,
 } from "@heroui/react";
 import { addSubmodulo as useAddSubmodulo } from "../data/addSubModulo"; // Rename the import
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 export default function AddSubModuloModal({ open, onClose, onSubmoduloCreated, refetch, moduleId, moduleName }) {
     const [nombreSub, setNombreSub] = useState("");
     const [rutaSub, setRutaSub] = useState("");
-    
+
     // Properly use the hook
     const { addSubmodulo, isLoading } = useAddSubmodulo();
 
     const handleSave = async () => {
         try {
-            const response = await addSubmodulo({ 
+            const response = await addSubmodulo({
                 id_modulo: moduleId,
-                nombre_sub: nombreSub, 
-                ruta: rutaSub 
+                nombre_sub: nombreSub,
+                ruta: rutaSub
             });
-            
+
             if (response.success) {
                 toast.success(response.message);
                 onSubmoduloCreated?.(response.data);
-                refetch?.(); 
+                refetch?.();
                 onClose();
             } else {
                 toast.error(response.error);
@@ -47,7 +47,6 @@ export default function AddSubModuloModal({ open, onClose, onSubmoduloCreated, r
 
     return (
         <>
-            <Toaster />
             <Modal
                 backdrop="opaque"
                 isOpen={open}

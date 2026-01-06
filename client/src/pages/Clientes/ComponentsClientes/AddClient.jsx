@@ -18,7 +18,7 @@ import {
 } from '@heroui/react';
 import { IoIosSearch } from "react-icons/io";
 import { useAddClient } from "@/services/clientes.services";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 const inputStyles = {
   base: "border-none",
@@ -165,7 +165,6 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
 
   return (
     <>
-      <Toaster />
       <Modal
         backdrop="opaque"
         isOpen={open}

@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
-import { Toaster } from 'react-hot-toast';
+
 
 // Services
 import { getModulosConSubmodulos } from '@/services/rutas.services';
@@ -321,7 +321,6 @@ function Dashboard() {
 
   return (
     <div className="h-full w-full bg-transparent">
-      <Toaster position="top-center" reverseOrder={true} containerStyle={{ zIndex: 99999 }} />
       <ScrollShadow className="h-full w-full" hideScrollBar>
         <div className="flex flex-col min-h-screen transition-all duration-300">
           <Navbar routes={routes} />

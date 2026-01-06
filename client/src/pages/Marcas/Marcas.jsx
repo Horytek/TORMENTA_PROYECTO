@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import MarcasForm from "./MarcasForm";
-import { Toaster } from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 import BarraSearch from "@/components/Search/Search";
 import { ShowMarcas } from "./ShowMarcas";

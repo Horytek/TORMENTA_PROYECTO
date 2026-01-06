@@ -15,7 +15,7 @@ import {
 } from '@heroui/react';
 import { IoMdClose } from "react-icons/io";
 import { FaPlus } from "react-icons/fa";
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { ModalTransporte } from './ModalGuias/ModalTransporte';
 import { ModalTransportista } from './ModalGuias/ModalTransportista';
 import { getTransportistasPublicos, getTransportistasPrivados } from '@/services/guiaRemision.services';
@@ -154,7 +154,6 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
         }
       }}
     >
-      <Toaster />
       <ModalContent>
         <ModalHeader>
           <div className="flex flex-col gap-1">

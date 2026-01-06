@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
 import { useVendedoresData } from '@/services/sucursal.services';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete/GooglePlacesAutocomplete';
@@ -58,22 +58,22 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
   const dni_vendedor = watch('dni_vendedor');
   const vendedorSeleccionado = vendedores.find(v => v.dni === dni_vendedor);
 
-const onSubmit = (data) => {
-  if (!data.dni_vendedor) {
-    toast.error("Debe seleccionar un vendedor");
-    return;
-  }
-  if (!data.nombre_sucursal.trim() || !data.ubicacion.trim()) {
-    toast.error("Por favor, complete los campos obligatorios.");
-    return;
-  }
-  onSuccess({
-    ...data,
-    dni: data.dni_vendedor,
-    estado_sucursal: Number(data.estado_sucursal),
-  });
-  handleCloseModal();
-};
+  const onSubmit = (data) => {
+    if (!data.dni_vendedor) {
+      toast.error("Debe seleccionar un vendedor");
+      return;
+    }
+    if (!data.nombre_sucursal.trim() || !data.ubicacion.trim()) {
+      toast.error("Por favor, complete los campos obligatorios.");
+      return;
+    }
+    onSuccess({
+      ...data,
+      dni: data.dni_vendedor,
+      estado_sucursal: Number(data.estado_sucursal),
+    });
+    handleCloseModal();
+  };
 
   const handleCloseModal = () => {
     setIsOpen(false);
@@ -84,7 +84,6 @@ const onSubmit = (data) => {
 
   return (
     <>
-      <Toaster />
       <Modal isOpen={isOpen} onClose={handleCloseModal} size="md">
         <ModalContent>
           <>
@@ -123,7 +122,7 @@ const onSubmit = (data) => {
                       errorMessage={errors.dni_vendedor?.message}
                     >
                       {vendedores.map((v) => (
-                        <AutocompleteItem 
+                        <AutocompleteItem
                           key={v.dni}
                           textValue={`${v.nombre} (${v.dni})`}
                         >

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useMarcas } from '@/context/Marca/MarcaProvider';
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
-import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
   ModalFooter,
   Input,
   Button
@@ -52,17 +52,16 @@ export const ModalMarca = ({ modalTitle, closeModel }) => {
 
   return (
     <>
-      <Toaster />
-<Modal
-  isOpen={isOpen}
-  onClose={handleCloseModal}
-  size="md"
-  classNames={{
-    backdrop: "z-[10020]",
-    wrapper: "z-[10021]",
-    base: "z-[10022]"
-  }}
->
+      <Modal
+        isOpen={isOpen}
+        onClose={handleCloseModal}
+        size="md"
+        classNames={{
+          backdrop: "z-[10020]",
+          wrapper: "z-[10021]",
+          base: "z-[10022]"
+        }}
+      >
         <ModalContent>
           {(onClose) => (
             <>
@@ -88,15 +87,15 @@ export const ModalMarca = ({ modalTitle, closeModel }) => {
                 />
               </ModalBody>
               <ModalFooter>
-                <Button 
-                  color="danger" 
-                  variant="light" 
+                <Button
+                  color="danger"
+                  variant="light"
                   onPress={handleCloseModal}
                 >
                   Cancelar
                 </Button>
-                <Button 
-                  color="primary" 
+                <Button
+                  color="primary"
                   onPress={handleSubmit(onSubmit)}
                 >
                   Guardar

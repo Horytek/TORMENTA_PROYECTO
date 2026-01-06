@@ -12,7 +12,7 @@ import {
   EmptyContent,
 } from "@/components/ui/empty";
 import { sendCredencialesEmail } from '@/services/resend.services';
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 // Popover minimalista estilo HeroUI/Shadcn para ayuda de logotipo
 function LogotipoPopoverInfo() {
@@ -110,7 +110,7 @@ export const RegistroForm = ({ planInfo }) => {
     </div>
   );
 
-    // Manejar archivos para certificado y logo SUNAT
+  // Manejar archivos para certificado y logo SUNAT
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     if (files && files.length > 0) {
@@ -120,42 +120,42 @@ export const RegistroForm = ({ planInfo }) => {
       }));
     }
   };
-  
 
-const extractImgbbUrl = (input) => {
-  // Busca el segundo https://i.ibb.co/... en el texto
-  const matches = input.match(/https:\/\/i\.ibb\.co\/[^\s\[\]]+\.(jpg|png)/gi);
-  return matches && matches.length > 1 ? matches[1] : matches?.[0] || '';
-};
 
-const handleLogotipoPaste = (e) => {
-  const pasted = e.clipboardData.getData('text');
-  const url = extractImgbbUrl(pasted);
-  if (url) {
-    setFormData(prev => ({ ...prev, logotipo: url }));
-    if (errors.logotipo) setErrors(prev => ({ ...prev, logotipo: '' }));
-    e.preventDefault();
-  }
-};
+  const extractImgbbUrl = (input) => {
+    // Busca el segundo https://i.ibb.co/... en el texto
+    const matches = input.match(/https:\/\/i\.ibb\.co\/[^\s\[\]]+\.(jpg|png)/gi);
+    return matches && matches.length > 1 ? matches[1] : matches?.[0] || '';
+  };
 
-const handleChange = (e) => {
-  const { name, value, type, checked } = e.target;
-  // Si el campo es logotipo, castea automáticamente al segundo https
-  if (name === "logotipo") {
-    const url = extractImgbbUrl(value);
-    setFormData(prev => ({
-      ...prev,
-      [name]: url
-    }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-  } else {
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-  }
-};
+  const handleLogotipoPaste = (e) => {
+    const pasted = e.clipboardData.getData('text');
+    const url = extractImgbbUrl(pasted);
+    if (url) {
+      setFormData(prev => ({ ...prev, logotipo: url }));
+      if (errors.logotipo) setErrors(prev => ({ ...prev, logotipo: '' }));
+      e.preventDefault();
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    // Si el campo es logotipo, castea automáticamente al segundo https
+    if (name === "logotipo") {
+      const url = extractImgbbUrl(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: url
+      }));
+      if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+      if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
 
   const validateForm = () => {
     const formErrors = {};
@@ -178,93 +178,92 @@ const handleChange = (e) => {
   };
 
   function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) return resolve('');
-    const reader = new FileReader();
-    reader.onload = () => {
-      // Solo el string base64, sin el prefijo data:...
-      const result = reader.result;
-      const base64 = result.split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-
-  // Validación extra: no permitir envío si algún campo requerido está vacío
-  const requiredFields = [
-    'nombre',
-    'apellido',
-    'ruc',
-    'razonSocial',
-    'direccion',
-    'pais',
-    'emailEmpresa',
-    'telefonoEmpresa'
-  ];
-  const emptyField = requiredFields.find(
-    (field) => !formData[field] || String(formData[field]).trim() === ""
-  );
-  if (emptyField) {
-    setErrors((prev) => ({
-      ...prev,
-      [emptyField]: 'Este campo es obligatorio'
-    }));
-    toast.error('Por favor, completa todos los campos obligatorios antes de continuar.');
-    return;
-  }
-
-  setCreating(true);
-
-  // Determinar el plan_pago int según el plan seleccionado
-  const plan_pago = getPlanPagoInt(planInfo.plan);
-
-  const empresaPayload = {
-    ruc: formData.ruc,
-    razonSocial: formData.razonSocial,
-    nombreComercial: formData.nombreComercial || null,
-    direccion: formData.direccion,
-    distrito: formData.distrito || null,
-    provincia: formData.provincia || null,
-    departamento: formData.departamento || null,
-    codigoPostal: formData.codigoPostal || null,
-    telefono: formData.telefonoEmpresa || null,
-    email: formData.emailEmpresa || null,
-    logotipo: formData.logotipo || null,
-    moneda: null,
-    pais: formData.pais,
-    plan_pago
-  };
-
-  const result = await createEmpresaAndAdmin(empresaPayload);
-  setCreating(false);
-
-  if (!result?.success) {
-    toast.error(result?.message || "No se pudo completar el registro");
-    return;
-  }
-
-  // Enviar credenciales al correo de la empresa (solo usuario y contraseña)
-  if (result.admin && formData.emailEmpresa) {
-    await sendCredencialesEmail({
-      to: formData.emailEmpresa,
-      usuario: result.admin.usua,
-      contrasena: result.admin.contra
+    return new Promise((resolve, reject) => {
+      if (!file) return resolve('');
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Solo el string base64, sin el prefijo data:...
+        const result = reader.result;
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
   }
 
-  setAdminCreds(result.admin);
-  setFormSubmitted(true);
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    // Validación extra: no permitir envío si algún campo requerido está vacío
+    const requiredFields = [
+      'nombre',
+      'apellido',
+      'ruc',
+      'razonSocial',
+      'direccion',
+      'pais',
+      'emailEmpresa',
+      'telefonoEmpresa'
+    ];
+    const emptyField = requiredFields.find(
+      (field) => !formData[field] || String(formData[field]).trim() === ""
+    );
+    if (emptyField) {
+      setErrors((prev) => ({
+        ...prev,
+        [emptyField]: 'Este campo es obligatorio'
+      }));
+      toast.error('Por favor, completa todos los campos obligatorios antes de continuar.');
+      return;
+    }
+
+    setCreating(true);
+
+    // Determinar el plan_pago int según el plan seleccionado
+    const plan_pago = getPlanPagoInt(planInfo.plan);
+
+    const empresaPayload = {
+      ruc: formData.ruc,
+      razonSocial: formData.razonSocial,
+      nombreComercial: formData.nombreComercial || null,
+      direccion: formData.direccion,
+      distrito: formData.distrito || null,
+      provincia: formData.provincia || null,
+      departamento: formData.departamento || null,
+      codigoPostal: formData.codigoPostal || null,
+      telefono: formData.telefonoEmpresa || null,
+      email: formData.emailEmpresa || null,
+      logotipo: formData.logotipo || null,
+      moneda: null,
+      pais: formData.pais,
+      plan_pago
+    };
+
+    const result = await createEmpresaAndAdmin(empresaPayload);
+    setCreating(false);
+
+    if (!result?.success) {
+      toast.error(result?.message || "No se pudo completar el registro");
+      return;
+    }
+
+    // Enviar credenciales al correo de la empresa (solo usuario y contraseña)
+    if (result.admin && formData.emailEmpresa) {
+      await sendCredencialesEmail({
+        to: formData.emailEmpresa,
+        usuario: result.admin.usua,
+        contrasena: result.admin.contra
+      });
+    }
+
+    setAdminCreds(result.admin);
+    setFormSubmitted(true);
+  };
 
   return (
     <div className="rounded-2xl p-6 md:p-8 w-full">
-      <Toaster position="top-center" />
       <div className="max-w-[1200px] w-full mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
           <div className="lg:col-span-2 bg-card-bg border border-gray-700/20 rounded-3xl p-10 md:p-12 shadow-xl min-h-[520px]">
@@ -419,34 +418,34 @@ const handleSubmit = async (e) => {
             ) : (
               <div className="mt-6">
                 <h4 className="text-lg font-semibold text-primary-text mb-4 text-center">Resumen y pago</h4>
-                  {adminCreds && (
-                    <div className="p-4 mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
-                      <div className="font-semibold mb-1">¡Revisa tu correo!</div>
-                      <div className="text-sm">
-                        Hemos enviado las credenciales de acceso a tu correo electrónico. Por favor, revisa tu bandeja de entrada en Gmail, Outlook u otro proveedor.
-                      </div>
-                      <div className="text-xs opacity-80 mt-2">
-                        <b>Paso 1:</b> <span className="text-white">Primero debes realizar el pago en Mercado Pago usando el botón de abajo.</span><br />
-                        <b>Paso 2:</b> <span className="text-white">
-                          Luego, ingresa a la ruta{" "}
-                          <a
-                            href="/login"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline text-secondary-color hover:text-primary-color transition-colors"
-                          >
-                            /login
-                          </a>{" "}
-                          para activar tu cuenta y acceder al sistema.
-                        </span>
-                        <br />
-                        <span className="block mt-2">
-                          <b>Importante:</b> Si no ves el correo en unos minutos, revisa también la carpeta de spam o correo no deseado.<br />
-                          Espera unos minutos mientras activamos el modo producción para la facturación electrónica en SUNAT.
-                        </span>
-                      </div>
+                {adminCreds && (
+                  <div className="p-4 mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
+                    <div className="font-semibold mb-1">¡Revisa tu correo!</div>
+                    <div className="text-sm">
+                      Hemos enviado las credenciales de acceso a tu correo electrónico. Por favor, revisa tu bandeja de entrada en Gmail, Outlook u otro proveedor.
                     </div>
-                  )}
+                    <div className="text-xs opacity-80 mt-2">
+                      <b>Paso 1:</b> <span className="text-white">Primero debes realizar el pago en Mercado Pago usando el botón de abajo.</span><br />
+                      <b>Paso 2:</b> <span className="text-white">
+                        Luego, ingresa a la ruta{" "}
+                        <a
+                          href="/login"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-secondary-color hover:text-primary-color transition-colors"
+                        >
+                          /login
+                        </a>{" "}
+                        para activar tu cuenta y acceder al sistema.
+                      </span>
+                      <br />
+                      <span className="block mt-2">
+                        <b>Importante:</b> Si no ves el correo en unos minutos, revisa también la carpeta de spam o correo no deseado.<br />
+                        Espera unos minutos mientras activamos el modo producción para la facturación electrónica en SUNAT.
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="p-6 rounded-2xl bg-card-bg border border-gray-700/20 shadow-sm">
                     <div className="text-sm text-gray-400 mb-3">Contacto</div>

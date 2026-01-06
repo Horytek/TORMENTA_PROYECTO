@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
 import {
   insertDestinatarioNatural,
@@ -238,7 +238,6 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
 
   return (
     <>
-      <Toaster />
       <Modal
         isOpen={isOpen}
         onClose={handleCloseModal}

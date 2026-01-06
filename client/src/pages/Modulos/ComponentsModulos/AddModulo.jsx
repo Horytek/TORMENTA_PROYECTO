@@ -9,7 +9,7 @@ import {
     Input,
 } from "@heroui/react";
 import { useAddModulo } from "../data/addModulo";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 export default function AddModuloModal({ open, onClose, onModuloCreated, refetch }) {
     const [moduloNombre, setModuloNombre] = useState("");
@@ -21,17 +21,17 @@ export default function AddModuloModal({ open, onClose, onModuloCreated, refetch
             toast.error("Todos los campos son obligatorios");
             return;
         }
-        
+
         const response = await addModulo({ nombre: moduloNombre, ruta: moduloRuta });
         if (response.success) {
             toast.success(response.message);
             onModuloCreated?.(response.data);
-            refetch?.(); 
-            
+            refetch?.();
+
             // Clear the form fields
             setModuloNombre("");
             setModuloRuta("");
-            
+
             // Close the modal using the function provided by NextUI
             closeModal();
         } else {
@@ -47,7 +47,6 @@ export default function AddModuloModal({ open, onClose, onModuloCreated, refetch
 
     return (
         <>
-            <Toaster />
             <Modal
                 backdrop="opaque"
                 isOpen={open}
@@ -72,18 +71,22 @@ export default function AddModuloModal({ open, onClose, onModuloCreated, refetch
                                         value={moduloNombre}
                                         onChange={(e) => setModuloNombre(e.target.value)}
                                         required
-                                        style={{  border: "none",
+                                        style={{
+                                            border: "none",
                                             boxShadow: "none",
-                                            outline: "none", }}
+                                            outline: "none",
+                                        }}
                                     />
                                     <Input
                                         label="Ruta del módulo"
                                         value={moduloRuta}
                                         onChange={(e) => setModuloRuta(e.target.value)}
                                         required
-                                        style={{  border: "none",
+                                        style={{
+                                            border: "none",
                                             boxShadow: "none",
-                                            outline: "none", }}
+                                            outline: "none",
+                                        }}
                                     />
                                 </div>
                             </ModalBody>

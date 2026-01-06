@@ -1,6 +1,6 @@
 // Ajustar Select para asegurar claves string y prevenir problemas de selección.
 import PropTypes from "prop-types";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useForm, Controller } from "react-hook-form";
 import {
   Input,
@@ -71,7 +71,6 @@ const SubcategoriaForm = ({ modalTitle, closeModal, onSuccess, categorias = [] }
         }
       }}
     >
-      <Toaster />
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
           <span className="text-xl font-bold text-slate-800 dark:text-white">{modalTitle}</span>
