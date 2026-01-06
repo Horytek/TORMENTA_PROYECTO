@@ -97,7 +97,6 @@ const Ventas = () => {
         estado_sunat: venta.estado_sunat,
         anular: venta.anular,
         anular_b: venta.anular_b,
-        id_venta_boucher: venta.id_venta_boucher,
         sucursal: sucursalV.nombre,
         direccion: sucursalV.ubicacion,
         usua_vendedor: venta.usua_vendedor,

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import toast from 'react-hot-toast';
 import axios from "@/api/axios";
+import externalApi from "@/api/axios.external";
 
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getClaveSunatByUser } from "@/services/clave.services";
@@ -56,10 +58,11 @@ export const handleGuardarCliente = async (datosCliente, setShowNuevoCliente) =>
 // --- handleSunat (add_sunat.js) ---
 const enviarVentaASunat = async (data, nombre) => {
     const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
-    const token = await getClaveSunatByUser(nombre);
+    const currentName = nombre || useUserStore.getState().nombre;
+    const token = await getClaveSunatByUser(currentName);
 
     try {
-        const response = await axios.post(url, data, {
+        const response = await externalApi.post(url, data, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
@@ -264,7 +267,8 @@ export const handleSunatMultiple = async (ventas, nombre) => {
 
 // --- handleSunatUnique (add_sunat_unique.js) ---
 export const handleSunatUnique = async (venta, nombre) => {
-    const empresaData = await getEmpresaDataByUser(nombre);
+    const currentName = nombre || useUserStore.getState().nombre;
+    const empresaData = await getEmpresaDataByUser(currentName);
     const detalles = venta.detalles;
 
     const totalGravada = detalles.reduce((acc, detalle) => {
@@ -343,7 +347,7 @@ export const handleSunatUnique = async (venta, nombre) => {
         legends: [{ code: "1000", value: `SON ${subTotal.toFixed(2)} CON 00/100 SOLES` }]
     };
 
-    enviarVentaASunat(data, nombre)
+    enviarVentaASunat(data, currentName)
         .then(() => { })
         .catch((error) => console.error(`Error al enviar la venta`, error));
 };
@@ -419,7 +423,7 @@ export const anularVentaEnSunatF = async (ventaData) => {
         const nuevaSerie = `${tipoDocMapping[ventaData.tipoComprobante] || "B"}${ventaData.serieNum}`;
 
         const data = {
-            correlativo: ventaData.anular,
+            correlativo: ventaData.anular || Math.floor(Date.now() % 1000000), // Fallback generico al no existir tabla anular_sunat
             fecGeneracion: result,
             fecComunicacion,
             company: {
@@ -437,12 +441,21 @@ export const anularVentaEnSunatF = async (ventaData) => {
             details: [{ tipoDoc: "01", serie: nuevaSerie, correlativo: ventaData.num.toString(), desMotivoBaja: "ERROR EN CÁLCULOS" }],
         };
 
-        const response = await axios.post(url, data, {
+        const response = await externalApi.post(url, data, {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         });
 
         if (response.status === 200) {
-            // Success logic
+            toast.success("Factura anulada en Sunat correctamente");
+
+            // Actualizar estado_sunat en BD (skip_stock para no restaurar inventario de nuevo)
+            await deleteVentaRequest({
+                id_venta: ventaData.id,
+                estado_venta: 0,
+                estado_sunat: 0,
+                skip_stock: true,
+                usua: nombre
+            });
         } else {
             console.error('Error al anular la venta en la Sunat.');
         }
@@ -483,7 +496,7 @@ export const anularVentaEnSunatB = async (ventaData, detalles) => {
         const data = {
             fecGeneracion: result,
             fecResumen,
-            correlativo: ventaData.anular_b,
+            correlativo: ventaData.anular_b || Math.floor(Date.now() % 1000000), // Fallback generico
             moneda: "PEN",
             company: {
                 ruc: empresaData.ruc,
@@ -513,12 +526,21 @@ export const anularVentaEnSunatB = async (ventaData, detalles) => {
             }],
         };
 
-        const response = await axios.post(url, data, {
+        const response = await externalApi.post(url, data, {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         });
 
         if (response.status === 200) {
-            // Success logic
+            toast.success("Boleta anulada en Sunat correctamente");
+
+            // Actualizar estado_sunat en BD (skip_stock para no restaurar inventario de nuevo)
+            await deleteVentaRequest({
+                id_venta: ventaData.id,
+                estado_venta: 0,
+                estado_sunat: 0,
+                skip_stock: true,
+                usua: nombre
+            });
         } else {
             console.error('Error al anular la venta en la Sunat.');
         }
@@ -618,10 +640,11 @@ export const useComprobanteData = () => {
 // --- handleSunatPDF (data_pdf.js) ---
 const generarPDF = async (data, nombre) => {
     const url = 'https://facturacion.apisperu.com/api/v1/invoice/pdf';
-    const token = await getClaveSunatByUser(nombre);
+    const currentName = nombre || useUserStore.getState().nombre;
+    const token = await getClaveSunatByUser(currentName);
 
     try {
-        const response = await axios.post(url, data, {
+        const response = await externalApi.post(url, data, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
@@ -725,7 +748,8 @@ export const handleSunatPDF = async (venta, detalles, nombre) => {
         legends: [{ code: "1000", value: `SON ${subTotal.toFixed(2)} CON 00/100 SOLES` }]
     };
 
-    generarPDF(data, nombre).catch((error) => console.error(`Error al enviar pdf`));
+    const currentName = nombre || useUserStore.getState().nombre;
+    generarPDF(data, currentName).catch((error) => console.error(`Error al enviar pdf`));
 };
 
 // --- useProductosData (data_producto_venta.js) ---
@@ -820,6 +844,10 @@ export const useVentasData = (filters = {}) => {
                     tipoComprobante: venta.tipoComprobante,
                     cliente: venta.cliente_r ? venta.cliente_r : `${venta.cliente_n}`,
                     ruc: venta.ruc ? venta.ruc : `${venta.dni}`,
+                    flex_cliente: venta.cliente_n,
+                    flex_documento: venta.ruc || venta.dni,
+                    flex_direccion: venta.direccion,
+                    direccion: venta.direccion,
                     fechaEmision: venta.fecha ? venta.fecha : '',
                     fecha_iso: venta.fecha_iso,
                     metodo_pago: venta.metodo_pago,
@@ -837,6 +865,17 @@ export const useVentasData = (filters = {}) => {
                     hora_creacion: venta.hora_creacion,
                     fecha_anulacion: venta.fecha_anulacion,
                     u_modifica: venta.u_modifica,
+                    recibido: venta.recibido,
+                    vuelto: venta.vuelto,
+                    descuento: venta.descuento,
+
+                    // Raw numeric values for Voucher/Calculation
+                    total_raw: parseFloat(venta.total),
+                    igv_raw: parseFloat(venta.igv),
+                    recibido_raw: parseFloat(venta.recibido),
+                    vuelto_raw: parseFloat(venta.vuelto),
+                    descuento_raw: parseFloat(venta.descuento || 0),
+
                     igv: `S/ ${parseFloat(venta.igv).toFixed(2)}`,
                     total: `S/ ${parseFloat(venta.total).toFixed(2)}`,
                     cajero: venta.cajero,
@@ -848,6 +887,9 @@ export const useVentasData = (filters = {}) => {
                         cantidad: detalle.cantidad,
                         undm: detalle.undm,
                         nom_marca: detalle.marca,
+                        precio_raw: parseFloat(detalle.precio),
+                        descuento_raw: parseFloat(detalle.descuento || 0),
+                        subtotal_raw: parseFloat(detalle.subtotal),
                         precio: `S/ ${parseFloat(detalle.precio).toFixed(2)}`,
                         descuento: `S/ ${(detalle.descuento || 0).toFixed(2)}`,
                         igv: `S/ ${((detalle.precio * 0.18).toFixed(2))}`,
@@ -1033,7 +1075,8 @@ export const handleDelete = async (datosVenta) => {
         id_venta: datosVenta.id,
         comprobante: datosVenta.tipoComprobante,
         estado_sunat: Number(datosVenta.estado_sunat) || 0,
-        usua: datosVenta.usua_usuario,
+        estado_venta: 0, // FORCE ANULACION
+        usua: datosVenta.usua_usuario || useUserStore.getState().nombre,
         id_usuario: datosVenta.id_usuario,
     };
 

@@ -50,15 +50,15 @@ const clearData = async (req, res) => {
         if (clean_sales) {
             console.log("Cleaning Sales...");
             // Delete details first
-            let [res1] = await connection.query("DELETE FROM detalle_venta_boucher WHERE id_tenant = ?", [id_tenant]);
-            console.log("Deleted detalle_venta_boucher:", res1.affectedRows);
+            // let [res1] = await connection.query("DELETE FROM detalle_venta_boucher WHERE id_tenant = ?", [id_tenant]);
+            // console.log("Deleted detalle_venta_boucher:", res1.affectedRows);
 
             let [res2] = await connection.query("DELETE FROM detalle_venta WHERE id_tenant = ?", [id_tenant]);
             console.log("Deleted detalle_venta:", res2.affectedRows);
 
             // Delete related tables
-            let [res3] = await connection.query("DELETE FROM venta_boucher WHERE id_tenant = ?", [id_tenant]);
-            console.log("Deleted venta_boucher:", res3.affectedRows);
+            // let [res3] = await connection.query("DELETE FROM venta_boucher WHERE id_tenant = ?", [id_tenant]);
+            // console.log("Deleted venta_boucher:", res3.affectedRows);
 
             await connection.query("DELETE FROM bitacora_nota WHERE id_venta IS NOT NULL AND id_tenant = ?", [id_tenant]);
 

@@ -133,11 +133,11 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
 
   // Modal de detalle individual (si se usa en otro contexto)
   const handleViewSale = async (sale) => {
-    if (!sale?.id_venta_boucher) return;
+    if (!sale?.id) return;
     setLoadingDetails(true);
     setDetailModalOpen(true);
     try {
-      const res = await getVentaByIdRequest({ id_venta_boucher: sale.id_venta_boucher });
+      const res = await getVentaByIdRequest({ id_venta: sale.id });
       if (res.data?.code === 1) {
         setSaleDetails(res.data.data);
         setSelectedSale(sale.id);
@@ -155,10 +155,10 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
     const saleId = sale.id;
     setExpandedSale(prev => (prev === saleId ? null : saleId));
     if (saleCache[saleId]) return;
-    if (!sale.id_venta_boucher) return; // no hay referencia de boucher
+    if (!sale.id) return;
     setLoadingDetailsId(saleId);
     try {
-      const res = await getVentaByIdRequest({ id_venta_boucher: sale.id_venta_boucher });
+      const res = await getVentaByIdRequest({ id_venta: sale.id });
       if (res.data?.code === 1) {
         setSaleCache(prev => ({ ...prev, [saleId]: res.data.data }));
       }

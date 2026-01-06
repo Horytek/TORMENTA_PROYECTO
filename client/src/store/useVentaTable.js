@@ -22,7 +22,7 @@ export const useVentaSeleccionadaStore = create((set) => ({
   ) =>
     set({
       venta,
-      boucher: venta?.id_venta_boucher || null,
+      boucher: null,
       detalles: detalles || [],
       datosClientes: venta
         ? { nombre: venta.cliente, documento: venta.ruc }

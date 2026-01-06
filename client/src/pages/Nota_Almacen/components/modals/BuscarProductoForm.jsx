@@ -44,14 +44,19 @@ const ModalBuscarProducto = ({
     }
   }, [isOpen]);
 
-  // Inicializar cantidades al abrir
+  // Inicializar cantidades al abrir (merge strategy to prevent reset)
   useEffect(() => {
     if (isOpen) {
-      const initialCantidades = productos.reduce((acc, p) => {
-        acc[p.codigo] = 1;
-        return acc;
-      }, {});
-      setCantidades(initialCantidades);
+      setCantidades(prev => {
+        const next = { ...prev };
+        productos.forEach(p => {
+          // Solo inicializar si no existe, para evitar sobreescribir lo que el usuario ya escribió
+          if (next[p.codigo] === undefined) {
+            next[p.codigo] = 1;
+          }
+        });
+        return next;
+      });
     }
   }, [isOpen, productos]);
 
@@ -77,6 +82,10 @@ const ModalBuscarProducto = ({
   const handleCloseProductosForm = () => setModalOpen(false);
 
   const handleCantidadChange = (codigo, value) => {
+    if (value === "") {
+      setCantidades(prev => ({ ...prev, [codigo]: "" }));
+      return;
+    }
     const cantidad = parseInt(value, 10);
     if (!isNaN(cantidad) && cantidad > 0) {
       setCantidades(prev => ({ ...prev, [codigo]: cantidad }));
@@ -84,12 +93,15 @@ const ModalBuscarProducto = ({
   };
 
   const handleAgregarProducto = (producto) => {
-    const cantidadSolicitada = cantidades[producto.codigo] || 1;
-    if (!hideStock && cantidadSolicitada > producto.stock) {
-      toast.error(`Cantidad (${cantidadSolicitada}) excede stock (${producto.stock}).`);
+    const val = cantidades[producto.codigo];
+    const cantidadSolicitada = (val === "" || val === undefined) ? 1 : parseInt(val, 10);
+    // Safety check if NaN
+    const finalCantidad = isNaN(cantidadSolicitada) ? 1 : cantidadSolicitada;
+    if (!hideStock && finalCantidad > producto.stock) {
+      toast.error(`Cantidad (${finalCantidad}) excede stock (${producto.stock}).`);
       return;
     }
-    agregarProducto(producto, cantidadSolicitada);
+    agregarProducto(producto, finalCantidad);
   };
 
   const resetFiltros = () => {
@@ -282,7 +294,7 @@ const ModalBuscarProducto = ({
                             <Input
                               type="number"
                               min={1}
-                              value={String(cantidades[producto.codigo] || 1)}
+                              value={cantidades[producto.codigo] !== undefined ? String(cantidades[producto.codigo]) : "1"}
                               onValueChange={(value) => handleCantidadChange(producto.codigo, value)}
                               size="sm"
                               classNames={{

@@ -704,7 +704,6 @@ const getComprasCliente = async (req, res) => {
             `
       SELECT 
         v.id_venta AS id,
-        v.id_venta_boucher AS id_venta_boucher,
         DATE_FORMAT(v.f_venta,'%Y-%m-%d') AS fecha,
         SUM(dv.total) AS total,
         COUNT(dv.id_producto) AS items

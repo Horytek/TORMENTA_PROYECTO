@@ -882,7 +882,6 @@ const getVentasPDF = async (req, res) => {
           v.fecha_iso, 
           v.metodo_pago, 
           v.estado_sunat, 
-          vb.id_venta_boucher, 
           usu.usua, 
           v.observacion,
           JSON_ARRAYAGG(
@@ -916,8 +915,6 @@ const getVentasPDF = async (req, res) => {
       INNER JOIN 
           vendedor ve ON ve.dni = s.dni
       INNER JOIN 
-          venta_boucher vb ON vb.id_venta_boucher = v.id_venta_boucher
-      INNER JOIN 
           usuario usu ON usu.id_usuario = ve.id_usuario
       WHERE v.estado_venta != 0 AND v.id_tenant = ?`;
 
@@ -936,7 +933,7 @@ const getVentasPDF = async (req, res) => {
           id, serieNum, num, tipoComprobante, cliente_n, cliente_r, dni, ruc, 
           DATE_FORMAT(v.f_venta, '%Y-%m-%d'), igv, cajero, cajeroId, estado,
           s.nombre_sucursal, s.ubicacion, cl.direccion, v.fecha_iso, v.metodo_pago,
-          v.estado_sunat, vb.id_venta_boucher, usu.usua, v.observacion
+          v.estado_sunat, usu.usua, v.observacion
       ORDER BY 
           v.id_venta DESC`;
     const limitNum = limit ? Math.max(parseInt(limit, 10) || 0, 0) : 0;

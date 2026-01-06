@@ -11,7 +11,6 @@ import {
   Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip
 } from "@heroui/react";
 import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
-import { useBoucher } from "@/services/ventas.services";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
@@ -56,7 +55,6 @@ const TablaVentas = ({
   const nombre = useUserStore((state) => state.nombre);
 
   // Nuevo: Estado para el comprobante por venta
-  const [comprobantePorVenta, setComprobantePorVenta] = useState({});
   const [ventaActualId, setVentaActualId] = useState(null);
 
   // Estado para Intercambio
@@ -93,18 +91,11 @@ const TablaVentas = ({
     setExpandedRow(null);
   };
 
-  // Hook para obtener los datos del boucher
-  const { venta_B } = useBoucher(ventaSeleccionada?.id_venta_boucher);
+  // Hook para obtener los datos del boucher (REMOVED)
 
   useEffect(() => {
-    if (venta_B?.num_comprobante && ventaSeleccionada?.id) {
-      setComprobantePorVenta(prev => ({
-        ...prev,
-        [ventaSeleccionada.id]: venta_B.num_comprobante
-      }));
-    }
     if (ventaSeleccionada?.observacion) setObservacion({ observacion: ventaSeleccionada.observacion });
-  }, [venta_B?.num_comprobante, ventaSeleccionada?.id, ventaSeleccionada?.observacion, setObservacion]);
+  }, [ventaSeleccionada?.id, ventaSeleccionada?.observacion, setObservacion]);
 
   const handlePrintIconClick = (venta) => {
     setVentaSeleccionada(venta);
@@ -145,10 +136,10 @@ const TablaVentas = ({
 
   const handlePrint = async () => {
     try {
-      const numComprobante = comprobantePorVenta[ventaActualId];
+      const numComprobante = `${ventaSeleccionada.serieNum}-${ventaSeleccionada.num}`;
       const comprobante1 = { nuevoNumComprobante: numComprobante };
       const content = await generateReceiptContent(
-        venta_B,
+        ventaSeleccionada,
         ventaSeleccionada,
         comprobante1,
         observacion,

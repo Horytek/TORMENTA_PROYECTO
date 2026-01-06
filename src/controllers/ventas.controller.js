@@ -98,32 +98,6 @@ const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, i
   // Registrar log de anulación de venta
   const motivoAnulacion = `Anulación solicitada por usuario. Estado SUNAT: ${estadoSunat}, Comprobante: ${comprobante}`;
   await logVentas.anular(id_venta, id_usuario, ip, id_tenant, motivoAnulacion);
-
-  // 6) Contadores SUNAT por tenant (solo si fue aceptada por SUNAT)
-  if (estadoSunat === 1 && comprobante === 'Factura') {
-    const [r1] = await connection.query(
-      `UPDATE anular_sunat SET anular = anular + 1 WHERE id_tenant = ?`,
-      [id_tenant]
-    );
-    if (r1.affectedRows === 0) {
-      await connection.query(
-        `INSERT INTO anular_sunat (anular, id_tenant) VALUES (1, ?)`,
-        [id_tenant]
-      );
-    }
-  }
-  if (estadoSunat === 1 && comprobante === 'Boleta') {
-    const [r2] = await connection.query(
-      `UPDATE anular_sunat_b SET anular_b = anular_b + 1 WHERE id_tenant = ?`,
-      [id_tenant]
-    );
-    if (r2.affectedRows === 0) {
-      await connection.query(
-        `INSERT INTO anular_sunat_b (anular_b, id_tenant) VALUES (1, ?)`,
-        [id_tenant]
-      );
-    }
-  }
 };
 
 const createVentaInternal = async (connection, saleData, id_tenant, ip) => {
@@ -184,11 +158,10 @@ const createVentaInternal = async (connection, saleData, id_tenant, ip) => {
   const id_comprobante_final = nuevoComprobanteResult.insertId;
 
   // 3. Insertar Venta
-  const id_anular = 4;
-  const id_anular_b = 5;
+  // id_anular / id_anular_b removed/ignored.
   const [ventaResult] = await connection.query(
-    "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular, id_anular_b, observacion, estado_sunat, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id_comprobante_final, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, id_anular, id_anular_b, observacion, estado_sunat, id_tenant]
+    "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, recibido, vuelto, descuento_global) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [id_comprobante_final, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, recibido, vuelto, descuento_venta]
   );
   const id_venta = ventaResult.insertId;
 
@@ -239,32 +212,8 @@ const createVentaInternal = async (connection, saleData, id_tenant, ip) => {
     );
   }
 
-  // 5. Insertar Venta Boucher
-  const [ventaResult_b] = await connection.query(
-    "INSERT INTO venta_boucher (fecha, nombre_cliente, documento_cliente, direccion_cliente, igv, total_t, comprobante_pago, totalImporte_venta, descuento_venta, vuelto, recibido, formadepago, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [fecha, nombre_cliente, documento_cliente, direccion_cliente, igv_b, total_t, comprobante_pago, totalImporte_venta, descuento_venta, vuelto, recibido, formadepago, id_tenant]
-  );
-  const id_venta_boucher = ventaResult_b.insertId;
-
-  await connection.query(
-    "UPDATE venta SET id_venta_boucher = ? WHERE id_venta= ?",
-    [id_venta_boucher, id_venta]
-  );
-
-  // 6. Insertar Detalles Boucher
-  if (detalles_b && detalles_b.length > 0) {
-    const detalleBoucherValues = [];
-    const detalleBoucherParams = [];
-    for (const detalle of detalles_b) {
-      const { id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total } = detalle;
-      detalleBoucherValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-      detalleBoucherParams.push(id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant);
-    }
-    await connection.query(
-      `INSERT INTO detalle_venta_boucher (id_venta_boucher, id_producto, nombre, undm, nom_marca, cantidad, precio, descuento, sub_total, id_tenant) VALUES ${detalleBoucherValues.join(', ')}`,
-      detalleBoucherParams
-    );
-  }
+  // 5. (Removed) Insertar Venta Boucher & Update
+  // 6. (Removed) Insertar Detalles Boucher
 
   // 7. Log
   if (id_usuario) {
@@ -303,7 +252,7 @@ const getVentas = async (req, res) => {
         v.id_venta AS id,
         SUBSTRING(com.num_comprobante, 2, 3) AS serieNum,
         SUBSTRING(com.num_comprobante, 6, 8) AS num,
-        CASE WHEN tp.nom_tipocomp='Nota de venta' THEN 'Nota' ELSE tp.nom_tipocomp END AS tipoComprobante,
+        CASE WHEN tp.nom_tipocomp = 'Nota de venta' THEN 'Nota' ELSE tp.nom_tipocomp END AS tipoComprobante,
         CONCAT(cl.nombres, ' ', cl.apellidos) AS cliente_n,
         cl.razon_social AS cliente_r,
         cl.dni AS dni,
@@ -320,12 +269,10 @@ const getVentas = async (req, res) => {
         cl.direccion,
         v.fecha_iso,
         v.metodo_pago,
-        anl.id_anular,
-        anl.anular,
-        anlb.id_anular_b,
-        anlb.anular_b,
+        v.recibido,
+        v.vuelto,
+        v.descuento_global as descuento,
         v.estado_sunat,
-        vb.id_venta_boucher,
         usu.usua,
         v.observacion,
         v.hora_creacion,
@@ -352,9 +299,6 @@ const getVentas = async (req, res) => {
         INNER JOIN marca m ON m.id_marca = pr.id_marca
         INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
         INNER JOIN vendedor ve ON ve.dni = s.dni
-        INNER JOIN anular_sunat anl ON anl.id_anular = v.id_anular
-        INNER JOIN anular_sunat_b anlb ON anlb.id_anular_b = v.id_anular_b
-        INNER JOIN venta_boucher vb ON vb.id_venta_boucher = v.id_venta_boucher
         INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
       ${whereClause}
       GROUP BY v.id_venta
@@ -395,9 +339,9 @@ const generarComprobante = async (req, res) => {
     let sucursalQuery = `
       SELECT su.id_sucursal 
       FROM sucursal su 
-      INNER JOIN vendedor ve ON ve.dni=su.dni 
-      INNER JOIN usuario u ON u.id_usuario=ve.id_usuario 
-      WHERE u.usua=?`;
+      INNER JOIN vendedor ve ON ve.dni = su.dni 
+      INNER JOIN usuario u ON u.id_usuario = ve.id_usuario 
+      WHERE u.usua =? `;
     let sucursalParams = [usuario];
     if (id_tenant) {
       sucursalQuery += " AND su.id_tenant = ?";
@@ -429,9 +373,9 @@ const generarComprobante = async (req, res) => {
       SELECT num_comprobante, estado_venta, estado_sunat 
       FROM venta v 
       INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante 
-      INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante=c.id_tipocomprobante 
+      INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = c.id_tipocomprobante 
       INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
-      WHERE tp.nom_tipocomp= ? AND v.id_sucursal = ?`;
+      WHERE tp.nom_tipocomp = ? AND v.id_sucursal = ? `;
     let ultimaVentaParams = [id_comprobante, id_sucursal];
     if (id_tenant) {
       ultimaVentaQuery += " AND s.id_tenant = ?";
@@ -452,10 +396,10 @@ const generarComprobante = async (req, res) => {
         let ultimoComprobanteQuery = `
           SELECT num_comprobante 
           FROM comprobante c 
-          INNER JOIN tipo_comprobante tp ON c.id_tipocomprobante=tp.id_tipocomprobante 
+          INNER JOIN tipo_comprobante tp ON c.id_tipocomprobante = tp.id_tipocomprobante 
           INNER JOIN sucursal s ON s.id_sucursal = ?
-          WHERE tp.nom_tipocomp = ? AND num_comprobante LIKE ?`;
-        let ultimoComprobanteParams = [id_sucursal, id_comprobante, `${prefijoBase}${id_sucursal}%`];
+      WHERE tp.nom_tipocomp = ? AND num_comprobante LIKE ? `;
+        let ultimoComprobanteParams = [id_sucursal, id_comprobante, `${prefijoBase}${id_sucursal}% `];
         if (id_tenant) {
           ultimoComprobanteQuery += " AND s.id_tenant = ?";
           ultimoComprobanteParams.push(id_tenant);
@@ -473,7 +417,7 @@ const generarComprobante = async (req, res) => {
             const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
             nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
           } else {
-            nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
+            nuevoNumComprobante = `${prefijoBase}${serie} -${numero.toString().padStart(8, "0")} `;
           }
         } else {
           nuevoNumComprobante = `${prefijoBase}${id_sucursal}00-00000001`;
@@ -534,18 +478,18 @@ const getProductosVentas = async (req, res) => {
 
     const [result] = await connection.query(
       `
-      SELECT PR.id_producto AS codigo, PR.descripcion AS nombre, 
-        CAST(PR.precio AS DECIMAL(10, 2)) AS precio, inv.stock as stock, PR.undm, MA.nom_marca, CA.nom_subcat AS categoria_p, PR.cod_barras as codigo_barras
+      SELECT PR.id_producto AS codigo, PR.descripcion AS nombre,
+      CAST(PR.precio AS DECIMAL(10, 2)) AS precio, inv.stock as stock, PR.undm, MA.nom_marca, CA.nom_subcat AS categoria_p, PR.cod_barras as codigo_barras
       FROM producto PR
         INNER JOIN marca MA ON MA.id_marca = PR.id_marca
         INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
-        INNER JOIN inventario inv ON inv.id_producto=PR.id_producto
-        INNER JOIN almacen al ON al.id_almacen=inv.id_almacen 
-        INNER JOIN sucursal_almacen sa ON sa.id_almacen=al.id_almacen
-        INNER JOIN sucursal su ON su.id_sucursal=sa.id_sucursal
-        INNER JOIN vendedor ven ON ven.dni=su.dni
-        INNER JOIN usuario us ON us.id_usuario=ven.id_usuario
-      WHERE PR.estado_producto=1 
+        INNER JOIN inventario inv ON inv.id_producto = PR.id_producto
+        INNER JOIN almacen al ON al.id_almacen = inv.id_almacen 
+        INNER JOIN sucursal_almacen sa ON sa.id_almacen = al.id_almacen
+        INNER JOIN sucursal su ON su.id_sucursal = sa.id_sucursal
+        INNER JOIN vendedor ven ON ven.dni = su.dni
+        INNER JOIN usuario us ON us.id_usuario = ven.id_usuario
+      WHERE PR.estado_producto = 1 
         AND inv.stock > 0 
         ${userCondition}
         AND PR.id_tenant = ?
@@ -592,7 +536,7 @@ const getEstado = async (req, res) => {
 
 const getComprobante = async (req, res) => {
   const id_tenant = req.id_tenant;
-  const cacheKey = `comprobantes_${id_tenant}`;
+  const cacheKey = `comprobantes_${id_tenant} `;
 
   // Verificar caché
   if (queryCache.has(cacheKey)) {
@@ -607,8 +551,8 @@ const getComprobante = async (req, res) => {
   try {
     connection = await getConnection();
     let query = `
-      SELECT id_tipocomprobante AS id, 
-        CASE WHEN nom_tipocomp='Nota de venta' THEN 'Nota' ELSE nom_tipocomp END as nombre 
+      SELECT id_tipocomprobante AS id,
+      CASE WHEN nom_tipocomp = 'Nota de venta' THEN 'Nota' ELSE nom_tipocomp END as nombre 
       FROM tipo_comprobante 
       WHERE nom_tipocomp NOT LIKE 'Guia de remision' 
         AND nom_tipocomp NOT LIKE 'Nota de credito' 
@@ -649,7 +593,7 @@ const getLastVenta = async (req, res) => {
     let query = `SELECT id_venta + 1 as id FROM venta`;
     let params = [];
     if (id_tenant) {
-      query += ` WHERE id_tenant = ?`;
+      query += ` WHERE id_tenant = ? `;
       params.push(id_tenant);
     }
     query += ` ORDER BY id_venta DESC LIMIT 1`;
@@ -667,7 +611,7 @@ const getLastVenta = async (req, res) => {
 
 const getSucursal = async (req, res) => {
   const id_tenant = req.id_tenant;
-  const cacheKey = `sucursales_ventas_${id_tenant}`;
+  const cacheKey = `sucursales_ventas_${id_tenant} `;
 
   // Verificar caché
   if (queryCache.has(cacheKey)) {
@@ -686,17 +630,17 @@ const getSucursal = async (req, res) => {
       FROM sucursal su
       INNER JOIN vendedor ven ON ven.dni = su.dni
       INNER JOIN usuario usu ON usu.id_usuario = ven.id_usuario
-      INNER JOIN rol ro ON ro.id_rol=usu.id_rol
+      INNER JOIN rol ro ON ro.id_rol = usu.id_rol
       WHERE su.estado_sucursal != 0
         AND su.id_sucursal = (
-          SELECT MIN(s2.id_sucursal)
+      SELECT MIN(s2.id_sucursal)
           FROM sucursal s2
           WHERE s2.nombre_sucursal = su.nombre_sucursal
         )
-    `;
+`;
     let params = [];
     if (id_tenant) {
-      query += ` AND su.id_tenant = ?`;
+      query += ` AND su.id_tenant = ? `;
       params.push(id_tenant);
     }
     query += " ORDER BY su.nombre_sucursal";
@@ -728,35 +672,35 @@ const getClienteVentas = async (req, res) => {
     let query = `
       SELECT 
         id_cliente AS id,
-        COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS cliente_t,
-        COALESCE(NULLIF(dni, ''), ruc) AS documento_t, 
-        direccion AS direccion_t
-      FROM 
-        cliente
-      WHERE 
-        (
-          (nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
-          OR
-          (razon_social IS NOT NULL AND razon_social <> '')
+  COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS cliente_t,
+    COALESCE(NULLIF(dni, ''), ruc) AS documento_t,
+      direccion AS direccion_t
+FROM
+cliente
+WHERE
+  (
+    (nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
+OR
+  (razon_social IS NOT NULL AND razon_social <> '')
         )
-    `;
+`;
     let params = [];
     if (id_tenant) {
-      query += ` AND id_tenant = ?`;
+      query += ` AND id_tenant = ? `;
       params.push(id_tenant);
     }
     query += `
-      ORDER BY 
-        (CASE 
+      ORDER BY
+  (CASE 
             WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' THEN 0 
             ELSE 1 
          END),
-        cliente_t
+  cliente_t
     `;
     const [result] = await connection.query(query, params);
 
     // Guardar en caché
-    queryCache.set(`clientes_ventas_${id_tenant}`, {
+    queryCache.set(`clientes_ventas_${id_tenant} `, {
       data: result,
       timestamp: Date.now()
     });
@@ -804,7 +748,7 @@ const addVenta = async (req, res) => {
 
     // Cliente
     // Cliente
-    let clienteQuery = `SELECT id_cliente FROM cliente WHERE (id_cliente = ? OR CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?)`;
+    let clienteQuery = `SELECT id_cliente FROM cliente WHERE(id_cliente = ? OR CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?)`;
     let clienteParams = [id_cliente, id_cliente, id_cliente];
     if (id_tenant) {
       clienteQuery += " AND id_tenant = ?";
@@ -928,8 +872,10 @@ const updateVenta = async (req, res) => {
 
     // Usar annulVentaInternal para la lógica de anulación
     // Si el frontend manda estado_venta = 0, es anulación.
-    const { estado_venta } = req.body; // Asegurarnos de recibir esto si es relevante
-    if (estado_venta === 0 || estado_venta === '0') {
+    const { estado_venta, skip_stock } = req.body;
+
+    // Si es anulación (0) y NO se indica que se omita el stock
+    if ((estado_venta === 0 || estado_venta === '0') && !skip_stock) {
       const ip = req.ip || req.connection.remoteAddress;
       // Necesitamos id_usuario para el log y u_modifica. Si no vino usua, intentar sacarlo de la sesión o error?
       // Por ahora usaremos id_usuario si existe, sino null (aunque annulVentaInternal lo usa).
@@ -939,10 +885,13 @@ const updateVenta = async (req, res) => {
       }
       await annulVentaInternal(connection, id_venta, id_usuario, id_tenant, ip, comprobante, estadoSunat);
     } else {
-      // Actualización estándar (no anulación)
+      // Actualización estándar (no anulación o anulación sin stock check)
+      // Fix: estado_venta || 1 falla si es 0. Usar operador ternario.
+      const nuevoEstado = (estado_venta !== undefined && estado_venta !== null) ? estado_venta : 1;
+
       await connection.query(
-        `UPDATE venta SET estado_venta = ?, estado_sunat = ?, u_modifica = ? WHERE id_venta = ? AND id_tenant = ?`,
-        [req.body.estado_venta || 1, estadoSunat, id_usuario, id_venta, id_tenant]
+        `UPDATE venta SET estado_venta = ?, estado_sunat = ?, u_modifica = ? WHERE id_venta = ? AND id_tenant = ? `,
+        [nuevoEstado, estadoSunat, id_usuario, id_venta, id_tenant]
       );
     }
 
@@ -968,49 +917,62 @@ const updateVenta = async (req, res) => {
 const getVentaById = async (req, res) => {
   let connection;
 
-  const { id_venta_boucher } = req.query;
+  const { id_venta, id_venta_boucher } = req.query;
+  const idTarget = id_venta || id_venta_boucher; // Support both for transition
   const id_tenant = req.id_tenant;
 
-  if (!id_venta_boucher) {
+  if (!idTarget) {
     return res.status(400).json({ message: "ID de venta no proporcionado" });
   }
 
   try {
     connection = await getConnection();
     // Consulta para obtener los datos de la venta (filtrando por id_tenant)
+    // Mapeamos a la estructura que espera el frontend (similar a venta_boucher antigua)
     const [venta] = await connection.query(
-      `SELECT vb.id_venta_boucher,
-              vb.fecha,
-              vb.nombre_cliente,
-              vb.documento_cliente,
-              vb.direccion_cliente,
-              vb.igv,
-              vb.total_t,
-              vb.comprobante_pago,
-              vb.totalImporte_venta,
-              vb.descuento_venta,
-              vb.vuelto,
-              vb.recibido,
-              vb.formadepago,
-              com.num_comprobante,
-              v.estado_venta AS estado_venta,
-              v.id_venta
-       FROM venta_boucher vb 
-       INNER JOIN venta v ON vb.id_venta_boucher = v.id_venta_boucher 
+      `SELECT 
+          v.id_venta as id_venta_boucher, -- Mantener alias para compatibilidad frontend
+          v.id_venta,
+          v.fecha_iso as fecha,
+          CONCAT(cl.nombres, ' ', cl.apellidos) as nombre_cliente,
+          COALESCE(NULLIF(cl.dni, ''), cl.ruc) as documento_cliente,
+          cl.direccion as direccion_cliente,
+          v.igv,
+          v.total_t as total_t,
+          CASE WHEN tp.nom_tipocomp = 'Nota de venta' THEN 'Recibo' ELSE tp.nom_tipocomp END as comprobante_pago,
+          v.total_t as totalImporte_venta,
+          v.descuento_global as descuento_venta,
+          v.vuelto,
+          v.recibido,
+          v.metodo_pago as formadepago,
+          com.num_comprobante,
+          v.estado_venta AS estado_venta
+       FROM venta v 
        INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
        INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
-       WHERE vb.id_venta_boucher = ? AND vb.id_tenant = ?`,
-      [id_venta_boucher, id_tenant]
+       LEFT JOIN cliente cl ON cl.id_cliente = v.id_cliente
+       WHERE v.id_venta = ? AND v.id_tenant = ? `,
+      [idTarget, id_tenant]
     );
 
     if (venta.length === 0) {
       return res.status(404).json({ message: "Venta no encontrada" });
     }
 
-    // Consulta para obtener los detalles de la venta (filtrando por id_tenant)
+    // Consulta para obtener los detalles de la venta
     const [detalles] = await connection.query(
-      "SELECT * FROM detalle_venta_boucher WHERE id_venta_boucher = ? AND id_tenant = ?",
-      [id_venta_boucher, id_tenant]
+      `SELECT 
+        dv.id_detalle,
+        dv.id_producto,
+        p.descripcion as nombre,
+        dv.cantidad,
+        dv.precio,
+        dv.descuento,
+        dv.total as sub_total
+       FROM detalle_venta dv
+       INNER JOIN producto p ON p.id_producto = dv.id_producto
+       WHERE dv.id_venta = ?`,
+      [idTarget]
     );
 
     // Convertir los valores de la venta a números
@@ -1018,12 +980,12 @@ const getVentaById = async (req, res) => {
       return {
         ...venta,
         fecha: new Date(venta.fecha).toISOString().slice(0, 10),
-        igv: parseFloat(venta.igv),
-        total_t: parseFloat(venta.total_t),
-        totalImporte_venta: parseFloat(venta.totalImporte_venta),
-        descuento_venta: parseFloat(venta.descuento_venta),
-        vuelto: parseFloat(venta.vuelto),
-        recibido: parseFloat(venta.recibido),
+        igv: parseFloat(venta.igv || 0),
+        total_t: parseFloat(venta.total_t || 0),
+        totalImporte_venta: parseFloat(venta.totalImporte_venta || 0),
+        descuento_venta: parseFloat(venta.descuento_venta || 0),
+        vuelto: parseFloat(venta.vuelto || 0),
+        recibido: parseFloat(venta.recibido || 0),
       };
     };
 
@@ -1169,7 +1131,7 @@ const exchangeProducto = async (req, res) => {
       recibido: totalNuevo,
       formadepago: oldSale.metodo_pago,
       detalles_b: [],
-      observacion: `Intercambio realizado. Venta anterior: ${oldSale.num_comprobante}. ${diferenciaTexto}`,
+      observacion: `Intercambio realizado.Venta anterior: ${oldSale.num_comprobante}. ${diferenciaTexto} `,
       estado_sunat: 0,
       id_usuario: id_usuario
     };
@@ -1214,7 +1176,7 @@ const exchangeProducto = async (req, res) => {
             SELECT dv.*, p.descripcion as nombre, p.undm 
             FROM detalle_venta dv 
             INNER JOIN producto p ON dv.id_producto = p.id_producto 
-            WHERE dv.id_venta = ?`,
+            WHERE dv.id_venta = ? `,
         [newVentaId]
       );
 
