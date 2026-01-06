@@ -112,6 +112,12 @@ function Subcategorias({
     subcat.nom_subcat.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Helper para actualizar local y padre
+  const updateLocal = (id, data) => {
+    setSubcategorias(prev => prev.map(item => item.id_subcategoria === id ? { ...item, ...data } : item));
+    onUpdate && onUpdate(id, data);
+  };
+
   return (
     <div>
 
@@ -145,6 +151,7 @@ function Subcategorias({
         onEdit={(data) => setEditModal({ open: true, data })}
         onDelete={handleDeleteSubcategoria}
         onDeactivate={handleDeactivateSubcategoria}
+        onUpdate={updateLocal}
       />
 
       {activeAdd && (

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Card, CardHeader, CardBody, CardFooter, Divider, Chip, Tooltip } from "@heroui/react";
 import { Legend, LineChart } from '@tremor/react';
 import { BarChart2 } from "lucide-react";
-import useAnalisisGananciasSucursales from '@/services/reports/data_ganancias_sucr';
+import { useAnalisisGananciasSucursales } from '@/services/reportes.services';
 
 const valueFormatter = (number) =>
     'S/. ' + new Intl.NumberFormat('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(number);

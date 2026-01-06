@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardHeader, CardBody, CardFooter, Divider, Chip, Spinner } from "@heroui/react";
-import useTopProductosMargen from "@/services/reports/data_productos_marge";
+import { useTopProductosMargen } from "@/services/reportes.services";
 import { TrendingUp } from "lucide-react";
 
 export default function TopProductosMargen({ idSucursal, year, month, week, limit = 5 }) {

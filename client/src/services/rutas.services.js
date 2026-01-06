@@ -1,13 +1,10 @@
 import { getModulosRequest, getSubmodulosRequest, getModulosConSubmodulosRequest } from '@/api/api.rutas';
-import { toast } from 'react-hot-toast';
-
 export const getModulos = async () => {
   try {
     const response = await getModulosRequest();
     return response.data;
   } catch (error) {
     console.error("Error en getModulos:", error.message);
-    toast.error("No fue posible obtener los módulos");
     return [];
   }
 };
@@ -18,7 +15,6 @@ export const getSubmodulos = async () => {
     return response.data;
   } catch (error) {
     console.error("Error en getSubmodulos:", error.message);
-    toast.error("No fue posible obtener los submódulos");
     return [];
   }
 };
@@ -26,7 +22,7 @@ export const getSubmodulos = async () => {
 export const getModulosConSubmodulos = async () => {
   try {
     const response = await getModulosConSubmodulosRequest();
-    
+
     if (response.data) {
       const datos = response.data;
       const datosNormalizados = datos.map(mod => ({
@@ -40,10 +36,10 @@ export const getModulosConSubmodulos = async () => {
           ruta: String(sub.ruta || '')
         })) : []
       }));
-      
+
       return datosNormalizados;
     }
-    
+
     return [];
   } catch (error) {
     console.error("Error:", error);

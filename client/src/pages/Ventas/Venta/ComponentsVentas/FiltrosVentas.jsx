@@ -1,17 +1,16 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { MdAddCircleOutline, MdOutlineRealEstateAgent } from "react-icons/md";
 import { DateRangePicker } from "@heroui/date-picker";
-import useComprobanteData from "@/services/data/data_comprobante_venta";
-import useSucursalData from "@/services/data/data_sucursal_venta";
+import { useComprobanteData, useSucursalData } from "@/services/ventas.services";
 import { parseDate } from "@internationalized/date";
 import { Select, SelectItem } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";
 import { CgOptions } from "react-icons/cg";
 import { Input } from '@heroui/react';
-import { handleSunatMultiple } from "@/services/data/add_sunat_multiple";
-import { handleUpdateMultiple } from "@/services/data/update_venta_multiple";
+import { handleSunatMultiple, handleUpdateMultiple } from "@/services/ventas.services";
 import { Toaster } from "react-hot-toast";
 import { toast } from "react-hot-toast";
 import PDFModal from "../hook/PDFModal";
@@ -69,14 +68,16 @@ const FiltrosVentas = ({ onFiltersChange }) => {
       value.start.month - 1,
       value.start.day
     );
-    const fecha_i = `${date_i.getFullYear()}-${String(
+    const fecha_i = `${date_i.getFullYear()} -${String(
       date_i.getMonth() + 1
-    ).padStart(2, "0")}-${String(date_i.getDate()).padStart(2, "0")}`;
+    ).padStart(2, "0")
+      } -${String(date_i.getDate()).padStart(2, "0")} `;
 
     const date_e = new Date(value.end.year, value.end.month - 1, value.end.day);
-    const fecha_e = `${date_e.getFullYear()}-${String(
+    const fecha_e = `${date_e.getFullYear()} -${String(
       date_e.getMonth() + 1
-    ).padStart(2, "0")}-${String(date_e.getDate()).padStart(2, "0")}`;
+    ).padStart(2, "0")
+      } -${String(date_e.getDate()).padStart(2, "0")} `;
 
     const filtros = {
       comprobanteSeleccionado,

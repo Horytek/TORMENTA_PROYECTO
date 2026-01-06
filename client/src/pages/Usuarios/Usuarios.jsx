@@ -12,8 +12,10 @@ import { FaFileExport, FaFileExcel } from "react-icons/fa";
 import { exportUsuariosLocal, filterUsuariosForExport } from '@/utils/exportUsuarios';
 import UserImportModal from './UserImportModal';
 import { Pagination, Select, SelectItem } from "@heroui/react";
-import BulkActionsToolbar from '@/components/Shared/BulkActionsToolbar';
+
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
+
+
 import { motion } from "framer-motion";
 import TableSkeleton from "@/components/Skeletons/TableSkeleton";
 
@@ -29,7 +31,7 @@ function Usuarios() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [selectedKeys, setSelectedKeys] = useState(new Set());
-  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+
 
   // Input de búsqueda de usuarios
   const [searchTerm, setSearchTerm] = useState('');
@@ -158,43 +160,12 @@ function Usuarios() {
     });
   }, [usuarios, searchTerm, activeFilters]);
 
-  // Bulk Actions Logic
-  const getSelectedIdsArray = () => {
-    if (selectedKeys === "all") {
-      return filteredUsuarios.map(u => u.id_usuario);
-    }
-    return Array.from(selectedKeys);
-  };
 
-  const handleBulkAction = async (action) => {
-    const ids = getSelectedIdsArray();
-    if (ids.length === 0) return;
 
-    if (action === 'delete') {
-      setIsBulkDeleteModalOpen(true);
-      return;
-    }
+  // Sync hook state to what used to be local state if needed, but better to just use hook's state.
+  // I'll remove the local `useState` for selectedKeys in a separate edit or use the hook's one.
+  // Let's map the hook's set to the props.
 
-    executeBulkAction(action);
-  };
-
-  const executeBulkAction = async (action) => {
-    const idsArray = getSelectedIdsArray();
-    const success = await bulkUpdateUsuarios(action, idsArray);
-
-    if (success) {
-      if (action === 'delete') {
-        idsArray.forEach(id => removeUsuario(id));
-      } else {
-        const numericValue = action === 'activate' ? 1 : 0;
-        idsArray.forEach(id => {
-          updateUsuarioLocal(id, { estado_usuario: numericValue });
-        });
-      }
-      setSelectedKeys(new Set());
-    }
-    if (action === 'delete') setIsBulkDeleteModalOpen(false);
-  };
 
   return (
     <motion.div
@@ -276,8 +247,7 @@ function Usuarios() {
               addUsuario={addUsuario}
               updateUsuarioLocal={updateUsuarioLocal}
               removeUsuario={removeUsuario}
-              selectedKeys={selectedKeys}
-              onSelectionChange={setSelectedKeys}
+
               page={page}
               limit={limit}
             />
@@ -343,22 +313,10 @@ function Usuarios() {
         onSuccess={handleImportSuccess}
       />
 
-      {/* Bulk Delete Modal */}
-      {isBulkDeleteModalOpen && (
-        <ConfirmationModal
-          message={`¿Estás seguro que deseas eliminar ${selectedKeys.size} usuarios seleccionados? Esta acción no se puede deshacer.`}
-          onClose={() => setIsBulkDeleteModalOpen(false)}
-          onConfirm={() => executeBulkAction('delete')}
-        />
-      )}
 
-      <BulkActionsToolbar
-        selectedCount={selectedKeys === "all" ? filteredUsuarios.length : selectedKeys.size}
-        onActivate={() => handleBulkAction('activate')}
-        onDeactivate={() => handleBulkAction('deactivate')}
-        onDelete={() => handleBulkAction('delete')}
-        onClearSelection={() => setSelectedKeys(new Set())}
-      />
+
+
+
     </motion.div>
   );
 }

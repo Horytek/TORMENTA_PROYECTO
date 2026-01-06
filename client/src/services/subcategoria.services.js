@@ -11,7 +11,7 @@ import {
   getSubcategoriasConCategoriaRequest,
   importExcelRequest
 } from '@/api/api.subcategoria';
-import { toast } from "react-hot-toast";
+
 
 // Obtener todas las subcategorías
 const getSubcategorias = async () => {
@@ -20,11 +20,9 @@ const getSubcategorias = async () => {
     if (response.data.code === 1) {
       return response.data.data;
     } else {
-      toast.error(response.data.message || 'Error al obtener subcategorías');
       return [];
     }
   } catch (error) {
-    toast.error('Error en la solicitud: ' + error.message);
     return [];
   }
 };
@@ -36,11 +34,9 @@ const getSubcategoriasForCategoria = async (id) => {
     if (response.data.code === 1) {
       return response.data.data;
     } else {
-      toast.error(response.data.message || 'Error al obtener subcategorías por categoría');
       return [];
     }
   } catch (error) {
-    toast.error('Error en la solicitud: ' + error.message);
     return [];
   }
 };
@@ -52,11 +48,9 @@ const getSubcategoriaNomCategoria = async () => {
     if (response.data.code === 1) {
       return response.data.data;
     } else {
-      toast.error(response.data.message || 'Error al obtener subcategorías');
       return [];
     }
   } catch (error) {
-    toast.error('Error en la solicitud: ' + error.message);
     return [];
   }
 };
@@ -68,11 +62,9 @@ const getSubcategoriaById = async (id) => {
     if (response.data.code === 1) {
       return response.data.data;
     } else {
-      toast.error(response.data.message || 'Error al obtener la subcategoría');
       return null;
     }
   } catch (error) {
-    toast.error('Error en la solicitud: ' + error.message);
     return null;
   }
 };
@@ -106,14 +98,11 @@ const addSubcategoria = async (subcategoria) => {
   try {
     const response = await addSubcategoriaRequest(subcategoria);
     if (response.data.code === 1) {
-      toast.success("Subcategoría añadida con éxito");
       return [true, response.data.id];
     } else {
-      toast.error("Ocurrió un error al guardar la subcategoría");
       return [false];
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
     return [false];
   }
 };
@@ -168,20 +157,13 @@ const useDeleteSubcategoria = () => {
       const response = await deleteSubcategoriaRequest(id);
       if (response.data.code === 1) {
         setSuccess(true);
-        toast.success("Subcategoría eliminada con éxito");
         return true;
         // Aquí puedes llamar a un callback para refrescar la lista en el componente padre
       } else {
-        toast.error("Error al eliminar la subcategoría");
         return false;
       }
     } catch (err) {
       setError(err.message);
-      if (err.response && err.response.data && err.response.data.message) {
-        toast.error(err.response.data.message);
-      } else {
-        toast.error("Error en el servidor interno");
-      }
       return false;
     } finally {
       setLoading(false);
@@ -206,16 +188,13 @@ const useDeactivateSubcategoria = () => {
       const response = await deactivateSubcategoriaRequest(id);
       if (response.data.message === "Subcategoría dada de baja con éxito") {
         setSuccess(true);
-        toast.success("Subcategoría dada de baja con éxito");
         return true;
         // Aquí puedes llamar a un callback para refrescar la lista en el componente padre
       } else {
-        toast.error("Error al desactivar la subcategoría");
         return false;
       }
     } catch (err) {
       setError(err.message);
-      toast.error("Error en el servidor interno");
       return false;
     } finally {
       setLoading(false);
@@ -230,14 +209,11 @@ const updateSubcategoria = async (id, subcategoria) => {
   try {
     const response = await updateSubcategoriaRequest(id, subcategoria);
     if (response.data.code === 1 || response.data.message?.includes("actualizadas con éxito")) {
-      toast.success("Subcategoría actualizada con éxito");
       return true;
     } else {
-      toast.error("No se pudo actualizar la subcategoría");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
     return false;
   }
 };
@@ -246,19 +222,15 @@ const importExcel = async (data) => {
   try {
     const response = await importExcelRequest(data);
     if (response.data.code === 1) {
-      toast.success(response.data.message);
       if (response.data.errors && response.data.errors.length > 0) {
         console.warn("Import warnings:", response.data.errors);
-        toast.error(`Importado con ${response.data.errors.length} errores. Revisa la consola.`);
       }
       return true;
     } else {
-      toast.error(response.data.message || "Error al importar");
       return false;
     }
   } catch (error) {
     console.error("Import error:", error);
-    toast.error(error.response?.data?.message || "Error en el servidor");
     return false;
   }
 };
@@ -274,5 +246,32 @@ export {
   useDeleteSubcategoria,
   useDeactivateSubcategoria,
   updateSubcategoria,
-  importExcel
+  importExcel,
+  bulkUpdateSubcategorias
+};
+
+// --- Helper for Frontend Bulk Operations ---
+const bulkUpdateSubcategorias = async (action, ids, items = []) => {
+  try {
+    const promises = ids.map(id => {
+      if (action === 'delete') {
+        return deleteSubcategoriaRequest(id); // Using request directly or duplicate logic from useDeleteSubcategoria
+      } else if (action === 'activate') {
+        const item = items.find(i => i.id_subcategoria === id);
+        if (item) return updateSubcategoriaRequest(id, { ...item, estado_subcat: 1 });
+        return updateSubcategoriaRequest(id, { estado_subcat: 1 });
+      } else if (action === 'deactivate') {
+        const item = items.find(i => i.id_subcategoria === id);
+        if (item) return updateSubcategoriaRequest(id, { ...item, estado_subcat: 0 });
+        return updateSubcategoriaRequest(id, { estado_subcat: 0 });
+      }
+      return Promise.resolve(false);
+    });
+
+    await Promise.all(promises);
+    return true;
+  } catch (e) {
+    console.error("Bulk update error", e);
+    return false;
+  }
 };

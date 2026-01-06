@@ -7,7 +7,7 @@ import {
   savePermisosRequest
 } from "@/api/api.permisos";
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from "react-hot-toast";
+
 
 // Obtener módulos con submódulos
 const getModulosConSubmodulos = async () => {
@@ -15,7 +15,6 @@ const getModulosConSubmodulos = async () => {
     const response = await getModulosConSubmodulosRequest();
     return response.data;
   } catch (error) {
-    toast.error("Error al obtener módulos y submódulos");
     return [];
   }
 };
@@ -25,7 +24,6 @@ const getRoles = async () => {
     const response = await getRolesRequest();
     return response.data;
   } catch (error) {
-    toast.error("Error al obtener roles");
     return [];
   }
 };
@@ -36,7 +34,6 @@ const getPermisosByRol = async (id_rol) => {
     const response = await getPermisosByRolRequest(id_rol);
     return response.data;
   } catch (error) {
-    toast.error("Error al obtener permisos por rol");
     return [];
   }
 };
@@ -47,7 +44,6 @@ const checkPermiso = async (params) => {
     const response = await checkPermisoRequest(params);
     return response.data;
   } catch (error) {
-    toast.error("Error al chequear permiso");
     return null;
   }
 };
@@ -58,7 +54,6 @@ const getPermisosModulo = async (id_rol) => {
     const response = await getPermisosModuloRequest(id_rol);
     return response.data;
   } catch (error) {
-    toast.error("Error al obtener permisos del módulo");
     return [];
   }
 };
@@ -69,116 +64,115 @@ const savePermisos = async (permisos) => {
     const response = await savePermisosRequest(permisos);
     return response.data;
   } catch (error) {
-    toast.error("Error al guardar permisos");
     return null;
   }
 };
 
 const useGetRutas = () => {
-    const [modulosConSubmodulos, setModulosConSubmodulos] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [expandedModulos, setExpandedModulos] = useState({});
-    const [selectedRutas, setSelectedRutas] = useState({}); 
+  const [modulosConSubmodulos, setModulosConSubmodulos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [expandedModulos, setExpandedModulos] = useState({});
+  const [selectedRutas, setSelectedRutas] = useState({});
 
-    const fetchRutas = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        
-        try {
-           const response = await getModulosConSubmodulosRequest();
-            
-            if (response.data && response.data.success) {
-                setModulosConSubmodulos(response.data.data || []);
-            } else {
-                setError(response.data?.message || 'Error al obtener las rutas');
-                setModulosConSubmodulos([]);
-            }
-        } catch (error) {
-            console.error('Error al cargar rutas:', error);
-            setError(error.response?.data?.message || error.message || 'Error al cargar las rutas');
-            setModulosConSubmodulos([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+  const fetchRutas = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-    const toggleExpand = useCallback((moduleId) => {
-        setExpandedModulos(prev => ({
-            ...prev,
-            [moduleId]: !prev[moduleId]
-        }));
-    }, []);
+    try {
+      const response = await getModulosConSubmodulosRequest();
 
-    const expandAll = useCallback(() => {
-        const allExpanded = {};
-        modulosConSubmodulos.forEach(modulo => {
-            if (modulo.expandible) {
-                allExpanded[modulo.id] = true;
-            }
+      if (response.data && response.data.success) {
+        setModulosConSubmodulos(response.data.data || []);
+      } else {
+        setError(response.data?.message || 'Error al obtener las rutas');
+        setModulosConSubmodulos([]);
+      }
+    } catch (error) {
+      console.error('Error al cargar rutas:', error);
+      setError(error.response?.data?.message || error.message || 'Error al cargar las rutas');
+      setModulosConSubmodulos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const toggleExpand = useCallback((moduleId) => {
+    setExpandedModulos(prev => ({
+      ...prev,
+      [moduleId]: !prev[moduleId]
+    }));
+  }, []);
+
+  const expandAll = useCallback(() => {
+    const allExpanded = {};
+    modulosConSubmodulos.forEach(modulo => {
+      if (modulo.expandible) {
+        allExpanded[modulo.id] = true;
+      }
+    });
+    setExpandedModulos(allExpanded);
+  }, [modulosConSubmodulos]);
+
+  const collapseAll = useCallback(() => {
+    setExpandedModulos({});
+  }, []);
+
+  const addAll = useCallback(() => {
+    const allSelected = {};
+
+    modulosConSubmodulos.forEach(modulo => {
+      allSelected[modulo.id] = true;
+
+      if (modulo.submodulos && Array.isArray(modulo.submodulos)) {
+        modulo.submodulos.forEach(submodulo => {
+          allSelected[submodulo.id] = true;
         });
-        setExpandedModulos(allExpanded);
-    }, [modulosConSubmodulos]);
+      }
+    });
 
-    const collapseAll = useCallback(() => {
-        setExpandedModulos({});
-    }, []);
+    setSelectedRutas(allSelected);
+  }, [modulosConSubmodulos]);
 
-    const addAll = useCallback(() => {
-        const allSelected = {};
-        
-        modulosConSubmodulos.forEach(modulo => {
-            allSelected[modulo.id] = true;
-            
-            if (modulo.submodulos && Array.isArray(modulo.submodulos)) {
-                modulo.submodulos.forEach(submodulo => {
-                    allSelected[submodulo.id] = true;
-                });
-            }
-        });
-        
-        setSelectedRutas(allSelected);
-    }, [modulosConSubmodulos]);
+  const deleteAll = useCallback(() => {
+    setSelectedRutas({});
+  }, []);
 
-    const deleteAll = useCallback(() => {
-        setSelectedRutas({});
-    }, []);
+  const isExpanded = useCallback((moduleId) => {
+    return !!expandedModulos[moduleId];
+  }, [expandedModulos]);
 
-    const isExpanded = useCallback((moduleId) => {
-        return !!expandedModulos[moduleId];
-    }, [expandedModulos]);
-    
-    const isSelected = useCallback((rutaId) => {
-        return !!selectedRutas[rutaId];
-    }, [selectedRutas]);
-    
-    const toggleSelection = useCallback((rutaId) => {
-        setSelectedRutas(prev => ({
-            ...prev,
-            [rutaId]: !prev[rutaId]
-        }));
-    }, []);
+  const isSelected = useCallback((rutaId) => {
+    return !!selectedRutas[rutaId];
+  }, [selectedRutas]);
 
-    useEffect(() => {
-        fetchRutas();
-    }, [fetchRutas]);
+  const toggleSelection = useCallback((rutaId) => {
+    setSelectedRutas(prev => ({
+      ...prev,
+      [rutaId]: !prev[rutaId]
+    }));
+  }, []);
 
-    return {
-        modulosConSubmodulos,
-        loading,
-        error,
-        expandedModulos,
-        toggleExpand,
-        expandAll,
-        addAll,
-        deleteAll,
-        collapseAll,
-        isExpanded,
-        isSelected,          
-        toggleSelection,    
-        selectedRutas,       
-        refreshRutas: fetchRutas
-    };
+  useEffect(() => {
+    fetchRutas();
+  }, [fetchRutas]);
+
+  return {
+    modulosConSubmodulos,
+    loading,
+    error,
+    expandedModulos,
+    toggleExpand,
+    expandAll,
+    addAll,
+    deleteAll,
+    collapseAll,
+    isExpanded,
+    isSelected,
+    toggleSelection,
+    selectedRutas,
+    refreshRutas: fetchRutas
+  };
 };
 
 const useRoles = () => {
@@ -191,7 +185,7 @@ const useRoles = () => {
       try {
         setLoading(true);
         const response = await getRolesRequest();
-        
+
         if (response.data.success) {
           setRoles(response.data.data);
         } else {
@@ -250,13 +244,13 @@ const useSavePermisos = () => {
     setSaving(true);
     setSuccess(false);
     setError(null);
-    
+
     try {
       const response = await savePermisosRequest({
         id_rol: roleId,
         permisos: permissionsList
       });
-      
+
       if (response.data.success) {
         setSuccess(true);
         return true;
@@ -277,14 +271,14 @@ const useSavePermisos = () => {
 };
 
 export {
-    getModulosConSubmodulos,
-    getRoles,
-    getPermisosByRol,
-    checkPermiso,
-    getPermisosModulo,
-    savePermisos,
-    useGetRutas,
-    useRoles,
-    usePermisosByRol,
-    useSavePermisos
-    };
+  getModulosConSubmodulos,
+  getRoles,
+  getPermisosByRol,
+  checkPermiso,
+  getPermisosModulo,
+  savePermisos,
+  useGetRutas,
+  useRoles,
+  usePermisosByRol,
+  useSavePermisos
+};

@@ -1,7 +1,7 @@
 import { getMarcasRequest, getMarcaRequest, addMarcasRequest, deleteMarcaRequest, updateMarcaRequest, deactivateMarcaRequest, importExcelRequest }
   from '@/api/api.marca';
 import { useState } from "react";
-import { toast } from "react-hot-toast";
+
 
 const getMarcas = async () => {
   try {
@@ -34,14 +34,12 @@ const addMarca = async (marca) => {
   try {
     const response = await addMarcasRequest(marca);
     if (response.data.code === 1) {
-      toast.success("Marca añadido con éxito");
       return [true, response.data.id];
     } else {
-      toast.error("Ocurrió un error al guardar la marca");
       return [false];
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    return [false];
   }
 };
 
@@ -49,17 +47,15 @@ const deleteMarca = async (id) => {
   try {
     const response = await deleteMarcaRequest(id);
     if (response.data.code === 1) {
-      toast.success("Marca eliminada con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al eliminar la marca");
       return false;
     }
   } catch (error) {
     if (error.response && error.response.data && error.response.data.message) {
-      toast.error(error.response.data.message);
+      // Logic for error
     } else {
-      toast.error("Error en el servidor interno");
+      // Logic for error
     }
   }
 }
@@ -80,16 +76,13 @@ const updateMarca = () => {
       });
 
       if (response.data && response.data.message) {
-        // toast.success(response.data.message);
         return true;
       } else {
         return false;
-        //  toast.success("Marca actualizada con éxito");
       }
     } catch (err) {
       setError(err);
       return false;
-      // toast.error("Error al actualizar la marca");
     } finally {
       setLoading(false);
     }
@@ -102,14 +95,12 @@ const deactivateMarca = async (id) => {
   try {
     const response = await deactivateMarcaRequest(id);
     if (response.data.message === 'Marca dada de baja con éxito') {
-      toast.success("Marca desactivada con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al desactivar la marca");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    return false;
   }
 }
 
@@ -117,21 +108,43 @@ const importExcel = async (data) => {
   try {
     const response = await importExcelRequest(data);
     if (response.data.code === 1) {
-      toast.success(response.data.message);
       if (response.data.errors && response.data.errors.length > 0) {
         console.warn("Import warnings:", response.data.errors);
-        toast.error(`Importado con ${response.data.errors.length} errores. Revisa la consola.`);
       }
       return true;
     } else {
-      toast.error(response.data.message || "Error al importar");
       return false;
     }
   } catch (error) {
     console.error("Import error:", error);
-    toast.error(error.response?.data?.message || "Error en el servidor");
     return false;
   }
 };
 
-export { getMarcas, getMarca, addMarca, deleteMarca, updateMarca, deactivateMarca, importExcel };
+export { getMarcas, getMarca, addMarca, deleteMarca, updateMarca, deactivateMarca, importExcel, bulkUpdateMarcas };
+
+// --- Helper for Frontend Bulk Operations ---
+const bulkUpdateMarcas = async (action, ids, items = []) => {
+  try {
+    const promises = ids.map(id => {
+      if (action === 'delete') {
+        return deleteMarca(id);
+      } else if (action === 'activate') {
+        const item = items.find(i => i.id_marca === id);
+        if (item) return updateMarcaRequest(id, { ...item, estado_marca: 1 });
+        return updateMarcaRequest(id, { id_marca: id, estado_marca: 1 });
+      } else if (action === 'deactivate') {
+        const item = items.find(i => i.id_marca === id);
+        if (item) return updateMarcaRequest(id, { ...item, estado_marca: 0 });
+        return updateMarcaRequest(id, { id_marca: id, estado_marca: 0 });
+      }
+      return Promise.resolve(false);
+    });
+
+    await Promise.all(promises);
+    return true;
+  } catch (e) {
+    console.error("Bulk update error", e);
+    return false;
+  }
+};

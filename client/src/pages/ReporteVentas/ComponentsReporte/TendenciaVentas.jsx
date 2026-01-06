@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardHeader, CardBody, CardFooter, Divider, Chip, Tooltip } from "@heroui/react";
 import { LineChart } from "@tremor/react";
 import { BarChart2, TrendingUp, Calendar } from "lucide-react";
-import useTendenciaVentas from "@/services/reports/data_tendencia_ventas";
+import { useTendenciaVentas } from "@/services/reportes.services";
 
 const valueFormatter = (number) => `S/. ${Intl.NumberFormat("es-PE").format(number)}`;
 const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];

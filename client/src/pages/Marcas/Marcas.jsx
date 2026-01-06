@@ -75,7 +75,7 @@ function Marcas({
           Agregar marca
         </ActionButton>
       </div>
-      <ShowMarcas searchTerm={searchTerm} marcas={marcas} setMarcas={setMarcas} />
+      <ShowMarcas searchTerm={searchTerm} marcas={marcas} setMarcas={setMarcas} onUpdate={onUpdate} onDelete={onDelete} />
       <MarcasForm
         modalTitle={'Nueva marca'}
         isVisible={activeAdd}

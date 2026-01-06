@@ -8,7 +8,7 @@ import {
   deactivateClienteRequest,
 } from "@/api/api.cliente";
 
-import { toast } from "react-hot-toast";
+
 
 // Obtener todos los clientes
 const getClientes = async () => {
@@ -43,14 +43,11 @@ const addCliente = async (cliente) => {
   try {
     const response = await addClienteRequest(cliente);
     if (response.data.code === 1) {
-      toast.success("Cliente añadido con éxito");
       return { success: true, id_cliente: response.data.id_cliente };
     } else {
-      toast.error("Error al añadir cliente");
       return { success: false };
     }
   } catch (error) {
-    toast.error("Error del servidor");
     return { success: false };
   }
 };
@@ -60,14 +57,11 @@ const updateCliente = async (cliente) => {
   try {
     const response = await updateClienteRequest(cliente);
     if (response.data.code === 1) {
-      toast.success("Cliente actualizado con éxito");
       return true;
     } else {
-      toast.error("Error al actualizar cliente");
       return false;
     }
   } catch (error) {
-    toast.error("Error del servidor");
     return false;
   }
 };
@@ -77,12 +71,12 @@ const deleteCliente = async (id) => {
   try {
     const response = await deleteClienteRequest(id);
     if (response.data.code === 1) {
-      toast.success("Cliente eliminado con éxito");
+      return true;
     } else {
-      toast.error("Error al eliminar cliente");
+      return false;
     }
   } catch (error) {
-    toast.error("Error del servidor");
+    return false;
   }
 };
 
@@ -126,148 +120,148 @@ const useAddClient = () => {
 };
 
 const deactivateCliente = () => {
-    const [cliente, setCliente] = useState(null);
-    const [getLoading, setGetLoading] = useState(false);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [error, setError] = useState(null);
+  const [cliente, setCliente] = useState(null);
+  const [getLoading, setGetLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const getCliente = async (id) => {
-        setGetLoading(true);
-        try {
-            const response = await deactivateClienteRequest(id);
-            if (response.data.code === 1) {
-                setCliente(response.data.data);
-            } else {
-                setError(response.data.message);
-            }
-        } catch (err) {
-            setError(err.message || "Error de conexión");
-        } finally {
-            setGetLoading(false);
-        }
-    };
+  const getCliente = async (id) => {
+    setGetLoading(true);
+    try {
+      const response = await deactivateClienteRequest(id);
+      if (response.data.code === 1) {
+        setCliente(response.data.data);
+      } else {
+        setError(response.data.message);
+      }
+    } catch (err) {
+      setError(err.message || "Error de conexión");
+    } finally {
+      setGetLoading(false);
+    }
+  };
 
-    const darDeBajaCliente = async (clientId) => {
-        setDeleteLoading(true);
-        try {
-            const response = await deactivateClienteRequest(clientId);
-            if (response.status === 204 || !response.data) {
-                return { success: true };
-            }
-            return { success: true, ...response.data };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.response?.data || error.message,
-            };
-        } finally {
-            setDeleteLoading(false);
-        }
-    };
+  const darDeBajaCliente = async (clientId) => {
+    setDeleteLoading(true);
+    try {
+      const response = await deactivateClienteRequest(clientId);
+      if (response.status === 204 || !response.data) {
+        return { success: true };
+      }
+      return { success: true, ...response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data || error.message,
+      };
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
-    return { cliente, error, getLoading, deleteLoading, getCliente, darDeBajaCliente };
+  return { cliente, error, getLoading, deleteLoading, getCliente, darDeBajaCliente };
 
 };
 
 const useUpdateClient = () => {
-    const [cliente, setCliente] = useState(null);
-    const [getLoading, setGetLoading] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+  const [cliente, setCliente] = useState(null);
+  const [getLoading, setGetLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const getCliente = async (id) => {
-        setGetLoading(true);
-        try {
-            const response = await getClienteRequest(id);
-            if (response.data.code === 1) {
-                setCliente(response.data.data);
-            } else {
-                setError(response.data.message);
-            }
-        } catch (err) {
-            setError(err.message || "Error de conexión");
-        } finally {
-            setGetLoading(false);
-        }
-    };
+  const getCliente = async (id) => {
+    setGetLoading(true);
+    try {
+      const response = await getClienteRequest(id);
+      if (response.data.code === 1) {
+        setCliente(response.data.data);
+      } else {
+        setError(response.data.message);
+      }
+    } catch (err) {
+      setError(err.message || "Error de conexión");
+    } finally {
+      setGetLoading(false);
+    }
+  };
 
-    const updateClient = async (clientData) => {
-        setIsLoading(true);
-        try {
-            const response = await updateClienteRequest(clientData);
-            if (response.data.code === 1) {
-                setCliente(response.data.data);
-                return { success: true, data: response.data.data };
-            }
-            setError(response.data.message);
-            return { success: false, error: response.data.message };
-        } catch (error) {
-            setError(error.response?.data || error.message);
-            return {
-                success: false,
-                error: error.response?.data || error.message,
-            };
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const updateClient = async (clientData) => {
+    setIsLoading(true);
+    try {
+      const response = await updateClienteRequest(clientData);
+      if (response.data.code === 1) {
+        setCliente(response.data.data);
+        return { success: true, data: response.data.data };
+      }
+      setError(response.data.message);
+      return { success: false, error: response.data.message };
+    } catch (error) {
+      setError(error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data || error.message,
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return { 
-        cliente, 
-        error, 
-        getLoading, 
-        isLoading, 
-        getCliente, 
-        updateClient 
-    };
+  return {
+    cliente,
+    error,
+    getLoading,
+    isLoading,
+    getCliente,
+    updateClient
+  };
 };
 
 const useCliente = () => {
-    const [cliente, setCliente] = useState(null);
-    const [getLoading, setGetLoading] = useState(false);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [error, setError] = useState(null);
+  const [cliente, setCliente] = useState(null);
+  const [getLoading, setGetLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const getCliente = async (id) => {
-        setGetLoading(true);
-        try {
-            const response = await getClienteRequest(id);
-            if (response.data.code === 1) {
-                setCliente(response.data.data);
-            } else {
-                setError(response.data.message);
-            }
-        } catch (err) {
-            setError(err.message || "Error de conexión");
-        } finally {
-            setGetLoading(false);
-        }
-    };
+  const getCliente = async (id) => {
+    setGetLoading(true);
+    try {
+      const response = await getClienteRequest(id);
+      if (response.data.code === 1) {
+        setCliente(response.data.data);
+      } else {
+        setError(response.data.message);
+      }
+    } catch (err) {
+      setError(err.message || "Error de conexión");
+    } finally {
+      setGetLoading(false);
+    }
+  };
 
-    const deleteClient = async (clientId) => {
-        setDeleteLoading(true);
-        try {
-            const response = await deleteClienteRequest(clientId);
-            if (response.status === 204 || !response.data) {
-                return { success: true };
-            }
-            return { success: true, ...response.data };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.response?.data || error.message,
-            };
-        } finally {
-            setDeleteLoading(false);
-        }
-    };
+  const deleteClient = async (clientId) => {
+    setDeleteLoading(true);
+    try {
+      const response = await deleteClienteRequest(clientId);
+      if (response.status === 204 || !response.data) {
+        return { success: true };
+      }
+      return { success: true, ...response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data || error.message,
+      };
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
-    return { cliente, error, getLoading, deleteLoading, getCliente, deleteClient };
+  return { cliente, error, getLoading, deleteLoading, getCliente, deleteClient };
 };
 
 const useGetClientes = (
-  initialPage = 1, 
-  initialLimit = 10, 
+  initialPage = 1,
+  initialLimit = 10,
   initialDocType = "",
   initialDocNumber = "",
   initialSearchTerm = ""
@@ -283,24 +277,24 @@ const useGetClientes = (
   const [error, setError] = useState(null);
 
   const fetchClientes = async (
-    page = initialPage, 
-    limit = initialLimit, 
+    page = initialPage,
+    limit = initialLimit,
     docType = initialDocType,
     docNumber = initialDocNumber,
     searchTerm = initialSearchTerm
   ) => {
     try {
       setLoading(true);
-      const response = await axios.get('/clientes/', { 
-        params: { 
-          page, 
-          limit, 
+      const response = await axios.get('/clientes/', {
+        params: {
+          page,
+          limit,
           docType,
           docNumber,
-          searchTerm 
-        } 
+          searchTerm
+        }
       });
-      
+
       if (response.data.code === 1) {
         const clientesConId = response.data.data.map(cliente => ({
           id: cliente.id_cliente,
@@ -322,12 +316,12 @@ const useGetClientes = (
     fetchClientes();
   }, []);
 
-  return { 
-    clientes, 
-    metadata, 
-    loading, 
-    error, 
-    refetch: fetchClientes 
+  return {
+    clientes,
+    metadata,
+    loading,
+    error,
+    refetch: fetchClientes
   };
 };
 

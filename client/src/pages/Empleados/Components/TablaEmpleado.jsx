@@ -22,8 +22,7 @@ const TablaEmpleado = ({
     addVendedor,
     updateVendedorLocal,
     removeVendedor,
-    selectedKeys,
-    onSelectionChange,
+
     page = 1,
     limit = 10
 }) => {
@@ -163,9 +162,7 @@ const TablaEmpleado = ({
         <>
             <Table
                 aria-label="Tabla de empleados"
-                selectionMode="multiple"
-                selectedKeys={selectedKeys}
-                onSelectionChange={onSelectionChange}
+
                 removeWrapper
                 classNames={{
                     base: "",
@@ -193,6 +190,7 @@ const TablaEmpleado = ({
 
             {openConfirmModal && (
                 <ConfirmationModal
+                    isOpen={openConfirmModal}
                     message={`¿Estás seguro que deseas eliminar a "${selectedRow}"?`}
                     onClose={() => setOpenConfirmModal(false)}
                     onConfirm={handleConfirmDelete}

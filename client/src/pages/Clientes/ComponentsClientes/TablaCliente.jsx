@@ -18,9 +18,7 @@ import { MdEdit, MdVisibility } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 import EditClientModal from "./EditClient.jsx";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
-import useCliente from "@/services/client_data/useCliente";
-import deactivateCliente from "@/services/client_data/deactivateCliente";
-import useUpdateClient from "@/services/client_data/updateCliente";
+import { useCliente, useDeactivateCliente, useUpdateClient } from "@/services/clientes.services";
 import { toast, Toaster } from "react-hot-toast";
 import ViewClientModal from "./ShowClient";
 import TableSkeleton from "@/components/Skeletons/TableSkeleton";
@@ -39,8 +37,7 @@ const TablaCliente = ({
     onEdit,
     onDelete,
     setAllClientes,
-    selectedKeys,
-    onSelectionChange
+
 }) => {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -52,7 +49,7 @@ const TablaCliente = ({
     const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
 
     const { deleteClient, deleteLoading } = useCliente();
-    const deactivateClienteHook = deactivateCliente();
+    const deactivateClienteHook = useDeactivateCliente();
     const { darDeBajaCliente, deleteLoading: deactivateLoading } = deactivateClienteHook;
     const { updateClient, isLoading: updateLoading } = useUpdateClient();
 
@@ -71,12 +68,16 @@ const TablaCliente = ({
             case "datos":
                 return (
                     <User
-                        avatarProps={{ radius: "xl", src: null, name: (cliente.nombres || cliente.razon_social || "?")[0] }}
-                        description={cliente.dniRuc}
+                        avatarProps={{ radius: "lg", src: null, name: (cliente.nombres || cliente.razon_social || "?")[0], classNames: { base: "bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-slate-200" } }}
+                        description={
+                            <span className="text-slate-500 dark:text-slate-400 font-medium text-xs">
+                                {cliente.dniRuc || cliente.dni || cliente.ruc || "Sin documento"}
+                            </span>
+                        }
                         name={cliente.razon_social || `${cliente.nombres} ${cliente.apellidos}`}
                         classNames={{
-                            name: "text-slate-900 dark:text-slate-100 font-semibold",
-                            description: "text-slate-400 dark:text-slate-500"
+                            name: "text-slate-900 dark:text-slate-100 font-bold",
+                            description: "block"
                         }}
                     >
                         {cliente.dniRuc}
@@ -85,11 +86,11 @@ const TablaCliente = ({
             case "direccion":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize text-slate-600 dark:text-slate-300">{cliente.direccion || "Sin dirección"}</p>
+                        <p className="text-bold text-small capitalize text-slate-700 dark:text-slate-300 font-medium">{cliente.direccion || "Sin dirección"}</p>
                     </div>
                 );
             case "estado":
-                const isActive = cliente.estado === 1 || cliente.estado === "1";
+                const isActive = Number(cliente.estado) === 1;
                 return (
                     <Chip
                         className="gap-1 border-none capitalize"
@@ -97,7 +98,7 @@ const TablaCliente = ({
                         size="sm"
                         variant="flat"
                         startContent={
-                            <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}
+                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}
                             ></span>
                         }
                     >
@@ -221,9 +222,7 @@ const TablaCliente = ({
 
             <Table
                 aria-label="Tabla de clientes"
-                selectionMode="multiple"
-                selectedKeys={selectedKeys}
-                onSelectionChange={onSelectionChange}
+
                 removeWrapper
                 classNames={{
                     base: "",
@@ -271,6 +270,7 @@ const TablaCliente = ({
 
             {openConfirmModal && targetClient && (
                 <ConfirmationModal
+                    isOpen={openConfirmModal}
                     message={
                         actionType === "delete" ? "¿Eliminar cliente?" :
                             actionType === "deactivate" ? "¿Dar de baja?" :

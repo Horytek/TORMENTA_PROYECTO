@@ -5,6 +5,10 @@ import { Tooltip, Table, TableHeader, TableColumn, TableBody, TableRow, TableCel
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 import { usePermisos } from "@/routes";
 
+
+import { bulkUpdateSubcategorias } from "@/services/subcategoria.services";
+
+
 const columns = [
   { name: "CÓDIGO", uid: "id_subcategoria" },
   { name: "NOMBRE", uid: "nom_subcat" },
@@ -18,6 +22,7 @@ export function ShowSubcategorias({
   onEdit,
   onDelete,
   onDeactivate,
+  onUpdate
 }) {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -27,6 +32,9 @@ export function ShowSubcategorias({
   const [selectedRow, setSelectedRow] = useState(null);
 
   const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
+
+
+
 
   const filteredItems = useMemo(() => {
     return subcategorias.filter((sub_categoria) =>
@@ -166,11 +174,16 @@ export function ShowSubcategorias({
 
   return (
     <>
-      <div className="w-full">
+
+      <div className="w-full space-y-4">
+
+
         <Table
           aria-label="Tabla de Subcategorías"
+
           removeWrapper
           isHeaderSticky
+
           classNames={{
             base: "max-h-[600px] overflow-scroll",
             th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
@@ -256,9 +269,25 @@ export function ShowSubcategorias({
             onClose={handleCloseDeactivationModal}
             onConfirm={handleConfirmDeactivate}
           />
+
         )
       }
+
+      {/* Bulk Action Confirmation Modal */}
+      {isConfirmOpen && (
+        <ConfirmationModal
+          isOpen={isConfirmOpen}
+          message={confirmMessage}
+          onClose={closeConfirm}
+          onConfirm={async () => {
+            await executeAction(filteredItems);
+            setSelectedKeys(new Set());
+          }}
+          loading={isProcessing}
+        />
+      )}
     </>
+
   );
 }
 

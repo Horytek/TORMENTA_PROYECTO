@@ -15,7 +15,9 @@ import {
   ModalBody,
   ModalFooter,
   Input,
-  Button
+  Button,
+  Select,
+  SelectItem
 } from "@heroui/react";
 
 const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
@@ -34,7 +36,13 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
       ubicacion: initialData.ubicacion || '',
       direccion: initialData.direccion || '',
       email: initialData.email || '',
-      telefono: initialData.telefono || ''
+      telefono: initialData.telefono || '',
+      // Map status fields (1/0, "Activo"/"Inactivo", true/false) to "1"/"0" string for Select
+      estado_destinatario: (
+        initialData.estado === 1 || initialData.estado === "1" ||
+        initialData.estado_destinatario === 1 || initialData.estado_destinatario === "1" ||
+        initialData.estado_proveedor === 1 || initialData.estado_proveedor === "1"
+      ) ? "1" : "0"
     };
 
     if (initialData.documento?.length === 8) {
@@ -69,7 +77,8 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
       ubicacion: parsedInitialData.ubicacion || '',
       direccion: parsedInitialData.direccion || '',
       email: parsedInitialData.email || '',
-      telefono: parsedInitialData.telefono || ''
+      telefono: parsedInitialData.telefono || '',
+      estado_destinatario: isEditMode ? parsedInitialData.estado_destinatario : "1"
     }
   });
 
@@ -77,6 +86,9 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
     if (initialData) {
       const parsedData = parseInitialData();
       reset(parsedData);
+      setDocumento(parsedData.documento || '');
+      setIsDNI(parsedData.documento?.length === 8);
+      setIsRUC(parsedData.documento?.length === 11);
     }
   }, [initialData, reset]);
 
@@ -90,8 +102,11 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
         ubicacion,
         direccion,
         email,
-        telefono
+        telefono,
+        estado_destinatario
       } = data;
+
+      const estado = Number(estado_destinatario);
 
       let result;
       let destinatarioResult = null;
@@ -106,18 +121,18 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
             ubicacion,
             direccion,
             telefono,
-            email
+            email,
+            estado_destinatario: estado
           };
           result = await updateDestinatarioNatural(initialData.id, destinatarioData);
           if (result) {
             destinatarioResult = {
+              ...initialData,
+              ...destinatarioData,
               id: initialData.id,
-              documento,
               destinatario: `${nombre} ${apellidos}`,
-              ubicacion,
-              direccion,
-              telefono,
-              email
+              estado_destinatario: estado,
+              estado
             };
           }
         } else if (documento.length === 11) {
@@ -128,18 +143,18 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
             ubicacion,
             direccion,
             telefono,
-            email
+            email,
+            estado_destinatario: estado
           };
           result = await updateDestinatarioJuridico(initialData.id, destinatarioData);
           if (result) {
             destinatarioResult = {
+              ...initialData,
+              ...destinatarioData,
               id: initialData.id,
-              documento,
               destinatario: razonsocial,
-              ubicacion,
-              direccion,
-              telefono,
-              email
+              estado_destinatario: estado,
+              estado
             };
           }
         } else {
@@ -156,7 +171,8 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
             ubicacion,
             direccion,
             telefono,
-            email
+            email,
+            estado_destinatario: estado
           };
           result = await insertDestinatarioNatural(destinatarioData);
           if (result && result[0]) {
@@ -167,7 +183,9 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
               ubicacion,
               direccion,
               telefono,
-              email
+              email,
+              estado_destinatario: estado,
+              estado
             };
           }
         } else if (documento.length === 11) {
@@ -177,7 +195,8 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
             ubicacion,
             direccion,
             telefono,
-            email
+            email,
+            estado_destinatario: estado
           };
           result = await insertDestinatarioJuridico(destinatarioData);
           if (result && result[0]) {
@@ -188,7 +207,9 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
               ubicacion,
               direccion,
               telefono,
-              email
+              email,
+              estado_destinatario: estado,
+              estado
             };
           }
         } else {
@@ -203,6 +224,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
         handleCloseModal();
       }
     } catch (error) {
+      console.error(error);
       toast.error("Error al gestionar el destinatario");
     }
   };
@@ -221,34 +243,69 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
         isOpen={isOpen}
         onClose={handleCloseModal}
         size="2xl"
+        className="dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800"
+        motionProps={{
+          variants: {
+            enter: { opacity: 1, scale: 1 },
+            exit: { opacity: 0, scale: 0.95 }
+          }
+        }}
+        backdrop="blur"
       >
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
+              <ModalHeader className="flex flex-col gap-1 text-slate-800 dark:text-white border-b border-slate-100 dark:border-zinc-800 pb-3">
                 {modalTitle}
               </ModalHeader>
-              <ModalBody>
-                <Controller
-                  name="documento"
-                  control={control}
-                  rules={{ required: "Documento requerido (8-11 dígitos)", minLength: 8, maxLength: 11 }}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      label="Documento"
-                      variant="flat"
-                      value={documento}
-                      onChange={handleDocumentoChange}
-                      color={errors.documento ? "danger" : "default"}
-                      errorMessage={errors.documento?.message}
-                      isRequired
-                    />
-                  )}
-                />
+              <ModalBody className="py-6 space-y-4">
+
+                {/* Document + Status Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Controller
+                    name="documento"
+                    control={control}
+                    rules={{ required: "Documento requerido (8-11 dígitos)", minLength: 8, maxLength: 11 }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="Documento"
+                        variant="bordered"
+                        labelPlacement="outside"
+                        placeholder="Ingrese documento"
+                        value={documento}
+                        onChange={handleDocumentoChange}
+                        color={errors.documento ? "danger" : "default"}
+                        errorMessage={errors.documento?.message}
+                        isRequired
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    name="estado_destinatario"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        label="Estado"
+                        variant="bordered"
+                        labelPlacement="outside"
+                        placeholder="Seleccione estado"
+                        selectedKeys={field.value ? [field.value] : []}
+                        classNames={{
+                          trigger: "min-h-[40px]",
+                        }}
+                      >
+                        <SelectItem key="1" textValue="Activo">Activo</SelectItem>
+                        <SelectItem key="0" textValue="Inactivo">Inactivo</SelectItem>
+                      </Select>
+                    )}
+                  />
+                </div>
 
                 {isDNI && (
-                  <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Controller
                       name="nombre"
                       control={control}
@@ -257,7 +314,9 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Nombre"
-                          variant="flat"
+                          variant="bordered"
+                          labelPlacement="outside"
+                          placeholder="Ingrese nombres"
                           color={errors.nombre ? "danger" : "default"}
                           errorMessage={errors.nombre?.message}
                           isRequired={isDNI}
@@ -273,7 +332,9 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Apellidos"
-                          variant="flat"
+                          variant="bordered"
+                          labelPlacement="outside"
+                          placeholder="Ingrese apellidos"
                           color={errors.apellidos ? "danger" : "default"}
                           errorMessage={errors.apellidos?.message}
                           isRequired={isDNI}
@@ -292,17 +353,18 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Razón Social"
-                        variant="flat"
+                        variant="bordered"
+                        labelPlacement="outside"
+                        placeholder="Ingrese razón social"
                         color={errors.razonsocial ? "danger" : "default"}
                         errorMessage={errors.razonsocial?.message}
-                        className="mt-2"
                         isRequired={isRUC}
                       />
                     )}
                   />
                 )}
 
-                <div className="grid grid-cols-2 gap-4 mt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Controller
                     name="telefono"
                     control={control}
@@ -310,7 +372,9 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Teléfono"
-                        variant="flat"
+                        variant="bordered"
+                        labelPlacement="outside"
+                        placeholder="Ingrese teléfono"
                         color={errors.telefono ? "danger" : "default"}
                         errorMessage={errors.telefono?.message}
                       />
@@ -325,7 +389,9 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Ubicación"
-                        variant="flat"
+                        variant="bordered"
+                        labelPlacement="outside"
+                        placeholder="Ingrese ubicación"
                         color={errors.ubicacion ? "danger" : "default"}
                         errorMessage={errors.ubicacion?.message}
                         isRequired
@@ -341,10 +407,11 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     <Input
                       {...field}
                       label="Dirección"
-                      variant="flat"
+                      variant="bordered"
+                      labelPlacement="outside"
+                      placeholder="Ingrese dirección"
                       color={errors.direccion ? "danger" : "default"}
                       errorMessage={errors.direccion?.message}
-                      className="mt-2"
                     />
                   )}
                 />
@@ -356,25 +423,26 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     <Input
                       {...field}
                       label="Email"
-                      type="email"
-                      variant="flat"
+                      variant="bordered"
+                      labelPlacement="outside"
+                      placeholder="Ingrese email"
                       color={errors.email ? "danger" : "default"}
                       errorMessage={errors.email?.message}
-                      className="mt-2"
                     />
                   )}
                 />
               </ModalBody>
-              <ModalFooter>
+              <ModalFooter className="border-t border-slate-100 dark:border-zinc-800 mt-2">
                 <Button
                   color="danger"
                   variant="light"
                   onPress={handleCloseModal}
+                  className="font-medium"
                 >
                   Cancelar
                 </Button>
                 <Button
-                  color="primary"
+                  className="bg-blue-600 text-white font-bold shadow-blue-500/30"
                   onPress={handleSubmit(onSubmit)}
                 >
                   Guardar

@@ -11,6 +11,10 @@ import {
 import EditCat from "./EditCat";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
+
+import { bulkUpdateCategorias } from "@/services/categoria.services";
+
+
 const columns = [
   { name: "CÓDIGO", uid: "id_categoria" },
   { name: "NOMBRE", uid: "nom_categoria" },
@@ -25,6 +29,8 @@ export function ShowCategorias({
   onEdit,
   onDelete,
   onDeactivate,
+
+  onUpdate
 }) {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -36,6 +42,9 @@ export function ShowCategorias({
   const [selectedId, setSelectedId] = useState(null);
 
   const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
+
+
+
 
   const filteredItems = useMemo(() => {
     return categorias.filter((categoria) =>
@@ -206,11 +215,15 @@ export function ShowCategorias({
 
   return (
     <>
-      <div className="w-full">
+      <div className="w-full space-y-4">
+
+
         <Table
           aria-label="Tabla de Categorías"
+
           removeWrapper
           isHeaderSticky
+
           classNames={{
             base: "max-h-[600px] overflow-scroll",
             th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",

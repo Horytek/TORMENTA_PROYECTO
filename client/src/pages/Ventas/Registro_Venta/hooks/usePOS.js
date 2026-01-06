@@ -1,10 +1,12 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import useProductosData from '@/services/data/data_producto_venta';
-import useClientesData from '@/services/data/data_cliente_venta';
-import useSucursalData from '@/services/data/data_sucursal_venta';
-import generateComprobanteNumber from '@/services/data/generate_comprobante';
-import { handleCobrar } from '@/services/data/add_venta';
+import {
+    useProductosData,
+    useClientesData,
+    useSucursalData,
+    generateComprobanteNumber,
+    handleCobrar
+} from "@/services/ventas.services";
 import { handlePrintThermal } from '@/services/print.services';
 import { useUserStore } from '@/store/useStore';
 

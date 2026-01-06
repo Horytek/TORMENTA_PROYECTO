@@ -10,7 +10,11 @@ import { usePermisos } from '@/routes';
 import { getVendedores } from '@/services/vendedor.services';
 import PagosEmpleados from './PagosEmpleados';
 import TablaEmpleado from './Components/TablaEmpleado';
-import BulkActionsToolbar from "@/components/Shared/BulkActionsToolbar";
+
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { bulkUpdateVendedores } from "@/services/vendedor.services";
+
+
 
 // Estilos Glass Clean
 const glassInputClasses = {
@@ -24,7 +28,7 @@ function Vendedores() {
   const [manualOpen, setManualOpen] = useState(false);
   const { hasCreatePermission } = usePermisos();
 
-  const [selectedKeys, setSelectedKeys] = useState(new Set());
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -101,12 +105,10 @@ function Vendedores() {
     </Card>
   );
 
-  // Bulk Actions
-  const handleBulkActivate = () => alert("Activar masivo próximamente");
-  const handleBulkDeactivate = () => alert("Desactivar masivo próximamente");
-  const handleBulkDelete = () => alert("Eliminar masivo próximamente");
+
 
   return (
+
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
       <Toaster />
       <Tabs
@@ -207,8 +209,7 @@ function Vendedores() {
               addVendedor={addVendedor}
               updateVendedorLocal={updateVendedorLocal}
               removeVendedor={removeVendedor}
-              selectedKeys={selectedKeys}
-              onSelectionChange={setSelectedKeys}
+
               page={page}
               limit={limit}
             />
@@ -273,13 +274,10 @@ function Vendedores() {
         </Card>
       )}
 
-      <BulkActionsToolbar
-        selectedCount={selectedKeys === "all" ? filteredVendedores.length : selectedKeys.size}
-        onActivate={handleBulkActivate}
-        onDeactivate={handleBulkDeactivate}
-        onDelete={handleBulkDelete}
-        onClearSelection={() => setSelectedKeys(new Set())}
-      />
+
+
+
+
 
       {/* Modal Manual de Usuario */}
       <Modal

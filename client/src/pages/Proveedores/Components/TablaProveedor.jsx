@@ -22,8 +22,7 @@ const TablaProveedor = ({
     updateDestinatarioLocal,
     removeDestinatario,
     onEdit,
-    selectedKeys,
-    onSelectionChange,
+
     page = 1,
     limit = 10
 }) => {
@@ -70,12 +69,16 @@ const TablaProveedor = ({
             case "datos":
                 return (
                     <User
-                        avatarProps={{ radius: "xl", src: null, name: (destinatario.destinatario || "?")[0] }}
-                        description={destinatario.documento}
+                        avatarProps={{ radius: "lg", src: null, name: (destinatario.destinatario || "?")[0], classNames: { base: "bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-slate-200" } }}
+                        description={
+                            <span className="text-slate-500 dark:text-slate-400 font-medium text-xs">
+                                {destinatario.documento || "Sin documento"}
+                            </span>
+                        }
                         name={destinatario.destinatario}
                         classNames={{
-                            name: "text-slate-900 dark:text-slate-100 font-semibold",
-                            description: "text-slate-400 dark:text-slate-500"
+                            name: "text-slate-900 dark:text-slate-100 font-bold",
+                            description: "block"
                         }}
                     >
                         {destinatario.destinatario}
@@ -84,20 +87,22 @@ const TablaProveedor = ({
             case "ubicacion":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize text-slate-600 dark:text-slate-300">{destinatario.ubicacion || "Sin ubicación"}</p>
+                        <p className="text-bold text-small capitalize text-slate-700 dark:text-slate-300 font-medium">{destinatario.ubicacion || "Sin ubicación"}</p>
                         <p className="text-tiny text-slate-400 dark:text-slate-500">{destinatario.direccion}</p>
                     </div>
                 );
             case "contacto":
                 return (
                     <div className="flex flex-col">
-                        <p className="text-bold text-small text-slate-600 dark:text-slate-300">{destinatario.email || "-"}</p>
+                        <p className="text-bold text-small text-slate-700 dark:text-slate-300">{destinatario.email || "-"}</p>
                         <p className="text-tiny text-slate-400 dark:text-slate-500">{destinatario.telefono || "-"}</p>
                     </div>
                 );
             case "estado":
-                const estadoRaw = destinatario.estado || destinatario.estado_destinatario || destinatario.estado_proveedor;
-                const isActive = estadoRaw === 1 || estadoRaw === "1" || estadoRaw === "Activo" || estadoRaw === true;
+                const estadoRaw = destinatario.estado_destinatario ?? destinatario.estado ?? destinatario.estado_proveedor;
+
+                const isActive = Number(estadoRaw) === 1;
+
                 return (
                     <Chip
                         className="gap-1 border-none capitalize"
@@ -105,7 +110,7 @@ const TablaProveedor = ({
                         size="sm"
                         variant="flat"
                         startContent={
-                            <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}
+                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}
                             ></span>
                         }
                     >
@@ -152,9 +157,7 @@ const TablaProveedor = ({
         <>
             <Table
                 aria-label="Tabla de proveedores"
-                selectionMode="multiple"
-                selectedKeys={selectedKeys}
-                onSelectionChange={onSelectionChange}
+
                 removeWrapper
                 classNames={{
                     base: "",
@@ -182,6 +185,7 @@ const TablaProveedor = ({
 
             {openConfirmModal && (
                 <ConfirmationModal
+                    isOpen={openConfirmModal}
                     message={`¿Estás seguro que deseas eliminar a "${selectedRow}"?`}
                     onClose={() => setOpenConfirmModal(false)}
                     onConfirm={handleConfirmDelete}

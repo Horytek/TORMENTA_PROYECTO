@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { DateRangePicker } from "@heroui/date-picker";
-import useComprobanteData from "@/services/data/data_comprobante_venta";
-import useSucursalData from "@/services/data/data_sucursal_venta";
+import { useComprobanteData, useSucursalData } from "@/services/ventas.services";
 import { parseDate } from "@internationalized/date";
 import { Select, SelectItem } from "@heroui/react";
 import { useUserStore } from "@/store/useStore";
@@ -41,14 +41,16 @@ const StatsFilters = ({ onFiltersChange }) => {
                 value.start.month - 1,
                 value.start.day
             );
-            fecha_i = `${date_i.getFullYear()}-${String(
+            fecha_i = `${date_i.getFullYear()} -${String(
                 date_i.getMonth() + 1
-            ).padStart(2, "0")}-${String(date_i.getDate()).padStart(2, "0")}`;
+            ).padStart(2, "0")
+                } -${String(date_i.getDate()).padStart(2, "0")} `;
 
             const date_e = new Date(value.end.year, value.end.month - 1, value.end.day);
-            fecha_e = `${date_e.getFullYear()}-${String(
+            fecha_e = `${date_e.getFullYear()} -${String(
                 date_e.getMonth() + 1
-            ).padStart(2, "0")}-${String(date_e.getDate()).padStart(2, "0")}`;
+            ).padStart(2, "0")
+                } -${String(date_e.getDate()).padStart(2, "0")} `;
         }
 
         const filtros = {

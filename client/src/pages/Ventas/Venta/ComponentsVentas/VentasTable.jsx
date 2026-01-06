@@ -11,7 +11,7 @@ import {
   Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Chip
 } from "@heroui/react";
 import { generateReceiptContent } from '../../../Ventas/Registro_Venta/ComponentsRegistroVentas/Comprobantes/Voucher/Voucher';
-import useBoucher from '@/services/data/data_boucher';
+import { useBoucher } from "@/services/ventas.services";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
@@ -19,8 +19,7 @@ import { FaUser, FaCalendarAlt, FaFileInvoice, FaMoneyBillWave, FaCalculator, Fa
 import IntercambioModal from './Modals/IntercambioModal';
 import { exchangeVenta } from '@/services/exchange_venta';
 import { toast } from "react-hot-toast";
-import { handleSunatUnique } from "@/services/data/add_sunat_unique";
-import { handleUpdate } from "@/services/data/update_venta";
+import { handleSunatUnique, handleUpdate } from "@/services/ventas.services";
 
 const ESTADO_STYLES = {
   Aceptada: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",

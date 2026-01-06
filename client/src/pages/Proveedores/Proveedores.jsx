@@ -9,7 +9,11 @@ import { getDestinatarios } from '@/services/destinatario.services';
 import TablaProveedor from './Components/TablaProveedor';
 import { exportProveedoresLocal, filterProveedoresForExport } from '@/utils/exportProveedores';
 import ProveedoresImportModal from './ProveedoresImportModal';
-import BulkActionsToolbar from '@/components/Shared/BulkActionsToolbar';
+
+import { bulkUpdateDestinatarios } from '@/services/destinatario.services';
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+
+
 import TableSkeleton from "@/components/Skeletons/TableSkeleton";
 
 // Estilos Glass Clean
@@ -25,7 +29,7 @@ function Proveedores() {
   const [activeEdit, setActiveEdit] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
-  const [selectedKeys, setSelectedKeys] = useState(new Set());
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -86,14 +90,8 @@ function Proveedores() {
       const matchesSearch = name.includes(term);
       if (!matchesSearch) return false;
       if (statusFilter === 'all') return true;
-      const estadoRaw = d.estado || d.estado_destinatario || d.estado_proveedor || d.estado_proveedor;
-      const estadoStr = String(estadoRaw).toLowerCase();
-      const isActive =
-        estadoRaw === 1 ||
-        estadoRaw === '1' ||
-        estadoRaw === true ||
-        estadoStr === 'activo' ||
-        estadoStr === 'active';
+      const estadoRaw = d.estado_destinatario ?? d.estado ?? d.estado_proveedor;
+      const isActive = Number(estadoRaw) === 1;
 
       if (statusFilter === 'active') return isActive;
       if (statusFilter === 'inactive') return !isActive;
@@ -114,23 +112,18 @@ function Proveedores() {
 
   const stats = useMemo(() => {
     const total = destinatarios.length;
-    // Mock simulation for stats, ideally filtering real backend data
-    return { total };
+    const active = destinatarios.filter(d => {
+      const est = d.estado_destinatario ?? d.estado ?? d.estado_proveedor;
+      return Number(est) === 1;
+    }).length;
+    const inactive = total - active;
+
+    return { total, active, inactive };
   }, [destinatarios]);
 
   // Bulk Actions Handlers
-  const handleBulkActivate = () => {
-    // Implement Activate Logic (Needs backend update support)
-    alert("Activar masivo: Próximamente");
-  };
-  const handleBulkDeactivate = () => {
-    // Implement Deactivate Logic
-    alert("Desactivar masivo: Próximamente");
-  };
-  const handleBulkDelete = () => {
-    // Implement Delete Logic 
-    alert("Eliminar masivo: Próximamente");
-  };
+
+
 
   // KPI Card Style: Clean White
   const KpiCard = ({ icon: Icon, value, title, iconBgClass, iconTextClass }) => (
@@ -208,14 +201,14 @@ function Proveedores() {
         />
         <KpiCard
           icon={FaCheckCircle}
-          value={stats.total}
+          value={stats.active}
           title="Activos"
           iconBgClass="bg-emerald-100 dark:bg-emerald-900/30"
           iconTextClass="text-emerald-600 dark:text-emerald-400"
         />
         <KpiCard
           icon={FaTimesCircle}
-          value={0}
+          value={stats.inactive}
           title="Inactivos"
           iconBgClass="bg-rose-100 dark:bg-rose-900/30"
           iconTextClass="text-rose-600 dark:text-rose-400"
@@ -242,12 +235,11 @@ function Proveedores() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold text-slate-500 uppercase mr-2">Estado:</span>
             <Chip
-              classname="cursor-pointer transition-all hover:scale-105"
+              className="cursor-pointer transition-all hover:scale-105"
               variant={statusFilter === 'all' ? "solid" : "flat"}
               color={statusFilter === 'all' ? "primary" : "default"}
               onClick={() => setStatusFilter('all')}
               size="sm"
-              className="cursor-pointer"
             >
               Todos
             </Chip>
@@ -280,8 +272,7 @@ function Proveedores() {
             updateDestinatarioLocal={updateDestinatarioLocal}
             removeDestinatario={removeDestinatario}
             onEdit={handleEdit}
-            selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
+
             page={page}
             limit={limit}
           />
@@ -329,13 +320,10 @@ function Proveedores() {
         />
       </div>
 
-      <BulkActionsToolbar
-        selectedCount={selectedKeys === "all" ? filteredDestinatarios.length : selectedKeys.size}
-        onActivate={handleBulkActivate}
-        onDeactivate={handleBulkDeactivate}
-        onDelete={handleBulkDelete}
-        onClearSelection={() => setSelectedKeys(new Set())}
-      />
+
+
+
+
 
       {activeAdd && (
         <DestinatariosForm

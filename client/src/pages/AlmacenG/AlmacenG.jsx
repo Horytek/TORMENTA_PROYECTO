@@ -8,7 +8,11 @@ import TablaAlmacen from './Components/TablaAlmacen';
 import AlmacenesForm from './AlmacenesForm';
 import { exportAlmacenesLocal, filterAlmacenesForExport } from '@/utils/exportAlmacenes';
 import AlmacenesImportModal from './AlmacenesImportModal';
-import BulkActionsToolbar from "@/components/Shared/BulkActionsToolbar";
+
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { bulkUpdateAlmacenes } from "@/services/almacen.services";
+
+
 
 // Clean White Input Styles
 const glassInputClasses = {
@@ -23,7 +27,7 @@ function Almacenes() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedKeys, setSelectedKeys] = useState(new Set());
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -131,12 +135,10 @@ function Almacenes() {
     </Card>
   );
 
-  // Bulk Actions
-  const handleBulkActivate = () => alert("Activar masivo próximamente");
-  const handleBulkDeactivate = () => alert("Desactivar masivo próximamente");
-  const handleBulkDelete = () => alert("Eliminar masivo próximamente");
+
 
   return (
+
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
       <Toaster />
 
@@ -231,8 +233,7 @@ function Almacenes() {
           updateAlmacenLocal={handleEditAlmacen}
           removeAlmacen={removeAlmacen}
           onEdit={handleEdit}
-          selectedKeys={selectedKeys}
-          onSelectionChange={setSelectedKeys}
+
           page={page}
           limit={limit}
           setPage={setPage}
@@ -304,13 +305,10 @@ function Almacenes() {
         onSuccess={handleImportSuccess}
       />
 
-      <BulkActionsToolbar
-        selectedCount={selectedKeys === "all" ? filteredAlmacenes.length : selectedKeys.size}
-        onActivate={handleBulkActivate}
-        onDeactivate={handleBulkDeactivate}
-        onDelete={handleBulkDelete}
-        onClearSelection={() => setSelectedKeys(new Set())}
-      />
+
+
+
+
     </div>
   );
 }

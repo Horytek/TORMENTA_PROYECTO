@@ -20,8 +20,7 @@ const TablaAlmacen = ({
     updateAlmacenLocal,
     removeAlmacen,
     onEdit,
-    selectedKeys,
-    onSelectionChange,
+
     page,
     limit,
     setPage,
@@ -145,9 +144,7 @@ const TablaAlmacen = ({
         <>
             <Table
                 aria-label="Tabla de almacenes"
-                selectionMode="multiple"
-                selectedKeys={selectedKeys}
-                onSelectionChange={onSelectionChange}
+
                 removeWrapper
                 classNames={{
                     base: "",
@@ -175,6 +172,7 @@ const TablaAlmacen = ({
 
             {openConfirmModal && (
                 <ConfirmationModal
+                    isOpen={openConfirmModal}
                     message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
                     onClose={() => setOpenConfirmModal(false)}
                     onConfirm={handleConfirmDelete}

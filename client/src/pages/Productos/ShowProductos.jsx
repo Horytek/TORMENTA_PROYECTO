@@ -8,6 +8,10 @@ import Barcode from '../../components/Barcode/Barcode';
 import EmptyState from "@/components/Shared/EmptyState";
 import { usePermisos } from '@/routes';
 
+
+import { bulkUpdateProductos } from "@/services/productos.services";
+
+
 const columns = [
     { name: "DESCRIPCIÓN", uid: "descripcion" },
     { name: "LÍNEA", uid: "nom_marca" },
@@ -19,7 +23,7 @@ const columns = [
     { name: "ACCIONES", uid: "acciones" },
 ];
 
-export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
+export function ShowProductos({ searchTerm, productos, onEdit, onDelete, updateProductoLocal }) {
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -81,7 +85,12 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
         document.body.removeChild(a);
     };
 
+
+
     const { hasEditPermission, hasDeletePermission } = usePermisos();
+
+
+
 
     const renderCell = useCallback((producto, columnKey) => {
         const cellValue = producto[columnKey];
@@ -182,11 +191,15 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
     }, [hasEditPermission, hasDeletePermission, onEdit]);
 
     return (
-        <div className="w-full">
+        <div className="w-full space-y-4">
+
+
             <Table
                 aria-label="Tabla de productos con paginación"
+
                 removeWrapper
                 isHeaderSticky
+
                 classNames={{
                     base: "max-h-[600px] overflow-scroll",
                     th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
@@ -265,6 +278,26 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete }) {
                     />
                 )
             }
+
+            {/* Bulk Action Confirmation Modal */}
+            {isConfirmOpen && (
+                <ConfirmationModal
+                    isOpen={isConfirmOpen}
+                    message={confirmMessage}
+                    onClose={closeConfirm}
+                    onConfirm={async () => {
+                        await executeAction(filteredItems);
+                        // Note: We are relying on optimistic updates passed to onDelete for local state
+                        // If that's not enough, we might need to trigger a reload from parent
+                        setSelectedKeys(new Set());
+                        // Force refresh? Products.js uses useInventoryData which doesn't auto-refresh from child operations unless we call reloadData.
+                        // But we passed onDelete={ops.productos.remove} to ShowProductos.
+                        // The executeAction callback calls onDelete for each ID. So local state should update.
+                    }}
+                    loading={isProcessing}
+                />
+            )}
+
         </div >
     );
 }

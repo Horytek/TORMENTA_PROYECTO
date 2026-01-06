@@ -1,6 +1,6 @@
-import { getFuncionesRequest, getFuncionRequest, addFuncionRequest, updateFuncionRequest, /*deleteFuncionRequest*/ } 
-from '@/api/api.funciones';
-import { toast } from "react-hot-toast";
+import { getFuncionesRequest, getFuncionRequest, addFuncionRequest, updateFuncionRequest, /*deleteFuncionRequest*/ }
+  from '@/api/api.funciones';
+
 
 const getFunciones = async () => {
   try {
@@ -33,15 +33,12 @@ const addFuncion = async (user) => {
     const response = await addFuncionRequest(user);
     //console.log("Respuesta del servidor (addRol):", response.data);
     if (response.data.code === 1) {
-      toast.success("Rol añadido con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al guardar el rol");
       return false;
     }
   } catch (error) {
     console.error("Error en addRol:", error);
-    toast.error("Error en el servidor interno");
   }
 };
 
@@ -50,14 +47,12 @@ const updateFuncion = async (id, newFields) => {
   try {
     const response = await updateFuncionRequest(id, newFields);
     if (response.data.code === 1) {
-      toast.success("Rol actualizado con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al actualizar el rol");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    // Error logic
   }
 };
 

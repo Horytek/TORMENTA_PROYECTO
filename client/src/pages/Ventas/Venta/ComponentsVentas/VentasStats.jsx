@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Card, CardBody } from "@heroui/react";
 import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator } from "react-icons/fa";
 import StatsFilters from './StatsFilters';
-import useVentasStats from '@/services/data/data_venta_stats';
+import { useVentasStats } from "@/services/ventas.services";
 
 const VentasStats = () => {
     const [filters, setFilters] = useState({

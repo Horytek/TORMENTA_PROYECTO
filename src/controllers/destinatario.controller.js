@@ -17,14 +17,14 @@ setInterval(() => {
 // INSERTAR DESTINATARIO - OPTIMIZADO
 const insertDestinatario = async (req, res) => {
     const {
-        ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, telefono, email
+        ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, telefono, email, estado = 1
     } = req.body;
     const id_tenant = req.id_tenant;
 
     if (!ubicacion) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "La ubicación es requerida" 
+            message: "La ubicación es requerida"
         });
     }
 
@@ -35,17 +35,18 @@ const insertDestinatario = async (req, res) => {
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            "INSERT INTO destinatario (ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email, telefono, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO destinatario (ruc, dni, nombres, apellidos, razon_social, ubicacion, direccion, email, telefono, estado_destinatario, id_tenant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
-                ruc || null, 
-                dni || null, 
-                nombres ? nombres.trim() : null, 
-                apellidos ? apellidos.trim() : null, 
-                razon_social ? razon_social.trim() : null, 
-                ubicacion, 
-                direccion || null, 
-                email || null, 
-                telefono || null, 
+                ruc || null,
+                dni || null,
+                nombres ? nombres.trim() : null,
+                apellidos ? apellidos.trim() : null,
+                razon_social ? razon_social.trim() : null,
+                ubicacion,
+                direccion || null,
+                email || null,
+                telefono || null,
+                estado,
                 id_tenant
             ]
         );
@@ -55,26 +56,26 @@ const insertDestinatario = async (req, res) => {
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
-            message: 'Destinatario insertado correctamente', 
-            id: result.insertId 
+        res.json({
+            code: 1,
+            message: 'Destinatario insertado correctamente',
+            id: result.insertId
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en insertDestinatario:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "El destinatario ya existe" 
+            res.status(400).json({
+                code: 0,
+                message: "El destinatario ya existe"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -94,14 +95,15 @@ const addDestinatarioNatural = async (req, res) => {
         ubicacion,
         direccion = "",
         email = "",
-        telefono = ""
+        telefono = "",
+        estado_destinatario = 1
     } = req.body;
     const id_tenant = req.id_tenant;
 
     if (!dni || !nombres || !apellidos || !ubicacion) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "Campos requeridos: dni, nombres, apellidos, ubicacion" 
+        return res.status(400).json({
+            code: 0,
+            message: "Campos requeridos: dni, nombres, apellidos, ubicacion"
         });
     }
 
@@ -111,16 +113,17 @@ const addDestinatarioNatural = async (req, res) => {
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion, direccion, email, telefono, id_tenant) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion, direccion, email, telefono, estado_destinatario, id_tenant) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                dni, 
-                nombres.trim(), 
-                apellidos.trim(), 
-                ubicacion, 
-                direccion || null, 
-                email || null, 
-                telefono || null, 
+                dni,
+                nombres.trim(),
+                apellidos.trim(),
+                ubicacion,
+                direccion || null,
+                email || null,
+                telefono || null,
+                estado_destinatario,
                 id_tenant
             ]
         );
@@ -130,26 +133,26 @@ const addDestinatarioNatural = async (req, res) => {
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
+        res.json({
+            code: 1,
             message: "Destinatario natural añadido exitosamente",
-            id: result.insertId 
+            id: result.insertId
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en addDestinatarioNatural:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "Ya existe un destinatario con ese DNI" 
+            res.status(400).json({
+                code: 0,
+                message: "Ya existe un destinatario con ese DNI"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -168,14 +171,15 @@ const addDestinatarioJuridico = async (req, res) => {
         ubicacion,
         direccion = "",
         email = "",
-        telefono = ""
+        telefono = "",
+        estado_destinatario = 1
     } = req.body;
     const id_tenant = req.id_tenant;
 
     if (!ruc || !razon_social || !ubicacion) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "Campos requeridos: ruc, razon_social, ubicacion" 
+        return res.status(400).json({
+            code: 0,
+            message: "Campos requeridos: ruc, razon_social, ubicacion"
         });
     }
 
@@ -185,15 +189,16 @@ const addDestinatarioJuridico = async (req, res) => {
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            `INSERT INTO destinatario (ruc, razon_social, ubicacion, direccion, email, telefono, id_tenant) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO destinatario (ruc, razon_social, ubicacion, direccion, email, telefono, estado_destinatario, id_tenant) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                ruc, 
-                razon_social.trim(), 
-                ubicacion, 
-                direccion || null, 
-                email || null, 
-                telefono || null, 
+                ruc,
+                razon_social.trim(),
+                ubicacion,
+                direccion || null,
+                email || null,
+                telefono || null,
+                estado_destinatario,
                 id_tenant
             ]
         );
@@ -203,26 +208,26 @@ const addDestinatarioJuridico = async (req, res) => {
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
+        res.json({
+            code: 1,
             message: "Destinatario jurídico añadido exitosamente",
-            id: result.insertId 
+            id: result.insertId
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en addDestinatarioJuridico:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "Ya existe un destinatario con ese RUC" 
+            res.status(400).json({
+                code: 0,
+                message: "Ya existe un destinatario con ese RUC"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -244,14 +249,15 @@ const updateDestinatarioNatural = async (req, res) => {
             telefono = "",
             direccion = "",
             ubicacion = "",
-            email = ""
+            email = "",
+            estado_destinatario
         } = req.body;
         const id_tenant = req.id_tenant;
 
         if (!dni || !nombres || !apellidos || !ubicacion) {
-            return res.status(400).json({ 
-                code: 0, 
-                message: "Campos requeridos: dni, nombres, apellidos, ubicacion" 
+            return res.status(400).json({
+                code: 0,
+                message: "Campos requeridos: dni, nombres, apellidos, ubicacion"
             });
         }
 
@@ -264,55 +270,53 @@ const updateDestinatarioNatural = async (req, res) => {
         );
 
         if (existe.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                message: "Destinatario no encontrado" 
+                message: "Destinatario no encontrado"
             });
         }
 
         await connection.beginTransaction();
 
-        const [result] = await connection.query(
-            `UPDATE destinatario
-             SET dni = ?, nombres = ?, apellidos = ?, telefono = ?, direccion = ?, ubicacion = ?, email = ?
-             WHERE id_destinatario = ? AND id_tenant = ?`,
-            [
-                dni, 
-                nombres.trim(), 
-                apellidos.trim(), 
-                telefono || null, 
-                direccion || null, 
-                ubicacion, 
-                email || null, 
-                id, 
-                id_tenant
-            ]
-        );
+        let query = `UPDATE destinatario
+             SET dni = ?, nombres = ?, apellidos = ?, telefono = ?, direccion = ?, ubicacion = ?, email = ?`;
+        const params = [
+            dni,
+            nombres.trim(),
+            apellidos.trim(),
+            telefono || null,
+            direccion || null,
+            ubicacion,
+            email || null
+        ];
+
+        if (estado_destinatario !== undefined) {
+            query += `, estado_destinatario = ?`;
+            params.push(estado_destinatario);
+        }
+
+        query += ` WHERE id_destinatario = ? AND id_tenant = ?`;
+        params.push(id, id_tenant);
+
+        const [result] = await connection.query(query, params);
 
         await connection.commit();
-
-        if (result.affectedRows === 0) {
-            return res.status(400).json({ 
-                code: 0,
-                message: "No se realizó ninguna actualización" 
-            });
-        }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
+        res.json({
             code: 1,
-            message: "Destinatario natural actualizado con éxito" 
+            message: "Destinatario natural actualizado con éxito"
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en updateDestinatarioNatural:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error interno del servidor" 
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -332,14 +336,15 @@ const updateDestinatarioJuridico = async (req, res) => {
             telefono = "",
             direccion = "",
             ubicacion = "",
-            email = ""
+            email = "",
+            estado_destinatario
         } = req.body;
         const id_tenant = req.id_tenant;
 
         if (!ruc || !razon_social || !ubicacion) {
-            return res.status(400).json({ 
-                code: 0, 
-                message: "Campos requeridos: ruc, razon_social, ubicacion" 
+            return res.status(400).json({
+                code: 0,
+                message: "Campos requeridos: ruc, razon_social, ubicacion"
             });
         }
 
@@ -352,54 +357,52 @@ const updateDestinatarioJuridico = async (req, res) => {
         );
 
         if (existe.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                message: "Destinatario no encontrado" 
+                message: "Destinatario no encontrado"
             });
         }
 
         await connection.beginTransaction();
 
-        const [result] = await connection.query(
-            `UPDATE destinatario
-             SET ruc = ?, razon_social = ?, ubicacion = ?, direccion = ?, email = ?, telefono = ?
-             WHERE id_destinatario = ? AND id_tenant = ?`,
-            [
-                ruc, 
-                razon_social.trim(), 
-                ubicacion, 
-                direccion || null, 
-                email || null, 
-                telefono || null, 
-                id, 
-                id_tenant
-            ]
-        );
+        let query = `UPDATE destinatario
+             SET ruc = ?, razon_social = ?, ubicacion = ?, direccion = ?, email = ?, telefono = ?`;
+        const params = [
+            ruc,
+            razon_social.trim(),
+            ubicacion,
+            direccion || null,
+            email || null,
+            telefono || null
+        ];
+
+        if (estado_destinatario !== undefined) {
+            query += `, estado_destinatario = ?`;
+            params.push(estado_destinatario);
+        }
+
+        query += ` WHERE id_destinatario = ? AND id_tenant = ?`;
+        params.push(id, id_tenant);
+
+        const [result] = await connection.query(query, params);
 
         await connection.commit();
-
-        if (result.affectedRows === 0) {
-            return res.status(400).json({ 
-                code: 0,
-                message: "No se realizó ninguna actualización" 
-            });
-        }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
+        res.json({
             code: 1,
-            message: "Destinatario jurídico actualizado con éxito" 
+            message: "Destinatario jurídico actualizado con éxito"
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en updateDestinatarioJuridico:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error interno del servidor" 
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -412,24 +415,24 @@ const updateDestinatarioJuridico = async (req, res) => {
 const getDestinatarios = async (req, res) => {
     const id_tenant = req.id_tenant;
     const cacheKey = `destinatarios_${id_tenant}`;
-    
-    // Verificar caché
-    if (queryCache.has(cacheKey)) {
-        const cached = queryCache.get(cacheKey);
-        if (Date.now() - cached.timestamp < CACHE_TTL) {
-            return res.json({ 
-                code: 1, 
-                data: cached.data, 
-                message: "Destinatarios listados (caché)" 
-            });
-        }
-        queryCache.delete(cacheKey);
-    }
-    
+
+    // Verificación de caché deshabilitada temporalmente para depuración
+    // if (queryCache.has(cacheKey)) {
+    //     const cached = queryCache.get(cacheKey);
+    //     if (Date.now() - cached.timestamp < CACHE_TTL) {
+    //         return res.json({
+    //             code: 1,
+    //             data: cached.data,
+    //             message: "Destinatarios listados (caché)"
+    //         });
+    //     }
+    //     queryCache.delete(cacheKey);
+    // }
+
     let connection;
     try {
         connection = await getConnection();
-        
+
         const [result] = await connection.query(`
             SELECT 
                 id_destinatario AS id,
@@ -438,7 +441,8 @@ const getDestinatarios = async (req, res) => {
                 ubicacion,
                 direccion,
                 email,
-                telefono 
+                telefono,
+                COALESCE(estado_destinatario, 1) AS estado_destinatario
             FROM destinatario
             WHERE id_tenant = ?
                 AND (
@@ -453,23 +457,23 @@ const getDestinatarios = async (req, res) => {
                 END),
                 destinatario
         `, [id_tenant]);
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
-        res.json({ 
-            code: 1, 
-            data: result, 
-            message: "Destinatarios listados" 
+
+        res.json({
+            code: 1,
+            data: result,
+            message: "Destinatarios listados"
         });
     } catch (error) {
         console.error('Error en getDestinatarios:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error interno del servidor" 
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -486,14 +490,14 @@ const getDestinatario = async (req, res) => {
         const id_tenant = req.id_tenant;
 
         if (!id) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "Debe proporcionar un ID o documento" 
+                message: "Debe proporcionar un ID o documento"
             });
         }
 
         connection = await getConnection();
-        
+
         const [result] = await connection.query(
             `SELECT 
                 id_destinatario AS id,
@@ -502,7 +506,8 @@ const getDestinatario = async (req, res) => {
                 ubicacion,
                 direccion,
                 email,
-                telefono 
+                telefono,
+                COALESCE(estado_destinatario, 1) AS estado_destinatario
             FROM destinatario
             WHERE COALESCE(NULLIF(dni, ''), ruc) = ? AND id_tenant = ?
             ORDER BY 
@@ -516,24 +521,24 @@ const getDestinatario = async (req, res) => {
         );
 
         if (result.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                data: [], 
-                message: "Destinatario no encontrado" 
+                data: [],
+                message: "Destinatario no encontrado"
             });
         }
 
-        res.json({ 
-            code: 1, 
-            data: result[0], 
-            message: "Destinatario encontrado" 
+        res.json({
+            code: 1,
+            data: result[0],
+            message: "Destinatario encontrado"
         });
     } catch (error) {
         console.error('Error en getDestinatario:', error);
         if (!res.headersSent) {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -551,9 +556,9 @@ const deleteDestinatario = async (req, res) => {
         const id_tenant = req.id_tenant;
 
         if (!id) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "El ID del destinatario es obligatorio" 
+                message: "El ID del destinatario es obligatorio"
             });
         }
 
@@ -566,9 +571,9 @@ const deleteDestinatario = async (req, res) => {
         );
 
         if (existe.length === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "Destinatario no encontrado" 
+            return res.status(404).json({
+                code: 0,
+                message: "Destinatario no encontrado"
             });
         }
 
@@ -579,50 +584,50 @@ const deleteDestinatario = async (req, res) => {
         );
 
         if (guias[0].total > 0) {
-            return res.status(400).json({ 
-                code: 0, 
-                message: `No se puede eliminar el destinatario porque tiene ${guias[0].total} guía(s) de remisión asociada(s)` 
+            return res.status(400).json({
+                code: 0,
+                message: `No se puede eliminar el destinatario porque tiene ${guias[0].total} guía(s) de remisión asociada(s)`
             });
         }
 
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            "DELETE FROM destinatario WHERE id_destinatario = ? AND id_tenant = ?", 
+            "DELETE FROM destinatario WHERE id_destinatario = ? AND id_tenant = ?",
             [id, id_tenant]
         );
 
         await connection.commit();
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "No se pudo eliminar el destinatario" 
+            return res.status(404).json({
+                code: 0,
+                message: "No se pudo eliminar el destinatario"
             });
         }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
-            message: "Destinatario eliminado correctamente" 
+        res.json({
+            code: 1,
+            message: "Destinatario eliminado correctamente"
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en deleteDestinatario:', error);
-        
+
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "No se puede eliminar el destinatario porque tiene datos relacionados" 
+            res.status(400).json({
+                code: 0,
+                message: "No se puede eliminar el destinatario porque tiene datos relacionados"
             });
         } else if (!res.headersSent) {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {

@@ -7,7 +7,7 @@ import {
   savePermisosGlobalesRequest
 } from "@/api/api.permisosGlobales";
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from "react-hot-toast";
+
 
 // Obtener módulos con submódulos por plan
 const getModulosConSubmodulosPorPlan = async () => {
@@ -15,7 +15,6 @@ const getModulosConSubmodulosPorPlan = async () => {
     const response = await getModulosConSubmodulosPorPlanRequest();
     return response.data;
   } catch (error) {
-    toast.error("Error al obtener módulos por plan");
     return [];
   }
 };
@@ -25,7 +24,6 @@ const getRolesPorPlan = async () => {
     const response = await getRolesPorPlanRequest();
     return response.data;
   } catch (error) {
-    toast.error("Error al obtener roles por plan");
     return [];
   }
 };
@@ -36,7 +34,6 @@ const getPermisosByRolGlobal = async (id_rol) => {
     const response = await getPermisosByRolGlobalRequest(id_rol);
     return response.data;
   } catch (error) {
-    toast.error("Error al obtener permisos globales por rol");
     return [];
   }
 };
@@ -47,7 +44,6 @@ const checkPermisoGlobal = async (params) => {
     const response = await checkPermisoGlobalRequest(params);
     return response.data;
   } catch (error) {
-    toast.error("Error al chequear permiso global");
     return null;
   }
 };
@@ -58,7 +54,6 @@ const getPlanesDisponibles = async () => {
     const response = await getPlanesDisponiblesRequest();
     return response.data;
   } catch (error) {
-    toast.error("Error al obtener planes disponibles");
     return [];
   }
 };
@@ -69,76 +64,75 @@ const savePermisosGlobales = async (permisos) => {
     const response = await savePermisosGlobalesRequest(permisos);
     return response.data;
   } catch (error) {
-    toast.error("Error al guardar permisos globales");
     return null;
   }
 };
 
 const useGetRutasPorPlan = () => {
-    const [modulosConSubmodulos, setModulosConSubmodulos] = useState([]);
-    const [planEmpresa, setPlanEmpresa] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [expandedModulos, setExpandedModulos] = useState({});
+  const [modulosConSubmodulos, setModulosConSubmodulos] = useState([]);
+  const [planEmpresa, setPlanEmpresa] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [expandedModulos, setExpandedModulos] = useState({});
 
-    const fetchRutas = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        
-        try {
-            const response = await getModulosConSubmodulosPorPlanRequest();
-            if (response.data && response.data.success) {
-                setModulosConSubmodulos(response.data.data || []);
-                setPlanEmpresa(response.data.planEmpresa || null);
-            } else {
-                const errorMsg = response.data?.message || 'Error al obtener las rutas por plan';
-                setError(errorMsg);
-                setModulosConSubmodulos([]);
-            }
-        } catch (error) {
-            setError(error.response?.data?.message || error.message || 'Error al cargar las rutas por plan');
-            setModulosConSubmodulos([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+  const fetchRutas = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-    const toggleExpand = useCallback((moduleId) => {
-        setExpandedModulos(prev => ({
-            ...prev,
-            [moduleId]: !prev[moduleId]
-        }));
-    }, []);
+    try {
+      const response = await getModulosConSubmodulosPorPlanRequest();
+      if (response.data && response.data.success) {
+        setModulosConSubmodulos(response.data.data || []);
+        setPlanEmpresa(response.data.planEmpresa || null);
+      } else {
+        const errorMsg = response.data?.message || 'Error al obtener las rutas por plan';
+        setError(errorMsg);
+        setModulosConSubmodulos([]);
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || error.message || 'Error al cargar las rutas por plan');
+      setModulosConSubmodulos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const expandAll = useCallback(() => {
-        const allExpanded = {};
-        modulosConSubmodulos.forEach(modulo => {
-            if (modulo.expandible) {
-                allExpanded[modulo.id] = true;
-            }
-        });
-        setExpandedModulos(allExpanded);
-    }, [modulosConSubmodulos]);
+  const toggleExpand = useCallback((moduleId) => {
+    setExpandedModulos(prev => ({
+      ...prev,
+      [moduleId]: !prev[moduleId]
+    }));
+  }, []);
 
-    const collapseAll = useCallback(() => {
-        setExpandedModulos({});
-    }, []);
+  const expandAll = useCallback(() => {
+    const allExpanded = {};
+    modulosConSubmodulos.forEach(modulo => {
+      if (modulo.expandible) {
+        allExpanded[modulo.id] = true;
+      }
+    });
+    setExpandedModulos(allExpanded);
+  }, [modulosConSubmodulos]);
 
-    useEffect(() => {
-        fetchRutas();
-    }, [fetchRutas]);
+  const collapseAll = useCallback(() => {
+    setExpandedModulos({});
+  }, []);
 
-    return {
-        modulosConSubmodulos,
-        planEmpresa,
-        loading,
-        error,
-        expandedModulos,
-        toggleExpand,
-        expandAll,
-        collapseAll,
-        refreshRutas: fetchRutas
-    };
+  useEffect(() => {
+    fetchRutas();
+  }, [fetchRutas]);
+
+  return {
+    modulosConSubmodulos,
+    planEmpresa,
+    loading,
+    error,
+    expandedModulos,
+    toggleExpand,
+    expandAll,
+    collapseAll,
+    refreshRutas: fetchRutas
+  };
 };
 
 const useRolesPorPlan = () => {
@@ -213,14 +207,14 @@ const useSavePermisosGlobales = () => {
     setSaving(true);
     setSuccess(false);
     setError(null);
-    
+
     try {
       const response = await savePermisosGlobalesRequest({
         id_rol: roleId,
         permisos: permissionsList,
         plan_seleccionado: planSeleccionado
       });
-      
+
       if (response.data.success) {
         setSuccess(true);
         return true;
@@ -278,15 +272,15 @@ const usePlanesDisponibles = () => {
 };
 
 export {
-    getModulosConSubmodulosPorPlan,
-    getRolesPorPlan,
-    getPermisosByRolGlobal,
-    checkPermisoGlobal,
-    getPlanesDisponibles,
-    savePermisosGlobales,
-    useGetRutasPorPlan,
-    useRolesPorPlan,
-    usePermisosByRolGlobal,
-    useSavePermisosGlobales,
-    usePlanesDisponibles
+  getModulosConSubmodulosPorPlan,
+  getRolesPorPlan,
+  getPermisosByRolGlobal,
+  checkPermisoGlobal,
+  getPlanesDisponibles,
+  savePermisosGlobales,
+  useGetRutasPorPlan,
+  useRolesPorPlan,
+  usePermisosByRolGlobal,
+  useSavePermisosGlobales,
+  usePlanesDisponibles
 };

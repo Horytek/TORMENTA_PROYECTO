@@ -1,9 +1,11 @@
-import { getEmpresasRequest, getEmpresaRequest, addEmpresaRequest,
-  updateEmpresaRequest, deleteEmpresaRequest, updateEmpresaMonedasRequest } 
-from '@/api/api.empresa';
+import {
+  getEmpresasRequest, getEmpresaRequest, addEmpresaRequest,
+  updateEmpresaRequest, deleteEmpresaRequest, updateEmpresaMonedasRequest
+}
+  from '@/api/api.empresa';
 import { addUsuarioLandingRequest } from '@/api/api.usuario'; // usamos la API directa para obtener respuesta
 import { getUsuario_1 } from "@/services/usuario.services";
-import { toast } from "react-hot-toast";
+
 import { useUserStore } from "@/store/useStore";
 
 // Utilidades simples para credenciales
@@ -23,7 +25,7 @@ const getEmpresas = async () => {
   try {
     const response = await getEmpresasRequest();
     if (response.data.code === 1) {
-      return response.data.data; 
+      return response.data.data;
     } else {
       console.error('Error en la solicitud: ', response.data.message);
     }
@@ -49,14 +51,12 @@ const addEmpresa = async (empresa) => {
   try {
     const response = await addEmpresaRequest(empresa);
     if (response.data.code === 1) {
-      toast.success("Empresa añadida con éxito");
       return true;
     } else {
-      toast.error(response.data.message || "Ocurrió un error al guardar la empresa");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    return false;
   }
 };
 
@@ -64,14 +64,12 @@ const updateEmpresa = async (id, newFields) => {
   try {
     const response = await updateEmpresaRequest(id, newFields);
     if (response.data.code === 1) {
-      toast.success("Empresa actualizada con éxito");
       return true;
     } else {
-      toast.error(response.data.message || "Ocurrió un error al actualizar la empresa");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    return false;
   }
 };
 
@@ -79,16 +77,16 @@ const deleteEmpresa = async (id) => {
   try {
     const response = await deleteEmpresaRequest(id);
     if (response.data.code === 2) {
-      toast.success("Empresa dada de baja con éxito");
+      // Success
     }
     if (response.data.code === 1) {
-      toast.success("Empresa eliminada con éxito");
+      // Success
     }
     if (response.status === 404) {
-      toast.error("Ocurrió un error al eliminar la empresa");
+      // Error
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    // Error
   }
 };
 
@@ -117,14 +115,11 @@ const updateEmpresaMonedas = async (id, monedas, pais) => {
   try {
     const response = await updateEmpresaMonedasRequest(id, monedas, pais);
     if (response.data.code === 1) {
-      toast.success("Monedas y país actualizados correctamente");
       return true;
     } else {
-      toast.error(response.data.message || "Error al actualizar monedas y país");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
     return false;
   }
 };
@@ -163,5 +158,7 @@ const createEmpresaAndAdmin = async (empresa) => {
   }
 };
 
-export { getEmpresas, getEmpresa, addEmpresa, 
-  updateEmpresa, deleteEmpresa, getEmpresaDataByUser, updateEmpresaMonedas, createEmpresaAndAdmin };
+export {
+  getEmpresas, getEmpresa, addEmpresa,
+  updateEmpresa, deleteEmpresa, getEmpresaDataByUser, updateEmpresaMonedas, createEmpresaAndAdmin
+};

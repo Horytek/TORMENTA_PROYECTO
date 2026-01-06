@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Card, CardHeader, CardBody, CardFooter, Divider, Chip, Tooltip, Input, Select, SelectItem, Popover, PopoverTrigger, PopoverContent, Button } from "@heroui/react";
 import { Calendar, Sparkles } from "lucide-react";
 import useComparacionTotal from "@/layouts/Inicio/hooks/comparacion_ventas";
-import useTendenciaVentas from "@/services/reports/data_tendencia_ventas";
+import { useTendenciaVentas } from "@/services/reportes.services";
 import { AreaChart } from "@tremor/react";
 
 const valueFormatter = (number) =>

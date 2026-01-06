@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Card, Chip, Spinner, Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, ScrollShadow } from "@heroui/react";
 import { RiSearchLine } from "@remixicon/react";
-import useCantidadVentasPorProducto from "@/services/reports/data_prod_venta";
-import useTopProductosMargen from "@/services/reports/data_productos_marge";
+import { useCantidadVentasPorProducto, useTopProductosMargen } from "@/services/reportes.services";
 
 const dataFormatter = (number) => ` ${Intl.NumberFormat("us").format(number).toString()}`;
 const currencyFormatter = (number) => `S/ ${Intl.NumberFormat("us").format(number).toString()}`;

@@ -1,6 +1,6 @@
-import { getPlanesRequest  } 
-from '@/api/api.planes';
-import { toast } from "react-hot-toast";
+import { getPlanesRequest }
+  from '@/api/api.planes';
+
 
 const getPlanes = async () => {
   try {
@@ -15,4 +15,4 @@ const getPlanes = async () => {
   }
 };
 
-export {getPlanes};
+export { getPlanes };

@@ -1,5 +1,5 @@
 import axios from "@/api/axios";
-import { toast } from 'react-hot-toast';
+
 import { useUserStore } from "@/store/useStore";
 
 /**
@@ -40,7 +40,7 @@ export const anularGuia = async (guiaId) => {
       guiaId,
       usuario: nombre,
     });
-    
+
     if (response.data.code === 1) {
       return { success: true, message: 'Guía anulada correctamente' };
     } else {
@@ -288,6 +288,7 @@ export const getUbigeosGuia = async () => {
 /**
  * Buscar productos para guía de remisión
  */
+// Buscar productos para guía de remisión
 export const buscarProductosGuia = async (searchInput, setProductos) => {
   try {
     const term = (searchInput || '').trim();
@@ -303,14 +304,10 @@ export const buscarProductosGuia = async (searchInput, setProductos) => {
     if (response.data.code === 1) {
       setProductos(response.data.data);
     } else {
-      toast.error('Error al buscar productos');
       setProductos([]);
     }
   } catch (error) {
     console.error('Error al buscar productos:', error?.message);
-    if (!axios.isCancel?.(error)) {
-      toast.error('No se pudieron cargar productos');
-    }
     setProductos([]);
   }
 };
@@ -319,9 +316,6 @@ export const buscarProductosGuia = async (searchInput, setProductos) => {
 // INTEGRACIÓN CON SUNAT
 // ============================================
 
-/**
- * Convertir fecha al formato requerido por SUNAT
- */
 function convertDateToDesiredFormat(dateString, offsetHours) {
   const date = new Date(dateString);
   const offsetMilliseconds = offsetHours * 60 * 60 * 1000;
@@ -337,12 +331,9 @@ function convertDateToDesiredFormat(dateString, offsetHours) {
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-05:00`;
 }
 
-/**
- * Enviar guía de remisión a SUNAT
- */
 async function enviarGuiaRemisionASunat(data, nombre) {
   const url = 'https://facturacion.apisperu.com/api/v1/despatch/send';
-  
+
   // Importar servicios dinámicamente para evitar dependencias circulares
   const { getClaveSunatByUser } = await import('@/services/clave.services');
   const token = await getClaveSunatByUser(nombre);
@@ -356,31 +347,21 @@ async function enviarGuiaRemisionASunat(data, nombre) {
     });
 
     if (response.status === 200) {
-      toast.success('La guía de remisión se ha enviado con éxito a la Sunat');
       return { success: true, data: response.data };
     } else {
-      toast.error('Error al enviar la guía de remisión a la Sunat');
       return { success: false, message: 'Error en respuesta de SUNAT' };
     }
   } catch (error) {
     console.error('Error al enviar a SUNAT:', error.response ? error.response.data : error.message);
-    if (error.response) {
-      toast.error(`Error SUNAT: ${error.response.status} - ${error.response.data}`);
-    } else {
-      toast.error('Error al enviar la guía de remisión a la Sunat');
-    }
     return { success: false, message: error.message };
   }
 }
 
-/**
- * Manejar envío de guía de remisión a SUNAT
- */
 export async function handleGuiaRemisionSunat(guia, destinata, transportista, detalles, nombre) {
   // Importar servicios dinámicamente
   const { getEmpresaDataByUser } = await import('@/services/empresa.services');
   const empresaData = await getEmpresaDataByUser(nombre);
-  
+
   const tipoDoc = "05";
   const guialetra = "T";
   const guiaserie = guia.serieNum;
@@ -439,13 +420,10 @@ export async function handleGuiaRemisionSunat(guia, destinata, transportista, de
     }))
   };
 
-  const loadingToastId = toast.loading('Enviando datos a SUNAT...');
-  
   try {
     await enviarGuiaRemisionASunat(data, nombre);
-    toast.dismiss(loadingToastId);
   } catch (_error) {
-    toast.dismiss(loadingToastId);
+    // Error handling managed by caller or logs
   }
 }
 
@@ -456,23 +434,23 @@ const guiaRemisionService = {
   anularGuia,
   generarDocumentoGuia,
   handleGuiaRemisionSunat,
-  
+
   // Destinatarios
   getDestinatariosGuia,
   addDestinatarioNatural,
   addDestinatarioJuridico,
-  
+
   // Transportistas
   generarCodigoTransportista,
   getTransportistasPublicos,
   getTransportistasPrivados,
   addTransportistaPublico,
   addTransportistaPrivado,
-  
+
   // Vehículos
   getVehiculos,
   addVehiculo,
-  
+
   // Auxiliares
   getSucursalesGuia,
   getUbigeosGuia,

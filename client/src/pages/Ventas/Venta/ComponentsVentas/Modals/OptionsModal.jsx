@@ -3,9 +3,7 @@ import PropTypes from 'prop-types';
 import { IoMdOptions } from 'react-icons/io';
 import toast from 'react-hot-toast';
 import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Checkbox } from "@heroui/react";
-import { handleSunat } from '@/services/data/add_sunat';
-import { handleSunatPDF } from '@/services/data/data_pdf';
-import { handleUpdate } from '@/services/data/update_venta';
+import { handleSunat, handleSunatPDF, handleUpdate } from "@/services/ventas.services";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { useUserStore } from "@/store/useStore";
 

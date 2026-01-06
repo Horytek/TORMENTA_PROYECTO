@@ -30,8 +30,7 @@ export function ShowUsuarios({
   addUsuario,
   updateUsuarioLocal,
   removeUsuario,
-  selectedKeys,
-  onSelectionChange,
+
   page = 1,
   limit = 10
 }) {
@@ -200,9 +199,7 @@ export function ShowUsuarios({
       <div className="w-full">
         <Table
           aria-label="Tabla de usuarios"
-          selectionMode="multiple"
-          selectedKeys={selectedKeys}
-          onSelectionChange={onSelectionChange}
+
           removeWrapper
           classNames={{
             base: "",
@@ -233,6 +230,7 @@ export function ShowUsuarios({
       {/* Modal de Confirmación para eliminar Producto */}
       {isConfirmationModalOpen && (
         <ConfirmationModal
+          isOpen={isConfirmationModalOpen}
           message={`¿Estás seguro que deseas eliminar "${selectedRow}"?`}
           onClose={handleCloseConfirmationModal}
           onConfirm={handleConfirmDelete}

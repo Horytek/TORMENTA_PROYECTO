@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import TablaLibro from './ComponentsLibroVentas/TablaLibro';
 import ExportarExcel from './ComponentsLibroVentas/ExportarExcel';
 import FiltroLibro from './ComponentsLibroVentas/FiltroLibro';
-import useLibroVentasSunatData from '@/services/data/getLibroVenta';
+import { useLibroVentasSunatData } from "@/services/ventas.services";
 import { Card, CardBody } from "@heroui/react";
 import { FaCalculator, FaMoneyBillWave, FaFileInvoice, FaPercent } from "react-icons/fa";
 

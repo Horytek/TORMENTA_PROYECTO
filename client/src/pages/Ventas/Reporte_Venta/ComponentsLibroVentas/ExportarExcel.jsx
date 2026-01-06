@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import axios from "@/api/axios";
-import useSucursalData from "@/services/data/data_sucursal_venta";
+import { useSucursalData } from "@/services/ventas.services";
 import {
   Button,
   Modal,
@@ -74,9 +75,9 @@ const ExportarExcel = ({
     setIsExporting(true);
     try {
       const tipoComprobante = tipoComprobanteArr.join(",");
-      let url = `/reporte/registro_ventas_sunat?mes=${mes}&ano=${ano}&tipoComprobante=${tipoComprobante}`;
+      let url = `/ reporte / registro_ventas_sunat ? mes = ${mes}& ano=${ano}& tipoComprobante=${tipoComprobante} `;
       if (idSucursal) {
-        url += `&idSucursal=${idSucursal}`;
+        url += `& idSucursal=${idSucursal} `;
       }
 
       const response = await axios.get(url, {
@@ -94,7 +95,7 @@ const ExportarExcel = ({
         ? sucursales.find(s => String(s.id) === String(idSucursal))?.nombre || 'Sucursal'
         : 'Todas';
 
-      const fileName = `RegistroVentas_${sucursalNombre}_${mes}-${ano}.xlsx`;
+      const fileName = `RegistroVentas_${sucursalNombre}_${mes} -${ano}.xlsx`;
 
       link.setAttribute('download', fileName);
       document.body.appendChild(link);

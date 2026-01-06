@@ -19,8 +19,7 @@ const TablaSucursal = ({
     updateSucursalLocal,
     removeSucursal,
     onEdit,
-    selectedKeys,
-    onSelectionChange,
+
     page = 1,
     limit = 10
 }) => {
@@ -135,9 +134,7 @@ const TablaSucursal = ({
         <>
             <Table
                 aria-label="Tabla de sucursales"
-                selectionMode="multiple"
-                selectedKeys={selectedKeys}
-                onSelectionChange={onSelectionChange}
+
                 removeWrapper
                 classNames={{
                     base: "",

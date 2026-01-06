@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import NumeroALetras from '../../../../../../utils/ConvertidorDeNumALetras';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
-import useSucursalData from '@/services/data/data_sucursal_venta';
+import { useSucursalData } from "@/services/ventas.services";
 
 const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     const { detalles, fecha, total_t, igv, descuento_venta, nombre_cliente, documento_cliente, direccion_cliente } = datosVentaComprobante;
@@ -15,7 +15,7 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
     const [qrDataUrl, setQrDataUrl] = useState(null);
     const [empresaData, setEmpresaData] = useState(null); // Estado para almacenar los datos de la empresa
     const [sucursalData, setSucursalData] = useState(null);
-    
+
     const generatePDF = async () => {
         const publicPdfUrl = "https://www.facebook.com/profile.php?id=100055385846115";
         setPdfUrl(publicPdfUrl);
@@ -177,13 +177,13 @@ const Comprobante = React.forwardRef(({ datosVentaComprobante }, ref) => {
                 </div>
 
                 <div className="flex flex-wrap justify-between mb-6">
-                <div className='flex items-center justify-center bg-gray-100 rounded border w-[170px] h-[170px]'>
-                    {qrDataUrl ? (
-                        <img src={qrDataUrl} alt="QR" className="w-[128px] h-[128px]" />
-                    ) : (
-                        <span className="text-xs text-gray-500">Generando QR...</span>
-                    )}
-                </div>
+                    <div className='flex items-center justify-center bg-gray-100 rounded border w-[170px] h-[170px]'>
+                        {qrDataUrl ? (
+                            <img src={qrDataUrl} alt="QR" className="w-[128px] h-[128px]" />
+                        ) : (
+                            <span className="text-xs text-gray-500">Generando QR...</span>
+                        )}
+                    </div>
 
                     <div className="flex-1 mr-6 py-6 pl-6 pr-0">
                         <p className="text-md font-bold text-gray-900 mb-2">ORDEN DE COMPRA:</p>

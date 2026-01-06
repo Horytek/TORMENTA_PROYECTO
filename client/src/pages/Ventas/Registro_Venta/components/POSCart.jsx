@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Button, ScrollShadow, Divider, Select, SelectItem, Autocomplete, AutocompleteItem } from "@heroui/react";
 import { Trash2, Plus, Minus, CreditCard, ShoppingCart } from "lucide-react";
-import useClientesData from '@/services/data/data_cliente_venta';
+import { useClientesData } from "@/services/ventas.services";
 import PaymentModal from './PaymentModal';
 import AddClientModal from '@/pages/Clientes/ComponentsClientes/AddClient';
 import { toast } from 'react-hot-toast';
@@ -219,8 +219,8 @@ const POSCart = ({ pos }) => {
                     </Button>
                     <Button
                         className={`col-span-3 rounded-xl h-12 font-bold text-md ${cart.length === 0 || !client || !documentType
-                                ? 'bg-gray-400 text-gray-200 cursor-not-allowed shadow-none'
-                                : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed shadow-none'
+                            : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                             }`}
                         color={cart.length === 0 || !client || !documentType ? "default" : "primary"}
                         startContent={<CreditCard size={20} />}

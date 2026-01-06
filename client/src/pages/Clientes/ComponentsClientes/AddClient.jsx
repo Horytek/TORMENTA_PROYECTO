@@ -8,16 +8,16 @@ import {
   Checkbox
 } from "@heroui/react";
 import {
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter, 
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Select,
   SelectItem
 } from '@heroui/react';
 import { IoIosSearch } from "react-icons/io";
-import { useAddClient } from "@/services/client_data/addCliente";
+import { useAddClient } from "@/services/clientes.services";
 import { toast, Toaster } from "react-hot-toast";
 
 const inputStyles = {
@@ -45,14 +45,14 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
     if (clientType === "personal") {
       setDocumentType("dni");
       setBusinessName("");
-      if (documentNumber.length === 11) { 
+      if (documentNumber.length === 11) {
         setDocumentNumber("");
       }
     } else {
       setDocumentType("ruc");
       setClientName("");
       setClientLastName("");
-      if (documentNumber.length === 8) { 
+      if (documentNumber.length === 8) {
         setDocumentNumber("");
       }
     }
@@ -81,7 +81,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
           setClientType("personal");
         } else {
           toast.error('No se encontraron datos para el DNI proporcionado');
-  // ...existing code...
+          // ...existing code...
           setClientLastName('');
         }
       } else {
@@ -131,22 +131,22 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
     if (result.success) {
       toast.success('Cliente guardado exitosamente');
       // Reflejar el cambio en tiempo real en el array local
-if (setAllClientes) {
-  setAllClientes(prev => [
-    {
-      id: result.data?.id || Math.random().toString(36),
-      dni: clientType === "personal" ? documentNumber.trim() : null,
-      ruc: clientType === "business" ? documentNumber.trim() : null,
-      dniRuc: documentNumber.trim(), // <-- Agrega este campo para facilitar la visualización
-      nombres: clientType === "personal" ? clientName : null,
-      apellidos: clientType === "personal" ? clientLastName : null,
-      razon_social: clientType === "business" ? businessName : null,
-      direccion: address || null,
-      estado: 1
-    },
-    ...prev
-  ]);
-}
+      if (setAllClientes) {
+        setAllClientes(prev => [
+          {
+            id: result.data?.id || Math.random().toString(36),
+            dni: clientType === "personal" ? documentNumber.trim() : null,
+            ruc: clientType === "business" ? documentNumber.trim() : null,
+            dniRuc: documentNumber.trim(), // <-- Agrega este campo para facilitar la visualización
+            nombres: clientType === "personal" ? clientName : null,
+            apellidos: clientType === "personal" ? clientLastName : null,
+            razon_social: clientType === "business" ? businessName : null,
+            direccion: address || null,
+            estado: 1
+          },
+          ...prev
+        ]);
+      }
       if (onClientCreated) onClientCreated();
       handleClose();
     } else {
@@ -181,7 +181,7 @@ if (setAllClientes) {
                 <p className="text-sm text-gray-600">
                   Ingrese los datos del cliente. Los campos obligatorios están marcados con *.
                 </p>
-                                {/* Checkbox para habilitar inputs manualmente */}
+                {/* Checkbox para habilitar inputs manualmente */}
                 <div className="mb-2">
                   <Checkbox
                     checked={manualInput}
@@ -211,7 +211,7 @@ if (setAllClientes) {
                         </Select>
 
                         <div className="flex gap-2">
-                          <Input 
+                          <Input
                             label="Número de documento"
                             placeholder="Ingrese DNI"
                             value={documentNumber}
@@ -281,7 +281,7 @@ if (setAllClientes) {
                   <Tab key="business" title="Empresa">
                     <div className="mt-4">
                       <div className="flex flex-col gap-3">
-                        <Select 
+                        <Select
                           label="Tipo de documento"
                           selectedKeys={[documentType]}
                           onChange={(e) => setDocumentType(e.target.value)}
@@ -292,7 +292,7 @@ if (setAllClientes) {
                         </Select>
 
                         <div className="flex gap-2">
-                          <Input 
+                          <Input
                             label="Número de documento"
                             placeholder="Ingrese RUC"
                             value={documentNumber}
@@ -321,7 +321,7 @@ if (setAllClientes) {
                           classNames={inputStyles}
                           isDisabled={!manualInput}
                         />
-                        
+
                         {/* Campo de dirección con autocompletado Google Places, solo Chiclayo */}
                         <div>
                           <label className="text-sm font-medium mb-1">Dirección</label>

@@ -4,11 +4,15 @@ import { FaPlus, FaUsers, FaUserCheck, FaUserTimes, FaChartLine, FaSearch } from
 import { Button, Card, CardBody, Chip, Select, SelectItem, Input, Pagination } from "@heroui/react";
 import { motion } from "framer-motion";
 import TablaCliente from '@/pages/Clientes/ComponentsClientes/TablaCliente';
-import useGetClientes from "@/services/client_data/getClientes";
+import { useGetClientes } from "@/services/clientes.services";
 import AddClientModal from './ComponentsClientes/AddClient';
 import { usePermisos } from '@/routes';
 import { getClientStatsRequest } from "@/api/api.cliente";
-import BulkActionsToolbar from "@/components/Shared/BulkActionsToolbar";
+
+import { bulkUpdateClientes } from "@/services/clientes.services";
+
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+
 
 // Estilos Glass Clean
 const glassInputClasses = {
@@ -30,7 +34,7 @@ function Clientes() {
   const [docNumber, setDocNumber] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const [selectedKeys, setSelectedKeys] = useState(new Set());
+
 
   // Stats
   const [stats, setStats] = useState({ total: 0, activos: 0, inactivos: 0, nuevos_mes: 0 });
@@ -99,12 +103,11 @@ function Clientes() {
     </Card>
   );
 
-  // Bulk Actions
-  const handleBulkActivate = () => alert("Activar masivo próximamente");
-  const handleBulkDeactivate = () => alert("Desactivar masivo próximamente");
-  const handleBulkDelete = () => alert("Eliminar masivo próximamente");
+
+
 
   return (
+
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -275,8 +278,7 @@ function Clientes() {
             loadStats();
           }}
           setAllClientes={setAllClientes}
-          selectedKeys={selectedKeys}
-          onSelectionChange={setSelectedKeys}
+
         />
       </div>
 
@@ -318,13 +320,10 @@ function Clientes() {
         />
       </div>
 
-      <BulkActionsToolbar
-        selectedCount={selectedKeys === "all" ? filteredClientes.length : selectedKeys.size}
-        onActivate={handleBulkActivate}
-        onDeactivate={handleBulkDeactivate}
-        onDelete={handleBulkDelete}
-        onClearSelection={() => setSelectedKeys(new Set())}
-      />
+
+
+
+
 
       <AddClientModal
         open={activeAdd}

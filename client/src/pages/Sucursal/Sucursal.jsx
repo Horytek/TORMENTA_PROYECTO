@@ -8,7 +8,11 @@ import TablaSucursal from './Components/TablaSucursal';
 import SucursalForm from './SucursalForm';
 import { exportSucursalesLocal, filterSucursalesForExport } from '@/utils/exportSucursales';
 import SucursalesImportModal from './SucursalesImportModal';
-import BulkActionsToolbar from "@/components/Shared/BulkActionsToolbar";
+
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
+import { bulkUpdateSucursales } from "@/services/sucursal.services";
+
+
 
 // Estilos Glass Clean
 const glassInputClasses = {
@@ -23,7 +27,8 @@ function Sucursal() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedKeys, setSelectedKeys] = useState(new Set());
+
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -115,12 +120,10 @@ function Sucursal() {
     </Card>
   );
 
-  // Bulk Actions
-  const handleBulkActivate = () => alert("Activar masivo próximamente");
-  const handleBulkDeactivate = () => alert("Desactivar masivo próximamente");
-  const handleBulkDelete = () => alert("Eliminar masivo próximamente");
+
 
   return (
+
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
       <Toaster />
 
@@ -215,8 +218,7 @@ function Sucursal() {
           updateSucursalLocal={updateSucursalLocal}
           removeSucursal={removeSucursalLocal}
           onEdit={handleEdit}
-          selectedKeys={selectedKeys}
-          onSelectionChange={setSelectedKeys}
+
           page={page}
           limit={limit}
         />
@@ -288,13 +290,10 @@ function Sucursal() {
         onSuccess={handleImportSuccess}
       />
 
-      <BulkActionsToolbar
-        selectedCount={selectedKeys === "all" ? filteredSucursales.length : selectedKeys.size}
-        onActivate={handleBulkActivate}
-        onDeactivate={handleBulkDeactivate}
-        onDelete={handleBulkDelete}
-        onClearSelection={() => setSelectedKeys(new Set())}
-      />
+
+
+
+
     </div>
   );
 }

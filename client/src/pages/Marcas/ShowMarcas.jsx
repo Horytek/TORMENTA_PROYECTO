@@ -10,6 +10,10 @@ import {
 import EditForm from "./EditMarca";
 import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
+
+import { bulkUpdateMarcas } from "@/services/marca.services";
+
+
 const columns = [
   { name: "CÓDIGO", uid: "id_marca" },
   { name: "NOMBRE", uid: "nom_marca" },
@@ -17,7 +21,7 @@ const columns = [
   { name: "ACCIONES", uid: "acciones" },
 ];
 
-export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
+export function ShowMarcas({ searchTerm, marcas, setMarcas, onUpdate, onDelete }) {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -28,6 +32,9 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
   const [selectedId, setSelectedId] = useState(null);
 
   const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = usePermisos();
+
+
+
 
   const filteredItems = useMemo(() => {
     return marcas.filter((marca) =>
@@ -195,11 +202,15 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
 
   return (
     <>
-      <div className="w-full">
+      <div className="w-full space-y-4">
+
+
         <Table
           aria-label="Tabla de Marcas"
+
           removeWrapper
           isHeaderSticky
+
           classNames={{
             base: "max-h-[600px] overflow-scroll",
             th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
@@ -299,6 +310,21 @@ export function ShowMarcas({ searchTerm, marcas, setMarcas }) {
           />
         )
       }
+
+
+      {/* Bulk Action Confirmation Modal */}
+      {isConfirmOpen && (
+        <ConfirmationModal
+          isOpen={isConfirmOpen}
+          message={confirmMessage}
+          onClose={closeConfirm}
+          onConfirm={async () => {
+            await executeAction(filteredItems);
+            setSelectedKeys(new Set());
+          }}
+          loading={isProcessing}
+        />
+      )}
     </>
   );
 }

@@ -1,12 +1,12 @@
-import { 
-    getVendedoresRequest, 
-    getVendedorRequest, 
-    addVendedorRequest, 
-    deleteVendedorRequest, 
-    updateVendedorRequest, 
-    deactivateVendedorRequest 
+import {
+  getVendedoresRequest,
+  getVendedorRequest,
+  addVendedorRequest,
+  deleteVendedorRequest,
+  updateVendedorRequest,
+  deactivateVendedorRequest
 } from '@/api/api.vendedor';
-import { toast } from "react-hot-toast";
+
 import { transformData } from '@/utils/vendedor';
 
 // Función para obtener todos los vendedores
@@ -56,14 +56,12 @@ const deleteVendedor = async (id) => {
   try {
     const response = await deleteVendedorRequest(id);
     if (response.data.code === 1) {
-      toast.success("Vendedor eliminado con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al eliminar el vendedor");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    return false;
   }
 };
 
@@ -89,26 +87,49 @@ const deactivateVendedor = async (id) => {
     const response = await deactivateVendedorRequest(id);
 
     if (response.data.message.includes("Vendedor dado de baja")) {
-      toast.success("El vendedor ha sido desactivado correctamente.");
       return true;
-    } 
+    }
     if (response.data.message.includes("Vendedor eliminado")) {
-      toast.success("El vendedor ha sido eliminado correctamente.");
       return true;
-    } 
+    }
     if (response.status === 404) {
-      toast.error("El vendedor no fue encontrado.");
       return false;
     }
 
-    toast.error("Ocurrió un error al procesar la solicitud.");
     return false;
   } catch (error) {
     console.error("Error al desactivar/eliminar el vendedor:", error);
-    toast.error("Error interno del servidor. Inténtelo más tarde.");
     return false;
   }
 };
 
 
-export { getVendedores, getVendedor, addVendedor, deleteVendedor, updateVendedor, deactivateVendedor };
+export { getVendedores, getVendedor, addVendedor, deleteVendedor, updateVendedor, deactivateVendedor, bulkUpdateVendedores };
+
+// --- Helper for Frontend Bulk Operations ---
+const bulkUpdateVendedores = async (action, ids, items = []) => {
+  try {
+    const promises = ids.map(id => {
+      if (action === 'delete') {
+        return deleteVendedor(id);
+      } else if (action === 'deactivate') {
+        const item = items.find(i => i.dni === id) || items.find(i => i.id === id); // Fallback for ID field
+        if (item) return updateVendedor(id, { ...item, estado_vendedor: 0 });
+        // Fallback or skip if not found, since controller requires validation
+        console.warn("Item not found for deactivate, trying partial but likely to fail", id);
+        return updateVendedor(id, { estado_vendedor: 0 });
+      } else if (action === 'activate') {
+        const item = items.find(i => i.dni === id) || items.find(i => i.id === id);
+        if (item) return updateVendedor(id, { ...item, estado_vendedor: 1 });
+        return updateVendedor(id, { estado_vendedor: 1 });
+      }
+      return Promise.resolve(false);
+    });
+
+    await Promise.all(promises);
+    return true;
+  } catch (e) {
+    console.error("Bulk update error", e);
+    return false;
+  }
+};

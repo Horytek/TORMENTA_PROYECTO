@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import useClientesData from '@/services/data/data_cliente_venta';
-import useProductosData from '@/services/data/data_producto_venta';
-import useSucursalData from '@/services/data/data_sucursal_venta';
-import { useLastData } from '@/services/data/getLastVenta';
-import generateComprobanteNumber from '@/services/data/generate_comprobante';
+import {
+  useClientesData,
+  useProductosData,
+  useSucursalData,
+  useLastData,
+  generateComprobanteNumber
+} from "@/services/ventas.services";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { useUserStore } from "@/store/useStore";
 

@@ -1,6 +1,6 @@
-import { getRolesRequest, getRolRequest, addRolRequest, updateRolRequest, deleteRolRequest } 
-from '@/api/api.rol';
-import { toast } from "react-hot-toast";
+import { getRolesRequest, getRolRequest, addRolRequest, updateRolRequest, deleteRolRequest }
+  from '@/api/api.rol';
+
 import { transformData } from '@/utils/rol';
 
 const getRoles = async () => {
@@ -33,15 +33,12 @@ const addRol = async (user) => {
   try {
     const response = await addRolRequest(user);
     if (response.data.code === 1) {
-      toast.success("Rol añadido con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al guardar el rol");
       return false;
     }
   } catch (error) {
     console.error("Error en addRol:", error);
-    toast.error("Error en el servidor interno");
   }
 };
 
@@ -50,14 +47,12 @@ const updateRol = async (id, newFields) => {
   try {
     const response = await updateRolRequest(id, newFields);
     if (response.data.code === 1) {
-      toast.success("Rol actualizado con éxito");
       return true;
     } else {
-      toast.error("Ocurrió un error al actualizar el rol");
       return false;
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    // Error logic
   }
 };
 
@@ -65,16 +60,16 @@ const deleteRol = async (id) => {
   try {
     const response = await deleteRolRequest(id);
     if (response.data.code === 2) {
-      toast.success("Rol dado de baja con éxito");
+      // Success
     }
     if (response.data.code === 1) {
-      toast.success("Rol eliminado con éxito");
+      // Success
     }
     if (response.status === 404) {
-      toast.error("Ocurrió un error al eliminar el rol");
+      // Error
     }
   } catch (error) {
-    toast.error("Error en el servidor interno");
+    // Error
   }
 };
 

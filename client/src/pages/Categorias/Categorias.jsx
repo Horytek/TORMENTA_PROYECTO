@@ -67,6 +67,7 @@ function Categorias({
         onEdit={updateCategoriaLocal}
         onDelete={removeCategoriaLocal}
         onDeactivate={deactivateCategoriaLocal}
+        onUpdate={updateCategoriaLocal}
       />
 
       {activeAdd && (
