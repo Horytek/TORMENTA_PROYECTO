@@ -116,132 +116,202 @@ export function ModuloPermisos({
     if (!currentData[key] || typeof currentData[key] !== 'object') {
       return false;
     }
-    // Solo retornar true si el campo existe y es verdadero
     return currentData[key][field] === true;
   };
 
+  // Helper to separate actions
+  const getActionsSplit = (contextId, contextType) => {
+    const active = allActions.filter(a => isActionAllowed(a.key, contextId, contextType));
+    const viewAction = active.find(a => a.key === 'ver');
+    const otherActions = active.filter(a => a.key !== 'ver');
+
+    // Sort standard actions first in 'otherActions'
+    const standardOrder = ['crear', 'editar', 'eliminar'];
+    otherActions.sort((a, b) => {
+      const idxA = standardOrder.indexOf(a.key);
+      const idxB = standardOrder.indexOf(b.key);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return 0;
+    });
+
+    return { viewAction, otherActions };
+  };
+
+  const { viewAction: moduleViewAction, otherActions: moduleOtherActions } = getActionsSplit(modulo.id, 'modulo');
+
   return (
     <Card
-      className="shadow-sm border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden hover:shadow-md transition-shadow"
+      className="shadow-sm border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden hover:shadow-md transition-shadow mb-4"
       shadow="none"
     >
       <CardBody className="p-0">
+        {/* Module Header Row */}
         <div
-          className={`flex items-center justify-between px-5 py-4 ${modulo.expandible ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+          className={`flex items-center justify-between px-6 py-4 ${modulo.expandible ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/20' : ''} transition-colors`}
           onClick={() => modulo.expandible && toggleExpand(modulo.id)}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             {modulo.expandible ? (
-              expandedModulos[modulo.id] ?
-                <FaChevronDown className="text-gray-400" /> :
-                <FaChevronRight className="text-gray-400" />
-            ) : <div className="w-4" />}
+              <div className={`p-1 rounded-full ${expandedModulos[modulo.id] ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600' : 'text-slate-400'}`}>
+                {expandedModulos[modulo.id] ? <FaChevronDown size={14} /> : <FaChevronRight size={14} />}
+              </div>
+            ) : <div className="w-6" />}
 
-            <span className="font-bold text-slate-800 dark:text-slate-100 text-lg tracking-tight">{modulo.nombre}</span>
-            {isDeveloper && (
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                className="ml-2 text-slate-400 hover:text-blue-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfigTarget({ type: 'modulo', data: modulo });
-                  setIsConfigOpen(true);
-                }}
-              >
-                <FaCog />
-              </Button>
-            )}
-            {modulo.ruta && (
-              <code className="text-xs font-mono bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 ml-2">
-                {modulo.ruta}
-              </code>
-            )}
-            {modulo.planRequerido && (
-              <Chip size="sm" color={getPlanColor(modulo.planRequerido)} variant="flat">
-                Plan {modulo.planRequerido}+
-              </Chip>
-            )}
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-slate-800 dark:text-slate-100 text-lg tracking-tight">{modulo.nombre}</span>
+                {modulo.ruta && (
+                  <span className="text-xs text-slate-400 font-normal">
+                    ({modulo.ruta})
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {modulo.planRequerido && (
+                <Chip size="sm" color={getPlanColor(modulo.planRequerido)} variant="flat" className="h-6">
+                  Plan {modulo.planRequerido}+
+                </Chip>
+              )}
+              {isDeveloper && (
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  className="text-slate-400 hover:text-blue-500 w-8 h-8 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfigTarget({ type: 'modulo', data: modulo });
+                    setIsConfigOpen(true);
+                  }}
+                >
+                  <FaCog size={14} />
+                </Button>
+              )}
+            </div>
           </div>
 
-          {modulo.id !== 9 && (
-            <div className="flex gap-4 items-center flex-wrap">
-              {allActions.filter(action => isActionAllowed(action.key, modulo.id, 'modulo')).map(action => (
-                <Checkbox
-                  key={action.key}
-                  color={action.color}
-                  isSelected={getPermissionValue(`modulo_${modulo.id}`, action.key)}
-                  onValueChange={(isChecked) => handlePermissionChange(modulo.id, action.key, isChecked, 'modulo')}
-                  onClick={(e) => e.stopPropagation()}
-                  isDisabled={!isDeveloper}
-                >
-                  {action.label}
-                </Checkbox>
-              ))}
-            </div>
-          )}
+          {/* Right Side: View Action ONLY */}
+          <div className="flex items-center gap-4">
+            {moduleViewAction && (
+              <Checkbox
+                size="lg"
+                color={moduleViewAction.color}
+                isSelected={getPermissionValue(`modulo_${modulo.id}`, 'ver')}
+                onValueChange={(isChecked) => handlePermissionChange(modulo.id, 'ver', isChecked, 'modulo')}
+                onClick={(e) => e.stopPropagation()}
+                isDisabled={!isDeveloper}
+                classNames={{ label: "text-base font-semibold text-slate-700 dark:text-slate-200" }}
+              >
+                {moduleViewAction.label}
+              </Checkbox>
+            )}
+          </div>
         </div>
 
-        {expandedModulos[modulo.id] && modulo.submodulos && modulo.submodulos.length > 0 && (
-          <>
-            <Divider />
-            <div className="bg-slate-50 dark:bg-zinc-800/40 px-5 py-2 border-t border-slate-100 dark:border-zinc-800">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Submódulos</span>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800 divide-y divide-slate-50 dark:divide-zinc-800">
-              {modulo.submodulos
-                .filter(submodulo => submodulo.id_submodulo !== 8)
-                .map((submodulo) => (
-                  <div
-                    key={submodulo.id_submodulo}
-                    className="flex items-center justify-between px-5 py-3 pl-14 hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors"
+        {/* Module Expanded Content */}
+        {expandedModulos[modulo.id] && (
+          <div className="pb-2">
+            {/* Secondary Actions Row for Module (if any) */}
+            {moduleOtherActions.length > 0 && modulo.id !== 9 && (
+              <div className="px-6 py-3 pl-[3.25rem] border-b border-dashed border-slate-200 dark:border-zinc-800 flex flex-wrap gap-6 bg-slate-50/50">
+                {moduleOtherActions.map(action => (
+                  <Checkbox
+                    key={action.key}
+                    size="md"
+                    color={action.color}
+                    isSelected={getPermissionValue(`modulo_${modulo.id}`, action.key)}
+                    onValueChange={(isChecked) => handlePermissionChange(modulo.id, action.key, isChecked, 'modulo')}
+                    onClick={(e) => e.stopPropagation()}
+                    isDisabled={!isDeveloper}
+                    classNames={{ label: "text-sm font-medium" }}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                      <span className="text-slate-600 dark:text-slate-300 font-medium">{submodulo.nombre_sub}</span>
-                      {isDeveloper && (
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          className="text-slate-400 hover:text-blue-500 -ml-1 h-6 w-6 min-w-4"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfigTarget({ type: 'submodulo', data: submodulo });
-                            setIsConfigOpen(true);
-                          }}
-                        >
-                          <FaCog size={12} />
-                        </Button>
-                      )}
-                      {submodulo.ruta_submodulo && (
-                        <code className="text-[10px] font-mono bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700 ml-1">
-                          {submodulo.ruta_submodulo}
-                        </code>
-                      )}
-                    </div>
-
-                    {userInfo && (
-                      <div className="flex gap-3 items-center flex-wrap">
-                        {allActions.filter(action => isActionAllowed(action.key, submodulo.id_submodulo, 'submodulo')).map(action => (
-                          <Checkbox
-                            key={action.key}
-                            size="sm"
-                            color={action.color}
-                            isSelected={getPermissionValue(`submodulo_${submodulo.id_submodulo}`, action.key)}
-                            onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, action.key, isChecked, 'submodulo')}
-                            isDisabled={!isDeveloper}
-                          >
-                            {action.label}
-                          </Checkbox>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                    {action.label}
+                  </Checkbox>
                 ))}
-            </div>
-          </>
+              </div>
+            )}
+
+            {/* Submodules List */}
+            {modulo.submodulos && modulo.submodulos.length > 0 && (
+              <div className="bg-white dark:bg-zinc-900 mt-2">
+                {modulo.submodulos
+                  .filter(submodulo => submodulo.id_submodulo !== 8)
+                  .map((submodulo, index) => {
+                    const { viewAction: subView, otherActions: subOthers } = getActionsSplit(submodulo.id_submodulo, 'submodulo');
+
+                    return (
+                      <div
+                        key={submodulo.id_submodulo}
+                        className="flex items-center justify-between px-6 py-3 hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors group"
+                      >
+                        {/* Left: Name with Tree Connector */}
+                        <div className="flex items-center gap-3 pl-12 relative">
+                          {/* Tree Connector visual */}
+                          <div className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 border-l-2 border-b-2 border-slate-300 rounded-bl-lg"></div>
+
+                          <span className="text-slate-600 dark:text-slate-300 font-medium text-sm">{submodulo.nombre_sub}</span>
+
+                          {/* Hover Actions */}
+                          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                            {isDeveloper && (
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                className="text-slate-300 hover:text-blue-500 w-6 h-6"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfigTarget({ type: 'submodulo', data: submodulo });
+                                  setIsConfigOpen(true);
+                                }}
+                              >
+                                <FaCog size={12} />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right: All Actions Inline */}
+                        <div className="flex items-center gap-4">
+                          {/* View First */}
+                          {subView && (
+                            <Checkbox
+                              key={subView.key}
+                              size="sm"
+                              color={subView.color}
+                              isSelected={getPermissionValue(`submodulo_${submodulo.id_submodulo}`, subView.key)}
+                              onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, subView.key, isChecked, 'submodulo')}
+                              isDisabled={!isDeveloper}
+                              classNames={{ label: "text-xs font-semibold" }}
+                            >
+                              {subView.label}
+                            </Checkbox>
+                          )}
+                          {/* Others */}
+                          {subOthers.map(action => (
+                            <Checkbox
+                              key={action.key}
+                              size="sm"
+                              color={action.color}
+                              isSelected={getPermissionValue(`submodulo_${submodulo.id_submodulo}`, action.key)}
+                              onValueChange={(isChecked) => handlePermissionChange(submodulo.id_submodulo, action.key, isChecked, 'submodulo')}
+                              isDisabled={!isDeveloper}
+                              classNames={{ label: "text-xs font-medium" }}
+                            >
+                              {action.label}
+                            </Checkbox>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
         )}
       </CardBody>
 
