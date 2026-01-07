@@ -7,8 +7,8 @@ import {
 } from "@heroui/react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 
-export function ModuloPermisos({ 
-  modulo, 
+export function ModuloPermisos({
+  modulo,
   expandedModulos,
   toggleExpand,
   permisosData,
@@ -18,11 +18,11 @@ export function ModuloPermisos({
   userInfo,
   getPlanColor
 }) {
-  
+
   // Función helper para obtener el valor del permiso de forma segura
   const getPermissionValue = (key, field) => {
     const currentData = permisosData?.[dataKey];
-    
+
     // Retornar false explícitamente si no hay datos o si los datos están vacíos
     if (!currentData || typeof currentData !== 'object' || Object.keys(currentData).length === 0) {
       return false;
@@ -34,11 +34,11 @@ export function ModuloPermisos({
     // Solo retornar true si el campo existe y es verdadero
     return currentData[key][field] === true;
   };
-  
+
   return (
     <Card
-      className="shadow-md border border-gray-200 bg-white overflow-hidden"
-      style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}
+      className="shadow-sm border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden hover:shadow-md transition-shadow"
+      shadow="none"
     >
       <CardBody className="p-0">
         <div
@@ -48,13 +48,15 @@ export function ModuloPermisos({
           <div className="flex items-center gap-2">
             {modulo.expandible ? (
               expandedModulos[modulo.id] ?
-                <FaChevronDown className="text-gray-600" /> :
-                <FaChevronRight className="text-gray-600" />
+                <FaChevronDown className="text-gray-400" /> :
+                <FaChevronRight className="text-gray-400" />
             ) : <div className="w-4" />}
 
-            <span className="font-semibold text-gray-800 text-lg">{modulo.nombre}</span>
+            <span className="font-bold text-slate-800 dark:text-slate-100 text-lg tracking-tight">{modulo.nombre}</span>
             {modulo.ruta && (
-              <span className="text-xs text-gray-500 ml-2">({modulo.ruta})</span>
+              <code className="text-xs font-mono bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 ml-2">
+                {modulo.ruta}
+              </code>
             )}
             {modulo.planRequerido && (
               <Chip size="sm" color={getPlanColor(modulo.planRequerido)} variant="flat">
@@ -127,21 +129,24 @@ export function ModuloPermisos({
         {expandedModulos[modulo.id] && modulo.submodulos && modulo.submodulos.length > 0 && (
           <>
             <Divider />
-            <div className="bg-gray-100 px-5 py-2">
-              <span className="text-sm font-medium text-gray-600">Submódulos</span>
+            <div className="bg-slate-50 dark:bg-zinc-800/40 px-5 py-2 border-t border-slate-100 dark:border-zinc-800">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Submódulos</span>
             </div>
-            <div className="bg-gray-50">
+            <div className="bg-white dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800 divide-y divide-slate-50 dark:divide-zinc-800">
               {modulo.submodulos
                 .filter(submodulo => submodulo.id_submodulo !== 8)
                 .map((submodulo) => (
                   <div
                     key={submodulo.id_submodulo}
-                    className="flex items-center justify-between px-5 py-3 pl-14 border-t border-gray-200"
+                    className="flex items-center justify-between px-5 py-3 pl-14 hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-700">➤ {submodulo.nombre_sub}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-zinc-600"></div>
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">{submodulo.nombre_sub}</span>
                       {submodulo.ruta_submodulo && (
-                        <span className="text-xs text-gray-500 ml-2">({submodulo.ruta_submodulo})</span>
+                        <code className="text-[10px] font-mono bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700 ml-1">
+                          {submodulo.ruta_submodulo}
+                        </code>
                       )}
                     </div>
 

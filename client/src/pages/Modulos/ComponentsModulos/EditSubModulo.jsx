@@ -7,9 +7,12 @@ import {
     ModalBody,
     ModalFooter,
     Input,
+    Autocomplete,
+    AutocompleteItem
 } from "@heroui/react";
 import { useUpdateSubModulo } from "../data/updSubModulo";
 import { toast } from "react-hot-toast";
+import { AVAILABLE_ROUTES } from "@/utils/componentRegistry";
 
 export default function EditSubModuloModal({ open, onClose, onSubModuloUpdated, refetch, submodulo }) {
     const [submoduloNombre, setSubmoduloNombre] = useState("");
@@ -53,61 +56,56 @@ export default function EditSubModuloModal({ open, onClose, onSubModuloUpdated, 
     };
 
     return (
-        <>
-            <Modal
-                backdrop="opaque"
-                isOpen={open}
-                onOpenChange={(value) => {
-                    if (!value) handleClose();
-                }}
-            >
-                <ModalContent>
-                    {(closeModal) => (
-                        <>
-                            <ModalHeader>Editar submódulo</ModalHeader>
-                            <ModalBody>
-                                <p className="text-sm text-gray-600">
-                                    Edite los datos del submódulo.
-                                </p>
-                                <div className="mt-4 flex flex-col gap-3">
-                                    <Input
-                                        label="Nombre del submódulo"
-                                        value={submoduloNombre}
-                                        onChange={(e) => setSubmoduloNombre(e.target.value)}
-                                        required
-                                        style={{
-                                            border: "none",
-                                            boxShadow: "none",
-                                            outline: "none",
-                                        }}
-                                    />
-                                    <Input
-                                        label="Ruta del submódulo"
-                                        value={submoduloRuta}
-                                        onChange={(e) => setSubmoduloRuta(e.target.value)}
-                                        required
-                                        style={{
-                                            border: "none",
-                                            boxShadow: "none",
-                                            outline: "none",
-                                        }}
-                                    />
-                                </div>
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button onPress={closeModal}>Cancelar</Button>
-                                <Button
-                                    color="primary"
-                                    onPress={handleSave}
-                                    isLoading={loading}
+        <Modal
+            backdrop="opaque"
+            isOpen={open}
+            onOpenChange={(value) => {
+                if (!value) handleClose();
+            }}
+        >
+            <ModalContent>
+                {(closeModal) => (
+                    <>
+                        <ModalHeader>Editar submódulo</ModalHeader>
+                        <ModalBody>
+                            <p className="text-sm text-gray-600 mb-2">
+                                Edite los datos del submódulo.
+                            </p>
+                            <div className="flex flex-col gap-4">
+                                <Input
+                                    label="Nombre del submódulo"
+                                    value={submoduloNombre}
+                                    onChange={(e) => setSubmoduloNombre(e.target.value)}
+                                    required
+                                    variant="bordered"
+                                />
+                                <Autocomplete
+                                    label="Ruta del submódulo"
+                                    placeholder="Seleccione o escriba una ruta"
+                                    defaultItems={AVAILABLE_ROUTES.map(r => ({ value: r, label: r }))}
+                                    onInputChange={(value) => setSubmoduloRuta(value)}
+                                    onSelectionChange={(key) => setSubmoduloRuta(key)}
+                                    inputValue={submoduloRuta}
+                                    variant="bordered"
+                                    allowsCustomValue
                                 >
-                                    {loading ? "Guardando..." : "Actualizar"}
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
-        </>
+                                    {(item) => <AutocompleteItem key={item.value}>{item.label}</AutocompleteItem>}
+                                </Autocomplete>
+                            </div>
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button onPress={closeModal} variant="light">Cancelar</Button>
+                            <Button
+                                color="primary"
+                                onPress={handleSave}
+                                isLoading={loading}
+                            >
+                                {loading ? "Guardando..." : "Actualizar"}
+                            </Button>
+                        </ModalFooter>
+                    </>
+                )}
+            </ModalContent>
+        </Modal>
     );
 }

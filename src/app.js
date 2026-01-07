@@ -52,6 +52,7 @@ import landingRoutes from "./routes/landing.routes.js";
 import negocioRoutes from "./routes/negocio.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import developerRoutes from "./routes/developer.routes.js";
+import syncRoutes from "./routes/sync.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -64,9 +65,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Middlewares
 app.use(morgan("dev"));
-app.use(helmet());
-app.use(
-  helmet.contentSecurityPolicy({
+app.use(helmet({
+  contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: [
@@ -100,13 +100,21 @@ app.use(
         "data:",
         "https://i.ibb.co",
         "https://facturacion.apisperu.com/api",
-        "'self'", // Allow self for uploads
+        "'self'",
         "blob:"
       ],
-      // ...otras directivas...
     }
-  })
-);
+  },
+  strictTransportSecurity: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  },
+  xFrameOptions: { action: "sameorigin" },
+  xContentTypeOptions: true,
+  xXssProtection: true,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" }
+}));
 
 app.use(express.json({ limit: '2mb' })); // o más si lo necesitas
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
@@ -200,6 +208,7 @@ app.use("/api/help", helpRoutes);
 app.use("/api/function-shortcuts", functionShortcutsRoutes);
 app.use("/api/negocio", negocioRoutes);
 app.use("/api/developer", developerRoutes);
+app.use("/api/sync", syncRoutes);
 app.use("/api", emailRoutes);
 app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);

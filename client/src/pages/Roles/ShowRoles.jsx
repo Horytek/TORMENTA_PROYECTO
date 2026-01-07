@@ -201,58 +201,60 @@ export default function ShowRoles({ searchTerm }) {
   return (
     <div className="w-full">
 
-      <Table
-        aria-label="Tabla de roles"
-        classNames={{
-          base: "max-h-[calc(100vh-300px)] overflow-y-auto",
-          table: "min-w-full",
-          th: "bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider h-10 first:rounded-l-lg last:rounded-r-lg",
-          td: "py-3 border-b border-slate-100 dark:border-zinc-800",
-          tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors",
-          thead: "[&>tr]:first:shadow-none",
-        }}
-        bottomContent={
-          <div className="flex w-full justify-between items-center mt-4">
-            <span className="text-small text-default-400">
-              {filteredUsuarios.length} roles
-            </span>
-            <Pagination
-              isCompact
-              showControls
-              showShadow
-              color="primary"
-              page={currentPage}
-              total={Math.ceil(filteredUsuarios.length / usuariosPerPage) || 1}
-              onChange={setCurrentPage}
-            />
-            <span className="text-small text-default-400 w-[10%]"></span>
-          </div>
-        }
-      >
-        <TableHeader columns={columns}>
-          {(column) => (
-            <TableColumn
-              key={column.uid}
-              align={column.align || "start"}
-              allowsSorting={column.sortable}
-            >
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody
-          items={currentUsuarios}
-          emptyContent={"No se encontraron roles"}
-          isLoading={isLoading}
-          loadingContent={<Spinner label="Cargando..." />}
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 p-0 overflow-hidden">
+        <Table
+          aria-label="Tabla de roles"
+          removeWrapper
+          classNames={{
+            base: "max-h-[calc(100vh-300px)] overflow-y-auto",
+            table: "min-w-full",
+            th: "bg-gray-50 dark:bg-zinc-800/50 text-gray-500 dark:text-gray-400 font-medium text-xs tracking-wider border-b border-gray-100 dark:border-zinc-800 h-10 first:rounded-none last:rounded-none",
+            td: "py-3 border-b border-gray-50 dark:border-zinc-800/50 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 transition-colors",
+            tr: "transition-colors",
+            thead: "[&>tr]:first:shadow-none",
+          }}
+          bottomContent={
+            <div className="flex w-full justify-between items-center p-4 border-t border-gray-50 dark:border-zinc-800">
+              <span className="text-small text-default-400">
+                {filteredUsuarios.length} roles
+              </span>
+              <Pagination
+                isCompact
+                showControls
+                showShadow
+                color="primary"
+                page={currentPage}
+                total={Math.ceil(filteredUsuarios.length / usuariosPerPage) || 1}
+                onChange={setCurrentPage}
+              />
+            </div>
+          }
         >
-          {(item) => (
-            <TableRow key={item.id_rol}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn
+                key={column.uid}
+                align={column.align || "start"}
+                allowsSorting={column.sortable}
+              >
+                {column.name}
+              </TableColumn>
+            )}
+          </TableHeader>
+          <TableBody
+            items={currentUsuarios}
+            emptyContent={"No se encontraron roles"}
+            isLoading={isLoading}
+            loadingContent={<Spinner label="Cargando..." />}
+          >
+            {(item) => (
+              <TableRow key={item.id_rol}>
+                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Modals */}
       {isConfirmationModalOpen && (

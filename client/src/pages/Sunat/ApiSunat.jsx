@@ -29,7 +29,7 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/react";
-import { FaEdit, FaPlus, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEdit, FaPlus, FaEye, FaEyeSlash, FaKey } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { getClaves, addClave, updateClave, deleteClave } from "@/services/clave.services";
 import { getEmpresas } from "@/services/empresa.services";
@@ -148,147 +148,170 @@ const ApiSunat = () => {
 
   return (
     <div className="space-y-8 px-4 py-6 max-w-7xl mx-auto">
-      <h1 className="text-4xl font-extrabold text-blue-900 dark:text-blue-100 mb-2">
-        Gestión de claves
-      </h1>
-      <div className="w-full flex flex-row items-center gap-4 mb-4">
-  <Select
-    label="Empresa"
-    placeholder="Filtrar por empresa"
-    className="min-w-[220px] dark:bg-zinc-900 dark:text-blue-100"
-    selectedKeys={selectedEmpresa ? [selectedEmpresa] : []}
-    onSelectionChange={(keys) => {
-      const key = Array.from(keys)[0] || "";
-      setSelectedEmpresa(key);
-      setCurrentPage(1);
-    }}
-    size="lg"
-    classNames={{
-      trigger: "h-[48px] px-4", // iguala altura y padding
-      label: "text-sm mb-1",
-      value: "text-base",
-    }}
-  >
-    <SelectItem key="" value="">Todas</SelectItem>
-    {empresas.map((empresa) => (
-      <SelectItem key={empresa.id_empresa.toString()} value={empresa.id_empresa.toString()}>
-        {empresa.razonSocial}
-      </SelectItem>
-    ))}
-  </Select>
-  <Input
-    isClearable
-    placeholder="Buscar por tipo o valor..."
-    value={searchTerm}
-    onValueChange={setSearchTerm}
-    className="max-w-xs dark:bg-zinc-900 dark:text-blue-100 h-[48px] px-4"
-    size="lg"
-    classNames={{
-      inputWrapper: "h-[48px] px-4",
-      input: "text-base",
-    }}
-  />
-  <Button
-    color="primary"
-    startContent={<FaPlus />}
-    onPress={() => {
-      resetForm();
-      openModal();
-    }}
-    className="bg-blue-500 text-white dark:bg-blue-700 dark:text-white h-[48px] px-6"
-  >
-    Agregar Clave
-  </Button>
-</div>
-
-      <Card className="w-full bg-white/90 dark:bg-zinc-900/90 border border-blue-100/60 dark:border-zinc-700/60 rounded-xl shadow-md">
-        <CardHeader className="flex justify-between px-4 py-2 dark:border-zinc-700">
-          <h3 className="font-semibold text-gray-700 dark:text-blue-100">Lista de Claves</h3>
-        </CardHeader>
-        <CardBody>
-          <div className="overflow-x-auto">
-            <Table isStriped aria-label="Tabla de claves" className="min-w-[700px] dark:bg-zinc-900 dark:text-blue-100">
-              <TableHeader>
-                <TableColumn>ID</TableColumn>
-                <TableColumn>Empresa</TableColumn>
-                <TableColumn>Tipo</TableColumn>
-                <TableColumn>Valor</TableColumn>
-                <TableColumn>Estado</TableColumn>
-                <TableColumn>Acciones</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {paginatedKeys.map((key) => (
-                  <TableRow key={key.id_clave}>
-                    <TableCell>{key.id_clave}</TableCell>
-                    <TableCell>{key.razonSocial}</TableCell>
-                    <TableCell>{key.tipo}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span>
-                          {showKeys[key.id_clave] ? key.valor : getRepresentedValue(key.valor)}
-                        </span>
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          color="primary"
-                          size="sm"
-                          onPress={() => toggleShowKey(key.id_clave)}
-                          className="ml-1"
-                          aria-label={showKeys[key.id_clave] ? "Ocultar clave" : "Mostrar clave"}
-                        >
-                          {showKeys[key.id_clave] ? <FaEyeSlash /> : <FaEye />}
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        color={key.estado_clave === 1 ? "success" : "danger"}
-                        variant="flat"
-                      >
-                        {key.estado_clave === 1 ? "Activo" : "Inactivo"}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <Dropdown>
-                        <DropdownTrigger>
-                          <Button
-                            isIconOnly
-                            variant="light"
-                            color="primary"
-                            className="text-blue-500 hover:text-blue-700"
-                          >
-                            <FaEdit />
-                          </Button>
-                        </DropdownTrigger>
-                        <DropdownMenu>
-                          <DropdownItem onClick={() => handleEdit(key)}>
-                            Editar
-                          </DropdownItem>
-                          <DropdownItem
-                            color="danger"
-                            onClick={() => handleDelete(key.id_clave)}
-                          >
-                            Eliminar
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </Dropdown>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-zinc-800">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl">
+            <FaKey size={24} />
           </div>
-        </CardBody>
-        <div className="flex justify-between items-center p-4">
-          <Pagination
-            total={Math.ceil(filteredKeys.length / itemsPerPage)}
-            initialPage={currentPage}
-            onChange={(page) => setCurrentPage(page)}
-            showControls
-            color="primary"
-          />
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+              Gestión de Claves API
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+              Administra las credenciales de Sunat y otros servicios externos.
+            </p>
+          </div>
         </div>
-      </Card>
+      </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <Input
+            isClearable
+            placeholder="Buscar por tipo o valor..."
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            className="w-full sm:w-72"
+            startContent={<FaKey className="text-default-400" />}
+          />
+          <Select
+            placeholder="Filtrar por empresa"
+            className="w-full sm:w-64"
+            selectedKeys={selectedEmpresa ? [selectedEmpresa] : []}
+            onSelectionChange={(keys) => {
+              const key = Array.from(keys)[0] || "";
+              setSelectedEmpresa(key);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectItem key="" value="">Todas las empresas</SelectItem>
+            {empresas.map((empresa) => (
+              <SelectItem key={empresa.id_empresa.toString()} value={empresa.id_empresa.toString()}>
+                {empresa.razonSocial}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+
+        <Button
+          color="primary"
+          startContent={<FaPlus />}
+          onPress={() => {
+            resetForm();
+            openModal();
+          }}
+          className="bg-blue-600 text-white font-medium shadow-md shadow-blue-500/20 w-full sm:w-auto"
+        >
+          Agregar Clave
+        </Button>
+      </div>
+
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 p-0 overflow-hidden">
+        <Table
+          aria-label="Tabla de claves"
+          removeWrapper
+          classNames={{
+            base: "min-h-[400px]",
+            th: "bg-gray-50 dark:bg-zinc-800/50 text-gray-500 dark:text-gray-400 font-medium text-xs tracking-wider border-b border-gray-100 dark:border-zinc-800 h-10 first:rounded-none last:rounded-none",
+            td: "py-3 border-b border-gray-50 dark:border-zinc-800/50 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 transition-colors",
+            tr: "transition-colors",
+            thead: "[&>tr]:first:shadow-none",
+          }}
+          bottomContent={
+            <div className="flex w-full justify-between items-center p-4 border-t border-gray-50 dark:border-zinc-800">
+              <span className="text-small text-default-400">
+                {filteredKeys.length} claves
+              </span>
+              <Pagination
+                isCompact
+                showControls
+                showShadow
+                color="primary"
+                page={currentPage}
+                total={Math.ceil(filteredKeys.length / itemsPerPage) || 1}
+                onChange={setCurrentPage}
+              />
+            </div>
+          }
+        >
+          <TableHeader>
+            <TableColumn>ID</TableColumn>
+            <TableColumn>EMPRESA</TableColumn>
+            <TableColumn>TIPO</TableColumn>
+            <TableColumn>VALOR</TableColumn>
+            <TableColumn>ESTADO</TableColumn>
+            <TableColumn align="center">ACCIONES</TableColumn>
+          </TableHeader>
+          <TableBody emptyContent={"No se encontraron claves registradas"}>
+            {paginatedKeys.map((key) => (
+              <TableRow key={key.id_clave}>
+                <TableCell>
+                  <span className="text-slate-500 font-mono text-xs">{key.id_clave}</span>
+                </TableCell>
+                <TableCell>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{key.razonSocial}</span>
+                </TableCell>
+                <TableCell>
+                  <Chip size="sm" variant="dot" color="primary" className="border-none">{key.tipo}</Chip>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs font-mono bg-slate-50 dark:bg-zinc-800 px-2 py-1 rounded border border-slate-100 dark:border-zinc-700 text-slate-600 dark:text-slate-400">
+                      {showKeys[key.id_clave] ? key.valor : getRepresentedValue(key.valor)}
+                    </code>
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      size="sm"
+                      onPress={() => toggleShowKey(key.id_clave)}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      {showKeys[key.id_clave] ? <FaEyeSlash /> : <FaEye />}
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    className="gap-1 border-none capitalize"
+                    color={key.estado_clave === 1 ? "success" : "danger"}
+                    size="sm"
+                    variant="flat"
+                    startContent={
+                      <span className={`w-1 h-1 rounded-full ${key.estado_clave === 1 ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>
+                    }
+                  >
+                    {key.estado_clave === 1 ? "Activo" : "Inactivo"}
+                  </Chip>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-center items-center gap-2">
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      color="primary"
+                      size="sm"
+                      onPress={() => handleEdit(key)}
+                      className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    >
+                      <FaEdit size={16} />
+                    </Button>
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      color="danger"
+                      size="sm"
+                      onPress={() => handleDelete(key.id_clave)}
+                      className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <FaKey size={14} className="rotate-45" /> {/* Using FaKey as trash alternative or keep FaTrash if imported */}
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Modal para agregar/editar clave */}
       <Modal isOpen={isModalOpen} onOpenChange={onModalChange}>

@@ -7,9 +7,12 @@ import {
     ModalBody,
     ModalFooter,
     Input,
+    Autocomplete,
+    AutocompleteItem
 } from "@heroui/react";
 import { useUpdateModulo } from "../data/updModulo";
 import { toast } from "react-hot-toast";
+import { AVAILABLE_ROUTES } from "@/utils/componentRegistry";
 
 export default function EditModuloModal({ open, onClose, onModuloUpdated, refetch, modulo }) {
     const [moduloNombre, setModuloNombre] = useState("");
@@ -53,61 +56,56 @@ export default function EditModuloModal({ open, onClose, onModuloUpdated, refetc
     };
 
     return (
-        <>
-            <Modal
-                backdrop="opaque"
-                isOpen={open}
-                onOpenChange={(value) => {
-                    if (!value) handleClose();
-                }}
-            >
-                <ModalContent>
-                    {(closeModal) => (
-                        <>
-                            <ModalHeader>Editar módulo</ModalHeader>
-                            <ModalBody>
-                                <p className="text-sm text-gray-600">
-                                    Edite los datos del módulo.
-                                </p>
-                                <div className="mt-4 flex flex-col gap-3">
-                                    <Input
-                                        label="Nombre del módulo"
-                                        value={moduloNombre}
-                                        onChange={(e) => setModuloNombre(e.target.value)}
-                                        required
-                                        style={{
-                                            border: "none",
-                                            boxShadow: "none",
-                                            outline: "none",
-                                        }}
-                                    />
-                                    <Input
-                                        label="Ruta del módulo"
-                                        value={moduloRuta}
-                                        onChange={(e) => setModuloRuta(e.target.value)}
-                                        required
-                                        style={{
-                                            border: "none",
-                                            boxShadow: "none",
-                                            outline: "none",
-                                        }}
-                                    />
-                                </div>
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button onPress={closeModal}>Cancelar</Button>
-                                <Button
-                                    color="primary"
-                                    onPress={handleSave}
-                                    isLoading={loading}
+        <Modal
+            backdrop="opaque"
+            isOpen={open}
+            onOpenChange={(value) => {
+                if (!value) handleClose();
+            }}
+        >
+            <ModalContent>
+                {(closeModal) => (
+                    <>
+                        <ModalHeader>Editar módulo</ModalHeader>
+                        <ModalBody>
+                            <p className="text-sm text-gray-600 mb-2">
+                                Edite los datos del módulo.
+                            </p>
+                            <div className="flex flex-col gap-4">
+                                <Input
+                                    label="Nombre del módulo"
+                                    value={moduloNombre}
+                                    onChange={(e) => setModuloNombre(e.target.value)}
+                                    required
+                                    variant="bordered"
+                                />
+                                <Autocomplete
+                                    label="Ruta del módulo"
+                                    placeholder="Seleccione o escriba una ruta"
+                                    defaultItems={AVAILABLE_ROUTES.map(r => ({ value: r, label: r }))}
+                                    onInputChange={(value) => setModuloRuta(value)}
+                                    onSelectionChange={(key) => setModuloRuta(key)}
+                                    inputValue={moduloRuta}
+                                    variant="bordered"
+                                    allowsCustomValue
                                 >
-                                    {loading ? "Guardando..." : "Actualizar"}
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
-        </>
+                                    {(item) => <AutocompleteItem key={item.value}>{item.label}</AutocompleteItem>}
+                                </Autocomplete>
+                            </div>
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button onPress={closeModal} variant="light">Cancelar</Button>
+                            <Button
+                                color="primary"
+                                onPress={handleSave}
+                                isLoading={loading}
+                            >
+                                {loading ? "Guardando..." : "Actualizar"}
+                            </Button>
+                        </ModalFooter>
+                    </>
+                )}
+            </ModalContent>
+        </Modal>
     );
 }

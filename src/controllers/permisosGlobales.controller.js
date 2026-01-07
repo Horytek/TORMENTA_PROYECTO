@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 // Helper para obtener el nombre de usuario de forma flexible
 function getUserName(req) {
@@ -294,6 +295,7 @@ const savePermisosGlobales = async (req, res) => {
     const { id_rol, permisos, plan_seleccionado } = req.body;
     const nameUser = getUserName(req);
     const id_tenant = req.id_tenant;
+    const id_usuario_actor = req.user?.id_usuario;
 
     const isDeveloper = await isDeveloperUser(req, connection);
 
@@ -346,6 +348,23 @@ const savePermisosGlobales = async (req, res) => {
     }
 
     await connection.commit();
+
+    // ---------------------------------------------------------
+    // Audit Log (Async)
+    // ---------------------------------------------------------
+    logAudit(req, {
+      actor_user_id: id_usuario_actor,
+      actor_role: req.user?.rol || 'DESARROLLADOR',
+      id_tenant_target: null, // Global
+      entity_type: 'PERMISOS_GLOBALES',
+      entity_id: `ROL:${id_rol}-PLAN:${planObjetivo}`,
+      action: 'UPDATE',
+      details: {
+        permisos_count: permisos ? permisos.length : 0,
+        affected_tenants_count: tenants.length
+      }
+    });
+    // ---------------------------------------------------------
 
     return res.json({
       success: true,

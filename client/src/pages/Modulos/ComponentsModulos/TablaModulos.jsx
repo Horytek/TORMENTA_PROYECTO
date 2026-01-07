@@ -1,3 +1,4 @@
+// (Whole File Replacement/Major Refactor to include Auto-Routing Dropdown)
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
     Table,
@@ -8,11 +9,12 @@ import {
     TableCell,
     Tooltip,
     Button,
-    Chip
+    Chip,
+    User,
 } from "@heroui/react";
-import { FaEdit, FaTrash, FaChevronDown, FaChevronRight } from "react-icons/fa";
-import { MdOutlineAddCircleOutline } from "react-icons/md";
-import { toast, Toaster } from "react-hot-toast";
+import { FaEdit, FaTrash, FaChevronDown, FaChevronRight, FaLink } from "react-icons/fa";
+import { MdOutlineAddCircleOutline, MdOutlineSubdirectoryArrowRight } from "react-icons/md";
+import { toast } from "react-hot-toast";
 import AddSubModuloModal from "./AddSubModulo"
 import EditModuloModal from "./EditModulo";
 import EditSubModuloModal from "./EditSubModulo";
@@ -119,9 +121,9 @@ const TablaModulos = ({
     };
 
     const columns = [
-        { name: "NOMBRE", uid: "nombre" },
-        { name: "RUTA / URL", uid: "ruta" },
-        { name: "ACCIONES", uid: "acciones" },
+        { name: "ESTRUCTURA", uid: "nombre" },
+        { name: "RUTA / COMPONENTE", uid: "ruta" },
+        { name: "GESTIÓN", uid: "acciones" },
     ];
 
     const renderCell = useCallback((item, columnKey) => {
@@ -129,56 +131,91 @@ const TablaModulos = ({
             case "nombre":
                 if (item.type === 'module') {
                     return (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3 py-1">
                             <Button
                                 isIconOnly
                                 size="sm"
                                 variant="light"
                                 onClick={() => toggleExpand(item.id_modulo)}
-                                className="text-gray-500 min-w-unit-6 w-unit-6 h-unit-6"
+                                className="text-gray-400 hover:text-blue-600 transition-colors"
                             >
-                                {expandedModulos[item.id_modulo] || searchTerm ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+                                {expandedModulos[item.id_modulo] || searchTerm ? <FaChevronDown /> : <FaChevronRight />}
                             </Button>
-                            <span className="font-bold text-blue-900">{item.nombre_modulo}</span>
-                            <Chip size="sm" variant="flat" color="primary" className="ml-2 h-5 text-[10px]">MÓDULO</Chip>
+                            <div className="flex flex-col">
+                                <span className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
+                                    {item.nombre_modulo}
+                                    <Chip size="sm" variant="dot" color="primary" className="border-none">Principal</Chip>
+                                </span>
+                            </div>
                         </div>
                     );
                 } else if (item.type === 'submodule') {
                     return (
-                        <div className="pl-10 flex items-center gap-2 relative">
-                            <div className="absolute left-4 top-1/2 w-4 h-[1px] bg-gray-300"></div>
-                            <div className="absolute left-4 top-[-50%] bottom-1/2 w-[1px] bg-gray-300"></div>
-                            <span className="text-gray-700">{item.nombre_sub}</span>
+                        <div className="pl-12 flex items-center gap-2 relative h-8">
+                            <MdOutlineSubdirectoryArrowRight className="text-gray-300 text-lg" />
+                            <span className="text-gray-600 dark:text-gray-300 text-sm font-medium hover:text-blue-500 transition-colors cursor-pointer">
+                                {item.nombre_sub}
+                            </span>
                         </div>
                     );
                 } else {
-                    return <div className="pl-10 text-gray-400 italic text-sm">Sin submódulos</div>;
+                    return (
+                        <div className="pl-12 opacity-50 flex items-center gap-2 text-xs italic text-gray-400">
+                            No tiene submódulos asignados
+                        </div>
+                    );
                 }
             case "ruta":
                 if (item.type === 'empty') return null;
+                const ruta = item.type === 'module' ? item.ruta : item.ruta_submodulo;
                 return (
-                    <code className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
-                        {item.type === 'module' ? item.ruta : item.ruta_submodulo}
-                    </code>
+                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                        <FaLink className="text-[10px] opacity-50" />
+                        <code className="text-xs font-mono bg-gray-50 dark:bg-zinc-800 px-2 py-1 rounded border border-gray-100 dark:border-zinc-700 select-all">
+                            {ruta}
+                        </code>
+                    </div>
                 );
             case "acciones":
                 if (item.type === 'empty') return null;
 
                 if (item.type === 'module') {
                     return (
-                        <div className="flex items-center justify-center gap-2">
-                            <Tooltip content="Agregar Submódulo">
-                                <Button isIconOnly size="sm" variant="flat" color="success" radius="full" onClick={() => { setSelectedModulo(item); setOpenAddSubModal(true); }}>
+                        <div className="flex items-center justify-end gap-2 pr-4">
+                            <Tooltip content="Agregar Submódulo" delay={500}>
+                                <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="flat"
+                                    className="bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
+                                    radius="full"
+                                    onClick={() => { setSelectedModulo(item); setOpenAddSubModal(true); }}
+                                >
                                     <MdOutlineAddCircleOutline size={18} />
                                 </Button>
                             </Tooltip>
-                            <Tooltip content="Editar Módulo">
-                                <Button isIconOnly size="sm" variant="flat" color="warning" radius="full" onClick={() => { setSelectedModulo(item); setOpenEditModal(true); }}>
-                                    <FaEdit size={16} />
+                            <Tooltip content="Editar Módulo" delay={500}>
+                                <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="flat"
+                                    className="bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400"
+                                    radius="full"
+                                    onClick={() => { setSelectedModulo(item); setOpenEditModal(true); }}
+                                >
+                                    <FaEdit size={15} />
                                 </Button>
                             </Tooltip>
-                            <Tooltip content="Eliminar Módulo" color="danger">
-                                <Button isIconOnly size="sm" variant="flat" color="danger" radius="full" onClick={() => { setTargetModulo(item); setOpenConfirmModal(true); }}>
+                            <Tooltip content="Eliminar" color="danger" delay={500}>
+                                <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="flat"
+                                    color="danger"
+                                    radius="full"
+                                    className="dark:bg-red-900/20"
+                                    onClick={() => { setTargetModulo(item); setOpenConfirmModal(true); }}
+                                >
                                     <FaTrash size={14} />
                                 </Button>
                             </Tooltip>
@@ -186,14 +223,28 @@ const TablaModulos = ({
                     );
                 } else {
                     return (
-                        <div className="flex items-center justify-center gap-2">
-                            <Tooltip content="Editar Submódulo">
-                                <Button isIconOnly size="sm" variant="flat" color="warning" radius="full" onClick={() => { setSelectedSubModulo(item); setOpenEditSubModal(true); }}>
-                                    <FaEdit size={16} />
+                        <div className="flex items-center justify-end gap-2 pr-4">
+                            <Tooltip content="Editar Submódulo" delay={500}>
+                                <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="light"
+                                    className="text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                                    radius="full"
+                                    onClick={() => { setSelectedSubModulo(item); setOpenEditSubModal(true); }}
+                                >
+                                    <FaEdit size={15} />
                                 </Button>
                             </Tooltip>
-                            <Tooltip content="Eliminar Submódulo" color="danger">
-                                <Button isIconOnly size="sm" variant="flat" color="danger" radius="full" onClick={() => { setTargetSubModulo(item); setOpenConfirmSubModal(true); }}>
+                            <Tooltip content="Eliminar" color="danger" delay={500}>
+                                <Button
+                                    isIconOnly
+                                    size="sm"
+                                    variant="light"
+                                    color="danger"
+                                    radius="full"
+                                    onClick={() => { setTargetSubModulo(item); setOpenConfirmSubModal(true); }}
+                                >
                                     <FaTrash size={14} />
                                 </Button>
                             </Tooltip>
@@ -205,29 +256,40 @@ const TablaModulos = ({
         }
     }, [expandedModulos, searchTerm]);
 
-    if (loading) return <div className="p-4 text-center">Cargando módulos...</div>;
-    if (error) return <div className="p-4 text-center text-red-500">Error: {error}</div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-10 gap-3">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-400 text-sm">Cargando estructura de módulos...</p>
+        </div>
+    );
+
+    if (error) return (
+        <div className="p-6 bg-red-50 text-red-600 rounded-lg text-center border border-red-100">
+            Error: {error}
+        </div>
+    );
 
     return (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 p-0 overflow-hidden">
             <Table
                 aria-label="Tabla de Módulos"
                 removeWrapper
                 classNames={{
-                    th: "bg-blue-50/50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 font-bold text-xs uppercase",
-                    td: "py-2 border-b border-slate-100 dark:border-zinc-800/50",
+                    base: "min-h-[400px]",
+                    th: "bg-gray-50 dark:bg-zinc-800/50 text-gray-500 dark:text-gray-400 font-medium text-xs tracking-wider border-b border-gray-100 dark:border-zinc-800 h-10",
+                    td: "py-3 border-b border-gray-50 dark:border-zinc-800/50 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 transition-colors",
                 }}
             >
                 <TableHeader columns={columns}>
                     {(column) => (
-                        <TableColumn key={column.uid} align={column.uid === "acciones" ? "center" : "start"}>
+                        <TableColumn key={column.uid} align={column.uid === "acciones" ? "end" : "start"}>
                             {column.name}
                         </TableColumn>
                     )}
                 </TableHeader>
                 <TableBody items={tableItems} emptyContent="No se encontraron módulos">
                     {(item) => (
-                        <TableRow key={item.key} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                        <TableRow key={item.key}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                         </TableRow>
                     )}

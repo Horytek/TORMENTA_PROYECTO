@@ -63,3 +63,6 @@ export const COMPONENT_REGISTRY = {
 
 // Re-export legacy maps for hybrid support in Dashboard
 export { moduleComponentMap, submoduleComponentMap };
+
+// Export available routes key list for Auto-Routing UI
+export const AVAILABLE_ROUTES = Object.keys(COMPONENT_REGISTRY).sort();

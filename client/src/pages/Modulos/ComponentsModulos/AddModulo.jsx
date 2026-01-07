@@ -71,22 +71,12 @@ export default function AddModuloModal({ open, onClose, onModuloCreated, refetch
                                         value={moduloNombre}
                                         onChange={(e) => setModuloNombre(e.target.value)}
                                         required
-                                        style={{
-                                            border: "none",
-                                            boxShadow: "none",
-                                            outline: "none",
-                                        }}
                                     />
                                     <Input
                                         label="Ruta del módulo"
                                         value={moduloRuta}
                                         onChange={(e) => setModuloRuta(e.target.value)}
                                         required
-                                        style={{
-                                            border: "none",
-                                            boxShadow: "none",
-                                            outline: "none",
-                                        }}
                                     />
                                 </div>
                             </ModalBody>

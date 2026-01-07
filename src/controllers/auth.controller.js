@@ -66,40 +66,53 @@ const login = async (req, res) => {
         }
 
         // ---------------------------------------------------------
-        // VALIDACIÓN DE SUSCRIPCIÓN (EXPIRACIÓN)
+        // VALIDACIÓN DE SUSCRIPCIÓN (NUEVA ARQUITECTURA E1)
         // ---------------------------------------------------------
-        if (userbd.id_tenant && userbd.fecha_pago) {
-            const today = new Date();
-            const expiration = new Date(userbd.fecha_pago);
-            today.setHours(0, 0, 0, 0); // Normalizar a medianoche
 
-            // Si la fecha de pago es AYER o antes (expirado)
-            if (expiration < today) {
-                // Bloquear usuario actual Y TODOS los usuarios del mismo tenant
-                try {
-                    await connection.query(
-                        "UPDATE usuario SET estado_usuario = 0 WHERE id_tenant = ?",
-                        [userbd.id_tenant]
-                    );
-                    userbd.estado_usuario = 0; // Actualizar en memoria local
-                    console.log(`[SUBSCRIPTION] Tenant ${userbd.id_tenant} expirado (${userbd.fecha_pago}). Usuarios bloqueados.`);
-                } catch (eExp) {
-                    console.error("[SUBSCRIPTION] Error desactivando usuarios expirados:", eExp);
+        let tenantStatus = 'ACTIVE'; // Default para devs o usuarios sin tenant
+        let permVersion = 1;
+
+        if (userbd.id_tenant) {
+            // Consultar estado del tenant
+            const [tenantRows] = await connection.query(
+                "SELECT tenant_status, grace_until, perm_version FROM empresa WHERE id_empresa = ? LIMIT 1",
+                [userbd.id_tenant]
+            );
+
+            if (tenantRows.length > 0) {
+                const tenantInfo = tenantRows[0];
+                tenantStatus = tenantInfo.tenant_status;
+                permVersion = tenantInfo.perm_version || 1;
+
+                // Lógica de Bloqueo por Status
+                if (tenantInfo.tenant_status === 'SUSPENDED') {
+                    const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
+                    recordFailedAttempt(req);
+                    return res.status(403).json({
+                        success: false,
+                        message: "La suscripción de la empresa está suspendida. Contacte al administrador."
+                    });
+                }
+
+                if (tenantInfo.tenant_status === 'GRACE') {
+                    // Validar si venció el periodo de gracia
+                    if (tenantInfo.grace_until && new Date(tenantInfo.grace_until) < new Date()) {
+                        // Opcional: Auto-suspender aquí o simplemente negar acceso
+                        // Por ahora negamos acceso
+                        return res.status(403).json({
+                            success: false,
+                            message: "El periodo de gracia de la suscripción ha terminado."
+                        });
+                    }
                 }
             }
         }
-        // ---------------------------------------------------------
 
-        // Ahora verificar estado actual
+        // El usuario individual debe estar activo
         if (userbd.estado_usuario !== 1) {
             const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
             recordFailedAttempt(req);
-
-            const msg = userbd.fecha_pago && new Date(userbd.fecha_pago) < new Date()
-                ? "Tu suscripción ha vencido. Contacta al administrador."
-                : "Tu cuenta está desactivada.";
-
-            return res.status(403).json({ success: false, message: msg });
+            return res.status(403).json({ success: false, message: "Tu cuenta está desactivada." });
         }
 
         // Si es rol normal, traer más datos
@@ -122,7 +135,9 @@ const login = async (req, res) => {
         const token = await createAccessToken({
             nameUser: user.usuario,
             id_usuario: userbd.id_usuario,
-            id_tenant: userbd.id_tenant ?? null
+            id_tenant: userbd.id_tenant ?? null,
+            status: tenantStatus,
+            pv: permVersion // perm_version corta para payload de JWT
         });
 
         // Resolver ruta por defecto usando caché

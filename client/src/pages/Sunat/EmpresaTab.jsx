@@ -21,7 +21,7 @@ import {
   Select, SelectItem,
   Autocomplete, AutocompleteItem
 } from "@heroui/react";
-import { FaEdit, FaPlus, FaCoins } from "react-icons/fa";
+import { FaEdit, FaPlus, FaCoins, FaBuilding } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { getEmpresas, addEmpresa, updateEmpresa, deleteEmpresa, updateEmpresaMonedas } from "@/services/empresa.services";
 import { GiMoneyStack } from "react-icons/gi";
@@ -55,8 +55,8 @@ const EmpresaCard = ({ empresa, monedas, onEdit, onDelete, onVerMonedas }) => {
     : [];
 
   return (
-    <Card className="h-full w-full rounded-2xl shadow-lg">
-      <CardHeader className="flex items-start justify-between gap-3 p-6 pb-3">
+    <Card className="h-full w-full rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <CardHeader className="flex items-start justify-between gap-3 p-6 pb-4 border-b border-gray-50 dark:border-zinc-800/50 bg-gray-50/30 dark:bg-zinc-900/50">
         <div className="flex items-center gap-4">
           {empresa.logotipo ? (
             <img
@@ -299,8 +299,22 @@ const EmpresasSunat = () => {
   return (
     <div className="space-y-6 px-2 py-4 max-w-[1800px] mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
-        <h1 className="text-4xl font-extrabold">Gestión de empresas</h1>
+      {/* Premium Header with Action */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-zinc-800 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
+            <FaBuilding size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+              Empresas y Configuración
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+              Directorio de empresas registradas y sus configuraciones regionales.
+            </p>
+          </div>
+        </div>
+
         <Button
           color="primary"
           startContent={<FaPlus />}
@@ -324,24 +338,24 @@ const EmpresasSunat = () => {
             setSelectedPais("");
             openModal();
           }}
-          className="bg-blue-500 text-white"
+          className="bg-blue-600 text-white font-medium"
         >
           Agregar Empresa
         </Button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col md:flex-row gap-4 items-center mb-2">
+      {/* Premium Filter Toolbar */}
+      <div className="flex flex-col md:flex-row gap-4 items-center mb-6 bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800">
         <Select
-          label="Empresa"
           placeholder={loading ? "Cargando..." : "Selecciona una empresa"}
-          className="min-w-[260px]"
+          className="w-full md:w-80"
           isDisabled={loading}
           selectedKeys={selectedEmpresaId ? [selectedEmpresaId] : []}
           onSelectionChange={(keys) => {
             const key = Array.from(keys)[0] || "";
             setSelectedEmpresaId(key);
           }}
+          startContent={<FaBuilding className="text-default-400" />}
         >
           <SelectItem key="" value="">Todas</SelectItem>
           {empresaOptions.map((empresa) => (
@@ -355,8 +369,9 @@ const EmpresasSunat = () => {
           placeholder="Buscar por RUC o razón social..."
           value={searchTerm}
           onValueChange={setSearchTerm}
-          className="max-w-sm"
+          className="w-full md:max-w-md"
           size="md"
+          startContent={<FaBuilding className="text-default-400" />}
         />
       </div>
 
@@ -371,10 +386,12 @@ const EmpresasSunat = () => {
             onVerMonedas={handleVerMonedas}
           />
 
-          <Card ref={monedasCardRef} className="w-full shadow-lg rounded-2xl h-full">
-            <CardHeader className="flex items-center gap-2 px-6 pt-6 pb-2">
-              <GiMoneyStack className="text-2xl text-green-600" />
-              <h3 className="font-semibold text-gray-700">Monedas internacionales</h3>
+          <Card ref={monedasCardRef} className="w-full rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 bg-white dark:bg-zinc-900 h-full overflow-hidden">
+            <CardHeader className="flex items-center gap-3 px-6 py-4 border-b border-gray-50 dark:border-zinc-800/50 bg-gray-50/30 dark:bg-zinc-900/50">
+              <div className="p-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg">
+                <GiMoneyStack className="text-xl" />
+              </div>
+              <h3 className="font-bold text-gray-800 dark:text-white tracking-tight">Monedas internacionales</h3>
             </CardHeader>
             <CardBody className="px-6 pb-6">
               <div className="mb-2 text-gray-600 text-sm flex items-center gap-2">

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { Toaster, toast } from "react-hot-toast";
 import {
   Table,
   TableHeader,
@@ -6,35 +7,34 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Checkbox,
   Button,
-  Select,
-  SelectItem,
   Chip,
   Pagination,
-  Autocomplete,
-  AutocompleteItem,
   Input,
+  Select,
+  SelectItem,
 } from "@heroui/react";
-import { FaPlus, FaTrash, FaSyncAlt } from "react-icons/fa";
-import { getUsuarios, updateUsuarioPlan, deleteUsuario } from "@/services/usuario.services";
+import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
+import { getUsuarios, deleteUsuario } from "@/services/usuario.services";
 import { getEmpresas } from "@/services/empresa.services";
 import UsuariosForm from "./UsuariosForm";
+import EditPlanUserModal from "./EditPlanUserModal";
 
 const PlanUsers = () => {
   const [users, setUsers] = useState([]);
   const [empresas, setEmpresas] = useState([]);
-  const [newEmail, setNewEmail] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("");
   const [searchUser, setSearchUser] = useState("");
   const [searchEmpresa, setSearchEmpresa] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
   const [activeAdd, setModalOpen] = useState(false);
-  const [editableUsers, setEditableUsers] = useState({});
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedUserToEdit, setSelectedUserToEdit] = useState(null);
 
   const handleModalAdd = () => {
     setModalOpen(!activeAdd);
+    if (activeAdd) fetchUsers();
   };
 
   useEffect(() => {
@@ -42,225 +42,227 @@ const PlanUsers = () => {
     fetchEmpresas();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     const data = await getUsuarios();
-    // Mostrar solo administradores (id_rol = 1)
     const filteredUsuarios = (Array.isArray(data) ? data : []).filter(u => String(u.id_rol) === "1");
     setUsers(filteredUsuarios);
-  };
-  
+  }, []);
+
   const fetchEmpresas = async () => {
     const data = await getEmpresas();
     setEmpresas(data);
   };
 
-  const removeUser = async (id) => {
-    await deleteUsuario(id);
-    fetchUsers(); // Refrescar la lista de usuarios después de la eliminación
-  };
-
-  const updateUserPlan = (id, plan) => {
-    setUsers(users.map((user) => (user.id_usuario === id ? { ...user, plan_pago: plan } : user)));
-  };
-
-  const toggleEditable = (id) => {
-    setEditableUsers((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleEmpresaChange = (id, value) => {
-    setUsers(users.map((user) => (user.id_usuario === id ? { ...user, id_empresa: value } : user)));
-  };
-
-  const handleEstadoChange = (id, value) => {
-    setUsers(users.map((user) => (user.id_usuario === id ? { ...user, estado_usuario_1: value || "0" } : user)));
-  };
-
-  const handleFechaChange = (id, nuevaFecha) => {
-    setUsers(users.map((user) =>
-      user.id_usuario === id
-        ? { ...user, fecha_pago: nuevaFecha || null } // Si la fecha es vacía, establecer como null
-        : user
-    ));
-  };
-
-  const handleUpdateUserPlan = async (id) => {
-    const user = users.find((user) => user.id_usuario === id);
-    if (user) {
-      const formattedFechaPago = user.fecha_pago
-        ? new Date(user.fecha_pago).toISOString().split("T")[0]
-        : null;
-
-      try {
-        await updateUsuarioPlan(id, {
-          id_empresa: user.id_empresa, // Ahora se pasa el id_empresa
-          plan_pago: user.plan_pago === "enterprise" ? 1 : user.plan_pago === "pro" ? 2 : 3,
-          estado_usuario: user.estado_usuario_1,
-          fecha_pago: formattedFechaPago,
-        });
-        fetchUsers();
-      } catch (error) {
-        console.error("Error al actualizar el usuario:", error);
-      }
+  const removeUser = useCallback(async (id) => {
+    try {
+      await deleteUsuario(id);
+      toast.success("Usuario eliminado correctamente");
+      fetchUsers();
+    } catch (error) {
+      toast.error("Error al eliminar usuario");
     }
+  }, [fetchUsers]);
+
+  const handleEditUser = (user) => {
+    setSelectedUserToEdit(user);
+    setEditModalOpen(true);
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      (user.usua?.toLowerCase() || "").includes(searchUser.toLowerCase()) &&
-      (empresas.find((empresa) => empresa.id_empresa === user.id_empresa)?.razonSocial.toLowerCase() || "").includes(searchEmpresa.toLowerCase()) &&
-      (selectedPlan ? user.plan_pago === selectedPlan : true)
-  );
+  const handleEditSuccess = () => {
+    fetchUsers();
+  };
 
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const filteredUsers = useMemo(() => {
+    return users.filter(
+      (user) =>
+        (user.usua?.toLowerCase() || "").includes(searchUser.toLowerCase()) &&
+        (empresas.find((empresa) => empresa.id_empresa === user.id_empresa)?.razonSocial.toLowerCase() || "").includes(searchEmpresa.toLowerCase()) &&
+        (selectedPlan ? user.plan_pago === selectedPlan : true)
+    );
+  }, [users, searchUser, searchEmpresa, selectedPlan, empresas]);
+
+  const currentUsers = useMemo(() => {
+    const indexOfLastUser = currentPage * usersPerPage;
+    const indexOfFirstUser = indexOfLastUser - usersPerPage;
+    return filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  }, [filteredUsers, currentPage]);
 
   return (
-    <div className="space-y-6 p-6 bg-white shadow-lg rounded-xl border-gray-200">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <Input
-          type="text"
-          placeholder="Buscar usuario..."
-          value={searchUser}
-          onChange={(e) => setSearchUser(e.target.value)}
-        />
-        <Input
-          type="text"
-          placeholder="Buscar empresa..."
-          value={searchEmpresa}
-          onChange={(e) => setSearchEmpresa(e.target.value)}
-        />
-        <Select
-          label="Filtrar por Plan"
-          selectedKeys={[selectedPlan]}
-          onSelectionChange={(keys) => setSelectedPlan(keys.currentKey)}
-        >
-          <SelectItem key="">Todos</SelectItem>
-          <SelectItem key="basic">Plan Básico</SelectItem>
-          <SelectItem key="pro">Plan Pro</SelectItem>
-          <SelectItem key="enterprise">Plan Enterprise</SelectItem>
-        </Select>
-        <div className="flex justify-center items-center">
-          <Button color="primary" variant="shadow" onClick={handleModalAdd} startContent={<FaPlus />} className="bg-blue-500 text-white hover:bg-blue-600 w-full sm:w-auto">
-            Añadir
+    <div className="space-y-6">
+      <Toaster position="top-center" />
+      <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center p-1">
+        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto flex-1">
+          <Input
+            type="text"
+            placeholder="Buscar usuario..."
+            value={searchUser}
+            onChange={(e) => setSearchUser(e.target.value)}
+            className="w-full flex-1"
+            variant="faded"
+            size="md"
+            radius="lg"
+            classNames={{
+              inputWrapper: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm",
+            }}
+          />
+          <Input
+            type="text"
+            placeholder="Buscar empresa..."
+            value={searchEmpresa}
+            onChange={(e) => setSearchEmpresa(e.target.value)}
+            className="w-full flex-1"
+            variant="faded"
+            size="md"
+            radius="lg"
+            classNames={{
+              inputWrapper: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm",
+            }}
+          />
+          <Select
+            placeholder="Filtrar por plan"
+            selectedKeys={selectedPlan ? [selectedPlan] : []}
+            onSelectionChange={(keys) => setSelectedPlan(keys.currentKey)}
+            className="w-full flex-1"
+            variant="faded"
+            size="md"
+            radius="lg"
+            classNames={{
+              trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm",
+            }}
+          >
+            <SelectItem key="">Todos</SelectItem>
+            <SelectItem key="basic">Plan Básico</SelectItem>
+            <SelectItem key="pro">Plan Pro</SelectItem>
+            <SelectItem key="enterprise">Plan Enterprise</SelectItem>
+          </Select>
+        </div>
+        <div className="flex w-full lg:w-auto justify-end">
+          <Button
+            color="primary"
+            size="md"
+            className="font-medium shadow-lg shadow-blue-500/20 px-6"
+            onPress={handleModalAdd}
+            startContent={<FaPlus className="w-3 h-3" />}
+          >
+            Añadir Usuario
           </Button>
         </div>
       </div>
-      <Table aria-label="Lista de Usuarios" className="rounded-lg">
+
+      <Table
+        aria-label="Lista de Usuarios"
+        classNames={{
+          wrapper: "shadow-none bg-transparent p-0",
+          th: "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 font-semibold text-xs tracking-wider border-b border-slate-200 dark:border-zinc-700 h-12 first:rounded-l-lg last:rounded-r-lg",
+          td: "py-4 border-b border-slate-100 dark:border-zinc-800/50 group-hover:bg-slate-50/50 dark:group-hover:bg-zinc-800/30 transition-colors",
+          thead: "[&>tr]:first:shadow-none mb-2",
+        }}
+      >
         <TableHeader>
-          <TableColumn>Empresa</TableColumn>
-          <TableColumn>Usuario</TableColumn>
-          <TableColumn>Plan</TableColumn>
-          <TableColumn>Estado</TableColumn>
-          <TableColumn>Fecha de Pago</TableColumn>
-          <TableColumn>Acciones</TableColumn>
+          <TableColumn>EMPRESA</TableColumn>
+          <TableColumn>USUARIO</TableColumn>
+          <TableColumn align="center">PLAN</TableColumn>
+          <TableColumn align="center">ESTADO</TableColumn>
+          <TableColumn align="center">FECHA DE PAGO</TableColumn>
+          <TableColumn align="center">ACCIONES</TableColumn>
         </TableHeader>
-        <TableBody>
-  {currentUsers.map((user) => (
-    <TableRow key={user.id_usuario}>
-      <TableCell>
-        <div className="flex items-center">
-          <Checkbox
-            isSelected={editableUsers[user.id_usuario] || false}
-            onChange={() => {
-              toggleEditable(user.id_usuario);
-              // Asegurarse de que el Autocomplete tenga el valor seleccionado
-              if (!editableUsers[user.id_usuario]) {
-                handleEmpresaChange(user.id_usuario, user.id_empresa);
-              }
-            }}
-          />
-{editableUsers[user.id_usuario] ? (
-  <Autocomplete
-    className="ml-2 max-w-xs"
-    label="Empresa"
-    selectedKey={user.id_empresa?.toString()} // Asegúrate de que sea string
-    onSelectionChange={(selected) =>
-      handleEmpresaChange(user.id_usuario, selected)
-    }
-  >
-    {empresas.map((empresa) => (
-      <AutocompleteItem key={empresa.id_empresa.toString()}>
-        {empresa.razonSocial}
-      </AutocompleteItem>
-    ))}
-  </Autocomplete>
-) : (
-  <span className="ml-2">
-    {empresas.find((empresa) => empresa.id_empresa === user.id_empresa)?.razonSocial || "Sin asignar"}
-  </span>
-)}
-        </div>
-      </TableCell>
-      <TableCell>{user.usua}</TableCell>
-      <TableCell>
-        <Select
-          label="Plan"
-          selectedKeys={[user.plan_pago]}
-          onSelectionChange={(keys) => updateUserPlan(user.id_usuario, keys.currentKey)}
-        >
-          <SelectItem key="basic">Plan Básico</SelectItem>
-          <SelectItem key="pro">Plan Pro</SelectItem>
-          <SelectItem key="enterprise">Plan Enterprise</SelectItem>
-        </Select>
-      </TableCell>
-      <TableCell>
-        <Select
-          label="Estado"
-          selectedKeys={[user.estado_usuario_1.toString()]}
-          onSelectionChange={(keys) => handleEstadoChange(user.id_usuario, keys.currentKey)}
-        >
-          <SelectItem key="1">Activo</SelectItem>
-          <SelectItem key="0">Inactivo</SelectItem>
-        </Select>
-      </TableCell>
-      <TableCell>
-        {editableUsers[user.id_usuario] ? (
-          <Input
-            type="date"
-            value={user.fecha_pago ? new Date(user.fecha_pago).toISOString().split("T")[0] : ""}
-            onChange={(e) => handleFechaChange(user.id_usuario, e.target.value)}
-          />
-        ) : (
-          <span>{user.fecha_pago ? new Date(user.fecha_pago).toLocaleDateString("es-ES") : "Sin fecha"}</span>
-        )}
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center space-x-2">
-          <Button
-            isIconOnly
-            variant="light"
-            color="danger"
-            onClick={() => removeUser(user.id_usuario)}
-          >
-            <FaTrash />
-          </Button>
-          <Button
-            isIconOnly
-            variant="light"
-            color="primary"
-            onClick={() => handleUpdateUserPlan(user.id_usuario)}
-          >
-            <FaSyncAlt />
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
-  ))}
-</TableBody>
+        <TableBody items={currentUsers} emptyContent="No se encontraron usuarios">
+          {(user) => (
+            <TableRow key={user.id_usuario} className="group">
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {empresas.find((empresa) => empresa.id_empresa === user.id_empresa)?.razonSocial || "Sin asignar"}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 text-xs font-bold shadow-sm">
+                    {(user.usua || "U").substring(0, 2).toUpperCase()}
+                  </div>
+                  <span className="text-slate-600 dark:text-slate-400 font-medium">{user.usua}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-center">
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    className="capitalize"
+                    color={user.plan_pago === 'enterprise' ? 'warning' : user.plan_pago === 'pro' ? 'secondary' : 'primary'}
+                  >
+                    {user.plan_pago === 'basic' ? 'Básico' : user.plan_pago === 'pro' ? 'Pro' : user.plan_pago === 'enterprise' ? 'Enterprise' : user.plan_pago}
+                  </Chip>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-center">
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${user.estado_usuario_1 == "1"
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    }`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${user.estado_usuario_1 == "1" ? "bg-green-500" : "bg-red-500"}`} />
+                    {user.estado_usuario_1 == "1" ? "Activo" : "Inactivo"}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-center">
+                  <span className="text-sm text-slate-500 font-medium">
+                    {user.fecha_pago ? new Date(user.fecha_pago).toLocaleDateString("es-ES") : "Sin fecha"}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-center gap-1">
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    color="primary"
+                    onPress={() => handleEditUser(user)}
+                    className="text-blue-500 hover:bg-blue-50"
+                  >
+                    <FaEdit className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    color="danger"
+                    onPress={() => removeUser(user.id_usuario)}
+                    className="text-red-500 hover:bg-red-50"
+                  >
+                    <FaTrash className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
       </Table>
       <div className="flex justify-center mt-4">
         <Pagination
           showControls
           initialPage={1}
-          currentPage={currentPage}
-          total={Math.ceil(filteredUsers.length / usersPerPage)}
+          page={currentPage}
+          total={Math.ceil(filteredUsers.length / usersPerPage) || 1}
           onChange={setCurrentPage}
         />
       </div>
+
       {activeAdd && (
         <UsuariosForm modalTitle={"Nuevo Usuario"} onClose={handleModalAdd} />
       )}
+
+      <EditPlanUserModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        user={selectedUserToEdit}
+        companies={empresas}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 };

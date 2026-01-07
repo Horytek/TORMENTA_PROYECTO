@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { FaPlus } from "react-icons/fa";
-import { Button } from '@heroui/react';
+import { FaPlus, FaLayerGroup } from "react-icons/fa";
+import { Button, Card, CardBody } from '@heroui/react';
 import TablaModulos from '@/pages/Modulos/ComponentsModulos/TablaModulos';
 import AddModuloModal from './ComponentsModulos/AddModulo';
 import useGetModulos from "./data/getModulos";
@@ -22,41 +22,56 @@ function Modulos() {
     };
 
     return (
-        <div className="w-full my-4">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-            <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-                <div>
-                    <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Módulos y Submódulos</h1>
-                    <p className="text-sm text-gray-500 mt-1">Gestiona la estructura de navegación del sistema</p>
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-zinc-800">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                        <FaLayerGroup size={24} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+                            Módulos y Submódulos
+                        </h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                            Gestiona la estructura de navegación y organización del sistema
+                        </p>
+                    </div>
                 </div>
-                <div className="flex gap-3 w-full md:w-auto">
+
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                     <BarraSearch
                         placeholder="Buscar módulo..."
                         isClearable={true}
-                        className="w-full md:w-64"
+                        className="w-full sm:w-72"
                         value={searchTerm}
                         onChange={handleSearchChange}
                     />
                     <Button
                         color="primary"
-                        endContent={<FaPlus />}
+                        endContent={<FaPlus size={14} />}
                         onPress={handleModalAdd}
-                        className="font-semibold"
+                        className="font-semibold shadow-lg shadow-blue-500/30"
+                        radius="full"
                     >
                         Nuevo Módulo
                     </Button>
                 </div>
             </div>
 
-            <TablaModulos
-                modulos={modulos}
-                submodulos={submodulos}
-                loading={loading}
-                error={error}
-                searchTerm={searchTerm}
-                getSubmodulosByModuloId={getSubmodulosByModuloId}
-                refreshModulos={refreshModulos}
-            />
+            {/* Content Section */}
+            <div className="grid grid-cols-1">
+                <TablaModulos
+                    modulos={modulos}
+                    submodulos={submodulos}
+                    loading={loading}
+                    error={error}
+                    searchTerm={searchTerm}
+                    getSubmodulosByModuloId={getSubmodulosByModuloId}
+                    refreshModulos={refreshModulos}
+                />
+            </div>
 
             <AddModuloModal
                 open={activeAdd}

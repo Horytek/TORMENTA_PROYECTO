@@ -7,6 +7,7 @@ import TablaAsignacion from './ComponentsRoles/TablaAsignacion';
 import { Tabs, Tab, Spinner } from "@heroui/react";
 import { useGetRutas, useRoles } from '@/services/permisos.services';
 import axios from '@/api/axios';
+import { FaUserTag } from "react-icons/fa";
 
 function Roles() {
   const [activeAdd, setModalOpen] = useState(false);
@@ -137,13 +138,21 @@ function Roles() {
   return (
     <div className="w-full min-h-screen p-6 flex flex-col gap-6 bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-200">
 
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Roles y Permisos
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-          Administra los roles de usuario, configura permisos de acceso y define las pantallas de inicio de cada rol.
-        </p>
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-zinc-800">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl">
+            <FaUserTag size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+              Roles y Permisos
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+              Administra los roles de usuario, configura permisos de acceso y define las pantallas de inicio.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="w-full flex flex-col">

@@ -1,7 +1,4 @@
 import {
-  Card,
-  CardHeader,
-  CardBody,
   Tabs,
   Tab,
   Spinner,
@@ -40,7 +37,7 @@ export function TablaPermisosGlobales() {
         }
         return prev;
       });
-      
+
       // Forzar re-render para actualizar la UI
       setForceRenderKey(prev => prev + 1);
     }
@@ -52,7 +49,7 @@ export function TablaPermisosGlobales() {
       refetchPermisos();
     }
   }, [currentRoleId, selectedPlan]);
-  
+
   // Ref para controlar el primer render y prevenir bucles
   const isInitialized = useRef(false);
   const lastProcessedKey = useRef('');
@@ -62,7 +59,7 @@ export function TablaPermisosGlobales() {
   const showToastWithDebounce = useCallback((message, type = 'success') => {
     const now = Date.now();
     const timeSinceLastToast = now - lastToastTimeRef.current;
-    
+
     // Solo mostrar toast si han pasado al menos 500ms desde el último
     if (timeSinceLastToast > 500) {
       if (type === 'success') {
@@ -73,7 +70,7 @@ export function TablaPermisosGlobales() {
       lastToastTimeRef.current = now;
     }
   }, []);
-  
+
   const {
     modulosConSubmodulos,
     planEmpresa,
@@ -87,12 +84,12 @@ export function TablaPermisosGlobales() {
 
   const { roles, loading: rolesLoading, error: rolesError } = useRolesPorPlan();
   const { planes, loading: planesLoading } = usePlanesDisponibles();
-  
-  
+
+
   const { permisos, loading: permisosLoading, refetchPermisos } = usePermisosByRolGlobal(currentRoleId, selectedPlan);
   const { savePermisos, saving: savingPermisos } = useSavePermisosGlobales();
 
-    // Filtrar solo el rol Administrador
+  // Filtrar solo el rol Administrador
   const adminRoles = useMemo(() => {
     return (roles || []).filter(
       (r) => r.id_rol === 1 || (r.nom_rol || '').toUpperCase() === 'Administrador'
@@ -100,26 +97,26 @@ export function TablaPermisosGlobales() {
   }, [roles]);
 
   // Memoizar el cálculo de isDeveloper - verificar múltiples campos con más flexibilidad
-const isDeveloper = useMemo(() => {
-  if (!userInfo) return false;
-  const isDevByUsername = userInfo?.usuario === 'desarrollador' || userInfo?.nameUser === 'desarrollador';
-  const isDevByRole = userInfo?.rol === 10 || userInfo?.rol === '10' || parseInt(userInfo?.rol) === 10;
-  const isDevByIdRole = userInfo?.id_rol === 10 || userInfo?.id_rol === '10' || parseInt(userInfo?.id_rol) === 10;
-  return isDevByUsername || isDevByRole || isDevByIdRole;
-}, [userInfo]);
+  const isDeveloper = useMemo(() => {
+    if (!userInfo) return false;
+    const isDevByUsername = userInfo?.usuario === 'desarrollador' || userInfo?.nameUser === 'desarrollador';
+    const isDevByRole = userInfo?.rol === 10 || userInfo?.rol === '10' || parseInt(userInfo?.rol) === 10;
+    const isDevByIdRole = userInfo?.id_rol === 10 || userInfo?.id_rol === '10' || parseInt(userInfo?.id_rol) === 10;
+    return isDevByUsername || isDevByRole || isDevByIdRole;
+  }, [userInfo]);
 
   // Obtener información del usuario para saber si es desarrollador - solo una vez
-useEffect(() => {
-  if (userInfo) return;
-  const userData = useUserStore.getState();
-  if (userData) {
-    setUserInfo({
-      ...userData,
-      rol: parseInt(userData.rol) || userData.rol,
-      id_rol: parseInt(userData.id_rol) || userData.id_rol
-    });
-  }
-}, []);
+  useEffect(() => {
+    if (userInfo) return;
+    const userData = useUserStore.getState();
+    if (userData) {
+      setUserInfo({
+        ...userData,
+        rol: parseInt(userData.rol) || userData.rol,
+        id_rol: parseInt(userData.id_rol) || userData.id_rol
+      });
+    }
+  }, []);
 
   // Manejo inicial de roles y mapeo - más estable
   useEffect(() => {
@@ -157,7 +154,7 @@ useEffect(() => {
     }
 
     const dataKey = `${currentRoleId}_${selectedPlan}`;
-    
+
     // Si no hay permisos, crear estructura vacía
     if (!permisos || permisos.length === 0) {
       setPermisosData(prev => ({
@@ -197,7 +194,7 @@ useEffect(() => {
       ...prev,
       [dataKey]: rolePermisos
     }));
-    
+
     // Forzar re-render para asegurar que los checkboxes se actualicen
     setForceRenderKey(prev => prev + 1);
   }, [currentRoleId, permisos, selectedPlan]);
@@ -222,12 +219,12 @@ useEffect(() => {
         generar: false,
         ...currentRolePerms[key]
       };
-      
+
       // Solo actualizar si el valor realmente cambió
       if (currentPermission[field] === isChecked) {
         return prev;
       }
-      
+
       currentPermission[field] = isChecked;
       currentRolePerms[key] = currentPermission;
 
@@ -301,7 +298,7 @@ useEffect(() => {
 
     const dataKey = `${currentRoleId}_${selectedPlan}`;
     const currentData = permisosData[dataKey] || {};
-    
+
     const allPermissions = {};
 
     modulosConSubmodulos.forEach(modulo => {
@@ -330,7 +327,7 @@ useEffect(() => {
 
     // Solo actualizar y mostrar toast si realmente hay cambios
     const hasChanges = JSON.stringify(currentData) !== JSON.stringify(allPermissions);
-    
+
     if (hasChanges) {
       setPermisosData(prev => ({
         ...prev,
@@ -345,7 +342,7 @@ useEffect(() => {
 
     const dataKey = `${currentRoleId}_${selectedPlan}`;
     const currentData = permisosData[dataKey];
-    
+
     // Solo actualizar y mostrar toast si hay datos para limpiar
     if (currentData && Object.keys(currentData).length > 0) {
       setPermisosData(prev => ({
@@ -364,7 +361,7 @@ useEffect(() => {
   };
 
   const getPlanColor = (planId) => {
-    switch(planId) {
+    switch (planId) {
       case 1: return "primary";
       case 2: return "secondary";
       case 3: return "warning";
@@ -374,7 +371,7 @@ useEffect(() => {
 
   const renderModulosListing = () => {
     return (
-      <ModulosListing 
+      <ModulosListing
         rutasLoading={rutasLoading}
         rolesLoading={rolesLoading}
         planesLoading={planesLoading}
@@ -413,37 +410,47 @@ useEffect(() => {
           <Spinner label="Cargando datos iniciales..." color="primary" size="lg" />
         </div>
       )}
-      
+
       {(rutasError || rolesError) && (
         <div className="p-4 text-center text-danger">
           <p>Error al cargar los datos:</p>
           <p>{rutasError || rolesError}</p>
         </div>
       )}
-      
-{!rutasLoading && !rolesLoading && isInitialized.current && !rutasError && !rolesError && (
+
+      {!rutasLoading && !rolesLoading && isInitialized.current && !rutasError && !rolesError && (
         <>
-          <div className="flex flex-col mb-4">
-            <h1 className='text-3xl font-extrabold mb-4 text-blue-900 tracking-tight'>
-              Gestión de permisos globales por Plan
-            </h1>
-            <p
-              className="text-small text-default-400"
-              style={{ fontSize: "16px", userSelect: "none", marginTop: "10px" }}
-            >
-              Administra los permisos de acceso según el plan de suscripción de cada empresa.
-            </p>
+
+          {/* Premium Header - Clean Variant */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                <FaUserShield size={24} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+                  Permisos Globales
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                  Administra los permisos de acceso y roles según el plan de suscripción.
+                </p>
+              </div>
+            </div>
           </div>
-          <Card>
-            <CardHeader />
-            <CardBody>
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 overflow-hidden">
+            <div className="p-0">
               <Tabs
                 aria-label="Roles"
                 selectedKey={selectedTab}
                 onSelectionChange={handleTabChange}
                 color="primary"
-                variant="bordered"
-                classNames={{ tabList: "gap-4", tab: "py-2" }}
+                variant="underlined"
+                classNames={{
+                  tabList: "gap-6 px-6 pt-4 border-b border-slate-100 dark:border-zinc-800 w-full relative",
+                  cursor: "w-full bg-blue-600",
+                  tab: "max-w-fit px-0 h-12 text-slate-500",
+                  tabContent: "group-data-[selected=true]:text-blue-600 group-data-[selected=true]:font-bold"
+                }}
               >
                 {adminRoles.map(role => {
                   const tabKey = role.nom_rol.toLowerCase();
@@ -453,32 +460,36 @@ useEffect(() => {
                     <Tab
                       key={tabKey}
                       title={
-                        <div className="flex items-center gap-2">
-                          {isAdmin ? <FaUserShield /> : <FaUser />}
+                        <div className="flex items-center gap-2 pb-1">
+                          {isAdmin ? <FaUserShield size={16} /> : <FaUser size={16} />}
                           <span>{formatRoleName(role.nom_rol)}</span>
                           {role.plan_requerido && (
-                            <Chip size="sm" color={getPlanColor(role.plan_requerido)} variant="flat">
+                            <Chip size="sm" color={getPlanColor(role.plan_requerido)} variant="flat" className="ml-1 h-5 text-[10px]">
                               Plan {role.plan_requerido}+
                             </Chip>
                           )}
                         </div>
                       }
                     >
-                      <div className="p-4">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                          {isAdmin ? <FaUserShield /> : <FaUser />}
-                          Permisos de {formatRoleName(role.nom_rol)}
-                          {isDeveloper && (
-                            <span className="text-sm font-normal text-gray-500">
-                              (Plan {planes.find(p => p.id_plan === selectedPlan)?.descripcion_plan || selectedPlan || "Básico"})
-                            </span>
-                          )}
-                        </h3>
+                      <div className="p-6 pt-4">
+                        <div className="mb-6 flex items-center justify-between">
+                          <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-white">
+                            {isAdmin ? <FaUserShield className="text-blue-500" /> : <FaUser className="text-slate-500" />}
+                            Permisos de {formatRoleName(role.nom_rol)}
+                            {isDeveloper && (
+                              <span className="text-sm font-normal text-slate-400 ml-2">
+                                (Plan {planes.find(p => p.id_plan === selectedPlan)?.descripcion_plan || selectedPlan || "Básico"})
+                              </span>
+                            )}
+                          </h3>
+                        </div>
                         {renderModulosListing()}
                         {isDeveloper && (
-                          <div className="mt-6 flex justify-end">
+                          <div className="mt-8 flex justify-end pt-4 border-t border-slate-100 dark:border-zinc-800">
                             <Button
                               color="primary"
+                              className="font-medium px-8 shadow-lg shadow-blue-500/30"
+                              size="lg"
                               isLoading={savingPermisos}
                               onPress={handleSavePermissions}
                             >
@@ -491,8 +502,8 @@ useEffect(() => {
                   );
                 })}
               </Tabs>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         </>
       )}
     </>

@@ -85,13 +85,20 @@ const DatabaseCleaner = () => {
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center space-x-4 mb-6">
-                <div className="p-3 bg-red-100 rounded-full dark:bg-red-900/20">
-                    <Database className="w-8 h-8 text-red-600 dark:text-red-400" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Limpiador de Base de Datos</h1>
-                    <p className="text-muted-foreground text-gray-500">Herramienta para desarrolladores. Elimina datos de prueba de forma recursiva.</p>
+            {/* Premium Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-zinc-800">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl">
+                        <Database size={24} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+                            Limpiador de Base de Datos
+                        </h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                            Herramienta para desarrolladores. Elimina datos de prueba de forma recursiva.
+                        </p>
+                    </div>
                 </div>
             </div>
 

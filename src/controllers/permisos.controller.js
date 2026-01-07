@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 // Cache para consultas frecuentes
 const queryCache = new Map();
@@ -366,6 +367,7 @@ const savePermisos = async (req, res) => {
     const nameUser = req.user.nameUser;
     const isDeveloper = nameUser === 'desarrollador';
     const id_tenant = req.id_tenant;
+    const id_usuario_actor = req.user.id_usuario; // del JWT
 
     // Validaciones
     if (!id_rol) {
@@ -476,6 +478,37 @@ const savePermisos = async (req, res) => {
 
         // Limpiar caché
         queryCache.clear();
+
+        // ---------------------------------------------------------
+        // NUEVA ARQUITECTURA: Versionado + Auditoría
+        // ---------------------------------------------------------
+        if (!isDeveloper && id_tenant) {
+            // 1. Incrementar perm_version del tenant
+            connection.query(
+                "UPDATE empresa SET perm_version = perm_version + 1 WHERE id_empresa = ?",
+                [id_tenant]
+            ).catch(e => console.error("Error updating perm_version:", e));
+
+            // 2. Audit Log (Async)
+            if (permisos.length > 0) {
+                // Import dinámico para evitar error circular si fuera el caso, aunque aquí está ok
+                // import { logAudit } from "../utils/auditLogger.js"; 
+                // Asumimos que lo importamos arriba
+                logAudit(req, {
+                    actor_user_id: id_usuario_actor,
+                    actor_role: req.user.rol,
+                    id_tenant_target: id_tenant,
+                    entity_type: 'PERMISOS',
+                    entity_id: String(id_rol),
+                    action: 'UPDATE',
+                    details: {
+                        permisos_count: permisos.length,
+                        permisos_ids: permisos.map(p => p.id_modulo) // ejemplo
+                    }
+                });
+            }
+        }
+        // ---------------------------------------------------------
 
         res.json({
             success: true,

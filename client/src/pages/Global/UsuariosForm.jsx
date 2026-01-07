@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { IoMdClose, IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { toast } from "react-hot-toast";
-import { ButtonSave, ButtonClose } from '@/components/Buttons/Buttons';
+import { Button } from "@heroui/react";
 import { useForm } from "react-hook-form";
 import { addUsuario, updateUsuario } from '@/services/usuario.services';
-import { getRoles } from '@/services/rol.services';
 
-const ProductosForm = ({ modalTitle, onClose, initialData }) => {
-  const [roles, setRoles] = useState([]);
+const UsuariosForm = ({ modalTitle, onClose, initialData }) => {
   const [showPassword, setShowPassword] = useState(false);
 
+  // Default to Role ID 1 (Administrator)
   const { register, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: initialData?.data || {
-      id_rol: '',
+      id_rol: '1',
       usua: '',
       contra: '',
       estado_usuario: '',
@@ -21,19 +20,10 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
   });
 
   useEffect(() => {
-    getRols();
-  }, []);
-
-  useEffect(() => {
-    if (initialData && roles.length > 0) {
+    if (initialData) {
       reset(initialData.data);
     }
-  }, [initialData, roles, reset]);
-
-  const getRols = async () => {
-    const data = await getRoles();
-    setRoles(data);
-  };
+  }, [initialData, reset]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -53,107 +43,128 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
       }
 
       if (result) {
+        toast.success(initialData ? "Usuario actualizado" : "Usuario creado exitosamente");
         onClose();
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+      } else {
+        toast.error("Error al guardar el usuario");
       }
 
     } catch (error) {
+      console.error(error);
       toast.error("Error al realizar la gestión del usuario");
     }
   });
 
   return (
     <div>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
         <form
           onSubmit={onSubmit}
-          className="w-full max-w-lg md:max-w-xl bg-white rounded-2xl shadow-2xl border border-blue-100 animate-fade-in"
+          className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-xl shadow-2xl animate-fade-in overflow-hidden"
         >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-blue-100 rounded-t-2xl bg-gradient-to-r from-blue-50 to-blue-100">
-            <h3 className="text-xl md:text-2xl font-bold text-blue-900">{modalTitle}</h3>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{modalTitle}</h3>
             <button
               type="button"
-              className="text-gray-500 hover:text-blue-700 transition-colors"
+              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
               onClick={onClose}
               aria-label="Cerrar"
             >
-              <IoMdClose className="text-2xl md:text-3xl" />
+              <IoMdClose className="text-xl" />
             </button>
           </div>
-          <div className="px-6 py-6 md:py-8 bg-blue-50/60 rounded-b-2xl">
+
+          {/* Body */}
+          <div className="px-6 py-6 space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="w-full flex flex-col gap-2">
-                <label className="text-sm font-bold text-blue-900">Rol:</label>
-                <select
-                  {...register('id_rol', { required: true })}
-                  name='id_rol'
-                  className={`w-full text-sm bg-white border ${errors.id_rol ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-blue-200'} text-blue-900 rounded-lg p-2 transition-all focus:outline-none`}
-                >
-                  <option value="">Seleccione...</option>
-                  {roles.map((rol) => (
-                    <option key={rol.id_rol} value={rol.id_rol}>{rol.nom_rol}</option>
-                  ))}
-                </select>
-                {errors.id_rol && <span className="text-xs text-red-500 mt-1">El rol es requerido</span>}
+
+              {/* Role - Restricted to Administrator */}
+              <div className="w-full flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Rol</label>
+                <div className="relative">
+                  <select
+                    {...register('id_rol', { required: true })}
+                    className="w-full text-sm bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-lg p-2.5 outline-none cursor-not-allowed"
+                    disabled
+                  >
+                    <option value="1">Administrador</option>
+                  </select>
+                  {/* Hidden input to ensure value is sent if disabled doesn't send it (though defaultValues usually handle it, safest to rely on defaultValues + disabled) */}
+                  <input type="hidden" {...register('id_rol')} value="1" />
+                </div>
               </div>
-              <div className="w-full flex flex-col gap-2">
-                <label className="text-sm font-bold text-blue-900">Usuario:</label>
+
+              {/* Usuario */}
+              <div className="w-full flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Usuario</label>
                 <input
                   {...register('usua', { required: true })}
                   type="text"
-                  name='usua'
                   autoComplete="off"
-                  className={`w-full bg-white border ${errors.usua ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-blue-200'} text-blue-900 rounded-lg p-2 transition-all focus:outline-none`}
+                  className={`w-full text-sm bg-white dark:bg-zinc-900 border ${errors.usua ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'} text-zinc-900 dark:text-zinc-100 rounded-lg p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                   placeholder="Ingrese usuario"
                 />
-                {errors.usua && <span className="text-xs text-red-500 mt-1">El usuario es requerido</span>}
+                {errors.usua && <span className="text-xs text-red-500">El usuario es requerido</span>}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
-              <div className="w-full flex flex-col gap-2">
-                <label className="text-sm font-bold text-blue-900">Contraseña:</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Contraseña */}
+              <div className="w-full flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Contraseña</label>
                 <div className="relative">
                   <input
-                    {...register('contra', { required: true })}
+                    {...register('contra', { required: !initialData })} // Only required if new
                     type={showPassword ? "text" : "password"}
-                    name='contra'
-                    autoComplete="off"
-                    className={`w-full bg-white border ${errors.contra ? 'border-red-600 focus:border-red-600 focus:ring-red-600 placeholder:text-red-500' : 'border-blue-200'} text-blue-900 rounded-lg p-2 pr-10 transition-all focus:outline-none`}
-                    placeholder="Ingrese contraseña"
+                    autoComplete="new-password"
+                    className={`w-full text-sm bg-white dark:bg-zinc-900 border ${errors.contra ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'} text-zinc-900 dark:text-zinc-100 rounded-lg p-2.5 pr-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
+                    placeholder={initialData ? "Sin cambios" : "Ingrese contraseña"}
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 flex items-center pr-3"
-                    tabIndex={-1}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600"
                     onClick={() => setShowPassword(prev => !prev)}
                   >
-                    {showPassword ? <IoMdEyeOff className='text-gray-600' /> : <IoMdEye className='text-gray-600' />}
+                    {showPassword ? <IoMdEyeOff /> : <IoMdEye />}
                   </button>
                 </div>
-                {errors.contra && <span className="text-xs text-red-500 mt-1">La contraseña es requerida</span>}
+                {errors.contra && <span className="text-xs text-red-500">La contraseña es requerida</span>}
               </div>
-              <div className="w-full flex flex-col gap-2">
-                <label className="text-sm font-bold text-blue-900">Estado:</label>
+
+              {/* Estado */}
+              <div className="w-full flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Estado</label>
                 <select
                   {...register('estado_usuario', { required: true })}
-                  name='estado_usuario'
-                  className={`w-full text-sm bg-white border ${errors.estado_usuario ? 'border-red-600 focus:border-red-600 focus:ring-red-600 text-red-500' : 'border-blue-200'} text-blue-900 rounded-lg p-2 transition-all focus:outline-none`}
+                  className={`w-full text-sm bg-white dark:bg-zinc-900 border ${errors.estado_usuario ? 'border-red-500' : 'border-zinc-300 dark:border-zinc-700'} text-zinc-900 dark:text-zinc-100 rounded-lg p-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                 >
                   <option value="">Seleccione...</option>
                   <option value={1}>Activo</option>
                   <option value={0}>Inactivo</option>
                 </select>
-                {errors.estado_usuario && <span className="text-xs text-red-500 mt-1">El estado es requerido</span>}
+                {errors.estado_usuario && <span className="text-xs text-red-500">El estado es requerido</span>}
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-col md:flex-row gap-3 justify-end mt-8">
-              <ButtonClose onClick={onClose} color="default" className="w-full md:w-auto" />
-              <ButtonSave type="submit" color="primary" className="w-full md:w-auto" />
-            </div>
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800">
+            <Button
+              onPress={onClose}
+              variant="light"
+              color="danger"
+              className="font-medium"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              color="primary"
+              className="font-medium px-6 shadow-lg shadow-blue-500/20"
+            >
+              Guardar
+            </Button>
           </div>
         </form>
       </div>
@@ -161,10 +172,10 @@ const ProductosForm = ({ modalTitle, onClose, initialData }) => {
   );
 };
 
-ProductosForm.propTypes = {
+UsuariosForm.propTypes = {
   modalTitle: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
   initialData: PropTypes.object
 };
 
-export default ProductosForm;
+export default UsuariosForm;
