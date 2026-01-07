@@ -25,6 +25,7 @@ const Historico = lazy(() => import('@/pages/Kardex/Historico/Historico'));
 const Logs = lazy(() => import('@/pages/SystemLogs/Logs'));
 const Negocio = lazy(() => import('@/pages/Negocio/Negocio'));
 const DatabaseCleaner = lazy(() => import('@/pages/Developer/DatabaseCleaner'));
+const ActionCatalog = lazy(() => import('@/pages/Developer/ActionCatalog'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
@@ -249,6 +250,18 @@ function Dashboard() {
         element={
           <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
             <DatabaseCleaner />
+          </RouteProtectedRol>
+        }
+      />
+    );
+
+    dynamicRoutes.push(
+      <Route
+        key="action-catalog"
+        path="/desarrollador/actions"
+        element={
+          <RouteProtectedRol allowedRoles={[DESARROLLO_ROL]}>
+            <ActionCatalog />
           </RouteProtectedRol>
         }
       />

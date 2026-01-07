@@ -715,7 +715,8 @@ export const getNotificaciones = async (req, res) => {
   const id_tenant = req.id_tenant;
 
   if (!id_tenant) {
-    return res.status(400).json({ code: 0, message: "Falta id_tenant" });
+    // Si no hay tenant (ej: desarrollador global), retornamos lista vacía para no romper la UI
+    return res.json({ code: 1, data: [], message: "Sin notificaciones (Global Context)" });
   }
 
   try {

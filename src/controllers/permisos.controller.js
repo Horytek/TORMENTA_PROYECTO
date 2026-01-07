@@ -160,7 +160,8 @@ const getPermisosModulo = async (req, res) => {
                     p.editar, 
                     p.eliminar, 
                     p.desactivar, 
-                    p.generar
+                    p.generar,
+                    p.actions_json
                 FROM permisos p
                 INNER JOIN modulo m ON p.id_modulo = m.id_modulo
                 LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
@@ -178,7 +179,8 @@ const getPermisosModulo = async (req, res) => {
                     p.editar, 
                     p.eliminar, 
                     p.desactivar, 
-                    p.generar
+                    p.generar,
+                    p.actions_json
                 FROM permisos p
                 INNER JOIN modulo m ON p.id_modulo = m.id_modulo
                 LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
@@ -309,6 +311,7 @@ const getPermisosByRol = async (req, res) => {
                     p.eliminar,
                     p.desactivar,
                     p.generar,
+                    p.actions_json,
                     m.ruta AS modulo_ruta,
                     s.ruta AS submodulo_ruta
                 FROM permisos p
@@ -331,6 +334,7 @@ const getPermisosByRol = async (req, res) => {
                     p.eliminar,
                     p.desactivar,
                     p.generar,
+                    p.actions_json,
                     m.ruta AS modulo_ruta,
                     s.ruta AS submodulo_ruta
                 FROM permisos p
@@ -417,7 +421,7 @@ const savePermisos = async (req, res) => {
 
                     for (const tenant of tenants) {
                         for (const p of permisos) {
-                            values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                            values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
                             params.push(
                                 id_rol,
                                 p.id_modulo,
@@ -428,6 +432,7 @@ const savePermisos = async (req, res) => {
                                 p.eliminar !== undefined ? p.eliminar : 0,
                                 p.desactivar !== undefined ? p.desactivar : 0,
                                 p.generar !== undefined ? p.generar : 0,
+                                JSON.stringify(p.actions_json || {}),
                                 tenant.id_tenant
                             );
                         }
@@ -436,7 +441,7 @@ const savePermisos = async (req, res) => {
                     // Batch insert - mucho más eficiente
                     const batchQuery = `
                         INSERT INTO permisos
-                        (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
+                        (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant)
                         VALUES ${values.join(', ')}
                     `;
 
@@ -448,7 +453,7 @@ const savePermisos = async (req, res) => {
                 const params = [];
 
                 for (const p of permisos) {
-                    values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                    values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
                     params.push(
                         id_rol,
                         p.id_modulo,
@@ -459,6 +464,7 @@ const savePermisos = async (req, res) => {
                         p.eliminar !== undefined ? p.eliminar : 0,
                         p.desactivar !== undefined ? p.desactivar : 0,
                         p.generar !== undefined ? p.generar : 0,
+                        JSON.stringify(p.actions_json || {}),
                         id_tenant
                     );
                 }
@@ -466,7 +472,7 @@ const savePermisos = async (req, res) => {
                 // Batch insert
                 const batchQuery = `
                     INSERT INTO permisos
-                    (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, id_tenant)
+                    (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant)
                     VALUES ${values.join(', ')}
                 `;
 
@@ -598,6 +604,7 @@ const checkPermiso = async (req, res) => {
                 p.eliminar, 
                 p.desactivar, 
                 p.generar,
+                p.actions_json,
                 u.id_rol
             FROM usuario u
             LEFT JOIN permisos p ON u.id_rol = p.id_rol 

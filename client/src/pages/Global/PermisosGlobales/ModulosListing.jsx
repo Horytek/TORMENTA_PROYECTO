@@ -2,7 +2,7 @@ import { Spinner, Divider } from "@heroui/react";
 import ModuloPermisos from './ModuloPermisos';
 import PermissionsToolbar from './PermissionsToolbar';
 
-export function ModulosListing({ 
+export function ModulosListing({
   rutasLoading,
   rolesLoading,
   planesLoading,
@@ -28,9 +28,11 @@ export function ModulosListing({
   collapseAll,
   handlePermissionChange,
   userInfo,
-  getPlanColor
+  getPlanColor,
+  dynamicActions,
+  onConfigUpdate // New prop
 }) {
-  
+
   if (rutasLoading || rolesLoading || planesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -74,12 +76,12 @@ export function ModulosListing({
 
   const dataKey = `${currentRoleId}_${selectedPlan}`;
   let rolePermisos = permisosData[dataKey];
-  
+
   // Si los permisos están cargando y tenemos datos de la API pero no en nuestro estado local, forzar procesamiento
   if (!rolePermisos && permisos && permisos.length > 0 && !permisosLoading) {
     lastProcessedKey.current = ''; // Reset para forzar procesamiento
   }
-  
+
   // Si no hay permisos cargados, inicializar vacío SIEMPRE para evitar mostrar permisos de otro plan
   if (!rolePermisos || typeof rolePermisos !== 'object') {
     rolePermisos = {};
@@ -87,7 +89,7 @@ export function ModulosListing({
 
   return (
     <>
-      <PermissionsToolbar 
+      <PermissionsToolbar
         modulosConSubmodulos={modulosConSubmodulos}
         selectedPlan={selectedPlan}
         planes={planes}
@@ -102,9 +104,9 @@ export function ModulosListing({
       />
 
       <Divider className="mb-3" />
-      
+
       <div className="text-sm text-gray-400 mb-6">
-        {isDeveloper 
+        {isDeveloper
           ? `Configurando permisos globales para el plan ${planes.find(p => p.id_plan === selectedPlan)?.descripcion_plan || selectedPlan}. Recuerda guardar los cambios después de modificar los permisos.`
           : `Visualizando permisos disponibles para tu plan actual: ${planes.find(p => p.id_plan === planEmpresa)?.descripcion_plan || 'Desconocido'}. Los checkboxes están deshabilitados ya que solo el desarrollador puede modificar estos permisos.`
         }
@@ -123,6 +125,8 @@ export function ModulosListing({
             isDeveloper={isDeveloper}
             userInfo={userInfo}
             getPlanColor={getPlanColor}
+            dynamicActions={dynamicActions}
+            onConfigUpdate={onConfigUpdate}
           />
         ))}
       </div>

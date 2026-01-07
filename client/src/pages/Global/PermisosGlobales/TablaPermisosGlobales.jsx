@@ -5,12 +5,15 @@ import {
   Button,
   Chip
 } from "@heroui/react";
-import { FaUserShield, FaUser } from "react-icons/fa";
+import { FaUserShield, FaUser, FaCube } from "react-icons/fa";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetRutasPorPlan } from '@/services/permisosGlobales.services';
 import { useRolesPorPlan, usePermisosByRolGlobal, useSavePermisosGlobales, usePlanesDisponibles } from '@/services/permisosGlobales.services';
+import { getActions } from '@/services/actionCatalog.services';
 import { toast } from "react-hot-toast";
 import ModulosListing from './ModulosListing';
+import ActionCatalogTab from './ActionCatalogTab';
 import { useUserStore } from "@/store/useStore";
 
 export function TablaPermisosGlobales() {
@@ -20,7 +23,27 @@ export function TablaPermisosGlobales() {
   const [roleMapping, setRoleMapping] = useState({});
   const [currentRoleId, setCurrentRoleId] = useState(null);
   const [permisosData, setPermisosData] = useState({});
-  const [forceRenderKey, setForceRenderKey] = useState(0); // Key para forzar re-render completo
+  const [dynamicActions, setDynamicActions] = useState([]);
+  const [forceRenderKey, setForceRenderKey] = useState(0);  // Ref para controlar estado de carga
+  const loadingRef = useRef(false);
+
+  // Función para recargar rutas (configuración de módulos)
+  const handleConfigUpdate = async () => {
+    // Forzamos recarga de roles/rutas reseteando el cache o invalidando queries
+    // En este caso, el hook useGetRutasPorPlan se ejecuta al cambiar forceRenderKey? 
+    // No, useGetRutasPorPlan depende de user/plan. 
+    // Pero si usamos un key en el componente o un refetch manual...
+    // Vamos a usar un hack simple: incrementar un contador que fuerce re-ejecución interna si el hook lo soporta,
+    // o recargar la página si es muy complejo.
+    // Mejor: Pasar un prop de 'refresh' a los hooks si fuera necesario.
+
+    // Dado que useGetRutasPorPlan usa SWR o useEffect interno, podemos intentar remontar.
+    // O mejor, simplemente location.reload() es lo más seguro para desarrolladores.
+    // Pero para ser SPA, idealmente invalidamos queries. 
+
+    // Como el hook no expone refetch, vamos a notificar y recargar.
+    window.location.reload();
+  };
 
   // Efecto simple para manejar cambios de plan/rol
   useEffect(() => {
@@ -85,6 +108,11 @@ export function TablaPermisosGlobales() {
   const { roles, loading: rolesLoading, error: rolesError } = useRolesPorPlan();
   const { planes, loading: planesLoading } = usePlanesDisponibles();
 
+  // Load dynamic actions
+  useEffect(() => {
+    getActions().then(setDynamicActions).catch(console.error);
+  }, []);
+
 
   const { permisos, loading: permisosLoading, refetchPermisos } = usePermisosByRolGlobal(currentRoleId, selectedPlan);
   const { savePermisos, saving: savingPermisos } = useSavePermisosGlobales();
@@ -141,9 +169,19 @@ export function TablaPermisosGlobales() {
 
   // Manejo de cambio de tab seleccionado - simplificado
   const handleTabChange = useCallback((newTab) => {
-    if (roleMapping[newTab] && roleMapping[newTab] !== currentRoleId) {
+    if (newTab === "actions_catalog") {
       setSelectedTab(newTab);
-      setCurrentRoleId(roleMapping[newTab]);
+      return;
+    }
+
+    // Si el tab existe en el mapeo de roles
+    if (roleMapping[newTab]) {
+      setSelectedTab(newTab);
+      // Solo actualizamos el ID del rol si es diferente, para evitar recargas innecesarias
+      // Pero permitimos cambiar el tab visualmente siempre
+      if (roleMapping[newTab] !== currentRoleId) {
+        setCurrentRoleId(roleMapping[newTab]);
+      }
     }
   }, [roleMapping, currentRoleId]);
 
@@ -175,7 +213,8 @@ export function TablaPermisosGlobales() {
           editar: !!permiso.editar,
           eliminar: !!permiso.eliminar,
           desactivar: !!permiso.desactivar,
-          generar: !!permiso.generar
+          generar: !!permiso.generar,
+          ...permiso.actions_json // Flatten dynamic actions
         };
       } else if (permiso.id_modulo) {
         rolePermisos[`modulo_${permiso.id_modulo}`] = {
@@ -184,7 +223,8 @@ export function TablaPermisosGlobales() {
           editar: !!permiso.editar,
           eliminar: !!permiso.eliminar,
           desactivar: !!permiso.desactivar,
-          generar: !!permiso.generar
+          generar: !!permiso.generar,
+          ...permiso.actions_json // Flatten dynamic actions
         };
       }
     });
@@ -248,7 +288,7 @@ export function TablaPermisosGlobales() {
       modulosConSubmodulos.forEach((modulo) => {
         const moduloKey = `modulo_${modulo.id}`;
         if (rolePermisos[moduloKey]) {
-          const { ver, crear, editar, eliminar, desactivar, generar } = rolePermisos[moduloKey];
+          const { ver, crear, editar, eliminar, desactivar, generar, ...rest } = rolePermisos[moduloKey];
           permisosToSave.push({
             id_modulo: modulo.id,
             id_submodulo: null,
@@ -257,14 +297,15 @@ export function TablaPermisosGlobales() {
             editar: editar ? 1 : 0,
             eliminar: eliminar ? 1 : 0,
             desactivar: desactivar ? 1 : 0,
-            generar: generar ? 1 : 0
+            generar: generar ? 1 : 0,
+            actions_json: rest // Save remaining keys as JSON
           });
         }
 
         modulo.submodulos.forEach((submodulo) => {
           const subKey = `submodulo_${submodulo.id_submodulo}`;
           if (rolePermisos[subKey]) {
-            const { ver, crear, editar, eliminar, desactivar, generar } = rolePermisos[subKey];
+            const { ver, crear, editar, eliminar, desactivar, generar, ...rest } = rolePermisos[subKey];
             permisosToSave.push({
               id_modulo: modulo.id,
               id_submodulo: submodulo.id_submodulo,
@@ -274,6 +315,7 @@ export function TablaPermisosGlobales() {
               eliminar: eliminar ? 1 : 0,
               desactivar: desactivar ? 1 : 0,
               generar: generar ? 1 : 0,
+              actions_json: rest // Save remaining keys as JSON
             });
           }
         });
@@ -398,6 +440,8 @@ export function TablaPermisosGlobales() {
         handlePermissionChange={handlePermissionChange}
         userInfo={userInfo}
         getPlanColor={getPlanColor}
+        dynamicActions={dynamicActions}
+        onConfigUpdate={handleConfigUpdate}
       />
     );
   };
@@ -436,8 +480,11 @@ export function TablaPermisosGlobales() {
                 </p>
               </div>
             </div>
+            {isDeveloper && (
+              <div className="hidden" />
+            )}
           </div>
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 overflow-hidden mt-8">
             <div className="p-0">
               <Tabs
                 aria-label="Roles"
@@ -452,6 +499,23 @@ export function TablaPermisosGlobales() {
                   tabContent: "group-data-[selected=true]:text-blue-600 group-data-[selected=true]:font-bold"
                 }}
               >
+                {/* Tab for Global Actions - Developer Only */}
+                {isDeveloper && (
+                  <Tab
+                    key="actions_catalog"
+                    title={
+                      <div className="flex items-center gap-2 pb-1">
+                        <span className="font-bold flex items-center gap-2">
+                          <FaCube size={16} />
+                          Catálogo de Opciones
+                        </span>
+                      </div>
+                    }
+                  >
+                    <ActionCatalogTab />
+                  </Tab>
+                )}
+
                 {adminRoles.map(role => {
                   const tabKey = role.nom_rol.toLowerCase();
                   const isAdmin = role.id_rol === 1;
