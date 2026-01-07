@@ -1,5 +1,6 @@
 import { getConnection } from "./../database/database.js";
 import { logAcceso } from "../utils/logActions.js";
+import { checkLimit } from "../services/limites.service.js";
 import { hashPassword } from "../utils/passwordUtil.js";
 import * as XLSX from 'xlsx';
 
@@ -205,7 +206,14 @@ const addUsuario = async (req, res) => {
             id_tenant = newIdTenant;
         } else {
             // Si no es administrador, usar el id_tenant actual de la sesión
+            // Si no es administrador, usar el id_tenant actual de la sesión
             id_tenant = req.id_tenant;
+
+            // Verificar límite de usuarios
+            const limitCheck = await checkLimit(id_tenant, 'MAX_USERS');
+            if (!limitCheck.allowed) {
+                return res.status(403).json({ code: 0, message: `Límite de usuarios alcanzado (${limitCheck.current}/${limitCheck.limit})` });
+            }
         }
 
         // Encriptar la contraseña antes de guardar
@@ -299,10 +307,10 @@ const updateUsuario = async (req, res) => {
             params.push(nuevaContra);
         }
         if (typeof estado_usuario !== "undefined") {
-        const parsed = parseInt(estado_usuario);
-        if (![0,1].includes(parsed)) {
-            return res.status(400).json({ code: 0, message: "estado_usuario inválido" });
-        }
+            const parsed = parseInt(estado_usuario);
+            if (![0, 1].includes(parsed)) {
+                return res.status(400).json({ code: 0, message: "estado_usuario inválido" });
+            }
         }
         if (typeof estado_prueba !== "undefined") {
             updates.push("estado_prueba = ?");
