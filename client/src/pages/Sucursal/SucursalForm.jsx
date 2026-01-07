@@ -59,10 +59,8 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
   const vendedorSeleccionado = vendedores.find(v => v.dni === dni_vendedor);
 
   const onSubmit = (data) => {
-    if (!data.dni_vendedor) {
-      toast.error("Debe seleccionar un vendedor");
-      return;
-    }
+    // Removed validation for dni_vendedor to allow empty assignment
+
     if (!data.nombre_sucursal.trim() || !data.ubicacion.trim()) {
       toast.error("Por favor, complete los campos obligatorios.");
       return;
@@ -95,7 +93,6 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                 <Controller
                   name="dni_vendedor"
                   control={control}
-                  rules={{ required: "Debe seleccionar un vendedor" }}
                   render={({ field }) => (
                     <Autocomplete
                       {...field}
@@ -111,6 +108,12 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       }
                       onInputChange={setFiltroVendedor}
                       onSelectionChange={key => {
+                        if (!key) {
+                          field.onChange(null);
+                          setValue('nombre_vendedor', '');
+                          setFiltroVendedor('');
+                          return;
+                        }
                         const vendedor = vendedores.find(v => v.dni === key);
                         if (vendedor) {
                           field.onChange(vendedor.dni); // Actualiza dni_vendedor en el form
@@ -126,7 +129,12 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                           key={v.dni}
                           textValue={`${v.nombre} (${v.dni})`}
                         >
-                          {v.nombre} ({v.dni})
+                          <div className="flex flex-col">
+                            <span>{v.nombre} ({v.dni})</span>
+                            <span className="text-tiny text-default-400">
+                              {v.sucursal ? `⚠️ Asignado a: ${v.sucursal} (Se intercambiará)` : "✅ Libre"}
+                            </span>
+                          </div>
                         </AutocompleteItem>
                       ))}
                     </Autocomplete>

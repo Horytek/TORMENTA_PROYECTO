@@ -18,24 +18,24 @@ setInterval(() => {
 const getVendedores = async (req, res) => {
     const id_tenant = req.id_tenant;
     const cacheKey = `vendedores_${id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_TTL) {
-            return res.json({ 
-                code: 1, 
-                data: cached.data, 
-                message: "Vendedores listados (caché)" 
+            return res.json({
+                code: 1,
+                data: cached.data,
+                message: "Vendedores listados (caché)"
             });
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
-        
+
         const [result] = await connection.query(`
             SELECT 
                 ve.dni, 
@@ -51,24 +51,24 @@ const getVendedores = async (req, res) => {
             WHERE ve.id_tenant = ?
             ORDER BY ve.nombres, ve.apellidos
         `, [id_tenant]);
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
-        res.json({ 
-            code: 1, 
-            data: result, 
-            message: "Vendedores listados" 
+
+        res.json({
+            code: 1,
+            data: result,
+            message: "Vendedores listados"
         });
     } catch (error) {
         console.error('Error en getVendedores:', error);
         if (!res.headersSent) {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -82,18 +82,18 @@ const getVendedores = async (req, res) => {
 const getVendedor = async (req, res) => {
     const { dni } = req.params;
     const id_tenant = req.id_tenant;
-    
+
     if (!dni) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El DNI del vendedor es obligatorio" 
+            message: "El DNI del vendedor es obligatorio"
         });
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
-        
+
         const [result] = await connection.query(`
             SELECT 
                 ve.dni, 
@@ -111,24 +111,24 @@ const getVendedor = async (req, res) => {
         `, [dni, id_tenant]);
 
         if (result.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                data: [], 
-                message: "Vendedor no encontrado" 
+                data: [],
+                message: "Vendedor no encontrado"
             });
         }
 
-        res.json({ 
-            code: 1, 
-            data: result[0], 
-            message: "Vendedor encontrado" 
+        res.json({
+            code: 1,
+            data: result[0],
+            message: "Vendedor encontrado"
         });
     } catch (error) {
         console.error('Error en getVendedor:', error);
         if (!res.headersSent) {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -145,31 +145,31 @@ const addVendedor = async (req, res) => {
 
     // Validaciones mejoradas
     if (!dni || dni.trim() === '') {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El DNI es obligatorio" 
+            message: "El DNI es obligatorio"
         });
     }
-    
+
     if (!id_usuario) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El ID de usuario es obligatorio" 
+            message: "El ID de usuario es obligatorio"
         });
     }
-    
+
     if (!nombres || nombres.trim() === '') {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El nombre es obligatorio" 
+            message: "El nombre es obligatorio"
         });
     }
 
     // Validar formato de DNI (8 dígitos)
     if (!/^\d{8}$/.test(dni)) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El DNI debe tener 8 dígitos numéricos" 
+            message: "El DNI debe tener 8 dígitos numéricos"
         });
     }
 
@@ -184,9 +184,9 @@ const addVendedor = async (req, res) => {
         );
 
         if (dniExiste.length > 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "Ya existe un vendedor con ese DNI" 
+                message: "Ya existe un vendedor con ese DNI"
             });
         }
 
@@ -197,9 +197,9 @@ const addVendedor = async (req, res) => {
         );
 
         if (usuarioExiste.length === 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "El usuario especificado no existe" 
+                message: "El usuario especificado no existe"
             });
         }
 
@@ -222,8 +222,8 @@ const addVendedor = async (req, res) => {
         // Limpiar caché
         queryCache.clear();
 
-        res.status(201).json({ 
-            code: 1, 
+        res.status(201).json({
+            code: 1,
             message: "Vendedor añadido con éxito",
             data: { dni: vendedor.dni }
         });
@@ -232,16 +232,16 @@ const addVendedor = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en addVendedor:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "Ya existe un vendedor con ese DNI" 
+            res.status(400).json({
+                code: 0,
+                message: "Ya existe un vendedor con ese DNI"
             });
         } else if (!res.headersSent) {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -252,31 +252,31 @@ const addVendedor = async (req, res) => {
 };
 
 // ACTUALIZAR VENDEDOR - OPTIMIZADO
-const updateVendedor = async (req, res) => { 
+const updateVendedor = async (req, res) => {
     const { dni } = req.params; // DNI original
     const { nuevo_dni, id_usuario, nombres, apellidos, telefono, estado_vendedor } = req.body;
     const id_tenant = req.id_tenant;
 
     // Validaciones mejoradas
     if (!dni) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El DNI del vendedor es obligatorio" 
+            message: "El DNI del vendedor es obligatorio"
         });
     }
 
     if (!nombres || nombres.trim() === '') {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El nombre es obligatorio" 
+            message: "El nombre es obligatorio"
         });
     }
 
     // Validar formato de nuevo DNI si se proporciona
     if (nuevo_dni && !/^\d{8}$/.test(nuevo_dni)) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El nuevo DNI debe tener 8 dígitos numéricos" 
+            message: "El nuevo DNI debe tener 8 dígitos numéricos"
         });
     }
 
@@ -286,28 +286,28 @@ const updateVendedor = async (req, res) => {
 
         // Verificar si el vendedor existe
         const [vendedorExiste] = await connection.query(
-            "SELECT dni FROM vendedor WHERE dni = ? AND id_tenant = ? LIMIT 1", 
+            "SELECT dni FROM vendedor WHERE dni = ? AND id_tenant = ? LIMIT 1",
             [dni, id_tenant]
         );
-        
+
         if (vendedorExiste.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                message: "Vendedor no encontrado" 
+                message: "Vendedor no encontrado"
             });
         }
 
         // Si el DNI cambia, verificar que no esté en uso
         if (nuevo_dni && nuevo_dni !== dni) {
             const [dniEnUso] = await connection.query(
-                "SELECT dni FROM vendedor WHERE dni = ? AND id_tenant = ? LIMIT 1", 
+                "SELECT dni FROM vendedor WHERE dni = ? AND id_tenant = ? LIMIT 1",
                 [nuevo_dni, id_tenant]
             );
-            
+
             if (dniEnUso.length > 0) {
-                return res.status(400).json({ 
+                return res.status(400).json({
                     code: 0,
-                    message: "El nuevo DNI ya está en uso" 
+                    message: "El nuevo DNI ya está en uso"
                 });
             }
         }
@@ -320,14 +320,41 @@ const updateVendedor = async (req, res) => {
             );
 
             if (usuarioExiste.length === 0) {
-                return res.status(400).json({ 
+                return res.status(400).json({
                     code: 0,
-                    message: "El usuario especificado no existe" 
+                    message: "El usuario especificado no existe"
                 });
             }
         }
 
+        // Obtener datos actuales del vendedor (para el swap)
+        const [currentData] = await connection.query(
+            'SELECT id_usuario FROM vendedor WHERE dni = ? AND id_tenant = ?',
+            [dni, id_tenant]
+        );
+        const currentUserId = currentData[0]?.id_usuario;
+
         await connection.beginTransaction();
+
+        // LOGIC SWAP: Si cambiamos de usuario
+        if (id_usuario && parseInt(id_usuario) !== parseInt(currentUserId)) {
+            // Verificar si el NUEVO usuario ya está asignado a OTRO vendedor
+            const [otherVendor] = await connection.query(
+                'SELECT dni FROM vendedor WHERE id_usuario = ? AND id_tenant = ? AND dni != ?',
+                [id_usuario, id_tenant, dni]
+            );
+
+            if (otherVendor.length > 0) {
+                // EL INTERCAMBIO:
+                // El otro vendedor recibe el usuario que SOLTAMOS (currentUserId)
+                // Si el vendedor actual no tenía usuario (currentUserId null), el otro vendedor se queda sin usuario (null).
+
+                await connection.query(
+                    'UPDATE vendedor SET id_usuario = ? WHERE dni = ? AND id_tenant = ?',
+                    [currentUserId, otherVendor[0].dni, id_tenant]
+                );
+            }
+        }
 
         const [result] = await connection.query(`
             UPDATE vendedor
@@ -339,30 +366,30 @@ const updateVendedor = async (req, res) => {
                 estado_vendedor = ?
             WHERE dni = ? AND id_tenant = ?
         `, [
-            nuevo_dni || dni, 
-            id_usuario, 
-            nombres.trim(), 
-            apellidos?.trim() || '', 
-            telefono?.trim() || '', 
+            nuevo_dni || dni,
+            id_usuario,
+            nombres.trim(),
+            apellidos?.trim() || '',
+            telefono?.trim() || '',
             estado_vendedor !== undefined ? estado_vendedor : 1,
-            dni, 
+            dni,
             id_tenant
         ]);
 
         await connection.commit();
 
         if (result.affectedRows === 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "No se realizó ninguna actualización" 
+                message: "No se realizó ninguna actualización"
             });
         }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
+        res.json({
+            code: 1,
             message: "Vendedor actualizado con éxito",
             data: { dni: nuevo_dni || dni }
         });
@@ -371,16 +398,16 @@ const updateVendedor = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en updateVendedor:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "El nuevo DNI ya está en uso" 
+            res.status(400).json({
+                code: 0,
+                message: "El nuevo DNI ya está en uso"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -388,7 +415,7 @@ const updateVendedor = async (req, res) => {
             connection.release();
         }
     }
-};  
+};
 
 // DESACTIVAR VENDEDOR - OPTIMIZADO CON LÓGICA INTELIGENTE
 const deactivateVendedor = async (req, res) => {
@@ -397,16 +424,16 @@ const deactivateVendedor = async (req, res) => {
 
     // Validaciones mejoradas
     if (!dni || dni.trim() === '') {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El DNI es obligatorio" 
+            message: "El DNI es obligatorio"
         });
     }
 
     if (!/^\d{8}$/.test(dni)) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "DNI inválido. Debe tener 8 dígitos numéricos" 
+            message: "DNI inválido. Debe tener 8 dígitos numéricos"
         });
     }
 
@@ -421,9 +448,9 @@ const deactivateVendedor = async (req, res) => {
         );
 
         if (vendedorExiste.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                message: "Vendedor no encontrado" 
+                message: "Vendedor no encontrado"
             });
         }
 
@@ -447,17 +474,17 @@ const deactivateVendedor = async (req, res) => {
             await connection.commit();
 
             if (updateResult.affectedRows === 0) {
-                return res.status(404).json({ 
+                return res.status(404).json({
                     code: 0,
-                    message: "No se pudo desactivar el vendedor" 
+                    message: "No se pudo desactivar el vendedor"
                 });
             }
 
             // Limpiar caché
             queryCache.clear();
 
-            return res.json({ 
-                code: 2, 
+            return res.json({
+                code: 2,
                 message: `Vendedor desactivado porque está asociado a ${sucursales[0].total} sucursal(es)`,
                 sucursales_asociadas: sucursales[0].total
             });
@@ -471,18 +498,18 @@ const deactivateVendedor = async (req, res) => {
             await connection.commit();
 
             if (deleteResult.affectedRows === 0) {
-                return res.status(404).json({ 
+                return res.status(404).json({
                     code: 0,
-                    message: "No se pudo eliminar el vendedor" 
+                    message: "No se pudo eliminar el vendedor"
                 });
             }
 
             // Limpiar caché
             queryCache.clear();
 
-            return res.json({ 
-                code: 1, 
-                message: "Vendedor eliminado con éxito" 
+            return res.json({
+                code: 1,
+                message: "Vendedor eliminado con éxito"
             });
         }
     } catch (error) {
@@ -490,16 +517,16 @@ const deactivateVendedor = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en deactivateVendedor:', error);
-        
+
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            res.status(400).json({ 
+            res.status(400).json({
                 code: 0,
-                message: "No se puede eliminar el vendedor porque tiene datos relacionados" 
+                message: "No se puede eliminar el vendedor porque tiene datos relacionados"
             });
         } else {
-            res.status(500).json({ 
+            res.status(500).json({
                 code: 0,
-                message: "Error interno del servidor" 
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -513,11 +540,11 @@ const deactivateVendedor = async (req, res) => {
 const deleteVendedor = async (req, res) => {
     const { dni } = req.params;
     const id_tenant = req.id_tenant;
-    
+
     if (!dni) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El DNI del vendedor es obligatorio" 
+            message: "El DNI del vendedor es obligatorio"
         });
     }
 
@@ -532,9 +559,9 @@ const deleteVendedor = async (req, res) => {
         );
 
         if (vendedorExiste.length === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "Vendedor no encontrado" 
+            return res.status(404).json({
+                code: 0,
+                message: "Vendedor no encontrado"
             });
         }
 
@@ -543,52 +570,52 @@ const deleteVendedor = async (req, res) => {
             'SELECT COUNT(*) as total FROM sucursal WHERE dni = ? AND id_tenant = ?',
             [dni, id_tenant]
         );
-        
+
         if (sucursales[0].total > 0) {
-            return res.status(400).json({ 
-                code: 0, 
-                message: `No se puede eliminar el vendedor porque tiene ${sucursales[0].total} sucursal(es) asociada(s). Considere desactivarlo en lugar de eliminarlo.` 
+            return res.status(400).json({
+                code: 0,
+                message: `No se puede eliminar el vendedor porque tiene ${sucursales[0].total} sucursal(es) asociada(s). Considere desactivarlo en lugar de eliminarlo.`
             });
         }
 
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            "DELETE FROM vendedor WHERE dni = ? AND id_tenant = ?", 
+            "DELETE FROM vendedor WHERE dni = ? AND id_tenant = ?",
             [dni, id_tenant]
         );
 
         await connection.commit();
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "No se pudo eliminar el vendedor" 
+            return res.status(404).json({
+                code: 0,
+                message: "No se pudo eliminar el vendedor"
             });
         }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
-            message: "Vendedor eliminado correctamente" 
+        res.json({
+            code: 1,
+            message: "Vendedor eliminado correctamente"
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en deleteVendedor:', error);
-        
+
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "No se puede eliminar el vendedor porque tiene datos relacionados" 
+            res.status(400).json({
+                code: 0,
+                message: "No se puede eliminar el vendedor porque tiene datos relacionados"
             });
         } else if (!res.headersSent) {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {

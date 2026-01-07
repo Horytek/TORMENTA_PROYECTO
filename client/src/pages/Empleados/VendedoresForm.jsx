@@ -248,17 +248,27 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                             errorMessage={errors.id_usuario?.message}
                             className="flex-1"
                           >
-                            {usuarios.map((usuario) => (
-                              <SelectItem
-                                key={usuario.id_usuario.toString()}
-                                value={usuario.id_usuario.toString()}
-                                isDisabled={vendedores.some((vendedor) =>
-                                  vendedor.id_usuario === usuario.id_usuario) &&
-                                  initialData?.id_usuario !== usuario.id_usuario}
-                              >
-                                {usuario.usua}
-                              </SelectItem>
-                            ))}
+                            {usuarios.map((usuario) => {
+                              const assignedVendor = vendedores.find(v => v.id_usuario === usuario.id_usuario);
+                              const isAssigned = assignedVendor && initialData?.id_usuario !== usuario.id_usuario;
+
+                              return (
+                                <SelectItem
+                                  key={usuario.id_usuario.toString()}
+                                  value={usuario.id_usuario.toString()}
+                                  textValue={usuario.usua}
+                                >
+                                  <div className="flex flex-col">
+                                    <span>{usuario.usua}</span>
+                                    <span className="text-tiny text-default-400">
+                                      {isAssigned
+                                        ? `⚠️ Asignado a: ${assignedVendor.nombre} (Se intercambiará)`
+                                        : "✅ Libre"}
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
                           </Select>
                         )}
                       />

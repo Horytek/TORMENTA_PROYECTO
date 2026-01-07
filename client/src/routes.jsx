@@ -131,7 +131,7 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null, capabi
       const sameModule = String(p.id_modulo) === String(idModulo);
       const sameSub = idSubmodulo
         ? String(p.id_submodulo) === String(idSubmodulo)
-        : (p.id_submodulo === null || p.id_submodulo === undefined);
+        : (p.id_submodulo === null || p.id_submodulo === undefined || p.id_submodulo === 0); // Handle 0 or null
       return sameModule && sameSub;
     });
 

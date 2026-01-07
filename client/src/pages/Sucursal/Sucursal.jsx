@@ -57,7 +57,7 @@ function Sucursal() {
 
   const updateSucursalLocal = async (id, updatedData) => {
     const ok = await editSucursal({ id, ...updatedData });
-    if (ok) setSucursales(prev => prev.map(s => s.id === id ? { ...s, ...updatedData } : s));
+    if (ok) fetchSucursales(); // Refetch to capture side-effects like seller swaps
   };
 
   const removeSucursalLocal = async (id) => {

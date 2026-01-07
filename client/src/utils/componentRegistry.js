@@ -42,6 +42,7 @@ export const COMPONENT_REGISTRY = {
     '/proveedores': Proveedores,
     '/sunat': Sunat,
     '/kardex': Almacen, // Used to be ID 10 "Almacen"
+    '/almacen': Almacen, // Alternative route for Almacen module
 
     // Submodules
     '/ventas/registro': Registro_venta,

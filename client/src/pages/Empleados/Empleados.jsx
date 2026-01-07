@@ -46,24 +46,21 @@ function Vendedores() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedTab, setSelectedTab] = useState("empleados");
 
+  const fetchVendedores = async () => {
+    const data = await getVendedores();
+    setVendedores(data);
+  };
+
   useEffect(() => {
-    const fetchVendedores = async () => {
-      const data = await getVendedores();
-      setVendedores(data);
-    };
     fetchVendedores();
   }, []);
 
   const addVendedor = (nuevoVendedor) => {
-    setVendedores(prev => [transformVendedor(nuevoVendedor), ...prev]);
+    fetchVendedores(); // Refetch to safe order
   };
 
   const updateVendedorLocal = (dni, updatedData) => {
-    setVendedores(prev =>
-      prev.map(v =>
-        v.dni === dni ? { ...v, ...transformVendedor(updatedData) } : v
-      )
-    );
+    fetchVendedores(); // Refetch to reflect swaps
   };
 
   const removeVendedor = (dni) => {

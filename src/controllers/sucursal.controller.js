@@ -19,22 +19,22 @@ const getSucursalInicio = async (req, res) => {
     const { nombre = '' } = req.query;
     const id_tenant = req.id_tenant;
     const cacheKey = `sucursal_inicio_${nombre}_${id_tenant}`;
-    
+
     // Verificar caché solo si no hay búsqueda específica o si es corta
     if (!nombre || nombre.length < 3) {
         if (queryCache.has(cacheKey)) {
             const cached = queryCache.get(cacheKey);
             if (Date.now() - cached.timestamp < CACHE_TTL) {
-                return res.json({ 
-                    code: 1, 
-                    data: cached.data, 
-                    message: "Sucursales listadas (caché)" 
+                return res.json({
+                    code: 1,
+                    data: cached.data,
+                    message: "Sucursales listadas (caché)"
                 });
             }
             queryCache.delete(cacheKey);
         }
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -78,7 +78,7 @@ const getSucursalInicio = async (req, res) => {
 const getSucursales = async (req, res) => {
     const { nombre = '', estado = '' } = req.query;
     const id_tenant = req.id_tenant;
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -133,9 +133,9 @@ const insertSucursal = async (req, res) => {
 
     // Validación mejorada
     if (!dni || !nombre_sucursal || !ubicacion || estado_sucursal === undefined) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "Campos requeridos: dni, nombre_sucursal, ubicacion, estado_sucursal" 
+            message: "Campos requeridos: dni, nombre_sucursal, ubicacion, estado_sucursal"
         });
     }
 
@@ -150,9 +150,9 @@ const insertSucursal = async (req, res) => {
         );
 
         if (vendedorExiste.length === 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "El vendedor especificado no existe o está inactivo" 
+                message: "El vendedor especificado no existe o está inactivo"
             });
         }
 
@@ -163,9 +163,9 @@ const insertSucursal = async (req, res) => {
         );
 
         if (sucursalExiste.length > 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "Ya existe una sucursal con ese nombre" 
+                message: "Ya existe una sucursal con ese nombre"
             });
         }
 
@@ -182,26 +182,26 @@ const insertSucursal = async (req, res) => {
         // Limpiar caché relacionado
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
-            message: 'Sucursal insertada correctamente', 
-            id: result.insertId 
+        res.json({
+            code: 1,
+            message: 'Sucursal insertada correctamente',
+            id: result.insertId
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en insertSucursal:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "La sucursal ya existe" 
+            res.status(400).json({
+                code: 0,
+                message: "La sucursal ya existe"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -218,9 +218,9 @@ const updateSucursal = async (req, res) => {
 
     // Validación mejorada
     if (!id) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El ID de la sucursal es obligatorio" 
+            message: "El ID de la sucursal es obligatorio"
         });
     }
 
@@ -235,9 +235,9 @@ const updateSucursal = async (req, res) => {
         );
 
         if (sucursalExiste.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                message: "Sucursal no encontrada" 
+                message: "Sucursal no encontrada"
             });
         }
 
@@ -249,9 +249,9 @@ const updateSucursal = async (req, res) => {
             );
 
             if (vendedorExiste.length === 0) {
-                return res.status(400).json({ 
+                return res.status(400).json({
                     code: 0,
-                    message: "El vendedor especificado no existe o está inactivo" 
+                    message: "El vendedor especificado no existe o está inactivo"
                 });
             }
         }
@@ -278,13 +278,41 @@ const updateSucursal = async (req, res) => {
         }
 
         if (updates.length === 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "No se proporcionaron campos para actualizar" 
+                message: "No se proporcionaron campos para actualizar"
             });
         }
 
+        // Obtener datos actuales de la sucursal (para el swap)
+        const [currentData] = await connection.query(
+            'SELECT dni FROM sucursal WHERE id_sucursal = ? AND id_tenant = ?',
+            [id, id_tenant]
+        );
+        const currentDni = currentData[0]?.dni;
+
         await connection.beginTransaction();
+
+        // LOGIC SWAP: Si cambiamos de vendedor
+        if (dni && dni !== currentDni) {
+            // Verificar si el NUEVO vendedor ya está asignado a OTRA sucursal
+            const [otherBranch] = await connection.query(
+                'SELECT id_sucursal FROM sucursal WHERE dni = ? AND id_tenant = ? AND id_sucursal != ?',
+                [dni, id_tenant, id]
+            );
+
+            if (otherBranch.length > 0) {
+                // EL INTERCAMBIO:
+                // La otra sucursal recibe al vendedor que SOLTAMOS (currentDni)
+                // Si la sucursal actual no tenía vendedor (currentDni null), la otra sucursal se queda sin vendedor (null) o podríamos bloquear.
+                // Asumiremos que si currentDni es null, la otra sucursal se queda libre.
+
+                await connection.query(
+                    'UPDATE sucursal SET dni = ? WHERE id_sucursal = ?',
+                    [currentDni, otherBranch[0].id_sucursal]
+                );
+            }
+        }
 
         const query = `
             UPDATE sucursal
@@ -299,9 +327,9 @@ const updateSucursal = async (req, res) => {
         await connection.commit();
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                message: "No se pudo actualizar la sucursal" 
+                message: "No se pudo actualizar la sucursal"
             });
         }
 
@@ -314,16 +342,16 @@ const updateSucursal = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en updateSucursal:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "Ya existe otra sucursal con ese nombre" 
+            res.status(400).json({
+                code: 0,
+                message: "Ya existe otra sucursal con ese nombre"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -337,35 +365,38 @@ const updateSucursal = async (req, res) => {
 const getVendedores = async (req, res) => {
     const id_tenant = req.id_tenant;
     const cacheKey = `vendedores_${id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_TTL) {
-            return res.json({ 
-                code: 1, 
-                data: cached.data, 
-                message: "Vendedores listados (caché)" 
+            return res.json({
+                code: 1,
+                data: cached.data,
+                message: "Vendedores listados (caché)"
             });
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
 
         const query = `
             SELECT 
-                dni,
-                CONCAT(nombres, ' ', apellidos) AS nombre_completo,
-                nombres,
-                apellidos,
-                telefono
-            FROM vendedor
-            WHERE estado_vendedor = 1 
-                AND id_tenant = ?
-            ORDER BY nombres, apellidos
+                v.dni,
+                CONCAT(v.nombres, ' ', v.apellidos) AS nombre_completo,
+                v.nombres,
+                v.apellidos,
+                v.telefono,
+                s.nombre_sucursal,
+                s.id_sucursal AS id_sucursal_asignada
+            FROM vendedor v
+            LEFT JOIN sucursal s ON v.dni = s.dni AND s.id_tenant = v.id_tenant
+            WHERE v.estado_vendedor = 1 
+                AND v.id_tenant = ?
+            ORDER BY v.nombres, v.apellidos
         `;
 
         const [vendedores] = await connection.query(query, [id_tenant]);
@@ -376,17 +407,17 @@ const getVendedores = async (req, res) => {
             timestamp: Date.now()
         });
 
-        res.json({ 
-            code: 1, 
-            data: vendedores, 
-            message: "Vendedores listados correctamente" 
+        res.json({
+            code: 1,
+            data: vendedores,
+            message: "Vendedores listados correctamente"
         });
 
     } catch (error) {
         console.error('Error en getVendedores:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error al obtener la lista de vendedores" 
+        res.status(500).json({
+            code: 0,
+            message: "Error al obtener la lista de vendedores"
         });
     } finally {
         if (connection) {
@@ -401,9 +432,9 @@ const deleteSucursal = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     if (!id) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El ID de la sucursal es obligatorio" 
+            message: "El ID de la sucursal es obligatorio"
         });
     }
 
@@ -418,9 +449,9 @@ const deleteSucursal = async (req, res) => {
         );
 
         if (almacenesRelacionados[0].total > 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "No se puede eliminar la sucursal porque tiene almacenes asociados. Considere desactivarla en lugar de eliminarla." 
+                message: "No se puede eliminar la sucursal porque tiene almacenes asociados. Considere desactivarla en lugar de eliminarla."
             });
         }
 
@@ -432,9 +463,9 @@ const deleteSucursal = async (req, res) => {
         await connection.commit();
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "Sucursal no encontrada" 
+            return res.status(404).json({
+                code: 0,
+                message: "Sucursal no encontrada"
             });
         }
 
@@ -447,16 +478,16 @@ const deleteSucursal = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en deleteSucursal:', error);
-        
+
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "No se puede eliminar la sucursal porque tiene datos relacionados. Considere desactivarla en lugar de eliminarla." 
+            res.status(400).json({
+                code: 0,
+                message: "No se puede eliminar la sucursal porque tiene datos relacionados. Considere desactivarla en lugar de eliminarla."
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {

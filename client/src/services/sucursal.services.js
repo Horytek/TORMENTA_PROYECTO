@@ -53,6 +53,8 @@ const useVendedoresData = () => {
           const vendedores = response.data.data.map(item => ({
             dni: item.dni, // DNI del vendedor
             nombre: item.nombre_completo, // Nombre completo del vendedor
+            sucursal: item.nombre_sucursal, // <-- NEW: Sucursal assigned
+            id_sucursal: item.id_sucursal_asignada // <-- NEW: ID assigned
           }));
           setVendedores(vendedores); // Guardar la lista de vendedores en el estado
         } else {
