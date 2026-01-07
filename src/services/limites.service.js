@@ -55,11 +55,12 @@ export const checkLimit = async (tenantId, featureCode, context = {}) => {
                     [tenantId]
                 );
                 current = count[0].total;
-            } else if (featureCode === 'MAX_BRANCHES') { // Example
-                // Assuming sucursal table exists
-                // const [count] = await connection.query("SELECT COUNT(*) as total FROM sucursal WHERE id_tenant = ?", [tenantId]);
-                // current = count[0].total;
-                current = 0; // Placeholder
+            } else if (featureCode === 'MAX_BRANCHES') {
+                const [count] = await connection.query("SELECT COUNT(*) as total FROM sucursal WHERE id_tenant = ? AND estado = 1", [tenantId]);
+                current = count[0].total;
+            } else if (featureCode === 'MAX_WAREHOUSES') {
+                const [count] = await connection.query("SELECT COUNT(*) as total FROM almacen WHERE id_tenant = ? AND estado = 1", [tenantId]);
+                current = count[0].total;
             }
 
             if (current >= limit) {

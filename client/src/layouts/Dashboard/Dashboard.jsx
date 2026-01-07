@@ -15,6 +15,7 @@ import { SubcategoriaContextProvider } from '@/context/Subcategoria/Subcategoria
 import { MarcaContextProvider } from '@/context/Marca/MarcaProvider';
 
 import { RouteProtectedRol, RoutePermission } from '../../routes';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 
 const Global = lazy(() => import('@/pages/Global/Global'));
 const Sunat = lazy(() => import('@/pages/Sunat/Sunat'));
@@ -366,9 +367,16 @@ function Dashboard() {
       </ScrollShadow>
 
       {/* Widget global del chatbot (siempre visible sobre el contenido) */}
-      <DeepSeekOpenRouterChatbot routes={routes} />
+      <ChatbotWrapper routes={routes} />
     </div>
   );
+}
+
+// Wrapper to handle hook conditional internally without re-rendering huge Dashboard on every hook change
+function ChatbotWrapper({ routes }) {
+  const { allowed } = useFeatureAccess('CHATBOT');
+  if (!allowed) return null;
+  return <DeepSeekOpenRouterChatbot routes={routes} />;
 }
 
 export default Dashboard;
