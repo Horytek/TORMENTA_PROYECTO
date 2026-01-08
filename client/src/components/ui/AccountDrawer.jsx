@@ -219,7 +219,9 @@ export default function AccountDrawer({ open, onClose }) {
         onOpenChange={v => { if (!v) onClose?.(); }}
         placement="right"
         size="sm"
-        overlayClassName="bg-black/40 backdrop-blur-[2px]"
+        classNames={{
+          backdrop: "bg-black/40 backdrop-blur-[2px]",
+        }}
         className="z-[12000]"
       >
         <DrawerContent>

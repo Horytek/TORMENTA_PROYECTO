@@ -58,7 +58,15 @@ export function useAccountData({ open }) {
             // Si el cache es válido, solo actualizamos funcionesPlan si cambió el plan
             if (cache.planes) {
                 const planObj = cache.planes.find(p => String(p.id_plan) === String(plan_pago));
-                const ids = planObj?.funciones ? planObj.funciones.split(",").map(n => Number(n)) : [];
+                let ids = [];
+
+                if (planObj) {
+                    if (planObj.funciones_detalles && Array.isArray(planObj.funciones_detalles)) {
+                        ids = planObj.funciones_detalles.map(fd => fd.id_funcion);
+                    } else if (planObj.funciones) {
+                        ids = planObj.funciones.split(",").map(n => Number(n));
+                    }
+                }
 
                 setData(prev => ({
                     ...prev,
@@ -97,8 +105,19 @@ export function useAccountData({ open }) {
             }
 
             // Calcular funciones del plan actual
+            // Calcular funciones del plan actual (Compatibilidad con nueva estructura plan_funciones)
             const planObj = planes.find(p => String(p.id_plan) === String(plan_pago));
-            const funcionesPlan = planObj?.funciones ? planObj.funciones.split(",").map(n => Number(n)) : [];
+            let funcionesPlan = [];
+
+            if (planObj) {
+                if (planObj.funciones_detalles && Array.isArray(planObj.funciones_detalles)) {
+                    // Nueva estructura: Array de objetos
+                    funcionesPlan = planObj.funciones_detalles.map(fd => fd.id_funcion);
+                } else if (planObj.funciones) {
+                    // Fallback antigua estructura: String separado por comas
+                    funcionesPlan = planObj.funciones.split(",").map(n => Number(n));
+                }
+            }
             cache.lastPlanPago = plan_pago;
 
             // Fetch fecha pago (siempre intentamos refrescar esto o usar el del usuario)

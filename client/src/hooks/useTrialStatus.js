@@ -52,10 +52,15 @@ export function useTrialStatus({ open, fechaPago, user }) {
             let productosCount = 0;
 
             try {
+                const start = trialStart > today ? today : trialStart;
+
                 const [resV, resK] = await Promise.all([
-                    axios.get("/reporte/registro_ventas_sunat", {
-                        params: { startDate: fmt(trialStart), endDate: fmt(today) }
-                    }).catch(() => ({ data: { data: [] } })),
+                    axios.get("/reporte/libro_ventas_sunat", {
+                        params: { startDate: fmt(start), endDate: fmt(today) }
+                    }).catch(err => {
+                        console.warn("Error fetching sales history:", err);
+                        return { data: { data: [] } };
+                    }),
                     axios.get("/kardex").catch(() => ({ data: { data: [] } }))
                 ]);
 

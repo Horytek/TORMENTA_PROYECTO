@@ -298,6 +298,7 @@ export const EditFeatureModal = ({
               >
                 <SelectItem key="General" value="General">General</SelectItem>
                 <SelectItem key="Dashboard" value="Dashboard">Dashboard</SelectItem>
+                <SelectItem key="Facturación" value="Facturación">Facturación</SelectItem>
 
                 <SelectItem key="Productos" value="Productos">Productos</SelectItem>
                 <SelectItem key="Ventas" value="Ventas">Ventas</SelectItem>

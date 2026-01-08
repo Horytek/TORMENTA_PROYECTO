@@ -4,7 +4,7 @@ import PlanUsers from "./PlanUsers";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950">
       <div className="w-full px-6 py-12 space-y-8">
 
         <ConfigurationSection
