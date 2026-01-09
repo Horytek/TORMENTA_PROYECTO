@@ -47,7 +47,7 @@ function StockCard({ productos }) {
                     const isWarning = urgencyLevel > 2 && !isCritical;
 
                     return (
-                      <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-default group">
+                      <tr key={prod.id || prod.codigo || idx} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-default group">
                         <td className="px-5 py-2.5 max-w-[140px]">
                           <p className="font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 transition-colors">{prod.nombre}</p>
                           <p className="text-[9px] text-slate-400">{prod.codigo || 'S/C'}</p>
@@ -107,7 +107,7 @@ function PerformanceCard({ sucursales, promedioGeneral }) {
                 const barColor = colors[index % colors.length];
 
                 return (
-                  <li key={index} className="space-y-1.5 group">
+                  <li key={branch.id || branch.nombre || branch.name || index} className="space-y-1.5 group">
                     <div className="flex justify-between items-end text-xs">
                       <span className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-blue-600 transition-colors">{branch.nombre || branch.name}</span>
                       <span className="font-bold text-slate-800 dark:text-slate-100 tabular-nums">S/. {sales.toLocaleString()}</span>

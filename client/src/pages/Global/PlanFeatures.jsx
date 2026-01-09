@@ -261,7 +261,7 @@ const PlanFeatures = () => {
                   <TableColumn align="center">ENTERPRISE</TableColumn>
                   <TableColumn align="center" width="10%">ACCIONES</TableColumn>
                 </TableHeader>
-                <TableBody items={sectionFeatures} emptyContent="No hay características en esta sección">
+                <TableBody items={(sectionFeatures || []).filter(f => f && f.id_funciones)} emptyContent="No hay características en esta sección">
                   {(feature) => (
                     <TableRow key={feature.id_funciones} className="group">
                       <TableCell>

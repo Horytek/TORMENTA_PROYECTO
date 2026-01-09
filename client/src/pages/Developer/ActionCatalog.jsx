@@ -112,7 +112,7 @@ const ActionCatalog = () => {
                         <TableColumn align="center">ESTADO</TableColumn>
                         <TableColumn align="center">ACCIONES</TableColumn>
                     </TableHeader>
-                    <TableBody items={actions} emptyContent="No hay acciones definidas">
+                    <TableBody items={(actions || []).filter(a => a && a.id_action)} emptyContent="No hay acciones definidas">
                         {(item) => (
                             <TableRow key={item.id_action} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-slate-100 dark:border-zinc-800 last:border-0">
                                 <TableCell>

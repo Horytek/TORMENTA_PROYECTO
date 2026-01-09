@@ -123,7 +123,7 @@ const TablaLogs = ({ logs, loading }) => {
 					</TableColumn>
 				)}
 			</TableHeader>
-			<TableBody items={logs} emptyContent={"Sin resultados"}>
+			<TableBody items={(logs || []).filter(l => l && l.id_log)} emptyContent={"Sin resultados"}>
 				{(item) => (
 					<TableRow key={item.id_log}>
 						{(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

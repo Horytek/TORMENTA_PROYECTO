@@ -59,9 +59,9 @@ export default function NavLinks() {
                                 base: "gap-4",
                             }}
                         >
-                            {data.items.map((item, idx) => (
+                            {data.items.map((item) => (
                                 <DropdownItem
-                                    key={idx}
+                                    key={item.url || item.title}
                                     description={item.description}
                                     startContent={
                                         <div className="bg-slate-50 dark:bg-zinc-800 p-2 rounded-lg">

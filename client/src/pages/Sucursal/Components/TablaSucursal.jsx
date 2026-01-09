@@ -151,7 +151,7 @@ const TablaSucursal = ({
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody items={items} emptyContent={"No se encontraron sucursales"}>
+                <TableBody items={(items || []).filter(i => i && i.id)} emptyContent={"No se encontraron sucursales"}>
                     {(item) => (
                         <TableRow key={item.id}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}

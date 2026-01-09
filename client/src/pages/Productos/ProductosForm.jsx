@@ -149,7 +149,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
           const categoria = categorias.find(c => c.id_categoria === (subcat ? subcat.id_categoria : null));
           productoResult = {
             ...newProduct,
-            id_producto: result[1],
+            id_producto: result.id_producto,
             nom_marca: marca ? marca.nom_marca : '',
             nom_subcat: subcat ? subcat.nom_subcat : '',
             id_categoria: categoria ? categoria.id_categoria : '',

@@ -215,7 +215,7 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete, updateP
                         </TableColumn>
                     )}
                 </TableHeader>
-                <TableBody items={items} emptyContent={<EmptyState title="No se encontraron productos" description="Intenta ajustar tus filtros de búsqueda." />}>
+                <TableBody items={(items || []).filter(i => i && i.id_producto)} emptyContent={<EmptyState title="No se encontraron productos" description="Intenta ajustar tus filtros de búsqueda." />}>
                     {(item) => (
                         <TableRow key={item.id_producto}>
                             {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
