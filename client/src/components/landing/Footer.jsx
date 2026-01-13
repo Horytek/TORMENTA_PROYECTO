@@ -6,171 +6,91 @@ import { TwitterIcon } from "../../assets/icons/TwitterIcon";
 const footerData = [
   {
     title: "Productos",
-    items: ["Servicios", "Sobre nosotros"],
+    items: [
+      { label: "Servicios", href: "/landing/servicios" },
+      { label: "Sobre nosotros", href: "/landing/about" }
+    ],
   },
   {
     title: "Enlaces importantes",
     items: [
-      "Equipo de la organización",
-      "Actualizaciones",
-      "Términos y condiciones",
-      "Política de privacidad",
+      { label: "Equipo de la organización", href: "/landing/team" },
+      { label: "Actualizaciones", href: "/landing/actualizaciones" },
+      { label: "Términos y condiciones", href: "/landing/terminos-y-condiciones" },
+      { label: "Política de privacidad", href: "/landing/politica-de-privacidad" }
     ],
   },
   {
     title: "Compañía",
-    items: ["Empleos", "Contáctanos"],
-    links: ["/jobs", "/contacto"],
+    items: [
+      { label: "Empleos", href: "/landing/empleos" },
+      { label: "Contáctanos", href: "/landing/contactanos" }
+    ],
   },
 ];
 
 export const Footer = () => {
   return (
-    <footer aria-label="Site footer">
-      <div 
-        className="pt-10 lg:pt-20 lg:pb-16 radius-for-skewed"
-        style={{
-          backgroundColor: 'rgba(38, 39, 43, 0.5)',
-          backdropFilter: 'blur(16px)'
-        }}
-      >
-        <div className="container mx-auto px-4 w-4/5 md:w-11/12 lg:w-10/12 xl:w-4/5 2xl:w-2/3">
-          <div className="flex flex-wrap">
-            <div className="w-full lg:w-1/3 mb-16 lg:mb-0">
-              <div className="flex justify-center lg:justify-start items-center grow basis-0">
-                <div className="text-white mr-2 text-6xl">
-                  <HoryCoreLogo />
-                </div>
-                <div className="text-white font-['Inter'] font-bold text-xl">
-                  HoryCore
-                </div>
+    <footer className="bg-[#02040a] text-slate-400 py-16 font-manrope relative border-t border-white/5">
+      {/* Seamless transition glow */}
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+      <div className="container mx-auto px-4">
+        <div className="grid lg:grid-cols-5 gap-12 mb-16">
+          {/* Brand Column */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="text-white w-8 h-8">
+                <HoryCoreLogo />
               </div>
-              <p className="mb-10 mt-4 sm:w-[22rem] lg:w-[20rem] xl:w-[24rem] content-text-gray leading-loose text-center lg:text-left mx-auto lg:mx-0 lg:pe-4">
-                En HoryTek creemos que la tecnología debe ser una aliada en el crecimiento de las empresas. Con HoryCore, nuestro ERP empresarial, ayudamos a las organizaciones a gestionar mejor sus recursos y avanzar hacia el horizonte de la transformación digital.
-              </p>
-              <div className="w-36 mx-auto lg:mx-0">
-                <a
-                  className="inline-block w-10  h-10 mr-2 p-2 pt-[0.55rem] outlined-button"
-                  href="#"
-                  aria-label="Facebook"
-                >
-                  <FacebookIcon />
-                </a>
-                <a
-                  className="inline-block w-10  h-10 mr-2 p-2 pt-[0.55rem] pl-[0.55rem] outlined-button"
-                  href="#"
-                  aria-label="Twitter"
-                >
-                  <TwitterIcon />
-                </a>
-                <a
-                  className="inline-block w-10  h-10 mr-2 p-2 pt-[0.55rem] pl-[0.55rem] outlined-button"
-                  href="#"
-                  aria-label="Instagram"
-                >
-                  <InstagramIcon />
-                </a>
-              </div>
+              <span className="text-xl font-bold text-white tracking-tight">HoryCore</span>
             </div>
-            <div className="w-full lg:w-2/3 lg:pl-16 flex flex-wrap justify-between pb-10 lg:pb-0">
-              <div className="w-full md:w-1/3 lg:w-auto mb-16 md:mb-0">
-                <h3 className="mb-6 text-2xl font-bold text-primaryText">Productos</h3>
-                <ul>
-                  {footerData[0].items.map((item, index) => (
-                    <li key={`${item}-${index}`} className="mb-4">
-                      <a
-                        className="content-text-gray hover:content-text-white"
-                        href={
-                          item === "Sobre nosotros" ? "/landing/about"
-                            : item === "Servicios" ? "/landing/servicios"
-                              : "#"
-                        }
-                        aria-label={item}
-                      >
-                        {item}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="w-full md:w-1/3 lg:w-auto mb-16 md:mb-0">
-                <h3 className="mb-6 text-2xl font-bold text-primaryText">
-                  Enlaces importantes
-                </h3>
-                <ul>
-                  {footerData[1].items.map((item, index) => (
-                    <li key={`${item}-${index}`} className="mb-4">
-                      <a
-                        className="content-text-gray hover:content-text-white"
-                        href={
-                          item === "Política de privacidad" ? "/landing/politica-de-privacidad"
-                            : item === "Equipo de la organización" ? "/landing/team"
-                              : item === "Planes de precios" ? "/#pricing"
-                                : item === "Términos y condiciones" ? "/landing/terminos-y-condiciones"
-                                  : item === "Actualizaciones" ? "/landing/actualizaciones"
-                                    : "#"
-                        }
-                        aria-label={item}
-                      >
-                        {item}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="w-full md:w-1/3 lg:w-auto">
-                <h3 className="mb-6 text-2xl font-bold text-primaryText">Compañía</h3>
-                <ul>
-                  {footerData[2].items.map((item, index) => (
-                    <li key={`${item}-${index}`} className="mb-4">
-                      <a
-                        className="content-text-gray hover:content-text-white"
-                        href={
-                          item === "Sobre nosotros" ? "/landing/about"
-                            : item === "Empleos" ? "/landing/empleos"
-                              : item === "Contáctanos" ? "/landing/contactanos"
-                                : "#"
-                        }
-                        aria-label={item}
-                      >
-                        {item}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <p className="text-sm leading-relaxed mb-6 max-w-sm">
+              Tecnología ERP que transforma la gestión empresarial.
+              Diseñada para empresas que buscan control, velocidad y crecimiento sin límites.
+            </p>
+            <div className="flex gap-4">
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 hover:text-white transition-colors"><FacebookIcon /></a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 hover:text-white transition-colors"><TwitterIcon /></a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 hover:text-white transition-colors"><InstagramIcon /></a>
             </div>
+          </div>
+
+          {/* Links Columns - Dynamic Rendering */}
+          {footerData.map((section) => (
+            <div key={section.title}>
+              <h4 className="text-white font-semibold mb-6">{section.title}</h4>
+              <ul className="space-y-3 text-sm">
+                {section.items.map((item) => (
+                  <li key={item.label}>
+                    <a href={item.href} className="group flex items-center gap-2 text-slate-400 hover:text-landing-accent transition-colors duration-300">
+                      {/* Micro-interaction: Arrow Reveal */}
+                      <span className="opacity-0 -ml-3 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300 text-landing-accent">
+                        ›
+                      </span>
+                      {/* Micro-interaction: Text Slide */}
+                      <span className="transform group-hover:translate-x-1 transition-transform duration-300">
+                        {item.label}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-8 border-t border-white/5 flex flex-col lg:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-slate-500">
+            &copy; {new Date().getFullYear()} HoryTek Inc. Todos los derechos reservados.
+          </p>
+          <div className="flex gap-6 text-xs text-slate-500">
+            <span>Diseñado con precisión en Perú.</span>
+            <span className="w-1 h-1 rounded-full bg-slate-700 my-auto" />
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Systems Operational</span>
           </div>
         </div>
       </div>
-      <style jsx>{`
-        .block-title {
-          color: rgb(255,255,255);
-          font-size: 1.875rem;
-          font-weight: 700;
-          letter-spacing: normal;
-        }
-        .content-text-gray {
-          color: rgb(156, 163, 175);
-          font-size: 1rem;
-        }
-        .content-text-white {
-          color: rgb(255,255,255);
-          font-size: 1rem;
-          line-height: 1.625;
-        }
-        .outlined-button {
-          color: rgb(255,255,255);
-          border: 1px solid rgb(255,255,255,0.15);
-          border-radius: 0.75rem;
-          background-color: rgb(38, 39, 43);
-          font-size: 0.875rem;
-          transition: background-color 0.15s ease-in-out;
-        }
-        .outlined-button:hover {
-          background-color: rgb(48, 49, 54);
-        }
-      `}</style>
     </footer>
   );
 };

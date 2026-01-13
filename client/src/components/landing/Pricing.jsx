@@ -1,22 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
-
-import { InvitationModal } from "./InvitationModal";
-import { CheckArrowIcon } from "../../assets/icons/CheckArrowIcon";
+import { Check } from 'lucide-react';
 
 export const Pricing = () => {
   const [isMonthly, setIsMonthly] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = () => {
-    setIsMonthly(!isMonthly);
-  };
-
   const handlePlanSelection = (planName, period) => {
-    // Redirigir a la nueva página de registro solo con el plan y período
-    // El precio se calculará de forma segura en el componente de destino
     const searchParams = new URLSearchParams({
       plan: planName,
       period: period
@@ -25,174 +16,150 @@ export const Pricing = () => {
   };
 
   return (
-    <section
-      className="w-screen flex justify-center relative"
-      style={{
-        backgroundColor: 'rgba(38, 39, 43, 0.5)',
-        backdropFilter: 'blur(16px)',
-      }}
-    >
-      <div className="absolute -top-16" id="pricing" />
-      <div className="pb-20 pt-12 2xl:w-[1150px] lg:w-[1050px] md:w-4/5">
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center mb-16">
-              <span className="block-subtitle">Encuentra tu ajuste perfecto</span>
-              <h2 className="mt-6 mb-6 text-4xl lg:text-5xl font-bold font-heading text-primary-text">
-                Elige tu mejor plan
-              </h2>
-              <p className="mb-6 text-secondary-text">
-                Selecciona el plan que se adapte a tus necesidades y benefíciate de nuestras
-                herramientas de análisis.
-              </p>
-              <label className="mx-auto bg-bgDark3 relative flex justify-between items-center group text-xl w-44 h-12 rounded-lg pr-36 pl-1 cursor-pointer pricing-toggle">
-                <input
-                  type="checkbox"
-                  className="peer appearance-none pricing-toggle-checkbox"
-                  checked={!isMonthly}
-                  onChange={handleChange}
-                />
-                <span className="h-8 w-[5.5rem] flex items-center pr-2 bg-bgDark3 after:rounded-lg duration-300 ease-in-out  after:w-[30rem] after:h-10  after:bg-primary-color   after:shadow-md after:duration-300 peer-checked:after:translate-x-[5.5rem] cursor-pointer"></span>
-                <div className="flex absolute text-primary-text text-sm font-bold">
-                  <div
-                    className={
-                      isMonthly ? "mr-9 ml-3" : "mr-9 ml-3 text-gray-400"
-                    }
-                  >
-                    Mensual
-                  </div>
-                  <div className={isMonthly ? "text-gray-400" : ""}>Anual</div>
-                </div>
-              </label>
-            </div>
-            <div className="flex flex-wrap flex-col lg:flex-row -mx-4 items-stretch mt-20">
-              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0 flex">
-                <div
-                  className="p-8 rounded-3xl flex flex-col w-full"
-                  style={{
-                    backgroundColor: 'rgba(48, 49, 54, 0.7)',
-                    backdropFilter: 'blur(4px)',
-                  }}
-                >
-                  <h3 className="mb-2 text-xl font-bold font-heading text-primary-text text-left">
-                    Básico
-                  </h3>
-                  <div className="flex justify-start items-end">
-                    <div className="text-4xl sm:text-5xl font-bold text-primary-text text-left mt-4 mr-2">
-                      {isMonthly ? "S/ 85" : "S/ 850"}
-                    </div>
-                    <div className="text-gray-500">
-                      {isMonthly ? "/ mes" : "/ año"}
-                    </div>
-                  </div>
-                  <p className="mt-4 mb-6 text-gray-500 leading-loose text-left">
-                    Comienza a digitalizar tu negocio con acceso al innovador módulo de ventas.
-                  </p>
-                  <ul className="mb-6 text-primary-text flex-grow">
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Acceso al módulo de Ventas</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Reportes básicos (Análisis de ventas, Libro de ventas)</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Gestión de clientes</span></li>
-                  </ul>
-                  <button
-                    className="inline-block text-center py-2 px-4 w-full rounded-xl text-white bg-primary-color hover:bg-primary-color/80 font-bold leading-loose transition"
-                    onClick={() => handlePlanSelection('Básico', isMonthly ? 'mes' : 'año')}
-                    aria-label="Comenzar"
-                  >
-                    Comenzar
-                  </button>
-                </div>
-              </div>
-              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0 relative flex">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-xs font-semibold px-4 py-1 rounded-full shadow z-10">
-                  Popular
-                </div>
-                <div
-                  className="px-8 py-8 rounded-3xl border border-orange-500 flex flex-col w-full"
-                  style={{
-                    backgroundColor: 'rgba(48, 49, 54, 0.7)',
-                    backdropFilter: 'blur(4px)',
-                  }}
-                >
-                  <h3 className="mb-2 2xl:mb-4 text-2xl font-bold font-heading text-primary-text text-left">
-                    Pro
-                  </h3>
-                  <div className="flex justify-start items-end">
-                    <div className="text-4xl sm:text-5xl font-bold text-primary-text text-left mt-4 mr-2">
-                      {isMonthly ? "S/ 135" : "S/ 1,350"}
-                    </div>
-                    <div className="text-gray-500">
-                      {isMonthly ? "/ mes" : "/ año"}
-                    </div>
-                  </div>
-                  <p className="mt-8 mb-8 text-gray-500 leading-loose text-left">
-                    Para negocios que necesitan control total de ventas, almacén y compras.
-                  </p>
-                  <ul className="mb-6 text-primary-text flex-grow">
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Acceso a todos los módulos</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Usuarios ilimitados</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Múltiples sucursales</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Uso de Chatbot</span></li>
-                  </ul>
-                  <button
-                    className="inline-block text-center py-2 px-4 w-full rounded-xl text-white bg-primary-color hover:bg-primary-color/80 font-bold leading-loose transition"
-                    onClick={() => handlePlanSelection('Pro', isMonthly ? 'mes' : 'año')}
-                    aria-label="Comenzar"
-                  >
-                    Comenzar
-                  </button>
-                </div>
-              </div>
+    <section className="py-24 bg-[#02040a] text-white relative font-manrope">
+      {/* Background Gradients for seamless integration */}
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-              <div className="w-[350px] sm:w-[380px] lg:w-1/3 px-4 mb-8 lg:mb-0 flex">
-                <div
-                  className="p-8 rounded-3xl flex flex-col w-full"
-                  style={{
-                    backgroundColor: 'rgba(48, 49, 54, 0.7)',
-                    backdropFilter: 'blur(4px)',
-                  }}
-                >
-                  <h3 className="mb-2 text-xl font-bold font-heading text-primary-text text-left">
-                    Enterprise
-                  </h3>
-                  <div className="flex justify-start items-end">
-                    <div className="text-4xl sm:text-5xl font-bold text-primary-text text-left mt-4 mr-2">
-                      {isMonthly ? "S/ 240" : "S/ 2,400"}
-                    </div>
-                    <div className="text-gray-500">
-                      {isMonthly ? "/ mes" : "/ año"}
-                    </div>
-                  </div>
-                  <p className="mt-4 mb-6 text-gray-500 leading-loose text-left">
-                    La solución completa para empresas que requieren personalización y escalabilidad.
-                  </p>
-                  <ul className="mb-6 text-primary-text flex-grow">
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Usuarios ilimitados</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Múltiples sucursales</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Uso de Chatbot y Atajo de funciones</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Uso del log, mensajería y videollamadas internas</span></li>
-                    <li className="mb-4 flex"><CheckArrowIcon /><span>Sucursales ilimitadas</span></li>
-                  </ul>
-                  <button
-                    className="inline-block text-center py-2 px-4 w-full rounded-xl text-white bg-primary-color hover:bg-primary-color/80 font-bold leading-loose transition"
-                    onClick={() => handlePlanSelection('Enterprise', isMonthly ? 'mes' : 'año')}
-                    aria-label="Comenzar"
-                  >
-                    Comenzar
-                  </button>
-                </div>
-              </div>
+      <div className="container mx-auto px-4 max-w-6xl relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold mb-4 font-manrope">Planes simples y transparentes.</h2>
+          <p className="text-gray-400">Escala tu negocio con la tecnología adecuada.</p>
+
+          {/* Toggle */}
+          <div className="flex items-center justify-center gap-6 mt-8 select-none">
+            <span
+              className={`cursor-pointer transition-colors duration-300 ${isMonthly ? 'text-white font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+              onClick={() => setIsMonthly(true)}
+            >
+              Mensual
+            </span>
+
+            <button
+              onClick={() => setIsMonthly(!isMonthly)}
+              className="w-14 h-8 rounded-full border-2 border-white/20 p-1 relative transition-colors hover:border-white/40 focus:outline-none"
+            >
+              <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ease-out ${!isMonthly ? 'translate-x-[1.4rem]' : 'translate-x-0'}`} />
+            </button>
+
+            <span
+              className={`cursor-pointer transition-colors duration-300 flex items-center gap-2 ${!isMonthly ? 'text-white font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+              onClick={() => setIsMonthly(false)}
+            >
+              Anual
+              <span className="text-landing-accent text-[10px] font-bold bg-landing-accent/10 px-2 py-0.5 rounded-full uppercase tracking-wider">-20%</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-8 items-start">
+          {/* Plan Start */}
+          <div className="p-8 rounded-2xl border border-white/10 bg-[#0f121a] hover:border-landing-accent/30 transition-all duration-300">
+            <h3 className="text-lg font-semibold text-white mb-2">Start</h3>
+            <div className="mb-6">
+              <span className="text-4xl font-bold tracking-tight text-white">S/ {isMonthly ? '85' : '850'}</span>
+              <span className="text-gray-500 text-sm">/ {isMonthly ? 'mes' : 'año'}</span>
+            </div>
+            <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Para pequeños negocios que inician su digitalización.</p>
+            <button
+              onClick={() => handlePlanSelection('Start', isMonthly ? 'mes' : 'año')}
+              className="w-full py-3 rounded-lg border border-white/20 hover:border-white hover:bg-white hover:text-black text-white font-semibold transition-all mb-8"
+            >
+              Comenzar
+            </button>
+            <ul className="space-y-4 text-sm text-gray-400">
+              <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Punto de Venta (POS)</li>
+              <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Inventario Simple</li>
+              <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> 1 Usuario / 1 Almacén</li>
+            </ul>
+          </div>
+
+          {/* Plan Professional (Featured) */}
+          <div className="p-8 rounded-2xl bg-[#0f121a] text-white shadow-2xl relative lg:-mt-4 lg:pb-12 border border-white/10 group hover:border-landing-accent/30 transition-all duration-300">
+            {/* "Popular" as a watermark/ghost text or clean badge */}
+            <div className="absolute top-6 right-6 text-xs font-bold tracking-widest text-landing-accent opacity-80 uppercase">POPULAR</div>
+
+            <h3 className="text-xl font-bold mb-2 text-white">Profesional</h3>
+            <div className="mb-4 flex items-baseline gap-1">
+              <span className="text-5xl font-bold tracking-tighter text-white">S/ {isMonthly ? '135' : '1,350'}</span>
+              <span className="text-gray-500 text-sm font-medium">/ {isMonthly ? 'mes' : 'año'}</span>
+            </div>
+
+            <p className="text-xs text-gray-400 font-bold mb-6 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-1 h-4 bg-landing-accent rounded-full"></span>
+              MEJOR PARA CRECIMIENTO
+            </p>
+
+            <p className="text-gray-400 text-sm mb-8 leading-relaxed">Control total para negocios en expansión. Automatiza lo aburrido.</p>
+
+            <button
+              onClick={() => handlePlanSelection('Profesional', isMonthly ? 'mes' : 'año')}
+              className="w-full py-4 rounded-xl bg-white hover:bg-gray-100 text-black font-bold transition-all hover:-translate-y-1 shadow-lg shadow-white/10 mb-8 flex items-center justify-center gap-2"
+            >
+              Obtener Pro <span className="opacity-0 group-hover:opacity-100 -ml-2 group-hover:ml-0 transition-all">→</span>
+            </button>
+            <ul className="space-y-4 text-sm text-gray-300">
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Todo en Start</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Multi-Almacén (Hasta 3)</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Usuarios Ilimitados</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Facturación Electrónica</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Reportes Avanzados</li>
+            </ul>
+          </div>
+
+          {/* Plan Enterprise */}
+          <div className="p-8 rounded-2xl border border-white/10 bg-[#0f121a] hover:border-landing-accent/30 transition-all duration-300">
+            <h3 className="text-lg font-semibold text-white mb-2">Enterprise</h3>
+            <div className="mb-2">
+              <span className="text-4xl font-bold tracking-tight text-white">Personalizado</span>
+            </div>
+            <p className="text-xs text-gray-500 font-medium mb-6 uppercase tracking-wider">Mejor para grandes volúmenes</p>
+
+            <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Soluciones a medida para corporaciones.</p>
+
+            <div className="flex flex-col gap-3 mb-8">
+              <button
+                onClick={() => window.location.href = 'mailto:ventas@horycore.com'}
+                className="w-full py-3 rounded-lg bg-white text-black font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Contactar Ventas
+              </button>
+              <button className="w-full py-3 rounded-lg border border-white/20 text-gray-400 font-medium hover:text-white hover:border-white transition-colors">
+                Agendar Llamada
+              </button>
+            </div>
+
+            <ul className="space-y-4 text-sm text-gray-400">
+              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> API Personalizada</li>
+              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> Soporte Dedicado 24/7</li>
+              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> Migración Asistida</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* FAQ Quick Block - Redesigned to fix the "image 5" issue & line alignment */}
+        <div className="mt-24 pt-16 border-t border-white/10 relative">
+          <div className="text-center mb-12">
+            <span className="text-landing-accent text-sm font-bold tracking-widest uppercase mb-2 block">Dudas Frecuentes</span>
+            <h4 className="text-2xl font-bold text-white">Resolvemos tus dudas en segundos</h4>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+              <div className="font-bold text-white mb-3 text-lg">¿Incluye implementación?</div>
+              <p className="text-sm text-gray-400 leading-relaxed">Sí, todos los planes incluyen onboarding guiado y carga inicial de datos para que empieces a vender desde el día 1.</p>
+            </div>
+            <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+              <div className="font-bold text-white mb-3 text-lg">¿Puedo cancelar cuando sea?</div>
+              <p className="text-sm text-gray-400 leading-relaxed">Totalmente. No creemos en los contratos forzosos. Si no te sirve, puedes cancelar tu suscripción mensual en cualquier momento.</p>
+            </div>
+            <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+              <div className="font-bold text-white mb-3 text-lg">¿Migración desde Excel?</div>
+              <p className="text-sm text-gray-400 leading-relaxed">Contamos con plantillas de importación masiva. Sube tu inventario y clientes en segundos.</p>
             </div>
           </div>
-        </motion.div>
+        </div>
+
       </div>
-      {isModalOpen && (
-        <InvitationModal isOpen={isModalOpen} setIsOpen={setIsModalOpen} />
-      )}
     </section>
   );
 };

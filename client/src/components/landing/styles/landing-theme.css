@@ -1,0 +1,66 @@
+/* Scoped variables for the 3-Act Landing Page Redesign */
+
+.landing-body {
+    /* Paleta Base - Acto 1 (Living Dashboard) */
+    --landing-primary: #02040a;
+    /* Carbón profundo / Azul noche */
+    --landing-primary-foreground: #ffffff;
+
+    --landing-secondary: #0f121a;
+    /* Variación un poco más clara para cards */
+    --landing-secondary-foreground: #e2e8f0;
+
+    /* Paleta Blueprint - Acto 2 */
+    --landing-blueprint-bg: #1e293b;
+    /* Gris azulado técnico */
+    --landing-blueprint-line: rgba(148, 163, 184, 0.15);
+    /* Líneas sutiles */
+
+    /* Paleta Luxury - Acto 3 */
+    --landing-luxury-bg: #f8fafc;
+    /* Blanco roto / Gris muy suave */
+    --landing-luxury-foreground: #0f172a;
+
+    /* Acentos */
+    --landing-accent: #00bdd6;
+    /* Cian Sobrio */
+    --landing-accent-hover: #06b6d4;
+    --landing-accent-foreground: #ffffff;
+
+    /* Textos */
+    --landing-text-muted: #94a3b8;
+    --landing-text-main: #f8fafc;
+    /* Por defecto para secciones oscuras */
+}
+
+/* Glass Effect Utilities */
+.glass-panel {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+}
+
+.glass-card {
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Typography Utilities */
+.text-balance-landing {
+    text-wrap: balance;
+}
+
+.font-manrope {
+    font-family: 'Manrope', sans-serif;
+}

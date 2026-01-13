@@ -1,25 +1,19 @@
 import React, { useEffect } from 'react';
 
-// Importa los componentes de la landing migrados
+// Components
 import { Navbar } from '../../components/landing/Navbar';
-import { Hero } from '../../components/landing/Hero';
-import { Features1 } from '../../components/landing/Features1';
-import { Features2 } from '../../components/landing/Features2';
-import { FeaturesDiagonal } from '../../components/landing/FeaturesDiagonal';
+import Hero from '../../components/landing/Hero';
+import BlueprintSection from '../../components/landing/blueprint/BlueprintSection';
+import CaseStudy from '../../components/landing/CaseStudy';
 import { Pricing } from '../../components/landing/Pricing';
-import { Brands } from '../../components/landing/Brands';
-import { Testimonials } from '../../components/landing/Testimonials';
-import { Blog } from '../../components/landing/Blog';
-import { FAQ } from '../../components/landing/FAQ';
 import { Footer } from '../../components/landing/Footer';
 import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
-import { ParticleWaveBackground } from '../../components/landing/ParticleWaveBackground';
 
-// Importar estilos específicos de landing aislados
-import '../../styles/landing/index.css';
+// Styles
+import '../../components/landing/styles/landing-theme.css';
 
 export default function LandingPage() {
-  // Añade/remueve una clase al body para aislar estilos
+  // Isolate Landing Page Styles
   useEffect(() => {
     document.body.classList.add('landing-body');
     return () => {
@@ -28,25 +22,31 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="landing-page" data-theme="landing">
-      {/* Fondo animado - Particle Wave */}
-      <ParticleWaveBackground />
+    <div className="landing-page bg-landing-primary overflow-x-hidden" data-theme="landing">
+      <Navbar />
 
-      {/* Contenido de la landing page */}
-      <div className="relative z-10">
-        <Navbar />
+      {/* Act 1: Living Dashboard */}
+      <div id="home">
         <Hero />
-        <Features1 />
-        <Features2 />
-        <FeaturesDiagonal />
-        <Pricing />
-        <Brands />
-        {/* <Testimonials /> */}
-        <Blog />
-        <FAQ />
-        <Footer />
-        <ScrollUpButton />
       </div>
+
+      {/* Act 2: Architecture & Security */}
+      <div id="features">
+        <BlueprintSection />
+      </div>
+
+      {/* Act 3: Review / Social Proof */}
+      <div id="feedback">
+        <CaseStudy />
+      </div>
+
+      {/* Act 3: Pricing */}
+      <div id="pricing">
+        <Pricing />
+      </div>
+
+      <Footer />
+      <ScrollUpButton />
     </div>
   );
 }

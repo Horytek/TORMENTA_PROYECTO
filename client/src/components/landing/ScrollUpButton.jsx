@@ -28,20 +28,21 @@ export const ScrollUpButton = () => {
     <>
       {isVisible && (
         <button
-          className="scrollup-btn"
+          className="fixed bottom-6 right-6 w-12 h-12 flex justify-center items-center rounded-xl bg-[#0f121a] border border-white/10 cursor-pointer z-50 transition-all duration-300 ease-out hover:border-landing-accent hover:shadow-[0_0_15px_rgba(var(--landing-accent-rgb),0.3)] group"
           onClick={scrollToTop}
           aria-label="Scroll to top"
         >
           <svg
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            width="35px"
-            height="35px"
+            width="24px"
+            height="24px"
             viewBox="0 0 20 20"
+            className="text-landing-accent transition-transform duration-300 group-hover:-translate-y-1"
           >
             <path
               d="M4.16732 12.5L10.0007 6.66667L15.834 12.5"
-              stroke="rgb(99, 102, 241)"
+              stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -49,27 +50,6 @@ export const ScrollUpButton = () => {
           </svg>
         </button>
       )}
-      <style jsx>{`
-        .scrollup-btn {
-          width: 3rem;
-          height: 3rem;
-          position: fixed;
-          bottom: 1.5rem;
-          right: 1.5rem;
-          border: 1px solid rgb(255,255,255,0.15);
-          border-radius: 0.75rem;
-          background-color: rgb(38, 39, 43);
-          cursor: pointer;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          transition: background-color 0.15s ease-in-out;
-          z-index: 50;
-        }
-        .scrollup-btn:hover {
-          background-color: rgb(48, 49, 54);
-        }
-      `}</style>
     </>
   );
 };

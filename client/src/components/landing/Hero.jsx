@@ -1,218 +1,157 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, Zap, Bot, X, ExternalLink } from "lucide-react";
-import heroShortcuts from "../../assets/images/hero-shortcuts.png";
-import heroChatbot from "../../assets/images/hero-chatbot.png";
+import { useState } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowRight, Play, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
+import ParticleWaveBackground from './3d/ParticleBackground';
+import LivingDashboard from './hero/LivingDashboard';
+import FloatingCard from './hero/FloatingCard';
 
-import { InvitationModal } from "./InvitationModal";
-import { ContactModal } from "./ContactModal";
-import { useTheme } from "../../components/ui/theme-provider";
-import dashboardLight from "../../assets/images/dashboard3.jpeg";
-import dashboardDark from "../../assets/images/dashboard4.jpeg";
-import styles from "../../styles/landing.module.css";
+const sectors = [
+    {
+        id: 'retail',
+        label: 'Retail',
+        accent: 'from-emerald-400 to-cyan-500',
+        description: 'Gestiona tus puntos de venta, inventario y caja en tiempo real. Todo lo que tu tienda necesita para vender más sin perder el control.'
+    },
+    {
+        id: 'services',
+        label: 'Servicios',
+        accent: 'from-blue-400 to-indigo-500',
+        description: 'Administra proyectos, cotizaciones y facturación sin complicaciones. La herramienta ideal para consultoras y agencias que buscan orden.'
+    },
+    {
+        id: 'distribution',
+        label: 'Distribución',
+        accent: 'from-amber-400 to-orange-500',
+        description: 'Optimiza tu logística, controla múltiples almacenes y agiliza tus despachos. Potencia tu cadena de suministro con datos precisos.'
+    }
+];
 
-// Nuevo componente para las tarjetas de características
-const FeatureCard = ({ icon: Icon, label, description, delay, onClick }) => (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: delay }}
-        onClick={onClick}
-        className="flex items-start gap-4 p-4 rounded-2xl bg-bg-dark-2 border border-primary-color/20 backdrop-blur-sm hover:border-primary-color/50 transition-all cursor-pointer w-full sm:w-auto hover:bg-bg-dark-3 hover:scale-[1.02] group"
-    >
-        <div className="p-3 rounded-xl bg-primary-color/10 text-primary-color flex-shrink-0 group-hover:bg-primary-color/20 transition-colors">
-            <Icon size={24} />
-        </div>
-        <div>
-            <h4 className="text-primary-text font-bold text-lg mb-1 group-hover:text-primary-color transition-colors">{label}</h4>
-            <p className="text-secondary-text text-sm leading-relaxed">{description}</p>
-        </div>
-    </motion.div>
-);
+const Hero = () => {
+    const [activeSector, setActiveSector] = useState('retail');
+    const { scrollY } = useScroll();
+    const y1 = useTransform(scrollY, [0, 500], [0, 200]);
+    const y2 = useTransform(scrollY, [0, 500], [0, -150]);
 
-export const Hero = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-    const [selectedFeature, setSelectedFeature] = useState(null);
-    const { theme } = useTheme();
-    const [isDarkPreview, setIsDarkPreview] = useState(false);
-
-    useEffect(() => {
-        const isSystemDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        setIsDarkPreview(isSystemDark);
-    }, [theme]);
-
-    const currentDashboard = isDarkPreview ? dashboardDark : dashboardLight;
-
-    const handleScrollToPricing = () => {
-        const pricingSection = document.getElementById("pricing");
-        if (pricingSection) {
-            pricingSection.scrollIntoView({ behavior: "smooth" });
-        }
-    };
+    // Find active sector data
+    const currentSector = sectors.find(s => s.id === activeSector) || sectors[0];
 
     return (
-        <section
-            className={`landing-hero w-full min-h-[90vh] flex flex-col justify-center items-center pb-20 pt-28 md:pt-32 lg:pt-40 px-4 sm:px-8 md:px-12 lg:px-20 xl:px-28 2xl:px-40`}
-            id="home"
-            style={{
-                background: 'transparent',
-            }}
-        >
-            {/* Contenido Centralizado */}
-            <div className="w-full flex flex-col items-center text-center z-20 mt-8 mb-12">
+        <section className="relative min-h-screen w-full overflow-hidden bg-landing-primary flex flex-col justify-center pt-32 pb-20">
+            {/* 1. Background Layer */}
+            <ParticleWaveBackground />
+
+            <div className="container mx-auto px-4 z-10 relative grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+                {/* 2. Content Layer (Left) */}
                 <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="mb-6"
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="text-left space-y-10"
                 >
-                    <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-gray-300 text-xs font-medium backdrop-blur-sm flex items-center gap-2 hover:bg-white/10 transition-colors">
-                        <Bot size={14} className="text-primary-color" />
-                        Potenciado por IA
-                    </span>
-                </motion.div>
+                    {/* Sector Selector - Updated Logic with active state feedback */}
+                    <div className="inline-flex p-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                        {sectors.map((sector) => (
+                            <button
+                                key={sector.id}
+                                onClick={() => setActiveSector(sector.id)}
+                                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeSector === sector.id
+                                    ? 'bg-white/10 text-white shadow-inner'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                            >
+                                {sector.label}
+                            </button>
+                        ))}
+                    </div>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.05 }}
-                    className="max-w-4xl mx-auto"
-                >
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight mb-6">
-                        Control total. <br />
-                        <span className="text-gray-400">Crecimiento sin límites.</span>
-                    </h1>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="mb-8 max-w-2xl mx-auto"
-                >
-                    <h2 className="text-gray-400 text-base sm:text-lg leading-relaxed font-light">
-                        Centraliza operaciones, ventas y finanzas en una plataforma viva.
-                        Deja que la IA de HoryCore se encargue de los datos.
-                    </h2>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.15 }}
-                    className="flex flex-wrap justify-center gap-4"
-                >
-                    <button
-                        className="px-6 py-2.5 rounded-lg font-medium bg-white text-black hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm"
-                        onClick={handleScrollToPricing}
-                        aria-label="Comienza Gratis"
-                    >
-                        Comienza Gratis <ExternalLink size={16} />
-                    </button>
-                    <button
-                        onClick={() => setIsContactModalOpen(true)}
-                        className="px-6 py-2.5 rounded-lg font-medium text-white border border-white/10 hover:bg-white/5 transition-colors flex items-center gap-2 text-sm"
-                        aria-label="Agendar un Demo"
-                    >
-                        <div className="w-4 h-4 rounded-full border border-white flex items-center justify-center">
-                            <div className="w-0 h-0 border-t-[3px] border-t-transparent border-l-[5px] border-l-white border-b-[3px] border-b-transparent ml-0.5"></div>
-                        </div>
-                        Ver Demo
-                    </button>
-                </motion.div>
-            </div>
-
-            {/* Imagen del Dashboard Minimalista */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="w-full max-w-[1000px] relative z-10 mt-4"
-            >
-                <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black/50">
-                    <img
-                        src={dashboardDark}
-                        alt="Dashboard HoryCore Dark Mode"
-                        className="w-full h-auto"
-                    />
-                    {/* Sutil gradiente inferior */}
-                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent opacity-80"></div>
-                </div>
-            </motion.div>
-
-            {isModalOpen && (
-                <InvitationModal isOpen={isModalOpen} setIsOpen={setIsModalOpen} />
-            )}
-
-            {/* Modal de Detalle de Característica */}
-            <AnimatePresence>
-                {selectedFeature && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                        onClick={() => setSelectedFeature(null)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-bg-dark-1 border border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+                    <h1 className="text-5xl lg:text-7xl font-bold font-manrope text-white leading-[1.1] tracking-tight text-balance">
+                        Control total que{' '}
+                        <motion.span
+                            key={activeSector}
+                            initial={{ opacity: 0.8 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className={`text-transparent bg-clip-text bg-gradient-to-r ${currentSector.accent} pb-2`}
                         >
-                            {/* Imagen */}
-                            <div className="w-full md:w-2/3 bg-black/20 p-8 flex items-center justify-center relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary-color/5 to-secondary-color/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                <img
-                                    src={selectedFeature.image}
-                                    alt={selectedFeature.label}
-                                    className="w-full h-full object-contain drop-shadow-2xl transform transition-transform duration-700 group-hover:scale-105"
-                                />
-                            </div>
+                            impulsa
+                        </motion.span>
+                        <br />
+                        tu crecimiento.
+                    </h1>
 
-                            {/* Contenido */}
-                            <div className="w-full md:w-1/3 p-8 flex flex-col bg-bg-dark-2 relative">
-                                <button
-                                    onClick={() => setSelectedFeature(null)}
-                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
-                                >
-                                    <X size={20} />
-                                </button>
+                    <motion.p
+                        key={activeSector + "desc"}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="text-lg lg:text-xl text-gray-400 text-pretty max-w-xl font-light leading-relaxed min-h-[84px]"
+                    >
+                        {currentSector.description}
+                    </motion.p>
 
-                                <div className="w-12 h-12 rounded-xl bg-primary-color/10 flex items-center justify-center text-primary-color mb-6">
-                                    <selectedFeature.icon size={28} />
-                                </div>
+                    <div className="space-y-6">
+                        <div className="flex flex-wrap gap-4">
+                            <button className="px-8 py-4 rounded-2xl bg-white text-black font-bold hover:bg-gray-100 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] flex items-center gap-2 group hover:scale-[1.02]">
+                                Solicitar Demo
+                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                            <button className="px-8 py-4 rounded-2xl bg-transparent text-white border border-white/20 hover:bg-white/5 transition-colors flex items-center gap-2 hover:border-white/40">
+                                <Play size={18} className="fill-current" />
+                                Ver Video
+                            </button>
+                        </div>
 
-                                <h3 className="text-2xl font-bold text-white mb-4">{selectedFeature.label}</h3>
-                                <p className="text-gray-300 leading-relaxed mb-8">
-                                    {selectedFeature.description}
-                                </p>
+                        {/* New Microcopy Trust Indicators */}
+                        <div className="flex items-center gap-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>Implementación ràpida</span>
+                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>Soporte humano</span>
+                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>Auditoría total</span>
+                        </div>
+                    </div>
+                </motion.div>
 
-                                <div className="mt-auto">
-                                    <button
-                                        onClick={() => {
-                                            setSelectedFeature(null);
-                                            setIsContactModalOpen(true);
-                                        }}
-                                        className="w-full py-3 rounded-xl bg-primary-color text-white font-bold hover:bg-primary-color/90 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        Probar ahora <ExternalLink size={18} />
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
+                {/* 3. Visual Layer (Right) - Dashboard + Floating Cards */}
+                <div className="relative h-[600px] flex items-center justify-center perspective-[2000px]">
+                    {/* Animated Dashboard Mockup */}
+                    <motion.div
+                        style={{ y: y2, rotateX: 5, rotateY: -5 }}
+                        className="relative z-10 w-full max-w-[650px]"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1, delay: 0.2 }}
+                    >
+                        <LivingDashboard activeSector={activeSector} />
                     </motion.div>
-                )}
-            </AnimatePresence>
 
-            <ContactModal
-                isOpen={isContactModalOpen}
-                onClose={() => setIsContactModalOpen(false)}
-                title="Solicitar Demo - HoryCore"
-                type="demo"
-            />
+                    {/* Floating Cards (Parallax Elements) - Repositioned for safety */}
+                    <motion.div style={{ y: y1 }} className="absolute z-20 top-12 -right-4 lg:right-0 shadow-2xl">
+                        <FloatingCard
+                            icon={TrendingUp}
+                            label="Ventas Semanales"
+                            value="$54,230"
+                            trend="+12%"
+                            trendUp={true}
+                            delay={0.5}
+                            className="animate-float-slow"
+                        />
+                    </motion.div>
+
+                    <motion.div style={{ y: y1 }} className="absolute z-20 bottom-20 -left-6 lg:left-0 shadow-2xl">
+                        <FloatingCard
+                            icon={AlertTriangle}
+                            label="Stock Crítico"
+                            value="5 Items"
+                            trend="Requiere Atención"
+                            trendUp={false}
+                            delay={0.7}
+                            className="animate-float-slower"
+                        />
+                    </motion.div>
+                </div>
+            </div>
         </section>
     );
 };
+
+export default Hero;

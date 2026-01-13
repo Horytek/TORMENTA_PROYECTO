@@ -76,6 +76,34 @@ export default {
           },
         },
         'custom-blue': '#00bdd6',
+        landing: {
+          primary: {
+            DEFAULT: 'var(--landing-primary)',
+            foreground: 'var(--landing-primary-foreground)',
+          },
+          secondary: {
+            DEFAULT: 'var(--landing-secondary)',
+            foreground: 'var(--landing-secondary-foreground)',
+          },
+          blueprint: {
+            bg: 'var(--landing-blueprint-bg)',
+            line: 'var(--landing-blueprint-line)',
+          },
+          luxury: {
+            bg: 'var(--landing-luxury-bg)',
+            foreground: 'var(--landing-luxury-foreground)',
+            text: 'var(--landing-luxury-foreground)',
+          },
+          accent: {
+            DEFAULT: 'var(--landing-accent)',
+            hover: 'var(--landing-accent-hover)',
+            foreground: 'var(--landing-accent-foreground)',
+          },
+          text: {
+            muted: 'var(--landing-text-muted)',
+            main: 'var(--landing-text-main)',
+          }
+        },
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',
           foreground: 'hsl(var(--sidebar-foreground))',
