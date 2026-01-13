@@ -9,7 +9,7 @@ const navbarLinks = [
   { label: "Características", href: "#features", ariaLabel: "Características" },
   { label: "Precios", href: "#pricing", ariaLabel: "Precios" },
   { label: "Opiniones", href: "#feedback", ariaLabel: "Opiniones de clientes" },
-  { label: "Preguntas frecuentes", href: "#FAQ", ariaLabel: "Preguntas frecuentes" },
+  { label: "Dudas frecuentes", href: "#dudas-frecuentes", ariaLabel: "Dudas frecuentes" },
   { label: "Contacto", href: "/landing/contactanos", ariaLabel: "Contactar con nosotros" },
 ];
 

@@ -1,109 +1,34 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
 
-const FAQData = [
-  {
-    question: "¿Qué es HoryCore y qué soluciones ofrece?",
-    answer:
-      "HoryCore es una plataforma integral que digitaliza la gestión empresarial. Ofrece módulos como control de inventario en tiempo real, gestión de ventas, generación automática de reportes, seguimiento de clientes y facturación electrónica validada por SUNAT.",
-  },
-  {
-    question: "¿HoryCore cumple con los requisitos de facturación electrónica SUNAT?",
-    answer:
-      "Sí, nuestra plataforma está integrada con SUNAT para emitir comprobantes electrónicos válidos como boletas, facturas y notas de crédito, evitando errores y cumpliendo con la normativa vigente.",
-  },
-  {
-    question: "¿Puedo controlar mis almacenes en tiempo real?",
-    answer:
-      "Claro. Con HoryCore puedes monitorear tu stock en tiempo real, configurar alertas de quiebre de stock y visualizar entradas y salidas desde cualquier dispositivo con conexión a internet.",
-  },
-  {
-    question: "¿La plataforma es fácil de usar para mi equipo?",
-    answer:
-      "Sí. Hemos diseñado HoryCore con una interfaz moderna, intuitiva y responsive, ideal tanto para usuarios con experiencia como para quienes recién comienzan a digitalizar su negocio.",
-  },
-  {
-    question: "¿Cómo accedo al soporte técnico si tengo dudas?",
-    answer:
-      "Nuestro equipo de soporte está disponible por WhatsApp, correo electrónico y desde la propia plataforma. Además, contamos con guías paso a paso y capacitaciones gratuitas.",
-  },
-];
 
 export const FAQ = () => (
-  <section className="relative -mt-8 sm:mt-0 pt-12 sm:pt-16 pb-16 bg-blueGray-50 overflow-hidden">
-    <div className="absolute -top-10" id="FAQ" />
-    <motion.div
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-    >
-      <div className="relative z-10 container px-2 sm:px-8 lg:px-4 mx-auto w-11/12 sm:w-full">
-        <div className="md:max-w-4xl mx-auto">
-          <p className="mb-7 block-subtitle text-center">¿Tienes alguna pregunta?</p>
-          <h2 className="mb-16 block-big-title text-center">
-            Preguntas Frecuentes
-          </h2>
-          <div className="mb-11 flex flex-wrap -m-1">
-            {FAQData.map((item, index) => (
-              <div className="w-full p-1" key={`${item.question}-${index}`}>
-                <FAQBox
-                  title={item.question}
-                  content={item.answer}
-                  key={`${item.question}-${item.answer}`}
-                  defaultOpen={index === 0}
-                />
-              </div>
-            ))}
-          </div>
+  // Using the classes from the Pricing.jsx block: mt-24 pt-16 border-t border-white/10
+  // But since it's a separate section now, we might adjust top spacing, 
+  // keeping the border-t to maintain visual continuity if that was desired.
+  // The original block was: <div className="mt-24 pt-16 border-t border-white/10 relative">
+  <section className="relative py-20 bg-[#02040a]" id="dudas-frecuentes">
+    <div className="container mx-auto px-4 relative z-10">
+      {/* Separator Line centered and constrained */}
+      <div className="border-t border-white/10 max-w-4xl mx-auto mb-16" />
+
+      <div className="text-center mb-12">
+        <span className="text-landing-accent text-sm font-bold tracking-widest uppercase mb-2 block font-manrope">Dudas Frecuentes</span>
+        <h4 className="text-2xl md:text-3xl font-bold text-white font-manrope">Resolvemos tus dudas en segundos</h4>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto font-manrope">
+        <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+          <div className="font-bold text-white mb-3 text-lg">¿Incluye implementación?</div>
+          <p className="text-sm text-gray-400 leading-relaxed">Sí, todos los planes incluyen onboarding guiado y carga inicial de datos para que empieces a vender desde el día 1.</p>
+        </div>
+        <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+          <div className="font-bold text-white mb-3 text-lg">¿Puedo cancelar cuando sea?</div>
+          <p className="text-sm text-gray-400 leading-relaxed">Totalmente. No creemos en los contratos forzosos. Si no te sirve, puedes cancelar tu suscripción mensual en cualquier momento.</p>
+        </div>
+        <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+          <div className="font-bold text-white mb-3 text-lg">¿Migración desde Excel?</div>
+          <p className="text-sm text-gray-400 leading-relaxed">Contamos con plantillas de importación masiva. Sube tu inventario y clientes en segundos.</p>
         </div>
       </div>
-    </motion.div>
+    </div>
   </section>
 );
-
-const FAQBox = ({ defaultOpen, title, content }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div
-      className="pt-2 sm:pt-6 pb-2 px-3 sm:px-8 rounded-3xl main-border-gray-darker mb-4 relative hover:bg-bgDark3Hover cursor-pointer transition"
-      style={{
-        backgroundColor: 'rgba(48, 49, 54, 0.85)',
-        backdropFilter: 'blur(2px)'
-      }}
-      onClick={() => setIsOpen(!isOpen)}
-    >
-      <div className="flex flex-col p-2  justify-center items-start">
-        <h3 className=" content-title pt-3 sm:pt-0 pr-8 sm:pr-0">{title}</h3>
-        <p
-          className={`text-secondary-text pt-4 transition-height duration-300 overflow-hidden ${
-            isOpen ? "max-h-96" : "max-h-0"
-          }`}
-        >
-          {content}
-        </p>
-      </div>
-      <div className="absolute top-6 right-4 sm:top-8 sm:right-8">
-        <svg
-          width="28px"
-          height="30px"
-          viewBox="0 0 20 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className={`transition-all duration-500  ${
-            isOpen ? "rotate-[180deg]" : "rotate-[270deg]"
-          }`}
-        >
-          <path
-            d="M4.16732 12.5L10.0007 6.66667L15.834 12.5"
-            stroke="#4F46E5"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          ></path>
-        </svg>
-      </div>
-    </div>
-  );
-};

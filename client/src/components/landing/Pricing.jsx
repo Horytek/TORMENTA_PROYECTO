@@ -137,27 +137,7 @@ export const Pricing = () => {
         </div>
 
         {/* FAQ Quick Block - Redesigned to fix the "image 5" issue & line alignment */}
-        <div className="mt-24 pt-16 border-t border-white/10 relative">
-          <div className="text-center mb-12">
-            <span className="text-landing-accent text-sm font-bold tracking-widest uppercase mb-2 block">Dudas Frecuentes</span>
-            <h4 className="text-2xl font-bold text-white">Resolvemos tus dudas en segundos</h4>
-          </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-              <div className="font-bold text-white mb-3 text-lg">¿Incluye implementación?</div>
-              <p className="text-sm text-gray-400 leading-relaxed">Sí, todos los planes incluyen onboarding guiado y carga inicial de datos para que empieces a vender desde el día 1.</p>
-            </div>
-            <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-              <div className="font-bold text-white mb-3 text-lg">¿Puedo cancelar cuando sea?</div>
-              <p className="text-sm text-gray-400 leading-relaxed">Totalmente. No creemos en los contratos forzosos. Si no te sirve, puedes cancelar tu suscripción mensual en cualquier momento.</p>
-            </div>
-            <div className="p-6 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-              <div className="font-bold text-white mb-3 text-lg">¿Migración desde Excel?</div>
-              <p className="text-sm text-gray-400 leading-relaxed">Contamos con plantillas de importación masiva. Sube tu inventario y clientes en segundos.</p>
-            </div>
-          </div>
-        </div>
 
       </div>
     </section>

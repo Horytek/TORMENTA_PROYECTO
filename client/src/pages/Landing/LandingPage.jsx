@@ -6,6 +6,7 @@ import Hero from '../../components/landing/Hero';
 import BlueprintSection from '../../components/landing/blueprint/BlueprintSection';
 import CaseStudy from '../../components/landing/CaseStudy';
 import { Pricing } from '../../components/landing/Pricing';
+import { FAQ } from '../../components/landing/FAQ';
 import { Footer } from '../../components/landing/Footer';
 import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
 
@@ -44,6 +45,8 @@ export default function LandingPage() {
       <div id="pricing">
         <Pricing />
       </div>
+
+      <FAQ />
 
       <Footer />
       <ScrollUpButton />
