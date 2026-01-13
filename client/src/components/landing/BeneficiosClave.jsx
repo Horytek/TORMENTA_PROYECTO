@@ -4,149 +4,125 @@ export const BeneficiosClave = ({ onOpenModal }) => {
   const beneficios = [
     {
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H6.99C4.26 7 2 9.26 2 12s2.26 5 4.99 5H11v-1.9H6.99c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm5-6h4.01c2.73 0 4.99 2.26 4.99 5s-2.26 5-4.99 5H13v1.9h4.01C19.74 17 22 14.74 22 12s-2.26-5-4.99-5H13v1.9z"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
         </svg>
       ),
       titulo: "Integración Total",
-      descripcion: "Todos los módulos trabajan de forma sincronizada para una gestión unificada",
-      color: "from-primary-color to-secondary-color",
-      stat: "100%"
+      descripcion: "Finanzas, Ventas y Logística en una sola fuente de verdad.",
+      chip: "100% UNIFICADO"
     },
     {
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M12 2L13.09 8.26L18 7L16.74 12L22 14.14L15.74 17.26L17 22L12 20.74L7 22L8.26 17.26L2 14.14L7.26 12L6 7L10.91 8.26L12 2Z"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
         </svg>
       ),
-      titulo: "Cumplimiento Legal",
-      descripcion: "100% compatible con normativas peruanas (SUNAT, etc.)",
-      color: "from-secondary-color to-primary-color",
-      stat: "Certificado"
+      titulo: "Cumplimiento SUNAT",
+      descripcion: "Facturación electrónica y libros PLE actualizados.",
+      chip: "NORMATIVA"
     },
     {
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
         </svg>
       ),
       titulo: "Escalabilidad",
-      descripcion: "Crece junto con tu empresa sin límites de usuarios o funcionalidades",
-      color: "from-primary-color to-secondary-color",
-      stat: "Ilimitado"
+      descripcion: "Crece sin límites de usuarios o transacciones.",
+      chip: "ILIMITADO",
+      highlight: true
     },
     {
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,19V17H9A6,6 0 0,1 3,11H5C5,13.78 7.22,16 10,16H11V14L15,17L11,20V19Z"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
         </svg>
       ),
-      titulo: "Acceso Remoto",
-      descripcion: "Disponible desde cualquier dispositivo con internet, trabajo híbrido",
-      color: "from-secondary-color to-primary-color",
-      stat: "24/7"
+      titulo: "Cloud Native",
+      descripcion: "Acceso seguro desde cualquier lugar, 24/7.",
+      chip: "ONLINE"
     },
     {
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22S19,14.25 19,9A7,7 0 0,0 12,2Z"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 5.472m0 0a9.09 9.09 0 00-3.279 3.298m.091-7.663c.21.11.43.21.66.295.6.22 1.25.337 1.91.337a6.002 6.002 0 003.76-1.597m0 0A9.01 9.01 0 0112 8.25c2.485 0 4.734.996 6.406 2.623m0 0a5.992 5.992 0 013.76 1.597m0 0c.23-.085.45-.185.66-.295a9.096 9.096 0 013.185-3.142" />
         </svg>
       ),
       titulo: "Soporte Local",
-      descripcion: "Equipo técnico especializado en Perú con respuesta inmediata",
-      color: "from-primary-color to-secondary-color",
-      stat: "<2hrs"
+      descripcion: "Equipo técnico especializado en Perú.",
+      chip: "<2 HORAS"
     },
     {
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.98C19.47,12.66 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.02L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.65 15.48,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.52,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.02C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.52,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.48,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.98Z"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
         </svg>
       ),
-      titulo: "Personalización",
-      descripcion: "Adaptable a las necesidades específicas de tu industria y procesos",
-      color: "from-secondary-color to-primary-color",
-      stat: "100%"
+      titulo: "Personalizable",
+      descripcion: "Adaptable a flujos específicos de tu industria.",
+      chip: "MODULAR"
     }
   ];
 
   return (
-    <section className="w-full py-20 bg-gradient-to-br from-bgDark2 via-bgDark1 to-bgDark2" id="beneficios">
-      <div className="flex justify-center px-2 sm:px-4">
-        <div className="w-4/5 md:w-11/12 lg:w-10/12 xl:w-4/5 2xl:w-2/3">
-          {/* Header de la sección */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <div className="flex items-center justify-center mb-6">
-            <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white">Beneficios Clave</h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6 max-w-32"></div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 max-w-4xl mx-auto">
-            <p className="text-lg leading-relaxed text-secondary-text">
-              Descubre por qué las empresas <span className="text-secondary-color font-semibold">confían en HoryCore</span> para transformar su <span className="text-white font-medium">gestión empresarial</span>.
-            </p>
-          </div>
-        </motion.div>
+    <section className="w-full py-24 relative" id="beneficios">
+      <div className="flex justify-center px-4">
+        <div className="w-full xl:w-[1280px]">
 
-        {/* Grid de beneficios */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {beneficios.map((beneficio, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ 
-                duration: 0.6, 
-                delay: index * 0.1,
-                ease: "easeOut"
-              }}
-              viewport={{ once: true }}
-              className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-6 rounded-2xl border border-gray-600/20 hover:border-secondary-color/40 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary-color/10 overflow-hidden"
-            >
-              {/* Elementos decorativos de fondo */}
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-secondary-color/20 to-transparent rounded-full blur-2xl"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-secondary-color/20 to-primary-color/20 rounded-xl border border-secondary-color/30 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform duration-300">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="flex items-center gap-4 mb-16"
+          >
+            <h2 className="text-3xl font-bold text-white">Beneficios Clave</h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
+          </motion.div>
+
+          {/* Grid de beneficios */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+            {beneficios.map((beneficio, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className={`group relative p-8 rounded-2xl transition-all duration-500 overflow-hidden ${beneficio.highlight
+                    ? "bg-white/10 border border-secondary-color/30 shadow-2xl shadow-secondary-color/10"
+                    : "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20"
+                  }`}
+              >
+                {/* Corner Chip */}
+                <div className="absolute top-4 right-4">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border ${beneficio.highlight
+                      ? "text-secondary-color border-secondary-color/30 bg-secondary-color/10"
+                      : "text-white/40 border-white/5 bg-white/5"
+                    }`}>
+                    {beneficio.chip}
+                  </span>
+                </div>
+
+                <div className="flex flex-col h-full">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-2xl transition-transform duration-300 group-hover:scale-110 ${beneficio.highlight
+                      ? "bg-secondary-color/20 text-secondary-color border border-secondary-color/20"
+                      : "bg-white/10 text-white border border-white/10"
+                    }`}>
                     {beneficio.icon}
                   </div>
-                  <div className="bg-secondary-color/10 px-3 py-1 rounded-full">
-                    <span className="text-secondary-color text-xs font-bold">{beneficio.stat}</span>
-                  </div>
-                </div>
-                
-                <h3 className="text-xl font-bold text-white group-hover:text-secondary-color transition-colors duration-300 mb-3">
-                  {beneficio.titulo}
-                </h3>
-                
-                <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mb-4 rounded-full"></div>
-                
-                <p className="text-secondary-text group-hover:text-white transition-colors duration-300 text-sm leading-relaxed">
-                  {beneficio.descripcion}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
 
-        {/* CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          viewport={{ once: true }}
-          className="mt-16"
-        >
-        </motion.div>
+                  <h3 className="text-xl font-bold text-white mb-3">
+                    {beneficio.titulo}
+                  </h3>
+
+                  <p className="text-secondary-text text-sm leading-relaxed">
+                    {beneficio.descripcion}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

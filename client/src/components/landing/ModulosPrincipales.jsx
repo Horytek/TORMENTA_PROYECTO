@@ -1,227 +1,155 @@
-import { motion } from "framer-motion";
+import React from "react";
+import { SectionShell } from "./ui/SectionShell";
+import { SectionHeader } from "./ui/SectionHeader";
+import { GlassCard } from "./ui/GlassCard";
 
 export const ModulosPrincipales = ({ onOpenModal }) => {
+  // Módulos reales del sistema basados en la estructura del proyecto y solicitud del usuario.
   const modulos = [
     {
+      category: "Ventas",
+      titulo: "Punto de Venta",
+      descripcion: "Facturación rápida, control de cajas y múltiples métodos de pago.",
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-          <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+        <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 4.5ZM3 4.5v13.5c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6Zm3 3h.008v.008H6V7.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM6 10.5h.008v.008H6v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM6 13.5h.008v.008H6v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
         </svg>
       ),
-      titulo: "Contabilidad y Finanzas",
-      color: "from-primary-color to-secondary-color",
-      descripcion: "Gestión financiera integral y automatizada",
       caracteristicas: [
-        "Contabilidad general automatizada",
-        "Libros electrónicos PLEs integrados con SUNAT",
-        "Control de flujo de caja y tesorería",
-        "Reportes financieros en tiempo real",
-        "Conciliación bancaria automática",
-        "Gestión de activos fijos"
+        "Emisión de Tickets/Facturas",
+        "Apertura y Cierre de Caja",
+        "Gestión de Vendedores"
       ]
     },
     {
+      category: "Logística",
+      titulo: "Inventario Global",
+      descripcion: "Control total de stock, guía de remisión y movimientos de almacén.",
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-          <path d="M19,7H18V6A2,2 0 0,0 16,4H8A2,2 0 0,0 6,6V7H5A3,3 0 0,0 2,10V19A3,3 0 0,0 5,22H19A3,3 0 0,0 22,19V10A3,3 0 0,0 19,7M8,6H16V7H8V6Z"/>
+        <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
         </svg>
       ),
-      titulo: "Ventas y CRM",
-      color: "from-secondary-color to-primary-color",
-      descripcion: "Optimiza tu fuerza de ventas y relación con clientes",
       caracteristicas: [
-        "Gestión de clientes y prospectos",
-        "Cotizaciones y pedidos de venta",
-        "Facturación electrónica SUNAT",
-        "Control de comisiones de vendedores",
-        "Análisis de ventas y rentabilidad",
-        "Seguimiento de pipeline de ventas"
+        "Kardex Físico y Valorizado",
+        "Gestión de Marcas y Categorías",
+        "Códigos de Barras y QR"
       ]
     },
     {
+      category: "Gestión",
+      titulo: "Clientes",
+      descripcion: "Base de datos centralizada para fidelización y seguimiento comercial.",
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-          <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
+        <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
         </svg>
       ),
-      titulo: "Inventarios y Almacén",
-      color: "from-primary-color to-secondary-color",
-      descripcion: "Control total de stock y movimientos",
       caracteristicas: [
-        "Control de stock en tiempo real",
-        "Gestión de múltiples almacenes",
-        "Trazabilidad completa de productos",
-        "Valorización de inventarios (FIFO, LIFO, Promedio)",
-        "Alertas de stock mínimo",
-        "Código de barras y etiquetado"
+        "Historial de Compras",
+        "Cuentas Corrientes",
+        "Línea de Crédito"
       ]
     },
     {
+      category: "Compras",
+      titulo: "Proveedores",
+      descripcion: "Gestión eficiente de adquisiciones, órdenes de compra y cuentas por pagar.",
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-          <path d="M17,18C15.89,18 15,18.89 15,20A2,2 0 0,0 17,22A2,2 0 0,0 19,20C19,18.89 18.1,18 17,18M1,2V4H3L6.6,11.59L5.24,14.04C5.09,14.32 5,14.65 5,15A2,2 0 0,0 7,17H19V15H7.42A0.25,0.25 0 0,1 7.17,14.75C7.17,14.7 7.18,14.66 7.2,14.63L8.1,13H15.55C16.3,13 16.96,12.58 17.3,11.97L20.88,5H5.21L4.27,3H1M7,18C5.89,18 5,18.89 5,20A2,2 0 0,0 7,22A2,2 0 0,0 9,20C9,18.89 8.1,18 7,18Z"/>
+        <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
         </svg>
       ),
-      titulo: "Compras y Proveedores",
-      color: "from-secondary-color to-primary-color",
-      descripcion: "Optimización de procesos de adquisición",
       caracteristicas: [
-        "Gestión de proveedores y cotizaciones",
-        "Órdenes de compra automatizadas",
-        "Control de recepciones y devoluciones",
-        "Evaluación de proveedores",
-        "Planificación de requerimientos",
-        "Gestión de contratos y acuerdos"
+        "Registro de Compras",
+        "Evaluación de Proveedores",
+        "Pagos Programados"
       ]
     },
     {
+      category: "Talento",
+      titulo: "Empleados",
+      descripcion: "Administración de personal, roles, accesos y control de asistencia.",
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-          <path d="M16,4C16.88,4 17.67,4.5 18,5.26L19,7H20A2,2 0 0,1 22,9V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V9A2,2 0 0,1 4,7H5L6,5.26C6.33,4.5 7.12,4 8,4H16M16.5,10A1.5,1.5 0 0,0 15,11.5V12.5A1.5,1.5 0 0,0 16.5,14A1.5,1.5 0 0,0 18,12.5V11.5A1.5,1.5 0 0,0 16.5,10M7.5,10A1.5,1.5 0 0,0 6,11.5V12.5A1.5,1.5 0 0,0 7.5,14A1.5,1.5 0 0,0 9,12.5V11.5A1.5,1.5 0 0,0 7.5,10Z"/>
+        <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
         </svg>
       ),
-      titulo: "Recursos Humanos",
-      color: "from-primary-color to-secondary-color",
-      descripcion: "Gestión integral del capital humano",
       caracteristicas: [
-        "Gestión de personal y nóminas",
-        "Control de asistencia y marcaciones",
-        "Cálculo automático de planillas",
-        "Gestión de vacaciones y permisos",
-        "Evaluación de desempeño",
-        "Reportes laborales"
+        "Gestión de Usuarios y Roles",
+        "Asignación de Sucursales",
+        "Permisos Granulares"
       ]
     },
     {
+      category: "Control",
+      titulo: "Reportes y BI",
+      descripcion: "Tableros de control en tiempo real para la toma de decisiones estratégicas.",
       icon: (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-          <path d="M7,2V4H8V18A4,4 0 0,0 12,22A4,4 0 0,0 16,18V4H17V2H7M11,16C10.4,16 10,15.6 10,15C10,14.4 10.4,14 11,14C11.6,14 12,14.4 12,15C12,15.6 11.6,16 11,16M13,12C12.4,12 12,11.6 12,11C12,10.4 12.4,10 13,10C13.6,10 14,10.4 14,11C14,11.6 13.6,12 13,12M14,7H10V4H14V7Z"/>
+        <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
         </svg>
       ),
-      titulo: "Producción",
-      color: "from-secondary-color to-primary-color",
-      descripcion: "Planificación y control de manufactura",
       caracteristicas: [
-        "Planificación de la producción",
-        "Control de órdenes de trabajo",
-        "Gestión de recetas y fórmulas",
-        "Control de calidad integrado",
-        "Seguimiento de costos de producción",
-        "Optimización de recursos productivos"
+        "Reportes de Ventas Detallados",
+        "Márgenes de Ganancia",
+        "Exportación a Excel/PDF"
       ]
     }
   ];
 
   return (
-    <section className="w-full py-20 bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1" id="modulos">
-      <div className="flex justify-center px-2 sm:px-4">
-        <div className="w-4/5 md:w-11/12 lg:w-10/12 xl:w-4/5 2xl:w-2/3">
-          {/* Header de la sección */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-        >
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white">Módulos Principales</h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6 max-w-32"></div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 max-w-4xl mx-auto">
-            <p className="text-lg leading-relaxed text-secondary-text">
-              Cada módulo está diseñado para <span className="text-secondary-color font-semibold">optimizar una área específica</span> de tu empresa, trabajando en <span className="text-white font-medium">perfecta sincronía</span> para una gestión integral.
-            </p>
-          </div>
-        </motion.div>
+    <SectionShell id="modulos">
+      <SectionHeader
+        title="Módulos del Sistema"
+        subtitle="Una suite completa de herramientas diseñadas para operar tu negocio de principio a fin."
+      />
 
-        {/* Grid de módulos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {modulos.map((modulo, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ 
-                duration: 0.6, 
-                delay: index * 0.1,
-                ease: "easeOut"
-              }}
-              viewport={{ once: true }}
-              className="group relative bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 p-8 rounded-2xl border border-gray-600/20 hover:border-secondary-color/40 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary-color/10 overflow-hidden"
-            >
-              {/* Elementos decorativos de fondo */}
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-secondary-color/10 to-transparent rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-primary-color/10 to-transparent rounded-full blur-2xl"></div>
-              
-              {/* Contenido principal */}
-              <div className="relative z-10">
-                <div className="flex items-center mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-secondary-color/20 to-primary-color/20 rounded-2xl border border-secondary-color/30 flex items-center justify-center mr-4 text-3xl group-hover:scale-105 transition-transform duration-300">
-                    {modulo.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white group-hover:text-secondary-color transition-colors duration-300">
-                      {modulo.titulo}
-                    </h3>
-                    <p className="text-secondary-text text-sm mt-1">{modulo.descripcion}</p>
-                  </div>
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {modulos.map((modulo, index) => (
+          <GlassCard
+            key={index}
+            className="p-8 group !bg-[#060a14] border-white/5"
+          >
+            {/* Header: Chip + Dot */}
+            <div className="flex justify-between items-center mb-8">
+              <span className="px-3 py-1 rounded-[var(--radius-chip)] bg-white/5 border border-white/5 text-[10px] uppercase font-bold tracking-widest text-[var(--premium-muted)]">
+                {modulo.category}
+              </span>
+              <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+            </div>
 
-                <div className="w-24 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mb-6 rounded-full"></div>
-
-                <div className="space-y-3">
-                  {modulo.caracteristicas.map((caracteristica, idx) => (
-                    <div key={idx} className="flex items-start group/item">
-                      <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0 group-hover/item:bg-primary-color transition-colors duration-200"></div>
-                      <span className="text-secondary-text text-sm leading-relaxed group-hover/item:text-white transition-colors duration-200">{caracteristica}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Badge de importancia */}
-                <div className="mt-6 pt-4 border-t border-gray-600/30">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-secondary-color font-medium bg-secondary-color/10 px-3 py-1 rounded-full">
-                      Módulo esencial
-                    </span>
-                    <div className="flex items-center text-xs text-secondary-text">
-                      <div className="w-1 h-1 bg-green-400 rounded-full mr-1"></div>
-                      Totalmente integrado
-                    </div>
-                  </div>
-                </div>
+            {/* Icon & Title Block */}
+            <div className="flex gap-4 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 text-purple-400 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                {modulo.icon}
               </div>
-            </motion.div>
-          ))}
-        </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-2">{modulo.titulo}</h3>
+                <p className="text-sm text-[var(--premium-muted)] leading-relaxed">
+                  {modulo.descripcion}
+                </p>
+              </div>
+            </div>
 
-        {/* Call to action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          viewport={{ once: true }}
-          className="text-center mt-16"
-        >
-          <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-8 rounded-2xl border border-secondary-color/20 max-w-2xl mx-auto">
-            <h3 className="text-xl font-bold text-white mb-4">¿Necesitas más información?</h3>
-            <p className="text-secondary-text mb-6">
-              Cada módulo puede personalizarse según las necesidades específicas de tu empresa
-            </p>
-            <button 
-              onClick={onOpenModal}
-              className="bg-gradient-to-r from-secondary-color to-primary-color text-white px-8 py-3 rounded-full font-medium hover:shadow-lg hover:shadow-secondary-color/30 transition-all duration-300"
-            >
-              Solicitar demostración
-            </button>
-          </div>
-        </motion.div>
-        </div>
+            {/* Divider */}
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent mb-6" />
+
+            {/* Feature List */}
+            <ul className="space-y-3">
+              {modulo.caracteristicas.map((item, i) => (
+                <li key={i} className="flex items-center text-sm text-[var(--premium-muted2)] group-hover:text-[var(--premium-muted)] transition-colors">
+                  <svg className="w-3.5 h-3.5 mr-3 text-purple-500" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </GlassCard>
+        ))}
       </div>
-    </section>
+    </SectionShell>
   );
 };

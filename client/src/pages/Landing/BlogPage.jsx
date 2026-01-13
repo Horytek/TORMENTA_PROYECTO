@@ -1,8 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from "framer-motion";
-import { Navbar } from '../../components/landing/Navbar';
-import { Footer } from '../../components/landing/Footer';
-import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
+import { LandingSubPageLayout } from '../../components/landing/LandingSubPageLayout';
 
 // Importar estilos específicos
 import '../../styles/landing/index.css';
@@ -46,33 +44,20 @@ const blogPosts = [
 ];
 
 const BlogPage = () => {
-  // Añade/remueve una clase al body para aislar estilos
-  useEffect(() => {
-    document.body.classList.add('landing-body');
-    return () => {
-      document.body.classList.remove('landing-body');
-    };
-  }, []);
-
   return (
-    <div className="landing-page" data-theme="blog">
-      <Navbar />
-      
+    <LandingSubPageLayout activeSectorColor="#3b82f6">
+
       {/* Hero Section */}
-      <section className="w-full relative overflow-hidden bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 pt-20">
-        <div className="absolute inset-0 bg-gradient-to-r from-secondary-color/5 to-primary-color/5"></div>
-        <div className="absolute top-20 right-10 w-96 h-96 bg-gradient-to-br from-secondary-color/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-10 w-64 h-64 bg-gradient-to-tr from-primary-color/20 to-transparent rounded-full blur-2xl"></div>
-        
+      <section className="w-full relative overflow-hidden pt-20">
         <div className="relative z-10 flex justify-center px-2 sm:px-4 py-24">
           <div className="w-full md:w-10/12 lg:w-[1200px] 2xl:w-[1400px]">
-            <motion.div 
+            <motion.div
               className="text-center"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <motion.div 
+              <motion.div
                 className="inline-flex items-center bg-gradient-to-r from-secondary-color/20 to-primary-color/20 rounded-full px-6 py-3 mb-8 border border-secondary-color/30"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -81,8 +66,8 @@ const BlogPage = () => {
                 <div className="w-2 h-2 bg-secondary-color rounded-full mr-3 animate-pulse"></div>
                 <span className="text-secondary-color font-semibold text-sm">Blog HoryCore</span>
               </motion.div>
-              
-              <motion.h1 
+
+              <motion.h1
                 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -94,8 +79,8 @@ const BlogPage = () => {
                 </span>{" "}
                 tu negocio
               </motion.h1>
-              
-              <motion.p 
+
+              <motion.p
                 className="text-xl md:text-2xl text-secondary-text max-w-4xl mx-auto mb-12 leading-relaxed"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -104,8 +89,8 @@ const BlogPage = () => {
                 Aprende sobre gestión empresarial, control de inventario, facturación electrónica y más con{" "}
                 <span className="text-white font-semibold">HoryCore ERP</span>.
               </motion.p>
-              
-              <motion.div 
+
+              <motion.div
                 className="w-32 h-1 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: "8rem" }}
@@ -114,12 +99,10 @@ const BlogPage = () => {
             </motion.div>
           </div>
         </div>
-        
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-secondary-color/50 to-transparent"></div>
       </section>
 
       {/* Blog Posts Section */}
-      <section className="w-full py-20 bg-gradient-to-b from-bgDark2 to-bgDark1">
+      <section className="w-full py-20">
         <div className="max-w-6xl mx-auto px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
             {blogPosts.map((post, index) => (
@@ -129,7 +112,7 @@ const BlogPage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-gradient-to-br from-bgDark2/80 to-bgDark3/60 backdrop-blur-sm rounded-3xl p-6 shadow-2xl border border-gray-700/30 hover:shadow-3xl hover:shadow-secondary-color/10 transition-all duration-300 group"
+                className="bg-white/5 backdrop-blur-md rounded-3xl p-6 shadow-2xl border border-white/10 hover:shadow-3xl hover:border-secondary-color/50 transition-all duration-300 group"
               >
                 <div className="relative overflow-hidden rounded-2xl mb-6">
                   <img
@@ -139,32 +122,32 @@ const BlogPage = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-bgDark1/80 to-transparent"></div>
                 </div>
-                
+
                 <div className="flex items-center gap-4 mb-4 text-sm text-secondary-text">
                   <span>{post.date}</span>
                   <span>•</span>
                   <span>{post.readTime}</span>
                 </div>
-                
+
                 <h2 className="text-xl font-bold text-white mb-3 group-hover:text-secondary-color transition-colors duration-300">
                   {post.title}
                 </h2>
-                
+
                 <p className="text-secondary-text mb-4 leading-relaxed">
                   {post.subtitle}
                 </p>
-                
+
                 <p className="text-secondary-text/80 text-sm leading-relaxed mb-6">
                   {post.content}
                 </p>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-secondary-text">Por {post.author}</span>
                 </div>
               </motion.article>
             ))}
           </div>
-          
+
           {/* CTA Section */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -173,7 +156,7 @@ const BlogPage = () => {
             viewport={{ once: true }}
             className="text-center mt-16"
           >
-            <div className="bg-gradient-to-r from-bgDark2/80 to-bgDark3/60 backdrop-blur-sm rounded-3xl p-8 border border-gray-700/30">
+            <div className="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
               <h3 className="text-2xl font-bold text-white mb-4">
                 ¿Listo para optimizar tu negocio?
               </h3>
@@ -190,10 +173,7 @@ const BlogPage = () => {
           </motion.div>
         </div>
       </section>
-
-      <Footer />
-      <ScrollUpButton />
-    </div>
+    </LandingSubPageLayout>
   );
 };
 

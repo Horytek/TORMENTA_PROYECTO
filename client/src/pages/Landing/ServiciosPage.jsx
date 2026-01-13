@@ -1,17 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 // Importa los componentes de servicios migrados
-import { Navbar } from '../../components/landing/Navbar';
+import { LandingSubPageLayout } from '../../components/landing/LandingSubPageLayout';
 import { ServiciosHero } from '../../components/landing/ServiciosHero';
 import { ModulosPrincipales } from '../../components/landing/ModulosPrincipales';
 import { BeneficiosClave } from '../../components/landing/BeneficiosClave';
 import { ServiciosAdicionales } from '../../components/landing/ServiciosAdicionales';
+import { SectoresAtendemos } from '../../components/landing/SectoresAtendemos';
 import { ContactoServicios } from '../../components/landing/ContactoServicios';
-import { Footer } from '../../components/landing/Footer';
-import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
 import { ContactModal } from '../../components/landing/ContactModal';
 
-// Importar estilos específicos de servicios aislados
+// Styles
 import '../../styles/landing/index.css';
 
 const ServiciosPage = () => {
@@ -20,14 +19,6 @@ const ServiciosPage = () => {
     title: '',
     type: 'demo'
   });
-
-  // Añade/remueve una clase al body para aislar estilos
-  useEffect(() => {
-    document.body.classList.add('landing-body');
-    return () => {
-      document.body.classList.remove('landing-body');
-    };
-  }, []);
 
   const openModal = (title, type) => {
     setModalConfig({ isOpen: true, title, type });
@@ -39,39 +30,34 @@ const ServiciosPage = () => {
 
 
   return (
-    <div className="landing-page " data-theme="servicios">
-      {/* Navegación */}
-      <Navbar />
-      
-      {/* Hero de servicios */}
-      <ServiciosHero />
-      
-      {/* Módulos principales del ERP */}
-      <ModulosPrincipales onOpenModal={() => openModal('Solicitar Demostración', 'demo')} />
-      
-      {/* Beneficios clave */}
-      <BeneficiosClave onOpenModal={() => openModal('Solicitar Demo - HoryCore', 'demo')} />
-      
-      {/* Servicios adicionales */}
-      <ServiciosAdicionales onOpenModal={() => openModal('Solicitar Cotización', 'contact')} />
-      
-      {/* Contacto para servicios */}
-      <ContactoServicios onOpenModal={() => openModal('Solicitar Demo - HoryCore', 'demo')} />
-      
-      {/* Footer */}
-      <Footer />
-      
-      {/* Botón de scroll */}
-      <ScrollUpButton />
+    <LandingSubPageLayout activeSectorColor="#a855f7">
 
-      {/* Modal de contacto */}
-      <ContactModal 
+      {/* 1. Hero: Propuesta de Valor Principal */}
+      <ServiciosHero />
+
+      {/* 2. Core: Módulos Reales (6 Cards - Ventas, Inv, Clientes, etc.) */}
+      <ModulosPrincipales onOpenModal={() => openModal('Solicitar Demostración', 'demo')} />
+
+      {/* 3. Beneficios Clave: Re-integrado (Glass Grid) */}
+      <BeneficiosClave />
+
+      {/* 4. Servicios Adicionales (Image 1 Style - Implementation/Integrations) */}
+      <ServiciosAdicionales />
+
+      {/* 5. Sectores (Image 2 Style - Grid of Industries) */}
+      <SectoresAtendemos onOpenModal={(t) => openModal(t, 'contact')} />
+
+      {/* 6. Contact (Image 3 Style) */}
+      <ContactoServicios onOpenModal={(t, type) => openModal(t, type)} />
+
+      {/* Modal de contacto compartido */}
+      <ContactModal
         isOpen={modalConfig.isOpen}
         onClose={closeModal}
         title={modalConfig.title}
         type={modalConfig.type}
       />
-    </div>
+    </LandingSubPageLayout>
   );
 };
 

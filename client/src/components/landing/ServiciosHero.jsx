@@ -1,71 +1,64 @@
-import React from 'react';
 import { motion } from "framer-motion";
 
 export const ServiciosHero = () => {
   return (
-    <section className="w-full relative overflow-hidden bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 pt-20">
-      {/* Elementos decorativos de fondo */}
-      <div className="absolute inset-0 bg-gradient-to-r from-secondary-color/5 to-primary-color/5"></div>
-      <div className="absolute top-20 right-10 w-96 h-96 bg-gradient-to-br from-secondary-color/20 to-transparent rounded-full blur-3xl"></div>
-      <div className="absolute bottom-20 left-10 w-64 h-64 bg-gradient-to-tr from-primary-color/20 to-transparent rounded-full blur-2xl"></div>
-      
+    <section className="w-full relative overflow-hidden pt-32 pb-20">
+
       {/* Contenido principal */}
-      <div className="relative z-10 flex justify-center px-2 sm:px-4 py-24">
-        <div className="w-full md:w-10/12 lg:w-[1200px] 2xl:w-[1400px]">
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0, y: 50 }}
+      <div className="relative z-10 flex justify-center px-4 w-full">
+        <div className="w-full max-w-5xl text-center">
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
+            className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-secondary-color/10 border border-secondary-color/20 text-secondary-color text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md hover:bg-secondary-color/20 transition-colors cursor-default"
           >
-            {/* Badge */}
-            <motion.div 
-              className="inline-flex items-center bg-gradient-to-r from-secondary-color/20 to-primary-color/20 rounded-full px-6 py-3 mb-8 border border-secondary-color/30"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <div className="w-2 h-2 bg-secondary-color rounded-full mr-3 animate-pulse"></div>
-              <span className="text-secondary-color font-semibold text-sm">ERP líder en el Perú</span>
-            </motion.div>
-            
-            {/* Título */}
-            <motion.h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              Servicios{" "}
-              <span className="bg-gradient-to-r from-secondary-color to-primary-color bg-clip-text text-transparent">
-                HoryCore ERP
-              </span>
-            </motion.h1>
-            
-            {/* Subtítulo */}
-            <motion.p 
-              className="text-xl md:text-2xl text-secondary-text max-w-4xl mx-auto mb-12 leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            >
-              Solución integral para la gestión empresarial moderna que transforma la manera de hacer negocios con{" "}
-              <span className="text-white font-semibold">tecnología avanzada</span>.
-            </motion.p>
-            
-            {/* Línea decorativa */}
-            <motion.div 
-              className="w-32 h-1 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: "8rem" }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-            ></motion.div>
+            <span className="w-1.5 h-1.5 rounded-full bg-secondary-color animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
+            Sistema Integrado de Gestión
           </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+            className="text-5xl md:text-6xl lg:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white via-gray-200 to-gray-400 tracking-tight leading-[1.1] mb-8"
+          >
+            Control total de tu negocio.<br />
+            <span className="text-white/40">Sin complicaciones.</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            className="text-lg md:text-xl text-secondary-text max-w-3xl mx-auto leading-relaxed mb-10"
+          >
+            HoryCore unifica <span className="text-white font-medium">Facturación</span>, <span className="text-white font-medium">Inventarios</span>, <span className="text-white font-medium">Contabilidad</span> y <span className="text-white font-medium">RR.HH.</span> en una sola plataforma cloud. Cumplimiento SUNAT garantizado y toma de decisiones en tiempo real.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-white/60 font-medium"
+          >
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/5">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              Facturación Electrónica OSE/PSE
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/5">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              Libros Electrónicos PLE 5.0
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/5">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              Multi-almacén Real
+            </div>
+          </motion.div>
+
         </div>
       </div>
-      
-      {/* Elementos decorativos adicionales */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-secondary-color/50 to-transparent"></div>
     </section>
   );
 };
