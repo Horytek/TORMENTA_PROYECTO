@@ -10,18 +10,21 @@ const sectors = [
         id: 'retail',
         label: 'Retail',
         accent: 'from-emerald-400 to-cyan-500',
+        glow: '#10b981',
         description: 'Gestiona tus puntos de venta, inventario y caja en tiempo real. Todo lo que tu tienda necesita para vender más sin perder el control.'
     },
     {
         id: 'services',
         label: 'Servicios',
         accent: 'from-blue-400 to-indigo-500',
+        glow: '#3b82f6',
         description: 'Administra proyectos, cotizaciones y facturación sin complicaciones. La herramienta ideal para consultoras y agencias que buscan orden.'
     },
     {
         id: 'distribution',
         label: 'Distribución',
         accent: 'from-amber-400 to-orange-500',
+        glow: '#f59e0b',
         description: 'Optimiza tu logística, controla múltiples almacenes y agiliza tus despachos. Potencia tu cadena de suministro con datos precisos.'
     }
 ];
@@ -38,7 +41,7 @@ const Hero = () => {
     return (
         <section className="relative min-h-screen w-full overflow-hidden bg-landing-primary flex flex-col justify-center pt-32 pb-20">
             {/* 1. Background Layer */}
-            <ParticleWaveBackground />
+            <ParticleWaveBackground activeColor={currentSector.glow} />
 
             <div className="container mx-auto px-4 z-10 relative grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 

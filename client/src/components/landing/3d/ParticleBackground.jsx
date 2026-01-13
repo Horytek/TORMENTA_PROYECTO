@@ -3,12 +3,13 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as random from 'maath/random/dist/maath-random.esm';
 import * as THREE from 'three';
+import { motion } from 'framer-motion';
 
 function Particles({ count = 3000, mobile = false }) {
     const ref = useRef();
     const { opacity, size } = mobile
-        ? { opacity: 0.4, size: 0.008 }
-        : { opacity: 0.25, size: 0.005 };
+        ? { opacity: 0.55, size: 0.009 }
+        : { opacity: 0.35, size: 0.006 };
 
     // Generate positions once
     const sphere = useMemo(() => {
@@ -70,7 +71,7 @@ function Particles({ count = 3000, mobile = false }) {
     );
 }
 
-const ParticleWaveBackground = () => {
+const ParticleWaveBackground = ({ activeColor = '#10b981' }) => {
     const [isMobile, setIsMobile] = useState(false);
     const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -97,7 +98,24 @@ const ParticleWaveBackground = () => {
     const dpr = isMobile ? 1 : [1, 2];
 
     return (
-        <div className="absolute inset-0 z-0 w-full h-full pointer-events-none bg-[#02040a]">
+        <div className="absolute inset-0 z-0 w-full h-full pointer-events-none bg-[#02040a] overflow-hidden">
+
+            {/* 0. Dynamic Atmosphere (Cinematic Glow) */}
+            <motion.div
+                animate={{ backgroundColor: activeColor }}
+                transition={{ duration: 2, ease: "easeInOut" }}
+                className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-full blur-[120px] opacity-[0.25] z-0 mix-blend-screen pointer-events-none"
+            />
+            <motion.div
+                animate={{ backgroundColor: activeColor }}
+                transition={{ duration: 2.5, ease: "easeInOut", delay: 0.2 }}
+                className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[100px] opacity-[0.15] z-0 mix-blend-screen pointer-events-none"
+            />
+            {/* Center Fill Light to remove "Void" feeling */}
+            <div
+                className="absolute top-[20%] left-[20%] w-[60%] h-[60%] rounded-full blur-[150px] bg-indigo-500/10 opacity-20 z-0 mix-blend-screen pointer-events-none"
+            />
+
             {/* R3F Canvas */}
             {!reduceMotion && (
                 <Canvas
@@ -122,16 +140,24 @@ const ParticleWaveBackground = () => {
                 <div className="absolute inset-0 bg-[url('/assets/static-noise.png')] opacity-20" />
             )}
 
+            {/* Cinematic Grain Overlay */}
+            <div
+                className="absolute inset-0 z-[5] pointer-events-none opacity-[0.03] mix-blend-overlay"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+                }}
+            />
+
             {/* Premium Overlays / Masks */}
 
             {/* 1. Base Gradient (Bottom Up) */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#02040a] via-transparent to-transparent opacity-90" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#02040a] via-transparent to-transparent opacity-90 z-[10]" />
 
             {/* 2. Text Readability Mask (Left Side) - CRITICAL for readability */}
-            <div className="absolute inset-y-0 left-0 w-full lg:w-1/2 bg-gradient-to-r from-[#02040a] via-[#02040a]/60 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 left-0 w-full lg:w-1/2 bg-gradient-to-r from-[#02040a] via-[#02040a]/60 to-transparent z-[10] pointer-events-none" />
 
             {/* 3. Right Side Vignette (Subtle) */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#02040a]/80 via-transparent to-[#02040a]/30" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#02040a]/80 via-transparent to-[#02040a]/30 z-[10]" />
 
         </div>
     );
