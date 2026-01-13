@@ -1,214 +1,95 @@
 import { motion } from "framer-motion";
+import { GlassCard } from "./ui/GlassCard";
 
 export const TeamMembers = () => {
+
+  // Core Team Data
+  const leaderTeam = [
+    { initials: "DB", name: "Davist Bustamante", role: "CEO & Fundador", desc: "Visionario y líder del proyecto Horycore. Dirige la estrategia general.", isCeo: true },
+    { initials: "MR", name: "Marco Rioja", role: "CTO & Arquitecto", desc: "Responsable de la arquitectura técnica y escalabilidad.", isCeo: false },
+    { initials: "AR", name: "Andree Requejo", role: "Director TI", desc: "Lidera I+D de nuevas funcionalidades y tecnología.", isCeo: false },
+    { initials: "ÁM", name: "Ángel Montenegro", role: "Director Ops", desc: "Optimiza procesos internos y eficiencia operativa.", isCeo: false },
+    { initials: "FF", name: "Fernando Fernandez", role: "Director Producto", desc: "Especialista en UX. Asegura que Horycore sea intuitivo.", isCeo: false },
+    { initials: "JR", name: "Javier Rojas", role: "Gerente General", desc: "Supervisa operaciones y cumplimiento de objetivos.", isCeo: false }
+  ];
+
+  // Specialists Data
+  const specialists = [
+    { name: 'Adrian Portocarrero', role: 'Full Stack Senior', initials: 'AP', desc: 'Desarrollo de microservicios y APIs escalables.' },
+    { name: 'Julio Castañeda', role: 'Full Stack Senior', initials: 'JC', desc: 'Optimización de frontend y experiencia de usuario.' },
+    { name: 'Armando Infante', role: 'Especialista BD', initials: 'AI', desc: 'Modelado de datos y optimización de consultas complejas.' },
+    { name: 'Juan Forero', role: 'DBA Senior', initials: 'JF', desc: 'Seguridad, respaldo y alta disponibilidad de datos.' },
+    { name: 'Johan Torres', role: 'Analista de Datos', initials: 'JT', desc: 'Inteligencia de negocios y paneles de control en tiempo real.' }
+  ];
+
   return (
-    <div className="flex justify-center bg-transparent relative pt-2">
-      <div className="px-2 sm:px-4">
-        <article className="w-full lg:w-[1200px] 2xl:w-[1400px] mb-24 mt-16 sm:mt-24">
+    <section className="w-full pb-32 relative z-10">
+      <div className="max-w-7xl mx-auto px-6">
 
-          <section className="text-secondary-text !leading-7 sm:!leading-8 text-base sm:text-lg text-left sm:text-justify mx-auto w-full md:w-10/12 lg:w-2/3">
+        {/* Lideres Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-32">
+          {leaderTeam.map((member, i) => (
+            <GlassCard key={i} className={`p-0 group ${member.isCeo ? 'border-indigo-500/30 bg-indigo-500/5' : ''}`}>
+              {/* Inner Content Wrapper for Perfect Centering */}
+              <div className="flex flex-col items-center text-center p-8 w-full h-full">
 
-            {/* Sección del Equipo Principal */}
-            <motion.div
-              className="text-white text-3xl font-bold mb-6 text-center"
-              initial={{ opacity: 0, y: -20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              viewport={{ once: true }}
-            >
-              Equipo HoryCore
-            </motion.div>
-
-            <motion.div
-              className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 mb-12 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              <p className="text-lg leading-relaxed text-gray-300">
-                Nuestro equipo está formado por los <span className="text-white font-bold">líderes y arquitectos</span>, quienes definen la visión estratégica y <span className="text-white font-bold">guían el desarrollo del producto</span>.
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              viewport={{ once: true }}
-            >
-              {/* Marco Rioja */}
-              <motion.div
-                className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:border-secondary-color/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                viewport={{ once: true }}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-24 h-24 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full mb-6 flex items-center justify-center shadow-lg border-2 border-white/5 group-hover:border-secondary-color/50 transition-colors">
-                    <span className="text-white font-bold text-2xl">MR</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Marco Rioja</h3>
-                  <p className="text-secondary-color font-bold text-xs uppercase tracking-widest mb-4">CTO & Arquitecto</p>
-                  <p className="text-gray-400 text-sm leading-relaxed">Responsable de la arquitectura técnica y la escalabilidad de Horycore. Supervisa el desarrollo del núcleo del sistema.</p>
+                {/* Icon Container */}
+                <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-xl ring-4 ring-white/5 group-hover:scale-105 transition-transform duration-300 ${member.isCeo ? 'bg-[#5865F2]' : 'bg-[#1A1D26]'}`}>
+                  <span className="text-2xl font-bold text-white font-manrope">{member.initials}</span>
                 </div>
-              </motion.div>
 
-              {/* Davist Bustamante - CEO destacado */}
-              <motion.div
-                className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-secondary-color/30 hover:border-secondary-color/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl relative overflow-hidden group"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-b from-secondary-color/10 to-transparent pointer-events-none"></div>
-                <div className="flex flex-col items-center text-center relative z-10">
-                  <div className="w-28 h-28 bg-gradient-to-br from-secondary-color to-blue-600 rounded-full mb-6 flex items-center justify-center shadow-2xl shadow-secondary-color/20 ring-4 ring-white/10">
-                    <span className="text-white font-bold text-3xl">DB</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Davist Bustamante</h3>
-                  <p className="text-white font-bold text-xs uppercase tracking-widest mb-4 bg-white/20 px-3 py-1 rounded-full">CEO & Fundador</p>
-                  <p className="text-gray-200 text-sm leading-relaxed font-medium">Visionario y líder del proyecto Horycore. Dirige la estrategia general y la innovación tecnológica de la empresa.</p>
+                <h3 className="text-xl font-bold text-white mb-3 font-manrope">{member.name}</h3>
+
+                {/* Role Pill */}
+                <div className={`inline-block px-4 py-1.5 rounded-full border mb-5 ${member.isCeo ? 'bg-indigo-500/20 border-indigo-500/30' : 'bg-white/5 border-white/10'}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${member.isCeo ? 'text-indigo-200' : 'text-white/60'}`}>{member.role}</span>
                 </div>
-              </motion.div>
 
-              {/* Andree Requejo */}
-              <motion.div
-                className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:border-secondary-color/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                viewport={{ once: true }}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-24 h-24 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full mb-6 flex items-center justify-center shadow-lg border-2 border-white/5 group-hover:border-secondary-color/50 transition-colors">
-                    <span className="text-white font-bold text-2xl">AR</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Andree Requejo</h3>
-                  <p className="text-secondary-color font-bold text-xs uppercase tracking-widest mb-4">Director TI</p>
-                  <p className="text-gray-400 text-sm leading-relaxed">Lidera la investigación y desarrollo de nuevas funcionalidades. Mantiene Horycore a la vanguardia tecnológica.</p>
-                </div>
-              </motion.div>
-            </motion.div>
+                <p className="text-white/50 text-sm leading-relaxed font-light px-2">
+                  {member.desc}
+                </p>
 
-            {/* Segunda fila centrada */}
-            <motion.div
-              className="flex justify-center mt-6"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl w-full">
-                {/* Ángel Montenegro */}
-                <motion.div
-                  className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:border-secondary-color/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
-                  viewport={{ once: true }}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-24 h-24 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full mb-6 flex items-center justify-center shadow-lg border-2 border-white/5 group-hover:border-secondary-color/50 transition-colors">
-                      <span className="text-white font-bold text-2xl">ÁM</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Ángel Montenegro</h3>
-                    <p className="text-secondary-color font-bold text-xs uppercase tracking-widest mb-4">Director Ops</p>
-                    <p className="text-gray-400 text-sm leading-relaxed">Optimiza los procesos internos y la eficiencia operativa. Coordina los equipos para garantizar entregas de calidad.</p>
-                  </div>
-                </motion.div>
-
-                {/* Fernando Fernandez */}
-                <motion.div
-                  className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:border-secondary-color/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  viewport={{ once: true }}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-24 h-24 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full mb-6 flex items-center justify-center shadow-lg border-2 border-white/5 group-hover:border-secondary-color/50 transition-colors">
-                      <span className="text-white font-bold text-2xl">FF</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Fernando Fernandez</h3>
-                    <p className="text-secondary-color font-bold text-xs uppercase tracking-widest mb-4">Director Producto</p>
-                    <p className="text-gray-400 text-sm leading-relaxed">Especialista en experiencia de usuario. Asegura que Horycore sea intuitivo y cumpla con las necesidades reales de los clientes.</p>
-                  </div>
-                </motion.div>
-
-                {/* Javier Rojas */}
-                <motion.div
-                  className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:border-secondary-color/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                  viewport={{ once: true }}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-24 h-24 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full mb-6 flex items-center justify-center shadow-lg border-2 border-white/5 group-hover:border-secondary-color/50 transition-colors">
-                      <span className="text-white font-bold text-2xl">JR</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Javier Rojas</h3>
-                    <p className="text-secondary-color font-bold text-xs uppercase tracking-widest mb-4">Gerente General</p>
-                    <p className="text-gray-400 text-sm leading-relaxed">Supervisa las operaciones generales de HoryCore. Coordina los equipos y asegura el cumplimiento de los objetivos estratégicos.</p>
-                  </div>
-                </motion.div>
               </div>
-            </motion.div>
+            </GlassCard>
+          ))}
+        </div>
 
-            {/* Sección del Equipo de Apoyo */}
-            <div className="mt-20 mb-12">
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-12"></div>
-              <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 text-center">
-                <p className="text-lg leading-relaxed text-gray-300">Además contamos con <span className="text-white font-bold">especialistas de élite</span> que apoyan en desarrollo, seguridad y mejora continua.</p>
+
+        {/* Especialistas Header */}
+        <div className="mb-8">
+          <div className="w-full bg-[#0A0B10] border border-white/10 rounded-2xl p-8 md:p-12 text-center shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[80px] rounded-full pointer-events-none" />
+            <p className="text-lg md:text-xl text-gray-300 font-light relative z-10">
+              Además contamos con <span className="text-white font-bold">especialistas de élite</span> que apoyan en desarrollo, seguridad y mejora continua.
+            </p>
+          </div>
+        </div>
+
+        {/* Especialistas Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {specialists.map((spec, i) => (
+            <div key={i} className="bg-[#0A0B10] border border-white/10 rounded-2xl p-5 flex items-start gap-5 hover:border-white/20 transition-colors group relative overflow-hidden">
+              <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              {/* Circle Avatar (Side) */}
+              <div className="w-12 h-12 rounded-full bg-[#1A1D26] flex items-center justify-center shrink-0 border border-white/5">
+                <span className="text-white font-bold text-sm tracking-wide">{spec.initials}</span>
               </div>
+
+              {/* Text Info */}
+              <div className="flex flex-col items-start pt-0.5">
+                <h4 className="text-white font-bold text-sm font-manrope mb-1">{spec.name}</h4>
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-2 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{spec.role}</p>
+                <p className="text-white/40 text-xs leading-snug">
+                  {spec.desc}
+                </p>
+              </div>
+
             </div>
+          ))}
+        </div>
 
-            {/* Grid Equipo Apoyo */}
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              viewport={{ once: true }}
-            >
-              {['Adrian Portocarrero', 'Julio Castañeda', 'Armando Infante', 'Juan Forero', 'Johan Torres'].map((name, idx) => {
-                const initials = name.split(' ').map(n => n[0]).join('');
-                const roles = [
-                  'Full Stack Senior',
-                  'Full Stack Senior',
-                  'Especialista BD',
-                  'DBA Senior',
-                  'Analista de Datos'
-                ];
-
-                return (
-                  <motion.div
-                    key={name}
-                    className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 hover:border-secondary-color/30 transition-all duration-300 hover:bg-white/10 flex items-center gap-4 group"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: idx * 0.1 }}
-                    viewport={{ once: true }}
-                  >
-                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center font-bold text-white shrink-0 group-hover:bg-secondary-color group-hover:text-black transition-colors">
-                      {initials}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-bold text-sm">{name}</h4>
-                      <p className="text-gray-400 text-xs">{roles[idx]}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-
-          </section>
-        </article>
       </div>
-    </div>
+    </section>
   );
 };

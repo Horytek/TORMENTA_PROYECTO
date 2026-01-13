@@ -1,113 +1,75 @@
 import { motion } from 'framer-motion';
+import { GlassCard } from "./ui/GlassCard";
+import { Layers, TrendingDown, Clock, MoveRight } from "lucide-react";
 
 export const PorQueElegir = () => {
   return (
-    <section className="w-full py-12 bg-gradient-to-b from-bgDark2 to-bgDark1">
-      <div className="max-w-6xl mx-auto px-8">
-        {/* Título */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="flex items-center mb-6"
-        >
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">¿Por Qué Elegir HoryCore?</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </motion.div>
-        
+    <section className="w-full py-24 relative z-10">
+      <div className="max-w-7xl mx-auto px-6">
+
+        {/* Header */}
+        <div className="flex items-center gap-6 mb-16 w-full">
+          <h2 className="text-3xl md:text-5xl font-bold text-white font-manrope tracking-tight leading-none whitespace-nowrap">
+            ¿Por Qué HoryCore?
+          </h2>
+          <div className="h-[1px] bg-white/10 w-full rounded-full relative overflow-hidden flex-1">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] animate-shimmer" />
+          </div>
+        </div>
+
         {/* Grid de estadísticas */}
-        <motion.div 
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8"
-        >
-          {/* Card 1: Módulos Implementados */}
-          <div className="group relative bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/20 hover:border-secondary-color/50 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary-color/15 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative z-10 text-center">
-              {/* Gráfico de módulos apilados */}
-              <div className="relative mx-auto w-24 h-24 mb-6 flex flex-col items-center justify-center space-y-1.5">
-                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color to-primary-color rounded-md shadow-lg"></div>
-                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color/90 to-primary-color/90 rounded-md shadow-lg"></div>
-                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color/80 to-primary-color/80 rounded-md shadow-lg"></div>
-                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color/70 to-primary-color/70 rounded-md shadow-lg"></div>
-                <div className="w-20 h-3 bg-gradient-to-r from-secondary-color/60 to-primary-color/60 rounded-md shadow-lg"></div>
-                <div className="absolute -top-2 -right-2 bg-gradient-to-br from-secondary-color to-primary-color text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg border-2 border-bgDark1">
-                  +5
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+          {/* Card 1: Módulos */}
+          <GlassCard className="p-8 md:p-10 !bg-[#060a14]/60 hover:border-indigo-500/30 transition-all duration-300 group">
+            <div className="mb-6 relative">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform duration-300">
+                <Layers className="w-8 h-8" />
               </div>
-              
-              <h4 className="text-lg font-bold text-white mb-3 group-hover:text-secondary-color transition-colors duration-300">
-                Módulos Implementados
-              </h4>
-              <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-3"></div>
-              <p className="text-secondary-text text-sm leading-relaxed">
-                Amplia gama de módulos y funcionalidades para tu negocio
-              </p>
-            </div>
-          </div>
-          
-          {/* Card 2: Reducción de costos */}
-          <div className="group relative bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/20 hover:border-secondary-color/50 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary-color/15 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative z-10 text-center">
-              {/* Gráfico de barras minimalista */}
-              <div className="relative mx-auto w-24 h-24 mb-6 flex items-end justify-center space-x-2">
-                <div className="w-3 h-16 bg-gradient-to-t from-secondary-color/30 to-secondary-color/60 rounded-t-full"></div>
-                <div className="w-3 h-12 bg-gradient-to-t from-primary-color/40 to-primary-color/70 rounded-t-full"></div>
-                <div className="w-3 h-20 bg-gradient-to-t from-secondary-color to-primary-color rounded-t-full relative">
-                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-secondary-color text-white text-xs font-bold px-2 py-1 rounded-full">
-                    40%
-                  </div>
-                </div>
-                <div className="w-3 h-8 bg-gradient-to-t from-gray-600/40 to-gray-500/60 rounded-t-full"></div>
+              {/* Badge Absolute */}
+              <div className="absolute -top-2 -right-2 bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                +12
               </div>
-              
-              <h4 className="text-lg font-bold text-white mb-3 group-hover:text-secondary-color transition-colors duration-300">
-                Reducción de Costos
-              </h4>
-              <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-3"></div>
-              <p className="text-secondary-text text-sm leading-relaxed">
-                Promedio de ahorro en costos operativos de nuestros clientes
-              </p>
             </div>
-          </div>
-          
-          {/* Card 3: Soporte 24/7 */}
-          <div className="group relative bg-gradient-to-br from-bgDark1 to-bgDark2 p-8 rounded-2xl border border-gray-600/20 hover:border-secondary-color/50 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary-color/15 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary-color/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative z-10 text-center">
-              {/* Reloj minimalista */}
-              <div className="relative mx-auto w-24 h-24 mb-6">
-                <div className="absolute inset-0 border-4 border-secondary-color/30 rounded-full"></div>
-                <div className="absolute inset-2 border-2 border-secondary-color/50 rounded-full bg-gradient-to-br from-secondary-color/10 to-primary-color/10"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-white font-bold text-lg">24</div>
-                    <div className="text-secondary-color text-xs font-semibold">7</div>
-                  </div>
-                </div>
-                {/* Pequeños puntos indicadores */}
-                <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-1 h-2 bg-secondary-color rounded-full"></div>
-                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-2 bg-secondary-color rounded-full"></div>
-                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 w-2 h-1 bg-secondary-color rounded-full"></div>
-                <div className="absolute left-1 top-1/2 transform -translate-y-1/2 w-2 h-1 bg-secondary-color rounded-full"></div>
+            <h3 className="text-2xl font-bold text-white mb-2 font-manrope">Módulos Integrados</h3>
+            <p className="text-white/50 leading-relaxed font-light">
+              Desde inventarios hasta contabilidad, todo conectado en un solo ecosistema.
+            </p>
+          </GlassCard>
+
+          {/* Card 2: Costos */}
+          <GlassCard className="p-8 md:p-10 !bg-[#060a14]/60 hover:border-green-500/30 transition-all duration-300 group">
+            <div className="mb-6 relative">
+              <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform duration-300">
+                <TrendingDown className="w-8 h-8" />
               </div>
-              
-              <h4 className="text-lg font-bold text-white mb-3 group-hover:text-secondary-color transition-colors duration-300">
-                Soporte Continuo
-              </h4>
-              <div className="w-16 h-0.5 bg-gradient-to-r from-secondary-color to-primary-color mx-auto rounded-full mb-3"></div>
-              <p className="text-secondary-text text-sm leading-relaxed">
-                Asistencia técnica especializada disponible las 24 horas
-              </p>
+              <div className="absolute -top-2 -right-2 bg-green-500 text-black text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                -40%
+              </div>
             </div>
-          </div>
-        </motion.div>
+            <h3 className="text-2xl font-bold text-white mb-2 font-manrope">Reducción de Costos</h3>
+            <p className="text-white/50 leading-relaxed font-light">
+              Optimiza operaciones y elimina redundancias para maximizar tu rentabilidad.
+            </p>
+          </GlassCard>
+
+          {/* Card 3: Soporte */}
+          <GlassCard className="p-8 md:p-10 !bg-[#060a14]/60 hover:border-purple-500/30 transition-all duration-300 group">
+            <div className="mb-6 relative">
+              <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform duration-300">
+                <Clock className="w-8 h-8" />
+              </div>
+              <div className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                24/7
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2 font-manrope">Soporte Local</h3>
+            <p className="text-white/50 leading-relaxed font-light">
+              Equipo técnico en Perú listo para resolver cualquier duda en minutos.
+            </p>
+          </GlassCard>
+
+        </div>
       </div>
     </section>
   );
