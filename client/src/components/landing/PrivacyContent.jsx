@@ -1,299 +1,181 @@
 import { motion } from 'framer-motion';
+import { GlassCard } from "./ui/GlassCard";
+import {
+  Shield,
+  Lock,
+  Eye,
+  Share2,
+  Cookie,
+  Globe,
+  RefreshCw,
+  Mail,
+  Server,
+  Database,
+  Users
+} from "lucide-react";
 
 export const PrivacyContent = () => {
+
+  const sections = [
+    {
+      id: 1,
+      icon: <Database className="w-6 h-6 text-white" />,
+      title: "Información que Recopilamos",
+      content: (
+        <ul className="space-y-3 mt-4">
+          <li className="flex items-start gap-3 text-sm text-white/60">
+            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mt-1.5 shrink-0" />
+            <span><strong className="text-indigo-200">Registro:</strong> Nombre, email, teléfono, empresa y cargo.</span>
+          </li>
+          <li className="flex items-start gap-3 text-sm text-white/60">
+            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mt-1.5 shrink-0" />
+            <span><strong className="text-indigo-200">Empresarial:</strong> Datos financieros, inventarios y transacciones.</span>
+          </li>
+          <li className="flex items-start gap-3 text-sm text-white/60">
+            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mt-1.5 shrink-0" />
+            <span><strong className="text-indigo-200">Técnica:</strong> Dirección IP, navegador y uso del sistema.</span>
+          </li>
+        </ul>
+      )
+    },
+    {
+      id: 2,
+      icon: <Eye className="w-6 h-6 text-white" />,
+      title: "Uso de la Información",
+      content: (
+        <p className="text-sm text-white/60 leading-relaxed mt-2">
+          Utilizamos tus datos para proporcionar el servicio ERP, procesar transacciones, cumplir normativas SUNAT, mejorar la seguridad y brindar soporte técnico dedicado.
+        </p>
+      )
+    },
+    {
+      id: 3,
+      icon: <Shield className="w-6 h-6 text-white" />,
+      title: "Protección de Datos",
+      content: (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex items-center gap-3">
+            <Lock className="w-5 h-5 text-indigo-400" />
+            <span className="text-xs text-white/70">Encriptación AES-256</span>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex items-center gap-3">
+            <Users className="w-5 h-5 text-indigo-400" />
+            <span className="text-xs text-white/70">Acceso por Roles</span>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5 border border-white/5 flex items-center gap-3">
+            <Server className="w-5 h-5 text-indigo-400" />
+            <span className="text-xs text-white/70">Backups Redundantes</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 4,
+      icon: <Share2 className="w-6 h-6 text-white" />,
+      title: "Compartir Información",
+      content: (
+        <p className="text-sm text-white/60 leading-relaxed mt-2">
+          <span className="text-white font-medium">No vendemos datos.</span> Solo compartimos información con proveedores de servicio (hosting) o por requerimiento legal (SUNAT/Autoridades).
+        </p>
+      )
+    },
+    {
+      id: 5,
+      icon: <Cookie className="w-6 h-6 text-white" />,
+      title: "Cookies",
+      content: (
+        <p className="text-sm text-white/60 leading-relaxed mt-2">
+          Usamos cookies esenciales para el funcionamiento del sistema, preferencias de usuario y analítica anonimizada para mejorar la experiencia.
+        </p>
+      )
+    },
+    {
+      id: 6,
+      icon: <Globe className="w-6 h-6 text-white" />,
+      title: "Transferencias Internacionales",
+      content: (
+        <p className="text-sm text-white/60 leading-relaxed mt-2">
+          Tus datos se procesan principalmente en <span className="text-white">Perú</span>. Cualquier transferencia internacional cumple con los más altos estándares de protección.
+        </p>
+      )
+    }
+  ];
+
   return (
-    <div className="flex justify-center bg-gradient-to-br from-bgDark1 via-bgDark2 to-bgDark1 relative pt-2">
-      <div className="px-2 sm:px-4">
-        <motion.article 
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="p-8 rounded-3xl w-full lg:w-[1200px] 2xl:w-[1400px] mb-24 mt-16 sm:mt-24"
-        >
-          
-          <section className="text-secondary-text !leading-7 sm:!leading-8 text-base sm:text-lg text-left sm:text-justify mx-auto w-full md:w-10/12 lg:w-2/3">
-            
-            {/* Introducción */}
-            <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-8">
-              <p className="text-lg leading-relaxed text-secondary-text">En HoryCore, nos comprometemos a <span className="text-secondary-color font-semibold">proteger la privacidad y seguridad</span> de los datos de nuestros usuarios. Esta política describe cómo recopilamos, utilizamos, protegemos y divulgamos la información personal cuando utilizas nuestro <span className="text-white font-medium">sistema ERP HoryCore</span> y nuestros servicios relacionados.</p>
+    <section className="w-full pb-24 relative z-10 px-6">
+      <div className="max-w-5xl mx-auto space-y-8">
+
+        {/* Intro Card */}
+        <GlassCard className="!bg-[#0A0B10] p-8 border-indigo-500/20 relative overflow-hidden text-center md:text-left">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
+          <h3 className="text-2xl font-bold text-white mb-4 font-manrope">Compromiso HoryCore</h3>
+          <p className="text-white/50 leading-relaxed max-w-3xl">
+            En HoryCore, la privacidad no es una opción, es un estándar base. Esta política detalla cómo protegemos la integridad y confidencialidad de tus datos empresariales críticos.
+          </p>
+        </GlassCard>
+
+        {/* Grid de Secciones */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {sections.map((section) => (
+            <GlassCard key={section.id} className="p-8 hover:bg-white/[0.02] transition-colors relative overflow-hidden group border-white/5">
+              <div className="absolute -right-20 -top-20 w-40 h-40 bg-indigo-500/10 blur-[50px] rounded-full group-hover:bg-indigo-500/20 transition-colors" />
+
+              <div className="relative z-10">
+                {/* Icon Header */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-[#1A1D26] border border-white/10 flex items-center justify-center shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                    {section.icon}
+                  </div>
+                  <h3 className="text-lg font-bold text-white font-manrope group-hover:text-indigo-400 transition-colors">
+                    {section.title}
+                  </h3>
+                </div>
+
+                {/* Content */}
+                <div className="pl-0 md:pl-2">
+                  {section.content}
+                </div>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+
+        {/* Derechos del Usuario - Full Width */}
+        <GlassCard className="p-8 border-white/5">
+          <div className="flex flex-col md:flex-row gap-8 items-center">
+            <div className="shrink-0 text-center md:text-left">
+              <h3 className="text-2xl font-bold text-white mb-2 font-manrope">Tus Derechos</h3>
+              <p className="text-white/50 text-sm max-w-xs">Control total sobre tu información personal.</p>
             </div>
-
-            {/* Sección 1 */}
-            <div className="flex items-center mb-6 mt-12">
-              <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-              <h2 className="text-3xl font-bold text-white">1. Información que Recopilamos</h2>
-              <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
+            <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+              {['Acceso', 'Rectificación', 'Eliminación', 'Portabilidad'].map((right) => (
+                <div key={right} className="p-3 rounded-lg bg-white/5 text-center text-sm font-medium text-white/80 border border-white/5">
+                  {right}
+                </div>
+              ))}
             </div>
-            <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-6">
-              <p className="text-lg leading-relaxed text-secondary-text">Como proveedor de <span className="text-secondary-color font-semibold">soluciones ERP empresariales</span>, recopilamos diferentes tipos de información para brindarte el <span className="text-white font-medium">mejor servicio posible</span>:</p>
+          </div>
+        </GlassCard>
+
+        {/* Contact Footer */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 p-8 rounded-3xl bg-[#0A0B10] border border-white/10 mt-12">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center">
+              <Mail className="w-6 h-6 text-indigo-400" />
             </div>
-            <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Información de registro:</strong> Nombre, correo electrónico, teléfono, empresa y cargo.</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Datos empresariales:</strong> Información financiera, inventarios, clientes, proveedores y transacciones comerciales.</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Información técnica:</strong> Dirección IP, tipo de navegador, sistema operativo y datos de uso del sistema.</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Datos de facturación:</strong> Información necesaria para la emisión de comprobantes electrónicos según normativas SUNAT.</span>
-          </li>
-        </ul>
+            <div>
+              <p className="text-white font-bold">¿Dudas sobre privacidad?</p>
+              <p className="text-white/50 text-sm">Contáctanos a javierrojasq.0612@gmail.com</p>
+            </div>
+          </div>
 
-        {/* Sección 2 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">2. Cómo Utilizamos tu Información</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-6">
-          <p className="text-lg leading-relaxed text-secondary-text">Utilizamos la información recopilada para los siguientes <span className="text-secondary-color font-semibold">propósitos legítimos</span>:</p>
-        </div>
-        <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Proporcionar y mantener nuestros servicios ERP</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Procesar transacciones y generar reportes empresariales</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Cumplir con obligaciones fiscales y regulatorias (SUNAT, tributarias)</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Mejorar la funcionalidad y seguridad de nuestros sistemas</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Brindar soporte técnico y atención al cliente</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Enviar actualizaciones importantes sobre el servicio</span>
-          </li>
-        </ul>
-
-        {/* Sección 3 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">3. Protección y Seguridad de Datos</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-6">
-          <p className="text-lg leading-relaxed text-secondary-text">Implementamos <span className="text-secondary-color font-semibold">medidas de seguridad robustas</span> para <span className="text-white font-medium">proteger tu información</span>:</p>
-        </div>
-        <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Encriptación:</strong> Todos los datos se transmiten y almacenan con encriptación de nivel empresarial (AES-256)</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Acceso controlado:</strong> Sistema de autenticación multifactor y control de permisos por roles</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Respaldos seguros:</strong> Copias de seguridad automáticas y redundantes en servidores seguros</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Monitoreo continuo:</strong> Supervisión 24/7 para detectar y prevenir accesos no autorizados</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Auditorías regulares:</strong> Evaluaciones periódicas de seguridad y vulnerabilidades</span>
-          </li>
-        </ul>
-
-        {/* Sección 4 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">4. Compartir Información</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-6">
-          <p className="text-lg leading-relaxed text-secondary-text"><span className="text-secondary-color font-semibold">No vendemos, alquilamos ni compartimos</span> tu información personal con terceros, excepto en las siguientes <span className="text-white font-medium">circunstancias específicas</span>:</p>
-        </div>
-        <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Proveedores de servicios:</strong> Empresas que nos ayudan a operar nuestros servicios (hosting, soporte técnico)</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Cumplimiento legal:</strong> Cuando sea requerido por ley, como reportes a SUNAT o autoridades competentes</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Protección de derechos:</strong> Para proteger nuestros derechos legales o la seguridad de nuestros usuarios</span>
-          </li>
-        </ul>
-
-        {/* Sección 5 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">5. Retención de Datos</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-6">
-          <p className="text-lg leading-relaxed">Conservamos tu información personal durante el <span className="text-secondary-color font-semibold">tiempo necesario</span> para cumplir con los propósitos descritos en esta política, <span className="text-white font-medium">incluyendo</span>:</p>
-        </div>
-        <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Mientras mantengas una cuenta activa con nosotros</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Para cumplir con obligaciones legales y fiscales (mínimo 5 años según normativa peruana)</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Para resolver disputas y hacer cumplir nuestros acuerdos</span>
-          </li>
-        </ul>
-
-        {/* Sección 6 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">6. Tus Derechos</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-6">
-          <p className="text-lg leading-relaxed">Como usuario de HoryCore, tienes los siguientes <span className="text-secondary-color font-semibold">derechos sobre tus datos personales</span>:</p>
-        </div>
-        <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Acceso:</strong> Solicitar una copia de la información personal que tenemos sobre ti</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Rectificación:</strong> Corregir información inexacta o incompleta</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Eliminación:</strong> Solicitar la eliminación de tus datos (sujeto a obligaciones legales)</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Portabilidad:</strong> Recibir tus datos en un formato estructurado y legible</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Oposición:</strong> Oponerte al procesamiento de tus datos en ciertas circunstancias</span>
-          </li>
-        </ul>
-
-        {/* Sección 7 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">7. Cookies y Tecnologías Similares</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-6">
-          <p className="text-lg leading-relaxed">Utilizamos <span className="text-secondary-color font-semibold">cookies y tecnologías similares</span> para <span className="text-white font-medium">mejorar tu experiencia</span> en HoryCore:</p>
-        </div>
-        <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Cookies esenciales para el funcionamiento del sistema</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Cookies de preferencias para recordar tus configuraciones</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Cookies analíticas para mejorar nuestros servicios (datos anonimizados)</span>
-          </li>
-        </ul>
-
-        {/* Sección 8 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">8. Transferencias Internacionales</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-8">
-          <p className="text-lg leading-relaxed">Tus datos se procesan principalmente en <span className="text-secondary-color font-semibold">servidores ubicados en Perú</span>. En caso de transferencias internacionales, garantizamos que se realicen con las <span className="text-white font-medium">protecciones adecuadas</span> y cumpliendo con las normativas locales e internacionales.</p>
+          <div className="flex items-center gap-2 text-white/30 text-xs bg-white/5 px-4 py-2 rounded-full border border-white/5">
+            <RefreshCw className="w-3 h-3" />
+            <span>Actualizado: {new Date().toLocaleDateString("es-PE", { year: "numeric", month: "long", day: "numeric" })}</span>
+          </div>
         </div>
 
-        {/* Sección 9 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">9. Cambios a esta Política</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mb-6">
-          <p className="text-lg leading-relaxed">Podemos actualizar esta política de privacidad ocasionalmente. Te <span className="text-secondary-color font-semibold">notificaremos sobre cambios significativos</span> mediante:</p>
-        </div>
-        <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Notificación dentro del sistema HoryCore</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Correo electrónico a tu dirección registrada</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Publicación en nuestro sitio web con fecha de actualización</span>
-          </li>
-        </ul>
-
-        {/* Sección 10 */}
-        <div className="flex items-center mb-6 mt-12">
-          <div className="w-2 h-8 bg-gradient-to-b from-secondary-color to-primary-color rounded-full mr-4"></div>
-          <h2 className="text-3xl font-bold text-white">10. Contacto</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-secondary-color/30 to-transparent ml-6"></div>
-        </div>
-        <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mb-6">
-          <p className="text-lg leading-relaxed">Si tienes preguntas sobre esta política de privacidad o sobre el <span className="text-secondary-color font-semibold">manejo de tus datos personales</span>, puedes <span className="text-white font-medium">contactarnos</span>:</p>
-        </div>
-        <ul className="list-none ml-6 text-secondary-text mt-4 space-y-3">
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Correo electrónico:</strong> javierrojasq.0612@gmail.com</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Teléfono:</strong> +51 961 797 720</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-2 h-2 bg-secondary-color rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span><strong className="text-white">Horario de atención:</strong> Lunes a Viernes, 9:00 AM - 6:00 PM</span>
-          </li>
-        </ul>
-
-        {/* Fecha de actualización */}
-        <div className="bg-gradient-to-l from-bgDark2/30 to-transparent p-6 rounded-xl border-r-4 border-primary-color/40 mt-12 mb-6">
-          <p className="text-lg leading-relaxed"><strong className="text-white">Fecha de última actualización:</strong> <span className="text-secondary-color font-semibold">{new Date().toLocaleDateString("es-PE", {
-            year: "numeric",
-            month: "long", 
-            day: "numeric"
-          })}</span></p>
-        </div>
-        
-        {/* Mensaje final */}
-        <div className="bg-gradient-to-r from-bgDark2/50 to-transparent p-6 rounded-xl border-l-4 border-secondary-color/50 mt-6">
-          <p className="text-lg leading-relaxed text-secondary-text">En HoryCore, <span className="text-secondary-color font-semibold">tu confianza es fundamental</span> para nosotros. Trabajamos constantemente para mantener los <span className="text-white font-medium">más altos estándares de privacidad y seguridad</span> en todos nuestros servicios ERP.</p>
-        </div>
-        
-          </section>
-        </motion.article>
       </div>
-    </div>
+    </section>
   );
 };

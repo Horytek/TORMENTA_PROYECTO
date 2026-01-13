@@ -23,7 +23,6 @@ const footerData = [
   {
     title: "Compañía",
     items: [
-      { label: "Empleos", href: "/landing/empleos" },
       { label: "Contáctanos", href: "/landing/contactanos" }
     ],
   },

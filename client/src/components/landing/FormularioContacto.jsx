@@ -1,10 +1,25 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { GlassCard } from "./ui/GlassCard";
+import { Send, Loader2 } from "lucide-react";
+
+// Shadcn UI Components
+import { Input } from "../ui/Input";
+import { Label } from "../ui/Label";
+import { Textarea } from "../ui/Textarea";
+import { Button } from "../ui/Button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/Select";
 
 export const FormularioContacto = () => {
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -13,14 +28,23 @@ export const FormularioContacto = () => {
     tipoConsulta: "",
     mensaje: ""
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // General handler for native inputs
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  // Handler specifically for Shadcn Select
+  const handleSelectChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      tipoConsulta: value
     }));
   };
 
@@ -41,169 +65,166 @@ export const FormularioContacto = () => {
     }, 2000);
   };
 
-  const handlePrivacyPolicyClick = () => {
-    navigate('/landing/politica-de-privacidad');
-  };
+  const tiposConsulta = [
+    { key: "implementacion", label: "Implementación completa" },
+    { key: "migracion", label: "Migración de sistema actual" },
+    { key: "consultoria", label: "Consultoría y asesoría" },
+    { key: "soporte", label: "Soporte técnico" },
+    { key: "personalizacion", label: "Personalización de módulos" },
+    { key: "capacitacion", label: "Capacitación del equipo" },
+    { key: "demo", label: "Demo del sistema" }
+  ];
 
   return (
-    <section className="w-full py-16 bg-gradient-to-b from-bgDark1 via-bgDark2 to-bgDark1" id="formulario-contacto">
-      <div className="flex justify-center px-4">
-        <div className="w-full max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="bg-gradient-to-br from-bgDark2/80 to-bgDark3/60 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-gray-700/30"
-          >
-            <div className="text-center mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+    <section className="w-full pb-20 relative px-4" id="formulario-contacto">
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+        >
+          <GlassCard className="p-8 md:p-12 border-white/10 !bg-[#0A0B10]/80 backdrop-blur-xl relative overflow-hidden">
+
+            {/* Glow Effect */}
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-500/5 blur-[100px] pointer-events-none" />
+
+            <div className="text-center mb-10 relative z-10">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-manrope">
                 ¿Listo para Transformar tu Empresa?
               </h2>
-              <p className="text-gray-300 text-lg">
-                Completa el formulario y nuestro equipo se pondrá en contacto contigo
+              <p className="text-white/50 text-lg">
+                Completa el formulario y nuestro equipo se pondrá en contacto contigo.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="nombre" className="landing-form-label">
-                    Nombre completo *
-                  </label>
-                  <input
-                    type="text"
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="nombre" className="text-white text-base font-semibold mb-1">Nombre completo</Label>
+                  <Input
                     id="nombre"
                     name="nombre"
+                    placeholder="Ej. Juan Pérez"
                     value={formData.nombre}
                     onChange={handleInputChange}
                     required
-                    className="landing-form-input"
-                    placeholder="Ingresa tu nombre completo"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-indigo-500 h-11"
                   />
                 </div>
-                
-                <div>
-                  <label htmlFor="email" className="landing-form-label">
-                    Email corporativo *
-                  </label>
-                  <input
-                    type="email"
+
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="email" className="text-white text-base font-semibold mb-1">Email corporativo</Label>
+                  <Input
                     id="email"
                     name="email"
+                    type="email"
+                    placeholder="nombre@empresa.com"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="landing-form-input"
-                    placeholder="correo@empresa.com"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-indigo-500 h-11"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="empresa" className="landing-form-label">
-                    Nombre de la empresa
-                  </label>
-                  <input
-                    type="text"
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="empresa" className="text-white text-base font-semibold mb-1">Nombre de la empresa</Label>
+                  <Input
                     id="empresa"
                     name="empresa"
+                    placeholder="Ej. HoryTek S.A.C."
                     value={formData.empresa}
                     onChange={handleInputChange}
-                    className="landing-form-input"
-                    placeholder="Nombre de tu empresa"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-indigo-500 h-11"
                   />
                 </div>
-                
-                <div>
-                  <label htmlFor="telefono" className="landing-form-label">
-                    Teléfono de contacto
-                  </label>
-                  <input
-                    type="tel"
+
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="telefono" className="text-white text-base font-semibold mb-1">Teléfono de contacto</Label>
+                  <Input
                     id="telefono"
                     name="telefono"
+                    type="tel"
+                    placeholder="+51 900 000 000"
                     value={formData.telefono}
                     onChange={handleInputChange}
-                    className="landing-form-input"
-                    placeholder="+51 961 797 720"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-indigo-500 h-11"
                   />
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="tipoConsulta" className="landing-form-label">
-                  Tipo de consulta *
-                </label>
-                <select
-                  id="tipoConsulta"
-                  name="tipoConsulta"
+              <div className="flex flex-col gap-3">
+                <Label className="text-white text-base font-semibold mb-1">Tipo de consulta</Label>
+                <Select
                   value={formData.tipoConsulta}
-                  onChange={handleInputChange}
+                  onValueChange={handleSelectChange}
                   required
-                  className="landing-form-select"
                 >
-                  <option value="" className="bg-bgDark3 text-gray-400">Selecciona el tipo de consulta</option>
-                  <option value="implementacion" className="bg-bgDark3 text-white">Implementación completa</option>
-                  <option value="migracion" className="bg-bgDark3 text-white">Migración de sistema actual</option>
-                  <option value="consultoria" className="bg-bgDark3 text-white">Consultoría y asesoría</option>
-                  <option value="soporte" className="bg-bgDark3 text-white">Soporte técnico</option>
-                  <option value="personalizacion" className="bg-bgDark3 text-white">Personalización de módulos</option>
-                  <option value="capacitacion" className="bg-bgDark3 text-white">Capacitación del equipo</option>
-                  <option value="demo" className="bg-bgDark3 text-white">Demo del sistema</option>
-                </select>
+                  <SelectTrigger className="w-full bg-white/5 border-white/10 text-white focus:ring-indigo-500 h-11">
+                    <SelectValue placeholder="Selecciona una opción" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1A1D26] border-white/10 text-white">
+                    {tiposConsulta.map((tipo) => (
+                      <SelectItem
+                        key={tipo.key}
+                        value={tipo.key}
+                        className="text-white focus:bg-indigo-500/20 focus:text-white"
+                      >
+                        {tipo.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="w-full">
-                <label htmlFor="mensaje" className="landing-form-label">
-                  Describe tu proyecto *
-                </label>
-                <textarea
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="mensaje" className="text-white text-base font-semibold mb-1">Describe tu proyecto</Label>
+                <Textarea
                   id="mensaje"
                   name="mensaje"
+                  placeholder="Cuéntanos sobre tus necesidades, objetivos y requerimientos..."
                   value={formData.mensaje}
                   onChange={handleInputChange}
                   required
-                  rows={4}
-                  className="landing-form-textarea"
-                  placeholder="Cuéntanos detalladamente sobre tu empresa, necesidades específicas, número de usuarios, procesos actuales que necesitas automatizar con Horycore..."
+                  className="min-h-[120px] bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-indigo-500"
                 />
               </div>
 
-              <div className="text-center pt-4">
-                <button
+              <div className="pt-4">
+                <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="landing-form-button"
+                  className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-6 rounded-xl text-lg shadow-lg shadow-indigo-500/20"
                 >
                   {isSubmitting ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Enviando consulta...
-                    </span>
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
                   ) : (
-                    "Enviar consulta"
+                    <>
+                      Enviar Consulta
+                      <Send className="ml-2 h-4 w-4" />
+                    </>
                   )}
-                </button>
+                </Button>
               </div>
 
-              <div className="text-center text-sm text-gray-400 pt-2">
+              <p className="text-center text-xs text-white/40 pt-2">
                 Al enviar este formulario, aceptas nuestra{" "}
                 <button
                   type="button"
-                  onClick={handlePrivacyPolicyClick}
-                  className="text-secondary-color hover:text-primary-color transition-colors duration-200"
+                  onClick={() => navigate('/landing/politica-de-privacidad')}
+                  className="text-indigo-400 hover:text-indigo-300 transition-colors underline decoration-indigo-400/30 underline-offset-4"
                 >
                   Política de Privacidad
                 </button>
-              </div>
+              </p>
             </form>
-          </motion.div>
-        </div>
+          </GlassCard>
+        </motion.div>
       </div>
     </section>
   );
