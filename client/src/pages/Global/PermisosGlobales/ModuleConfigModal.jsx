@@ -61,12 +61,18 @@ export const ModuleConfigModal = ({
 
     const handleSave = async () => {
         setLoading(true);
+        // Correct ID extraction: moduleData.id for modules, moduleData.id_submodulo for submodules
+        const idToUpdate = moduleData.id || moduleData.id_submodulo;
+
+        console.log("Saving config:", { type, id: idToUpdate, active_actions: selectedActions });
+
         try {
-            await updateModuleConfig(type, moduleData.id, { active_actions: selectedActions });
+            await updateModuleConfig(type, idToUpdate, { active_actions: selectedActions });
             toast.success("Configuración de acciones actualizada");
             if (onSuccess) onSuccess(); // Trigger reload
             onClose();
         } catch (error) {
+            console.error("Save error:", error);
             toast.error("Error al guardar configuración");
         } finally {
             setLoading(false);
@@ -77,7 +83,7 @@ export const ModuleConfigModal = ({
         <Modal isOpen={isOpen} onClose={onClose} size="lg" backdrop="blur">
             <ModalContent>
                 <ModalHeader>
-                    Configurar Acciones para {type === 'modulo' ? 'Módulo' : 'Submódulo'}: {moduleData?.nombre || moduleData?.nombre_sub}
+                    Configurar Acciones para {type === 'modulo' ? 'Módulo' : 'Submódulo'}: {moduleData?.nombre || moduleData?.nombre_sub || moduleData?.name}
                 </ModalHeader>
                 <ModalBody>
                     <p className="text-sm text-slate-500 mb-4">

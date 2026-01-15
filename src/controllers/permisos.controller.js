@@ -401,7 +401,7 @@ const savePermisos = async (req, res) => {
             );
         } else {
             await connection.query(
-                'DELETE FROM permisos WHERE id_rol = ? AND id_tenant = ?',
+                'DELETE FROM permisos WHERE id_rol = ? AND id_tenant = ? AND id_plan IS NULL',
                 [id_rol, id_tenant]
             );
         }

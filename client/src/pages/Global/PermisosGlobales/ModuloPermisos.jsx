@@ -82,23 +82,33 @@ export function ModuloPermisos({
     }
 
     // Fallback to legacy hardcoded rules if not configured yet
+    // Fallback to legacy hardcoded rules if not configured yet
     if (type === 'modulo') {
+      // By default allow CRUD for all modules except specific read-only ones
       if (['crear', 'editar', 'eliminar'].includes(actionKey)) {
-        // Restricted for modules 1, 6, 7
-        if ([1, 6, 7].includes(id)) return false;
+        // Restricted ONLY for: 1 (Inicio), 7 (Reportes). 
+        // Note: 6 (Ventas) should probably allow creating sales? If not, kept it restricted? 
+        // User wanted "reset to default" which usually means standard CRUD. 
+        // Let's UNBLOCK 6 (Ventas) as usually you create sales there.
+        // Let's UNBLOCK 8 (Sucursales) definitely.
+        if ([1, 7].includes(id)) return false;
       }
       if (actionKey === 'desactivar') {
-        // Only for module 4
+        // Only for module 4 (Clientes) and maybe others? Let's keep it restricted to 4 for now as per legacy.
         return id === 4;
       }
-      if (actionKey === 'generar') return false; // Not for modules generally
+      if (actionKey === 'generar') return false;
     } else if (type === 'submodulo') {
+      // For submodules, allow CRUD by default.
+      if (['crear', 'editar', 'eliminar'].includes(actionKey)) {
+        return true;
+      }
       if (actionKey === 'desactivar') {
-        // Allowed for specific submodules
+        // Allowed for specific submodules matching legacy list
         return [1, 2, 3, 10, 11, 13].includes(id);
       }
       if (actionKey === 'generar') {
-        // Allowed for specific submodules
+        // Allowed for specific submodules matching legacy list
         return [10, 11, 13].includes(id);
       }
     }

@@ -1,18 +1,11 @@
 import {
-    Card,
-    CardBody,
-    Tabs,
-    Tab,
-    Spinner,
-    Checkbox,
-    Button,
-    Divider
+    Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+    Tabs, Tab, Spinner, Button, Chip, Input, Tooltip
 } from "@heroui/react";
 
 import { MdOutlineRestore } from "react-icons/md";
-import { RiCollapseDiagonal2Line, RiExpandDiagonalLine } from "react-icons/ri";
-import { FaUserShield, FaUser, FaChevronDown, FaChevronRight, FaHouseUser } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { FaUserShield, FaUser, FaFolder, FaFileAlt, FaCheck, FaSearch } from "react-icons/fa";
+import { useState, useEffect, useMemo } from "react";
 import { useGetRutas } from '@/services/permisos.services';
 import { useRoles } from '@/services/permisos.services';
 import { toast } from "react-hot-toast";
@@ -21,6 +14,7 @@ import { ButtonSave } from "@/components/Buttons/Buttons";
 
 export function TablaAsignacion({ externalData, skipApiCall = false }) {
     const [selectedTab, setSelectedTab] = useState("administrador");
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Usar datos externos o hooks de API condicionalmente
     const rutasHook = skipApiCall ? null : useGetRutas();
@@ -31,18 +25,10 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
         modulosConSubmodulos,
         loading: rutasLoading,
         error: rutasError,
-        expandedModulos,
-        toggleExpand,
-        expandAll,
-        collapseAll
     } = skipApiCall ? {
         modulosConSubmodulos: externalData?.rutas,
         loading: false,
         error: null,
-        expandedModulos: externalData?.expandedModulos,
-        toggleExpand: externalData?.toggleExpand,
-        expandAll: externalData?.expandAll,
-        collapseAll: externalData?.collapseAll
     } : rutasHook;
 
     const { roles, loading: rolesLoading, error: rolesError } = skipApiCall ? {
@@ -59,7 +45,6 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
 
     // Fetch default pages for all roles
     useEffect(() => {
-        // Si tenemos datos externos, usar esos datos directamente
         if (skipApiCall) {
             setDefaultPages(externalData?.defaultPages || {});
             setLoading(false);
@@ -130,14 +115,12 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
 
     const handleSaveDefaultPage = async () => {
         if (!currentRoleId) return;
-
         const defaultPage = defaultPages[currentRoleId];
 
         if (!defaultPage || !defaultPage.id_modulo) {
             toast.error("Por favor selecciona una página por defecto");
             return;
         }
-
 
         try {
             setSaving(true);
@@ -159,20 +142,9 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
         }
     };
 
-    const _handleDeleteConfig = () => {
-        if (!currentRoleId) return;
-
-        setDefaultPages(prev => ({
-            ...prev,
-            [currentRoleId]: {}
-        }));
-    };
-
     const handleRestoreDefaultPage = () => {
         if (!currentRoleId) return;
-
-        const defaultPage = modulosConSubmodulos.find(modulo => modulo.id === 1);
-
+        const defaultPage = modulosConSubmodulos.find(modulo => modulo.id === 1); // Default to Module 1 (usually Dashboard/Inicio)
         if (defaultPage) {
             setDefaultPages(prev => ({
                 ...prev,
@@ -181,6 +153,7 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
                     id_submodulo: null
                 }
             }));
+            toast.success("Restaurado a Inicio general");
         }
     };
 
@@ -212,15 +185,51 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
         }
     };
 
-    const formatRoleName = (roleName) => {
-        if (roleName === "ADMIN") return "Administrador";
-        if (roleName === "EMPLEADOS") return "Empleado";
-        if (roleName === "SUPERVISOR") return "Supervisor";
-        return roleName;
-    };
+    // Flatten logic similar to UnifiedPermissionsTable
+    const renderTableItems = useMemo(() => {
+        if (!modulosConSubmodulos) return [];
+        const items = [];
+        const lowerSearch = searchTerm.toLowerCase();
+
+        const traverse = (nodes, level = 0, parentMatched = false) => {
+            nodes.forEach(node => {
+                // Adapting node structure
+                // Assuming `node` has `submodulos` as children
+                // Or if it's already flat list? No, modulosConSubmodulos is a tree.
+
+                const isModulo = !!node.submodulos; // Roughly checks if it's a module
+                const name = isModulo ? node.nombre : node.nombre_sub;
+                const id = isModulo ? node.id : node.id_submodulo;
+                const type = isModulo ? 'modulo' : 'submodulo';
+                const uniqueId = isModulo ? `M_${id}` : `S_${id}`;
+
+                const matches = name.toLowerCase().includes(lowerSearch);
+                const showRow = matches || parentMatched || searchTerm === "";
+
+                if (showRow) {
+                    items.push({
+                        uniqueId,
+                        id,
+                        type,
+                        name,
+                        route: isModulo ? node.ruta : node.ruta_submodulo,
+                        level,
+                        originalNode: node
+                    });
+                }
+
+                if (isModulo && node.submodulos) {
+                    traverse(node.submodulos, level + 1, matches || parentMatched);
+                }
+            });
+        };
+
+        traverse(modulosConSubmodulos);
+        return items;
+    }, [modulosConSubmodulos, searchTerm]);
+
 
     const renderModulosListing = () => {
-        // Si usar datos externos y skipApiCall, no mostrar loading de API
         const isLoading = skipApiCall ? loading : (rutasLoading || rolesLoading || loading);
         const hasError = skipApiCall ? false : (rutasError || rolesError);
 
@@ -235,16 +244,7 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
         if (hasError) {
             return (
                 <div className="p-4 text-center text-danger">
-                    <p>Error al cargar los datos:</p>
-                    <p>{rutasError || rolesError}</p>
-                </div>
-            );
-        }
-
-        if (!modulosConSubmodulos || modulosConSubmodulos.length === 0) {
-            return (
-                <div className="p-4 text-center text-gray-500">
-                    No hay módulos disponibles.
+                    <p>Error al cargar los datos</p>
                 </div>
             );
         }
@@ -253,157 +253,154 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
         const currentModuleId = currentDefault.id_modulo;
         const currentSubmoduleId = currentDefault.id_submodulo;
 
-        let currentRoute = "";
-        if (currentSubmoduleId) {
-            const parent = modulosConSubmodulos.find(m =>
-                m.submodulos.some(s => s.id_submodulo === currentSubmoduleId)
-            );
-            const sub = parent?.submodulos.find(s => s.id_submodulo === currentSubmoduleId);
-            currentRoute = sub?.ruta_submodulo || "";
-        } else if (currentModuleId) {
-            const mod = modulosConSubmodulos.find(m => m.id === currentModuleId);
-            currentRoute = mod?.ruta || "";
-        }
-
         return (
-            <>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <div>
-                        <div className="text-sm font-bold text-slate-500 dark:text-slate-400">
-                            Página de inicio seleccionada
-                        </div>
+            <div className="flex flex-col gap-6 animate-fade-in pb-10">
+                {/* Controls */}
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800">
+                    <div className="w-full md:w-96">
+                        <Input
+                            placeholder="Buscar página..."
+                            value={searchTerm}
+                            onValueChange={setSearchTerm}
+                            startContent={<FaSearch className="text-slate-400" />}
+                            radius="lg"
+                            variant="flat"
+                            classNames={{
+                                inputWrapper: "bg-white dark:bg-zinc-800 shadow-sm"
+                            }}
+                        />
                     </div>
-
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex gap-3">
                         <Button
-                            size="sm"
                             variant="flat"
                             color="success"
                             onPress={handleRestoreDefaultPage}
                             startContent={<MdOutlineRestore size={18} />}
-                            className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium"
                         >
                             Restaurar por defecto
                         </Button>
-
-                        <Button
-                            size="sm"
-                            variant="flat"
-                            color="primary"
-                            onPress={expandAll}
-                            startContent={<RiExpandDiagonalLine size={18} />}
-                        >
-                            Expandir
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="flat"
-                            color="secondary"
-                            onPress={collapseAll}
-                            startContent={<RiCollapseDiagonal2Line size={18} />}
-                        >
-                            Colapsar
-                        </Button>
+                        <ButtonSave
+                            onPress={handleSaveDefaultPage}
+                            isLoading={saving}
+                            text={saving ? "Guardando..." : "Guardar cambios"}
+                        />
                     </div>
                 </div>
 
-                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50 flex items-center gap-3">
-                    <div className="p-2 bg-white dark:bg-blue-900 rounded-lg shadow-sm">
-                        <FaHouseUser className="text-blue-600 dark:text-blue-400 text-xl" />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-blue-500 uppercase tracking-wide">Página Actual</span>
-                        <span className="text-slate-700 dark:text-slate-200 font-bold text-base">{currentRoute || "Ninguna seleccionada"}</span>
-                    </div>
-                </div>
+                {/* Table */}
+                <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm bg-white dark:bg-zinc-900">
+                    <Table
+                        aria-label="Tabla de Asignación de Inicio"
+                        isStriped
+                        removeWrapper
+                        layout="fixed"
+                        classNames={{
+                            th: "bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase tracking-wider py-3 text-center first:text-left first:pl-8 h-10",
+                            td: "py-1.5 border-b border-slate-100 dark:border-zinc-800/50 h-12"
+                        }}
+                    >
+                        <TableHeader>
+                            <TableColumn width={400} className="pl-6">Módulo / Página</TableColumn>
+                            <TableColumn>Ruta</TableColumn>
+                            <TableColumn align="center">Acción</TableColumn>
+                        </TableHeader>
+                        <TableBody items={renderTableItems} emptyContent="No se encontraron páginas.">
+                            {(item) => {
+                                const isSelected = item.type === 'modulo'
+                                    ? (currentModuleId === item.id && !currentSubmoduleId)
+                                    : (currentSubmoduleId === item.id); // If selecting submodule, we ignore module ID matching in this check logic because submodules are unique ID usually, but safer to just check ID matches target.
 
-                <div className="space-y-4">
-                    {modulosConSubmodulos.map((modulo) => (
-                        <div
-                            key={modulo.id}
-                            className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-sm transition-shadow hover:shadow-md"
-                        >
-                            <div
-                                className={`flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors select-none`}
-                                onClick={() => modulo.expandible && toggleExpand(modulo.id)}
-                            >
-                                <div className="flex items-center gap-3">
-                                    {modulo.expandible ? (
-                                        expandedModulos[modulo.id] ?
-                                            <FaChevronDown className="text-slate-400" /> :
-                                            <FaChevronRight className="text-slate-400" />
-                                    ) : <div className="w-4" />}
+                                // Actually, defaultPages logic:
+                                // { id_modulo: X, id_submodulo: Y }
+                                // If Y is set, then X is parent.
+                                // If Y is null, then X is target.
 
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-slate-800 dark:text-slate-200 text-base">
-                                                {modulo.nombre}
-                                            </span>
-                                            {modulo.id === 1 && (
-                                                <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-bold uppercase tracking-wider">Default</span>
-                                            )}
-                                        </div>
-                                        {modulo.ruta && (
-                                            <span className="text-xs text-slate-400 font-mono hidden sm:inline-block">({modulo.ruta})</span>
-                                        )}
-                                    </div>
-                                </div>
+                                let isMyDefault = false;
+                                if (item.type === 'modulo') {
+                                    isMyDefault = (currentModuleId === item.id && !currentSubmoduleId);
+                                } else {
+                                    isMyDefault = (currentSubmoduleId === item.id);
+                                }
 
-                                <div className="flex gap-4 items-center">
-                                    <Checkbox
-                                        color="primary"
-                                        isSelected={currentModuleId === modulo.id && !currentSubmoduleId}
-                                        onChange={() => handleDefaultPageChange('modulo', modulo.id)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        classNames={{
-                                            label: "text-small font-medium text-slate-600 dark:text-slate-300"
-                                        }}
-                                    >
-                                        Establecer inicio
-                                    </Checkbox>
-                                </div>
-                            </div>
+                                return (
+                                    <TableRow key={item.uniqueId}>
+                                        <TableCell>
+                                            <div
+                                                style={{ paddingLeft: `${item.level * 28}px` }}
+                                                className="flex items-center gap-3 relative"
+                                            >
+                                                {/* Connector Lines */}
+                                                {item.level > 0 && (
+                                                    <div className="absolute w-px h-[200%] bg-slate-200 dark:bg-zinc-700 -top-full"
+                                                        style={{ left: `${(item.level * 28) - 14}px` }}
+                                                    />
+                                                )}
+                                                {item.level > 0 && (
+                                                    <div className="absolute w-3 h-px bg-slate-200 dark:bg-zinc-700 top-1/2"
+                                                        style={{ left: `${(item.level * 28) - 14}px` }}
+                                                    />
+                                                )}
 
-                            {expandedModulos[modulo.id] && modulo.submodulos && modulo.submodulos.length > 0 && (
-                                <>
-                                    <div className="border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30 p-2 space-y-2">
-                                        {modulo.submodulos
-                                            .filter(submodulo => submodulo.id_submodulo !== 8)
-                                            .map((submodulo) => (
-                                                <div
-                                                    key={submodulo.id_submodulo}
-                                                    className="flex items-center justify-between px-4 py-3 bg-white dark:bg-zinc-900 rounded-lg border border-slate-100 dark:border-zinc-800 ml-4 shadow-sm"
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-slate-700 dark:text-slate-300 font-medium">↳ {submodulo.nombre_sub}</span>
-                                                        {submodulo.ruta_submodulo && (
-                                                            <span className="text-xs text-slate-400 font-mono hidden sm:inline-block">({submodulo.ruta_submodulo})</span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex gap-3 items-center">
-                                                        <Checkbox
-                                                            size="sm"
-                                                            color="primary"
-                                                            isSelected={currentSubmoduleId === submodulo.id_submodulo}
-                                                            onChange={() => handleDefaultPageChange('submodulo', submodulo.id_submodulo)}
-                                                            classNames={{
-                                                                label: "text-small font-medium text-slate-600 dark:text-slate-300"
-                                                            }}
-                                                        >
-                                                            Establecer inicio
-                                                        </Checkbox>
-                                                    </div>
+                                                <div className={`
+                                                    flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md shadow-sm
+                                                    ${item.type === 'modulo'
+                                                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                                                        : 'bg-slate-100 dark:bg-zinc-800 text-slate-500'}
+                                                `}>
+                                                    {item.type === 'modulo' ? <FaFolder size={12} /> : <FaFileAlt size={10} />}
                                                 </div>
-                                            ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    ))}
+
+                                                <span className={`
+                                                    ${item.type === 'modulo'
+                                                        ? 'font-bold text-slate-800 dark:text-slate-100 text-sm'
+                                                        : 'font-medium text-slate-600 dark:text-slate-300 text-xs'}
+                                                `}>
+                                                    {item.name}
+                                                </span>
+
+                                                {isMyDefault && (
+                                                    <Chip size="sm" color="success" variant="flat" className="ml-2 font-bold h-5 text-[10px]">
+                                                        Inicio
+                                                    </Chip>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="font-mono text-[10px] text-slate-400 bg-slate-50 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                                                {item.route || "/"}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex justify-center">
+                                                <Button
+                                                    size="sm"
+                                                    color={isMyDefault ? "success" : "default"}
+                                                    variant={isMyDefault ? "solid" : "flat"}
+                                                    isDisabled={isMyDefault}
+                                                    onPress={() => handleDefaultPageChange(item.type, item.id)}
+                                                    startContent={isMyDefault ? <FaCheck size={12} /> : null}
+                                                    className={`font-semibold h-7 min-h-7 text-xs ${isMyDefault ? "" : "text-slate-500 dark:text-slate-400"}`}
+                                                >
+                                                    {isMyDefault ? "Seleccionado" : "Establecer"}
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            }}
+                        </TableBody>
+                    </Table>
                 </div>
-            </>
+            </div>
         );
+    };
+
+    const formatRoleName = (roleName) => {
+        if (roleName === "ADMIN") return "Administrador";
+        if (roleName === "EMPLEADOS") return "Empleado";
+        if (roleName === "SUPERVISOR") return "Supervisor";
+        return roleName;
     };
 
     return (
@@ -416,13 +413,13 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
                     color="primary"
                     variant="underlined"
                     classNames={{
-                        tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+                        tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider mb-6",
                         cursor: "w-full bg-primary",
                         tab: "max-w-fit px-0 h-12",
                         tabContent: "group-data-[selected=true]:text-primary"
                     }}
                 >
-                    {roles.map(role => {
+                    {roles?.map(role => {
                         const tabKey = role.nom_rol.toLowerCase();
                         const isAdmin = role.id_rol === 1;
 
@@ -436,17 +433,8 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
                                     </div>
                                 }
                             >
-                                <div className="py-6">
+                                <div className="py-2">
                                     {renderModulosListing()}
-                                    <div className="mt-8 flex justify-end sticky bottom-6 z-10">
-                                        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-2 rounded-2xl shadow-lg border border-slate-100 dark:border-zinc-800">
-                                            <ButtonSave
-                                                onPress={handleSaveDefaultPage}
-                                                isLoading={saving}
-                                                text={saving ? "Guardando..." : "Guardar cambios"}
-                                            />
-                                        </div>
-                                    </div>
                                 </div>
                             </Tab>
                         );

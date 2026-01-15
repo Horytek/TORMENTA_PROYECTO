@@ -1,141 +1,38 @@
+
 import {
   Tabs,
   Tab,
   Spinner,
-  Button,
-  Chip
+  Chip,
+  useDisclosure
 } from "@heroui/react";
 import { FaUserShield, FaUser, FaCube } from "react-icons/fa";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useGetRutasPorPlan } from '@/services/permisosGlobales.services';
-import { useRolesPorPlan, usePermisosByRolGlobal, useSavePermisosGlobales, usePlanesDisponibles } from '@/services/permisosGlobales.services';
-import { getActions } from '@/services/actionCatalog.services';
-import { toast } from "react-hot-toast";
-import ModulosListing from './ModulosListing';
-import ActionCatalogTab from './ActionCatalogTab';
+import { useState, useMemo, useEffect } from "react";
+import { useRolesPorPlan, usePlanesDisponibles } from '@/services/permisosGlobales.services';
 import { useUserStore } from "@/store/useStore";
+import ActionCatalogTab from './ActionCatalogTab';
+import { useUnifiedPermissions } from '@/hooks/useUnifiedPermissions';
+import { UnifiedPermissionsTable } from './UnifiedPermissionsTable';
+import { ModuleConfigModal } from './ModuleConfigModal';
+import { getActions } from '@/services/actionCatalog.services';
 
 export function TablaPermisosGlobales() {
   const [selectedTab, setSelectedTab] = useState("administrador");
-  const [selectedPlan, setSelectedPlan] = useState(1); // Enterprise por defecto 
+  const [selectedPlan, setSelectedPlan] = useState(1);
   const [userInfo, setUserInfo] = useState(null);
-  const [roleMapping, setRoleMapping] = useState({});
   const [currentRoleId, setCurrentRoleId] = useState(null);
-  const [permisosData, setPermisosData] = useState({});
-  const [dynamicActions, setDynamicActions] = useState([]);
-  const [forceRenderKey, setForceRenderKey] = useState(0);  // Ref para controlar estado de carga
-  const loadingRef = useRef(false);
+  const [allActions, setAllActions] = useState([]);
 
-  // Función para recargar rutas (configuración de módulos)
-  const handleConfigUpdate = async () => {
-    // Forzamos recarga de roles/rutas reseteando el cache o invalidando queries
-    // En este caso, el hook useGetRutasPorPlan se ejecuta al cambiar forceRenderKey? 
-    // No, useGetRutasPorPlan depende de user/plan. 
-    // Pero si usamos un key en el componente o un refetch manual...
-    // Vamos a usar un hack simple: incrementar un contador que fuerce re-ejecución interna si el hook lo soporta,
-    // o recargar la página si es muy complejo.
-    // Mejor: Pasar un prop de 'refresh' a los hooks si fuera necesario.
+  // Config Modal State
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [configModule, setConfigModule] = useState(null);
 
-    // Dado que useGetRutasPorPlan usa SWR o useEffect interno, podemos intentar remontar.
-    // O mejor, simplemente location.reload() es lo más seguro para desarrolladores.
-    // Pero para ser SPA, idealmente invalidamos queries. 
+  // --- External Data (Roles & Plans) ---
+  const { roles, loading: rolesLoading } = useRolesPorPlan();
+  const { planes } = usePlanesDisponibles();
 
-    // Como el hook no expone refetch, vamos a notificar y recargar.
-    window.location.reload();
-  };
-
-  // Efecto simple para manejar cambios de plan/rol
+  // --- User Info & Developer Check ---
   useEffect(() => {
-    if (selectedPlan && currentRoleId && isInitialized.current) {
-      // Solo limpiar los datos del estado, sin complicar con transiciones
-      setPermisosData(prev => {
-        const dataKey = `${currentRoleId}_${selectedPlan}`;
-        // Si no existe el dataKey, crear uno vacío para forzar la recarga
-        if (!prev[dataKey]) {
-          return {
-            ...prev,
-            [dataKey]: {}
-          };
-        }
-        return prev;
-      });
-
-      // Forzar re-render para actualizar la UI
-      setForceRenderKey(prev => prev + 1);
-    }
-  }, [selectedPlan, currentRoleId]);
-
-  // Forzar recarga de permisos al cambiar de plan o rol
-  useEffect(() => {
-    if (currentRoleId && selectedPlan && typeof refetchPermisos === 'function') {
-      refetchPermisos();
-    }
-  }, [currentRoleId, selectedPlan]);
-
-  // Ref para controlar el primer render y prevenir bucles
-  const isInitialized = useRef(false);
-  const lastProcessedKey = useRef('');
-  const lastToastTimeRef = useRef(0); // Para debounce de toasts
-
-  // Función helper para mostrar toasts con debounce
-  const showToastWithDebounce = useCallback((message, type = 'success') => {
-    const now = Date.now();
-    const timeSinceLastToast = now - lastToastTimeRef.current;
-
-    // Solo mostrar toast si han pasado al menos 500ms desde el último
-    if (timeSinceLastToast > 500) {
-      if (type === 'success') {
-        toast.success(message);
-      } else if (type === 'error') {
-        toast.error(message);
-      }
-      lastToastTimeRef.current = now;
-    }
-  }, []);
-
-  const {
-    modulosConSubmodulos,
-    planEmpresa,
-    loading: rutasLoading,
-    error: rutasError,
-    expandedModulos,
-    toggleExpand,
-    expandAll,
-    collapseAll
-  } = useGetRutasPorPlan();
-
-  const { roles, loading: rolesLoading, error: rolesError } = useRolesPorPlan();
-  const { planes, loading: planesLoading } = usePlanesDisponibles();
-
-  // Load dynamic actions
-  useEffect(() => {
-    getActions().then(setDynamicActions).catch(console.error);
-  }, []);
-
-
-  const { permisos, loading: permisosLoading, refetchPermisos } = usePermisosByRolGlobal(currentRoleId, selectedPlan);
-  const { savePermisos, saving: savingPermisos } = useSavePermisosGlobales();
-
-  // Filtrar solo el rol Administrador
-  const adminRoles = useMemo(() => {
-    return (roles || []).filter(
-      (r) => r.id_rol === 1 || (r.nom_rol || '').toUpperCase() === 'Administrador'
-    );
-  }, [roles]);
-
-  // Memoizar el cálculo de isDeveloper - verificar múltiples campos con más flexibilidad
-  const isDeveloper = useMemo(() => {
-    if (!userInfo) return false;
-    const isDevByUsername = userInfo?.usuario === 'desarrollador' || userInfo?.nameUser === 'desarrollador';
-    const isDevByRole = userInfo?.rol === 10 || userInfo?.rol === '10' || parseInt(userInfo?.rol) === 10;
-    const isDevByIdRole = userInfo?.id_rol === 10 || userInfo?.id_rol === '10' || parseInt(userInfo?.id_rol) === 10;
-    return isDevByUsername || isDevByRole || isDevByIdRole;
-  }, [userInfo]);
-
-  // Obtener información del usuario para saber si es desarrollador - solo una vez
-  useEffect(() => {
-    if (userInfo) return;
     const userData = useUserStore.getState();
     if (userData) {
       setUserInfo({
@@ -144,431 +41,169 @@ export function TablaPermisosGlobales() {
         id_rol: parseInt(userData.id_rol) || userData.id_rol
       });
     }
+
+    // Load all actions for config modal (Always load these for config)
+    getActions().then(dynamicActions => {
+      const standardActions = [
+        { key: 'ver', label: 'Ver', isDynamic: false },
+        { key: 'crear', label: 'Crear', isDynamic: false },
+        { key: 'editar', label: 'Editar', isDynamic: false },
+        { key: 'eliminar', label: 'Eliminar', isDynamic: false },
+        { key: 'desactivar', label: 'Desactivar', isDynamic: false },
+        { key: 'generar', label: 'Generar', isDynamic: false }
+      ];
+
+      // Map dynamic actions to match structure
+      const formattedDynamic = (dynamicActions || []).map(da => ({
+        key: da.action_key,
+        label: da.name,
+        isDynamic: true
+      }));
+
+      setAllActions([...standardActions, ...formattedDynamic]);
+    }).catch(console.error);
+
   }, []);
 
-  // Manejo inicial de roles y mapeo - más estable
+  const isDeveloper = useMemo(() => {
+    if (!userInfo) return false;
+    const isDevByUsername = userInfo?.usuario === 'desarrollador' || userInfo?.nameUser === 'desarrollador';
+    const isDevByRole = userInfo?.rol === 10 || parseInt(userInfo?.rol) === 10;
+    return isDevByUsername || isDevByRole;
+  }, [userInfo]);
+
+  const adminRoles = useMemo(() => {
+    return (roles || []).filter(r => r.id_rol === 1 || (r.nom_rol || '').toUpperCase() === 'ADMINISTRADOR');
+  }, [roles]);
+
+  // --- Tab & Role Selection Logic ---
   useEffect(() => {
-    // Usar solo el rol Administrador
-    if (!adminRoles || adminRoles.length === 0) return;
+    if (!adminRoles || adminRoles.length === 0 || currentRoleId) return;
+    setCurrentRoleId(adminRoles[0].id_rol);
+  }, [adminRoles, currentRoleId]);
 
-    const tabRoleMapping = {};
-    adminRoles.forEach(role => {
-      const tabKey = role.nom_rol.toLowerCase();
-      tabRoleMapping[tabKey] = role.id_rol;
-    });
+  const handleTabChange = (newTab) => {
+    setSelectedTab(newTab);
+    if (newTab === "actions_catalog") return;
 
-    const firstRole = adminRoles[0];
-    const firstTabKey = firstRole.nom_rol.toLowerCase();
-
-    setRoleMapping(tabRoleMapping);
-    setSelectedTab(firstTabKey);
-    setCurrentRoleId(firstRole.id_rol);
-
-    isInitialized.current = true;
-  }, [adminRoles]);
-
-  // Manejo de cambio de tab seleccionado - simplificado
-  const handleTabChange = useCallback((newTab) => {
-    if (newTab === "actions_catalog") {
-      setSelectedTab(newTab);
-      return;
-    }
-
-    // Si el tab existe en el mapeo de roles
-    if (roleMapping[newTab]) {
-      setSelectedTab(newTab);
-      // Solo actualizamos el ID del rol si es diferente, para evitar recargas innecesarias
-      // Pero permitimos cambiar el tab visualmente siempre
-      if (roleMapping[newTab] !== currentRoleId) {
-        setCurrentRoleId(roleMapping[newTab]);
-      }
-    }
-  }, [roleMapping, currentRoleId]);
-
-  // Procesamiento de permisos - mejorado para asegurar que siempre se procesen
-  useEffect(() => {
-    if (!currentRoleId || !isInitialized.current || !selectedPlan) {
-      return;
-    }
-
-    const dataKey = `${currentRoleId}_${selectedPlan}`;
-
-    // Si no hay permisos, crear estructura vacía
-    if (!permisos || permisos.length === 0) {
-      setPermisosData(prev => ({
-        ...prev,
-        [dataKey]: {}
-      }));
-      return;
-    }
-
-    const rolePermisos = {};
-
-    // Procesar permisos
-    permisos.forEach(permiso => {
-      if (permiso.id_submodulo) {
-        rolePermisos[`submodulo_${permiso.id_submodulo}`] = {
-          ver: !!permiso.ver,
-          crear: !!permiso.crear,
-          editar: !!permiso.editar,
-          eliminar: !!permiso.eliminar,
-          desactivar: !!permiso.desactivar,
-          generar: !!permiso.generar,
-          ...permiso.actions_json // Flatten dynamic actions
-        };
-      } else if (permiso.id_modulo) {
-        rolePermisos[`modulo_${permiso.id_modulo}`] = {
-          ver: !!permiso.ver,
-          crear: !!permiso.crear,
-          editar: !!permiso.editar,
-          eliminar: !!permiso.eliminar,
-          desactivar: !!permiso.desactivar,
-          generar: !!permiso.generar,
-          ...permiso.actions_json // Flatten dynamic actions
-        };
-      }
-    });
-
-    // Actualizar siempre los datos y forzar re-render
-    setPermisosData(prev => ({
-      ...prev,
-      [dataKey]: rolePermisos
-    }));
-
-    // Forzar re-render para asegurar que los checkboxes se actualicen
-    setForceRenderKey(prev => prev + 1);
-  }, [currentRoleId, permisos, selectedPlan]);
-
-  const handlePermissionChange = useCallback((id, field, value, type = 'modulo') => {
-    if (!currentRoleId || !selectedPlan) return;
-
-    const isChecked = typeof value === 'boolean'
-      ? value
-      : (value && typeof value === 'object' ? value.target?.checked : false);
-    const key = `${type}_${id}`;
-    const dataKey = `${currentRoleId}_${selectedPlan}`;
-
-    setPermisosData(prev => {
-      const currentRolePerms = { ...prev[dataKey] };
-      const currentPermission = {
-        ver: false,
-        crear: false,
-        editar: false,
-        eliminar: false,
-        desactivar: false,
-        generar: false,
-        ...currentRolePerms[key]
-      };
-
-      // Solo actualizar si el valor realmente cambió
-      if (currentPermission[field] === isChecked) {
-        return prev;
-      }
-
-      currentPermission[field] = isChecked;
-      currentRolePerms[key] = currentPermission;
-
-      const newState = {
-        ...prev,
-        [dataKey]: currentRolePerms
-      };
-
-      return newState;
-    });
-  }, [currentRoleId, selectedPlan]);
-
-  const handleSavePermissions = useCallback(async () => {
-    if (!currentRoleId || !selectedPlan) return;
-
-    try {
-      const dataKey = `${currentRoleId}_${selectedPlan}`;
-      const rolePermisos = permisosData[dataKey] || {};
-      const permisosToSave = [];
-
-      modulosConSubmodulos.forEach((modulo) => {
-        const moduloKey = `modulo_${modulo.id}`;
-        if (rolePermisos[moduloKey]) {
-          const { ver, crear, editar, eliminar, desactivar, generar, ...rest } = rolePermisos[moduloKey];
-          permisosToSave.push({
-            id_modulo: modulo.id,
-            id_submodulo: null,
-            ver: ver ? 1 : 0,
-            crear: crear ? 1 : 0,
-            editar: editar ? 1 : 0,
-            eliminar: eliminar ? 1 : 0,
-            desactivar: desactivar ? 1 : 0,
-            generar: generar ? 1 : 0,
-            actions_json: rest // Save remaining keys as JSON
-          });
-        }
-
-        modulo.submodulos.forEach((submodulo) => {
-          const subKey = `submodulo_${submodulo.id_submodulo}`;
-          if (rolePermisos[subKey]) {
-            const { ver, crear, editar, eliminar, desactivar, generar, ...rest } = rolePermisos[subKey];
-            permisosToSave.push({
-              id_modulo: modulo.id,
-              id_submodulo: submodulo.id_submodulo,
-              ver: ver ? 1 : 0,
-              crear: crear ? 1 : 0,
-              editar: editar ? 1 : 0,
-              eliminar: eliminar ? 1 : 0,
-              desactivar: desactivar ? 1 : 0,
-              generar: generar ? 1 : 0,
-              actions_json: rest // Save remaining keys as JSON
-            });
-          }
-        });
-      });
-
-      const success = await savePermisos(currentRoleId, permisosToSave, selectedPlan);
-
-      if (success) {
-        showToastWithDebounce(`Permisos globales para plan ${planes.find(p => p.id_plan === selectedPlan)?.descripcion_plan || selectedPlan} guardados correctamente`);
-        refetchPermisos();
-      } else {
-        showToastWithDebounce("Error al guardar los permisos globales", 'error');
-      }
-    } catch (error) {
-      console.error("Error saving permissions:", error);
-      showToastWithDebounce("Error al guardar los permisos globales", 'error');
-    }
-  }, [currentRoleId, permisosData, modulosConSubmodulos, savePermisos, refetchPermisos, selectedPlan, planes, showToastWithDebounce]);
-
-  const handleAddAllPermissions = useCallback(() => {
-    if (!currentRoleId || !selectedPlan || !modulosConSubmodulos) return;
-
-    const dataKey = `${currentRoleId}_${selectedPlan}`;
-    const currentData = permisosData[dataKey] || {};
-
-    const allPermissions = {};
-
-    modulosConSubmodulos.forEach(modulo => {
-      allPermissions[`modulo_${modulo.id}`] = {
-        ver: true,
-        crear: true,
-        editar: true,
-        eliminar: true,
-        desactivar: true,
-        generar: true
-      };
-
-      if (modulo.submodulos && modulo.submodulos.length > 0) {
-        modulo.submodulos.forEach(submodulo => {
-          allPermissions[`submodulo_${submodulo.id_submodulo}`] = {
-            ver: true,
-            crear: true,
-            editar: true,
-            eliminar: true,
-            desactivar: true,
-            generar: true
-          };
-        });
-      }
-    });
-
-    // Solo actualizar y mostrar toast si realmente hay cambios
-    const hasChanges = JSON.stringify(currentData) !== JSON.stringify(allPermissions);
-
-    if (hasChanges) {
-      setPermisosData(prev => ({
-        ...prev,
-        [dataKey]: allPermissions
-      }));
-      showToastWithDebounce("Todos los permisos han sido agregados");
-    }
-  }, [currentRoleId, selectedPlan, modulosConSubmodulos, permisosData, showToastWithDebounce]);
-
-  const handleDeleteAllPermissions = useCallback(() => {
-    if (!currentRoleId || !selectedPlan) return;
-
-    const dataKey = `${currentRoleId}_${selectedPlan}`;
-    const currentData = permisosData[dataKey];
-
-    // Solo actualizar y mostrar toast si hay datos para limpiar
-    if (currentData && Object.keys(currentData).length > 0) {
-      setPermisosData(prev => ({
-        ...prev,
-        [dataKey]: {}
-      }));
-      showToastWithDebounce("Todos los permisos han sido eliminados");
-    }
-  }, [currentRoleId, selectedPlan, permisosData, showToastWithDebounce]);
-
-  const formatRoleName = (roleName) => {
-    if (roleName === "ADMIN") return "Administrador";
-    if (roleName === "EMPLEADOS") return "Empleado";
-    if (roleName === "SUPERVISOR") return "Supervisor";
-    return roleName;
+    const role = adminRoles.find(r => r.nom_rol.toLowerCase() === newTab);
+    if (role) setCurrentRoleId(role.id_rol);
   };
 
-  const getPlanColor = (planId) => {
-    switch (planId) {
-      case 1: return "primary";
-      case 2: return "secondary";
-      case 3: return "warning";
-      default: return "default";
-    }
+  // --- Unified v2 Hook ---
+  const { data, loading, saving, updateLocalPermission, saveChanges, refetch } = useUnifiedPermissions(currentRoleId, selectedPlan);
+
+  const formatRoleName = (roleName) => (roleName === "ADMIN" ? "Administrador" : roleName);
+  const getPlanColor = (planId) => (planId === 1 ? "primary" : planId === 2 ? "secondary" : "warning");
+
+  // --- Module Configuration Handler ---
+  const handleConfigureModule = (item) => {
+    setConfigModule(item);
+    onOpen();
   };
 
-  const renderModulosListing = () => {
-    return (
-      <ModulosListing
-        rutasLoading={rutasLoading}
-        rolesLoading={rolesLoading}
-        planesLoading={planesLoading}
-        permisosLoading={permisosLoading}
-        rutasError={rutasError}
-        rolesError={rolesError}
-        modulosConSubmodulos={modulosConSubmodulos}
-        currentRoleId={currentRoleId}
-        selectedPlan={selectedPlan}
-        forceRenderKey={forceRenderKey}
-        permisosData={permisosData}
-        permisos={permisos}
-        lastProcessedKey={lastProcessedKey}
-        planes={planes}
-        planEmpresa={planEmpresa}
-        isDeveloper={isDeveloper}
-        setSelectedPlan={setSelectedPlan}
-        handleAddAllPermissions={handleAddAllPermissions}
-        handleDeleteAllPermissions={handleDeleteAllPermissions}
-        expandedModulos={expandedModulos}
-        toggleExpand={toggleExpand}
-        expandAll={expandAll}
-        collapseAll={collapseAll}
-        handlePermissionChange={handlePermissionChange}
-        userInfo={userInfo}
-        getPlanColor={getPlanColor}
-        dynamicActions={dynamicActions}
-        onConfigUpdate={handleConfigUpdate}
-      />
-    );
+  const handleConfigSuccess = async () => {
+    // Reload permissions tree after config update
+    if (refetch) await refetch();
   };
+
+
+  if (rolesLoading) return <div className="flex justify-center p-10"><Spinner size="lg" /></div>;
 
   return (
     <>
-      {/* Validación temprana para evitar errores de renderizado */}
-      {(rutasLoading || rolesLoading || !isInitialized.current) && (
-        <div className="flex justify-center items-center h-64">
-          <Spinner label="Cargando datos iniciales..." color="primary" size="lg" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
+            <FaUserShield size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+              Permisos Globales (v2)
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+              Administración unificada de permisos y recursos.
+            </p>
+          </div>
         </div>
-      )}
+      </div>
 
-      {(rutasError || rolesError) && (
-        <div className="p-4 text-center text-danger">
-          <p>Error al cargar los datos:</p>
-          <p>{rutasError || rolesError}</p>
-        </div>
-      )}
-
-      {!rutasLoading && !rolesLoading && isInitialized.current && !rutasError && !rolesError && (
-        <>
-
-          {/* Premium Header - Clean Variant */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
-                <FaUserShield size={24} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-                  Permisos Globales
-                </h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
-                  Administra los permisos de acceso y roles según el plan de suscripción.
-                </p>
-              </div>
-            </div>
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 overflow-hidden mt-8">
+        <div className="p-0">
+          <Tabs
+            aria-label="Roles"
+            selectedKey={selectedTab}
+            onSelectionChange={handleTabChange}
+            color="primary"
+            variant="underlined"
+            classNames={{
+              tabList: "gap-6 px-6 pt-4 border-b border-slate-100 dark:border-zinc-800 w-full relative",
+              cursor: "w-full bg-blue-600",
+              tab: "max-w-fit px-0 h-12 text-slate-500",
+              tabContent: "group-data-[selected=true]:text-blue-600 group-data-[selected=true]:font-bold"
+            }}
+          >
             {isDeveloper && (
-              <div className="hidden" />
-            )}
-          </div>
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 overflow-hidden mt-8">
-            <div className="p-0">
-              <Tabs
-                aria-label="Roles"
-                selectedKey={selectedTab}
-                onSelectionChange={handleTabChange}
-                color="primary"
-                variant="underlined"
-                classNames={{
-                  tabList: "gap-6 px-6 pt-4 border-b border-slate-100 dark:border-zinc-800 w-full relative",
-                  cursor: "w-full bg-blue-600",
-                  tab: "max-w-fit px-0 h-12 text-slate-500",
-                  tabContent: "group-data-[selected=true]:text-blue-600 group-data-[selected=true]:font-bold"
-                }}
+              <Tab
+                key="actions_catalog"
+                title={
+                  <div className="flex items-center gap-2 pb-1">
+                    <span className="font-bold flex items-center gap-2">
+                      <FaCube size={16} /> Catálogo
+                    </span>
+                  </div>
+                }
               >
-                {/* Tab for Global Actions - Developer Only */}
-                {isDeveloper && (
-                  <Tab
-                    key="actions_catalog"
-                    title={
-                      <div className="flex items-center gap-2 pb-1">
-                        <span className="font-bold flex items-center gap-2">
-                          <FaCube size={16} />
-                          Catálogo de Opciones
-                        </span>
-                      </div>
-                    }
-                  >
-                    <ActionCatalogTab />
-                  </Tab>
-                )}
+                <ActionCatalogTab />
+              </Tab>
+            )}
 
-                {adminRoles.map(role => {
-                  const tabKey = role.nom_rol.toLowerCase();
-                  const isAdmin = role.id_rol === 1;
+            {adminRoles.map(role => {
+              const tabKey = role.nom_rol.toLowerCase();
+              return (
+                <Tab
+                  key={tabKey}
+                  title={
+                    <div className="flex items-center gap-2 pb-1">
+                      <FaUserShield size={16} />
+                      <span>{formatRoleName(role.nom_rol)}</span>
+                      {role.plan_requerido && (
+                        <Chip size="sm" color={getPlanColor(role.plan_requerido)} variant="flat" className="ml-1 h-5 text-[10px]">
+                          Plan {role.plan_requerido}+
+                        </Chip>
+                      )}
+                    </div>
+                  }
+                >
+                  <div className="p-6 pt-4">
+                    {/* Unified Table Component */}
+                    <UnifiedPermissionsTable
+                      data={data}
+                      loading={loading}
+                      isSaving={saving}
+                      onToggle={updateLocalPermission}
+                      onSave={saveChanges}
+                      onConfigure={handleConfigureModule}
+                    />
+                  </div>
+                </Tab>
+              );
+            })}
+          </Tabs>
+        </div>
+      </div>
 
-                  return (
-                    <Tab
-                      key={tabKey}
-                      title={
-                        <div className="flex items-center gap-2 pb-1">
-                          {isAdmin ? <FaUserShield size={16} /> : <FaUser size={16} />}
-                          <span>{formatRoleName(role.nom_rol)}</span>
-                          {role.plan_requerido && (
-                            <Chip size="sm" color={getPlanColor(role.plan_requerido)} variant="flat" className="ml-1 h-5 text-[10px]">
-                              Plan {role.plan_requerido}+
-                            </Chip>
-                          )}
-                        </div>
-                      }
-                    >
-                      <div className="p-6 pt-4">
-                        <div className="mb-6 flex items-center justify-between">
-                          <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-white">
-                            {isAdmin ? <FaUserShield className="text-blue-500" /> : <FaUser className="text-slate-500" />}
-                            Permisos de {formatRoleName(role.nom_rol)}
-                            {isDeveloper && (
-                              <span className="text-sm font-normal text-slate-400 ml-2">
-                                (Plan {planes.find(p => p.id_plan === selectedPlan)?.descripcion_plan || selectedPlan || "Básico"})
-                              </span>
-                            )}
-                          </h3>
-                        </div>
-                        {renderModulosListing()}
-                        {isDeveloper && (
-                          <div className="mt-8 flex justify-end pt-4 border-t border-slate-100 dark:border-zinc-800">
-                            <Button
-                              color="primary"
-                              className="font-medium px-8 shadow-lg shadow-blue-500/30"
-                              size="lg"
-                              isLoading={savingPermisos}
-                              onPress={handleSavePermissions}
-                            >
-                              {savingPermisos ? "Guardando..." : "Guardar cambios"}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </Tab>
-                  );
-                })}
-              </Tabs>
-            </div>
-          </div>
-        </>
+      {/* Configuration Modal */}
+      {configModule && (
+        <ModuleConfigModal
+          isOpen={isOpen}
+          onClose={onClose}
+          moduleData={configModule}
+          type={configModule.type} // 'modulo' or 'submodulo' (from unified Item)
+          allActions={allActions}
+          currentAllowed={configModule.availableActions}
+          onSuccess={handleConfigSuccess}
+        />
       )}
     </>
   );

@@ -23,17 +23,21 @@ export const getModulosConSubmodulos = async () => {
   try {
     const response = await getModulosConSubmodulosRequest();
 
-    if (response.data) {
-      const datos = response.data;
-      const datosNormalizados = datos.map(mod => ({
+    const responseData = response.data?.data || response.data || [];
+
+    if (Array.isArray(responseData)) {
+      const datosNormalizados = responseData.map(mod => ({
         id: Number(mod.id),
         nombre: String(mod.nombre || ''),
         ruta: String(mod.ruta || ''),
+        active_actions: mod.active_actions,
+        expandible: Boolean(mod.expandible),
         submodulos: Array.isArray(mod.submodulos) ? mod.submodulos.map(sub => ({
           id_submodulo: Number(sub.id_submodulo),
           id_modulo: Number(sub.id_modulo),
           nombre_sub: String(sub.nombre_sub || ''),
-          ruta: String(sub.ruta || '')
+          ruta: String(sub.ruta || ''),
+          active_actions: sub.active_actions
         })) : []
       }));
 

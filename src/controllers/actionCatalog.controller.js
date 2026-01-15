@@ -1,4 +1,6 @@
+
 import { getConnection } from "../database/database.js";
+import { clearRutasCache } from "./rutas.controller.js";
 
 const getActions = async (req, res) => {
     let connection;
@@ -86,16 +88,29 @@ const updateModuleConfig = async (req, res) => {
     const { active_actions } = req.body; // Array of action_keys
 
     try {
+        console.log(`[UpdateModuleConfig] Request for ${type} ID: ${id}. Data:`, active_actions);
+
         connection = await getConnection();
         const table = type === 'modulo' ? 'modulo' : 'submodulos';
         const pk = type === 'modulo' ? 'id_modulo' : 'id_submodulo';
 
-        await connection.query(
+        console.log(`[UpdateModuleConfig] Query: UPDATE ${table} SET active_actions = ? WHERE ${pk} = ?`);
+
+        const [result] = await connection.query(
             `UPDATE ${table} SET active_actions = ? WHERE ${pk} = ?`,
             [JSON.stringify(active_actions), id]
         );
 
-        res.json({ success: true, message: "Configuración actualizada" });
+        console.log(`[UpdateModuleConfig] Affected Rows:`, result.affectedRows);
+
+        if (result.affectedRows === 0) {
+            console.warn(`[UpdateModuleConfig] WARNING: No rows updated! Check ID and Table.`);
+        }
+
+        // Clear Cache to ensure UI updates immediately
+        clearRutasCache();
+
+        res.json({ success: true, message: "Configuración actualizada", affected: result.affectedRows });
     } catch (error) {
         console.error("Error updating module config:", error);
         res.status(500).json({ success: false, message: "Error al actualizar configuración" });

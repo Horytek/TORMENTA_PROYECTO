@@ -298,37 +298,54 @@ const savePermisosGlobales = async (req, res) => {
     const id_usuario_actor = req.user?.id_usuario;
 
     const isDeveloper = await isDeveloperUser(req, connection);
+    const isAdminRole = id_rol === 1; // Rol Administrador
 
-    if (!isDeveloper) {
+    // SECURITY: 
+    // - Developers can modify ANY role for ALL tenants
+    // - Admins can modify NON-ADMIN roles for THEIR tenant only
+    if (!isDeveloper && isAdminRole) {
       await connection.rollback();
       return res.status(403).json({
         success: false,
-        message: "Solo desarrolladores pueden modificar permisos globales"
+        message: "Solo desarrolladores pueden modificar permisos del rol Administrador"
       });
     }
 
     const planObjetivo = plan_seleccionado ? parseInt(plan_seleccionado) : 1;
 
-    // Eliminar solo para tenants con ese plan
-    const [tenants] = await connection.query(
-      'SELECT DISTINCT id_tenant FROM usuario WHERE plan_pago = ? AND id_tenant IS NOT NULL',
-      [planObjetivo]
-    );
+    let tenantsToUpdate = [];
+    let auditScope = '';
 
-    for (const tenant of tenants) {
+    if (isDeveloper) {
+      // Developer: Update all tenants with this plan
+      const [tenants] = await connection.query(
+        'SELECT DISTINCT id_tenant FROM usuario WHERE plan_pago = ? AND id_tenant IS NOT NULL',
+        [planObjetivo]
+      );
+      tenantsToUpdate = tenants;
+      auditScope = 'GLOBAL';
+    } else {
+      // Admin: Update only their tenant
+      tenantsToUpdate = [{ id_tenant: id_tenant }];
+      auditScope = 'TENANT';
+    }
+
+    // Delete existing permissions for target tenants
+    for (const tenant of tenantsToUpdate) {
       await connection.query(
         'DELETE FROM permisos WHERE id_rol = ? AND id_plan = ? AND id_tenant = ?',
         [id_rol, planObjetivo, tenant.id_tenant]
       );
     }
 
+    // Insert new permissions
     if (permisos && permisos.length > 0) {
-      for (const tenant of tenants) {
+      for (const tenant of tenantsToUpdate) {
         for (const p of permisos) {
           await connection.query(`
             INSERT INTO permisos
-            (id_rol, id_modulo, id_submodulo, id_plan, crear, ver, editar, eliminar, desactivar, generar, id_tenant, f_creacion)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id_rol, id_modulo, id_submodulo, id_plan, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant, f_creacion)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `, [
             id_rol,
             p.id_modulo,
@@ -340,6 +357,7 @@ const savePermisosGlobales = async (req, res) => {
             p.eliminar !== undefined ? p.eliminar : 0,
             p.desactivar !== undefined ? p.desactivar : 0,
             p.generar !== undefined ? p.generar : 0,
+            p.actions_json ? JSON.stringify(p.actions_json) : null,
             tenant.id_tenant,
             new Date()
           ]);
@@ -354,32 +372,38 @@ const savePermisosGlobales = async (req, res) => {
     // ---------------------------------------------------------
     logAudit(req, {
       actor_user_id: id_usuario_actor,
-      actor_role: req.user?.rol || 'DESARROLLADOR',
-      id_tenant_target: null, // Global
-      entity_type: 'PERMISOS_GLOBALES',
+      actor_role: isDeveloper ? 'DESARROLLADOR' : (req.user?.rol || 'ADMIN'),
+      id_tenant_target: isDeveloper ? null : id_tenant,
+      entity_type: isDeveloper ? 'PERMISOS_GLOBALES' : 'PERMISOS_ROL',
       entity_id: `ROL:${id_rol}-PLAN:${planObjetivo}`,
       action: 'UPDATE',
       details: {
         permisos_count: permisos ? permisos.length : 0,
-        affected_tenants_count: tenants.length
+        affected_tenants_count: tenantsToUpdate.length,
+        scope: auditScope
       }
     });
     // ---------------------------------------------------------
 
+    const scopeMessage = isDeveloper
+      ? `Permisos globales para rol ${id_rol} y plan ${planObjetivo} actualizados para ${tenantsToUpdate.length} tenant(s)`
+      : `Permisos para rol ${id_rol} actualizados para tu organización`;
+
     return res.json({
       success: true,
-      message: `Permisos globales para rol ${id_rol} y plan ${planObjetivo} actualizados solo para tenants con ese plan`,
+      message: scopeMessage,
       data: {
         id_rol,
         plan_seleccionado: planObjetivo,
-        permisos_count: permisos ? permisos.length : 0
+        permisos_count: permisos ? permisos.length : 0,
+        scope: auditScope
       }
     });
   } catch (error) {
     await connection.rollback();
     res.status(500).json({
       success: false,
-      message: `Error al guardar permisos globales: ${error.message}`,
+      message: `Error al guardar permisos: ${error.message}`,
       details: error.toString()
     });
   } finally {

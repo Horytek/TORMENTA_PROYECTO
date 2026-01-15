@@ -179,18 +179,7 @@ function Roles() {
           <Tab key="permisos" title="Permisos">
             <div className="mt-4">
               {getCurrentTab === 'permisos' && (
-                <TablaPermisos
-                  externalData={{
-                    rutas: allData.rutas,
-                    roles: allData.roles,
-                    permisos: allData.permisos,
-                    expandedModulos,
-                    toggleExpand,
-                    expandAll,
-                    collapseAll
-                  }}
-                  skipApiCall={true}
-                />
+                <TablaPermisos />
               )}
             </div>
           </Tab>

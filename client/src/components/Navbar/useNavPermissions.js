@@ -1,27 +1,90 @@
 import { useMemo } from 'react';
 import { useAuth } from '@/context/Auth/AuthProvider';
+import { useUserStore } from '@/store/useStore';
 import { NAVIGATION_DATA } from './NavigationData';
 
+/**
+ * Hook to filter navigation based on user's actual permissions from database.
+ * No more hardcoded role IDs - works with any role created by the company.
+ */
 export function useNavPermissions() {
     const { user } = useAuth();
+    const permissions = useUserStore(state => state.permissions);
 
     const filteredNav = useMemo(() => {
         if (!user) return {};
 
-        // Get user role as a number (handle string case "1")
         const userRole = parseInt(user.rol, 10);
-        const allowed = {};
+        const isDeveloper = userRole === 10 || user.usuario === 'desarrollador';
+
+        // Create a set of allowed routes from user's permissions
+        const allowedRoutes = new Set();
+
+        if (Array.isArray(permissions)) {
+            permissions.forEach(p => {
+                // Add module route if user has 'ver' permission
+                if (p.ver === 1 || p.ver === true) {
+                    // Add main module route
+                    if (p.modulo_ruta) {
+                        allowedRoutes.add(p.modulo_ruta.toLowerCase());
+                    }
+                    // Add submodule route
+                    if (p.submodulo_ruta) {
+                        allowedRoutes.add(p.submodulo_ruta.toLowerCase());
+                    }
+                }
+            });
+        }
+
+        // Developer has access to everything
+        if (isDeveloper) {
+            Object.values(NAVIGATION_DATA).forEach(section => {
+                if (section.resourceKey) allowedRoutes.add(section.resourceKey.toLowerCase());
+                if (section.items) {
+                    section.items.forEach(item => {
+                        if (item.resourceKey) allowedRoutes.add(item.resourceKey.toLowerCase());
+                    });
+                }
+            });
+        }
+
+        // Helper to check if a route is allowed
+        const hasAccess = (resourceKey) => {
+            if (!resourceKey) return true; // No key = always show (e.g., dashboard)
+            return allowedRoutes.has(resourceKey.toLowerCase());
+        };
+
+        const result = {};
 
         Object.entries(NAVIGATION_DATA).forEach(([key, section]) => {
-            // If no allowedRoles defined, assume public (or default allow)
-            // If defined, check if userRole is included
-            if (!section.allowedRoles || section.allowedRoles.includes(userRole)) {
-                allowed[key] = section;
+            // Developer-only sections
+            if (section.developerOnly && !isDeveloper) {
+                return;
+            }
+
+            // Single link (no items)
+            if (!section.items) {
+                // Dashboard is always visible for authenticated users
+                if (key === 'dashboard' || hasAccess(section.resourceKey)) {
+                    result[key] = section;
+                }
+                return;
+            }
+
+            // Dropdown with items - filter items based on permissions
+            const allowedItems = section.items.filter(item => hasAccess(item.resourceKey));
+
+            // Only add section if at least one item is accessible
+            if (allowedItems.length > 0) {
+                result[key] = {
+                    ...section,
+                    items: allowedItems
+                };
             }
         });
 
-        return allowed;
-    }, [user]);
+        return result;
+    }, [user, permissions]);
 
     return filteredNav;
 }

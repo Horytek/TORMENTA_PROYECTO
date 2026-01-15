@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { methods as permisosController } from "./../controllers/permisos.controller.js";
-import { auth } from "../middlewares/auth.middleware.js"; 
+import { methods as rutasController } from "./../controllers/rutas.controller.js";
+import { auth } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -8,7 +9,7 @@ const router = Router();
 router.use(auth);
 
 
-router.get("/", permisosController.getModulosConSubmodulos);
+router.get("/", rutasController.getModulosConSubmodulos);
 router.get("/roles", permisosController.getRoles);
 router.get("/roles/:id_rol", permisosController.getPermisosByRol);
 router.get("/check", permisosController.checkPermiso);

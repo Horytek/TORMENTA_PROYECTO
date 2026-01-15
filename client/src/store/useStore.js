@@ -41,6 +41,7 @@ export const useUserStore = create((set) => ({
   plan_pago: "", // <-- Añadido aquí
   permissions: [], // <-- Cache de permisos
   capabilities: new Set(), // <-- Set unificado de strings
+  globalModuleConfigs: [], // <-- Stores active_actions for all modules
   // Nuevo objeto normalizado
   user: null,
 
@@ -53,7 +54,9 @@ export const useUserStore = create((set) => ({
   setIdTenant: (id_tenant) => set({ id_tenant }),
   setPlanPago: (plan_pago) => set({ plan_pago }),
   setPermissions: (permissions) => set({ permissions }),
+  setPermissions: (permissions) => set({ permissions }),
   setCapabilities: (capabilities) => set({ capabilities: new Set(capabilities) }), // Accepts Array or Set
+  setGlobalModuleConfigs: (configs) => set({ globalModuleConfigs: configs }),
 
   // NUEVO: asignar usuario crudo y normalizar
   setUserRaw: (raw) => {
@@ -97,7 +100,10 @@ export const useUserStore = create((set) => ({
       almacen: "",
       id_tenant: "",
       plan_pago: "",
+      id_tenant: "",
+      plan_pago: "",
       permissions: [],
-      capabilities: new Set()
+      capabilities: new Set(),
+      globalModuleConfigs: []
     })
 }));

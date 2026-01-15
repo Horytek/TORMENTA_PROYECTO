@@ -139,7 +139,7 @@ const ImportDataModal = ({ isOpen, onClose, type, onImport }) => (
 
 // --- 3. COMPONENTE PRINCIPAL ---
 function Productos() {
-  const { hasCreatePermission } = usePermisos();
+  const { hasCreatePermission, hasGeneratePermission } = usePermisos();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -359,22 +359,24 @@ function Productos() {
               Administra el catálogo completo, marcas, categorías y subcategorías.
             </p>
           </div>
-          <div className="flex gap-3 mt-4 sm:mt-0">
-            <ActionButton
-              color="green"
-              icon={<FaFileExcel size={18} />}
-              onClick={() => setImportModal({ open: true, type: activeTab })}
-            >
-              Importar
-            </ActionButton>
-            <ActionButton
-              color="indigo"
-              icon={<FaFileExport size={18} />}
-              onClick={() => handleExport(activeTab)}
-            >
-              Exportar
-            </ActionButton>
-          </div>
+          {hasGeneratePermission && (
+            <div className="flex gap-3">
+              <ActionButton
+                color="green"
+                icon={<FaFileExcel size={18} />}
+                onClick={() => setImportModal({ open: true, type: activeTab })}
+              >
+                Importar
+              </ActionButton>
+              <ActionButton
+                color="indigo"
+                icon={<FaFileExport size={18} />}
+                onClick={() => handleExport(activeTab)}
+              >
+                Exportar
+              </ActionButton>
+            </div>
+          )}
         </div>
 
         {/* Tabs Section */}

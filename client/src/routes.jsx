@@ -127,11 +127,48 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null, capabi
       return;
     }
 
+    const globalConfigs = useUserStore.getState().globalModuleConfigs || [];
+    const moduleConfig = globalConfigs.find(m => {
+      if (idSubmodulo) {
+        // Search in submodules
+        return m.submodulos?.some(s => String(s.id_submodulo) === String(idSubmodulo));
+      }
+      return String(m.id) === String(idModulo); // Use 'id' as per store normalization if applicable, or check structure
+    });
+
+    // If not found in flat list, we might need a recursive finder or flattened list.
+    // Assuming globalModuleConfigs has nested structure from 'rutas' endpoint: { id, submodulos: [] }
+
+    let activeActions = [];
+    if (idSubmodulo) {
+      // Find parent module then submodulo
+      const parent = globalConfigs.find(m => m.submodulos?.some(s => String(s.id_submodulo) === String(idSubmodulo)));
+      const sub = parent?.submodulos?.find(s => String(s.id_submodulo) === String(idSubmodulo));
+      activeActions = sub?.active_actions || [];
+    } else {
+      const mod = globalConfigs.find(m => String(m.id) === String(idModulo));
+      activeActions = mod?.active_actions || [];
+    }
+
+    // Parse if string (just in case backend sends string)
+    if (typeof activeActions === 'string') {
+      try { activeActions = JSON.parse(activeActions); } catch (e) { activeActions = []; }
+    }
+    // If array but empty, it might mean "all allowed" or "none allowed". 
+    // Usually active_actions is explicit. If undefined/null, we might default to ALL for backward compat, BUT guide says "Gatekeeper".
+    // Let's assume emptiness means "Inherit" or "All" for now to avoid breaking everything if fetch fails.
+    // Ideally: if activeActions exists, use it.
+
+    const isActionActive = (action) => {
+      if (!activeActions || activeActions.length === 0) return true; // Fallback if config active_actions is empty/missing
+      return activeActions.includes(action);
+    };
+
     const found = permissions?.find(p => {
       const sameModule = String(p.id_modulo) === String(idModulo);
       const sameSub = idSubmodulo
         ? String(p.id_submodulo) === String(idSubmodulo)
-        : (p.id_submodulo === null || p.id_submodulo === undefined || p.id_submodulo === 0); // Handle 0 or null
+        : (p.id_submodulo === null || p.id_submodulo === undefined || p.id_submodulo === 0);
       return sameModule && sameSub;
     });
 
@@ -139,11 +176,11 @@ export function RoutePermission({ children, idModulo, idSubmodulo = null, capabi
       setHasAccess(true);
       setComputedPermissions({
         hasPermission: true,
-        hasCreatePermission: found.crear === 1,
-        hasEditPermission: found.editar === 1,
-        hasDeletePermission: found.eliminar === 1,
-        hasGeneratePermission: found.generar === 1,
-        hasDeactivatePermission: found.desactivar === 1,
+        hasCreatePermission: (found.crear === 1) && isActionActive('crear'),
+        hasEditPermission: (found.editar === 1) && isActionActive('editar'),
+        hasDeletePermission: (found.eliminar === 1) && isActionActive('eliminar'),
+        hasGeneratePermission: (found.generar === 1) && isActionActive('generar'),
+        hasDeactivatePermission: (found.desactivar === 1) && isActionActive('desactivar'),
       });
     } else {
       setHasAccess(false);

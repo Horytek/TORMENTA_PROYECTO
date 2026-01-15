@@ -17,30 +17,38 @@ const getIp = (req) => req?.ip || req?.connection?.remoteAddress || '';
  */
 export const logAudit = async (req, { actor_user_id, actor_role, id_tenant_target, entity_type, entity_id, action, details }) => {
     // Ejecutar en background para no bloquear el request principal
-    // (A menos que la auditoría sea estricta y bloqueante, aquí asumimos background por performance)
 
     setImmediate(async () => {
         let connection;
         try {
             connection = await getConnection();
 
-            const ip_address = req ? getIp(req) : 'SYSTEM';
+            const ip = req ? getIp(req) : 'SYSTEM';
             const user_agent = req ? req.get('User-Agent') : 'SYSTEM';
-            const detailsJson = details ? JSON.stringify(details) : null;
+            const metadataJson = details ? JSON.stringify(details) : null;
 
+            // org_id comes from request's id_tenant (required field in audit_log)
+            const org_id = req?.id_tenant || id_tenant_target || 1;
+
+            // Column names mapped to actual table structure:
+            // entity_type -> target_type
+            // entity_id -> target_id  
+            // details -> metadata_json
+            // ip_address -> ip
             await connection.query(
                 `INSERT INTO audit_log 
-                (actor_user_id, actor_role, id_tenant_target, entity_type, entity_id, action, details, ip_address, user_agent)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (org_id, actor_user_id, actor_role, id_tenant_target, target_type, target_id, action, metadata_json, ip, user_agent)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
+                    org_id,
                     actor_user_id || null,
                     actor_role || null,
                     id_tenant_target || null,
                     entity_type,
                     entity_id || null,
                     action,
-                    detailsJson,
-                    ip_address,
+                    metadataJson,
+                    ip,
                     user_agent
                 ]
             );
