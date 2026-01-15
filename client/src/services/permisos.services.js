@@ -75,8 +75,10 @@ const useGetRutas = () => {
   const [expandedModulos, setExpandedModulos] = useState({});
   const [selectedRutas, setSelectedRutas] = useState({});
 
-  const fetchRutas = useCallback(async () => {
-    setLoading(true);
+  const fetchRutas = useCallback(async (isBackground = false) => {
+    if (!isBackground) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -86,14 +88,20 @@ const useGetRutas = () => {
         setModulosConSubmodulos(response.data.data || []);
       } else {
         setError(response.data?.message || 'Error al obtener las rutas');
-        setModulosConSubmodulos([]);
+        if (!isBackground) {
+          setModulosConSubmodulos([]);
+        }
       }
     } catch (error) {
       console.error('Error al cargar rutas:', error);
       setError(error.response?.data?.message || error.message || 'Error al cargar las rutas');
-      setModulosConSubmodulos([]);
+      if (!isBackground) {
+        setModulosConSubmodulos([]);
+      }
     } finally {
-      setLoading(false);
+      if (!isBackground) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -153,6 +161,24 @@ const useGetRutas = () => {
     }));
   }, []);
 
+  const updateLocalModuleConfig = useCallback((id, type, newActiveActions) => {
+    setModulosConSubmodulos(prev => prev.map(m => {
+      if (type === 'modulo' && m.id === id) {
+        return { ...m, active_actions: newActiveActions };
+      }
+      if (m.submodulos) {
+        const updatedSub = m.submodulos.map(s => {
+          if (type === 'submodulo' && s.id_submodulo === id) {
+            return { ...s, active_actions: newActiveActions };
+          }
+          return s;
+        });
+        return { ...m, submodulos: updatedSub };
+      }
+      return m;
+    }));
+  }, []);
+
   useEffect(() => {
     fetchRutas();
   }, [fetchRutas]);
@@ -171,7 +197,8 @@ const useGetRutas = () => {
     isSelected,
     toggleSelection,
     selectedRutas,
-    refreshRutas: fetchRutas
+    refreshRutas: fetchRutas,
+    updateLocalModuleConfig
   };
 };
 

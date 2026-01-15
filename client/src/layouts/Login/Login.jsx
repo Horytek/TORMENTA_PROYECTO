@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaUser, FaLock, FaShieldAlt } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaUser, FaLock, FaShieldAlt, FaArrowLeft } from "react-icons/fa";
 import { useUserStore } from "@/store/useStore";
 import {
   Input,
@@ -328,9 +328,17 @@ function Login() {
             </div>
 
             <div className="mt-8 pt-6 border-t border-white/5 text-center">
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500 mb-4">
                 ¿No tiene cuenta? <span className="text-blue-400 hover:text-blue-300 cursor-pointer font-medium hover:underline">Contacte a su administrador</span>
               </p>
+              <Button
+                variant="flat"
+                className="w-full bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                onPress={() => navigate('/landing')}
+              >
+                <FaArrowLeft className="mr-2" />
+                Volver a la página principal
+              </Button>
             </div>
           </div>
         </div>

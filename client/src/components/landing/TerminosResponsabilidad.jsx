@@ -49,6 +49,16 @@ export const TerminosResponsabilidad = () => {
     },
     {
       id: 3,
+      icon: <CreditCard className="w-6 h-6 text-white" />,
+      title: "Política de Reembolso",
+      content: (
+        <p className="text-sm text-white/60 leading-relaxed mt-2">
+          Para suscripciones mensuales, puede cancelar en cualquier momento y el acceso continuará hasta el final del ciclo de facturación. <span className="text-white">No ofrecemos reembolsos</span> por meses parciales o servicios ya prestados, salvo errores técnicos atribuibles a nuestra plataforma.
+        </p>
+      )
+    },
+    {
+      id: 4,
       icon: <Ban className="w-6 h-6 text-white" />,
       title: "Terminación del Servicio",
       content: (
@@ -63,7 +73,7 @@ export const TerminosResponsabilidad = () => {
       )
     },
     {
-      id: 4,
+      id: 5,
       icon: <Scale className="w-6 h-6 text-white" />,
       title: "Ley Aplicable y Jurisdicción",
       content: (
