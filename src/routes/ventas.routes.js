@@ -23,4 +23,7 @@ router.get("/venta_boucher", ventasController.getVentaById);
 router.get("/last_venta", ventasController.getLastVenta);
 router.post("/intercambio", ventasController.exchangeProducto);
 
+// Ventas online desde tesis_db
+router.get("/online", ventasController.getVentasOnline);
+
 export default router;

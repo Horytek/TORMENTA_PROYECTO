@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import TablaVentas from './ComponentsVentas/VentasTable';
+import VentasOnlineTable from './ComponentsVentas/VentasOnlineTable';
 import FiltrosVentas from './ComponentsVentas/FiltrosVentas';
 import OptionsModal from './ComponentsVentas/Modals/OptionsModal';
 import ConfirmationModal from './ComponentsVentas/Modals/ConfirmationModal';
-import { useVentasData } from "@/services/ventas.services";
+import { useVentasData, useVentasOnlineData } from "@/services/ventas.services";
 
 
 import { useUserStore } from "@/store/useStore";
 import { handleDelete, anularVentaEnSunatF, anularVentaEnSunatB } from "@/services/ventas.services";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { Card, CardBody, ScrollShadow } from "@heroui/react";
-import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator } from "react-icons/fa";
+import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator, FaGlobe, FaStore } from "react-icons/fa";
 import { useSucursalData } from "@/services/ventas.services";
 import { Tabs, Tab } from "@heroui/react";
 import InventoryCalendar from './ComponentsVentas/InventoryCalendar/InventoryCalendar';
@@ -40,6 +41,20 @@ const Ventas = () => {
     refreshVentas,
     allVentas
   } = useVentasData(filters);
+
+  // Hook para ventas online (tesis_db)
+  const {
+    ventas: ventasOnline,
+    loading: loadingOnline,
+    currentPage: currentPageOnline,
+    setCurrentPage: setCurrentPageOnline,
+    totalPages: totalPagesOnline,
+    ventasPerPage: ventasPerPageOnline,
+    setVentasPerPage: setVentasPerPageOnline,
+    totalOnline,
+    cantidadOnline,
+    refreshVentas: refreshVentasOnline
+  } = useVentasOnlineData(filters);
 
   // Zustand: obtener y setear datos globales
   const setTotalVentas = useVentaSeleccionadaStore((state) => state.setTotalVentas);
@@ -231,6 +246,47 @@ const Ventas = () => {
                   />
                 </div>
               </ScrollShadow>
+            </div>
+          </Tab>
+          <Tab key="online" title={
+            <div className="flex items-center gap-2">
+              <FaGlobe className="text-emerald-500" />
+              <span>Ventas Online</span>
+            </div>
+          }>
+            <div className="space-y-6 mt-4">
+              {/* KPIs Online */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <KpiCard
+                  title="Total Ventas Online"
+                  value={`S/. ${totalOnline || "0.00"}`}
+                  icon={FaGlobe}
+                  colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                />
+                <KpiCard
+                  title="Total Electrónico"
+                  value={`S/. ${totalOnline || "0.00"}`}
+                  icon={FaCreditCard}
+                  colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                />
+                <KpiCard
+                  title="Cantidad Ventas"
+                  value={cantidadOnline || "0"}
+                  icon={FaCalculator}
+                  colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+                />
+              </div>
+
+              {/* Tabla de ventas online */}
+              <VentasOnlineTable
+                ventas={ventasOnline || []}
+                loading={loadingOnline}
+                currentPage={currentPageOnline}
+                totalPages={totalPagesOnline}
+                setCurrentPage={setCurrentPageOnline}
+                ventasPerPage={ventasPerPageOnline}
+                setVentasPerPage={setVentasPerPageOnline}
+              />
             </div>
           </Tab>
           <Tab key="inventario" title="Inventario y Calendario">

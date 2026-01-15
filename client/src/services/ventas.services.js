@@ -18,7 +18,8 @@ import {
     deleteVentaRequest,
     getNumeroComprobanteRequest,
     getLastVentaRequest,
-    updateVentaEstadoRequest
+    updateVentaEstadoRequest,
+    getVentasOnlineRequest
 } from "@/api/api.ventas";
 import { getLibroVentasSunat } from "@/services/reporte.services";
 
@@ -980,6 +981,112 @@ export const useVentasData = (filters = {}) => {
         removeVenta, addVenta, updateVenta, currentPage, setCurrentPage,
         totalPages: Math.ceil(totalVentas / ventasPerPage), ventasPerPage, setVentasPerPage,
         totalRecaudado, totalEfectivo, totalPagoElectronico, allVentas, refreshVentas: fetchVentas
+    };
+};
+
+// --- useVentasOnlineData (ventas desde tesis_db) ---
+export const useVentasOnlineData = (filters = {}) => {
+    const [allVentas, setAllVentas] = useState([]);
+    const [ventas, setVentas] = useState([]);
+    const [totalVentas, setTotalVentas] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [ventasPerPage, setVentasPerPage] = useState(10);
+    const [totalOnline, setTotalOnline] = useState("0.00");
+    const [cantidadOnline, setCantidadOnline] = useState(0);
+    const [loading, setLoading] = useState(true);
+
+    const fetchVentas = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await getVentasOnlineRequest();
+            if (response.data.code === 1) {
+                const ventasData = response.data.data.map(venta => ({
+                    id: venta.id,
+                    serieNum: venta.serieNum || 'ONL',
+                    num: venta.num || String(venta.id).padStart(8, '0'),
+                    tipoComprobante: 'Online',
+                    cliente: venta.cliente || 'Cliente',
+                    dni: venta.dni || '',
+                    email: venta.email || '',
+                    telefono: venta.telefono || '',
+                    direccion: venta.direccion || '',
+                    fechaEmision: venta.fechaEmision ? new Date(venta.fechaEmision).toISOString().split('T')[0] : '',
+                    fechaVerificacion: venta.fechaVerificacion,
+                    metodo_pago: venta.metodo_pago || 'Electrónico',
+                    transaccion: venta.transaccion || '',
+                    almacen: venta.almacen || '',
+                    estado: venta.estado || 'Aceptada',
+                    estado_verificacion: venta.estado_verificacion,
+                    observacion: venta.observacion,
+                    origen: 'online',
+                    cajero: 'Sistema Online',
+                    total_raw: parseFloat(venta.total || 0),
+                    igv_raw: parseFloat(venta.igv || 0),
+                    igv: `S/ ${parseFloat(venta.igv || 0).toFixed(2)}`,
+                    total: `S/ ${parseFloat(venta.total || 0).toFixed(2)}`,
+                    detalles: (venta.detalles || []).map(detalle => ({
+                        codigo: String(detalle.codigo || detalle.id_producto || '').padStart(3, '0'),
+                        nombre: detalle.nombre || detalle.descripcion || '',
+                        cantidad: detalle.cantidad || 0,
+                        undm: detalle.undm || 'UND',
+                        precio_raw: parseFloat(detalle.precio || 0),
+                        subtotal_raw: parseFloat(detalle.subtotal || 0),
+                        precio: `S/ ${parseFloat(detalle.precio || 0).toFixed(2)}`,
+                        subtotal: `S/ ${parseFloat(detalle.subtotal || 0).toFixed(2)}`
+                    }))
+                }));
+                setAllVentas(ventasData);
+                setTotalOnline(response.data.totalOnline || "0.00");
+                setCantidadOnline(response.data.cantidadOnline || 0);
+            }
+        } catch (error) {
+            console.error('Error al obtener ventas online:', error.message);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchVentas();
+    }, [fetchVentas]);
+
+    useEffect(() => {
+        let filtradas = [...allVentas];
+
+        if (filters.estado && filters.estado !== "Todos") {
+            filtradas = filtradas.filter(v => String(v.estado).toLowerCase() === String(filters.estado).toLowerCase());
+        }
+
+        if (filters.razon) {
+            filtradas = filtradas.filter(v => (v.cliente || '').toLowerCase().includes(String(filters.razon).toLowerCase()));
+        }
+
+        if (filters.fecha_i) {
+            filtradas = filtradas.filter(v => (v.fechaEmision || '') >= String(filters.fecha_i));
+        }
+
+        if (filters.fecha_e) {
+            filtradas = filtradas.filter(v => (v.fechaEmision || '') <= String(filters.fecha_e));
+        }
+
+        setTotalVentas(filtradas.length);
+        const start = (currentPage - 1) * ventasPerPage;
+        const end = start + ventasPerPage;
+        setVentas(filtradas.slice(start, end));
+    }, [allVentas, filters, currentPage, ventasPerPage]);
+
+    return {
+        ventas,
+        allVentas,
+        loading,
+        currentPage,
+        setCurrentPage,
+        totalPages: Math.ceil(totalVentas / ventasPerPage),
+        ventasPerPage,
+        setVentasPerPage,
+        totalOnline,
+        cantidadOnline,
+        refreshVentas: fetchVentas
     };
 };
 

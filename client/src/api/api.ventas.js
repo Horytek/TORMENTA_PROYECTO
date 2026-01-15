@@ -35,3 +35,6 @@ export const getVentaByIdRequest = (params) => axios.get("/ventas/venta_boucher"
 
 // Obtener última venta
 export const getLastVentaRequest = () => axios.get("/ventas/last_venta");
+
+// Obtener ventas online desde tesis_db
+export const getVentasOnlineRequest = () => axios.get("/ventas/online");

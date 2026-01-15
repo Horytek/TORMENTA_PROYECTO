@@ -3,6 +3,7 @@ config();
 
 export const HOST = process.env.DB_HOST || "";
 export const DATABASE = process.env.DB_DATABASE || "";
+export const TESIS_DATABASE = process.env.TESIS_DB_DATABASE || "tesis_db";
 export const USER = process.env.DB_USERNAME || "";
 export const PASSWORD = process.env.DB_PASSWORD || "";
 export const PORT_DB = process.env.DB_PORT || "3306";

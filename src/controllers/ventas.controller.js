@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { getTesisConnection } from "./../database/database_tesis.js";
 import { logVentas } from "../utils/logActions.js";
 
 // Cache para datos que no cambian frecuentemente
@@ -1213,6 +1214,129 @@ const exchangeProducto = async (req, res) => {
 
 
 
+// ========== VENTAS ONLINE (tesis_db) ==========
+const getVentasOnline = async (req, res) => {
+  let connection;
+  try {
+    connection = await getTesisConnection();
+    const id_tenant = req.id_tenant;
+
+    // Paginación
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(Math.max(1, parseInt(req.query.limit, 10) || 100), 500);
+    const offset = (page - 1) * limit;
+
+    // Query principal sin cross-database JOIN para evitar problemas
+    const comprasQuery = `
+      SELECT
+        c.id_compra AS id,
+        c.fecha_compra AS fechaEmision,
+        c.fecha_verificacion AS fechaVerificacion,
+        c.total,
+        c.medio_pago AS metodo_pago,
+        CASE c.estado_compra 
+          WHEN 1 THEN 'Aceptada' 
+          WHEN 0 THEN 'Anulada'
+          ELSE 'En proceso' 
+        END AS estado,
+        c.observaciones AS observacion,
+        c.id_transaccion AS transaccion,
+        c.estado_verificacion,
+        c.id_almacen,
+        cl.id_cliente,
+        CONCAT(COALESCE(cl.nombres, ''), ' ', COALESCE(cl.apellidos, '')) AS cliente,
+        cl.dni,
+        cl.email,
+        cl.telefono,
+        cl.direccion
+      FROM compra c
+      LEFT JOIN cliente cl ON cl.id_cliente = c.id_cliente
+      WHERE c.id_tenant = ?
+      ORDER BY c.id_compra DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const [comprasResult] = await connection.query(comprasQuery, [id_tenant, limit, offset]);
+
+    // Obtener detalles para cada compra (si hay compras)
+    let detallesMap = {};
+
+    if (comprasResult.length > 0) {
+      const comprasIds = comprasResult.map(c => c.id);
+
+      try {
+        // Usar placeholders individuales para el IN clause
+        const placeholders = comprasIds.map(() => '?').join(',');
+        const [detallesResult] = await connection.query(`
+          SELECT 
+            dc.id_compra,
+            dc.id_detalle_compra AS codigo,
+            COALESCE(p.descripcion, 'Producto') AS nombre,
+            dc.cantidad,
+            dc.precio_unitario AS precio,
+            (dc.cantidad * dc.precio_unitario) AS subtotal,
+            COALESCE(p.undm, 'UND') AS undm
+          FROM detalle_compra dc
+          LEFT JOIN producto p ON p.id_producto = dc.id_producto
+          WHERE dc.id_compra IN (${placeholders})
+        `, comprasIds);
+
+        // Agrupar detalles por id_compra
+        detallesResult.forEach(d => {
+          if (!detallesMap[d.id_compra]) {
+            detallesMap[d.id_compra] = [];
+          }
+          detallesMap[d.id_compra].push(d);
+        });
+      } catch (detalleError) {
+        console.warn('Error al obtener detalles de compra:', detalleError.message);
+        // Continuar sin detalles
+      }
+    }
+
+    // Combinar compras con sus detalles
+    const compras = comprasResult.map(compra => ({
+      ...compra,
+      cliente: compra.cliente?.trim() || 'Cliente Online',
+      origen: 'online',
+      tipoComprobante: 'Online',
+      serieNum: 'ONL',
+      num: String(compra.id).padStart(8, '0'),
+      cajero: 'Sistema Online',
+      almacen: compra.id_almacen ? `Almacén ${compra.id_almacen}` : '-',
+      igv: parseFloat((parseFloat(compra.total || 0) * 0.18 / 1.18).toFixed(2)),
+      detalles: detallesMap[compra.id] || []
+    }));
+
+    // Calcular totales para KPIs
+    const [totalesResult] = await connection.query(`
+      SELECT 
+        COUNT(*) as cantidad,
+        COALESCE(SUM(total), 0) as totalVentas
+      FROM compra 
+      WHERE id_tenant = ? AND estado_compra = 1
+    `, [id_tenant]);
+
+    const totales = totalesResult[0] || { cantidad: 0, totalVentas: 0 };
+
+    res.json({
+      code: 1,
+      data: compras,
+      totalOnline: parseFloat(totales.totalVentas || 0).toFixed(2),
+      cantidadOnline: parseInt(totales.cantidad || 0)
+    });
+  } catch (error) {
+    console.error('Error en getVentasOnline:', error.message, error.code);
+    res.status(500).json({
+      code: 0,
+      message: "Error al obtener ventas online",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 export const methods = {
   getVentas,
   getProductosVentas,
@@ -1227,4 +1351,5 @@ export const methods = {
   getVentaById,
   getLastVenta,
   exchangeProducto,
+  getVentasOnline,
 };
