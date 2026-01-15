@@ -330,23 +330,25 @@ const savePermisosGlobales = async (req, res) => {
       auditScope = 'TENANT';
     }
 
-    // Delete existing permissions for target tenants
-    for (const tenant of tenantsToUpdate) {
+    // OPTIMIZED: Batch delete for all tenants at once
+    if (tenantsToUpdate.length > 0) {
+      const tenantIds = tenantsToUpdate.map(t => t.id_tenant);
       await connection.query(
-        'DELETE FROM permisos WHERE id_rol = ? AND id_plan = ? AND id_tenant = ?',
-        [id_rol, planObjetivo, tenant.id_tenant]
+        `DELETE FROM permisos WHERE id_rol = ? AND id_plan = ? AND id_tenant IN (${tenantIds.map(() => '?').join(',')})`,
+        [id_rol, planObjetivo, ...tenantIds]
       );
     }
 
-    // Insert new permissions
-    if (permisos && permisos.length > 0) {
+    // OPTIMIZED: Batch insert all permissions at once
+    if (permisos && permisos.length > 0 && tenantsToUpdate.length > 0) {
+      const values = [];
+      const params = [];
+      const now = new Date();
+
       for (const tenant of tenantsToUpdate) {
         for (const p of permisos) {
-          await connection.query(`
-            INSERT INTO permisos
-            (id_rol, id_modulo, id_submodulo, id_plan, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant, f_creacion)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `, [
+          values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+          params.push(
             id_rol,
             p.id_modulo,
             p.id_submodulo || null,
@@ -359,10 +361,18 @@ const savePermisosGlobales = async (req, res) => {
             p.generar !== undefined ? p.generar : 0,
             p.actions_json ? JSON.stringify(p.actions_json) : null,
             tenant.id_tenant,
-            new Date()
-          ]);
+            now
+          );
         }
       }
+
+      // Single batch insert - much more efficient
+      const batchQuery = `
+        INSERT INTO permisos
+        (id_rol, id_modulo, id_submodulo, id_plan, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant, f_creacion)
+        VALUES ${values.join(', ')}
+      `;
+      await connection.query(batchQuery, params);
     }
 
     await connection.commit();

@@ -6,6 +6,8 @@ import { NAVIGATION_DATA } from './NavigationData';
 /**
  * Hook to filter navigation based on user's actual permissions from database.
  * No more hardcoded role IDs - works with any role created by the company.
+ * 
+ * Developer accounts ONLY see developer-specific modules, not all modules.
  */
 export function useNavPermissions() {
     const { user } = useAuth();
@@ -17,7 +19,18 @@ export function useNavPermissions() {
         const userRole = parseInt(user.rol, 10);
         const isDeveloper = userRole === 10 || user.usuario === 'desarrollador';
 
-        // Create a set of allowed routes from user's permissions
+        // If user is a developer, only show developer-only sections
+        if (isDeveloper) {
+            const result = {};
+            Object.entries(NAVIGATION_DATA).forEach(([key, section]) => {
+                if (section.developerOnly) {
+                    result[key] = section;
+                }
+            });
+            return result;
+        }
+
+        // For non-developer users, filter based on permissions from database
         const allowedRoutes = new Set();
 
         if (Array.isArray(permissions)) {
@@ -36,18 +49,6 @@ export function useNavPermissions() {
             });
         }
 
-        // Developer has access to everything
-        if (isDeveloper) {
-            Object.values(NAVIGATION_DATA).forEach(section => {
-                if (section.resourceKey) allowedRoutes.add(section.resourceKey.toLowerCase());
-                if (section.items) {
-                    section.items.forEach(item => {
-                        if (item.resourceKey) allowedRoutes.add(item.resourceKey.toLowerCase());
-                    });
-                }
-            });
-        }
-
         // Helper to check if a route is allowed
         const hasAccess = (resourceKey) => {
             if (!resourceKey) return true; // No key = always show (e.g., dashboard)
@@ -57,8 +58,8 @@ export function useNavPermissions() {
         const result = {};
 
         Object.entries(NAVIGATION_DATA).forEach(([key, section]) => {
-            // Developer-only sections
-            if (section.developerOnly && !isDeveloper) {
+            // Skip developer-only sections for non-developers
+            if (section.developerOnly) {
                 return;
             }
 
