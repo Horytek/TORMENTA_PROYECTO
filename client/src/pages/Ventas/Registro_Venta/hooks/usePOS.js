@@ -56,43 +56,54 @@ export const usePOS = () => {
             return;
         }
 
-        setCart(prevCart => {
-            // Calculate potential new total
-            const existingItem = prevCart.find(item => item.codigo === product.codigo);
-            let newCart;
+        // Calculate if adding this product would exceed limits
+        const existingItem = cart.find(item => item.codigo === product.codigo);
+        let newTotal;
 
-            if (existingItem) {
-                newCart = prevCart.map(item =>
-                    item.codigo === product.codigo
-                        ? { ...item, cantidad: item.cantidad + 1 }
-                        : item
-                );
-            } else {
-                newCart = [...prevCart, { ...product, cantidad: 1, descuento: 0, precio_venta: product.precio }];
-            }
-
-            // Calculate total of newCart
-            const newTotal = newCart.reduce((acc, item) => {
+        if (existingItem) {
+            newTotal = cart.reduce((acc, item) => {
+                const price = parseFloat(item.precio) || 0;
+                const qty = item.codigo === product.codigo ? item.cantidad + 1 : item.cantidad;
+                const discountPct = parseFloat(item.descuento) || 0;
+                return acc + (price * qty * (1 - discountPct / 100));
+            }, 0);
+        } else {
+            const currentTotal = cart.reduce((acc, item) => {
                 const price = parseFloat(item.precio) || 0;
                 const qty = item.cantidad || 1;
                 const discountPct = parseFloat(item.descuento) || 0;
                 return acc + (price * qty * (1 - discountPct / 100));
             }, 0);
+            newTotal = currentTotal + parseFloat(product.precio);
+        }
 
-            // Legacy Validation: 499 Soles Limit
-            if (newTotal > 499) {
-                toast.error(`No se puede agregar. El total excedería S/ 499.00`);
-                return prevCart; // Return unchanged cart
-            }
+        // Legacy Validation: 499 Soles Limit
+        if (newTotal > 499) {
+            toast.error(`No se puede agregar. El total excedería S/ 499.00`);
+            return;
+        }
 
-            // Consume Stock if validation passed
-            setProductos(prev => prev.map(p =>
-                p.codigo === product.codigo ? { ...p, stock: p.stock - 1 } : p
-            ));
+        // Update cart
+        if (existingItem) {
+            setCart(prevCart =>
+                prevCart.map(item =>
+                    item.codigo === product.codigo
+                        ? { ...item, cantidad: item.cantidad + 1 }
+                        : item
+                )
+            );
+        } else {
+            setCart(prevCart => [
+                ...prevCart,
+                { ...product, cantidad: 1, descuento: 0, precio_venta: product.precio }
+            ]);
+        }
 
-            return newCart;
-        });
-    }, [setProductos]);
+        // Consume Stock - OUTSIDE of setCart callback to prevent double execution
+        setProductos(prev => prev.map(p =>
+            p.codigo === product.codigo ? { ...p, stock: p.stock - 1 } : p
+        ));
+    }, [cart, setProductos]);
 
     const removeFromCart = useCallback((codigo, cantidad) => {
         setCart(prev => prev.filter(item => item.codigo !== codigo));
@@ -103,26 +114,29 @@ export const usePOS = () => {
 
     const updateQuantity = useCallback((codigo, newQuantity) => {
         if (newQuantity < 1) return;
-        setCart(prevCart => {
-            const item = prevCart.find(i => i.codigo === codigo);
-            if (!item) return prevCart;
-            const diff = newQuantity - item.cantidad;
 
-            const productInStock = productos.find(p => p.codigo === codigo);
-            // productInStock.stock is available stock.
-            // If diff > 0 (increasing qty), we consume stock.
-            if (diff > 0 && productInStock.stock < diff) {
-                toast.error(`Solo quedan ${productInStock.stock} unidades`);
-                return prevCart;
-            }
+        const item = cart.find(i => i.codigo === codigo);
+        if (!item) return;
 
-            setProductos(prev => prev.map(p =>
-                p.codigo === codigo ? { ...p, stock: p.stock - diff } : p
-            ));
+        const diff = newQuantity - item.cantidad;
+        const productInStock = productos.find(p => p.codigo === codigo);
 
-            return prevCart.map(i => i.codigo === codigo ? { ...i, cantidad: newQuantity } : i);
-        });
-    }, [productos, setProductos]);
+        // If diff > 0 (increasing qty), we consume stock.
+        if (diff > 0 && productInStock.stock < diff) {
+            toast.error(`Solo quedan ${productInStock.stock} unidades`);
+            return;
+        }
+
+        // Update cart quantity
+        setCart(prevCart =>
+            prevCart.map(i => i.codigo === codigo ? { ...i, cantidad: newQuantity } : i)
+        );
+
+        // Update stock - OUTSIDE of setCart callback to prevent double execution
+        setProductos(prev => prev.map(p =>
+            p.codigo === codigo ? { ...p, stock: p.stock - diff } : p
+        ));
+    }, [cart, productos, setProductos]);
 
     const updatePrice = useCallback((codigo, newPrice) => {
         setCart(prev => prev.map(item =>
@@ -198,7 +212,8 @@ export const usePOS = () => {
             id_comprobante: documentType,
             id_cliente: client?.id || client?.nombre || client?.razon_social || 'Clientes Varios', // Prefer ID for robust lookup
             estado_venta: 1,
-            ...(documentType !== 'Nota de venta' && { estado_sunat: 1 }),
+            // estado_sunat se inicializa en 0, se actualizará a 1 solo si SUNAT responde exitosamente
+            ...(documentType !== 'Nota de venta' && { estado_sunat: 0 }),
             sucursal: sucursalV?.nombre || "",
             direccion: sucursalV?.ubicacion || "",
             f_venta: localDate,
@@ -244,14 +259,29 @@ export const usePOS = () => {
         };
 
         // Construct Data Object specifically for handleSunatUnique
-        // Legacy code was missing these fields, causing silent failures
+        // Use detalles_b format which includes nombre, undm for SUNAT
+        // Parse numComprobante: "B600-00000001" => serie="600", correlativo="00000001"
+        const comprobantePartes = numComprobante.split('-');
+        const serieFromComprobante = comprobantePartes[0].substring(1); // Remove prefix (B or F), get "600"
+        const correlativoFromComprobante = comprobantePartes[1] || numComprobante; // Get "00000001"
+
         const datosVentaSunat = {
             ...datosVenta,
             tipoComprobante: documentType,
-            num: numComprobante,
-            serieNum: '001', // Default series as per legacy logic expectation
+            num: correlativoFromComprobante, // Only the correlativo part for SUNAT
+            serieNum: serieFromComprobante,  // The actual serie from the comprobante
             ruc: client?.documento || '',
-            cliente: client?.nombre || 'Clientes Varios'
+            cliente: client?.nombre || 'Clientes Varios',
+            // Override detalles with proper format for SUNAT
+            detalles: cart.map(item => ({
+                codigo: item.codigo,
+                nombre: item.nombre,
+                cantidad: item.cantidad,
+                precio: parseFloat(item.precio),
+                undm: item.undm || 'NIU',
+                descuento: 0,
+                subtotal: (item.cantidad * item.precio).toFixed(2)
+            }))
         };
 
         // Call Legacy Save Function

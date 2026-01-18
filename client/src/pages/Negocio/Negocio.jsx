@@ -20,16 +20,23 @@ export default function Negocio() {
     logotipoUrl,
     setLogotipoUrl,
     onLogotipoUrlChange,
-    handleLogotipoPaste,
+    handleLogoChange, // Added for file upload
     preview,
     loading,
     saving,
     resetChanges,
     hasChanges,
-    handleSubmit
+    handleSubmit,
+    // New fields
+    distrito, setDistrito,
+    provincia, setProvincia,
+    departamento, setDepartamento,
+    codigoPostal, setCodigoPostal,
+    email, setEmail,
+    telefono, setTelefono,
+    moneda, setMoneda,
+    pais, setPais
   } = useNegocio();
-
-  const [showUrlInput, setShowUrlInput] = useState(false);
 
   // Modal Preview State
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -56,6 +63,7 @@ export default function Negocio() {
     const content = `
 ${(nombre || "NOMBRE NEGOCIO").toUpperCase()}
 ${(direccion || "DIRECCION").toUpperCase()}
+${(distrito || "").toUpperCase()} - ${(provincia || "").toUpperCase()} - ${(departamento || "").toUpperCase()}
 RUC: ${(ruc || "00000000000")}
 ----------------------------------------
        BOLETA DE VENTA ELECTRONICA
@@ -72,7 +80,7 @@ PRODUCTO DE PRUEBA     1   100.00   100.00
 ----------------------------------------
 SUBTOTAL:                           100.00
 IGV (18%):                           18.00
-TOTAL A PAGAR:                      118.00
+TOTAL A PAGAR: ${moneda}            118.00
 ----------------------------------------
       GRACIAS POR SU PREFERENCIA
     Representación impresa de la
@@ -115,6 +123,15 @@ TOTAL A PAGAR:                      118.00
               setRuc={setRuc}
               direccion={direccion}
               setDireccion={setDireccion}
+              // New Props
+              distrito={distrito} setDistrito={setDistrito}
+              provincia={provincia} setProvincia={setProvincia}
+              departamento={departamento} setDepartamento={setDepartamento}
+              codigoPostal={codigoPostal} setCodigoPostal={setCodigoPostal}
+              email={email} setEmail={setEmail}
+              telefono={telefono} setTelefono={setTelefono}
+              moneda={moneda} setMoneda={setMoneda}
+              pais={pais} setPais={setPais}
             />
           </div>
 
@@ -141,41 +158,24 @@ TOTAL A PAGAR:                      118.00
 
             {/* Visual Actions */}
             <div className="space-y-3">
-              {/* URL Toggle Button */}
+              {/* File Upload Button */}
+              <input
+                type="file"
+                id="logo-upload"
+                className="hidden"
+                accept="image/*"
+                onChange={handleLogoChange}
+              />
               <Button
                 size="sm"
                 variant="flat"
                 color="primary"
                 className="w-full bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-bold"
                 startContent={<UploadCloud size={16} />}
-                onPress={() => setShowUrlInput(!showUrlInput)}
+                onPress={() => document.getElementById('logo-upload').click()}
               >
-                {showUrlInput ? "Cancelar edición" : "Cambiar logo"}
+                {preview ? "Cambiar imagen" : "Subir imagen"}
               </Button>
-
-              {/* URL Input Area with Animation */}
-              {showUrlInput && (
-                <div className="animate-in fade-in slide-in-from-top-2 p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-lg border border-slate-100 dark:border-zinc-700">
-                  <div className="flex gap-2 items-center">
-                    <Input
-                      size="sm"
-                      placeholder="Pega URL de ImgBB..."
-                      value={logotipoUrl}
-                      onValueChange={onLogotipoUrlChange}
-                      onPaste={handleLogotipoPaste}
-                      className="flex-1"
-                      classNames={{
-                        inputWrapper: "bg-white dark:bg-zinc-800 border-slate-200 shadow-none",
-                        input: "text-xs",
-                      }}
-                    />
-                    <LogotipoPopoverInfo />
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1 pl-1">
-                    Solo URLs directas (.jpg/.png)
-                  </p>
-                </div>
-              )}
 
               <Button
                 size="sm"

@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import axios from "@/api/axios";
 import { LineChartComponent } from "./LineChart";
 import useNotasPendientes from "./hooks/notas_pendientes";
+import useNuevosClientes from "./hooks/nuevos_clientes";
 import NotasPendientesModal from "./NotasPendientesModal";
 import { QuickActionsCard } from "./QuickActionsCard";
 import { RecentTransactionsTable } from "./RecentTransactionsTable";
@@ -245,7 +246,7 @@ function Inicio() {
 
   const { totalProductsSold, percentageChange: percentageChangeProducts } = useProductSell(selectedTab, selectedSucursal);
   const { ventasTotal, ventasAnterior, percentageChange, totalRegistros } = useVentasTotal(selectedTab, selectedSucursal);
-  const cambioNuevosClientes = ventasAnterior > 0 ? ((totalRegistros - ventasAnterior) / ventasAnterior) * 100 : (totalRegistros > 0 ? 100 : 0);
+  const { nuevosClientes, percentageChange: cambioNuevosClientes } = useNuevosClientes(selectedTab, selectedSucursal);
 
   const { cantidadPendientes, totalNotas, notasPendientes, refetchNotasPendientes } = useNotasPendientes({ idSucursal: selectedSucursal });
   const porcentajePendientes = totalNotas > 0 ? (cantidadPendientes / totalNotas) * 100 : 0;
@@ -323,7 +324,7 @@ function Inicio() {
           <MetricCard
             icon={<Users size={22} />}
             title="Nuevos Clientes"
-            value={totalRegistros}
+            value={nuevosClientes}
             change={`${cambioNuevosClientes > 0 ? "+" : ""}${cambioNuevosClientes.toFixed(1)}%`}
             isPositive={cambioNuevosClientes >= 0}
             variant="primary"

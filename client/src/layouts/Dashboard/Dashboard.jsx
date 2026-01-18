@@ -46,7 +46,9 @@ function Dashboard() {
           const processedRoutes = modulesData.map(m => {
             if (m.submodulos && m.submodulos.length > 0) {
               const newSubmodulos = m.submodulos.map(sub => {
-                if (sub.id_submodulo === 10 || sub.id_submodulo === 11) {
+                const subName = sub.nombre_submodulo ? sub.nombre_submodulo.toLowerCase() : '';
+                // Check ID 10/11 OR Name match for robustness
+                if (sub.id_submodulo === 10 || sub.id_submodulo === 11 || (subName.includes('nota') && subName.includes('almacen'))) {
                   return { ...sub, ruta: '/nota_almacen' };
                 }
                 return sub;

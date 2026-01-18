@@ -59,6 +59,7 @@ export const COMPONENT_REGISTRY = {
     '/almacen/historico': Historico,
     '/guia_remision': Guia_Remision,
     '/guia_remision/registro': RegistroGuia,
+    '/nota_almacen': Nota_Almacen, // Added explicit mapping for Nota de Almacén
 };
 
 // Re-export legacy maps for hybrid support in Dashboard

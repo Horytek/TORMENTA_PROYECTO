@@ -13,6 +13,7 @@ export async function createAccessToken(input) {
   const nameUser   = input?.nameUser   ?? input?.usr      ?? input?.usuario ?? input?.username ?? null;
   const id_usuario = input?.id_usuario ?? input?.sub      ?? input?.id      ?? null;
   const id_tenant  = input?.id_tenant  ?? input?.ten      ?? input?.tenant  ?? null;
+  const id_empresa = input?.id_empresa ?? input?.emp      ?? null;
 
   const now = Math.floor(Date.now() / 1000);
 
@@ -20,6 +21,7 @@ export async function createAccessToken(input) {
     sub: id_usuario,
     usr: nameUser,
     ...(id_tenant != null ? { ten: id_tenant } : {}),
+    ...(id_empresa != null ? { emp: id_empresa } : {}),
     iat: now,
     iss: "horytek-backend",
     aud: "horytek-erp",

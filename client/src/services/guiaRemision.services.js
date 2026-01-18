@@ -332,19 +332,9 @@ function convertDateToDesiredFormat(dateString, offsetHours) {
 }
 
 async function enviarGuiaRemisionASunat(data, nombre) {
-  const url = 'https://facturacion.apisperu.com/api/v1/despatch/send';
-
-  // Importar servicios dinámicamente para evitar dependencias circulares
-  const { getClaveSunatByUser } = await import('@/services/clave.services');
-  const token = await getClaveSunatByUser(nombre);
-
   try {
-    const response = await axios.post(url, data, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    // Nuevo: integración directa SUNAT desde el backend
+    const response = await axios.post('/sunat/gre/despatch/emit', data);
 
     if (response.status === 200) {
       return { success: true, data: response.data };

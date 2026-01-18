@@ -751,6 +751,112 @@ export const getNotificaciones = async (req, res) => {
   }
 };
 
+// Obtener clientes nuevos (cuya primera compra fue en el período seleccionado)
+const getNuevosClientes = async (req, res) => {
+  let connection;
+  const id_tenant = req.id_tenant;
+  try {
+    connection = await getConnection();
+    let { tiempo, usuario: usuarioQuery, sucursal } = req.query;
+
+    if (!tiempo || !usuarioQuery) {
+      return res.status(400).json({ message: "Falta filtro de tiempo o usuario" });
+    }
+
+    const fechaFin = new Date();
+    let fechaInicio, fechaInicioAnterior, fechaFinAnterior;
+
+    switch (tiempo) {
+      case '24h':
+        fechaInicio = subDays(fechaFin, 1);
+        fechaInicioAnterior = subDays(fechaInicio, 1);
+        fechaFinAnterior = subDays(fechaFin, 1);
+        break;
+      case 'semana':
+        fechaInicio = subWeeks(fechaFin, 1);
+        fechaInicioAnterior = subWeeks(fechaInicio, 1);
+        fechaFinAnterior = subWeeks(fechaFin, 1);
+        break;
+      case 'mes':
+        fechaInicio = subMonths(fechaFin, 1);
+        fechaInicioAnterior = subMonths(fechaInicio, 1);
+        fechaFinAnterior = subMonths(fechaFin, 1);
+        break;
+      case 'anio':
+        fechaInicio = subYears(fechaFin, 1);
+        fechaInicioAnterior = subYears(fechaInicio, 1);
+        fechaFinAnterior = subYears(fechaFin, 1);
+        break;
+      default:
+        return res.status(400).json({ message: "Filtro de tiempo no válido" });
+    }
+
+    fechaInicio.setHours(0, 0, 0, 0);
+    fechaFin.setHours(23, 59, 59, 999);
+    fechaInicioAnterior.setHours(0, 0, 0, 0);
+    fechaFinAnterior.setHours(23, 59, 59, 999);
+
+    const fechaInicioISO = format(fechaInicio, 'yyyy-MM-dd HH:mm:ss');
+    const fechaFinISO = format(fechaFin, 'yyyy-MM-dd HH:mm:ss');
+    const fechaInicioAnteriorISO = format(fechaInicioAnterior, 'yyyy-MM-dd HH:mm:ss');
+    const fechaFinAnteriorISO = format(fechaFinAnterior, 'yyyy-MM-dd HH:mm:ss');
+
+    // Query para contar clientes nuevos: clientes cuya primera compra fue en el período
+    // Usa subquery para encontrar la fecha de primera compra de cada cliente
+    let queryActual = `
+      SELECT COUNT(DISTINCT c.id_cliente) AS nuevos_clientes
+      FROM cliente c
+      INNER JOIN venta v ON c.id_cliente = v.id_cliente
+      WHERE v.id_tenant = ?
+        AND v.estado_venta != 0
+        AND c.f_creacion BETWEEN ? AND ?
+    `;
+
+    let queryAnterior = `
+      SELECT COUNT(DISTINCT c.id_cliente) AS nuevos_clientes
+      FROM cliente c
+      INNER JOIN venta v ON c.id_cliente = v.id_cliente
+      WHERE v.id_tenant = ?
+        AND v.estado_venta != 0
+        AND c.f_creacion BETWEEN ? AND ?
+    `;
+
+    const paramsActual = [id_tenant, fechaInicioISO, fechaFinISO];
+    const paramsAnterior = [id_tenant, fechaInicioAnteriorISO, fechaFinAnteriorISO];
+
+    if (sucursal) {
+      queryActual += " AND v.id_sucursal = ?";
+      queryAnterior += " AND v.id_sucursal = ?";
+      paramsActual.push(sucursal);
+      paramsAnterior.push(sucursal);
+    }
+
+    const [[resultActual]] = await connection.query(queryActual, paramsActual);
+    const [[resultAnterior]] = await connection.query(queryAnterior, paramsAnterior);
+
+    const actual = resultActual?.nuevos_clientes || 0;
+    const anterior = resultAnterior?.nuevos_clientes || 0;
+
+    const porcentajeCambio = anterior > 0
+      ? ((actual - anterior) / anterior) * 100
+      : (actual > 0 ? 100 : 0);
+
+    res.json({
+      code: 1,
+      nuevosClientes: actual,
+      nuevosClientesAnterior: anterior,
+      cambio: porcentajeCambio,
+      message: "Nuevos clientes calculados correctamente"
+    });
+
+  } catch (error) {
+    console.error("Error en getNuevosClientes:", error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 export const methods = {
   getProductoMasVendido,
   getTotalVentas,
@@ -762,5 +868,7 @@ export const methods = {
   getVentasPorSucursalPeriodo,
   getNotasPendientes,
   actualizarEstadoEspera,
-  getNotificaciones
+  getNotificaciones,
+  getNuevosClientes
 };
+

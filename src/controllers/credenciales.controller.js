@@ -21,55 +21,212 @@ export const sendCredencialesEmail = async (req, res) => {
       [claveAcceso, usuario]
     );
 
-    // Enviar correo SOLO con usuario y contraseña, indicando que falta la clave
+    const currentYear = new Date().getFullYear();
+
+    // Template de correo elegante y profesional
+    const emailHtml = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;background-color:#f8fafc;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" style="width:100%;max-width:600px;border-collapse:collapse;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding:32px 40px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:16px 16px 0 0;">
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td>
+                    <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-0.5px;">
+                      HoryCore
+                    </h1>
+                    <p style="margin:4px 0 0 0;color:#94a3b8;font-size:13px;font-weight:500;">
+                      Sistema de Gestión Empresarial
+                    </p>
+                  </td>
+                  <td align="right">
+                    <div style="background:linear-gradient(135deg,#10b981,#059669);width:48px;height:48px;border-radius:12px;display:inline-block;">
+                      <table role="presentation" style="width:48px;height:48px;">
+                        <tr>
+                          <td align="center" valign="middle" style="color:#ffffff;font-size:20px;">✓</td>
+                        </tr>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:0;background-color:#ffffff;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;">
+              
+              <!-- Welcome Section -->
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:40px 40px 24px 40px;">
+                    <h2 style="margin:0 0 8px 0;color:#0f172a;font-size:22px;font-weight:700;">
+                      ¡Bienvenido a HoryCore! 🎉
+                    </h2>
+                    <p style="margin:0;color:#64748b;font-size:15px;line-height:1.6;">
+                      Tu cuenta de administrador ha sido creada exitosamente. A continuación encontrarás tus credenciales de acceso.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Credentials Card -->
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:0 40px 32px 40px;">
+                    <table role="presentation" style="width:100%;border-collapse:collapse;background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);border-radius:12px;border:1px solid #e2e8f0;">
+                      
+                      <!-- Usuario -->
+                      <tr>
+                        <td style="padding:20px 24px 12px 24px;border-bottom:1px solid #e2e8f0;">
+                          <table role="presentation" style="width:100%;border-collapse:collapse;">
+                            <tr>
+                              <td style="width:40px;vertical-align:top;">
+                                <div style="width:36px;height:36px;background:#dbeafe;border-radius:8px;">
+                                  <table role="presentation" style="width:36px;height:36px;">
+                                    <tr>
+                                      <td align="center" valign="middle" style="color:#2563eb;font-size:14px;">👤</td>
+                                    </tr>
+                                  </table>
+                                </div>
+                              </td>
+                              <td style="vertical-align:middle;padding-left:12px;">
+                                <p style="margin:0;color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Usuario</p>
+                                <p style="margin:4px 0 0 0;color:#0f172a;font-size:18px;font-weight:700;font-family:monospace;">${usuario}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- Contraseña -->
+                      <tr>
+                        <td style="padding:12px 24px 20px 24px;">
+                          <table role="presentation" style="width:100%;border-collapse:collapse;">
+                            <tr>
+                              <td style="width:40px;vertical-align:top;">
+                                <div style="width:36px;height:36px;background:#dcfce7;border-radius:8px;">
+                                  <table role="presentation" style="width:36px;height:36px;">
+                                    <tr>
+                                      <td align="center" valign="middle" style="color:#16a34a;font-size:14px;">🔐</td>
+                                    </tr>
+                                  </table>
+                                </div>
+                              </td>
+                              <td style="vertical-align:middle;padding-left:12px;">
+                                <p style="margin:0;color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Contraseña</p>
+                                <p style="margin:4px 0 0 0;color:#0f172a;font-size:18px;font-weight:700;font-family:monospace;">${contrasena}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Alert -->
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:0 40px 32px 40px;">
+                    <table role="presentation" style="width:100%;border-collapse:collapse;background:#fef3c7;border-radius:12px;border:1px solid #fcd34d;">
+                      <tr>
+                        <td style="padding:16px 20px;">
+                          <table role="presentation" style="width:100%;border-collapse:collapse;">
+                            <tr>
+                              <td style="width:24px;vertical-align:top;font-size:16px;">⚠️</td>
+                              <td style="padding-left:12px;">
+                                <p style="margin:0;color:#92400e;font-size:14px;font-weight:600;">Activación pendiente</p>
+                                <p style="margin:6px 0 0 0;color:#a16207;font-size:13px;line-height:1.5;">
+                                  Una vez confirmado tu pago, recibirás una clave de activación de 4 dígitos para acceder al sistema.
+                                </p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Security Notice -->
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:0 40px 32px 40px;">
+                    <table role="presentation" style="width:100%;border-collapse:collapse;background:#f1f5f9;border-radius:12px;">
+                      <tr>
+                        <td style="padding:16px 20px;">
+                          <p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">
+                            🔒 <strong>Seguridad:</strong> Guarda estas credenciales en un lugar seguro. Te recomendamos cambiar tu contraseña después del primer inicio de sesión.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:0 40px 40px 40px;" align="center">
+                    <a href="https://horycore.online/login" style="display:inline-block;background:linear-gradient(135deg,#10b981,#059669);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+                      Ir al Login →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px;background:#0f172a;border-radius:0 0 16px 16px;">
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td align="center">
+                    <p style="margin:0;color:#94a3b8;font-size:13px;">
+                      © ${currentYear} <strong style="color:#e2e8f0;">HoryCore</strong> by Horytek
+                    </p>
+                    <p style="margin:8px 0 0 0;color:#64748b;font-size:12px;">
+                      Este correo fue enviado automáticamente. Responde para contactar soporte.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+
+    // Enviar correo
     const { data, error } = await resend.emails.send({
       from: 'HoryCore <soporte@send.horycore.online>',
       to,
-      subject: 'Credenciales de acceso a HoryCore',
+      subject: '🎉 Tus credenciales de acceso a HoryCore',
       reply_to: 'soporte@horycore.online',
-      html: `
-        <div style="background:#0b1020;padding:24px 12px;">
-          <div style="max-width:680px;margin:0 auto;background:#0f172a;border-radius:16px;overflow:hidden;border:1px solid rgba(148,163,184,.2);color:#e2e8f0">
-            <div style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);padding:18px 20px;display:flex;align-items:center;gap:12px">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="white" style="opacity:.95">
-                <path d="M12 2l3 6 6 .9-4.5 4.4 1 6.3L12 17l-5.5 2.6 1-6.3L3 8.9 9 8z"/>
-              </svg>
-              <div style="font-weight:800;font-size:16px;letter-spacing:.2px">Usuario administrador generado</div>
-              <span style="margin-left:auto;background:rgba(255,255,255,.18);color:#fff;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700">HoryCore</span>
-            </div>
-            <div style="padding:22px">
-              <div style="font-size:15px;color:#cbd5e1;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:#0ea5e9">
-                  <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm-7 9a7 7 0 0 1 14 0z"/>
-                </svg>
-                Usuario: <span style="color:#e2e8f0;font-weight:700;margin-left:6px">${usuario}</span>
-              </div>
-              <div style="font-size:15px;color:#cbd5e1;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:#16a34a">
-                  <path d="M12 17a2 2 0 0 0 2-2V7a2 2 0 0 0-4 0v8a2 2 0 0 0 2 2zm0 2a4 4 0 0 1-4-4V7a4 4 0 0 1 8 0v8a4 4 0 0 1-4 4z"/>
-                </svg>
-                Contraseña: <span style="color:#e2e8f0;font-weight:700;margin-left:6px">${contrasena}</span>
-              </div>
-              <div style="margin:18px 0 10px 0;color:#fbbf24;font-size:15px;display:flex;align-items:center;gap:8px">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:#fbbf24">
-                  <path d="M12 2a10 10 0 1 1-10 10A10 10 0 0 1 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/>
-                </svg>
-                <b>Importante:</b> Para activar tu cuenta y acceder, recibirás una clave de activación de 4 dígitos una vez confirmado tu pago.
-              </div>
-              <div style="font-size:13px;color:#94a3b8;margin-top:10px">
-                Guarda estos datos en un lugar seguro.
-              </div>
-            </div>
-            <div style="padding:18px 20px;border-top:1px solid rgba(148,163,184,.2);background:#0b1220;color:#94a3b8;text-align:center">
-              <div style="font-weight:800;color:#e2e8f0">Horytek ERP</div>
-              <div style="font-size:12px">Sistema de Gestión Empresarial</div>
-              <div style="margin-top:6px;font-size:12px;color:#64748b">
-                Este correo fue enviado automáticamente desde la plataforma. Responde directamente para contactar a soporte.
-              </div>
-            </div>
-          </div>
-        </div>
-      `
+      html: emailHtml
     });
 
     if (error) {
@@ -78,6 +235,7 @@ export const sendCredencialesEmail = async (req, res) => {
 
     res.json({ ok: true, message: 'Correo enviado', data });
   } catch (err) {
+    console.error('Error en sendCredencialesEmail:', err);
     res.status(500).json({ ok: false, message: 'Error interno', error: err.message });
   } finally {
     if (connection) connection.release();

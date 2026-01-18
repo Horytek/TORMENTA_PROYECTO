@@ -25,6 +25,7 @@ const normalizeUser = (raw) => {
     roleId,
     sucursal: raw.sucursal || raw.nombre_sucursal || raw.sur || "",
     id_tenant: raw.id_tenant || raw.idTenant || null,
+    id_empresa: raw.id_empresa || raw.idEmpresa || null,
     plan_pago: raw.plan_pago || raw.planPago || null, // <-- Añadido aquí
     original: raw
   };
@@ -37,8 +38,7 @@ export const useUserStore = create((set) => ({
   rol: "",
   sur: "",
   almacen: "",
-  id_tenant: "",
-  plan_pago: "", // <-- Añadido aquí
+  id_tenant: "",  id_empresa: "",  plan_pago: "", // <-- Añadido aquí
   permissions: [], // <-- Cache de permisos
   capabilities: new Set(), // <-- Set unificado de strings
   globalModuleConfigs: [], // <-- Stores active_actions for all modules
@@ -52,6 +52,7 @@ export const useUserStore = create((set) => ({
   setSur: (sur) => set({ sur }),
   setAlmacen: (almacen) => set({ almacen }),
   setIdTenant: (id_tenant) => set({ id_tenant }),
+  setIdEmpresa: (id_empresa) => set({ id_empresa }),
   setPlanPago: (plan_pago) => set({ plan_pago }),
   setPermissions: (permissions) => set({ permissions }),
   setPermissions: (permissions) => set({ permissions }),
@@ -69,6 +70,7 @@ export const useUserStore = create((set) => ({
         rol: "",
         sur: "",
         id_tenant: "",
+        id_empresa: "",
         plan_pago: ""
       });
       return;
@@ -80,6 +82,7 @@ export const useUserStore = create((set) => ({
       rol: u.roleId,
       sur: u.sucursal,
       id_tenant: u.id_tenant,
+      id_empresa: u.id_empresa,
       plan_pago: u.plan_pago || ""
     });
   },
@@ -99,8 +102,7 @@ export const useUserStore = create((set) => ({
       sur: "",
       almacen: "",
       id_tenant: "",
-      plan_pago: "",
-      id_tenant: "",
+      id_empresa: "",
       plan_pago: "",
       permissions: [],
       capabilities: new Set(),

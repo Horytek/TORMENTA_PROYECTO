@@ -42,13 +42,16 @@ const POSCart = ({ pos }) => {
         }
 
         // 2. Validation: Client Requirements for 'Factura'
+        // IMPORTANT: SUNAT only accepts RUC (11 digits) for Factura, NOT DNI
         if (documentType === 'Factura') {
             if (!client) {
                 toast.error("Para emitir FACTURA, es obligatorio seleccionar un Cliente.");
                 return;
             }
-            if (!client.documento || client.documento.length !== 11) {
-                toast.error("El cliente seleccionado no tiene un RUC válido (11 dígitos).");
+            const docLen = client.documento?.length || 0;
+            // Factura REQUIRES RUC (11 digits) - SUNAT Error 2800 if using DNI
+            if (docLen !== 11) {
+                toast.error("Para FACTURA, el cliente debe tener RUC válido (11 dígitos). Para DNI use BOLETA.");
                 return;
             }
         }

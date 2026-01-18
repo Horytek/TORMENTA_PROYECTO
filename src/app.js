@@ -53,6 +53,8 @@ import negocioRoutes from "./routes/negocio.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import developerRoutes from "./routes/developer.routes.js";
 import syncRoutes from "./routes/sync.routes.js";
+import sunatRoutes from "./routes/sunat.routes.js";
+import uploadsRoutes from "./routes/uploads.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -86,8 +88,7 @@ app.use(helmet({
         "https://api.mercadopago.com",
         "https://http2.mlstatic.com",
         "https://op-cho-bricks.mercadopago.com",
-        "https://api.mercadolibre.com",
-        "https://facturacion.apisperu.com/api"
+        "https://api.mercadolibre.com"
       ],
       frameSrc: [
         "'self'",
@@ -99,8 +100,7 @@ app.use(helmet({
         "'self'",
         "data:",
         "https://i.ibb.co",
-        "https://facturacion.apisperu.com/api",
-        "'self'",
+        "https://ik.imagekit.io",
         "blob:"
       ],
     }
@@ -209,6 +209,8 @@ app.use("/api/function-shortcuts", functionShortcutsRoutes);
 app.use("/api/negocio", negocioRoutes);
 app.use("/api/developer", developerRoutes);
 app.use("/api/sync", syncRoutes);
+app.use("/api/sunat", sunatRoutes);
+app.use("/api/uploads", uploadsRoutes);
 app.use("/api", emailRoutes);
 app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);

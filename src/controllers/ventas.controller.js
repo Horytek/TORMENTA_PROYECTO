@@ -400,7 +400,7 @@ const generarComprobante = async (req, res) => {
           INNER JOIN tipo_comprobante tp ON c.id_tipocomprobante = tp.id_tipocomprobante 
           INNER JOIN sucursal s ON s.id_sucursal = ?
       WHERE tp.nom_tipocomp = ? AND num_comprobante LIKE ? `;
-        let ultimoComprobanteParams = [id_sucursal, id_comprobante, `${prefijoBase}${id_sucursal}% `];
+        let ultimoComprobanteParams = [id_sucursal, id_comprobante, `${prefijoBase}${id_sucursal}%`];
         if (id_tenant) {
           ultimoComprobanteQuery += " AND s.id_tenant = ?";
           ultimoComprobanteParams.push(id_tenant);
@@ -418,7 +418,7 @@ const generarComprobante = async (req, res) => {
             const nuevaSerie = (parseInt(serie, 10) + 1).toString().padStart(3, "0");
             nuevoNumComprobante = `${prefijoBase}${nuevaSerie}-00000001`;
           } else {
-            nuevoNumComprobante = `${prefijoBase}${serie} -${numero.toString().padStart(8, "0")} `;
+            nuevoNumComprobante = `${prefijoBase}${serie}-${numero.toString().padStart(8, "0")}`;
           }
         } else {
           nuevoNumComprobante = `${prefijoBase}${id_sucursal}00-00000001`;

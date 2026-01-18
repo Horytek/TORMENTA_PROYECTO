@@ -53,7 +53,7 @@ const OptionsModal = ({
         toast.error('Error, no se puede usar esta opción');
       } else {
         closeModal();
-        handleSunat(datos_precio, detalles, detalles, nombre);
+        handleSunat(datos_precio, detalles, nombre);
         handleUpdate(d_venta);
       }
     } else if (generatePdfSelected) {

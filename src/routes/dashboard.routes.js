@@ -17,4 +17,5 @@ router.get("/ventas_por_sucursal", dashboardController.getVentasPorSucursalPerio
 router.get("/notas_pendientes", dashboardController.getNotasPendientes);
 router.post("/actualizar_espera", dashboardController.actualizarEstadoEspera);
 router.get("/notificaciones", dashboardController.getNotificaciones);
+router.get("/nuevos_clientes", dashboardController.getNuevosClientes);
 export default router;

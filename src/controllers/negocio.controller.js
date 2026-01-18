@@ -39,9 +39,19 @@ export const getNegocio = async (req, res) => {
             code: 1,
             data: {
                 nombre_negocio: empresa.nombreComercial || empresa.razonSocial,
+                id_empresa: empresa.id_empresa, // Required for ImageKit upload
                 direccion: empresa.direccion,
-                logo_url: empresa.logotipo,
-                ruc: empresa.ruc
+                logotipo_url: empresa.logotipo, // Renamed for clarity in frontend but maps to logotipo
+                ruc: empresa.ruc,
+                // New fields
+                distrito: empresa.distrito,
+                provincia: empresa.provincia,
+                departamento: empresa.departamento,
+                codigoPostal: empresa.codigoPostal,
+                email: empresa.email,
+                telefono: empresa.telefono,
+                moneda: empresa.moneda,
+                pais: empresa.pais
             }
         });
 
@@ -64,10 +74,19 @@ export const updateNegocio = async (req, res) => {
         }
         const id_empresa = users[0].id_empresa;
 
-        const { nombre_negocio, direccion, ruc, eliminar_logo } = req.body;
-        let logo_url = undefined;
+        const {
+            nombre_negocio,
+            direccion,
+            ruc,
+            eliminar_logo,
+            logotipo, // URL from ImageKit
+            // New fields
+            distrito, provincia, departamento, codigoPostal, email, telefono, moneda, pais
+        } = req.body;
 
-        // Handle File Upload
+        let final_logo_url = undefined;
+
+        // Handle File Upload (Legacy or Backup)
         if (req.file) {
             // Validate image type
             if (!req.file.mimetype.startsWith('image/')) {
@@ -82,31 +101,35 @@ export const updateNegocio = async (req, res) => {
 
             const protocol = req.protocol;
             const host = req.get('host');
-            // Ensure endpoint for uploads is correct
-            logo_url = `${protocol}://${host}/uploads/${filename}`;
+            final_logo_url = `${protocol}://${host}/uploads/${filename}`;
+        } else if (logotipo !== undefined) {
+            // If URL is provided (e.g. from ImageKit), use it
+            final_logo_url = logotipo;
         } else if (eliminar_logo === '1') {
-            logo_url = null;
+            final_logo_url = null;
         }
 
         // Build Update Query
         const updates = [];
         const params = [];
 
-        if (nombre_negocio !== undefined) {
-            updates.push("nombreComercial = ?");
-            params.push(nombre_negocio.trim());
-        }
-        if (direccion !== undefined) {
-            updates.push("direccion = ?");
-            params.push(direccion.trim());
-        }
-        if (ruc !== undefined) {
-            updates.push("ruc = ?");
-            params.push(ruc.trim());
-        }
-        if (logo_url !== undefined) {
+        if (nombre_negocio !== undefined) { updates.push("nombreComercial = ?"); params.push(nombre_negocio.trim()); }
+        if (direccion !== undefined) { updates.push("direccion = ?"); params.push(direccion.trim()); }
+        if (ruc !== undefined) { updates.push("ruc = ?"); params.push(ruc.trim()); }
+
+        // New fields updates
+        if (distrito !== undefined) { updates.push("distrito = ?"); params.push(distrito.trim()); }
+        if (provincia !== undefined) { updates.push("provincia = ?"); params.push(provincia.trim()); }
+        if (departamento !== undefined) { updates.push("departamento = ?"); params.push(departamento.trim()); }
+        if (codigoPostal !== undefined) { updates.push("codigoPostal = ?"); params.push(codigoPostal.trim()); }
+        if (email !== undefined) { updates.push("email = ?"); params.push(email.trim()); }
+        if (telefono !== undefined) { updates.push("telefono = ?"); params.push(telefono.trim()); }
+        if (moneda !== undefined) { updates.push("moneda = ?"); params.push(moneda.trim()); }
+        if (pais !== undefined) { updates.push("pais = ?"); params.push(pais.trim()); }
+
+        if (final_logo_url !== undefined) {
             updates.push("logotipo = ?");
-            params.push(logo_url);
+            params.push(final_logo_url);
         }
 
         if (updates.length > 0) {
@@ -124,7 +147,16 @@ export const updateNegocio = async (req, res) => {
                 nombre_negocio: empresa.nombreComercial,
                 direccion: empresa.direccion,
                 logo_url: empresa.logotipo,
-                ruc: empresa.ruc
+                ruc: empresa.ruc,
+                // Return new fields
+                distrito: empresa.distrito,
+                provincia: empresa.provincia,
+                departamento: empresa.departamento,
+                codigoPostal: empresa.codigoPostal,
+                email: empresa.email,
+                telefono: empresa.telefono,
+                moneda: empresa.moneda,
+                pais: empresa.pais
             },
             message: "Configuración guardada correctamente"
         });

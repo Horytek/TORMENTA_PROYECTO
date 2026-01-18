@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import axios from "@/api/axios";
-import externalApi from "@/api/axios.external";
 
 import { getEmpresaDataByUser } from "@/services/empresa.services";
-import { getClaveSunatByUser } from "@/services/clave.services";
 import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import {
@@ -57,34 +55,48 @@ export const handleGuardarCliente = async (datosCliente, setShowNuevoCliente) =>
 };
 
 // --- handleSunat (add_sunat.js) ---
+// Rate limiting: Track last SUNAT request time to avoid 401 errors
+let lastSunatRequestTime = 0;
+const SUNAT_MIN_INTERVAL_MS = 20000; // Minimum 20 seconds between SUNAT requests (Beta is VERY strict)
+
 const enviarVentaASunat = async (data, nombre) => {
-    const url = 'https://facturacion.apisperu.com/api/v1/invoice/send';
-    const currentName = nombre || useUserStore.getState().nombre;
-    const token = await getClaveSunatByUser(currentName);
-
     try {
-        const response = await externalApi.post(url, data, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        // Throttle: Wait if last request was too recent
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastSunatRequestTime;
+        if (timeSinceLastRequest < SUNAT_MIN_INTERVAL_MS) {
+            const waitTime = SUNAT_MIN_INTERVAL_MS - timeSinceLastRequest;
+            const waitSecs = Math.ceil(waitTime / 1000);
+            console.log(`[SUNAT] Throttling: waiting ${waitTime}ms to avoid rate limiting...`);
 
-        if (response.status === 200) {
-            // Success logged or handled by caller
+            // Show visual indicator to user
+            const toastId = toast.loading(`SUNAT: Esperando ${waitSecs}s para evitar bloqueo...`, {
+                duration: waitTime + 500
+            });
+
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            toast.dismiss(toastId);
+        }
+        lastSunatRequestTime = Date.now();
+
+        // Nuevo: integración directa SUNAT desde el backend
+        const response = await axios.post('/sunat/cpe/invoice/emit', data);
+
+        if (response.status === 200 && response.data?.ok) {
+            // Retornar éxito
+            return { success: true, data: response.data };
         } else {
-            console.error('Error al enviar los datos a la Sunat.');
+            console.error('Error al enviar los datos a la Sunat:', response.data?.message);
+            return { success: false, error: response.data?.message || 'Error desconocido' };
         }
     } catch (error) {
-        if (error.response) {
-            console.error(`Error al enviar los datos a la Sunat: ${error.response.status} - ${error.response.data}`);
-        } else {
-            console.error('Error al enviar los datos a la Sunat.');
-        }
+        const errorMsg = error.response?.data?.message || error.message || 'Error de conexión';
+        console.error(`Error al enviar los datos a la Sunat: ${errorMsg}`);
+        return { success: false, error: errorMsg };
     }
 };
 
-export const handleSunat = async (cliente, detalles, productos, nombre) => {
+export const handleSunat = async (cliente, detalles, nombre) => {
     try {
         const empresaData = await getEmpresaDataByUser(nombre);
 
@@ -107,8 +119,13 @@ export const handleSunat = async (cliente, detalles, productos, nombre) => {
         const ultimaSerie_n = tipoDocMapping1[comprobante.tipoComprobante] || "B";
         const nuevaSerie_t = ultimaSerie_n + ultimaSerie;
 
-        const tipoDocCliente = cliente?.documento?.length === 11 ? "6" : "1";
+        // Tipo de documento: 6 = RUC (11 dígitos), 1 = DNI (8 dígitos), 0 = Sin documento
+        const docLen = cliente?.documento?.length || 0;
+        const tipoDocCliente = docLen === 11 ? "6" : docLen === 8 ? "1" : "0";
         const result = convertDateToDesiredFormat(cliente.fechaEmision, -5);
+
+        // DEBUG: Log detalles structure
+        console.log('[handleSunat] detalles sample:', JSON.stringify(detalles[0] || {}, null, 2));
 
         const data = {
             ublVersion: "2.1",
@@ -144,7 +161,6 @@ export const handleSunat = async (cliente, detalles, productos, nombre) => {
             subTotal: subTotal.toFixed(2),
             mtoImpVenta: subTotal.toFixed(2),
             details: detalles.map(detalle => {
-                const producto = productos.find(prod => prod.codigo === detalle.codigo);
                 const cantidad = parseInt(detalle.cantidad);
                 const mtoValorUnitarioConIgv = parseFloat(detalle.precio.replace('S/ ', '')).toFixed(2);
                 const mtoValorUnitarioSinIgv = (mtoValorUnitarioConIgv / 1.18).toFixed(2);
@@ -153,9 +169,9 @@ export const handleSunat = async (cliente, detalles, productos, nombre) => {
                 const igv = (parseFloat(mtoBaseIgv) * 0.18).toFixed(2);
 
                 return {
-                    codProducto: detalle.codigo,
-                    unidad: producto?.undm || 'ZZ',
-                    descripcion: detalle.nombre,
+                    codProducto: detalle.codigo || '',
+                    unidad: detalle.undm || 'NIU',
+                    descripcion: detalle.nombre || 'Producto',
                     cantidad: cantidad,
                     mtoValorUnitario: mtoValorUnitarioSinIgv,
                     mtoValorVenta: mtoValorVenta,
@@ -244,7 +260,7 @@ export const handleSunatMultiple = async (ventas, nombre) => {
 
                 return {
                     codProducto: detalle.codigo,
-                    unidad: detalle.undm || 'ZZ',
+                    unidad: detalle.undm || 'NIU',
                     descripcion: detalle.nombre,
                     cantidad: cantidad,
                     mtoValorUnitario: mtoValorUnitarioSinIgv,
@@ -267,7 +283,7 @@ export const handleSunatMultiple = async (ventas, nombre) => {
 };
 
 // --- handleSunatUnique (add_sunat_unique.js) ---
-export const handleSunatUnique = async (venta, nombre) => {
+export const handleSunatUnique = async (venta, nombre, id_venta = null) => {
     const currentName = nombre || useUserStore.getState().nombre;
     const empresaData = await getEmpresaDataByUser(currentName);
     const detalles = venta.detalles;
@@ -287,8 +303,15 @@ export const handleSunatUnique = async (venta, nombre) => {
     const ultimaSerie_n = tipoDocMapping1[venta.tipoComprobante] || "B";
     const nuevaSerie_t = ultimaSerie_n + venta.serieNum;
 
-    const tipoDocCliente = (venta.ruc || '').length === 11 ? "6" : "1";
+    // Determinar documento del cliente: usar RUC si existe, sino DNI
+    const documentoCliente = venta.ruc || venta.documento || venta.dni || '';
+    // Tipo de documento: 6 = RUC (11 dígitos), 1 = DNI (8 dígitos), 0 = Sin documento
+    const tipoDocCliente = documentoCliente.length === 11 ? "6" :
+        documentoCliente.length === 8 ? "1" : "0";
     const result = convertDateToDesiredFormat(venta.fecha_iso, -5);
+
+    // DEBUG: Log detalles structure to verify field names
+    console.log('[handleSunatUnique] detalles sample:', JSON.stringify(detalles[0] || {}, null, 2));
 
     const data = {
         ublVersion: "2.1",
@@ -301,7 +324,7 @@ export const handleSunatUnique = async (venta, nombre) => {
         tipoMoneda: "PEN",
         client: {
             tipoDoc: tipoDocCliente,
-            numDoc: venta.ruc || '',
+            numDoc: documentoCliente,
             rznSocial: venta.cliente || '',
             address: { direccion: "", provincia: "", departamento: "", distrito: "", ubigueo: "" }
         },
@@ -332,7 +355,7 @@ export const handleSunatUnique = async (venta, nombre) => {
             const igv = (parseFloat(mtoBaseIgv) * 0.18).toFixed(2);
             return {
                 codProducto: detalle.codigo,
-                unidad: detalle.undm || 'ZZ',
+                unidad: detalle.undm || 'NIU',
                 descripcion: detalle.nombre,
                 cantidad: cantidad,
                 mtoValorUnitario: mtoValorUnitarioSinIgv,
@@ -348,9 +371,23 @@ export const handleSunatUnique = async (venta, nombre) => {
         legends: [{ code: "1000", value: `SON ${subTotal.toFixed(2)} CON 00/100 SOLES` }]
     };
 
-    enviarVentaASunat(data, currentName)
-        .then(() => { })
-        .catch((error) => console.error(`Error al enviar la venta`, error));
+    // Enviar a SUNAT y actualizar estado_sunat si es exitoso
+    try {
+        const result = await enviarVentaASunat(data, currentName);
+        if (result.success) {
+            // Actualizar estado_sunat a 1 en la BD
+            if (id_venta) {
+                await updateVentaEstadoRequest({ id_venta });
+                console.log('SUNAT: Comprobante enviado y estado actualizado exitosamente');
+            } else {
+                console.log('SUNAT: Comprobante enviado exitosamente (sin id_venta para actualizar)');
+            }
+        } else {
+            console.error('SUNAT: Error al enviar comprobante -', result.error);
+        }
+    } catch (error) {
+        console.error('Error al enviar la venta a SUNAT:', error);
+    }
 };
 
 // --- handleUpdate (update_venta.js) ---
@@ -387,8 +424,12 @@ export const handleCobrar = async (datosVenta, setShowConfirmacion, datosVenta_1
             headers: { 'Content-Type': 'application/json' }
         });
 
+        // Guardar el id_venta retornado para poder actualizar estado_sunat después
+        const id_venta = response.data?.id_venta;
+
         if (datosVenta_1.comprobante_pago != "Nota de venta") {
-            handleSunatUnique(datosVenta_1, nombre);
+            // Await para poder manejar el resultado de SUNAT
+            await handleSunatUnique(datosVenta_1, nombre, id_venta);
             if (ven) {
                 handleUpdate(ven);
             }
@@ -404,27 +445,19 @@ export const handleCobrar = async (datosVenta, setShowConfirmacion, datosVenta_1
     }
 };
 
-// --- anularVentaEnSunatF (anular_sunat.js) ---
+// --- anularVentaEnSunatF (Comunicación de Baja - Facturas) ---
 export const anularVentaEnSunatF = async (ventaData) => {
     try {
-        const url = 'https://facturacion.apisperu.com/api/v1/voided/send';
         const nombre = useUserStore.getState().nombre;
-        let token;
-        try {
-            token = await getClaveSunatByUser(nombre);
-        } catch {
-            console.warn('Clave Sunat no configurada; se omite envío a SUNAT');
-            return;
-        }
         const empresaData = await getEmpresaDataByUser(nombre);
         const result = convertDateToDesiredFormat(ventaData.fechaEmision, -5);
         const fecComunicacion = convertDateToDesiredFormat(new Date().toISOString(), -5);
 
         const tipoDocMapping = { "Boleta": "B", "Factura": "F" };
-        const nuevaSerie = `${tipoDocMapping[ventaData.tipoComprobante] || "B"}${ventaData.serieNum}`;
+        const nuevaSerie = `${tipoDocMapping[ventaData.tipoComprobante] || "F"}${ventaData.serieNum}`;
 
         const data = {
-            correlativo: ventaData.anular || Math.floor(Date.now() % 1000000), // Fallback generico al no existir tabla anular_sunat
+            correlativo: ventaData.anular || Math.floor(Date.now() % 1000000),
             fecGeneracion: result,
             fecComunicacion,
             company: {
@@ -442,14 +475,12 @@ export const anularVentaEnSunatF = async (ventaData) => {
             details: [{ tipoDoc: "01", serie: nuevaSerie, correlativo: ventaData.num.toString(), desMotivoBaja: "ERROR EN CÁLCULOS" }],
         };
 
-        const response = await externalApi.post(url, data, {
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        });
+        // Usar nuevo endpoint directo a SUNAT
+        const response = await axios.post('/sunat/cpe/voided/emit', data);
 
-        if (response.status === 200) {
+        if (response.status === 200 && response.data?.ok) {
             toast.success("Factura anulada en Sunat correctamente");
 
-            // Actualizar estado_sunat en BD (skip_stock para no restaurar inventario de nuevo)
             await deleteVentaRequest({
                 id_venta: ventaData.id,
                 estado_venta: 0,
@@ -458,24 +489,19 @@ export const anularVentaEnSunatF = async (ventaData) => {
                 usua: nombre
             });
         } else {
-            console.error('Error al anular la venta en la Sunat.');
+            console.error('Error al anular la venta en la Sunat:', response.data?.message);
+            toast.error(response.data?.message || 'Error al anular factura');
         }
     } catch (error) {
         console.error('Error en la solicitud:', error.message);
+        toast.error('Error al comunicarse con SUNAT');
     }
 };
 
+// --- anularVentaEnSunatB (Resumen Diario - Boletas) ---
 export const anularVentaEnSunatB = async (ventaData, detalles) => {
     try {
-        const url = 'https://facturacion.apisperu.com/api/v1/summary/send';
         const nombre = useUserStore.getState().nombre;
-        let token;
-        try {
-            token = await getClaveSunatByUser(nombre);
-        } catch {
-            console.warn('Clave Sunat no configurada; se omite envío a SUNAT');
-            return;
-        }
         const empresaData = await getEmpresaDataByUser(nombre);
         const result = convertDateToDesiredFormat(ventaData.fechaEmision, -5);
         const fecResumen = convertDateToDesiredFormat(new Date().toISOString(), -5);
@@ -497,7 +523,7 @@ export const anularVentaEnSunatB = async (ventaData, detalles) => {
         const data = {
             fecGeneracion: result,
             fecResumen,
-            correlativo: ventaData.anular_b || Math.floor(Date.now() % 1000000), // Fallback generico
+            correlativo: ventaData.anular_b || Math.floor(Date.now() % 1000000),
             moneda: "PEN",
             company: {
                 ruc: empresaData.ruc,
@@ -527,14 +553,12 @@ export const anularVentaEnSunatB = async (ventaData, detalles) => {
             }],
         };
 
-        const response = await externalApi.post(url, data, {
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        });
+        // Usar nuevo endpoint directo a SUNAT
+        const response = await axios.post('/sunat/cpe/summary/emit', data);
 
-        if (response.status === 200) {
+        if (response.status === 200 && response.data?.ok) {
             toast.success("Boleta anulada en Sunat correctamente");
 
-            // Actualizar estado_sunat en BD (skip_stock para no restaurar inventario de nuevo)
             await deleteVentaRequest({
                 id_venta: ventaData.id,
                 estado_venta: 0,
@@ -543,10 +567,12 @@ export const anularVentaEnSunatB = async (ventaData, detalles) => {
                 usua: nombre
             });
         } else {
-            console.error('Error al anular la venta en la Sunat.');
+            console.error('Error al anular la venta en la Sunat:', response.data?.message);
+            toast.error(response.data?.message || 'Error al anular boleta');
         }
     } catch (error) {
         console.error('Error en la solicitud:', error.message);
+        toast.error('Error al comunicarse con SUNAT');
     }
 };
 
@@ -638,35 +664,33 @@ export const useComprobanteData = () => {
     return { comprobantes, setComprobante };
 };
 
-// --- handleSunatPDF (data_pdf.js) ---
+// --- handleSunatPDF (Generación de PDF local) ---
 const generarPDF = async (data, nombre) => {
-    const url = 'https://facturacion.apisperu.com/api/v1/invoice/pdf';
-    const currentName = nombre || useUserStore.getState().nombre;
-    const token = await getClaveSunatByUser(currentName);
-
     try {
-        const response = await externalApi.post(url, data, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/pdf'
-            },
+        // Usar nuevo endpoint del backend para generar PDF
+        const response = await axios.post('/sunat/cpe/invoice/pdf', data, {
             responseType: 'blob'
         });
 
-        const url1 = window.URL.createObjectURL(new Blob([response.data]));
+        const serie = data?.serie || 'B001';
+        const correlativo = String(data?.correlativo || '1').padStart(8, '0');
+        const fileName = `${serie}-${correlativo}.pdf`;
+
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
         const link = document.createElement('a');
-        link.href = url1;
-        link.setAttribute('download', 'factura.pdf');
+        link.href = url;
+        link.setAttribute('download', fileName);
         document.body.appendChild(link);
         link.click();
         link.remove();
+        window.URL.revokeObjectURL(url);
     } catch (error) {
         if (error.response) {
-            console.error(`Error al generar pdf: ${error.response.status} - ${error.response.data}`);
+            console.error(`Error al generar pdf: ${error.response.status}`);
         } else {
             console.error('Error al generar pdf. Por favor, inténtelo de nuevo.');
         }
+        toast.error('Error al generar PDF');
     }
 };
 
@@ -733,7 +757,7 @@ export const handleSunatPDF = async (venta, detalles, nombre) => {
             const igv = (parseFloat(mtoBaseIgv) * 0.18).toFixed(2);
             return {
                 codProducto: detalle.codigo,
-                unidad: detalle.undm || 'ZZ',
+                unidad: detalle.undm || 'NIU',
                 descripcion: detalle.nombre,
                 cantidad: cantidad,
                 mtoValorUnitario: mtoValorUnitarioSinIgv,

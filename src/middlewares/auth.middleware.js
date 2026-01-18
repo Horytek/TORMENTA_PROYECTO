@@ -41,11 +41,13 @@ export const auth = (req, res, next) => {
             null,
           id_usuario: user.sub ?? user.id_usuario ?? user.id ?? null,
           id_tenant: user.ten ?? user.id_tenant ?? user.tenant ?? null,
+          id_empresa: user.emp ?? user.id_empresa ?? null,
           rol: user.rol ?? user.role ?? null,
         };
 
         req.user = normalized;
         req.id_tenant = normalized.id_tenant ?? null;
+        req.id_empresa = normalized.id_empresa ?? null;
         // compat opcional
         req.nameUser = normalized.nameUser ?? null;
 

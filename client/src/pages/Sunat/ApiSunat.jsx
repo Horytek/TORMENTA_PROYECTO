@@ -51,6 +51,15 @@ const ApiSunat = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [showKeys, setShowKeys] = useState({});
+  const [valorModificado, setValorModificado] = useState(false); // Track if valor was actually changed
+
+  // Verificar si el valor es válido (no contiene caracteres de máscara)
+  const isValidNewValue = (value) => {
+    if (!value || value.trim() === '') return false;
+    // No debe contener ningún carácter de máscara (• o ●)
+    if (/[•●]/.test(value)) return false;
+    return true;
+  };
 
   // Obtener claves desde la API
   const fetchClaves = async () => {
@@ -108,11 +117,13 @@ const ApiSunat = () => {
 
   const handleEdit = (key) => {
     setEditingKey(key.id_clave);
+    const maskedValue = getRepresentedValue(key.valor);
     setFormData({
       ...key,
-      valor: getRepresentedValue(key.valor),
+      valor: maskedValue, // Mostrar representación enmascarada
       estado_clave: key.estado_clave?.toString() ?? "1",
     });
+    setValorModificado(false); // Reset el tracker
     openModal();
   };
 
@@ -139,11 +150,13 @@ const ApiSunat = () => {
       estado_clave: "1",
     });
     setEditingKey(null);
+    setValorModificado(false);
   };
 
   const getRepresentedValue = (value) => {
     if (!value) return "••••••••";
-    return value.slice(0, 4) + "••••••••" + value.slice(-2);
+    // Mask entirely for security, unless user clicks eye icon
+    return "••••••••••••••••";
   };
 
   return (
@@ -255,20 +268,9 @@ const ApiSunat = () => {
                   <Chip size="sm" variant="dot" color="primary" className="border-none">{key.tipo}</Chip>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs font-mono bg-slate-50 dark:bg-zinc-800 px-2 py-1 rounded border border-slate-100 dark:border-zinc-700 text-slate-600 dark:text-slate-400">
-                      {showKeys[key.id_clave] ? key.valor : getRepresentedValue(key.valor)}
-                    </code>
-                    <Button
-                      isIconOnly
-                      variant="light"
-                      size="sm"
-                      onPress={() => toggleShowKey(key.id_clave)}
-                      className="text-slate-400 hover:text-slate-600"
-                    >
-                      {showKeys[key.id_clave] ? <FaEyeSlash /> : <FaEye />}
-                    </Button>
-                  </div>
+                  <code className="text-xs font-mono bg-slate-50 dark:bg-zinc-800 px-2 py-1 rounded border border-slate-100 dark:border-zinc-700 text-slate-600 dark:text-slate-400">
+                    {key.valor}
+                  </code>
                 </TableCell>
                 <TableCell>
                   <Chip
@@ -343,12 +345,22 @@ const ApiSunat = () => {
                 <Textarea
                   label="Valor"
                   value={formData.valor}
-                  onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                  placeholder="Ingrese el valor"
+                  onChange={(e) => {
+                    setFormData({ ...formData, valor: e.target.value });
+                    setValorModificado(true);
+                  }}
+                  placeholder={editingKey ? "Ingrese el nuevo valor (dejar vacío para mantener el actual)" : "Ingrese el valor"}
                 />
-                <p className="text-sm text-gray-500 dark:text-blue-200 mt-1">
-                  * Este valor es solo una representación. El valor real está protegido.
-                </p>
+                {editingKey && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                    ⚠️ Dejar vacío para mantener el valor actual. Si ingresa un valor, este reemplazará al existente.
+                  </p>
+                )}
+                {!editingKey && (
+                  <p className="text-sm text-gray-500 dark:text-blue-200 mt-1">
+                    * El valor será encriptado y protegido.
+                  </p>
+                )}
                 <Select
                   label="Estado"
                   selectedKeys={formData.estado_clave !== undefined ? [formData.estado_clave.toString()] : []}
@@ -376,6 +388,7 @@ const ApiSunat = () => {
                 <Button
                   color="primary"
                   onPress={handleSaveKey}
+                  isDisabled={editingKey && !isValidNewValue(formData.valor)}
                 >
                   {editingKey ? "Actualizar Clave" : "Guardar Clave"}
                 </Button>

@@ -5,7 +5,9 @@ import {
 import { Info, X, UserCog } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUserStore } from "@/store/useStore";
-import { addClave } from "@/services/clave.services";
+import { addClave, getClaves } from "@/services/clave.services";
+import { uploadLogo } from "@/services/imagekit.services";
+import { updateEmpresa } from "@/services/empresa.services";
 import { toast } from "react-hot-toast";
 
 // Hooks
@@ -48,14 +50,45 @@ export default function AccountDrawer({ open, onClose }) {
 
   // Actualizar formulario cuando llegan datos de empresa
   useEffect(() => {
-    if (data.empresa && !isEditing) {
-      setForm(f => ({
-        ...f,
-        ruc: data.empresa?.ruc || "",
-        razon_social: data.empresa?.razonSocial || data.empresa?.empresa || "",
-        direccion: data.empresa?.direccion || ""
-      }));
+    async function loadKeys() {
+      if (data.empresa && !isEditing) {
+        // 1. Set basic company data
+        const baseForm = {
+          ruc: data.empresa?.ruc || "",
+          razon_social: data.empresa?.razonSocial || data.empresa?.empresa || "",
+          direccion: data.empresa?.direccion || ""
+        };
+
+        try {
+          // 2. Fetch SUNAT keys
+          const keys = await getClaves(); // Fetches all keys for tenant
+          const companyKeys = keys.filter(k => k.id_empresa === data.empresa.id_empresa);
+
+          const keyMap = {};
+          companyKeys.forEach(k => {
+            keyMap[k.tipo] = k.valor;
+          });
+
+          // 3. Merge keys into form
+          setForm(f => ({
+            ...f,
+            ...baseForm,
+            sol_user: keyMap['sunat_sol_user'] || "",
+            sol_pass: keyMap['sunat_sol_pass'] || "",
+            environment: keyMap['sunat_env'] || "", // If missing, remains empty "Seleccione..."
+            cert_password: keyMap['sunat_cert_pass'] || "",
+            client_id: keyMap['sunat_client_id'] || "",
+            client_secret: keyMap['sunat_client_secret'] || "",
+            certificadoBase64: keyMap['sunat_cert_p12'] || ""
+          }));
+        } catch (err) {
+          console.error("Error loading SUNAT keys:", err);
+          // Fallback set info basics
+          setForm(f => ({ ...f, ...baseForm }));
+        }
+      }
     }
+    loadKeys();
   }, [data.empresa, isEditing]);
 
   // Utilidades
@@ -68,40 +101,9 @@ export default function AccountDrawer({ open, onClose }) {
       reader.readAsDataURL(file);
     });
 
-  const fetchApiToken = async () => {
-    const resp = await fetch("https://facturacion.apisperu.com/api/v1/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: "destinyelvacio@outlook.com", password: "AedoDelSol" })
-    });
-    const data = await resp.json();
-    if (!data.token) throw new Error("Token apisperu ausente");
-    return data.token;
-  };
-
-  const getPemFromCert = async () => {
-    try {
-      const token = await fetchApiToken();
-      const resp = await fetch("https://facturacion.apisperu.com/api/v1/companies/certificate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          cert: form.certificadoBase64,
-          cert_pass: form.cert_password,
-          base64: true
-        })
-      });
-      const data = await resp.json();
-      if (!resp.ok || !data?.pem) {
-        toast.error(data?.message || "Error obteniendo PEM");
-        return null;
-      }
-      return data.pem;
-    } catch {
-      toast.error("Error conversión PEM");
-      return null;
-    }
-  };
+  // NOTA: La configuración de SUNAT ahora se maneja desde variables de entorno en el backend.
+  // Las credenciales SOL y certificado se configuran en .env del servidor.
+  // Este formulario ya no necesita comunicarse con ApisPeru.
 
   // Handlers de archivos
   const handleCertificadoChange = async e => {
@@ -121,8 +123,9 @@ export default function AccountDrawer({ open, onClose }) {
     try {
       const b64 = await fileToBase64(file);
       setForm(p => ({ ...p, logoBase64: b64 }));
+      toast.success("Logotipo cargado");
     } catch {
-      toast.error("Error base64 logo");
+      toast.error("Error al cargar logotipo");
     }
   };
 
@@ -131,65 +134,67 @@ export default function AccountDrawer({ open, onClose }) {
     setForm(p => ({ ...p, [name]: value }));
   };
 
-  // Guardar empresa + token SUNAT
+  // Guardar credenciales SUNAT en BD (encriptadas)
   const handleSave = async () => {
     setLoadingSave(true);
-    const asStr = v => (v != null && String(v).trim() !== "" ? String(v) : "string");
     try {
-      const pem = await getPemFromCert();
-      const apiToken = await fetchApiToken();
-      const payload = {
-        plan: asStr(form.plan),
-        environment: asStr(form.environment),
-        sol_user: asStr(form.sol_user),
-        sol_pass: asStr(form.sol_pass),
-        ruc: asStr(form.ruc),
-        razon_social: asStr(form.razon_social),
-        direccion: asStr(form.direccion),
-        certificado: asStr(pem || form.certificadoBase64),
-        logo: asStr(form.logoBase64),
-        client_id: asStr(form.client_id),
-        client_secret: asStr(form.client_secret)
-      };
-
-      let resp = await fetch("https://facturacion.apisperu.com/api/v1/companies", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiToken}` },
-        body: JSON.stringify(payload)
-      });
-      let dataRes = await resp.json();
-
-      if (resp.status === 409) {
-        resp = await fetch("https://facturacion.apisperu.com/api/v1/companies", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiToken}` },
-          body: JSON.stringify(payload)
-        });
-        dataRes = await resp.json();
-      }
-
-      if (!resp.ok) {
-        toast.error(`Error apisperu (${resp.status})`);
-        setLoadingSave(false);
+      const id_empresa = data.empresa?.id_empresa;
+      if (!id_empresa) {
+        toast.error("No se encontró la empresa");
         return;
       }
 
-      if (dataRes?.token?.code) {
-        await addClave({
-          id_empresa: data.empresa?.id_empresa,
-          tipo: "Sunat",
-          valor: dataRes.token.code,
-          estado_clave: 1
-        });
-        toast.success("Token guardado");
-        setIsEditing(false);
-        reload(); // Recargar datos
-      } else {
-        toast.error("Respuesta sin token");
+      // Guardar cada credencial SUNAT como clave separada
+      const clavesToSave = [];
+
+      if (form.sol_user?.trim()) {
+        clavesToSave.push({ id_empresa, tipo: 'sunat_sol_user', valor: form.sol_user.trim() });
       }
+      if (form.sol_pass?.trim()) {
+        clavesToSave.push({ id_empresa, tipo: 'sunat_sol_pass', valor: form.sol_pass.trim() });
+      }
+      if (form.certificadoBase64?.trim()) {
+        clavesToSave.push({ id_empresa, tipo: 'sunat_cert_p12', valor: form.certificadoBase64.trim() });
+      }
+      if (form.cert_password?.trim()) {
+        clavesToSave.push({ id_empresa, tipo: 'sunat_cert_pass', valor: form.cert_password.trim() });
+      }
+      if (form.environment?.trim()) {
+        clavesToSave.push({ id_empresa, tipo: 'sunat_env', valor: form.environment.trim() });
+      }
+      if (form.client_id?.trim()) {
+        clavesToSave.push({ id_empresa, tipo: 'sunat_client_id', valor: form.client_id.trim() });
+      }
+      if (form.client_secret?.trim()) {
+        clavesToSave.push({ id_empresa, tipo: 'sunat_client_secret', valor: form.client_secret.trim() });
+      }
+
+      // Guardar todas las claves SUNAT
+      for (const clave of clavesToSave) {
+        await addClave(clave);
+      }
+
+      // Subir logotipo a ImageKit si hay uno nuevo
+      if (form.logoBase64?.trim()) {
+        try {
+          const uploadResult = await uploadLogo(form.logoBase64, id_empresa);
+          if (uploadResult.success && uploadResult.url) {
+            // Actualizar empresa con la nueva URL del logo
+            await updateEmpresa(id_empresa, { logotipo: uploadResult.url });
+            toast.success("Logotipo actualizado");
+          }
+        } catch (logoError) {
+          console.error('Error subiendo logo:', logoError);
+          toast.error("Error al subir logotipo");
+        }
+      }
+
+      toast.success("Configuración guardada correctamente");
+      setIsEditing(false);
+      reload();
     } catch (e) {
       console.error(e);
-      toast.error("Error enviando datos");
+      toast.error("Error guardando configuración SUNAT");
     } finally {
       setLoadingSave(false);
     }

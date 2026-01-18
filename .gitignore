@@ -1,5 +1,8 @@
 # Environments 
 .env
+.env.sunat.local
+.env.sunat.*.local
+.env.*.local
 .venv
 env/ 
 venv/ 
@@ -8,3 +11,10 @@ env.bak/
 venv.bak/
 node_modules/
 none_modules
+
+# Certificados y artefactos SUNAT
+*.pfx
+*.p12
+cert.base64.txt
+*.base64.txt
+tmp/sunat-tests/

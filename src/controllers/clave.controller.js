@@ -35,12 +35,15 @@ const getClaves = async (req, res) => {
 
     const [result] = await connection.query(query, params);
 
-    const clavesDesencriptadas = result.map(clave => ({
+    // SEGURIDAD: NO devolver valores desencriptados al frontend
+    // Solo devolver una representación enmascarada
+    const clavesSinValor = result.map(clave => ({
       ...clave,
-      valor: decrypt(clave.valor),
+      valor: '••••••••••••••••', // Nunca exponer el valor real
+      hasValue: clave.valor ? true : false, // Solo indicar si tiene valor
     }));
 
-    res.json({ code: 1, data: clavesDesencriptadas, message: "Claves listadas" });
+    res.json({ code: 1, data: clavesSinValor, message: "Claves listadas" });
   } catch (error) {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
@@ -72,7 +75,8 @@ const getClave = async (req, res) => {
 
     const clave = {
       ...result[0],
-      valor: decrypt(result[0].valor),
+      valor: '••••••••••••••••', // SEGURIDAD: No exponer el valor real
+      hasValue: result[0].valor ? true : false,
     };
 
     res.json({ code: 1, data: clave, message: "Clave encontrada" });
@@ -88,7 +92,7 @@ const addClave = async (req, res) => {
   try {
     const { id_empresa, tipo = 'Sunat', valor, estado_clave = 1 } = req.body;
     if (!id_empresa) return res.status(400).json({ code: 0, message: "El campo id_empresa es obligatorio." });
-    if (!valor)      return res.status(400).json({ code: 0, message: "El campo valor (token) es obligatorio." });
+    if (!valor) return res.status(400).json({ code: 0, message: "El campo valor (token) es obligatorio." });
 
     const developer = isDeveloperUser(req);
     const valorEncriptado = encrypt(valor);
@@ -138,9 +142,9 @@ const addClave = async (req, res) => {
       return res.status(409).json({ code: 0, message: "Ya existe una clave Sunat para esta empresa" });
     }
     if ((error.sqlMessage || "").includes("Data too long")) {
-      return res.status(400).json({ 
-        code: 0, 
-        message: "El token es demasiado largo para la columna 'valor'. Aumenta el tamaño a TEXT/LONGTEXT." 
+      return res.status(400).json({
+        code: 0,
+        message: "El token es demasiado largo para la columna 'valor'. Aumenta el tamaño a TEXT/LONGTEXT."
       });
     }
     return res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -156,13 +160,21 @@ const updateClave = async (req, res) => {
     const { id_empresa, tipo, valor, estado_clave } = req.body;
     const developer = isDeveloperUser(req);
 
+    // Construir objeto de actualización dinámicamente
+    // Si valor está vacío o es la representación enmascarada, NO lo incluimos (mantener el existente)
     const clave = {
       id_empresa,
       tipo,
-      valor: encrypt(valor),
       estado_clave,
       id_tenant: req.id_tenant
     };
+
+    // Solo actualizar el valor si se proporciona uno nuevo (no vacío ni representación con puntos)
+    // Detectar si es representación enmascarada: solo contiene • o es vacío
+    const isMaskedOrEmpty = !valor || valor.trim() === '' || /^[•●]+$/.test(valor.trim());
+    if (!isMaskedOrEmpty) {
+      clave.valor = encrypt(valor);
+    }
 
     connection = await getConnection();
 
