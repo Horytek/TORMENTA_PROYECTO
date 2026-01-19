@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import {
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Pagination, Chip, Button, Tooltip, Select, SelectItem
+  Pagination, Chip, Button, Tooltip, Select, SelectItem,
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter
 } from "@heroui/react";
 import { FaFilePdf, FaEye, FaArrowRight, FaTimes } from "react-icons/fa";
 import { TiDeleteOutline } from "react-icons/ti";
@@ -29,6 +31,7 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
   },
   ref
 ) {
+  const navigate = useNavigate();
   const nombreUsuario = useUserStore(s => s.nombre);
   const { hasGeneratePermission = false, hasDeactivatePermission = false } = usePermisos() || {};
 
@@ -500,7 +503,7 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
                   size="sm"
                   className="w-full font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
                   endContent={<FaArrowRight className="text-slate-400" />}
-                  onClick={() => window.location.href = '/almacen/kardex'}
+                  onPress={() => navigate('/almacen')}
                 >
                   Ir al Kardex
                 </Button>
@@ -527,6 +530,33 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
           onConfirm={handleConfirmAnular}
         />
       )}
+
+      {/* Modal de Observación */}
+      <Modal
+        isOpen={isObservationModalOpen}
+        onClose={() => setIsObservationModalOpen(false)}
+        backdrop="blur"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 text-slate-800 dark:text-slate-100">
+                Observación
+              </ModalHeader>
+              <ModalBody>
+                <p className="text-slate-600 dark:text-slate-300">
+                  {selectedNota?.observacion || "No hay observaciones registradas para esta nota."}
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="primary" onPress={onClose}>
+                  Cerrar
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 });

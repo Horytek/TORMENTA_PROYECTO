@@ -127,10 +127,10 @@ const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay product
         removeWrapper
         classNames={{
           base: "max-h-[calc(100vh-350px)] overflow-y-auto",
-          table: "min-w-full",
-          th: "bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider h-10 first:rounded-l-lg last:rounded-r-lg",
-          td: "py-3 border-b border-slate-100 dark:border-zinc-800",
-          tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer",
+          table: "min-w-full text-[13px]",
+          th: "bg-slate-50 text-slate-500 font-bold uppercase text-xs h-10 dark:bg-zinc-900 dark:text-slate-400 border-b border-slate-100 dark:border-zinc-800 first:rounded-l-lg last:rounded-r-lg",
+          td: "py-3 border-b border-slate-100 dark:border-zinc-800 dark:text-gray-300 group-hover:bg-slate-50/50",
+          tr: "hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer",
           thead: "[&>tr]:first:shadow-none",
         }}
         selectionMode="single"

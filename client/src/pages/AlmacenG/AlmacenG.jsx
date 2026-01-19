@@ -15,8 +15,8 @@ import { bulkUpdateAlmacenes } from "@/services/almacen.services";
 
 // Clean White Input Styles
 const glassInputClasses = {
-  inputWrapper: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl h-10 data-[hover=true]:border-blue-400 focus-within:!border-blue-500",
-  input: "text-slate-700 dark:text-slate-200 text-sm",
+  inputWrapper: "bg-white dark:bg-zinc-800 shadow-none border-none rounded-2xl h-10 group-data-[focus=true]:bg-white dark:group-data-[focus=true]:bg-zinc-800 ring-0 transition-all duration-300",
+  input: "text-slate-600 dark:text-slate-200 font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500",
 };
 
 function Almacenes() {
@@ -190,7 +190,7 @@ function Almacenes() {
       </div>
 
       {/* Filters & Table Wrapper */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4 space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-col xl:flex-row items-center justify-between gap-4">
           <Input
             placeholder="Buscar almacén..."

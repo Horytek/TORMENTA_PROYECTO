@@ -139,13 +139,13 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
       isOpen={true}
       onClose={onClose}
       size="lg"
-      backdrop="blur"
+      backdrop="opaque"
       classNames={{
-        backdrop: "z-[1200] bg-white/10",
-        base: "z-[1210] pointer-events-auto bg-white/80 dark:bg-zinc-900/80 supports-[backdrop-filter]:backdrop-blur-xl border border-blue-100/40 dark:border-zinc-700/50 shadow-2xl rounded-2xl",
-        header: "px-6 py-4 border-b border-blue-100/30 dark:border-zinc-700/40",
-        body: "px-6 pb-4 pt-4",
-        footer: "px-6 py-4 border-t border-blue-100/30 dark:border-zinc-700/40"
+        backdrop: "bg-slate-900/50 backdrop-blur-sm",
+        base: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl rounded-2xl",
+        header: "px-6 py-4 border-b border-slate-100 dark:border-zinc-800",
+        body: "px-6 py-4",
+        footer: "px-6 py-4 border-t border-slate-100 dark:border-zinc-800"
       }}
       motionProps={{
         variants: {
@@ -163,20 +163,21 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
         </ModalHeader>
 
         <ModalBody>
-          <div className="bg-slate-50/50 dark:bg-zinc-800/50 p-1 rounded-xl mb-4 self-center inline-flex">
+          <div className="bg-slate-100 dark:bg-zinc-800 p-1.5 rounded-2xl mb-6 self-center inline-flex">
             <RadioGroup
               value={transportePublico ? 'publico' : 'privado'}
               onValueChange={(value) => handleTransporteToggle(value)}
               orientation="horizontal"
               classNames={{
-                wrapper: "gap-0"
+                wrapper: "gap-2"
               }}
             >
               <Radio
                 value="publico"
                 classNames={{
-                  base: `px-4 py-2 rounded-lg transition-colors cursor-pointer ${transportePublico ? 'bg-white shadow-sm dark:bg-zinc-700' : 'hover:bg-gray-200/50'}`,
-                  label: `text-sm font-semibold ${transportePublico ? 'text-blue-600' : 'text-slate-500'}`
+                  base: `px-5 py-2.5 rounded-xl transition-all cursor-pointer m-0 border-2 ${transportePublico ? 'bg-white border-transparent shadow-sm dark:bg-zinc-700' : 'border-transparent hover:bg-slate-200/50 dark:hover:bg-zinc-700/50'}`,
+                  label: `text-sm font-bold ${transportePublico ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'}`,
+                  control: "bg-blue-600 border-blue-600"
                 }}
               >
                 Público
@@ -184,8 +185,9 @@ const TransporteForm = ({ modalTitle, onClose, onSave }) => {
               <Radio
                 value="privado"
                 classNames={{
-                  base: `px-4 py-2 rounded-ld transition-colors cursor-pointer ${!transportePublico ? 'bg-white shadow-sm dark:bg-zinc-700' : 'hover:bg-gray-200/50'}`,
-                  label: `text-sm font-semibold ${!transportePublico ? 'text-blue-600' : 'text-slate-500'}`
+                  base: `px-5 py-2.5 rounded-xl transition-all cursor-pointer m-0 border-2 ${!transportePublico ? 'bg-white border-transparent shadow-sm dark:bg-zinc-700' : 'border-transparent hover:bg-slate-200/50 dark:hover:bg-zinc-700/50'}`,
+                  label: `text-sm font-bold ${!transportePublico ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'}`,
+                  control: "bg-blue-600 border-blue-600"
                 }}
               >
                 Privado

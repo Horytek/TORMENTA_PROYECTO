@@ -206,7 +206,6 @@ export function ShowUsuarios({
             table: "min-w-full",
             th: "bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider h-10 border-b border-slate-100 dark:border-zinc-800",
             td: "py-3 border-b border-slate-100 dark:border-zinc-800",
-            tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors",
             thead: "[&>tr]:first:shadow-none",
           }}
         >
@@ -219,7 +218,10 @@ export function ShowUsuarios({
           </TableHeader>
           <TableBody items={currentUsuarios} emptyContent={<EmptyState title="No se encontraron usuarios" description="Intenta ajustar tus filtros de búsqueda." />}>
             {(item) => (
-              <TableRow key={item.id_usuario}>
+              <TableRow
+                key={item.id_usuario}
+                className="hover:bg-slate-100 dark:hover:bg-zinc-800/50 transition-colors duration-200"
+              >
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
               </TableRow>
             )}

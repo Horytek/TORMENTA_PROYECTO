@@ -167,7 +167,7 @@ export default function LogsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4 space-y-4">
+      <div className="space-y-4">
 
         {/* Time Filter Tabs and Search */}
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
@@ -194,7 +194,7 @@ export default function LogsPage() {
               base: "max-w-full sm:max-w-[15rem] h-10",
               mainWrapper: "h-full",
               input: "text-small",
-              inputWrapper: "h-full font-normal text-default-500 bg-slate-100 dark:bg-zinc-800 dark:border-zinc-700/50",
+              inputWrapper: "h-full font-normal text-default-500 bg-white dark:bg-zinc-800 shadow-none border-none rounded-2xl",
             }}
             placeholder="Buscar por usuario, acción..."
             size="sm"
@@ -213,7 +213,7 @@ export default function LogsPage() {
       </div>
 
       {/* Pagination Footer - Outside Table Container */}
-      <div className="flex w-full justify-between items-center px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
+      <div className="flex w-full justify-between items-center px-4 py-3">
         <span className="text-[12px] text-slate-400 dark:text-slate-500">
           Mostrando {paginatedLogs.length} de {filteredLogs.length} registros ({getFilterLabel()})
         </span>

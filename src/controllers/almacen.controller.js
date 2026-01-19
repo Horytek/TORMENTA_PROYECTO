@@ -31,7 +31,7 @@ const getAlmacenes = async (req, res) => {
         res.json({ code: 1, data: result });
 
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener los almacenes con su sucursal"});
+        res.status(500).json({ message: "Error al obtener los almacenes con su sucursal" });
     } finally {
         if (connection) {
             connection.release();
@@ -70,7 +70,7 @@ const getAlmacenes_A = async (req, res) => {
         res.json({ code: 1, data: result });
 
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener los almacenes con su sucursal"});
+        res.status(500).json({ message: "Error al obtener los almacenes con su sucursal" });
     } finally {
         if (connection) {
             connection.release();
@@ -208,7 +208,7 @@ const updateAlmacen = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { nom_almacen, ubicacion, estado_almacen, id_sucursal } = req.body;
+        const { nom_almacen, ubicacion, estado_almacen, id_sucursal, force_exchange } = req.body;
 
         const almacen = {
             nom_almacen: nom_almacen.trim(),
@@ -219,21 +219,47 @@ const updateAlmacen = async (req, res) => {
         connection = await getConnection();
         await connection.beginTransaction();
 
+        // Si se solicita intercambio forzado, liberar la sucursal primero
+        if (force_exchange && id_sucursal) {
+            // Eliminar cualquier asignación previa de esta sucursal (EXCEPTO la del almacén actual, aunque esa se sobrescribirá igual)
+            await connection.query(
+                "DELETE FROM sucursal_almacen WHERE id_sucursal = ? AND id_almacen != ?;",
+                [id_sucursal, id]
+            );
+        }
+
         // Actualizar almacén
         const [resultAlmacen] = await connection.query(
             "UPDATE almacen SET ? WHERE id_almacen = ? AND id_tenant = ?;",
             [almacen, id, req.id_tenant]
         );
 
-        // Actualizar la relación en sucursal_almacen
-        const [resultSucursalAlmacen] = await connection.query(
-            "UPDATE sucursal_almacen SET id_sucursal = ? WHERE id_almacen = ?;",
-            [id_sucursal, id]
+        // Verificar si la relación ya existe para este almacén
+        const [existingRelation] = await connection.query(
+            "SELECT 1 FROM sucursal_almacen WHERE id_almacen = ?",
+            [id]
         );
 
-        if (resultAlmacen.affectedRows === 0 && resultSucursalAlmacen.affectedRows === 0) {
+        if (existingRelation.length > 0) {
+            // Actualizar la relación existente
+            await connection.query(
+                "UPDATE sucursal_almacen SET id_sucursal = ? WHERE id_almacen = ?;",
+                [id_sucursal, id]
+            );
+        } else {
+            // Si no existía (raro en update, pero posible), insertar
+            if (id_sucursal) {
+                await connection.query(
+                    "INSERT INTO sucursal_almacen (id_sucursal, id_almacen) VALUES (?, ?);",
+                    [id_sucursal, id]
+                );
+            }
+        }
+
+        // No verificamos affectedRows de resultSucursalAlmacen porque puede que no cambie si es la misma
+        if (resultAlmacen.affectedRows === 0) {
             await connection.rollback();
-            return res.status(404).json({ code: 0, message: "Almacén o sucursal no encontrado" });
+            return res.status(404).json({ code: 0, message: "Almacén no encontrado" });
         }
 
         await connection.commit();
@@ -241,8 +267,12 @@ const updateAlmacen = async (req, res) => {
 
     } catch (error) {
         if (connection) await connection.rollback();
+        // Check for duplicate entry if key constraint exists and force_exchange wasn't used
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ code: 0, message: "La sucursal ya está asignada a otro almacén." });
+        }
         if (!res.headersSent) {
-            res.status(500).json({ code: 0, message: "Error interno del servidor" });
+            res.status(500).json({ code: 0, message: "Error interno del servidor", error: error.message });
         }
     } finally {
         if (connection) connection.release();

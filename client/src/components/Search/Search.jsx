@@ -71,6 +71,7 @@ const BarraSearch = forwardRef((props, ref) => {
     ),
     classNames: {
       ...styles,
+      ...props.classNames,
     },
   });
 

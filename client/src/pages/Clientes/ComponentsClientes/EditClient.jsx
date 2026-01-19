@@ -220,6 +220,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                         isRequired
                                         isDisabled={!!client} // Deshabilitar solo si hay un cliente
                                         className="max-w-xs"
+                                        variant="faded"
                                     >
                                         {clientType === "personal" ? (
                                             <SelectItem key="dni" value="dni">
@@ -239,7 +240,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                             value={documentNumber}
                                             onChange={(e) => setDocumentNumber(e.target.value)}
                                             isRequired
-                                            classNames={inputStyles}
+                                            variant="faded"
                                         />
                                         <Button
                                             isIconOnly
@@ -266,7 +267,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                                 value={clientName}
                                                 onChange={(e) => setClientName(e.target.value)}
                                                 isRequired
-                                                classNames={inputStyles}
+                                                variant="faded"
                                             />
                                             <Input
                                                 label="Apellidos"
@@ -274,7 +275,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                                 value={clientLastName}
                                                 onChange={(e) => setClientLastName(e.target.value)}
                                                 isRequired
-                                                classNames={inputStyles}
+                                                variant="faded"
                                             />
                                         </>
                                     ) : (
@@ -284,7 +285,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                             value={businessName}
                                             onChange={(e) => setBusinessName(e.target.value)}
                                             isRequired
-                                            classNames={inputStyles}
+                                            variant="faded"
                                         />
                                     )}
 
@@ -293,7 +294,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                         placeholder="Ingrese dirección"
                                         value={address}
                                         onChange={(e) => setAddress(e.target.value)}
-                                        classNames={inputStyles}
+                                        variant="faded"
                                     />
                                     <Select
                                         label="Estado"
@@ -303,11 +304,7 @@ export default function EditClientModal({ open, onClose, client, onClientUpdated
                                             setEstado(Number(selectedKey));
                                         }}
                                         isRequired
-                                        style={{
-                                            border: "none",
-                                            boxShadow: "none",
-                                            outline: "none",
-                                        }}
+                                        variant="faded"
                                     >
                                         <SelectItem key="1" value="1">
                                             Activo

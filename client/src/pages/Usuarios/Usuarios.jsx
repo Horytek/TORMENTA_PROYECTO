@@ -7,16 +7,22 @@ import BarraSearch from "@/components/Search/Search";
 import { getUsuarios, bulkUpdateUsuarios } from '@/services/usuario.services';
 import { ActionButton } from "@/components/Buttons/Buttons";
 import FilterControls from './components/FilterControls';
-import { FaFileExport, FaFileExcel } from "react-icons/fa";
+import { FaFileExport, FaFileExcel, FaSearch } from "react-icons/fa";
 import { exportUsuariosLocal, filterUsuariosForExport } from '@/utils/exportUsuarios';
 import UserImportModal from './UserImportModal';
-import { Pagination, Select, SelectItem } from "@heroui/react";
+import { Pagination, Select, SelectItem, Input } from "@heroui/react";
 
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 
 
 import { motion } from "framer-motion";
 import TableSkeleton from "@/components/Skeletons/TableSkeleton";
+
+// Estilos Glass Clean
+const glassInputClasses = {
+  inputWrapper: "bg-white dark:bg-zinc-800 shadow-none border-none rounded-2xl h-10 group-data-[focus=true]:bg-white dark:group-data-[focus=true]:bg-zinc-800 ring-0 transition-all duration-300",
+  input: "text-slate-600 dark:text-slate-200 font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500",
+};
 
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -186,15 +192,21 @@ function Usuarios() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
         <div className="w-full sm:w-80">
-          <BarraSearch
+          <Input
             placeholder="Buscar por nombre de usuario..."
-            isClearable={true}
             value={searchTerm}
             onChange={handleSearchChange}
+            startContent={<FaSearch className="text-slate-400" />}
+            classNames={glassInputClasses}
+            isClearable
+            onClear={() => setSearchTerm('')}
+            className="w-full"
+            size="sm"
           />
         </div>
+
 
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <ActionButton
@@ -237,7 +249,7 @@ function Usuarios() {
         )}
 
         {/* Table Wrapper */}
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4 space-y-4">
+        <div className="space-y-4">
           {loading ? (
             <TableSkeleton rows={6} />
           ) : (
@@ -296,14 +308,16 @@ function Usuarios() {
       </div>
 
       {/* Add User Modal */}
-      {activeAdd && (
-        <UsuariosForm
-          modalTitle="Nuevo Usuario"
-          onClose={() => setModalOpen(false)}
-          onSuccess={addUsuario}
-          usuarios={usuarios}
-        />
-      )}
+      {
+        activeAdd && (
+          <UsuariosForm
+            modalTitle="Nuevo Usuario"
+            onClose={() => setModalOpen(false)}
+            onSuccess={addUsuario}
+            usuarios={usuarios}
+          />
+        )
+      }
 
       {/* Import Modal */}
       <UserImportModal
@@ -316,7 +330,7 @@ function Usuarios() {
 
 
 
-    </motion.div>
+    </motion.div >
   );
 }
 

@@ -82,12 +82,12 @@ const RegistroNotaTable = ({
     return (
         <div className="space-y-0">
             {/* Barra superior métricas */}
-            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/20">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-b border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                 <div className="flex flex-wrap gap-2">
-                    <Chip size="sm" variant="flat" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 font-bold h-7">
+                    <Chip size="sm" variant="flat" className="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-bold h-7 border border-blue-100 dark:border-blue-900/30">
                         Items: {totalProductos}
                     </Chip>
-                    <Chip size="sm" variant="flat" className="bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400 font-bold h-7">
+                    <Chip size="sm" variant="flat" className="bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 font-bold h-7 border border-purple-100 dark:border-purple-900/30">
                         Unidades: {totalUnidades}
                     </Chip>
                 </div>
@@ -96,7 +96,7 @@ const RegistroNotaTable = ({
                         <Button
                             size="sm"
                             variant="flat"
-                            className="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 font-bold"
+                            className="bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 font-bold"
                             startContent={<FaBroom className="text-[14px]" />}
                             isDisabled={!productos.length}
                             onPress={openModalEliminarTodos}
@@ -115,7 +115,7 @@ const RegistroNotaTable = ({
                         removeWrapper
                         className="min-w-full"
                         classNames={{
-                            th: "bg-blue-50/50 dark:bg-zinc-800/80 text-blue-800 dark:text-blue-300 text-[11px] font-bold uppercase tracking-wider h-10 first:pl-6 last:pr-6",
+                            th: "bg-transparent text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest h-12 first:pl-6 last:pr-6 border-b border-slate-100 dark:border-zinc-800",
                             td: "text-[13px] py-3 first:pl-6 last:pr-6 border-b border-slate-50 dark:border-zinc-800/50",
                             tr: "hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors"
                         }}

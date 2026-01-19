@@ -367,6 +367,16 @@ function RegistroNota() {
                                     {(GLOSAS[tipoNota] || GLOSAS['ingreso']).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                                 </Select>
 
+                                <Input
+                                    type="date"
+                                    label="Fecha de Emisión"
+                                    placeholder="Seleccione fecha"
+                                    value={fecha}
+                                    onChange={(e) => setFecha(e.target.value)}
+                                    variant="bordered"
+                                    classNames={inputClasses}
+                                />
+
                                 <Input label="Referencia / Nota" placeholder="Ej. Ingreso por compra..." value={nota} onChange={e => setNota(e.target.value)} variant="bordered" classNames={inputClasses} />
                                 <Textarea label="Observaciones" placeholder="Opcional..." minRows={2} value={observacion} onChange={e => setObservacion(e.target.value)} variant="bordered" classNames={inputClasses} />
                             </div>
@@ -386,7 +396,7 @@ function RegistroNota() {
                         {/* Summary Bar */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
+                                <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-inner">
                                     <FaBoxOpen size={22} />
                                 </div>
                                 <div className="flex flex-col">
@@ -403,7 +413,7 @@ function RegistroNota() {
                                 </Chip>
                                 <Button
                                     color="primary"
-                                    className="font-bold shadow-lg shadow-indigo-500/20 bg-indigo-600 text-white h-10 px-6"
+                                    className="font-bold shadow-lg shadow-blue-500/20 bg-blue-600 text-white h-10 px-6"
                                     startContent={<FiPlus size={20} />}
                                     onPress={openModalBuscarProducto}
                                     isDisabled={!almacenOrigen && tipoNota !== 'ingreso'}
@@ -435,7 +445,7 @@ function RegistroNota() {
                                 Limpiar
                             </Button>
                             <Button
-                                className="font-bold text-white bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 w-48 shadow-lg h-11"
+                                className="font-bold text-white bg-slate-900 hover:bg-black dark:bg-slate-700 dark:hover:bg-slate-600 w-48 shadow-lg h-11"
                                 startContent={<FiSave />}
                                 onPress={openModalGuardar}
                                 isDisabled={!isValid || isSaving}

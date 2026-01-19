@@ -205,6 +205,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                           onChange={(e) => setDocumentType(e.target.value)}
                           isRequired
                           isDisabled
+                          variant="faded"
                         >
                           <SelectItem key="dni" value="dni">DNI</SelectItem>
                         </Select>
@@ -216,7 +217,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                             value={documentNumber}
                             onChange={(e) => setDocumentNumber(e.target.value)}
                             isRequired
-                            classNames={inputStyles}
+                            variant="faded"
                           />
                           <Button
                             isIconOnly
@@ -236,7 +237,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                           value={clientName}
                           onChange={(e) => setClientName(e.target.value)}
                           isRequired
-                          classNames={inputStyles}
+                          variant="faded"
                           isDisabled={!manualInput}
                         />
                         <Input
@@ -244,7 +245,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                           value={clientLastName}
                           onChange={(e) => setClientLastName(e.target.value)}
                           isRequired
-                          classNames={inputStyles}
+                          variant="faded"
                           isDisabled={!manualInput}
                         />
                         {/* Campo de dirección con autocompletado Google Places, solo Chiclayo */}
@@ -261,7 +262,8 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                               placeholder: 'Buscar dirección en Chiclayo...',
                               isClearable: true,
                               styles: {
-                                input: (provided) => ({ ...provided, minHeight: '38px' })
+                                input: (provided) => ({ ...provided, minHeight: '38px' }),
+                                control: (provided) => ({ ...provided, backgroundColor: '#F4F4F5', borderColor: '#E4E4E7', boxShadow: 'none', '&:hover': { borderColor: '#D4D4D8' } })
                               },
                               loadingMessage: () => 'Cargando direcciones...',
                               noOptionsMessage: () => 'No se encontraron direcciones'
@@ -286,6 +288,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                           onChange={(e) => setDocumentType(e.target.value)}
                           isRequired
                           isDisabled
+                          variant="faded"
                         >
                           <SelectItem key="ruc" value="ruc">RUC</SelectItem>
                         </Select>
@@ -297,7 +300,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                             value={documentNumber}
                             onChange={(e) => setDocumentNumber(e.target.value)}
                             isRequired
-                            classNames={inputStyles}
+                            variant="faded"
                           />
                           <Button
                             isIconOnly
@@ -317,7 +320,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                           value={businessName}
                           onChange={(e) => setBusinessName(e.target.value)}
                           isRequired
-                          classNames={inputStyles}
+                          variant="faded"
                           isDisabled={!manualInput}
                         />
 
@@ -335,7 +338,8 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
                               placeholder: 'Buscar dirección en Chiclayo...',
                               isClearable: true,
                               styles: {
-                                input: (provided) => ({ ...provided, minHeight: '38px' })
+                                input: (provided) => ({ ...provided, minHeight: '38px' }),
+                                control: (provided) => ({ ...provided, backgroundColor: '#F4F4F5', borderColor: '#E4E4E7', boxShadow: 'none', '&:hover': { borderColor: '#D4D4D8' } })
                               },
                               loadingMessage: () => 'Cargando direcciones...',
                               noOptionsMessage: () => 'No se encontraron direcciones'

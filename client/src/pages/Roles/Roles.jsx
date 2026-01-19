@@ -138,8 +138,8 @@ function Roles() {
   return (
     <div className="w-full min-h-screen p-6 flex flex-col gap-6 bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-200">
 
-      {/* Premium Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-zinc-800">
+      {/* Premium Header - Transparent */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-2">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl">
             <FaUserTag size={24} />

@@ -93,7 +93,8 @@ const getClientes = async (req, res) => {
                 COALESCE(razon_social, '') AS razon_social, 
                 direccion, 
                 estado_cliente AS estado,
-                DATE_FORMAT(f_creacion, '%Y-%m-%d') AS f_creacion
+                DATE_FORMAT(f_creacion, '%Y-%m-%d') AS f_creacion,
+                'local' as origen
             FROM cliente 
             ${filterCondition}
             ORDER BY f_creacion DESC, id_cliente DESC
@@ -299,7 +300,7 @@ const getCliente = async (req, res) => {
     try {
         connection = await getConnection();
 
-        const [result] = await connection.query(
+        let [result] = await connection.query(
             `SELECT 
                 id_cliente, 
                 dni, 
@@ -309,7 +310,8 @@ const getCliente = async (req, res) => {
                 razon_social, 
                 direccion, 
                 DATE_FORMAT(f_creacion, '%Y-%m-%d') AS f_creacion,
-                estado_cliente AS estado
+                estado_cliente AS estado,
+                'local' as origen
              FROM cliente
              WHERE id_cliente = ? AND id_tenant = ?
              LIMIT 1`,
@@ -317,10 +319,32 @@ const getCliente = async (req, res) => {
         );
 
         if (result.length === 0) {
-            return res.status(404).json({
-                code: 0,
-                message: "Cliente no encontrado"
-            });
+            const [resultExterno] = await connection.query(
+                `SELECT 
+                    id_cliente, 
+                    dni, 
+                    ruc, 
+                    nombres, 
+                    apellidos, 
+                    razon_social, 
+                    direccion, 
+                    DATE_FORMAT(f_creacion, '%Y-%m-%d') AS f_creacion,
+                    estado_cliente AS estado,
+                    'externo' as origen
+                 FROM tesis_db.cliente
+                 WHERE id_cliente = ? AND id_tenant = ?
+                 LIMIT 1`,
+                [id, id_tenant]
+            );
+
+            if (resultExterno.length > 0) {
+                result = resultExterno;
+            } else {
+                return res.status(404).json({
+                    code: 0,
+                    message: "Cliente no encontrado"
+                });
+            }
         }
 
         // Guardar en caché
@@ -790,6 +814,143 @@ const getClientStats = async (req, res) => {
     }
 };
 
+// OBTENER CLIENTES EXTERNOS (TESIS_DB)
+const getClientesExternos = async (req, res) => {
+    let connection;
+    try {
+        connection = await getConnection();
+        const [result] = await connection.query(
+            `SELECT 
+                id_cliente, 
+                dni, 
+                nombres, 
+                apellidos, 
+                direccion, 
+                email,
+                telefono,
+                estado_cliente as estado, 
+                DATE_FORMAT(f_creacion, '%Y-%m-%d') as f_creacion 
+             FROM tesis_db.cliente 
+             WHERE id_tenant = ? 
+             ORDER BY f_creacion DESC`,
+            [req.id_tenant]
+        );
+
+        const mapped = result.map(c => ({
+            ...c,
+            ruc: '',
+            razon_social: '',
+            dniRuc: c.dni,
+            origen: 'externo',
+        }));
+
+        res.json({
+            code: 1,
+            data: mapped,
+            message: "Clientes externos listados"
+        });
+    } catch (error) {
+        console.error('Error en getClientesExternos:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+// OBTENER COMPRAS CLIENTE EXTERNO
+const getComprasClienteExterno = async (req, res) => {
+    let connection;
+    const { id_cliente, limit = 10 } = req.query;
+    const id_tenant = req.id_tenant;
+
+    if (!id_cliente) return res.status(400).json({ code: 0, message: "Falta id_cliente" });
+
+    try {
+        connection = await getConnection();
+        const [rows] = await connection.query(
+            `
+            SELECT 
+                c.id_compra AS id,
+                DATE_FORMAT(c.fecha_compra, '%Y-%m-%d') AS fecha,
+                c.total,
+                COUNT(dc.id_detalle_compra) AS items
+            FROM tesis_db.compra c
+            LEFT JOIN tesis_db.detalle_compra dc ON c.id_compra = dc.id_compra
+            WHERE c.id_cliente = ? AND c.id_tenant = ?
+            GROUP BY c.id_compra
+            ORDER BY c.fecha_compra DESC
+            LIMIT ?
+            `,
+            [id_cliente, id_tenant, Number(limit)]
+        );
+        res.json({ code: 1, data: rows, message: "Compras externas listadas" });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+// OBTENER DETALLE COMPRA EXTERNA
+const getCompraExternoById = async (req, res) => {
+    let connection;
+    const { id } = req.params;
+
+    try {
+        connection = await getConnection();
+        const [compra] = await connection.query(
+            `SELECT 
+                c.id_compra as id,
+                DATE_FORMAT(c.fecha_compra, '%Y-%m-%d') as fecha,
+                c.total,
+                c.estado_compra as estado,
+                'Externo' as usuario,
+                cli.dni,
+                CONCAT(cli.nombres, ' ', cli.apellidos) as cliente
+             FROM tesis_db.compra c
+             LEFT JOIN tesis_db.cliente cli ON c.id_cliente = cli.id_cliente
+             WHERE c.id_compra = ?`,
+            [id]
+        );
+
+        if (compra.length === 0) return res.status(404).json({ code: 0, message: "Compra no encontrada" });
+
+        // Intento unir con producto local, asumiendo IDs compatibles o si no, solo IDs
+        // Si tesis_db tiene producto, usar tesis_db.producto
+        // Haré un Left Join condicional o simplemente mostraré ID producto si no hay match
+        // Usaré tesis_db.producto asumiendo que existe
+        const [detalles] = await connection.query(
+            `SELECT 
+                dc.id_producto as id,
+                COALESCE(p.descripcion, CONCAT('Producto Externo ', dc.id_producto)) as nombre,
+                dc.cantidad,
+                dc.precio_unitario as precio,
+                dc.subtotal as total
+             FROM tesis_db.detalle_compra dc
+             LEFT JOIN producto p ON dc.id_producto = p.id_producto
+             WHERE dc.id_compra = ?`,
+            [id]
+        );
+
+        const data = {
+            ...compra[0],
+            detalles
+        };
+
+        res.json({ code: 1, data, message: "Detalle compra externa" });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+
 export const methods = {
     getClientes,
     getCliente,
@@ -799,5 +960,8 @@ export const methods = {
     deactivateCliente,
     getComprasCliente,
     getHistorialCliente,
-    getClientStats
+    getClientStats,
+    getClientesExternos,
+    getComprasClienteExterno,
+    getCompraExternoById
 };

@@ -550,10 +550,10 @@ const TablaVentas = ({
           onSelectionChange={(keys) => setVentasPerPage(Number(Array.from(keys)[0]))}
           className="w-28"
         >
-          <SelectItem key="5" value={5}>5</SelectItem>
-          <SelectItem key="10" value={10}>10</SelectItem>
-          <SelectItem key="20" value={20}>20</SelectItem>
-          <SelectItem key="100000" value={100000}>Todos</SelectItem>
+          <SelectItem key="10" value={10}>10 filas</SelectItem>
+          <SelectItem key="20" value={20}>20 filas</SelectItem>
+          <SelectItem key="50" value={50}>50 filas</SelectItem>
+          <SelectItem key="100" value={100}>100 filas</SelectItem>
         </Select>
       </div>
 

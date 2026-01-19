@@ -10,7 +10,9 @@ import {
   Pagination,
   Button,
   Chip,
-  Spinner
+  Spinner,
+  Select,
+  SelectItem
 } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
@@ -199,36 +201,20 @@ export default function ShowRoles({ searchTerm }) {
   }, [hasEditPermission, hasDeletePermission]);
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col gap-4">
 
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/20 border border-white dark:border-zinc-800 p-0 overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-0 overflow-hidden">
         <Table
           aria-label="Tabla de roles"
           removeWrapper
           classNames={{
             base: "max-h-[calc(100vh-300px)] overflow-y-auto",
-            table: "min-w-full",
-            th: "bg-gray-50 dark:bg-zinc-800/50 text-gray-500 dark:text-gray-400 font-medium text-xs tracking-wider border-b border-gray-100 dark:border-zinc-800 h-10 first:rounded-none last:rounded-none",
-            td: "py-3 border-b border-gray-50 dark:border-zinc-800/50 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 transition-colors",
-            tr: "transition-colors",
+            table: "min-w-full text-[13px]",
+            th: "bg-slate-50 text-slate-500 font-bold uppercase text-xs h-10 dark:bg-zinc-900 dark:text-slate-400 border-b border-slate-100 dark:border-zinc-800 first:rounded-none last:rounded-none",
+            td: "py-3 border-b border-slate-100 dark:border-zinc-800 dark:text-gray-300 group-hover:bg-slate-50/50",
+            tr: "hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors",
             thead: "[&>tr]:first:shadow-none",
           }}
-          bottomContent={
-            <div className="flex w-full justify-between items-center p-4 border-t border-gray-50 dark:border-zinc-800">
-              <span className="text-small text-default-400">
-                {filteredUsuarios.length} roles
-              </span>
-              <Pagination
-                isCompact
-                showControls
-                showShadow
-                color="primary"
-                page={currentPage}
-                total={Math.ceil(filteredUsuarios.length / usuariosPerPage) || 1}
-                onChange={setCurrentPage}
-              />
-            </div>
-          }
         >
           <TableHeader columns={columns}>
             {(column) => (
@@ -254,6 +240,51 @@ export default function ShowRoles({ searchTerm }) {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pagination - Separated */}
+      {/* Pagination Footer */}
+      <div className="flex w-full justify-between items-center bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
+        <div className="flex gap-4 items-center">
+          <span className="text-small text-slate-500 dark:text-slate-400">
+            {filteredUsuarios.length} roles
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-small text-slate-500 dark:text-slate-400 hidden sm:block">Filas:</span>
+            <Select
+              size="sm"
+              className="w-20"
+              selectedKeys={[`${usuariosPerPage}`]}
+              onChange={(e) => {
+                // TODO: Implement dynamic usersPerPage if needed, for now just UI
+                // setUsuariosPerPage(Number(e.target.value));
+              }}
+              aria-label="Filas por página"
+              classNames={{
+                trigger: "min-h-8 h-8 bg-slate-100 dark:bg-zinc-800 rounded-lg shadow-none border-none",
+                value: "text-[12px]",
+                popoverContent: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800"
+              }}
+              isDisabled={true} // Fixed to 10 for now as state logic only supports 10 currently
+            >
+              <SelectItem key="10">10</SelectItem>
+            </Select>
+          </div>
+        </div>
+
+        <Pagination
+          isCompact
+          showControls
+          showShadow
+          color="primary"
+          page={currentPage}
+          total={Math.ceil(filteredUsuarios.length / usuariosPerPage) || 1}
+          onChange={setCurrentPage}
+          classNames={{
+            cursor: "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/30",
+            wrapper: "gap-2"
+          }}
+        />
       </div>
 
       {/* Modals */}

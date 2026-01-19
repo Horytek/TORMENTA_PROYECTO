@@ -939,9 +939,9 @@ const getVentaById = async (req, res) => {
           COALESCE(NULLIF(cl.dni, ''), cl.ruc) as documento_cliente,
           cl.direccion as direccion_cliente,
           v.igv,
-          v.total_t as total_t,
+          -- v.total_t as total_t, -- REMOVED: Column does not exist
           CASE WHEN tp.nom_tipocomp = 'Nota de venta' THEN 'Recibo' ELSE tp.nom_tipocomp END as comprobante_pago,
-          v.total_t as totalImporte_venta,
+          -- v.total_t as totalImporte_venta, -- REMOVED
           v.descuento_global as descuento_venta,
           v.vuelto,
           v.recibido,
@@ -976,35 +976,36 @@ const getVentaById = async (req, res) => {
       [idTarget]
     );
 
+    // Convertir los valores de los detalles a números
+    const detallesProcesados = detalles.map(detalle => ({
+      ...detalle,
+      id_producto: parseInt(detalle.id_producto, 10),
+      precio: parseFloat(detalle.precio),
+      descuento: parseFloat(detalle.descuento),
+      sub_total: parseFloat(detalle.sub_total),
+    }));
+
+    // Calcular total basado en detalles
+    const calculatedTotal = detallesProcesados.reduce((acc, item) => acc + item.sub_total, 0);
+
     // Convertir los valores de la venta a números
     const convertVentaToNumbers = (venta) => {
       return {
         ...venta,
         fecha: new Date(venta.fecha).toISOString().slice(0, 10),
         igv: parseFloat(venta.igv || 0),
-        total_t: parseFloat(venta.total_t || 0),
-        totalImporte_venta: parseFloat(venta.totalImporte_venta || 0),
+        total_t: calculatedTotal, // Inserted calculated total
+        totalImporte_venta: calculatedTotal, // Inserted calculated total
         descuento_venta: parseFloat(venta.descuento_venta || 0),
         vuelto: parseFloat(venta.vuelto || 0),
         recibido: parseFloat(venta.recibido || 0),
       };
     };
 
-    // Convertir los valores de los detalles a números
-    const convertDetallesToNumbers = (detalles) => {
-      return detalles.map(detalle => ({
-        ...detalle,
-        id_producto: parseInt(detalle.id_producto, 10),
-        precio: parseFloat(detalle.precio),
-        descuento: parseFloat(detalle.descuento),
-        sub_total: parseFloat(detalle.sub_total),
-      }));
-    };
-
     // Construir el objeto de respuesta
     const datosVentaComprobante = {
       ...convertVentaToNumbers(venta[0]), // Los datos principales de la venta
-      detalles: convertDetallesToNumbers(detalles), // Los detalles de la venta
+      detalles: detallesProcesados, // Los detalles de la venta
     };
 
     res.json({ code: 1, data: datosVentaComprobante, message: "Datos comprobante listados" });

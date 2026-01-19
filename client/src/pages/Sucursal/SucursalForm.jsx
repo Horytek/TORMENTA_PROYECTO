@@ -98,6 +98,7 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       {...field}
                       className="mb-4"
                       label="Vendedor"
+                      variant="faded"
                       placeholder="Buscar vendedor por nombre o DNI..."
                       selectedKey={field.value}
                       inputValue={
@@ -152,7 +153,7 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       isInvalid={!!errors.nombre_sucursal}
                       errorMessage={errors.nombre_sucursal?.message}
                       isRequired
-                      variant="bordered"
+                      variant="faded"
                       className="mb-4"
                     />
                   )}
@@ -167,7 +168,7 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       isInvalid={!!errors.ubicacion}
                       errorMessage={errors.ubicacion?.message}
                       isRequired
-                      variant="bordered"
+                      variant="faded"
                       className="mb-4"
                     />
                   )}
@@ -183,7 +184,7 @@ const SucursalForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       selectedKeys={field.value ? [field.value.toString()] : []}
                       onChange={e => field.onChange(e.target.value)}
                       className="mb-2"
-                      variant="bordered"
+                      variant="faded"
                       isRequired
                       color={errors.estado_sucursal ? "danger" : "default"}
                       errorMessage={errors.estado_sucursal?.message}

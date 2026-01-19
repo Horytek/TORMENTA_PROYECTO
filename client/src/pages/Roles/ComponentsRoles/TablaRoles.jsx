@@ -15,15 +15,18 @@ export default function TablaRoles({ searchTerm: initialSearchTerm, externalData
     const { hasCreatePermission } = usePermisos();
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <BarraSearch
                     placeholder="Buscar rol..."
                     isClearable={true}
                     className="w-full sm:w-80"
                     value={searchTerm}
                     onChange={handleSearchChange}
+                    classNames={{
+                        inputWrapper: "bg-white dark:bg-zinc-900 shadow-sm border border-slate-200 dark:border-zinc-800"
+                    }}
                 />
 
                 <Tooltip content={hasCreatePermission ? "Agregar rol" : "No tiene permisos para agregar roles"}>

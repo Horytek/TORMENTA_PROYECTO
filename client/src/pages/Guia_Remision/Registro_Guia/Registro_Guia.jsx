@@ -67,7 +67,11 @@ export default function RegistroGuia() {
 
       if (clientesRes.success) setClientes(clientesRes.data);
       if (sucursalesRes.success) setSucursales(sucursalesRes.data);
-      if (documentoRes.success) setDocumentos(documentoRes.data);
+      if (documentoRes.success) {
+        // Ensure we handle both array and object responses for robustness
+        const docs = Array.isArray(documentoRes.data) ? documentoRes.data : [documentoRes.data];
+        setDocumentos(docs);
+      }
     };
     fetchInitialData();
   }, []);
@@ -92,7 +96,10 @@ export default function RegistroGuia() {
   const [searchInput, setSearchInput] = useState('');
   const [loadingProductos, setLoadingProductos] = useState(false);
 
-  const currentDocumento = documentos.length ? (documentos[0].guia || '') : '';
+  // Handle potential property names: 'nuevo_numero_de_guia' (from controller) or 'guia' (legacy/fallback)
+  const currentDocumento = documentos.length
+    ? (documentos[0].nuevo_numero_de_guia || documentos[0].guia || '')
+    : '';
   const [currentHour, setCurrentHour] = useState(new Date().toLocaleTimeString('en-GB', { hour12: false }));
   const [todayString] = useState(formatDate(new Date()));
 
@@ -134,12 +141,12 @@ export default function RegistroGuia() {
     }
   }, [selectedSucursalId, sucursales]);
 
-  // Sucursales Unicas
+  // Sucursales Unicas (Deduplicated by name)
   const sucursalesUnicas = useMemo(() => {
     const seen = new Set();
     return (sucursales || []).filter(s => {
-      if (!s || seen.has(s.id)) return false;
-      seen.add(s.id);
+      if (!s || seen.has(s.nombre)) return false;
+      seen.add(s.nombre);
       return true;
     });
   }, [sucursales]);
@@ -333,19 +340,46 @@ export default function RegistroGuia() {
           </CardHeader>
           <Divider className="my-2" />
           <CardBody className="gap-4 px-4 pb-4">
-            <Select label="Sucursal Origen" placeholder="Selecciona sucursal" selectedKeys={selectedSucursalId ? [selectedSucursalId] : []} onChange={(e) => setSelectedSucursalId(e.target.value)} variant="flat">
-              {sucursalesUnicas.map(s => <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>)}
+            <Select
+              label="Sucursal Origen"
+              placeholder="Selecciona sucursal"
+              selectedKeys={selectedSucursalId ? [selectedSucursalId] : []}
+              onChange={(e) => setSelectedSucursalId(e.target.value)}
+              variant="flat"
+              itemClasses={{ base: "text-slate-900 dark:text-slate-200" }}
+              popoverProps={{ classNames: { content: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800" } }}
+            >
+              {sucursalesUnicas.map(s => <SelectItem key={s.id} value={s.id} className="text-slate-700 dark:text-slate-200">{s.nombre}</SelectItem>)}
             </Select>
             <div className="flex gap-2">
-              <Select label="Cliente (Destinatario)" placeholder="Selecciona cliente" selectedKeys={selectedClienteId ? [selectedClienteId] : []} onChange={(e) => setSelectedClienteId(e.target.value)} className="flex-1" variant="flat">
-                {clientes.map(c => <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>)}
+              <Select
+                label="Cliente (Destinatario)"
+                placeholder="Selecciona cliente"
+                selectedKeys={selectedClienteId ? [selectedClienteId] : []}
+                onChange={(e) => setSelectedClienteId(e.target.value)}
+                className="flex-1"
+                variant="flat"
+                itemClasses={{ base: "text-slate-900 dark:text-slate-200" }}
+                popoverProps={{ classNames: { content: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800" } }}
+              >
+                {clientes.map(c => <SelectItem key={c.id} value={c.id} className="text-slate-700 dark:text-slate-200">
+                  {c.destinatario || c.nombre || "Cliente sin nombre"}
+                </SelectItem>)}
               </Select>
               <Button isIconOnly variant="flat" color="primary" className="h-[56px] w-[56px]" onPress={() => openModal('Nuevo Cliente', 'cliente')}><MdPersonAdd size={20} /></Button>
             </div>
             <Input label="Documento Identidad" value={documentoCliente} isReadOnly variant="flat" className="bg-slate-50" />
 
-            <Select label="Motivo de Traslado (Glosa)" placeholder="Selecciona motivo" selectedKeys={glosa ? [glosa] : []} onChange={(e) => setGlosa(e.target.value)} variant="flat">
-              {GLOSA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+            <Select
+              label="Motivo de Traslado (Glosa)"
+              placeholder="Selecciona motivo"
+              selectedKeys={glosa ? [glosa] : []}
+              onChange={(e) => setGlosa(e.target.value)}
+              variant="flat"
+              itemClasses={{ base: "text-slate-900 dark:text-slate-200" }}
+              popoverProps={{ classNames: { content: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800" } }}
+            >
+              {GLOSA_OPTIONS.map(o => <SelectItem key={o} value={o} className="text-slate-700 dark:text-slate-200">{o}</SelectItem>)}
             </Select>
             <Textarea label="Observaciones" placeholder="Detalles adicionales..." minRows={2} value={observacion} onChange={e => setObservacion(e.target.value)} variant="flat" />
           </CardBody>

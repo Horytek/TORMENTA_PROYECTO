@@ -1268,8 +1268,8 @@ export const useLibroVentasSunatData = (filters) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(5);
-    const [metadata, setMetadata] = useState({ total_records: 0, current_page: 1, per_page: 5, total_pages: 0 });
+    const [limit, setLimit] = useState(10);
+    const [metadata, setMetadata] = useState({ total_records: 0, current_page: 1, per_page: 10, total_pages: 0 });
 
     useEffect(() => {
         const fetchAllVentas = async () => {

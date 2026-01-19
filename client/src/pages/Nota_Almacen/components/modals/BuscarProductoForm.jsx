@@ -8,7 +8,14 @@ import {
   Input,
   Button,
   Chip,
-  Spinner
+  Spinner,
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Tooltip
 } from '@heroui/react';
 import { ScrollShadow } from '@heroui/react';
 import { IoMdAdd } from "react-icons/io";
@@ -180,10 +187,10 @@ const ModalBuscarProducto = ({
           <ModalHeader className="flex flex-col gap-1 pb-4 pt-6 px-8 bg-slate-50/50 dark:bg-zinc-900/20 border-b border-slate-100 dark:border-zinc-800/50">
             <div className="flex items-center justify-between w-full">
               <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-extrabold text-blue-900 dark:text-blue-100 tracking-tight">
+                <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">
                   Buscar producto
                 </h2>
-                <span className="text-xs font-semibold text-blue-500/80 dark:text-blue-400/70">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
                   Filtra por descripción o código de barras
                 </span>
               </div>
@@ -233,7 +240,7 @@ const ModalBuscarProducto = ({
                 }}
               />
               <Button
-                className="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 font-bold h-11 rounded-xl px-6"
+                className="bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-slate-300 font-bold h-11 rounded-xl px-6"
                 variant="flat"
                 startContent={<RiRefreshLine size={18} />}
                 onPress={resetFiltros}
@@ -241,7 +248,7 @@ const ModalBuscarProducto = ({
                 Reset
               </Button>
               <Button
-                className="bg-emerald-500 text-white font-bold h-11 rounded-xl px-6 shadow-md shadow-emerald-500/20"
+                className="bg-blue-600 text-white font-bold h-11 rounded-xl px-6 shadow-md shadow-blue-500/20"
                 startContent={<IoMdAdd size={20} />}
                 onPress={handleModalAdd}
               >
@@ -249,77 +256,123 @@ const ModalBuscarProducto = ({
               </Button>
             </div>
 
-            <div className="rounded-2xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
-              <ScrollShadow hideScrollBar className="max-h-[450px]">
-                <table className="min-w-full text-sm">
-                  <thead className="sticky top-0 z-20 bg-white dark:bg-zinc-900 border-b border-slate-100 dark:border-zinc-800">
-                    <tr className="text-left">
-                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider">Código</th>
-                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider">Descripción</th>
-                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider">Marca</th>
-                      {!hideStock && <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider text-center">Stock</th>}
-                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider text-center w-32">Cantidad</th>
-                      <th className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider text-center w-20">Añadir</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50 dark:divide-zinc-800">
-                    {productos.length === 0 && emptyState}
-                    {productos.map((producto, idx) => {
-                      const lowStock = !hideStock && producto.stock <= 0;
+            {/* Tabla Compacta Clean UI */}
+            <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
+              <ScrollShadow className="h-[450px] w-full" hideScrollBar>
+                <Table
+                  aria-label="Tabla de búsqueda de productos"
+                  removeWrapper
+                  radius="none"
+                  classNames={{
+                    base: "min-w-full",
+                    table: "min-w-full",
+                    thead: "sticky top-0 z-20 bg-slate-50 dark:bg-zinc-800",
+                    th: "bg-slate-50 dark:bg-zinc-800/50 text-slate-500 font-semibold text-[10px] uppercase tracking-wider h-8 border-b border-slate-100 dark:border-zinc-800",
+                    td: "py-2 px-4 border-b border-slate-50 dark:border-zinc-800/50",
+                    tr: "hover:bg-slate-50/60 dark:hover:bg-zinc-800/50 transition-colors"
+                  }}
+                  shadow="none"
+                  isCompact
+                >
+                  <TableHeader>
+                    <TableColumn className="w-24">CÓDIGO</TableColumn>
+                    <TableColumn>DESCRIPCIÓN</TableColumn>
+                    <TableColumn className="w-32">MARCA</TableColumn>
+                    {!hideStock && <TableColumn className="text-center w-24">STOCK</TableColumn>}
+                    <TableColumn className="text-center w-32">CANTIDAD</TableColumn>
+                    <TableColumn className="text-center w-20">ACCIÓN</TableColumn>
+                  </TableHeader>
+                  <TableBody
+                    emptyContent={
+                      isSearching ? (
+                        <div className="flex flex-col items-center justify-center gap-3 py-10">
+                          <Spinner size="sm" color="primary" />
+                          <span className="text-slate-500 text-xs">Buscando...</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 py-12">
+                          <FiSearch className="text-2xl text-slate-300" />
+                          <span className="text-slate-500 font-medium text-sm">Sin resultados</span>
+                        </div>
+                      )
+                    }
+                  >
+                    {productos.map((item) => {
+                      const lowStock = !hideStock && item.stock <= 0;
                       return (
-                        <tr
-                          key={producto.codigo}
-                          className="bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group"
-                        >
-                          <td className="py-4 px-6 font-bold text-blue-600 dark:text-blue-400 text-xs">
-                            {producto.codigo}
-                          </td>
-                          <td className="py-4 px-6 text-slate-700 dark:text-slate-300 font-medium text-sm">
-                            {highlight(producto.descripcion)}
-                          </td>
-                          <td className="py-4 px-6 text-slate-500 dark:text-slate-400 text-xs font-medium">
-                            {producto.marca || '-'}
-                          </td>
+                        <TableRow key={item.codigo}>
+                          <TableCell>
+                            <span className="font-mono text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                              {item.codigo}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                {highlight(item.descripcion)}
+                              </span>
+                              {item.cod_barras && (
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  {item.cod_barras}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-zinc-800/50 px-2 py-0.5 rounded-full border border-slate-100 dark:border-zinc-700">
+                              {item.marca || '-'}
+                            </span>
+                          </TableCell>
                           {!hideStock && (
-                            <td className="py-4 px-6 text-center">
-                              <div className={`inline-flex items-center justify-center h-8 px-3 rounded-full border ${lowStock
-                                ? "bg-rose-50 text-rose-500 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800"
-                                : "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"
-                                }`}>
-                                <span className="text-xs font-bold">{producto.stock}</span>
+                            <TableCell>
+                              <div className="flex justify-center items-center gap-1.5">
+                                <div className={`w-2 h-2 rounded-full ${item.stock > 10 ? "bg-emerald-500" : item.stock > 0 ? "bg-amber-500" : "bg-rose-500"}`} />
+                                <span className={`text-[11px] font-bold ${item.stock > 0 ? "text-slate-600 dark:text-slate-300" : "text-rose-500"}`}>
+                                  {item.stock}
+                                </span>
                               </div>
-                            </td>
+                            </TableCell>
                           )}
-                          <td className="py-4 px-6">
+                          <TableCell>
                             <Input
                               type="number"
+                              size="sm"
+                              variant="flat"
                               min={1}
-                              value={cantidades[producto.codigo] !== undefined ? String(cantidades[producto.codigo]) : "1"}
-                              onValueChange={(value) => handleCantidadChange(producto.codigo, value)}
-                              size="sm"
+                              value={cantidades[item.codigo] ?? 1}
+                              onValueChange={(val) => handleCantidadChange(item.codigo, val)}
+                              isDisabled={lowStock}
+                              className="w-16 mx-auto"
                               classNames={{
-                                inputWrapper: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 h-9 shadow-sm hover:border-blue-400 focus-within:border-blue-500 transition-colors",
-                                input: "text-center font-bold text-slate-700 dark:text-white"
+                                input: "text-center font-bold text-slate-700 dark:text-white text-[12px]",
+                                inputWrapper: "h-7 min-h-7 bg-slate-100 dark:bg-zinc-800 shadow-none hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-md"
                               }}
-                              isDisabled={lowStock}
                             />
-                          </td>
-                          <td className="py-4 px-6 text-center">
-                            <Button
-                              className="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 min-w-8 w-9 h-9 rounded-lg"
-                              isIconOnly
-                              size="sm"
-                              onPress={() => handleAgregarProducto(producto)}
-                              isDisabled={lowStock}
-                            >
-                              <IoMdAdd size={18} />
-                            </Button>
-                          </td>
-                        </tr>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-center">
+                              <Tooltip content="Agregar" delay={0} closeDelay={0} className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 shadow-sm rounded-lg px-2 py-1">
+                                <Button
+                                  isIconOnly
+                                  size="sm"
+                                  variant="flat"
+                                  isDisabled={lowStock}
+                                  onPress={() => handleAgregarProducto(item)}
+                                  className={`w-7 h-7 min-w-7 rounded-md transition-all ${lowStock
+                                    ? "bg-slate-100 text-slate-300 dark:bg-zinc-800 dark:text-zinc-600"
+                                    : "bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-600 dark:hover:text-white"
+                                    }`}
+                                >
+                                  <IoMdAdd className="text-lg" />
+                                </Button>
+                              </Tooltip>
+                            </div>
+                          </TableCell>
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </ScrollShadow>
             </div>
           </ModalBody>
@@ -340,17 +393,19 @@ const ModalBuscarProducto = ({
         </>
       </ModalContent>
 
-      {activeAdd && (
-        <ProductosForm
-          modalTitle="Nuevo Producto"
-          onClose={handleCloseProductosForm}
-          onSuccess={() => {
-            toast.success("Producto creado. Actualizando…");
-            triggerSearch();
-          }}
-        />
-      )}
-    </Modal>
+      {
+        activeAdd && (
+          <ProductosForm
+            modalTitle="Nuevo Producto"
+            onClose={handleCloseProductosForm}
+            onSuccess={() => {
+              toast.success("Producto creado. Actualizando…");
+              triggerSearch();
+            }}
+          />
+        )
+      }
+    </Modal >
   );
 };
 

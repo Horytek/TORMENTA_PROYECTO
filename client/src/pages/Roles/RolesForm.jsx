@@ -104,7 +104,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                             {...field}
                                             label="Nombre del Rol"
                                             placeholder="Ingrese el nombre del rol"
-                                            variant="bordered"
+                                            variant="faded"
                                             color={errors.nom_rol ? "danger" : "default"}
                                             errorMessage={errors.nom_rol?.message}
                                             isRequired
@@ -121,7 +121,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                     render={({ field }) => (
                                         <Select
                                             label="Estado"
-                                            variant="bordered"
+                                            variant="faded"
                                             selectedKeys={new Set([String(field.value)])}
                                             onSelectionChange={(keys) => {
                                                 const val = Array.from(keys)[0];

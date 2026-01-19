@@ -269,7 +269,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Documento"
-                        variant="bordered"
+                        variant="faded"
                         labelPlacement="outside"
                         placeholder="Ingrese documento"
                         value={documento}
@@ -288,7 +288,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Select
                         {...field}
                         label="Estado"
-                        variant="bordered"
+                        variant="faded"
                         labelPlacement="outside"
                         placeholder="Seleccione estado"
                         selectedKeys={field.value ? [field.value] : []}
@@ -313,7 +313,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Nombre"
-                          variant="bordered"
+                          variant="faded"
                           labelPlacement="outside"
                           placeholder="Ingrese nombres"
                           color={errors.nombre ? "danger" : "default"}
@@ -331,7 +331,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Apellidos"
-                          variant="bordered"
+                          variant="faded"
                           labelPlacement="outside"
                           placeholder="Ingrese apellidos"
                           color={errors.apellidos ? "danger" : "default"}
@@ -352,7 +352,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Razón Social"
-                        variant="bordered"
+                        variant="faded"
                         labelPlacement="outside"
                         placeholder="Ingrese razón social"
                         color={errors.razonsocial ? "danger" : "default"}
@@ -371,7 +371,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Teléfono"
-                        variant="bordered"
+                        variant="faded"
                         labelPlacement="outside"
                         placeholder="Ingrese teléfono"
                         color={errors.telefono ? "danger" : "default"}
@@ -388,7 +388,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                       <Input
                         {...field}
                         label="Ubicación"
-                        variant="bordered"
+                        variant="faded"
                         labelPlacement="outside"
                         placeholder="Ingrese ubicación"
                         color={errors.ubicacion ? "danger" : "default"}
@@ -406,7 +406,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     <Input
                       {...field}
                       label="Dirección"
-                      variant="bordered"
+                      variant="faded"
                       labelPlacement="outside"
                       placeholder="Ingrese dirección"
                       color={errors.direccion ? "danger" : "default"}
@@ -422,7 +422,7 @@ const DestinatariosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     <Input
                       {...field}
                       label="Email"
-                      variant="bordered"
+                      variant="faded"
                       labelPlacement="outside"
                       placeholder="Ingrese email"
                       color={errors.email ? "danger" : "default"}

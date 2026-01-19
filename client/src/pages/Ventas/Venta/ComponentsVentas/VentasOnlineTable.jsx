@@ -175,12 +175,12 @@ const VentasOnlineTable = ({
                                 size="sm"
                                 selectedKeys={[String(ventasPerPage)]}
                                 onChange={(e) => setVentasPerPage(Number(e.target.value))}
-                                className="w-20"
+                                className="w-28"
                             >
-                                <SelectItem key="5" value="5">5</SelectItem>
-                                <SelectItem key="10" value="10">10</SelectItem>
-                                <SelectItem key="25" value="25">25</SelectItem>
-                                <SelectItem key="50" value="50">50</SelectItem>
+                                <SelectItem key="10" value="10">10 filas</SelectItem>
+                                <SelectItem key="20" value="20">20 filas</SelectItem>
+                                <SelectItem key="50" value="50">50 filas</SelectItem>
+                                <SelectItem key="100" value="100">100 filas</SelectItem>
                             </Select>
                         </div>
                         <Pagination

@@ -17,7 +17,7 @@ setInterval(() => {
 //MOSTRAR TODAS LAS GUIAS DE REMISION - OPTIMIZADO
 const getGuias = async (req, res) => {
     console.log('Parámetros recibidos en getGuias:', req.query);
-    
+
     let connection;
     const {
         page = 0,
@@ -44,7 +44,7 @@ const getGuias = async (req, res) => {
                 ${nombre_sucursal ? 'AND EXISTS (SELECT 1 FROM sucursal s WHERE s.id_sucursal = gr.id_sucursal AND s.nombre_sucursal LIKE ?)' : ''}
                 AND gr.f_generacion BETWEEN ? AND ?
         `;
-        
+
         const countParams = [id_tenant];
         if (num_guia) countParams.push(`%${num_guia}%`);
         if (documento) {
@@ -126,9 +126,9 @@ const getGuias = async (req, res) => {
             ORDER BY gp.num_guia ASC
             `,
             [
-                id_tenant, 
+                id_tenant,
                 num_guia, `%${num_guia}%`,
-                documento, `${documento}%`, `${documento}%`, 
+                documento, `${documento}%`, `${documento}%`,
                 fecha_i, fecha_e,
                 nombre_sucursal, `${nombre_sucursal}%`,
                 parseInt(limit), parseInt(offset),
@@ -138,27 +138,27 @@ const getGuias = async (req, res) => {
 
         // Agrupar los resultados por guía
         const guiasMap = new Map();
-        
+
         for (const row of guiasConDetalles) {
             const guiaId = row.id;
-            
+
             if (!guiasMap.has(guiaId)) {
-                const { 
-                    detalle_codigo: _detalle_codigo, 
-                    detalle_marca: _detalle_marca, 
-                    detalle_descripcion: _detalle_descripcion, 
-                    detalle_cantidad: _detalle_cantidad, 
-                    detalle_um: _detalle_um, 
-                    detalle_precio: _detalle_precio, 
-                    ...guiaData 
+                const {
+                    detalle_codigo: _detalle_codigo,
+                    detalle_marca: _detalle_marca,
+                    detalle_descripcion: _detalle_descripcion,
+                    detalle_cantidad: _detalle_cantidad,
+                    detalle_um: _detalle_um,
+                    detalle_precio: _detalle_precio,
+                    ...guiaData
                 } = row;
-                
+
                 guiasMap.set(guiaId, {
                     ...guiaData,
                     detalles: []
                 });
             }
-            
+
             // Agregar detalle si existe
             if (row.detalle_codigo) {
                 guiasMap.get(guiaId).detalles.push({
@@ -188,7 +188,7 @@ const getGuias = async (req, res) => {
 //SUCURSALES - OPTIMIZADO CON CACHÉ
 const getSucursal = async (req, res) => {
     const cacheKey = `sucursales_${req.id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
@@ -197,7 +197,7 @@ const getSucursal = async (req, res) => {
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -208,13 +208,13 @@ const getSucursal = async (req, res) => {
              ORDER BY nombre_sucursal`,
             [req.id_tenant]
         );
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
+
         res.json({ code: 1, data: result, message: "Sucursales listadas" });
     } catch (error) {
         console.error('Error en getSucursal:', error);
@@ -229,7 +229,7 @@ const getSucursal = async (req, res) => {
 //UBIGEO - OPTIMIZADO CON CACHÉ
 const getUbigeoGuia = async (req, res) => {
     const cacheKey = `ubigeo_${req.id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
@@ -238,7 +238,7 @@ const getUbigeoGuia = async (req, res) => {
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -250,13 +250,13 @@ const getUbigeoGuia = async (req, res) => {
              ORDER BY departamento, provincia, distrito`,
             [req.id_tenant]
         );
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
+
         res.json({ code: 1, data: result, message: "Ubigeo listados" });
     } catch (error) {
         console.error('Error en getUbigeoGuia:', error);
@@ -291,10 +291,10 @@ const generarCodigoGuia = async (req, res) => {
     }
 };
 
-//DESTINATARIOS - OPTIMIZADO CON CACHÉ
+//DESTINATARIOS - OPTIMIZADO CON CACHÉ Y UNIFICADO CON CLIENTES
 const getDestinatariosGuia = async (req, res) => {
-    const cacheKey = `destinatarios_${req.id_tenant}`;
-    
+    const cacheKey = `destinatarios_unificados_${req.id_tenant}`;
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
@@ -303,13 +303,14 @@ const getDestinatariosGuia = async (req, res) => {
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
         const [result] = await connection.query(
-            `SELECT 
-                id_destinatario AS id,
+            `
+            SELECT 
+                CAST(id_destinatario AS CHAR) AS id,
                 COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS destinatario,
                 COALESCE(dni, ruc) AS documento, 
                 ubicacion
@@ -317,19 +318,35 @@ const getDestinatariosGuia = async (req, res) => {
             WHERE id_tenant = ?
                 AND ((nombres IS NOT NULL AND nombres <> '' AND apellidos IS NOT NULL AND apellidos <> '')
                     OR (razon_social IS NOT NULL AND razon_social <> ''))
-            ORDER BY 
-                CASE WHEN COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) = 'Clientes Varios' 
-                     THEN 0 ELSE 1 END,
-                destinatario`,
-            [req.id_tenant]
+            
+            UNION
+            
+            SELECT 
+                CONCAT('C-', id_cliente) AS id,
+                COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS destinatario,
+                COALESCE(dni, ruc) AS documento,
+                direccion AS ubicacion
+            FROM cliente c
+            WHERE id_tenant = ?
+                AND NOT EXISTS (
+                    SELECT 1 FROM destinatario d 
+                    WHERE d.id_tenant = c.id_tenant 
+                    AND (
+                        (d.dni IS NOT NULL AND d.dni = c.dni) OR 
+                        (d.ruc IS NOT NULL AND d.ruc = c.ruc)
+                    )
+                )
+            ORDER BY destinatario
+            `,
+            [req.id_tenant, req.id_tenant]
         );
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
+
         res.json({ code: 1, data: result, message: "Destinatarios listados" });
     } catch (error) {
         console.error('Error en getDestinatariosGuia:', error);
@@ -344,7 +361,7 @@ const getDestinatariosGuia = async (req, res) => {
 //OBTENER TRANSPORTE PÚBLICO - OPTIMIZADO
 const getTransportePublicoGuia = async (req, res) => {
     const cacheKey = `transporte_publico_${req.id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
@@ -353,7 +370,7 @@ const getTransportePublicoGuia = async (req, res) => {
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -370,13 +387,13 @@ const getTransportePublicoGuia = async (req, res) => {
              ORDER BY t.razon_social`,
             [req.id_tenant]
         );
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
+
         res.json({ code: 1, data: result, message: "Transportes Públicos listados" });
     } catch (error) {
         console.error('Error en getTransportePublicoGuia:', error);
@@ -391,7 +408,7 @@ const getTransportePublicoGuia = async (req, res) => {
 //OBTENER TRANSPORTE PRIVADO - OPTIMIZADO
 const getTransportePrivadoGuia = async (req, res) => {
     const cacheKey = `transporte_privado_${req.id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
@@ -400,7 +417,7 @@ const getTransportePrivadoGuia = async (req, res) => {
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -417,13 +434,13 @@ const getTransportePrivadoGuia = async (req, res) => {
              ORDER BY t.nombres, t.apellidos`,
             [req.id_tenant]
         );
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
+
         res.json({ code: 1, data: result, message: "Transportes Privados listados" });
     } catch (error) {
         console.error('Error en getTransportePrivadoGuia:', error);
@@ -464,12 +481,12 @@ const addTransportistaPublico = async (req, res) => {
 
     // Validación mejorada
     if (!id || !ruc || !razon_social || !ubicacion) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "Campos requeridos: id, ruc, razon_social, ubicacion" 
+        return res.status(400).json({
+            code: 0,
+            message: "Campos requeridos: id, ruc, razon_social, ubicacion"
         });
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -479,26 +496,26 @@ const addTransportistaPublico = async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [id, placa || null, ruc, razon_social, ubicacion, telefono || null, id_tenant]
         );
-        
+
         // Limpiar caché relacionado
         queryCache.delete(`transporte_publico_${id_tenant}`);
-        
-        res.json({ 
-            code: 1, 
+
+        res.json({
+            code: 1,
             message: "Transportista público añadido exitosamente",
-            id_transportista: id 
+            id_transportista: id
         });
     } catch (error) {
         console.error('Error en addTransportistaPublico:', error);
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "El transportista ya existe" 
+            res.status(400).json({
+                code: 0,
+                message: "El transportista ya existe"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -515,12 +532,12 @@ const addTransportistaPrivado = async (req, res) => {
 
     // Validación mejorada
     if (!id || !dni || !nombres || !apellidos || !ubicacion) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "Campos requeridos: id, dni, nombres, apellidos, ubicacion" 
+        return res.status(400).json({
+            code: 0,
+            message: "Campos requeridos: id, dni, nombres, apellidos, ubicacion"
         });
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -530,26 +547,26 @@ const addTransportistaPrivado = async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, placa || null, dni, nombres, apellidos, ubicacion, telefono || null, id_tenant]
         );
-        
+
         // Limpiar caché relacionado
         queryCache.delete(`transporte_privado_${id_tenant}`);
-        
-        res.json({ 
-            code: 1, 
+
+        res.json({
+            code: 1,
             message: "Transportista privado añadido exitosamente",
-            id_transportista: id 
+            id_transportista: id
         });
     } catch (error) {
         console.error('Error en addTransportistaPrivado:', error);
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "El transportista ya existe" 
+            res.status(400).json({
+                code: 0,
+                message: "El transportista ya existe"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -564,7 +581,7 @@ const addTransportistaPrivado = async (req, res) => {
 //OBTENER VEHÍCULOS - OPTIMIZADO
 const getVehiculos = async (req, res) => {
     const cacheKey = `vehiculos_${req.id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
@@ -573,7 +590,7 @@ const getVehiculos = async (req, res) => {
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -584,13 +601,13 @@ const getVehiculos = async (req, res) => {
              ORDER BY placa`,
             [req.id_tenant]
         );
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: vehiculos,
             timestamp: Date.now()
         });
-        
+
         res.json({ code: 1, data: vehiculos, message: "Vehículos listados" });
     } catch (error) {
         console.error('Error en getVehiculos:', error);
@@ -610,12 +627,12 @@ const addVehiculo = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     if (!placa || !tipo) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "Campos requeridos: placa, tipo" 
+        return res.status(400).json({
+            code: 0,
+            message: "Campos requeridos: placa, tipo"
         });
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
@@ -623,28 +640,28 @@ const addVehiculo = async (req, res) => {
             `INSERT INTO vehiculo (placa, tipo, id_tenant) VALUES (?, ?, ?)`,
             [placa.toUpperCase(), tipo, id_tenant]
         );
-        
+
         // Limpiar caché relacionado
         queryCache.delete(`vehiculos_${id_tenant}`);
         queryCache.delete(`transporte_publico_${id_tenant}`);
         queryCache.delete(`transporte_privado_${id_tenant}`);
-        
-        res.json({ 
-            code: 1, 
+
+        res.json({
+            code: 1,
             message: "Vehículo añadido exitosamente",
-            placa: placa.toUpperCase() 
+            placa: placa.toUpperCase()
         });
     } catch (error) {
         console.error('Error en addVehiculo:', error);
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "La placa ya está registrada" 
+            res.status(400).json({
+                code: 0,
+                message: "La placa ya está registrada"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -675,15 +692,15 @@ const getProductos = async (req, res) => {
             INNER JOIN 
                 marca m ON p.id_marca = m.id_marca
             WHERE p.id_tenant = ?`;
-        
+
         const params = [id_tenant];
-        
+
         // Solo agregar condiciones si hay valores de búsqueda
         if (descripcion) {
             query += ` AND p.descripcion LIKE ?`;
             params.push(`%${descripcion}%`);
         }
-        
+
         if (codbarras) {
             // Si es búsqueda exacta de código de barras, es más eficiente
             if (!codbarras.includes('%')) {
@@ -694,7 +711,7 @@ const getProductos = async (req, res) => {
                 params.push(`%${codbarras}%`);
             }
         }
-        
+
         query += ` ORDER BY p.descripcion LIMIT 100`; // Limitar resultados para evitar sobrecarga
 
         const [productosResult] = await connection.query(query, params);
@@ -715,9 +732,9 @@ const addDestinatarioNatural = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     if (!dni || !nombres || !apellidos || !ubicacion) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "Campos requeridos: dni, nombres, apellidos, ubicacion" 
+        return res.status(400).json({
+            code: 0,
+            message: "Campos requeridos: dni, nombres, apellidos, ubicacion"
         });
     }
 
@@ -729,26 +746,26 @@ const addDestinatarioNatural = async (req, res) => {
              VALUES (?, ?, ?, ?, ?)`,
             [dni, nombres.trim(), apellidos.trim(), ubicacion, id_tenant]
         );
-        
+
         // Limpiar caché
         queryCache.delete(`destinatarios_${id_tenant}`);
-        
-        res.json({ 
-            code: 1, 
+
+        res.json({
+            code: 1,
             message: "Destinatario natural añadido exitosamente",
-            id_destinatario: result.insertId 
+            id_destinatario: result.insertId
         });
     } catch (error) {
         console.error('Error en addDestinatarioNatural:', error);
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "El destinatario ya existe" 
+            res.status(400).json({
+                code: 0,
+                message: "El destinatario ya existe"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -764,9 +781,9 @@ const addDestinatarioJuridico = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     if (!ruc || !razon_social || !ubicacion) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "Campos requeridos: ruc, razon_social, ubicacion" 
+        return res.status(400).json({
+            code: 0,
+            message: "Campos requeridos: ruc, razon_social, ubicacion"
         });
     }
 
@@ -778,26 +795,26 @@ const addDestinatarioJuridico = async (req, res) => {
              VALUES (?, ?, ?, ?)`,
             [ruc, razon_social.trim(), ubicacion, id_tenant]
         );
-        
+
         // Limpiar caché
         queryCache.delete(`destinatarios_${id_tenant}`);
-        
-        res.json({ 
-            code: 1, 
+
+        res.json({
+            code: 1,
             message: "Destinatario jurídico añadido exitosamente",
-            id_destinatario: result.insertId 
+            id_destinatario: result.insertId
         });
     } catch (error) {
         console.error('Error en addDestinatarioJuridico:', error);
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "El destinatario ya existe" 
+            res.status(400).json({
+                code: 0,
+                message: "El destinatario ya existe"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -813,9 +830,9 @@ const anularGuia = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     if (!guiaId) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El ID de la guía es necesario." 
+            message: "El ID de la guía es necesario."
         });
     }
 
@@ -836,24 +853,24 @@ const anularGuia = async (req, res) => {
         );
 
         if (updateResult.affectedRows === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                message: "Guía de remisión no encontrada o ya anulada." 
+                message: "Guía de remisión no encontrada o ya anulada."
             });
         }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
-            message: 'Guía de remisión anulada correctamente' 
+        res.json({
+            code: 1,
+            message: 'Guía de remisión anulada correctamente'
         });
     } catch (error) {
         console.error('Error en anularGuia:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error interno del servidor" 
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -865,39 +882,39 @@ const anularGuia = async (req, res) => {
 // INSERTAR GUÍA DE REMISIÓN Y DETALLES - OPTIMIZADO CON BATCH INSERT
 const insertGuiaRemisionAndDetalle = async (req, res) => {
     console.log('Datos recibidos en insertGuiaRemisionAndDetalle:', req.body);
-    
+
     const {
-        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista, 
-        glosa, dir_partida, dir_destino, canti, peso, observacion, 
+        id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario, id_transportista,
+        glosa, dir_partida, dir_destino, canti, peso, observacion,
         f_generacion, h_generacion, total, producto, num_comprobante, cantidad
     } = req.body;
     const id_tenant = req.id_tenant;
 
     // Validación mejorada con detalle de campos faltantes
     const camposRequeridos = {
-        id_sucursal, 
-        id_ubigeo_o, 
-        id_ubigeo_d, 
-        id_destinatario, 
-        id_transportista, 
-        glosa, 
-        f_generacion, 
-        h_generacion, 
-        producto, 
-        num_comprobante, 
+        id_sucursal,
+        id_ubigeo_o,
+        id_ubigeo_d,
+        id_destinatario,
+        id_transportista,
+        glosa,
+        f_generacion,
+        h_generacion,
+        producto,
+        num_comprobante,
         cantidad
     };
-    
+
     const camposFaltantes = [];
     for (const [campo, valor] of Object.entries(camposRequeridos)) {
         if (!valor || (Array.isArray(valor) && valor.length === 0)) {
             camposFaltantes.push(campo);
         }
     }
-    
+
     if (camposFaltantes.length > 0) {
         console.error('Campos requeridos faltantes:', camposFaltantes);
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
             message: `Faltan campos requeridos: ${camposFaltantes.join(', ')}`
         });
@@ -905,9 +922,9 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
 
     // Validar que producto y cantidad tengan la misma longitud
     if (!Array.isArray(producto) || !Array.isArray(cantidad) || producto.length !== cantidad.length) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "Los productos y cantidades deben ser arrays del mismo tamaño" 
+            message: "Los productos y cantidades deben ser arrays del mismo tamaño"
         });
     }
 
@@ -946,14 +963,14 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
         if (producto.length > 0) {
             const detalleValues = [];
             const detalleParams = [];
-            
+
             for (let i = 0; i < producto.length; i++) {
                 detalleValues.push('(?, ?, ?, ?, ?)');
                 detalleParams.push(
-                    id_guiaremision, 
-                    producto[i], 
-                    cantidad[i], 
-                    'KGM', 
+                    id_guiaremision,
+                    producto[i],
+                    cantidad[i],
+                    'KGM',
                     id_tenant
                 );
             }
@@ -963,32 +980,32 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
                 INSERT INTO detalle_envio 
                 (id_guiaremision, id_producto, cantidad, undm, id_tenant) 
                 VALUES ${detalleValues.join(', ')}`;
-            
+
             const [detalleResult] = await connection.query(batchQuery, detalleParams);
-            
+
             if (detalleResult.affectedRows !== producto.length) {
                 throw new Error('Error al insertar todos los detalles del envío');
             }
         }
 
         await connection.commit();
-        
+
         // Limpiar caché relacionado
         queryCache.clear();
-        
-        res.json({ 
-            code: 1, 
+
+        res.json({
+            code: 1,
             message: 'Guía de remisión y detalles insertados correctamente',
-            id_guiaremision 
+            id_guiaremision
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en insertGuiaRemisionAndDetalle:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error al insertar guía de remisión" 
+        res.status(500).json({
+            code: 0,
+            message: "Error al insertar guía de remisión"
         });
     } finally {
         if (connection) {

@@ -9,7 +9,7 @@ import {
   Input,
   Button,
 } from '@heroui/react';
-import { IoMdClose } from "react-icons/io";
+
 import { FaRegPlusSquare } from "react-icons/fa";
 import { generarCodigoTransportista, addTransportistaPrivado } from '@/services/guiaRemision.services';
 import ModalVehiculo from './ModalVehiculo';
@@ -67,13 +67,13 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
       isOpen={true}
       onClose={closeModel}
       size="lg"
-      backdrop="blur"
+      backdrop="opaque"
       classNames={{
-        backdrop: "z-[1200] bg-white/10",
-        base: "z-[1210] pointer-events-auto bg-white/80 dark:bg-zinc-900/80 supports-[backdrop-filter]:backdrop-blur-xl border border-blue-100/40 dark:border-zinc-700/50 shadow-2xl rounded-2xl",
-        header: "px-6 py-4 border-b border-blue-100/30 dark:border-zinc-700/40",
-        body: "px-6 pb-4 pt-4",
-        footer: "px-6 py-4 border-t border-blue-100/30 dark:border-zinc-700/40"
+        backdrop: "bg-slate-900/50 backdrop-blur-sm",
+        base: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl rounded-2xl",
+        header: "px-6 py-4 border-b border-slate-100 dark:border-zinc-800",
+        body: "px-6 py-4",
+        footer: "px-6 py-4 border-t border-slate-100 dark:border-zinc-800"
       }}
       motionProps={{
         variants: {
@@ -84,12 +84,7 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
     >
       <ModalContent>
         <ModalHeader>
-          <div className="flex justify-between items-center w-full">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-blue-100">{modalTitle}</h2>
-            <Button isIconOnly variant="light" size="sm" onPress={closeModel}>
-              <IoMdClose className="text-lg" />
-            </Button>
-          </div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-blue-100">{modalTitle}</h2>
         </ModalHeader>
 
         <ModalBody>
@@ -107,7 +102,7 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
               placeholder="Ingrese el DNI"
               value={dni}
               onChange={(e) => setDni(e.target.value)}
-              classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+              classNames={{ inputWrapper: "bg-slate-50 border border-slate-200 dark:bg-zinc-800 dark:border-zinc-700" }}
             />
             <div className="grid grid-cols-2 gap-3">
               <Input
@@ -116,7 +111,7 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
                 placeholder="Ingrese los apellidos"
                 value={apellidos}
                 onChange={(e) => setApellidos(e.target.value)}
-                classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+                classNames={{ inputWrapper: "bg-slate-50 border border-slate-200 dark:bg-zinc-800 dark:border-zinc-700" }}
               />
               <Input
                 variant="flat"
@@ -124,7 +119,7 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
                 placeholder="Ingrese los nombres"
                 value={nombres}
                 onChange={(e) => setNombres(e.target.value)}
-                classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+                classNames={{ inputWrapper: "bg-slate-50 border border-slate-200 dark:bg-zinc-800 dark:border-zinc-700" }}
               />
             </div>
             <div>
@@ -156,7 +151,7 @@ export const ModalTransporte = ({ modalTitle, closeModel, onTransportistaAdded }
               placeholder="Ingrese el teléfono"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
-              classNames={{ inputWrapper: "bg-white/50 dark:bg-zinc-800/50 border border-slate-200/50" }}
+              classNames={{ inputWrapper: "bg-slate-50 border border-slate-200 dark:bg-zinc-800 dark:border-zinc-700" }}
             />
           </div>
         </ModalBody>

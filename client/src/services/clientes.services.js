@@ -5,7 +5,8 @@ import {
     deactivateClienteRequest,
     getClientesRequest,
     updateClienteRequest,
-    deleteClienteRequest
+    deleteClienteRequest,
+    getClientesExternosRequest
 } from "@/api/api.cliente";
 
 // --- useAddClient ---
@@ -144,21 +145,47 @@ export const useGetClientes = (
             setLoading(true);
             setError(null);
             try {
-                // Trae todos los clientes sin filtros ni paginación
-                const response = await getClientesRequest({
-                    page: 1,
-                    limit: 1000000, // Traer todos
-                });
-                if (response.data.code === 1) {
-                    const clientesConId = response.data.data.map(cliente => ({
+                // Fetch local and external clients in parallel
+                const [localRes, externalRes] = await Promise.all([
+                    getClientesRequest({ page: 1, limit: 1000000 }), // Traer todos los locales
+                    getClientesExternosRequest()
+                ]);
+
+                let combinedClients = [];
+
+                // Process Local Clients
+                if (localRes.data.code === 1) {
+                    const localClients = localRes.data.data.map(cliente => ({
                         id: cliente.id_cliente,
                         ...cliente,
+                        origen: 'local'
                     }));
-                    setAllClientes(clientesConId);
-                } else {
-                    setError('Error inesperado al obtener clientes.');
+                    combinedClients = [...combinedClients, ...localClients];
                 }
+
+                // Process External Clients
+                if (externalRes.data.code === 1) {
+                    const externalClients = externalRes.data.data.map(cliente => ({
+                        id: `EXT-${cliente.id_cliente}`, // ID único para el frontend
+                        ...cliente,
+                        // Asegurar campos necesarios
+                        id_cliente: cliente.id_cliente
+                        // origen: 'externo' viene del backend
+                    }));
+                    combinedClients = [...combinedClients, ...externalClients];
+                }
+
+                // Ordenar por fecha (descendente)
+                combinedClients.sort((a, b) => {
+                    const dateA = new Date(a.f_creacion);
+                    const dateB = new Date(b.f_creacion);
+                    return dateB - dateA;
+                });
+
+                setAllClientes(combinedClients);
+
             } catch (err) {
+                console.error("Error fetching clients", err);
                 setError(err.message || 'Error de conexión');
             } finally {
                 setLoading(false);

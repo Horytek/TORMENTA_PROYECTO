@@ -220,7 +220,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="DNI"
-                          variant="bordered"
+                          variant="faded"
                           color={errors.dni ? "danger" : "default"}
                           errorMessage={errors.dni?.message}
                           isRequired
@@ -239,7 +239,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                           <Select
                             {...field}
                             label="Usuario"
-                            variant="bordered"
+                            variant="faded"
                             placeholder="Seleccione un usuario"
                             selectedKeys={field.value ? [field.value.toString()] : []}
                             onChange={(e) => field.onChange(e.target.value)}
@@ -297,7 +297,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Nombre"
-                          variant="bordered"
+                          variant="faded"
                           color={errors.nombres ? "danger" : "default"}
                           errorMessage={errors.nombres?.message}
                           isRequired
@@ -315,7 +315,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Apellidos"
-                          variant="bordered"
+                          variant="faded"
                           color={errors.apellidos ? "danger" : "default"}
                           errorMessage={errors.apellidos?.message}
                           isRequired
@@ -359,7 +359,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                         <Input
                           {...field}
                           label="Teléfono"
-                          variant="bordered"
+                          variant="faded"
                           color={errors.telefono ? "danger" : "default"}
                           errorMessage={errors.telefono?.message}
                           isRequired
@@ -412,7 +412,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
 
                   <Input
                     label="Usuario"
-                    variant="bordered"
+                    variant="faded"
                     value={newUserData.usua}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, usua: e.target.value }))}
                     isRequired
@@ -420,7 +420,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                   <Input
                     label="Contraseña"
                     type="password"
-                    variant="bordered"
+                    variant="faded"
                     value={newUserData.contra}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, contra: e.target.value }))}
                     isRequired
@@ -428,7 +428,7 @@ const VendedoresForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
 
                   <Select
                     label="Estado"
-                    variant="bordered"
+                    variant="faded"
                     selectedKeys={[newUserData.estado_usuario]}
                     onChange={(e) => setNewUserData(prev => ({ ...prev, estado_usuario: e.target.value }))}
                   >

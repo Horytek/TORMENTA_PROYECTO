@@ -30,8 +30,8 @@ import { ActionButton } from '@/components/Buttons/Buttons';
 
 // Estilos Glass Clean
 const glassInputClasses = {
-  inputWrapper: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl h-10 data-[hover=true]:border-blue-400 focus-within:!border-blue-500",
-  input: "text-slate-700 dark:text-slate-200 text-sm",
+  inputWrapper: "bg-white dark:bg-zinc-800 border-none shadow-none rounded-2xl h-10 data-[hover=true]:bg-slate-50 dark:data-[hover=true]:bg-zinc-800/50 group-data-[focus=true]:bg-white dark:group-data-[focus=true]:bg-zinc-800 ring-1 ring-slate-200 dark:ring-zinc-700 focus-within:!ring-2 focus-within:!ring-blue-500/20",
+  input: "text-slate-600 dark:text-slate-300 text-sm group-data-[has-value=true]:text-slate-900 dark:group-data-[has-value=true]:text-white",
 };
 
 const Kardex = () => {
@@ -349,105 +349,114 @@ const Kardex = () => {
       </div>
 
       {/* Filters Section - Clean & Glass */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          <Select
-            label="Almacén"
-            placeholder="Seleccione..."
-            selectedKeys={[almacenSeleccionado.id?.toString()]}
-            onChange={handleAlmacenChange}
-            size="sm"
-            classNames={{
-              trigger: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl h-10",
-              value: "text-slate-700 dark:text-slate-200 text-sm"
-            }}
-          >
-            <SelectItem key="%" value="%">Todos los almacenes</SelectItem>
-            {almacenesFiltrados.map((almacen) => (
-              <SelectItem key={almacen.id} value={almacen.id}>
-                {almacen.almacen}
-              </SelectItem>
-            ))}
-          </Select>
+      <div className="w-full">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+              <Select
+                placeholder="Almacén"
+                selectedKeys={almacenSeleccionado.id && almacenSeleccionado.id !== "%" ? [almacenSeleccionado.id.toString()] : []}
+                onChange={handleAlmacenChange}
+                size="sm"
+                className="w-full"
+                classNames={{
+                  trigger: "h-10 min-h-10 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-blue-400 focus:border-blue-600 rounded-xl shadow-sm transition-all",
+                  value: "text-sm text-slate-700 dark:text-slate-200",
+                  popoverContent: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-lg rounded-xl"
+                }}
+              >
+                <SelectItem key="%" value="%">Todos los almacenes</SelectItem>
+                {almacenesFiltrados.map((almacen) => (
+                  <SelectItem key={almacen.id} value={almacen.id}>
+                    {almacen.almacen}
+                  </SelectItem>
+                ))}
+              </Select>
 
-          <Input
-            placeholder="Buscar por código..."
-            startContent={<IoIosSearch className="text-slate-400" />}
-            value={filters.idProducto}
-            onValueChange={(val) => handleFiltersChange({ idProducto: val })}
-            classNames={glassInputClasses}
-            isClearable
-            onClear={() => handleFiltersChange({ idProducto: '' })}
-            size="sm"
-          />
+              <Input
+                placeholder="Buscar por código..."
+                value={filters.idProducto}
+                onValueChange={(val) => handleFiltersChange({ idProducto: val })}
+                isClearable
+                onClear={() => handleFiltersChange({ idProducto: '' })}
+                size="sm"
+                classNames={{
+                  inputWrapper: "h-10 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-blue-400 focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600/20 rounded-xl shadow-sm transition-all",
+                  input: "text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
+                }}
+              />
 
-          <Input
-            placeholder="Buscar producto..."
-            startContent={<IoIosSearch className="text-slate-400" />}
-            value={filters.descripcion}
-            onValueChange={(val) => handleFiltersChange({ descripcion: val })}
-            classNames={glassInputClasses}
-            isClearable
-            onClear={() => handleFiltersChange({ descripcion: '' })}
-            size="sm"
-          />
+              <Input
+                placeholder="Buscar producto..."
+                value={filters.descripcion}
+                onValueChange={(val) => handleFiltersChange({ descripcion: val })}
+                isClearable
+                onClear={() => handleFiltersChange({ descripcion: '' })}
+                size="sm"
+                classNames={{
+                  inputWrapper: "h-10 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-blue-400 focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600/20 rounded-xl shadow-sm transition-all",
+                  input: "text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
+                }}
+              />
 
-          <Select
-            label="Línea"
-            placeholder="Filtrar"
-            selectedKeys={categoriaSeleccionada ? [categoriaSeleccionada.toString()] : []}
-            onChange={(e) => {
-              setCategoriaSeleccionada(e.target.value);
-              handleFiltersChange({ cat: e.target.value });
-            }}
-            size="sm"
-            classNames={{
-              trigger: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl h-10",
-              value: "text-slate-700 dark:text-slate-200 text-sm"
-            }}
-          >
-            {categorias.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>{cat.categoria}</SelectItem>
-            ))}
-          </Select>
+              <Select
+                placeholder="Línea"
+                selectedKeys={categoriaSeleccionada ? [categoriaSeleccionada.toString()] : []}
+                onChange={(e) => {
+                  setCategoriaSeleccionada(e.target.value);
+                  handleFiltersChange({ cat: e.target.value });
+                }}
+                size="sm"
+                classNames={{
+                  trigger: "h-10 min-h-10 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-blue-400 focus:border-blue-600 rounded-xl shadow-sm transition-all",
+                  value: "text-sm text-slate-700 dark:text-slate-200",
+                  popoverContent: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-lg rounded-xl"
+                }}
+              >
+                {categorias.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>{cat.categoria}</SelectItem>
+                ))}
+              </Select>
 
-          <Select
-            label="Sub-línea"
-            placeholder="Filtrar"
-            selectedKeys={filters.subcat ? [filters.subcat.toString()] : []}
-            onChange={(e) => handleFiltersChange({ subcat: e.target.value })}
-            size="sm"
-            classNames={{
-              trigger: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl h-10",
-              value: "text-slate-700 dark:text-slate-200 text-sm"
-            }}
-            isDisabled={!categoriaSeleccionada}
-          >
-            {subcategorias.map((sub) => (
-              <SelectItem key={sub.id} value={sub.id}>{sub.sub_categoria}</SelectItem>
-            ))}
-          </Select>
+              <Select
+                placeholder="Sub-línea"
+                selectedKeys={filters.subcat ? [filters.subcat.toString()] : []}
+                onChange={(e) => handleFiltersChange({ subcat: e.target.value })}
+                size="sm"
+                classNames={{
+                  trigger: "h-10 min-h-10 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-blue-400 focus:border-blue-600 rounded-xl shadow-sm transition-all",
+                  value: "text-sm text-slate-700 dark:text-slate-200",
+                  popoverContent: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-lg rounded-xl"
+                }}
+                isDisabled={!categoriaSeleccionada}
+              >
+                {subcategorias.map((sub) => (
+                  <SelectItem key={sub.id} value={sub.id}>{sub.sub_categoria}</SelectItem>
+                ))}
+              </Select>
 
-          <Select
-            label="Marca"
-            placeholder="Filtrar"
-            selectedKeys={filters.marca ? [filters.marca.toString()] : []}
-            onChange={(e) => handleFiltersChange({ marca: e.target.value })}
-            size="sm"
-            classNames={{
-              trigger: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl h-10",
-              value: "text-slate-700 dark:text-slate-200 text-sm"
-            }}
-          >
-            {marcas.map((marca) => (
-              <SelectItem key={marca.id} value={marca.id}>{marca.marca}</SelectItem>
-            ))}
-          </Select>
+              <Select
+                placeholder="Marca"
+                selectedKeys={filters.marca ? [filters.marca.toString()] : []}
+                onChange={(e) => handleFiltersChange({ marca: e.target.value })}
+                size="sm"
+                classNames={{
+                  trigger: "h-10 min-h-10 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:border-blue-400 focus:border-blue-600 rounded-xl shadow-sm transition-all",
+                  value: "text-sm text-slate-700 dark:text-slate-200",
+                  popoverContent: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-lg rounded-xl"
+                }}
+              >
+                {marcas.map((marca) => (
+                  <SelectItem key={marca.id} value={marca.id}>{marca.marca}</SelectItem>
+                ))}
+              </Select>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Table Section */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4 space-y-4">
+      <div className="space-y-4">
         <TablaKardex
           kardex={kardex}
           page={page}
@@ -456,7 +465,7 @@ const Kardex = () => {
         />
 
         {/* Pagination Footer */}
-        <div className="flex w-full justify-between items-center bg-white dark:bg-zinc-900 rounded-xl">
+        <div className="flex w-full justify-between items-center bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
           <div className="flex gap-2 items-center">
             <span className="text-[12px] text-slate-400 dark:text-slate-500">
               {kardex.length} items
@@ -471,7 +480,7 @@ const Kardex = () => {
               }}
               aria-label="Filas por página"
               classNames={{
-                trigger: "min-h-8 h-8 bg-slate-50 dark:bg-zinc-800",
+                trigger: "min-h-8 h-8 bg-slate-50 dark:bg-zinc-800 rounded-lg",
                 value: "text-[12px]"
               }}
             >

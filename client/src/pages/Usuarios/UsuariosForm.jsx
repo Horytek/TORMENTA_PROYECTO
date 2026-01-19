@@ -138,7 +138,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios })
                                                     <Select
                                                         {...field}
                                                         label="Rol"
-                                                        variant="bordered"
+                                                        variant="faded"
                                                         placeholder="Seleccione un rol"
                                                         selectedKeys={field.value ? [field.value.toString()] : []}
                                                         onChange={(e) => field.onChange(e.target.value)}
@@ -165,7 +165,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios })
                                                     <Input
                                                         {...field}
                                                         label="Usuario"
-                                                        variant="bordered"
+                                                        variant="faded"
                                                         color={errors.usua ? "danger" : "default"}
                                                         errorMessage={errors.usua?.message}
                                                         isRequired
@@ -186,7 +186,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios })
                                                         {...field}
                                                         type={showPassword ? "text" : "password"}
                                                         label="Contraseña"
-                                                        variant="bordered"
+                                                        variant="faded"
                                                         color={errors.contra ? "danger" : "default"}
                                                         errorMessage={errors.contra?.message}
                                                         isRequired={!initialData}
@@ -217,7 +217,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios })
                                                     <Select
                                                         {...field}
                                                         label="Estado"
-                                                        variant="bordered"
+                                                        variant="faded"
                                                         placeholder="Seleccione un estado"
                                                         selectedKeys={field.value ? [field.value.toString()] : []}
                                                         onChange={(e) => field.onChange(e.target.value)}

@@ -20,6 +20,7 @@ import {
     Select,
     SelectItem
 } from '@heroui/react';
+import ConfirmationModal from "@/components/Modals/ConfirmationModal";
 
 const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
     const [sucursales, setSucursales] = useState([]);
@@ -54,15 +55,61 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
         setSucursales(data);
     };
 
+    const [almacenGlobal] = useState(() => {
+        try {
+            // Intenta leer del localStorage directamente para sincronización inmediata
+            const stored = localStorage.getItem('almacen-storage');
+            return stored ? JSON.parse(stored).state.almacen : "%";
+        } catch {
+            return "%";
+        }
+    });
+
+    useEffect(() => {
+        if (!initialData && sucursales.length > 0 && almacenGlobal && almacenGlobal !== "%") {
+            // Buscar si la sucursal global existe y está disponible
+            const currentSucursal = sucursales.find(s => s.id_sucursal.toString() === almacenGlobal && s.disponible);
+            if (currentSucursal) {
+                reset({
+                    ...watch(),
+                    id_sucursal: currentSucursal.id_sucursal.toString()
+                });
+            }
+        }
+    }, [sucursales, initialData, almacenGlobal, reset]);
+
     const selectedSucursalId = watch('id_sucursal');
     const selectedSucursal = sucursales.find(sucursal =>
         sucursal.id_sucursal === parseInt(selectedSucursalId)
     );
 
-    const onSubmit = async (data) => {
+    const [confirmModalData, setConfirmModalData] = useState(null);
+
+    const handlePreSubmit = (data) => {
+        const { id_sucursal } = data;
+        const selectedSucursalId = parseInt(id_sucursal);
+        const sucursalInfo = sucursales.find(s => s.id_sucursal === selectedSucursalId);
+
+        const isCurrentlyAssignedToThis = initialData?.data?.id_sucursal === selectedSucursalId;
+
+        // Si la sucursal no está disponible Y no es la misma que ya tenía asignada este almacén
+        if (sucursalInfo && !sucursalInfo.disponible && !isCurrentlyAssignedToThis) {
+            setConfirmModalData({
+                isOpen: true,
+                title: "Sucursal Ocupada",
+                message: `La sucursal "${sucursalInfo.nombre_sucursal}" ya está asignada a otro almacén. ¿Deseas realizar el intercambio y asignarla a este almacén? El almacén anterior quedará sin sucursal asignada.`,
+                data: data
+            });
+            return;
+        }
+
+        // Si no hay conflicto, guardar normal
+        onSubmit(data);
+    };
+
+    const onSubmit = async (data, force_exchange = false) => {
         try {
             const { nom_almacen, id_sucursal, ubicacion, estado_almacen } = data;
-            // Asegura que id_sucursal sea un número válido
             const idSucursalNumber = id_sucursal ? parseInt(id_sucursal, 10) : null;
             if (!idSucursalNumber) {
                 toast.error("Seleccione una sucursal válida");
@@ -72,7 +119,8 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                 nom_almacen,
                 id_sucursal: idSucursalNumber,
                 ubicacion,
-                estado_almacen: parseInt(estado_almacen)
+                estado_almacen: parseInt(estado_almacen),
+                force_exchange
             };
 
             let result;
@@ -97,7 +145,13 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                 handleCloseModal();
             }
         } catch (error) {
-            toast.error("Error al gestionar el almacén");
+            // Si el error es 409 (Conflicto) y no enviamos force_exchange, podríamos manejarlo aquí también,
+            // pero ya lo manejamos en el pre-submit.
+            if (error.response?.status === 409) {
+                toast.error("Conflicto: La sucursal ya está ocupada.");
+            } else {
+                toast.error("Error al gestionar el almacén");
+            }
         }
     };
 
@@ -115,6 +169,7 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                 isOpen={isOpen}
                 onClose={handleCloseModal}
                 size="2xl"
+                className="z-[9999]"
             >
                 <ModalContent>
                     {(onClose) => (
@@ -133,7 +188,7 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                                 <Input
                                                     {...field}
                                                     label="Nombre Almacén"
-                                                    variant="bordered"
+                                                    variant="faded"
                                                     color={errors.nom_almacen ? "danger" : "default"}
                                                     errorMessage={errors.nom_almacen?.message}
                                                     isRequired
@@ -150,11 +205,10 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                             render={({ field }) => (
                                                 <Select
                                                     label="Sucursal"
-                                                    variant="bordered"
+                                                    variant="faded"
                                                     placeholder="Seleccione una sucursal"
                                                     selectedKeys={field.value ? [field.value.toString()] : []}
                                                     onSelectionChange={(keys) => {
-                                                        // Siempre convierte a string y actualiza el valor en el form
                                                         const value = Array.from(keys)[0] || "";
                                                         field.onChange(value);
                                                     }}
@@ -162,32 +216,25 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                                     color={errors.id_sucursal ? "danger" : "default"}
                                                     errorMessage={errors.id_sucursal?.message}
                                                 >
-                                                    {sucursales.map((sucursal) => (
-                                                        <SelectItem
-                                                            key={sucursal.id_sucursal.toString()}
-                                                            value={sucursal.id_sucursal.toString()}
-                                                        >
-                                                            {sucursal.nombre_sucursal}
-                                                            {initialData?.data?.id_sucursal === sucursal.id_sucursal ? " - (En uso)" : ""}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {sucursales.map((sucursal) => {
+                                                        const isUsed = initialData?.data?.id_sucursal === sucursal.id_sucursal;
+                                                        const isDisabled = !sucursal.disponible;
+
+                                                        return (
+                                                            <SelectItem
+                                                                key={sucursal.id_sucursal.toString()}
+                                                                value={sucursal.id_sucursal.toString()}
+                                                                description={isDisabled ? (isUsed ? "En uso (Actual)" : "Ocupado - Seleccionar para intercambiar") : "Disponible"}
+                                                                className={isDisabled && !isUsed ? "text-amber-600" : ""}
+                                                                textValue={sucursal.nombre_sucursal}
+                                                            >
+                                                                {sucursal.nombre_sucursal}
+                                                            </SelectItem>
+                                                        );
+                                                    })}
                                                 </Select>
                                             )}
                                         />
-                                        {selectedSucursal && (
-                                            <div className="flex items-center mt-2">
-                                                <Chip
-                                                    startContent={selectedSucursal.disponible ?
-                                                        <FaCheckCircle className="text-green-500" /> :
-                                                        <TiDelete className="text-danger" />
-                                                    }
-                                                    color={selectedSucursal.disponible ? "success" : "danger"}
-                                                    variant="flat"
-                                                >
-                                                    {selectedSucursal.disponible ? "Disponible" : "No disponible"}
-                                                </Chip>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
@@ -200,7 +247,7 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                                 <Input
                                                     {...field}
                                                     label="Ubicación"
-                                                    variant="bordered"
+                                                    variant="faded"
                                                 />
                                             )}
                                         />
@@ -215,7 +262,7 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                                 <Select
                                                     {...field}
                                                     label="Estado"
-                                                    variant="bordered"
+                                                    variant="faded"
                                                     placeholder="Seleccione un estado"
                                                     selectedKeys={field.value ? [field.value.toString()] : []}
                                                     onChange={(e) => field.onChange(e.target.value)}
@@ -241,7 +288,7 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                 </Button>
                                 <Button
                                     color="primary"
-                                    onPress={handleSubmit(onSubmit)}
+                                    onPress={handleSubmit(handlePreSubmit)}
                                 >
                                     Guardar
                                 </Button>
@@ -250,6 +297,23 @@ const AlmacenForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                     )}
                 </ModalContent>
             </Modal>
+
+            {/* Confirmation Modal for Exchange */}
+            {confirmModalData && (
+                <ConfirmationModal
+                    isOpen={confirmModalData.isOpen}
+                    onClose={() => setConfirmModalData(null)}
+                    onConfirm={() => {
+                        onSubmit(confirmModalData.data, true); // force_exchange = true
+                        setConfirmModalData(null);
+                    }}
+                    title={confirmModalData.title}
+                    message={confirmModalData.message}
+                    confirmText="Intercambiar"
+                    cancelText="Cancelar"
+                    color="warning"
+                />
+            )}
         </>
     );
 };

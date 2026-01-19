@@ -82,13 +82,13 @@ const NuevaTablaGuia = ({ guias = [], setProductosSeleccionados }) => {
   }, [abrirEliminar]);
 
   return (
-    <div className="w-full rounded-xl border border-blue-100 dark:border-zinc-700 overflow-hidden">
+    <div className="w-full rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900">
       {/* Header compacto */}
-      <div className="flex items-center justify-between px-3 py-2 bg-blue-50/40 dark:bg-zinc-800/40">
-        <span className="text-xs font-semibold text-blue-700 dark:text-blue-200">Productos seleccionados</span>
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-50/50 dark:bg-zinc-800/30 border-b border-slate-100 dark:border-zinc-800">
+        <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Productos seleccionados</span>
         <div className="flex gap-2">
-          <Chip size="sm" variant="flat" color="primary" className="text-[10px]">{filas.length} ítems</Chip>
-          <Chip size="sm" variant="flat" color="secondary" className="text-[10px]">{totalUnidades} unid.</Chip>
+          <Chip size="sm" variant="flat" classNames={{ base: "h-5 bg-slate-200/50 dark:bg-zinc-700/50", content: "text-[10px] font-semibold text-slate-600 dark:text-slate-300" }}>{filas.length} ÍTEMS</Chip>
+          <Chip size="sm" variant="flat" classNames={{ base: "h-5 bg-indigo-50 dark:bg-indigo-900/20", content: "text-[10px] font-semibold text-indigo-600 dark:text-indigo-400" }}>{totalUnidades} UNID.</Chip>
         </div>
       </div>
 
@@ -101,10 +101,13 @@ const NuevaTablaGuia = ({ guias = [], setProductosSeleccionados }) => {
           base: "bg-transparent",
           table: "bg-transparent",
           thead: "bg-transparent",
-          th: "bg-blue-50/70 dark:bg-zinc-800/60 first:pl-4 last:pr-4 text-[11px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300",
-          tr: "hover:bg-blue-50/50 dark:hover:bg-zinc-800/50 transition-colors",
-          td: "py-2.5 px-3 first:pl-4 last:pr-4 align-middle text-[12px]"
+          th: "bg-white dark:bg-zinc-900/50 text-slate-500 font-semibold text-[10px] uppercase tracking-wider h-8 border-b border-slate-100 dark:border-zinc-800",
+          tr: "hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors border-b border-slate-50 dark:border-zinc-800/50 last:border-0",
+          td: "py-2 px-4 align-middle text-[12px]"
         }}
+        radius="none"
+        shadow="none"
+        isCompact
       >
         <TableHeader columns={columns}>
           {(col) => (
@@ -115,8 +118,8 @@ const NuevaTablaGuia = ({ guias = [], setProductosSeleccionados }) => {
         </TableHeader>
         <TableBody
           emptyContent={
-            <div className="py-10 text-blue-500/80 dark:text-blue-300 text-[12px]">
-              {EMPTY_MSG}
+            <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+              <p className="text-sm font-medium">{EMPTY_MSG}</p>
             </div>
           }
           items={filas}
@@ -131,9 +134,9 @@ const NuevaTablaGuia = ({ guias = [], setProductosSeleccionados }) => {
 
       {/* Footer solo si hay filas */}
       {filas.length > 0 && (
-        <div className="flex justify-end gap-6 px-4 py-2 text-[11px] text-blue-700 dark:text-blue-300 border-t border-blue-100 dark:border-zinc-700 bg-transparent">
-          <span>Total ítems: <strong>{filas.length}</strong></span>
-          <span>Total unidades: <strong>{totalUnidades}</strong></span>
+        <div className="flex justify-end gap-6 px-4 py-3 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50/30 dark:bg-zinc-800/20 border-t border-slate-100 dark:border-zinc-800">
+          <span>Total ítems: <strong className="text-slate-800 dark:text-white">{filas.length}</strong></span>
+          <span>Total unidades: <strong className="text-indigo-600 dark:text-indigo-400">{totalUnidades}</strong></span>
         </div>
       )}
 

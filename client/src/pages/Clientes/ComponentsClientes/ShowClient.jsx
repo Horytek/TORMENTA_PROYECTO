@@ -31,7 +31,7 @@ import {
   ModalFooter
 } from "@heroui/react";
 import { useState, useEffect, memo, useMemo } from "react";
-import { getComprasClienteRequest, getHistorialClienteRequest } from "@/api/api.cliente";
+import { getComprasClienteRequest, getHistorialClienteRequest, getComprasClienteExternoRequest, getCompraExternoByIdRequest } from "@/api/api.cliente";
 import { getVentaByIdRequest } from "@/api/api.ventas";
 import { usePermisos } from '@/routes';
 
@@ -57,6 +57,7 @@ const normalizeClient = (raw) => {
     email: raw.email || "",
     phone: raw.telefono || "",
     createdAt,
+    origen: raw.origen || (raw.id && String(raw.id).startsWith('EXT-') ? 'externo' : 'local'),
   };
 };
 
@@ -96,18 +97,28 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
   const loadExtra = async () => {
     if (!data?.id) return;
     setLoadingExtra(true);
+    setPurchases([]);
+    setChanges([]);
+
     try {
-      const [comprasRes, historialRes] = await Promise.all([
-        getComprasClienteRequest({ id_cliente: data.id, limit: 100 }), // Increased limit for better filtering
-        getHistorialClienteRequest({ id_cliente: data.id, limit: 20 })
-      ]);
-      if (comprasRes.data.code === 1) {
-        setPurchases(comprasRes.data.data);
+      if (data.origen === 'externo') {
+        const comprasRes = await getComprasClienteExternoRequest({ id_cliente: String(data.id).replace('EXT-', ''), limit: 100 });
+        if (comprasRes.data.code === 1) {
+          setPurchases(comprasRes.data.data);
+        }
+      } else {
+        const [comprasRes, historialRes] = await Promise.all([
+          getComprasClienteRequest({ id_cliente: data.id, limit: 100 }), // Increased limit for better filtering
+          getHistorialClienteRequest({ id_cliente: data.id, limit: 20 })
+        ]);
+        if (comprasRes.data.code === 1) {
+          setPurchases(comprasRes.data.data);
+        }
+        if (historialRes.data.code === 1) {
+          setChanges(historialRes.data.data);
+        }
       }
-      if (historialRes.data.code === 1) {
-        setChanges(historialRes.data.data);
-      }
-    } catch { }
+    } catch (e) { console.error(e) }
     setLoadingExtra(false);
   };
 
@@ -132,18 +143,27 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
   }, [purchases, purchaseSearch, minAmount, maxAmount]);
 
   // Modal de detalle individual (si se usa en otro contexto)
+  // Modal de detalle individual (si se usa en otro contexto)
   const handleViewSale = async (sale) => {
     if (!sale?.id) return;
     setLoadingDetails(true);
     setDetailModalOpen(true);
     try {
-      const res = await getVentaByIdRequest({ id_venta: sale.id });
-      if (res.data?.code === 1) {
-        setSaleDetails(res.data.data);
-        setSelectedSale(sale.id);
-      } else if (res.data?.code === 1 === false && res.data?.data) { // fallback por estructura distinta
-        setSaleDetails(res.data.data);
-        setSelectedSale(sale.id);
+      if (data.origen === 'externo') {
+        const res = await getCompraExternoByIdRequest(sale.id);
+        if (res.data?.code === 1) {
+          setSaleDetails(res.data.data);
+          setSelectedSale(sale.id);
+        }
+      } else {
+        const res = await getVentaByIdRequest({ id_venta: sale.id });
+        if (res.data?.code === 1) {
+          setSaleDetails(res.data.data);
+          setSelectedSale(sale.id);
+        } else if (res.data?.code === 1 === false && res.data?.data) { // fallback por estructura distinta
+          setSaleDetails(res.data.data);
+          setSelectedSale(sale.id);
+        }
       }
     } catch (error) {
       console.error("Error fetching sale details:", error);
@@ -158,10 +178,27 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
     if (!sale.id) return;
     setLoadingDetailsId(saleId);
     try {
-      const res = await getVentaByIdRequest({ id_venta: sale.id });
-      if (res.data?.code === 1) {
-        setSaleCache(prev => ({ ...prev, [saleId]: res.data.data }));
+      let res;
+      if (data.origen === 'externo') {
+        res = await getCompraExternoByIdRequest(saleId);
+      } else {
+        res = await getVentaByIdRequest({ id_venta: saleId });
       }
+
+      console.log(`[ShowClient] Venta ${saleId} response:`, res); // Debug log
+
+      if (res.data?.code === 1 && res.data?.data) {
+        console.log(`[ShowClient] Venta ${saleId} details found:`, res.data.data);
+        setSaleCache(prev => ({ ...prev, [saleId]: res.data.data }));
+      } else if (res.data?.data) {
+        // Fallback: Code might not be 1 but data exists
+        console.warn(`[ShowClient] Venta ${saleId} code not 1 but data exists:`, res.data.data);
+        setSaleCache(prev => ({ ...prev, [saleId]: res.data.data }));
+      } else {
+        console.error(`[ShowClient] Venta ${saleId} no data found`, res);
+      }
+    } catch (err) {
+      console.error(`[ShowClient] Error loading sale ${saleId}:`, err);
     } finally {
       setLoadingDetailsId(null);
     }
@@ -254,53 +291,63 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
                       title={<div className="flex items-center gap-2"><FaUser className="w-4 h-4" /><span>Detalles</span></div>}
                     >
                       <div className="grid md:grid-cols-2 gap-6 mt-6">
-                        <Card className="border border-blue-100 dark:border-zinc-700 bg-white/90 dark:bg-[#232339] shadow-sm rounded-xl">
-                          <CardBody className="space-y-4 p-5">
-                            <h4 className="text-[12px] font-bold text-blue-900 dark:text-blue-100 uppercase tracking-wide">Contacto</h4>
+                        <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-5 space-y-4">
+                          <h4 className="text-[12px] font-bold text-blue-900 dark:text-blue-100 uppercase tracking-wide">Contacto</h4>
 
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
-                                <FaMapMarkerAlt className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <p className="text-[11px] text-gray-500 dark:text-zinc-400">Dirección</p>
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{data.address || "No registrada"}</p>
-                              </div>
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-300 shadow-sm">
+                              <FaMapMarkerAlt className="w-4 h-4" />
                             </div>
+                            <div>
+                              <p className="text-[11px] text-gray-500 dark:text-zinc-400">Dirección</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{data.address || "No registrada"}</p>
+                            </div>
+                          </div>
 
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
-                                <FaPhone className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <p className="text-[11px] text-gray-500 dark:text-zinc-400">Teléfono</p>
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{data.phone || "No registrado"}</p>
-                              </div>
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-300 shadow-sm">
+                              <FaPhone className="w-4 h-4" />
                             </div>
+                            <div>
+                              <p className="text-[11px] text-gray-500 dark:text-zinc-400">Teléfono</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{data.phone || "No registrado"}</p>
+                            </div>
+                          </div>
 
-                            <div className="flex items-start gap-3">
-                              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
-                                <FaEnvelope className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <p className="text-[11px] text-gray-500 dark:text-zinc-400">Email</p>
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{data.email || "No registrado"}</p>
-                              </div>
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-lg bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-300 shadow-sm">
+                              <FaEnvelope className="w-4 h-4" />
                             </div>
-                          </CardBody>
-                        </Card>
+                            <div>
+                              <p className="text-[11px] text-gray-500 dark:text-zinc-400">Email</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{data.email || "No registrado"}</p>
+                            </div>
+                          </div>
+                        </div>
 
-                        <Card className="border border-blue-100 dark:border-zinc-700 bg-white/90 dark:bg-[#232339] shadow-sm rounded-xl">
-                          <CardBody className="p-5 space-y-4">
-                            <h4 className="text-[12px] font-bold text-blue-900 dark:text-blue-100 uppercase tracking-wide">Resumen</h4>
-                            <div className="text-xs text-gray-600 dark:text-zinc-300 space-y-2">
-                              <p><span className="font-semibold text-blue-700 dark:text-blue-300">Tipo:</span> {data.type === "business" ? "Empresa" : "Persona"}</p>
-                              <p><span className="font-semibold text-blue-700 dark:text-blue-300">Documento:</span> {data.documentNumber || "-"}</p>
-                              <p><span className="font-semibold text-blue-700 dark:text-blue-300">Estado:</span> {data.status === "active" ? "Activo" : "Inactivo"}</p>
-                              <p><span className="font-semibold text-blue-700 dark:text-blue-300">Creación:</span> {safeDate(data.createdAt)}</p>
+                        <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-5 space-y-4">
+                          <h4 className="text-[12px] font-bold text-blue-900 dark:text-blue-100 uppercase tracking-wide">Resumen</h4>
+                          <div className="text-xs text-gray-600 dark:text-zinc-300 space-y-3">
+                            <div className="flex justify-between border-b border-gray-200 dark:border-zinc-700 pb-2">
+                              <span className="font-semibold text-blue-700 dark:text-blue-300">Tipo</span>
+                              <span>{data.type === "business" ? "Empresa" : "Persona"}</span>
                             </div>
-                          </CardBody>
-                        </Card>
+                            <div className="flex justify-between border-b border-gray-200 dark:border-zinc-700 pb-2">
+                              <span className="font-semibold text-blue-700 dark:text-blue-300">Documento</span>
+                              <span>{data.documentNumber || "-"}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-gray-200 dark:border-zinc-700 pb-2">
+                              <span className="font-semibold text-blue-700 dark:text-blue-300">Estado</span>
+                              <span className={data.status === "active" ? "text-green-600 font-bold" : "text-red-500 font-bold"}>
+                                {data.status === "active" ? "Activo" : "Inactivo"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between border-b border-gray-200 dark:border-zinc-700 pb-2">
+                              <span className="font-semibold text-blue-700 dark:text-blue-300">Creación</span>
+                              <span>{safeDate(data.createdAt)}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </Tab>
 
@@ -412,12 +459,12 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
                                                     </tr>
                                                   </thead>
                                                   <tbody className="divide-y divide-gray-100 dark:divide-zinc-700">
-                                                    {details.detalles?.map((d, idx) => (
+                                                    {(details.detalles || details.items || []).map((d, idx) => (
                                                       <tr key={idx}>
-                                                        <td className="px-2 py-1">{d.nombre || d.producto_nombre}</td>
-                                                        <td className="px-2 py-1 text-center">{d.cantidad}</td>
+                                                        <td className="px-2 py-1">{d.nombre || d.producto_nombre || d.descripcion || "Item"}</td>
+                                                        <td className="px-2 py-1 text-center">{d.cantidad || 0}</td>
                                                         <td className="px-2 py-1 text-right">S/ {parseFloat(d.precio || d.precio_unitario || 0).toFixed(2)}</td>
-                                                        <td className="px-2 py-1 text-right font-medium">S/ {parseFloat(d.sub_total || d.subtotal || 0).toFixed(2)}</td>
+                                                        <td className="px-2 py-1 text-right font-medium">S/ {parseFloat(d.sub_total || d.subtotal || d.total || 0).toFixed(2)}</td>
                                                       </tr>
                                                     ))}
                                                   </tbody>
