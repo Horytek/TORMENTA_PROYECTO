@@ -21,5 +21,6 @@ router.get("/externos", clientesController.getClientesExternos);
 router.get("/externos/compras", clientesController.getComprasClienteExterno);
 router.get("/externos/compra/:id", clientesController.getCompraExternoById);
 router.get("/stats", clientesController.getClientStats);
+router.get("/externos/compras-by-doc", clientesController.getComprasClienteExternoByDoc);
 
 export default router;

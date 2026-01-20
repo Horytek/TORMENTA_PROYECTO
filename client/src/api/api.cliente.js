@@ -27,3 +27,4 @@ export const getClientStatsRequest = () => axios.get("/clientes/stats");
 export const getClientesExternosRequest = () => axios.get("/clientes/externos");
 export const getComprasClienteExternoRequest = (params) => axios.get("/clientes/externos/compras", { params });
 export const getCompraExternoByIdRequest = (id) => axios.get(`/clientes/externos/compra/${id}`);
+export const getComprasClienteExternoByDocRequest = (params) => axios.get("/clientes/externos/compras-by-doc", { params });

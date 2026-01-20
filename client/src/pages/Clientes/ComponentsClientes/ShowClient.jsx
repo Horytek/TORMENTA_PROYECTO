@@ -31,7 +31,7 @@ import {
   ModalFooter
 } from "@heroui/react";
 import { useState, useEffect, memo, useMemo } from "react";
-import { getComprasClienteRequest, getHistorialClienteRequest, getComprasClienteExternoRequest, getCompraExternoByIdRequest } from "@/api/api.cliente";
+import { getComprasClienteRequest, getHistorialClienteRequest, getComprasClienteExternoRequest, getCompraExternoByIdRequest, getComprasClienteExternoByDocRequest } from "@/api/api.cliente";
 import { getVentaByIdRequest } from "@/api/api.ventas";
 import { usePermisos } from '@/routes';
 
@@ -68,6 +68,7 @@ const safeDate = (d) => {
 };
 
 const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, onDelete, permissions }) => {
+  // ... (hooks unchanged)
   const { hasEditPermission, hasDeletePermission, hasDeactivatePermission } = permissions || usePermisos();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("details");
@@ -101,23 +102,55 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
     setChanges([]);
 
     try {
+      let externalPurchases = [];
+      let localPurchases = [];
+
+      // 1. Fetch External Purchases (if applicable)
       if (data.origen === 'externo') {
-        const comprasRes = await getComprasClienteExternoRequest({ id_cliente: String(data.id).replace('EXT-', ''), limit: 100 });
-        if (comprasRes.data.code === 1) {
-          setPurchases(comprasRes.data.data);
-        }
+        // Direct external client
+        const res = await getComprasClienteExternoRequest({ id_cliente: String(data.id).replace('EXT-', ''), limit: 100 });
+        if (res.data.code === 1) externalPurchases = res.data.data;
       } else {
-        const [comprasRes, historialRes] = await Promise.all([
-          getComprasClienteRequest({ id_cliente: data.id, limit: 100 }), // Increased limit for better filtering
-          getHistorialClienteRequest({ id_cliente: data.id, limit: 20 })
-        ]);
-        if (comprasRes.data.code === 1) {
-          setPurchases(comprasRes.data.data);
-        }
-        if (historialRes.data.code === 1) {
-          setChanges(historialRes.data.data);
+        // Local client: Try fetching external purchases by DOC
+        if (data.documentNumber && data.documentNumber.length >= 8) {
+          try {
+            const res = await getComprasClienteExternoByDocRequest({ doc: data.documentNumber, limit: 50 });
+            if (res.data.code === 1 && Array.isArray(res.data.data)) {
+              externalPurchases = res.data.data;
+            }
+          } catch (err) {
+            console.warn("External purchases fetch failed", err);
+          }
         }
       }
+
+      // Map external purchases to have EXT- prefix
+      externalPurchases = externalPurchases.map(p => ({
+        ...p,
+        id: `EXT-${p.id}`,
+        isExternal: true,
+        // Ensure fecha exists or map it
+        fecha: p.fecha || p.fecha_compra || new Date().toISOString()
+      }));
+
+      // 2. Fetch Local Purchases (only if local)
+      if (data.origen !== 'externo') {
+        const [comprasRes, historialRes] = await Promise.all([
+          getComprasClienteRequest({ id_cliente: data.id, limit: 100 }),
+          getHistorialClienteRequest({ id_cliente: data.id, limit: 20 })
+        ]);
+        if (comprasRes.data.code === 1) localPurchases = comprasRes.data.data;
+        if (historialRes.data.code === 1) setChanges(historialRes.data.data);
+      }
+
+      // 3. Merge and Sort
+      const allPurchases = [...localPurchases, ...externalPurchases].sort((a, b) => {
+        const dateA = new Date(a.fecha);
+        const dateB = new Date(b.fecha);
+        return dateB - dateA;
+      });
+
+      setPurchases(allPurchases);
     } catch (e) { console.error(e) }
     setLoadingExtra(false);
   };
@@ -143,24 +176,24 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
   }, [purchases, purchaseSearch, minAmount, maxAmount]);
 
   // Modal de detalle individual (si se usa en otro contexto)
-  // Modal de detalle individual (si se usa en otro contexto)
   const handleViewSale = async (sale) => {
     if (!sale?.id) return;
     setLoadingDetails(true);
     setDetailModalOpen(true);
     try {
-      if (data.origen === 'externo') {
-        const res = await getCompraExternoByIdRequest(sale.id);
+      if (String(sale.id).startsWith('EXT-') || sale.isExternal) {
+        const realId = String(sale.id).replace('EXT-', '');
+        const res = await getCompraExternoByIdRequest(realId);
         if (res.data?.code === 1) {
           setSaleDetails(res.data.data);
-          setSelectedSale(sale.id);
+          setSelectedSale(sale.id); // Keep prefixed ID for display
         }
       } else {
         const res = await getVentaByIdRequest({ id_venta: sale.id });
         if (res.data?.code === 1) {
           setSaleDetails(res.data.data);
           setSelectedSale(sale.id);
-        } else if (res.data?.code === 1 === false && res.data?.data) { // fallback por estructura distinta
+        } else if (res.data?.code === 1 === false && res.data?.data) {
           setSaleDetails(res.data.data);
           setSelectedSale(sale.id);
         }
@@ -179,8 +212,9 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
     setLoadingDetailsId(saleId);
     try {
       let res;
-      if (data.origen === 'externo') {
-        res = await getCompraExternoByIdRequest(saleId);
+      if (String(saleId).startsWith('EXT-') || sale.isExternal) {
+        const realId = String(saleId).replace('EXT-', '');
+        res = await getCompraExternoByIdRequest(realId);
       } else {
         res = await getVentaByIdRequest({ id_venta: saleId });
       }
@@ -188,11 +222,9 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
       console.log(`[ShowClient] Venta ${saleId} response:`, res); // Debug log
 
       if (res.data?.code === 1 && res.data?.data) {
-        console.log(`[ShowClient] Venta ${saleId} details found:`, res.data.data);
         setSaleCache(prev => ({ ...prev, [saleId]: res.data.data }));
       } else if (res.data?.data) {
         // Fallback: Code might not be 1 but data exists
-        console.warn(`[ShowClient] Venta ${saleId} code not 1 but data exists:`, res.data.data);
         setSaleCache(prev => ({ ...prev, [saleId]: res.data.data }));
       } else {
         console.error(`[ShowClient] Venta ${saleId} no data found`, res);

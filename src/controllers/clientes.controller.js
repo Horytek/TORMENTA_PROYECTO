@@ -130,7 +130,8 @@ const addCliente = async (req, res) => {
             clientName,
             clientLastName,
             businessName,
-            address
+            address,
+            destination // 'sistema' (default) or 'web'
         } = req.body;
 
         const id_tenant = req.id_tenant;
@@ -174,79 +175,153 @@ const addCliente = async (req, res) => {
 
         connection = await getConnection();
 
-        // Verificar duplicados de forma más eficiente
-        const [existing] = await connection.query(
-            `SELECT id_cliente, 
-                    CASE WHEN dni = ? THEN 'DNI' ELSE 'RUC' END as tipo_duplicado
-             FROM cliente
-             WHERE (dni = ? OR ruc = ?) AND id_tenant = ?
-             LIMIT 1`,
-            [documentNumber, documentNumber, documentNumber, id_tenant]
-        );
+        if (destination === 'web') {
+            // Verificar duplicados en tesis_db (Catálogo Web)
+            // Asumimos que 'dni' almacena cualquier documento (DNI o RUC)
+            const [existing] = await connection.query(
+                `SELECT id_cliente
+                 FROM tesis_db.cliente
+                 WHERE dni = ? AND id_tenant = ?
+                 LIMIT 1`,
+                [documentNumber, id_tenant]
+            );
 
-        if (existing.length > 0) {
-            return res.status(400).json({
-                code: 0,
-                message: `Ya existe un cliente con el mismo ${existing[0].tipo_duplicado}`
+            if (existing.length > 0) {
+                return res.status(400).json({
+                    code: 0,
+                    message: "Ya existe un cliente con el mismo documento en el Catálogo Web"
+                });
+            }
+
+            // Insertar en tesis_db.cliente
+            // Mapeamos RUC a 'dni' column
+            // Mapeamos Razon Social a 'nombres' y apellidos como '-'
+            const query = `
+                INSERT INTO tesis_db.cliente (
+                    dni,
+                    nombres,
+                    apellidos,
+                    direccion,
+                    estado_cliente,
+                    id_tenant,
+                    f_creacion
+                ) VALUES (?, ?, ?, ?, 1, ?, NOW())
+            `;
+
+            const values = [
+                documentNumber, // Holds DNI or RUC
+                clientType === "business" ? businessName : (clientName || "").trim(),
+                clientType === "business" ? "-" : (clientLastName || "").trim(),
+                address || null,
+                id_tenant
+            ];
+
+            const [result] = await connection.query(query, values);
+
+            // No transaction usually needed for single insert on external db unless complex
+            // We reuse the same connection which is fine if user has permissions
+
+            // Registrar log de creación de cliente externo
+            if (req.log && req.id_usuario) {
+                try {
+                    const nombreCliente = clientName
+                        ? `${clientName} ${clientLastName}`
+                        : businessName || 'Sin nombre';
+
+                    await req.log(LOG_ACTIONS.CLIENTE_CREAR, MODULOS.CLIENTES, {
+                        recurso: `cliente_externo_id:${result.insertId}`,
+                        descripcion: `Cliente WEB creado: ${nombreCliente} (Doc: ${documentNumber})`
+                    });
+                } catch (error) {
+                    console.error('Error al registrar log de cliente externo:', error);
+                }
+            }
+
+            return res.json({
+                code: 1,
+                data: { id: result.insertId, origen: 'externo' },
+                message: "Cliente creado exitosamente en el Catálogo Web"
+            });
+
+        } else {
+            // Lógica existente para cliente LOCAL (Sistema)
+
+            // Verificar duplicados de forma más eficiente
+            const [existing] = await connection.query(
+                `SELECT id_cliente, 
+                        CASE WHEN dni = ? THEN 'DNI' ELSE 'RUC' END as tipo_duplicado
+                 FROM cliente
+                 WHERE (dni = ? OR ruc = ?) AND id_tenant = ?
+                 LIMIT 1`,
+                [documentNumber, documentNumber, documentNumber, id_tenant]
+            );
+
+            if (existing.length > 0) {
+                return res.status(400).json({
+                    code: 0,
+                    message: `Ya existe un cliente con el mismo ${existing[0].tipo_duplicado}`
+                });
+            }
+
+            await connection.beginTransaction();
+
+            const query = `
+                INSERT INTO cliente (
+                    dni,
+                    ruc,
+                    nombres,
+                    apellidos,
+                    razon_social,
+                    direccion,
+                    estado_cliente,
+                    id_tenant
+                ) VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+            `;
+
+            const values = [
+                clientType === "personal" ? documentNumber : null,
+                clientType === "business" ? documentNumber : null,
+                clientName ? clientName.trim() : null,
+                clientLastName ? clientLastName.trim() : null,
+                businessName ? businessName.trim() : null,
+                address || null,
+                id_tenant
+            ];
+
+            const [result] = await connection.query(query, values);
+
+            await connection.commit();
+
+            // Limpiar caché relacionado
+            queryCache.clear();
+
+            // Registrar log de creación de cliente
+            if (req.log && req.id_usuario) {
+                try {
+                    const nombreCliente = clientName
+                        ? `${clientName} ${clientLastName}`
+                        : businessName || 'Sin nombre';
+
+                    await req.log(LOG_ACTIONS.CLIENTE_CREAR, MODULOS.CLIENTES, {
+                        recurso: `cliente_id:${result.insertId}`,
+                        descripcion: `Cliente creado: ${nombreCliente} (Doc: ${documentNumber})`
+                    });
+                } catch (error) {
+                    console.error('Error al registrar log de cliente:', error);
+                }
+            }
+
+            res.json({
+                code: 1,
+                data: { id: result.insertId, origen: 'local' },
+                message: "Cliente creado exitosamente"
             });
         }
 
-        await connection.beginTransaction();
-
-        const query = `
-            INSERT INTO cliente (
-                dni,
-                ruc,
-                nombres,
-                apellidos,
-                razon_social,
-                direccion,
-                estado_cliente,
-                id_tenant
-            ) VALUES (?, ?, ?, ?, ?, ?, 1, ?)
-        `;
-
-        const values = [
-            clientType === "personal" ? documentNumber : null,
-            clientType === "business" ? documentNumber : null,
-            clientName ? clientName.trim() : null,
-            clientLastName ? clientLastName.trim() : null,
-            businessName ? businessName.trim() : null,
-            address || null,
-            id_tenant
-        ];
-
-        const [result] = await connection.query(query, values);
-
-        await connection.commit();
-
-        // Limpiar caché relacionado
-        queryCache.clear();
-
-        // Registrar log de creación de cliente
-        if (req.log && req.id_usuario) {
-            try {
-                const nombreCliente = clientName
-                    ? `${clientName} ${clientLastName}`
-                    : businessName || 'Sin nombre';
-
-                await req.log(LOG_ACTIONS.CLIENTE_CREAR, MODULOS.CLIENTES, {
-                    recurso: `cliente_id:${result.insertId}`,
-                    descripcion: `Cliente creado: ${nombreCliente} (Doc: ${documentNumber})`
-                });
-            } catch (error) {
-                console.error('Error al registrar log de cliente:', error);
-            }
-        }
-
-        res.json({
-            code: 1,
-            data: { id: result.insertId },
-            message: "Cliente creado exitosamente"
-        });
-
     } catch (error) {
-        if (connection) {
+        if (connection && connection.rollback && req.body.destination !== 'web') {
+            // Rollback only strictly necessary if transaction started (local)
+            // But 'web' path didn't start explicit transaction above.
             await connection.rollback();
         }
         console.error('Error en addCliente:', error);
@@ -822,9 +897,9 @@ const getClientesExternos = async (req, res) => {
         const [result] = await connection.query(
             `SELECT 
                 id_cliente, 
-                dni, 
+                dni,
                 nombres, 
-                apellidos, 
+                apellidos,
                 direccion, 
                 email,
                 telefono,
@@ -838,9 +913,10 @@ const getClientesExternos = async (req, res) => {
 
         const mapped = result.map(c => ({
             ...c,
-            ruc: '',
-            razon_social: '',
-            dniRuc: c.dni,
+            // Si apellidos es '-', es empresa
+            razon_social: c.apellidos === '-' ? c.nombres : null,
+            // Si no es empresa, concatenar nombres y apellidos para display si se desea, o dejar como está
+            dniRuc: c.dni, // dni column now holds both
             origen: 'externo',
         }));
 
@@ -950,6 +1026,56 @@ const getCompraExternoById = async (req, res) => {
     }
 };
 
+// OBTENER COMPRAS EXTERNAS POR DNI/RUC
+const getComprasClienteExternoByDoc = async (req, res) => {
+    let connection;
+    const { doc, limit = 10 } = req.query;
+    const id_tenant = req.id_tenant;
+
+    if (!doc) return res.status(400).json({ code: 0, message: "Falta documento (doc)" });
+
+    try {
+        connection = await getConnection();
+        // Primero buscamos el id_cliente en tesis_db.cliente usando el doc (en campo dni)
+        const [clientes] = await connection.query(
+            `SELECT id_cliente FROM tesis_db.cliente WHERE dni = ? AND id_tenant = ? LIMIT 1`,
+            [doc, id_tenant]
+        );
+
+        if (clientes.length === 0) {
+            // Si no existe en tesis_db, retornamos array vacío
+            return res.json({ code: 1, data: [], message: "No se encontró cliente externo con ese documento" });
+        }
+
+        const id_cliente = clientes[0].id_cliente;
+
+        const [rows] = await connection.query(
+            `
+            SELECT 
+                c.id_compra AS id,
+                DATE_FORMAT(c.fecha_compra, '%Y-%m-%d') AS fecha,
+                c.total,
+                COUNT(dc.id_detalle_compra) AS items
+            FROM tesis_db.compra c
+            LEFT JOIN tesis_db.detalle_compra dc ON c.id_compra = dc.id_compra
+            WHERE c.id_cliente = ? AND c.id_tenant = ?
+            GROUP BY c.id_compra
+            ORDER BY c.fecha_compra DESC
+            LIMIT ?
+            `,
+            [id_cliente, id_tenant, Number(limit)]
+        );
+
+        res.json({ code: 1, data: rows, message: "Compras externas listadas por documento" });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 
 export const methods = {
     getClientes,
@@ -963,5 +1089,7 @@ export const methods = {
     getClientStats,
     getClientesExternos,
     getComprasClienteExterno,
-    getCompraExternoById
+    getCompraExternoById,
+    getComprasClienteExternoByDoc,
+    // ...otros
 };

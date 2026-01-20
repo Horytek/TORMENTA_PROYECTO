@@ -40,9 +40,11 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
   const [selectedAddress, setSelectedAddress] = useState(null); // Para guardar el objeto seleccionado
   const { addClient, isLoading } = useAddClient();
   const [manualInput, setManualInput] = useState(false); // NUEVO
+  const [destination, setDestination] = useState("sistema"); // 'sistema' | 'web'
 
   useEffect(() => {
     if (clientType === "personal") {
+      // ... existing logic
       setDocumentType("dni");
       setBusinessName("");
       if (documentNumber.length === 11) {
@@ -59,7 +61,10 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
     setAddress("");
   }, [clientType]);
 
+  // ... (handleValidate remains same)
+
   const handleValidate = async () => {
+    // ... existing validation logic
     const cleanDocumentNumber = documentNumber.trim().replace(/\s+/g, '');
     if (cleanDocumentNumber === '') {
       toast.error('El número de documento es obligatorio');
@@ -81,7 +86,6 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
           setClientType("personal");
         } else {
           toast.error('No se encontraron datos para el DNI proporcionado');
-          // ...existing code...
           setClientLastName('');
         }
       } else {
@@ -123,26 +127,32 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
       clientName,
       clientLastName,
       businessName,
-      address
+      address,
+      destination // Nuevo campo
     };
 
     const result = await addClient(clientData);
 
     if (result.success) {
-      toast.success('Cliente guardado exitosamente');
-      // Reflejar el cambio en tiempo real en el array local
+      toast.success(destination === 'web' ? 'Cliente guardado en Catálogo Web' : 'Cliente guardado exitosamente');
+
+      // Reflejar el cambio en tiempo real en el array local si corresponde o si queremos mostrarlo igual
+      // Si es web, el ID vendrá con EXT- o origen='externo' desde el backend si lo soportara el return
+      // Por ahora simulamos la inserción visual si es necesario, o recargamos.
+
       if (setAllClientes) {
         setAllClientes(prev => [
           {
-            id: result.data?.id || Math.random().toString(36),
+            id: destination === 'web' ? `EXT-${result.data?.id}` : result.data?.id || Math.random().toString(36),
             dni: clientType === "personal" ? documentNumber.trim() : null,
             ruc: clientType === "business" ? documentNumber.trim() : null,
-            dniRuc: documentNumber.trim(), // <-- Agrega este campo para facilitar la visualización
+            dniRuc: documentNumber.trim(),
             nombres: clientType === "personal" ? clientName : null,
             apellidos: clientType === "personal" ? clientLastName : null,
             razon_social: clientType === "business" ? businessName : null,
             direccion: address || null,
-            estado: 1
+            estado: 1,
+            origen: destination === 'web' ? 'externo' : 'local'
           },
           ...prev
         ]);
@@ -160,6 +170,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
     setClientLastName('');
     setBusinessName('');
     setAddress('');
+    setDestination('sistema'); // Reset destination
     onClose();
   };
 
@@ -178,10 +189,24 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
               <ModalHeader>Agregar nuevo cliente</ModalHeader>
               <ModalBody>
                 <p className="text-sm text-gray-600">
-                  Ingrese los datos del cliente. Los campos obligatorios están marcados con *.
+                  Ingrese los datos del cliente. Seleccione si desea guardarlo en el Sistema Local o en el Catálogo Web.
                 </p>
+
+                {/* Destination Tabs */}
+                <Tabs
+                  selectedKey={destination}
+                  onSelectionChange={setDestination}
+                  aria-label="Destino del Cliente"
+                  color="primary"
+                  variant="underlined"
+                  fullWidth
+                >
+                  <Tab key="sistema" title="Sistema (Local)" />
+                  <Tab key="web" title="Catálogo Web" />
+                </Tabs>
+
                 {/* Checkbox para habilitar inputs manualmente */}
-                <div className="mb-2">
+                <div className="mb-2 mt-4">
                   <Checkbox
                     checked={manualInput}
                     onChange={e => setManualInput(e.target.checked)}
