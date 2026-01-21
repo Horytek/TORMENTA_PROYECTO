@@ -37,14 +37,15 @@ function Login() {
   const setIdTenant = useUserStore((state) => state.setIdTenant);
 
   // Contexto de autenticación
-  const { login, isAuthenticated, sendAuthCode } = useAuth();
+  const { login, isAuthenticated, sendAuthCode, user } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/Inicio");
+      const redirectPath = user?.defaultPage || "/Inicio";
+      navigate(redirectPath.toLowerCase());
     }
     setLoaded(true);
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, user]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

@@ -18,24 +18,24 @@ setInterval(() => {
 const getRoles = async (req, res) => {
     const id_tenant = req.id_tenant;
     const cacheKey = `roles_${id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_TTL) {
-            return res.json({ 
-                code: 1, 
+            return res.json({
+                code: 1,
                 data: cached.data,
-                message: "Roles listados (caché)" 
+                message: "Roles listados (caché)"
             });
         }
         queryCache.delete(cacheKey);
     }
-    
+
     let connection;
     try {
         connection = await getConnection();
-        
+
         const query = `
             SELECT 
                 id_rol, 
@@ -48,25 +48,25 @@ const getRoles = async (req, res) => {
                 AND id_tenant = ?
             ORDER BY nom_rol
         `;
-        
+
         const [result] = await connection.query(query, [id_tenant]);
-        
+
         // Guardar en caché
         queryCache.set(cacheKey, {
             data: result,
             timestamp: Date.now()
         });
-        
-        res.json({ 
-            code: 1, 
+
+        res.json({
+            code: 1,
             data: result,
-            message: "Roles listados" 
+            message: "Roles listados"
         });
     } catch (error) {
         console.error('Error en getRoles:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error interno del servidor" 
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -81,16 +81,16 @@ const getPaginaDefecto = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     if (!id) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "El ID del rol es obligatorio" 
+        return res.status(400).json({
+            code: 0,
+            message: "El ID del rol es obligatorio"
         });
     }
 
     let connection;
     try {
         connection = await getConnection();
-        
+
         const query = `
             SELECT 
                 id_modulo, 
@@ -100,26 +100,26 @@ const getPaginaDefecto = async (req, res) => {
                 AND id_tenant = ?
             LIMIT 1
         `;
-        
+
         const [result] = await connection.query(query, [id, id_tenant]);
 
         if (result.length === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "Rol no encontrado" 
+            return res.status(404).json({
+                code: 0,
+                message: "Rol no encontrado"
             });
         }
 
-        res.json({ 
-            code: 1, 
+        res.json({
+            code: 1,
             data: result[0],
-            message: "Página por defecto obtenida" 
+            message: "Página por defecto obtenida"
         });
     } catch (error) {
         console.error('Error en getPaginaDefecto:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error interno del servidor" 
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -136,16 +136,16 @@ const guardarPaginaPorDefecto = async (req, res) => {
 
     // Validaciones mejoradas
     if (!id_rol) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "El ID del rol es obligatorio" 
+        return res.status(400).json({
+            code: 0,
+            message: "El ID del rol es obligatorio"
         });
     }
 
     if (!id_modulo) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "El ID del módulo es obligatorio" 
+        return res.status(400).json({
+            code: 0,
+            message: "El ID del módulo es obligatorio"
         });
     }
 
@@ -160,22 +160,22 @@ const guardarPaginaPorDefecto = async (req, res) => {
         );
 
         if (rolExiste.length === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "Rol no encontrado" 
+            return res.status(404).json({
+                code: 0,
+                message: "Rol no encontrado"
             });
         }
 
         // Verificar que el módulo existe
         const [moduloExiste] = await connection.query(
-            'SELECT id_modulo FROM modulos WHERE id_modulo = ? LIMIT 1',
+            'SELECT id_modulo FROM modulo WHERE id_modulo = ? LIMIT 1',
             [id_modulo]
         );
 
         if (moduloExiste.length === 0) {
-            return res.status(400).json({ 
-                code: 0, 
-                message: "El módulo especificado no existe" 
+            return res.status(400).json({
+                code: 0,
+                message: "El módulo especificado no existe"
             });
         }
 
@@ -187,9 +187,9 @@ const guardarPaginaPorDefecto = async (req, res) => {
             );
 
             if (submoduloExiste.length === 0) {
-                return res.status(400).json({ 
-                    code: 0, 
-                    message: "El submódulo especificado no existe o no pertenece al módulo" 
+                return res.status(400).json({
+                    code: 0,
+                    message: "El submódulo especificado no existe o no pertenece al módulo"
                 });
             }
         }
@@ -203,27 +203,27 @@ const guardarPaginaPorDefecto = async (req, res) => {
             WHERE id_rol = ? 
                 AND id_tenant = ?
         `;
-        
+
         const [result] = await connection.query(
-            query, 
+            query,
             [id_modulo, id_submodulo || null, id_rol, id_tenant]
         );
 
         await connection.commit();
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "No se pudo actualizar el rol" 
+            return res.status(404).json({
+                code: 0,
+                message: "No se pudo actualizar el rol"
             });
         }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
-            message: "Página por defecto guardada correctamente" 
+        res.json({
+            code: 1,
+            message: "Página por defecto guardada correctamente"
         });
 
     } catch (error) {
@@ -231,9 +231,9 @@ const guardarPaginaPorDefecto = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en guardarPaginaPorDefecto:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error interno del servidor" 
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -248,22 +248,22 @@ const getRol = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     if (!id) {
-        return res.status(400).json({ 
-            code: 0, 
-            message: "El ID del rol es obligatorio" 
+        return res.status(400).json({
+            code: 0,
+            message: "El ID del rol es obligatorio"
         });
     }
 
     const cacheKey = `rol_${id}_${id_tenant}`;
-    
+
     // Verificar caché
     if (queryCache.has(cacheKey)) {
         const cached = queryCache.get(cacheKey);
         if (Date.now() - cached.timestamp < CACHE_TTL) {
-            return res.json({ 
-                code: 1, 
+            return res.json({
+                code: 1,
                 data: cached.data,
-                message: "Rol encontrado (caché)" 
+                message: "Rol encontrado (caché)"
             });
         }
         queryCache.delete(cacheKey);
@@ -272,7 +272,7 @@ const getRol = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        
+
         const query = `
             SELECT 
                 id_rol, 
@@ -285,14 +285,14 @@ const getRol = async (req, res) => {
                 AND id_tenant = ?
             LIMIT 1
         `;
-        
+
         const [result] = await connection.query(query, [id, id_tenant]);
 
         if (result.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 code: 0,
-                data: [], 
-                message: "Rol no encontrado" 
+                data: [],
+                message: "Rol no encontrado"
             });
         }
 
@@ -302,16 +302,16 @@ const getRol = async (req, res) => {
             timestamp: Date.now()
         });
 
-        res.json({ 
-            code: 1, 
-            data: result[0], 
-            message: "Rol encontrado" 
+        res.json({
+            code: 1,
+            data: result[0],
+            message: "Rol encontrado"
         });
     } catch (error) {
         console.error('Error en getRol:', error);
-        res.status(500).json({ 
-            code: 0, 
-            message: "Error interno del servidor" 
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
         });
     } finally {
         if (connection) {
@@ -327,16 +327,16 @@ const addRol = async (req, res) => {
 
     // Validaciones mejoradas
     if (!nom_rol || nom_rol.trim() === '') {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El nombre del rol es obligatorio" 
+            message: "El nombre del rol es obligatorio"
         });
     }
 
     if (estado_rol === undefined) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El estado del rol es obligatorio" 
+            message: "El estado del rol es obligatorio"
         });
     }
 
@@ -351,9 +351,9 @@ const addRol = async (req, res) => {
         );
 
         if (rolExiste.length > 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "Ya existe un rol con ese nombre" 
+                message: "Ya existe un rol con ese nombre"
             });
         }
 
@@ -369,8 +369,8 @@ const addRol = async (req, res) => {
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
+        res.json({
+            code: 1,
             message: "Rol añadido exitosamente",
             data: { id: result.insertId }
         });
@@ -379,16 +379,16 @@ const addRol = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en addRol:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "Ya existe un rol con ese nombre" 
+            res.status(400).json({
+                code: 0,
+                message: "Ya existe un rol con ese nombre"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -406,23 +406,23 @@ const updateRol = async (req, res) => {
 
     // Validaciones mejoradas
     if (!id) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El ID del rol es obligatorio" 
+            message: "El ID del rol es obligatorio"
         });
     }
 
     if (!nom_rol || nom_rol.trim() === '') {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El nombre del rol es obligatorio" 
+            message: "El nombre del rol es obligatorio"
         });
     }
 
     if (estado_rol === undefined) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El estado del rol es obligatorio" 
+            message: "El estado del rol es obligatorio"
         });
     }
 
@@ -437,9 +437,9 @@ const updateRol = async (req, res) => {
         );
 
         if (rolExiste.length === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "Rol no encontrado" 
+            return res.status(404).json({
+                code: 0,
+                message: "Rol no encontrado"
             });
         }
 
@@ -450,9 +450,9 @@ const updateRol = async (req, res) => {
         );
 
         if (nombreDuplicado.length > 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 code: 0,
-                message: "Ya existe otro rol con ese nombre" 
+                message: "Ya existe otro rol con ese nombre"
             });
         }
 
@@ -465,43 +465,43 @@ const updateRol = async (req, res) => {
             WHERE id_rol = ? 
                 AND id_tenant = ?
         `;
-        
+
         const [result] = await connection.query(
-            query, 
+            query,
             [nom_rol.trim(), estado_rol, id, id_tenant]
         );
 
         await connection.commit();
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "No se pudo actualizar el rol" 
+            return res.status(404).json({
+                code: 0,
+                message: "No se pudo actualizar el rol"
             });
         }
 
         // Limpiar caché
         queryCache.clear();
 
-        res.json({ 
-            code: 1, 
-            message: "Rol modificado exitosamente" 
+        res.json({
+            code: 1,
+            message: "Rol modificado exitosamente"
         });
     } catch (error) {
         if (connection) {
             await connection.rollback();
         }
         console.error('Error en updateRol:', error);
-        
+
         if (error.code === 'ER_DUP_ENTRY') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "Ya existe otro rol con ese nombre" 
+            res.status(400).json({
+                code: 0,
+                message: "Ya existe otro rol con ese nombre"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {
@@ -517,17 +517,17 @@ const deleteRol = async (req, res) => {
     const id_tenant = req.id_tenant;
 
     if (!id) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "El ID del rol es obligatorio" 
+            message: "El ID del rol es obligatorio"
         });
     }
 
     // Proteger el rol con ID 10 (rol especial del sistema)
     if (parseInt(id) === 10) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             code: 0,
-            message: "No se puede eliminar el rol del sistema" 
+            message: "No se puede eliminar el rol del sistema"
         });
     }
 
@@ -542,9 +542,9 @@ const deleteRol = async (req, res) => {
         );
 
         if (rolExiste.length === 0) {
-            return res.status(404).json({ 
-                code: 0, 
-                message: "Rol no encontrado" 
+            return res.status(404).json({
+                code: 0,
+                message: "Rol no encontrado"
             });
         }
 
@@ -568,17 +568,17 @@ const deleteRol = async (req, res) => {
             await connection.commit();
 
             if (updateResult.affectedRows === 0) {
-                return res.status(404).json({ 
-                    code: 0, 
-                    message: "No se pudo desactivar el rol" 
+                return res.status(404).json({
+                    code: 0,
+                    message: "No se pudo desactivar el rol"
                 });
             }
 
             // Limpiar caché
             queryCache.clear();
 
-            res.json({ 
-                code: 2, 
+            res.json({
+                code: 2,
                 message: `Rol desactivado porque está siendo usado por ${usuariosConRol[0].total} usuario(s)`,
                 usuarios_afectados: usuariosConRol[0].total
             });
@@ -592,18 +592,18 @@ const deleteRol = async (req, res) => {
             await connection.commit();
 
             if (deleteResult.affectedRows === 0) {
-                return res.status(404).json({ 
-                    code: 0, 
-                    message: "No se pudo eliminar el rol" 
+                return res.status(404).json({
+                    code: 0,
+                    message: "No se pudo eliminar el rol"
                 });
             }
 
             // Limpiar caché
             queryCache.clear();
 
-            res.json({ 
-                code: 1, 
-                message: "Rol eliminado exitosamente" 
+            res.json({
+                code: 1,
+                message: "Rol eliminado exitosamente"
             });
         }
 
@@ -612,16 +612,16 @@ const deleteRol = async (req, res) => {
             await connection.rollback();
         }
         console.error('Error en deleteRol:', error);
-        
+
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            res.status(400).json({ 
-                code: 0, 
-                message: "No se puede eliminar el rol porque tiene datos relacionados" 
+            res.status(400).json({
+                code: 0,
+                message: "No se puede eliminar el rol porque tiene datos relacionados"
             });
         } else {
-            res.status(500).json({ 
-                code: 0, 
-                message: "Error interno del servidor" 
+            res.status(500).json({
+                code: 0,
+                message: "Error interno del servidor"
             });
         }
     } finally {

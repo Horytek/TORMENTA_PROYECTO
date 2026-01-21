@@ -348,6 +348,48 @@ const verifyToken = async (req, res) => {
             });
         }
 
+        // Resolver ruta por defecto usando caché (Igual que en login para consistencia)
+        let defaultRedirect = "/inicio";
+        const cacheKey = `route_${userbd.id_rol}`;
+
+        if (routeCache.has(cacheKey)) {
+            const cached = routeCache.get(cacheKey);
+            if (Date.now() - cached.timestamp < CACHE_TTL) {
+                defaultRedirect = cached.route;
+            } else {
+                routeCache.delete(cacheKey);
+            }
+        }
+
+        if (defaultRedirect === "/inicio") {
+            // Nota: Reutilizamos la conexión existente
+            const [rolData] = await connection.query(
+                "SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ? LIMIT 1",
+                [userbd.id_rol]
+            );
+
+            if (rolData[0]?.id_submodulo) {
+                const [submoduleData] = await connection.query(
+                    "SELECT ruta FROM submodulos WHERE id_submodulo = ? LIMIT 1",
+                    [rolData[0].id_submodulo]
+                );
+                if (submoduleData.length > 0 && submoduleData[0].ruta) {
+                    defaultRedirect = submoduleData[0].ruta;
+                }
+            }
+
+            if (defaultRedirect === "/inicio" && rolData[0]?.id_modulo) {
+                const [moduleData] = await connection.query(
+                    "SELECT ruta FROM modulo WHERE id_modulo = ? LIMIT 1",
+                    [rolData[0].id_modulo]
+                );
+                if (moduleData.length > 0 && moduleData[0].ruta) {
+                    defaultRedirect = moduleData[0].ruta;
+                }
+            }
+            routeCache.set(cacheKey, { route: defaultRedirect, timestamp: Date.now() });
+        }
+
         return res.json({
             success: true,
             id: userbd.id_usuario,
@@ -357,6 +399,7 @@ const verifyToken = async (req, res) => {
             id_tenant: userbd.id_tenant || null,
             id_empresa: userbd.id_empresa || null,
             plan_pago: userbd.plan_pago || null,
+            defaultPage: defaultRedirect
         });
     } catch (error) {
         console.error('[SECURITY] Error en verifyToken:', error);

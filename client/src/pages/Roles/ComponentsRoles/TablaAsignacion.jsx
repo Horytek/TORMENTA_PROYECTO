@@ -158,29 +158,37 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
     };
 
     const handleDefaultPageChange = (type, id) => {
-        if (!currentRoleId) return;
+        if (!currentRoleId) {
+            console.error("No current role ID selected");
+            return;
+        }
+
+        const numericId = parseInt(id);
 
         if (type === 'modulo') {
             setDefaultPages(prev => ({
                 ...prev,
                 [currentRoleId]: {
-                    id_modulo: id,
+                    id_modulo: numericId,
                     id_submodulo: null
                 }
             }));
         } else if (type === 'submodulo') {
-            const parentModule = modulosConSubmodulos.find(modulo =>
-                modulo.submodulos.some(sub => sub.id_submodulo === id)
+            // Find parent module that contains this submodule
+            const parentModule = modulosConSubmodulos?.find(modulo =>
+                modulo.submodulos?.some(sub => parseInt(sub.id_submodulo) === numericId)
             );
 
             if (parentModule) {
                 setDefaultPages(prev => ({
                     ...prev,
                     [currentRoleId]: {
-                        id_modulo: parentModule.id,
-                        id_submodulo: id
+                        id_modulo: parseInt(parentModule.id), // AuthZService returns 'id'
+                        id_submodulo: numericId
                     }
                 }));
+            } else {
+                console.error("Parent module not found for submodule", numericId);
             }
         }
     };
@@ -188,22 +196,29 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
     // Flatten logic similar to UnifiedPermissionsTable
     const renderTableItems = useMemo(() => {
         if (!modulosConSubmodulos) return [];
+        // Force re-calculation when selection changes to ensure Table updates (if it relies on reference equality)
+        // trigger: defaultPages, currentRoleId
+        const _trigger = defaultPages[currentRoleId];
+
         const items = [];
         const lowerSearch = searchTerm.toLowerCase();
 
         const traverse = (nodes, level = 0, parentMatched = false) => {
             nodes.forEach(node => {
-                // Adapting node structure
-                // Assuming `node` has `submodulos` as children
-                // Or if it's already flat list? No, modulosConSubmodulos is a tree.
-
-                const isModulo = !!node.submodulos; // Roughly checks if it's a module
+                const isModulo = !!node.submodulos;
+                // Adapt node structure if necessary (AuthZ service returns 'id', 'nombre')
                 const name = isModulo ? node.nombre : node.nombre_sub;
+
+                // Ensure ID is accessed correctly. 
+                // AuthZService returns { id: ..., nombre: ... } for modules
+                // and submodulos array with { id_submodulo: ... }
+                // let's double check node structure in loop
                 const id = isModulo ? node.id : node.id_submodulo;
+
                 const type = isModulo ? 'modulo' : 'submodulo';
                 const uniqueId = isModulo ? `M_${id}` : `S_${id}`;
 
-                const matches = name.toLowerCase().includes(lowerSearch);
+                const matches = name && name.toLowerCase().includes(lowerSearch);
                 const showRow = matches || parentMatched || searchTerm === "";
 
                 if (showRow) {
@@ -226,7 +241,7 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
 
         traverse(modulosConSubmodulos);
         return items;
-    }, [modulosConSubmodulos, searchTerm]);
+    }, [modulosConSubmodulos, searchTerm, defaultPages, currentRoleId]);
 
 
     const renderModulosListing = () => {
@@ -317,10 +332,14 @@ export function TablaAsignacion({ externalData, skipApiCall = false }) {
                                 // If Y is null, then X is target.
 
                                 let isMyDefault = false;
+                                const numId = parseInt(item.id);
+                                const numModuleId = currentModuleId ? parseInt(currentModuleId) : null;
+                                const numSubId = currentSubmoduleId ? parseInt(currentSubmoduleId) : null;
+
                                 if (item.type === 'modulo') {
-                                    isMyDefault = (currentModuleId === item.id && !currentSubmoduleId);
+                                    isMyDefault = (numModuleId === numId && !numSubId);
                                 } else {
-                                    isMyDefault = (currentSubmoduleId === item.id);
+                                    isMyDefault = (numSubId === numId);
                                 }
 
                                 return (

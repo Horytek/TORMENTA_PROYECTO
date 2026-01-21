@@ -748,16 +748,79 @@ const addVenta = async (req, res) => {
     const id_almacen = almacenResult[0].id_almacen;
 
     // Cliente
-    // Cliente
-    let clienteQuery = `SELECT id_cliente FROM cliente WHERE(id_cliente = ? OR CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?)`;
-    let clienteParams = [id_cliente, id_cliente, id_cliente];
-    if (id_tenant) {
-      clienteQuery += " AND id_tenant = ?";
-      clienteParams.push(id_tenant);
+    let id_cliente_final;
+    if (typeof id_cliente === 'string' && id_cliente.startsWith('EXT-')) {
+      const externalId = id_cliente.replace('EXT-', '');
+
+      // 1. Fetch external client details from tesis_db
+      const [externalClient] = await connection.query(
+        `SELECT dni, nombres, apellidos, direccion, id_tenant FROM tesis_db.cliente WHERE id_cliente = ?`,
+        [externalId] // Note: id_tenant check for security? Assuming shared catalog authorized access
+      );
+
+      if (!externalClient || externalClient.length === 0) {
+        throw new Error("External client not found in catalog.");
+      }
+
+      const extData = externalClient[0];
+      const docNumber = extData.dni; // 'dni' in tesis_db holds both DNI and RUC
+
+      // 2. Check if exists locally by Document Number
+      // Try to match strictly by DNI or RUC logic or just the value
+      // Local schema has separate dni and ruc columns. 
+      // tesis_db schema: dni column used for document number.
+      // Heuristic: Length 11 -> RUC, Length 8 -> DNI.
+      let existingLocalParams = [docNumber, docNumber];
+      let existingLocalQuery = `SELECT id_cliente FROM cliente WHERE (dni = ? OR ruc = ?)`;
+
+      if (id_tenant) {
+        existingLocalQuery += " AND id_tenant = ?";
+        existingLocalParams.push(id_tenant);
+      }
+
+      const [existingLocal] = await connection.query(existingLocalQuery, existingLocalParams);
+
+      if (existingLocal.length > 0) {
+        id_cliente_final = existingLocal[0].id_cliente;
+      } else {
+        // 3. Import (Create) Local Client
+        const isRuc = docNumber.length === 11;
+        const [insertResult] = await connection.query(
+          `INSERT INTO cliente (dni, ruc, nombres, apellidos, razon_social, direccion, estado_cliente, id_tenant, f_creacion)
+           VALUES (?, ?, ?, ?, ?, ?, 1, ?, NOW())`,
+          [
+            !isRuc ? docNumber : null,
+            isRuc ? docNumber : null,
+            extData.nombres,     // For RUC 'nombres' usually holds Razon Social in some schemas? 
+            // Wait, addClient mappings:
+            // RUC -> Razon Social -> 'nombres' (in tesis_db insert above: names=businessName, last='-')
+            // So here:
+            // If RUC: Razon Social = extData.nombres, Nombres/Apellidos = null
+            // If DNI: Nombres = extData.nombres, Apellidos = extData.apellidos
+            !isRuc ? extData.nombres : null, // Nombres
+            !isRuc ? extData.apellidos : null, // Apellidos
+            isRuc ? extData.nombres : null, // Razon Social (mapped from 'nombres' in tesis_db which stores Business Name there for RUCs?) 
+            // Re-checking addCliente 'web' insert:
+            // nombres = clientType === "business" ? businessName : clientName
+            extData.direccion,
+            id_tenant
+          ]
+        );
+        id_cliente_final = insertResult.insertId;
+      }
+
+    } else {
+      // Original Logic
+      let clienteQuery = `SELECT id_cliente FROM cliente WHERE(id_cliente = ? OR CONCAT(nombres, ' ', apellidos) = ? OR razon_social = ?)`;
+      let clienteParams = [id_cliente, id_cliente, id_cliente];
+      if (id_tenant) {
+        clienteQuery += " AND id_tenant = ?";
+        clienteParams.push(id_tenant);
+      }
+      const [clienteResult] = await connection.query(clienteQuery, clienteParams);
+      if (clienteResult.length === 0) throw new Error("Cliente not found.");
+      id_cliente_final = clienteResult[0].id_cliente;
     }
-    const [clienteResult] = await connection.query(clienteQuery, clienteParams);
-    if (clienteResult.length === 0) throw new Error("Cliente not found.");
-    const id_cliente_final = clienteResult[0].id_cliente;
 
     const ip = req.ip || req.connection.remoteAddress;
 

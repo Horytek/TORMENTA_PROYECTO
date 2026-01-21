@@ -40,7 +40,6 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
   const [selectedAddress, setSelectedAddress] = useState(null); // Para guardar el objeto seleccionado
   const { addClient, isLoading } = useAddClient();
   const [manualInput, setManualInput] = useState(false); // NUEVO
-  const [destination, setDestination] = useState("sistema"); // 'sistema' | 'web'
 
   useEffect(() => {
     if (clientType === "personal") {
@@ -127,23 +126,18 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
       clientName,
       clientLastName,
       businessName,
-      address,
-      destination // Nuevo campo
+      address
     };
 
     const result = await addClient(clientData);
 
     if (result.success) {
-      toast.success(destination === 'web' ? 'Cliente guardado en Catálogo Web' : 'Cliente guardado exitosamente');
-
-      // Reflejar el cambio en tiempo real en el array local si corresponde o si queremos mostrarlo igual
-      // Si es web, el ID vendrá con EXT- o origen='externo' desde el backend si lo soportara el return
-      // Por ahora simulamos la inserción visual si es necesario, o recargamos.
+      toast.success('Cliente guardado exitosamente');
 
       if (setAllClientes) {
         setAllClientes(prev => [
           {
-            id: destination === 'web' ? `EXT-${result.data?.id}` : result.data?.id || Math.random().toString(36),
+            id: result.data?.id || Math.random().toString(36),
             dni: clientType === "personal" ? documentNumber.trim() : null,
             ruc: clientType === "business" ? documentNumber.trim() : null,
             dniRuc: documentNumber.trim(),
@@ -152,7 +146,7 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
             razon_social: clientType === "business" ? businessName : null,
             direccion: address || null,
             estado: 1,
-            origen: destination === 'web' ? 'externo' : 'local'
+            origen: 'local'
           },
           ...prev
         ]);
@@ -170,7 +164,6 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
     setClientLastName('');
     setBusinessName('');
     setAddress('');
-    setDestination('sistema'); // Reset destination
     onClose();
   };
 
@@ -188,22 +181,9 @@ export default function AddClientModal({ open, onClose, onClientCreated, setAllC
             <>
               <ModalHeader>Agregar nuevo cliente</ModalHeader>
               <ModalBody>
-                <p className="text-sm text-gray-600">
-                  Ingrese los datos del cliente. Seleccione si desea guardarlo en el Sistema Local o en el Catálogo Web.
+                <p className="text-sm text-gray-600 mb-4">
+                  Ingrese los datos del cliente para registrarlo en el sistema.
                 </p>
-
-                {/* Destination Tabs */}
-                <Tabs
-                  selectedKey={destination}
-                  onSelectionChange={setDestination}
-                  aria-label="Destino del Cliente"
-                  color="primary"
-                  variant="underlined"
-                  fullWidth
-                >
-                  <Tab key="sistema" title="Sistema (Local)" />
-                  <Tab key="web" title="Catálogo Web" />
-                </Tabs>
 
                 {/* Checkbox para habilitar inputs manualmente */}
                 <div className="mb-2 mt-4">
