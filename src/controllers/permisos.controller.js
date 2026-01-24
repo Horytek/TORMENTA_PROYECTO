@@ -67,11 +67,11 @@ const getModulosConSubmodulos = async (req, res) => {
                     s.nombre_sub,
                     s.ruta as ruta_submodulo
                 FROM modulo m
-                LEFT JOIN submodulos s ON m.id_modulo = s.id_modulo AND s.id_tenant = ?
-                WHERE m.id_tenant = ?
+                LEFT JOIN submodulos s ON m.id_modulo = s.id_modulo
+                WHERE m.id_tenant = ? OR m.id_tenant IS NULL
                 ORDER BY m.id_modulo, s.id_submodulo
             `;
-            queryParams = [id_tenant, id_tenant];
+            queryParams = [id_tenant];
         }
 
         const [rows] = await connection.query(query, queryParams);
@@ -154,7 +154,7 @@ const getPermisosModulo = async (req, res) => {
             permisosQuery = `
                 SELECT 
                     m.nombre_modulo, 
-                    s.nombre_submodulo, 
+                    s.nombre_sub as nombre_submodulo, 
                     p.ver, 
                     p.crear, 
                     p.editar, 
@@ -166,14 +166,14 @@ const getPermisosModulo = async (req, res) => {
                 INNER JOIN modulo m ON p.id_modulo = m.id_modulo
                 LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
                 WHERE p.id_rol = ?
-                ORDER BY m.nombre_modulo, s.nombre_submodulo
+                ORDER BY m.nombre_modulo, s.nombre_sub
             `;
             queryParams = [id_rol];
         } else {
             permisosQuery = `
                 SELECT 
                     m.nombre_modulo, 
-                    s.nombre_submodulo, 
+                    s.nombre_sub as nombre_submodulo, 
                     p.ver, 
                     p.crear, 
                     p.editar, 
@@ -185,7 +185,7 @@ const getPermisosModulo = async (req, res) => {
                 INNER JOIN modulo m ON p.id_modulo = m.id_modulo
                 LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
                 WHERE p.id_rol = ? AND p.id_tenant = ?
-                ORDER BY m.nombre_modulo, s.nombre_submodulo
+                ORDER BY m.nombre_modulo, s.nombre_sub
             `;
             queryParams = [id_rol, id_tenant];
         }

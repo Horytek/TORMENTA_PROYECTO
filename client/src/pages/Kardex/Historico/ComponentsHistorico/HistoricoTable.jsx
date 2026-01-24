@@ -245,7 +245,7 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
               }}
             >
               <TableHeader>
-                {["Fecha", "Hora", "Documento", "Nombre", "Entra", "Sale", "Stock", "Precio", "Glosa"].map((header) => (
+                {["Fecha", "Hora", "Usuario", "Documento", "Origen", "Destino", "Tonalidad", "Talla", "Entra", "Sale", "Stock", "Estado"].map((header) => (
                   <TableColumn key={header}>{header}</TableColumn>
                 ))}
               </TableHeader>
@@ -259,7 +259,7 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
                   <TableRow key={index} onClick={() => toggleRow(transaction)}>
                     {/* Fecha */}
                     <TableCell className="text-slate-700 dark:text-zinc-300 font-medium whitespace-nowrap">{transaction["fecha"] || "0"}</TableCell>
-                    {/* Hora de creación */}
+                    {/* Hora */}
                     <TableCell className="text-slate-500 dark:text-zinc-400 whitespace-nowrap">
                       {transaction["hora_creacion"]
                         ? new Date(`1970-01-01T${transaction["hora_creacion"]}`).toLocaleTimeString("es-ES", {
@@ -269,15 +269,48 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
                         })
                         : "N/A"}
                     </TableCell>
-                    {/* Resto de columnas */}
-                    {["documento", "nombre", "entra", "sale", "stock", "precio", "glosa"].map((field) => (
-                      <TableCell key={field} className="whitespace-nowrap">
-                        {field === "entra" || field === "sale"
-                          ? <span className={Number(transaction[field]) > 0 ? (field === "entra" ? "text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded" : "text-rose-600 font-bold bg-rose-50 dark:bg-rose-900/20 px-1.5 py-0.5 rounded") : "text-slate-300 dark:text-zinc-600"}>{transaction[field] || "0"}</span>
-                          : <span className="text-slate-600 dark:text-zinc-400 max-w-[150px] truncate block" title={transaction[field]}>{transaction[field] || "-"}</span>
-                        }
-                      </TableCell>
-                    ))}
+                    {/* Usuario */}
+                    <TableCell className="text-slate-600 dark:text-zinc-400 whitespace-nowrap max-w-[100px] truncate" title={transaction["usuario"]}>
+                      {transaction["usuario"] || "-"}
+                    </TableCell>
+                    {/* Documento */}
+                    <TableCell className="whitespace-nowrap font-mono text-slate-600 dark:text-zinc-400">
+                      {transaction["documento"] || "-"}
+                    </TableCell>
+                    {/* Origen */}
+                    <TableCell className="text-slate-500 dark:text-zinc-500 whitespace-nowrap max-w-[100px] truncate" title={transaction["almacen_origen"]}>
+                      {transaction["almacen_origen"] || "-"}
+                    </TableCell>
+                    {/* Destino */}
+                    <TableCell className="text-slate-500 dark:text-zinc-500 whitespace-nowrap max-w-[100px] truncate" title={transaction["almacen_destino"]}>
+                      {transaction["almacen_destino"] || "-"}
+                    </TableCell>
+                    {/* Tonalidad */}
+                    <TableCell className="text-slate-600 dark:text-zinc-400 whitespace-nowrap">
+                      {transaction["tonalidad"] || "-"}
+                    </TableCell>
+                    {/* Talla */}
+                    <TableCell className="text-slate-600 dark:text-zinc-400 whitespace-nowrap">
+                      {transaction["talla"] || "-"}
+                    </TableCell>
+                    {/* Entra */}
+                    <TableCell className="whitespace-nowrap">
+                      <span className={Number(transaction["entra"]) > 0 ? "text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded" : "text-slate-300 dark:text-zinc-600"}>{transaction["entra"] || "0"}</span>
+                    </TableCell>
+                    {/* Sale */}
+                    <TableCell className="whitespace-nowrap">
+                      <span className={Number(transaction["sale"]) > 0 ? "text-rose-600 font-bold bg-rose-50 dark:bg-rose-900/20 px-1.5 py-0.5 rounded" : "text-slate-300 dark:text-zinc-600"}>{transaction["sale"] || "0"}</span>
+                    </TableCell>
+                    {/* Stock */}
+                    <TableCell className="whitespace-nowrap font-semibold text-slate-700 dark:text-zinc-300">
+                      {transaction["stock"] || "-"}
+                    </TableCell>
+                    {/* Estado */}
+                    <TableCell className="whitespace-nowrap">
+                      <Chip size="sm" variant="flat" color={transaction["estado_doc"] === 'APROBADO' ? "success" : transaction["estado_doc"] === 'PENDIENTE' ? "warning" : "default"}>
+                        {transaction["estado_doc"] || "REGISTRADO"}
+                      </Chip>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

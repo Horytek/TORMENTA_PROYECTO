@@ -7,12 +7,12 @@ const CACHE_TTL = 60000; // 1 minuto
 
 // Limpiar caché periódicamente
 setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of queryCache.entries()) {
-        if (now - value.timestamp > CACHE_TTL * 2) {
-            queryCache.delete(key);
-        }
+  const now = Date.now();
+  for (const [key, value] of queryCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL * 2) {
+      queryCache.delete(key);
     }
+  }
 }, CACHE_TTL * 2);
 
 const getIngresos = async (req, res) => {
@@ -31,7 +31,7 @@ const getIngresos = async (req, res) => {
 
   const id_tenant = req.id_tenant;
   const offset = page * limit;
-  
+
   let connection;
   try {
     connection = await getConnection();
@@ -186,17 +186,17 @@ const getIngresos = async (req, res) => {
 const getAlmacen = async (req, res) => {
   let connection;
   const id_tenant = req.id_tenant;
-  
+
   // Usar caché
   const cacheKey = `almacenes_${id_tenant}`;
   const cached = queryCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return res.json({ code: 1, data: cached.data, message: "Almacenes listados" });
   }
-  
+
   try {
-      connection = await getConnection();
-      const [result] = await connection.query(`
+    connection = await getConnection();
+    const [result] = await connection.query(`
           SELECT a.id_almacen AS id, a.nom_almacen AS almacen, COALESCE(s.nombre_sucursal,'Sin Sucursal') AS sucursal, usa.usua AS usuario
           FROM almacen a 
           LEFT JOIN sucursal_almacen sa ON a.id_almacen = sa.id_almacen
@@ -205,17 +205,17 @@ const getAlmacen = async (req, res) => {
           INNER JOIN usuario usa ON usa.id_usuario=ve.id_usuario
           WHERE a.estado_almacen = 1 AND a.id_tenant = ?
       `, [id_tenant]);
-      
-      // Guardar en caché
-      queryCache.set(cacheKey, { data: result, timestamp: Date.now() });
-      
-      res.json({ code: 1, data: result, message: "Almacenes listados" });
+
+    // Guardar en caché
+    queryCache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+    res.json({ code: 1, data: result, message: "Almacenes listados" });
   } catch (error) {
-      console.error('Error en getAlmacen:', error);
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    console.error('Error en getAlmacen:', error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-        connection.release();
+      connection.release();
     }
   }
 };
@@ -281,7 +281,7 @@ const getProductos = async (req, res) => {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-        connection.release();
+      connection.release();
     }
   }
 };
@@ -292,10 +292,10 @@ const getProductos_SinStock = async (req, res) => {
   const id_tenant = req.id_tenant;
 
   try {
-      connection = await getConnection();
+    connection = await getConnection();
 
-      const [productosResult] = await connection.query(
-          `
+    const [productosResult] = await connection.query(
+      `
           SELECT 
               p.id_producto AS codigo, 
               p.descripcion AS descripcion, 
@@ -311,16 +311,16 @@ const getProductos_SinStock = async (req, res) => {
               p.id_tenant = ?
           LIMIT ?
           `,
-          [`%${descripcion}%`, `%${codbarras}%`, id_tenant, parseInt(limit)]
-      );
+      [`%${descripcion}%`, `%${codbarras}%`, id_tenant, parseInt(limit)]
+    );
 
-      res.json({ code: 1, data: productosResult });
+    res.json({ code: 1, data: productosResult });
   } catch (error) {
-      console.error('Error en getProductos_SinStock:', error);
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    console.error('Error en getProductos_SinStock:', error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-        connection.release();
+      connection.release();
     }
   }
 };
@@ -371,32 +371,32 @@ const getNuevoDocumento = async (req, res) => {
 const getDestinatario = async (req, res) => {
   let connection;
   const id_tenant = req.id_tenant;
-  
+
   // Usar caché
   const cacheKey = `destinatarios_${id_tenant}`;
   const cached = queryCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return res.json({ code: 1, data: cached.data, message: "Destinatarios listados" });
   }
-  
+
   try {
-      connection = await getConnection();
-      const [result] = await connection.query(`
+    connection = await getConnection();
+    const [result] = await connection.query(`
           SELECT id_destinatario AS id, COALESCE(ruc, dni) AS documento, COALESCE(razon_social, CONCAT(nombres, ' ', apellidos)) AS destinatario 
           FROM destinatario
           WHERE id_tenant = ?
       `, [id_tenant]);
-      
-      // Guardar en caché
-      queryCache.set(cacheKey, { data: result, timestamp: Date.now() });
-      
-      res.json({ code: 1, data: result, message: "Destinatarios listados" });
+
+    // Guardar en caché
+    queryCache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+    res.json({ code: 1, data: result, message: "Destinatarios listados" });
   } catch (error) {
-      console.error('Error en getDestinatario:', error);
-      res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    console.error('Error en getDestinatario:', error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-        connection.release();
+      connection.release();
     }
   }
 };
@@ -451,7 +451,7 @@ const insertNotaAndDetalle = async (req, res) => {
     );
 
     const id_comprobante = comprobanteResult.insertId;
-   
+
     let notaResult;
 
     if (almacenO) {
@@ -513,20 +513,26 @@ const insertNotaAndDetalle = async (req, res) => {
     // Preparar datos para batch insert de detalles
     const detalleValues = [];
     const detalleParams = [];
-    
+
+    // Asumimos que id_tonalidad y id_talla vienen en el body (o son null/undefined)
+    const tonalidades = req.body.tonalidad || [];
+    const tallas = req.body.talla || [];
+
     for (let i = 0; i < producto.length; i++) {
       const id_producto = producto[i];
       const cantidadProducto = cantidad[i];
       const precio = preciosMap.get(id_producto);
       const totalProducto = cantidadProducto * precio;
-      
-      detalleValues.push('(?, ?, ?, ?, ?, ?)');
-      detalleParams.push(id_producto, id_nota, cantidadProducto, precio, totalProducto, id_tenant);
+      const id_ton = tonalidades[i] || null;
+      const id_tal = tallas[i] || null;
+
+      detalleValues.push('(?, ?, ?, ?, ?, ?, ?, ?)');
+      detalleParams.push(id_producto, id_nota, cantidadProducto, precio, totalProducto, id_tenant, id_ton, id_tal);
     }
 
     // Batch insert de detalles
     const [detalleResult] = await connection.query(
-      `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant) VALUES ${detalleValues.join(', ')}`,
+      `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant, id_tonalidad, id_talla) VALUES ${detalleValues.join(', ')}`,
       detalleParams
     );
 
@@ -535,13 +541,27 @@ const insertNotaAndDetalle = async (req, res) => {
 
     // Procesar inventario y bitácora si hay almacén destino
     if (almacenD) {
-      // Obtener stocks actuales de todos los productos en un solo query
+      // Necesitamos verificar stock especifico por producto+variant
+      // La query anterior agrupada por producto ya no es suficiente si hay variantes.
+      // Haremos consultas especificas o un mapa compuesto.
+      // Para optimizar, traemos todo el inventario de estos productos en este almacén 
+      // y luego filtramos en memoria (o construimos claves compuestas).
+
       const [stocksResult] = await connection.query(
-        `SELECT id_producto, stock FROM inventario WHERE id_producto IN (${productosPlaceholders}) AND id_almacen = ? AND id_tenant = ?`,
+        `SELECT id_producto, id_tonalidad, id_talla, stock 
+         FROM inventario 
+         WHERE id_producto IN (${productosPlaceholders}) 
+         AND id_almacen = ? 
+         AND id_tenant = ?`,
         [...producto, almacenD, id_tenant]
       );
 
-      const stocksMap = new Map(stocksResult.map(s => [s.id_producto, s.stock]));
+      // Usar clave compuesta para el mapa: "prodId-tonId-talId"
+      const getVariantKey = (p, t, s) => `${p}-${t || 'null'}-${s || 'null'}`;
+      const stocksMap = new Map();
+      stocksResult.forEach(row => {
+        stocksMap.set(getVariantKey(row.id_producto, row.id_tonalidad, row.id_talla), row.stock);
+      });
 
       // Preparar batch operations
       const updateInventarioPromises = [];
@@ -554,26 +574,40 @@ const insertNotaAndDetalle = async (req, res) => {
         const id_producto = producto[i];
         const cantidadProducto = cantidad[i];
         const id_detalle = firstDetalleId + i;
-        const stockAnterior = stocksMap.get(id_producto) || 0;
-        const totalStock = cantidadProducto + stockAnterior;
+        const id_ton = tonalidades[i] || null;
+        const id_tal = tallas[i] || null;
+        const variantKey = getVariantKey(id_producto, id_ton, id_tal);
 
-        if (stocksMap.has(id_producto)) {
+        const stockAnterior = stocksMap.get(variantKey) || 0;
+        const totalStock = Number(cantidadProducto) + Number(stockAnterior); // Ensure numbers
+
+        if (stocksMap.has(variantKey)) {
           // Actualizar stock existente
+          // IMPORTANTE: Manejar id_tonalidad/id_talla NULL en SQL requiere "IS NULL" o COALESCE, 
+          // pero aqui al pasar parametros, si es null, "id_tonalidad = ?" funcionará si el driver convierte a NULL 
+          // pero la igualdad SQL "field = NULL" siempre es false. Necesitamos <=> (null-safe equality) o query dinamica.
+          // MySQL stardard operator <=>
+
           updateInventarioPromises.push(
             connection.query(
-              "UPDATE inventario SET stock = stock + ? WHERE id_producto = ? AND id_almacen = ? AND id_tenant = ?",
-              [cantidadProducto, id_producto, almacenD, id_tenant]
+              `UPDATE inventario SET stock = stock + ? 
+               WHERE id_producto = ? 
+               AND id_almacen = ? 
+               AND (id_tonalidad <=> ?) 
+               AND (id_talla <=> ?)
+               AND id_tenant = ?`,
+              [cantidadProducto, id_producto, almacenD, id_ton, id_tal, id_tenant]
             )
           );
         } else {
           // Insertar nuevo stock
-          insertInventarioValues.push('(?, ?, ?, ?)');
-          insertInventarioParams.push(id_producto, almacenD, cantidadProducto, id_tenant);
+          insertInventarioValues.push('(?, ?, ?, ?, ?, ?)');
+          insertInventarioParams.push(id_producto, almacenD, cantidadProducto, id_tenant, id_ton, id_tal);
         }
 
         // Preparar bitácora
-        bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        bitacoraParams.push(id_nota, id_producto, almacenD, id_detalle, cantidadProducto, stockAnterior, totalStock, fecha, id_tenant);
+        bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        bitacoraParams.push(id_nota, id_producto, almacenD, id_detalle, cantidadProducto, stockAnterior, totalStock, fecha, id_tenant, id_ton, id_tal);
       }
 
       // Ejecutar batch updates en paralelo
@@ -584,7 +618,7 @@ const insertNotaAndDetalle = async (req, res) => {
       // Batch insert de nuevos inventarios
       if (insertInventarioValues.length > 0) {
         await connection.query(
-          `INSERT INTO inventario (id_producto, id_almacen, stock, id_tenant) VALUES ${insertInventarioValues.join(', ')}`,
+          `INSERT INTO inventario (id_producto, id_almacen, stock, id_tenant, id_tonalidad, id_talla) VALUES ${insertInventarioValues.join(', ')}`,
           insertInventarioParams
         );
       }
@@ -592,7 +626,7 @@ const insertNotaAndDetalle = async (req, res) => {
       // Batch insert de bitácora
       if (bitacoraValues.length > 0) {
         await connection.query(
-          `INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha, id_tenant) VALUES ${bitacoraValues.join(', ')}`,
+          `INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES ${bitacoraValues.join(', ')}`,
           bitacoraParams
         );
       }
@@ -604,9 +638,9 @@ const insertNotaAndDetalle = async (req, res) => {
     queryCache.clear();
 
     // Registrar log de creación de nota de ingreso
-    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-              (req.connection.socket ? req.connection.socket.remoteAddress : null);
-    
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
+      (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
     if (usuarioResult[0]?.id_usuario && id_tenant) {
       await logInventario.notaIngreso(id_nota, usuarioResult[0].id_usuario, ip, id_tenant);
     }
@@ -620,7 +654,7 @@ const insertNotaAndDetalle = async (req, res) => {
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
-        connection.release();
+      connection.release();
     }
   }
 };
@@ -711,10 +745,10 @@ const anularNota = async (req, res) => {
     );
 
     await connection.commit();
-    
+
     // Limpiar caché relacionado
     queryCache.clear();
-    
+
     res.json({ code: 1, message: "Nota anulada correctamente" });
 
   } catch (error) {
@@ -739,12 +773,12 @@ const anularNota = async (req, res) => {
 };
 
 export const methods = {
-    getIngresos,
-    getAlmacen,
-    getProductos,
-    getProductos_SinStock,
-    getNuevoDocumento,
-    getDestinatario,
-    insertNotaAndDetalle,
-    anularNota
+  getIngresos,
+  getAlmacen,
+  getProductos,
+  getProductos_SinStock,
+  getNuevoDocumento,
+  getDestinatario,
+  insertNotaAndDetalle,
+  anularNota
 };

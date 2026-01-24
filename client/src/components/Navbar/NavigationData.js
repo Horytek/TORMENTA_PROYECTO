@@ -1,5 +1,5 @@
 import {
-  Home, Tags, LineChart, FileBarChart2, User, Users, Warehouse, Building2, UserCog, Bot, SquareTerminal, Settings2, BookOpen, Database
+  Home, Tags, LineChart, FileBarChart2, User, Users, Warehouse, Building2, UserCog, Bot, SquareTerminal, Settings2, BookOpen, Database, ClipboardCheck
 } from "lucide-react";
 
 /**
@@ -31,6 +31,8 @@ export const NAVIGATION_DATA = {
       { title: "Productos", url: "/productos", icon: Tags, description: "Catálogo de productos", resourceKey: "/productos" },
       { title: "Kárdex & Almacén", url: "/almacen", icon: Warehouse, description: "Movimientos y stock", resourceKey: "/almacen" },
       { title: "Nota de Almacén", url: "/nota_almacen", icon: Warehouse, description: "Ingresos y salidas manuales", resourceKey: "/nota_almacen" },
+      { title: "Solicitud Inventario", url: "/inventario/solicitud", icon: ClipboardCheck, description: "Registro de lote", resourceKey: "/inventario/solicitud" },
+      { title: "Verificación Inventario", url: "/inventario/verificacion", icon: ClipboardCheck, description: "Aprobar movimientos", resourceKey: "/inventario/verificacion" },
       { title: "Almacenes Físicos", url: "/almacenG", icon: Warehouse, description: "Gestión de ubicaciones", resourceKey: "/almacenG" },
       { title: "Sucursales", url: "/sucursal", icon: Building2, description: "Sedes y puntos de venta", resourceKey: "/sucursal" },
     ]
@@ -50,12 +52,25 @@ export const NAVIGATION_DATA = {
     items: [
       { title: "Reportes", url: "/reportes", icon: FileBarChart2, description: "Análisis y estadísticas", resourceKey: "/reportes" },
       { title: "Libro de Ventas", url: "/ventas/libro_ventas", icon: FileBarChart2, description: "Registro contable", resourceKey: "/libro_ventas" },
+      // Gestor Contenidos Submodules
+      { title: "Tonalidades", url: "/gestor-contenidos/tonalidades", icon: Tags, description: "Gestión de colores/variantes", resourceKey: "/gestor-contenidos/tonalidades" },
+      { title: "Tallas", url: "/gestor-contenidos/tallas", icon: Tags, description: "Gestión de dimensiones", resourceKey: "/gestor-contenidos/tallas" },
+
       // These use submodule routes from the database
       { title: "Usuarios (Admin)", url: "/configuracion/usuarios", icon: UserCog, description: "Administración de usuarios", resourceKey: "/configuracion/usuarios" },
       { title: "Roles y Permisos", url: "/configuracion/roles", icon: Users, description: "Control de accesos", resourceKey: "/configuracion/roles" },
       { title: "Logs de Sistema", url: "/configuracion/logs", icon: FileBarChart2, description: "Auditoría de acciones", resourceKey: "/configuracion/logs" },
       { title: "Config. Negocio", url: "/configuracion/negocio", icon: Tags, description: "Datos de la empresa", resourceKey: "/configuracion/negocio" },
     ]
+  },
+
+  // New Section or integrated? Let's Integrate Inventario into Inventario section or create new if distinct?
+  // Existing Inventario section has "Verificación Inventario" already at line 34.
+  // Wait, I see "Verificación Inventario" at line 34.
+  // I need to add "Solicitud Inventario" there too.
+
+  inventario_avanzado: {
+    // Merging into existing Inventario section (below) via replacement plan
   },
 
   desarrollador: {

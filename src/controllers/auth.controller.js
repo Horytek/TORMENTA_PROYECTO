@@ -683,9 +683,41 @@ const sendAuthCode = async (req, res) => {
     }
 };
 
+// MIDDLEWARE: Validar Token para Rutas Protegidas
+const validateTokenMiddleware = async (req, res, next) => {
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+    } else {
+        token = req.cookies?.token;
+    }
+
+    if (!token) {
+        return res.status(401).json({ success: false, message: "No autenticado" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, TOKEN_SECRET, {
+            audience: "horytek-erp",
+            issuer: "horytek-backend"
+        });
+
+        // Adjuntar datos al request para los controladores
+        req.user = decoded;
+        req.id_tenant = decoded.ten ?? decoded.id_tenant;
+        req.id_usuario = decoded.sub ?? decoded.id_usuario ?? decoded.id;
+
+        next();
+    } catch (error) {
+        return res.status(401).json({ success: false, message: "Token inválido o expirado" });
+    }
+};
+
 export const methods = {
     login,
     verifyToken,
+    validateTokenMiddleware,
     logout,
     updateUsuarioName,
     sendAuthCode
