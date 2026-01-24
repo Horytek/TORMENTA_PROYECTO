@@ -31,7 +31,8 @@ const requiredVars = [
     { name: 'DB_DATABASE', value: process.env.DB_DATABASE, critical: true },
     { name: 'DB_PORT', value: process.env.DB_PORT, critical: false },
     { name: 'TOKEN_SECRET', value: process.env.TOKEN_SECRET, critical: true },
-    { name: 'OPENAI_API_KEY', value: process.env.OPENAI_API_KEY, critical: false },
+    { name: 'GEMINI_API_KEY', value: process.env.GEMINI_API_KEY, critical: false },
+    { name: 'GEMINI_MODEL', value: process.env.GEMINI_MODEL, critical: false },
     { name: 'PORT', value: process.env.PORT, critical: false },
 ];
 

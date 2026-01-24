@@ -37,17 +37,28 @@ const getConnection = async () => {
 };
 
 const closeInactiveConnections = async () => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [rows] = await connection.execute(
       "SELECT Id FROM information_schema.processlist WHERE Command = 'Sleep' AND `TIME` > 30"
     );
     for (const row of rows) {
       const process_id = row.Id;
-      await connection.execute(`KILL ${process_id}`);
+      try {
+        // Verificar que la conexión aún existe antes de intentar cerrarla
+        await connection.execute(`KILL ${process_id}`);
+      } catch (killError) {
+        // Ignorar error si la conexión ya fue cerrada (ER_NO_SUCH_THREAD)
+        if (killError.code !== 'ER_NO_SUCH_THREAD') {
+          console.error(`Error killing process ${process_id}:`, killError.message);
+        }
+      }
     }
   } catch (error) {
-    console.error("Error closing inactive connections:", error);
+    console.error("Error closing inactive connections:", error.message);
+  } finally {
+    if (connection) connection.release();
   }
 };
 

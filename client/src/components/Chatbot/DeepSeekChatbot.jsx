@@ -43,6 +43,13 @@ export default function DeepSeekOpenRouterChatbot() {
   const [exporting, setExporting] = useState(false);
   const [isFunctionShortcutsOpen, setIsFunctionShortcutsOpen] = useState(false);
   const [featuresAllowed, setFeaturesAllowed] = useState({ chatbot: true, shortcuts: true });
+  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
+  const [pdfConfig, setPdfConfig] = useState({
+    type: "mensual", // "mensual" | "anual"
+    period: "", // YYYY-MM para mensual, YYYY para anual
+    modules: [] // ["ventas", "compras", "inventario", "clientes"]
+  });
+  const [generatingPDF, setGeneratingPDF] = useState(false);
 
 
   // NUEVO: controles de densidad y tamaño de texto
@@ -143,6 +150,67 @@ export default function DeepSeekOpenRouterChatbot() {
       setErrorMsg("No se pudo exportar el Kardex mensual.");
     } finally {
       setExporting(false);
+    }
+  };
+
+  // NUEVO: generación de reporte PDF con análisis AI
+  const generatePDFReport = async () => {
+    try {
+      setGeneratingPDF(true);
+      setErrorMsg("");
+
+      // Validar configuración
+      if (!pdfConfig.period || pdfConfig.modules.length === 0) {
+        toast.error("Por favor selecciona un período y al menos un módulo");
+        return;
+      }
+
+      // Validar formato del período
+      const periodRegex = pdfConfig.type === "mensual" ? /^\d{4}-\d{2}$/ : /^\d{4}$/;
+      if (!periodRegex.test(pdfConfig.period)) {
+        toast.error(`Formato de período inválido. Usa ${pdfConfig.type === "mensual" ? "YYYY-MM" : "YYYY"}`);
+        return;
+      }
+
+      toast.loading("Generando reporte PDF con análisis AI...", { id: "pdf-gen" });
+
+      const response = await axios.post("/chat/generate-report", {
+        type: pdfConfig.type,
+        period: pdfConfig.period,
+        modules: pdfConfig.modules
+      }, {
+        responseType: "blob",
+        headers: { Accept: "application/pdf" }
+      });
+
+      // Descargar PDF
+      const downloadUrl = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      const fileName = `Reporte_${pdfConfig.type}_${pdfConfig.period.replace(/-/g, "_")}.pdf`;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast.success("Reporte PDF generado exitosamente", { id: "pdf-gen" });
+      setIsPDFModalOpen(false);
+      
+      // Resetear configuración
+      setPdfConfig({
+        type: "mensual",
+        period: "",
+        modules: []
+      });
+
+    } catch (e) {
+      console.error("Error generando PDF:", e);
+      const errorMsg = e.response?.data?.message || "No se pudo generar el reporte PDF";
+      toast.error(errorMsg, { id: "pdf-gen" });
+      setErrorMsg(errorMsg);
+    } finally {
+      setGeneratingPDF(false);
     }
   };
 
@@ -739,15 +807,26 @@ Historial breve: ${historySummary || "inicio"}.
               </Tooltip>
             </Button>
           </DropdownTrigger>
-          <DropdownMenu aria-label="Panel de opciones" className="dark:bg-zinc-900">
+          <DropdownMenu 
+            aria-label="Panel de opciones" 
+            className="dark:bg-zinc-900"
+            onAction={(key) => {
+              if (key === "function-shortcuts") {
+                featuresAllowed.shortcuts
+                  ? setIsFunctionShortcutsOpen(true)
+                  : handleNoAccess("Atajos de función");
+              } else if (key === "chatbot") {
+                featuresAllowed.chatbot
+                  ? setIsChatOpen(true)
+                  : handleNoAccess("Chatbot");
+              } else if (key === "pdf-report") {
+                setIsPDFModalOpen(true);
+              }
+            }}
+          >
             <DropdownItem
               key="function-shortcuts"
               startContent={<Zap className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
-              onClick={() =>
-                featuresAllowed.shortcuts
-                  ? setIsFunctionShortcutsOpen(true)
-                  : handleNoAccess("Atajos de función")
-              }
               isDisabled={!featuresAllowed.shortcuts}
               className={!featuresAllowed.shortcuts ? "opacity-60 pointer-events-none" : ""}
             >
@@ -756,15 +835,16 @@ Historial breve: ${historySummary || "inicio"}.
             <DropdownItem
               key="chatbot"
               startContent={<Bot className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
-              onClick={() =>
-                featuresAllowed.chatbot
-                  ? setIsChatOpen(true)
-                  : handleNoAccess("Chatbot")
-              }
               isDisabled={!featuresAllowed.chatbot}
               className={!featuresAllowed.chatbot ? "opacity-60 pointer-events-none" : ""}
             >
               Asistente ERP
+            </DropdownItem>
+            <DropdownItem
+              key="pdf-report"
+              startContent={<FileText className="w-4 h-4 text-gray-600 dark:text-zinc-300" />}
+            >
+              Generar Reporte PDF
             </DropdownItem>
 
           </DropdownMenu>
@@ -1054,6 +1134,143 @@ Historial breve: ${historySummary || "inicio"}.
           .animate-fade-in { animation: fade-in .3s ease; }
         `}</style>
         </Card>
+      )}
+
+      {/* Modal de generación de reportes PDF */}
+      {isPDFModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[10001]"
+          onClick={() => setIsPDFModalOpen(false)}
+        >
+          <Card
+            className="w-[500px] max-w-[90vw] p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-zinc-100 flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Generar Reporte PDF con Análisis AI
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-zinc-400 mt-1">
+                Selecciona el período y módulos para generar un reporte detallado con análisis de Gemini
+              </p>
+            </div>
+
+            <Divider className="mb-4" />
+
+            <div className="space-y-4">
+              {/* Tipo de reporte */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2 block">
+                  Tipo de reporte
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={pdfConfig.type === "mensual" ? "solid" : "bordered"}
+                    color={pdfConfig.type === "mensual" ? "primary" : "default"}
+                    onPress={(e) => {
+                      setPdfConfig(prev => ({ ...prev, type: "mensual", period: "" }));
+                    }}
+                    className="flex-1"
+                  >
+                    Mensual
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={pdfConfig.type === "anual" ? "solid" : "bordered"}
+                    color={pdfConfig.type === "anual" ? "primary" : "default"}
+                    onPress={(e) => {
+                      setPdfConfig(prev => ({ ...prev, type: "anual", period: "" }));
+                    }}
+                    className="flex-1"
+                  >
+                    Anual
+                  </Button>
+                </div>
+              </div>
+
+              {/* Período */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2 block">
+                  Período {pdfConfig.type === "mensual" ? "(YYYY-MM)" : "(YYYY)"}
+                </label>
+                <input
+                  type={pdfConfig.type === "mensual" ? "month" : "number"}
+                  value={pdfConfig.period}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setPdfConfig(prev => ({ ...prev, period: e.target.value }));
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  placeholder={pdfConfig.type === "mensual" ? "2024-01" : "2024"}
+                  min={pdfConfig.type === "anual" ? "2020" : undefined}
+                  max={pdfConfig.type === "anual" ? "2030" : undefined}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-800 dark:text-zinc-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Módulos */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2 block">
+                  Módulos a incluir
+                </label>
+                <div className="space-y-2">
+                  {[
+                    { value: "ventas", label: "Ventas" },
+                    { value: "compras", label: "Compras" },
+                    { value: "inventario", label: "Inventario" },
+                    { value: "clientes", label: "Clientes" }
+                  ].map(module => (
+                    <label
+                      key={module.value}
+                      className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={pdfConfig.modules.includes(module.value)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          if (e.target.checked) {
+                            setPdfConfig(prev => ({ ...prev, modules: [...prev.modules, module.value] }));
+                          } else {
+                            setPdfConfig(prev => ({ ...prev, modules: prev.modules.filter(m => m !== module.value) }));
+                          }
+                        }}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-zinc-300">{module.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Divider className="my-4" />
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                size="sm"
+                variant="light"
+                onPress={() => setIsPDFModalOpen(false)}
+                isDisabled={generatingPDF}
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                color="primary"
+                onPress={generatePDFReport}
+                isLoading={generatingPDF}
+                isDisabled={!pdfConfig.period || pdfConfig.modules.length === 0}
+                startContent={!generatingPDF && <FileText className="w-4 h-4" />}
+              >
+                {generatingPDF ? "Generando..." : "Generar PDF"}
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </>
   );
