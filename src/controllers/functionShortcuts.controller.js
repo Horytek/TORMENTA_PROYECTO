@@ -1,8 +1,9 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+// Inicializar Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash-exp";
 
 // Helper: construir URL base http/https actual
 const baseUrlFromReq = (req) => `${req.protocol}://${req.get("host")}`;
@@ -1025,13 +1026,25 @@ function detectIntentKey(entity, question = "") {
 }
 
 // OpenAI redactor (incluye la pregunta original)
-async function askOpenAI({ prompt, context, question }) {
-  const messages = [
-    { role: "system", content: "Eres un asistente ERP que genera mini‑reportes claros y útiles. No inventes datos: usa solo el JSON dado. Considera sucursal/fechas/top/comprobante si están en 'applied' o filtros. Responde en español con viñetas y 1 párrafo final." },
-    { role: "user", content: `Instrucciones: ${prompt}\nPregunta original: ${question || "-"}\nDatos JSON:\n${JSON.stringify(context)}` }
-  ];
-  const out = await client.chat.completions.create({ model: MODEL, messages, temperature: 0.2 });
-  return out.choices?.[0]?.message?.content || "";
+async function askGemini({ prompt, context, question }) {
+  const systemPrompt = "Eres un asistente ERP que genera mini‑reportes claros y útiles. No inventes datos: usa solo el JSON dado. Considera sucursal/fechas/top/comprobante si están en 'applied' o filtros. Responde en español con viñetas y 1 párrafo final.";
+  
+  const userPrompt = `Instrucciones: ${prompt}\nPregunta original: ${question || "-"}\nDatos JSON:\n${JSON.stringify(context)}`;
+  
+  const model = genAI.getGenerativeModel({ 
+    model: MODEL,
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 500,
+    }
+  });
+  
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    systemInstruction: systemPrompt
+  });
+  
+  return result.response.text();
 }
 
 export const functionShortcutsAsk = async (req, res) => {
@@ -1068,12 +1081,12 @@ export const functionShortcutsAsk = async (req, res) => {
     // Ejecutar resolver con filtros enriquecidos
     const { context, prompt } = await intent.resolver(req, filters);
 
-    // Devolver JSON si no hay OpenAI
-    if (!process.env.OPENAI_API_KEY) {
-      return res.json({ code: 1, reply: "OpenAI no configurado. Enviando datos crudos.", data: context, intent: intentKey, entity, id_tenant, filters });
+    // Devolver JSON si no hay Gemini
+    if (!process.env.GEMINI_API_KEY) {
+      return res.json({ code: 1, reply: "Gemini no configurado. Enviando datos crudos.", data: context, intent: intentKey, entity, id_tenant, filters });
     }
 
-    const reply = await askOpenAI({ prompt, context, question });
+    const reply = await askGemini({ prompt, context, question });
     return res.json({ code: 1, reply, data: context, intent: intentKey, entity, id_tenant, filters });
   } catch (err) {
     return res.status(500).json({ code: 0, message: err.message });
