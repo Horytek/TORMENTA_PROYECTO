@@ -52,35 +52,35 @@ export const Pricing = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8 items-start">
-          {/* Plan Start */}
+          {/* Plan Emprendedor */}
           <div className="p-8 rounded-2xl border border-white/10 bg-[#0f121a] hover:border-landing-accent/30 transition-all duration-300">
-            <h3 className="text-lg font-semibold text-white mb-2">Start</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">Emprendedor</h3>
             <div className="mb-6">
-              <span className="text-4xl font-bold tracking-tight text-white">S/ {isMonthly ? '85' : '850'}</span>
+              <span className="text-4xl font-bold tracking-tight text-white">S/ {isMonthly ? '79' : '790'}</span>
               <span className="text-gray-500 text-sm">/ {isMonthly ? 'mes' : 'año'}</span>
             </div>
-            <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Para pequeños negocios que inician su digitalización.</p>
+            <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Para boutiques y tiendas de moda que inician.</p>
             <button
-              onClick={() => handlePlanSelection('Start', isMonthly ? 'mes' : 'año')}
+              onClick={() => handlePlanSelection('Emprendedor', isMonthly ? 'mes' : 'año')}
               className="w-full py-3 rounded-lg border border-white/20 hover:border-white hover:bg-white hover:text-black text-white font-semibold transition-all mb-8"
             >
               Comenzar
             </button>
             <ul className="space-y-4 text-sm text-gray-400">
-              <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Punto de Venta (POS)</li>
-              <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Inventario Simple</li>
+              <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Punto de Venta (POS) Rápido</li>
+              <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Gestión de Tallas y Colores</li>
+              <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Control de Inventario (Kárdex)</li>
               <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> 1 Usuario / 1 Almacén</li>
             </ul>
           </div>
 
-          {/* Plan Professional (Featured) */}
+          {/* Plan Empresario (Featured) */}
           <div className="p-8 rounded-2xl bg-[#0f121a] text-white shadow-2xl relative lg:-mt-4 lg:pb-12 border border-white/10 group hover:border-landing-accent/30 transition-all duration-300">
-            {/* "Popular" as a watermark/ghost text or clean badge */}
-            <div className="absolute top-6 right-6 text-xs font-bold tracking-widest text-landing-accent opacity-80 uppercase">POPULAR</div>
+            <div className="absolute top-6 right-6 text-xs font-bold tracking-widest text-landing-accent opacity-80 uppercase">RECOMENDADO</div>
 
-            <h3 className="text-xl font-bold mb-2 text-white">Profesional</h3>
+            <h3 className="text-xl font-bold mb-2 text-white">Empresario</h3>
             <div className="mb-4 flex items-baseline gap-1">
-              <span className="text-5xl font-bold tracking-tighter text-white">S/ {isMonthly ? '135' : '1,350'}</span>
+              <span className="text-5xl font-bold tracking-tighter text-white">S/ {isMonthly ? '149' : '1,490'}</span>
               <span className="text-gray-500 text-sm font-medium">/ {isMonthly ? 'mes' : 'año'}</span>
             </div>
 
@@ -89,32 +89,32 @@ export const Pricing = () => {
               MEJOR PARA CRECIMIENTO
             </p>
 
-            <p className="text-gray-400 text-sm mb-8 leading-relaxed">Control total para negocios en expansión. Automatiza lo aburrido.</p>
+            <p className="text-gray-400 text-sm mb-8 leading-relaxed">Facturación electrónica y control total para tu equipo.</p>
 
             <button
-              onClick={() => handlePlanSelection('Profesional', isMonthly ? 'mes' : 'año')}
+              onClick={() => handlePlanSelection('Empresario', isMonthly ? 'mes' : 'año')}
               className="w-full py-4 rounded-xl bg-white hover:bg-gray-100 text-black font-bold transition-all hover:-translate-y-1 shadow-lg shadow-white/10 mb-8 flex items-center justify-center gap-2"
             >
               Obtener Pro <span className="opacity-0 group-hover:opacity-100 -ml-2 group-hover:ml-0 transition-all">→</span>
             </button>
             <ul className="space-y-4 text-sm text-gray-300">
-              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Todo en Start</li>
-              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Multi-Almacén (Hasta 3)</li>
-              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Usuarios Ilimitados</li>
-              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Facturación Electrónica</li>
-              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Reportes Avanzados</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Todo en Emprendedor</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Facturación Electrónica (SUNAT)</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Multi-Almacén (Hasta 2 sedes)</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Hasta 3 Usuarios y Roles</li>
+              <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Reportes de Rendimiento</li>
             </ul>
           </div>
 
-          {/* Plan Enterprise */}
+          {/* Plan Corporativo */}
           <div className="p-8 rounded-2xl border border-white/10 bg-[#0f121a] hover:border-landing-accent/30 transition-all duration-300">
-            <h3 className="text-lg font-semibold text-white mb-2">Enterprise</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">Corporativo</h3>
             <div className="mb-2">
-              <span className="text-4xl font-bold tracking-tight text-white">Personalizado</span>
+              <span className="text-4xl font-bold tracking-tight text-white">A medida</span>
             </div>
-            <p className="text-xs text-gray-500 font-medium mb-6 uppercase tracking-wider">Mejor para grandes volúmenes</p>
+            <p className="text-xs text-gray-500 font-medium mb-6 uppercase tracking-wider">Para cadenas y franquicias</p>
 
-            <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Soluciones a medida para corporaciones.</p>
+            <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Soluciones personalizadas para alto volumen.</p>
 
             <div className="flex flex-col gap-3 mb-8">
               <button
@@ -124,14 +124,14 @@ export const Pricing = () => {
                 Contactar Ventas
               </button>
               <button className="w-full py-3 rounded-lg border border-white/20 text-gray-400 font-medium hover:text-white hover:border-white transition-colors">
-                Agendar Llamada
+                Agendar Demostración
               </button>
             </div>
 
             <ul className="space-y-4 text-sm text-gray-400">
-              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> API Personalizada</li>
-              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> Soporte Dedicado 24/7</li>
-              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> Migración Asistida</li>
+              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> Sedes y Usuarios Ilimitados</li>
+              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> Inteligencia de Negocios (BI)</li>
+              <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> API de Integración</li>
             </ul>
           </div>
         </div>
