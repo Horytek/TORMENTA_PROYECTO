@@ -18,10 +18,13 @@ const createLote = async (req, res) => {
 
         // Crear Lote
         const [loteResult] = await connection.query(
-            "INSERT INTO lote_inventario (descripcion, estado, id_usuario_crea, id_tenant) VALUES (?, 0, ?, ?)",
+            "INSERT INTO lote_inventario (descripcion, estado, id_usuario_crea, id_tenant, id_usuario_verifica, fecha_verificacion) VALUES (?, 0, ?, ?, NULL, NULL)",
             [descripcion || '', id_usuario, id_tenant]
         );
+        console.log("Lote Insert Result:", loteResult); // DEBUG
         const id_lote = loteResult.insertId;
+
+        if (!id_lote) throw new Error("Insert ID is missing");
 
         // Crear Detalles
         const detalleValues = [];
@@ -58,6 +61,24 @@ const verifyLote = async (req, res) => {
 
         connection = await getConnection();
 
+        // Fallback: If role is missing in token (old tokens), fetch it
+        let userRole = req.user.rol;
+        if (!userRole) {
+            const [u] = await connection.query("SELECT id_rol FROM usuario WHERE id_usuario = ?", [id_usuario]);
+            if (u.length > 0) userRole = u[0].id_rol;
+        }
+
+        // Verificar Permiso (Rol Verificador)
+        const [permiso] = await connection.query(
+            "SELECT id FROM config_verificacion_roles WHERE id_rol = ? AND id_tenant = ? AND stage = 'verify'",
+            [userRole, id_tenant]
+        );
+
+        if (permiso.length === 0) {
+            // Optional: Allow Admin/Dev bypass if needed, but for now strict check
+            return res.status(403).json({ message: "No tienes permisos para verificar inventario (Etapa 1)" });
+        }
+
         // Verificar estado actual
         const [lote] = await connection.query("SELECT estado FROM lote_inventario WHERE id_lote = ?", [id_lote]);
         if (!lote.length || lote[0].estado !== 0) {
@@ -88,6 +109,24 @@ const approveLote = async (req, res) => {
 
         connection = await getConnection();
         await connection.beginTransaction();
+
+        // Fallback: If role is missing in token (old tokens), fetch it
+        let userRole = req.user.rol;
+        if (!userRole) {
+            const [u] = await connection.query("SELECT id_rol FROM usuario WHERE id_usuario = ?", [id_usuario]);
+            if (u.length > 0) userRole = u[0].id_rol;
+        }
+
+        // Verificar Permiso (Rol Aprobador)
+        const [permiso] = await connection.query(
+            "SELECT id FROM config_verificacion_roles WHERE id_rol = ? AND id_tenant = ? AND stage = 'approve'",
+            [userRole, id_tenant]
+        );
+
+        if (permiso.length === 0) {
+            await connection.rollback();
+            return res.status(403).json({ message: "No tienes permisos para aprobar inventario (Etapa 2)" });
+        }
 
         // Verificar estado (debe ser 1: Pendiente Aprobación)
         const [lote] = await connection.query("SELECT * FROM lote_inventario WHERE id_lote = ?", [id_lote]);

@@ -38,7 +38,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios })
             reset({
                 id_rol: initialData.data.id_rol.toString(),
                 usua: initialData.data.usua,
-                contra: initialData.data.contra, // Note: This might be a hash, handling this carefully
+                contra: "", // Always start with empty password for security
                 estado_usuario: initialData.data.estado_usuario.toString()
             });
         }
@@ -73,10 +73,14 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios })
             const newUser = {
                 id_rol: parseInt(id_rol),
                 usua,
-                contra,
                 estado_usuario: parseInt(estado_usuario),
                 id_empresa: idEmpresa,
             };
+
+            // Only include password if it was typed/changed
+            if (contra) {
+                newUser.contra = contra;
+            }
 
             let result;
             if (initialData) {
@@ -186,6 +190,7 @@ const UsuariosForm = ({ modalTitle, onClose, initialData, onSuccess, usuarios })
                                                         {...field}
                                                         type={showPassword ? "text" : "password"}
                                                         label="Contraseña"
+                                                        placeholder={initialData ? "Dejar en blanco para mantener la actual" : "Ingrese su contraseña"}
                                                         variant="faded"
                                                         color={errors.contra ? "danger" : "default"}
                                                         errorMessage={errors.contra?.message}

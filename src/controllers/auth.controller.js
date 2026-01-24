@@ -128,15 +128,32 @@ const login = async (req, res) => {
             if (extra.length > 0) userbd = { ...userbd, ...extra[0] };
         }
 
+        // FIX: Ensure Plan Consistency for Enterprise/Tenant Users
+        if (userbd.id_tenant) {
+            try {
+                const [tenantPlan] = await connection.query(
+                    "SELECT plan_pago FROM usuario WHERE id_tenant = ? AND id_rol = 1 ORDER BY id_usuario ASC LIMIT 1",
+                    [userbd.id_tenant]
+                );
+                if (tenantPlan.length > 0 && tenantPlan[0].plan_pago) {
+                    userbd.plan_pago = tenantPlan[0].plan_pago;
+                }
+            } catch (ePlan) {
+                console.warn("Error fetching tenant plan", ePlan);
+            }
+        }
+
         // Login exitoso
         clearAttempts(req);
 
+        // Crear token JWT seguro
         // Crear token JWT seguro
         const token = await createAccessToken({
             nameUser: user.usuario,
             id_usuario: userbd.id_usuario,
             id_tenant: userbd.id_tenant ?? null,
             id_empresa: userbd.id_empresa ?? null,
+            rol: userbd.id_rol, // Add missing role
             status: tenantStatus,
             pv: permVersion // perm_version corta para payload de JWT
         });
@@ -367,6 +384,23 @@ const verifyToken = async (req, res) => {
                 "SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ? LIMIT 1",
                 [userbd.id_rol]
             );
+
+            // FIX: Ensure Plan Consistency for Enterprise/Tenant Users
+            // If user belongs to a tenant, fetch the plan from the Tenant Owner/Admin (Role 1 typically)
+            // or use the max plan available in the tenant to ensure "Enterprise" is reflected.
+            if (userbd.id_tenant) {
+                try {
+                    const [tenantPlan] = await connection.query(
+                        "SELECT plan_pago FROM usuario WHERE id_tenant = ? AND id_rol = 1 ORDER BY id_usuario ASC LIMIT 1",
+                        [userbd.id_tenant]
+                    );
+                    if (tenantPlan.length > 0 && tenantPlan[0].plan_pago) {
+                        userbd.plan_pago = tenantPlan[0].plan_pago;
+                    }
+                } catch (ePlan) {
+                    console.warn("Error fetching tenant plan", ePlan);
+                }
+            }
 
             if (rolData[0]?.id_submodulo) {
                 const [submoduleData] = await connection.query(

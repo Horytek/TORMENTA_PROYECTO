@@ -84,14 +84,21 @@ export default function SolicitudInventario() {
         try {
             const payload = {
                 descripcion,
-                id_usuario: user.id_usuario,
+                id_usuario: user.id || user.id_usuario,
                 productos: items
             };
             const res = await axios.post("/lote/create", payload);
+            console.log("Create Response:", res.data); // DEBUG
             if (res.data.code === 1) {
                 toast.success("Solicitud creada correctamente");
                 setItems([]);
                 setDescripcion("");
+                setTempItem({
+                    id_producto: "",
+                    id_tonalidad: "",
+                    id_talla: "",
+                    cantidad: 1
+                });
             }
         } catch (error) {
             console.error(error);

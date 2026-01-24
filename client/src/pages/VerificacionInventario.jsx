@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardBody, Tabs, Tab, Button, Chip, Spacer, useDisclosure, Select, SelectItem } from "@heroui/react";
+import { Card, CardHeader, CardBody, Tabs, Tab, Button, Chip, Spacer, useDisclosure, Select, SelectItem, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Checkbox, Spinner, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/react";
 import { toast } from "react-hot-toast";
 import axios from "@/api/axios";
-import { CheckCircle, Eye, FileText, AlertCircle } from "lucide-react";
+import { CheckCircle, Eye, FileText, AlertCircle, Settings } from "lucide-react";
 import Loader from "@/components/Loader";
 import moment from "moment";
+import { useAuth } from "@/context/Auth/AuthProvider";
 
 // Import hook for warehouses
 import { useAlmacenesKardex } from '@/hooks/useKardex';
 
 // Componente para tabla de lotes (Reutilizable)
-const LotesTable = ({ status, refreshTrigger, onAction }) => {
+const LotesTable = ({ status, refreshTrigger, onAction, isDisabled }) => {
     const [lotes, setLotes] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -35,60 +36,48 @@ const LotesTable = ({ status, refreshTrigger, onAction }) => {
 
     if (loading) return <Loader />;
 
-    if (lotes.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                <div className="bg-slate-50 dark:bg-zinc-800/50 p-4 rounded-full mb-3">
-                    <AlertCircle size={40} className="text-slate-300 dark:text-slate-500" />
-                </div>
-                <p className="font-medium text-slate-500 dark:text-slate-400">No hay solicitudes pendientes en esta etapa</p>
-            </div>
-        );
-    }
-
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-                <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-zinc-900/50 font-semibold">
-                    <tr>
-                        <th className="px-6 py-3">ID</th>
-                        <th className="px-6 py-3">Descripción</th>
-                        <th className="px-6 py-3">Creado Por</th>
-                        <th className="px-6 py-3">Fecha</th>
-                        <th className="px-6 py-3">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {lotes.map((lote) => (
-                        <tr key={lote.id_lote} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                            <td className="px-6 py-4 font-medium">#{lote.id_lote}</td>
-                            <td className="px-6 py-4">{lote.descripcion}</td>
-                            <td className="px-6 py-4">
-                                <div className="flex flex-col">
-                                    <span>{lote.creador || 'N/A'}</span>
-                                </div>
-                            </td>
-                            <td className="px-6 py-4">{moment(lote.fecha_creacion).format('DD/MM/YYYY HH:mm')}</td>
-                            <td className="px-6 py-4">
-                                <Button
-                                    size="sm"
-                                    color={status === 0 ? "warning" : "success"}
-                                    startContent={status === 0 ? <Eye size={16} /> : <CheckCircle size={16} />}
-                                    onPress={() => onAction(lote)}
-                                >
-                                    {status === 0 ? "Verificar" : "Aprobar"}
-                                </Button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <Table aria-label="Tabla de solicitudes" shadow="none" selectionMode="none">
+            <TableHeader>
+                <TableColumn>ID</TableColumn>
+                <TableColumn>DESCRIPCIÓN</TableColumn>
+                <TableColumn>CREADO POR</TableColumn>
+                <TableColumn>FECHA</TableColumn>
+                <TableColumn>ACCIONES</TableColumn>
+            </TableHeader>
+            <TableBody emptyContent={"No hay solicitudes pendientes en esta etapa"}>
+                {lotes.map((lote) => (
+                    <TableRow key={lote.id_lote}>
+                        <TableCell>#{lote.id_lote}</TableCell>
+                        <TableCell>{lote.descripcion}</TableCell>
+                        <TableCell>
+                            <div className="flex flex-col">
+                                <span>{lote.creador || 'N/A'}</span>
+                            </div>
+                        </TableCell>
+                        <TableCell>{moment(lote.fecha_creacion).format('DD/MM/YYYY HH:mm')}</TableCell>
+                        <TableCell>
+                            <Button
+                                size="sm"
+                                color={status === 0 ? "warning" : "success"}
+                                startContent={status === 0 ? <Eye size={16} /> : <CheckCircle size={16} />}
+                                onPress={() => onAction(lote)}
+                                isDisabled={isDisabled}
+                            >
+                                {status === 0 ? "Verificar" : "Aprobar"}
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
     );
 };
 
 // Detalle y Confirmación
-const DetalleLote = ({ lote, onClose, onConfirm, isApproval, almacenes }) => {
+// Detalle y Confirmación (Modal)
+// Detalle y Confirmación (Modal)
+const DetalleLote = ({ lote, onClose, onConfirm, isApproval, almacenes, isDisabled }) => {
     const [detalles, setDetalles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedAlmacen, setSelectedAlmacen] = useState("");
@@ -126,90 +115,268 @@ const DetalleLote = ({ lote, onClose, onConfirm, isApproval, almacenes }) => {
         onConfirm(lote, selectedAlmacen);
     };
 
+    if (!lote) return null;
+
     return (
-        <Card className="mt-4 border border-gray-200 dark:border-gray-700 shadow-none">
-            <CardHeader className="flex justify-between items-center bg-gray-50 dark:bg-zinc-800/50 px-4 py-3">
-                <div className="flex gap-2 items-center">
-                    <FileText size={18} />
-                    <span className="font-semibold">Detalle Lote #{lote.id_lote}</span>
-                </div>
-                <Button size="sm" variant="flat" onPress={onClose}>Cerrar</Button>
-            </CardHeader>
-            <CardBody>
-                {loading ? <Loader /> : (
+        <Modal isOpen={!!lote} onOpenChange={onClose} size="3xl" scrollBehavior="inside">
+            <ModalContent>
+                {(onClose) => (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
-                            <div><span className="font-bold">Descripción:</span> {lote.descripcion}</div>
-                            <div><span className="font-bold">Creado por:</span> {lote.creador}</div>
-                        </div>
-                        <table className="w-full text-sm text-left mb-4">
-                            <thead className="bg-gray-100 dark:bg-gray-700">
-                                <tr>
-                                    <th className="p-2">Producto</th>
-                                    <th className="p-2">Marca</th>
-                                    <th className="p-2">Tonalidad</th>
-                                    <th className="p-2">Talla</th>
-                                    <th className="p-2 text-right">Cant.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {detalles.map((d, idx) => (
-                                    <tr key={idx} className="border-b dark:border-gray-700">
-                                        <td className="p-2">{d.producto}</td>
-                                        <td className="p-2">{d.marca}</td>
-                                        <td className="p-2">{d.tonalidad || '-'}</td>
-                                        <td className="p-2">{d.talla || '-'}</td>
-                                        <td className="p-2 text-right font-bold">{d.cantidad}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-
-                        {isApproval && (
-                            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800">
-                                <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-2">Destino de Mercadería</h4>
-                                <Select
-                                    label="Almacén de Destino"
-                                    placeholder="Seleccione dónde ingresará el stock"
-                                    selectedKeys={selectedAlmacen ? [selectedAlmacen] : []}
-                                    onChange={(e) => setSelectedAlmacen(e.target.value)}
-                                    className="max-w-xs"
-                                >
-                                    {almacenes.map((a) => (
-                                        <SelectItem key={a.id} value={a.id.toString()}>
-                                            {a.almacen}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
+                        <ModalHeader className="flex flex-col gap-1">
+                            <div className="flex gap-2 items-center">
+                                <FileText size={18} />
+                                <span className="font-semibold">Detalle Lote #{lote.id_lote}</span>
                             </div>
-                        )}
+                        </ModalHeader>
+                        <ModalBody>
+                            {loading ? <Loader /> : (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-lg">
+                                        <div><span className="font-bold">Descripción:</span> {lote.descripcion}</div>
+                                        <div><span className="font-bold">Creado por:</span> {lote.creador}</div>
+                                    </div>
+                                    <Table aria-label="Detalle de productos" removeWrapper shadow="none">
+                                        <TableHeader>
+                                            <TableColumn>PRODUCTO</TableColumn>
+                                            <TableColumn>MARCA</TableColumn>
+                                            <TableColumn>TONALIDAD</TableColumn>
+                                            <TableColumn>TALLA</TableColumn>
+                                            <TableColumn align="end">CANT.</TableColumn>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {detalles.map((d, idx) => (
+                                                <TableRow key={idx}>
+                                                    <TableCell>{d.producto}</TableCell>
+                                                    <TableCell>{d.marca}</TableCell>
+                                                    <TableCell>{d.tonalidad || '-'}</TableCell>
+                                                    <TableCell>{d.talla || '-'}</TableCell>
+                                                    <TableCell>{d.cantidad}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
 
-                        <div className="flex justify-end gap-2 mt-4">
+                                    {isApproval && (
+                                        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800">
+                                            <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-2">Destino de Mercadería</h4>
+                                            <Select
+                                                label="Almacén de Destino"
+                                                placeholder="Seleccione dónde ingresará el stock"
+                                                selectedKeys={selectedAlmacen ? [selectedAlmacen] : []}
+                                                onChange={(e) => setSelectedAlmacen(e.target.value)}
+                                                className="max-w-xs"
+                                                isDisabled={isDisabled}
+                                            >
+                                                {almacenes.map((a) => (
+                                                    <SelectItem key={a.id} value={a.id.toString()}>
+                                                        {a.almacen}
+                                                    </SelectItem>
+                                                ))}
+                                            </Select>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </ModalBody>
+                        <ModalFooter>
                             <Button variant="light" onPress={onClose}>Cancelar</Button>
-                            <Button color={isApproval ? "success" : "warning"} onPress={handleConfirm}>
-                                {isApproval ? "Aprobar e Ingresar Stock" : "Confirmar Verificación"}
-                            </Button>
-                        </div>
+                            {!loading && (
+                                <Button
+                                    color={isApproval ? "success" : "warning"}
+                                    onPress={handleConfirm}
+                                    isDisabled={isDisabled}
+                                >
+                                    {isApproval ? "Aprobar e Ingresar Stock" : "Confirmar Verificación"}
+                                </Button>
+                            )}
+                        </ModalFooter>
                     </>
                 )}
-            </CardBody>
-        </Card>
+            </ModalContent>
+        </Modal>
+    );
+};
+
+
+// Modal de Configuración de Roles
+const ConfigRolesModal = ({ isOpen, onOpenChange }) => {
+    const [roles, setRoles] = useState([]);
+    const [verifyRoles, setVerifyRoles] = useState([]); // IDs allowed for step 1
+    const [approveRoles, setApproveRoles] = useState([]); // IDs allowed for step 2
+    const [loading, setLoading] = useState(true);
+    const [configTab, setConfigTab] = useState("paso1");
+
+    useEffect(() => {
+        if (isOpen) fetchData();
+    }, [isOpen]);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [rolesRes, configRes] = await Promise.all([
+                axios.get("/rol"),
+                axios.get("/config-verification")
+            ]);
+
+            setRoles(rolesRes.data.data || []);
+            const config = configRes.data.data || {};
+            setVerifyRoles(config.verify || []);
+            setApproveRoles(config.approve || []);
+        } catch (error) {
+            console.error(error);
+            toast.error("Error cargando configuración");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async (onClose) => {
+        try {
+            await axios.post("/config-verification", {
+                verify: verifyRoles,
+                approve: approveRoles
+            });
+            toast.success("Configuración guardada");
+            onClose();
+        } catch (error) {
+            console.error(error);
+            toast.error("Error guardando cambios");
+        }
+    };
+
+    const toggleVerify = (id) => {
+        if (verifyRoles.includes(id)) {
+            setVerifyRoles(verifyRoles.filter(r => r !== id));
+        } else {
+            setVerifyRoles([...verifyRoles, id]);
+        }
+    };
+
+    const toggleApprove = (id) => {
+        if (approveRoles.includes(id)) {
+            setApproveRoles(approveRoles.filter(r => r !== id));
+        } else {
+            setApproveRoles([...approveRoles, id]);
+        }
+    };
+
+    const renderRoleList = (selectedIds, toggleFn) => (
+        <div className="space-y-2 max-h-[300px] overflow-y-auto p-1">
+            {roles.map(rol => (
+                <div key={rol.id_rol} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50 hover:bg-slate-100 transition-colors">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{rol.nom_rol}</span>
+                    <Checkbox
+                        isSelected={selectedIds.includes(rol.id_rol)}
+                        onValueChange={() => toggleFn(rol.id_rol)}
+                    >
+                        Permitir
+                    </Checkbox>
+                </div>
+            ))}
+        </div>
+    );
+
+    return (
+        <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="lg">
+            <ModalContent>
+                {(onClose) => (
+                    <>
+                        <ModalHeader>Configurar Roles por Etapa</ModalHeader>
+                        <ModalBody>
+                            <Tabs
+                                aria-label="Etapas"
+                                selectedKey={configTab}
+                                onSelectionChange={setConfigTab}
+                                fullWidth
+                                color="secondary"
+                            >
+                                <Tab key="paso1" title="1. Verificación">
+                                    <p className="text-sm text-slate-500 mb-2 mt-2">
+                                        Roles que pueden <strong>verificar</strong> el ingreso inicial (conteo físico).
+                                    </p>
+                                    {loading ? <Spinner className="mx-auto my-4" /> : renderRoleList(verifyRoles, toggleVerify)}
+                                </Tab>
+                                <Tab key="paso2" title="2. Aprobación">
+                                    <p className="text-sm text-slate-500 mb-2 mt-2">
+                                        Roles que pueden <strong>aprobar</strong> el ingreso final y mover stock a almacén.
+                                    </p>
+                                    {loading ? <Spinner className="mx-auto my-4" /> : renderRoleList(approveRoles, toggleApprove)}
+                                </Tab>
+                            </Tabs>
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button variant="light" onPress={onClose}>Cancelar</Button>
+                            <Button color="primary" onPress={() => handleSave(onClose)}>Guardar Cambios</Button>
+                        </ModalFooter>
+                    </>
+                )}
+            </ModalContent>
+        </Modal>
     );
 };
 
 export default function VerificacionInventario() {
+    const { isOpen: isConfigOpen, onOpen: onOpenConfig, onOpenChange: onConfigOpenChange } = useDisclosure();
     const [selectedLote, setSelectedLote] = useState(null);
     const [refresh, setRefresh] = useState(0);
     const [tab, setTab] = useState("verificar"); // 'verificar' | 'aprobar'
 
+    // Auth
+    const { user, loading: authLoading } = useAuth();
+
     // Hook for warehouses
     const { almacenes } = useAlmacenesKardex();
 
+    // Permissions State
+    const [permissions, setPermissions] = useState({ verify: false, approve: false });
+    const [configLoading, setConfigLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPermissions = async () => {
+            if (!user) return;
+            try {
+                const res = await axios.get("/config-verification");
+                const config = res.data.data || {};
+                // Handle different user object structures (login vs verify response)
+                const userRoleId = user.id_rol || user.rol;
+
+                // Admin check (id_rol === 1) or explicit permission from config
+                // Ensure type safety by checking both raw and parsed ID just in case
+                const canVerify = userRoleId === 1 ||
+                    (config.verify || []).includes(userRoleId) ||
+                    (config.verify || []).includes(parseInt(userRoleId));
+
+                const canApprove = userRoleId === 1 ||
+                    (config.approve || []).includes(userRoleId) ||
+                    (config.approve || []).includes(parseInt(userRoleId));
+
+                setPermissions({ verify: canVerify, approve: canApprove });
+
+                // Adjust selected tab based on permissions
+                if (!canVerify && canApprove) {
+                    setTab("aprobar");
+                }
+            } catch (error) {
+                console.error("Error checking permissions", error);
+            } finally {
+                setConfigLoading(false);
+            }
+        };
+        fetchPermissions();
+    }, [user]);
+
+    if (authLoading || configLoading) return <Loader />;
+
     const confirmAction = async (lote, almacenD) => {
         try {
-            const user = JSON.parse(localStorage.getItem("user"));
+            const userId = user?.id || user?.id_usuario;
+            if (!userId) {
+                toast.error("Error: Usuario no identificado");
+                return;
+            }
+
             if (tab === "verificar") {
-                const res = await axios.post('/lote/verify', { id_lote: lote.id_lote, id_usuario: user.id_usuario });
+                const res = await axios.post('/lote/verify', { id_lote: lote.id_lote, id_usuario: userId });
                 if (res.data.code === 1) {
                     toast.success("Lote verificado");
                     setSelectedLote(null);
@@ -219,7 +386,7 @@ export default function VerificacionInventario() {
                 // Aprobar
                 const res = await axios.post('/lote/approve', {
                     id_lote: lote.id_lote,
-                    id_usuario: user.id_usuario,
+                    id_usuario: userId,
                     almacenD: almacenD,
                     glosa: `Ingreso Lote #${lote.id_lote}`
                 });
@@ -247,6 +414,16 @@ export default function VerificacionInventario() {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    {user?.id_rol === 1 && (
+                        <Button
+                            variant="flat"
+                            color="secondary"
+                            startContent={<Settings size={18} />}
+                            onPress={onOpenConfig}
+                        >
+                            Configurar Roles
+                        </Button>
+                    )}
                     <Button
                         size="sm"
                         variant="flat"
@@ -258,41 +435,58 @@ export default function VerificacionInventario() {
                 </div>
             </div>
 
-            {!selectedLote ? (
-                <div className="space-y-4">
-                    <Tabs
-                        aria-label="Estados"
-                        selectedKey={tab}
-                        onSelectionChange={setTab}
-                        color="primary"
-                        variant="underlined"
-                        classNames={{
-                            tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
-                            cursor: "w-full bg-primary",
-                            tab: "max-w-fit px-0 h-12",
-                            tabContent: "group-data-[selected=true]:text-primary font-semibold"
-                        }}
-                    >
-                        <Tab key="verificar" title="Por Verificar (Paso 1)" />
-                        <Tab key="aprobar" title="Por Aprobar (Paso 2)" />
-                    </Tabs>
+            <div className="space-y-4">
+                <Tabs
+                    aria-label="Estados"
+                    selectedKey={tab}
+                    onSelectionChange={setTab}
+                    color="primary"
+                    variant="underlined"
+                    classNames={{
+                        tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+                        cursor: "w-full bg-primary",
+                        tab: "max-w-fit px-0 h-12",
+                        tabContent: "group-data-[selected=true]:text-primary font-semibold"
+                    }}
+                >
+                    <Tab key="verificar" title="Por Verificar (Paso 1)" />
+                    <Tab key="aprobar" title="Por Aprobar (Paso 2)" />
+                </Tabs>
 
-                    <Card className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl min-h-[400px]">
-                        <CardBody className="p-0">
-                            <LotesTable status={tab === 'verificar' ? 0 : 1} refreshTrigger={refresh} onAction={setSelectedLote} />
-                        </CardBody>
-                    </Card>
-                </div>
-            ) : (
+                <Card className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl min-h-[400px]">
+                    <CardBody className="p-0">
+                        {tab === 'verificar' && (
+                            <LotesTable
+                                status={0}
+                                refreshTrigger={refresh}
+                                onAction={setSelectedLote}
+                                isDisabled={!permissions.verify}
+                            />
+                        )}
+                        {tab === 'aprobar' && (
+                            <LotesTable
+                                status={1}
+                                refreshTrigger={refresh}
+                                onAction={setSelectedLote}
+                                isDisabled={!permissions.approve}
+                            />
+                        )}
+                    </CardBody>
+                </Card>
+            </div>
+
+            {selectedLote && (
                 <DetalleLote
                     lote={selectedLote}
                     onClose={() => setSelectedLote(null)}
                     onConfirm={confirmAction}
                     isApproval={tab === "aprobar"}
                     almacenes={almacenes}
+                    isDisabled={tab === 'verificar' ? !permissions.verify : !permissions.approve}
                 />
             )}
-        </div>
+            <ConfigRolesModal isOpen={isConfigOpen} onOpenChange={onConfigOpenChange} />
+        </div >
     );
 }
 
