@@ -9,7 +9,7 @@ import { useUserStore } from "@/store/useStore";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-function HeaderHistorico({ productoData, onDateChange, transactions, previousTransactions, dateRange }) {
+function HeaderHistorico({ productoData, onDateChange, transactions, previousTransactions, dateRange, almacenSeleccionado }) {
   const { almacenes } = useAlmacenesKardex();
   const nombre = useUserStore(state => state.nombre);
   const almacenGlobal = useUserStore((state) => state.almacen);
@@ -28,18 +28,28 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
     };
   }
 
-  // Inicializar el rango de fechas al rango de la semana actual
+  // Inicializar el rango de fechas al rango de la semana actual si no hay props
   const initialWeekRange = getCurrentWeekRange();
 
-  const [selectedAlmacen, setSelectedAlmacen] = useState(almacenGlobal || "");
+  // Si vienen props (desde el padre), usamos esos valores
+  const initialStartDate = dateRange?.fechaInicio
+    ? new Date(dateRange.fechaInicio + "T00:00:00")
+    : initialWeekRange.start;
+
+  const initialEndDate = dateRange?.fechaFin
+    ? new Date(dateRange.fechaFin + "T00:00:00")
+    : initialWeekRange.end;
+
+  const [selectedAlmacen, setSelectedAlmacen] = useState(almacenSeleccionado || almacenGlobal || "");
+
   const [selectedDates, setSelectedDates] = useState({
-    startDate: initialWeekRange.start,
-    endDate: initialWeekRange.end,
+    startDate: initialStartDate,
+    endDate: initialEndDate,
   });
 
   const [value, setValue] = useState({
-    start: parseDate(initialWeekRange.start.toISOString().slice(0, 10)),
-    end: parseDate(initialWeekRange.end.toISOString().slice(0, 10)),
+    start: parseDate(initialStartDate.toISOString().slice(0, 10)),
+    end: parseDate(initialEndDate.toISOString().slice(0, 10)),
   });
 
   const [empresaData, setEmpresaData] = useState(null);
@@ -67,23 +77,37 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
     fetchEmpresa();
   }, []);
 
+  // Sincronizar select interno si cambia desde fuera (ej: primer render con props)
   useEffect(() => {
-    if (almacenGlobal) {
+    if (almacenSeleccionado && almacenSeleccionado !== selectedAlmacen) {
+      setSelectedAlmacen(almacenSeleccionado);
+    } else if (!selectedAlmacen && almacenGlobal) {
       setSelectedAlmacen(almacenGlobal);
     }
-    const formattedStartDate = selectedDates.startDate.toISOString().split("T")[0];
-    const formattedEndDate = selectedDates.endDate.toISOString().split("T")[0];
-    onDateChange(formattedStartDate, formattedEndDate, almacenGlobal || "");
-  }, [onDateChange, selectedDates.startDate, selectedDates.endDate, almacenGlobal]);
+  }, [almacenSeleccionado, almacenGlobal]);
 
+  // Sincronizar fechas si cambian desde fuera
   useEffect(() => {
-    if (selectedAlmacen && selectedDates.startDate && selectedDates.endDate) {
-      const formattedStartDate = selectedDates.startDate.toISOString().split("T")[0];
-      const formattedEndDate = selectedDates.endDate.toISOString().split("T")[0];
-      onDateChange(formattedStartDate, formattedEndDate, selectedAlmacen);
-      setAlmacenGlobal(selectedAlmacen); // Actualiza el almacén global en Zustand
+    if (dateRange?.fechaInicio && dateRange?.fechaFin) {
+      const propStart = new Date(dateRange.fechaInicio + "T00:00:00");
+      const propEnd = new Date(dateRange.fechaFin + "T00:00:00");
+
+      // Solo actualizar si hay diferencia significativa (evitar loop)
+      if (propStart.getTime() !== selectedDates.startDate.getTime() ||
+        propEnd.getTime() !== selectedDates.endDate.getTime()) {
+
+        setSelectedDates({ startDate: propStart, endDate: propEnd });
+        setValue({
+          start: parseDate(dateRange.fechaInicio),
+          end: parseDate(dateRange.fechaFin)
+        });
+      }
     }
-  }, [selectedAlmacen, selectedDates.startDate, selectedDates.endDate, onDateChange, setAlmacenGlobal]);
+  }, [dateRange]);
+
+  // Notificar al padre solo cuando el usuario cambia algo explícitamente o si es la inicialización necesaria
+  // NOTA: Movimos la lógica de notificación al handleDateChange y handleAlmacenChange
+  // para evitar que el hijo sobrescriba al padre al montarse con valores por defecto incorrectos.
 
   const handleAlmacenChange = useCallback((selectedId) => {
     setSelectedAlmacen(selectedId);

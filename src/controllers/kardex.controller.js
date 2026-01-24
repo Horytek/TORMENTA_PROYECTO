@@ -394,11 +394,11 @@ const getDetalleKardex = async (req, res) => {
                 c.num_comprobante as num_comp_raw,
                 -- Nuevos campos para historial detallado
                 COALESCE(un.usua, uv.usua, 'Sistema') as usuario,
-                COALESCE(ao.nom_almacen, av.nom_almacen, 'N/A') as almacen_origen, 
+                COALESCE(ao.nom_almacen, abn.nom_almacen, 'N/A') as almacen_origen, 
                 COALESCE(ad.nom_almacen, 'N/A') as almacen_destino,
                 t.nombre as tonalidad,
                 ta.nombre as talla,
-                COALESCE(n.estado_nota, v.estado, 1) as estado_doc,
+                COALESCE(n.estado_nota, v.estado_venta, 1) as estado_doc,
                 
                 -- Productos de nota
                 dn.id_producto AS nota_producto_codigo,
@@ -418,10 +418,10 @@ const getDetalleKardex = async (req, res) => {
             
             -- Joins para detalles extra
             LEFT JOIN usuario un ON n.id_usuario = un.id_usuario
-            LEFT JOIN usuario uv ON v.id_usuario = uv.id_usuario
+            LEFT JOIN usuario uv ON v.u_modifica = uv.id_usuario
             LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen       -- Almacen Origen Nota
             LEFT JOIN almacen ad ON n.id_almacenD = ad.id_almacen       -- Almacen Destino Nota
-            LEFT JOIN almacen av ON v.id_almacen = av.id_almacen        -- Almacen Venta (Origen)
+            LEFT JOIN almacen abn ON bn.id_almacen = abn.id_almacen     -- Almacen Bitacora (Origen Venta)
             
             LEFT JOIN tonalidad t ON bn.id_tonalidad = t.id_tonalidad
             LEFT JOIN talla ta ON bn.id_talla = ta.id_talla
@@ -564,15 +564,14 @@ const getInfProducto = async (req, res) => {
                 p.id_producto AS codigo, 
                 p.descripcion AS descripcion, 
                 m.nom_marca AS marca, 
-                i.stock AS stock
+                COALESCE(i.stock, 0) AS stock
             FROM producto p 
             INNER JOIN marca m ON p.id_marca = m.id_marca
-            INNER JOIN inventario i ON p.id_producto = i.id_producto
+            LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
             WHERE p.id_producto = ?
-                AND i.id_almacen = ?
                 AND p.id_tenant = ?
             LIMIT 1`,
-            [idProducto, idAlmacen, id_tenant]
+            [idAlmacen, idProducto, id_tenant]
         );
 
         if (infProductoResult.length === 0) {

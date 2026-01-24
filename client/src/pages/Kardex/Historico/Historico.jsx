@@ -1,6 +1,6 @@
 import HeaderHistorico from './ComponentsHistorico/HeaderHistorico';
 import HistoricoTable from './ComponentsHistorico/HistoricoTable';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { getDetalleKardexCompleto } from '@/services/kardex.services';
 import { useAlmacenesKardex } from '@/hooks/useKardex';
@@ -8,19 +8,43 @@ import { useUserStore } from "@/store/useStore";
 
 function Historico() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { almacenes } = useAlmacenesKardex();
   const almacenGlobal = useUserStore((state) => state.almacen);
   const setAlmacenGlobal = useUserStore((state) => state.setAlmacen);
 
   // Estado local para el almacén seleccionado
   const [almacenSeleccionado, setAlmacenSeleccionado] = useState(() => {
+    // 1. Prioridad: URL param
+    const paramAlmacen = searchParams.get("almacen");
+    if (paramAlmacen) return paramAlmacen;
+
+    // 2. Prioridad: Global Store
     if (almacenGlobal && almacenGlobal !== "%") return almacenGlobal;
+
     return "";
   });
 
-  // Sincroniza el estado local con Zustand si cambia (solo si es ID válido)
+  // Sincronizar URL cuando cambia la selección
   useEffect(() => {
+    if (almacenSeleccionado && almacenSeleccionado !== "%") {
+      setSearchParams(prev => {
+        prev.set("almacen", almacenSeleccionado);
+        return prev;
+      }, { replace: true });
+    }
+  }, [almacenSeleccionado, setSearchParams]);
+
+  // Sincroniza el estado local con Zustand si cambia (solo si es ID válido)
+  // NOTA: Esto maneja la navegación interna cuando el store global cambia
+  useEffect(() => {
+    // Si la URL ya tiene un valor, y es diferente al global (ej: reload), la URL gana en el init,
+    // pero si navegamos, el global debería mandar. 
+    // Para simplificar: Si el global cambia Y no tenemos nada en URL o es diferente, actualizamos.
+    // Pero cuidado con el reload. En reload global es "".
     if (almacenGlobal && almacenGlobal !== "%" && almacenGlobal !== almacenSeleccionado) {
+      // Verificar si no está conflicto con URL actual?
+      // Generalmente si cambiamos el global es porque el usuario cambió de contexto en el sidebar/header
       setAlmacenSeleccionado(almacenGlobal);
     }
   }, [almacenGlobal]);
