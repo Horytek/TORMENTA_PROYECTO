@@ -15,7 +15,7 @@ import axios from "@/api/axios";
 export const getProductosKardex = async (filters) => {
   try {
     const response = await axios.get('/kardex', { params: filters });
-    
+
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -46,29 +46,29 @@ export const getDetalleKardexCompleto = async (filters) => {
 
     // Verificar respuestas exitosas
     if (responseKardex.data.code === 1 && responsePrev.data.code === 1 && responseProducto.data.code === 1) {
-      return { 
+      return {
         success: true,
-        kardex: responseKardex.data.data, 
+        kardex: responseKardex.data.data,
         previousTransactions: responsePrev.data.data,
         productos: responseProducto.data.data
       };
     } else {
       const errorMsg = responseKardex.data.message || responsePrev.data.message || responseProducto.data.message;
       console.error('Error al obtener detalle kardex:', errorMsg);
-      return { 
+      return {
         success: false,
-        kardex: [], 
-        previousTransactions: null, 
-        productos: [] 
+        kardex: [],
+        previousTransactions: null,
+        productos: []
       };
     }
   } catch (error) {
     console.error('Error al obtener detalle kardex:', error.message);
-    return { 
+    return {
       success: false,
-      kardex: [], 
-      previousTransactions: null, 
-      productos: [] 
+      kardex: [],
+      previousTransactions: null,
+      productos: []
     };
   }
 };
@@ -79,7 +79,7 @@ export const getDetalleKardexCompleto = async (filters) => {
 export const getProductoInfo = async (filters) => {
   try {
     const response = await axios.get('/kardex/producto', { params: filters });
-    
+
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -96,13 +96,33 @@ export const getProductoInfo = async (filters) => {
 export const getProductosStockMinimo = async (filters) => {
   try {
     const response = await axios.get('/kardex/menorstock', { params: filters });
-    
+
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
     return { success: false, data: [] };
   } catch (error) {
     console.error('Error al obtener productos con stock mínimo:', error.message);
+    return { success: false, data: [] };
+  }
+};
+
+
+/**
+ * Obtener detalle de stock por SKU (para modal)
+ */
+export const getProductStockDetails = async (idProducto, idAlmacen) => {
+  try {
+    const response = await axios.get('/kardex/stock-details', {
+      params: { idProducto, idAlmacen }
+    });
+
+    if (response.data.code === 1) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    console.error('Error al obtener detalle de stock:', error.message);
     return { success: false, data: [] };
   }
 };
@@ -128,7 +148,7 @@ export const downloadExcelReporteMes = async (mes, year, almacen) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     return { success: true, message: 'Reporte descargado' };
   } catch (error) {
     console.error("Error al descargar reporte Excel:", error);
@@ -153,7 +173,7 @@ export const downloadExcelReporteFechas = async (startDate, endDate, almacen) =>
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     return { success: true, message: 'Reporte descargado' };
   } catch (error) {
     console.error("Error al descargar reporte Excel:", error);
@@ -171,7 +191,7 @@ export const downloadExcelReporteFechas = async (startDate, endDate, almacen) =>
 export const getAlmacenesKardex = async () => {
   try {
     const response = await axios.get('/kardex/almacen');
-    
+
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -188,7 +208,7 @@ export const getAlmacenesKardex = async () => {
 export const getMarcasKardex = async () => {
   try {
     const response = await axios.get('/kardex/marca');
-    
+
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -205,7 +225,7 @@ export const getMarcasKardex = async () => {
 export const getCategoriasKardex = async () => {
   try {
     const response = await axios.get('/kardex/categoria');
-    
+
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -224,7 +244,7 @@ export const getSubcategoriasKardex = async (idCategoria) => {
     const response = await axios.get('/kardex/subcategoria', {
       params: { cat: idCategoria }
     });
-    
+
     if (response.data.code === 1) {
       return { success: true, data: response.data.data };
     }
@@ -247,6 +267,7 @@ const kardexService = {
   getMarcasKardex,
   getCategoriasKardex,
   getSubcategoriasKardex,
+  getProductStockDetails
 };
 
 export default kardexService;

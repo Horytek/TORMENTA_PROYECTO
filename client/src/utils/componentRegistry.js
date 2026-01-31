@@ -50,6 +50,7 @@ export const COMPONENT_REGISTRY = {
     '/configuracion/usuarios': Usuarios, // Assuming route structure
     '/configuracion/roles': RolesWrapper,
     '/configuracion/modulos': Modulos,
+    '/configuracion/atributos': lazy(() => import('@/pages/Configuracion/Attributes/AttributesPage')),
 
     // Note: Some routes might need normalization or checking against DB values.
     // We add common variations just in case.

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip, Pagination, Button, Chip, Select, SelectItem } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
-import { FaTrash, FaCheck, FaTimes } from "react-icons/fa";
+import { FaTrash, FaCheck, FaTimes, FaEye } from "react-icons/fa";
 import { deleteProducto } from '@/services/productos.services';
 import ConfirmationModal from '@/components/Modals/ConfirmationModal';
 import Barcode from '../../components/Barcode/Barcode';
@@ -21,7 +21,7 @@ const columns = [
     { name: "ACCIONES", uid: "acciones" },
 ];
 
-export function ShowProductos({ searchTerm, productos, onEdit, onDelete, updateProductoLocal }) {
+export function ShowProductos({ searchTerm, productos, onEdit, onDelete, updateProductoLocal, onView = () => { } }) {
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -155,6 +155,18 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete, updateP
             case "acciones":
                 return (
                     <div className="flex gap-1 justify-center" onClick={(e) => e.stopPropagation()}>
+                        <Tooltip content="Ver Variantes">
+                            <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                color="secondary"
+                                onPress={() => onView(producto)}
+                                className="text-slate-400 hover:text-purple-600 dark:text-slate-500 dark:hover:text-purple-400"
+                            >
+                                <FaEye size={18} />
+                            </Button>
+                        </Tooltip>
                         <Tooltip content={hasEditPermission ? "Editar producto" : "No tiene permisos"}>
                             <Button
                                 isIconOnly

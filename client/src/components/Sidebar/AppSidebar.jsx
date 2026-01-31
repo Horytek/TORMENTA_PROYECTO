@@ -66,6 +66,7 @@ const SIDEBAR_DATA = {
   configuracion: [
     { title: "Usuarios", url: "/configuracion/usuarios", icon: UserCog },
     { title: "Roles y permisos", url: "/configuracion/roles", icon: Users },
+    { title: "Atributos", url: "/configuracion/atributos", icon: Settings2 },
     { title: "Logs", url: "/configuracion/logs", icon: FileBarChart2 },
     { title: "Negocio", url: "/configuracion/negocio", icon: Tags },
     { title: "Llamadas", url: "/configuracion/llamadas", icon: Phone },

@@ -27,8 +27,11 @@ export default function NavCompany() {
     const navigate = useNavigate();
     const id_tenant = useUserStore(state => state.id_tenant);
     const plan_pago = useUserStore(state => state.plan_pago);
+    const rol = useUserStore(state => state.rol);
     const [empresasTenant, setEmpresasTenant] = useState([]);
     const [planes, setPlanes] = useState([]);
+
+    const isAdmin = String(rol) === "1";
 
     useEffect(() => {
         const fetchData = async () => {
@@ -132,22 +135,25 @@ export default function NavCompany() {
                     </div>
                 </div>
 
-                <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800 -mx-1.5" />
-
-                {/* Quick Actions - Clean */}
-                <DropdownMenuGroup className="py-1">
-                    {actions.map((action) => (
-                        <DropdownMenuItem
-                            key={action.label}
-                            onClick={action.onClick}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors group"
-                        >
-                            <action.icon className="size-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
-                            <span className="flex-1 text-sm">{action.label}</span>
-                            <ChevronRight className="size-3.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuGroup>
+                {/* Quick Actions - Admin Only */}
+                {isAdmin && (
+                    <>
+                        <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800 -mx-1.5" />
+                        <DropdownMenuGroup className="py-1">
+                            {actions.map((action) => (
+                                <DropdownMenuItem
+                                    key={action.label}
+                                    onClick={action.onClick}
+                                    className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors group"
+                                >
+                                    <action.icon className="size-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
+                                    <span className="flex-1 text-sm">{action.label}</span>
+                                    <ChevronRight className="size-3.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuGroup>
+                    </>
+                )}
 
                 {/* Footer - Dirección y Email */}
                 {(activeCompany.direccion || activeCompany.email) && (

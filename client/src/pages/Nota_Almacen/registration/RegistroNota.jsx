@@ -209,24 +209,50 @@ function RegistroNota() {
     };
     const closeModalGuardar = () => setIsModalGuardar(false);
 
-    const agregarProducto = useCallback((producto, cantidad) => {
+    const agregarProducto = useCallback((producto, cantidad, variant = null) => {
         setProductosSeleccionados(prev => {
+            const uniqueKey = variant
+                ? (variant.id_sku ? `SKU-${variant.id_sku}` : `${producto.codigo}-${variant.id_tonalidad || 'null'}-${variant.id_talla || 'null'}`)
+                : `${producto.codigo}-null-null`;
+
             if ((tipoNota === 'salida' || tipoNota === 'conjunto')) {
+                const stockDisponible = variant ? variant.stock : (producto.stock || 0);
+
+                // Calculate current quantity in cart for this specific variant/product
                 const agregadoPrev = prev
-                    .filter(p => p.codigo === producto.codigo)
+                    .filter(p => p.uniqueKey === uniqueKey)
                     .reduce((a, p) => a + p.cantidad, 0);
+
                 const nuevoTotal = agregadoPrev + cantidad;
-                const stockDisponible = producto.stock || 0;
+
                 if (nuevoTotal > stockDisponible) {
                     toast.error(`Stock insuficiente. Disponible: ${stockDisponible}`);
                     return prev;
                 }
             }
-            const existe = prev.find(p => p.codigo === producto.codigo);
+
+            const existe = prev.find(p => p.uniqueKey === uniqueKey);
+
+            const productData = {
+                ...producto,
+                cantidad,
+                // Variant info
+                id_tonalidad: variant?.id_tonalidad || null,
+                id_talla: variant?.id_talla || null,
+                id_sku: variant?.id_sku || null, // Capture SKU ID
+                attributes: variant?.attributes || null,
+                resolvedAttributes: variant?.resolvedAttributes || null,
+                // Use variant names if available, or fallbacks
+                nombre_tonalidad: variant?.tonalidad || variant?.nombre_tonalidad || null,
+                nombre_talla: variant?.talla || variant?.nombre_talla || null,
+                sku_label: variant?.sku_label || variant?.nombre_sku || null, // Capture Label
+                uniqueKey
+            };
+
             if (existe) {
-                return prev.map(p => (p.codigo === producto.codigo ? { ...p, cantidad: p.cantidad + cantidad } : p));
+                return prev.map(p => (p.uniqueKey === uniqueKey ? { ...p, cantidad: p.cantidad + cantidad } : p));
             } else {
-                return [...prev, { ...producto, cantidad }];
+                return [...prev, productData];
             }
         });
         closeModalBuscarProducto();
@@ -261,6 +287,9 @@ function RegistroNota() {
             producto: productosSeleccionados.map(p => p.codigo || p.id),
             numComprobante: isOutput ? currentDocumentoSalida : currentDocumentoIngreso,
             cantidad: productosSeleccionados.map(p => p.cantidad),
+            tonalidad: productosSeleccionados.map(p => p.id_tonalidad || null),
+            talla: productosSeleccionados.map(p => p.id_talla || null),
+            sku: productosSeleccionados.map(p => p.id_sku || null), // Send SKUs
             observacion,
             ...(isOutput ? { nom_usuario: usuario } : { usuario })
         });
@@ -467,6 +496,7 @@ function RegistroNota() {
                     agregarProducto={agregarProducto}
                     setCodigoBarras={setCodigoBarras}
                     hideStock={!almacenOrigen && tipoNota !== 'ingreso'}
+                    mode={tipoNota}
                 />
                 {isModalProducto && (<ProductosModal modalTitle={modalTitle} onClose={() => setIsModalProducto(false)} />)}
                 <AgregarProovedor isOpen={isModalProveedor} onClose={closeModalProveedor} titulo={tipoNota === 'ingreso' ? "proveedor" : "destinatario"} />

@@ -8,7 +8,7 @@
  *   node migrate-passwords.js
  */
 
-import { getConnection } from "./src/database/database.js";
+import { getConnection } from "../src/database/database.js";
 import bcrypt from 'bcryptjs';
 
 const SALT_ROUNDS = 12;

@@ -11,6 +11,10 @@ import {
 } from "@heroui/react";
 import { CheckCircle, AlertTriangle, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { Eye } from 'lucide-react';
+import { Button } from "@heroui/react";
+import StockDetailModal from './StockDetailModal';
 
 function getStockStatus(stock) {
   if (stock <= 5) return "critical";
@@ -19,7 +23,9 @@ function getStockStatus(stock) {
   return "high";
 }
 
-const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay productos en el inventario" }) => {
+const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay productos en el inventario", attrMetadataMap = {}, almacenSeleccionado }) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const navigate = useNavigate();
 
   const handleRowClick = (producto) => {
@@ -58,6 +64,23 @@ const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay product
           <span className="inline-block px-3 py-1 rounded-full border border-slate-200 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold shadow-sm">
             {item.marca}
           </span>
+        );
+      case "actions":
+        return (
+          <div className="flex justify-center">
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              onPress={() => {
+                setSelectedProduct(item);
+                setModalOpen(true);
+              }}
+              className="text-slate-400 hover:text-blue-600"
+            >
+              <Eye size={18} />
+            </Button>
+          </div>
         );
       case "stock":
         return (
@@ -135,8 +158,11 @@ const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay product
         }}
         selectionMode="single"
         onRowAction={(key) => {
-          const item = items.find(i => String(i.codigo) === String(key));
-          if (item) handleRowClick(item);
+          // key might be composite "code-sku"
+          const parts = String(key).split('-');
+          const code = parts[0];
+          // Navigate using code (Historical view expects Product Code)
+          if (code) navigate(`/almacen/kardex/historico/${code}`);
         }}
       >
         <TableHeader>
@@ -146,15 +172,30 @@ const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay product
           <TableColumn key="stock" align="center">Stock</TableColumn>
           <TableColumn key="estado" align="center">Estado</TableColumn>
           <TableColumn key="um" align="center">UM</TableColumn>
+          <TableColumn key="actions" align="center">Detalle</TableColumn>
         </TableHeader>
         <TableBody emptyContent={emptyText} items={items}>
           {(item) => (
-            <TableRow key={item.codigo}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+            <TableRow key={item.codigo} className="cursor-pointer">
+              {(columnKey) => <TableCell>
+                {/* Stop propagation for action buttons if easier, but Heroui Table usually handles it if button is interactive. 
+                     Actually, Heroui Table onRowAction fires on row click. 
+                     We need to ensure button click doesn't trigger row action? 
+                     Typically Button onPress stops propagation. */}
+                {renderCell(item, columnKey)}
+              </TableCell>}
             </TableRow>
           )}
         </TableBody>
       </Table>
+
+      <StockDetailModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        product={selectedProduct}
+        almacenId={almacenSeleccionado}
+        attrMetadataMap={attrMetadataMap}
+      />
     </div>
   );
 };
@@ -164,6 +205,8 @@ KardexTable.propTypes = {
   page: PropTypes.number,
   limit: PropTypes.number,
   emptyText: PropTypes.string,
+  attrMetadataMap: PropTypes.object,
+  almacenSeleccionado: PropTypes.any,
 };
 
 export default KardexTable;

@@ -59,6 +59,7 @@ export const NAVIGATION_DATA = {
       // These use submodule routes from the database
       { title: "Usuarios (Admin)", url: "/configuracion/usuarios", icon: UserCog, description: "Administración de usuarios", resourceKey: "/configuracion/usuarios" },
       { title: "Roles y Permisos", url: "/configuracion/roles", icon: Users, description: "Control de accesos", resourceKey: "/configuracion/roles" },
+      { title: "Atributos", url: "/configuracion/atributos", icon: Settings2, description: "Gestión de atributos", resourceKey: "/configuracion/atributos" },
       { title: "Logs de Sistema", url: "/configuracion/logs", icon: FileBarChart2, description: "Auditoría de acciones", resourceKey: "/configuracion/logs" },
       { title: "Config. Negocio", url: "/configuracion/negocio", icon: Tags, description: "Datos de la empresa", resourceKey: "/configuracion/negocio" },
     ]

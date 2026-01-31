@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip, Select, SelectItem } from "@heroui/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Chip, Select, SelectItem, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter, Button } from "@heroui/react";
 import { ProgressBar } from "@tremor/react";
 import { TrendingUp, Archive, Package, DollarSign, ArrowRight, TrendingDown, Activity } from 'lucide-react';
 
-function HistoricoTable({ transactions, previousTransactions, productoData = [] }) {
+function HistoricoTable({ transactions, previousTransactions, productoData = [], attrMetadataMap = {} }) {
   const [collapsedTransaction, setCollapsedTransaction] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -220,9 +220,9 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
         </KpiCard>
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-6 w-full items-start">
+      <div className="flex flex-col gap-6 w-full items-start">
         {/* Tabla principal */}
-        <div className={`transition-all duration-300 w-full ${collapsedTransaction ? 'xl:w-2/3' : 'xl:w-full'}`}>
+        <div className="w-full">
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl overflow-hidden">
 
             {/* Header Styled */}
@@ -245,7 +245,7 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
               }}
             >
               <TableHeader>
-                {["Fecha", "Hora", "Usuario", "Documento", "Origen", "Destino", "Tonalidad", "Talla", "Entra", "Sale", "Stock", "Estado"].map((header) => (
+                {["Fecha", "Hora", "Usuario", "Documento", "Origen", "Destino", "Variante", "Entra", "Sale", "Stock", "Estado"].map((header) => (
                   <TableColumn key={header}>{header}</TableColumn>
                 ))}
               </TableHeader>
@@ -285,13 +285,9 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
                     <TableCell className="text-slate-500 dark:text-zinc-500 whitespace-nowrap max-w-[100px] truncate" title={transaction["almacen_destino"]}>
                       {transaction["almacen_destino"] || "-"}
                     </TableCell>
-                    {/* Tonalidad */}
+                    {/* Variante */}
                     <TableCell className="text-slate-600 dark:text-zinc-400 whitespace-nowrap">
-                      {transaction["tonalidad"] || "-"}
-                    </TableCell>
-                    {/* Talla */}
-                    <TableCell className="text-slate-600 dark:text-zinc-400 whitespace-nowrap">
-                      {transaction["talla"] || "-"}
+                      {transaction["sku_label"] || `${transaction["tonalidad"]} - ${transaction["talla"]}`}
                     </TableCell>
                     {/* Entra */}
                     <TableCell className="whitespace-nowrap">
@@ -354,65 +350,122 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [] 
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Panel Lateral de Detalles (Split View) */}
-        {collapsedTransaction && (
-          <div className="w-full xl:w-1/3 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-xl rounded-xl overflow-hidden sticky top-4">
-              <div className="bg-slate-50 dark:bg-zinc-800 p-4 border-b border-slate-200 dark:border-zinc-700 flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    <ArrowRight size={16} className="text-blue-500" /> Detalle de Movimiento
+      <Drawer
+        isOpen={!!collapsedTransaction}
+        onOpenChange={(v) => !v && setCollapsedTransaction(null)}
+        placement="right"
+        size="md"
+        classNames={{
+          backdrop: "bg-black/40 backdrop-blur-[2px]",
+        }}
+      >
+        <DrawerContent>
+          {(onClose) => (
+            <>
+              <DrawerHeader className="border-b border-slate-100 dark:border-zinc-800 px-6 py-4">
+                <div className="flex flex-col gap-1">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2">
+                    Detalle de Movimiento
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Documento: <span className="font-mono text-slate-700 dark:text-zinc-300">{collapsedTransaction.documento}</span>
+                  <p className="text-sm text-slate-500">
+                    Documento: <span className="font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-slate-700 dark:text-zinc-300">{collapsedTransaction?.documento}</span>
                   </p>
                 </div>
-                <button onClick={() => setCollapsedTransaction(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200">
-                  &times;
-                </button>
-              </div>
+              </DrawerHeader>
+              <DrawerBody className="p-0 bg-slate-50/50 dark:bg-zinc-950/50">
+                {collapsedTransaction ? (
+                  <div className="p-6 space-y-4">
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                      <Table
+                        aria-label="Detalles de Productos"
+                        removeWrapper
+                        classNames={{
+                          base: "max-h-[calc(100vh-200px)]",
+                          th: "bg-slate-50 dark:bg-zinc-800 text-slate-500 font-semibold text-xs border-b border-slate-100 dark:border-zinc-800",
+                          td: "py-3 px-4 text-xs border-b border-slate-50 dark:border-zinc-800/50"
+                        }}
+                      >
+                        <TableHeader>
+                          <TableColumn>CÓDIGO</TableColumn>
+                          <TableColumn>DESCRIPCIÓN</TableColumn>
+                          <TableColumn align="center">CANT.</TableColumn>
+                        </TableHeader>
+                        <TableBody emptyContent="No se encontraron detalles.">
+                          {collapsedTransaction.productos?.map((producto, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="font-mono text-slate-500">{producto.codigo}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-semibold text-slate-700 dark:text-zinc-200">
+                                    {producto.descripcion}
+                                  </span>
+                                  <span className="text-xs text-slate-500">
+                                    {producto.marca}
+                                  </span>
+                                  {/* VARIANT DETAILS */}
+                                  <div className="flex flex-wrap gap-2 mt-1">
+                                    {(() => {
+                                      // 1. Try SKU Label first if strictly generic
+                                      if (producto.sku_label && producto.sku_label !== 'Standard') {
+                                        return <Chip size="sm" variant="flat" className="h-5 text-[10px] bg-blue-50 text-blue-700">{producto.sku_label}</Chip>;
+                                      }
 
-              <div className="p-0">
-                <Table
-                  aria-label="Detalles de Productos"
-                  removeWrapper
-                  classNames={{
-                    th: "bg-white dark:bg-zinc-900 text-slate-400 font-semibold text-[10px] uppercase tracking-wider",
-                    td: "py-2 px-3 text-xs border-b border-slate-50 dark:border-zinc-800"
-                  }}
-                >
-                  <TableHeader>
-                    {["Código", "Descripción", "Cant."].map((header) => (
-                      <TableColumn key={header}>{header}</TableColumn>
-                    ))}
-                  </TableHeader>
-                  <TableBody emptyContent={"No se encontró detalles."}>
-                    {collapsedTransaction.productos && collapsedTransaction.productos.length > 0 ? (
-                      collapsedTransaction.productos.map((producto, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-mono text-slate-500">{producto.codigo}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="text-slate-700 dark:text-zinc-200 font-medium truncate max-w-[120px]" title={producto.descripcion}>{producto.descripcion}</span>
-                              <span className="text-[10px] text-slate-400">{producto.marca}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-bold text-slate-700 dark:text-zinc-200">{producto.cantidad}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </div>
+                                      // 2. Parse attributes
+                                      let attrs = producto.attributes;
+                                      try { if (typeof attrs === 'string') attrs = JSON.parse(attrs); } catch { }
 
-              <div className="p-3 bg-slate-50 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800 text-center">
-                <p className="text-[10px] text-slate-400">Fin del detalle</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+                                      if (attrs && Object.keys(attrs).length > 0) {
+                                        const prodCode = producto.codigo;
+                                        const meta = attrMetadataMap[prodCode] || (Object.values(attrMetadataMap)[0]) || { names: {} };
+
+                                        return Object.entries(attrs).map(([k, v]) => {
+                                          // Check for Color/Size special handling
+                                          const label = meta.names[k] || k;
+                                          const isColor = label.toLowerCase() === 'color';
+
+                                          return (
+                                            <div key={k} className="flex flex-col">
+                                              <span className="text-[10px] text-slate-400 font-medium uppercase">{label}</span>
+                                              <span className={`text-xs font-medium ${isColor ? 'text-slate-700' : 'text-slate-600'}`}>
+                                                {isColor && (
+                                                  <span className="inline-block w-2 h-2 rounded-full bg-current mr-1 opacity-70"></span>
+                                                )}
+                                                {v}
+                                              </span>
+                                            </div>
+                                          );
+                                        });
+                                      }
+
+                                      return <span className="text-slate-300 italic text-[10px]">Estándar</span>;
+                                    })()}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <span className="font-bold text-slate-700 dark:text-zinc-200 text-base">
+                                  {producto.cantidad}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ) : null}
+              </DrawerBody>
+              <DrawerFooter className="border-t border-slate-100 dark:border-zinc-800 px-6 py-4">
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Cerrar
+                </Button>
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
@@ -421,6 +474,7 @@ HistoricoTable.propTypes = {
   transactions: PropTypes.array.isRequired,
   previousTransactions: PropTypes.array,
   productoData: PropTypes.array,
+  attrMetadataMap: PropTypes.object,
 };
 
 export default HistoricoTable;

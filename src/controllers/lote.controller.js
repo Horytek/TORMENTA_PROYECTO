@@ -1,5 +1,6 @@
 import { getConnection } from "../database/database.js";
 import { methods as NotaIngresoController } from "./notaingreso.controller.js";
+import { resolveSku } from "../utils/skuHelper.js";
 import moment from "moment";
 
 // 1. Crear Lote (Solicitud)
@@ -21,7 +22,6 @@ const createLote = async (req, res) => {
             "INSERT INTO lote_inventario (descripcion, estado, id_usuario_crea, id_tenant, id_usuario_verifica, fecha_verificacion) VALUES (?, 0, ?, ?, NULL, NULL)",
             [descripcion || '', id_usuario, id_tenant]
         );
-        console.log("Lote Insert Result:", loteResult); // DEBUG
         const id_lote = loteResult.insertId;
 
         if (!id_lote) throw new Error("Insert ID is missing");
@@ -31,12 +31,19 @@ const createLote = async (req, res) => {
         const detalleParams = [];
 
         for (const p of productos) {
-            detalleValues.push('(?, ?, ?, ?, ?, ?)');
-            detalleParams.push(id_lote, p.id_producto, p.id_tonalidad || null, p.id_talla || null, p.cantidad, id_tenant);
+            // Resolver SKU (Check if provided, else resolve legacy)
+            let id_sku = p.id_sku;
+            if (!id_sku) {
+                id_sku = await resolveSku(connection, p.id_producto, p.id_tonalidad || null, p.id_talla || null, id_tenant);
+            }
+
+            detalleValues.push('(?, ?, ?, ?, ?, ?, ?)');
+            // Note: We set tonalidad/talla to null if not provided (SKU based)
+            detalleParams.push(id_lote, p.id_producto, p.id_tonalidad || null, p.id_talla || null, p.cantidad, id_tenant, id_sku);
         }
 
         await connection.query(
-            `INSERT INTO detalle_lote_inventario (id_lote, id_producto, id_tonalidad, id_talla, cantidad, id_tenant) VALUES ${detalleValues.join(', ')}`,
+            `INSERT INTO detalle_lote_inventario (id_lote, id_producto, id_tonalidad, id_talla, cantidad, id_tenant, id_sku) VALUES ${detalleValues.join(', ')}`,
             detalleParams
         );
 
@@ -75,7 +82,6 @@ const verifyLote = async (req, res) => {
         );
 
         if (permiso.length === 0) {
-            // Optional: Allow Admin/Dev bypass if needed, but for now strict check
             return res.status(403).json({ message: "No tienes permisos para verificar inventario (Etapa 1)" });
         }
 
@@ -141,21 +147,6 @@ const approveLote = async (req, res) => {
             [id_lote]
         );
 
-        // Preparar datos para NotaIngresoController.insertNotaAndDetalle
-        // Este controller espera req.body con arrays paralelos.
-
-        // Simular req/res para reutilizar lógica (o refactorizar, pero reutilizar por ahora es más rápido)
-        // PERO: llamarlo directamente es complejo por el manejo de res. 
-        // Mejor opción: Replicar la lógica de insertNota aquí dentro de la transacción,
-        // O refactorizar NotaIngreso para exponer una función 'service'.
-
-        // Dado que NotaIngreso usa body params, construiremos el payload.
-        // ADVERTENCIA: `insertNotaAndDetalle` maneja su propia transacción.
-        // Si la llamamos "desde fuera" como función pura, debemos asegurarnos que no haga commit/release si queremos atomicidad global.
-        // Pero `insertNotaAndDetalle` hace `beginTransaction` y `commit`.
-        // Solución: Dejar que `insertNotaAndDetalle` maneje la transacción de la NOTA.
-        // Nosotros manejamos el update del LOTE.
-
         // 1. Actualizar Lote a Aprobado (2)
         await connection.query(
             "UPDATE lote_inventario SET estado = 2, id_usuario_aprueba = ?, fecha_aprobacion = NOW() WHERE id_lote = ? AND id_tenant = ?",
@@ -165,19 +156,13 @@ const approveLote = async (req, res) => {
         await connection.commit(); // Commit del cambio de estado del lote primero.
         connection.release(); // Liberar esta conexión
 
-        // 2. Llamar a crear Nota, pasando los datos necesarios.
-        // Construimos un objeto simulando request body
+        // 2. Llamar a crear Nota
         const productosIds = detalles.map(d => d.id_producto);
         const cantidades = detalles.map(d => d.cantidad);
         const tonalidades = detalles.map(d => d.id_tonalidad);
         const tallas = detalles.map(d => d.id_talla);
 
-        // Necesitamos un numero de comprobante.
-        // Podemos llamar a `getNuevoDocumento` internamente o dejar que se genere.
-        // NotaIngresoController espera numComprobante.
-
-        // HACK: Llamar a getNuevoDocumento via API interna o consulta rapida.
-        // Hacerlo manual aqui rapidito:
+        // HACK: Obtener numero comprobante
         const conn2 = await getConnection();
         const [ultimoComp] = await conn2.query("SELECT num_comprobante FROM comprobante WHERE id_tipocomprobante = 6 AND id_tenant = ? ORDER BY num_comprobante DESC LIMIT 1", [id_tenant]);
 
@@ -191,14 +176,14 @@ const approveLote = async (req, res) => {
         conn2.release();
 
         if (!almacenD) {
-            await connection.rollback();
+            await connection.rollback(); // Too late for batch, but safe guard logic
             return res.status(400).json({ message: "Se requiere un almacén de destino (almacenD)" });
         }
 
         const fakeReq = {
             body: {
                 almacenD: almacenD,
-                destinatario: 1, // Default dest? O pasarlo desde frontend
+                destinatario: 1,
                 glosa: glosa || `Nota generada desde Lote #${id_lote}`,
                 nota: 'Ingreso por Aprobación de Lote',
                 fecha: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -206,25 +191,19 @@ const approveLote = async (req, res) => {
                 numComprobante: nuevoNum,
                 cantidad: cantidades,
                 observacion: `Generado auto desde Lote ${id_lote}`,
-                usuario: req.user.username || 'Sistema', // Need username for log
+                usuario: req.user.username || 'Sistema',
                 tonalidad: tonalidades,
                 talla: tallas
             },
             id_tenant: id_tenant,
-            connection: { remoteAddress: '::1' } // Fake connection for IP log
+            connection: { remoteAddress: '::1' },
+            user: req.user
         };
 
-        // Mock res object
         const fakeRes = {
             status: (code) => ({ json: (data) => console.log(`Status ${code}:`, data) }),
             json: (data) => console.log("Nota Response:", data)
         };
-
-        // LLAMAR A LA FUNCION
-        // Nota: Esto creará la nota. Si falla, el lote ya quedó en "Aprobado".
-        // Idealmente deberíamos refactorizar para que todo sea una TX, pero `insertNotaAndDetalle` es monolítica.
-        // Riesgo aceptable por ahora: Si falla la nota, el lote queda aprobado pero sin nota (inconsistencia manual).
-        // Podemos hacer un try/catch y revertir lote si falla nota.
 
         try {
             await NotaIngresoController.insertNotaAndDetalle(fakeReq, fakeRes);
@@ -292,12 +271,14 @@ const getLoteDetalle = async (req, res) => {
 
         const [rows] = await connection.query(`
             SELECT d.*, p.descripcion as producto, m.nom_marca as marca, 
-                   t.nombre as tonalidad, ta.nombre as talla
+                   t.nombre as tonalidad, ta.nombre as talla,
+                   sku.sku as sku_code
             FROM detalle_lote_inventario d
             INNER JOIN producto p ON d.id_producto = p.id_producto
             INNER JOIN marca m ON p.id_marca = m.id_marca
             LEFT JOIN tonalidad t ON d.id_tonalidad = t.id_tonalidad
             LEFT JOIN talla ta ON d.id_talla = ta.id_talla
+            LEFT JOIN producto_sku sku ON d.id_sku = sku.id_sku
             WHERE d.id_lote = ?
         `, [id]);
 
@@ -310,6 +291,7 @@ const getLoteDetalle = async (req, res) => {
         if (connection) connection.release();
     }
 };
+
 
 export const methods = {
     createLote,

@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from "@heroui/react";
 import { FaRegCreditCard } from "react-icons/fa";
-import { CheckCircle, XCircle, X, DownloadCloud, AlertTriangle } from "lucide-react";
+import { CheckCircle, XCircle, X, DownloadCloud, AlertTriangle, Building2, CalendarDays, Banknote, Receipt, Sparkles, History, CreditCard, Info, ArrowRightLeft } from "lucide-react";
 import { useUserStore } from "@/store/useStore";
 import { useEffect, useState } from "react";
 import { Accordion, AccordionItem } from "@heroui/react";
@@ -28,6 +28,17 @@ const BILLING_FEATURES = [
   { id: 4, label: "Descarga de comprobantes" },
   { id: 5, label: "Alertas de vencimiento" },
 ];
+
+// Helper component for summary pills
+function InfoPill({ icon, label, value }) {
+  return (
+    <div className="flex flex-col items-center p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+      <div className="text-slate-400 dark:text-zinc-500 mb-1">{icon}</div>
+      <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase tracking-wide">{label}</span>
+      <span className="text-sm font-semibold text-slate-700 dark:text-zinc-200">{value || "-"}</span>
+    </div>
+  );
+}
 
 export default function BillingDrawer({ open, onClose }) {
   const { user, plan_pago, nombre } = useUserStore();
@@ -258,6 +269,12 @@ export default function BillingDrawer({ open, onClose }) {
       size="sm"
       overlayClassName="bg-black/40 backdrop-blur-[2px]"
       className="z-[12000]"
+      motionProps={{
+        variants: {
+          enter: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" } },
+          exit: { opacity: 0, x: 100, transition: { duration: 0.2, ease: "easeIn" } },
+        }
+      }}
     >
       <DrawerContent>
         {(internalClose) => (
@@ -278,8 +295,8 @@ export default function BillingDrawer({ open, onClose }) {
                     size="sm"
                     variant="flat"
                     className={`font-semibold text-[10px] h-6 px-2 border ${String(plan_pago) === "1" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                        String(plan_pago) === "2" ? "bg-amber-50 text-amber-600 border-amber-100" :
-                          "bg-slate-50 text-slate-600 border-slate-200"
+                      String(plan_pago) === "2" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                        "bg-slate-50 text-slate-600 border-slate-200"
                       }`}
                   >
                     {planLabel}
@@ -301,162 +318,195 @@ export default function BillingDrawer({ open, onClose }) {
             </DrawerHeader>
 
             <DrawerBody className="px-5 py-6 bg-slate-50/50 dark:bg-zinc-950/50">
-              <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 shadow-sm p-5">
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-blue-100 mb-2">
-                  <div>
-                    <span className="text-xs text-gray-500 dark:text-zinc-400">Empresa</span>
-                    <div className="font-medium truncate">{empresa}</div>
+              <div className="space-y-4">
+                {/* Summary Card */}
+                <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden">
+                  <div className="p-5">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/30 dark:to-indigo-900/10 border border-indigo-200/50 dark:border-indigo-800/30 flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-800 dark:text-white text-base leading-tight truncate">{empresa}</h3>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 truncate mt-0.5">{correo}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <InfoPill icon={<CalendarDays className="w-3.5 h-3.5" />} label="Vence" value={vencimiento ? new Date(vencimiento).toLocaleDateString() : "-"} />
+                      <InfoPill icon={<Banknote className="w-3.5 h-3.5" />} label="Costo" value={costo} />
+                      <InfoPill icon={<Receipt className="w-3.5 h-3.5" />} label="Pagos" value={payments.length.toString()} />
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-xs text-gray-500 dark:text-zinc-400">Correo</span>
-                    <div className="font-medium truncate">{correo}</div>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500 dark:text-zinc-400">Vencimiento</span>
-                    <div className="font-medium">{vencimiento ? new Date(vencimiento).toLocaleDateString() : "Sin fecha"}</div>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500 dark:text-zinc-400">Costo</span>
-                    <div className="font-medium">{costo}</div>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500 dark:text-zinc-400">Pagos registrados</span>
-                    <div className="font-medium">{payments.length}</div>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500 dark:text-zinc-400">Resumen</span>
-                    <div className="text-sm text-gray-600 dark:text-zinc-300 mt-1">
-                      Plan {String(plan_pago) || "-"} • {estado}
+                  <div className="px-5 py-3 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50 flex items-center justify-between">
+                    <span className="text-xs text-slate-500 dark:text-zinc-400">Estado</span>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${alertaVencimiento ? "bg-red-500" : "bg-emerald-500"} shadow-sm`} />
+                      <span className={`text-xs font-semibold ${alertaVencimiento ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                        Plan {String(plan_pago) || "-"} • {estado}
+                      </span>
                     </div>
                   </div>
                 </div>
+
+                {/* Alert Banner */}
                 {alertaVencimiento && (
-                  <div className="flex items-center gap-2 my-2 p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700">
-                    <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                    <span className="text-xs text-yellow-700 dark:text-yellow-200">¡Tu suscripción está vencida o próxima a vencer!</span>
+                  <div className="rounded-xl bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/10 border border-red-200/80 dark:border-red-800/30 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-red-800 dark:text-red-300">¡Suscripción vencida!</p>
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">Realiza el pago para reactivar tu acceso.</p>
+                      </div>
+                    </div>
                   </div>
                 )}
-                <div className="my-3 h-px bg-gradient-to-r from-gray-100 to-transparent dark:from-zinc-800/30" />
-                <div>
-                  <div className="mb-2 text-xs text-gray-500 dark:text-zinc-400">Beneficios de facturación</div>
-                  <div className="space-y-2">
+
+                {/* Billing Features Card */}
+                <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-indigo-500" />
+                      <span className="text-xs font-semibold text-slate-600 dark:text-zinc-300 uppercase tracking-wide">Beneficios de Facturación</span>
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-1.5">
                     {BILLING_FEATURES.map((f) => {
                       const enabled = isBillingFeatureEnabled(f.id);
                       return (
-                        <div key={f.id} className="flex items-center justify-between">
+                        <div key={f.id} className={`flex items-center justify-between py-1.5 px-3 rounded-lg transition-colors ${enabled ? "bg-emerald-50/50 dark:bg-emerald-900/10" : "opacity-50"}`}>
                           <div className="flex items-center gap-3">
                             {enabled ? (
-                              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                              <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
+                              <XCircle className="w-4 h-4 text-slate-400 dark:text-zinc-600" />
                             )}
-                            <span className={`text-sm ${enabled ? "text-gray-800 dark:text-blue-100" : "text-gray-500 dark:text-zinc-400"}`}>
+                            <span className={`text-sm ${enabled ? "text-slate-700 dark:text-zinc-200 font-medium" : "text-slate-500 dark:text-zinc-500"}`}>
                               {f.label}
                             </span>
                           </div>
-                          {!enabled && <span className="text-xs text-gray-400 dark:text-zinc-500">No incluido</span>}
+                          {!enabled && <span className="text-[10px] text-slate-400 dark:text-zinc-600 uppercase tracking-wide">No incluido</span>}
                         </div>
                       );
                     })}
                   </div>
                 </div>
-                <div className="my-4 h-px bg-gradient-to-r from-gray-100 to-transparent dark:from-zinc-800/30" />
-                {/* Historial de pagos reales (mp_payments) */}
-                <div>
-                  <div className="mb-2 text-xs text-gray-500 dark:text-zinc-400">Historial de pagos</div>
-                  <div className="space-y-2">
+
+                {/* Payment History Card */}
+                <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50">
+                    <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs font-semibold text-slate-600 dark:text-zinc-300 uppercase tracking-wide">Historial de Pagos</span>
+                    </div>
+                  </div>
+                  <div className="p-4">
                     {loadingPayments ? (
-                      <div className="text-xs text-gray-500">Cargando pagos...</div>
+                      <div className="flex items-center justify-center py-6">
+                        <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
                     ) : payments.length === 0 ? (
-                      <div className="text-xs text-gray-500">Sin pagos registrados</div>
+                      <div className="text-center py-6">
+                        <Receipt className="w-8 h-8 text-slate-300 dark:text-zinc-700 mx-auto mb-2" />
+                        <p className="text-xs text-slate-400 dark:text-zinc-500">Sin pagos registrados</p>
+                      </div>
                     ) : (
-                      payments.map(p => (
-                        <div key={p.id} className="flex items-center justify-between text-xs">
-                          <span className="truncate">
-                            {new Date(p.date_created || p.created_at).toLocaleDateString()} • {p.currency_id || "S/"} {Number(p.transaction_amount || 0).toFixed(2)} •
-                            <span className={`ml-1 font-semibold ${String(p.status).toLowerCase() === "approved" ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}`}>
-                              {p.status}
-                            </span>
-                          </span>
-                          <Tooltip content="Ver detalle">
-                            <Button
-                              isIconOnly
-                              size="xs"
-                              variant="light"
-                              className="text-blue-600 dark:text-blue-300"
-                              onPress={() => window.open(`/api/payment-receipt/${p.id}`, "_blank")}
-                              aria-label="Descargar comprobante"
-                            >
-                              <DownloadCloud className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                        </div>
-                      ))
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {payments.map(p => (
+                          <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-2 h-2 rounded-full shrink-0 ${String(p.status).toLowerCase() === "approved" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-slate-700 dark:text-zinc-200 truncate">
+                                  {p.currency_id || "S/"} {Number(p.transaction_amount || 0).toFixed(2)}
+                                </p>
+                                <p className="text-[10px] text-slate-400 dark:text-zinc-500">
+                                  {new Date(p.date_created || p.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <Tooltip content="Descargar comprobante">
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-700 rounded-lg"
+                                onPress={() => window.open(`/api/payment-receipt/${p.id}`, "_blank")}
+                              >
+                                <DownloadCloud className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Renovación automática + Solicitud de cambio de plan (oculta por defecto) */}
-                <div className="my-4 h-px bg-gradient-to-r from-gray-100 to-transparent dark:from-zinc-800/30" />
-
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="rounded-lg border border-gray-200 dark:border-zinc-800 p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm">
-                        <div className="font-semibold text-gray-800 dark:text-blue-100">Estado de Suscripción</div>
-                        <div className="text-xs text-gray-500 dark:text-zinc-400">
+                {/* Subscription Status Card */}
+                <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs font-semibold text-slate-600 dark:text-zinc-300 uppercase tracking-wide">Estado de Suscripción</span>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
                           {alertaVencimiento
                             ? "Tu suscripción ha vencido. Realiza el pago para reactivar."
                             : "Tu plan se renueva mensualmente de forma manual."}
-                        </div>
+                        </p>
                         {vencimiento && (
-                          <div className={`text-[11px] font-semibold mt-1 ${alertaVencimiento ? "text-red-500" : "text-green-600 dark:text-green-400"}`}>
+                          <div className={`inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-md text-xs font-medium ${alertaVencimiento ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"}`}>
+                            <CalendarDays className="w-3 h-3" />
                             Vence el: {new Date(vencimiento).toLocaleDateString()}
                           </div>
                         )}
                         {!canPay && fechaHabilitacion && (
-                          <div className="mt-1 text-[10px] text-orange-500">
+                          <p className="mt-2 text-[11px] text-amber-600 dark:text-amber-400">
                             Podrás renovar a partir del {fechaHabilitacion.toLocaleDateString()}
-                          </div>
+                          </p>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 shrink-0">
                         <Tooltip content={!canPay ? `Habilitado 5 días antes del vencimiento` : "Pago de renovación mensual"}>
-                          <div className="w-full">
-                            <Button
-                              size="sm"
-                              className={`w-full ${!canPay ? "opacity-50" : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20"}`}
-                              isLoading={autoRenewLoading}
-                              onPress={handleManualRenewal}
-                              isDisabled={!canPay}
-                            >
-                              Pagar Renovación
-                            </Button>
-                          </div>
+                          <Button
+                            size="sm"
+                            className={`${!canPay ? "opacity-50 bg-slate-100 text-slate-400" : "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40"}`}
+                            isLoading={autoRenewLoading}
+                            onPress={handleManualRenewal}
+                            isDisabled={!canPay}
+                          >
+                            Pagar Renovación
+                          </Button>
                         </Tooltip>
                         <Button
                           size="sm"
                           variant="light"
-                          color="danger"
-                          className="text-xs h-7"
+                          className="text-xs h-7 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                           onPress={() => setShowCancelConfirm(true)}
                         >
                           Cancelar
                         </Button>
                       </div>
                     </div>
-                    {/* Confirmación de Cancelación Inline */}
+
+                    {/* Cancel Confirmation */}
                     {showCancelConfirm && (
-                      <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg animate-in fade-in slide-in-from-top-1">
-                        <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-1">¿Estás seguro?</p>
-                        <p className="text-[11px] text-red-600 dark:text-red-400 mb-3 leading-snug">
-                          Si cancelas, tendrás acceso hasta el <b>{vencimiento ? new Date(vencimiento).toLocaleDateString() : "fin del periodo"}</b>. Luego, tu cuenta y la de todos tus usuarios se desactivarán.
+                      <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200/80 dark:border-red-900/30 rounded-xl animate-in fade-in slide-in-from-top-2">
+                        <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">¿Estás seguro?</p>
+                        <p className="text-xs text-red-600 dark:text-red-400 mb-3 leading-relaxed">
+                          Si cancelas, tendrás acceso hasta el <span className="font-semibold">{vencimiento ? new Date(vencimiento).toLocaleDateString() : "fin del periodo"}</span>. Luego, tu cuenta y la de todos tus usuarios se desactivarán.
                         </p>
                         <div className="flex gap-2 justify-end">
                           <Button
                             size="sm"
-                            variant="light"
-                            className="h-6 text-[10px]"
+                            variant="flat"
+                            className="h-7 text-xs"
                             onPress={() => setShowCancelConfirm(false)}
                           >
                             Volver
@@ -464,7 +514,7 @@ export default function BillingDrawer({ open, onClose }) {
                           <Button
                             size="sm"
                             color="danger"
-                            className="h-6 text-[10px] px-3"
+                            className="h-7 text-xs px-4"
                             onPress={() => {
                               handleCancelSubscription();
                               setShowCancelConfirm(false);
@@ -476,79 +526,95 @@ export default function BillingDrawer({ open, onClose }) {
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Instrucciones Breves */}
-                  <div className="rounded-lg border border-gray-200 dark:border-zinc-800 overflow-hidden">
-                    <Accordion isCompact variant="light">
-                      <AccordionItem key="1" aria-label="Instrucciones de Pago" title={<span className="text-xs font-semibold text-gray-500">ℹ️ ¿Cómo funciona la renovación?</span>}>
-                        <div className="text-xs text-gray-500 dark:text-zinc-400 space-y-2 pb-2">
-                          <p>1. <b>Pago habilitado:</b> El botón de pago se activa 5 días antes de tu vencimiento.</p>
-                          <p>2. <b>Sin cobros automáticos:</b> No te debitaremos nada. Tú decides cuándo pagar.</p>
-                          <p>3. <b>Renovación:</b> Al realizar el pago, tu fecha de vencimiento se extiende 30 días automáticamente.</p>
-                          <p>4. <b>Vencimiento:</b> Si llega la fecha y no pagas, tendrás un periodo de gracia breve antes de perder el acceso hasta que regularices.</p>
+                {/* FAQ Accordion */}
+                <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden">
+                  <Accordion isCompact variant="light" className="px-0">
+                    <AccordionItem
+                      key="1"
+                      aria-label="Instrucciones de Pago"
+                      title={
+                        <div className="flex items-center gap-2 py-1">
+                          <Info className="w-4 h-4 text-indigo-500" />
+                          <span className="text-xs font-semibold text-slate-600 dark:text-zinc-300">¿Cómo funciona la renovación?</span>
                         </div>
-                      </AccordionItem>
-                    </Accordion>
+                      }
+                      classNames={{
+                        trigger: "px-4 py-3",
+                        content: "px-4 pb-4"
+                      }}
+                    >
+                      <div className="text-xs text-slate-500 dark:text-zinc-400 space-y-2.5">
+                        <p className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 dark:text-indigo-400 shrink-0">1</span> <span><strong>Pago habilitado:</strong> El botón se activa 5 días antes del vencimiento.</span></p>
+                        <p className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 dark:text-indigo-400 shrink-0">2</span> <span><strong>Sin cobros automáticos:</strong> No te debitaremos nada.</span></p>
+                        <p className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 dark:text-indigo-400 shrink-0">3</span> <span><strong>Renovación:</strong> El pago extiende 30 días automáticamente.</span></p>
+                        <p className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-bold text-indigo-600 dark:text-indigo-400 shrink-0">4</span> <span><strong>Vencimiento:</strong> Hay un breve periodo de gracia antes de perder acceso.</span></p>
+                      </div>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+
+                {/* Plan Change Request Card */}
+                <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ArrowRightLeft className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs font-semibold text-slate-600 dark:text-zinc-300 uppercase tracking-wide">Cambio de Plan</span>
+                    </div>
+                    {!showPlanChange && (
+                      <Button size="sm" variant="flat" className="h-7 text-xs" onPress={() => setShowPlanChange(true)}>
+                        Solicitar
+                      </Button>
+                    )}
                   </div>
 
-                  {/* Solicitar cambio de plan (toggle) */}
                   {!showPlanChange ? (
-                    <div className="rounded-lg border border-gray-200 dark:border-zinc-800 p-3 flex items-center justify-between">
-                      <div className="text-sm">
-                        <div className="font-semibold text-gray-800 dark:text-blue-100">Solicitar cambio de plan</div>
-                        <div className="text-xs text-gray-500 dark:text-zinc-400">Envía una solicitud indicando el plan y motivo</div>
-                      </div>
-                      <Button size="sm" variant="flat" onPress={() => setShowPlanChange(true)}>
-                        Abrir formulario
-                      </Button>
+                    <div className="p-4">
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 text-center">
+                        Envía una solicitud indicando el plan deseado y el motivo del cambio.
+                      </p>
                     </div>
                   ) : (
-                    <div className="rounded-lg border border-gray-200 dark:border-zinc-800 p-3">
-                      <div className="text-sm font-semibold text-gray-800 dark:text-blue-100 mb-2">Solicitar cambio de plan</div>
-                      <div className="grid grid-cols-1 gap-2">
-                        <select
-                          value={targetPlan}
-                          onChange={(e) => setTargetPlan(e.target.value)}
-                          className="w-full rounded-lg border px-3 py-2 text-sm"
-                          aria-label="Plan destino"
+                    <div className="p-4 space-y-3">
+                      <select
+                        value={targetPlan}
+                        onChange={(e) => setTargetPlan(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-700 dark:text-zinc-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                        aria-label="Plan destino"
+                      >
+                        <option value="">Seleccione nuevo plan</option>
+                        <option value="Basic">Basic</option>
+                        <option value="Pro">Pro</option>
+                        <option value="Enterprise">Enterprise</option>
+                      </select>
+                      <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        rows={3}
+                        placeholder="Cuéntanos por qué deseas cambiar de plan..."
+                        className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-700 dark:text-zinc-200 placeholder:text-slate-400 dark:placeholder:text-zinc-500 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                        aria-label="Motivo del cambio"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="flat" className="h-8" onPress={() => { setShowPlanChange(false); setTargetPlan(""); setReason(""); }}>
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          color="primary"
+                          className="h-8"
+                          isLoading={sendingRequest}
+                          isDisabled={!targetPlan || !reason.trim()}
+                          onPress={handleRequestPlanChange}
                         >
-                          <option value="">Seleccione nuevo plan</option>
-                          <option value="Basic">Basic</option>
-                          <option value="Pro">Pro</option>
-                          <option value="Enterprise">Enterprise</option>
-                        </select>
-                        <textarea
-                          value={reason}
-                          onChange={(e) => setReason(e.target.value)}
-                          rows={3}
-                          placeholder="Cuéntanos por qué deseas cambiar de plan"
-                          className="w-full rounded-lg border px-3 py-2 text-sm"
-                          aria-label="Motivo del cambio"
-                        />
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="light" onPress={() => { setShowPlanChange(false); setTargetPlan(""); setReason(""); }}>
-                            Cancelar
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="primary"
-                            isLoading={sendingRequest}
-                            isDisabled={!targetPlan || !reason.trim()}
-                            onPress={handleRequestPlanChange}
-                          >
-                            Enviar solicitud
-                          </Button>
-                        </div>
+                          Enviar solicitud
+                        </Button>
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 text-xs text-gray-500 dark:text-zinc-400">
-                  <p className="leading-snug">
-                    Consulta aquí tus datos de facturación y beneficios. Para descargar comprobantes, cambiar de plan o actualizar método de pago, pulsa "Administrar plan".
-                  </p>
-                </div>
               </div>
             </DrawerBody>
 

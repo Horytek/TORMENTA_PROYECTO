@@ -1,4 +1,4 @@
-import { getConnection } from "./src/database/database.js";
+import { getConnection } from "../src/database/database.js";
 
 async function checkAllPerms() {
     const connection = await getConnection();

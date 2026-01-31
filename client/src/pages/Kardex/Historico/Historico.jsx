@@ -3,6 +3,7 @@ import HistoricoTable from './ComponentsHistorico/HistoricoTable';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { getDetalleKardexCompleto } from '@/services/kardex.services';
+import { getProductAttributes } from "@/services/productos.services";
 import { useAlmacenesKardex } from '@/hooks/useKardex';
 import { useUserStore } from "@/store/useStore";
 
@@ -61,6 +62,7 @@ function Historico() {
   const [kardexData, setKardexData] = useState([]);
   const [previousTransactions, setPreviousTransactions] = useState([]);
   const [productoData, setProductoData] = useState([]);
+  const [attrMetadataMap, setAttrMetadataMap] = useState({});
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -91,6 +93,22 @@ function Historico() {
     }
   }, [id, dateRange, almacenSeleccionado, fetchKardexData]);
 
+  // Fetch Metadata
+  useEffect(() => {
+    if (!id) return;
+    getProductAttributes(id).then(data => {
+      if (data && data.attributes) {
+        const names = {};
+        const colors = {};
+        data.attributes.forEach(a => {
+          names[a.id_atributo] = a.nombre;
+          if (a.hex) colors[a.nombre] = a.hex;
+        });
+        setAttrMetadataMap({ [id]: { names, colors } });
+      }
+    }).catch(console.error);
+  }, [id]);
+
   const handleDateChange = useCallback((fechaInicio, fechaFin, almacenId) => {
     setDateRange({ fechaInicio, fechaFin });
     if (almacenId && almacenId !== almacenSeleccionado) {
@@ -109,11 +127,13 @@ function Historico() {
         previousTransactions={previousTransactions}
         dateRange={dateRange}
         almacenSeleccionado={almacenSeleccionado}
+        attrMetadataMap={attrMetadataMap}
       />
       <HistoricoTable
         transactions={kardexData}
         previousTransactions={previousTransactions}
         productoData={productoData}
+        attrMetadataMap={attrMetadataMap}
       />
     </div>
   );

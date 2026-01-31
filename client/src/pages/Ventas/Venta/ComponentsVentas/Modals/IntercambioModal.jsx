@@ -114,7 +114,14 @@ const IntercambioModal = ({ isOpen, onClose, venta, onConfirm }) => {
                               }`}
                           >
                             <div className="flex flex-col">
-                              <span className="font-medium">{det.nombre}</span>
+                              <span className="font-medium">
+                                {det.nombre}
+                                {det.sku_label ? ` [${det.sku_label}]` :
+                                  (det.nombre_talla || det.nombre_tonalidad ? ` [${[
+                                    det.nombre_talla && det.nombre_talla !== 'U' ? `T:${det.nombre_talla}` : '',
+                                    det.nombre_tonalidad && det.nombre_tonalidad !== 'Sin Tonalidad' ? `C:${det.nombre_tonalidad}` : ''
+                                  ].filter(Boolean).join(' ')}]` : '')}
+                              </span>
                               <span className="text-xs text-default-500">
                                 Cant: {det.cantidad} • S/ {det.precio}
                               </span>

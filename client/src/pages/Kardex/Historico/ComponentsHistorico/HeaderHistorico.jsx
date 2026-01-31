@@ -9,7 +9,7 @@ import { useUserStore } from "@/store/useStore";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-function HeaderHistorico({ productoData, onDateChange, transactions, previousTransactions, dateRange, almacenSeleccionado }) {
+function HeaderHistorico({ productoData, onDateChange, transactions, previousTransactions, dateRange, almacenSeleccionado, attrMetadataMap = {} }) {
   const { almacenes } = useAlmacenesKardex();
   const nombre = useUserStore(state => state.nombre);
   const almacenGlobal = useUserStore((state) => state.almacen);
@@ -167,16 +167,91 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
       }
 
       // Tabla transacciones
-      const rows = (transactions || []).map(item => [
-        item.fecha ? new Date(item.fecha).toLocaleDateString() : '',
-        item.documento || '',
-        item.nombre || '',
-        item.entra != null ? String(item.entra) : '0',
-        item.sale != null ? String(item.sale) : '0',
-        item.stock != null ? String(item.stock) : '',
-        item.precio != null ? String(item.precio) : '',
-        (item.glosa || '').replace(/\r?\n/g, ' ')
-      ]);
+      const rows = (transactions || []).map(item => {
+        let nombre = item.nombre || '';
+
+        // Build detailed variant info from sub-products (accurate for mixed movements)
+        let variantParts = [];
+
+        if (item.productos && item.productos.length > 0) {
+          item.productos.forEach(p => {
+            let pInfo = '';
+            // Check attributes first
+            let attrs = p.attributes;
+            if (typeof attrs === 'string') { try { attrs = JSON.parse(attrs); } catch { } }
+
+            if (attrs && Object.keys(attrs).length > 0) {
+              const prodCode = productoData?.[0]?.codigo;
+              const meta = attrMetadataMap[prodCode] || (Object.values(attrMetadataMap)[0]) || { names: {} };
+              const keys = Object.keys(attrs).sort((a, b) => {
+                const la = meta.names[a] || a;
+                const lb = meta.names[b] || b;
+                if (la === 'Color') return -1;
+                if (lb === 'Color') return 1;
+                return la.localeCompare(lb);
+              });
+              const pParts = keys.map(k => {
+                const label = meta.names[k] || k;
+                const val = attrs[k];
+                return `${label}: ${val}`;
+              });
+              if (pParts.length) pInfo = `[${pParts.join(', ')}]`;
+            } else if (p.sku_label && p.sku_label !== 'Standard') {
+              // Fallback to sku_label if attributes missing
+              pInfo = `[${p.sku_label}]`;
+            }
+
+            if (pInfo) {
+              // Append quantity to differentiate multiple variants
+              variantParts.push(`${pInfo} (${p.cantidad})`);
+            }
+          });
+        }
+
+        // Fallback to top-level if no products or no parts found
+        if (variantParts.length === 0) {
+          let attributes = item.sku_attrs;
+          if (typeof attributes === 'string') { try { attributes = JSON.parse(attributes); } catch { } }
+
+          if (attributes && Object.keys(attributes).length > 0) {
+            const prodCode = productoData?.[0]?.codigo;
+            const meta = attrMetadataMap[prodCode] || (Object.values(attrMetadataMap)[0]) || { names: {} };
+
+            const keys = Object.keys(attributes).sort((a, b) => {
+              const la = meta.names[a] || a;
+              const lb = meta.names[b] || b;
+              if (la === 'Color') return -1;
+              if (lb === 'Color') return 1;
+              return la.localeCompare(lb);
+            });
+            const parts = keys.map(k => {
+              const label = meta.names[k] || k;
+              const val = attributes[k];
+              return `${label}: ${val}`;
+            });
+            if (parts.length > 0) variantParts.push(`[${parts.join(', ')}]`);
+          } else if (item.sku_label && item.sku_label !== 'Standard') {
+            variantParts.push(`[${item.sku_label}]`);
+          }
+        }
+
+        if (variantParts.length > 0) {
+          const joined = variantParts.join(' ');
+          // Avoid duplicating if logic runs multiple times or similar strings
+          if (!nombre.includes(joined)) nombre += ` ${joined}`;
+        }
+
+        return [
+          item.fecha ? new Date(item.fecha).toLocaleDateString() : '',
+          item.documento || '',
+          nombre,
+          item.entra != null ? String(item.entra) : '0',
+          item.sale != null ? String(item.sale) : '0',
+          item.stock != null ? String(item.stock) : '',
+          item.precio != null ? String(item.precio) : '',
+          (item.glosa || '').replace(/\r?\n/g, ' ')
+        ]
+      });
 
       doc.autoTable({
         head: [['Fecha', 'Documento', 'Nombre', 'Entra', 'Sale', 'Stock', 'Precio', 'Glosa']],

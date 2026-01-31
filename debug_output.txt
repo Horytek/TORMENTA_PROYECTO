@@ -1,0 +1,6 @@
+[
+  {
+    "Table": "inventario",
+    "Create Table": "CREATE TABLE `inventario` (\n  `id_producto` int NOT NULL,\n  `id_almacen` int NOT NULL,\n  `id_tonalidad` int DEFAULT NULL,\n  `id_talla` int DEFAULT NULL,\n  `stock` int NOT NULL,\n  `id_tenant` int unsigned DEFAULT NULL,\n  PRIMARY KEY (`id_producto`,`id_almacen`),\n  UNIQUE KEY `idx_inventario_variant` (`id_producto`,`id_almacen`,`id_tonalidad`,`id_talla`,`id_tenant`),\n  KEY `FKinventario620330` (`id_almacen`),\n  KEY `idx_inventario_id_tenant` (`id_tenant`),\n  CONSTRAINT `fk_inventario_id_tenant` FOREIGN KEY (`id_tenant`) REFERENCES `tenant` (`id_tenant`) ON DELETE CASCADE ON UPDATE CASCADE,\n  CONSTRAINT `FKinventario399278` FOREIGN KEY (`id_producto`) REFERENCES `producto` (`id_producto`),\n  CONSTRAINT `FKinventario620330` FOREIGN KEY (`id_almacen`) REFERENCES `almacen` (`id_almacen`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+  }
+]

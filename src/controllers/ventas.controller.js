@@ -1,6 +1,7 @@
 import { getConnection } from "./../database/database.js";
 import { getTesisConnection } from "./../database/database_tesis.js";
 import { logVentas } from "../utils/logActions.js";
+import { resolveSku } from "../utils/skuHelper.js";
 
 // Cache para datos que no cambian frecuentemente
 const queryCache = new Map();
@@ -9,10 +10,10 @@ const CACHE_TTL = 60000; // 1 minuto
 // --- INTERNAL HELPER FUNCTIONS ---
 
 const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, ip, comprobante, estadoSunat) => {
-  // 1) Obtener detalles sin usar id_tenant en detalle_venta (usa JOIN con venta)
+  // 1) Obtener detalles - ADD id_sku
   const [detallesResult] = await connection.query(
     `
-    SELECT dv.id_producto, dv.cantidad
+    SELECT dv.id_producto, dv.cantidad, dv.id_tonalidad, dv.id_talla, dv.id_sku
     FROM detalle_venta dv
     INNER JOIN venta v ON v.id_venta = dv.id_venta
     WHERE dv.id_venta = ? AND v.id_tenant = ?
@@ -51,38 +52,44 @@ const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, i
 
   // 4) Restaurar stock para cada detalle
   for (const detalle of detallesResult) {
-    const { id_producto, cantidad } = detalle;
+    const { id_producto, cantidad, id_tonalidad, id_talla } = detalle; // id_sku is also here
+
+    // Resolve SKU - Prioritize existing id_sku
+    let id_sku = detalle.id_sku;
+    if (!id_sku) {
+      id_sku = await resolveSku(connection, id_producto, id_tonalidad, id_talla, id_tenant);
+    }
 
     // Stock actual del inventario del producto en el almacén de la venta
     const [[stockRow]] = await connection.query(
       `
       SELECT I.stock AS stockActual
-      FROM inventario I
-      WHERE I.id_producto = ? 
+      FROM inventario_stock I
+      WHERE I.id_sku = ? 
         AND I.id_almacen = ?
       `,
-      [id_producto, id_almacen]
+      [id_sku, id_almacen]
     );
 
     const stockActual = Number(stockRow?.stockActual ?? 0);
 
     await connection.query(
       `
-      UPDATE inventario
+      UPDATE inventario_stock
       SET stock = ?
-      WHERE id_producto = ?
+      WHERE id_sku = ?
         AND id_almacen = ?
       `,
-      [stockActual + cantidad, id_producto, id_almacen]
+      [stockActual + cantidad, id_sku, id_almacen]
     );
 
-    // Bitácora de entrada
+    // Bitácora de entrada (Legacy columns for T/T)
     await connection.query(
       `
-      INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta, id_tenant)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta, id_tenant, id_tonalidad, id_talla)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta, id_venta, id_tenant]
+      [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta, id_venta, id_tenant, id_tonalidad, id_talla]
     );
   }
 
@@ -173,42 +180,58 @@ const createVentaInternal = async (connection, saleData, id_tenant, ip) => {
   const bitacoraParams = [];
 
   for (const detalle of detalles) {
-    const { id_producto, cantidad, precio, descuento, total } = detalle;
+    const { id_producto, cantidad, precio, descuento, total, id_tonalidad, id_talla } = detalle;
+    const id_ton = id_tonalidad || null;
+    const id_tal = id_talla || null;
+
+    // Resolve SKU - Prioritize passed id_sku
+    let id_sku = detalle.id_sku;
+    if (!id_sku) {
+      id_sku = await resolveSku(connection, id_producto, id_ton, id_tal, id_tenant);
+    }
 
     // Verificar Stock
     const [inventarioResult] = await connection.query(
-      "SELECT stock FROM inventario WHERE id_producto = ? AND id_almacen = ?",
-      [id_producto, id_almacen]
+      `SELECT stock FROM inventario_stock 
+       WHERE id_sku = ? 
+       AND id_almacen = ?
+       LIMIT 1`,
+      [id_sku, id_almacen]
     );
-    if (inventarioResult.length === 0) throw new Error(`No stock found for product ID ${id_producto}.`);
-    const stockActual = Number(inventarioResult[0].stock);
-    if (stockActual < cantidad) throw new Error(`Not enough stock for product ID ${id_producto}.`);
+
+    const stockActual = inventarioResult.length > 0 ? Number(inventarioResult[0].stock) : 0;
+
+    if (stockActual < cantidad) {
+      throw new Error(`Not enough stock for product ID ${id_producto}. Available: ${stockActual}, Requested: ${cantidad}`);
+    }
 
     const stockNuevo = stockActual - cantidad;
 
     // Update Stock
     await connection.query(
-      "UPDATE inventario SET stock = ? WHERE id_producto = ? AND id_almacen = ?",
-      [stockNuevo, id_producto, id_almacen]
+      `UPDATE inventario_stock SET stock = ? 
+       WHERE id_sku = ? 
+       AND id_almacen = ?`,
+      [stockNuevo, id_sku, id_almacen]
     );
 
-    detalleVentaValues.push('(?, ?, ?, ?, ?, ?)');
-    detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total);
+    detalleVentaValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total, id_ton, id_tal, id_sku);
 
-    bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?)');
-    bitacoraParams.push(id_producto, id_almacen, cantidad, stockActual, stockNuevo, fecha, id_venta, id_tenant);
+    bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    bitacoraParams.push(id_producto, id_almacen, cantidad, stockActual, stockNuevo, fecha, id_venta, id_tenant, id_ton, id_tal);
   }
 
   if (detalleVentaValues.length > 0) {
     await connection.query(
-      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total) VALUES ${detalleVentaValues.join(', ')}`,
+      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total, id_tonalidad, id_talla, id_sku) VALUES ${detalleVentaValues.join(', ')}`,
       detalleVentaParams
     );
   }
 
   if (bitacoraValues.length > 0) {
     await connection.query(
-      `INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant) VALUES ${bitacoraValues.join(', ')}`,
+      `INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant, id_tonalidad, id_talla) VALUES ${bitacoraValues.join(', ')}`,
       bitacoraParams
     );
   }
@@ -282,13 +305,20 @@ const getVentas = async (req, res) => {
         JSON_ARRAYAGG(
           JSON_OBJECT(
             'codigo', dv.id_detalle,
+            'id_producto', pr.id_producto,
             'nombre', pr.descripcion,
             'cantidad', dv.cantidad,
             'precio', dv.precio,
             'descuento', dv.descuento,
             'subtotal', dv.total,
             'undm', pr.undm,
-            'marca', m.nom_marca
+            'marca', m.nom_marca,
+            'tonalidad', ton.nombre,
+            'nombre_tonalidad', ton.nombre,
+            'talla', tal.nombre,
+            'nombre_talla', tal.nombre,
+            'sku_label', ps.sku,
+            'attributes', ps.attributes_json
           )
         ) AS detalles
       FROM venta v
@@ -298,6 +328,9 @@ const getVentas = async (req, res) => {
         INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
         INNER JOIN producto pr ON pr.id_producto = dv.id_producto
         INNER JOIN marca m ON m.id_marca = pr.id_marca
+        LEFT JOIN tonalidad ton ON ton.id_tonalidad = dv.id_tonalidad
+        LEFT JOIN talla tal ON tal.id_talla = dv.id_talla
+        LEFT JOIN producto_sku ps ON ps.id_sku = dv.id_sku
         INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
         INNER JOIN vendedor ve ON ve.dni = s.dni
         INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
@@ -446,60 +479,101 @@ const getProductosVentas = async (req, res) => {
     const id_tenant = req.id_tenant;
     connection = await getConnection();
 
-    let userCondition = 'AND us.usua=?';
-    let queryParams = [req.query.usua || req.user?.username || '', id_tenant]; // Default params
+    // Determine the almacen filter based on sucursal
+    let almacenFilter = '';
+    let queryParams = [id_tenant];
 
-    if (id_sucursal) {
-      userCondition = 'AND su.id_sucursal=?';
-      queryParams = [id_sucursal, id_tenant];
-    } else {
-      // Si no hay id_sucursal, usamos el usuario de la request (token)
-      // Nota: req.user.username debe estar disponible desde el middleware auth
-      // Si el frontend manda 'id_sucursal' como nombre de usuario (como estaba antes), 
-      // mantenemos la compatibilidad revisando si es numérico o string, 
-      // pero la lógica anterior asignaba req.query.id_sucursal a us.usua.
-      // Para ser más robustos:
-      const param = id_sucursal || req.user?.username;
-      // Pero el frontend actual manda { id_sucursal: nombre } en el caso legacy.
-      // Vamos a asumir que si recibimos un id_sucursal numérico es ID, si no, es usuario?
-      // Mejor: El frontend mandará explícitamente id_sucursal cuando sea ID.
-      // Si el frontend manda el nombre en el campo id_sucursal (como hacía antes), lo manejamos.
-
-      // Lógica anterior: AND us.usua=? con [id_sucursal]
-      // Nueva lógica: Si id_sucursal es un número, usamos su.id_sucursal. Si es string, us.usua.
-
-      if (!isNaN(id_sucursal)) {
-        userCondition = 'AND su.id_sucursal=?';
-        queryParams = [id_sucursal, id_tenant];
-      } else {
-        userCondition = 'AND us.usua=?';
-        queryParams = [id_sucursal, id_tenant];
-      }
+    if (id_sucursal && !isNaN(id_sucursal)) {
+      // If we have a numeric sucursal ID, find the associated almacen
+      almacenFilter = `
+        AND al.id_almacen IN (
+          SELECT sa.id_almacen 
+          FROM sucursal_almacen sa 
+          WHERE sa.id_sucursal = ?
+        )
+      `;
+      queryParams.push(id_sucursal);
+    } else if (id_sucursal) {
+      // If we have a sucursal name (legacy), find via usuario
+      almacenFilter = `
+        AND al.id_almacen IN (
+          SELECT sa.id_almacen 
+          FROM sucursal_almacen sa 
+          INNER JOIN sucursal su ON su.id_sucursal = sa.id_sucursal
+          INNER JOIN vendedor ven ON ven.dni = su.dni
+          INNER JOIN usuario us ON us.id_usuario = ven.id_usuario
+          WHERE us.usua = ?
+        )
+      `;
+      queryParams.push(id_sucursal);
     }
 
+    // Modern query that checks BOTH inventario_stock (for SKU-based products)
+    // AND legacy inventario table (for simple products without SKUs)
+    // We use UNION to combine both sources
     const [result] = await connection.query(
       `
-      SELECT PR.id_producto AS codigo, PR.descripcion AS nombre,
-      CAST(PR.precio AS DECIMAL(10, 2)) AS precio, inv.stock as stock, PR.undm, MA.nom_marca, CA.nom_subcat AS categoria_p, PR.cod_barras as codigo_barras
-      FROM producto PR
-        INNER JOIN marca MA ON MA.id_marca = PR.id_marca
-        INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
-        INNER JOIN inventario inv ON inv.id_producto = PR.id_producto
-        INNER JOIN almacen al ON al.id_almacen = inv.id_almacen 
-        INNER JOIN sucursal_almacen sa ON sa.id_almacen = al.id_almacen
-        INNER JOIN sucursal su ON su.id_sucursal = sa.id_sucursal
-        INNER JOIN vendedor ven ON ven.dni = su.dni
-        INNER JOIN usuario us ON us.id_usuario = ven.id_usuario
-      WHERE PR.estado_producto = 1 
-        AND inv.stock > 0 
-        ${userCondition}
-        AND PR.id_tenant = ?
+      SELECT 
+        codigo, nombre, precio, SUM(stock) as stock, undm, nom_marca, categoria_p, codigo_barras
+      FROM (
+        -- Modern SKU-based inventory from inventario_stock
+        SELECT 
+          PR.id_producto AS codigo, 
+          PR.descripcion AS nombre,
+          CAST(PR.precio AS DECIMAL(10, 2)) AS precio, 
+          COALESCE(ist.stock, 0) as stock, 
+          PR.undm, 
+          MA.nom_marca, 
+          CA.nom_subcat AS categoria_p, 
+          PR.cod_barras as codigo_barras
+        FROM producto PR
+          INNER JOIN marca MA ON MA.id_marca = PR.id_marca
+          INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
+          LEFT JOIN producto_sku sku ON sku.id_producto = PR.id_producto
+          LEFT JOIN inventario_stock ist ON ist.id_sku = sku.id_sku
+          LEFT JOIN almacen al ON al.id_almacen = ist.id_almacen
+        WHERE PR.estado_producto = 1 
+          AND PR.id_tenant = ?
+          AND sku.id_sku IS NOT NULL
+          AND sku.attributes_json IS NOT NULL 
+          AND LENGTH(sku.attributes_json) > 2
+          AND sku.attributes_json != '{}'
+          AND sku.attributes_json != '[]'
+          ${almacenFilter}
+        
+        UNION ALL
+        
+        -- Legacy inventory for products without SKUs
+        SELECT 
+          PR.id_producto AS codigo, 
+          PR.descripcion AS nombre,
+          CAST(PR.precio AS DECIMAL(10, 2)) AS precio, 
+          COALESCE(inv.stock, 0) as stock, 
+          PR.undm, 
+          MA.nom_marca, 
+          CA.nom_subcat AS categoria_p, 
+          PR.cod_barras as codigo_barras
+        FROM producto PR
+          INNER JOIN marca MA ON MA.id_marca = PR.id_marca
+          INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
+          LEFT JOIN inventario inv ON inv.id_producto = PR.id_producto
+          LEFT JOIN almacen al ON al.id_almacen = inv.id_almacen
+          LEFT JOIN producto_sku sku ON sku.id_producto = PR.id_producto
+        WHERE PR.estado_producto = 1 
+          AND PR.id_tenant = ?
+          AND sku.id_sku IS NULL  -- Only products WITHOUT SKUs
+          ${almacenFilter ? almacenFilter.replace('?', (queryParams.length > 1 ? '?' : '')) : ''}
+      ) combined
+      GROUP BY codigo, nombre, precio, undm, nom_marca, categoria_p, codigo_barras
+      HAVING stock > 0
+      ORDER BY nombre
       `,
-      queryParams
+      almacenFilter ? [...queryParams, id_tenant, queryParams[1]] : [...queryParams, id_tenant]
     );
+
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
-    console.error('Error en ventas:', error);
+    console.error('Error en ventas getProductosVentas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
@@ -733,7 +807,8 @@ const addVenta = async (req, res) => {
 
     // Obtener datos de sucursal y cliente para preparar saleData
     // Sucursal
-    let sucursalQuery = "SELECT id_sucursal, u.id_usuario FROM sucursal su INNER JOIN vendedor ve ON ve.dni=su.dni INNER JOIN usuario u ON u.id_usuario=ve.id_usuario WHERE u.usua=?";
+    // FIX: Select id_tenant from DB to ensure we have the correct Integer ID, avoiding token pollution (e.g. addresses in id_tenant)
+    let sucursalQuery = "SELECT id_sucursal, u.id_usuario, su.id_tenant as db_tenant_id FROM sucursal su INNER JOIN vendedor ve ON ve.dni=su.dni INNER JOIN usuario u ON u.id_usuario=ve.id_usuario WHERE u.usua=?";
     let sucursalParams = [usuario];
     if (id_tenant) {
       sucursalQuery += " AND su.id_tenant = ?";
@@ -741,7 +816,7 @@ const addVenta = async (req, res) => {
     }
     const [sucursalResult] = await connection.query(sucursalQuery, sucursalParams);
     if (sucursalResult.length === 0) throw new Error("Sucursal not found.");
-    const { id_sucursal, id_usuario } = sucursalResult[0];
+    const { id_sucursal, id_usuario, db_tenant_id } = sucursalResult[0];
 
     // Almacen
     const [almacenResult] = await connection.query("SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal =?", [id_sucursal]);
@@ -753,9 +828,10 @@ const addVenta = async (req, res) => {
       const externalId = id_cliente.replace('EXT-', '');
 
       // 1. Fetch external client details from tesis_db
+      // Removing 'id_tenant' from select to avoid confusion, though it wasn't the root cause.
       const [externalClient] = await connection.query(
-        `SELECT dni, nombres, apellidos, direccion, id_tenant FROM tesis_db.cliente WHERE id_cliente = ?`,
-        [externalId] // Note: id_tenant check for security? Assuming shared catalog authorized access
+        `SELECT dni, nombres, apellidos, direccion FROM tesis_db.cliente WHERE id_cliente = ?`,
+        [externalId]
       );
 
       if (!externalClient || externalClient.length === 0) {
@@ -766,16 +842,13 @@ const addVenta = async (req, res) => {
       const docNumber = extData.dni; // 'dni' in tesis_db holds both DNI and RUC
 
       // 2. Check if exists locally by Document Number
-      // Try to match strictly by DNI or RUC logic or just the value
-      // Local schema has separate dni and ruc columns. 
-      // tesis_db schema: dni column used for document number.
-      // Heuristic: Length 11 -> RUC, Length 8 -> DNI.
       let existingLocalParams = [docNumber, docNumber];
+      // Use DB tenant ID for consistency
       let existingLocalQuery = `SELECT id_cliente FROM cliente WHERE (dni = ? OR ruc = ?)`;
 
-      if (id_tenant) {
+      if (db_tenant_id) {
         existingLocalQuery += " AND id_tenant = ?";
-        existingLocalParams.push(id_tenant);
+        existingLocalParams.push(db_tenant_id);
       }
 
       const [existingLocal] = await connection.query(existingLocalQuery, existingLocalParams);
@@ -791,19 +864,11 @@ const addVenta = async (req, res) => {
           [
             !isRuc ? docNumber : null,
             isRuc ? docNumber : null,
-            extData.nombres,     // For RUC 'nombres' usually holds Razon Social in some schemas? 
-            // Wait, addClient mappings:
-            // RUC -> Razon Social -> 'nombres' (in tesis_db insert above: names=businessName, last='-')
-            // So here:
-            // If RUC: Razon Social = extData.nombres, Nombres/Apellidos = null
-            // If DNI: Nombres = extData.nombres, Apellidos = extData.apellidos
             !isRuc ? extData.nombres : null, // Nombres
             !isRuc ? extData.apellidos : null, // Apellidos
-            isRuc ? extData.nombres : null, // Razon Social (mapped from 'nombres' in tesis_db which stores Business Name there for RUCs?) 
-            // Re-checking addCliente 'web' insert:
-            // nombres = clientType === "business" ? businessName : clientName
+            isRuc ? extData.nombres : null, // Razon Social 
             extData.direccion,
-            id_tenant
+            parseInt(db_tenant_id) || 1 // Sanitize ID
           ]
         );
         id_cliente_final = insertResult.insertId;

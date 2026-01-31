@@ -28,9 +28,16 @@ const getProductos = async (req, res) => {
         const whereClauses = ['p.id_tenant = ?'];
         const params = [id_tenant];
 
+        // SPU/SKU Logic: We need to aggregate stock from inventario_stock
+        let invJoin = `LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
+                       LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku`;
+
         if (almacen) {
-            whereClauses.push('i.id_almacen = ?');
-            params.push(almacen);
+            // Need to filter by warehouse in the ON clause for the join, otherwise we get cross product pre-filter
+            // Update join logic to filter by warehouse
+            invJoin = `LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
+                       LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku AND i.id_almacen = ?`;
+            params.unshift(almacen);
         }
 
         if (descripcion) {
@@ -58,10 +65,12 @@ const getProductos = async (req, res) => {
             params.push(subcat);
         }
 
+        // For HAVING clause after aggregation
+        let havingClause = "";
         if (stock === 'con_stock') {
-            whereClauses.push('i.stock > 0');
+            havingClause = "HAVING stock > 0";
         } else if (stock === 'sin_stock') {
-            whereClauses.push('i.stock = 0');
+            havingClause = "HAVING stock = 0";
         }
 
         const where = `WHERE ${whereClauses.join(' AND ')}`;
@@ -71,16 +80,18 @@ const getProductos = async (req, res) => {
                 p.id_producto AS codigo, 
                 p.descripcion AS descripcion, 
                 m.nom_marca AS marca, 
-                COALESCE(i.stock, 0) AS stock, 
+                COALESCE(SUM(i.stock), 0) AS stock, 
                 p.undm AS um, 
                 CAST(p.precio AS DECIMAL(10, 2)) AS precio, 
                 p.cod_barras, 
                 p.estado_producto AS estado
             FROM producto p 
             INNER JOIN marca m ON p.id_marca = m.id_marca 
-            INNER JOIN inventario i ON p.id_producto = i.id_producto 
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
+            ${invJoin}
             ${where}
+            GROUP BY p.id_producto
+            ${havingClause}
             ORDER BY p.descripcion
             LIMIT 500`,
             params
@@ -106,10 +117,16 @@ const getProductosMenorStock = async (req, res) => {
     try {
         connection = await getConnection();
 
-        const whereClauses = ['i.stock < 10', 'p.id_tenant = ?'];
+        const havingClauses = ['SUM(i.stock) < 10'];
+        const whereClauses = ['p.id_tenant = ?'];
         const params = [id_tenant];
 
+        let invJoin = `LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
+                       LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku`;
+
         if (sucursal) {
+            // Need to join through warehouse-branch map
+            invJoin += ` LEFT JOIN sucursal_almacen sa ON i.id_almacen = sa.id_almacen`;
             whereClauses.push('sa.id_sucursal = ?');
             params.push(sucursal);
         }
@@ -121,13 +138,14 @@ const getProductosMenorStock = async (req, res) => {
                 p.id_producto AS codigo,
                 p.descripcion AS nombre,
                 m.nom_marca AS marca,
-                COALESCE(i.stock, 0) AS stock
+                COALESCE(SUM(i.stock), 0) AS stock
             FROM producto p
             INNER JOIN marca m ON p.id_marca = m.id_marca
-            INNER JOIN inventario i ON p.id_producto = i.id_producto
-            LEFT JOIN sucursal_almacen sa ON i.id_almacen = sa.id_almacen
+            ${invJoin}
             ${where}
-            ORDER BY i.stock ASC, p.descripcion ASC
+            GROUP BY p.id_producto
+            HAVING SUM(i.stock) < 10
+            ORDER BY SUM(i.stock) ASC, p.descripcion ASC
             LIMIT 100`,
             params
         );
@@ -383,13 +401,21 @@ const getDetalleKardex = async (req, res) => {
                 bn.id_bitacora AS id,
                 bn.fecha,
                 DATE_FORMAT(bn.fecha, '%d/%m/%Y') AS fecha_formateada,
-                COALESCE(c.num_comprobante, 'Sin comprobante') AS documento,
-                COALESCE(n.nom_nota, 'Venta') AS nombre,
+                COALESCE(c.num_comprobante, IF(bn.id_nota IS NULL AND bn.id_venta IS NULL, 'N/A', 'Sin comprobante')) AS documento,
+                CASE 
+                    WHEN n.nom_nota IS NOT NULL THEN n.nom_nota
+                    WHEN v.id_venta IS NOT NULL THEN 'Venta'
+                    ELSE 'Ajuste Manual / Carga Inicial' 
+                END AS nombre,
                 bn.entra AS entra,
                 bn.sale AS sale,
                 bn.stock_actual AS stock,
                 p.precio AS precio,
-                COALESCE(n.glosa, 'VENTA DE PRODUCTOS') AS glosa,
+                CASE 
+                    WHEN n.glosa IS NOT NULL THEN n.glosa
+                    WHEN v.id_venta IS NOT NULL THEN 'VENTA DE PRODUCTOS'
+                    ELSE 'MOVIMIENTO DIRECTO DE INVENTARIO'
+                END AS glosa,
                 bn.hora_creacion,
                 c.num_comprobante as num_comp_raw,
                 -- Nuevos campos para historial detallado
@@ -400,6 +426,11 @@ const getDetalleKardex = async (req, res) => {
                 ta.nombre as talla,
                 COALESCE(n.estado_nota, v.estado_venta, 1) as estado_doc,
                 
+                -- SKU Info
+                COALESCE(sku_n.sku, sku_v.sku, sku_legacy.sku) as sku_label,
+                sku_n.attributes_json as sku_attrs_n,
+                sku_v.attributes_json as sku_attrs_v,
+
                 -- Productos de nota
                 dn.id_producto AS nota_producto_codigo,
                 pn.descripcion AS nota_producto_descripcion,
@@ -426,21 +457,37 @@ const getDetalleKardex = async (req, res) => {
             LEFT JOIN tonalidad t ON bn.id_tonalidad = t.id_tonalidad
             LEFT JOIN talla ta ON bn.id_talla = ta.id_talla
 
-            -- JOIN para productos de nota
-            LEFT JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+            -- JOIN para productos de nota (Prioritize id_detalle_nota for 100% accuracy)
+            LEFT JOIN detalle_nota dn ON (
+                (bn.id_detalle_nota IS NOT NULL AND bn.id_detalle_nota = dn.id_detalle_nota)
+                OR 
+                (bn.id_detalle_nota IS NULL AND n.id_nota = dn.id_nota AND dn.id_producto = bn.id_producto AND dn.id_tonalidad <=> bn.id_tonalidad AND dn.id_talla <=> bn.id_talla)
+            )
+            LEFT JOIN producto_sku sku_n ON dn.id_sku = sku_n.id_sku
             LEFT JOIN producto pn ON dn.id_producto = pn.id_producto
             LEFT JOIN marca mn ON pn.id_marca = mn.id_marca
-            -- JOIN para productos de venta
-            LEFT JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+            
+            -- JOIN para productos de venta (Strict Join enabled)
+            LEFT JOIN detalle_venta dv ON v.id_venta = dv.id_venta 
+                                       AND dv.id_producto = bn.id_producto
+                                       AND (dv.id_tonalidad <=> bn.id_tonalidad)
+                                       AND (dv.id_talla <=> bn.id_talla)
+            LEFT JOIN producto_sku sku_v ON dv.id_sku = sku_v.id_sku
             LEFT JOIN producto pv ON dv.id_producto = pv.id_producto
             LEFT JOIN marca mv ON pv.id_marca = mv.id_marca
+            
+            -- Fallback Legacy SKU Join
+            LEFT JOIN producto_sku sku_legacy ON p.id_producto = sku_legacy.id_producto AND sku_legacy.sku = CONCAT(p.descripcion, ' - ', IFNULL(t.nombre,''), ' - ', IFNULL(ta.nombre,''))
+
             WHERE bn.fecha >= ?
                 AND bn.fecha < DATE_ADD(?, INTERVAL 1 DAY)
                 AND bn.id_producto = ?
-                AND bn.id_almacen = ?
+                ${idAlmacen && idAlmacen !== '%' ? 'AND bn.id_almacen = ?' : ''}
                 AND bn.id_tenant = ?
-            ORDER BY bn.fecha ASC, bn.hora_creacion ASC`, // Orden cronologico para consistencia
-            [fechaInicio, fechaFin, idProducto, idAlmacen, id_tenant]
+            ORDER BY bn.fecha ASC, bn.hora_creacion ASC`,
+            idAlmacen && idAlmacen !== '%'
+                ? [fechaInicio, fechaFin, idProducto, idAlmacen, id_tenant]
+                : [fechaInicio, fechaFin, idProducto, id_tenant]
         );
 
         // Agrupar resultados por bitacora eliminando duplicados de productos
@@ -467,6 +514,8 @@ const getDetalleKardex = async (req, res) => {
                     almacen_destino: row.almacen_destino,
                     tonalidad: row.tonalidad || '-',
                     talla: row.talla || '-',
+                    sku_label: row.sku_label || `${row.tonalidad || ''} ${row.talla || ''}`.trim() || 'Standard', // Fallback
+                    sku_attrs: row.sku_attrs_n || row.sku_attrs_v || null,
                     estado_doc: row.estado_doc,
                     productos: []
                 });
@@ -484,7 +533,9 @@ const getDetalleKardex = async (req, res) => {
                         codigo: row.nota_producto_codigo,
                         descripcion: row.nota_producto_descripcion,
                         marca: row.nota_producto_marca,
-                        cantidad: row.nota_producto_cantidad
+                        cantidad: row.nota_producto_cantidad,
+                        attributes: row.sku_attrs_n,
+                        sku_label: row.sku_label
                     });
                 }
             }
@@ -499,7 +550,9 @@ const getDetalleKardex = async (req, res) => {
                         codigo: row.venta_producto_codigo,
                         descripcion: row.venta_producto_descripcion,
                         marca: row.venta_producto_marca,
-                        cantidad: row.venta_producto_cantidad
+                        cantidad: row.venta_producto_cantidad,
+                        attributes: row.sku_attrs_v,
+                        sku_label: row.sku_label
                     });
                 }
             }
@@ -534,9 +587,11 @@ const getDetalleKardexAnteriores = async (req, res) => {
             FROM bitacora_nota bn 
             WHERE bn.fecha < ?
                 AND bn.id_producto = ?
-                AND bn.id_almacen = ?
+                ${idAlmacen && idAlmacen !== '%' ? 'AND bn.id_almacen = ?' : ''}
                 AND bn.id_tenant = ?`,
-            [fecha, idProducto, idAlmacen, id_tenant]
+            idAlmacen && idAlmacen !== '%'
+                ? [fecha, idProducto, idAlmacen, id_tenant]
+                : [fecha, idProducto, id_tenant]
         );
 
         res.json({ code: 1, data: detalleKardexAnterioresResult });
@@ -564,14 +619,17 @@ const getInfProducto = async (req, res) => {
                 p.id_producto AS codigo, 
                 p.descripcion AS descripcion, 
                 m.nom_marca AS marca, 
-                COALESCE(i.stock, 0) AS stock
+                COALESCE(SUM(i.stock), 0) AS stock
             FROM producto p 
             INNER JOIN marca m ON p.id_marca = m.id_marca
-            LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?
+            LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
+            LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku ${idAlmacen && idAlmacen !== '%' ? 'AND i.id_almacen = ?' : ''}
             WHERE p.id_producto = ?
                 AND p.id_tenant = ?
-            LIMIT 1`,
-            [idAlmacen, idProducto, id_tenant]
+            GROUP BY p.id_producto`,
+            idAlmacen && idAlmacen !== '%'
+                ? [idAlmacen, idProducto, id_tenant]
+                : [idProducto, id_tenant]
         );
 
         if (infProductoResult.length === 0) {
@@ -585,6 +643,58 @@ const getInfProducto = async (req, res) => {
         res.json({ code: 1, data: infProductoResult });
     } catch (error) {
         console.error('Error en getInfProducto:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+// OBTENER DETALLE STOCK POR SKU (PARA MODAL)
+const getProductoStockDetails = async (req, res) => {
+    const { idProducto, idAlmacen } = req.query;
+    const id_tenant = req.id_tenant;
+    let connection;
+
+    try {
+        connection = await getConnection();
+
+        // Si idAlmacen es '%', sumamos stock de todos los almacenes? 
+        // Normalmente el kardex se ve por almacén. Si es '%', mostramos desglose por almacén O totalizado?
+        // El usuario probablemente quiera ver el stock de *ese* almacen seleccionado en el filtro principal.
+
+        let almacenCondition = '';
+        let params = [];
+
+        // Param order must match query placeholders: JOIN (almacen) -> WHERE (tenant, product)
+        if (idAlmacen && idAlmacen !== '%') {
+            almacenCondition = 'AND i.id_almacen = ?';
+            params.push(idAlmacen);
+        }
+
+        params.push(id_tenant, idProducto);
+
+        const [result] = await connection.query(
+            `SELECT 
+                sku.id_sku,
+                sku.sku AS sku_label,
+                sku.attributes_json AS attributes,
+                COALESCE(SUM(i.stock), 0) AS stock,
+                a.nom_almacen
+            FROM producto_sku sku
+            LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku ${almacenCondition}
+            LEFT JOIN almacen a ON i.id_almacen = a.id_almacen
+            WHERE sku.id_tenant = ?
+              AND sku.id_producto = ?
+            GROUP BY sku.id_sku, sku.sku, sku.attributes_json ${idAlmacen && idAlmacen !== '%' ? '' : ', a.id_almacen'}
+            ORDER BY sku.sku`,
+            params
+        );
+
+        res.json({ code: 1, data: result });
+    } catch (error) {
+        console.error('Error en getProductoStockDetails:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
     } finally {
         if (connection) {
@@ -919,5 +1029,6 @@ export const methods = {
     getInfProducto,
     generateExcelReport,
     generateExcelReportByDateRange,
-    getProductosMenorStock
+    getProductosMenorStock,
+    getProductoStockDetails
 };

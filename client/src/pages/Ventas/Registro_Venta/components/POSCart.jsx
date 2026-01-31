@@ -136,30 +136,60 @@ const POSCart = ({ pos }) => {
                     {cart.length > 0 ? (
                         <div className="space-y-1">
                             {cart.map((item) => (
-                                <div key={item.codigo} className="group flex items-center p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-zinc-800">
+                                <div key={item.uniqueKey} className="group flex items-center p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-zinc-800">
                                     {/* Quantity Controls */}
                                     <div className="w-16 flex items-center justify-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-lg p-1 h-8">
                                         <button
                                             className="w-5 h-full flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors text-slate-600"
-                                            onClick={() => updateQuantity(item.codigo, item.cantidad - 1)}
+                                            onClick={() => updateQuantity(item.uniqueKey, item.cantidad - 1, item.codigo)}
                                         >
                                             <Minus size={12} strokeWidth={3} />
                                         </button>
                                         <span className="flex-1 text-center font-bold text-sm text-slate-800 dark:text-slate-200">{item.cantidad}</span>
                                         <button
                                             className="w-5 h-full flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors text-blue-600"
-                                            onClick={() => updateQuantity(item.codigo, item.cantidad + 1)}
+                                            onClick={() => updateQuantity(item.uniqueKey, item.cantidad + 1, item.codigo)}
                                         >
                                             <Plus size={12} strokeWidth={3} />
                                         </button>
                                     </div>
 
-                                    {/* Name */}
+                                    {/* Name & Variants */}
                                     <div className="flex-1 px-3 flex flex-col justify-center">
                                         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 line-clamp-1 leading-tight">
                                             {item.nombre}
                                         </span>
-                                        <span className="text-[10px] text-slate-400 font-mono">
+                                        {/* Display Variant Info */}
+                                        {/* Display Variant Info */}
+                                        {(item.resolvedAttributes?.length > 0 || item.sku_label || item.nombre_tonalidad || item.nombre_talla) && (
+                                            <div className="flex flex-wrap gap-1 mt-0.5">
+                                                {item.resolvedAttributes?.length > 0 ? (
+                                                    item.resolvedAttributes.map((attr, idx) => (
+                                                        <span key={idx} className="text-[10px] bg-slate-200 dark:bg-zinc-700 px-1.5 rounded text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap">
+                                                            {attr.label}: {attr.value}
+                                                        </span>
+                                                    ))
+                                                ) : item.sku_label ? (
+                                                    <span className="text-[10px] bg-slate-200 dark:bg-zinc-700 px-1.5 rounded text-slate-600 dark:text-slate-300 font-medium">
+                                                        {item.sku_label}
+                                                    </span>
+                                                ) : (
+                                                    <>
+                                                        {item.nombre_talla && item.nombre_talla !== 'U' && (
+                                                            <span className="text-[10px] bg-slate-200 dark:bg-zinc-700 px-1.5 rounded text-slate-600 dark:text-slate-300">
+                                                                T: {item.nombre_talla}
+                                                            </span>
+                                                        )}
+                                                        {item.nombre_tonalidad && item.nombre_tonalidad !== 'Sin Tonalidad' && (
+                                                            <span className="text-[10px] bg-slate-200 dark:bg-zinc-700 px-1.5 rounded text-slate-600 dark:text-slate-300">
+                                                                C: {item.nombre_tonalidad}
+                                                            </span>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                        <span className="text-[10px] text-slate-400 font-mono mt-0.5">
                                             S/ {item.precio} u.
                                         </span>
                                     </div>
@@ -172,7 +202,7 @@ const POSCart = ({ pos }) => {
                                     {/* Remove */}
                                     <div className="w-8 flex justify-end">
                                         <button
-                                            onClick={() => removeFromCart(item.codigo, item.cantidad)}
+                                            onClick={() => removeFromCart(item.uniqueKey, item.cantidad, item.codigo)}
                                             className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                         >
                                             <Trash2 size={16} />

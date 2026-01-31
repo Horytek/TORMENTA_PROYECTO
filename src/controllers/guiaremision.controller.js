@@ -118,11 +118,18 @@ const getGuias = async (req, res) => {
                 p.descripcion AS detalle_descripcion,
                 de.cantidad AS detalle_cantidad,
                 p.undm AS detalle_um,
-                p.precio AS detalle_precio
+                p.precio AS detalle_precio,
+                ton.nombre AS detalle_tonalidad,
+                tal.nombre AS detalle_talla,
+                ps.sku AS detalle_sku_label,
+                ps.attributes_json AS detalle_attributes
             FROM GuiasPaginadas gp
             LEFT JOIN detalle_envio de ON gp.id = de.id_guiaremision AND de.id_tenant = ?
             LEFT JOIN producto p ON de.id_producto = p.id_producto
             LEFT JOIN marca m ON p.id_marca = m.id_marca
+            LEFT JOIN tonalidad ton ON de.id_tonalidad = ton.id_tonalidad
+            LEFT JOIN talla tal ON de.id_talla = tal.id_talla
+            LEFT JOIN producto_sku ps ON de.id_sku = ps.id_sku
             ORDER BY gp.num_guia ASC
             `,
             [
@@ -167,7 +174,11 @@ const getGuias = async (req, res) => {
                     descripcion: row.detalle_descripcion,
                     cantidad: row.detalle_cantidad,
                     um: row.detalle_um,
-                    precio: row.detalle_precio
+                    precio: row.detalle_precio,
+                    tonalidad: row.detalle_tonalidad,
+                    talla: row.detalle_talla,
+                    sku_label: row.detalle_sku_label,
+                    attributes: row.detalle_attributes
                 });
             }
         }
@@ -681,16 +692,23 @@ const getProductos = async (req, res) => {
         connection = await getConnection();
 
         // Query optimizada con condiciones más eficientes
+        // Query optimizada con condiciones más eficientes
         let query = `
             SELECT 
+                p.id_producto,
                 p.id_producto AS codigo, 
                 p.descripcion AS descripcion, 
                 m.nom_marca AS marca,
-                p.cod_barras AS codbarras
+                p.cod_barras AS codbarras,
+                COALESCE(SUM(i.stock), 0) as stock
             FROM 
                 producto p 
             INNER JOIN 
                 marca m ON p.id_marca = m.id_marca
+            LEFT JOIN
+                producto_sku sku ON p.id_producto = sku.id_producto
+            LEFT JOIN
+                inventario_stock i ON sku.id_sku = i.id_sku
             WHERE p.id_tenant = ?`;
 
         const params = [id_tenant];
@@ -712,7 +730,7 @@ const getProductos = async (req, res) => {
             }
         }
 
-        query += ` ORDER BY p.descripcion LIMIT 100`; // Limitar resultados para evitar sobrecarga
+        query += ` GROUP BY p.id_producto, p.descripcion, m.nom_marca, p.cod_barras ORDER BY p.descripcion LIMIT 100`;
 
         const [productosResult] = await connection.query(query, params);
         res.json({ code: 1, data: productosResult });
@@ -888,6 +906,9 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
         glosa, dir_partida, dir_destino, canti, peso, observacion,
         f_generacion, h_generacion, total, producto, num_comprobante, cantidad
     } = req.body;
+    const tonalidades = req.body.tonalidad || [];
+    const tallas = req.body.talla || [];
+    const skus = req.body.sku || []; // Read SKUs
     const id_tenant = req.id_tenant;
 
     // Validación mejorada con detalle de campos faltantes
@@ -965,20 +986,24 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
             const detalleParams = [];
 
             for (let i = 0; i < producto.length; i++) {
-                detalleValues.push('(?, ?, ?, ?, ?)');
+                // id, prod, cant, um, tenant, ton, tal, sku
+                detalleValues.push('(?, ?, ?, ?, ?, ?, ?, ?)');
                 detalleParams.push(
                     id_guiaremision,
                     producto[i],
                     cantidad[i],
                     'KGM',
-                    id_tenant
+                    id_tenant,
+                    tonalidades[i] || null,
+                    tallas[i] || null,
+                    skus[i] || null
                 );
             }
 
             // Inserción batch de todos los detalles en una sola query
             const batchQuery = `
                 INSERT INTO detalle_envio 
-                (id_guiaremision, id_producto, cantidad, undm, id_tenant) 
+                (id_guiaremision, id_producto, cantidad, undm, id_tenant, id_tonalidad, id_talla, id_sku) 
                 VALUES ${detalleValues.join(', ')}`;
 
             const [detalleResult] = await connection.query(batchQuery, detalleParams);

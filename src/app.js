@@ -45,7 +45,14 @@ import functionShortcutsRoutes from "./routes/functionShortcuts.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
 import { startLogMaintenance } from "./services/logMaintenance.service.js";
 import { getConnection } from "./database/database.js";
+import attributesRoutes from "./routes/attributes.routes.js";
 import emailRoutes from "./routes/email.routes.js";
+
+const app = express();
+app.set('trust proxy', 1);
+
+
+
 import credencialRoutes from "./routes/credenciales.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import verificationConfigRoutes from "./routes/verificationConfig.routes.js";
@@ -59,9 +66,6 @@ import uploadsRoutes from "./routes/uploads.routes.js";
 import tallaRoutes from "./routes/talla.routes.js";
 import tonalidadRoutes from "./routes/tonalidad.routes.js";
 import loteRoutes from "./routes/lote.routes.js";
-
-const app = express();
-app.set('trust proxy', 1);
 
 // Settings
 const port = process.env.PORT || 4000;
@@ -219,6 +223,7 @@ app.use("/api/uploads", uploadsRoutes);
 app.use("/api/talla", tallaRoutes);
 app.use("/api/tonalidad", tonalidadRoutes);
 app.use("/api/lote", loteRoutes);
+app.use("/api/attributes", attributesRoutes);
 app.use("/api", emailRoutes);
 app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);

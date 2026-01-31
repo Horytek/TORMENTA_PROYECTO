@@ -57,9 +57,12 @@ export const ModalMarca = ({ modalTitle, closeModel }) => {
         onClose={handleCloseModal}
         size="md"
         classNames={{
-          backdrop: "z-[10020]",
-          wrapper: "z-[10021]",
-          base: "z-[10022]"
+          backdrop: "z-[10020] bg-slate-900/40 backdrop-blur-md",
+          wrapper: "z-[10021] overflow-hidden",
+          base: "z-[10022] bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 shadow-2xl rounded-2xl overflow-hidden",
+          header: "border-b border-slate-100 dark:border-zinc-800 py-3 px-6 bg-white dark:bg-zinc-900",
+          body: "py-6 px-6",
+          footer: "border-t border-slate-100 dark:border-zinc-800 py-3 px-6 bg-slate-50/50 dark:bg-zinc-900/50 backdrop-blur-sm"
         }}
       >
         <ModalContent>
@@ -77,7 +80,7 @@ export const ModalMarca = ({ modalTitle, closeModel }) => {
                     <Input
                       {...field}
                       label="Marca"
-                      variant="bordered"
+                      variant="faded"
                       placeholder="Nombre de Marca"
                       color={errors.nom_marca ? "danger" : "default"}
                       errorMessage={errors.nom_marca?.message}

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Input, Card, CardBody, Button, Chip, ScrollShadow } from "@heroui/react";
 import { Search, ShoppingCart, Package } from "lucide-react";
+import VariantSelectionModal from '@/components/Modals/VariantSelectionModal';
+import { getProductVariants } from "@/services/productos.services";
 
 const ProductCatalog = ({ pos }) => {
     const {
@@ -21,6 +23,49 @@ const ProductCatalog = ({ pos }) => {
             return matchText && matchCat;
         });
     }, [productos, globalFilter, selectedCategory]);
+
+    // Modal State
+    const [modalOpen, setModalOpen] = React.useState(false);
+    const [selectedProduct, setSelectedProduct] = React.useState(null);
+
+    const handleProductClick = async (product) => {
+        // Quick check: fetch variants
+        const variants = await getProductVariants(product.codigo, false, null, pos.sucursalV?.id);
+
+        // Logic to determine if modal is needed
+        const needsModal = variants.length > 1 ||
+            (variants.length === 1 && (variants[0].tonalidad !== 'Sin Tonalidad' || variants[0].talla !== 'U'));
+
+        if (needsModal) {
+            setSelectedProduct({ ...product, variantsList: variants }); // Pass fetched variants to avoid re-fetch? 
+            // Actually the modal fetches again, but we can optimize.
+            // For now, let modal fetch or pass pre-fetched.
+            // The modal I wrote fetches on mount. I'll let it fetch for simplicity or pass data if I update modal.
+            // My modal currently uses `product.codigo` to fetch.
+            setModalOpen(true);
+        } else {
+            // Simple product
+            addToCart(product);
+        }
+    };
+
+    const handleVariantConfirm = (items) => {
+        // items is an array of { ...sku, quantity }
+        items.forEach(item => {
+            const productWithVariant = {
+                ...selectedProduct,
+                id_sku: item.id_sku,
+                stock: item.stock, // Update valid stock for this variant
+                codigo: selectedProduct.codigo, // Keep main Product ID
+                nombre_sku: item.nombre_sku, // Use SKU name if available
+                attributes: item.attributes, // Pass attributes for display
+                resolvedAttributes: item.resolvedAttributes, // Pass resolved attributes for display
+                cantidad: item.quantity, // Initial quantity
+                precio: item.precio || selectedProduct.precio // Use SKU price if different
+            };
+            addToCart(productWithVariant);
+        });
+    };
 
     // Extract Categories
     const categories = React.useMemo(() => {
@@ -77,7 +122,7 @@ const ProductCatalog = ({ pos }) => {
                             <ProductCard
                                 key={product.codigo}
                                 product={product}
-                                onAdd={() => addToCart(product)}
+                                onAdd={() => handleProductClick(product)}
                             />
                         ))}
                     </div>
@@ -88,7 +133,16 @@ const ProductCatalog = ({ pos }) => {
                     </div>
                 )}
             </div>
-        </Card>
+            <VariantSelectionModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                product={selectedProduct}
+                onConfirm={handleVariantConfirm}
+                cart={pos.cart}
+                // Pass id_sucursal instead of direct almacen ID to ensure correct stock resolution
+                id_sucursal={pos.sucursalV?.id}
+            />
+        </Card >
     );
 };
 

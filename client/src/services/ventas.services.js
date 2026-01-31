@@ -7,6 +7,7 @@ import { useUserStore } from "@/store/useStore";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import {
     addClienteRequest,
+    addVentaRequest,
     getVentaByIdRequest,
     getClienteVentasRequest,
     getComprobanteRequest,
@@ -52,14 +53,14 @@ export const handleGuardarCliente = async (clienteData) => {
 };
 
 // --- handleSunat (handle_sunat.js) ---
-export const handleSunat = async (datosVenta, details = []) => {
+export const handleSunat = async (datosVenta, details = [], showSuccessToast = true) => {
     try {
         const response = await axios.post('/facturacion/send', {
             ...datosVenta,
             detalles: details.length > 0 ? details : datosVenta.detalles
         });
         if (response.data.success) {
-            toast.success("Enviado a SUNAT exitosamente");
+            if (showSuccessToast) toast.success("Enviado a SUNAT exitosamente");
             return true;
         } else {
             toast.error("Error al enviar a SUNAT");
@@ -79,8 +80,8 @@ export const handleSunatMultiple = async (ventas) => {
     }
 };
 
-export const handleSunatUnique = async (venta) => {
-    return await handleSunat(venta);
+export const handleSunatUnique = async (venta, showSuccessToast = true) => {
+    return await handleSunat(venta, [], showSuccessToast);
 };
 
 // --- handleUpdate (update_venta.js) ---
@@ -91,11 +92,43 @@ export const handleUpdate = async (id, data) => {
 };
 
 // --- handleCobrar (handle_cobrar.js) ---
-export const handleCobrar = (total, recibido) => {
-    const totalNum = parseFloat(total);
-    const recibidoNum = parseFloat(recibido);
-    if (isNaN(totalNum) || isNaN(recibidoNum)) return 0;
-    return (recibidoNum - totalNum).toFixed(2);
+export const handleCobrar = async (datosVenta, callback, datosVentaSunat, uselessParam, nombreUsuario) => {
+    try {
+        // 1. Registrar Venta en BD
+        const response = await addVentaRequest(datosVenta);
+
+        if (response.data.code === 1) {
+            // 2. Éxito BD -> Intentar SUNAT (Si corresponde)
+            let sunatSuccess = false;
+            let sunatAttempt = false;
+
+            if (datosVentaSunat && (datosVenta.tipoComprobante === 'Boleta' || datosVenta.tipoComprobante === 'Factura')) {
+                sunatAttempt = true;
+                // Intentamos SUNAT silenciando su toast de éxito interno
+                sunatSuccess = await handleSunatUnique(datosVentaSunat, false).catch(err => console.error("Error silencioso SUNAT:", err));
+            }
+
+            if (sunatAttempt) {
+                if (sunatSuccess) {
+                    toast.success("Venta registrada y enviada a SUNAT 🚀");
+                } else {
+                    toast("Venta registrada, pero falló envío a SUNAT ⚠️", { icon: '⚠️' });
+                }
+            } else {
+                toast.success("Venta registrada exitosamente");
+            }
+
+            if (callback) callback();
+            return true;
+        } else {
+            toast.error(response.data.message || "Error al registrar venta");
+            return false;
+        }
+    } catch (error) {
+        console.error("Error en handleCobrar:", error);
+        toast.error("Error de conexión al registrar venta");
+        return false;
+    }
 };
 
 // --- anularVentaEnSunat - Frontend ---
@@ -468,7 +501,12 @@ export const useVentasData = (filters = {}) => {
                         precio: `S/ ${parseFloat(detalle.precio).toFixed(2)}`,
                         descuento: `S/ ${(detalle.descuento || 0).toFixed(2)}`,
                         igv: `S/ ${((detalle.precio * 0.18).toFixed(2))}`,
-                        subtotal: `S/ ${parseFloat(detalle.subtotal).toFixed(2)}`
+                        subtotal: `S/ ${parseFloat(detalle.subtotal).toFixed(2)}`,
+                        // Pass variant info for badges
+                        sku_label: detalle.sku_label,
+                        attributes: detalle.attributes,
+                        nombre_talla: detalle.nombre_talla,
+                        nombre_tonalidad: detalle.nombre_tonalidad
                     }))
                 }));
                 setAllVentas(ventas);

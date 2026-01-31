@@ -26,6 +26,7 @@ export const usePOS = () => {
             s => String(s.nombre || '').toLowerCase() === String(sur || '').toLowerCase()
         ) || null;
         return {
+            id: found?.id || null,
             nombre: found?.nombre || sur || '',
             ubicacion: found?.ubicacion || '',
         };
@@ -51,19 +52,24 @@ export const usePOS = () => {
 
     // --- Cart Actions ---
     const addToCart = useCallback((product) => {
+        // Generate unique key for cart item (supporting variants via SKU)
+        const uniqueKey = product.id_sku
+            ? `SKU-${product.id_sku}`
+            : `${product.codigo}-${product.id_tonalidad || 'null'}-${product.id_talla || 'null'}`;
+
         if (product.stock <= 0) {
             toast.error('Producto sin stock');
             return;
         }
 
         // Calculate if adding this product would exceed limits
-        const existingItem = cart.find(item => item.codigo === product.codigo);
+        const existingItem = cart.find(item => item.uniqueKey === uniqueKey);
         let newTotal;
 
         if (existingItem) {
             newTotal = cart.reduce((acc, item) => {
                 const price = parseFloat(item.precio) || 0;
-                const qty = item.codigo === product.codigo ? item.cantidad + 1 : item.cantidad;
+                const qty = item.uniqueKey === uniqueKey ? item.cantidad + product.cantidad : item.cantidad; // Handle bulk add if product.cantidad > 1
                 const discountPct = parseFloat(item.descuento) || 0;
                 return acc + (price * qty * (1 - discountPct / 100));
             }, 0);
@@ -74,7 +80,7 @@ export const usePOS = () => {
                 const discountPct = parseFloat(item.descuento) || 0;
                 return acc + (price * qty * (1 - discountPct / 100));
             }, 0);
-            newTotal = currentTotal + parseFloat(product.precio);
+            newTotal = currentTotal + (parseFloat(product.precio) * (product.cantidad || 1));
         }
 
         // Legacy Validation: 499 Soles Limit
@@ -83,43 +89,58 @@ export const usePOS = () => {
             return;
         }
 
+        const qtyToAdd = product.cantidad || 1;
+
         // Update cart
         if (existingItem) {
             setCart(prevCart =>
                 prevCart.map(item =>
-                    item.codigo === product.codigo
-                        ? { ...item, cantidad: item.cantidad + 1 }
+                    item.uniqueKey === uniqueKey
+                        ? { ...item, cantidad: item.cantidad + qtyToAdd }
                         : item
                 )
             );
         } else {
             setCart(prevCart => [
                 ...prevCart,
-                { ...product, cantidad: 1, descuento: 0, precio_venta: product.precio }
+                {
+                    ...product,
+                    uniqueKey,
+                    cantidad: qtyToAdd,
+                    descuento: 0,
+                    precio_venta: product.precio
+                }
             ]);
         }
 
-        // Consume Stock - OUTSIDE of setCart callback to prevent double execution
+        // Consume Stock - Visual Update on Grid
         setProductos(prev => prev.map(p =>
-            p.codigo === product.codigo ? { ...p, stock: p.stock - 1 } : p
+            p.codigo === product.codigo ? { ...p, stock: p.stock - qtyToAdd } : p
         ));
     }, [cart, setProductos]);
 
-    const removeFromCart = useCallback((codigo, cantidad) => {
-        setCart(prev => prev.filter(item => item.codigo !== codigo));
+    const removeFromCart = useCallback((uniqueKey, cantidad, codigo) => {
+        setCart(prev => prev.filter(item => item.uniqueKey !== uniqueKey));
+        // Restore stock visual
         setProductos(prev => prev.map(p =>
             p.codigo === codigo ? { ...p, stock: p.stock + cantidad } : p
         ));
     }, [setProductos]);
 
-    const updateQuantity = useCallback((codigo, newQuantity) => {
+    const updateQuantity = useCallback((uniqueKey, newQuantity, codigo) => {
         if (newQuantity < 1) return;
 
-        const item = cart.find(i => i.codigo === codigo);
+        const item = cart.find(i => i.uniqueKey === uniqueKey);
         if (!item) return;
 
         const diff = newQuantity - item.cantidad;
         const productInStock = productos.find(p => p.codigo === codigo);
+
+        // Limit Check for Variants (item.stock holds the max stock for that specific SKU)
+        if (item.id_sku && newQuantity > item.stock) {
+            toast.error(`Solo hay ${item.stock} unidades de este variante`);
+            return;
+        }
 
         // If diff > 0 (increasing qty), we consume stock.
         if (diff > 0 && productInStock.stock < diff) {
@@ -129,7 +150,7 @@ export const usePOS = () => {
 
         // Update cart quantity
         setCart(prevCart =>
-            prevCart.map(i => i.codigo === codigo ? { ...i, cantidad: newQuantity } : i)
+            prevCart.map(i => i.uniqueKey === uniqueKey ? { ...i, cantidad: newQuantity } : i)
         );
 
         // Update stock - OUTSIDE of setCart callback to prevent double execution
@@ -138,9 +159,9 @@ export const usePOS = () => {
         ));
     }, [cart, productos, setProductos]);
 
-    const updatePrice = useCallback((codigo, newPrice) => {
+    const updatePrice = useCallback((uniqueKey, newPrice) => {
         setCart(prev => prev.map(item =>
-            item.codigo === codigo ? { ...item, precio: newPrice } : item
+            item.uniqueKey === uniqueKey ? { ...item, precio: newPrice } : item
         ));
     }, []);
 
@@ -148,8 +169,9 @@ export const usePOS = () => {
     // 1. Cancel/Clear Cart -> Restores Item Stock (User aborted)
     const cancelCart = useCallback(() => {
         setProductos(prev => prev.map(p => {
-            const inCart = cart.find(c => c.codigo === p.codigo);
-            return inCart ? { ...p, stock: p.stock + inCart.cantidad } : p;
+            const inCartItems = cart.filter(c => c.codigo === p.codigo);
+            const totalQty = inCartItems.reduce((acc, c) => acc + c.cantidad, 0);
+            return totalQty > 0 ? { ...p, stock: p.stock + totalQty } : p;
         }));
         setCart([]);
         setClient(null);
@@ -236,19 +258,37 @@ export const usePOS = () => {
                 cantidad: item.cantidad,
                 precio: parseFloat(item.precio),
                 descuento: 0,
-                total: (item.cantidad * item.precio).toFixed(2)
-                // subtotal legacy param?
+                total: (item.cantidad * item.precio).toFixed(2),
+                id_tonalidad: item.id_tonalidad || null,
+                id_talla: item.id_talla || null,
+                id_sku: item.id_sku || null // Added SKU
             })),
-            detalles_b: cart.map(item => ({
-                id_producto: item.codigo,
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                precio: parseFloat(item.precio),
-                sub_total: item.cantidad * parseFloat(item.precio), // Pass as NUMBER for Voucher.jsx to format
-                descuento: 0,
-                undm: item.undm || '',
-                nom_marca: item.nom_marca || ''
-            })),
+            detalles_b: cart.map(item => {
+                // Determine display attributes
+                let attrText = "";
+                if (item.attributes) {
+                    attrText = Object.entries(item.attributes)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(", ");
+                }
+
+                return {
+                    id_producto: item.codigo,
+                    nombre: item.nombre,
+                    // If SKU name exists, append it or use it?
+                    // Legacy printed ticket might rely on nombre_tonalidad/nombre_talla
+                    cantidad: item.cantidad,
+                    precio: parseFloat(item.precio),
+                    sub_total: item.cantidad * parseFloat(item.precio),
+                    descuento: 0,
+                    undm: item.undm || '',
+                    nom_marca: item.nom_marca || '',
+                    nombre_tonalidad: item.nombre_tonalidad || (item.attributes?.["Color"] || ''),
+                    nombre_talla: item.nombre_talla || (item.attributes?.["Talla"] || ''),
+                    sku_label: item.sku_label,
+                    sku_display: attrText // New field for generic attributes on Voucher?
+                };
+            }),
             observacion: observacion || ''
         };
 
@@ -275,7 +315,7 @@ export const usePOS = () => {
             // Override detalles with proper format for SUNAT
             detalles: cart.map(item => ({
                 codigo: item.codigo,
-                nombre: item.nombre,
+                nombre: item.nombre + (item.nombre_sku ? ` - ${item.nombre_sku}` : ''), // Append SKU info to name for SUNAT
                 cantidad: item.cantidad,
                 precio: parseFloat(item.precio),
                 undm: item.undm || 'NIU',
@@ -297,7 +337,7 @@ export const usePOS = () => {
                     numComprobante,
                     'window'
                 );
-                toast.success("Venta registrada correctamente");
+                // toast handled in services
                 completeSale();
             },
             datosVentaSunat, // Payload for handleSunatUnique (Critical Fix)
@@ -327,6 +367,7 @@ export const usePOS = () => {
         clearCart: cancelCart, // UI "Clear" button restores stock
         completeSale,          // Internal use for successful sales
         generateNumber,
-        submitSale
+        submitSale,
+        sucursalV
     };
 };

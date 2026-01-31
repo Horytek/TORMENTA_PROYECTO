@@ -19,6 +19,7 @@ import IntercambioModal from './Modals/IntercambioModal';
 import { exchangeVenta } from '@/services/exchange_venta';
 import { toast } from "react-hot-toast";
 import { handleSunatUnique, handleUpdate } from "@/services/ventas.services";
+import { getProductAttributes } from "@/services/productos.services";
 
 const ESTADO_STYLES = {
   Aceptada: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
@@ -67,6 +68,7 @@ const TablaVentas = ({
   const ventaSeleccionada = useVentaSeleccionadaStore((state) => state.venta);
   const setObservacion = useVentaSeleccionadaStore((state) => state.setObservacion);
   const observacion = useVentaSeleccionadaStore(state => state.observacion);
+  const [attrMetadataMap, setAttrMetadataMap] = useState({});
 
   useEffect(() => {
     setExpandedRow(null);
@@ -80,6 +82,83 @@ const TablaVentas = ({
     };
     fetchEmpresaData();
   }, [currentPage, nombre]);
+
+  useEffect(() => {
+    if (!expandedRow) return;
+    const venta = ventas.find(v => v.id === expandedRow);
+    if (!venta || !venta.detalles) return;
+
+    const uniqueIds = [...new Set(venta.detalles.filter(d => d.id_producto).map(d => d.id_producto))];
+
+    uniqueIds.forEach(async (id) => {
+      if (attrMetadataMap[id]) return;
+      try {
+        const data = await getProductAttributes(id);
+        if (data) {
+          const names = {};
+          const colors = {};
+          if (data.attributes) {
+            data.attributes.forEach(a => {
+              names[a.id_atributo] = a.nombre;
+              if (a.hex) colors[a.nombre] = a.hex;
+            });
+          }
+          setAttrMetadataMap(prev => ({ ...prev, [id]: { names, colors } }));
+        }
+      } catch (e) { console.error(e); }
+    });
+  }, [expandedRow, ventas]); // attrMetadataMap in dep might cause loop if not careful, better to check inside
+
+  const renderVariantBadges = (detalle) => {
+    let attributes = detalle.attributes;
+    if (typeof attributes === 'string') {
+      try { attributes = JSON.parse(attributes); } catch { attributes = null; }
+    }
+
+    if (!attributes || Object.keys(attributes).length === 0) {
+      // Fallback
+      if (detalle.sku_label) {
+        return <span className="ml-1 text-[10px] font-bold text-slate-500 bg-slate-100 rounded px-1">{detalle.sku_label}</span>;
+      }
+      return (
+        <>
+          {detalle.nombre_talla && <span className="ml-1 text-[10px] font-bold text-slate-500 bg-slate-100 rounded px-1">T:{detalle.nombre_talla}</span>}
+          {detalle.nombre_tonalidad && <span className="ml-1 text-[10px] text-slate-500">C:{detalle.nombre_tonalidad}</span>}
+        </>
+      );
+    }
+
+    const metadata = attrMetadataMap[detalle.id_producto] || { names: {}, colors: {} };
+    const keys = Object.keys(attributes);
+    keys.sort((a, b) => {
+      const la = metadata.names[a] || a;
+      const lb = metadata.names[b] || b;
+      if (la === 'Color') return -1;
+      if (lb === 'Color') return 1;
+      return la.localeCompare(lb);
+    });
+
+    return (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {keys.map(k => {
+          const label = metadata.names[k] || k;
+          const value = attributes[k];
+          const isColor = label.toLowerCase() === 'color';
+          const hex = isColor ? metadata.colors[value] : null;
+
+          return (
+            <div key={k} className="flex items-center gap-1 bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5">
+              <span className="text-[9px] uppercase font-bold text-slate-400">{label}:</span>
+              {isColor && hex && (
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: hex }} />
+              )}
+              <span className="text-[10px] font-medium text-slate-600">{value}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const handleViewDetail = (venta) => {
     setExpandedRow(venta.id);
@@ -314,53 +393,54 @@ const TablaVentas = ({
 
   const renderVentaInfo = (venta) => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-      <Card className="relative overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-sm">
-        <CardBody className="flex flex-col gap-2 p-4">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="p-2.5 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-              <FaFileInvoice className="text-lg" />
+      {/* Comprobante Card */}
+      <Card className="relative overflow-hidden border border-blue-100 dark:border-blue-900/30 bg-gradient-to-br from-blue-50/80 to-white dark:from-blue-900/10 dark:to-zinc-900 rounded-xl shadow-sm">
+        <div className="absolute -right-6 -bottom-6 opacity-10 transform -rotate-12 pointer-events-none">
+          <FaFileInvoice className="text-9xl text-blue-600 dark:text-blue-400" />
+        </div>
+        <CardBody className="flex flex-col gap-1 p-5 relative z-10">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600/70 dark:text-blue-400/70">Comprobante</span>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="font-bold text-slate-800 dark:text-white text-2xl tracking-tight">{venta.serieNum}-{venta.num}</span>
+          </div>
+          <div className="mt-2 flex">
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm border border-black/5 ${TIPO_COMPROBANTE_COLORS[venta.tipoComprobante] || TIPO_COMPROBANTE_COLORS.Default}`}>
+              {venta.tipoComprobante}
             </span>
-            <div>
-              <span className="block text-xs text-slate-500 font-medium uppercase tracking-wider">Comprobante</span>
-              <span className="font-bold text-slate-800 dark:text-white text-base">{venta.serieNum}-{venta.num}</span>
-              <div className="mt-1">
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${TIPO_COMPROBANTE_COLORS[venta.tipoComprobante] || TIPO_COMPROBANTE_COLORS.Default}`}>
-                  {venta.tipoComprobante}
-                </span>
-              </div>
-            </div>
           </div>
         </CardBody>
       </Card>
-      <Card className="relative overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-sm">
-        <CardBody className="flex flex-col gap-2 p-4">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
-              <FaUser className="text-lg" />
+
+      {/* Cliente Card */}
+      <Card className="relative overflow-hidden border border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-br from-emerald-50/80 to-white dark:from-emerald-900/10 dark:to-zinc-900 rounded-xl shadow-sm">
+        <div className="absolute -right-6 -bottom-6 opacity-10 transform -rotate-12 pointer-events-none">
+          <FaUser className="text-9xl text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <CardBody className="flex flex-col gap-1 p-5 relative z-10">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/70 dark:text-emerald-400/70">Cliente</span>
+          <div className="flex flex-col mt-0.5 min-w-0">
+            <span className="font-bold text-slate-800 dark:text-white text-lg truncate leading-tight" title={venta.cliente}>{venta.cliente}</span>
+            <span className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1">
+              ID: <span className="font-mono text-slate-600 dark:text-slate-400">{venta.ruc}</span>
             </span>
-            <div>
-              <span className="block text-xs text-slate-500 font-medium uppercase tracking-wider">Cliente</span>
-              <span className="font-bold text-slate-800 dark:text-white text-base line-clamp-1" title={venta.cliente}>{venta.cliente}</span>
-              <div className="text-xs text-slate-400 font-medium">{venta.ruc}</div>
-            </div>
           </div>
         </CardBody>
       </Card>
-      <Card className="relative overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-sm">
-        <CardBody className="flex flex-col gap-2 p-4">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="p-2.5 rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400">
-              <FaCalendarAlt className="text-lg" />
+
+      {/* Fecha Card */}
+      <Card className="relative overflow-hidden border border-violet-100 dark:border-violet-900/30 bg-gradient-to-br from-violet-50/80 to-white dark:from-violet-900/10 dark:to-zinc-900 rounded-xl shadow-sm">
+        <div className="absolute -right-6 -bottom-6 opacity-10 transform -rotate-12 pointer-events-none">
+          <FaCalendarAlt className="text-9xl text-violet-600 dark:text-violet-400" />
+        </div>
+        <CardBody className="flex flex-col gap-1 p-5 relative z-10">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-violet-600/70 dark:text-violet-400/70">Fecha Emisión</span>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="font-bold text-slate-800 dark:text-white text-xl capitalize">{new Date(venta.fechaEmision).toLocaleDateString("es-ES", { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          </div>
+          <div className="mt-2 flex">
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm border border-black/5 ${ESTADO_STYLES[venta.estado]?.bg || "bg-slate-100"} ${ESTADO_STYLES[venta.estado]?.text || "text-slate-600"}`}>
+              {venta.estado}
             </span>
-            <div>
-              <span className="block text-xs text-slate-500 font-medium uppercase tracking-wider">Fecha</span>
-              <span className="font-bold text-slate-800 dark:text-white text-base">{venta.fechaEmision}</span>
-              <div className="mt-1">
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${ESTADO_STYLES[venta.estado]?.bg || "bg-slate-100"} ${ESTADO_STYLES[venta.estado]?.text || "text-slate-600"}`}>
-                  {venta.estado}
-                </span>
-              </div>
-            </div>
           </div>
         </CardBody>
       </Card>
@@ -389,8 +469,8 @@ const TablaVentas = ({
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="relative overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-sm flex flex-col">
-          <CardHeader className="bg-slate-50/50 dark:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800 py-3">
-            <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-white dark:from-zinc-800 dark:to-zinc-900 border-b border-slate-100 dark:border-zinc-800 py-3">
+            <span className="font-bold text-slate-700 dark:text-slate-200 text-xs uppercase flex items-center gap-2">
               <FaMoneyBillWave className="text-yellow-500" /> Información de Pago
             </span>
           </CardHeader>
@@ -407,8 +487,8 @@ const TablaVentas = ({
         </Card>
 
         <Card className="relative overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-sm flex flex-col">
-          <CardHeader className="bg-slate-50/50 dark:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800 py-3">
-            <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-white dark:from-zinc-800 dark:to-zinc-900 border-b border-slate-100 dark:border-zinc-800 py-3">
+            <span className="font-bold text-slate-700 dark:text-slate-200 text-xs uppercase flex items-center gap-2">
               <FaCalculator className="text-emerald-500" /> Resumen de Totales
             </span>
           </CardHeader>
@@ -435,8 +515,8 @@ const TablaVentas = ({
         </Card>
 
         <Card className="relative overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-sm flex flex-col">
-          <CardHeader className="bg-slate-50/50 dark:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800 py-3">
-            <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-white dark:from-zinc-800 dark:to-zinc-900 border-b border-slate-100 dark:border-zinc-800 py-3">
+            <span className="font-bold text-slate-700 dark:text-slate-200 text-xs uppercase flex items-center gap-2">
               <FaFileInvoice className="text-blue-500" /> Observación
             </span>
           </CardHeader>
@@ -455,9 +535,9 @@ const TablaVentas = ({
   const renderVentaTable = (venta) => (
     <div className="w-full mt-4">
       <Card className="relative overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-sm">
-        <CardHeader className="flex items-center gap-2 bg-slate-50/50 dark:bg-zinc-800/50 border-b border-slate-100 dark:border-zinc-800 py-3">
-          <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
-            <span className="text-lg">🛒</span> Productos y Servicios
+        <CardHeader className="flex items-center gap-2 bg-gradient-to-b from-slate-50 to-white dark:from-zinc-800 dark:to-zinc-900 border-b border-slate-100 dark:border-zinc-800 py-4 px-6">
+          <span className="font-bold text-slate-700 dark:text-slate-200 text-xs uppercase flex items-center gap-2 tracking-wide">
+            <span className="text-base">🛒</span> Productos y Servicios
           </span>
         </CardHeader>
         <CardBody className="p-0">
@@ -488,7 +568,10 @@ const TablaVentas = ({
                   <TableRow key={idx}>
                     <TableCell className="text-[12px] text-center font-medium text-slate-500">{detalle.codigo || "-"}</TableCell>
                     <TableCell className="text-[12px] text-left">
-                      <div className="font-medium text-slate-700 dark:text-slate-200">{detalle.nombre}</div>
+                      <div className="font-medium text-slate-700 dark:text-slate-200">
+                        {detalle.nombre}
+                        {renderVariantBadges(detalle)}
+                      </div>
                     </TableCell>
                     <TableCell className="text-[12px] text-left text-slate-500">{detalle.nom_marca}</TableCell>
                     <TableCell className="text-[12px] text-center font-bold text-slate-700 dark:text-slate-300">{detalle.cantidad}</TableCell>
@@ -575,7 +658,7 @@ const TablaVentas = ({
                 <ModalHeader className="flex justify-between items-center">
                   <span className="text-lg font-semibold text-blue-900">Detalles de la Venta</span>
                 </ModalHeader>
-                <ModalBody className="space-y-4 max-h-[65vh] overflow-y-auto pb-2">
+                <ModalBody className="space-y-4 max-h-[65vh] overflow-y-auto pb-2 bg-slate-50/50 px-6 py-6">
                   {venta && (
                     <>
                       {renderVentaInfo(venta)}

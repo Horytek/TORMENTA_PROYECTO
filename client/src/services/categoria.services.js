@@ -16,7 +16,7 @@ const getCategorias = async () => {
     return response.data.code === 1 ? response.data.data : [];
   } catch (error) {
     console.error("Error al obtener categorías:", error.message);
-    return [];
+    return null;
   }
 };
 

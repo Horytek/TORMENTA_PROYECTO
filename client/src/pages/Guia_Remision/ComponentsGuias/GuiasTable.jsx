@@ -11,6 +11,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { anularGuia } from '@/services/guiaRemision.services';
 import { useUserStore } from "@/store/useStore";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { getProductAttributes } from "@/services/productos.services";
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Import jspdf things dynamically if possible inside function, but for now standard import structure or similar to existing
@@ -24,6 +25,104 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedGuia, setSelectedGuia] = useState(null);
+
+  // Cache for product attribute metadata: { [productId]: { names: {}, colors: {} } }
+  const [attrMetadataMap, setAttrMetadataMap] = useState({});
+
+  // Effect to load attribute metadata when selectedGuia changes
+  useEffect(() => {
+    if (!selectedGuia) return;
+
+    const uniqueProductIds = [...new Set((selectedGuia.detalles || []).map(d => d.codigo))];
+    // Filter ids that we don't have metadata for
+    const missingIds = uniqueProductIds.filter(id => !attrMetadataMap[id]);
+
+    if (missingIds.length > 0) {
+      Promise.all(missingIds.map(id => getProductAttributes(id).catch(err => null)))
+        .then(results => {
+          setAttrMetadataMap(prev => {
+            const next = { ...prev };
+            results.forEach((data, index) => {
+              const pid = missingIds[index];
+              if (data) {
+                const names = {};
+                const colors = {};
+                if (data.attributes) {
+                  data.attributes.forEach(a => {
+                    names[a.id_atributo] = a.nombre;
+                  });
+                }
+                if (data.tonalidades) {
+                  data.tonalidades.forEach(t => {
+                    colors[t.nombre] = t.hex;
+                  });
+                }
+                next[pid] = { names, colors };
+              }
+            });
+            return next;
+          });
+        });
+    }
+  }, [selectedGuia]);
+
+  const renderVariantBadges = (detalle) => {
+    let attributes = detalle.attributes;
+    if (typeof attributes === 'string') {
+      try {
+        attributes = JSON.parse(attributes);
+      } catch {
+        attributes = null;
+      }
+    }
+
+    if (!attributes || Object.keys(attributes).length === 0) {
+      // Fallback to legacy
+      if (detalle.sku_label) {
+        return <span className="ml-1 font-bold text-[10px] bg-slate-100 px-1 rounded text-slate-600">{detalle.sku_label}</span>;
+      }
+      if (detalle.talla || detalle.tonalidad) {
+        return (
+          <span className="ml-1 text-[10px] text-slate-400">
+            {[detalle.talla && `T:${detalle.talla}`, detalle.tonalidad && `C:${detalle.tonalidad}`].filter(Boolean).join(' ')}
+          </span>
+        );
+      }
+      return null;
+    }
+
+    const metadata = attrMetadataMap[detalle.codigo] || { names: {}, colors: {} };
+    const keys = Object.keys(attributes);
+
+    keys.sort((a, b) => {
+      const la = metadata.names[a] || a;
+      const lb = metadata.names[b] || b;
+      if (la === 'Color') return -1;
+      if (lb === 'Color') return 1;
+      return la.localeCompare(lb);
+    });
+
+    return (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {keys.map(k => {
+          const label = metadata.names[k] || k;
+          const value = attributes[k];
+          const isColor = label.toLowerCase() === 'color';
+          const hex = isColor ? metadata.colors[value] : null;
+
+          return (
+            <div key={k} className="flex items-center gap-1 bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5">
+              <span className="text-[9px] uppercase font-bold text-slate-400">{label}:</span>
+              {isColor && hex && (
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: hex }} />
+              )}
+              <span className="text-[10px] font-medium text-slate-600">{value}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const [isModalOpenImprimir, setIsModalOpenImprimir] = useState(false);
   const [isModalOpenAnular, setIsModalOpenAnular] = useState(false);
@@ -109,6 +208,26 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
       const empresaRuc = empresaData?.ruc || '20';
       // ... (Rest of enterprise data mapping)
 
+      // Fetch attribute metadata for PDF
+      const metadataMap = {};
+      if (guia.detalles && guia.detalles.length > 0) {
+        const idsToFetch = [...new Set(guia.detalles.filter(d => d.attributes).map(d => d.codigo))];
+        if (idsToFetch.length > 0) {
+          await Promise.all(idsToFetch.map(async (id) => {
+            try {
+              const data = await getProductAttributes(id);
+              if (data && data.attributes) {
+                const names = {};
+                data.attributes.forEach(a => names[a.id_atributo] = a.nombre);
+                metadataMap[id] = { names };
+              }
+            } catch (e) {
+              console.error("Error fetching pdf attributes", e);
+            }
+          }));
+        }
+      }
+
       const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       let cursorY = 18;
@@ -137,12 +256,51 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
       cursorY += 40;
 
       // AutoTable
-      const rows = (guia.detalles || []).map(d => [
-        d.codigo || '',
-        d.descripcion || '',
-        d.cantidad != null ? String(d.cantidad) : '',
-        d.um || ''
-      ]);
+      // AutoTable
+      const rows = (guia.detalles || []).map(d => {
+        let desc = (d.descripcion || '').trim();
+
+        // Parse and Format Attributes
+        let attributes = d.attributes;
+        if (typeof attributes === 'string') {
+          try { attributes = JSON.parse(attributes); } catch { }
+        }
+
+        if (attributes && Object.keys(attributes).length > 0) {
+          const meta = metadataMap[d.codigo] || { names: {} };
+          const keys = Object.keys(attributes).sort((a, b) => {
+            const la = meta.names[a] || a;
+            const lb = meta.names[b] || b;
+            if (la === 'Color') return -1;
+            if (lb === 'Color') return 1;
+            return la.localeCompare(lb);
+          });
+          const parts = keys.map(k => {
+            const label = meta.names[k] || k;
+            const val = attributes[k];
+            return `${label}: ${val}`;
+          });
+          if (parts.length > 0) {
+            desc += ` [${parts.join(', ')}]`;
+          }
+        } else {
+          // Fallback
+          const extras = [];
+          if (d.sku_label) extras.push(d.sku_label);
+          else {
+            if (d.talla && d.talla !== '-') extras.push(`T: ${d.talla}`);
+            if (d.tonalidad && d.tonalidad !== '-') extras.push(`C: ${d.tonalidad}`);
+          }
+          if (extras.length) desc += ` [${extras.join(', ')}]`;
+        }
+
+        return [
+          d.codigo || '',
+          desc,
+          d.cantidad != null ? String(d.cantidad) : '',
+          d.um || ''
+        ];
+      });
 
       doc.autoTable({
         head: [['Código', 'Descripción', 'Cant.', 'U.M.']],
@@ -372,7 +530,10 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
                           <span className="font-bold text-xs text-slate-800 dark:text-slate-200">{d.codigo}</span>
                           <span className="font-bold text-xs text-indigo-600">{d.cantidad}</span>
                         </div>
-                        <p className="text-xs text-slate-500 line-clamp-1">{d.descripcion}</p>
+                        <div className="text-xs text-slate-500">
+                          <span className="line-clamp-1">{d.descripcion}</span>
+                          {renderVariantBadges(d)}
+                        </div>
                       </div>
                     </div>
                   ))}

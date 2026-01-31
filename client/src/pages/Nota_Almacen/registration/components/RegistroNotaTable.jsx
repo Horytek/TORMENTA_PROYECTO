@@ -45,7 +45,7 @@ const RegistroNotaTable = ({
 
     const handleConfirmEliminar = () => {
         if (productoAEliminar) {
-            setProductosSeleccionados(prev => prev.filter(p => p.codigo !== productoAEliminar.codigo));
+            setProductosSeleccionados(prev => prev.filter(p => p.uniqueKey !== productoAEliminar.uniqueKey));
         }
         closeModalEliminar();
     };
@@ -57,10 +57,10 @@ const RegistroNotaTable = ({
         closeModalEliminarTodos();
     };
 
-    const actualizarCantidad = useCallback((codigo, nueva) => {
+    const actualizarCantidad = useCallback((uniqueKey, nueva) => {
         setProductosSeleccionados(prev =>
             prev.map(p =>
-                p.codigo === codigo
+                p.uniqueKey === uniqueKey
                     ? { ...p, cantidad: nueva < 1 ? 1 : nueva }
                     : p
             )
@@ -123,18 +123,62 @@ const RegistroNotaTable = ({
                         <TableHeader>
                             <TableColumn className="text-left w-32">CÓDIGO</TableColumn>
                             <TableColumn className="text-left min-w-[220px]">DESCRIPCIÓN</TableColumn>
+                            <TableColumn className="text-center w-24">VARIANTES</TableColumn>
                             <TableColumn className="text-center w-32">MARCA</TableColumn>
                             <TableColumn className="text-center w-32">CANTIDAD</TableColumn>
                             <TableColumn className="text-center w-20">ACCIÓN</TableColumn>
                         </TableHeader>
                         <TableBody emptyContent={renderEmpty}>
                             {productos.map((p, idx) => (
-                                <TableRow key={`${p.codigo}-${idx}`}>
+                                <TableRow key={`${p.uniqueKey || p.codigo}-${idx}`}>
                                     <TableCell className="text-left font-bold text-slate-700 dark:text-slate-200">
                                         {p.codigo}
                                     </TableCell>
                                     <TableCell className="text-left text-slate-600 dark:text-slate-300 font-medium">
                                         {p.descripcion}
+                                    </TableCell>
+                                    <TableCell className="text-center text-xs">
+                                        {/* Variant Display */}
+                                        <div className="flex flex-col items-center gap-1">
+                                            {p.resolvedAttributes && Array.isArray(p.resolvedAttributes) ? (
+                                                <div className="flex flex-wrap justify-center gap-1">
+                                                    {p.resolvedAttributes.map((attr, idx) => (
+                                                        <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 dark:bg-zinc-800 rounded-full border border-slate-200 dark:border-zinc-700">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400">{attr.label}</span>
+                                                            {attr.hex ? (
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="w-3 h-3 rounded-full border border-slate-300 shadow-sm" style={{ backgroundColor: attr.hex }}></span>
+                                                                    <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">{attr.value}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">{attr.value}</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (p.resolvedAttributes // Backward compatibility if object
+                                                && !Array.isArray(p.resolvedAttributes)) ? (
+                                                <div className="flex flex-wrap justify-center gap-1">
+                                                    {Object.entries(p.resolvedAttributes).map(([key, val]) => (
+                                                        <span key={key} className="text-[10px] text-slate-500 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
+                                                            <span className="font-bold">{key}:</span> {val}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : p.sku_label ? (
+                                                <span className="font-semibold text-slate-600 bg-slate-100 px-1.5 rounded text-[11px]">{p.sku_label}</span>
+                                            ) : (
+                                                <>
+                                                    {p.nombre_talla && (
+                                                        <span className="font-semibold text-slate-600 bg-slate-100 px-1.5 rounded">{p.nombre_talla}</span>
+                                                    )}
+                                                    {p.nombre_tonalidad && (
+                                                        <span className="text-[10px] text-slate-500">{p.nombre_tonalidad}</span>
+                                                    )}
+                                                    {!p.nombre_talla && !p.nombre_tonalidad && <span className="text-slate-300">-</span>}
+                                                </>
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-center text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase">
                                         {p.marca || '-'}
@@ -148,7 +192,7 @@ const RegistroNotaTable = ({
                                                 value={String(p.cantidad)}
                                                 onChange={(e) => {
                                                     const val = parseInt(e.target.value, 10);
-                                                    actualizarCantidad(p.codigo, isNaN(val) ? 1 : val);
+                                                    actualizarCantidad(p.uniqueKey || p.codigo, isNaN(val) ? 1 : val);
                                                 }}
                                                 classNames={{
                                                     inputWrapper: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 h-8 shadow-sm",

@@ -23,6 +23,7 @@ import { ActionButton } from "@/components/Buttons/Buttons";
 import BarraSearch from "@/components/Search/Search";
 import ProductosForm from './ProductosForm';
 import { ShowProductos } from './ShowProductos';
+import ViewVariantsModal from './Modals/ViewVariantsModal';
 import Marcas from '../Marcas/Marcas';
 import Categorias from '../Categorias/Categorias';
 import Subcategorias from '../Subcategorias/Subcategorias';
@@ -33,7 +34,9 @@ const useInventoryData = () => {
     productos: [],
     marcas: [],
     categorias: [],
-    subcategorias: []
+    subcategorias: [],
+    tonalidades: [],
+    tallas: []
   });
   const [loaded, setLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,6 +99,8 @@ const useInventoryData = () => {
       marcas: createOperations('marcas', 'id_marca'),
       categorias: createOperations('categorias', 'id_categoria'),
       subcategorias: createOperations('subcategorias', 'id_subcategoria'),
+      tonalidades: createOperations('tonalidades', 'id_tonalidad'),
+      tallas: createOperations('tallas', 'id_talla'),
     },
     reloadData: () => setLoaded(false) // Force reload
   };
@@ -160,6 +165,8 @@ function Productos() {
     if (path.endsWith('/marcas')) return 'marcas';
     if (path.endsWith('/categorias')) return 'categorias';
     if (path.endsWith('/subcategorias')) return 'subcategorias';
+    if (path.endsWith('/tonalidades')) return 'tonalidades';
+    if (path.endsWith('/tallas')) return 'tallas';
     return 'productos';
   }, [location.pathname]);
 
@@ -174,9 +181,13 @@ function Productos() {
     navigate(routes[key] || '/productos');
   };
 
-  // -- Lógica de Edición --
+  // -- Lógica de Edición y Visualización --
   const handleEditOpen = (producto) => setEditingProduct(producto);
   const handleEditClose = () => setEditingProduct(null);
+
+  const [viewProduct, setViewProduct] = useState(null);
+  const handleViewOpen = (producto) => setViewProduct(producto);
+  const handleViewClose = () => setViewProduct(null);
 
   // -- Lógica de Exportación --
   const handleExport = async (type) => {
@@ -303,11 +314,20 @@ function Productos() {
               searchTerm={searchTerm}
               productos={data.productos}
               onEdit={handleEditOpen}
+              onView={handleViewOpen}
               onDelete={ops.productos.remove}
               updateProductoLocal={ops.productos.update}
             />
 
             {/* Modales de Producto */}
+            {viewProduct && (
+              <ViewVariantsModal
+                isOpen={!!viewProduct}
+                onClose={handleViewClose}
+                productId={viewProduct.id_producto}
+                productName={viewProduct.descripcion}
+              />
+            )}
             {isCreateModalOpen && (
               <ProductosForm
                 modalTitle="Nuevo Producto"

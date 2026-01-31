@@ -27,6 +27,7 @@ const Logs = lazy(() => import('@/pages/SystemLogs/Logs'));
 const Negocio = lazy(() => import('@/pages/Negocio/Negocio'));
 const DatabaseCleaner = lazy(() => import('@/pages/Developer/DatabaseCleaner'));
 const ActionCatalog = lazy(() => import('@/pages/Developer/ActionCatalog'));
+const AttributesPage = lazy(() => import('@/pages/Configuracion/Attributes/AttributesPage'));
 
 function Dashboard() {
   const ADMIN_ROL = 1;
@@ -269,6 +270,8 @@ function Dashboard() {
         }
       />
     );
+
+
 
 
     dynamicRoutes.push(

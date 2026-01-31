@@ -12,6 +12,7 @@ import { TiDeleteOutline } from "react-icons/ti";
 import { anularNotaIngreso } from '@/services/notaIngreso.services';
 import { anularNotaSalida } from '@/services/notaSalida.services';
 import { toast } from "react-hot-toast";
+import { getProductAttributes } from "@/services/productos.services";
 import { usePermisos } from '@/routes';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";
@@ -47,6 +48,111 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
   // Default to 20 items per page
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+
+  // Cache for product attribute metadata: { [productId]: { names: {}, colors: {} } }
+  const [attrMetadataMap, setAttrMetadataMap] = useState({});
+
+  // Effect to load attribute metadata when expandedRow changes
+  useEffect(() => {
+    if (!expandedRow) return;
+
+    const nota = registros.find(n => String(n.id) === String(expandedRow));
+    if (!nota || !nota.detalles) return;
+
+    const uniqueProductIds = [...new Set(nota.detalles.map(d => d.codigo))];
+    const missingIds = uniqueProductIds.filter(id => !attrMetadataMap[id]);
+
+    if (missingIds.length > 0) {
+      Promise.all(missingIds.map(id => getProductAttributes(id).catch(err => null)))
+        .then(results => {
+          setAttrMetadataMap(prev => {
+            const next = { ...prev };
+            results.forEach((data, index) => {
+              const pid = missingIds[index];
+              if (data) {
+                const names = {};
+                const colors = {};
+                if (data.attributes) {
+                  data.attributes.forEach(a => {
+                    names[a.id_atributo] = a.nombre;
+                  });
+                }
+                if (data.tonalidades) {
+                  data.tonalidades.forEach(t => {
+                    colors[t.nombre] = t.hex;
+                  });
+                }
+                next[pid] = { names, colors };
+              }
+            });
+            return next;
+          });
+        });
+    }
+  }, [expandedRow, registros]); // Depend on expandedRow
+
+  const renderVariantBadges = (detalle) => {
+    // If we have resolvedAttributes directly (from local state/cache?), use them. (Not likely here from DB)
+    // If not, parse `attributes`
+
+    let attributes = detalle.attributes;
+    if (typeof attributes === 'string') {
+      try {
+        attributes = JSON.parse(attributes);
+      } catch {
+        attributes = null;
+      }
+    }
+
+    // Default fallback if no attributes
+    if (!attributes || Object.keys(attributes).length === 0) {
+      if (detalle.sku_label || (detalle.nombre_talla && detalle.nombre_talla !== '-') || (detalle.nombre_tonalidad && detalle.nombre_tonalidad !== '-')) {
+        return (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {detalle.sku_label && <Chip size="sm" variant="flat" className="text-[10px] h-5">{detalle.sku_label}</Chip>}
+            {detalle.nombre_talla !== '-' && <Chip size="sm" variant="flat" className="text-[10px] h-5">Talla: {detalle.nombre_talla}</Chip>}
+            {detalle.nombre_tonalidad !== '-' && <Chip size="sm" variant="flat" className="text-[10px] h-5">Color: {detalle.nombre_tonalidad}</Chip>}
+          </div>
+        )
+      }
+      return null;
+    }
+
+    const metadata = attrMetadataMap[detalle.codigo] || { names: {}, colors: {} };
+    const keys = Object.keys(attributes);
+
+    // Sort logic similar to Modal
+    keys.sort((a, b) => {
+      const la = metadata.names[a] || a;
+      const lb = metadata.names[b] || b;
+      if (la === 'Color') return -1;
+      if (lb === 'Color') return 1;
+      return la.localeCompare(lb);
+    });
+
+    return (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {keys.map(k => {
+          const label = metadata.names[k] || k;
+          const value = attributes[k];
+          const isColor = label.toLowerCase() === 'color';
+          const hex = isColor ? metadata.colors[value] : null;
+
+          return (
+            <div key={k} className="flex flex-col">
+              <span className="text-[9px] uppercase font-bold text-slate-400 leading-none mb-0.5">{label}</span>
+              <div className="flex items-center gap-1">
+                {isColor && hex && (
+                  <div className="w-3 h-3 rounded-full border border-slate-200 shadow-sm" style={{ backgroundColor: hex }} />
+                )}
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{value}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -150,6 +256,26 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
     const empresaRuc = ed.ruc || '20610588981';
     const empresaNombreComercial = ed.nombreComercial || 'TORMENTA JEANS';
 
+    // Fetch attribute metadata for PDF
+    const metadataMap = {};
+    if (nota.detalles && nota.detalles.length > 0) {
+      const idsToFetch = [...new Set(nota.detalles.filter(d => d.attributes).map(d => d.codigo))];
+      if (idsToFetch.length > 0) {
+        await Promise.all(idsToFetch.map(async (id) => {
+          try {
+            const data = await getProductAttributes(id);
+            if (data && data.attributes) {
+              const names = {};
+              data.attributes.forEach(a => names[a.id_atributo] = a.nombre);
+              metadataMap[id] = { names };
+            }
+          } catch (e) {
+            console.error("Error fetching pdf attributes", e);
+          }
+        }));
+      }
+    }
+
     try {
       const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       doc.setLineHeightFactor(1.15);
@@ -227,13 +353,51 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
       cursorY += isIngreso ? 23 : 18;
       doc.setDrawColor(230).line(15, cursorY - 4, pageWidth - 15, cursorY - 4);
 
-      const rows = (nota.detalles || []).map(d => [
-        d.codigo || '',
-        d.marca || '',
-        (d.descripcion || '').trim(),
-        d.cantidad != null ? String(d.cantidad) : '',
-        d.unidad || ''
-      ]);
+      const rows = (nota.detalles || []).map(d => {
+        let desc = (d.descripcion || '').trim();
+
+        // Parse and Format Attributes
+        let attributes = d.attributes;
+        if (typeof attributes === 'string') {
+          try { attributes = JSON.parse(attributes); } catch { }
+        }
+
+        if (attributes && Object.keys(attributes).length > 0) {
+          const meta = metadataMap[d.codigo] || { names: {} };
+          const keys = Object.keys(attributes).sort((a, b) => {
+            const la = meta.names[a] || a;
+            const lb = meta.names[b] || b;
+            if (la === 'Color') return -1;
+            if (lb === 'Color') return 1;
+            return la.localeCompare(lb);
+          });
+          const parts = keys.map(k => {
+            const label = meta.names[k] || k;
+            const val = attributes[k];
+            return `${label}: ${val}`;
+          });
+          if (parts.length > 0) {
+            desc += ` [${parts.join(', ')}]`;
+          }
+        } else {
+          // Fallback
+          const extras = [];
+          if (d.sku_label) extras.push(d.sku_label);
+          else {
+            if (d.nombre_talla && d.nombre_talla !== '-') extras.push(`T: ${d.nombre_talla}`);
+            if (d.nombre_tonalidad && d.nombre_tonalidad !== '-') extras.push(`C: ${d.nombre_tonalidad}`);
+          }
+          if (extras.length) desc += ` [${extras.join(', ')}]`;
+        }
+
+        return [
+          d.codigo || '',
+          d.marca || '',
+          desc,
+          d.cantidad != null ? String(d.cantidad) : '',
+          d.unidad || ''
+        ];
+      });
 
       doc.autoTable({
         head: [['Código', 'Marca', 'Descripción', 'Cant.', 'Und.']],
@@ -493,6 +657,8 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
                         <span className="font-bold text-indigo-600 dark:text-indigo-400">{d.cantidad}</span>
                       </div>
                       <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{d.descripcion}</p>
+                      {/* Variant Info */}
+                      {renderVariantBadges(d)}
                       <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mt-2 block">{d.marca}</span>
                     </div>
                   </div>

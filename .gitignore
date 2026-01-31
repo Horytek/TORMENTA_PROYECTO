@@ -18,3 +18,5 @@ none_modules
 cert.base64.txt
 *.base64.txt
 tmp/sunat-tests/
+.agent/
+.agents/

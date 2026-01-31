@@ -722,6 +722,9 @@ export const getNotificaciones = async (req, res) => {
   try {
     connection = await getConnection();
 
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = parseInt(req.query.offset) || 0;
+
     const [rows] = await connection.query(
       `SELECT 
          l.id_log,
@@ -736,8 +739,8 @@ export const getNotificaciones = async (req, res) => {
        LEFT JOIN usuario u ON l.id_usuario = u.id_usuario
        WHERE l.id_tenant = ?
        ORDER BY l.fecha DESC
-       LIMIT 50`,
-      [id_tenant]
+       LIMIT ? OFFSET ?`,
+      [id_tenant, limit, offset]
     );
 
     // Devolvemos la data cruda para que el frontend decida cómo mostrarla

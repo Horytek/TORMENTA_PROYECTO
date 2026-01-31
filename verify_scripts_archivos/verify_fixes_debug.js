@@ -1,5 +1,5 @@
 
-import { getConnection } from './src/database/database.js';
+import { getConnection } from '../src/database/database.js';
 
 async function verifyQueries() {
     let connection;

@@ -1,4 +1,4 @@
-import { getProductosRequest, getProductoRequest, addProductosRequest, updateProductoRequest, deleteProductosRequest, getLastIdProductoRequest, importExcelRequest }
+import { getProductosRequest, getProductoRequest, addProductosRequest, updateProductoRequest, deleteProductosRequest, getLastIdProductoRequest, importExcelRequest, getProductVariantsRequest, registerProductVariantsRequest, getProductAttributesRequest, generateSKUsRequest }
   from '@/api/api.productos';
 import { transformData } from '@/utils/producto';
 
@@ -39,6 +39,61 @@ const getProducto = async (id) => {
     console.error('Error en la solicitud: ', error.message);
   }
 };
+
+const getProductVariants = async (id, includeZero = false, almacen, id_sucursal) => {
+  try {
+    const params = { includeZero };
+    if (almacen) params.almacen = almacen;
+    if (id_sucursal) params.id_sucursal = id_sucursal;
+    const response = await getProductVariantsRequest(id, params);
+    if (response.data.code === 1) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error en la solicitud: ', error.message);
+    return [];
+  }
+};
+
+const getProductAttributes = async (id) => {
+  try {
+    const response = await getProductAttributesRequest(id);
+    if (response.data.code === 1) {
+      return response.data.data;
+    }
+    return { tonalidades: [], tallas: [] };
+  } catch (error) {
+    console.error('Error en getProductAttributes:', error.message);
+    return { tonalidades: [], tallas: [] };
+  }
+};
+
+const generateSKUs = async (id_producto, attributes) => {
+  try {
+    // attributes: [{ id_atributo: 1, values: [{id: 10, label: 'Rojo'}] }]
+    const response = await generateSKUsRequest({ id_producto, attributes });
+    return response.data.code === 1;
+  } catch (error) {
+    console.error('Error generateSKUs:', error);
+    return false;
+  }
+};
+
+const registerProductVariants = async (id_producto, tonalidades, tallas) => {
+  try {
+    const response = await registerProductVariantsRequest({ id_producto, tonalidades, tallas });
+    if (response.data.code === 1) {
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error registerProductVariants:', error);
+    return false;
+  }
+};
+
+
 
 const addProducto = async (producto) => {
   try {
@@ -102,8 +157,6 @@ const importExcel = async (data) => {
   }
 };
 
-export { getProductos, getLastIdProducto, getProducto, addProducto, updateProducto, deleteProducto, importExcel, bulkUpdateProductos };
-
 // --- Helper for Frontend Bulk Operations ---
 const bulkUpdateProductos = async (action, ids, items = []) => {
   try {
@@ -129,3 +182,5 @@ const bulkUpdateProductos = async (action, ids, items = []) => {
     return false;
   }
 };
+
+export { getProductos, getLastIdProducto, getProducto, addProducto, updateProducto, deleteProducto, importExcel, bulkUpdateProductos, getProductVariants, registerProductVariants, getProductAttributes, generateSKUs };

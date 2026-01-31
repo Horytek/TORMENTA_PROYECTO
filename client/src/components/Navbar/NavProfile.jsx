@@ -158,46 +158,48 @@ export default function NavProfile() {
                         </div>
                     </DropdownMenuLabel>
 
-                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800/50 h-px mx-2 my-1" />
-
-                    <DropdownMenuGroup className="space-y-0.5 px-1">
-                        <DropdownMenuItem
-                            className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-medium text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 focus:bg-slate-50 transition-colors cursor-pointer outline-none data-[highlighted]:bg-slate-50"
-                            onClick={() => setShowAccount(true)}
-                        >
-                            <div className="p-1.5 rounded-lg bg-slate-50 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                                <BadgeCheck className="w-4 h-4" strokeWidth={2} />
-                            </div>
-                            Cuenta
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-medium text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 focus:bg-slate-50 transition-colors cursor-pointer outline-none data-[highlighted]:bg-slate-50"
-                            onClick={() => setShowBilling(true)}
-                        >
-                            <div className="p-1.5 rounded-lg bg-slate-50 text-slate-500 group-hover:bg-violet-50 group-hover:text-violet-600 transition-colors">
-                                <CreditCard className="w-4 h-4" strokeWidth={2} />
-                            </div>
-                            Facturación
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => setShowNotifications(true)}
-                            className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-medium text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 focus:bg-slate-50 transition-colors cursor-pointer outline-none data-[highlighted]:bg-slate-50 justify-between"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-1.5 rounded-lg bg-slate-50 text-slate-500 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
-                                    <Bell className="w-4 h-4" strokeWidth={2} />
-                                </div>
-                                Notificaciones
-                            </div>
-                            {notifCount > 0 && (
-                                <span className="inline-flex items-center justify-center h-5 px-2 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-sm shadow-rose-200 dark:shadow-none">
-                                    {notifCount}
-                                </span>
-                            )}
-                        </DropdownMenuItem>
-                    </DropdownMenuGroup>
-
-                    <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800/50 h-px mx-2 my-1" />
+                    {/* Admin-only options: Cuenta, Facturación, Notificaciones */}
+                    {String(user.rol) === "1" && (
+                        <>
+                            <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800/50 h-px mx-2 my-1" />
+                            <DropdownMenuGroup className="space-y-0.5 px-1">
+                                <DropdownMenuItem
+                                    className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-medium text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 focus:bg-slate-50 transition-colors cursor-pointer outline-none data-[highlighted]:bg-slate-50"
+                                    onClick={() => setShowAccount(true)}
+                                >
+                                    <div className="p-1.5 rounded-lg bg-slate-50 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                        <BadgeCheck className="w-4 h-4" strokeWidth={2} />
+                                    </div>
+                                    Cuenta
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-medium text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 focus:bg-slate-50 transition-colors cursor-pointer outline-none data-[highlighted]:bg-slate-50"
+                                    onClick={() => setShowBilling(true)}
+                                >
+                                    <div className="p-1.5 rounded-lg bg-slate-50 text-slate-500 group-hover:bg-violet-50 group-hover:text-violet-600 transition-colors">
+                                        <CreditCard className="w-4 h-4" strokeWidth={2} />
+                                    </div>
+                                    Facturación
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setShowNotifications(true)}
+                                    className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-medium text-xs hover:bg-slate-50 dark:hover:bg-zinc-800 focus:bg-slate-50 transition-colors cursor-pointer outline-none data-[highlighted]:bg-slate-50 justify-between"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-1.5 rounded-lg bg-slate-50 text-slate-500 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
+                                            <Bell className="w-4 h-4" strokeWidth={2} />
+                                        </div>
+                                        Notificaciones
+                                    </div>
+                                    {notifCount > 0 && (
+                                        <span className="inline-flex items-center justify-center h-5 px-2 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-sm shadow-rose-200 dark:shadow-none">
+                                            {notifCount}
+                                        </span>
+                                    )}
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                        </>
+                    )}
 
                     <div className="px-1 pb-1">
                         <DropdownMenuItem

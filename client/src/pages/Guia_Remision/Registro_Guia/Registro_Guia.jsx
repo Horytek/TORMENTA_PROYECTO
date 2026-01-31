@@ -205,21 +205,48 @@ export default function RegistroGuia() {
   const handleSaveCliente = () => closeModal();
 
   // Add Product Logic
-  const agregarProducto = useCallback((producto, cantidad) => {
+  const agregarProducto = useCallback((producto, cantidad, variant = null) => {
     setProductosSeleccionados(prev => {
-      const existente = prev.find(p => p.codigo === producto.codigo);
-      const totalPrev = prev.filter(p => p.codigo === producto.codigo).reduce((acc, p) => acc + p.cantidad, 0);
+      const uniqueKey = variant
+        ? (variant.id_sku ? `SKU-${variant.id_sku}` : `${producto.codigo}-${variant.id_tonalidad || 'null'}-${variant.id_talla || 'null'}`)
+        : `${producto.codigo}-null-null`;
+
+      // Check stock with variant logic
+      const stockDisponible = variant ? variant.stock : producto.stock;
+
+      const totalPrev = prev
+        .filter(p => p.uniqueKey === uniqueKey)
+        .reduce((acc, p) => acc + p.cantidad, 0);
+
       const nuevoTotal = totalPrev + cantidad;
 
-      if (nuevoTotal > producto.stock) {
-        toast.error(`Stock insuficiente. Máximo: ${producto.stock}`);
+      // Validar stock SOLO si hay sucursal seleccionada
+      if (selectedSucursalId && nuevoTotal > stockDisponible) {
+        toast.error(`Stock insuficiente. Máximo: ${stockDisponible}`);
         return prev;
       }
 
+      const existente = prev.find(p => p.uniqueKey === uniqueKey);
+
+      const productData = {
+        ...producto,
+        cantidad,
+        id_tonalidad: variant?.id_tonalidad || null,
+        id_talla: variant?.id_talla || null,
+        id_sku: variant?.id_sku || null, // Added SKU
+        attributes: variant?.attributes || null,
+        resolvedAttributes: variant?.resolvedAttributes || null,
+        nombre_tonalidad: variant?.tonalidad || variant?.nombre_tonalidad || null,
+        nombre_talla: variant?.talla || variant?.nombre_talla || null,
+        sku_label: variant?.sku_label || variant?.nombre_sku || null, // Added Label
+        stock_disponible: Number(stockDisponible) || 0,
+        uniqueKey
+      };
+
       if (existente) {
-        return prev.map(p => p.codigo === producto.codigo ? { ...p, cantidad: p.cantidad + cantidad } : p);
+        return prev.map(p => p.uniqueKey === uniqueKey ? { ...p, cantidad: p.cantidad + cantidad } : p);
       }
-      return [...prev, { ...producto, cantidad }];
+      return [...prev, productData];
     });
     closeModalBuscarProducto();
   }, []);
@@ -261,6 +288,9 @@ export default function RegistroGuia() {
     producto: productosSeleccionados.map(p => p.codigo),
     num_comprobante: currentDocumento,
     cantidad: productosSeleccionados.map(p => p.cantidad),
+    tonalidad: productosSeleccionados.map(p => p.id_tonalidad || null),
+    talla: productosSeleccionados.map(p => p.id_talla || null),
+    sku: productosSeleccionados.map(p => p.id_sku || null), // Added SKU array
   }), [
     selectedSucursalId, ubipart, ubidest, selectedClienteId, transporte,
     glosa, dirPartida, dirDestino, canti, peso, observacion,
@@ -476,6 +506,9 @@ export default function RegistroGuia() {
         loading={loadingProductos}
         searchInput={searchInput}
         setSearchInput={setSearchInput}
+        hideStock={!selectedSucursalId}
+        almacenOrigen={selectedSucursalId}
+        mode={selectedSucursalId ? 'salida' : 'ingreso'}
       />
 
       <ConfirmationModal

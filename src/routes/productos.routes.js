@@ -11,10 +11,14 @@ router.use(logMiddleware);
 
 router.get("/", productosController.getProductos);
 router.get("/lastid", productosController.getUltimoIdProducto);
+router.get("/:id/variants", productosController.getProductVariants);
+router.get("/:id/attributes", productosController.getProductAttributes);
+router.post("/variants", productosController.registerVariants);
 router.get("/:id", productosController.getProducto);
 router.post("/", productosController.addProducto);
 router.put("/:id", productosController.updateProducto);
 router.delete("/:id", productosController.deleteProducto);
+router.post("/skus/generate", productosController.generateSKUs);
 router.post("/import/excel", productosController.importExcel);
 
 export default router;

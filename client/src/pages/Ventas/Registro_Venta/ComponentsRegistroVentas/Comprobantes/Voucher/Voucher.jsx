@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getEmpresaDataByUser } from "@/services/empresa.services";
+import { getProductAttributes } from "@/services/productos.services";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { useUserStore } from "@/store/useStore";
 
@@ -271,9 +272,62 @@ export const generateReceiptContent = async (
   appendContent("Descrip      Cant   P.Unit   TOTAL");
   appendContent("==================================");
 
+  // Fetch Attribute Metadata
+  const metadataMap = {};
+  const idsToFetch = [...new Set((venta.detalles || []).filter(d => d.attributes).map(d => d.id_producto || d.codigo))];
+
+  if (idsToFetch.length > 0) {
+    await Promise.all(idsToFetch.map(async (id) => {
+      try {
+        const data = await getProductAttributes(id);
+        if (data && data.attributes) {
+          const names = {};
+          data.attributes.forEach(a => names[a.id_atributo] = a.nombre);
+          metadataMap[id] = { names };
+        }
+      } catch (e) { console.error(e); }
+    }));
+  }
+
   venta.detalles.forEach(detalle => {
+    let displayName = detalle.nombre || 'N/A';
+
+    // Attempt to parse attributes
+    let attributes = detalle.attributes;
+    if (typeof attributes === 'string') {
+      try { attributes = JSON.parse(attributes); } catch { attributes = null; }
+    }
+
+    if (attributes && Object.keys(attributes).length > 0) {
+      const id = detalle.id_producto || detalle.codigo;
+      const meta = metadataMap[id] || { names: {} };
+      const keys = Object.keys(attributes).sort((a, b) => {
+        const la = meta.names[a] || a;
+        const lb = meta.names[b] || b;
+        if (la === 'Color') return -1;
+        if (lb === 'Color') return 1;
+        return la.localeCompare(lb);
+      });
+      const parts = keys.map(k => {
+        const label = meta.names[k] || k;
+        const val = attributes[k];
+        return `${label}:${val}`;
+      });
+      if (parts.length > 0) displayName += ` [${parts.join(' ')}]`;
+    } else {
+      // Legacy Fallback
+      if (detalle.sku_label) {
+        displayName += ` [${detalle.sku_label}]`;
+      } else if (detalle.nombre_talla || detalle.nombre_tonalidad) {
+        const parts = [];
+        if (detalle.nombre_talla && detalle.nombre_talla !== 'U') parts.push(`T:${detalle.nombre_talla}`);
+        if (detalle.nombre_tonalidad && detalle.nombre_tonalidad !== 'Sin Tonalidad') parts.push(`C:${detalle.nombre_tonalidad}`);
+        if (parts.length > 0) displayName += ` [${parts.join(' ')}]`;
+      }
+    }
+
     appendContent(formatDetail(
-      detalle.nombre || 'N/A',
+      displayName,
       detalle.cantidad || 0,
       Number(detalle.precio_raw || detalle.precio || 0),
       Number(detalle.subtotal_raw || detalle.sub_total || 0)

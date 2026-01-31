@@ -189,43 +189,47 @@ export function NavUser() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem
-                  className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg"
-                  onClick={() => setShowAccount(true)} // abre el drawer de cuenta
-                >
-                  <BadgeCheck className="mr-2 text-blue-400" />
-                  Cuenta
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg"
-                  onClick={() => setShowBilling(true)}
-                >
-                  <CreditCard className="mr-2 text-blue-400" />
-                  Facturación
-                </DropdownMenuItem>
-                {/* Notificaciones: badge minimalista a la derecha */}
-                <DropdownMenuItem
-                  onClick={() => setShowNotifications(true)}
-                  className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg flex items-center gap-2 pr-2"
-                  style={{ minHeight: 38 }}
-                >
-                  <Bell className="text-blue-400 mr-2" />
-                  <span className="text-sm text-blue-900 flex-1">Notificaciones</span>
-                  <Badge
-                    color="primary"
-                    content={notifCount}
-                    className="ml-1 mr-1 px-1 py-0 text-[10px] font-bold min-w-[18px] h-4 rounded-full flex items-center justify-center shadow-none bg-blue-500/90 text-white"
-                    style={{
-                      lineHeight: "16px",
-                      height: 16,
-                      fontWeight: 700,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  />
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
+              {/* Admin-only options: Cuenta, Facturación, Notificaciones */}
+              {String(user.rol) === "1" && (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg"
+                      onClick={() => setShowAccount(true)}
+                    >
+                      <BadgeCheck className="mr-2 text-blue-400" />
+                      Cuenta
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg"
+                      onClick={() => setShowBilling(true)}
+                    >
+                      <CreditCard className="mr-2 text-blue-400" />
+                      Facturación
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setShowNotifications(true)}
+                      className="hover:bg-blue-50/80 focus:bg-blue-100/80 transition-colors rounded-lg flex items-center gap-2 pr-2"
+                      style={{ minHeight: 38 }}
+                    >
+                      <Bell className="text-blue-400 mr-2" />
+                      <span className="text-sm text-blue-900 flex-1">Notificaciones</span>
+                      <Badge
+                        color="primary"
+                        content={notifCount}
+                        className="ml-1 mr-1 px-1 py-0 text-[10px] font-bold min-w-[18px] h-4 rounded-full flex items-center justify-center shadow-none bg-blue-500/90 text-white"
+                        style={{
+                          lineHeight: "16px",
+                          height: 16,
+                          fontWeight: 700,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      />
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem
                 onClick={logout}
                 className="cursor-pointer text-red-600 hover:bg-red-50 active:bg-red-100 font-medium rounded-lg"

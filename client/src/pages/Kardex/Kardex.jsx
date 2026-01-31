@@ -19,6 +19,7 @@ import {
 } from '@heroui/react';
 import TablaKardex from './components/KardexTable';
 import { getProductosKardex, downloadExcelReporteMes, downloadExcelReporteFechas } from '@/services/kardex.services';
+import { getProductAttributes } from "@/services/productos.services";
 import { useAlmacenesKardex, useMarcasKardex, useCategoriasKardex, useSubcategoriasKardex } from '@/hooks/useKardex';
 import { toast } from 'react-hot-toast';
 import { FaRegFilePdf, FaFileExcel } from "react-icons/fa";
@@ -37,6 +38,7 @@ const glassInputClasses = {
 const Kardex = () => {
   const { almacenes } = useAlmacenesKardex();
   const [kardex, setKardex] = useState([]);
+  const [attrMetadataMap, setAttrMetadataMap] = useState({});
   const { marcas } = useMarcasKardex();
   const { categorias } = useCategoriasKardex();
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
@@ -143,6 +145,30 @@ const Kardex = () => {
     fetchKardex();
   }, [fetchKardex]);
 
+  // Fetch metadata for variants
+  useEffect(() => {
+    if (!kardex.length) return;
+    const uniqueIds = [...new Set(kardex.filter(k => k.attributes).map(k => k.codigo))];
+
+    uniqueIds.forEach(async (id) => {
+      if (attrMetadataMap[id]) return;
+      try {
+        const data = await getProductAttributes(id);
+        if (data) {
+          const names = {};
+          const colors = {};
+          if (data.attributes) {
+            data.attributes.forEach(a => {
+              names[a.id_atributo] = a.nombre;
+              if (a.hex) colors[a.nombre] = a.hex;
+            });
+          }
+          setAttrMetadataMap(prev => ({ ...prev, [id]: { names, colors } }));
+        }
+      } catch (e) { console.error(e); }
+    });
+  }, [kardex]);
+
   const handleFiltersChange = (newFilters) => {
     setFilters(prevFilters => ({ ...prevFilters, ...newFilters }));
   };
@@ -214,13 +240,49 @@ const Kardex = () => {
       doc.setDrawColor(230); doc.line(15, cursorY - 4, pageWidth - 15, cursorY - 4);
 
       // Tabla
-      const rows = (kardexItems || []).map(item => [
-        item.codigo || '',
-        item.descripcion || '',
-        item.marca || '',
-        item.stock != null ? String(item.stock) : '',
-        item.um || ''
-      ]);
+      // Tabla
+      const rows = (kardexItems || []).map(item => {
+        let desc = item.descripcion || '';
+
+        let attributes = item.attributes;
+        if (typeof attributes === 'string') {
+          try { attributes = JSON.parse(attributes); } catch { }
+        }
+
+        if (attributes && Object.keys(attributes).length > 0) {
+          const meta = attrMetadataMap[item.codigo] || { names: {} };
+          const keys = Object.keys(attributes).sort((a, b) => {
+            const la = meta.names[a] || a;
+            const lb = meta.names[b] || b;
+            if (la === 'Color') return -1;
+            if (lb === 'Color') return 1;
+            return la.localeCompare(lb);
+          });
+          const parts = keys.map(k => {
+            const label = meta.names[k] || k;
+            const val = attributes[k];
+            return `${label}: ${val}`;
+          });
+          if (parts.length > 0) desc += ` [${parts.join(', ')}]`;
+        } else {
+          // Fallback Legacy
+          const extras = [];
+          if (item.sku_label && item.sku_label !== 'Standard') extras.push(item.sku_label);
+          else {
+            if (item.talla && item.talla !== '-') extras.push(`T: ${item.talla}`);
+            if (item.tonalidad && item.tonalidad !== '-') extras.push(`C: ${item.tonalidad}`);
+          }
+          if (extras.length) desc += ` [${extras.join(', ')}]`;
+        }
+
+        return [
+          item.codigo || '',
+          desc,
+          item.marca || '',
+          item.stock != null ? String(item.stock) : '',
+          item.um || ''
+        ];
+      });
 
       doc.autoTable({
         head: [['Código', 'Descripción', 'Marca', 'Stock', 'UM']],
@@ -462,6 +524,8 @@ const Kardex = () => {
           page={page}
           limit={limit}
           emptyText={!filters.almacen || filters.almacen === '%' ? "Seleccione un almacén para ver el inventario" : "No hay productos en el inventario"}
+          attrMetadataMap={attrMetadataMap}
+          almacenSeleccionado={filters.almacen}
         />
 
         {/* Pagination Footer */}
