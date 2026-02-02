@@ -60,22 +60,7 @@ export const handleSunat = async (datosVenta, details = [], showSuccessToast = t
             detalles: details.length > 0 ? details : datosVenta.detalles
         };
 
-        console.log('[handleSunat] Enviando a /sunat/cpe/invoice/emit:', {
-            tipoComprobante: payload.tipoComprobante,
-            num: payload.num,
-            serieNum: payload.serieNum,
-            hasCompany: !!payload.company,
-            companyRuc: payload.company?.ruc,
-            detallesCount: payload.detalles?.length
-        });
-
         const response = await axios.post('/sunat/cpe/invoice/emit', payload);
-
-        console.log('[handleSunat] Respuesta del servidor:', {
-            ok: response.data.ok,
-            message: response.data.message,
-            statusCode: response.status
-        });
 
         // Backend returns { ok: true, ... } on success
         if (response.data.ok) {

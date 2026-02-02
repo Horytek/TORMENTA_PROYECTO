@@ -196,11 +196,9 @@ export const methods = {
       const payload = req.body;
 
       // Debug: ver qué tiene el req.user del token
-      console.log(`[SunatController] buildAndSendInvoice - req.user:`, JSON.stringify(req.user || {}, null, 2));
-      console.log(`[SunatController] buildAndSendInvoice - req.id_empresa=${req.id_empresa}, req.id_tenant=${req.id_tenant}`);
-      
-      // Debug: ver los details del payload
-      console.log(`[SunatController] Payload details:`, JSON.stringify(payload.details || [], null, 2));
+      // console.log(`[SunatController] buildAndSendInvoice - req.id_empresa=${req.id_empresa}, req.id_tenant=${req.id_tenant}`);
+
+      // Sanitizing correlativo (SUNAT restriction)
 
       // Sanitize correlativo: SUNAT requires purely numeric correlativo in filename (padded to 8)
       // If client sends 'B001-0000001', we strip the prefix.
