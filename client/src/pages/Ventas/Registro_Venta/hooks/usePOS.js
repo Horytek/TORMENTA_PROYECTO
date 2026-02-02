@@ -9,6 +9,7 @@ import {
 } from "@/services/ventas.services";
 import { handlePrintThermal } from '@/services/print.services';
 import { useUserStore } from '@/store/useStore';
+import { getEmpresaDataByUser } from '@/services/empresa.services';
 
 export const usePOS = () => {
     const nombreUsuario = useUserStore((state) => state.nombre);
@@ -39,6 +40,7 @@ export const usePOS = () => {
     const [comprobanteNumber, setComprobanteNumber] = useState(null);
     const [globalFilter, setGlobalFilter] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [empresaData, setEmpresaData] = useState(null);
     const [stockOriginal, setStockOriginal] = useState({});
 
     // --- Initialization ---
@@ -49,6 +51,20 @@ export const usePOS = () => {
             setStockOriginal(stockMap);
         }
     }, [productos, stockOriginal]);
+
+    // --- Fetch Empresa Data for SUNAT ---
+    useEffect(() => {
+        const fetchEmpresa = async () => {
+            if (!nombreUsuario) return;
+            try {
+                const data = await getEmpresaDataByUser(nombreUsuario);
+                setEmpresaData(data);
+            } catch (e) {
+                console.warn('No se pudo obtener datos de empresa:', e.message);
+            }
+        };
+        fetchEmpresa();
+    }, [nombreUsuario]);
 
     // --- Cart Actions ---
     const addToCart = useCallback((product) => {
@@ -300,28 +316,91 @@ export const usePOS = () => {
 
         // Construct Data Object specifically for handleSunatUnique
         // Use detalles_b format which includes nombre, undm for SUNAT
-        // Parse numComprobante: "B600-00000001" => serie="600", correlativo="00000001"
+        // Parse numComprobante: "B600-00000001" => serie="B600", correlativo="00000001"
         const comprobantePartes = numComprobante.split('-');
-        const serieFromComprobante = comprobantePartes[0].substring(1); // Remove prefix (B or F), get "600"
-        const correlativoFromComprobante = comprobantePartes[1] || numComprobante; // Get "00000001"
+        const serieCompleta = comprobantePartes[0]; // "B600" or "F001" - keep full serie with prefix
+        const correlativoFromComprobante = comprobantePartes[1] || '00000001'; // Get "00000001"
+
+        // Calculate tax values for SUNAT
+        const mtoOperGravadas = totals.subtotal; // Base gravada (sin IGV)
+        const mtoIGV = totals.igv;
+        const mtoImpVenta = totals.total;
+
+        // Determine document type code and client document type
+        const tipoDocMapping = { 'Boleta': '03', 'Factura': '01' };
+        const tipoDoc = tipoDocMapping[documentType] || '03';
+
+        // Client document type: 1 = DNI, 6 = RUC
+        const clientDoc = client?.documento || '00000000';
+        const clientTipoDoc = clientDoc.length === 8 ? '1' : clientDoc.length === 11 ? '6' : '0';
 
         const datosVentaSunat = {
-            ...datosVenta,
+            // Core SUNAT fields matching ublInvoiceBuilder expectations
+            ublVersion: '2.1',
+            tipoOperacion: '0101', // Venta interna
+            tipoDoc: tipoDoc,
+            serie: serieCompleta,
+            correlativo: correlativoFromComprobante,
+            fechaEmision: fechaIsoLocal,
+            tipoMoneda: 'PEN',
+
+            // Company data for credential resolution and XML building
+            company: empresaData ? {
+                ruc: empresaData.ruc,
+                razonSocial: empresaData.razonSocial,
+                nombreComercial: empresaData.nombreComercial,
+                address: {
+                    direccion: empresaData.direccion,
+                    provincia: empresaData.provincia,
+                    departamento: empresaData.departamento,
+                    distrito: empresaData.distrito,
+                    ubigueo: empresaData.ubigueo
+                }
+            } : null,
+
+            // Client data for XML
+            client: {
+                tipoDoc: clientTipoDoc,
+                numDoc: clientDoc,
+                rznSocial: client?.nombre || 'Clientes Varios'
+            },
+
+            // Tax totals
+            mtoOperGravadas: mtoOperGravadas,
+            mtoIGV: mtoIGV,
+            mtoImpVenta: mtoImpVenta,
+
+            // Legends (optional but recommended for SUNAT)
+            legends: [
+                { code: '1000', value: `SON ${mtoImpVenta.toFixed(2)} SOLES` }
+            ],
+
+            // Details array matching ublInvoiceBuilder format
+            details: cart.map(item => {
+                const precioConIgv = parseFloat(item.precio);
+                const precioSinIgv = precioConIgv / 1.18;
+                const cantidad = item.cantidad;
+                const mtoValorVenta = precioSinIgv * cantidad;
+                const igvItem = mtoValorVenta * 0.18;
+
+                return {
+                    codProducto: item.codigo,
+                    descripcion: item.nombre + (item.nombre_sku ? ` - ${item.nombre_sku}` : ''),
+                    cantidad: cantidad,
+                    unidad: item.undm || 'NIU',
+                    mtoValorVenta: mtoValorVenta.toFixed(2),
+                    mtoValorUnitario: precioSinIgv.toFixed(2),
+                    mtoPrecioUnitario: precioConIgv.toFixed(2),
+                    mtoBaseIgv: mtoValorVenta.toFixed(2),
+                    igv: igvItem.toFixed(2),
+                    tipAfeIgv: 10 // Gravado - Operación Onerosa
+                };
+            }),
+
+            // Keep original fields for backward compatibility
             tipoComprobante: documentType,
-            num: correlativoFromComprobante, // Only the correlativo part for SUNAT
-            serieNum: serieFromComprobante,  // The actual serie from the comprobante
-            ruc: client?.documento || '',
-            cliente: client?.nombre || 'Clientes Varios',
-            // Override detalles with proper format for SUNAT
-            detalles: cart.map(item => ({
-                codigo: item.codigo,
-                nombre: item.nombre + (item.nombre_sku ? ` - ${item.nombre_sku}` : ''), // Append SKU info to name for SUNAT
-                cantidad: item.cantidad,
-                precio: parseFloat(item.precio),
-                undm: item.undm || 'NIU',
-                descuento: 0,
-                subtotal: (item.cantidad * item.precio).toFixed(2)
-            }))
+            num: correlativoFromComprobante,
+            serieNum: serieCompleta
         };
 
         // Call Legacy Save Function

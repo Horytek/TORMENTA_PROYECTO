@@ -55,20 +55,39 @@ export const handleGuardarCliente = async (clienteData) => {
 // --- handleSunat (handle_sunat.js) ---
 export const handleSunat = async (datosVenta, details = [], showSuccessToast = true) => {
     try {
-        const response = await axios.post('/sunat/cpe/invoice/emit', {
+        const payload = {
             ...datosVenta,
             detalles: details.length > 0 ? details : datosVenta.detalles
+        };
+
+        console.log('[handleSunat] Enviando a /sunat/cpe/invoice/emit:', {
+            tipoComprobante: payload.tipoComprobante,
+            num: payload.num,
+            serieNum: payload.serieNum,
+            hasCompany: !!payload.company,
+            companyRuc: payload.company?.ruc,
+            detallesCount: payload.detalles?.length
         });
+
+        const response = await axios.post('/sunat/cpe/invoice/emit', payload);
+
+        console.log('[handleSunat] Respuesta del servidor:', {
+            ok: response.data.ok,
+            message: response.data.message,
+            statusCode: response.status
+        });
+
         // Backend returns { ok: true, ... } on success
         if (response.data.ok) {
             if (showSuccessToast) toast.success("Enviado a SUNAT exitosamente");
             return true;
         } else {
+            console.error('[handleSunat] SUNAT rechazó:', response.data);
             toast.error("Error al enviar a SUNAT: " + (response.data.message || 'Respuesta inesperada'));
             return false;
         }
     } catch (error) {
-        console.error('Error enviando a SUNAT:', error);
+        console.error('[handleSunat] Error de conexión:', error.response?.data || error.message);
         toast.error("Error de conexión con servicio SUNAT");
         return false;
     }
@@ -105,10 +124,26 @@ export const handleCobrar = async (datosVenta, callback, datosVentaSunat, useles
             let sunatSuccess = false;
             let sunatAttempt = false;
 
-            if (datosVentaSunat && (datosVenta.tipoComprobante === 'Boleta' || datosVenta.tipoComprobante === 'Factura')) {
+            // CRITICAL FIX: Check datosVentaSunat.tipoComprobante (not datosVenta which uses id_comprobante)
+            const tipoComp = datosVentaSunat?.tipoComprobante || datosVenta?.id_comprobante;
+            console.log('[handleCobrar] Verificando SUNAT - tipoComprobante:', tipoComp, 'datosVentaSunat presente:', !!datosVentaSunat);
+
+            if (datosVentaSunat && (tipoComp === 'Boleta' || tipoComp === 'Factura')) {
                 sunatAttempt = true;
+                console.log('[handleCobrar] Intentando envío a SUNAT...', {
+                    id_venta,
+                    tipoComprobante: tipoComp,
+                    hasCompany: !!datosVentaSunat.company
+                });
+
                 // Intentamos SUNAT silenciando su toast de éxito interno
-                sunatSuccess = await handleSunatUnique(datosVentaSunat, false).catch(err => console.error("Error silencioso SUNAT:", err));
+                try {
+                    sunatSuccess = await handleSunatUnique(datosVentaSunat, false);
+                    console.log('[handleCobrar] Resultado SUNAT:', sunatSuccess);
+                } catch (err) {
+                    console.error("[handleCobrar] Error SUNAT:", err);
+                    sunatSuccess = false;
+                }
 
                 // 3. Si SUNAT fue exitoso, actualizar estado_sunat en BD
                 if (sunatSuccess && id_venta) {
@@ -119,10 +154,13 @@ export const handleCobrar = async (datosVenta, callback, datosVentaSunat, useles
                             estado_venta: 1,
                             usua: nombreUsuario
                         });
+                        console.log('[handleCobrar] estado_sunat actualizado a 1');
                     } catch (err) {
                         console.error("Error actualizando estado_sunat:", err);
                     }
                 }
+            } else {
+                console.log('[handleCobrar] SUNAT no aplica para este tipo de comprobante:', tipoComp);
             }
 
             if (sunatAttempt) {

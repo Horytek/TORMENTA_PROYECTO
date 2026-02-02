@@ -245,7 +245,7 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
               }}
             >
               <TableHeader>
-                {["Fecha", "Hora", "Usuario", "Documento", "Origen", "Destino", "Variante", "Entra", "Sale", "Stock", "Estado"].map((header) => (
+                {["Fecha", "Hora", "Usuario", "Documento", "Origen", "Destino", "Variante", "Entra", "Sale", "Stock (Var.)", "Estado"].map((header) => (
                   <TableColumn key={header}>{header}</TableColumn>
                 ))}
               </TableHeader>
@@ -287,7 +287,30 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
                     </TableCell>
                     {/* Variante */}
                     <TableCell className="text-slate-600 dark:text-zinc-400 whitespace-nowrap">
-                      {transaction["sku_label"] || `${transaction["tonalidad"]} - ${transaction["talla"]}`}
+                      {(() => {
+                        const label = transaction["sku_label"];
+                        const attrs = transaction["sku_attrs"];
+
+                        if (label && label !== 'Standard' && label !== 'Default') return label;
+
+                        // Try to parse attributes if label is generic
+                        try {
+                          const parsed = typeof attrs === 'string' ? JSON.parse(attrs) : attrs;
+                          if (parsed && Object.keys(parsed).length > 0) {
+                            // Format as "Key: Value, Key: Value"
+                            return Object.entries(parsed)
+                              .map(([k, v]) => `${v}`)
+                              .join(' - ');
+                          }
+                        } catch (e) { }
+
+                        // Fallback
+                        if (transaction["tonalidad"] !== '-' || transaction["talla"] !== '-') {
+                          return `${transaction["tonalidad"]} - ${transaction["talla"]}`;
+                        }
+
+                        return "Standard";
+                      })()}
                     </TableCell>
                     {/* Entra */}
                     <TableCell className="whitespace-nowrap">

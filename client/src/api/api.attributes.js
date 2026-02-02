@@ -23,3 +23,6 @@ export const getCategoryAttributesRequest = async (id_categoria) =>
 
 export const linkCategoryAttributesRequest = async (data) =>
     await axios.post("/attributes/link-category", data);
+
+export const updateAttributeValueRequest = async (id, data) =>
+    await axios.put(`/attributes/values/${id}`, data);

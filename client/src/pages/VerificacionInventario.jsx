@@ -144,15 +144,57 @@ const DetalleLote = ({ lote, onClose, onConfirm, isApproval, almacenes, isDisabl
                                             <TableColumn align="end">CANT.</TableColumn>
                                         </TableHeader>
                                         <TableBody>
-                                            {detalles.map((d, idx) => (
-                                                <TableRow key={idx}>
-                                                    <TableCell>{d.producto}</TableCell>
-                                                    <TableCell>{d.marca}</TableCell>
-                                                    <TableCell>{d.tonalidad || '-'}</TableCell>
-                                                    <TableCell>{d.talla || '-'}</TableCell>
-                                                    <TableCell>{d.cantidad}</TableCell>
-                                                </TableRow>
-                                            ))}
+                                            {detalles.map((d, idx) => {
+                                                // Parse attributes if available
+                                                let color = d.tonalidad;
+                                                let talla = d.talla;
+
+                                                if (!color && !talla && d.attributes_json) {
+                                                    try {
+                                                        const attrs = typeof d.attributes_json === 'string'
+                                                            ? JSON.parse(d.attributes_json)
+                                                            : d.attributes_json;
+
+                                                        // Try to find keys case-insensitive
+                                                        const keys = Object.keys(attrs);
+                                                        const colorKey = keys.find(k => k.toLowerCase() === 'color');
+                                                        const tallaKey = keys.find(k => k.toLowerCase() === 'talla');
+
+                                                        if (colorKey) color = attrs[colorKey];
+                                                        if (tallaKey) talla = attrs[tallaKey];
+
+                                                        // Formatting: If object (id, label) or just string
+                                                        if (typeof color === 'object' && color?.label) color = color.label;
+                                                        if (typeof talla === 'object' && talla?.label) talla = talla.label;
+
+                                                    } catch (e) {
+                                                        console.error("Error parsing attributes", e);
+                                                    }
+                                                }
+
+                                                // Fallback to SKU code info if still empty (e.g. "Name - Color - Size")
+                                                if ((!color || !talla) && d.sku_code) {
+                                                    // This is a naive heuristic, better to rely on attributes
+                                                    // But visually presenting the full SKU might be better than empty
+                                                }
+
+                                                return (
+                                                    <TableRow key={idx}>
+                                                        <TableCell>
+                                                            <div className="flex flex-col">
+                                                                <span>{d.producto}</span>
+                                                                {d.sku_code && d.sku_code !== d.producto && (
+                                                                    <span className="text-[10px] text-slate-400">{d.sku_code}</span>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>{d.marca}</TableCell>
+                                                        <TableCell>{color || '-'}</TableCell>
+                                                        <TableCell>{talla || '-'}</TableCell>
+                                                        <TableCell>{d.cantidad}</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
                                         </TableBody>
                                     </Table>
 

@@ -161,6 +161,7 @@ const approveLote = async (req, res) => {
         const cantidades = detalles.map(d => d.cantidad);
         const tonalidades = detalles.map(d => d.id_tonalidad);
         const tallas = detalles.map(d => d.id_talla);
+        const skus = detalles.map(d => d.id_sku); // Pass the resolved SKU
 
         // HACK: Obtener numero comprobante
         const conn2 = await getConnection();
@@ -193,7 +194,8 @@ const approveLote = async (req, res) => {
                 observacion: `Generado auto desde Lote ${id_lote}`,
                 usuario: req.user.username || 'Sistema',
                 tonalidad: tonalidades,
-                talla: tallas
+                talla: tallas,
+                skus: skus // Explicitly pass SKUs
             },
             id_tenant: id_tenant,
             connection: { remoteAddress: '::1' },
@@ -272,7 +274,7 @@ const getLoteDetalle = async (req, res) => {
         const [rows] = await connection.query(`
             SELECT d.*, p.descripcion as producto, m.nom_marca as marca, 
                    t.nombre as tonalidad, ta.nombre as talla,
-                   sku.sku as sku_code
+                   sku.sku as sku_code, sku.attributes_json
             FROM detalle_lote_inventario d
             INNER JOIN producto p ON d.id_producto = p.id_producto
             INNER JOIN marca m ON p.id_marca = m.id_marca
@@ -281,6 +283,32 @@ const getLoteDetalle = async (req, res) => {
             LEFT JOIN producto_sku sku ON d.id_sku = sku.id_sku
             WHERE d.id_lote = ?
         `, [id]);
+
+        // Resolve Attribute Names for JSON keys
+        if (rows.length > 0) {
+            // Fetch all attributes for tenant to map IDs to Names
+            // Assuming not too many attributes defined in system
+            const [attrs] = await connection.query("SELECT id_atributo, nombre FROM atributo WHERE id_tenant = ?", [req.id_tenant]);
+            const attrMap = new Map();
+            attrs.forEach(a => attrMap.set(String(a.id_atributo), a.nombre));
+
+            rows.forEach(row => {
+                if (row.attributes_json) {
+                    try {
+                        const raw = typeof row.attributes_json === 'string' ? JSON.parse(row.attributes_json) : row.attributes_json;
+                        const resolved = {};
+                        Object.keys(raw).forEach(k => {
+                            // If key is an ID in our map, use name. Else keep key.
+                            const name = attrMap.get(String(k)) || k;
+                            resolved[name] = raw[k];
+                        });
+                        row.attributes_json = resolved; // Replace with resolved keys
+                    } catch (e) {
+                        // ignore parse error
+                    }
+                }
+            });
+        }
 
         res.json({ code: 1, data: rows });
 

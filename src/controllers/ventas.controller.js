@@ -1327,6 +1327,30 @@ const exchangeProducto = async (req, res) => {
         cliente: newSaleData.nombre_cliente,
         fecha_iso: newSaleData.fecha_iso
       };
+
+      // Add company data for SUNAT credential resolution
+      const [empresaResult] = await connection.query(
+        `SELECT e.ruc, e.razonSocial, e.nombreComercial, e.direccion, e.provincia, e.departamento, e.distrito, e.ubigueo 
+         FROM empresa e 
+         INNER JOIN usuario u ON u.id_empresa = e.id_empresa
+         WHERE u.usua = ? AND e.id_tenant = ? LIMIT 1`,
+        [usuario, id_tenant]
+      );
+      if (empresaResult.length > 0) {
+        const emp = empresaResult[0];
+        sunatData.company = {
+          ruc: emp.ruc,
+          razonSocial: emp.razonSocial,
+          nombreComercial: emp.nombreComercial,
+          address: {
+            direccion: emp.direccion,
+            provincia: emp.provincia,
+            departamento: emp.departamento,
+            distrito: emp.distrito,
+            ubigueo: emp.ubigueo
+          }
+        };
+      }
     }
 
     await connection.commit();

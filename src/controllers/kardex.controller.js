@@ -479,6 +479,9 @@ const getDetalleKardex = async (req, res) => {
             -- Fallback Legacy SKU Join
             LEFT JOIN producto_sku sku_legacy ON p.id_producto = sku_legacy.id_producto AND sku_legacy.sku = CONCAT(p.descripcion, ' - ', IFNULL(t.nombre,''), ' - ', IFNULL(ta.nombre,''))
 
+            -- Attempt to parse JSON attributes if needed (MySQL 5.7+ supports JSON_UNQUOTE(JSON_EXTRACT(...)))
+            -- But purely doing it in SQL is hard if keys vary. We rely on JS post-processing.
+
             WHERE bn.fecha >= ?
                 AND bn.fecha < DATE_ADD(?, INTERVAL 1 DAY)
                 AND bn.id_producto = ?

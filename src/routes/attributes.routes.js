@@ -13,6 +13,7 @@ router.put("/:id", auth, methods.updateAttribute);
 
 router.get("/:id/values", auth, methods.getAttributeValues);
 router.post("/:id/values", auth, methods.createAttributeValue);
+router.put("/values/:id_valor", auth, methods.updateAttributeValue);
 router.delete("/values/:id_valor", auth, methods.deleteAttributeValue);
 
 // Categories

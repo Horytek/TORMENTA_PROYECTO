@@ -427,6 +427,8 @@ const insertNotaAndDetalle = async (req, res) => {
     cantidad,
     observacion,
     usuario,
+    tonalidad,
+    talla
   } = req.body;
   const id_tenant = req.id_tenant;
 
@@ -527,10 +529,9 @@ const insertNotaAndDetalle = async (req, res) => {
     const detalleValues = [];
     const detalleParams = [];
 
-    // Asumimos que id_tonalidad y id_talla vienen en el body
     const tonalidades = req.body.tonalidad || [];
     const tallas = req.body.talla || [];
-    const skus = req.body.sku || []; // Read SKUs
+    const skus = req.body.skus || req.body.sku || []; // Support both new 'skus' and legacy 'sku'
     // New: Dynamic attributes support
     const atributos = req.body.atributos || [];
 
@@ -569,18 +570,17 @@ const insertNotaAndDetalle = async (req, res) => {
       for (let i = 0; i < producto.length; i++) {
         const id_producto = producto[i];
         const cantidadProducto = cantidad[i];
+        // MySQL guarantees sequential IDs for batch inserts
         const id_detalle = firstDetalleId + i;
         const id_ton = tonalidades[i] || null;
         const id_tal = tallas[i] || null;
         const passed_sku = skus[i] || null;
 
-        // Resolve SKU (Dynamically create if needed)
-        // If passed_sku is present, we prioritize it (or validate it?)
-        // If passed_sku is present, we use it directly.
         let id_sku;
         if (passed_sku) {
           id_sku = passed_sku;
         } else {
+          // Fallback if no SKU was passed (legacy support)
           id_sku = await resolveSku(connection, id_producto, id_ton, id_tal, id_tenant);
         }
 
@@ -590,8 +590,8 @@ const insertNotaAndDetalle = async (req, res) => {
           [id_sku, almacenD, id_tenant]
         );
 
-        const stockAnterior = currentStockRes.length > 0 ? currentStockRes[0].stock : 0;
-        const totalStock = Number(stockAnterior) + Number(cantidadProducto);
+        const stockAnterior = currentStockRes.length > 0 ? parseFloat(currentStockRes[0].stock) : 0;
+        const totalStock = stockAnterior + parseFloat(cantidadProducto);
 
         // Update Stock
         await connection.query(`
@@ -600,7 +600,7 @@ const insertNotaAndDetalle = async (req, res) => {
             ON DUPLICATE KEY UPDATE stock = stock + VALUES(stock)
         `, [id_sku, almacenD, cantidadProducto, id_tenant]);
 
-        // Bitacora (Legacy columns preserved for now)
+        // Bitacora - Insert with CORRECT id_detalle_nota
         await connection.query(
           `INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [id_nota, id_producto, almacenD, id_detalle, cantidadProducto, stockAnterior, totalStock, fecha, id_tenant, id_ton, id_tal]

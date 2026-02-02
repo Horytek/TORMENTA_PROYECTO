@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import {
     Card, CardBody, Button, Input, Tab, Tabs, Chip, Modal, ModalContent,
     ModalHeader, ModalBody, ModalFooter, Select, SelectItem, useDisclosure,
-    Listbox, ListboxItem, ScrollShadow, Divider, CardHeader, Autocomplete, AutocompleteItem
+    Listbox, ListboxItem, ScrollShadow, Divider, CardHeader, Autocomplete, AutocompleteItem, Switch
 } from "@heroui/react";
-import { Plus, Trash2, Edit2, Settings, Search, Check, Tag, Layers, Calendar, Hash, CheckSquare, ListChecks } from "lucide-react";
+import { Plus, Trash2, Edit2, Settings, Search, Check, Tag, Layers, Calendar, Hash, CheckSquare, ListChecks, Eye, Filter, AlertCircle, EyeOff, X } from "lucide-react";
 
-import { getAttributes, createAttribute, updateAttribute, getAttributeValues, createAttributeValue, deleteAttributeValue, getCategoryAttributes, linkCategoryAttributes } from "@/services/attributes.services";
+import { getAttributes, createAttribute, updateAttribute, getAttributeValues, createAttributeValue, updateAttributeValue, deleteAttributeValue, getCategoryAttributes, linkCategoryAttributes } from "@/services/attributes.services";
 import { getCategorias } from "@/services/categoria.services";
 import { getTonalidades, createTonalidad, deleteTonalidad } from "@/services/tonalidad.services";
 import { getTallas, createTalla, deleteTalla } from "@/services/talla.services";
@@ -24,6 +24,7 @@ export default function AttributesPage() {
     const [formData, setFormData] = useState({});
 
     // Values Management State
+    const [editingValueId, setEditingValueId] = useState(null); // ID being edited
     const [attrValues, setAttrValues] = useState([]);
     const [newValue, setNewValue] = useState("");
     const [newHex, setNewHex] = useState("#000000");
@@ -143,9 +144,42 @@ export default function AttributesPage() {
 
         if (success) {
             toast.success("Eliminado");
+            // If deleting the one being edited, cancel edit
+            if (editingValueId === id_item) cancelEdit();
             openValuesModal(selectedAttr);
         } else {
             toast.error("Error al eliminar");
+        }
+    };
+
+    const startEdit = (val) => {
+        setEditingValueId(val.id);
+        setNewValue(val.valor);
+        setNewHex(val.hex || "#000000");
+    };
+
+    const cancelEdit = () => {
+        setEditingValueId(null);
+        setNewValue("");
+        setNewHex("#000000");
+    };
+
+    const handleUpdateValue = async () => {
+        if (!newValue || !newValue.trim() || !editingValueId) return;
+
+        const payload = {
+            valor: newValue,
+            metadata: selectedAttr.tipo_input === 'COLOR' ? { hex: newHex } : null
+        };
+
+        const success = await updateAttributeValue(editingValueId, payload);
+
+        if (success) {
+            toast.success("Valor actualizado");
+            cancelEdit();
+            openValuesModal(selectedAttr);
+        } else {
+            toast.error("Error o duplicado");
         }
     };
 
@@ -205,7 +239,7 @@ export default function AttributesPage() {
                 <Button
                     color="primary"
                     className="shadow-lg shadow-blue-500/30 font-semibold"
-                    onPress={() => { setModalMode("create_attr"); setFormData({}); onOpen(); }}
+                    onPress={() => { setModalMode("create_attr"); setFormData({ es_visible: true }); onOpen(); }}
                     startContent={<Plus size={18} />}
                 >
                     Nuevo Atributo
@@ -222,9 +256,14 @@ export default function AttributesPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-primary transition-colors">{attr.nombre}</h4>
-                                    <Chip size="sm" variant="flat" color="secondary" className="mt-1 h-5 text-[10px] uppercase font-bold">
-                                        {attr.tipo_input}
-                                    </Chip>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        <Chip size="sm" variant="flat" color="secondary" className="h-5 text-[10px] uppercase font-bold">
+                                            {attr.tipo_input}
+                                        </Chip>
+                                        {attr.es_visible === 1 && <Chip size="sm" variant="flat" className="h-5 text-[10px] uppercase bg-green-100 text-green-700"><Eye size={10} /></Chip>}
+                                        {attr.es_filtro === 1 && <Chip size="sm" variant="flat" className="h-5 text-[10px] uppercase bg-blue-100 text-blue-700"><Filter size={10} /></Chip>}
+                                        {attr.es_requerido === 1 && <Chip size="sm" variant="flat" className="h-5 text-[10px] uppercase bg-red-100 text-red-700"><AlertCircle size={10} /></Chip>}
+                                    </div>
                                 </div>
                             </div>
                             <DropdownActions attr={attr} onEdit={() => { setSelectedAttr(attr); setFormData(attr); setModalMode("edit_attr"); onOpen(); }} onValues={() => openValuesModal(attr)} />
@@ -253,7 +292,7 @@ export default function AttributesPage() {
                 {/* Empty State / Add New Card */}
                 <Card
                     isPressable
-                    onPress={() => { setModalMode("create_attr"); setFormData({}); onOpen(); }}
+                    onPress={() => { setModalMode("create_attr"); setFormData({ es_visible: true }); onOpen(); }}
                     className="border-2 border-dashed border-slate-200 dark:border-zinc-800 bg-transparent shadow-none hover:border-primary hover:bg-slate-50 dark:hover:bg-zinc-900 transition-all flex items-center justify-center p-6 h-full min-h-[200px]"
                 >
                     <div className="flex flex-col items-center gap-3 text-slate-400 group-hover:text-primary transition-colors">
@@ -422,32 +461,49 @@ export default function AttributesPage() {
                             <ModalBody className="p-6">
                                 {modalMode === "manage_values" ? (
                                     <div className="space-y-6">
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 items-end">
                                             {selectedAttr?.tipo_input === "COLOR" && (
                                                 <input
                                                     type="color"
                                                     value={newHex}
                                                     onChange={(e) => setNewHex(e.target.value)}
                                                     className="h-12 w-12 p-1 rounded-xl border border-slate-200 cursor-pointer bg-white"
+                                                    title="Seleccionar color"
                                                 />
                                             )}
-                                            <Input
-                                                value={newValue}
-                                                onChange={(e) => setNewValue(e.target.value)}
-                                                placeholder={selectedAttr?.tipo_input === "COLOR" ? "Nombre del color (ej: Rojo)" : "Escribe un valor..."}
-                                                variant="faded"
-                                                size="lg"
-                                                startContent={<Tag size={16} className="text-slate-400" />}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleAddValue()}
-                                            />
+                                            <div className="flex-1">
+                                                <Input
+                                                    value={newValue}
+                                                    onChange={(e) => setNewValue(e.target.value)}
+                                                    placeholder={selectedAttr?.tipo_input === "COLOR" ? "Nombre del color (ej: Rojo)" : "Escribe un valor..."}
+                                                    variant="faded"
+                                                    size="lg"
+                                                    label={editingValueId ? "Editando valor" : undefined}
+                                                    startContent={<Tag size={16} className="text-slate-400" />}
+                                                    onKeyDown={(e) => e.key === 'Enter' && (editingValueId ? handleUpdateValue() : handleAddValue())}
+                                                />
+                                            </div>
 
-                                            <Button isIconOnly color="primary" size="lg" onPress={handleAddValue}>
-                                                <Plus />
-                                            </Button>
+                                            {editingValueId ? (
+                                                <div className="flex gap-1">
+                                                    <Button isIconOnly color="success" size="lg" onPress={handleUpdateValue} title="Guardar Cambios">
+                                                        <Check size={20} />
+                                                    </Button>
+                                                    <Button isIconOnly color="danger" variant="flat" size="lg" onPress={cancelEdit} title="Cancelar Edición">
+                                                        <X size={20} />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <Button isIconOnly color="primary" size="lg" onPress={handleAddValue} title="Agregar Valor">
+                                                    <Plus size={24} />
+                                                </Button>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
-                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Valores Actuales</span>
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                                Valores Actuales <span className="font-normal normal-case text-slate-500">(Clic para editar)</span>
+                                            </span>
                                             <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto p-4 border border-dashed border-slate-200 rounded-xl bg-slate-50 dark:bg-zinc-900/50">
                                                 {attrValues.length === 0 && (
                                                     <div className="w-full text-center py-8 text-slate-400">
@@ -457,12 +513,13 @@ export default function AttributesPage() {
                                                 {attrValues.map(val => (
                                                     <Chip
                                                         key={val.id}
+                                                        onClick={() => startEdit(val)}
                                                         onClose={() => handleDeleteValue(val.id)}
                                                         variant="flat"
-                                                        color="primary"
+                                                        color={editingValueId === val.id ? "warning" : "primary"}
                                                         startContent={val.hex ? <div className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: val.hex }} /> : null}
                                                         classNames={{
-                                                            base: "pl-2 pr-1 h-8 param-chip hover:bg-primary-100 transition-colors cursor-default gap-2",
+                                                            base: `pl-2 pr-1 h-8 param-chip transition-all cursor-pointer gap-2 ${editingValueId === val.id ? 'ring-2 ring-warning' : 'hover:bg-primary-100'}`,
                                                             content: "font-medium text-slate-700 dark:text-slate-200"
                                                         }}
                                                     >
@@ -522,6 +579,61 @@ export default function AttributesPage() {
                                         <p className="text-xs text-slate-400 mt-1">
                                             Determina si el atributo usa tablas maestras del sistema (Color/Talla) o listas personalizadas.
                                         </p>
+
+                                        <Divider className="my-4" />
+
+                                        <div className="space-y-4">
+                                            <h5 className="font-semibold text-sm text-slate-700 dark:text-slate-300">Configuración Avanzada</h5>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <Switch
+                                                    isSelected={!!formData.es_visible}
+                                                    onValueChange={(val) => setFormData({ ...formData, es_visible: val })}
+                                                    classNames={{
+                                                        base: "inline-flex flex-row-reverse w-full max-w-md bg-content1 hover:bg-content2 items-center justify-between cursor-pointer rounded-lg gap-2 p-2 border-2 border-transparent data-[selected=true]:border-primary",
+                                                        wrapper: "p-0 h-4 overflow-visible",
+                                                        thumb: "w-6 h-6 border-2 shadow-sm",
+                                                        label: "w-full text-small text-default-600 font-medium",
+                                                    }}
+                                                >
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-sm font-medium">Visible al Cliente</span>
+                                                        <span className="text-xs text-slate-400">Mostrar en detalles del producto</span>
+                                                    </div>
+                                                </Switch>
+
+                                                <Switch
+                                                    isSelected={!!formData.es_filtro}
+                                                    onValueChange={(val) => setFormData({ ...formData, es_filtro: val })}
+                                                    classNames={{
+                                                        base: "inline-flex flex-row-reverse w-full max-w-md bg-content1 hover:bg-content2 items-center justify-between cursor-pointer rounded-lg gap-2 p-2 border-2 border-transparent data-[selected=true]:border-primary",
+                                                        wrapper: "p-0 h-4 overflow-visible",
+                                                        thumb: "w-6 h-6 border-2 shadow-sm",
+                                                        label: "w-full text-small text-default-600 font-medium",
+                                                    }}
+                                                >
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-sm font-medium">Usar como Filtro</span>
+                                                        <span className="text-xs text-slate-400">Aparece en filtros laterales</span>
+                                                    </div>
+                                                </Switch>
+
+                                                <Switch
+                                                    isSelected={!!formData.es_requerido}
+                                                    onValueChange={(val) => setFormData({ ...formData, es_requerido: val })}
+                                                    classNames={{
+                                                        base: "inline-flex flex-row-reverse w-full max-w-md bg-content1 hover:bg-content2 items-center justify-between cursor-pointer rounded-lg gap-2 p-2 border-2 border-transparent data-[selected=true]:border-primary",
+                                                        wrapper: "p-0 h-4 overflow-visible",
+                                                        thumb: "w-6 h-6 border-2 shadow-sm",
+                                                        label: "w-full text-small text-default-600 font-medium",
+                                                    }}
+                                                >
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-sm font-medium">Requerido</span>
+                                                        <span className="text-xs text-slate-400">Obligatorio al crear producto</span>
+                                                    </div>
+                                                </Switch>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </ModalBody>

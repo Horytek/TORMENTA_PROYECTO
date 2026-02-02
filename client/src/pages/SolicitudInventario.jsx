@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button, Input, Textarea, Select, SelectItem, Card, CardBody, Autocomplete, AutocompleteItem, Chip } from "@heroui/react";
 import axios from "@/api/axios";
 import { toast } from "react-hot-toast";
-import { Plus, X, Box, Save } from "lucide-react";
+import { Plus, X, Box, Save, Layers } from "lucide-react";
 import { useAuth } from "@/context/Auth/AuthProvider";
 import { getProductVariants } from "@/services/productos.services";
+import VariantSelectionModal from "@/components/Modals/VariantSelectionModal";
 
 export default function SolicitudInventario() {
     const { user } = useAuth();
@@ -16,7 +17,7 @@ export default function SolicitudInventario() {
     // Lista de items del lote
     const [items, setItems] = useState([]);
 
-    // Item temporal siendo agregado
+    // Item temporal siendo agregado (Solo para productos simples o selección inicial)
     const [tempItem, setTempItem] = useState({
         id_producto: "",
         id_sku: "",
@@ -24,6 +25,7 @@ export default function SolicitudInventario() {
     });
 
     const [variants, setVariants] = useState([]); // SKUs for selected product
+    const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -31,7 +33,7 @@ export default function SolicitudInventario() {
 
     const loadData = async () => {
         try {
-            const pRes = await axios.get("/productos");
+            const pRes = await axios.get("/productos?limit=1000"); // Ensure we get enough products
             setProductos(pRes.data.data || []);
         } catch (error) {
             console.error(error);
@@ -49,7 +51,7 @@ export default function SolicitudInventario() {
 
             try {
                 // Fetch SKUs
-                const skus = await getProductVariants(tempItem.id_producto, true); // true = include zero stock (irrelevant here but consistent)
+                const skus = await getProductVariants(tempItem.id_producto, true); // true = include zero stock
                 setVariants(skus || []);
                 setTempItem(prev => ({ ...prev, id_sku: "" }));
             } catch (error) {
@@ -59,40 +61,55 @@ export default function SolicitudInventario() {
         fetchVariants();
     }, [tempItem.id_producto]);
 
-    const addItem = () => {
+    // Add Simple Product (No variants)
+    const addSimpleItem = () => {
         if (!tempItem.id_producto || !tempItem.cantidad) {
             toast.error("Seleccione producto y cantidad");
             return;
         }
 
-        // If product has variants, SKU is required
-        if (variants.length > 0 && !tempItem.id_sku) {
-            toast.error("Seleccione una variante");
-            return;
-        }
-
         const prod = productos.find(p => p.id_producto === parseInt(tempItem.id_producto));
-        let skuName = "Standard";
 
-        if (tempItem.id_sku) {
-            const v = variants.find(v => String(v.id_sku) === String(tempItem.id_sku));
-            skuName = v ? (v.nombre_sku || v.sku) : "Desconocido"; // backend returns 'nombre_sku' or 'sku'
-        } else if (variants.length > 0) {
-            // Should be caught above, but safety check
-            skuName = "Variante no seleccionada";
+        // Safety check if it unexpectedly has variants
+        if (variants.length > 0) {
+            setIsVariantModalOpen(true);
+            return;
         }
 
         const newItem = {
             id: Date.now(),
             id_producto: tempItem.id_producto,
-            id_sku: tempItem.id_sku || null,
-            cantidad: tempItem.cantidad,
+            id_sku: null, // Simple product usually has null id_sku or default? Assuming null for now based on logic
+            cantidad: parseInt(tempItem.cantidad),
             productoName: prod?.descripcion || "Desconocido",
-            skuName: skuName
+            skuName: "Standard",
+            attributes: []
         };
 
-        setItems([...items, newItem]);
-        setTempItem({ ...tempItem, id_sku: "", cantidad: 1 });
+        setItems(prev => [...prev, newItem]);
+        setTempItem({ ...tempItem, cantidad: 1 });
+        toast.success("Producto agregado");
+    };
+
+    // Callback from Variant Modal
+    const handleVariantConfirm = (selectedVariants) => {
+        if (!selectedVariants || selectedVariants.length === 0) return;
+
+        const prod = productos.find(p => p.id_producto === parseInt(tempItem.id_producto));
+        const newItems = selectedVariants.map((v, index) => ({
+            id: Date.now() + index,
+            id_producto: tempItem.id_producto,
+            id_sku: v.id_sku,
+            cantidad: v.quantity,
+            productoName: prod?.descripcion || "Desconocido",
+            skuName: v.nombre_sku || v.sku || "Variante",
+            attributes: v.resolvedAttributes // [{ label, value, hex }]
+        }));
+
+        setItems(prev => [...prev, ...newItems]);
+        // Reset temp item slightly but keep product selected if user wants to add more? 
+        // Better UX to keep product selected but maybe close modal.
+        // setTempItem({ ...tempItem, id_producto: "" }); // Optional: Reset product
     };
 
     const removeItem = (id) => {
@@ -120,7 +137,7 @@ export default function SolicitudInventario() {
             const payload = {
                 descripcion,
                 id_usuario: user.id || user.id_usuario,
-                productos: items // Contains id_sku
+                productos: items
             };
             const res = await axios.post("/lote/create", payload);
 
@@ -140,6 +157,16 @@ export default function SolicitudInventario() {
             toast.error("Error al crear solicitud");
         }
     };
+
+    // Get selected product object for Modal
+    const selectedProductObj = useMemo(() => {
+        if (!tempItem.id_producto) return null;
+        const p = productos.find(x => String(x.id_producto) === String(tempItem.id_producto));
+        // Construct object expected by VariantSelectionModal
+        // It expects { codigo: id_producto, nombre: descripcion ... } based on usage in other files
+        // service uses `product.codigo` for getProductVariants(id).
+        return p ? { ...p, codigo: p.id_producto, nombre: p.descripcion } : null;
+    }, [tempItem.id_producto, productos]);
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#09090b] p-4 md:p-6 space-y-6 transition-colors duration-200">
@@ -197,7 +224,7 @@ export default function SolicitudInventario() {
                                         placeholder="Buscar por nombre o código..."
                                         defaultItems={productos}
                                         selectedKey={tempItem.id_producto ? String(tempItem.id_producto) : null}
-                                        onSelectionChange={(key) => setTempItem({ ...tempItem, id_producto: key })}
+                                        onSelectionChange={(key) => setTempItem({ ...tempItem, id_producto: key, id_sku: "" })}
                                         variant="bordered"
                                         inputProps={{
                                             classNames: { inputWrapper: "bg-slate-50 dark:bg-zinc-800/50 h-10" }
@@ -214,47 +241,39 @@ export default function SolicitudInventario() {
                                     </Autocomplete>
 
                                     {variants.length > 0 ? (
-                                        <Select
-                                            label="Variante (SKU)"
-                                            labelPlacement="outside"
-                                            placeholder="Seleccione variante"
-                                            selectedKeys={tempItem.id_sku ? [String(tempItem.id_sku)] : []}
-                                            onChange={(e) => setTempItem({ ...tempItem, id_sku: e.target.value })}
-                                            variant="bordered"
-                                            classNames={{ trigger: "bg-slate-50 dark:bg-zinc-800/50 h-10" }}
-                                        >
-                                            {variants.map(v => (
-                                                <SelectItem key={v.id_sku} value={v.id_sku} textValue={v.nombre_sku || v.sku}>
-                                                    <div className="flex flex-col">
-                                                        <span>{v.nombre_sku || v.sku}</span>
-                                                        <span className="text-[10px] text-slate-400">{v.cod_barras || 'Sin código'}</span>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </Select>
+                                        <div className="p-4 bg-slate-50 dark:bg-zinc-800/30 rounded-lg border border-slate-100 dark:border-zinc-800 flex flex-col gap-3">
+                                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                                <Layers size={16} />
+                                                <span>Este producto tiene variantes</span>
+                                            </div>
+                                            <Button
+                                                color="primary"
+                                                variant="flat"
+                                                className="w-full font-semibold"
+                                                onPress={() => setIsVariantModalOpen(true)}
+                                            >
+                                                Seleccionar Variantes
+                                            </Button>
+                                        </div>
                                     ) : tempItem.id_producto ? (
-                                        <div className="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-xs text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/20">
-                                            Producto simple (sin variantes)
+                                        <div className="flex gap-3 items-end">
+                                            <div className="flex-1">
+                                                <Input
+                                                    type="number"
+                                                    label="Cantidad"
+                                                    labelPlacement="outside"
+                                                    placeholder="0"
+                                                    value={tempItem.cantidad}
+                                                    onValueChange={(v) => setTempItem({ ...tempItem, cantidad: v })}
+                                                    min={1}
+                                                    variant="bordered"
+                                                />
+                                            </div>
+                                            <Button isIconOnly color="primary" className="h-10 w-12" onPress={addSimpleItem}>
+                                                <Plus size={20} />
+                                            </Button>
                                         </div>
                                     ) : null}
-
-                                    <div className="flex gap-3 items-end">
-                                        <div className="flex-1">
-                                            <Input
-                                                type="number"
-                                                label="Cantidad"
-                                                labelPlacement="outside"
-                                                placeholder="0"
-                                                value={tempItem.cantidad}
-                                                onValueChange={(v) => setTempItem({ ...tempItem, cantidad: v })}
-                                                min={1}
-                                                variant="bordered"
-                                            />
-                                        </div>
-                                        <Button isIconOnly color="primary" className="h-10 w-12" onPress={addItem}>
-                                            <Plus size={20} />
-                                        </Button>
-                                    </div>
                                 </div>
                             </div>
                         </CardBody>
@@ -277,7 +296,7 @@ export default function SolicitudInventario() {
                                             <tr>
                                                 <th className="p-4">Producto</th>
                                                 <th className="p-4">Variante</th>
-                                                <th className="p-4 text-right">Cant.</th>
+                                                <th className="p-4 text-center">Cant.</th>
                                                 <th className="p-4 text-center">Acción</th>
                                             </tr>
                                         </thead>
@@ -288,18 +307,44 @@ export default function SolicitudInventario() {
                                                         {item.productoName}
                                                     </td>
                                                     <td className="p-4">
-                                                        {item.skuName !== "Standard" ? (
+                                                        {item.attributes && item.attributes.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {item.attributes.map((attr, idx) => (
+                                                                    <Chip
+                                                                        key={idx}
+                                                                        size="sm"
+                                                                        variant="flat"
+                                                                        className="text-xs h-6"
+                                                                        startContent={
+                                                                            attr.hex ? (
+                                                                                <span
+                                                                                    className="w-2 h-2 rounded-full ml-1"
+                                                                                    style={{ backgroundColor: attr.hex }}
+                                                                                />
+                                                                            ) : null
+                                                                        }
+                                                                    >
+                                                                        {attr.label}: {attr.value}
+                                                                    </Chip>
+                                                                ))}
+                                                            </div>
+                                                        ) : item.skuName !== "Standard" ? (
                                                             <Chip size="sm" variant="flat" color="secondary">{item.skuName}</Chip>
                                                         ) : (
                                                             <span className="text-slate-400">Standard</span>
                                                         )}
                                                     </td>
-                                                    <td className="p-4 text-right">
-                                                        <input
+                                                    <td className="p-4 text-center">
+                                                        <Input
                                                             type="number"
+                                                            size="sm"
                                                             value={item.cantidad}
-                                                            onChange={(e) => updateItem(item.id, 'cantidad', e.target.value)}
-                                                            className="w-16 p-1 text-right border rounded text-slate-700 bg-transparent"
+                                                            onValueChange={(val) => updateItem(item.id, 'cantidad', val)}
+                                                            className="w-24 mx-auto"
+                                                            classNames={{
+                                                                input: "text-center font-semibold",
+                                                                inputWrapper: "h-8 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 hover:border-blue-400 focus-within:border-blue-500 shadow-sm"
+                                                            }}
                                                         />
                                                     </td>
                                                     <td className="p-4 text-center">
@@ -317,6 +362,15 @@ export default function SolicitudInventario() {
                     </Card>
                 </div>
             </div>
+
+            {/* Modal de selección de variantes */}
+            <VariantSelectionModal
+                isOpen={isVariantModalOpen}
+                onClose={() => setIsVariantModalOpen(false)}
+                product={selectedProductObj}
+                onConfirm={handleVariantConfirm}
+                mode="ingreso" // Important: allows selecting any quantity (no stock limit)
+            />
         </div>
     );
 }

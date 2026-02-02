@@ -88,3 +88,13 @@ export const linkCategoryAttributes = async (data) => {
         return false;
     }
 };
+
+export const updateAttributeValue = async (id, data) => {
+    try {
+        const res = await updateAttributeValueRequest(id, data);
+        return res.data.code === 1;
+    } catch (error) {
+        console.error("Error updateAttributeValue:", error);
+        return false;
+    }
+};

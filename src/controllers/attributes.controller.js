@@ -12,7 +12,7 @@ const getAttributes = async (req, res) => {
         // Let's assume tenant-specific for flexibility, or null for system defaults.
 
         const [result] = await connection.query(`
-            SELECT id_atributo, nombre, tipo_input, slug, id_tenant 
+            SELECT id_atributo, nombre, tipo_input, slug, id_tenant, es_filtro, es_visible, es_requerido 
             FROM atributo 
             WHERE id_tenant = ? OR id_tenant IS NULL
             ORDER BY id_atributo
@@ -31,7 +31,7 @@ const createAttribute = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const { nombre, tipo_input } = req.body;
+        const { nombre, tipo_input, es_filtro, es_visible, es_requerido } = req.body;
         const id_tenant = req.id_tenant;
 
         const slug = nombre.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
@@ -42,8 +42,8 @@ const createAttribute = async (req, res) => {
         }
 
         const [ins] = await connection.query(`
-            INSERT INTO atributo (nombre, tipo_input, slug, id_tenant) VALUES (?, ?, ?, ?)
-        `, [nombre, tipo_input || 'SELECT', slug, id_tenant]);
+            INSERT INTO atributo (nombre, tipo_input, slug, id_tenant, es_filtro, es_visible, es_requerido) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [nombre, tipo_input || 'SELECT', slug, id_tenant, es_filtro ? 1 : 0, es_visible ? 1 : 0, es_requerido ? 1 : 0]);
 
         res.json({ code: 1, message: "Atributo creado", id: ins.insertId });
     } catch (error) {
@@ -59,7 +59,7 @@ const updateAttribute = async (req, res) => {
     try {
         connection = await getConnection();
         const { id } = req.params;
-        const { nombre, tipo_input } = req.body;
+        const { nombre, tipo_input, es_filtro, es_visible, es_requerido } = req.body;
         const id_tenant = req.id_tenant;
 
         // Verify ownership (or if system attribute, maybe block edit?)
@@ -75,8 +75,8 @@ const updateAttribute = async (req, res) => {
         const slug = nombre ? nombre.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') : null;
 
         await connection.query(`
-            UPDATE atributo SET nombre = ?, slug = ?, tipo_input = ? WHERE id_atributo = ? AND id_tenant = ?
-        `, [nombre, slug, tipo_input, id, id_tenant]);
+            UPDATE atributo SET nombre = ?, slug = ?, tipo_input = ?, es_filtro = ?, es_visible = ?, es_requerido = ? WHERE id_atributo = ? AND id_tenant = ?
+        `, [nombre, slug, tipo_input, es_filtro ? 1 : 0, es_visible ? 1 : 0, es_requerido ? 1 : 0, id, id_tenant]);
 
         res.json({ code: 1, message: "Atributo actualizado" });
     } catch (error) {
@@ -172,6 +172,46 @@ const deleteAttributeValue = async (req, res) => {
     }
 };
 
+const updateAttributeValue = async (req, res) => {
+    let connection;
+    try {
+        connection = await getConnection();
+        const { id_valor } = req.params;
+        const { valor, metadata } = req.body;
+        const id_tenant = req.id_tenant;
+
+        // Check ownership
+        const [check] = await connection.query("SELECT id_tenant, id_atributo FROM atributo_valor WHERE id_valor = ?", [id_valor]);
+        if (check.length === 0) return res.status(404).json({ message: "Valor no encontrado" });
+        if (check[0].id_tenant !== id_tenant && check[0].id_tenant !== null) {
+            return res.status(403).json({ message: "No autorizado" });
+        }
+
+        const id_atributo = check[0].id_atributo;
+
+        // Validar duplicados (excluyendo el actual)
+        const [existing] = await connection.query(`
+            SELECT id_valor FROM atributo_valor 
+            WHERE id_atributo = ? AND clean_name(valor) = clean_name(?) AND id_tenant = ? AND id_valor != ?
+        `, [id_atributo, valor, id_tenant, id_valor]);
+
+        if (existing.length > 0) {
+            return res.json({ code: 0, message: "Ya existe este valor" });
+        }
+
+        const metadataStr = metadata ? JSON.stringify(metadata) : null;
+
+        await connection.query("UPDATE atributo_valor SET valor = ?, metadata = ? WHERE id_valor = ? AND id_tenant = ?", [valor, metadataStr, id_valor, id_tenant]);
+        res.json({ code: 1, message: "Valor actualizado" });
+
+    } catch (error) {
+        console.error("Error updateAttributeValue:", error);
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 const getCategoryAttributes = async (req, res) => {
     let connection;
     try {
@@ -232,5 +272,7 @@ export const methods = {
     createAttributeValue,
     deleteAttributeValue,
     getCategoryAttributes,
-    linkCategoryAttributes
+    linkCategoryAttributes,
+    updateAttributeValue
 };
+
