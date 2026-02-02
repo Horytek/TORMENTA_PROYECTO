@@ -53,8 +53,13 @@ export const NAVIGATION_DATA = {
       { title: "Reportes", url: "/reportes", icon: FileBarChart2, description: "Análisis y estadísticas", resourceKey: "/reportes" },
       { title: "Libro de Ventas", url: "/ventas/libro_ventas", icon: FileBarChart2, description: "Registro contable", resourceKey: "/libro_ventas" },
       // Gestor Contenidos Submodules
-      { title: "Tonalidades", url: "/gestor-contenidos/tonalidades", icon: Tags, description: "Gestión de colores/variantes", resourceKey: "/gestor-contenidos/tonalidades" },
-      { title: "Tallas", url: "/gestor-contenidos/tallas", icon: Tags, description: "Gestión de dimensiones", resourceKey: "/gestor-contenidos/tallas" },
+      {
+        title: "Variantes",
+        url: "/gestor-contenidos/variantes",
+        icon: Tags,
+        description: "Gestión de variantes, unidades y atributos",
+        resourceKey: ["/gestor-contenidos/tonalidades", "/gestor-contenidos/tallas", "/gestor-contenidos/unidades"]
+      },
 
       // These use submodule routes from the database
       { title: "Usuarios (Admin)", url: "/configuracion/usuarios", icon: UserCog, description: "Administración de usuarios", resourceKey: "/configuracion/usuarios" },

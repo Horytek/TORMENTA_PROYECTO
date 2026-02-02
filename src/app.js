@@ -66,6 +66,7 @@ import uploadsRoutes from "./routes/uploads.routes.js";
 import tallaRoutes from "./routes/talla.routes.js";
 import tonalidadRoutes from "./routes/tonalidad.routes.js";
 import loteRoutes from "./routes/lote.routes.js";
+import unidadesRoutes from "./routes/unidades.routes.js";
 
 // Settings
 const port = process.env.PORT || 4000;
@@ -228,6 +229,7 @@ app.use("/api", emailRoutes);
 app.use("/api", credencialRoutes);
 app.use("/api", paymentRoutes);
 app.use("/api/landing", landingRoutes);
+app.use("/api/unidades", unidadesRoutes);
 app.use("/api/health", healthRoutes);
 
 

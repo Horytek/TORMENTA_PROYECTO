@@ -65,6 +65,7 @@ export const COMPONENT_REGISTRY = {
     // Gestor Contenidos
     '/gestor-contenidos/tonalidades': lazy(() => import('@/pages/GestorContenidos/Tonalidades')),
     '/gestor-contenidos/tallas': lazy(() => import('@/pages/GestorContenidos/Tallas')),
+    '/gestor-contenidos/variantes': lazy(() => import('@/pages/GestorContenidos/Variantes/VariantesWrapper')),
 
     // Inventario
     '/inventario/solicitud': lazy(() => import('@/pages/SolicitudInventario')),

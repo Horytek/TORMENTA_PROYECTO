@@ -52,6 +52,11 @@ export function useNavPermissions() {
         // Helper to check if a route is allowed
         const hasAccess = (resourceKey) => {
             if (!resourceKey) return true; // No key = always show (e.g., dashboard)
+
+            if (Array.isArray(resourceKey)) {
+                return resourceKey.some(key => allowedRoutes.has(key.toLowerCase()));
+            }
+
             return allowedRoutes.has(resourceKey.toLowerCase());
         };
 

@@ -68,55 +68,74 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
 
   const renderVariantBadges = (detalle) => {
     let attributes = detalle.attributes;
+
+    // Ensure attributes is an object
     if (typeof attributes === 'string') {
-      try {
-        attributes = JSON.parse(attributes);
-      } catch {
+      if (attributes === "null" || attributes === "") {
         attributes = null;
+      } else {
+        try {
+          attributes = JSON.parse(attributes);
+        } catch (e) {
+          console.error("Error parsing attributes JSON:", e);
+          attributes = null;
+        }
       }
     }
 
+    // Fallbacks if no attributes
     if (!attributes || Object.keys(attributes).length === 0) {
-      // Fallback to legacy
       if (detalle.sku_label) {
-        return <span className="ml-1 font-bold text-[10px] bg-slate-100 px-1 rounded text-slate-600">{detalle.sku_label}</span>;
+        return <span className="ml-1 font-bold text-[10px] bg-slate-100 px-1 rounded text-slate-600 border border-slate-200">{detalle.sku_label}</span>;
       }
       if (detalle.talla || detalle.tonalidad) {
-        return (
-          <span className="ml-1 text-[10px] text-slate-400">
-            {[detalle.talla && `T:${detalle.talla}`, detalle.tonalidad && `C:${detalle.tonalidad}`].filter(Boolean).join(' ')}
-          </span>
-        );
+        const parts = [];
+        if (detalle.talla && detalle.talla !== '-') parts.push(`T: ${detalle.talla}`);
+        if (detalle.tonalidad && detalle.tonalidad !== '-') parts.push(`C: ${detalle.tonalidad}`);
+
+        if (parts.length > 0) {
+          return (
+            <span className="ml-1 text-[10px] text-slate-500 bg-slate-50 px-1 rounded border border-slate-100">
+              {parts.join(' ')}
+            </span>
+          );
+        }
       }
       return null;
     }
 
+    // Render Attribute Badges
     const metadata = attrMetadataMap[detalle.codigo] || { names: {}, colors: {} };
     const keys = Object.keys(attributes);
 
     keys.sort((a, b) => {
-      const la = metadata.names[a] || a;
-      const lb = metadata.names[b] || b;
-      if (la === 'Color') return -1;
-      if (lb === 'Color') return 1;
+      const la = metadata.names[a] || String(a);
+      const lb = metadata.names[b] || String(b);
+      // Prioritize Color and Talla
+      const laLower = la.toLowerCase();
+      const lbLower = lb.toLowerCase();
+      if (laLower.includes('color')) return -1;
+      if (lbLower.includes('color')) return 1;
+      if (laLower.includes('talla')) return -1;
+      if (lbLower.includes('talla')) return 1;
       return la.localeCompare(lb);
     });
 
     return (
-      <div className="flex flex-wrap gap-1 mt-1">
+      <div className="flex flex-wrap gap-2 mt-1.5">
         {keys.map(k => {
-          const label = metadata.names[k] || k;
+          const label = metadata.names[k] || (isNaN(k) ? k : `Attr`); // If no metadata and key is number, show 'Attr' to avoid confusing '1:'
           const value = attributes[k];
-          const isColor = label.toLowerCase() === 'color';
+          const isColor = label.toLowerCase().includes('color');
           const hex = isColor ? metadata.colors[value] : null;
 
           return (
-            <div key={k} className="flex items-center gap-1 bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5">
-              <span className="text-[9px] uppercase font-bold text-slate-400">{label}:</span>
+            <div key={k} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-md px-2 py-0.5 shadow-sm">
+              <span className="text-[10px] uppercase font-bold text-slate-500">{label}:</span>
               {isColor && hex && (
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: hex }} />
+                <span className="w-2.5 h-2.5 rounded-full ring-1 ring-slate-200" style={{ backgroundColor: hex }} />
               )}
-              <span className="text-[10px] font-medium text-slate-600">{value}</span>
+              <span className="text-[11px] font-semibold text-slate-700">{value}</span>
             </div>
           );
         })}
@@ -263,25 +282,34 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
         // Parse and Format Attributes
         let attributes = d.attributes;
         if (typeof attributes === 'string') {
-          try { attributes = JSON.parse(attributes); } catch { }
+          if (attributes === "null" || attributes === "") {
+            attributes = null;
+          } else {
+            try { attributes = JSON.parse(attributes); } catch { }
+          }
         }
 
         if (attributes && Object.keys(attributes).length > 0) {
           const meta = metadataMap[d.codigo] || { names: {} };
           const keys = Object.keys(attributes).sort((a, b) => {
-            const la = meta.names[a] || a;
-            const lb = meta.names[b] || b;
-            if (la === 'Color') return -1;
-            if (lb === 'Color') return 1;
+            const la = meta.names[a] || String(a);
+            const lb = meta.names[b] || String(b);
+            const laLower = la.toLowerCase();
+            const lbLower = lb.toLowerCase();
+            if (laLower.includes('color')) return -1;
+            if (lbLower.includes('color')) return 1;
             return la.localeCompare(lb);
           });
+
           const parts = keys.map(k => {
-            const label = meta.names[k] || k;
+            const label = meta.names[k];
             const val = attributes[k];
-            return `${label}: ${val}`;
+            if (label) return `${label}: ${val}`;
+            return val; // Just show value if no label name found for key
           });
+
           if (parts.length > 0) {
-            desc += ` [${parts.join(', ')}]`;
+            desc += ` [${parts.join(' - ')}]`;
           }
         } else {
           // Fallback
@@ -291,7 +319,7 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
             if (d.talla && d.talla !== '-') extras.push(`T: ${d.talla}`);
             if (d.tonalidad && d.tonalidad !== '-') extras.push(`C: ${d.tonalidad}`);
           }
-          if (extras.length) desc += ` [${extras.join(', ')}]`;
+          if (extras.length) desc += ` [${extras.join(' - ')}]`;
         }
 
         return [

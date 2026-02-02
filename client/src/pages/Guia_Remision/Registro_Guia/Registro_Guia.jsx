@@ -306,10 +306,17 @@ export default function RegistroGuia() {
         return;
       }
       toast.success('Guía guardada exitosamente');
-      // Sync Sunat logic if needed
+      // Sync Sunat logic
       const destinatarioPayload = { documento: documentoCliente, destinatario: selectedCliente?.nombre || '' };
       const transportistaPayload = { placa: transporte?.placa || '' };
-      handleGuiaRemisionSunat(guiaData, destinatarioPayload, transportistaPayload, productosSeleccionados, nombreUsuario);
+
+      const sunatResp = await handleGuiaRemisionSunat(guiaData, destinatarioPayload, transportistaPayload, productosSeleccionados, nombreUsuario);
+
+      if (sunatResp && sunatResp.success) {
+        toast.success('Guía enviada a SUNAT correctamente');
+      } else {
+        toast('Guía guardada, pero error envío SUNAT: ' + (sunatResp?.message || 'Error desconocido'), { icon: '⚠️' });
+      }
 
       handleCancel();
       navigate('/almacen/guia_remision');

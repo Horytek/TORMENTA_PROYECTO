@@ -95,7 +95,13 @@ const addClave = async (req, res) => {
     if (!valor) return res.status(400).json({ code: 0, message: "El campo valor (token) es obligatorio." });
 
     const developer = isDeveloperUser(req);
-    const valorEncriptado = encrypt(valor);
+
+    // Detectar si es valor enmascarado
+    const isMasked = /^[•●]+$/.test(valor.trim());
+    let valorEncriptado = null;
+    if (!isMasked) {
+      valorEncriptado = encrypt(valor);
+    }
 
     connection = await getConnection();
     await connection.beginTransaction();
@@ -116,12 +122,24 @@ const addClave = async (req, res) => {
     let result;
     if (rows.length > 0) {
       // 2) Actualizar si existe
-      [result] = await connection.query(
-        "UPDATE clave SET valor = ?, estado_clave = ? WHERE id_clave = ?",
-        [valorEncriptado, estado_clave, rows[0].id_clave]
-      );
+      if (isMasked) {
+        // Si está enmascarado, NO actualizamos el valor, solo el estado
+        [result] = await connection.query(
+          "UPDATE clave SET estado_clave = ? WHERE id_clave = ?",
+          [estado_clave, rows[0].id_clave]
+        );
+      } else {
+        // Si es valor real, actualizamos todo
+        [result] = await connection.query(
+          "UPDATE clave SET valor = ?, estado_clave = ? WHERE id_clave = ?",
+          [valorEncriptado, estado_clave, rows[0].id_clave]
+        );
+      }
     } else {
       // 3) Insertar si no existe
+      if (isMasked) {
+        throw new Error("No se puede crear una nueva clave con valor enmascarado.");
+      }
       const clave = {
         id_empresa,
         tipo,

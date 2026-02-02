@@ -146,10 +146,13 @@ function Dashboard() {
             if (SubComponent && submodule.ruta) {
               const normalizedSubPath = submodule.ruta.startsWith('/') ? submodule.ruta : `/${submodule.ruta}`;
 
+              const isWrapper = normalizedSubPath.includes('variantes');
+              const routePath = isWrapper ? `${normalizedSubPath}/*` : normalizedSubPath;
+
               dynamicRoutes.push(
                 <Route
                   key={`submodule-${submodule.id_submodulo}`}
-                  path={normalizedSubPath}
+                  path={routePath}
                   element={
                     <RoutePermission idModulo={module.id} idSubmodulo={submodule.id_submodulo}>
                       <SubComponent />

@@ -133,6 +133,7 @@ const NuevaTablaGuia = ({ guias = [], setProductosSeleccionados }) => {
           <Input
             size="sm"
             type="number"
+            variant="bordered"
             min={1}
             max={Number(item.raw.stock_disponible ?? item.raw.stock ?? 0) || undefined}
             value={String(item.cantidad ?? 1)}
@@ -141,9 +142,10 @@ const NuevaTablaGuia = ({ guias = [], setProductosSeleccionados }) => {
               actualizarCantidad(item.raw.uniqueKey, Number.isNaN(val) ? 1 : val);
             }}
             classNames={{
-              inputWrapper: "bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 h-8 shadow-sm",
-              input: "text-center font-bold text-slate-700 dark:text-white"
+              input: "text-center font-bold text-slate-700 dark:text-white",
+              inputWrapper: "h-8 shadow-sm bg-white dark:bg-zinc-800"
             }}
+            aria-label="Cantidad"
           />
         );
       case 'acciones':

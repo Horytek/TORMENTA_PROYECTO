@@ -411,9 +411,11 @@ export async function handleGuiaRemisionSunat(guia, destinata, transportista, de
   };
 
   try {
-    await enviarGuiaRemisionASunat(data, nombre);
+    const result = await enviarGuiaRemisionASunat(data, nombre);
+    return result;
   } catch (_error) {
-    // Error handling managed by caller or logs
+    console.error("Error wrapper handleGuiaRemisionSunat", _error);
+    return { success: false, message: _error.message };
   }
 }
 

@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import {
     Card, CardBody, Button, Input, Tab, Tabs, Chip, Modal, ModalContent,
     ModalHeader, ModalBody, ModalFooter, Select, SelectItem, useDisclosure,
-    Listbox, ListboxItem, ScrollShadow, Divider, CardHeader
+    Listbox, ListboxItem, ScrollShadow, Divider, CardHeader, Autocomplete, AutocompleteItem
 } from "@heroui/react";
 import { Plus, Trash2, Edit2, Settings, Search, Check, Tag, Layers, Calendar, Hash, CheckSquare, ListChecks } from "lucide-react";
 
 import { getAttributes, createAttribute, updateAttribute, getAttributeValues, createAttributeValue, deleteAttributeValue, getCategoryAttributes, linkCategoryAttributes } from "@/services/attributes.services";
 import { getCategorias } from "@/services/categoria.services";
+import { getTonalidades, createTonalidad, deleteTonalidad } from "@/services/tonalidad.services";
+import { getTallas, createTalla, deleteTalla } from "@/services/talla.services";
 import { toast } from 'react-hot-toast';
 
 export default function AttributesPage() {
@@ -24,6 +26,12 @@ export default function AttributesPage() {
     // Values Management State
     const [attrValues, setAttrValues] = useState([]);
     const [newValue, setNewValue] = useState("");
+    const [newHex, setNewHex] = useState("#000000");
+
+    // Master Lists State for CRUD
+    const [masterList, setMasterList] = useState([]); // Array of { id, label, value }
+    const [isMasterListLoading, setIsMasterListLoading] = useState(false);
+    const [selectedMasterId, setSelectedMasterId] = useState(null);
 
     // Template Management State
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -75,38 +83,73 @@ export default function AttributesPage() {
     };
 
     // Values Logic
+
     const openValuesModal = async (attr) => {
         setSelectedAttr(attr);
         setModalMode("manage_values");
         setAttrValues([]);
-        const vals = await getAttributeValues(attr.id_atributo);
-        setAttrValues(vals);
+        setMasterList([]);
+        setNewValue("");
+        setNewHex("#000000");
+        setSelectedMasterId(null);
         onOpen();
+
+        try {
+            // UNIFIED API: All attributes now use getAttributeValues
+            // This reads from 'atributo_valor' which we just verified has the correct data
+            const values = await getAttributeValues(attr.id_atributo);
+
+            // Map to unified structure
+            // Backend returns: { id_valor, valor, metadata: { hex: ... } }
+            const mapped = values.map(v => ({
+                id: v.id_valor,
+                valor: v.valor,
+                hex: v.metadata?.hex || null
+            }));
+
+            setAttrValues(mapped);
+        } catch (error) {
+            console.error("Error loading values:", error);
+            toast.error("Error al cargar valores");
+        }
     };
 
     const handleAddValue = async () => {
-        if (!newValue.trim()) return;
-        const success = await createAttributeValue(selectedAttr.id_atributo, { valor: newValue });
+        if (!newValue || !newValue.trim()) return;
+
+        // UNIFIED API: Use createAttributeValue for EVERYTHING.
+        // For COLOR, we pass the Hex Code in the metadata.
+        const payload = {
+            valor: newValue,
+            metadata: selectedAttr.tipo_input === 'COLOR' ? { hex: newHex } : null
+        };
+
+        const success = await createAttributeValue(selectedAttr.id_atributo, payload);
+
         if (success) {
             toast.success("Valor agregado");
             setNewValue("");
-            const vals = await getAttributeValues(selectedAttr.id_atributo);
-            setAttrValues(vals);
+            setNewHex("#000000");
+            // Refresh
+            openValuesModal(selectedAttr);
         } else {
             toast.error("Error o duplicado");
         }
     };
 
-    const handleDeleteValue = async (id_valor) => {
-        const success = await deleteAttributeValue(id_valor);
+    const handleDeleteValue = async (id_item) => {
+        // UNIFIED API: Use deleteAttributeValue for EVERYTHING.
+        const success = await deleteAttributeValue(id_item);
+
         if (success) {
             toast.success("Eliminado");
-            const vals = await getAttributeValues(selectedAttr.id_atributo);
-            setAttrValues(vals);
+            openValuesModal(selectedAttr);
         } else {
             toast.error("Error al eliminar");
         }
     };
+
+
 
     // Templates Logic (Tab 3)
     const handleCategorySelect = async (id) => {
@@ -139,12 +182,14 @@ export default function AttributesPage() {
 
     const getIconForType = (type) => {
         switch (type) {
-            case 'COLOR': return <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-pink-500 to-yellow-500" />;
-            case 'BUTTON': return <div className="w-4 h-4 border-2 border-slate-400 rounded" />;
-            case 'MULTI_SELECT': return <ListChecks size={16} className="text-slate-500" />;
-            case 'CHECKBOX': return <CheckSquare size={16} className="text-slate-500" />;
-            case 'DATE': return <Calendar size={16} className="text-slate-500" />;
-            case 'NUMBER': return <Hash size={16} className="text-slate-500" />;
+            case 'COLOR': return <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-pink-500 to-yellow-500" title="Color" />;
+            case 'SIZE': return <div className="w-4 h-4 border-2 border-slate-400 rounded flex items-center justify-center text-[8px] font-bold" title="Talla">XS</div>;
+            case 'SELECT': return <ListChecks size={16} className="text-blue-500" title="Lista de Opciones" />;
+            case 'MULTI_SELECT': return <ListChecks size={16} className="text-purple-500" title="Selección Múltiple" />;
+            case 'TEXT': return <div className="text-slate-500 font-mono text-xs border border-slate-300 rounded px-1" title="Texto Libre">Abc</div>;
+            case 'NUMBER': return <div className="text-slate-500 font-mono text-xs border border-slate-300 rounded px-1" title="Número">123</div>;
+            case 'DATE': return <Calendar size={16} className="text-slate-500" title="Fecha" />;
+            case 'CHECKBOX': return <CheckSquare size={16} className="text-green-500" title="Casilla" />;
             default: return <div className="w-4 h-4 rounded bg-slate-300" />;
         }
     };
@@ -378,15 +423,24 @@ export default function AttributesPage() {
                                 {modalMode === "manage_values" ? (
                                     <div className="space-y-6">
                                         <div className="flex gap-2">
+                                            {selectedAttr?.tipo_input === "COLOR" && (
+                                                <input
+                                                    type="color"
+                                                    value={newHex}
+                                                    onChange={(e) => setNewHex(e.target.value)}
+                                                    className="h-12 w-12 p-1 rounded-xl border border-slate-200 cursor-pointer bg-white"
+                                                />
+                                            )}
                                             <Input
                                                 value={newValue}
                                                 onChange={(e) => setNewValue(e.target.value)}
-                                                placeholder="Escribe un valor y presiona Enter..."
+                                                placeholder={selectedAttr?.tipo_input === "COLOR" ? "Nombre del color (ej: Rojo)" : "Escribe un valor..."}
                                                 variant="faded"
                                                 size="lg"
                                                 startContent={<Tag size={16} className="text-slate-400" />}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleAddValue()}
                                             />
+
                                             <Button isIconOnly color="primary" size="lg" onPress={handleAddValue}>
                                                 <Plus />
                                             </Button>
@@ -402,16 +456,17 @@ export default function AttributesPage() {
                                                 )}
                                                 {attrValues.map(val => (
                                                     <Chip
-                                                        key={val.id_valor}
-                                                        onClose={() => handleDeleteValue(val.id_valor)}
+                                                        key={val.id}
+                                                        onClose={() => handleDeleteValue(val.id)}
                                                         variant="flat"
                                                         color="primary"
+                                                        startContent={val.hex ? <div className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: val.hex }} /> : null}
                                                         classNames={{
-                                                            base: "pl-3 param-chip hover:bg-primary-100 transition-colors cursor-default",
-                                                            content: "font-medium"
+                                                            base: "pl-2 pr-1 h-8 param-chip hover:bg-primary-100 transition-colors cursor-default gap-2",
+                                                            content: "font-medium text-slate-700 dark:text-slate-200"
                                                         }}
                                                     >
-                                                        {val.valor}
+                                                        {val.valor || "Sin Nombre"}
                                                     </Chip>
                                                 ))}
                                             </div>
@@ -427,29 +482,46 @@ export default function AttributesPage() {
                                             variant="faded"
                                             size="lg"
                                             onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                                            description="El nombre visible del atributo."
                                             startContent={<Tag size={18} className="text-slate-400" />}
                                         />
+                                        <p className="text-xs text-slate-400 mt-1">El nombre visible del atributo (ej: Material, Talla, Color).</p>
+
                                         <Select
-                                            label="Tipo de Selección"
-                                            labelPlacement="outside"
-                                            placeholder="Selecciona cómo se mostrará"
-                                            selectedKeys={formData.tipo_input ? [formData.tipo_input] : ["SELECT"]}
-                                            variant="faded"
-                                            size="lg"
+                                            label="Tipo de Atributo"
+                                            placeholder="Selecciona el comportamiento"
+                                            selectedKeys={formData.tipo_input ? [formData.tipo_input] : []}
                                             onChange={(e) => setFormData({ ...formData, tipo_input: e.target.value })}
-                                            description="Define la apariencia en el formulario de producto."
-                                            startContent={formData.tipo_input ? getIconForType(formData.tipo_input) : <Settings size={18} className="text-slate-400" />}
+                                            variant="faded"
+                                            className="mt-4"
                                         >
-                                            <SelectItem key="SELECT" value="SELECT" startContent={<div className="w-4 h-4 bg-slate-400 rounded" />}>Selección Única (Dropdown)</SelectItem>
-                                            <SelectItem key="MULTI_SELECT" value="MULTI_SELECT" startContent={<ListChecks size={16} />}>Selección Múltiple (Tags)</SelectItem>
-                                            <SelectItem key="COLOR" value="COLOR" startContent={<div className="w-4 h-4 rounded-full bg-gradient-to-tr from-blue-500 to-pink-500" />}>Selector de Color</SelectItem>
-                                            <SelectItem key="BUTTON" value="BUTTON" startContent={<div className="w-4 h-4 border border-slate-400 rounded" />}>Botones (Tallas)</SelectItem>
-                                            <SelectItem key="CHECKBOX" value="CHECKBOX" startContent={<CheckSquare size={16} />}>Casilla de Verificación (Sí/No)</SelectItem>
-                                            <SelectItem key="TEXT" value="TEXT" startContent={<div className="w-4 h-4 font-bold text-[10px] flex items-center justify-center border border-slate-400 rounded">Tx</div>}>Texto Libre</SelectItem>
-                                            <SelectItem key="NUMBER" value="NUMBER" startContent={<Hash size={16} />}>Numérico (Dimensiones/Peso)</SelectItem>
-                                            <SelectItem key="DATE" value="DATE" startContent={<Calendar size={16} />}>Fecha</SelectItem>
+                                            <SelectItem key="TEXT" startContent={<div className="text-xs border px-1 rounded">Abc</div>} description="Entrada de texto libre para cada producto.">
+                                                Texto Libre
+                                            </SelectItem>
+                                            <SelectItem key="NUMBER" startContent={<div className="text-xs border px-1 rounded">123</div>} description="Valor numérico (ej: Peso, Cantidad).">
+                                                Número
+                                            </SelectItem>
+                                            <SelectItem key="DATE" startContent={<Calendar size={16} />} description="Selector de fecha.">
+                                                Fecha
+                                            </SelectItem>
+                                            <SelectItem key="CHECKBOX" startContent={<CheckSquare size={16} />} description="Casilla de verificación (Sí/No).">
+                                                Casilla (Switch)
+                                            </SelectItem>
+                                            <SelectItem key="SELECT" startContent={<ListChecks size={16} />} description="Lista de opciones única.">
+                                                Lista de Opciones
+                                            </SelectItem>
+                                            <SelectItem key="MULTI_SELECT" startContent={<ListChecks size={16} />} description="Permite seleccionar múltiples opciones de una lista.">
+                                                Selección Múltiple
+                                            </SelectItem>
+                                            <SelectItem key="COLOR" startContent={<div className="w-3 h-3 rounded-full bg-gradient-to-tr from-pink-500 to-yellow-500" />} description="Selección de color con visualización.">
+                                                Color
+                                            </SelectItem>
+                                            <SelectItem key="SIZE" startContent={<div className="w-3 h-3 border rounded text-[8px] flex items-center justify-center">XS</div>} description="Selección de talla estándar.">
+                                                Talla
+                                            </SelectItem>
                                         </Select>
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            Determina si el atributo usa tablas maestras del sistema (Color/Talla) o listas personalizadas.
+                                        </p>
                                     </div>
                                 )}
                             </ModalBody>
@@ -467,7 +539,7 @@ export default function AttributesPage() {
                     )}
                 </ModalContent>
             </Modal>
-        </div>
+        </div >
     );
 }
 

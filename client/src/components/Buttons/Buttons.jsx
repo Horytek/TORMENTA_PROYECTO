@@ -6,6 +6,40 @@ import { RiCloseLargeLine } from "react-icons/ri";
 import { IoIosArrowDropdownCircle } from "react-icons/io";
 import { RefreshCw } from "lucide-react";
 import { Button, ButtonGroup } from "@heroui/button";
+import { MdEdit } from "react-icons/md";
+import { FaTrash } from "react-icons/fa";
+
+export function ButtonEdit({ onPress, ...props }) {
+  return (
+    <Button
+      isIconOnly
+      size="sm"
+      variant="light"
+      color="primary"
+      onPress={onPress}
+      className="text-slate-400 hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-400"
+      {...props}
+    >
+      <MdEdit size={18} />
+    </Button>
+  );
+}
+
+export function ButtonDelete({ onPress, ...props }) {
+  return (
+    <Button
+      isIconOnly
+      size="sm"
+      variant="light"
+      color="danger"
+      onPress={onPress}
+      className="text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
+      {...props}
+    >
+      <FaTrash size={16} />
+    </Button>
+  );
+}
 
 export function ButtonSave({ ...props }) {
   return (

@@ -8,10 +8,10 @@ import {
 export const getTallas = async () => {
     try {
         const res = await getTallasRequest();
-        return res.data;
+        return res.data?.code === 1 ? res.data.data : [];
     } catch (error) {
         console.error("Error al obtener tallas", error);
-        throw error;
+        return [];
     }
 };
 

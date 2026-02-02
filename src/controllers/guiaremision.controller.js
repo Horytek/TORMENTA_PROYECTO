@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { resolveSku } from "./../utils/skuHelper.js";
 
 // Cache para queries repetitivas (opcional, para datos que no cambian frecuentemente)
 const queryCache = new Map();
@@ -954,6 +955,65 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
         connection = await getConnection();
         await connection.beginTransaction();
 
+        // ---------------------------------------------------------
+        // LOGICA DE RESOLUCIÓN DE DESTINATARIO (CLIENTE -> DESTINATARIO)
+        // ---------------------------------------------------------
+        // Si el id_destinatario viene con prefijo 'C-' (ej: 'C-25'), es un Cliente que debe migrarse o buscarse en Destinatarios
+        let finalIdDestinatario = id_destinatario;
+
+        if (typeof id_destinatario === 'string' && id_destinatario.startsWith('C-')) {
+            const idCliente = id_destinatario.split('-')[1];
+
+            // 1. Obtener datos del cliente
+            const [clienteRows] = await connection.query(
+                `SELECT dni, ruc, nombres, apellidos, razon_social, direccion 
+                 FROM cliente WHERE id_cliente = ? AND id_tenant = ?`,
+                [idCliente, id_tenant]
+            );
+
+            if (clienteRows.length === 0) {
+                throw new Error('Cliente no encontrado para generar destinatario');
+            }
+            const cli = clienteRows[0];
+            const doc = cli.ruc || cli.dni;
+
+            // 2. Verificar si ya existe en destinatario por Documento
+            // Prioridad RUC si existe, sino DNI.
+            const [destRows] = await connection.query(
+                `SELECT id_destinatario FROM destinatario 
+                 WHERE ((ruc IS NOT NULL AND ruc = ?) OR (dni IS NOT NULL AND dni = ?)) 
+                 AND id_tenant = ? LIMIT 1`,
+                [doc, doc, id_tenant]
+            );
+
+            if (destRows.length > 0) {
+                finalIdDestinatario = destRows[0].id_destinatario;
+            } else {
+                // 3. Crear nuevo destinatario usando datos del cliente
+                // Mapeo inteligente de campos
+                const rucDest = cli.ruc || null;
+                const dniDest = !cli.ruc ? cli.dni : null; // Si tiene RUC, el DNI va a null en destinatario (según lógica común, o ambos si tabla permite)
+                // Revisando esquema destinatario: (dni, nombres, apellidos) OR (ruc, razon_social)
+
+                const [insertDest] = await connection.query(
+                    `INSERT INTO destinatario 
+                     (dni, ruc, nombres, apellidos, razon_social, ubicacion, id_tenant) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        dniDest,
+                        rucDest,
+                        cli.nombres || null,
+                        cli.apellidos || null,
+                        cli.razon_social || null,
+                        cli.direccion || '-', // Ubicación es requerida usualmente
+                        id_tenant
+                    ]
+                );
+                finalIdDestinatario = insertDest.insertId;
+            }
+        }
+        // ---------------------------------------------------------
+
         // Insertar el comprobante
         const [comprobanteResult] = await connection.query(
             "INSERT INTO comprobante (id_tipocomprobante, num_comprobante, id_tenant) VALUES (?, ?, ?)",
@@ -971,7 +1031,7 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
              f_generacion, h_generacion, estado_guia, total, id_tenant) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
             [
-                id_sucursal, id_ubigeo_o, id_ubigeo_d, id_destinatario,
+                id_sucursal, id_ubigeo_o, id_ubigeo_d, finalIdDestinatario,
                 id_transportista, id_comprobante, glosa, dir_partida || null,
                 dir_destino || null, canti || null, peso || null, observacion || null,
                 f_generacion, h_generacion, total || null, id_tenant
@@ -1012,6 +1072,64 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
                 throw new Error('Error al insertar todos los detalles del envío');
             }
         }
+
+        // ---------------------------------------------------------
+        // LÓGICA DE DESCUENTO DE STOCK (si la sucursal tiene almacén vinculado)
+        // ---------------------------------------------------------
+        const [almacenResult] = await connection.query(
+            "SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ? LIMIT 1",
+            [id_sucursal]
+        );
+
+        if (almacenResult.length > 0) {
+            const id_almacen = almacenResult[0].id_almacen;
+            console.log(`[GuiaRemision] Descontando stock del almacén ${id_almacen} para sucursal ${id_sucursal}`);
+
+            for (let i = 0; i < producto.length; i++) {
+                const id_producto = producto[i];
+                const cantidadProducto = parseFloat(cantidad[i]);
+                const id_ton = tonalidades[i] || null;
+                const id_tal = tallas[i] || null;
+                const passed_sku = skus[i] || null;
+
+                // Resolver SKU (usar el pasado o calcular)
+                let id_sku;
+                if (passed_sku) {
+                    id_sku = passed_sku;
+                } else {
+                    id_sku = await resolveSku(connection, id_producto, id_ton, id_tal, id_tenant);
+                }
+
+                if (!id_sku) {
+                    console.warn(`[GuiaRemision] No se pudo resolver SKU para producto ${id_producto}, saltando descuento de stock.`);
+                    continue;
+                }
+
+                // Verificar stock actual
+                const [stockResult] = await connection.query(
+                    "SELECT stock FROM inventario_stock WHERE id_sku = ? AND id_almacen = ? AND id_tenant = ?",
+                    [id_sku, id_almacen, id_tenant]
+                );
+
+                const stockActual = stockResult.length > 0 ? parseFloat(stockResult[0].stock) : 0;
+
+                // Validar stock suficiente
+                if (stockActual < cantidadProducto) {
+                    throw new Error(`Stock insuficiente para producto ID ${id_producto}. Disponible: ${stockActual}, Solicitado: ${cantidadProducto}`);
+                }
+
+                // Descontar stock
+                await connection.query(
+                    "UPDATE inventario_stock SET stock = stock - ? WHERE id_sku = ? AND id_almacen = ? AND id_tenant = ?",
+                    [cantidadProducto, id_sku, id_almacen, id_tenant]
+                );
+
+                console.log(`[GuiaRemision] Stock descontado: Producto ${id_producto}, SKU ${id_sku}, Cantidad ${cantidadProducto}, Almacén ${id_almacen}`);
+            }
+        } else {
+            console.log(`[GuiaRemision] Sucursal ${id_sucursal} no tiene almacén vinculado, no se descuenta stock.`);
+        }
+        // ---------------------------------------------------------
 
         await connection.commit();
 

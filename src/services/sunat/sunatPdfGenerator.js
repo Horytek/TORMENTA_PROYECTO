@@ -380,8 +380,35 @@ export async function generateDespatchPdf(payload, hash = '') {
 
             const details = Array.isArray(payload?.details) ? payload.details : [];
             details.forEach((item, idx) => {
+                let desc = item?.descripcion || '-';
+
+                // Parse attributes if available to show variants
+                let attrs = null;
+                if (item.attributes) {
+                    if (typeof item.attributes === 'object') {
+                        attrs = item.attributes;
+                    } else if (typeof item.attributes === 'string') {
+                        try { attrs = JSON.parse(item.attributes); } catch { }
+                    }
+                }
+
+                if (attrs && Object.keys(attrs).length > 0) {
+                    const variants = Object.entries(attrs)
+                        .map(([k, v]) => {
+                            // Try to use known keys or just value
+                            // keys might be "1", "2" so using values is safer if metadata missing
+                            // We don't have metadata here easily unless passed.
+                            // But usually we just want to show the value e.g. "Rojo", "M"
+                            return v;
+                        })
+                        .join(' / ');
+                    if (variants) desc += ` [${variants}]`;
+                } else if (item.sku_label) {
+                    desc += ` [${item.sku_label}]`;
+                }
+
                 doc.fontSize(8).font('Helvetica')
-                    .text(`${idx + 1}. ${item?.descripcion || '-'} - Cant: ${item?.cantidad || 0} ${item?.unidad || ''}`);
+                    .text(`${idx + 1}. ${desc} - Cant: ${item?.cantidad || 0} ${item?.unidad || ''}`);
             });
 
             doc.y += 20;

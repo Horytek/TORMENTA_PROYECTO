@@ -72,7 +72,7 @@ const updateAttribute = async (req, res) => {
             return res.status(403).json({ message: "No autorizado" });
         }
 
-        const slug = nombre ? nombre.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') : undefined;
+        const slug = nombre ? nombre.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') : null;
 
         await connection.query(`
             UPDATE atributo SET nombre = ?, slug = ?, tipo_input = ? WHERE id_atributo = ? AND id_tenant = ?
@@ -124,6 +124,7 @@ const createAttributeValue = async (req, res) => {
         const { valor, metadata } = req.body;
         const id_tenant = req.id_tenant;
 
+        // Validar duplicados por nombre
         const [existing] = await connection.query(`
             SELECT id_valor FROM atributo_valor 
             WHERE id_atributo = ? AND clean_name(valor) = clean_name(?) AND id_tenant = ?
@@ -139,7 +140,7 @@ const createAttributeValue = async (req, res) => {
             INSERT INTO atributo_valor (id_atributo, valor, metadata, id_tenant) VALUES (?, ?, ?, ?)
         `, [id, valor, metadataStr, id_tenant]);
 
-        res.json({ code: 1, message: "Valor agregado", id: ins.insertId });
+        res.json({ code: 1, message: "Valor agregado", id: ins.insertId, data: { id: ins.insertId, valor, metadata } });
     } catch (error) {
         console.error("Error createAttributeValue:", error);
         res.status(500).json({ code: 0, message: "Error interno" });

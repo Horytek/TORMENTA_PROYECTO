@@ -32,7 +32,7 @@ const UbigeoForm = ({ modalTitle = 'Ubigeos', onClose, onSave, initialOrigenId, 
   const [ubigeos, setUbigeos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  
+
   // Cargar ubigeos
   useEffect(() => {
     const fetchUbigeos = async () => {
@@ -158,18 +158,18 @@ const UbigeoForm = ({ modalTitle = 'Ubigeos', onClose, onSave, initialOrigenId, 
       toast.error('Complete ambos bloques (origen y destino)');
       return;
     }
-    
+
     const origenKey = `${partida.departamento}__${partida.provincia}__${partida.distrito}`;
     const destinoKey = `${destino.departamento}__${destino.provincia}__${destino.distrito}`;
-    
+
     const origenId = distritoIdIndex[origenKey];
     const destinoId = distritoIdIndex[destinoKey];
-    
+
     if (!origenId || !destinoId) {
       toast.error('No se pudo resolver ID(s) de ubigeo. Verifique los datos.');
       return;
     }
-    
+
     onSave(origenId, destinoId);
     setOpen(false);
     onClose();
@@ -199,6 +199,8 @@ const UbigeoForm = ({ modalTitle = 'Ubigeos', onClose, onSave, initialOrigenId, 
         body: "px-6 pb-4 pt-2",
         footer: "px-6 py-4 border-t border-blue-100/30 dark:border-zinc-700/40"
       }}
+      size="4xl"
+      scrollBehavior="outside"
       motionProps={{
         variants: {
           enter: { opacity: 1, y: 0, scale: 1 },
@@ -253,7 +255,7 @@ const UbigeoForm = ({ modalTitle = 'Ubigeos', onClose, onSave, initialOrigenId, 
             </div>
           </ModalHeader>
 
-            <Divider className="mb-2" />
+          <Divider className="mb-2" />
 
           <ModalBody>
             {loading ? (

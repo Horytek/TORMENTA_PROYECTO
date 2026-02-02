@@ -13,6 +13,7 @@ import { useMarcas } from '@/context/Marca/MarcaProvider';
 import { useSubcategorias } from '@/context/Subcategoria/SubcategoriaProvider';
 import { addProducto, updateProducto, getLastIdProducto, generateSKUs, getProductAttributes } from '@/services/productos.services';
 import { getCategoryAttributes, getAttributeValues } from '@/services/attributes.services'; // NEW Services
+import { getUnidades } from '@/services/unidades.services';
 
 import {
   Textarea,
@@ -52,10 +53,18 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
   const [loadingAttrs, setLoadingAttrs] = useState(false);
 
   // Carga inicial de datos externos
+  const [unidadesList, setUnidadesList] = useState([]);
+
   useEffect(() => {
     loadCategorias();
     loadMarcas();
     loadSubcategorias();
+
+    // Load Unidades
+    getUnidades().then(data => {
+      const activeUnidades = (data || []).filter(u => u.estado === 1 || u.estado === '1');
+      setUnidadesList(activeUnidades);
+    });
   }, []);
 
   // Adaptar initialData para selects (convertir a string)
@@ -357,9 +366,6 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                             )}
                           />
                           <Controller
-                            name="undm"
-                            control={control}
-                            rules={{ required: "Requerido" }}
                             render={({ field }) => (
                               <Select
                                 {...field}
@@ -369,8 +375,11 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                                 labelPlacement="outside"
                                 selectedKeys={field.value ? [field.value.toString()] : []}
                               >
-                                <SelectItem key="KGM" value="KGM">Kilogramos</SelectItem>
-                                <SelectItem key="NIU" value="NIU">Unidades</SelectItem>
+                                {unidadesList.map((u) => (
+                                  <SelectItem key={u.codigo_sunat} value={u.codigo_sunat}>
+                                    {u.descripcion}
+                                  </SelectItem>
+                                ))}
                               </Select>
                             )}
                           />

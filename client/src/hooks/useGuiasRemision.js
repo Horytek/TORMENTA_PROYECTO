@@ -52,9 +52,9 @@ const useGuiasRemision = (filters) => {
           transpub: guia.transportistapub,
           transpriv: guia.transportistapriv,
           estado: guia.estado === 0 ? 'Inactivo' :
-                  guia.estado === 1 ? 'Activo' :
-                  guia.estado === 2 ? 'En proceso' :
-                  'Desconocido',
+            guia.estado === 1 ? 'Activo' :
+              guia.estado === 2 ? 'En proceso' :
+                'Desconocido',
           detalles: guia.detalles ? guia.detalles.map(detalle => ({
             codigo: detalle.codigo ? detalle.codigo.toString().padStart(3, '0') : '000',
             marca: detalle.marca || '',
@@ -62,9 +62,14 @@ const useGuiasRemision = (filters) => {
             cantidad: detalle.cantidad || 0,
             um: detalle.um || '',
             precio: detalle.precio ? `S/ ${parseFloat(detalle.precio).toFixed(2)}` : 'S/ 0.00',
-            total: detalle.precio && detalle.cantidad 
-              ? `S/ ${(parseFloat(detalle.precio) * parseFloat(detalle.cantidad)).toFixed(2)}` 
+            total: detalle.precio && detalle.cantidad
+              ? `S/ ${(parseFloat(detalle.precio) * parseFloat(detalle.cantidad)).toFixed(2)}`
               : 'S/ 0.00',
+            // Variant fields
+            tonalidad: detalle.tonalidad || null,
+            talla: detalle.talla || null,
+            sku_label: detalle.sku_label || null,
+            attributes: detalle.attributes || null,
           })) : []
         }));
 
@@ -130,23 +135,23 @@ const useGuiasRemision = (filters) => {
     fetchGuias();
   };
 
-  return { 
-    guias, 
-    setGuias, 
-    removeGuia, 
-    currentPage, 
-    setCurrentPage, 
-    totalPages, 
-    guiasPerPage, 
-    setGuiasPerPage, 
-    detalles, 
-    addGuia, 
-    addDetalle, 
-    removeDetalle, 
-    updateDetalle, 
-    totalRecaudado, 
-    updateGuia, 
-    refetchGuias 
+  return {
+    guias,
+    setGuias,
+    removeGuia,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    guiasPerPage,
+    setGuiasPerPage,
+    detalles,
+    addGuia,
+    addDetalle,
+    removeDetalle,
+    updateDetalle,
+    totalRecaudado,
+    updateGuia,
+    refetchGuias
   };
 };
 
