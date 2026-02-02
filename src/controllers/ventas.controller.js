@@ -1424,13 +1424,17 @@ const getVentasOnline = async (req, res) => {
           SELECT 
             dc.id_compra,
             dc.id_detalle_compra AS codigo,
+            dc.id_producto,
             COALESCE(p.descripcion, 'Producto') AS nombre,
             dc.cantidad,
             dc.precio_unitario AS precio,
             (dc.cantidad * dc.precio_unitario) AS subtotal,
-            COALESCE(p.undm, 'UND') AS undm
+            COALESCE(p.undm, 'UND') AS undm,
+            sku.attributes_json,
+            sku.sku as sku_label
           FROM detalle_compra dc
           LEFT JOIN producto p ON p.id_producto = dc.id_producto
+          LEFT JOIN producto_sku sku ON dc.id_sku = sku.id_sku
           WHERE dc.id_compra IN (${placeholders})
         `, comprasIds);
 

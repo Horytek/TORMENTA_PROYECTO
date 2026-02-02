@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getProductAttributes } from "@/services/productos.services";
 import PropTypes from 'prop-types';
 import { FaEye, FaCalendarAlt, FaEnvelope, FaPhone, FaMapMarkerAlt, FaShoppingCart, FaCreditCard } from "react-icons/fa";
 import {
@@ -25,6 +26,74 @@ const VentasOnlineTable = ({
 }) => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedVenta, setSelectedVenta] = useState(null);
+    const [attrMetadataMap, setAttrMetadataMap] = useState({});
+
+    useEffect(() => {
+        if (!selectedVenta?.detalles) return;
+
+        // Extract unique product IDs to fetch metadata
+        const uniqueProductIds = [...new Set(selectedVenta.detalles.map(d => d.id_producto).filter(Boolean))];
+        const missingIds = uniqueProductIds.filter(id => !attrMetadataMap[id]);
+
+        if (missingIds.length > 0) {
+            Promise.all(missingIds.map(id => getProductAttributes(id).catch(() => null)))
+                .then(results => {
+                    setAttrMetadataMap(prev => {
+                        const next = { ...prev };
+                        results.forEach((data, index) => {
+                            if (data && missingIds[index]) {
+                                const pid = missingIds[index];
+                                const names = {};
+                                const colors = {};
+                                // Map attributes and legacy tonalidades for hex codes
+                                if (data.attributes) data.attributes.forEach(a => names[a.id_atributo] = a.nombre);
+                                if (data.tonalidades) data.tonalidades.forEach(t => colors[t.nombre] = t.hex);
+                                next[pid] = { names, colors };
+                            }
+                        });
+                        return next;
+                    });
+                });
+        }
+    }, [selectedVenta]);
+
+    const renderVariantBadges = (detalle) => {
+        if (!detalle.sku_label && !detalle.attributes_json) return null;
+
+        let attributes = detalle.attributes_json;
+        if (typeof attributes === 'string') {
+            try { attributes = JSON.parse(attributes); } catch { attributes = null; }
+        }
+
+        if (attributes && Object.keys(attributes).length > 0) {
+            const metadata = attrMetadataMap[detalle.id_producto] || { names: {}, colors: {} };
+            return (
+                <div className="flex flex-wrap gap-1 mt-1">
+                    {Object.keys(attributes).map(k => {
+                        const label = metadata.names[k] || k;
+                        const val = attributes[k];
+                        const isColor = label.toLowerCase().includes('color');
+                        const hex = isColor ? metadata.colors[val] : null;
+
+                        return (
+                            <div key={k} className="flex items-center gap-1 bg-slate-100 rounded px-1.5 py-0.5 border border-slate-200">
+                                <span className="text-[10px] font-bold text-slate-500">{label}:</span>
+                                {isColor && hex && <span className="w-2 h-2 rounded-full border border-slate-300" style={{ backgroundColor: hex }} />}
+                                <span className="text-[10px] text-slate-700 font-medium">{val}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // Fallback to label if no JSON
+        if (detalle.sku_label && detalle.sku_label !== detalle.nombre) {
+            return <div className="text-[10px] text-slate-500 bg-slate-100 px-1 rounded inline-block mt-1">{detalle.sku_label}</div>;
+        }
+        return null;
+    };
+
 
     const handleViewDetail = (venta) => {
         setSelectedVenta(venta);
@@ -256,7 +325,10 @@ const VentasOnlineTable = ({
                                                 <TableBody>
                                                     {(selectedVenta.detalles || []).map((det, idx) => (
                                                         <TableRow key={idx}>
-                                                            <TableCell>{det.nombre}</TableCell>
+                                                            <TableCell>
+                                                                <div className="font-semibold">{det.nombre}</div>
+                                                                {renderVariantBadges(det)}
+                                                            </TableCell>
                                                             <TableCell className="text-center">{det.cantidad}</TableCell>
                                                             <TableCell className="text-center">{det.precio}</TableCell>
                                                             <TableCell className="text-center font-semibold">{det.subtotal}</TableCell>
