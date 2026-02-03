@@ -108,8 +108,18 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
     porcentajeCrecimiento = `${(entradasActual * 100).toFixed(1)}%`;
   }
 
-  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
-  const paginatedTransactions = sortedTransactions.slice(
+  // Calcular Stock Visual (Running Balance)
+  let currentRunningStock = stockInventario;
+  const transactionsWithStock = sortedTransactions.map(t => {
+    const displayedStock = currentRunningStock;
+    // Preparar el stock para la siguiente iteración (transacción más antigua)
+    // Stock ANTES de esta transacción = Stock DESPUES - Entra + Sale
+    currentRunningStock = currentRunningStock - (parseFloat(t.entra) || 0) + (parseFloat(t.sale) || 0);
+    return { ...t, calculatedStock: displayedStock };
+  });
+
+  const totalPages = Math.ceil(transactionsWithStock.length / itemsPerPage);
+  const paginatedTransactions = transactionsWithStock.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -322,13 +332,23 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
                     </TableCell>
                     {/* Stock */}
                     <TableCell className="whitespace-nowrap font-semibold text-slate-700 dark:text-zinc-300">
-                      {transaction["stock"] || "-"}
+                      {transaction.calculatedStock !== undefined ? transaction.calculatedStock : (transaction["stock"] || "-")}
                     </TableCell>
                     {/* Estado */}
                     <TableCell className="whitespace-nowrap">
-                      <Chip size="sm" variant="flat" color={transaction["estado_doc"] === 'APROBADO' ? "success" : transaction["estado_doc"] === 'PENDIENTE' ? "warning" : "default"}>
-                        {transaction["estado_doc"] || "REGISTRADO"}
-                      </Chip>
+                      {(() => {
+                        const estado = transaction["estado_doc"];
+                        const isRegistrado = estado === 1 || estado === '1' || estado === 'REGISTRADO' || estado === 'APROBADO';
+                        const isAnulado = estado === 0 || estado === '0' || estado === 'ANULADO';
+                        const label = isRegistrado ? 'REGISTRADO' : (isAnulado ? 'ANULADO' : (estado || 'REGISTRADO'));
+                        const color = isRegistrado ? 'success' : (isAnulado ? 'danger' : 'default');
+
+                        return (
+                          <Chip size="sm" variant="flat" color={color}>
+                            {label}
+                          </Chip>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -405,7 +425,7 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
                         aria-label="Detalles de Productos"
                         removeWrapper
                         classNames={{
-                          base: "max-h-[calc(100vh-200px)]",
+                          base: "max-h-[calc(100vh-200px)] overflow-y-auto",
                           th: "bg-slate-50 dark:bg-zinc-800 text-slate-500 font-semibold text-xs border-b border-slate-100 dark:border-zinc-800",
                           td: "py-3 px-4 text-xs border-b border-slate-50 dark:border-zinc-800/50"
                         }}
