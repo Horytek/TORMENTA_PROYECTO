@@ -402,6 +402,8 @@ const getDetalleKardex = async (req, res) => {
                 bn.fecha,
                 DATE_FORMAT(bn.fecha, '%d/%m/%Y') AS fecha_formateada,
                 COALESCE(c.num_comprobante, IF(bn.id_nota IS NULL AND bn.id_venta IS NULL, 'N/A', 'Sin comprobante')) AS documento,
+                n.id_nota,
+                v.id_venta,
                 CASE 
                     WHEN n.nom_nota IS NOT NULL THEN n.nom_nota
                     WHEN v.id_venta IS NOT NULL THEN 'Venta'
@@ -493,46 +495,79 @@ const getDetalleKardex = async (req, res) => {
                 : [fechaInicio, fechaFin, idProducto, id_tenant]
         );
 
-        // Agrupar resultados por bitacora eliminando duplicados de productos
+        // Agrupar resultados por Operación (Nota o Venta) para evitar ambigüedad visual
         const kardexMap = new Map();
 
         for (const row of detalleKardexResult) {
-            const bitacoraId = row.id;
+            // Clave de agrupación: Prioridad Nota > Venta > Bitacora Individual
+            // Esto agrupa todos los movimientos de una misma Nota/Venta en una sola línea visual
+            let groupKey;
 
-            if (!kardexMap.has(bitacoraId)) {
-                kardexMap.set(bitacoraId, {
-                    id: row.id,
+            // Si tiene id_nota (es nota de ingreso/salida/etc)
+            if (row.id_nota) {
+                groupKey = `nota_${row.id_nota}`;
+            }
+            // Si tiene id_venta (es venta)
+            else if (row.id_venta) {
+                groupKey = `venta_${row.id_venta}`;
+            }
+            // Fallback: usar id de bitacora (movimiento individual)
+            else {
+                groupKey = `bit_id_${row.id}`;
+            }
+
+            if (!kardexMap.has(groupKey)) {
+                kardexMap.set(groupKey, {
+                    id: row.id, // ID representativo del grupo
                     fecha: row.fecha_formateada,
                     documento: row.documento,
                     nombre: row.nombre,
-                    entra: row.entra,
-                    sale: row.sale,
-                    stock: row.stock,
+                    entra: 0, // Iniciar en 0 para acumular
+                    sale: 0,  // Iniciar en 0 para acumular
+                    stock: 0, // Iniciar en 0 para acumular (Stock acumulado de variantes afectadas)
                     precio: row.precio,
                     glosa: row.glosa,
                     hora_creacion: row.hora_creacion,
-                    // Nuevos campos
+                    // Campos informativos
                     usuario: row.usuario,
                     almacen_origen: row.almacen_origen,
                     almacen_destino: row.almacen_destino,
-                    tonalidad: row.tonalidad || '-',
-                    talla: row.talla || '-',
-                    sku_label: row.sku_label || `${row.tonalidad || ''} ${row.talla || ''}`.trim() || 'Standard', // Fallback
+                    tonalidad: row.tonalidad, // Valor inicial, se sobrescribe si es mixto
+                    talla: row.talla,         // Valor inicial, se sobrescribe si es mixto
+                    sku_label: row.sku_label,
                     sku_attrs: row.sku_attrs_n || row.sku_attrs_v || null,
                     estado_doc: row.estado_doc,
+                    is_grouped: false, // Flag interno
+                    count_items: 0,
                     productos: []
                 });
             }
 
-            const kardexItem = kardexMap.get(bitacoraId);
+            const item = kardexMap.get(groupKey);
+
+            // Detectar si estamos agrupando items diferentes
+            if (item.count_items > 0) {
+                item.is_grouped = true;
+                if (item.tonalidad !== row.tonalidad) item.tonalidad = 'Varios';
+                if (item.talla !== row.talla) item.talla = 'Varios';
+                if (item.sku_label !== row.sku_label) item.sku_label = 'Varios Items';
+            }
+
+            // Acumular cantidades
+            item.entra += parseFloat(row.entra || 0);
+            item.sale += parseFloat(row.sale || 0);
+            item.stock += parseFloat(row.stock || 0);
+            item.count_items++;
 
             // Agregar producto de nota si existe y no está duplicado
             if (row.nota_producto_codigo) {
-                const exists = kardexItem.productos.some(p =>
-                    p.codigo === row.nota_producto_codigo && p.cantidad === row.nota_producto_cantidad
+                const exists = item.productos.some(p =>
+                    p.codigo === row.nota_producto_codigo &&
+                    p.cantidad === row.nota_producto_cantidad &&
+                    p.sku_label === (row.sku_label || 'Standard') // Diferenciar por SKU también
                 );
                 if (!exists) {
-                    kardexItem.productos.push({
+                    item.productos.push({
                         codigo: row.nota_producto_codigo,
                         descripcion: row.nota_producto_descripcion,
                         marca: row.nota_producto_marca,
@@ -545,11 +580,13 @@ const getDetalleKardex = async (req, res) => {
 
             // Agregar producto de venta si existe y no está duplicado
             if (row.venta_producto_codigo) {
-                const exists = kardexItem.productos.some(p =>
-                    p.codigo === row.venta_producto_codigo && p.cantidad === row.venta_producto_cantidad
+                const exists = item.productos.some(p =>
+                    p.codigo === row.venta_producto_codigo &&
+                    p.cantidad === row.venta_producto_cantidad &&
+                    p.sku_label === (row.sku_label || 'Standard')
                 );
                 if (!exists) {
-                    kardexItem.productos.push({
+                    item.productos.push({
                         codigo: row.venta_producto_codigo,
                         descripcion: row.venta_producto_descripcion,
                         marca: row.venta_producto_marca,
