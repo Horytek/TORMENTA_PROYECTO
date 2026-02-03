@@ -10,10 +10,17 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Ordenar transacciones por fecha descendente (más reciente primero)
+  // Ordenar transacciones por fecha y hora descendente (más reciente primero)
+  // Ordenar transacciones por fecha y hora descendente (más reciente primero)
   const sortedTransactions = [...transactions].sort((a, b) => {
-    const dateA = new Date(a.fecha);
-    const dateB = new Date(b.fecha);
-    return dateB - dateA;
+    // a.fecha viene como "DD/MM/YYYY" -> convertir a "YYYY-MM-DD"
+    const [dayA, monthA, yearA] = a.fecha.split('/');
+    const [dayB, monthB, yearB] = b.fecha.split('/');
+
+    const dateStrA = `${yearA}-${monthA}-${dayA}T${a.hora_creacion || '00:00:00'}`;
+    const dateStrB = `${yearB}-${monthB}-${dayB}T${b.hora_creacion || '00:00:00'}`;
+
+    return new Date(dateStrB) - new Date(dateStrA);
   });
 
   React.useEffect(() => {
@@ -141,6 +148,11 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
     </div>
   );
 
+  // Contar cantidad de transacciones (filas) para el card Historico
+  // El usuario espera ver "1 entrada, 6 salidas" basado en las filas de la tabla
+  const countEntradas = sortedTransactions.filter(t => parseFloat(t.entra) > 0).length;
+  const countSalidas = sortedTransactions.filter(t => parseFloat(t.sale) > 0).length;
+
   return (
     <div className="flex flex-col space-y-6 w-full pb-8">
       {/* KPI Cards Section */}
@@ -149,12 +161,12 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
         <KpiCard title="Histórico" icon={Package}>
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div>
-              <p className="text-xs text-slate-500 mb-1">Entradas Acum.</p>
-              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{entradasPrev}</p>
+              <p className="text-xs text-slate-500 mb-1">Entradas (Conteo)</p>
+              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{countEntradas}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">Salidas Acum.</p>
-              <p className="text-lg font-bold text-rose-500 dark:text-rose-400">{salidasPrev}</p>
+              <p className="text-xs text-slate-500 mb-1">Salidas (Conteo)</p>
+              <p className="text-lg font-bold text-rose-500 dark:text-rose-400">{countSalidas}</p>
             </div>
           </div>
 
@@ -255,7 +267,7 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
               }}
             >
               <TableHeader>
-                {["Fecha", "Hora", "Usuario", "Documento", "Origen", "Destino", "Variante", "Entra", "Sale", "Stock (Var.)", "Estado"].map((header) => (
+                {["Fecha", "Hora", "Usuario", "Documento", "Origen", "Destino", "Variante", "Entra", "Sale", "Stock", "Estado"].map((header) => (
                   <TableColumn key={header}>{header}</TableColumn>
                 ))}
               </TableHeader>
