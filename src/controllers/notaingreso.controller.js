@@ -473,7 +473,7 @@ const insertNotaAndDetalle = async (req, res) => {
       [notaResult] = await connection.query(
         `INSERT INTO nota 
         (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera, id_tenant) 
-        VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?)`,
+        VALUES (?, ?, 1, ?, ?, ?, ?, ?, 1, ?, ?, 0, ?)`,
         [
           almacenO,
           almacenD,
@@ -491,7 +491,7 @@ const insertNotaAndDetalle = async (req, res) => {
       [notaResult] = await connection.query(
         `INSERT INTO nota 
         (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera, id_tenant) 
-        VALUES (null, ?, 1, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?)`,
+        VALUES (null, ?, 1, ?, ?, ?, ?, ?, 1, ?, ?, 0, ?)`,
         [
           almacenD,
           destinatario,

@@ -556,7 +556,7 @@ const getDetalleKardex = async (req, res) => {
             // Acumular cantidades
             item.entra += parseFloat(row.entra || 0);
             item.sale += parseFloat(row.sale || 0);
-            item.stock += parseFloat(row.stock || 0);
+            item.stock = parseFloat(row.stock || 0); // Usar el último stock registrado en el grupo (estado final)
             item.count_items++;
 
             // Agregar producto de nota si existe y no está duplicado
