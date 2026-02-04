@@ -718,7 +718,9 @@ export const useVentasOnlineData = (filters = {}) => {
                         precio_raw: parseFloat(detalle.precio || 0),
                         subtotal_raw: parseFloat(detalle.subtotal || 0),
                         precio: `S/ ${parseFloat(detalle.precio || 0).toFixed(2)}`,
-                        subtotal: `S/ ${parseFloat(detalle.subtotal || 0).toFixed(2)}`
+                        subtotal: `S/ ${parseFloat(detalle.subtotal || 0).toFixed(2)}`,
+                        sku_label: detalle.sku_label,
+                        attributes: detalle.attributes_json
                     }))
                 }));
                 setAllVentas(ventasData);

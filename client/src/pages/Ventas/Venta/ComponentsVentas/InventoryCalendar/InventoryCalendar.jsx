@@ -73,8 +73,24 @@ const InventoryCalendar = ({ ventas }) => {
         Object.keys(data).forEach(d => {
             const aggregated = {};
             data[d].products.forEach(p => {
-                // Aggregating by nombre ensures products with identical names (but potentially different unique IDs/codes) are grouped.
-                const key = p.nombre;
+                // Aggregating by key ensures products with identical names but different variants are grouped separately.
+                // Create a unique key for the variant
+                let variantKey = p.nombre;
+
+                // Add variant details to key if they exist
+                if (p.sku_label) variantKey += `-${p.sku_label}`;
+                if (p.attributes) {
+                    // If attributes is an object, stringify it safely
+                    const attrStr = typeof p.attributes === 'object' ? JSON.stringify(p.attributes) : String(p.attributes);
+                    variantKey += `-${attrStr}`;
+                }
+                // Fallback for legacy variant fields if no SKU/Attributes
+                if (!p.sku_label && !p.attributes) {
+                    if (p.nombre_tonalidad) variantKey += `-${p.nombre_tonalidad}`;
+                    if (p.nombre_talla) variantKey += `-${p.nombre_talla}`;
+                }
+
+                const key = variantKey;
                 if (!aggregated[key]) {
                     aggregated[key] = { ...p, cantidad: 0, subtotalValue: 0 };
                 }

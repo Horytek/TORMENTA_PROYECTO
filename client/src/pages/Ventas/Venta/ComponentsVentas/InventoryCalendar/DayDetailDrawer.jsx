@@ -6,19 +6,53 @@ import {
     DrawerBody,
     DrawerFooter,
     Button,
-    ScrollShadow
+    ScrollShadow,
+    Accordion,
+    AccordionItem,
+    Chip
 } from "@heroui/react";
-import { FaBoxOpen, FaCalendarAlt } from "react-icons/fa";
+import { FaBoxOpen, FaCalendarAlt, FaTag } from "react-icons/fa";
 
 const DayDetailDrawer = ({ isOpen, onClose, day, products }) => {
 
-    const aggregatedProducts = useMemo(() => {
+    const groupedProducts = useMemo(() => {
         if (!products) return [];
-        return products.sort((a, b) => b.cantidad - a.cantidad);
+
+        const groups = {};
+
+        products.forEach(product => {
+            const name = product.nombre;
+            if (!groups[name]) {
+                groups[name] = {
+                    nombre: name,
+                    nom_marca: product.nom_marca || 'Sin Marca',
+                    totalQty: 0,
+                    totalRevenue: 0,
+                    variants: []
+                };
+            }
+
+            groups[name].totalQty += product.cantidad;
+            // Parse subtotal robustly (handle 'S/' string or number)
+            const subVal = typeof product.subtotal === 'string'
+                ? parseFloat(product.subtotal.replace(/[^\d.-]/g, ''))
+                : Number(product.subtotal);
+
+            groups[name].totalRevenue += isNaN(subVal) ? 0 : subVal;
+            groups[name].variants.push(product);
+        });
+
+        // Convert to array and sort by total quantity
+        return Object.values(groups).sort((a, b) => b.totalQty - a.totalQty);
     }, [products]);
 
     const totalQuantity = products ? products.reduce((acc, curr) => acc + curr.cantidad, 0) : 0;
-    const totalRevenue = products ? products.reduce((acc, curr) => acc + parseFloat(curr.subtotal.replace('S/ ', '').replace('S/', '')), 0) : 0;
+    const totalRevenue = products ? products.reduce((acc, curr) => {
+        const subVal = typeof curr.subtotal === 'string'
+            ? parseFloat(curr.subtotal.replace(/[^\d.-]/g, ''))
+            : Number(curr.subtotal);
+        return acc + (isNaN(subVal) ? 0 : subVal);
+    }, 0) : 0;
 
     return (
         <Drawer isOpen={isOpen} onOpenChange={onClose} placement="right" size="lg" backdrop="blur">
@@ -47,30 +81,75 @@ const DayDetailDrawer = ({ isOpen, onClose, day, products }) => {
                             </div>
 
                             <ScrollShadow className="h-full p-4">
-                                <div className="space-y-3">
-                                    {aggregatedProducts.map((product, idx) => (
-                                        <div key={`${product.codigo}-${idx}`} className="flex items-center justify-between p-3 bg-white rounded-lg border border-default-100 shadow-sm hover:border-primary-300 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
-                                                    <FaBoxOpen />
+                                {groupedProducts.length > 0 ? (
+                                    <Accordion selectionMode="multiple" variant="splitted">
+                                        {groupedProducts.map((group, idx) => (
+                                            <AccordionItem
+                                                key={`${group.nombre}-${idx}`}
+                                                aria-label={group.nombre}
+                                                startContent={
+                                                    <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
+                                                        <FaBoxOpen />
+                                                    </div>
+                                                }
+                                                subtitle={
+                                                    <span className="text-xs text-default-400">
+                                                        {group.nom_marca} • {group.variants.length} variante{group.variants.length !== 1 ? 's' : ''}
+                                                    </span>
+                                                }
+                                                title={
+                                                    <div className="flex justify-between items-center w-full pr-4">
+                                                        <span className="font-semibold text-default-700 text-sm">{group.nombre}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            <Chip size="sm" color="primary" variant="flat">{group.totalQty} und.</Chip>
+                                                            <span className="text-sm font-bold text-success-600">S/ {group.totalRevenue.toFixed(2)}</span>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            >
+                                                <div className="flex flex-col gap-2 pb-2">
+                                                    {group.variants.map((variant, vIdx) => (
+                                                        <div key={vIdx} className="flex justify-between items-center p-2 bg-default-50 rounded-lg border border-default-100">
+                                                            <div className="flex flex-col">
+                                                                <div className="flex items-center gap-2">
+                                                                    <FaTag className="text-default-400 text-xs" />
+                                                                    <span className="text-xs font-semibold text-default-600">
+                                                                        {variant.sku_label || 'Sin SKU'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                                    {variant.attributes && typeof variant.attributes === 'object' && Object.entries(variant.attributes).map(([key, val], k) => (
+                                                                        <span key={k} className="text-[10px] bg-white border border-default-200 px-1 rounded text-default-500">
+                                                                            {key}: {val}
+                                                                        </span>
+                                                                    ))}
+                                                                    {/* Fallback legacy attributes */}
+                                                                    {!variant.attributes && variant.nombre_talla && (
+                                                                        <span className="text-[10px] bg-white border border-default-200 px-1 rounded text-default-500">Talla: {variant.nombre_talla}</span>
+                                                                    )}
+                                                                    {!variant.attributes && variant.nombre_tonalidad && (
+                                                                        <span className="text-[10px] bg-white border border-default-200 px-1 rounded text-default-500">Color: {variant.nombre_tonalidad}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className="text-sm font-bold text-default-700">{variant.cantidad}</span>
+                                                                <span className="text-[10px] text-default-400 ml-1">und</span>
+                                                                <div className="text-xs font-medium text-success-600">
+                                                                    {typeof variant.subtotal === 'string' ? variant.subtotal : `S/ ${variant.subtotal.toFixed(2)}`}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <div>
-                                                    <p className="font-semibold text-default-700 text-sm line-clamp-1">{product.nombre}</p>
-                                                    <p className="text-xs text-default-400">{product.codigo} - {product.nom_marca || 'Sin Marca'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-default-800 text-lg">{product.cantidad}</p>
-                                                <p className="text-xs text-default-400">UND</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {aggregatedProducts.length === 0 && (
-                                        <div className="text-center py-10 text-default-400">
-                                            No hay productos registrados para este día.
-                                        </div>
-                                    )}
-                                </div>
+                                            </AccordionItem>
+                                        ))}
+                                    </Accordion>
+                                ) : (
+                                    <div className="text-center py-10 text-default-400">
+                                        No hay productos registrados para este día.
+                                    </div>
+                                )}
                             </ScrollShadow>
                         </DrawerBody>
                         <DrawerFooter className="border-t border-default-200">

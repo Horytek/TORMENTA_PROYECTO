@@ -106,7 +106,6 @@ const LineChartUsageExampleAxisLabel = () => {
                             showLegend={false}
                             curveType="monotone"
                             connectNulls={true}
-                            showDots={true}
                             minValue={0}
                             maxValue={maxValue}
 

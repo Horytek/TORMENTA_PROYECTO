@@ -58,9 +58,8 @@ const VentasOnlineTable = ({
     }, [selectedVenta]);
 
     const renderVariantBadges = (detalle) => {
-        if (!detalle.sku_label && !detalle.attributes_json) return null;
-
-        let attributes = detalle.attributes_json;
+        // Check for attributes object (JSON)
+        let attributes = detalle.attributes || detalle.attributes_json;
         if (typeof attributes === 'string') {
             try { attributes = JSON.parse(attributes); } catch { attributes = null; }
         }
@@ -87,7 +86,30 @@ const VentasOnlineTable = ({
             );
         }
 
-        // Fallback to label if no JSON
+        // Fallback: Check for individual Talla/Color fields
+        const badges = [];
+        if (detalle.nombre_talla) {
+            badges.push(
+                <div key="talla" className="flex items-center gap-1 bg-slate-100 rounded px-1.5 py-0.5 border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-500">Talla:</span>
+                    <span className="text-[10px] text-slate-700 font-medium">{detalle.nombre_talla}</span>
+                </div>
+            );
+        }
+        if (detalle.nombre_tonalidad) {
+            badges.push(
+                <div key="color" className="flex items-center gap-1 bg-slate-100 rounded px-1.5 py-0.5 border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-500">Color:</span>
+                    <span className="text-[10px] text-slate-700 font-medium">{detalle.nombre_tonalidad}</span>
+                </div>
+            );
+        }
+
+        if (badges.length > 0) {
+            return <div className="flex flex-wrap gap-1 mt-1">{badges}</div>;
+        }
+
+        // Final fallback: SKU label
         if (detalle.sku_label && detalle.sku_label !== detalle.nombre) {
             return <div className="text-[10px] text-slate-500 bg-slate-100 px-1 rounded inline-block mt-1">{detalle.sku_label}</div>;
         }

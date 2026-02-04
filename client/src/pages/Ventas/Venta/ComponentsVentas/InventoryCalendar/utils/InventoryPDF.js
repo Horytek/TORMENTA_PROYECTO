@@ -26,13 +26,55 @@ export const generateInventoryPDF = (month, year, daysData) => {
             // Add a header row for the day
             tableRows.push([{ content: `DÍA ${day}`, colSpan: 3, styles: { fillColor: [220, 220, 220], fontStyle: 'bold' } }]);
 
-            // Add product rows
+            // Group products by name
+            const groupedProducts = {};
             dayData.products.forEach(prod => {
+                const name = prod.nombre;
+                if (!groupedProducts[name]) {
+                    groupedProducts[name] = {
+                        nombre: name,
+                        totalQty: 0,
+                        totalRevenue: 0,
+                        variants: []
+                    };
+                }
+
+                const qty = prod.cantidad;
+                // Robust subtotal parsing
+                const rawSub = typeof prod.subtotal === 'string'
+                    ? parseFloat(prod.subtotal.replace(/[^\d.-]/g, ''))
+                    : Number(prod.subtotal);
+                const subVal = isNaN(rawSub) ? 0 : rawSub;
+
+                groupedProducts[name].totalQty += qty;
+                groupedProducts[name].totalRevenue += subVal;
+                groupedProducts[name].variants.push({
+                    ...prod,
+                    subtotalValue: subVal
+                });
+            });
+
+            // Add rows for each group
+            Object.values(groupedProducts).forEach(group => {
+                // Parent Row (Summary)
                 tableRows.push([
-                    prod.nombre,
-                    prod.cantidad,
-                    prod.subtotal
+                    { content: group.nombre, styles: { fontStyle: 'bold' } },
+                    { content: group.totalQty, styles: { fontStyle: 'bold' } },
+                    { content: `S/ ${group.totalRevenue.toFixed(2)}`, styles: { fontStyle: 'bold' } }
                 ]);
+
+                // Variant Rows (Indented)
+                group.variants.forEach(variant => {
+                    const variantLabel = `${variant.sku_label ? `${variant.sku_label}` : ''}${variant.attributes && typeof variant.attributes === 'object' ? ` - ${Object.values(variant.attributes).join(', ')}` : ''}`;
+                    // Fallback for no specific variant info, avoiding empty rows or just " - "
+                    const finalLabel = variantLabel.trim() ? `   ${variantLabel}` : `   (Variante)`;
+
+                    tableRows.push([
+                        { content: finalLabel, styles: { fontStyle: 'italic', textColor: [100, 100, 100] } },
+                        { content: variant.cantidad, styles: { textColor: [100, 100, 100] } },
+                        { content: `S/ ${variant.subtotalValue.toFixed(2)}`, styles: { textColor: [100, 100, 100] } }
+                    ]);
+                });
             });
 
             // Add daily total row

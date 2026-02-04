@@ -725,7 +725,16 @@ const getCantidadVentasPorProducto = async (req, res) => {
     let query = `
       SELECT 
         p.id_producto,
-        p.descripcion,
+        CASE 
+            WHEN ps.sku IS NOT NULL AND ps.sku != '' AND ps.sku LIKE CONCAT(p.descripcion, '%') THEN ps.sku
+            WHEN ps.sku IS NOT NULL AND ps.sku != '' THEN CONCAT(p.descripcion, ' - ', ps.sku)
+            ELSE 
+                TRIM(CONCAT(
+                    p.descripcion,
+                    CASE WHEN tal.nombre IS NOT NULL THEN CONCAT(' - ', tal.nombre) ELSE '' END,
+                    CASE WHEN ton.nombre IS NOT NULL THEN CONCAT(' - ', ton.nombre) ELSE '' END
+                ))
+        END AS descripcion,
         SUM(dv.cantidad) AS cantidad_vendida,
         SUM(dv.total) AS dinero_generado
       FROM 
@@ -734,6 +743,12 @@ const getCantidadVentasPorProducto = async (req, res) => {
         producto p ON dv.id_producto = p.id_producto
       JOIN 
         venta v ON dv.id_venta = v.id_venta
+      LEFT JOIN
+        producto_sku ps ON dv.id_sku = ps.id_sku
+      LEFT JOIN
+        talla tal ON dv.id_talla = tal.id_talla
+      LEFT JOIN
+        tonalidad ton ON dv.id_tonalidad = ton.id_tonalidad
       WHERE v.estado_venta != 0
         AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
@@ -750,7 +765,7 @@ const getCantidadVentasPorProducto = async (req, res) => {
     }
 
     query += `
-      GROUP BY p.id_producto, p.descripcion
+      GROUP BY p.id_producto, p.descripcion, ps.sku, tal.nombre, ton.nombre
       ORDER BY cantidad_vendida DESC
     `;
 
@@ -1394,12 +1409,24 @@ const getTopProductosMargen = async (req, res) => {
 
     let query = `
       SELECT 
-        p.descripcion AS nombre,
-        ROUND(AVG((dv.precio - p.precio) / NULLIF(dv.precio,0) * 100), 2) AS margen,
-        SUM(dv.total) AS ventas
+        CASE 
+            WHEN ps.sku IS NOT NULL AND ps.sku != '' AND ps.sku LIKE CONCAT(p.descripcion, '%') THEN ps.sku
+            WHEN ps.sku IS NOT NULL AND ps.sku != '' THEN CONCAT(p.descripcion, ' - ', ps.sku)
+            ELSE 
+                TRIM(CONCAT(
+                    p.descripcion,
+                    CASE WHEN tal.nombre IS NOT NULL THEN CONCAT(' - ', tal.nombre) ELSE '' END,
+                    CASE WHEN ton.nombre IS NOT NULL THEN CONCAT(' - ', ton.nombre) ELSE '' END
+                ))
+        END AS nombre,
+        COALESCE(ROUND(AVG((dv.precio - p.precio) / NULLIF(dv.precio,0) * 100), 2), 0) AS margen,
+        COALESCE(SUM(dv.total), 0) AS ventas
       FROM detalle_venta dv
       JOIN producto p ON dv.id_producto = p.id_producto
       JOIN venta v ON dv.id_venta = v.id_venta
+      LEFT JOIN producto_sku ps ON dv.id_sku = ps.id_sku
+      LEFT JOIN talla tal ON dv.id_talla = tal.id_talla
+      LEFT JOIN tonalidad ton ON dv.id_tonalidad = ton.id_tonalidad
       WHERE v.estado_venta != 0
         AND v.f_venta >= ? AND v.f_venta < DATE_ADD(?, INTERVAL 1 DAY)
     `;
@@ -1413,7 +1440,7 @@ const getTopProductosMargen = async (req, res) => {
       params.push(id_tenant);
     }
     query += `
-      GROUP BY p.id_producto, p.descripcion
+      GROUP BY p.id_producto, p.descripcion, ps.sku, tal.nombre, ton.nombre
       ORDER BY margen DESC, ventas DESC
       LIMIT ?
     `;

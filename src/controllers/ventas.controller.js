@@ -1,5 +1,6 @@
 import { getConnection } from "./../database/database.js";
 import { getTesisConnection } from "./../database/database_tesis.js";
+import { DATABASE } from "../config.js";
 import { logVentas } from "../utils/logActions.js";
 import { resolveSku } from "../utils/skuHelper.js";
 
@@ -1430,16 +1431,33 @@ const getVentasOnline = async (req, res) => {
             dc.precio_unitario AS precio,
             (dc.cantidad * dc.precio_unitario) AS subtotal,
             COALESCE(p.undm, 'UND') AS undm,
-            sku.attributes_json,
-            sku.sku as sku_label
+            dc.metadata
           FROM detalle_compra dc
-          LEFT JOIN producto p ON p.id_producto = dc.id_producto
-          LEFT JOIN producto_sku sku ON dc.id_sku = sku.id_sku
+          LEFT JOIN ${DATABASE}.producto p ON p.id_producto = dc.id_producto
           WHERE dc.id_compra IN (${placeholders})
         `, comprasIds);
 
         // Agrupar detalles por id_compra
         detallesResult.forEach(d => {
+          // Parse metadata to extract variants
+          let meta = null;
+          if (d.metadata) {
+            try {
+              meta = typeof d.metadata === 'string' ? JSON.parse(d.metadata) : d.metadata;
+            } catch (e) { console.error('Error parsing metadata', e); }
+          }
+
+          if (meta) {
+            // Construct attributes object for frontend
+            const attrs = {};
+            if (meta.size) attrs['Talla'] = meta.size;
+            if (meta.color && meta.color.name) attrs['Color'] = meta.color.name;
+
+            d.attributes_json = attrs;
+            d.nombre_talla = meta.size;
+            d.nombre_tonalidad = meta.color?.name;
+          }
+
           if (!detallesMap[d.id_compra]) {
             detallesMap[d.id_compra] = [];
           }

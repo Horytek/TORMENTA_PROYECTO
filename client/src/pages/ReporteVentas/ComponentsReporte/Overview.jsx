@@ -13,62 +13,36 @@ const BarChartHero = ({ idSucursal, year, month, week }) => {
     // Hook Margen
     const { data: marginData, loading: loadingMargin, error: errorMargin } = useTopProductosMargen(idSucursal, year, month, week, 5);
 
-    const [sortType, setSortType] = useState("cantidad"); // "cantidad" | "ingresos" | "margen"
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Determinar qué datos usar según el sortType
-    const isLoading = sortType === "margen" ? loadingMargin : loadingSales;
-    const error = sortType === "margen" ? errorMargin : errorSales;
+    // Default to 'cantidad' logic without state
+    const isLoading = loadingSales;
+    const error = errorSales;
+    const sortType = "cantidad"; // Fixed to quantity
 
-    let displayData = [];
-
-    if (sortType === "margen") {
-        // Datos de Margen
-        if (marginData) {
-            displayData = marginData.map(item => ({
-                name: item.nombre || item.name,
-                metricLabel: `Ventas: ${currencyFormatter(item.ventas || item.sales)}`,
-                value: item.margen ?? item.margin,
-                isMargin: true,
-                rawVentas: item.ventas || item.sales
-            }));
-        }
-    } else {
-        // Datos de Ventas
-        displayData = ventasPorProducto.map((producto) => ({
-            name: producto.descripcion,
-            cantidad: Number(producto.cantidad_vendida),
-            ingresos: Number(producto.dinero_generado),
-            isMargin: false
-        })).sort((a, b) => {
-            if (sortType === "ingresos") return b.ingresos - a.ingresos;
-            return b.cantidad - a.cantidad;
-        }).map(item => ({
+    const displayData = ventasPorProducto.map((producto) => ({
+        name: producto.nombre || producto.descripcion,
+        cantidad: Number(producto.cantidad_vendida),
+        ingresos: Number(producto.dinero_generado),
+        isMargin: false
+    })).sort((a, b) => b.cantidad - a.cantidad)
+        .map(item => ({
             ...item,
-            metricLabel: sortType === "cantidad" ? `${dataFormatter(item.cantidad)} unid.` : `${dataFormatter(item.cantidad)} unid.`,
-            value: sortType === "ingresos" ? item.ingresos : item.cantidad,
-            chipValue: sortType === "ingresos" ? currencyFormatter(item.ingresos) : currencyFormatter(item.ingresos) // Siempre mostrar ingresos en el chip si es ventas?
-            // Mejor:
-            // Cantidad View: Subtitle = Ingresos, Chip = Cantidad? No, users usually want Sales $ as primary or secondary.
-            // Let's stick to the previous good design:
-            // List Item: Name
-            // Subtitle: "X vendidos"
-            // Chip: "$ Y Generados"
+            metricLabel: `Ingresos: ${currencyFormatter(item.ingresos)}`,
+            value: item.cantidad,
+            chipValue: `${dataFormatter(item.cantidad)} un.`
         }));
-    }
 
-    // Modal Search Filter (Solo aplica para Ventas por ahora, ya que Margen API viene limitado)
-    const filteredItems = sortType === "margen"
-        ? displayData
-        : displayData.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    // Filter for Modal
+    const filteredItems = displayData.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    // Colors for margin ranking
+    // Colors for ranking
     const dotColors = ["bg-indigo-500", "bg-blue-500", "bg-sky-500", "bg-cyan-500", "bg-teal-500"];
 
     return (
         <>
-            <Card className="w-full h-full p-6 rounded-3xl shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
+            <Card className="w-full h-auto p-6 rounded-3xl shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
                 <div className="flex flex-col gap-4 mb-6">
                     <div className="flex items-center justify-between">
                         <div>
@@ -76,51 +50,17 @@ const BarChartHero = ({ idSucursal, year, month, week }) => {
                                 Top Desempeño
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {sortType === "cantidad" && "Más vendidos por volumen"}
-                                {sortType === "ingresos" && "Mayores ingresos generados"}
-                                {sortType === "margen" && "Mayor rentabilidad (%)"}
+                                Productos más vendidos por volumen
                             </p>
                         </div>
-                        {sortType !== "margen" && (
-                            <Button
-                                size="sm"
-                                variant="light"
-                                className="text-indigo-600 font-medium"
-                                onPress={() => setIsOpen(true)}
-                            >
-                                Ver todos
-                            </Button>
-                        )}
-                    </div>
-
-                    <div className="flex p-1 bg-slate-100 dark:bg-zinc-800 rounded-xl">
-                        <button
-                            onClick={() => setSortType("cantidad")}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${sortType === "cantidad"
-                                ? "bg-white dark:bg-zinc-700 text-slate-800 dark:text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                                }`}
+                        <Button
+                            size="sm"
+                            variant="light"
+                            className="text-indigo-600 font-medium"
+                            onPress={() => setIsOpen(true)}
                         >
-                            Cantidad
-                        </button>
-                        <button
-                            onClick={() => setSortType("ingresos")}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${sortType === "ingresos"
-                                ? "bg-white dark:bg-zinc-700 text-slate-800 dark:text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                                }`}
-                        >
-                            Ingresos
-                        </button>
-                        <button
-                            onClick={() => setSortType("margen")}
-                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${sortType === "margen"
-                                ? "bg-white dark:bg-zinc-700 text-slate-800 dark:text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                                }`}
-                        >
-                            Margen
-                        </button>
+                            Ver todos
+                        </Button>
                     </div>
                 </div>
 
