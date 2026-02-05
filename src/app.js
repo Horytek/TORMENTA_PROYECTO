@@ -47,6 +47,7 @@ import { startLogMaintenance } from "./services/logMaintenance.service.js";
 import { getConnection } from "./database/database.js";
 import attributesRoutes from "./routes/attributes.routes.js";
 import emailRoutes from "./routes/email.routes.js";
+import expressRoutes from "./routes/express.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -231,6 +232,7 @@ app.use("/api", paymentRoutes);
 app.use("/api/landing", landingRoutes);
 app.use("/api/unidades", unidadesRoutes);
 app.use("/api/health", healthRoutes);
+app.use("/api/express", expressRoutes);
 
 
 // Servir archivos estáticos (uploads)

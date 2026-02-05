@@ -28,6 +28,11 @@ const ContactanosPage = lazy(() => import("./pages/Landing/ContactanosPage"));
 const BlogPage = lazy(() => import("./pages/Landing/BlogPage"));
 const RegistroLicenciaPage = lazy(() => import("./pages/Landing/RegistroLicenciaPage"));
 const RegistroPage = lazy(() => import("./pages/Landing/RegistroPage"));
+const ExpressLayout = lazy(() => import("./layouts/Express/ExpressLayout"));
+const ExpressDashboard = lazy(() => import("./pages/Express/ExpressDashboard"));
+const ExpressPOS = lazy(() => import("./pages/Express/ExpressPOS"));
+const ExpressInventory = lazy(() => import("./pages/Express/ExpressInventory"));
+const ExpressUsers = lazy(() => import("./pages/Express/ExpressUsers"));
 
 const ChatbotClientWidget = lazy(() =>
   import("@/components/Chatbot/DeepSeekChatbot")
@@ -101,6 +106,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                     <Route path="/landing/registro" element={<RegistroPage />} />
                     <Route path="/blog" element={<BlogPage />} />
                     <Route path="/blog/article" element={<BlogPage />} />
+                    <Route path="/blog/article" element={<BlogPage />} />
+
+                    {/* Express Mode Routes */}
+                    <Route path="/express" element={<ExpressLayout />}>
+                      <Route path="dashboard" element={<ExpressDashboard />} />
+                      <Route path="pos" element={<ExpressPOS />} />
+                      <Route path="inventory" element={<ExpressInventory />} />
+                      <Route path="users" element={<ExpressUsers />} />
+                    </Route>
+
                     <Route element={<ProtectedRoute />}>
                       <Route path="/*" element={<ProtectedLayout />} />
                     </Route>

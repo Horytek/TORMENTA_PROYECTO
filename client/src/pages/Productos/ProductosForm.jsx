@@ -366,6 +366,8 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                             )}
                           />
                           <Controller
+                            name="undm"
+                            control={control}
                             render={({ field }) => (
                               <Select
                                 {...field}

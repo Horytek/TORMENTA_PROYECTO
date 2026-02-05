@@ -13,6 +13,7 @@ import {
 } from '@heroui/react';
 import { useAuth } from "@/context/Auth/AuthProvider";
 import AlertModal from "@/components/Modals/AlertModal";
+import { expressLogin, expressRegister } from "@/services/express.services";
 
 function Login() {
   const [usuario, setUsuario] = useState("");
@@ -28,7 +29,16 @@ function Login() {
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+
   const [otpValue, setOtpValue] = useState("");
+
+  // Express Mode State
+  const [expressEmail, setExpressEmail] = useState("");
+  const [expressPassword, setExpressPassword] = useState("");
+  const [expressBusiness, setExpressBusiness] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [expressLoading, setExpressLoading] = useState(false);
+  const [showExpressPassword, setShowExpressPassword] = useState(false);
 
   const navigate = useNavigate();
   const setNombre = useUserStore((state) => state.setNombre);
@@ -90,6 +100,42 @@ function Login() {
       setTimeout(() => window.location.reload(), 1200);
     } else {
       setAuthError(res?.message || "Código incorrecto o expirado.");
+    }
+  };
+
+  const handleExpressSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError(""); // Reuse authError for message
+    setExpressLoading(true);
+    try {
+      if (isRegistering) {
+        if (!expressBusiness || !expressEmail || !expressPassword) {
+          setAuthError("Todos los campos son obligatorios.");
+          setExpressLoading(false);
+          return;
+        }
+        await expressRegister({
+          business_name: expressBusiness,
+          email: expressEmail,
+          password: expressPassword
+        });
+      } else {
+        if (!expressEmail || !expressPassword) {
+          setAuthError("Ingrese correo y contraseña.");
+          setExpressLoading(false);
+          return;
+        }
+        await expressLogin({
+          email: expressEmail,
+          password: expressPassword
+        });
+      }
+      navigate('/express/dashboard');
+    } catch (error) {
+      console.error(error);
+      setAuthError(error.response?.data?.message || "Error de conexión con Express Mode.");
+    } finally {
+      setExpressLoading(false);
     }
   };
 
@@ -170,14 +216,15 @@ function Login() {
               color="primary"
               className="w-full mb-6"
               classNames={{
-                tabList: "w-full p-1 bg-zinc-800/40 rounded-xl border border-white/5",
-                cursor: "w-full shadow-sm rounded-lg bg-zinc-700",
-                tab: "h-9 text-sm font-medium",
-                tabContent: "group-data-[selected=true]:text-white text-zinc-400"
+                tabList: "w-full bg-zinc-800/40 p-1 rounded-2xl border border-white/5",
+                cursor: "w-full bg-zinc-700 shadow-lg rounded-xl",
+                tab: "h-10 text-sm",
+                tabContent: "group-data-[selected=true]:text-white text-zinc-500 font-semibold"
               }}
             >
-              <Tab key="login" title="Iniciar Sesión" />
-              <Tab key="auth" title="Autenticar Cuenta" />
+              <Tab key="login" title="Sistema ERP" />
+              <Tab key="express" title="Pocket POS" />
+              <Tab key="auth" title="Validar" />
             </Tabs>
 
             <div className="mt-2">
@@ -246,6 +293,108 @@ function Login() {
                     radius="md"
                   >
                     Iniciar sesión
+                  </Button>
+                </form>
+              ) : activeTab === 'express' ? (
+                <form onSubmit={handleExpressSubmit} className="space-y-5">
+                  <div className="flex justify-center mb-2">
+                    <div className="bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-xs font-semibold border border-amber-500/20">
+                      Modo Pocket POS (Beta)
+                    </div>
+                  </div>
+
+                  {/* Toggle Login/Register */}
+                  <div className="flex bg-zinc-900/60 p-1.5 rounded-xl mb-6 border border-white/5 relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsRegistering(false)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${!isRegistering ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      Ingresar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsRegistering(true)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${isRegistering ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      Registrar Negocio
+                    </button>
+                  </div>
+
+                  {isRegistering && (
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-zinc-300 ml-1">Nombre del Negocio</label>
+                      <Input
+                        type="text"
+                        placeholder="Ej. Bodega Don Pepe"
+                        value={expressBusiness}
+                        onChange={(e) => setExpressBusiness(e.target.value)}
+                        variant="flat"
+                        radius="md"
+                        classNames={{
+                          input: "!text-zinc-100 placeholder:!text-zinc-500",
+                          inputWrapper: "bg-zinc-800/50 data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800 !border-none !shadow-none !ring-0 !ring-offset-0 !outline-none h-12"
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-zinc-300 ml-1">Correo Electrónico</label>
+                    <Input
+                      type="text"
+                      placeholder="correo@negocio.com"
+                      value={expressEmail}
+                      onChange={(e) => setExpressEmail(e.target.value)}
+                      variant="flat"
+                      radius="md"
+                      classNames={{
+                        input: "!text-zinc-100 placeholder:!text-zinc-500",
+                        inputWrapper: "bg-zinc-800/50 data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800 !border-none !shadow-none !ring-0 !ring-offset-0 !outline-none h-12"
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-zinc-300 ml-1">Contraseña</label>
+                    <div className="relative">
+                      <Input
+                        type={showExpressPassword ? "text" : "password"}
+                        placeholder="********"
+                        value={expressPassword}
+                        onChange={(e) => setExpressPassword(e.target.value)}
+                        variant="flat"
+                        radius="md"
+                        endContent={
+                          <button className="focus:outline-none" type="button" onClick={() => setShowExpressPassword(!showExpressPassword)}>
+                            {showExpressPassword ? (
+                              <FaEyeSlash className="text-lg text-zinc-400" />
+                            ) : (
+                              <FaEye className="text-lg text-zinc-400" />
+                            )}
+                          </button>
+                        }
+                        classNames={{
+                          input: "!text-zinc-100 placeholder:!text-zinc-500",
+                          inputWrapper: "bg-zinc-800/50 data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800 !border-none !shadow-none !ring-0 !ring-offset-0 !outline-none h-12"
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {authError && (
+                    <div className="p-3 bg-red-900/20 border border-red-500/20 text-red-500 text-xs rounded-lg text-center font-semibold">
+                      {authError}
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 font-bold text-base bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20"
+                    radius="md"
+                    isLoading={expressLoading}
+                  >
+                    {isRegistering ? "Crear y Acceder" : "Acceder a Pocket POS"}
                   </Button>
                 </form>
               ) : (

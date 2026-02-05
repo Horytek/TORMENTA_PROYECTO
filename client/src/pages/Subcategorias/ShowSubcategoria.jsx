@@ -178,37 +178,79 @@ export function ShowSubcategorias({
       <div className="w-full space-y-4">
 
 
-        <Table
-          aria-label="Tabla de Subcategorías"
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <Table
+            aria-label="Tabla de Subcategorías"
 
-          removeWrapper
-          isHeaderSticky
+            removeWrapper
+            isHeaderSticky
 
-          classNames={{
-            base: "max-h-[600px] overflow-scroll",
-            th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
-            td: "py-3 border-b border-slate-100 dark:border-zinc-800/50 text-slate-700 dark:text-slate-300",
-            tr: "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-          }}
-        >
-          <TableHeader columns={columns}>
-            {(column) => (
-              <TableColumn
-                key={column.uid}
-                align={column.uid === "acciones" || column.uid === "id_subcategoria" || column.uid === "estado_subcat" ? "center" : "start"}
-              >
-                {column.name}
-              </TableColumn>
-            )}
-          </TableHeader>
-          <TableBody items={items} emptyContent={"No hay subcategorías correspondientes/existentes."}>
-            {(item) => (
-              <TableRow key={item.id_subcategoria}>
-                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            classNames={{
+              base: "max-h-[600px] overflow-scroll",
+              th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
+              td: "py-3 border-b border-slate-100 dark:border-zinc-800/50 text-slate-700 dark:text-slate-300",
+              tr: "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+            }}
+          >
+            <TableHeader columns={columns}>
+              {(column) => (
+                <TableColumn
+                  key={column.uid}
+                  align={column.uid === "acciones" || column.uid === "id_subcategoria" || column.uid === "estado_subcat" ? "center" : "start"}
+                >
+                  {column.name}
+                </TableColumn>
+              )}
+            </TableHeader>
+            <TableBody items={items} emptyContent={"No hay subcategorías correspondientes/existentes."}>
+              {(item) => (
+                <TableRow key={item.id_subcategoria}>
+                  {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="block md:hidden space-y-4">
+          {items.map((item) => (
+            <div key={item.id_subcategoria} className="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 space-y-3">
+              <div className="flex justify-between items-center gap-2">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-200 capitalize text-sm">
+                  {item.nom_subcat}
+                </h3>
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  color={item.estado_subcat === 1 ? "success" : "danger"}
+                  className="h-6 min-w-min px-2"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current absolute left-1.5" />
+                  <span className="ml-2 text-[10px] items-center">
+                    {item.estado_subcat === 1 ? "Activo" : "Inactivo"}
+                  </span>
+                </Chip>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center">
+                <span className="text-xs text-slate-400">ID: {item.id_subcategoria}</span>
+                <div className="flex gap-1">
+                  <Button isIconOnly size="sm" variant="light" color="primary" onPress={() => hasEditPermission && handleOpenEditModal(item)} onClick={(e) => e.stopPropagation()} isDisabled={!hasEditPermission}>
+                    <MdEdit size={16} />
+                  </Button>
+                  <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => hasDeletePermission && handleOpenConfirmationModal(item)} onClick={(e) => e.stopPropagation()} isDisabled={!hasDeletePermission}>
+                    <FaTrash size={14} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {items.length === 0 && (
+            <div className="text-center p-4 text-slate-500">No hay subcategorías correspondientes/existentes.</div>
+          )}
+        </div>
 
         {/* Pagination Controls */}
         <div className="flex w-full justify-between items-center bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-3 mt-4">

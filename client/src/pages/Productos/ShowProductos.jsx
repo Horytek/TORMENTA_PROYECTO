@@ -204,37 +204,99 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete, updateP
         <div className="w-full space-y-4">
 
 
-            <Table
-                aria-label="Tabla de productos con paginación"
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+                <Table
+                    aria-label="Tabla de productos con paginación"
+                    removeWrapper
+                    isHeaderSticky
+                    classNames={{
+                        base: "max-h-[600px] overflow-scroll",
+                        th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
+                        td: "py-3 border-b border-slate-100 dark:border-zinc-800/50 text-slate-700 dark:text-slate-300",
+                        tr: "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    }}
+                >
+                    <TableHeader columns={columns}>
+                        {(column) => (
+                            <TableColumn
+                                key={column.uid}
+                                align={column.uid === "acciones" || column.uid === "cod_barras" || column.uid === "precio" ? "center" : "start"}
+                            >
+                                {column.name}
+                            </TableColumn>
+                        )}
+                    </TableHeader>
+                    <TableBody items={(items || []).filter(i => i && i.id_producto)} emptyContent={<EmptyState title="No se encontraron productos" description="Intenta ajustar tus filtros de búsqueda." />}>
+                        {(item) => (
+                            <TableRow key={item.id_producto}>
+                                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
 
-                removeWrapper
-                isHeaderSticky
+            {/* Mobile Card View */}
+            <div className="block md:hidden space-y-4">
+                {(items || []).filter(i => i && i.id_producto).map((item) => (
+                    <div key={item.id_producto} className="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 space-y-3">
+                        {/* Header: Description & Status */}
+                        <div className="flex justify-between items-start gap-2">
+                            <h3 className="font-semibold text-slate-800 dark:text-slate-200 capitalize text-sm">
+                                {item.descripcion}
+                            </h3>
+                            <Chip
+                                size="sm"
+                                variant="flat"
+                                color={item.estado_producto !== 'Inactivo' ? "success" : "danger"}
+                                className="h-6 min-w-min px-2"
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-current absolute left-1.5" />
+                                <span className="ml-2 text-[10px] items-center">
+                                    {item.estado_producto !== 'Inactivo' ? "Activo" : "Inactivo"}
+                                </span>
+                            </Chip>
+                        </div>
 
-                classNames={{
-                    base: "max-h-[600px] overflow-scroll",
-                    th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
-                    td: "py-3 border-b border-slate-100 dark:border-zinc-800/50 text-slate-700 dark:text-slate-300",
-                    tr: "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                }}
-            >
-                <TableHeader columns={columns}>
-                    {(column) => (
-                        <TableColumn
-                            key={column.uid}
-                            align={column.uid === "acciones" || column.uid === "cod_barras" || column.uid === "precio" ? "center" : "start"}
-                        >
-                            {column.name}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody items={(items || []).filter(i => i && i.id_producto)} emptyContent={<EmptyState title="No se encontraron productos" description="Intenta ajustar tus filtros de búsqueda." />}>
-                    {(item) => (
-                        <TableRow key={item.id_producto}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-slate-400 font-medium">Línea/Sub</span>
+                                <div className="flex gap-1 flex-wrap">
+                                    <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded dark:bg-blue-900/30 dark:text-blue-300">{item.nom_marca}</span>
+                                    <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded dark:bg-purple-900/30 dark:text-purple-300">{item.nom_subcat}</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-1 items-end">
+                                <span className="text-slate-400 font-medium">Precio</span>
+                                <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">S/. {parseFloat(item.precio).toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        {/* Footer: Actions */}
+                        <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400">{item.cod_barras}</span>
+                            </div>
+                            <div className="flex gap-1">
+                                <Button isIconOnly size="sm" variant="light" color="secondary" onPress={() => onView(item)}>
+                                    <FaEye size={16} />
+                                </Button>
+                                <Button isIconOnly size="sm" variant="light" color="primary" onPress={() => onEdit(item)} isDisabled={!hasEditPermission}>
+                                    <MdEdit size={16} />
+                                </Button>
+                                <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => handleOpenConfirmationModal(item.descripcion, item.id_producto)} isDisabled={!hasDeletePermission}>
+                                    <FaTrash size={14} />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {items.length === 0 && (
+                    <EmptyState title="No se encontraron productos" description="Intenta ajustar tus filtros de búsqueda." />
+                )}
+            </div>
 
             {/* Pagination Controls */}
             <div className="flex w-full justify-between items-center bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-3 mt-4">

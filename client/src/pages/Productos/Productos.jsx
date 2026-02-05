@@ -400,7 +400,7 @@ function Productos() {
         </div>
 
         {/* Tabs Section */}
-        <div className="w-full">
+        <div className="w-full overflow-x-auto pb-2">
           <Tabs
             selectedKey={activeTab}
             onSelectionChange={handleTabChange}
