@@ -1,4 +1,11 @@
 import axios from "axios";
+import {
+    getExpressToken,
+    setExpressToken,
+    setBusinessName,
+    removeExpressToken,
+    removeBusinessName
+} from "@/utils/expressStorage";
 
 // Create a dedicated axios instance for Express Mode
 const expressApi = axios.create({
@@ -6,10 +13,14 @@ const expressApi = axios.create({
 });
 
 // Interceptor to add Token
-expressApi.interceptors.request.use((config) => {
-    const token = localStorage.getItem("express_token");
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+expressApi.interceptors.request.use(async (config) => {
+    try {
+        const token = await getExpressToken();
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    } catch (error) {
+        console.error("Error retrieving express token from storage", error);
     }
     return config;
 });
@@ -17,9 +28,9 @@ expressApi.interceptors.request.use((config) => {
 export const expressLogin = async (credentials) => {
     const response = await expressApi.post("/auth/login", credentials);
     if (response.data.token) {
-        localStorage.setItem("express_token", response.data.token);
+        await setExpressToken(response.data.token);
         if (response.data.business_name) {
-            localStorage.setItem("express_business_name", response.data.business_name);
+            await setBusinessName(response.data.business_name);
         }
     }
     return response.data;
@@ -28,12 +39,17 @@ export const expressLogin = async (credentials) => {
 export const expressRegister = async (data) => {
     const response = await expressApi.post("/auth/register", data);
     if (response.data.token) {
-        localStorage.setItem("express_token", response.data.token);
+        await setExpressToken(response.data.token);
         if (response.data.business_name) {
-            localStorage.setItem("express_business_name", response.data.business_name);
+            await setBusinessName(response.data.business_name);
         }
     }
     return response.data;
+};
+
+export const expressLogout = async () => {
+    await removeExpressToken();
+    await removeBusinessName();
 };
 
 export const getDashboardStats = async () => {

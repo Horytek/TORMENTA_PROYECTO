@@ -23,7 +23,7 @@ export const ActionsGrid = () => {
             bg: "bg-purple-500/10",
             border: "border-purple-500/20",
             glow: "group-hover:shadow-[0_0_20px_-5px_rgba(168,85,247,0.3)]",
-            path: null, // Future
+            path: "/express/inventory",
             delay: "delay-150"
         },
         {
@@ -33,7 +33,7 @@ export const ActionsGrid = () => {
             bg: "bg-emerald-500/10",
             border: "border-emerald-500/20",
             glow: "group-hover:shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]",
-            path: null, // Future
+            path: "/express/inventory", // Redirigir a inventario temporalmente
             delay: "delay-200"
         },
         {
@@ -43,7 +43,7 @@ export const ActionsGrid = () => {
             bg: "bg-orange-500/10",
             border: "border-orange-500/20",
             glow: "group-hover:shadow-[0_0_20px_-5px_rgba(249,115,22,0.3)]",
-            path: null, // Future
+            path: "/express/users",
             delay: "delay-300"
         }
     ];

@@ -1,6 +1,22 @@
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart } from '@tremor/react';
 import { TrendingUp } from 'lucide-react';
 import { Card } from '@heroui/react';
+
+
+const CustomTooltip = ({ payload, active, label }) => {
+    if (!active || !payload || payload.length === 0) return null;
+    return (
+        <div className="bg-zinc-900/95 backdrop-blur-xl border border-white/5 p-3 rounded-2xl shadow-2xl min-w-[120px]">
+            <p className="text-zinc-500 text-[10px] mb-1 font-bold tracking-wider uppercase">{label}</p>
+            <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse" />
+                <p className="text-white text-base font-bold font-mono">
+                    {Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(payload[0].value)}
+                </p>
+            </div>
+        </div>
+    );
+};
 
 export const WeeklyChart = ({ data = [] }) => {
     // Fill with empty data if null to prevent crash
@@ -23,41 +39,21 @@ export const WeeklyChart = ({ data = [] }) => {
                 </h3>
             </div>
 
-            <Card className="bg-zinc-900 border border-zinc-800 shadow-sm rounded-3xl p-4 h-48 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none" />
-                <div className="w-full h-full min-h-[160px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData}>
-                            <defs>
-                                <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <XAxis
-                                dataKey="date"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: '#71717a', fontSize: 10 }}
-                                dy={10}
-                            />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', fontSize: '12px' }}
-                                itemStyle={{ color: '#fff' }}
-                                labelStyle={{ color: '#a1a1aa' }}
-                                formatter={(value) => [`S/. ${value}`, 'Ventas']}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="total"
-                                stroke="#3b82f6"
-                                strokeWidth={3}
-                                fillOpacity={1}
-                                fill="url(#colorTotal)"
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
+            <Card className="bg-zinc-900 shadow-none rounded-3xl p-4 relative overflow-hidden ring-0 border-none">
+                <AreaChart
+                    className="h-40"
+                    data={chartData}
+                    index="date"
+                    categories={["total"]}
+                    colors={["blue"]}
+                    showLegend={false}
+                    showGridLines={false}
+                    showYAxis={false}
+                    showAnimation={true}
+                    curveType="natural"
+                    showGradient={true}
+                    customTooltip={CustomTooltip}
+                />
             </Card>
         </div>
     );

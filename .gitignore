@@ -20,3 +20,6 @@ cert.base64.txt
 tmp/sunat-tests/
 .agent/
 .agents/
+
+# Mobile Project
+mobile_flutter/

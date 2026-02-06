@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { LayoutGrid, ShoppingBag, Package, Users, LogOut, Building2 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useTheme } from "@heroui/use-theme";
+import { getBusinessName } from "@/utils/expressStorage";
+import { expressLogout } from "@/services/express.services";
 
 function ExpressLayout() {
     const navigate = useNavigate();
@@ -24,8 +26,8 @@ function ExpressLayout() {
         }
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem("express_token");
+    const handleLogout = async () => {
+        await expressLogout();
         navigate("/");
     };
 
@@ -36,7 +38,13 @@ function ExpressLayout() {
         { id: "users", icon: Users, label: "Equipo", path: "/express/users", color: "text-orange-400", bg: "bg-orange-500/10", glow: "shadow-[0_0_15px_-3px_rgba(249,115,22,0.4)]" },
     ];
 
-    const businessName = localStorage.getItem("express_business_name") || "Tormenta Express";
+    const [businessName, setBusinessState] = useState("Horycore Pocket");
+
+    useEffect(() => {
+        getBusinessName().then(name => {
+            if (name) setBusinessState(name);
+        });
+    }, []);
 
     return (
         <div className="flex flex-col h-screen bg-zinc-950 text-white overflow-hidden font-sans selection:bg-amber-500/30">
