@@ -333,25 +333,39 @@ const verifyToken = async (req, res) => {
         const userbd = userFound[0];
 
         // ---------------------------------------------------------
-        // VALIDACIÓN DE SUSCRIPCIÓN (EXPIRACIÓN)
+        // VALIDACIÓN DE SUSCRIPCIÓN (EXPIRACIÓN) - SOPORTE EXPRESS/POCKET
         // ---------------------------------------------------------
-        if (userbd.id_tenant && userbd.fecha_pago) {
-            const today = new Date();
-            const expiration = new Date(userbd.fecha_pago);
-            today.setHours(0, 0, 0, 0);
+        let subscriptionStatus = 'active'; // Default
 
-            if (expiration < today) {
-                try {
-                    await connection.query(
-                        "UPDATE usuario SET estado_usuario = 0 WHERE id_tenant = ?",
-                        [userbd.id_tenant]
-                    );
-                    userbd.estado_usuario = 0;
-                    return res.status(401).json({
-                        success: false,
-                        message: "Suscripción vencida"
-                    });
-                } catch (e) { }
+        if (userbd.id_tenant) {
+            // 1. Intentar validar en EMPRESA (Legacy/Enterprise)
+            // ... Logic exists in login, but here we usually rely on `estado_usuario` or `fecha_pago` for simple checks.
+            // However, for Express we need to be strict about 'subscription_end_date'.
+
+            // 2. Validar en EXPRESS_TENANTS (Pocket)
+            const [expressData] = await connection.query(
+                "SELECT subscription_status, subscription_end_date FROM express_tenants WHERE tenant_id = ? LIMIT 1",
+                [userbd.id_tenant]
+            );
+
+            if (expressData.length > 0) {
+                const expressTenant = expressData[0];
+                subscriptionStatus = expressTenant.subscription_status || 'trial';
+
+                // Chequeo de fecha
+                if (expressTenant.subscription_end_date) {
+                    const endDate = new Date(expressTenant.subscription_end_date);
+                    if (endDate < new Date()) {
+                        subscriptionStatus = 'expired';
+                        // Opcional: Actualizar DB si no estaba marcado como expired
+                        if (expressTenant.subscription_status !== 'expired') {
+                            // Asynchronously update to avoid blocking
+                            try {
+                                await connection.query("UPDATE express_tenants SET subscription_status = 'expired' WHERE tenant_id = ?", [userbd.id_tenant]);
+                            } catch (e) { }
+                        }
+                    }
+                }
             }
         }
         // ---------------------------------------------------------
@@ -433,6 +447,7 @@ const verifyToken = async (req, res) => {
             id_tenant: userbd.id_tenant || null,
             id_empresa: userbd.id_empresa || null,
             plan_pago: userbd.plan_pago || null,
+            subscription_status: subscriptionStatus,
             defaultPage: defaultRedirect
         });
     } catch (error) {

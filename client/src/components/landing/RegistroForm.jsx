@@ -8,8 +8,8 @@ import { Building2, User, Mail, Phone, MapPin, CheckCircle2, Sparkles } from "lu
 function getPlanPagoInt(planName) {
   let name = (planName || "").toLowerCase();
   name = name.replace(/plan|resumen del plan|resumen|del|de|el|la/gi, "").trim();
-  if (name.includes("basic") || name.includes("básico")) return 3;
-  if (name.includes("pro") || name.includes("empresarial") || name.includes("standart")) return 2;
+  if (name.includes("basic") || name.includes("básico") || name.includes("emprendedor") || name.includes("diario") || name.includes("semanal") || name.includes("express")) return 3;
+  if (name.includes("pro") || name.includes("empresarial") || name.includes("empresario") || name.includes("standart")) return 2;
   if (name.includes("enterprise") || name.includes("corporativo")) return 1;
   return 3;
 }
@@ -89,7 +89,11 @@ export const RegistroForm = ({ planInfo }) => {
       return;
     }
 
-    if (result.admin && formData.emailEmpresa) {
+    // Modificado: Solo enviar credenciales si es plan gratuito o precio 0.
+    // Si hay pago de por medio, el webhook se encargará de enviar el correo de bienvenida.
+    const isPaidPlan = planInfo?.priceValue && parseFloat(planInfo.priceValue) > 0;
+
+    if (result.admin && formData.emailEmpresa && !isPaidPlan) {
       await sendCredencialesEmail({
         to: formData.emailEmpresa,
         usuario: result.admin.usua,
@@ -260,7 +264,7 @@ export const RegistroForm = ({ planInfo }) => {
             </div>
 
             <ul className="space-y-3 text-sm">
-              {['Soporte técnico incluido', 'Módulos esenciales', 'Reportes y KPIs', 'Actualizaciones gratis'].map((feature, i) => (
+              {(planInfo.features || ['Soporte técnico incluido', 'Módulos esenciales', 'Reportes y KPIs', 'Actualizaciones gratis']).map((feature, i) => (
                 <li key={i} className="flex items-center gap-3 text-gray-300">
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />

@@ -28,11 +28,14 @@ const ContactanosPage = lazy(() => import("./pages/Landing/ContactanosPage"));
 const BlogPage = lazy(() => import("./pages/Landing/BlogPage"));
 const RegistroLicenciaPage = lazy(() => import("./pages/Landing/RegistroLicenciaPage"));
 const RegistroPage = lazy(() => import("./pages/Landing/RegistroPage"));
+const PaymentResultPage = lazy(() => import("./pages/Landing/PaymentResultPage"));
 const ExpressLayout = lazy(() => import("./layouts/Express/ExpressLayout"));
 const ExpressDashboard = lazy(() => import("./pages/Express/ExpressDashboard"));
 const ExpressPOS = lazy(() => import("./pages/Express/ExpressPOS"));
 const ExpressInventory = lazy(() => import("./pages/Express/ExpressInventory"));
 const ExpressUsers = lazy(() => import("./pages/Express/ExpressUsers"));
+const ExpressSubscription = lazy(() => import("./pages/Express/ExpressSubscription"));
+const ExpressSettings = lazy(() => import("./pages/Express/ExpressSettings"));
 
 const ChatbotClientWidget = lazy(() =>
   import("@/components/Chatbot/DeepSeekChatbot")
@@ -108,12 +111,18 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                     <Route path="/blog/article" element={<BlogPage />} />
                     <Route path="/blog/article" element={<BlogPage />} />
 
+                    <Route path="/success" element={<PaymentResultPage />} />
+                    <Route path="/failure" element={<PaymentResultPage />} />
+                    <Route path="/pending" element={<PaymentResultPage />} />
+
                     {/* Express Mode Routes */}
                     <Route path="/express" element={<ExpressLayout />}>
                       <Route path="dashboard" element={<ExpressDashboard />} />
                       <Route path="pos" element={<ExpressPOS />} />
                       <Route path="inventory" element={<ExpressInventory />} />
                       <Route path="users" element={<ExpressUsers />} />
+                      <Route path="subscription" element={<ExpressSubscription />} />
+                      <Route path="settings" element={<ExpressSettings />} />
                     </Route>
 
                     <Route element={<ProtectedRoute />}>

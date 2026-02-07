@@ -3,37 +3,67 @@
 // Los precios NO deben venir de la URL para evitar manipulación
 
 export const PLANS_CONFIG = {
-  'Básico': {
-    monthly: 85,
-    yearly: 850,
+  'Emprendedor': {
+    monthly: 79,
+    yearly: 790,
     currency: 'S/',
     features: [
-      'Acceso al módulo de Ventas',
-      'Reportes básicos (Análisis de ventas, Libro de ventas)',
-      'Gestión de clientes'
+      'Punto de venta (POS) Rápido',
+      'Gestión de Tallas y Colores',
+      'Control de Inventario (Kárdex)',
+      '1 Usuario / 1 Almacén'
     ]
   },
-  'Pro': {
-    monthly: 135,
-    yearly: 1350,
+  'Empresario': {
+    monthly: 149,
+    yearly: 1490,
     currency: 'S/',
     features: [
-      'Acceso a todos los módulos',
-      'Usuarios ilimitados',
-      'Múltiples sucursales',
-      'Uso de Chatbot'
+      'Todo en Emprendedor',
+      'Facturación Electrónica (SUNAT)',
+      'Multi-Almacén (Hasta 2 sedes)',
+      'Hasta 3 Usuarios y Roles',
+      'Reportes de Rendimiento'
     ]
   },
-  'Enterprise': {
-    monthly: 240,
-    yearly: 2400,
+  'Corporativo': {
+    monthly: 0, // A medida
+    yearly: 0,
     currency: 'S/',
     features: [
-      'Usuarios ilimitados',
-      'Múltiples sucursales',
-      'Uso de Chatbot y Atajo de funciones',
-      'Uso del log, mensajería y videollamadas internas',
-      'Sucursales ilimitadas'
+      'Sedes y Usuarios Ilimitados',
+      'Inteligencia de Negocios (BI)',
+      'API de Integración',
+      'Soporte Preferencial'
+    ]
+  },
+  // Pocket Plans
+  'Diario': {
+    daily: 5,
+    currency: 'S/',
+    features: [
+      'Acceso total por 24 horas',
+      'Ventas ilimitadas',
+      'Sin contratos'
+    ]
+  },
+  'Semanal': {
+    weekly: 10,
+    currency: 'S/',
+    features: [
+      'Acceso por 7 días',
+      'Gestión de inventario',
+      'Soporte básico'
+    ]
+  },
+  'Express': {
+    monthly: 30,
+    yearly: 300, // Optional
+    currency: 'S/',
+    features: [
+      'Todo incluido por 30 días',
+      'Sin contratos forzosos',
+      'Actualizaciones gratuitas'
     ]
   }
 };
@@ -46,7 +76,7 @@ export const PLANS_CONFIG = {
  */
 export function getPlanPrice(planName, period) {
   const plan = PLANS_CONFIG[planName];
-  
+
   if (!plan) {
     // Plan por defecto si no se encuentra
     return {
@@ -56,12 +86,16 @@ export function getPlanPrice(planName, period) {
     };
   }
 
-  const price = period === 'año' ? plan.yearly : plan.monthly;
-  
+  const price = period === 'año' ? plan.yearly
+    : period === 'dia' ? plan.daily
+      : period === 'semana' ? plan.weekly
+        : plan.monthly;
+
   return {
     price,
     formattedPrice: `${plan.currency} ${price.toLocaleString('es-PE')}`,
-    currency: plan.currency
+    currency: plan.currency,
+    features: plan.features || []
   };
 }
 
@@ -88,7 +122,7 @@ export function getAvailablePlans() {
  * @returns {boolean}
  */
 export function isValidPeriod(period) {
-  return period === 'mes' || period === 'año';
+  return ['mes', 'año', 'dia', 'semana'].includes(period);
 }
 
 /**
@@ -97,7 +131,7 @@ export function isValidPeriod(period) {
  */
 export function getDefaultPlanInfo() {
   return {
-    plan: 'Básico',
+    plan: 'Emprendedor',
     period: 'mes'
   };
 }

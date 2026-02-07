@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Components
 import { Navbar } from '../../components/landing/Navbar';
@@ -14,6 +14,8 @@ import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
 import '../../components/landing/styles/landing-theme.css';
 
 export default function LandingPage() {
+  const [isPocketMode, setIsPocketMode] = useState(false);
+
   // Isolate Landing Page Styles
   useEffect(() => {
     document.body.classList.add('landing-body');
@@ -24,29 +26,29 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page bg-landing-primary overflow-x-hidden" data-theme="landing">
-      <Navbar />
+      <Navbar isPocketMode={isPocketMode} setIsPocketMode={setIsPocketMode} />
 
       {/* Act 1: Living Dashboard */}
       <div id="home">
-        <Hero />
+        <Hero isPocketMode={isPocketMode} />
       </div>
 
       {/* Act 2: Architecture & Security */}
       <div id="features">
-        <BlueprintSection />
+        <BlueprintSection isPocketMode={isPocketMode} />
       </div>
 
       {/* Act 3: Review / Social Proof */}
       <div id="feedback">
-        <CaseStudy />
+        <CaseStudy isPocketMode={isPocketMode} />
       </div>
 
       {/* Act 3: Pricing */}
       <div id="pricing">
-        <Pricing />
+        <Pricing isPocketMode={isPocketMode} />
       </div>
 
-      <FAQ />
+      <FAQ isPocketMode={isPocketMode} />
 
       <Footer />
       <ScrollUpButton />

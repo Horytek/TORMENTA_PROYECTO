@@ -50,6 +50,13 @@ api.interceptors.request.use(async cfg => {
 api.interceptors.response.use(
   r => r,
   e => {
+    // Subscription Expired handling
+    if (e?.response?.status === 402 && e?.response?.data?.code === 'SUBSCRIPTION_EXPIRED') {
+      if (typeof window !== "undefined" && !window.location.pathname.includes('/express/subscription')) {
+        window.location.href = "/express/subscription";
+      }
+    }
+
     if (e?.response?.status === 401) {
       console.warn("[auth] 401:", e.config?.url);
     }

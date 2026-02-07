@@ -1,7 +1,9 @@
 import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 
-export const expressAuth = (req, res, next) => {
+import { getExpressConnection } from "../database/express_db.js";
+
+export const expressAuth = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         // Expect "Bearer <token>"
@@ -11,7 +13,7 @@ export const expressAuth = (req, res, next) => {
             return res.status(401).json({ message: "No token provided, authorization denied." });
         }
 
-        jwt.verify(token, TOKEN_SECRET, (err, decoded) => {
+        jwt.verify(token, TOKEN_SECRET, async (err, decoded) => {
             if (err) {
                 return res.status(401).json({ message: "Invalid token." });
             }
@@ -24,7 +26,43 @@ export const expressAuth = (req, res, next) => {
             // Context Injection
             req.tenantId = decoded.tenant_id;
             req.expressUser = decoded;
-            next();
+
+            // --- SUBSCRIPTION CHECK ---
+            // Allow subscription routes to pass even if expired
+            const path = req.path;
+            const isSubscriptionRoute = path.includes('/subscription') || path.includes('/auth/logout');
+
+            let connection;
+            try {
+                connection = await getExpressConnection();
+                const [rows] = await connection.query("SELECT subscription_status, subscription_end_date FROM express_tenants WHERE tenant_id = ?", [decoded.tenant_id]);
+
+                if (rows.length > 0) {
+                    const tenant = rows[0];
+                    const now = new Date();
+                    const endDate = tenant.subscription_end_date ? new Date(tenant.subscription_end_date) : null;
+
+                    let isExpired = false;
+                    if (!endDate || endDate < now) {
+                        isExpired = true;
+                    }
+
+                    // If expired and trying to access PROTECTED route (not subscription/auth), Block
+                    if (isExpired && !isSubscriptionRoute) {
+                        return res.status(402).json({
+                            message: "Subscription Expired",
+                            code: "SUBSCRIPTION_EXPIRED",
+                            expiryDate: endDate
+                        });
+                    }
+                }
+                next();
+            } catch (dbError) {
+                console.error("DB Error in Auth:", dbError);
+                next(); // Fallback: allow if DB fails? Or block? Block is safer but annoying. Let's allow for now to avoid lockouts during outages.
+            } finally {
+                if (connection) connection.release();
+            }
         });
     } catch (error) {
         console.error("Express Auth Error:", error);

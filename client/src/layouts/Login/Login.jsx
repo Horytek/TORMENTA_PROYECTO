@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/context/Auth/AuthProvider";
 import AlertModal from "@/components/Modals/AlertModal";
 import { expressLogin, expressRegister } from "@/services/express.services";
+import { toast } from "react-hot-toast";
 
 function Login() {
   const [usuario, setUsuario] = useState("");
@@ -133,7 +134,9 @@ function Login() {
       navigate('/express/dashboard');
     } catch (error) {
       console.error(error);
-      setAuthError(error.response?.data?.message || "Error de conexión con Express Mode.");
+      const msg = error.response?.data?.message || "Error de conexión con Express Mode.";
+      setAuthError(msg);
+      toast.error(msg);
     } finally {
       setExpressLoading(false);
     }
@@ -303,41 +306,7 @@ function Login() {
                     </div>
                   </div>
 
-                  {/* Toggle Login/Register */}
-                  <div className="flex bg-zinc-900/60 p-1.5 rounded-xl mb-6 border border-white/5 relative">
-                    <button
-                      type="button"
-                      onClick={() => setIsRegistering(false)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${!isRegistering ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
-                    >
-                      Ingresar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsRegistering(true)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${isRegistering ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
-                    >
-                      Registrar Negocio
-                    </button>
-                  </div>
 
-                  {isRegistering && (
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-semibold text-zinc-300 ml-1">Nombre del Negocio</label>
-                      <Input
-                        type="text"
-                        placeholder="Ej. Bodega Don Pepe"
-                        value={expressBusiness}
-                        onChange={(e) => setExpressBusiness(e.target.value)}
-                        variant="flat"
-                        radius="md"
-                        classNames={{
-                          input: "!text-zinc-100 placeholder:!text-zinc-500",
-                          inputWrapper: "bg-zinc-800/50 data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800 !border-none !shadow-none !ring-0 !ring-offset-0 !outline-none h-12"
-                        }}
-                      />
-                    </div>
-                  )}
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-zinc-300 ml-1">Correo Electrónico</label>
@@ -394,7 +363,7 @@ function Login() {
                     radius="md"
                     isLoading={expressLoading}
                   >
-                    {isRegistering ? "Crear y Acceder" : "Acceder a Pocket POS"}
+                    Acceder a Pocket POS
                   </Button>
                 </form>
               ) : (
@@ -407,7 +376,7 @@ function Login() {
                       classNames={{
                         // Adapting OTP to look more like the original gray boxes if possible, or keeping standard OTP but fitting the theme
                         segmentWrapper: "gap-x-3",
-                        segment: "w-14 h-14 text-2xl bg-zinc-800/50 border-white/5 text-white rounded-lg data-[active=true]:ring-2 ring-primary data-[active=true]:bg-zinc-800"
+                        segment: "w-14 h-14 text-2xl bg-zinc-900 border border-zinc-700 text-white rounded-lg data-[active=true]:ring-2 ring-emerald-500 data-[active=true]:border-emerald-500"
                       }}
                     />
                   </div>

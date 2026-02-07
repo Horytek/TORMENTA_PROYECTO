@@ -29,7 +29,7 @@ const sectors = [
     }
 ];
 
-const Hero = () => {
+const Hero = ({ isPocketMode }) => {
     const [activeSector, setActiveSector] = useState('retail');
     const { scrollY } = useScroll();
     const y1 = useTransform(scrollY, [0, 500], [0, 200]);
@@ -52,51 +52,64 @@ const Hero = () => {
                     transition={{ duration: 1, ease: "easeOut" }}
                     className="text-left space-y-10"
                 >
-                    {/* Sector Selector - Updated Logic with active state feedback */}
-                    <div className="inline-flex p-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                        {sectors.map((sector) => (
-                            <button
-                                key={sector.id}
-                                onClick={() => setActiveSector(sector.id)}
-                                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeSector === sector.id
-                                    ? 'bg-white/10 text-white shadow-inner'
-                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                            >
-                                {sector.label}
-                            </button>
-                        ))}
-                    </div>
+                    {/* Sector Selector - Hidden in Pocket Mode */}
+                    {!isPocketMode && (
+                        <div className="inline-flex p-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                            {sectors.map((sector) => (
+                                <button
+                                    key={sector.id}
+                                    onClick={() => setActiveSector(sector.id)}
+                                    className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeSector === sector.id
+                                        ? 'bg-white/10 text-white shadow-inner'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    {sector.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
-                    <h1 className="text-5xl lg:text-7xl font-bold font-manrope text-white leading-[1.1] tracking-tight text-balance">
-                        Control total que{' '}
-                        <motion.span
-                            key={activeSector}
-                            initial={{ opacity: 0.8 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.5 }}
-                            className={`text-transparent bg-clip-text bg-gradient-to-r ${currentSector.accent} pb-2`}
-                        >
-                            impulsa
-                        </motion.span>
-                        <br />
-                        tu crecimiento.
-                    </h1>
+                    {isPocketMode ? (
+                        <h1 className="text-5xl lg:text-7xl font-bold font-manrope text-white leading-[1.1] tracking-tight text-balance">
+                            Tu negocio en{' '}
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 pb-2">
+                                tu bolsillo.
+                            </span>
+                        </h1>
+                    ) : (
+                        <h1 className="text-5xl lg:text-7xl font-bold font-manrope text-white leading-[1.1] tracking-tight text-balance">
+                            Control total que{' '}
+                            <motion.span
+                                key={activeSector}
+                                initial={{ opacity: 0.8 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className={`text-transparent bg-clip-text bg-gradient-to-r ${currentSector.accent} pb-2`}
+                            >
+                                impulsa
+                            </motion.span>
+                            <br />
+                            tu crecimiento.
+                        </h1>
+                    )}
 
                     <motion.p
-                        key={activeSector + "desc"}
+                        key={isPocketMode ? "pocket-desc" : activeSector + "desc"}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
                         className="text-lg lg:text-xl text-gray-400 text-pretty max-w-xl font-light leading-relaxed min-h-[84px]"
                     >
-                        {currentSector.description}
+                        {isPocketMode
+                            ? "Sistema compacto para emprendedores. Vende, controla y crece con la agilidad que tu negocio necesita."
+                            : currentSector.description}
                     </motion.p>
 
                     <div className="space-y-6">
                         <div className="flex flex-wrap gap-4">
                             <button className="px-8 py-4 rounded-2xl bg-white text-black font-bold hover:bg-gray-100 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] flex items-center gap-2 group hover:scale-[1.02]">
-                                Solicitar Demo
+                                {isPocketMode ? 'Comenzar Ahora' : 'Solicitar Demo'}
                                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </button>
                             <button className="px-8 py-4 rounded-2xl bg-transparent text-white border border-white/20 hover:bg-white/5 transition-colors flex items-center gap-2 hover:border-white/40">
@@ -107,7 +120,7 @@ const Hero = () => {
 
                         {/* New Microcopy Trust Indicators */}
                         <div className="flex items-center gap-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>Implementación ràpida</span>
+                            <span className="flex items-center gap-2"><div className={`w-1.5 h-1.5 rounded-full ${isPocketMode ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>Implementación rápida</span>
                             <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>Soporte humano</span>
                             <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>Auditoría total</span>
                         </div>
@@ -124,33 +137,37 @@ const Hero = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 1, delay: 0.2 }}
                     >
-                        <LivingDashboard activeSector={activeSector} />
+                        <LivingDashboard activeSector={activeSector} isPocketMode={isPocketMode} />
                     </motion.div>
 
-                    {/* Floating Cards (Parallax Elements) - Repositioned for safety */}
-                    <motion.div style={{ y: y1 }} className="absolute z-20 top-12 -right-4 lg:right-0 shadow-2xl">
-                        <FloatingCard
-                            icon={TrendingUp}
-                            label="Ventas Semanales"
-                            value="$54,230"
-                            trend="+12%"
-                            trendUp={true}
-                            delay={0.5}
-                            className="animate-float-slow"
-                        />
-                    </motion.div>
+                    {/* Floating Cards (Parallax Elements) - Only in Standard Mode */}
+                    {!isPocketMode && (
+                        <>
+                            <motion.div style={{ y: y1 }} className="absolute z-20 top-12 -right-4 lg:right-0 shadow-2xl">
+                                <FloatingCard
+                                    icon={TrendingUp}
+                                    label="Ventas Semanales"
+                                    value="$54,230"
+                                    trend="+12%"
+                                    trendUp={true}
+                                    delay={0.5}
+                                    className="animate-float-slow"
+                                />
+                            </motion.div>
 
-                    <motion.div style={{ y: y1 }} className="absolute z-20 bottom-20 -left-6 lg:left-0 shadow-2xl">
-                        <FloatingCard
-                            icon={AlertTriangle}
-                            label="Stock Crítico"
-                            value="5 Items"
-                            trend="Requiere Atención"
-                            trendUp={false}
-                            delay={0.7}
-                            className="animate-float-slower"
-                        />
-                    </motion.div>
+                            <motion.div style={{ y: y1 }} className="absolute z-20 bottom-20 -left-6 lg:left-0 shadow-2xl">
+                                <FloatingCard
+                                    icon={AlertTriangle}
+                                    label="Stock Crítico"
+                                    value="5 Items"
+                                    trend="Requiere Atención"
+                                    trendUp={false}
+                                    delay={0.7}
+                                    className="animate-float-slower"
+                                />
+                            </motion.div>
+                        </>
+                    )}
                 </div>
             </div>
         </section>

@@ -50,3 +50,50 @@ export const getBusinessName = async () => {
 export const removeBusinessName = async () => {
     await del(BUSINESS_KEY);
 };
+
+const EMAIL_KEY = 'express_email';
+
+export const setExpressEmail = async (email) => {
+    if (!email) return;
+    await set(EMAIL_KEY, email);
+};
+
+export const getExpressEmail = async () => {
+    return await get(EMAIL_KEY);
+};
+
+export const removeExpressEmail = async () => {
+    await del(EMAIL_KEY);
+};
+
+const ROLE_KEY = 'express_role';
+
+export const setExpressRole = async (role) => {
+    if (!role) return;
+    await set(ROLE_KEY, role);
+};
+
+export const getExpressRole = async () => {
+    return await get(ROLE_KEY);
+};
+
+export const removeExpressRole = async () => {
+    await del(ROLE_KEY);
+};
+
+const PERMISSIONS_KEY = 'express_permissions';
+
+export const setExpressPermissions = async (permissions) => {
+    if (!permissions) return;
+    // Permissions is likely a JSON string or object. Let's store as object.
+    const val = typeof permissions === 'string' ? JSON.parse(permissions) : permissions;
+    await set(PERMISSIONS_KEY, val);
+};
+
+export const getExpressPermissions = async () => {
+    return await get(PERMISSIONS_KEY);
+};
+
+export const removeExpressPermissions = async () => {
+    await del(PERMISSIONS_KEY);
+};

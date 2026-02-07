@@ -13,7 +13,7 @@ const navbarLinks = [
   { label: "Contacto", href: "/landing/contactanos", ariaLabel: "Contactar con nosotros" },
 ];
 
-export const Navbar = () => {
+export const Navbar = ({ isPocketMode, setIsPocketMode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,7 +70,7 @@ export const Navbar = () => {
                 <HoryCoreLogo />
               </div>
               <div className="text-white font-inter font-bold text-xl">
-                HoryCore
+                Horytek
               </div>
             </div>
           </Link>
@@ -101,6 +101,16 @@ export const Navbar = () => {
           exit={{ opacity: 0 }}
         >
           <div className="grow basis-0 justify-end hidden lg:flex items-center gap-4 lg:ms-7">
+            {/* Pocket Mode Toggle */}
+            <button
+              onClick={() => setIsPocketMode(!isPocketMode)}
+              className={`px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300 tracking-wide ${isPocketMode
+                ? 'bg-amber-500 text-black border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]'
+                : 'bg-transparent text-white border-white/30 hover:bg-white hover:text-black hover:border-white'}`}
+            >
+              {isPocketMode ? 'Modo Pocket ACTIVO' : 'Activar Modo Pocket'}
+            </button>
+
             <Link
               to="/login"
               className="text-sm font-medium text-white hover:text-primary-color transition whitespace-nowrap px-4 py-2 border border-white/20 rounded-lg hover:bg-white/5"
@@ -150,6 +160,13 @@ export const Navbar = () => {
                   {label}
                 </button>
               ))}
+
+              <button
+                onClick={() => { setIsPocketMode(!isPocketMode); setIsOpen(false); }}
+                className={`text-white text-lg font-bold transition-all duration-300 ${isPocketMode ? 'text-amber-500' : 'text-gray-400'}`}
+              >
+                {isPocketMode ? 'Modo Pocket: ON' : 'Modo Pocket: OFF'}
+              </button>
 
               <Link to="/login"
                 className="text-white border border-main-border rounded-xl bg-bg-dark-2 hover:bg-bg-dark-3 px-6 py-2 text-lg mt-4 transition"

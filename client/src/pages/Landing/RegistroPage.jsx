@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 // Importar componentes de landing
 import { LandingSubPageLayout } from '../../components/landing/LandingSubPageLayout';
-import { RegistroForm } from '../../components/landing/RegistroForm';
+import { RegistroPocketForm } from '../../components/landing/RegistroPocketForm';
 
 // Importar configuración de planes
 import { getPlanPrice, isValidPlan, isValidPeriod, getDefaultPlanInfo } from '../../config/plans.config';
@@ -51,7 +51,8 @@ export default function RegistroPage() {
       price: priceInfo.formattedPrice,
       period: period,
       priceValue: priceInfo.price, // Precio numérico para cálculos
-      currency: priceInfo.currency
+      currency: priceInfo.currency,
+      features: priceInfo.features
     });
   }, [location.search, navigate]);
 
@@ -67,7 +68,7 @@ export default function RegistroPage() {
               Comienza con el plan <span className="text-emerald-400 font-semibold">{planInfo.plan}</span> • {planInfo.price}/{planInfo.period}
             </p>
 
-            <RegistroForm planInfo={planInfo} />
+            <RegistroPocketForm planInfo={planInfo} />
           </div>
         </div>
       </section>

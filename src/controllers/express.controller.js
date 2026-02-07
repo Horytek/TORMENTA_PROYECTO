@@ -61,22 +61,68 @@ export const loginTenant = async (req, res) => {
     let connection;
     try {
         connection = await getExpressConnection();
-        const [rows] = await connection.query("SELECT * FROM express_tenants WHERE email = ?", [email]);
 
-        if (rows.length === 0) return res.status(401).json({ message: "Invalid credentials." });
+        // 1. Try Tenant Login (Admin)
+        const [tenants] = await connection.query("SELECT * FROM express_tenants WHERE email = ?", [email]);
 
-        const tenant = rows[0];
-        const isMatch = await bcrypt.compare(password, tenant.password_hash);
+        if (tenants.length > 0) {
+            const tenant = tenants[0];
+            const isMatch = await bcrypt.compare(password, tenant.password_hash);
+            if (!isMatch) return res.status(401).json({ message: "Invalid credentials." });
 
-        if (!isMatch) return res.status(401).json({ message: "Invalid credentials." });
+            const token = jwt.sign(
+                { tenant_id: tenant.tenant_id, email: tenant.email, business_name: tenant.business_name, role: 'admin' },
+                TOKEN_SECRET,
+                { expiresIn: "7d" }
+            );
 
-        const token = jwt.sign(
-            { tenant_id: tenant.tenant_id, email: tenant.email, business_name: tenant.business_name },
-            TOKEN_SECRET,
-            { expiresIn: "7d" }
-        );
+            return res.json({ token, business_name: tenant.business_name, email: tenant.email, role: 'admin' });
+        }
 
-        res.json({ token, business_name: tenant.business_name });
+        // 2. Try Employee Login (Name@Username)
+        if (email.includes('@')) {
+            const parts = email.split('@');
+            if (parts.length === 2) {
+                const [namePart, usernamePart] = parts;
+                // Search user. Note: Name in DB might have spaces, but login uses stripped name.
+                // We compare REPLACE(name, ' ', '')
+                const [users] = await connection.query(
+                    "SELECT * FROM express_users WHERE REPLACE(name, ' ', '') = ? AND username = ?",
+                    [namePart, usernamePart]
+                );
+
+                if (users.length > 0) {
+                    const user = users[0];
+                    const isMatch = await bcrypt.compare(password, user.password_hash);
+                    if (!isMatch) return res.status(401).json({ message: "Invalid credentials." });
+
+                    // We need business name for the UI
+                    const [tenantRows] = await connection.query("SELECT business_name FROM express_tenants WHERE tenant_id = ?", [user.tenant_id]);
+                    const businessName = tenantRows[0]?.business_name || "Express Business";
+
+                    const token = jwt.sign(
+                        { tenant_id: user.tenant_id, user_id: user.id, username: user.username, role: user.role || 'cashier' },
+                        TOKEN_SECRET,
+                        { expiresIn: "1d" }
+                    );
+
+                    return res.json({
+                        token,
+                        user: {
+                            id: user.id,
+                            name: user.name,
+                            role: user.role,
+                            username: user.username,
+                            permissions: typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
+                        },
+                        business_name: businessName
+                    });
+                }
+            }
+        }
+
+        return res.status(401).json({ message: "Invalid credentials." });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error." });
@@ -176,6 +222,7 @@ export const createSale = async (req, res) => {
 
         const total = cart.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
 
+        // 1. Create Sale Record
         const [saleResult] = await connection.query(
             "INSERT INTO express_sales (tenant_id, total, payment_method) VALUES (?, ?, ?)",
             [tenantId, total, payment_method || 'Efectivo']
@@ -183,17 +230,36 @@ export const createSale = async (req, res) => {
         const saleId = saleResult.insertId;
 
         for (const item of cart) {
-            await connection.query(
-                "INSERT INTO express_sale_items (sale_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
-                [saleId, item.product_id, item.quantity, item.price]
-            );
-
-            // If product_id is valid (not a quick sale item with id=0 or null if implemented), update stock
+            // 2. Validate Stock before selling
             if (item.product_id) {
+                const [products] = await connection.query("SELECT stock, name FROM express_products WHERE id = ? AND tenant_id = ?", [item.product_id, tenantId]);
+                if (products.length === 0) throw new Error(`Product ${item.product_id} not found`);
+
+                const currentStock = products[0].stock;
+                if (currentStock < item.quantity) {
+                    throw new Error(`Insufficient stock for ${products[0].name}. Available: ${currentStock}`);
+                }
+
+                // 3. Insert Item
+                await connection.query(
+                    "INSERT INTO express_sale_items (sale_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
+                    [saleId, item.product_id, item.quantity, item.price]
+                );
+
+                // 4. Deduct Stock
                 await connection.query(
                     "UPDATE express_products SET stock = stock - ? WHERE id = ? AND tenant_id = ?",
                     [item.quantity, item.product_id, tenantId]
                 );
+
+                // 5. Check Low Stock & Notify
+                const newStock = currentStock - item.quantity;
+                if (newStock < 5) {
+                    await connection.query(
+                        "INSERT INTO express_notifications (tenant_id, type, message) VALUES (?, ?, ?)",
+                        [tenantId, 'stock', `Stock bajo: ${products[0].name} items restantes: ${newStock}`]
+                    );
+                }
             }
         }
 
@@ -202,72 +268,149 @@ export const createSale = async (req, res) => {
     } catch (error) {
         if (connection) await connection.rollback();
         console.error(error);
-        res.status(500).json({ message: "Error processing sale." });
+        res.status(500).json({ message: error.message || "Error processing sale." });
     } finally {
         if (connection) connection.release();
     }
 };
 
-export const getDashboardStats = async (req, res) => {
+export const getSales = async (req, res) => {
     const tenantId = req.tenantId;
     let connection;
     try {
         connection = await getExpressConnection();
+        const [sales] = await connection.query(
+            "SELECT id, total, payment_method, created_at FROM express_sales WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 50",
+            [tenantId]
+        );
+        res.json(sales);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+};
 
-        // 1. Today's Sales
-        const [today] = await connection.query(`
-            SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count 
-            FROM express_sales 
-            WHERE tenant_id = ? AND DATE(created_at) = CURDATE()
-        `, [tenantId]);
 
-        // 2. Recent Transactions (Limit 5)
-        const [recentSales] = await connection.query(`
-            SELECT id, total, payment_method, DATE_FORMAT(created_at, '%H:%i') as time 
-            FROM express_sales 
-            WHERE tenant_id = ? 
-            ORDER BY created_at DESC 
-            LIMIT 5
-        `, [tenantId]);
 
-        // 3. Low Stock Alert (Limit 3) - Threshold < 5
-        const [lowStock] = await connection.query(`
-            SELECT name, stock 
-            FROM express_products 
-            WHERE tenant_id = ? AND stock < 5 
-            ORDER BY stock ASC 
-            LIMIT 3
-        `, [tenantId]);
+export const getSaleDetails = async (req, res) => {
+    const tenantId = req.tenantId;
+    const { id } = req.params;
+    let connection;
+    try {
+        connection = await getExpressConnection();
+        // Verify sale belongs to tenant
+        const [sale] = await connection.query("SELECT id, total, created_at, payment_method FROM express_sales WHERE id = ? AND tenant_id = ?", [id, tenantId]);
 
-        // 4. Weekly Sales Chart (Last 7 Days)
-        const [weeklySales] = await connection.query(`
-            SELECT DATE_FORMAT(created_at, '%d/%m') as date, SUM(total) as total, COUNT(*) as count
-            FROM express_sales
-            WHERE tenant_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-            GROUP BY DATE_FORMAT(created_at, '%d/%m')
-            ORDER BY MIN(created_at) ASC
-        `, [tenantId]);
+        if (sale.length === 0) return res.status(404).json({ message: "Sale not found" });
 
-        // 5. Top Selling Product (All Time)
-        const [topProduct] = await connection.query(`
-            SELECT p.name, SUM(i.quantity) as sold
+        // Get Items
+        const [items] = await connection.query(`
+            SELECT i.quantity, i.price, p.name 
             FROM express_sale_items i
             JOIN express_products p ON i.product_id = p.id
-            JOIN express_sales s ON i.sale_id = s.id
-            WHERE s.tenant_id = ?
-            GROUP BY i.product_id, p.name
-            ORDER BY sold DESC
-            LIMIT 1
-        `, [tenantId]);
+            WHERE i.sale_id = ?
+        `, [id]);
 
-        res.json({
+        res.json({ ...sale[0], items });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+// Simple in-memory cache
+let statsCache = {
+    data: null,
+    timestamp: 0,
+    tenantId: null
+};
+
+export const getDashboardStats = async (req, res) => {
+    const tenantId = req.tenantId;
+
+    // Return cached data if valid (60 seconds)
+    if (statsCache.data && statsCache.tenantId === tenantId && (Date.now() - statsCache.timestamp < 60000)) {
+        return res.json(statsCache.data);
+    }
+
+    let connection;
+    try {
+        connection = await getExpressConnection();
+
+        // Execute all independent queries in parallel
+        const [
+            [today],
+            [recentSales],
+            [lowStock],
+            [weeklySales],
+            [topProduct]
+        ] = await Promise.all([
+            // 1. Today's Sales
+            connection.query(`
+                SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count 
+                FROM express_sales 
+                WHERE tenant_id = ? AND DATE(created_at) = CURDATE()
+            `, [tenantId]),
+
+            // 2. Recent Transactions (Limit 5)
+            connection.query(`
+                SELECT id, total, payment_method, DATE_FORMAT(created_at, '%H:%i') as time 
+                FROM express_sales 
+                WHERE tenant_id = ? 
+                ORDER BY created_at DESC 
+                LIMIT 5
+            `, [tenantId]),
+
+            // 3. Low Stock Alert (Limit 3) - Threshold < 5
+            connection.query(`
+                SELECT name, stock 
+                FROM express_products 
+                WHERE tenant_id = ? AND stock < 5 
+                ORDER BY stock ASC 
+                LIMIT 3
+            `, [tenantId]),
+
+            // 4. Weekly Sales Chart (Last 7 Days)
+            connection.query(`
+                SELECT DATE_FORMAT(created_at, '%d/%m') as date, SUM(total) as total, COUNT(*) as count
+                FROM express_sales
+                WHERE tenant_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                GROUP BY DATE_FORMAT(created_at, '%d/%m')
+                ORDER BY MIN(created_at) ASC
+            `, [tenantId]),
+
+            // 5. Top Selling Product (All Time)
+            connection.query(`
+                SELECT p.name, SUM(i.quantity) as sold
+                FROM express_sale_items i
+                JOIN express_products p ON i.product_id = p.id
+                JOIN express_sales s ON i.sale_id = s.id
+                WHERE s.tenant_id = ?
+                GROUP BY i.product_id, p.name
+                ORDER BY sold DESC
+                LIMIT 1
+            `, [tenantId])
+        ]);
+
+        const result = {
             todayTotal: today[0].total,
             todayCount: today[0].count,
             recentSales,
             lowStock,
             weeklySales,
             topProduct: topProduct[0] || null
-        });
+        };
+
+        // Update Cache
+        statsCache = {
+            data: result,
+            timestamp: Date.now(),
+            tenantId: tenantId
+        };
+
+        res.json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
     } finally {
@@ -282,7 +425,7 @@ export const getExpressUsers = async (req, res) => {
     let connection;
     try {
         connection = await getExpressConnection();
-        const [users] = await connection.query("SELECT id, name, username, role, created_at FROM express_users WHERE tenant_id = ?", [tenantId]);
+        const [users] = await connection.query("SELECT id, name, username, role, permissions, created_at FROM express_users WHERE tenant_id = ?", [tenantId]);
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -293,7 +436,7 @@ export const getExpressUsers = async (req, res) => {
 
 export const createExpressUser = async (req, res) => {
     const tenantId = req.tenantId;
-    const { name, username, password, role } = req.body;
+    const { name, username, password, role, permissions } = req.body;
 
     if (!name || !username || !password) return res.status(400).json({ message: "Fields required." });
 
@@ -301,9 +444,13 @@ export const createExpressUser = async (req, res) => {
     try {
         connection = await getExpressConnection();
         const password_hash = await bcrypt.hash(password, 10);
+
+        // Handle permissions JSON
+        const perms = permissions ? JSON.stringify(permissions) : null;
+
         await connection.query(
-            "INSERT INTO express_users (tenant_id, name, username, password_hash, role) VALUES (?, ?, ?, ?, ?)",
-            [tenantId, name, username, password_hash, role || 'cashier']
+            "INSERT INTO express_users (tenant_id, name, username, password_hash, role, permissions) VALUES (?, ?, ?, ?, ?, ?)",
+            [tenantId, name, username, password_hash, role || 'cashier', perms]
         );
         res.status(201).json({ message: "User created." });
     } catch (error) {
@@ -323,6 +470,38 @@ export const deleteExpressUser = async (req, res) => {
         res.json({ message: "User deleted." });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+export const updateExpressUser = async (req, res) => {
+    const tenantId = req.tenantId;
+    const { id } = req.params;
+    const { name, username, password, role, permissions } = req.body;
+
+    let connection;
+    try {
+        connection = await getExpressConnection();
+
+        // Build update query dynamically
+        let query = "UPDATE express_users SET name=?, username=?, role=?, permissions=?";
+        let params = [name, username, role, permissions ? JSON.stringify(permissions) : null];
+
+        if (password && password.length >= 6) {
+            const hash = await bcrypt.hash(password, 10);
+            query += ", password_hash=?";
+            params.push(hash);
+        }
+
+        query += " WHERE id=? AND tenant_id=?";
+        params.push(id, tenantId);
+
+        await connection.query(query, params);
+        res.json({ message: "User updated." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error updating user." });
     } finally {
         if (connection) connection.release();
     }
@@ -349,6 +528,83 @@ export const loginExpressUser = async (req, res) => {
         res.json({ token, user: { id: user.id, name: user.name, role: user.role } });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+// --- ME ---
+
+export const getMe = async (req, res) => {
+    // req.expressUser is populated by middleware if token has user_id
+    // req.tenantId is always populated
+
+    // If it's an employee (User)
+    if (req.expressUser && req.expressUser.user_id) {
+        let connection;
+        try {
+            connection = await getExpressConnection();
+            const [users] = await connection.query("SELECT id, name, username, role, permissions FROM express_users WHERE id = ? AND tenant_id = ?", [req.expressUser.user_id, req.tenantId]);
+            if (users.length > 0) {
+                const user = users[0];
+                return res.json({
+                    id: user.id,
+                    name: user.name,
+                    username: user.username,
+                    role: user.role,
+                    permissions: typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Error fetching user details" });
+        } finally {
+            if (connection) connection.release();
+        }
+    }
+
+    // Default: Admin (Tenant)
+    // Return mock admin object so frontend treats it same
+    return res.json({
+        id: req.tenantId,
+        name: "Admin",
+        username: "admin",
+        role: 'admin',
+        permissions: { sales: true, inventory: true }
+    });
+};
+
+export const updatePassword = async (req, res) => {
+    const { password } = req.body;
+    const tenantId = req.tenantId;
+
+    if (!password || password.length < 6) {
+        return res.status(400).json({ message: "La contraseña debe tener al menos 6 caracteres" });
+    }
+
+    let connection;
+    try {
+        const hash = await bcrypt.hash(password, 10);
+        connection = await getExpressConnection();
+
+        // Check if it's an employee updating their own password
+        if (req.expressUser && req.expressUser.user_id) {
+            await connection.query(
+                "UPDATE express_users SET password_hash = ? WHERE id = ? AND tenant_id = ?",
+                [hash, req.expressUser.user_id, tenantId]
+            );
+        } else {
+            // It's the Admin/Tenant
+            await connection.query(
+                "UPDATE express_tenants SET password_hash = ? WHERE tenant_id = ?",
+                [hash, tenantId]
+            );
+        }
+
+        res.json({ message: "Contraseña actualizada correctamente" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error al actualizar contraseña" });
     } finally {
         if (connection) connection.release();
     }

@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
-import { LayoutGrid, ShoppingBag, Package, Users, LogOut, Building2 } from "lucide-react";
+import { LayoutGrid, ShoppingBag, Package, Users, LogOut, Building2, Settings, Bell } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useTheme } from "@heroui/use-theme";
-import { getBusinessName } from "@/utils/expressStorage";
-import { expressLogout } from "@/services/express.services";
+import { getBusinessName, getExpressRole, getExpressPermissions } from "@/utils/expressStorage";
+import { expressLogout, getExpressMe } from "@/services/express.services";
+import { NotificationsDrawer } from "./NotificationsDrawer";
+import { useAuth } from "@/context/Auth/AuthProvider";
 
 function ExpressLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, setTheme } = useTheme();
     const [erpTheme, setErpTheme] = useState(null);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [role, setRole] = useState(null);
+    const [permissions, setPermissions] = useState({});
 
     // Isolated Theme Management for Express
     useEffect(() => {
@@ -19,6 +24,33 @@ function ExpressLayout() {
         // Force Dark Mode for Express
         setTheme("dark");
 
+        const init = async () => {
+            try {
+                // Try to get fresh permissions from backend
+                const me = await getExpressMe();
+                if (me) {
+                    setRole(me.role);
+                    setPermissions(me.permissions || {});
+
+                    // Update storage to keep it in sync
+                    // Note: We need to import setExpressRole/Permissions if we want to update them, 
+                    // but for now relying on state is enough for the session.
+                    // Actually, let's update storage so next reload works even offline-ish/faster
+                    // We need to import setters. 
+                }
+            } catch (e) {
+                console.error("Failed to refresh permissions", e);
+                // Fallback to storage
+                const r = await getExpressRole();
+                setRole(r);
+                if (r !== 'admin') {
+                    const p = await getExpressPermissions();
+                    setPermissions(p || {});
+                }
+            }
+        };
+        init();
+
         return () => {
             if (currentGlobalTheme) {
                 setTheme(currentGlobalTheme);
@@ -26,17 +58,64 @@ function ExpressLayout() {
         }
     }, []);
 
+    // Subscription Check
+    const { user } = useAuth();
+    useEffect(() => {
+        if (user?.subscription_status === 'expired' && !location.pathname.includes('/subscription')) {
+            navigate('/express/subscription');
+        }
+    }, [user, location.pathname]);
+
     const handleLogout = async () => {
         await expressLogout();
         navigate("/");
     };
 
-    const tabs = [
-        { id: "dashboard", icon: LayoutGrid, label: "Inicio", path: "/express/dashboard", color: "text-blue-400", bg: "bg-blue-500/10", glow: "shadow-[0_0_15px_-3px_rgba(59,130,246,0.4)]" },
-        { id: "pos", icon: ShoppingBag, label: "Vender", path: "/express/pos", color: "text-emerald-400", bg: "bg-emerald-500/10", glow: "shadow-[0_0_15px_-3px_rgba(16,185,129,0.4)]" },
-        { id: "inventory", icon: Package, label: "Stock", path: "/express/inventory", color: "text-purple-400", bg: "bg-purple-500/10", glow: "shadow-[0_0_15px_-3px_rgba(168,85,247,0.4)]" },
-        { id: "users", icon: Users, label: "Equipo", path: "/express/users", color: "text-orange-400", bg: "bg-orange-500/10", glow: "shadow-[0_0_15px_-3px_rgba(249,115,22,0.4)]" },
+    // Tabs Configuration
+    const allTabs = [
+        {
+            id: "dashboard",
+            icon: LayoutGrid,
+            label: "Inicio",
+            path: "/express/dashboard",
+            color: "text-blue-400",
+            bg: "bg-blue-500/10",
+            glow: "shadow-[0_0_15px_-3px_rgba(59,130,246,0.4)]",
+            isVisible: () => true
+        },
+        {
+            id: "pos",
+            icon: ShoppingBag,
+            label: "Vender",
+            path: "/express/pos",
+            color: "text-emerald-400",
+            bg: "bg-emerald-500/10",
+            glow: "shadow-[0_0_15px_-3px_rgba(16,185,129,0.4)]",
+            isVisible: () => role === 'admin' || permissions?.sales
+        },
+        {
+            id: "inventory",
+            icon: Package,
+            label: "Stock",
+            path: "/express/inventory",
+            color: "text-purple-400",
+            bg: "bg-purple-500/10",
+            glow: "shadow-[0_0_15px_-3px_rgba(168,85,247,0.4)]",
+            isVisible: () => role === 'admin' || permissions?.inventory
+        },
+        {
+            id: "users",
+            icon: Users,
+            label: "Equipo",
+            path: "/express/users",
+            color: "text-orange-400",
+            bg: "bg-orange-500/10",
+            glow: "shadow-[0_0_15px_-3px_rgba(249,115,22,0.4)]",
+            isVisible: () => role === 'admin'
+        },
     ];
+
+    const tabs = allTabs.filter(tab => tab.isVisible());
 
     const [businessName, setBusinessState] = useState("Horycore Pocket");
 
@@ -57,18 +136,29 @@ function ExpressLayout() {
                     </div>
                     <span className="font-bold text-lg tracking-tight truncate max-w-[200px] text-zinc-100">{businessName}</span>
                 </div>
-                <button
-                    onClick={handleLogout}
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300"
-                    title="Cerrar Sesión"
-                >
-                    <LogOut className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsNotificationsOpen(true)}
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-all duration-300 relative"
+                        title="Notificaciones"
+                    >
+                        <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        <Bell className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => navigate('/express/settings')}
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-all duration-300"
+                        title="Configuración"
+                    >
+                        <Settings className="w-5 h-5" />
+                    </button>
+                </div>
+
             </div>
 
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden pb-28 p-0 scrollbar-hide">
-                <Outlet />
+                <Outlet context={{ role, permissions }} />
             </div>
 
             {/* Floating Dock Navigation */}
@@ -100,6 +190,11 @@ function ExpressLayout() {
                     );
                 })}
             </div>
+
+            <NotificationsDrawer
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+            />
         </div>
     );
 }

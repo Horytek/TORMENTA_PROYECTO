@@ -303,6 +303,7 @@ export const paymentWebhook = async (req, res) => {
       connection = await getConnection();
 
       let empresa;
+      let isExpress = false;
       // Producto: enviar clave una vez. Suscripción: sumar días una vez.
       let shouldSendInitialCode = false;
       let shouldRenewAccess = false;
@@ -324,31 +325,109 @@ export const paymentWebhook = async (req, res) => {
           "SELECT id_empresa, id_tenant FROM empresa WHERE email = ? LIMIT 1",
           [externalReference]
         );
-        if (!empresas.length) { await connection.rollback(); return res.sendStatus(200); }
-        empresa = empresas[0];
+
+        if (empresas.length > 0) {
+          empresa = empresas[0];
+        } else {
+          // 2. Si no es ERP, buscar en EXPRESS (Pocket)
+          const [expressTenants] = await connection.query(
+            "SELECT id as db_id, tenant_id, email, business_name FROM express_tenants WHERE email = ? LIMIT 1",
+            [externalReference]
+          );
+          if (expressTenants.length > 0) {
+            empresa = { id_tenant: expressTenants[0].tenant_id, ...expressTenants[0] };
+            isExpress = true;
+          }
+        }
+
+        if (!empresa) { await connection.rollback(); return res.sendStatus(200); }
 
         // Guardar/actualizar el pago
         try { await saveMPPayment(connection, empresa.id_tenant, payment); } catch { }
 
-        if (shouldRenewAccess) {
-          // Suscripción: sumar +30 días solo una vez por cobro
-          await connection.query(
-            `UPDATE usuario
-               SET fecha_pago = DATE_ADD(
-                     CASE
-                       WHEN fecha_pago IS NULL OR fecha_pago < CURDATE() THEN CURDATE()
-                       ELSE fecha_pago
-                     END, INTERVAL 30 DAY
-                   ),
-                   estado_usuario = 1
-             WHERE id_tenant = ?`,
-            [empresa.id_tenant]
-          );
+        if (isExpress) {
+          // Lógica para Pocket / Express
+          if (!alreadyApproved) {
+            // Determinar duración según monto o metadata
+            let daysToAdd = 30;
+            const amount = Number(payment.transaction_amount);
+            if (amount < 8) daysToAdd = 1; // Diario
+            else if (amount < 25) daysToAdd = 7; // Semanal
+
+            await connection.query(
+              `UPDATE express_tenants 
+                      SET subscription_status = 'active',
+                          subscription_end_date = DATE_ADD(
+                              CASE 
+                                WHEN subscription_end_date IS NULL OR subscription_end_date < NOW() THEN NOW() 
+                                ELSE subscription_end_date 
+                              END, 
+                              INTERVAL ? DAY
+                          )
+                      WHERE tenant_id = ?`,
+              [daysToAdd, empresa.id_tenant]
+            );
+
+            // Enviar Correo de Bienvenida / Confirmación
+            await resend.emails.send({
+              from: "HoryCore Pocket <no-reply@horycore.online>",
+              to: externalReference,
+              subject: "¡Pago Exitoso! Tu HoryCore Pocket está listo",
+              html: `
+                      <div style="background:#02040a;padding:40px 20px;font-family:sans-serif;">
+                        <div style="max-width:600px;margin:0 auto;background:#0f121a;border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+                           <div style="padding:40px;text-align:center;">
+                              <div style="width:64px;height:64px;background:rgba(16,185,129,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">
+                                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                              </div>
+                              <h1 style="color:white;font-size:24px;margin:0 0 12px;">¡Pago Recibido!</h1>
+                              <p style="color:#9ca3af;font-size:16px;line-height:1.5;margin:0 0 32px;">
+                                 Tu suscripción a <strong>HoryCore Pocket</strong> ha sido activada correctamente. Ya puedes acceder a todas las funciones premium.
+                              </p>
+                              
+                              <div style="background:#1a1d2d;border-radius:16px;padding:20px;text-align:left;margin-bottom:32px;">
+                                 <div style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">PLAN</div>
+                                 <div style="color:white;font-weight:bold;font-size:18px;">${daysToAdd === 1 ? 'Diario' : daysToAdd === 7 ? 'Semanal' : 'Express Mensual'}</div>
+                                 <div style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;margin-top:16px;">ESTADO</div>
+                                 <div style="color:#10b981;font-weight:bold;font-size:14px;">ACTIVO</div>
+                              </div>
+
+                              <a href="${process.env.FRONTEND_URL}/login" style="display:inline-block;background:#10b981;color:black;font-weight:bold;text-decoration:none;padding:16px 32px;border-radius:12px;transition:all 0.2s;">
+                                 Ingresar al Sistema
+                              </a>
+                           </div>
+                           <div style="background:#0a0c10;padding:20px;text-align:center;border-top:1px solid rgba(255,255,255,0.05);">
+                              <p style="color:#4b5563;font-size:12px;margin:0;">Horytek Solutions &copy; ${new Date().getFullYear()}</p>
+                           </div>
+                        </div>
+                      </div>
+                    `
+            });
+          }
+        } else {
+          // Lógica ERP original
+          if (shouldRenewAccess) {
+            // Suscripción: sumar +30 días solo una vez por cobro
+            await connection.query(
+              `UPDATE usuario
+                   SET fecha_pago = DATE_ADD(
+                         CASE
+                           WHEN fecha_pago IS NULL OR fecha_pago < CURDATE() THEN CURDATE()
+                           ELSE fecha_pago
+                         END, INTERVAL 30 DAY
+                       ),
+                       estado_usuario = 1
+                 WHERE id_tenant = ?`,
+              [empresa.id_tenant]
+            );
+          }
         }
+
         // Producto: NO tocar fecha_pago ni estado_usuario
 
         await connection.commit();
-      } catch {
+      } catch (err) {
+        console.error("Webhook Logic Error:", err);
         try { await connection.rollback(); } catch { }
         return res.sendStatus(200);
       }
