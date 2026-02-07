@@ -15,9 +15,28 @@
 @source "./src/**/*.{js,ts,jsx,tsx}";
 
 @layer base {
+
+  /* Force color-scheme based on class */
+  html.light {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-slate-100;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
+  }
+
+  /* Explicit light mode - overrides when system is dark but class is light */
+  html.light body,
+  html:not(.dark) body {
+    background-color: rgb(248 250 252) !important;
+    /* slate-50 */
+    color: rgb(30 41 59) !important;
+    /* slate-800 */
   }
 
   /* Custom Elegant Scrollbar */
@@ -252,20 +271,20 @@
 
   /* Fix Chrome Autofill White Background */
   input:-webkit-autofill,
-  input:-webkit-autofill:hover, 
-  input:-webkit-autofill:focus, 
-  input:-webkit-autofill:active{
-      -webkit-box-shadow: 0 0 0 30px #18181b inset !important;
-      -webkit-text-fill-color: white !important;
-      transition: background-color 5000s ease-in-out 0s;
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #18181b inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
   }
-  
+
   .dark input:-webkit-autofill,
-  .dark input:-webkit-autofill:hover, 
-  .dark input:-webkit-autofill:focus, 
-  .dark input:-webkit-autofill:active{
-      -webkit-box-shadow: 0 0 0 30px #18181b inset !important;
-      -webkit-text-fill-color: white !important;
+  .dark input:-webkit-autofill:hover,
+  .dark input:-webkit-autofill:focus,
+  .dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #18181b inset !important;
+    -webkit-text-fill-color: white !important;
   }
 
   /* Si HeroUI agrega wrapper, reforzar (opcional) */
@@ -753,7 +772,7 @@ html.dark body:not(.landing-body) #root {
    Internamente renderiza un <input> absoluto que debe ser transparente.
    El reset global `.dark input { ... !important }` lo pinta y termina tapando los segmentos.
    Detectamos el contenedor porque incluye el wrapper con `data-slot="segment-wrapper"`. */
-.hc-login-otp > input {
+.hc-login-otp>input {
   background-color: transparent !important;
   color: transparent !important;
   border-color: transparent !important;
@@ -761,19 +780,19 @@ html.dark body:not(.landing-body) #root {
   box-shadow: none !important;
 }
 
-.hc-login-otp > input::placeholder {
+.hc-login-otp>input::placeholder {
   color: transparent !important;
 }
 
-.hc-login-otp > input:-webkit-autofill,
-.hc-login-otp > input:-webkit-autofill:hover,
-.hc-login-otp > input:-webkit-autofill:focus,
-.hc-login-otp > input:-webkit-autofill:active {
+.hc-login-otp>input:-webkit-autofill,
+.hc-login-otp>input:-webkit-autofill:hover,
+.hc-login-otp>input:-webkit-autofill:focus,
+.hc-login-otp>input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px transparent inset !important;
   -webkit-text-fill-color: transparent !important;
 }
 
-.dark .hc-login-otp > input {
+.dark .hc-login-otp>input {
   background-color: transparent !important;
   color: transparent !important;
   border-color: transparent !important;
@@ -781,20 +800,20 @@ html.dark body:not(.landing-body) #root {
   box-shadow: none !important;
 }
 
-.dark .hc-login-otp > input::placeholder {
+.dark .hc-login-otp>input::placeholder {
   color: transparent !important;
 }
 
-.dark .hc-login-otp > input:-webkit-autofill,
-.dark .hc-login-otp > input:-webkit-autofill:hover,
-.dark .hc-login-otp > input:-webkit-autofill:focus,
-.dark .hc-login-otp > input:-webkit-autofill:active {
+.dark .hc-login-otp>input:-webkit-autofill,
+.dark .hc-login-otp>input:-webkit-autofill:hover,
+.dark .hc-login-otp>input:-webkit-autofill:focus,
+.dark .hc-login-otp>input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px transparent inset !important;
   -webkit-text-fill-color: transparent !important;
 }
 
 /* Fallback genérico (si se usa InputOtp en otros lados sin containerClassName) */
-.dark div:has(> [data-slot="segment-wrapper"]) > input {
+.dark div:has(> [data-slot="segment-wrapper"])>input {
   background-color: transparent !important;
   color: transparent !important;
   border-color: transparent !important;
@@ -802,14 +821,14 @@ html.dark body:not(.landing-body) #root {
   box-shadow: none !important;
 }
 
-.dark div:has(> [data-slot="segment-wrapper"]) > input::placeholder {
+.dark div:has(> [data-slot="segment-wrapper"])>input::placeholder {
   color: transparent !important;
 }
 
-.dark div:has(> [data-slot="segment-wrapper"]) > input:-webkit-autofill,
-.dark div:has(> [data-slot="segment-wrapper"]) > input:-webkit-autofill:hover,
-.dark div:has(> [data-slot="segment-wrapper"]) > input:-webkit-autofill:focus,
-.dark div:has(> [data-slot="segment-wrapper"]) > input:-webkit-autofill:active {
+.dark div:has(> [data-slot="segment-wrapper"])>input:-webkit-autofill,
+.dark div:has(> [data-slot="segment-wrapper"])>input:-webkit-autofill:hover,
+.dark div:has(> [data-slot="segment-wrapper"])>input:-webkit-autofill:focus,
+.dark div:has(> [data-slot="segment-wrapper"])>input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px transparent inset !important;
   -webkit-text-fill-color: transparent !important;
 }
@@ -1380,4 +1399,85 @@ html.dark body:not(.landing-body) #root {
 .dark .productos-tabs-header .Dropdown {
   background-color: #232339 !important;
   color: #e6eef8 !important;
+}
+
+/* ================================================================
+   EXPLICIT LIGHT MODE OVERRIDES
+   These rules ensure proper light mode styling when the user selects
+   light theme but their system preference is dark.
+   ================================================================ */
+
+/* Base backgrounds - explicit light mode */
+html.light .bg-white,
+html.light .bg-gray-50,
+html.light .bg-gray-100,
+html.light .bg-zinc-50,
+html.light .bg-zinc-100,
+html.light .bg-slate-50,
+html.light .bg-slate-100 {
+  background-color: inherit !important;
+}
+
+html.light body {
+  background-color: rgb(248 250 252) !important;
+  /* slate-50 */
+  color: rgb(30 41 59) !important;
+  /* slate-800 */
+}
+
+/* Inputs in light mode */
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #f9fafb !important;
+  /* gray-50 */
+  color: #1f2937 !important;
+  /* gray-800 */
+  border-color: #e5e7eb !important;
+  /* gray-200 */
+}
+
+/* Reset dark overrides for light class */
+html.light .bg-white {
+  background-color: rgb(255 255 255) !important;
+}
+
+html.light .text-black,
+html.light .text-gray-900,
+html.light .text-gray-800,
+html.light .text-gray-700,
+html.light .text-zinc-900,
+html.light .text-zinc-800,
+html.light .text-zinc-700 {
+  color: inherit !important;
+}
+
+/* Sidebar in light mode */
+html.light [data-sidebar="sidebar"],
+html.light [data-sidebar="content"],
+html.light [data-sidebar="footer"],
+html.light [data-sidebar="header"] {
+  background: hsl(0 0% 97%) !important;
+  color: hsl(240 5.3% 26.1%) !important;
+  border-color: hsl(220 13% 91%) !important;
+}
+
+/* Cards and panels in light mode */
+html.light .card-surface,
+html.light .card-flat,
+html.light .app-panel,
+html.light .app-card {
+  background-color: rgb(255 255 255) !important;
+  color: rgb(24 24 27) !important;
+  border-color: rgb(229 231 235) !important;
+}
+
+/* Border colors in light mode */
+html.light .border-gray-100,
+html.light .border-gray-200,
+html.light .border-gray-300,
+html.light .border-zinc-100,
+html.light .border-zinc-200,
+html.light .border-zinc-300 {
+  border-color: inherit !important;
 }
