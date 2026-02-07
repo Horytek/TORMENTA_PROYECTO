@@ -99,41 +99,6 @@ export const RegistroPocketForm = ({ planInfo }) => {
         setFormSubmitted(true);
     };
 
-    // --- COMPONENTE INPUT MEJORADO ---
-    const FormInput = ({ icon: Icon, label, name, type = "text", placeholder, required = true }) => (
-        <div className="space-y-1.5">
-            <label htmlFor={name} className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-                {label} {required && <span className="text-emerald-500">*</span>}
-            </label>
-            <div className="relative group">
-                {/* Icono con mejor posicionamiento */}
-                {Icon && (
-                    <div className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center pointer-events-none border-r border-zinc-700/50 bg-zinc-800/30 rounded-l-lg">
-                        <Icon className="w-4 h-4 text-zinc-500 group-focus-within:text-emerald-400 transition-colors" />
-                    </div>
-                )}
-
-                <input
-                    id={name}
-                    name={name}
-                    type={type}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    placeholder={placeholder}
-                    className={`
-                        w-full h-11 pr-4 ${Icon ? 'pl-14' : 'pl-4'} rounded-lg
-                        bg-zinc-800/80 border-0 
-                        text-white text-sm placeholder:text-zinc-600
-                        focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:bg-zinc-800
-                        transition-all duration-200
-                        ${errors[name] ? 'ring-2 ring-red-500/50' : ''}
-                    `}
-                />
-            </div>
-            {errors[name] && <p className="text-xs text-red-400 mt-1">{errors[name]}</p>}
-        </div>
-    );
-
     return (
         <div className="w-full max-w-4xl mx-auto p-4">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -151,15 +116,51 @@ export const RegistroPocketForm = ({ planInfo }) => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <FormInput name="nombre" label="Nombre" placeholder="Juan" />
-                                <FormInput name="apellido" label="Apellido" placeholder="Pérez" />
+                                <FormInput
+                                    name="nombre"
+                                    label="Nombre"
+                                    placeholder="Juan"
+                                    value={formData.nombre}
+                                    onChange={handleChange}
+                                    error={errors.nombre}
+                                />
+                                <FormInput
+                                    name="apellido"
+                                    label="Apellido"
+                                    placeholder="Pérez"
+                                    value={formData.apellido}
+                                    onChange={handleChange}
+                                    error={errors.apellido}
+                                />
                             </div>
 
-                            <FormInput name="nombreNegocio" label="Nombre del Negocio" placeholder="Ej. Bodega El Chino" />
+                            <FormInput
+                                name="nombreNegocio"
+                                label="Nombre del Negocio"
+                                placeholder="Ej. Bodega El Chino"
+                                value={formData.nombreNegocio}
+                                onChange={handleChange}
+                                error={errors.nombreNegocio}
+                            />
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormInput name="email" label="Email" type="email" placeholder="juan@gmail.com" />
-                                <FormInput name="telefono" label="Teléfono" placeholder="999 000 111" />
+                                <FormInput
+                                    name="email"
+                                    label="Email"
+                                    type="email"
+                                    placeholder="juan@gmail.com"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    error={errors.email}
+                                />
+                                <FormInput
+                                    name="telefono"
+                                    label="Teléfono"
+                                    placeholder="999 000 111"
+                                    value={formData.telefono}
+                                    onChange={handleChange}
+                                    error={errors.telefono}
+                                />
                             </div>
 
                             <div className="pt-2">
@@ -262,3 +263,38 @@ export const RegistroPocketForm = ({ planInfo }) => {
         </div>
     );
 };
+
+// --- COMPONENTE INPUT MEJORADO (MOVIDO AFUERA) ---
+const FormInput = ({ icon: Icon, label, name, type = "text", placeholder, required = true, value, onChange, error }) => (
+    <div className="space-y-1.5">
+        <label htmlFor={name} className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+            {label} {required && <span className="text-emerald-500">*</span>}
+        </label>
+        <div className="relative group">
+            {/* Icono con mejor posicionamiento */}
+            {Icon && (
+                <div className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center pointer-events-none border-r border-zinc-700/50 bg-zinc-800/30 rounded-l-lg">
+                    <Icon className="w-4 h-4 text-zinc-500 group-focus-within:text-emerald-400 transition-colors" />
+                </div>
+            )}
+
+            <input
+                id={name}
+                name={name}
+                type={type}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                className={`
+                    w-full h-11 pr-4 ${Icon ? 'pl-14' : 'pl-4'} rounded-lg
+                    bg-zinc-800/80 border-0 
+                    text-white text-sm placeholder:text-zinc-600
+                    focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:bg-zinc-800
+                    transition-all duration-200
+                    ${error ? 'ring-2 ring-red-500/50' : ''}
+                `}
+            />
+        </div>
+        {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+    </div>
+);

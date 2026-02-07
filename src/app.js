@@ -292,4 +292,12 @@ try {
   console.error('❌ Error iniciando servicio de mantenimiento de logs:', error);
 }
 
+// Inicializar cron job de suscripciones Express
+import { initSubscriptionCron } from "./cron/subscriptionCron.js";
+try {
+  initSubscriptionCron();
+} catch (error) {
+  console.error('❌ Error iniciando cron de suscripciones:', error);
+}
+
 export default app;

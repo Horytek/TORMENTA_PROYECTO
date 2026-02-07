@@ -29,3 +29,13 @@ export const subscribeToPlanRequest = async (plan_id) => {
         throw error;
     }
 };
+
+export const renewSubscriptionRequest = async (plan_id) => {
+    try {
+        const response = await expressApi.post('/subscription/renew', { plan_id });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating renewal preference:", error);
+        throw error;
+    }
+};

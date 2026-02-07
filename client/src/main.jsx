@@ -36,16 +36,32 @@ const ExpressInventory = lazy(() => import("./pages/Express/ExpressInventory"));
 const ExpressUsers = lazy(() => import("./pages/Express/ExpressUsers"));
 const ExpressSubscription = lazy(() => import("./pages/Express/ExpressSubscription"));
 const ExpressSettings = lazy(() => import("./pages/Express/ExpressSettings"));
+const ExpressSalesHistory = lazy(() => import("./pages/Express/ExpressSalesHistory"));
 
 const ChatbotClientWidget = lazy(() =>
   import("@/components/Chatbot/DeepSeekChatbot")
 );
 
 function ThemeClassSync() {
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  useEffect(() => {
+    const handler = (event) => {
+      const nextTheme = event?.detail;
+      if (!nextTheme) return;
+      try {
+        setTheme(nextTheme);
+      } catch {
+        // noop
+      }
+    };
+
+    window.addEventListener("hc:set-heroui-theme", handler);
+    return () => window.removeEventListener("hc:set-heroui-theme", handler);
+  }, [setTheme]);
   return null;
 }
 
@@ -123,6 +139,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                       <Route path="users" element={<ExpressUsers />} />
                       <Route path="subscription" element={<ExpressSubscription />} />
                       <Route path="settings" element={<ExpressSettings />} />
+                      <Route path="history" element={<ExpressSalesHistory />} />
                     </Route>
 
                     <Route element={<ProtectedRoute />}>

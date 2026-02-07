@@ -18,6 +18,7 @@ function ExpressUsers() {
         sales: true,
         inventory: false
     });
+    const [userStatus, setUserStatus] = useState(1); // 1 = Active, 0 = Inactive
     const [loading, setLoading] = useState(false);
     const [businessName, setBusinessNameStr] = useState("");
 
@@ -44,6 +45,7 @@ function ExpressUsers() {
         setNewUsername("");
         setNewPassword("");
         setPermissions({ sales: true, inventory: false });
+        setUserStatus(1);
         onOpen();
     };
 
@@ -56,6 +58,7 @@ function ExpressUsers() {
             sales: user.permissions?.sales || false,
             inventory: user.permissions?.inventory || false
         });
+        setUserStatus(user.status !== undefined ? user.status : 1);
         onOpen();
     };
 
@@ -71,7 +74,8 @@ function ExpressUsers() {
                 name: newName,
                 username: newUsername,
                 role: 'cashier', // Fixed to cashier as per requirement
-                permissions
+                permissions,
+                status: userStatus
             };
             if (newPassword) payload.password = newPassword;
 
@@ -132,6 +136,7 @@ function ExpressUsers() {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <p className="font-bold text-white group-hover:text-emerald-400 transition-colors">{u.name}</p>
+                                    {u.status === 0 && <Chip size="sm" color="danger" variant="flat" className="h-5 text-[10px]">Inactivo</Chip>}
                                     {u.permissions?.inventory && <Chip size="sm" color="warning" variant="flat" className="h-5 text-[10px]">Inventario</Chip>}
                                     {u.permissions?.sales && <Chip size="sm" color="success" variant="flat" className="h-5 text-[10px]">Ventas</Chip>}
                                 </div>
@@ -217,6 +222,19 @@ function ExpressUsers() {
                                                 Acceso a Inventario y Productos
                                             </Checkbox>
                                         </div>
+                                    </div>
+
+                                    <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800">
+                                        <p className="text-sm text-zinc-400 mb-3 font-bold uppercase tracking-wider">Estado del Usuario</p>
+                                        <Checkbox
+                                            isSelected={userStatus === 1}
+                                            onValueChange={(v) => setUserStatus(v ? 1 : 0)}
+                                            classNames={{ label: "text-white" }}
+                                            color="success"
+                                        >
+                                            Usuario Activo
+                                        </Checkbox>
+                                        {userStatus === 0 && <p className="text-xs text-red-400 mt-2">El usuario no podrá iniciar sesión</p>}
                                     </div>
 
                                     <Input

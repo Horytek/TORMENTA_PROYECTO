@@ -749,6 +749,71 @@ html.dark body:not(.landing-body) #root {
   border-color: #36364a !important;
 }
 
+/* HeroUI InputOtp:
+   Internamente renderiza un <input> absoluto que debe ser transparente.
+   El reset global `.dark input { ... !important }` lo pinta y termina tapando los segmentos.
+   Detectamos el contenedor porque incluye el wrapper con `data-slot="segment-wrapper"`. */
+.hc-login-otp > input {
+  background-color: transparent !important;
+  color: transparent !important;
+  border-color: transparent !important;
+  caret-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.hc-login-otp > input::placeholder {
+  color: transparent !important;
+}
+
+.hc-login-otp > input:-webkit-autofill,
+.hc-login-otp > input:-webkit-autofill:hover,
+.hc-login-otp > input:-webkit-autofill:focus,
+.hc-login-otp > input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.dark .hc-login-otp > input {
+  background-color: transparent !important;
+  color: transparent !important;
+  border-color: transparent !important;
+  caret-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark .hc-login-otp > input::placeholder {
+  color: transparent !important;
+}
+
+.dark .hc-login-otp > input:-webkit-autofill,
+.dark .hc-login-otp > input:-webkit-autofill:hover,
+.dark .hc-login-otp > input:-webkit-autofill:focus,
+.dark .hc-login-otp > input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Fallback genérico (si se usa InputOtp en otros lados sin containerClassName) */
+.dark div:has(> [data-slot="segment-wrapper"]) > input {
+  background-color: transparent !important;
+  color: transparent !important;
+  border-color: transparent !important;
+  caret-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.dark div:has(> [data-slot="segment-wrapper"]) > input::placeholder {
+  color: transparent !important;
+}
+
+.dark div:has(> [data-slot="segment-wrapper"]) > input:-webkit-autofill,
+.dark div:has(> [data-slot="segment-wrapper"]) > input:-webkit-autofill:hover,
+.dark div:has(> [data-slot="segment-wrapper"]) > input:-webkit-autofill:focus,
+.dark div:has(> [data-slot="segment-wrapper"]) > input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: #cbd5e1 !important;

@@ -1,4 +1,5 @@
 import { setToken, getToken, removeToken } from "@/utils/authStorage";
+import { forceHeroUILightTheme } from "@/utils/clearHeroUITheme";
 import { AuthContext } from "./AuthContext";
 import { redirect } from 'react-router-dom';
 import { useEffect, useContext, useState } from "react";
@@ -207,6 +208,7 @@ export const AuthProvider = ({ children }) => {
     } catch { /* noop */ }
     await removeToken(); // Limpiar de IndexedDB
     sessionStorage.clear();
+    forceHeroUILightTheme();
     clearUserStore(); // This clears permissions too
     setIsAuthenticated(false);
     setUser(null);

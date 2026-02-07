@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { expressLogout, updateExpressPassword, getExpressMe } from "@/services/express.services";
 import { getBusinessName } from "@/utils/expressStorage";
+import { forceHeroUILightTheme } from "@/utils/clearHeroUITheme";
 
 export default function ExpressSettings() {
     const navigate = useNavigate();
@@ -40,6 +41,7 @@ export default function ExpressSettings() {
 
     const handleLogout = async () => {
         await expressLogout();
+        forceHeroUILightTheme();
         window.location.href = "/login";
     };
 
