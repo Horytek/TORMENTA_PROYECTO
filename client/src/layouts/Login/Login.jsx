@@ -333,6 +333,10 @@ function Login() {
                         inputWrapper: "bg-zinc-800/50 data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800 !border-none !shadow-none !ring-0 !ring-offset-0 !outline-none h-12"
                       }}
                     />
+                    {/* Employee login hint */}
+                    <p className="text-xs text-zinc-500 ml-1 mt-1">
+                      <span className="text-amber-500/80 font-medium">¿Eres empleado?</span> Usa: <span className="text-zinc-300 font-mono">NombreCompleto@usuario</span>
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">

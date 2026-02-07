@@ -22,7 +22,7 @@ export default function ExpressSettings() {
                 if (me) {
                     setProfile({
                         name: me.name,
-                        email: me.username ? `@${me.username}` : (me.email || ""),
+                        email: me.email || (me.username ? `@${me.username}` : ""),
                         role: me.role
                     });
                     setRole(me.role);

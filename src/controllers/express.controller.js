@@ -571,11 +571,12 @@ export const getMe = async (req, res) => {
     // req.expressUser is populated by middleware if token has user_id
     // req.tenantId is always populated
 
-    // If it's an employee (User)
-    if (req.expressUser && req.expressUser.user_id) {
-        let connection;
-        try {
-            connection = await getExpressConnection();
+    let connection;
+    try {
+        connection = await getExpressConnection();
+
+        // If it's an employee (User)
+        if (req.expressUser && req.expressUser.user_id) {
             const [users] = await connection.query("SELECT id, name, username, role, permissions FROM express_users WHERE id = ? AND tenant_id = ?", [req.expressUser.user_id, req.tenantId]);
             if (users.length > 0) {
                 const user = users[0];
@@ -587,23 +588,39 @@ export const getMe = async (req, res) => {
                     permissions: typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
                 });
             }
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: "Error fetching user details" });
-        } finally {
-            if (connection) connection.release();
         }
-    }
 
-    // Default: Admin (Tenant)
-    // Return mock admin object so frontend treats it same
-    return res.json({
-        id: req.tenantId,
-        name: "Admin",
-        username: "admin",
-        role: 'admin',
-        permissions: { sales: true, inventory: true }
-    });
+        // Default: Admin (Tenant) - Get actual business info
+        const [tenants] = await connection.query(
+            "SELECT business_name, email FROM express_tenants WHERE tenant_id = ?",
+            [req.tenantId]
+        );
+
+        if (tenants.length > 0) {
+            const tenant = tenants[0];
+            return res.json({
+                id: req.tenantId,
+                name: tenant.business_name,
+                email: tenant.email,
+                role: 'admin',
+                permissions: { sales: true, inventory: true }
+            });
+        }
+
+        // Fallback if tenant not found
+        return res.json({
+            id: req.tenantId,
+            name: "Mi Negocio",
+            role: 'admin',
+            permissions: { sales: true, inventory: true }
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error fetching user details" });
+    } finally {
+        if (connection) connection.release();
+    }
 };
 
 export const updatePassword = async (req, res) => {
