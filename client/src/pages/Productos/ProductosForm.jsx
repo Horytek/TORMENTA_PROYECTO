@@ -14,6 +14,7 @@ import { useSubcategorias } from '@/context/Subcategoria/SubcategoriaProvider';
 import { addProducto, updateProducto, getLastIdProducto, generateSKUs, getProductAttributes } from '@/services/productos.services';
 import { getCategoryAttributes, getAttributeValues } from '@/services/attributes.services'; // NEW Services
 import { getUnidades } from '@/services/unidades.services';
+import { useUserStore } from '@/store/useStore';
 
 import {
   Textarea,
@@ -173,7 +174,11 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
       if (!initialData) {
         try {
           const lastId = await getLastIdProducto();
-          const barcode = `P${lastId ? lastId.toString().padStart(11, '0') : '00000000001'}`;
+          // Use user's id_tenant from store if available, otherwise default to simple format (risky but fallback)
+          const state = useUserStore.getState();
+          const tenantPrefix = state.id_tenant ? `T${state.id_tenant}-` : '';
+
+          const barcode = `${tenantPrefix}P${lastId ? lastId.toString().padStart(8, '0') : '00000001'}`;
           setValue('cod_barras', barcode);
         } catch (error) { /* ignore */ }
       }
