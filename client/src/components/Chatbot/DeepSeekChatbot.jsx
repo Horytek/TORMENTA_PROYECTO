@@ -196,7 +196,7 @@ export default function DeepSeekOpenRouterChatbot() {
 
       toast.success("Reporte PDF generado exitosamente", { id: "pdf-gen" });
       setIsPDFModalOpen(false);
-      
+
       // Resetear configuración
       setPdfConfig({
         type: "mensual",
@@ -787,6 +787,9 @@ Historial breve: ${historySummary || "inicio"}.
   };
 
   // =================== UI ===================
+  // Force hide component
+  return null;
+
   return (
     <>
       {/* Botón flotante compacto con dropdown de opciones */}
@@ -807,8 +810,8 @@ Historial breve: ${historySummary || "inicio"}.
               </Tooltip>
             </Button>
           </DropdownTrigger>
-          <DropdownMenu 
-            aria-label="Panel de opciones" 
+          <DropdownMenu
+            aria-label="Panel de opciones"
             className="dark:bg-zinc-900"
             onAction={(key) => {
               if (key === "function-shortcuts") {

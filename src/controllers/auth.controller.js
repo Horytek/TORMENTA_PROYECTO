@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { getExpressConnection } from "./../database/express_db.js";
 import { createAccessToken } from "../libs/jwt.js";
 import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
@@ -343,29 +344,39 @@ const verifyToken = async (req, res) => {
             // However, for Express we need to be strict about 'subscription_end_date'.
 
             // 2. Validar en EXPRESS_TENANTS (Pocket)
-            const [expressData] = await connection.query(
-                "SELECT subscription_status, subscription_end_date FROM express_tenants WHERE tenant_id = ? LIMIT 1",
-                [userbd.id_tenant]
-            );
+            let expressConnection;
+            try {
+                expressConnection = await getExpressConnection();
+                const [expressData] = await expressConnection.query(
+                    "SELECT subscription_status, subscription_end_date FROM express_tenants WHERE tenant_id = ? LIMIT 1",
+                    [userbd.id_tenant]
+                );
 
-            if (expressData.length > 0) {
-                const expressTenant = expressData[0];
-                subscriptionStatus = expressTenant.subscription_status || 'trial';
+                if (expressData.length > 0) {
+                    const expressTenant = expressData[0];
+                    subscriptionStatus = expressTenant.subscription_status || 'trial';
 
-                // Chequeo de fecha
-                if (expressTenant.subscription_end_date) {
-                    const endDate = new Date(expressTenant.subscription_end_date);
-                    if (endDate < new Date()) {
-                        subscriptionStatus = 'expired';
-                        // Opcional: Actualizar DB si no estaba marcado como expired
-                        if (expressTenant.subscription_status !== 'expired') {
-                            // Asynchronously update to avoid blocking
-                            try {
-                                await connection.query("UPDATE express_tenants SET subscription_status = 'expired' WHERE tenant_id = ?", [userbd.id_tenant]);
-                            } catch (e) { }
+                    // Chequeo de fecha
+                    if (expressTenant.subscription_end_date) {
+                        const endDate = new Date(expressTenant.subscription_end_date);
+                        if (endDate < new Date()) {
+                            subscriptionStatus = 'expired';
+                            // Opcional: Actualizar BD si no estaba marcado como expired
+                            if (expressTenant.subscription_status !== 'expired') {
+                                // Asynchronously update to avoid blocking
+                                try {
+                                    await expressConnection.query("UPDATE express_tenants SET subscription_status = 'expired' WHERE tenant_id = ?", [userbd.id_tenant]);
+                                } catch (e) { }
+                            }
                         }
                     }
                 }
+            } catch (expressError) {
+                console.warn('[SECURITY] Error checking express subscription:', expressError);
+                // Fail safe: if we can't check, we might want to allow or deny. 
+                // For now, let's log and proceed with default 'active' or previous status.
+            } finally {
+                if (expressConnection) expressConnection.release();
             }
         }
         // ---------------------------------------------------------

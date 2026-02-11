@@ -59,7 +59,7 @@ export const expressAuth = async (req, res, next) => {
                 next();
             } catch (dbError) {
                 console.error("DB Error in Auth:", dbError);
-                next(); // Fallback: allow if DB fails? Or block? Block is safer but annoying. Let's allow for now to avoid lockouts during outages.
+                return res.status(500).json({ message: "Internal server error during authorization check." });
             } finally {
                 if (connection) connection.release();
             }
