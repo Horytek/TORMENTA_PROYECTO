@@ -105,27 +105,6 @@ export const RegistroForm = ({ planInfo }) => {
     setFormSubmitted(true);
   };
 
-  // Componente de input estilizado
-  const FormInput = ({ icon: Icon, label, name, type = "text", placeholder, required = true }) => (
-    <div className="space-y-1.5">
-      <label htmlFor={name} className="text-sm font-medium text-gray-300 flex items-center gap-2">
-        {Icon && <Icon className="w-4 h-4 text-gray-500" />}
-        {label} {required && <span className="text-emerald-400">*</span>}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={formData[name]}
-        onChange={handleChange}
-        placeholder={placeholder}
-        className={`w-full px-4 py-3 rounded-xl bg-white/5 border ${errors[name] ? 'border-red-500' : 'border-gray-700/50'} 
-          text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all`}
-      />
-      {errors[name] && <p className="text-xs text-red-400">{errors[name]}</p>}
-    </div>
-  );
-
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -140,8 +119,8 @@ export const RegistroForm = ({ planInfo }) => {
                   Datos del administrador
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <FormInput name="nombre" label="Nombre" placeholder="Tu nombre" />
-                  <FormInput name="apellido" label="Apellido" placeholder="Tu apellido" />
+                  <FormInput name="nombre" label="Nombre" placeholder="Tu nombre" value={formData.nombre} onChange={handleChange} error={errors.nombre} />
+                  <FormInput name="apellido" label="Apellido" placeholder="Tu apellido" value={formData.apellido} onChange={handleChange} error={errors.apellido} />
                 </div>
               </div>
 
@@ -153,15 +132,15 @@ export const RegistroForm = ({ planInfo }) => {
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <FormInput icon={Building2} name="ruc" label="RUC" placeholder="20XXXXXXXXX" />
-                  <FormInput name="razonSocial" label="Razón Social" placeholder="Empresa S.A.C." />
+                  <FormInput icon={Building2} name="ruc" label="RUC" placeholder="20XXXXXXXXX" value={formData.ruc} onChange={handleChange} error={errors.ruc} />
+                  <FormInput name="razonSocial" label="Razón Social" placeholder="Empresa S.A.C." value={formData.razonSocial} onChange={handleChange} error={errors.razonSocial} />
                 </div>
 
-                <FormInput icon={MapPin} name="direccion" label="Dirección" placeholder="Av. Principal 123, Lima" />
+                <FormInput icon={MapPin} name="direccion" label="Dirección" placeholder="Av. Principal 123, Lima" value={formData.direccion} onChange={handleChange} error={errors.direccion} />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <FormInput icon={Mail} name="emailEmpresa" label="Email" type="email" placeholder="contacto@empresa.com" />
-                  <FormInput icon={Phone} name="telefonoEmpresa" label="Teléfono" placeholder="+51 999 999 999" />
+                  <FormInput icon={Mail} name="emailEmpresa" label="Email" type="email" placeholder="contacto@empresa.com" value={formData.emailEmpresa} onChange={handleChange} error={errors.emailEmpresa} />
+                  <FormInput icon={Phone} name="telefonoEmpresa" label="Teléfono" placeholder="+51 999 999 999" value={formData.telefonoEmpresa} onChange={handleChange} error={errors.telefonoEmpresa} />
                 </div>
 
                 <input type="hidden" name="pais" value={formData.pais} />
@@ -285,3 +264,24 @@ export const RegistroForm = ({ planInfo }) => {
     </div>
   );
 };
+
+// Componente de input estilizado (Movido Afuera)
+const FormInput = ({ icon: Icon, label, name, type = "text", placeholder, required = true, value, onChange, error }) => (
+  <div className="space-y-1.5">
+    <label htmlFor={name} className="text-sm font-medium text-gray-300 flex items-center gap-2">
+      {Icon && <Icon className="w-4 h-4 text-gray-500" />}
+      {label} {required && <span className="text-emerald-400">*</span>}
+    </label>
+    <input
+      id={name}
+      name={name}
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className={`w-full px-4 py-3 rounded-xl bg-white/5 border ${error ? 'border-red-500' : 'border-gray-700/50'} 
+        text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all`}
+    />
+    {error && <p className="text-xs text-red-400">{error}</p>}
+  </div>
+);

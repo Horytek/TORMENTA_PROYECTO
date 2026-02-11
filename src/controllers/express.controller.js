@@ -70,6 +70,16 @@ export const loginTenant = async (req, res) => {
             const isMatch = await bcrypt.compare(password, tenant.password_hash);
             if (!isMatch) return res.status(401).json({ message: "Invalid credentials." });
 
+            // Check subscription status
+            if (tenant.subscription_status === 'expired') {
+                return res.status(403).json({
+                    error: 'SUBSCRIPTION_EXPIRED',
+                    message: "Tu suscripción ha expirado. Por favor, renueva tu plan para continuar usando Pocket POS.",
+                    tenant_id: tenant.tenant_id,
+                    business_name: tenant.business_name
+                });
+            }
+
             const token = jwt.sign(
                 { tenant_id: tenant.tenant_id, email: tenant.email, business_name: tenant.business_name, role: 'admin' },
                 TOKEN_SECRET,
@@ -96,9 +106,30 @@ export const loginTenant = async (req, res) => {
                     const isMatch = await bcrypt.compare(password, user.password_hash);
                     if (!isMatch) return res.status(401).json({ message: "Invalid credentials." });
 
-                    // We need business name for the UI
-                    const [tenantRows] = await connection.query("SELECT business_name FROM express_tenants WHERE tenant_id = ?", [user.tenant_id]);
-                    const businessName = tenantRows[0]?.business_name || "Express Business";
+                    // Check if user is active
+                    if (user.status === 0) {
+                        return res.status(403).json({
+                            error: 'USER_INACTIVE',
+                            message: "Tu cuenta ha sido desactivada. Contacta al administrador de tu negocio."
+                        });
+                    }
+
+                    // Get tenant info and check subscription
+                    const [tenantRows] = await connection.query(
+                        "SELECT business_name, subscription_status FROM express_tenants WHERE tenant_id = ?",
+                        [user.tenant_id]
+                    );
+                    const tenant = tenantRows[0];
+                    const businessName = tenant?.business_name || "Express Business";
+
+                    // Check subscription status
+                    if (tenant?.subscription_status === 'expired') {
+                        return res.status(403).json({
+                            error: 'SUBSCRIPTION_EXPIRED',
+                            message: "La suscripción de tu negocio ha expirado. El administrador debe renovar el plan.",
+                            business_name: businessName
+                        });
+                    }
 
                     const token = jwt.sign(
                         { tenant_id: user.tenant_id, user_id: user.id, username: user.username, role: user.role || 'cashier' },
@@ -425,7 +456,7 @@ export const getExpressUsers = async (req, res) => {
     let connection;
     try {
         connection = await getExpressConnection();
-        const [users] = await connection.query("SELECT id, name, username, role, permissions, created_at FROM express_users WHERE tenant_id = ?", [tenantId]);
+        const [users] = await connection.query("SELECT id, name, username, role, permissions, status, created_at FROM express_users WHERE tenant_id = ?", [tenantId]);
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -436,7 +467,7 @@ export const getExpressUsers = async (req, res) => {
 
 export const createExpressUser = async (req, res) => {
     const tenantId = req.tenantId;
-    const { name, username, password, role, permissions } = req.body;
+    const { name, username, password, role, permissions, status } = req.body;
 
     if (!name || !username || !password) return res.status(400).json({ message: "Fields required." });
 
@@ -447,10 +478,11 @@ export const createExpressUser = async (req, res) => {
 
         // Handle permissions JSON
         const perms = permissions ? JSON.stringify(permissions) : null;
+        const userStatus = status !== undefined ? status : 1; // Default to Active
 
         await connection.query(
-            "INSERT INTO express_users (tenant_id, name, username, password_hash, role, permissions) VALUES (?, ?, ?, ?, ?, ?)",
-            [tenantId, name, username, password_hash, role || 'cashier', perms]
+            "INSERT INTO express_users (tenant_id, name, username, password_hash, role, permissions, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [tenantId, name, username, password_hash, role || 'cashier', perms, userStatus]
         );
         res.status(201).json({ message: "User created." });
     } catch (error) {
@@ -478,15 +510,15 @@ export const deleteExpressUser = async (req, res) => {
 export const updateExpressUser = async (req, res) => {
     const tenantId = req.tenantId;
     const { id } = req.params;
-    const { name, username, password, role, permissions } = req.body;
+    const { name, username, password, role, permissions, status } = req.body;
 
     let connection;
     try {
         connection = await getExpressConnection();
 
         // Build update query dynamically
-        let query = "UPDATE express_users SET name=?, username=?, role=?, permissions=?";
-        let params = [name, username, role, permissions ? JSON.stringify(permissions) : null];
+        let query = "UPDATE express_users SET name=?, username=?, role=?, permissions=?, status=?";
+        let params = [name, username, role, permissions ? JSON.stringify(permissions) : null, status !== undefined ? status : 1];
 
         if (password && password.length >= 6) {
             const hash = await bcrypt.hash(password, 10);
@@ -539,11 +571,12 @@ export const getMe = async (req, res) => {
     // req.expressUser is populated by middleware if token has user_id
     // req.tenantId is always populated
 
-    // If it's an employee (User)
-    if (req.expressUser && req.expressUser.user_id) {
-        let connection;
-        try {
-            connection = await getExpressConnection();
+    let connection;
+    try {
+        connection = await getExpressConnection();
+
+        // If it's an employee (User)
+        if (req.expressUser && req.expressUser.user_id) {
             const [users] = await connection.query("SELECT id, name, username, role, permissions FROM express_users WHERE id = ? AND tenant_id = ?", [req.expressUser.user_id, req.tenantId]);
             if (users.length > 0) {
                 const user = users[0];
@@ -555,23 +588,39 @@ export const getMe = async (req, res) => {
                     permissions: typeof user.permissions === 'string' ? JSON.parse(user.permissions) : user.permissions
                 });
             }
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: "Error fetching user details" });
-        } finally {
-            if (connection) connection.release();
         }
-    }
 
-    // Default: Admin (Tenant)
-    // Return mock admin object so frontend treats it same
-    return res.json({
-        id: req.tenantId,
-        name: "Admin",
-        username: "admin",
-        role: 'admin',
-        permissions: { sales: true, inventory: true }
-    });
+        // Default: Admin (Tenant) - Get actual business info
+        const [tenants] = await connection.query(
+            "SELECT business_name, email FROM express_tenants WHERE tenant_id = ?",
+            [req.tenantId]
+        );
+
+        if (tenants.length > 0) {
+            const tenant = tenants[0];
+            return res.json({
+                id: req.tenantId,
+                name: tenant.business_name,
+                email: tenant.email,
+                role: 'admin',
+                permissions: { sales: true, inventory: true }
+            });
+        }
+
+        // Fallback if tenant not found
+        return res.json({
+            id: req.tenantId,
+            name: "Mi Negocio",
+            role: 'admin',
+            permissions: { sales: true, inventory: true }
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error fetching user details" });
+    } finally {
+        if (connection) connection.release();
+    }
 };
 
 export const updatePassword = async (req, res) => {

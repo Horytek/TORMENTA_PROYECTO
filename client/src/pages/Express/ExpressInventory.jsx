@@ -176,31 +176,47 @@ function ExpressInventory() {
                                     <div className="space-y-3">
                                         <label className="text-sm text-zinc-400 font-medium ml-1">Precio (S/.)</label>
                                         <Input
-                                            type="number"
-                                            min="0"
+                                            type="text"
+                                            inputMode="decimal"
                                             placeholder="0.00"
                                             value={formData.price}
                                             onChange={e => {
-                                                const val = parseFloat(e.target.value);
-                                                if (val < 0) return;
-                                                setFormData({ ...formData, price: e.target.value })
+                                                const value = e.target.value;
+                                                // Allow empty, digits, and one decimal point
+                                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                                    setFormData({ ...formData, price: value });
+                                                }
                                             }}
-                                            className="!bg-zinc-900 !border-zinc-800 !text-white h-14 text-lg placeholder:text-zinc-600 focus-visible:!ring-emerald-500 rounded-xl font-mono tracking-wider"
+                                            onBlur={e => {
+                                                const val = parseFloat(e.target.value);
+                                                if (isNaN(val) || val < 0) {
+                                                    setFormData({ ...formData, price: '0' });
+                                                }
+                                            }}
+                                            className="bg-zinc-900 border-zinc-800 text-white h-14 text-lg placeholder:text-zinc-600 focus-visible:ring-emerald-500 rounded-xl font-mono tracking-wider"
                                         />
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-sm text-zinc-400 font-medium ml-1">Stock Inicial</label>
                                         <Input
-                                            type="number"
-                                            min="0"
+                                            type="text"
+                                            inputMode="numeric"
                                             placeholder="0"
                                             value={formData.stock}
                                             onChange={e => {
-                                                const val = parseFloat(e.target.value);
-                                                if (val < 0) return;
-                                                setFormData({ ...formData, stock: e.target.value })
+                                                const value = e.target.value;
+                                                // Allow empty or digits only (integers)
+                                                if (value === '' || /^\d*$/.test(value)) {
+                                                    setFormData({ ...formData, stock: value });
+                                                }
                                             }}
-                                            className="!bg-zinc-900 !border-zinc-800 !text-white h-14 text-lg placeholder:text-zinc-600 focus-visible:!ring-emerald-500 rounded-xl font-mono tracking-wider"
+                                            onBlur={e => {
+                                                const val = parseInt(e.target.value);
+                                                if (isNaN(val) || val < 0) {
+                                                    setFormData({ ...formData, stock: '0' });
+                                                }
+                                            }}
+                                            className="bg-zinc-900 border-zinc-800 text-white h-14 text-lg placeholder:text-zinc-600 focus-visible:ring-emerald-500 rounded-xl font-mono tracking-wider"
                                         />
                                     </div>
                                 </div>

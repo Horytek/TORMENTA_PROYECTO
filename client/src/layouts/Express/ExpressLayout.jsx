@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useTheme } from "@heroui/use-theme";
 import { getBusinessName, getExpressRole, getExpressPermissions } from "@/utils/expressStorage";
 import { expressLogout, getExpressMe } from "@/services/express.services";
+import { forceHeroUILightTheme } from "@/utils/clearHeroUITheme";
 import { NotificationsDrawer } from "./NotificationsDrawer";
 import { useAuth } from "@/context/Auth/AuthProvider";
 
@@ -69,6 +70,7 @@ function ExpressLayout() {
     const handleLogout = async () => {
         await expressLogout();
         navigate("/");
+        forceHeroUILightTheme();
     };
 
     // Tabs Configuration

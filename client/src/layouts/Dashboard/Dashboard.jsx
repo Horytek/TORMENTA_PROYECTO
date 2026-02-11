@@ -375,7 +375,7 @@ function Dashboard() {
       </ScrollShadow>
 
       {/* Widget global del chatbot (siempre visible sobre el contenido) */}
-      <ChatbotWrapper routes={routes} />
+      {/* <ChatbotWrapper routes={routes} /> */}
     </div>
   );
 }

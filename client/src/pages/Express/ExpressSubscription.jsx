@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@heroui/react";
 import { Check, Star, Shield, Zap, AlertTriangle } from "lucide-react";
-import { getPlansRequest, getSubscriptionStatusRequest, subscribeToPlanRequest } from "../../services/subscription.services";
+import { getPlansRequest, getSubscriptionStatusRequest, subscribeToPlanRequest, renewSubscriptionRequest } from "../../services/subscription.services";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -104,6 +104,26 @@ export const ExpressSubscription = () => {
         }
     };
 
+    const handleRenew = async () => {
+        if (!status?.plan_id) {
+            toast.error("No se pudo identificar tu plan actual");
+            return;
+        }
+        setPurchasing(true);
+        try {
+            const result = await renewSubscriptionRequest(status.plan_id);
+            if (result.init_point) {
+                window.location.href = result.init_point;
+            } else {
+                toast.error("Error al generar enlace de pago");
+            }
+        } catch (error) {
+            toast.error("Error procesando renovación");
+        } finally {
+            setPurchasing(false);
+        }
+    };
+
     const handleCancel = async () => {
         if (!confirm("¿Estás seguro de cancelar tu plan Express? Perderás acceso al finalizar el periodo.")) return;
         toast.loading("Cancelando...");
@@ -133,9 +153,29 @@ export const ExpressSubscription = () => {
                 <p className="text-zinc-400 text-sm">Elige el plan que mejor se adapte a tu negocio.</p>
             </div>
 
+            {/* Urgency Banner - Show when 5 days or less remain */}
+            {status && status.canRenew && status.daysRemaining > 0 && status.daysRemaining <= 5 && (
+                <div className="p-4 rounded-2xl border bg-yellow-500/10 border-yellow-500/30 mb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle className="w-6 h-6 text-yellow-500" />
+                        <div>
+                            <p className="font-bold text-yellow-400">¡Tu suscripción está por vencer!</p>
+                            <p className="text-sm text-yellow-300/70">Te quedan {status.daysRemaining} día(s). Renueva ahora para no perder acceso.</p>
+                        </div>
+                    </div>
+                    <Button
+                        className="bg-yellow-500 text-black font-bold hover:bg-yellow-400 min-w-[140px]"
+                        onPress={handleRenew}
+                        isLoading={purchasing}
+                    >
+                        Renovar Ahora
+                    </Button>
+                </div>
+            )}
+
             {/* Status Banner */}
             {status && (
-                <div className={`p-4 rounded-2xl border ${status.status === 'active' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'} mb-8 flex items-center justify-between`}>
+                <div className={`p-4 rounded-2xl border ${status.status === 'active' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'} mb-8 flex flex-col sm:flex-row items-center justify-between gap-4`}>
                     <div className="flex items-center gap-4">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status.status === 'active' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'}`}>
                             {status.status === 'active' ? <Check className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
@@ -148,9 +188,21 @@ export const ExpressSubscription = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <p className="text-xs font-bold uppercase tracking-wider opacity-70">Días Restantes</p>
-                        <p className="font-mono text-xl font-bold">{String(status.daysRemaining)}</p>
+                    <div className="flex items-center gap-4">
+                        <div className="text-center">
+                            <p className="text-xs font-bold uppercase tracking-wider opacity-70">Días Restantes</p>
+                            <p className="font-mono text-xl font-bold">{String(status.daysRemaining)}</p>
+                        </div>
+                        {/* Renewal button for expired subscriptions */}
+                        {status.status === 'expired' && (
+                            <Button
+                                className="bg-emerald-500 text-black font-bold hover:bg-emerald-400"
+                                onPress={handleRenew}
+                                isLoading={purchasing}
+                            >
+                                Renovar Plan
+                            </Button>
+                        )}
                     </div>
                 </div>
             )}

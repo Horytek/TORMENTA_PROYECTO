@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@heroui/react";
-import { Plus, PackagePlus, ClipboardList, UserPlus, Grid } from "lucide-react";
+import { Plus, PackagePlus, ClipboardList, UserPlus, Grid, History } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { getExpressRole, getExpressPermissions } from "@/utils/expressStorage";
 
@@ -65,6 +65,17 @@ export const ActionsGrid = ({ demoMode = false }) => {
             path: "/express/users",
             delay: "delay-300",
             isVisible: () => role === 'admin'
+        },
+        {
+            label: "Historial",
+            icon: History,
+            color: "text-emerald-400",
+            bg: "bg-emerald-500/10",
+            border: "border-emerald-500/20",
+            glow: "group-hover:shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]",
+            path: "/express/history",
+            delay: "delay-350",
+            isVisible: () => role === 'admin' || permissions?.sales
         }
     ];
 

@@ -134,9 +134,20 @@ function Login() {
       navigate('/express/dashboard');
     } catch (error) {
       console.error(error);
-      const msg = error.response?.data?.message || "Error de conexión con Express Mode.";
-      setAuthError(msg);
-      toast.error(msg);
+      const errorData = error.response?.data;
+
+      // Handle subscription expired specifically
+      if (errorData?.error === 'SUBSCRIPTION_EXPIRED') {
+        setAuthError(errorData.message || "Tu suscripción ha expirado.");
+        toast.error(errorData.message, { duration: 5000, icon: '⚠️' });
+      } else if (errorData?.error === 'USER_INACTIVE') {
+        setAuthError(errorData.message || "Tu cuenta está desactivada.");
+        toast.error(errorData.message, { duration: 4000 });
+      } else {
+        const msg = errorData?.message || "Error de conexión con Express Mode.";
+        setAuthError(msg);
+        toast.error(msg);
+      }
     } finally {
       setExpressLoading(false);
     }
@@ -322,6 +333,10 @@ function Login() {
                         inputWrapper: "bg-zinc-800/50 data-[hover=true]:bg-zinc-800/80 group-data-[focus=true]:bg-zinc-800 !border-none !shadow-none !ring-0 !ring-offset-0 !outline-none h-12"
                       }}
                     />
+                    {/* Employee login hint */}
+                    <p className="text-xs text-zinc-500 ml-1 mt-1">
+                      <span className="text-amber-500/80 font-medium">¿Eres empleado?</span> Usa: <span className="text-zinc-300 font-mono">NombreCompleto@usuario</span>
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">
@@ -373,12 +388,19 @@ function Login() {
                       length={4}
                       value={otpValue}
                       onValueChange={setOtpValue}
+                      allowedKeys="^[0-9]*$"
+                      containerClassName="hc-login-otp"
                       classNames={{
-                        // Adapting OTP to look more like the original gray boxes if possible, or keeping standard OTP but fitting the theme
-                        segmentWrapper: "gap-x-3",
-                        segment: "w-14 h-14 text-2xl bg-zinc-900 border border-zinc-700 text-white rounded-lg data-[active=true]:ring-2 ring-emerald-500 data-[active=true]:border-emerald-500"
+                        inputWrapper: "w-full",
+                        segmentWrapper: "flex justify-center gap-3",
+                        segment:
+                          "w-12 h-12 rounded-lg border !border-white/10 !bg-zinc-950/60 !text-white " +
+                          "flex items-center justify-center text-2xl font-bold leading-none overflow-visible " +
+                          "data-[active=true]:!border-emerald-400 data-[active=true]:ring-2 data-[active=true]:ring-emerald-400/50 " +
+                          "data-[active=true]:!bg-zinc-950/70",
                       }}
                     />
+
                   </div>
 
                   <p className="text-center text-xs text-zinc-400 px-2 leading-relaxed">

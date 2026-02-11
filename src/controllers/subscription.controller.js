@@ -1,5 +1,12 @@
 import { getExpressConnection } from "../database/express_db.js";
 import { randomUUID } from "crypto";
+import { MercadoPagoConfig, Preference } from "mercadopago";
+import dotenv from "dotenv";
+dotenv.config();
+
+const mpClient = new MercadoPagoConfig({
+    accessToken: process.env.ACCESS_TOKEN,
+});
 
 // --- SUBSCRIPTIONS ---
 
@@ -67,11 +74,16 @@ export const getSubscriptionStatus = async (req, res) => {
             daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         }
 
+        // Renewal is allowed 5 days before expiry or if expired
+        const canRenew = daysRemaining <= 5 || tenant.subscription_status === 'expired';
+
         res.json({
             status: tenant.subscription_status,
-            plan: tenant.plan_name || 'Express', // Fallback name just in case
+            plan: tenant.plan_name || 'Express',
+            plan_id: tenant.plan_id,
             daysRemaining,
-            expiryDate: endDate
+            expiryDate: endDate,
+            canRenew
         });
 
     } catch (error) {
@@ -127,6 +139,74 @@ export const subscribeToPlan = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error processing subscription" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+/**
+ * Create a MercadoPago preference for subscription renewal
+ */
+export const createRenewalPreference = async (req, res) => {
+    const tenantId = req.tenantId;
+    const { plan_id } = req.body;
+
+    if (!plan_id) return res.status(400).json({ message: "Plan ID required" });
+
+    let connection;
+    try {
+        connection = await getExpressConnection();
+
+        // Get plan details
+        const [plans] = await connection.query("SELECT * FROM express_plans WHERE id = ?", [plan_id]);
+        if (plans.length === 0) return res.status(404).json({ message: "Plan not found" });
+        const plan = plans[0];
+
+        // Get tenant info
+        const [tenants] = await connection.query(
+            "SELECT email, business_name FROM express_tenants WHERE tenant_id = ?",
+            [tenantId]
+        );
+        if (tenants.length === 0) return res.status(404).json({ message: "Tenant not found" });
+        const tenant = tenants[0];
+
+        const origin = process.env.FRONTEND_URL || "http://localhost:5173";
+        const baseWebhook = (process.env.WEBHOOK_PUBLIC_URL || origin).replace(/\/$/, "");
+
+        const preference = new Preference(mpClient);
+        const result = await preference.create({
+            body: {
+                items: [{
+                    id: `EXPRESS_PLAN_${plan.id}`,
+                    title: `HoryCore Pocket - Plan ${plan.name}`,
+                    description: `Renovación de suscripción por ${plan.duration_days} días`,
+                    quantity: 1,
+                    unit_price: Number(plan.price),
+                    currency_id: "PEN"
+                }],
+                payer: {
+                    email: tenant.email
+                },
+                back_urls: {
+                    success: `${origin}/express/subscription?status=success`,
+                    failure: `${origin}/express/subscription?status=failure`,
+                    pending: `${origin}/express/subscription?status=pending`
+                },
+                notification_url: `${baseWebhook}/api/webhook`,
+                external_reference: tenant.email,
+                auto_return: "approved"
+            }
+        });
+
+        res.json({
+            success: true,
+            init_point: result.init_point,
+            preference_id: result.id
+        });
+
+    } catch (error) {
+        console.error("Error creating renewal preference:", error);
+        res.status(500).json({ message: "Error creating payment preference", error: error.message });
     } finally {
         if (connection) connection.release();
     }

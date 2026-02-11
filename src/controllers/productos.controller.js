@@ -654,7 +654,7 @@ const importExcel = async (req, res) => {
                 descripcion: item.descripcion,
                 undm: item.undm,
                 precio: item.precio,
-                cod_barras: item.cod_barras || '-',
+                cod_barras: item.cod_barras || `T${req.id_tenant}-IMP${Date.now()}-${index}`, // Auto-generate if missing to avoid unique constraint error
                 estado_producto: item.estado_producto !== undefined ? item.estado_producto : 1,
                 id_tenant: req.id_tenant
             };
