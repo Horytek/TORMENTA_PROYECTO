@@ -7,7 +7,6 @@ import {
   Button,
   Tabs,
   Tab,
-  InputOtp,
   Link,
   Divider,
 } from '@heroui/react';
@@ -384,22 +383,44 @@ function Login() {
               ) : (
                 <form onSubmit={handleVerifyOtp} className="space-y-6">
                   <div className="flex justify-center mb-4">
-                    <InputOtp
-                      length={4}
-                      value={otpValue}
-                      onValueChange={setOtpValue}
-                      allowedKeys="^[0-9]*$"
-                      containerClassName="hc-login-otp"
-                      classNames={{
-                        inputWrapper: "w-full",
-                        segmentWrapper: "flex justify-center gap-3",
-                        segment:
-                          "w-12 h-12 rounded-lg border !border-white/10 !bg-zinc-950/60 !text-white " +
-                          "flex items-center justify-center text-2xl font-bold leading-none overflow-visible " +
-                          "data-[active=true]:!border-emerald-400 data-[active=true]:ring-2 data-[active=true]:ring-emerald-400/50 " +
-                          "data-[active=true]:!bg-zinc-950/70",
-                      }}
-                    />
+                    {/* Custom Simulated OTP Input */}
+                    <div className="relative w-full max-w-[300px] h-14 mx-auto">
+                      {/* Hidden actual input for logic */}
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={4}
+                        value={otpValue}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                          setOtpValue(val);
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                        autoFocus
+                        autoComplete="one-time-code"
+                      />
+
+                      {/* Visual Boxes */}
+                      <div className="flex justify-center gap-4 w-full h-full pointer-events-none">
+                        {[0, 1, 2, 3].map((index) => {
+                          const isActive = otpValue.length === index;
+                          const isFilled = otpValue.length > index;
+                          return (
+                            <div
+                              key={index}
+                              className={`
+                                w-14 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-bold bg-zinc-950/60 text-white transition-all duration-200
+                                ${isActive ? 'border-emerald-500 ring-4 ring-emerald-500/20 scale-105 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'border-white/10'}
+                                ${isFilled ? 'border-emerald-500/50 bg-emerald-950/20 text-emerald-400' : ''}
+                              `}
+                            >
+                              {otpValue[index] || ""}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
 
                   </div>
 
