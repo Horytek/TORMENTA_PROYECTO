@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
+import { LandingButton } from './ui/LandingButton';
 
 export const Pricing = ({ isPocketMode }) => {
   const [isMonthly, setIsMonthly] = useState(true);
@@ -70,12 +71,14 @@ export const Pricing = ({ isPocketMode }) => {
                   <span className="text-gray-500 text-sm">/ día</span>
                 </div>
                 <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Perfecto para ferias o ventas eventuales.</p>
-                <button
+                <LandingButton
                   onClick={() => handlePlanSelection('Diario', 'dia')}
-                  className="w-full py-3 rounded-lg border border-white/20 hover:border-amber-500 hover:bg-amber-500 hover:text-black text-white font-semibold transition-all mb-8"
+                  variant="secondary"
+                  fullWidth
+                  className="hover:border-amber-500 hover:bg-amber-500 hover:text-black mb-8 border-white/20"
                 >
                   Elegir Diario
-                </button>
+                </LandingButton>
                 <ul className="space-y-4 text-sm text-gray-400">
                   <li className="flex gap-3"><Check size={18} className="text-amber-400 shrink-0" /> Acceso total por 24 horas</li>
                   <li className="flex gap-3"><Check size={18} className="text-amber-400 shrink-0" /> Ventas ilimitadas</li>
@@ -90,12 +93,14 @@ export const Pricing = ({ isPocketMode }) => {
                   <span className="text-gray-500 text-sm">/ semana</span>
                 </div>
                 <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Ideal para campañas cortas o temporadas.</p>
-                <button
+                <LandingButton
                   onClick={() => handlePlanSelection('Semanal', 'semana')}
-                  className="w-full py-3 rounded-lg border border-white/20 hover:border-amber-500 hover:bg-amber-500 hover:text-black text-white font-semibold transition-all mb-8"
+                  variant="secondary"
+                  fullWidth
+                  className="hover:border-amber-500 hover:bg-amber-500 hover:text-black mb-8 border-white/20"
                 >
                   Elegir Semanal
-                </button>
+                </LandingButton>
                 <ul className="space-y-4 text-sm text-gray-400">
                   <li className="flex gap-3"><Check size={18} className="text-amber-400 shrink-0" /> Acceso por 7 días</li>
                   <li className="flex gap-3"><Check size={18} className="text-amber-400 shrink-0" /> Gestión de inventario</li>
@@ -119,12 +124,15 @@ export const Pricing = ({ isPocketMode }) => {
 
                 <p className="text-gray-400 text-sm mb-8 leading-relaxed">Tu negocio operando todo el mes sin preocupaciones.</p>
 
-                <button
+                <LandingButton
                   onClick={() => handlePlanSelection('Express', 'mes')}
-                  className="w-full py-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all hover:-translate-y-1 shadow-lg shadow-amber-500/20 mb-8 flex items-center justify-center gap-2"
+                  variant="accent"
+                  size="lg"
+                  fullWidth
+                  className="mb-8 flex items-center justify-center gap-2 group"
                 >
                   Obtener Express <span className="opacity-0 group-hover:opacity-100 -ml-2 group-hover:ml-0 transition-all">→</span>
-                </button>
+                </LandingButton>
                 <ul className="space-y-4 text-sm text-gray-300">
                   <li className="flex gap-3 items-center"><Check size={16} className="text-amber-500 shrink-0" /> Todo incluido por 30 días</li>
                   <li className="flex gap-3 items-center"><Check size={16} className="text-amber-500 shrink-0" /> Sin contratos forzosos</li>
@@ -142,12 +150,14 @@ export const Pricing = ({ isPocketMode }) => {
                   <span className="text-gray-500 text-sm">/ {isMonthly ? 'mes' : 'año'}</span>
                 </div>
                 <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Para boutiques y tiendas de moda que inician.</p>
-                <button
+                <LandingButton
                   onClick={() => handlePlanSelection('Emprendedor', isMonthly ? 'mes' : 'año')}
-                  className="w-full py-3 rounded-lg border border-white/20 hover:border-white hover:bg-white hover:text-black text-white font-semibold transition-all mb-8"
+                  variant="outlineWhite"
+                  fullWidth
+                  className="mb-8 border-white/20"
                 >
                   Comenzar
-                </button>
+                </LandingButton>
                 <ul className="space-y-4 text-sm text-gray-400">
                   <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Punto de Venta (POS) Rápido</li>
                   <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Gestión de Tallas y Colores</li>
@@ -173,12 +183,15 @@ export const Pricing = ({ isPocketMode }) => {
 
                 <p className="text-gray-400 text-sm mb-8 leading-relaxed">Facturación electrónica y control total para tu equipo.</p>
 
-                <button
+                <LandingButton
                   onClick={() => handlePlanSelection('Empresario', isMonthly ? 'mes' : 'año')}
-                  className="w-full py-4 rounded-xl bg-white hover:bg-gray-100 text-black font-bold transition-all hover:-translate-y-1 shadow-lg shadow-white/10 mb-8 flex items-center justify-center gap-2"
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  className="mb-8 flex items-center justify-center gap-2 group shadow-white/10"
                 >
                   Obtener Pro <span className="opacity-0 group-hover:opacity-100 -ml-2 group-hover:ml-0 transition-all">→</span>
-                </button>
+                </LandingButton>
                 <ul className="space-y-4 text-sm text-gray-300">
                   <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Todo en Emprendedor</li>
                   <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Facturación Electrónica (SUNAT)</li>
@@ -199,15 +212,22 @@ export const Pricing = ({ isPocketMode }) => {
                 <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Soluciones personalizadas para alto volumen.</p>
 
                 <div className="flex flex-col gap-3 mb-8">
-                  <button
-                    onClick={() => window.location.href = 'mailto:ventas@horycore.com'}
-                    className="w-full py-3 rounded-lg bg-white text-black font-semibold hover:bg-gray-200 transition-colors"
-                  >
-                    Contactar Ventas
-                  </button>
-                  <button className="w-full py-3 rounded-lg border border-white/20 text-gray-400 font-medium hover:text-white hover:border-white transition-colors">
-                    Agendar Demostración
-                  </button>
+                  <div className="flex flex-col gap-3 mb-8">
+                    <LandingButton
+                      variant="primary"
+                      fullWidth
+                      onClick={() => window.location.href = 'mailto:ventas@horycore.com'}
+                    >
+                      Contactar Ventas
+                    </LandingButton>
+                    <LandingButton
+                      variant="ghost"
+                      fullWidth
+                      className="border border-white/20 text-gray-400 hover:border-white"
+                    >
+                      Agendar Demostración
+                    </LandingButton>
+                  </div>
                 </div>
 
                 <ul className="space-y-4 text-sm text-gray-400">

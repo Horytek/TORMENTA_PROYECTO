@@ -4,6 +4,7 @@ import { ArrowRight, Play, TrendingUp, AlertTriangle, Activity } from 'lucide-re
 import ParticleWaveBackground from './3d/ParticleBackground';
 import LivingDashboard from './hero/LivingDashboard';
 import FloatingCard from './hero/FloatingCard';
+import { LandingButton } from './ui/LandingButton';
 
 const sectors = [
     {
@@ -108,14 +109,14 @@ const Hero = ({ isPocketMode }) => {
 
                     <div className="space-y-6">
                         <div className="flex flex-wrap gap-4">
-                            <button className="px-8 py-4 rounded-2xl bg-white text-black font-bold hover:bg-gray-100 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] flex items-center gap-2 group hover:scale-[1.02]">
+                            <LandingButton variant="primary" size="lg" className="flex items-center gap-2 group">
                                 {isPocketMode ? 'Comenzar Ahora' : 'Solicitar Demo'}
                                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
-                            <button className="px-8 py-4 rounded-2xl bg-transparent text-white border border-white/20 hover:bg-white/5 transition-colors flex items-center gap-2 hover:border-white/40">
+                            </LandingButton>
+                            <LandingButton variant="secondary" size="lg" className="flex items-center gap-2">
                                 <Play size={18} className="fill-current" />
                                 Ver Video
-                            </button>
+                            </LandingButton>
                         </div>
 
                         {/* New Microcopy Trust Indicators */}

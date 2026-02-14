@@ -118,13 +118,6 @@ export const Navbar = ({ isPocketMode, setIsPocketMode }) => {
             >
               Iniciar Sesión
             </Link>
-            <Link
-              to="/register"
-              className="text-sm font-bold text-black bg-white hover:bg-gray-200 px-5 py-2.5 rounded-lg transition whitespace-nowrap"
-              aria-label="Crear Cuenta"
-            >
-              Crear Cuenta
-            </Link>
           </div>
 
         </motion.div>
