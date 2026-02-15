@@ -112,6 +112,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                     <Route path="/" element={<Login />} />
                     <Route path="/status" element={<StatusPage />} />
                     <Route path="/landing" element={<LandingPage />} />
+                    <Route path="/pocket" element={<LandingPage />} />
                     <Route path="/landing/servicios" element={<ServiciosPage />} />
                     <Route path="/landing/about" element={<AboutPage />} />
                     <Route path="/landing/team" element={<EquipoPage />} />

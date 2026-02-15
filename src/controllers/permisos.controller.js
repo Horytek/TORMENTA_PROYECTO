@@ -322,28 +322,57 @@ const getPermisosByRol = async (req, res) => {
             `;
             queryParams = [id_rol];
         } else {
-            permisosQuery = `
-                SELECT 
-                    p.id_permiso,
-                    p.id_rol,
-                    p.id_modulo,
-                    p.id_submodulo,
-                    p.crear,
-                    p.ver,
-                    p.editar,
-                    p.eliminar,
-                    p.desactivar,
-                    p.generar,
-                    p.actions_json,
-                    m.ruta AS modulo_ruta,
-                    s.ruta AS submodulo_ruta
-                FROM permisos p
-                LEFT JOIN modulo m ON p.id_modulo = m.id_modulo
-                LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
-                WHERE p.id_rol = ? AND p.id_tenant = ?
-                ORDER BY p.id_modulo, p.id_submodulo
-            `;
-            queryParams = [id_rol, id_tenant];
+            // Check if it is the Admin role (ID 1)
+            if (parseInt(id_rol) === 1) {
+                permisosQuery = `
+                    SELECT 
+                        p.id_permiso,
+                        p.id_rol,
+                        p.id_modulo,
+                        p.id_submodulo,
+                        p.crear,
+                        p.ver,
+                        p.editar,
+                        p.eliminar,
+                        p.desactivar,
+                        p.generar,
+                        p.actions_json,
+                        m.ruta AS modulo_ruta,
+                        s.ruta AS submodulo_ruta
+                    FROM permisos p
+                    LEFT JOIN modulo m ON p.id_modulo = m.id_modulo
+                    LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
+                    INNER JOIN usuario u ON u.usua = ? AND u.id_tenant = ?
+                    WHERE p.id_rol = ? AND p.id_tenant = ? 
+                    AND (p.id_plan = u.plan_pago OR p.id_plan IS NULL)
+                    ORDER BY p.id_modulo, p.id_submodulo
+                `;
+                queryParams = [nameUser, id_tenant, id_rol, id_tenant];
+            } else {
+                // For other roles, just filter by tenant and role (no plan check needed)
+                permisosQuery = `
+                    SELECT 
+                        p.id_permiso,
+                        p.id_rol,
+                        p.id_modulo,
+                        p.id_submodulo,
+                        p.crear,
+                        p.ver,
+                        p.editar,
+                        p.eliminar,
+                        p.desactivar,
+                        p.generar,
+                        p.actions_json,
+                        m.ruta AS modulo_ruta,
+                        s.ruta AS submodulo_ruta
+                    FROM permisos p
+                    LEFT JOIN modulo m ON p.id_modulo = m.id_modulo
+                    LEFT JOIN submodulos s ON p.id_submodulo = s.id_submodulo
+                    WHERE p.id_rol = ? AND p.id_tenant = ?
+                    ORDER BY p.id_modulo, p.id_submodulo
+                `;
+                queryParams = [id_rol, id_tenant];
+            }
         }
 
         const [permisos] = await connection.query(permisosQuery, queryParams);
@@ -611,6 +640,8 @@ const checkPermiso = async (req, res) => {
                 AND p.id_modulo = ? 
                 AND (p.id_submodulo = ? OR (p.id_submodulo IS NULL AND ? IS NULL))
                 AND p.id_tenant = u.id_tenant
+                AND p.id_tenant = u.id_tenant
+                AND (u.id_rol != 1 OR (p.id_plan = u.plan_pago OR p.id_plan IS NULL))
             WHERE u.usua = ? AND u.id_tenant = ?
             LIMIT 1`,
             [idModulo, idSubmodulo, idSubmodulo, nameUser, id_tenant]

@@ -3,7 +3,8 @@ import WalletBrick from './WalletBrick';
 import { createEmpresaAndAdmin } from '@/services/empresa.services';
 import { sendCredencialesEmail } from '@/services/resend.services';
 import { toast } from "react-hot-toast";
-import { User, Mail, Phone, Store, CheckCircle2, Sparkles } from "lucide-react";
+import { CheckCircle2, Sparkles, Building2, Mail, Phone, MapPin, User } from "lucide-react";
+import { Input, Checkbox, Button } from "@heroui/react";
 
 // Helper para determinar el plan
 function getPlanPagoInt(planName) {
@@ -31,11 +32,16 @@ export const RegistroPocketForm = ({ planInfo }) => {
     const [creating, setCreating] = useState(false);
     const [adminCreds, setAdminCreds] = useState(null);
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+    const inputClassNames = {
+        inputWrapper: "bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 focus-within:!border-emerald-500/60 h-12 px-4",
+        label: "text-sm text-zinc-400 mb-1",
+        input: "text-white !bg-transparent placeholder:text-zinc-600 text-sm"
+    };
+
+    const handleChange = (name, value) => {
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: value
         }));
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
@@ -50,8 +56,6 @@ export const RegistroPocketForm = ({ planInfo }) => {
         if (!formData.email.trim()) { formErrors.email = 'Requerido'; isValid = false; }
         else if (!/^\S+@\S+\.\S+$/.test(formData.email)) { formErrors.email = 'Email inválido'; isValid = false; }
         if (!formData.telefono.trim()) { formErrors.telefono = 'Requerido'; isValid = false; }
-        // Password eliminado visualmente según lógica anterior, pero si se requiere validación interna:
-        // if (!formData.password...) 
         if (!formData.aceptaTerminos) { formErrors.aceptaTerminos = 'Debes aceptar los términos'; isValid = false; }
 
         setErrors(formErrors);
@@ -109,88 +113,107 @@ export const RegistroPocketForm = ({ planInfo }) => {
                     <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
 
                     {!formSubmitted ? (
-                        <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+                        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <div className="mb-6">
                                 <h3 className="text-2xl font-bold text-white mb-1">¡Comencemos!</h3>
                                 <p className="text-sm text-zinc-400">Configura tu negocio en segundos.</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <FormInput
-                                    name="nombre"
+                                <Input
                                     label="Nombre"
+                                    labelPlacement="outside"
                                     placeholder="Juan"
                                     value={formData.nombre}
-                                    onChange={handleChange}
-                                    error={errors.nombre}
+                                    onValueChange={(val) => handleChange('nombre', val)}
+                                    isInvalid={!!errors.nombre}
+                                    errorMessage={errors.nombre}
+                                    variant="bordered"
+                                    radius="lg"
+                                    classNames={inputClassNames}
                                 />
-                                <FormInput
-                                    name="apellido"
+                                <Input
                                     label="Apellido"
+                                    labelPlacement="outside"
                                     placeholder="Pérez"
                                     value={formData.apellido}
-                                    onChange={handleChange}
-                                    error={errors.apellido}
+                                    onValueChange={(val) => handleChange('apellido', val)}
+                                    isInvalid={!!errors.apellido}
+                                    errorMessage={errors.apellido}
+                                    variant="bordered"
+                                    radius="lg"
+                                    classNames={inputClassNames}
                                 />
                             </div>
 
-                            <FormInput
-                                name="nombreNegocio"
+                            <Input
+                                startContent={<Building2 className="text-zinc-500 w-4 h-4" />}
                                 label="Nombre del Negocio"
+                                labelPlacement="outside"
                                 placeholder="Ej. Bodega El Chino"
                                 value={formData.nombreNegocio}
-                                onChange={handleChange}
-                                error={errors.nombreNegocio}
+                                onValueChange={(val) => handleChange('nombreNegocio', val)}
+                                isInvalid={!!errors.nombreNegocio}
+                                errorMessage={errors.nombreNegocio}
+                                variant="bordered"
+                                radius="lg"
+                                classNames={inputClassNames}
                             />
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormInput
-                                    name="email"
+                                <Input
+                                    startContent={<Mail className="text-zinc-500 w-4 h-4" />}
                                     label="Email"
-                                    type="email"
+                                    labelPlacement="outside"
+                                    type="text"
                                     placeholder="juan@gmail.com"
                                     value={formData.email}
-                                    onChange={handleChange}
-                                    error={errors.email}
+                                    onValueChange={(val) => handleChange('email', val)}
+                                    isInvalid={!!errors.email}
+                                    errorMessage={errors.email}
+                                    variant="bordered"
+                                    radius="lg"
+                                    classNames={inputClassNames}
                                 />
-                                <FormInput
-                                    name="telefono"
+                                <Input
+                                    startContent={<Phone className="text-zinc-500 w-4 h-4" />}
                                     label="Teléfono"
+                                    labelPlacement="outside"
                                     placeholder="999 000 111"
                                     value={formData.telefono}
-                                    onChange={handleChange}
-                                    error={errors.telefono}
+                                    onValueChange={(val) => handleChange('telefono', val)}
+                                    isInvalid={!!errors.telefono}
+                                    errorMessage={errors.telefono}
+                                    variant="bordered"
+                                    radius="lg"
+                                    classNames={inputClassNames}
                                 />
                             </div>
 
                             <div className="pt-2">
-                                <label className="flex items-start gap-3 cursor-pointer group select-none">
-                                    <div className="relative mt-0.5">
-                                        <input
-                                            type="checkbox"
-                                            name="aceptaTerminos"
-                                            checked={formData.aceptaTerminos}
-                                            onChange={handleChange}
-                                            className="sr-only"
-                                        />
-                                        <div className={`w-5 h-5 rounded-md border-2 ${formData.aceptaTerminos ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-600 group-hover:border-zinc-500'} flex items-center justify-center transition-colors`}>
-                                            {formData.aceptaTerminos && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                                        </div>
-                                    </div>
-                                    <span className="text-xs text-zinc-400 leading-snug">
-                                        Acepto <span className="text-emerald-400 hover:underline">términos y condiciones</span>.
-                                    </span>
-                                </label>
+                                <Checkbox
+                                    isSelected={formData.aceptaTerminos}
+                                    onValueChange={(val) => handleChange('aceptaTerminos', val)}
+                                    color="success"
+                                    classNames={{
+                                        label: "text-small text-zinc-400",
+                                        wrapper: "group-data-[selected=true]:bg-emerald-500 group-data-[selected=true]:border-emerald-500 text-white"
+                                    }}
+                                >
+                                    Acepto <span className="text-emerald-400 hover:underline">términos y condiciones</span>.
+                                </Checkbox>
                                 {errors.aceptaTerminos && <p className="mt-1 text-xs text-red-400">{errors.aceptaTerminos}</p>}
                             </div>
 
-                            <button
+                            <Button
                                 type="submit"
-                                disabled={creating}
-                                className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-lg shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-4"
+                                isLoading={creating}
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-lg shadow-lg shadow-emerald-500/20 data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed"
+                                size="lg"
+                                radius="lg"
                             >
                                 {creating ? "Creando..." : "Crear Cuenta"}
-                            </button>
+                            </Button>
                         </form>
                     ) : (
                         // Vista de Éxito / Credenciales
@@ -264,37 +287,3 @@ export const RegistroPocketForm = ({ planInfo }) => {
     );
 };
 
-// --- COMPONENTE INPUT MEJORADO (MOVIDO AFUERA) ---
-const FormInput = ({ icon: Icon, label, name, type = "text", placeholder, required = true, value, onChange, error }) => (
-    <div className="space-y-1.5">
-        <label htmlFor={name} className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-            {label} {required && <span className="text-emerald-500">*</span>}
-        </label>
-        <div className="relative group">
-            {/* Icono con mejor posicionamiento */}
-            {Icon && (
-                <div className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center pointer-events-none border-r border-zinc-700/50 bg-zinc-800/30 rounded-l-lg">
-                    <Icon className="w-4 h-4 text-zinc-500 group-focus-within:text-emerald-400 transition-colors" />
-                </div>
-            )}
-
-            <input
-                id={name}
-                name={name}
-                type={type}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                className={`
-                    w-full h-11 pr-4 ${Icon ? 'pl-14' : 'pl-4'} rounded-lg
-                    bg-zinc-800/80 border-0 
-                    text-white text-sm placeholder:text-zinc-600
-                    focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:bg-zinc-800
-                    transition-all duration-200
-                    ${error ? 'ring-2 ring-red-500/50' : ''}
-                `}
-            />
-        </div>
-        {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
-    </div>
-);

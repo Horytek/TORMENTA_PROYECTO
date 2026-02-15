@@ -73,8 +73,10 @@
 
   /* Override potenciales conflictos del main.css - Reset más específico */
   /* Do not unset checkboxes/radios — keep their native appearance */
-  .landing-page input:not([type='checkbox']):not([type='radio']),
-  .landing-page textarea {
+  /* Do not unset checkboxes/radios — keep their native appearance */
+  /* Also exclude HeroUI inputs (data-slot="input") so their layout isn't stripped */
+  .landing-page input:not([type='checkbox']):not([type='radio']):not([data-slot='input']),
+  .landing-page textarea:not([data-slot='input']) {
     all: unset;
     display: revert;
     box-sizing: border-box;
@@ -138,5 +140,12 @@
     background-color: rgba(168, 85, 247, 0.3);
     /* Purple accent with opacity */
     color: #ffffff;
+  }
+
+  /* Fix HeroUI Input Background in Landing Page */
+  .landing-page input[data-slot="input"],
+  .landing-page [data-slot="input-wrapper"] input {
+    background-color: transparent !important;
+    box-shadow: none !important;
   }
 }

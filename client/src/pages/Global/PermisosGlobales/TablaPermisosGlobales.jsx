@@ -4,7 +4,9 @@ import {
   Tab,
   Spinner,
   Chip,
-  useDisclosure
+  useDisclosure,
+  Select,
+  SelectItem
 } from "@heroui/react";
 import { FaUserShield, FaUser, FaCube } from "react-icons/fa";
 import { useState, useMemo, useEffect } from "react";
@@ -125,6 +127,31 @@ export function TablaPermisosGlobales() {
               Administración unificada de permisos y recursos.
             </p>
           </div>
+        </div>
+
+        {/* Plan Selector */}
+        <div className="w-full md:w-64">
+          <Select
+            label="Plan Objetivo"
+            placeholder="Seleccionar plan"
+            selectedKeys={[String(selectedPlan)]}
+            onChange={(e) => setSelectedPlan(Number(e.target.value))}
+            variant="bordered"
+            color="primary"
+            disallowEmptySelection
+            className="max-w-xs"
+          >
+            {planes.map((plan) => (
+              <SelectItem key={plan.id_plan} value={plan.id_plan} textValue={plan.descripcion_plan}>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${plan.id_plan === 1 ? 'bg-blue-500' :
+                    plan.id_plan === 2 ? 'bg-purple-500' : 'bg-emerald-500'
+                    }`}></span>
+                  {plan.descripcion_plan}
+                </div>
+              </SelectItem>
+            ))}
+          </Select>
         </div>
       </div>
 

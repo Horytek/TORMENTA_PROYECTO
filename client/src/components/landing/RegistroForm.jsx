@@ -4,12 +4,17 @@ import { createEmpresaAndAdmin } from '@/services/empresa.services';
 import { sendCredencialesEmail } from '@/services/resend.services';
 import { toast } from "react-hot-toast";
 import { Building2, User, Mail, Phone, MapPin, CheckCircle2, Sparkles } from "lucide-react";
+import { Input, Checkbox, Button } from "@heroui/react";
 
+// Helper para determinar el plan
 function getPlanPagoInt(planName) {
   let name = (planName || "").toLowerCase();
   name = name.replace(/plan|resumen del plan|resumen|del|de|el|la/gi, "").trim();
+  // Basic / Emprendedor / Diario / Semanal / Express -> 3
   if (name.includes("basic") || name.includes("básico") || name.includes("emprendedor") || name.includes("diario") || name.includes("semanal") || name.includes("express")) return 3;
+  // Pro / Empresario -> 2
   if (name.includes("pro") || name.includes("empresarial") || name.includes("empresario") || name.includes("standart")) return 2;
+  // Enterprise / Corporativo -> 1
   if (name.includes("enterprise") || name.includes("corporativo")) return 1;
   return 3;
 }
@@ -31,11 +36,16 @@ export const RegistroForm = ({ planInfo }) => {
   const [creating, setCreating] = useState(false);
   const [adminCreds, setAdminCreds] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const inputClassNames = {
+    inputWrapper: "bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 focus-within:!border-emerald-500/60 h-12 px-4",
+    label: "text-sm text-zinc-400 mb-1",
+    input: "text-white !bg-transparent placeholder:text-zinc-600 text-sm"
+  };
+
+  const handleChange = (name, value) => {
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -106,116 +116,197 @@ export const RegistroForm = ({ planInfo }) => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <div className="w-full max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Formulario Principal */}
-        <div className="lg:col-span-3 bg-gradient-to-b from-gray-900/80 to-gray-900/40 backdrop-blur-xl border border-gray-700/30 rounded-2xl p-6 md:p-8">
+        <div className="lg:col-span-8 bg-[#0f121a] border border-gray-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+          {/* Background glow */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none" />
+
           {!formSubmitted ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
+
               {/* Datos del Administrador */}
-              <div className="pb-4 border-b border-gray-700/30">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
-                  <User className="w-5 h-5 text-emerald-400" />
-                  Datos del administrador
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6 pb-4 border-b border-gray-800">
+                  <span className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <User className="w-4 h-4 text-emerald-400" />
+                  </span>
+                  Datos del Administrador
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormInput name="nombre" label="Nombre" placeholder="Tu nombre" value={formData.nombre} onChange={handleChange} error={errors.nombre} />
-                  <FormInput name="apellido" label="Apellido" placeholder="Tu apellido" value={formData.apellido} onChange={handleChange} error={errors.apellido} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Nombre"
+                    labelPlacement="outside"
+                    placeholder="Tu nombre"
+                    value={formData.nombre}
+                    onValueChange={(val) => handleChange('nombre', val)}
+                    isInvalid={!!errors.nombre}
+                    errorMessage={errors.nombre}
+                    variant="bordered"
+                    radius="lg"
+                    classNames={inputClassNames}
+                  />
+                  <Input
+                    label="Apellido"
+                    labelPlacement="outside"
+                    placeholder="Tu apellido"
+                    value={formData.apellido}
+                    onValueChange={(val) => handleChange('apellido', val)}
+                    isInvalid={!!errors.apellido}
+                    errorMessage={errors.apellido}
+                    variant="bordered"
+                    radius="lg"
+                    classNames={inputClassNames}
+                  />
                 </div>
               </div>
 
               {/* Datos de la Empresa */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-emerald-400" />
-                  Datos de la empresa
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6 pb-4 border-b border-gray-800">
+                  <span className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Building2 className="w-4 h-4 text-emerald-400" />
+                  </span>
+                  Datos de la Empresa
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormInput icon={Building2} name="ruc" label="RUC" placeholder="20XXXXXXXXX" value={formData.ruc} onChange={handleChange} error={errors.ruc} />
-                  <FormInput name="razonSocial" label="Razón Social" placeholder="Empresa S.A.C." value={formData.razonSocial} onChange={handleChange} error={errors.razonSocial} />
-                </div>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input
+                      startContent={<Building2 className="text-zinc-500 w-4 h-4" />}
+                      label="RUC"
+                      labelPlacement="outside"
+                      placeholder="20XXXXXXXXX"
+                      value={formData.ruc}
+                      onValueChange={(val) => handleChange('ruc', val)}
+                      isInvalid={!!errors.ruc}
+                      errorMessage={errors.ruc}
+                      variant="bordered"
+                      radius="lg"
+                      classNames={inputClassNames}
+                    />
+                    <Input
+                      label="Razón Social"
+                      labelPlacement="outside"
+                      placeholder="Empresa S.A.C."
+                      value={formData.razonSocial}
+                      onValueChange={(val) => handleChange('razonSocial', val)}
+                      isInvalid={!!errors.razonSocial}
+                      errorMessage={errors.razonSocial}
+                      variant="bordered"
+                      radius="lg"
+                      classNames={inputClassNames}
+                    />
+                  </div>
 
-                <FormInput icon={MapPin} name="direccion" label="Dirección" placeholder="Av. Principal 123, Lima" value={formData.direccion} onChange={handleChange} error={errors.direccion} />
+                  <Input
+                    startContent={<MapPin className="text-zinc-500 w-4 h-4" />}
+                    label="Dirección Fiscal"
+                    labelPlacement="outside"
+                    placeholder="Av. Principal 123, Lima"
+                    value={formData.direccion}
+                    onValueChange={(val) => handleChange('direccion', val)}
+                    isInvalid={!!errors.direccion}
+                    errorMessage={errors.direccion}
+                    variant="bordered"
+                    radius="lg"
+                    classNames={inputClassNames}
+                  />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormInput icon={Mail} name="emailEmpresa" label="Email" type="email" placeholder="contacto@empresa.com" value={formData.emailEmpresa} onChange={handleChange} error={errors.emailEmpresa} />
-                  <FormInput icon={Phone} name="telefonoEmpresa" label="Teléfono" placeholder="+51 999 999 999" value={formData.telefonoEmpresa} onChange={handleChange} error={errors.telefonoEmpresa} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input
+                      startContent={<Mail className="text-zinc-500 w-4 h-4" />}
+                      label="Email Corporativo"
+                      labelPlacement="outside"
+                      type="text"
+                      placeholder="contacto@empresa.com"
+                      value={formData.emailEmpresa}
+                      onValueChange={(val) => handleChange('emailEmpresa', val)}
+                      isInvalid={!!errors.emailEmpresa}
+                      errorMessage={errors.emailEmpresa}
+                      variant="bordered"
+                      radius="lg"
+                      classNames={inputClassNames}
+                    />
+                    <Input
+                      startContent={<Phone className="text-zinc-500 w-4 h-4" />}
+                      label="Teléfono / Celular"
+                      labelPlacement="outside"
+                      placeholder="+51 999 999 999"
+                      value={formData.telefonoEmpresa}
+                      onValueChange={(val) => handleChange('telefonoEmpresa', val)}
+                      isInvalid={!!errors.telefonoEmpresa}
+                      errorMessage={errors.telefonoEmpresa}
+                      variant="bordered"
+                      radius="lg"
+                      classNames={inputClassNames}
+                    />
+                  </div>
                 </div>
 
                 <input type="hidden" name="pais" value={formData.pais} />
               </div>
 
               {/* Términos */}
-              <div className="pt-4 border-t border-gray-700/30">
-                <label htmlFor="aceptaTerminos" className="flex items-start gap-3 cursor-pointer group">
-                  <div className="relative mt-0.5">
-                    <input
-                      id="aceptaTerminos"
-                      name="aceptaTerminos"
-                      type="checkbox"
-                      checked={formData.aceptaTerminos}
-                      onChange={handleChange}
-                      className="sr-only peer"
-                    />
-                    <div className={`w-5 h-5 rounded-md border-2 ${formData.aceptaTerminos ? 'bg-emerald-500 border-emerald-500' : 'border-gray-600'} 
-                      flex items-center justify-center transition-all group-hover:border-emerald-400`}>
-                      {formData.aceptaTerminos && (
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-sm text-gray-400 leading-snug">
-                    Acepto los <a href="/landing/terminos" className="text-emerald-400 hover:underline">términos y condiciones</a> y
-                    la <a href="/landing/privacidad" className="text-emerald-400 hover:underline">política de privacidad</a>
-                  </span>
-                </label>
-                {errors.aceptaTerminos && <p className="mt-1 text-xs text-red-400">{errors.aceptaTerminos}</p>}
+              <div className="pt-6 border-t border-gray-800">
+                <Checkbox
+                  isSelected={formData.aceptaTerminos}
+                  onValueChange={(val) => handleChange('aceptaTerminos', val)}
+                  color="success"
+                  classNames={{
+                    label: "text-sm text-zinc-400"
+                  }}
+                >
+                  He leído y acepto los <a href="/landing/terminos" className="text-emerald-400 hover:text-emerald-300 font-medium hover:underline">términos y condiciones</a> y la <a href="/landing/privacidad" className="text-emerald-400 hover:text-emerald-300 font-medium hover:underline">política de privacidad</a> de HoryCore.
+                </Checkbox>
+                {errors.aceptaTerminos && <p className="mt-2 text-sm text-red-400 font-medium ml-2">{errors.aceptaTerminos}</p>}
               </div>
 
               {/* Botón Submit */}
-              <button
+              <Button
                 type="submit"
-                disabled={creating}
-                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 
-                  text-white font-semibold text-lg shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 
-                  disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                isLoading={creating}
+                color="success"
+                size="lg"
+                className="w-full font-bold text-white shadow-lg shadow-emerald-900/20"
+                endContent={!creating && <Sparkles className="w-5 h-5" />}
               >
-                {creating ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creando cuenta...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    Crear cuenta y continuar
-                  </>
-                )}
-              </button>
+                {creating ? "Procesando registro..." : "Crear cuenta y continuar"}
+              </Button>
             </form>
           ) : (
             /* Estado de éxito */
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+            <div className="text-center py-12 relative z-10 animate-fade-in-up">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-emerald-500/10 flex items-center justify-center ring-1 ring-emerald-500/30">
+                <CheckCircle2 className="w-12 h-12 text-emerald-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">¡Cuenta creada!</h3>
-              <p className="text-gray-400 mb-6">Revisa tu correo para obtener tus credenciales de acceso</p>
+              <h3 className="text-3xl font-bold text-white mb-3">¡Bienvenido a bordo!</h3>
+              <p className="text-gray-400 mb-8 text-lg">Tu cuenta ha sido creada exitosamente.</p>
 
               {adminCreds && (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mb-6 text-left">
-                  <p className="text-sm text-emerald-300 mb-2">Credenciales enviadas a: <strong>{formData.emailEmpresa}</strong></p>
-                  <p className="text-xs text-gray-400">
-                    Después del pago, ingresa a <a href="/login" className="text-emerald-400 underline">/login</a> para acceder.
+                <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-6 mb-8 text-left max-w-md mx-auto">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-emerald-500/20 rounded-lg">
+                      <Mail className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Credenciales enviadas a</p>
+                      <p className="text-white font-medium">{formData.emailEmpresa}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 text-center border-t border-emerald-500/10 pt-4 mt-2">
+                    Si no encuentras el correo, por favor revisa tu carpeta de spam.
                   </p>
                 </div>
               )}
 
-              <div className="mt-6">
-                <p className="text-sm text-gray-500 mb-4">Completa el pago para activar tu cuenta:</p>
+              <div className="mt-8">
+                <div className="flex items-center justify-center gap-2 mb-6 text-gray-500 text-sm uppercase tracking-wider font-bold">
+                  <span className="w-8 h-px bg-gray-800"></span>
+                  Siguiente Paso
+                  <span className="w-8 h-px bg-gray-800"></span>
+                </div>
                 <WalletBrick planInfo={planInfo} userData={{
                   nombre: formData.nombre,
                   apellido: formData.apellido,
@@ -228,35 +319,45 @@ export const RegistroForm = ({ planInfo }) => {
         </div>
 
         {/* Sidebar - Resumen del Plan */}
-        <aside className="lg:col-span-2">
-          <div className="bg-gradient-to-b from-gray-900/80 to-gray-900/40 backdrop-blur-xl border border-gray-700/30 rounded-2xl p-6 sticky top-24">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-medium mb-3">
-                <Sparkles className="w-4 h-4" />
-                Plan seleccionado
+        <aside className="lg:col-span-4 space-y-6">
+          <div className="bg-[#0f121a] border border-gray-800 rounded-3xl p-8 sticky top-24 shadow-xl">
+            <div className="text-center mb-8 pb-8 pt-4 border-b border-gray-800 relative">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 bg-[#0f121a] text-xs font-bold text-gray-500 uppercase tracking-widest">
+                Resumen
               </div>
-              <h3 className="text-2xl font-bold text-white">{planInfo.plan}</h3>
-              <p className="text-3xl font-bold text-emerald-400 mt-2">
-                {planInfo.price}
-                <span className="text-sm text-gray-400 font-normal">/{planInfo.period}</span>
-              </p>
+              <h3 className="text-2xl font-bold text-white mb-2">{planInfo.plan}</h3>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-4xl font-bold text-emerald-400 leading-none">{planInfo.price}</span>
+                <span className="text-lg text-gray-500 font-medium leading-none">/{planInfo.period}</span>
+              </div>
             </div>
 
-            <ul className="space-y-3 text-sm">
-              {(planInfo.features || ['Soporte técnico incluido', 'Módulos esenciales', 'Reportes y KPIs', 'Actualizaciones gratis']).map((feature, i) => (
-                <li key={i} className="flex items-center gap-3 text-gray-300">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  </div>
-                  {feature}
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-4 mb-8">
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Incluye:</h4>
+              <ul className="space-y-4">
+                {(planInfo.features || ['Soporte técnico incluido', 'Módulos esenciales', 'Reportes y KPIs', 'Actualizaciones gratis']).map((feature, i) => (
+                  <li key={i} className="flex items-start gap-4 group">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500/20 transition-colors">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    </div>
+                    <span className="text-sm text-gray-300 leading-tight group-hover:text-gray-200 transition-colors">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-700/30">
-              <p className="text-xs text-gray-500 text-center">
-                Tu cuenta se activará automáticamente después del pago.
-              </p>
+            <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800">
+              <div className="flex gap-3">
+                <div className="mt-1">
+                  <Sparkles className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div>
+                  <h5 className="text-sm font-medium text-white mb-1">Garantía de Satisfacción</h5>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Si no estás satisfecho con el servicio, contáctanos y te ayudaremos a resolverlo.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </aside>
@@ -264,24 +365,3 @@ export const RegistroForm = ({ planInfo }) => {
     </div>
   );
 };
-
-// Componente de input estilizado (Movido Afuera)
-const FormInput = ({ icon: Icon, label, name, type = "text", placeholder, required = true, value, onChange, error }) => (
-  <div className="space-y-1.5">
-    <label htmlFor={name} className="text-sm font-medium text-gray-300 flex items-center gap-2">
-      {Icon && <Icon className="w-4 h-4 text-gray-500" />}
-      {label} {required && <span className="text-emerald-400">*</span>}
-    </label>
-    <input
-      id={name}
-      name={name}
-      type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className={`w-full px-4 py-3 rounded-xl bg-white/5 border ${error ? 'border-red-500' : 'border-gray-700/50'} 
-        text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all`}
-    />
-    {error && <p className="text-xs text-red-400">{error}</p>}
-  </div>
-);

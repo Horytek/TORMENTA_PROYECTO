@@ -103,7 +103,7 @@ export const Navbar = ({ isPocketMode, setIsPocketMode }) => {
           <div className="grow basis-0 justify-end hidden lg:flex items-center gap-4 lg:ms-7">
             {/* Pocket Mode Toggle */}
             <button
-              onClick={() => setIsPocketMode(!isPocketMode)}
+              onClick={() => navigate(isPocketMode ? '/landing' : '/pocket')}
               className={`px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300 tracking-wide ${isPocketMode
                 ? 'bg-amber-500 text-black border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]'
                 : 'bg-transparent text-white border-white/30 hover:bg-white hover:text-black hover:border-white'}`}
@@ -155,7 +155,7 @@ export const Navbar = ({ isPocketMode, setIsPocketMode }) => {
               ))}
 
               <button
-                onClick={() => { setIsPocketMode(!isPocketMode); setIsOpen(false); }}
+                onClick={() => { navigate(isPocketMode ? '/landing' : '/pocket'); setIsOpen(false); }}
                 className={`text-white text-lg font-bold transition-all duration-300 ${isPocketMode ? 'text-amber-500' : 'text-gray-400'}`}
               >
                 {isPocketMode ? 'Modo Pocket: ON' : 'Modo Pocket: OFF'}

@@ -3,38 +3,41 @@
 // Los precios NO deben venir de la URL para evitar manipulación
 
 export const PLANS_CONFIG = {
-  'Emprendedor': {
+  'Basic': {
+    title: 'Basic',
     monthly: 79,
     yearly: 790,
     currency: 'S/',
     features: [
       'Punto de venta (POS) Rápido',
-      'Gestión de Tallas y Colores',
+      'Gestión de variantes',
       'Control de Inventario (Kárdex)',
-      '1 Usuario / 1 Almacén'
+      '5 Usuario / 5 Almacén'
     ]
   },
-  'Empresario': {
+  'Pro': {
+    title: 'Pro',
     monthly: 149,
     yearly: 1490,
     currency: 'S/',
     features: [
-      'Todo en Emprendedor',
+      'Todo en Basic',
       'Facturación Electrónica (SUNAT)',
-      'Multi-Almacén (Hasta 2 sedes)',
-      'Hasta 3 Usuarios y Roles',
-      'Reportes de Rendimiento'
+      'Multi-Almacén (Hasta 15 sedes)',
+      'Hasta 10 Usuarios y Roles'
     ]
   },
-  'Corporativo': {
-    monthly: 0, // A medida
-    yearly: 0,
+  'Enterprise': {
+    title: 'Enterprise',
+    monthly: 299,
+    yearly: 2990,
     currency: 'S/',
     features: [
       'Sedes y Usuarios Ilimitados',
-      'Inteligencia de Negocios (BI)',
-      'API de Integración',
-      'Soporte Preferencial'
+      'Soporte Preferencial',
+      'Modulos ilimitados',
+      'Reportes de Rendimiento',
+      'Todo lo incluido en Pro'
     ]
   },
   // Pocket Plans
@@ -131,7 +134,7 @@ export function isValidPeriod(period) {
  */
 export function getDefaultPlanInfo() {
   return {
-    plan: 'Emprendedor',
+    plan: 'Basic',
     period: 'mes'
   };
 }

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { LandingButton } from './ui/LandingButton';
+import { PLANS_CONFIG } from '../../config/plans.config';
 
 export const Pricing = ({ isPocketMode }) => {
   const [isMonthly, setIsMonthly] = useState(true);
@@ -142,16 +143,16 @@ export const Pricing = ({ isPocketMode }) => {
             </>
           ) : (
             <>
-              {/* Plan Emprendedor */}
+              {/* Plan Basic */}
               <div className="p-8 rounded-2xl border border-white/10 bg-[#0f121a] hover:border-landing-accent/30 transition-all duration-300">
-                <h3 className="text-lg font-semibold text-white mb-2">Emprendedor</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">Basic</h3>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold tracking-tight text-white">S/ {isMonthly ? '79' : '790'}</span>
+                  <span className="text-4xl font-bold tracking-tight text-white">S/ {isMonthly ? PLANS_CONFIG.Basic.monthly : PLANS_CONFIG.Basic.yearly}</span>
                   <span className="text-gray-500 text-sm">/ {isMonthly ? 'mes' : 'año'}</span>
                 </div>
                 <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Para boutiques y tiendas de moda que inician.</p>
                 <LandingButton
-                  onClick={() => handlePlanSelection('Emprendedor', isMonthly ? 'mes' : 'año')}
+                  onClick={() => handlePlanSelection('Basic', isMonthly ? 'mes' : 'año')}
                   variant="outlineWhite"
                   fullWidth
                   className="mb-8 border-white/20"
@@ -159,20 +160,19 @@ export const Pricing = ({ isPocketMode }) => {
                   Comenzar
                 </LandingButton>
                 <ul className="space-y-4 text-sm text-gray-400">
-                  <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Punto de Venta (POS) Rápido</li>
-                  <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Gestión de Tallas y Colores</li>
-                  <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> Control de Inventario (Kárdex)</li>
-                  <li className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> 1 Usuario / 1 Almacén</li>
+                  {PLANS_CONFIG.Basic.features.map((feature, i) => (
+                    <li key={i} className="flex gap-3"><Check size={18} className="text-emerald-400 shrink-0" /> {feature}</li>
+                  ))}
                 </ul>
               </div>
 
-              {/* Plan Empresario (Featured) */}
+              {/* Plan Pro (Featured) */}
               <div className="p-8 rounded-2xl bg-[#0f121a] text-white shadow-2xl relative lg:-mt-4 lg:pb-12 border border-white/10 group hover:border-landing-accent/30 transition-all duration-300">
                 <div className="absolute top-6 right-6 text-xs font-bold tracking-widest text-landing-accent opacity-80 uppercase">RECOMENDADO</div>
 
-                <h3 className="text-xl font-bold mb-2 text-white">Empresario</h3>
+                <h3 className="text-xl font-bold mb-2 text-white">Pro</h3>
                 <div className="mb-4 flex items-baseline gap-1">
-                  <span className="text-5xl font-bold tracking-tighter text-white">S/ {isMonthly ? '149' : '1,490'}</span>
+                  <span className="text-5xl font-bold tracking-tighter text-white">S/ {isMonthly ? PLANS_CONFIG.Pro.monthly : PLANS_CONFIG.Pro.yearly.toLocaleString('es-PE')}</span>
                   <span className="text-gray-500 text-sm font-medium">/ {isMonthly ? 'mes' : 'año'}</span>
                 </div>
 
@@ -184,7 +184,7 @@ export const Pricing = ({ isPocketMode }) => {
                 <p className="text-gray-400 text-sm mb-8 leading-relaxed">Facturación electrónica y control total para tu equipo.</p>
 
                 <LandingButton
-                  onClick={() => handlePlanSelection('Empresario', isMonthly ? 'mes' : 'año')}
+                  onClick={() => handlePlanSelection('Pro', isMonthly ? 'mes' : 'año')}
                   variant="primary"
                   size="lg"
                   fullWidth
@@ -193,47 +193,36 @@ export const Pricing = ({ isPocketMode }) => {
                   Obtener Pro <span className="opacity-0 group-hover:opacity-100 -ml-2 group-hover:ml-0 transition-all">→</span>
                 </LandingButton>
                 <ul className="space-y-4 text-sm text-gray-300">
-                  <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Todo en Emprendedor</li>
-                  <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Facturación Electrónica (SUNAT)</li>
-                  <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Multi-Almacén (Hasta 2 sedes)</li>
-                  <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Hasta 3 Usuarios y Roles</li>
-                  <li className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> Reportes de Rendimiento</li>
+                  {PLANS_CONFIG.Pro.features.map((feature, i) => (
+                    <li key={i} className="flex gap-3 items-center"><Check size={16} className="text-white shrink-0" /> {feature}</li>
+                  ))}
                 </ul>
               </div>
 
-              {/* Plan Corporativo */}
+              {/* Plan Enterprise */}
               <div className="p-8 rounded-2xl border border-white/10 bg-[#0f121a] hover:border-landing-accent/30 transition-all duration-300">
-                <h3 className="text-lg font-semibold text-white mb-2">Corporativo</h3>
-                <div className="mb-2">
-                  <span className="text-4xl font-bold tracking-tight text-white">A medida</span>
+                <h3 className="text-lg font-semibold text-white mb-2">Enterprise</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold tracking-tight text-white">S/ {isMonthly ? PLANS_CONFIG.Enterprise.monthly : PLANS_CONFIG.Enterprise.yearly.toLocaleString('es-PE')}</span>
+                  <span className="text-gray-500 text-sm">/ {isMonthly ? 'mes' : 'año'}</span>
                 </div>
                 <p className="text-xs text-gray-500 font-medium mb-6 uppercase tracking-wider">Para cadenas y franquicias</p>
 
                 <p className="text-sm text-gray-400 mb-8 min-h-[40px]">Soluciones personalizadas para alto volumen.</p>
 
-                <div className="flex flex-col gap-3 mb-8">
-                  <div className="flex flex-col gap-3 mb-8">
-                    <LandingButton
-                      variant="primary"
-                      fullWidth
-                      onClick={() => window.location.href = 'mailto:ventas@horycore.com'}
-                    >
-                      Contactar Ventas
-                    </LandingButton>
-                    <LandingButton
-                      variant="ghost"
-                      fullWidth
-                      className="border border-white/20 text-gray-400 hover:border-white"
-                    >
-                      Agendar Demostración
-                    </LandingButton>
-                  </div>
-                </div>
+                <LandingButton
+                  variant="primary"
+                  fullWidth
+                  onClick={() => handlePlanSelection('Enterprise', isMonthly ? 'mes' : 'año')}
+                  className="mb-8"
+                >
+                  Elegir Enterprise
+                </LandingButton>
 
                 <ul className="space-y-4 text-sm text-gray-400">
-                  <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> Sedes y Usuarios Ilimitados</li>
-                  <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> Inteligencia de Negocios (BI)</li>
-                  <li className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> API de Integración</li>
+                  {PLANS_CONFIG.Enterprise.features.map((feature, i) => (
+                    <li key={i} className="flex gap-3"><Check size={18} className="text-landing-accent shrink-0" /> {feature}</li>
+                  ))}
                 </ul>
               </div>
             </>

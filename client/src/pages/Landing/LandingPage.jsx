@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 // Components
 import { Navbar } from '../../components/landing/Navbar';
@@ -14,7 +15,13 @@ import { ScrollUpButton } from '../../components/landing/ScrollUpButton';
 import '../../components/landing/styles/landing-theme.css';
 
 export default function LandingPage() {
-  const [isPocketMode, setIsPocketMode] = useState(false);
+  const location = useLocation();
+  const [isPocketMode, setIsPocketMode] = useState(location.pathname === '/pocket');
+
+  // Update mode if location changes (e.g. client-side navigation)
+  useEffect(() => {
+    setIsPocketMode(location.pathname === '/pocket');
+  }, [location.pathname]);
 
   // Isolate Landing Page Styles
   useEffect(() => {
