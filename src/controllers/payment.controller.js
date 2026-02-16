@@ -2,6 +2,7 @@ import axios from "axios";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import dotenv from "dotenv";
 import { getConnection } from "../database/database.js";
+import { getExpressConnection } from "../database/express_db.js";
 import { Resend } from "resend";
 import PDFDocument from "pdfkit";
 dotenv.config();
@@ -330,13 +331,21 @@ export const paymentWebhook = async (req, res) => {
           empresa = empresas[0];
         } else {
           // 2. Si no es ERP, buscar en EXPRESS (Pocket)
-          const [expressTenants] = await connection.query(
-            "SELECT id as db_id, tenant_id, email, business_name FROM express_tenants WHERE email = ? LIMIT 1",
-            [externalReference]
-          );
-          if (expressTenants.length > 0) {
-            empresa = { id_tenant: expressTenants[0].tenant_id, ...expressTenants[0] };
-            isExpress = true;
+          let expressConnection;
+          try {
+            expressConnection = await getExpressConnection();
+            const [expressTenants] = await expressConnection.query(
+              "SELECT tenant_id, email, business_name FROM express_tenants WHERE email = ? LIMIT 1",
+              [externalReference]
+            );
+            if (expressTenants.length > 0) {
+              empresa = { id_tenant: expressTenants[0].tenant_id, ...expressTenants[0] };
+              isExpress = true;
+            }
+          } catch (err) {
+            console.error("Error checking express db:", err);
+          } finally {
+            if (expressConnection) expressConnection.release();
           }
         }
 
@@ -354,19 +363,25 @@ export const paymentWebhook = async (req, res) => {
             if (amount < 8) daysToAdd = 1; // Diario
             else if (amount < 25) daysToAdd = 7; // Semanal
 
-            await connection.query(
-              `UPDATE express_tenants 
-                      SET subscription_status = 'active',
-                          subscription_end_date = DATE_ADD(
-                              CASE 
-                                WHEN subscription_end_date IS NULL OR subscription_end_date < NOW() THEN NOW() 
-                                ELSE subscription_end_date 
-                              END, 
-                              INTERVAL ? DAY
-                          )
-                      WHERE tenant_id = ?`,
-              [daysToAdd, empresa.id_tenant]
-            );
+            let expressUpdateConn;
+            try {
+              expressUpdateConn = await getExpressConnection();
+              await expressUpdateConn.query(
+                `UPDATE express_tenants 
+                          SET subscription_status = 'active',
+                              created_at = NOW(),
+                              subscription_end_date = DATE_ADD(NOW(), INTERVAL ? DAY)
+                          WHERE tenant_id = ?`,
+                [daysToAdd, empresa.id_tenant]
+              );
+            } catch (err) {
+              console.error("Error updating express tenant:", err);
+              // Should we throw to rollback the main transaction? 
+              // Yes, better to be consistent.
+              throw err;
+            } finally {
+              if (expressUpdateConn) expressUpdateConn.release();
+            }
 
             // Enviar Correo de Bienvenida / Confirmación
             await resend.emails.send({

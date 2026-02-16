@@ -39,7 +39,7 @@ export const RegistroForm = ({ planInfo }) => {
   const inputClassNames = {
     inputWrapper: "bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 focus-within:!border-emerald-500/60 h-12 px-4",
     label: "text-sm text-zinc-400 mb-1",
-    input: "text-white !bg-transparent placeholder:text-zinc-600 text-sm"
+    input: "!text-white !bg-transparent placeholder:text-zinc-600 text-sm"
   };
 
   const handleChange = (name, value) => {

@@ -7,7 +7,7 @@ import { randomUUID } from "crypto";
 // --- AUTH ---
 
 export const registerTenant = async (req, res) => {
-    const { business_name, email, password } = req.body;
+    const { business_name, email, password, plan_id } = req.body;
     if (!business_name || !email || !password) {
         return res.status(400).json({ message: "All fields are required." });
     }
@@ -34,22 +34,29 @@ export const registerTenant = async (req, res) => {
         const password_hash = await bcrypt.hash(password, 10);
         const tenant_id = randomUUID();
 
+        // Set subscription_status to 'pending' and DO NOT return token
+        // Save plan_id if provided
         await connection.query(
-            "INSERT INTO express_tenants (tenant_id, business_name, email, password_hash) VALUES (?, ?, ?, ?)",
-            [tenant_id, business_name, email, password_hash]
+            "INSERT INTO express_tenants (tenant_id, business_name, email, password_hash, subscription_status, plan_id) VALUES (?, ?, ?, ?, 'pending', ?)",
+            [tenant_id, business_name, email, password_hash, plan_id || null]
         );
 
-        // Auto-login
-        const token = jwt.sign(
-            { tenant_id, email, business_name },
-            TOKEN_SECRET,
-            { expiresIn: "7d" }
-        );
-
-        res.status(201).json({ message: "Welcome to Tormenta Express!", token, business_name });
+        res.status(201).json({ message: "Account created. Please complete payment to activate.", business_name });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error registering tenant." });
+        console.error("REGISTRATION ERROR:", error);
+        try {
+            const fs = await import('fs');
+            fs.writeFileSync('registration_error.log', JSON.stringify({
+                message: error.message,
+                stack: error.stack,
+                code: error.code,
+                sql: error.sql,
+                sqlMessage: error.sqlMessage
+            }, null, 2));
+        } catch (logErr) {
+            console.error("Failed to write log", logErr);
+        }
+        res.status(500).json({ message: "Error registering tenant.", error: error.message });
     } finally {
         if (connection) connection.release();
     }
@@ -71,6 +78,15 @@ export const loginTenant = async (req, res) => {
             if (!isMatch) return res.status(401).json({ message: "Invalid credentials." });
 
             // Check subscription status
+            if (tenant.subscription_status === 'pending') {
+                return res.status(403).json({
+                    error: 'SUBSCRIPTION_PENDING',
+                    message: "Tu cuenta está pendiente de activación. Por favor completa el pago para acceder.",
+                    tenant_id: tenant.tenant_id,
+                    business_name: tenant.business_name
+                });
+            }
+
             if (tenant.subscription_status === 'expired') {
                 return res.status(403).json({
                     error: 'SUBSCRIPTION_EXPIRED',
@@ -78,6 +94,26 @@ export const loginTenant = async (req, res) => {
                     tenant_id: tenant.tenant_id,
                     business_name: tenant.business_name
                 });
+            }
+
+            // FIRST LOGIN CHECK:
+            // If active but no end date (First time after payment), set it from created_at + plan duration.
+            // Default 30 days if no plan specific logic here (or fetch plan duration).
+            // For now, mirroring verifyPayment logic: 
+            // Weekly/Daily plans set plan_id. We can fetch plan days if needed, or assume 30 for safety if plan_id is 3. 
+            // Simpler: Just set it to created_at + 30 days as requested for "First Time".
+            // Note: If plan is Diario (1) or Semanal (2), 30 days might be wrong?
+            // User asked: "usando la fecha de creación... Y cuando renueve... se actualice"
+            // Let's rely on the plan_id to determine duration if possible, or default to 30.
+            if (tenant.subscription_status === 'active' && !tenant.subscription_end_date) {
+                let duration = 30;
+                if (tenant.plan_id === 1) duration = 1;
+                if (tenant.plan_id === 2) duration = 7;
+
+                await connection.query(
+                    "UPDATE express_tenants SET subscription_end_date = DATE_ADD(created_at, INTERVAL ? DAY) WHERE tenant_id = ?",
+                    [duration, tenant.tenant_id]
+                );
             }
 
             const token = jwt.sign(
@@ -123,6 +159,14 @@ export const loginTenant = async (req, res) => {
                     const businessName = tenant?.business_name || "Express Business";
 
                     // Check subscription status
+                    if (tenant?.subscription_status === 'pending') {
+                        return res.status(403).json({
+                            error: 'SUBSCRIPTION_PENDING',
+                            message: "La cuenta principal del negocio está pendiente de pago.",
+                            business_name: businessName
+                        });
+                    }
+
                     if (tenant?.subscription_status === 'expired') {
                         return res.status(403).json({
                             error: 'SUBSCRIPTION_EXPIRED',

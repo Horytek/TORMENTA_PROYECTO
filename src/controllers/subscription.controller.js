@@ -1,6 +1,6 @@
 import { getExpressConnection } from "../database/express_db.js";
 import { randomUUID } from "crypto";
-import { MercadoPagoConfig, Preference } from "mercadopago";
+import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -207,6 +207,69 @@ export const createRenewalPreference = async (req, res) => {
     } catch (error) {
         console.error("Error creating renewal preference:", error);
         res.status(500).json({ message: "Error creating payment preference", error: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+export const verifyPayment = async (req, res) => {
+    const { payment_id } = req.body;
+
+    if (!payment_id) return res.status(400).json({ message: "Payment ID required" });
+
+    let connection;
+    try {
+        // 1. Verify Payment with MercadoPago
+        const payment = await new Payment(mpClient).get({ id: payment_id });
+
+        if (payment.status !== 'approved') {
+            return res.status(400).json({ message: "Payment not approved", status: payment.status });
+        }
+
+        const email = payment.external_reference;
+        if (!email) return res.status(400).json({ message: "Invalid payment reference (no email)" });
+
+        connection = await getExpressConnection();
+
+        // 2. Find Tenant
+        const [tenants] = await connection.query("SELECT * FROM express_tenants WHERE email = ?", [email]);
+        if (tenants.length === 0) return res.status(404).json({ message: "Tenant not found for this payment" });
+        const tenant = tenants[0];
+
+        // 3. Activate Subscription
+        // Calculate duration and plan based on amount
+        let planId = 3; // Default Monthly
+        const amount = Number(payment.transaction_amount);
+
+        if (amount < 8) {
+            planId = 1; // Diario
+        } else if (amount < 25) {
+            planId = 2; // Semanal
+        }
+
+        // Only activate status. Date will be set on first login or via Webhook.
+        await connection.query(
+            "UPDATE express_tenants SET subscription_status = 'active', plan_id = ? WHERE tenant_id = ?",
+            [planId, tenant.tenant_id]
+        );
+
+        // 4. Generate Token (Auto-login)
+        const token = jwt.sign(
+            { tenant_id: tenant.tenant_id, email: tenant.email, business_name: tenant.business_name, role: 'admin', plan_id: planId },
+            TOKEN_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        res.json({
+            success: true,
+            message: "Subscription activated",
+            token,
+            business_name: tenant.business_name
+        });
+
+    } catch (error) {
+        console.error("Payment Verification Error:", error);
+        res.status(500).json({ message: "Error verifying payment" });
     } finally {
         if (connection) connection.release();
     }

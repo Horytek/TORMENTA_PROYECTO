@@ -101,7 +101,7 @@ export default function TendenciaVentas({ idSucursal, year, month, week }) {
     }
 
     return (
-        <Card className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 shadow-xl rounded-2xl transition-all">
+        <Card className="bg-white dark:bg-zinc-900 shadow-xl rounded-2xl transition-all">
             <CardHeader className="flex flex-col items-start gap-2">
                 <div className="flex flex-wrap gap-4 items-center w-full">
                     <div className="flex items-center gap-2">

@@ -25,6 +25,7 @@ const router = Router();
 // --- Auth Routes (Public) ---
 router.post("/auth/register", registerTenant);
 router.post("/auth/login", loginTenant);
+router.post("/subscription/verify", verifyPayment);
 
 // --- Protected Routes ---
 // Apply middleware to all routes below
@@ -45,14 +46,12 @@ router.get("/sales", getSales);
 router.get("/sales/:id", getSaleDetails);
 
 // Subscription
-import { getPlans, getSubscriptionStatus, subscribeToPlan, createRenewalPreference } from "../controllers/subscription.controller.js";
+import { getPlans, getSubscriptionStatus, subscribeToPlan, createRenewalPreference, verifyPayment } from "../controllers/subscription.controller.js";
 import { getNotifications, markAsRead } from "../controllers/notifications.controller.js";
 
 router.get("/subscription/plans", getPlans);
 router.get("/subscription/status", getSubscriptionStatus);
 router.post("/subscription/subscribe", subscribeToPlan);
-router.post("/subscription/renew", createRenewalPreference);
-
 // Notifications
 router.get("/notifications", getNotifications);
 router.put("/notifications/:id/read", markAsRead);

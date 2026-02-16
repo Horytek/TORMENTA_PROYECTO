@@ -1,0 +1,7 @@
+{
+  "message": "Data truncated for column 'subscription_status' at row 1",
+  "stack": "Error: Data truncated for column 'subscription_status' at row 1\n    at PromisePoolConnection.query (E:\\DISCO_D\\BUNDLE\\TORMENTA_PROYECTO\\node_modules\\mysql2\\lib\\promise\\connection.js:29:22)\n    at registerTenant (file:///E:/DISCO_D/BUNDLE/TORMENTA_PROYECTO/src/controllers/express.controller.js:38:26)",
+  "code": "WARN_DATA_TRUNCATED",
+  "sql": "INSERT INTO express_tenants (tenant_id, business_name, email, password_hash, subscription_status) VALUES ('f7f12890-f3c5-48c7-a0be-14fc647e8b1e', 'Bodegas Sehuidi', 'pruebas2@gmail.com', '$2b$10$GyhHGlvaTWT0qlxTSWR76e7CAuihRang7fkW2/qkfXjuUbSaYVzLS', 'pending')",
+  "sqlMessage": "Data truncated for column 'subscription_status' at row 1"
+}

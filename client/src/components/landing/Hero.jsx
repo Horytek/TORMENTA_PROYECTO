@@ -108,16 +108,7 @@ const Hero = ({ isPocketMode }) => {
                     </motion.p>
 
                     <div className="space-y-6">
-                        <div className="flex flex-wrap gap-4">
-                            <LandingButton variant="primary" size="lg" className="flex items-center gap-2 group">
-                                {isPocketMode ? 'Comenzar Ahora' : 'Solicitar Demo'}
-                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                            </LandingButton>
-                            <LandingButton variant="secondary" size="lg" className="flex items-center gap-2">
-                                <Play size={18} className="fill-current" />
-                                Ver Video
-                            </LandingButton>
-                        </div>
+
 
                         {/* New Microcopy Trust Indicators */}
                         <div className="flex items-center gap-6 text-xs font-medium text-gray-500 uppercase tracking-wider">

@@ -42,7 +42,7 @@ export const PLANS_CONFIG = {
   },
   // Pocket Plans
   'Diario': {
-    daily: 5,
+    daily: 1,
     currency: 'S/',
     features: [
       'Acceso total por 24 horas',
@@ -51,7 +51,7 @@ export const PLANS_CONFIG = {
     ]
   },
   'Semanal': {
-    weekly: 10,
+    weekly: 7,
     currency: 'S/',
     features: [
       'Acceso por 7 días',

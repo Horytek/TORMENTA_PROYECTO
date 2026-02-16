@@ -155,4 +155,14 @@ export const updateExpressPassword = async (newPassword) => {
     return response.data;
 };
 
+export const expressVerifyPayment = async (payment_id) => {
+    const response = await expressApi.post("/subscription/verify", { payment_id });
+    if (response.data.token) {
+        await setExpressToken(response.data.token);
+        if (response.data.business_name) await setBusinessName(response.data.business_name);
+        await setExpressRole('admin');
+    }
+    return response.data;
+};
+
 export default expressApi;
