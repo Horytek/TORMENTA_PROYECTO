@@ -12,6 +12,4 @@ export const TOKEN_SECRET = process.env.TOKEN_SECRET || "";
 export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:4000";
 
 // Exportar el certificado SSL para la base de datos
-export const DB_SSL_CA = process.env.DB_SSL_CA
-  ? process.env.DB_SSL_CA.replace(/\\n/g, "\n")
-  : undefined;
+export const DB_SSL_CA = undefined;

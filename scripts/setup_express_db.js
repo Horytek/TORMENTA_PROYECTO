@@ -12,11 +12,7 @@ const dbConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-    ssl: {
-        // Handle the multi-line certificate string correctly
-        ca: process.env.DB_SSL_CA ? process.env.DB_SSL_CA.replace(/\\n/g, '\n') : undefined
-    }
+    port: process.env.DB_PORT
 };
 
 async function main() {

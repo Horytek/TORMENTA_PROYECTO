@@ -6,14 +6,7 @@ import { dirname } from 'path';
 
 dotenv.config();
 
-const sslCA = process.env.DB_SSL_CA
-    ? Buffer.from(
-        process.env.DB_SSL_CA
-            .replace(/^"+|"+$/g, "")
-            .replace(/\\n/g, "\n"),
-        "utf-8"
-    )
-    : undefined;
+// SSL DB_SSL_CA requirement removed
 
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
@@ -22,8 +15,7 @@ const dbConfig = {
     database: process.env.DB_DATABASE || 'tormenta_db',
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0,
-    ...(sslCA && { ssl: { ca: sslCA } })
+    queueLimit: 0
 };
 
 const pool = createPool(dbConfig);

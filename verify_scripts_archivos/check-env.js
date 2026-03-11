@@ -62,16 +62,7 @@ requiredVars.forEach(({ name, value, critical }) => {
 
 console.log('\n📊 Verificando conexión a la base de datos...\n');
 
-// Procesar certificado SSL si existe
-const DB_SSL_CA = process.env.DB_SSL_CA;
-const sslCA = DB_SSL_CA
-    ? Buffer.from(
-        DB_SSL_CA
-            .replace(/^"+|"+$/g, "") // quita comillas al inicio/fin
-            .replace(/\\n/g, "\n"),
-        "utf-8"
-    )
-    : undefined;
+// SSL verification removed
 
 // Verificar conexión a la base de datos
 if (process.env.DB_HOST && process.env.DB_USERNAME && process.env.DB_DATABASE) {
@@ -81,10 +72,7 @@ if (process.env.DB_HOST && process.env.DB_USERNAME && process.env.DB_DATABASE) {
             user: process.env.DB_USERNAME,
             password: process.env.DB_PASSWORD || '',
             database: process.env.DB_DATABASE,
-            port: process.env.DB_PORT || 3306,
-            ...(sslCA && {
-                ssl: { ca: sslCA }
-            })
+            port: process.env.DB_PORT || 3306
         };
 
         const connection = await createConnection(connectionConfig);

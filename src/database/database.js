@@ -1,16 +1,7 @@
 import mysql from "mysql2/promise";
-import { HOST, DATABASE, USER, PASSWORD, PORT_DB, DB_SSL_CA } from "../config.js";
+import { HOST, DATABASE, USER, PASSWORD, PORT_DB } from "../config.js";
 
-// Procesar el certificado para eliminar comillas y convertir a Buffer
-const sslCA =
-  DB_SSL_CA
-    ? Buffer.from(
-        DB_SSL_CA
-          .replace(/^"+|"+$/g, "") // quita comillas al inicio/fin
-          .replace(/\\n/g, "\n"),
-        "utf-8"
-      )
-    : undefined;
+// Removed sslCA processing since DB_SSL_CA is no longer used
 
 const pool = mysql.createPool({
   host: HOST,
@@ -20,10 +11,7 @@ const pool = mysql.createPool({
   port: PORT_DB,
   waitForConnections: true,
   connectionLimit: 100,
-  queueLimit: 0,
-  ...(sslCA && {
-    ssl: { ca: sslCA }
-  })
+  queueLimit: 0
 });
 
 const getConnection = async () => {
