@@ -32,12 +32,6 @@ export default defineConfig({
       generateScopedName: '[name]_[local]__[hash:base64:5]'
     }
   },
-  optimizeDeps: {
-    exclude: [
-      '@botpress/webchat',
-      '@botpress/chat'
-    ]
-  },
   assetsInclude: ['**/*.ogg', '**/*.mp3', '**/*.wav'],
   build: {
     target: 'es2020',
