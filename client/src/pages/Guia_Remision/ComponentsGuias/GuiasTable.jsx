@@ -330,7 +330,7 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
         ];
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         head: [['Código', 'Descripción', 'Cant.', 'U.M.']],
         body: rows,
         startY: cursorY,

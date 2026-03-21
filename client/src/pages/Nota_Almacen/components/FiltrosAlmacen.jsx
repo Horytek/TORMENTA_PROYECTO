@@ -86,8 +86,8 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, onR
       estado: estado !== '%' ? estado : undefined,
     };
 
-    onFiltersChange(filtros);
-  }, [value, razon, documento, almacenSeleccionado, estado, onFiltersChange]);
+    onFiltersChange(filtros, tipo);
+  }, [value, razon, documento, almacenSeleccionado, estado, onFiltersChange, tipo]);
 
   useEffect(() => { applyFilters(); }, [applyFilters]);
 
@@ -122,7 +122,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, onR
       <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full xl:flex-1">
+        <div className="flex flex-wrap items-center gap-3 w-full xl:flex-1">
 
           <Select
             placeholder="Seleccionar Almacén"
@@ -132,6 +132,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, onR
             classNames={glassSelectClasses}
             aria-label="Almacén"
             size="sm"
+            className="w-full sm:w-56"
           >
             {isAdmin && <SelectItem key="%" value="%">Todos los almacenes</SelectItem>}
             {almacenesFiltrados.map((almacen) => (
@@ -153,6 +154,7 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, onR
             isClearable
             onClear={() => setSearchRazon('')}
             size="sm"
+            className="w-full sm:w-56"
           />
 
           <Input
@@ -164,12 +166,13 @@ const FiltrosIngresos = ({ almacenes = [], onAlmacenChange, onFiltersChange, onR
             isClearable
             onClear={() => setSearchDocumento('')}
             size="sm"
+            className="w-full sm:w-48"
           />
 
           <DateRangePicker
             value={value}
             onChange={setValue}
-            className="w-full"
+            className="w-full sm:w-[280px]"
             classNames={{
               inputWrapper: glassInputClasses.inputWrapper,
               segment: "text-slate-700 dark:text-slate-200 uppercase text-xs font-semibold tracking-wider",

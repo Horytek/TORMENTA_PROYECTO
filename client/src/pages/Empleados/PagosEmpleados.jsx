@@ -7,7 +7,7 @@ import {
 import { FaFilePdf, FaPlus, FaUser, FaFileInvoiceDollar, FaQuestionCircle, FaBook } from "react-icons/fa";
 import { Store, Trash2, AlertCircle, CheckCircle, Clock, Info } from "lucide-react";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { useUserStore } from "../../store/useStore";
 import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getPagosRequest, getPagosDashboardRequest, addPagoRequest, updatePagoRequest, deletePagoRequest } from "../../api/api.pagos";
@@ -82,7 +82,7 @@ export default function PagosEmpleados({ vendedores = [] }) {
 
   const fetchPagos = async () => {
     try {
-      const res = await getPagosRequest({ estado: tipoFiltro === 'TODOS' ? null : tipoFiltro });
+      const res = await getPagosRequest({ estado: null });
       if (res.data.code === 1) setPagos(res.data.data);
     } catch (error) { console.error(error); }
   };
@@ -95,13 +95,16 @@ export default function PagosEmpleados({ vendedores = [] }) {
     } catch (error) { console.error(error); }
   };
 
-  useEffect(() => {
-    if (id_tenant) fetchPagos();
-  }, [tipoFiltro]);
+
 
   const costoTotalEstimado = useMemo(() => {
     return Number(form.monto_neto || 0) + Number(form.monto_aportes || 0) + Number(form.monto_beneficios || 0);
   }, [form.monto_neto, form.monto_aportes, form.monto_beneficios]);
+
+  const pagosFiltrados = useMemo(() => {
+    if (tipoFiltro === "TODOS") return pagos;
+    return pagos.filter(p => p.estado_pago === tipoFiltro);
+  }, [pagos, tipoFiltro]);
 
   const handleAddPago = async () => {
     if (!form.dni_vendedor || !form.monto_neto) return;
@@ -151,7 +154,13 @@ export default function PagosEmpleados({ vendedores = [] }) {
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a5" });
 
     if (empresa?.logo) {
-      try { doc.addImage(empresa.logo, "PNG", 10, 10, 25, 25); } catch (e) { }
+      try {
+        const img = new Image();
+        img.src = empresa.logo;
+        doc.addImage(img, 'PNG', 10, 10, 25, 25);
+      } catch (e) {
+        console.error("Error logo", e);
+      }
     }
 
     doc.setFont("helvetica", "bold");
@@ -222,7 +231,13 @@ export default function PagosEmpleados({ vendedores = [] }) {
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     if (empresa?.logo) {
-      try { doc.addImage(empresa.logo, "PNG", 15, 10, 20, 20); } catch (e) { }
+      try {
+        const img = new Image();
+        img.src = empresa.logo;
+        doc.addImage(img, 'PNG', 15, 10, 20, 20);
+      } catch (e) {
+        console.error("Error logo", e);
+      }
     }
 
     doc.setFont("helvetica", "bold");
@@ -252,7 +267,7 @@ export default function PagosEmpleados({ vendedores = [] }) {
     doc.text(`S/ ${Number(dashboard.pagos_atrasados).toFixed(2)}`, 90, 58);
     doc.text(`S/ ${Number(dashboard.total_pagado_mes).toFixed(2)}`, 150, 58);
 
-    const tableData = pagos.map((p, idx) => [
+    const tableData = pagosFiltrados.map((p, idx) => [
       idx + 1,
       p.nombre_vendedor,
       p.tipo_pago,
@@ -287,9 +302,8 @@ export default function PagosEmpleados({ vendedores = [] }) {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#18192b] px-4 py-6">
-      <div className="max-w-[1600px] mx-auto space-y-6">
-        <header className="mb-2 flex justify-between items-start">
+    <div className="w-full space-y-6 animate-in fade-in">
+      <header className="mb-2 flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-extrabold tracking-wide text-zinc-900 dark:text-blue-100">
               Gestión de Pagos
@@ -352,7 +366,7 @@ export default function PagosEmpleados({ vendedores = [] }) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="lg:col-span-1 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-none px-6 py-6 h-fit">
+          <Card className="lg:col-span-1 bg-white dark:bg-zinc-900/90 border-none shadow-sm px-4 py-5 h-fit">
             <h2 className="font-bold text-lg text-zinc-900 dark:text-blue-100 mb-3">Programar Pago</h2>
             <Divider className="mb-3" />
             <div className="space-y-4">
@@ -496,7 +510,7 @@ export default function PagosEmpleados({ vendedores = [] }) {
           </Card>
 
           {/* Tabla de Pagos */}
-          <Card className="lg:col-span-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-none px-6 py-6 min-h-[500px]">
+          <Card className="lg:col-span-2 bg-white dark:bg-zinc-900/90 border-none shadow-sm px-4 py-5 min-h-[500px]">
             <div className="flex justify-between items-center mb-4">
               <h2 className="font-bold text-lg text-zinc-900 dark:text-blue-100">Historial de Pagos</h2>
               <div className="flex gap-2">
@@ -530,10 +544,10 @@ export default function PagosEmpleados({ vendedores = [] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {pagos.length === 0 ? (
+                  {pagosFiltrados.length === 0 ? (
                     <tr><td colSpan={6} className="text-center py-8 text-zinc-400">No hay pagos registrados</td></tr>
                   ) : (
-                    pagos.map(p => (
+                    pagosFiltrados.map(p => (
                       <tr key={p.id_pago} className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                         <td className="py-3 px-3 font-medium">{p.nombre_vendedor}</td>
                         <td className="py-3 px-3 text-center text-xs">{p.tipo_pago}</td>
@@ -583,7 +597,6 @@ export default function PagosEmpleados({ vendedores = [] }) {
             </div>
           </Card>
         </div>
-      </div>
 
       {/* Manual de Usuario Modal */}
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" scrollBehavior="inside">

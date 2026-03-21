@@ -68,20 +68,44 @@ const getIngresos = async (req, res) => {
       params.push(`%${usuario}%`);
     }
 
+    const loteWhere = [
+      'l.estado < 2',
+      'l.id_tenant = ?',
+      'DATE(l.fecha_creacion) >= ?',
+      'DATE(l.fecha_creacion) <= ?',
+      '(l.descripcion LIKE ? OR CONCAT("LOTE-", l.id_lote) LIKE ?)'
+    ];
+    const loteParams = [id_tenant, fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`];
+
+    if (almacen && almacen !== '%') loteWhere.push('1=0');
+    if (estado && estado !== '%') loteWhere.push('1=0');
+    if (usuario) {
+      loteWhere.push('(u.usua LIKE ? OR u.usua IS NULL)');
+      loteParams.push(`%${usuario}%`);
+    }
+
     // Query para contar total de registros (optimizado sin SUM ni GROUP BY)
     const countQuery = `
-      SELECT COUNT(DISTINCT n.id_nota) as total
-      FROM nota n
-        LEFT JOIN destinatario d ON n.id_destinatario = d.id_destinatario
-        LEFT JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-        LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
-        LEFT JOIN almacen ad ON n.id_almacenD = ad.id_almacen
-        LEFT JOIN usuario u ON n.id_usuario = u.id_usuario
-      WHERE ${where.join(' AND ')}
+      SELECT SUM(t) as total FROM (
+        SELECT COUNT(DISTINCT n.id_nota) as t
+        FROM nota n
+         LEFT JOIN destinatario d ON n.id_destinatario = d.id_destinatario
+         LEFT JOIN comprobante c ON n.id_comprobante = c.id_comprobante
+         LEFT JOIN almacen ao ON n.id_almacenO = ao.id_almacen
+         LEFT JOIN almacen ad ON n.id_almacenD = ad.id_almacen
+         LEFT JOIN usuario u ON n.id_usuario = u.id_usuario
+        WHERE ${where.join(' AND ')}
+        UNION ALL
+        SELECT COUNT(DISTINCT l.id_lote) as t
+        FROM lote_inventario l
+         LEFT JOIN usuario u ON l.id_usuario_crea = u.id_usuario
+        WHERE ${loteWhere.join(' AND ')}
+      ) combined
     `;
 
-    const [totalResult] = await connection.query(countQuery, params);
-    const totalNotas = totalResult[0].total;
+    const countParams = [...params, ...loteParams];
+    const [totalResult] = await connection.query(countQuery, countParams);
+    const totalNotas = totalResult[0].total || 0;
 
     // Si no hay notas, retornar temprano
     if (totalNotas === 0) {
@@ -100,6 +124,7 @@ const getIngresos = async (req, res) => {
           COALESCE(d.razon_social, CONCAT(d.nombres,' ',d.apellidos)) AS proveedor,
           n.glosa AS concepto,
           n.estado_nota AS estado,
+          n.estado_espera AS estado_espera,
           COALESCE(u.usua,'') AS usuario,
           n.observacion,
           n.hora_creacion,
@@ -113,54 +138,109 @@ const getIngresos = async (req, res) => {
           LEFT JOIN almacen ad ON n.id_almacenD = ad.id_almacen
           LEFT JOIN usuario u ON n.id_usuario = u.id_usuario
         WHERE ${where.join(' AND ')}
-        ORDER BY n.fecha DESC, c.num_comprobante DESC
+        
+        UNION ALL
+        
+        SELECT 
+          l.id_lote * -1 AS id,
+          DATE_FORMAT(l.fecha_creacion,'%Y-%m-%d') AS fecha,
+          CONCAT('LOTE-', l.id_lote) AS documento,
+          '--' AS almacen_O,
+          '--' AS almacen_D,
+          'LOTE PENDIENTE' AS proveedor,
+          l.descripcion AS concepto,
+          0 AS estado,
+          1 AS estado_espera,
+          COALESCE(u.usua,'') AS usuario,
+          'Pendiente de verificación/aprobación' AS observacion,
+          DATE_FORMAT(l.fecha_creacion,'%H:%i:%s') AS hora_creacion,
+          NULL AS fecha_anulacion,
+          NULL AS u_modifica,
+          'Nota Lote' AS nom_nota
+        FROM lote_inventario l
+          LEFT JOIN usuario u ON l.id_usuario_crea = u.id_usuario
+        WHERE ${loteWhere.join(' AND ')}
+        
+        ORDER BY fecha DESC, documento DESC
         LIMIT ? OFFSET ?
       )
       SELECT 
         np.*,
-        ROUND(IFNULL(SUM(dn.total),0),2) AS total_nota
+        (SELECT ROUND(IFNULL(SUM(dn.total),0),2) FROM detalle_nota dn WHERE dn.id_nota = np.id AND np.id > 0 AND dn.id_tenant = ?) AS total_nota
       FROM NotasPaginadas np
-        LEFT JOIN detalle_nota dn ON np.id = dn.id_nota AND dn.id_tenant = ?
-      GROUP BY np.id
       ORDER BY np.fecha DESC, np.documento DESC
     `;
 
-    const queryParams = [...params, parseInt(limit), parseInt(offset), id_tenant];
+    const queryParams = [...params, ...loteParams, parseInt(limit), parseInt(offset), id_tenant];
     const [ingresosResult] = await connection.query(cabecerasQuery, queryParams);
 
     if (!ingresosResult.length) {
       return res.json({ code: 1, data: [] });
     }
-
     // Obtener todos los detalles en un solo query (evita N+1)
-    const ids = ingresosResult.map(r => r.id);
-    const placeholders = ids.map(() => '?').join(',');
-    const detallesQuery = `
-      SELECT 
-        dn.id_nota,
-        p.id_producto AS codigo,
-        m.nom_marca AS marca,
-        sc.nom_subcat AS categoria,
-        p.descripcion,
-        dn.cantidad,
-        p.undm AS unidad,
-        dn.precio,
-        dn.total,
-        t.nombre AS nombre_tonalidad,
-        ta.nombre AS nombre_talla,
-        ta.nombre AS nombre_talla,
-        ps.sku AS sku_label,
-        ps.attributes_json AS attributes
-      FROM detalle_nota dn
-        INNER JOIN producto p ON p.id_producto = dn.id_producto
-        INNER JOIN marca m ON p.id_marca = m.id_marca
-        INNER JOIN sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
-        LEFT JOIN tonalidad t ON dn.id_tonalidad = t.id_tonalidad
-        LEFT JOIN talla ta ON dn.id_talla = ta.id_talla
-        LEFT JOIN producto_sku ps ON dn.id_sku = ps.id_sku
-      WHERE dn.id_nota IN (${placeholders}) AND dn.id_tenant = ?;
-    `;
-    const [detallesResult] = await connection.query(detallesQuery, [...ids, id_tenant]);
+    const validIds = ingresosResult.filter(r => r.id > 0).map(r => r.id);
+    const loteIds = ingresosResult.filter(r => r.id < 0).map(r => Math.abs(r.id));
+    
+    let detallesResult = [];
+    if (validIds.length > 0) {
+      const placeholders = validIds.map(() => '?').join(',');
+      const detallesQuery = `
+        SELECT 
+          dn.id_nota,
+          p.id_producto AS codigo,
+          m.nom_marca AS marca,
+          sc.nom_subcat AS categoria,
+          p.descripcion,
+          dn.cantidad,
+          p.undm AS unidad,
+          dn.precio,
+          dn.total,
+          t.nombre AS nombre_tonalidad,
+          ta.nombre AS nombre_talla,
+          ps.sku AS sku_label,
+          ps.attributes_json AS attributes
+        FROM detalle_nota dn
+          INNER JOIN producto p ON p.id_producto = dn.id_producto
+          INNER JOIN marca m ON p.id_marca = m.id_marca
+          INNER JOIN sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
+          LEFT JOIN tonalidad t ON dn.id_tonalidad = t.id_tonalidad
+          LEFT JOIN talla ta ON dn.id_talla = ta.id_talla
+          LEFT JOIN producto_sku ps ON dn.id_sku = ps.id_sku
+        WHERE dn.id_nota IN (${placeholders}) AND dn.id_tenant = ?;
+      `;
+      const [res] = await connection.query(detallesQuery, [...validIds, id_tenant]);
+      detallesResult = res;
+    }
+
+    if (loteIds.length > 0) {
+      const lotePlaceholders = loteIds.map(() => '?').join(',');
+      const detallesLoteQuery = `
+        SELECT 
+          d.id_lote * -1 AS id_nota,
+          p.id_producto AS codigo,
+          m.nom_marca AS marca,
+          sc.nom_subcat AS categoria,
+          p.descripcion,
+          d.cantidad,
+          p.undm AS unidad,
+          0 AS precio,
+          0 AS total,
+          t.nombre AS nombre_tonalidad,
+          ta.nombre AS nombre_talla,
+          sku.sku AS sku_label,
+          sku.attributes_json AS attributes
+        FROM detalle_lote_inventario d
+          INNER JOIN producto p ON p.id_producto = d.id_producto
+          INNER JOIN marca m ON p.id_marca = m.id_marca
+          INNER JOIN sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
+          LEFT JOIN tonalidad t ON d.id_tonalidad = t.id_tonalidad
+          LEFT JOIN talla ta ON d.id_talla = ta.id_talla
+          LEFT JOIN producto_sku sku ON d.id_sku = sku.id_sku
+        WHERE d.id_lote IN (${lotePlaceholders}) AND d.id_tenant = ?
+      `;
+      const [loteRes] = await connection.query(detallesLoteQuery, [...loteIds, id_tenant]);
+      detallesResult = detallesResult.concat(loteRes);
+    }
 
     // Indexar detalles por id_nota
     const detallesMap = {};
@@ -428,7 +508,8 @@ const insertNotaAndDetalle = async (req, res) => {
     observacion,
     usuario,
     tonalidad,
-    talla
+    talla,
+    estado_espera = 0
   } = req.body;
   const id_tenant = req.id_tenant;
 
@@ -473,7 +554,7 @@ const insertNotaAndDetalle = async (req, res) => {
       [notaResult] = await connection.query(
         `INSERT INTO nota 
         (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera, id_tenant) 
-        VALUES (?, ?, 1, ?, ?, ?, ?, ?, 1, ?, ?, 0, ?)`,
+        VALUES (?, ?, 1, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
         [
           almacenO,
           almacenD,
@@ -484,6 +565,7 @@ const insertNotaAndDetalle = async (req, res) => {
           nota,
           observacion,
           usuarioResult[0]?.id_usuario,
+          estado_espera,
           id_tenant
         ]
       );
@@ -491,7 +573,7 @@ const insertNotaAndDetalle = async (req, res) => {
       [notaResult] = await connection.query(
         `INSERT INTO nota 
         (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera, id_tenant) 
-        VALUES (null, ?, 1, ?, ?, ?, ?, ?, 1, ?, ?, 0, ?)`,
+        VALUES (null, ?, 1, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
         [
           almacenD,
           destinatario,
@@ -501,6 +583,7 @@ const insertNotaAndDetalle = async (req, res) => {
           nota,
           observacion,
           usuarioResult[0]?.id_usuario,
+          estado_espera,
           id_tenant
         ]
       );

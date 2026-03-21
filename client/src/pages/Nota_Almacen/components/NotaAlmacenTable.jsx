@@ -18,7 +18,7 @@ import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { getKeyValue } from "@heroui/react";
 import { useUserStore } from "@/store/useStore";
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const INTERNAL_ALL_KEY = '100000';
@@ -399,7 +399,7 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
         ];
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         head: [['Código', 'Marca', 'Descripción', 'Cant.', 'Und.']],
         body: rows,
         startY: cursorY,
@@ -426,8 +426,9 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
 
       doc.save(`${nota.documento || (isIngreso ? 'nota-ingreso' : 'nota-salida')}.pdf`);
       toast.success('PDF generado');
-    } catch {
-      toast.error('Error al generar el PDF');
+    } catch (e) {
+      console.error("Error PDF:", e);
+      toast.error('Error al generar el PDF: ' + (e.message || e));
     }
   }, [empresaData, tipo]);
 
@@ -488,10 +489,11 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
             <TableRow key={nota.id} onClick={() => toggleExpand(nota.id)}>
               {columnKey => {
                 if (columnKey === 'acciones') {
+                  const isEsperaLote = nota.id < 0;
                   return (
                     <TableCell>
-                      <div className="flex gap-1 justify-end">
-                        <Tooltip content="Ver Observación">
+                      <div className="flex justify-end gap-2 items-center">
+                        <Tooltip content="Ver Documento">
                           <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-indigo-600" onClick={e => { e.stopPropagation(); handleObservationClick(nota); }}>
                             <FaEye size={16} />
                           </Button>
@@ -503,7 +505,7 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
                             </Button>
                           </Tooltip>
                         )}
-                        {hasDeactivatePermission && (
+                        {hasDeactivatePermission && !isEsperaLote && (
                           <Tooltip content="Anular Nota">
                             <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-amber-600" onClick={e => { e.stopPropagation(); queueAccion('anular', nota.id); }}>
                               <TiDeleteOutline size={18} />
@@ -516,6 +518,8 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
                 }
                 if (columnKey === 'estado') {
                   const anulado = nota.estado === 1;
+                  const isAprobado = nota.estado === 0 && nota.estado_espera === 2;
+                  const isEspera = nota.estado === 0 && nota.estado_espera === 1;
                   return (
                     <TableCell>
                       {anulado ? (
@@ -541,6 +545,24 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
                             Anulado
                           </Chip>
                         </Tooltip>
+                      ) : isAprobado ? (
+                        <Chip
+                          className="gap-1 border-none capitalize bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                          size="sm"
+                          variant="flat"
+                          startContent={<span className="w-1 h-1 rounded-full bg-emerald-600 ml-1"></span>}
+                        >
+                          Aprobado
+                        </Chip>
+                      ) : isEspera ? (
+                        <Chip
+                          className="gap-1 border-none capitalize bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                          size="sm"
+                          variant="flat"
+                          startContent={<span className="w-1 h-1 rounded-full bg-amber-600 ml-1"></span>}
+                        >
+                          En espera
+                        </Chip>
                       ) : (
                         <Chip
                           className="gap-1 border-none capitalize"

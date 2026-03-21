@@ -76,17 +76,28 @@ export default function SolicitudInventario() {
             return;
         }
 
-        const newItem = {
-            id: Date.now(),
-            id_producto: tempItem.id_producto,
-            id_sku: null, // Simple product usually has null id_sku or default? Assuming null for now based on logic
-            cantidad: parseInt(tempItem.cantidad),
-            productoName: prod?.descripcion || "Desconocido",
-            skuName: "Standard",
-            attributes: []
-        };
+        setItems(prev => {
+            const existingIndex = prev.findIndex(i => String(i.id_producto) === String(tempItem.id_producto) && (i.id_sku === null || !i.id_sku));
+            if (existingIndex >= 0) {
+                const updated = [...prev];
+                updated[existingIndex] = {
+                    ...updated[existingIndex],
+                    cantidad: parseInt(updated[existingIndex].cantidad) + parseInt(tempItem.cantidad)
+                };
+                return updated;
+            }
+            const newItem = {
+                id: Date.now(),
+                id_producto: tempItem.id_producto,
+                id_sku: null,
+                cantidad: parseInt(tempItem.cantidad),
+                productoName: prod?.descripcion || "Desconocido",
+                skuName: "Standard",
+                attributes: []
+            };
+            return [...prev, newItem];
+        });
 
-        setItems(prev => [...prev, newItem]);
         setTempItem({ ...tempItem, cantidad: 1 });
         toast.success("Producto agregado");
     };
@@ -96,17 +107,30 @@ export default function SolicitudInventario() {
         if (!selectedVariants || selectedVariants.length === 0) return;
 
         const prod = productos.find(p => p.id_producto === parseInt(tempItem.id_producto));
-        const newItems = selectedVariants.map((v, index) => ({
-            id: Date.now() + index,
-            id_producto: tempItem.id_producto,
-            id_sku: v.id_sku,
-            cantidad: v.quantity,
-            productoName: prod?.descripcion || "Desconocido",
-            skuName: v.nombre_sku || v.sku || "Variante",
-            attributes: v.resolvedAttributes // [{ label, value, hex }]
-        }));
-
-        setItems(prev => [...prev, ...newItems]);
+        setItems(prev => {
+            let updatedItems = [...prev];
+            
+            selectedVariants.forEach((v, index) => {
+                const existingIndex = updatedItems.findIndex(i => String(i.id_sku) === String(v.id_sku) && String(i.id_producto) === String(tempItem.id_producto));
+                if (existingIndex >= 0) {
+                    updatedItems[existingIndex] = {
+                        ...updatedItems[existingIndex],
+                        cantidad: parseInt(updatedItems[existingIndex].cantidad) + parseInt(v.quantity)
+                    };
+                } else {
+                    updatedItems.push({
+                        id: Date.now() + index,
+                        id_producto: tempItem.id_producto,
+                        id_sku: v.id_sku,
+                        cantidad: parseInt(v.quantity),
+                        productoName: prod?.descripcion || "Desconocido",
+                        skuName: v.nombre_sku || v.sku || "Variante",
+                        attributes: v.resolvedAttributes
+                    });
+                }
+            });
+            return updatedItems;
+        });
         // Reset temp item slightly but keep product selected if user wants to add more? 
         // Better UX to keep product selected but maybe close modal.
         // setTempItem({ ...tempItem, id_producto: "" }); // Optional: Reset product

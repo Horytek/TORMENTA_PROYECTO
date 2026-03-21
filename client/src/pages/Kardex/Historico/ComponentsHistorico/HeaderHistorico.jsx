@@ -253,7 +253,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
         ]
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         head: [['Fecha', 'Documento', 'Nombre', 'Entra', 'Sale', 'Stock', 'Precio', 'Glosa']],
         body: rows,
         startY: cursorY,

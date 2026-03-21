@@ -99,6 +99,7 @@ const getSalidas = async (req, res) => {
           COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
           n.glosa AS concepto,
           n.estado_nota AS estado,
+          n.estado_espera AS estado_espera,
           COALESCE(u.usua, '') as usuario,
           n.observacion AS observacion,
           n.hora_creacion,

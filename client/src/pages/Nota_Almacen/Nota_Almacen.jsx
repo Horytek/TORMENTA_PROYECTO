@@ -11,7 +11,7 @@ import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { ArrowUpCircle, ArrowDownCircle, Package, Archive } from "lucide-react";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const Nota_Almacen = () => {
     const [filtersIngreso, setFiltersIngreso] = useState({});
@@ -60,22 +60,20 @@ const Nota_Almacen = () => {
 
     const handleAlmacenChange = (almacen) => {
         setAlmacenSeleccionado(almacen || null);
-        const id = almacen ? almacen.id : '%';
-        setFiltersIngreso(prev => ({ ...prev, almacen: id }));
-        setFiltersSalida(prev => ({ ...prev, almacen: id }));
     };
 
-    const handleFiltersChange = (newFilters) => {
-        if (tabActiva === "ingreso") {
+    const handleFiltersChange = (newFilters, tipo) => {
+        if (tipo === "ingreso") {
             const nf = { ...newFilters, almacen: newFilters.almacen || '%' };
             if (JSON.stringify(filtersIngreso) !== JSON.stringify(nf)) {
                 setFiltersIngreso(nf);
                 getNotasIngreso({ ...nf, almacen: nf.almacen || undefined }).then(res => setIngresos(res.data || []));
             }
-        } else {
-            if (JSON.stringify(filtersSalida) !== JSON.stringify(newFilters)) {
-                setFiltersSalida(newFilters);
-                getNotasSalida(newFilters).then(res => setSalidas(res.data || []));
+        } else if (tipo === "salida") {
+            const nf = { ...newFilters, almacen: newFilters.almacen || '%' };
+            if (JSON.stringify(filtersSalida) !== JSON.stringify(nf)) {
+                setFiltersSalida(nf);
+                getNotasSalida({ ...nf, almacen: nf.almacen || undefined }).then(res => setSalidas(res.data || []));
             }
         }
     };
@@ -108,7 +106,7 @@ const Nota_Almacen = () => {
             Referencia: item.proveedor || item.destino || '-',
             Almacen_Origen: item.almacen_O || '-',
             Almacen_Destino: item.almacen_D || '-',
-            Estado: item.estado === 1 ? 'Anulado' : 'Activo',
+            Estado: item.estado === 1 ? 'Anulado' : (item.estado_espera === 2 ? 'Aprobado' : (item.estado_espera === 1 ? 'En espera' : 'Activo')),
             Usuario: item.usuario || '-'
         }));
 
@@ -136,11 +134,11 @@ const Nota_Almacen = () => {
             (item.proveedor || item.destino || '-').substring(0, 15),
             (item.almacen_O || '-').substring(0, 10),
             (item.almacen_D || '-').substring(0, 10),
-            item.estado === 1 ? 'ANUL' : 'ACT',
+            item.estado === 1 ? 'ANUL' : (item.estado_espera === 2 ? 'APROB' : (item.estado_espera === 1 ? 'ESPERA' : 'ACT')),
             item.usuario || '-'
         ]);
 
-        doc.autoTable({
+        autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 35,

@@ -263,11 +263,7 @@ function Vendedores() {
       )}
 
       {selectedTab === "pagos" && (
-        <Card>
-          <CardBody>
-            <PagosEmpleados vendedores={vendedores} />
-          </CardBody>
-        </Card>
+        <PagosEmpleados vendedores={vendedores} />
       )}
 
 

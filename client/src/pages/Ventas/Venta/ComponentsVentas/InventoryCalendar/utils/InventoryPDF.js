@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -86,7 +86,7 @@ export const generateInventoryPDF = (month, year, daysData) => {
         }
     });
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: 40,
         head: [['Producto', 'Cantidad', 'Subtotal']],
         body: tableRows,

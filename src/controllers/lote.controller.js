@@ -195,7 +195,8 @@ const approveLote = async (req, res) => {
                 usuario: req.user.username || 'Sistema',
                 tonalidad: tonalidades,
                 talla: tallas,
-                skus: skus // Explicitly pass SKUs
+                skus: skus,
+                estado_espera: 2
             },
             id_tenant: id_tenant,
             connection: { remoteAddress: '::1' },

@@ -284,7 +284,7 @@ const Kardex = () => {
         ];
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         head: [['Código', 'Descripción', 'Marca', 'Stock', 'UM']],
         body: rows,
         startY: cursorY,

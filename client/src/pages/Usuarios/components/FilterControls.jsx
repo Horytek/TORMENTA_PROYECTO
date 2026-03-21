@@ -53,7 +53,7 @@ export default function FilterControls({
                         size="sm"
                         className="w-full md:w-40"
                         classNames={{
-                            trigger: "bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-sm",
+                            trigger: "bg-white dark:bg-zinc-800 shadow-sm",
                         }}
                         selectedKeys={selectedRole ? [selectedRole] : []}
                         onSelectionChange={(keys) => handleRoleChange(Array.from(keys)[0] || "")}
@@ -71,7 +71,7 @@ export default function FilterControls({
                         size="sm"
                         className="w-full md:w-36"
                         classNames={{
-                            trigger: "bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-sm",
+                            trigger: "bg-white dark:bg-zinc-800 shadow-sm",
                         }}
                         selectedKeys={selectedStatus ? [selectedStatus] : []}
                         onSelectionChange={(keys) => handleStatusChange(Array.from(keys)[0] || "")}
@@ -86,7 +86,7 @@ export default function FilterControls({
                         size="sm"
                         className="w-full md:w-36"
                         classNames={{
-                            trigger: "bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-sm",
+                            trigger: "bg-white dark:bg-zinc-800 shadow-sm",
                         }}
                         selectedKeys={selectedConnection ? [selectedConnection] : []}
                         onSelectionChange={(keys) => handleConnectionChange(Array.from(keys)[0] || "")}
