@@ -256,6 +256,8 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
               <span className="text-xs text-slate-500">{sortedTransactions.length} registros</span>
             </div>
 
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
             <Table
               aria-label="Historico de Transacciones"
               removeWrapper
@@ -366,6 +368,79 @@ function HistoricoTable({ transactions, previousTransactions, productoData = [],
                 ))}
               </TableBody>
             </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="block md:hidden border-b border-slate-200 dark:border-zinc-700">
+               <div className="flex flex-col divide-y divide-slate-100 dark:divide-zinc-800/80">
+                  {paginatedTransactions.map((transaction, index) => (
+                      <div key={index} className="p-4 flex flex-col gap-3 hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer" onClick={() => toggleRow(transaction)}>
+                         <div className="flex justify-between items-start">
+                            <div className="flex flex-col">
+                               <span className="font-bold text-sm text-slate-800 dark:text-zinc-200 tracking-tight">
+                                  {transaction.documento || "-"}
+                               </span>
+                               <span className="text-[11px] text-slate-500 mt-0.5">
+                                  {transaction.fecha} • {transaction.hora_creacion ? new Date(`1970-01-01T${transaction.hora_creacion}`).toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit", hour12: true}) : ""}
+                               </span>
+                            </div>
+                            
+                            <div>
+                               {(() => {
+                                  const estado = transaction["estado_doc"];
+                                  const isRegistrado = estado === 1 || estado === '1' || estado === 'REGISTRADO' || estado === 'APROBADO';
+                                  const isAnulado = estado === 0 || estado === '0' || estado === 'ANULADO';
+                                  const label = isRegistrado ? 'REGISTRADO' : (isAnulado ? 'ANULADO' : (estado || 'REGISTRADO'));
+                                  return <Chip size="sm" variant="flat" color={isRegistrado ? 'success' : (isAnulado ? 'danger' : 'default')} className="h-5 px-1 min-w-min" classNames={{content:"text-[9px] font-bold"}}>{label}</Chip>;
+                               })()}
+                            </div>
+                         </div>
+                         
+                         <div className="text-xs text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-zinc-800/50">
+                             <span className="font-bold text-slate-400 mr-1 text-[10px] uppercase">Variante:</span> 
+                             <span className="font-medium text-slate-700 dark:text-zinc-300">
+                             {(() => {
+                                const label = transaction.sku_label;
+                                if (label && label !== 'Standard' && label !== 'Default') return label;
+                                try {
+                                  const parsed = typeof transaction.sku_attrs === 'string' ? JSON.parse(transaction.sku_attrs) : transaction.sku_attrs;
+                                  if (parsed && Object.keys(parsed).length > 0) return Object.values(parsed).join(' - ');
+                                } catch (e) {}
+                                if (transaction.tonalidad !== '-' || transaction.talla !== '-') return `${transaction.tonalidad} - ${transaction.talla}`;
+                                return "Standard";
+                             })()}
+                             </span>
+                         </div>
+
+                         <div className="flex justify-between items-center text-xs mt-1">
+                             <div className="flex gap-6">
+                               <div className="flex flex-col">
+                                  <span className="text-slate-400 text-[10px] uppercase font-bold mb-0.5">Entra</span>
+                                  <span className={Number(transaction.entra) > 0 ? "text-emerald-600 font-black text-sm" : "text-slate-400 font-semibold"}>{transaction.entra || "0"}</span>
+                               </div>
+                               <div className="flex flex-col">
+                                  <span className="text-slate-400 text-[10px] uppercase font-bold mb-0.5">Sale</span>
+                                  <span className={Number(transaction.sale) > 0 ? "text-rose-600 font-black text-sm" : "text-slate-400 font-semibold"}>{transaction.sale || "0"}</span>
+                               </div>
+                             </div>
+                             <div className="flex flex-col items-end">
+                               <span className="text-slate-400 text-[10px] uppercase font-bold mb-0.5">Stock Final</span>
+                               <span className="font-black text-blue-600 dark:text-blue-400 text-base">
+                                  {transaction.calculatedStock !== undefined ? transaction.calculatedStock : (transaction.stock || "-")}
+                               </span>
+                             </div>
+                         </div>
+                         
+                      </div>
+                  ))}
+                  {paginatedTransactions.length === 0 && (
+                      <div className="py-10 text-center text-slate-400">
+                         <Package size={32} className="mx-auto mb-3 opacity-30 text-slate-400" />
+                         <p className="text-sm font-medium">No hay transacciones registradas.</p>
+                      </div>
+                  )}
+               </div>
+            </div>
 
             {/* Paginación Standard Styled */}
             <div className="p-3 border-t border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex flex-col sm:flex-row justify-between items-center gap-3">

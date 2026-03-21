@@ -592,11 +592,12 @@ const TablaVentas = ({
 
   return (
     <div className="w-full p-0">
+      <div className="hidden md:block">
       <ScrollShadow hideScrollBar>
         <Table
           aria-label="Tabla de Ventas"
           removeWrapper
-          className="min-w-full text-[13px]"
+          className="min-w-[1024px] text-[13px]"
           classNames={{
             th: "bg-slate-50 text-slate-500 font-bold uppercase text-xs h-10 dark:bg-zinc-900 dark:text-slate-400",
             td: "py-3 border-b border-slate-100 dark:border-zinc-800 dark:text-gray-300",
@@ -619,6 +620,95 @@ const TablaVentas = ({
           </TableBody>
         </Table>
       </ScrollShadow>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="block md:hidden border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/10">
+        <div className="flex flex-col divide-y divide-slate-100 dark:divide-zinc-800/80">
+          {ventas.map((venta) => {
+            const tipoColor = TIPO_COMPROBANTE_COLORS[venta.tipoComprobante] || TIPO_COMPROBANTE_COLORS.Default;
+            return (
+              <div key={venta.id} className="p-4 flex flex-col gap-3 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col min-w-0 pr-2">
+                    <span className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">
+                      {venta.serieNum}-{venta.num}
+                    </span>
+                    <span className="text-[11px] text-slate-500 mt-0.5 flex flex-col">
+                      <span>{venta.fechaEmision ? new Date(venta.fechaEmision + "T12:00:00").toLocaleDateString("es-ES") : "N/A"}</span>
+                      <span>{venta.hora_creacion ? new Date(`1970-01-01T${venta.hora_creacion}`).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", hour12: true }) : "N/A"}</span>
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <Chip className="h-5 px-1 min-w-min" color={['Aceptada', 'Activo'].includes(venta.estado) ? "success" : ['En proceso'].includes(venta.estado) ? "warning" : ['Anulada', 'Anulado'].includes(venta.estado) ? "danger" : "default"} size="sm" variant="flat" classNames={{content:"text-[9px] font-bold uppercase"}}>
+                      {venta.estado}
+                    </Chip>
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${tipoColor}`}>
+                      {venta.tipoComprobante}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 text-xs">
+                  <div className="flex justify-between gap-4">
+                    <span className="text-slate-500 shrink-0">Cliente:</span>
+                    <div className="flex flex-col items-end min-w-0">
+                      <span className="font-medium text-slate-700 dark:text-slate-300 text-right truncate w-full">{venta.cliente}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{venta.ruc}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-1 py-2 border-y border-slate-100 dark:border-zinc-800">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">IGV</span>
+                      <span className="font-medium text-slate-600 dark:text-slate-400">{venta.igv}</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">TOTAL</span>
+                      <span className="font-bold text-slate-800 dark:text-white text-sm">{venta.total}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-1 pt-2 flex justify-between items-center">
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1 shrink-0">
+                    Cajero: <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[100px]">{venta.cajero}</span>
+                  </span>
+                  
+                  <div className="flex gap-1">
+                    <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-indigo-600 min-w-8 w-8 h-8" onPress={() => handleViewDetail(venta)}>
+                       <FaEye size={15} />
+                    </Button>
+                    <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-blue-600 min-w-8 w-8 h-8" onPress={() => handlePrintIconClick(venta)}>
+                       <TiPrinter size={18} />
+                    </Button>
+                    <Dropdown>
+                      <DropdownTrigger>
+                        <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-slate-700 min-w-8 w-8 h-8">
+                          <IoMdOptions size={18} />
+                        </Button>
+                      </DropdownTrigger>
+                      <DropdownMenu aria-label="Opciones de venta" variant="faded" placement="bottom-end">
+                        <DropdownItem key="options" onPress={() => openModal(venta.id, venta.estado)}>
+                          Opciones Avanzadas
+                        </DropdownItem>
+                        <DropdownItem key="exchange" onPress={() => handleIntercambioClick(venta)}>
+                          Intercambio
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {ventas.length === 0 && (
+             <div className="py-10 text-center text-slate-400">
+                <p className="text-sm font-medium">No se encontraron ventas.</p>
+             </div>
+          )}
+        </div>
+      </div>
       <div className="flex flex-col md:flex-row justify-between items-center mt-4 px-4 pb-4 gap-3">
         <Pagination
           showControls

@@ -471,6 +471,7 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
 
   return (
     <div className="flex flex-col w-full relative">
+      <div className="hidden md:block">
       <Table
         aria-label={`Tabla de notas de ${tipo}`}
         removeWrapper
@@ -596,10 +597,98 @@ const TablaNotasAlmacen = forwardRef(function TablaNotasAlmacen(
           )}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="block md:hidden border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/10">
+        <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800/80">
+          {currentItems.map((nota) => {
+             const anulado = nota.estado === 1;
+             const isAprobado = nota.estado === 0 && nota.estado_espera === 2;
+             const isEspera = nota.estado === 0 && nota.estado_espera === 1;
+             const isEsperaLote = nota.id < 0;
+
+             return (
+              <div key={nota.id} className="p-4 flex flex-col gap-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" onClick={() => toggleExpand(nota.id)}>
+                <div className="flex justify-between items-start">
+                   <div className="flex flex-col min-w-0 pr-2">
+                      <span className="font-bold text-sm text-slate-800 dark:text-slate-100 tracking-tight truncate">
+                         {nota.documento || "SIN DOC"}
+                      </span>
+                      <span className="text-[11px] text-slate-500 mt-0.5">
+                         {nota.fecha} • {nota.hora_creacion || "N/A"}
+                      </span>
+                   </div>
+                   
+                   <div className="shrink-0">
+                     {anulado ? (
+                        <Chip className="h-5 px-1 min-w-min" classNames={{content:"text-[9px] font-bold uppercase"}} color="danger" size="sm" variant="flat">Anulado</Chip>
+                     ) : isAprobado ? (
+                        <Chip className="h-5 px-1 min-w-min bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" classNames={{content:"text-[9px] font-bold uppercase"}} size="sm" variant="flat">Aprobado</Chip>
+                     ) : isEspera ? (
+                        <Chip className="h-5 px-1 min-w-min bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" classNames={{content:"text-[9px] font-bold uppercase"}} size="sm" variant="flat">En espera</Chip>
+                     ) : (
+                        <Chip className="h-5 px-1 min-w-min" classNames={{content:"text-[9px] font-bold uppercase"}} color="success" size="sm" variant="flat">Activo</Chip>
+                     )}
+                   </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 text-xs">
+                   <div className="flex justify-between gap-4">
+                      <span className="text-slate-500 shrink-0">{tipo === 'ingreso' ? 'Proveedor:' : 'Destinatario:'}</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300 text-right truncate">{nota.proveedor || "-"}</span>
+                   </div>
+                   <div className="flex justify-between gap-4">
+                      <span className="text-slate-500 shrink-0">Concepto:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300 text-right truncate">{nota.concepto || "-"}</span>
+                   </div>
+                   <div className="flex flex-col mt-2 rounded-lg border border-slate-100 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+                      <div className="flex bg-slate-50 dark:bg-slate-800/30">
+                         <div className="flex flex-col p-2.5 w-1/2 border-r border-slate-100 dark:border-slate-800">
+                            <span className="text-[9px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">Origen</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300 line-clamp-1">{nota.almacen_O || "-"}</span>
+                         </div>
+                         <div className="flex flex-col p-2.5 w-1/2">
+                            <span className="text-[9px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">Destino</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300 line-clamp-1">{nota.almacen_D || "-"}</span>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="mt-1 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                   <span className="text-xs text-slate-500 flex items-center gap-1 shrink-0">Usuario: <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[100px]">{nota.usuario || "-"}</span></span>
+                   
+                   <div className="flex gap-1">
+                     <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-indigo-600 min-w-8 w-8 h-8" onPress={e => { e.stopPropagation(); handleObservationClick(nota); }}>
+                        <FaEye size={15} />
+                     </Button>
+                     {hasGeneratePermission && (
+                       <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-red-500 min-w-8 w-8 h-8" onPress={e => { e.stopPropagation(); queueAccion('pdf', nota.id); }}>
+                          <FaFilePdf size={14} />
+                       </Button>
+                     )}
+                     {hasDeactivatePermission && !isEsperaLote && (
+                       <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-amber-600 min-w-8 w-8 h-8" onPress={e => { e.stopPropagation(); queueAccion('anular', nota.id); }}>
+                          <TiDeleteOutline size={18} />
+                       </Button>
+                     )}
+                   </div>
+                </div>
+              </div>
+             );
+          })}
+          {currentItems.length === 0 && (
+             <div className="py-10 text-center text-slate-400">
+                <p className="text-sm font-medium">No hay registros para mostrar.</p>
+             </div>
+          )}
+        </div>
+      </div>
 
       {/* Pagination Bar */}
       {!externalPagination && (
-        <div className="mt-4 flex flex-wrap justify-between items-center gap-4 py-3 border-t border-slate-100 dark:border-slate-800 px-4">
+        <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4 py-3 border-t border-slate-100 dark:border-slate-800 px-4">
           <Pagination
             showControls
             total={totalPages}

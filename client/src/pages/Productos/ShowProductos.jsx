@@ -299,8 +299,8 @@ export function ShowProductos({ searchTerm, productos, onEdit, onDelete, updateP
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex w-full justify-between items-center bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-3 mt-4">
-                <div className="flex items-center gap-3 text-small text-slate-500 dark:text-slate-400 ml-2">
+            <div className="flex flex-col sm:flex-row w-full justify-between items-center gap-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-3 mt-4">
+                <div className="flex items-center gap-3 text-small text-slate-500 dark:text-slate-400 sm:ml-2">
                     <span className="font-medium text-slate-600 dark:text-slate-300">
                         {filteredItems.length} productos
                     </span>

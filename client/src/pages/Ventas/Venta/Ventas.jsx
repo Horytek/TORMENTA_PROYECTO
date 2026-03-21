@@ -11,7 +11,7 @@ import { useUserStore } from "@/store/useStore";
 import { handleDelete, anularVentaEnSunatF, anularVentaEnSunatB } from "@/services/ventas.services";
 import { useVentaSeleccionadaStore } from "@/store/useVentaTable";
 import { Card, CardBody, ScrollShadow } from "@heroui/react";
-import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator, FaGlobe, FaStore } from "react-icons/fa";
+import { FaShoppingBag, FaMoneyBillWave, FaCreditCard, FaCalculator, FaGlobe, FaStore, FaCalendarAlt, FaChartBar } from "react-icons/fa";
 import { useSucursalData } from "@/services/ventas.services";
 import { Tabs, Tab } from "@heroui/react";
 import InventoryCalendar from './ComponentsVentas/InventoryCalendar/InventoryCalendar';
@@ -193,8 +193,23 @@ const Ventas = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <Tabs aria-label="Vistas de Ventas" color="primary" variant="underlined">
-          <Tab key="ventas" title="Listado de Ventas">
+        <Tabs 
+          aria-label="Vistas de Ventas" 
+          color="primary" 
+          variant="underlined"
+          classNames={{
+            base: "w-full overflow-x-auto",
+            tabList: "w-full max-w-full overflow-x-auto gap-4 md:gap-6",
+            cursor: "w-full bg-primary",
+            tab: "max-w-fit px-2 h-12"
+          }}
+        >
+          <Tab key="ventas" title={
+            <div className="flex items-center gap-2">
+              <FaStore className="text-blue-500" />
+              <span>Listado de Ventas</span>
+            </div>
+          }>
             <div className="space-y-6 mt-4">
               {/* KPIs */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -229,9 +244,8 @@ const Ventas = () => {
                 <FiltrosVentas onFiltersChange={handleFilterChange} />
               </div>
 
-              {/* Tabla de ventas con ScrollShadow */}
-              <ScrollShadow hideScrollBar className="rounded-xl w-full overflow-x-auto overflow-y-hidden">
-                <div className="min-w-[900px]">
+              {/* Tabla de ventas */}
+              <div className="w-full">
                   <TablaVentas
                     ventas={ventas || []}
                     modalOpen={modalOpen}
@@ -244,8 +258,7 @@ const Ventas = () => {
                     setVentasPerPage={setVentasPerPage}
                     refreshVentas={refreshVentas}
                   />
-                </div>
-              </ScrollShadow>
+              </div>
             </div>
           </Tab>
           <Tab key="online" title={
@@ -289,12 +302,22 @@ const Ventas = () => {
               />
             </div>
           </Tab>
-          <Tab key="inventario" title="Inventario y Calendario">
+          <Tab key="inventario" title={
+            <div className="flex items-center gap-2">
+              <FaCalendarAlt className="text-purple-500" />
+              <span>Inventario y Calendario</span>
+            </div>
+          }>
             <div className="mt-4">
               <InventoryCalendar ventas={allVentas} />
             </div>
           </Tab>
-          <Tab key="estadisticas" title="Estadísticas">
+          <Tab key="estadisticas" title={
+            <div className="flex items-center gap-2">
+              <FaChartBar className="text-orange-500" />
+              <span>Estadísticas</span>
+            </div>
+          }>
             <VentasStats />
           </Tab>
         </Tabs>

@@ -368,9 +368,11 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
 
   return (
     <div className="flex flex-col w-full relative">
+      <div className="hidden md:block">
       <Table
         aria-label="Tabla Guías Remisión"
         removeWrapper
+        className="min-w-[1000px]"
         classNames={{
           base: "max-h-[600px] overflow-auto",
           th: "bg-slate-50 dark:bg-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 h-10",
@@ -457,9 +459,82 @@ const TablaGuias = ({ guias, onGuiaAnulada }) => {
           )}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="block md:hidden border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/10">
+        <div className="flex flex-col divide-y divide-slate-100 dark:divide-zinc-800/80">
+          {currentGuias.map((item) => (
+            <div key={item.id} className="p-4 flex flex-col gap-3 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer" onClick={() => handleRowClick(item)}>
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col min-w-0 pr-2">
+                  <span className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">
+                    {item.numGuia}
+                  </span>
+                  <span className="text-[11px] text-slate-500 mt-0.5">
+                    {item.fecha}
+                  </span>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <Chip
+                    className="h-5 px-1 min-w-min border-none capitalize"
+                    color={item.estado === 'Activo' ? "success" : "danger"}
+                    size="sm"
+                    variant="flat"
+                    classNames={{ content: "text-[9px] font-bold uppercase" }}
+                    startContent={<span className={`w-1 h-1 rounded-full ${item.estado === 'Activo' ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>}
+                  >
+                    {item.estado === 'Activo' ? "Activo" : "Inactivo"}
+                  </Chip>
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 px-1.5 py-0.5 rounded truncate max-w-[100px]" title={item.concepto}>
+                    {item.concepto}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5 text-xs">
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500 shrink-0">Cliente:</span>
+                  <div className="flex flex-col items-end min-w-0">
+                    <span className="font-medium text-slate-700 dark:text-slate-300 text-right truncate w-full">{item.cliente}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{item.documento}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500 shrink-0">Vendedor:</span>
+                  <div className="flex flex-col items-end min-w-0">
+                    <span className="font-medium text-slate-700 dark:text-slate-300 text-right truncate w-full">{item.vendedor}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{item.dni}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-1 pt-2 flex justify-between items-center border-t border-slate-100 dark:border-zinc-800/50">
+                <span className="text-[11px] font-medium text-slate-500 line-clamp-1 flex-1 pr-2">Ref: {item.documento}</span>
+                <div className="flex gap-1 shrink-0">
+                  <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-indigo-600 min-w-8 w-8 h-8" onClick={(e) => { e.stopPropagation(); handleRowClick(item); }}>
+                    <FaEye size={15} />
+                  </Button>
+                  <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-blue-600 min-w-8 w-8 h-8" onClick={(e) => { e.stopPropagation(); handleSelectAction('imprimir', item.id); }}>
+                    <FaFilePdf size={15} />
+                  </Button>
+                  <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-rose-600 min-w-8 w-8 h-8" onClick={(e) => { e.stopPropagation(); handleSelectAction('anular', item.id); }}>
+                    <TiDeleteOutline size={18} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {currentGuias.length === 0 && (
+            <div className="py-10 text-center text-slate-400">
+              <p className="text-sm font-medium">No hay guías registradas.</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Footer Pagination */}
-      <div className="mt-4 flex flex-wrap justify-between items-center gap-4 py-3 border-t border-slate-100 dark:border-slate-800 px-4">
+      <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4 py-3 border-t border-slate-100 dark:border-slate-800 px-4">
         <Pagination
           showControls
           total={totalPages}

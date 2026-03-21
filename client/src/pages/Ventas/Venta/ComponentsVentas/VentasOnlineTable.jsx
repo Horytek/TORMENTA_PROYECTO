@@ -229,6 +229,8 @@ const VentasOnlineTable = ({
                         <p>No hay ventas online registradas</p>
                     </div>
                 ) : (
+                    <>
+                    <div className="hidden md:block">
                     <ScrollShadow hideScrollBar className="w-full overflow-x-auto">
                         <Table
                             aria-label="Tabla de ventas online"
@@ -255,11 +257,74 @@ const VentasOnlineTable = ({
                             </TableBody>
                         </Table>
                     </ScrollShadow>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="block md:hidden border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/10">
+                      <div className="flex flex-col divide-y divide-slate-100 dark:divide-zinc-800/80">
+                        {ventas.map((venta) => {
+                          const estadoStyle = ESTADO_STYLES[venta.estado] || ESTADO_STYLES.Default;
+                          return (
+                            <div key={venta.id} className="p-4 flex flex-col gap-3 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                              <div className="flex justify-between items-start">
+                                <div className="flex flex-col min-w-0 pr-2">
+                                  <span className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate flex items-center gap-1">
+                                    <FaShoppingCart className="text-emerald-600" /> ID: {venta.id}
+                                  </span>
+                                  <span className="text-[11px] text-slate-500 mt-1">
+                                    {venta.fechaEmision ? new Date(venta.fechaEmision + "T12:00:00").toLocaleDateString("es-ES") : "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col items-end gap-1 shrink-0">
+                                  <Chip className="h-5 px-1 min-w-min" color={['Aceptada', 'Activo'].includes(venta.estado) ? "success" : ['En proceso'].includes(venta.estado) ? "warning" : ['Anulada', 'Anulado'].includes(venta.estado) ? "danger" : "default"} size="sm" variant="flat" classNames={{content:"text-[9px] font-bold uppercase"}}>
+                                    {venta.estado}
+                                  </Chip>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-1.5 text-xs">
+                                <div className="flex justify-between gap-4">
+                                  <span className="text-slate-500 shrink-0">Cliente:</span>
+                                  <div className="flex flex-col items-end min-w-0">
+                                    <span className="font-medium text-slate-700 dark:text-slate-300 text-right truncate w-full">{venta.cliente}</span>
+                                    <span className="text-[10px] text-slate-400 font-mono">{venta.dni}</span>
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2 mt-1 py-2 border-y border-slate-100 dark:border-zinc-800">
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">Pago</span>
+                                    <span className="font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1"><FaCreditCard className="text-blue-500" /> {venta.metodo_pago}</span>
+                                  </div>
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">TOTAL</span>
+                                    <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{venta.total}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="mt-1 flex justify-between items-center">
+                                <span className="text-[11px] text-slate-500 flex items-center gap-1 shrink-0">
+                                  Almacén: <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[100px]">{venta.almacen || "-"}</span>
+                                </span>
+                                
+                                <div className="flex gap-1">
+                                  <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-emerald-600 min-w-8 w-8 h-8" onPress={() => handleViewDetail(venta)}>
+                                    <FaEye size={15} />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    </>
                 )}
 
                 {/* Paginación */}
                 {!loading && ventas.length > 0 && (
-                    <div className="flex justify-between items-center mt-4 px-2">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4 px-2">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-slate-500">Filas:</span>
                             <Select

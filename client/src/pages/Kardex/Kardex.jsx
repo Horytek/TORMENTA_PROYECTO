@@ -529,7 +529,7 @@ const Kardex = () => {
         />
 
         {/* Pagination Footer */}
-        <div className="flex w-full justify-between items-center bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
+        <div className="flex flex-col sm:flex-row w-full justify-between items-center gap-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4">
           <div className="flex gap-2 items-center">
             <span className="text-[12px] text-slate-400 dark:text-slate-500">
               {kardex.length} items

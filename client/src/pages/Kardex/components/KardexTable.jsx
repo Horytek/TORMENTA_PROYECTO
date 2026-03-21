@@ -144,7 +144,9 @@ const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay product
 
   return (
     <div className="w-full">
-      <Table
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        <Table
         aria-label="Tabla de inventario kardex"
         isHeaderSticky
         removeWrapper
@@ -188,6 +190,76 @@ const KardexTable = ({ kardex, page = 1, limit = 10, emptyText = "No hay product
           )}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="block md:hidden space-y-4">
+        {items.map((item) => {
+          const status = getStockStatus(item.stock);
+          let color = "default";
+          let icon = null;
+          let text = "Desconocido";
+
+          switch (status) {
+            case "critical": color = "danger"; text = "Crítico"; icon = <AlertTriangle className="w-3 h-3" />; break;
+            case "low": color = "warning"; text = "Bajo"; icon = <AlertTriangle className="w-3 h-3" />; break;
+            case "normal": color = "success"; text = "Normal"; icon = <CheckCircle className="w-3 h-3" />; break;
+            case "high": color = "primary"; text = "Alto"; icon = <Package className="w-3 h-3" />; break;
+          }
+
+          return (
+            <div key={item.codigo} className="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800 space-y-3 cursor-pointer hover:border-blue-400 transition-colors" onClick={() => handleRowClick(item)}>
+               <div className="flex justify-between items-start gap-2">
+                 <div className="flex flex-col">
+                    <span className="font-mono text-[11px] text-slate-500 mb-0.5">{item.codigo}</span>
+                    <h3 className="font-semibold text-slate-800 dark:text-zinc-200 text-sm line-clamp-2">
+                      {item.descripcion}
+                    </h3>
+                 </div>
+                 <Chip startContent={icon} variant="flat" color={color} size="sm" classNames={{base: "gap-1 border-none h-6 min-w-min px-2", content: "font-semibold text-[10px] items-center capitalize"}}>
+                   {text}
+                 </Chip>
+               </div>
+               
+               <div className="grid grid-cols-3 gap-2 text-xs border-y border-slate-100 dark:border-zinc-800 py-2.5 mt-1">
+                  <div className="flex flex-col gap-1">
+                     <span className="text-slate-400 font-medium">Marca</span>
+                     <span className="font-semibold text-slate-700 dark:text-zinc-300">{item.marca}</span>
+                  </div>
+                  <div className="flex flex-col gap-1 items-center">
+                     <span className="text-slate-400 font-medium">UM</span>
+                     <span className="font-semibold text-slate-700 dark:text-zinc-300">{item.um}</span>
+                  </div>
+                  <div className="flex flex-col gap-1 items-end">
+                     <span className="text-slate-400 font-medium">Stock</span>
+                     <span className="font-extrabold text-blue-600 dark:text-blue-400 text-sm">{item.stock}</span>
+                  </div>
+               </div>
+
+               <div className="flex justify-end pt-1" onClick={(e) => e.stopPropagation()}>
+                 <Button
+                    size="sm"
+                    variant="flat"
+                    color="primary"
+                    className="font-medium"
+                    startContent={<Eye size={16} />}
+                    onPress={() => {
+                      setSelectedProduct(item);
+                      setModalOpen(true);
+                    }}
+                 >
+                   Ver Detalle de Variantes
+                 </Button>
+               </div>
+            </div>
+          );
+        })}
+        {items.length === 0 && (
+          <div className="text-center py-8 text-slate-500 bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-slate-300 dark:border-zinc-800 shadow-sm">
+            {emptyText}
+          </div>
+        )}
+      </div>
 
       <StockDetailModal
         isOpen={modalOpen}

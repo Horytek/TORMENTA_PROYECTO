@@ -8,6 +8,7 @@ import { getEmpresaDataByUser } from "@/services/empresa.services";
 import { useUserStore } from "@/store/useStore";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import autoTable from 'jspdf-autotable';
 
 function HeaderHistorico({ productoData, onDateChange, transactions, previousTransactions, dateRange, almacenSeleccionado, attrMetadataMap = {} }) {
   const { almacenes } = useAlmacenesKardex();
@@ -118,7 +119,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
   const generatePDFKardex = async (productoData, transactions = [], previousTransactions = [], dateRange = {}) => {
     try {
       const jspdfModule = await import(/* @vite-ignore */ 'jspdf');
-      await import(/* @vite-ignore */ 'jspdf-autotable');
+      
       const jsPDF = jspdfModule.jsPDF || jspdfModule.default || jspdfModule;
 
       const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
@@ -130,14 +131,17 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
 
       // Encabezado empresa (respetando espacio derecho)
       const xText = logoBase64 ? 46 : 16;
-      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
-      doc.text(empresaData?.nombreComercial || 'TORMENTA JEANS', xText, cursorY);
-      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-      cursorY += 6;
       const boxW = 72;
       const boxX = pageWidth - boxW - 16;
-      const infoMaxWidth = Math.max(80, boxX - xText - 8);
+      // Calculate true max width available avoiding the box
+      const infoMaxWidth = Math.max(40, boxX - xText - 4);
 
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      const titleLines = doc.splitTextToSize(empresaData?.nombreComercial || 'TORMENTA JEANS', infoMaxWidth);
+      titleLines.forEach(line => { doc.text(line, xText, cursorY); cursorY += 5; });
+      cursorY += 1;
+
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
       const direccionLines = doc.splitTextToSize(`Central: ${empresaData?.direccion || ''}`, infoMaxWidth);
       direccionLines.forEach(line => { doc.text(line, xText, cursorY); cursorY += 4; });
       const ubicLines = doc.splitTextToSize(`${empresaData?.distrito || ''} - ${empresaData?.provincia || ''} - ${empresaData?.departamento || ''}`, infoMaxWidth);
@@ -242,7 +246,7 @@ function HeaderHistorico({ productoData, onDateChange, transactions, previousTra
         }
 
         return [
-          item.fecha ? new Date(item.fecha).toLocaleDateString() : '',
+          item.fecha ? (item.fecha.includes('/') ? item.fecha : new Date(item.fecha).toLocaleDateString()) : '',
           item.documento || '',
           nombre,
           item.entra != null ? String(item.entra) : '0',
