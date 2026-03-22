@@ -175,14 +175,32 @@ export const useGetClientes = (
                     combinedClients = [...combinedClients, ...externalClients];
                 }
 
+                // Remove duplicates by document (dni or ruc)
+                const uniqueClients = [];
+                const docSet = new Set();
+                
+                for (const client of combinedClients) {
+                    const doc = client.dni || client.ruc || client.dniRuc || '';
+                    // Si tiene documento, comprobamos duplicado
+                    if (doc) {
+                        if (!docSet.has(doc)) {
+                            docSet.add(doc);
+                            uniqueClients.push(client);
+                        }
+                    } else {
+                        // Si no tiene, no sabemos si es duplicado real, lo agregamos
+                        uniqueClients.push(client); 
+                    }
+                }
+
                 // Ordenar por fecha (descendente)
-                combinedClients.sort((a, b) => {
+                uniqueClients.sort((a, b) => {
                     const dateA = new Date(a.f_creacion);
                     const dateB = new Date(b.f_creacion);
                     return dateB - dateA;
                 });
 
-                setAllClientes(combinedClients);
+                setAllClientes(uniqueClients);
 
             } catch (err) {
                 console.error("Error fetching clients", err);

@@ -260,8 +260,8 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
         backdrop="blur"
         scrollBehavior="inside"
         classNames={{
-          base: "bg-white/95 dark:bg-[#18192b] border border-blue-100 dark:border-zinc-700 rounded-2xl shadow-xl",
-          header: "px-6 py-4 border-b border-blue-100 dark:border-zinc-700 bg-white/90 dark:bg-[#232339] rounded-t-2xl",
+          base: "bg-white/95 dark:bg-[#18192b] border border-blue-100 dark:border-zinc-700 rounded-2xl shadow-xl mx-4 sm:mx-0",
+          header: "px-4 sm:px-6 py-4 border-b border-blue-100 dark:border-zinc-700 bg-white/90 dark:bg-[#232339] rounded-t-2xl",
           body: "px-0 py-0",
         }}
       >
@@ -304,7 +304,7 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
               </ModalHeader>
 
               <ModalBody className="pb-6">
-                <div className="px-6 pt-4">
+                <div className="px-4 sm:px-6 pt-4">
                   <Tabs
                     aria-label="Opciones"
                     color="primary"
@@ -312,9 +312,9 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
                     selectedKey={selectedTab}
                     onSelectionChange={setSelectedTab}
                     classNames={{
-                      tabList: "gap-6 w-full p-0 border-b border-blue-100 dark:border-zinc-700",
+                      tabList: "gap-4 sm:gap-6 w-full p-0 border-b border-blue-100 dark:border-zinc-700 overflow-x-auto",
                       cursor: "w-full bg-blue-600",
-                      tab: "max-w-fit px-0 h-11",
+                      tab: "max-w-fit px-0 h-11 whitespace-nowrap",
                       tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 font-semibold text-sm"
                     }}
                   >
@@ -322,8 +322,8 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
                       key="details"
                       title={<div className="flex items-center gap-2"><FaUser className="w-4 h-4" /><span>Detalles</span></div>}
                     >
-                      <div className="grid md:grid-cols-2 gap-6 mt-6">
-                        <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-5 space-y-4">
+                      <div className="flex flex-col md:grid md:grid-cols-2 gap-4 md:gap-6 mt-4 md:mt-6">
+                        <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-4 sm:p-5 space-y-4">
                           <h4 className="text-[12px] font-bold text-blue-900 dark:text-blue-100 uppercase tracking-wide">Contacto</h4>
 
                           <div className="flex items-start gap-3">
@@ -357,7 +357,7 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
                           </div>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-5 space-y-4">
+                        <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-4 sm:p-5 space-y-4 mt-4 md:mt-0">
                           <h4 className="text-[12px] font-bold text-blue-900 dark:text-blue-100 uppercase tracking-wide">Resumen</h4>
                           <div className="text-xs text-gray-600 dark:text-zinc-300 space-y-3">
                             <div className="flex justify-between border-b border-gray-200 dark:border-zinc-700 pb-2">
@@ -527,7 +527,7 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
                 </div>
                 {/* Acciones Rápidas (similar a perfil de usuario) */}
                 <Divider className="mt-6 mb-4" />
-                <div className="px-6 mb-2">
+                <div className="px-4 sm:px-6 mb-2">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                     Acciones Rápidas
                   </h3>
@@ -595,7 +595,7 @@ const ViewClientModal = ({ client, trigger, onEdit, onDeactivate, onReactivate, 
                 </div>
 
                 <Divider className="mb-4" />
-                <div className="px-6 text-[10px] text-gray-400 dark:text-zinc-500">
+                <div className="px-4 sm:px-6 text-[10px] text-gray-400 dark:text-zinc-500 pb-2">
                   Información generada automáticamente • Cliente ID: {data.id || "—"}
                 </div>
               </ModalBody>

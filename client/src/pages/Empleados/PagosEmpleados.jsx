@@ -531,7 +531,7 @@ export default function PagosEmpleados({ vendedores = [] }) {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
@@ -594,6 +594,69 @@ export default function PagosEmpleados({ vendedores = [] }) {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Cards View for Pagos */}
+            <div className="block md:hidden space-y-4">
+              {pagosFiltrados.length === 0 ? (
+                <div className="text-center py-8 text-zinc-400 text-sm">No hay pagos registrados</div>
+              ) : (
+                pagosFiltrados.map(p => (
+                  <Card key={p.id_pago} className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
+                    <CardBody className="p-4 space-y-4">
+                      
+                      <div className="flex justify-between items-start">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-100">{p.nombre_vendedor}</span>
+                          <div className="flex items-center gap-2">
+                             <span className="text-xs text-zinc-500 font-medium bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">{p.tipo_pago}</span>
+                             {p.es_recurrente === 1 && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Recurrente</span>}
+                          </div>
+                        </div>
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          color={p.estado_pago === 'PAGADO' ? "success" : p.estado_pago === 'ATRASADO' ? "danger" : "warning"}
+                          className="text-[10px]"
+                        >
+                          {p.estado_pago}
+                        </Chip>
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm border-y border-slate-100 dark:border-zinc-800 py-2">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-slate-500">Costo Total</span>
+                          <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">S/ {Number(p.costo_total).toFixed(2)}</span>
+                        </div>
+                        <div className="flex flex-col gap-1 items-end">
+                          <span className="text-xs text-slate-500">Fecha Prog.</span>
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{p.fecha_programada.slice(0, 10)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-1">
+                         {p.estado_pago !== 'PAGADO' && (
+                            <Tooltip content="Marcar Pagado">
+                              <Button isIconOnly size="sm" color="success" variant="flat" onClick={() => handleMarcarPagado(p)}>
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                          )}
+                          <Tooltip content="Boleta">
+                            <Button isIconOnly size="sm" color="primary" variant="flat" onClick={() => generatePayslip(p)}>
+                              <FaFileInvoiceDollar className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Eliminar">
+                            <Button isIconOnly size="sm" color="danger" variant="flat" onClick={() => handleRemovePago(p.id_pago)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                      </div>
+                    </CardBody>
+                  </Card>
+                ))
+              )}
             </div>
           </Card>
         </div>

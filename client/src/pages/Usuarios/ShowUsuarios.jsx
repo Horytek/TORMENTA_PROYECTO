@@ -9,7 +9,9 @@ import {
   Tooltip,
   Button,
   Chip,
-  User
+  User,
+  Card,
+  CardBody
 } from "@heroui/react";
 import UsuariosForm from './UsuariosForm';
 import UserProfileModal from './UserProfileModal';
@@ -196,7 +198,7 @@ export function ShowUsuarios({
 
   return (
     <>
-      <div className="w-full">
+      <div className="hidden md:block w-full">
         <Table
           aria-label="Tabla de usuarios"
 
@@ -227,6 +229,61 @@ export function ShowUsuarios({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile view */}
+      <div className="block md:hidden space-y-4">
+        {currentUsuarios.length === 0 ? (
+          <EmptyState title="No se encontraron usuarios" description="Intenta ajustar tus filtros de búsqueda." />
+        ) : (
+          currentUsuarios.map((item) => {
+            const isActive = item.estado_usuario === 1 || item.estado_usuario === "1" || item.estado_usuario === "Activo";
+            return (
+              <Card key={item.id_usuario} shadow="sm" className="w-full border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#18192b]">
+                <CardBody className="p-4 space-y-3">
+                  <div className="flex justify-between items-start gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-3">
+                    <User
+                      avatarProps={{ radius: "lg", src: null, name: item.usua[0]?.toUpperCase(), classNames: { base: item.estado_token === 1 ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500" } }}
+                      description={
+                        <span className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${item.estado_token === 1 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"}`}>
+                          <span className={`inline-block w-1.5 h-1.5 rounded-full ${item.estado_token === 1 ? "bg-emerald-500" : "bg-slate-400"}`}></span>
+                          {item.estado_token === 1 ? "Conectado" : "Offline"}
+                        </span>
+                      }
+                      name={item.usua}
+                      classNames={{
+                        name: "text-sm font-bold text-slate-900 dark:text-slate-100",
+                        description: "mt-0.5"
+                      }}
+                    />
+                    <div className="flex flex-col items-end gap-2">
+                       <Tooltip content="Ver perfil">
+                         <span className="text-lg text-default-400 cursor-pointer active:opacity-50 p-2" onClick={(e) => { e.stopPropagation(); handleViewProfile(item); }}>
+                           <FaUser />
+                         </span>
+                       </Tooltip>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-1">
+                    <Chip size="sm" variant="flat" color="primary" className="font-bold">
+                      {item.nom_rol}
+                    </Chip>
+                    <Chip
+                      className="gap-1 border-none capitalize"
+                      color={isActive ? "success" : "danger"}
+                      size="sm"
+                      variant="flat"
+                      startContent={<span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>}
+                    >
+                      {isActive ? "Activo" : "Inactivo"}
+                    </Chip>
+                  </div>
+                </CardBody>
+              </Card>
+            );
+          })
+        )}
       </div>
 
       {/* Modal de Confirmación para eliminar Producto */}

@@ -212,7 +212,7 @@ function Vendedores() {
           </div>
 
           {/* Pagination Footer - Outside Table Container */}
-          <div className="flex w-full justify-between items-center px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
+          <div className="flex flex-col sm:flex-row w-full justify-between items-center px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm gap-3">
             <div className="flex gap-2 items-center">
               <span className="text-[12px] text-slate-400 dark:text-slate-500">
                 {filteredVendedores.length} empleados

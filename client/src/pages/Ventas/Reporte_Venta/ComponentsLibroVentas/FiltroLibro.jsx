@@ -101,11 +101,11 @@ const FiltroLibro = ({ onFilter, filters }) => {
     };
 
     return (
-        <div className="flex flex-col gap-4 md:flex-row md:items-end">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end w-full">
             <Select
                 label="Sucursal"
                 placeholder="Seleccione sucursal"
-                className="w-[200px]"
+                className="w-full md:w-[200px]"
                 selectedKeys={sucursal1}
                 onSelectionChange={handleSucursalChange}
             >
@@ -120,7 +120,7 @@ const FiltroLibro = ({ onFilter, filters }) => {
                 value={dateRange}
                 onChange={handleDateChange}
                 placeholder="Seleccione rango de fechas"
-                className="w-[250px]"
+                className="w-full md:w-[250px]"
                 formatOptions={{
                     year: "numeric",
                     month: "2-digit",
@@ -130,7 +130,7 @@ const FiltroLibro = ({ onFilter, filters }) => {
             <Select
                 label="Tipo de comprobante"
                 placeholder="Seleccione tipo"
-                className="w-[200px]"
+                className="w-full md:w-[200px]"
                 selectionMode="multiple"
                 selectedKeys={tipoComprobante}
                 onSelectionChange={handleComprobanteChange}
@@ -142,11 +142,11 @@ const FiltroLibro = ({ onFilter, filters }) => {
                 ))}
             </Select>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full md:w-auto">
                 <Button
                     variant="bordered"
                     onClick={handleReset}
-                    className="min-w-[100px]"
+                    className="w-full md:w-auto md:min-w-[100px]"
                 >
                     Reiniciar
                 </Button>

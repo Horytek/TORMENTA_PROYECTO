@@ -167,7 +167,7 @@ const TablaLibro = ({
   return (
     <div className="space-y-4">
       <Card
-        className="border border-blue-100 dark:border-zinc-800 bg-white dark:bg-[#18192b] shadow-sm"
+        className="hidden md:block border border-blue-100 dark:border-zinc-800 bg-white dark:bg-[#18192b] shadow-sm"
         shadow="none"
         radius="lg"
       >
@@ -230,13 +230,68 @@ const TablaLibro = ({
         </CardBody>
       </Card>
 
+      {/* Mobile Cards View */}
+      <div className="block md:hidden space-y-4">
+        {items.length === 0 ? (
+          <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+            <p>No se encontraron registros</p>
+          </div>
+        ) : (
+          items.map((item) => (
+            <Card key={item.key} shadow="sm" className="w-full border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#18192b]">
+              <CardBody className="p-4 space-y-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
+                      {item.nombre_cliente || "Cliente General"}
+                    </span>
+                    <span className="text-xs text-slate-500 font-mono">
+                      {item.documento_cliente || "-"}
+                    </span>
+                  </div>
+                  <Chip size="sm" variant="flat" color="primary" className="h-6 text-xs whitespace-nowrap">
+                    {item.num_comprobante || "-"}
+                  </Chip>
+                </div>
+
+                <div className="flex justify-between items-center text-xs text-slate-500 border-b border-slate-100 dark:border-zinc-800/50 pb-2">
+                  <span>N° Corr: <span className="font-mono">{item.numero_correlativo || "-"}</span></span>
+                  <span>{formatDate(item.fecha)}</span>
+                </div>
+
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-slate-500">Monto Base / IGV</span>
+                    <span className="text-slate-600 dark:text-slate-400">
+                      S/ {item.importe != null ? nf.format(item.importe) : "0.00"} / S/ {item.igv != null ? nf.format(item.igv) : "0.00"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs text-slate-500">Total</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-400">
+                      S/ {item.total != null ? nf.format(item.total) : "0.00"}
+                    </span>
+                  </div>
+                </div>
+
+                {showActions && (
+                  <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-zinc-800/50">
+                    {renderActions(item)}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+          ))
+        )}
+      </div>
+
       {/* Footer: Paginación */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
         <span className="text-xs text-slate-500 dark:text-slate-400">
           Mostrando {items.length} registros
         </span>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap justify-center sm:justify-end items-center gap-4">
           <Select
             aria-label="Registros por página"
             selectedKeys={[String(limit)]}

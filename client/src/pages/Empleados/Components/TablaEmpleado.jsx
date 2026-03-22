@@ -8,7 +8,9 @@ import {
     TableCell,
     Tooltip,
     User,
-    Chip
+    Chip,
+    Card,
+    CardBody
 } from "@heroui/react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
@@ -160,33 +162,98 @@ const TablaEmpleado = ({
 
     return (
         <>
-            <Table
-                aria-label="Tabla de empleados"
+            <div className="hidden md:block">
+                <Table
+                    aria-label="Tabla de empleados"
 
-                removeWrapper
-                classNames={{
-                    base: "",
-                    table: "min-w-full",
-                    th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-11 first:rounded-l-lg last:rounded-r-lg shadow-none border-b border-slate-200 dark:border-zinc-800",
-                    td: "py-3 border-b border-slate-100 dark:border-zinc-800 group-data-[first=true]:first:before:rounded-none group-data-[first=true]:last:before:rounded-none",
-                    tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors shadow-none",
-                }}
-            >
-                <TableHeader columns={columns}>
-                    {(column) => (
-                        <TableColumn key={column.uid} align={column.uid === "acciones" || column.uid === "estado" ? "center" : "start"}>
-                            {column.name}
-                        </TableColumn>
-                    )}
-                </TableHeader>
-                <TableBody items={items} emptyContent={"No se encontraron empleados"}>
-                    {(item) => (
-                        <TableRow key={item.dni}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                    removeWrapper
+                    classNames={{
+                        base: "",
+                        table: "min-w-full",
+                        th: "bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider h-11 first:rounded-l-lg last:rounded-r-lg shadow-none border-b border-slate-200 dark:border-zinc-800",
+                        td: "py-3 border-b border-slate-100 dark:border-zinc-800 group-data-[first=true]:first:before:rounded-none group-data-[first=true]:last:before:rounded-none",
+                        tr: "hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors shadow-none",
+                    }}
+                >
+                    <TableHeader columns={columns}>
+                        {(column) => (
+                            <TableColumn key={column.uid} align={column.uid === "acciones" || column.uid === "estado" ? "center" : "start"}>
+                                {column.name}
+                            </TableColumn>
+                        )}
+                    </TableHeader>
+                    <TableBody items={items} emptyContent={"No se encontraron empleados"}>
+                        {(item) => (
+                            <TableRow key={item.dni}>
+                                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="block md:hidden space-y-4">
+                {items.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">No se encontraron empleados</div>
+                ) : (
+                    items.map((item) => {
+                        const isActive = item.estado_vendedor === "Activo";
+
+                        return (
+                            <Card key={item.dni} className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
+                                <CardBody className="p-4 space-y-4">
+                                    <div className="flex justify-between items-start">
+                                        <User
+                                            avatarProps={{ radius: "lg", src: null, name: (item.nombre || "?")[0] }}
+                                            description={<span className="text-slate-400 dark:text-slate-500 text-xs">{item.usua}</span>}
+                                            name={item.nombre}
+                                            classNames={{ name: "text-slate-900 dark:text-slate-100 font-semibold text-sm", description: "block" }}
+                                        />
+                                        <Chip className="gap-1 border-none capitalize text-[10px]" color={isActive ? "success" : "danger"} size="sm" variant="flat" startContent={<span className={`w-1 h-1 rounded-full ${isActive ? 'bg-success-600' : 'bg-danger-600'} ml-1`}></span>}>
+                                            {item.estado_vendedor}
+                                        </Chip>
+                                    </div>
+
+                                    <div className="flex justify-between items-center text-sm">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-xs text-slate-500">Contacto</span>
+                                            <span className="font-medium text-slate-700 dark:text-slate-300">{item.telefono || "Sin teléfono"}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 items-end">
+                                            <span className="text-xs text-slate-500">DNI</span>
+                                            <span className="text-xs text-slate-400 dark:text-slate-500">{item.dni}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                                        <Tooltip content={hasEditPermission ? "Editar" : "Sin permisos"}>
+                                            <span 
+                                                role="button" 
+                                                tabIndex={0} 
+                                                onClick={() => hasEditPermission && handleEditModal(item.dni)} 
+                                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors cursor-pointer ${hasEditPermission ? "bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/30" : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"}`}
+                                            >
+                                                <MdEdit className="w-4 h-4" />
+                                            </span>
+                                        </Tooltip>
+                                        <Tooltip content={hasDeletePermission ? "Eliminar" : "Sin permisos"}>
+                                            <span 
+                                                role="button" 
+                                                tabIndex={0} 
+                                                onClick={() => hasDeletePermission && handleOpenConfirmationModal(item.nombre, item.dni)} 
+                                                className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors cursor-pointer ${hasDeletePermission ? "bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/20 dark:hover:bg-rose-900/30" : "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"}`}
+                                            >
+                                                <FaTrash className="w-3.5 h-3.5" />
+                                            </span>
+                                        </Tooltip>
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        );
+                    })
+                )}
+            </div>
 
             {openConfirmModal && (
                 <ConfirmationModal

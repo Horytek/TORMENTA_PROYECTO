@@ -102,7 +102,7 @@ export default function FilterControls({
                             color="danger"
                             startContent={<FiX />}
                             onClick={clearFilters}
-                            className="h-10 md:h-12"
+                            className="w-full md:w-auto h-10 md:h-12"
                         >
                             Limpiar
                         </Button>
