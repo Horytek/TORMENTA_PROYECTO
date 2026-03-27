@@ -330,8 +330,8 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                   {/* SECCIÓN 1: DATOS BÁSICOS */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Información Básica</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                      <div className="md:col-span-7 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
                         <Controller
                           name="descripcion"
                           control={control}
@@ -350,7 +350,7 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                           )}
                         />
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4 items-end">
                           <Controller
                             name="precio"
                             control={control}
@@ -390,10 +390,30 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                               </Select>
                             )}
                           />
+                          <Controller
+                            name="estado_producto"
+                            control={control}
+                            render={({ field }) => (
+                              <div className="flex flex-col gap-1">
+                                <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">Estado</label>
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange(field.value === "1" ? "0" : "1")}
+                                  className={`h-10 px-4 rounded-xl font-semibold text-sm transition-all duration-300 cursor-pointer border-none outline-none ${
+                                    field.value === "1"
+                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/20"
+                                      : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 shadow-sm shadow-rose-200 dark:shadow-rose-900/20"
+                                  }`}
+                                >
+                                  {field.value === "1" ? "● Activo" : "● Inactivo"}
+                                </button>
+                              </div>
+                            )}
+                          />
                         </div>
                       </div>
 
-                      <div className="md:col-span-5 space-y-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 shadow-sm">
+                      <div className="space-y-4 bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 shadow-sm">
                         <div className="flex gap-2 items-end">
                           <Controller
                             name="id_categoria"
@@ -467,23 +487,6 @@ const ProductosForm = ({ modalTitle, onClose, initialData, onSuccess }) => {
                           />
                           <Button isIconOnly size="sm" variant="light" onPress={handleModalMarca} className="mb-2"><FaPlus /></Button>
                         </div>
-
-                        <Controller
-                          name="estado_producto"
-                          control={control}
-                          render={({ field }) => (
-                            <Select
-                              {...field}
-                              label="Estado"
-                              variant="faded"
-                              labelPlacement="outside"
-                              selectedKeys={field.value ? [field.value.toString()] : []}
-                            >
-                              <SelectItem key="1" value="1">Activo</SelectItem>
-                              <SelectItem key="0" value="0">Inactivo</SelectItem>
-                            </Select>
-                          )}
-                        />
                       </div>
                     </div>
                   </div>
