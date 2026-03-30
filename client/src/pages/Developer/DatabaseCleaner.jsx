@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardBody, Button, Switch, Input, Divider, Select, SelectItem } from "@heroui/react";
+import { Card, CardHeader, CardBody, Button, Switch, Divider, Select, SelectItem } from "@heroui/react";
 import { AlertTriangle, Trash2, Database, AlertCircle, Building2 } from 'lucide-react';
 import axios from '@/api/axios';
 import { toast } from 'react-hot-toast';
 
 const DatabaseCleaner = () => {
-    const [config, setConfig] = useState({
-        clean_sales: false,
-        clean_movements: false,
-        clean_stock: false,
-        clean_products: false,
-    });
+
     const [loading, setLoading] = useState(false);
     const [companies, setCompanies] = useState([]);
     const [selectedCompany, setSelectedCompany] = useState("");
@@ -33,23 +28,14 @@ const DatabaseCleaner = () => {
         fetchCompanies();
     }, []);
 
-    const handleSwitch = (key, value) => {
-        setConfig(prev => ({ ...prev, [key]: value }));
-    };
-
     const handleClean = async () => {
         if (!selectedCompany) {
             toast.error("Por favor selecciona una empresa objetivo.");
             return;
         }
 
-        if (confirmText !== 'ELIMINAR DATOS') {
-            toast.error("Por favor escribe 'ELIMINAR DATOS' para confirmar.");
-            return;
-        }
-
-        if (!config.clean_sales && !config.clean_movements && !config.clean_stock) {
-            toast.error("Selecciona al menos una opción para limpiar.");
+        if (confirmText !== 'CONFIRMADO') {
+            toast.error("Por favor confirma que deseas continuar.");
             return;
         }
 
@@ -57,21 +43,14 @@ const DatabaseCleaner = () => {
         try {
             const response = await axios.delete('/developer/clear-data', {
                 data: {
-                    ...config,
                     password: 'dev1234',
                     target_tenant_id: selectedCompany
                 }
             });
 
             if (response.data.code === 1) {
-                toast.success("Limpieza de datos completada correctamente.");
+                toast.success("Todos los datos transaccionales fueron limpiados correctamente.");
                 setConfirmText('');
-                setConfig({
-                    clean_sales: false,
-                    clean_movements: false,
-                    clean_stock: false,
-                    clean_products: false
-                });
             } else {
                 toast.error("Error al limpiar datos: " + response.data.message);
             }
@@ -130,106 +109,49 @@ const DatabaseCleaner = () => {
                 </CardBody>
             </Card>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="max-w-xl mx-auto">
                 <Card className="border-red-200 dark:border-red-900 shadow-md">
                     <CardHeader className="flex gap-3">
-                        <AlertTriangle className="w-8 h-8 text-red-600" />
+                        <AlertTriangle className="w-8 h-8 text-red-600 flex-shrink-0" />
                         <div className="flex flex-col">
-                            <p className="text-md font-bold text-red-600">Zona de Peligro</p>
-                            <p className="text-small text-default-500">Selecciona los módulos a limpiar. Irreversible.</p>
+                            <p className="text-lg font-bold text-red-600">Peligro: Borrado de Datos</p>
+                            <p className="text-small text-default-500">Esta acción limpiará permanentemente el historial.</p>
                         </div>
                     </CardHeader>
                     <Divider />
                     <CardBody className="space-y-6">
-
-                        {/* Option 1: Sales */}
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="space-y-1">
-                                <p className="text-medium font-semibold">Limpiar Ventas y Caja</p>
-                                <p className="text-tiny text-default-500">
-                                    Elimina facturas, boletas, notas venta, caja (excepto movimientos iniciales).
-                                </p>
-                            </div>
-                            <Switch
-                                isSelected={config.clean_sales}
-                                onValueChange={(v) => handleSwitch('clean_sales', v)}
-                                color="danger"
-                            />
+                        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-900/50">
+                            <ul className="list-disc list-inside text-sm text-red-800 dark:text-red-200 space-y-2">
+                                <li><strong>Elimina todas las ventas</strong> (facturas, boletas, notas de venta).</li>
+                                <li><strong>Elimina movimientos</strong> (notas de entrada/salida y caja).</li>
+                                <li><strong>Resetea el stock a cero</strong> y limpia la bitácora/kárdex.</li>
+                            </ul>
                         </div>
 
-                        {/* Option 2: Movements */}
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="space-y-1">
-                                <p className="text-medium font-semibold">Limpiar Movimientos (Notas)</p>
-                                <p className="text-tiny text-default-500">
-                                    Elimina notas de entrada/salida y detalles.
-                                </p>
-                            </div>
-                            <Switch
-                                isSelected={config.clean_movements}
-                                onValueChange={(v) => handleSwitch('clean_movements', v)}
-                                color="danger"
-                            />
-                        </div>
-
-                        {/* Option 3: Stock */}
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="space-y-1">
-                                <p className="text-medium font-semibold">Resetear Stock a Cero</p>
-                                <p className="text-tiny text-default-500">
-                                    Pone stock en 0 y limpia kárdex/bitácora.
-                                </p>
-                            </div>
-                            <Switch
-                                isSelected={config.clean_stock}
-                                onValueChange={(v) => handleSwitch('clean_stock', v)}
-                                color="danger"
-                            />
-                        </div>
-
-                    </CardBody>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex gap-3">
-                        <div className="flex flex-col">
-                            <p className="text-md font-bold">Confirmación</p>
-                            <p className="text-small text-default-500">Para proceder, confirma tu intención.</p>
-                        </div>
-                    </CardHeader>
-                    <Divider />
-                    <CardBody className="space-y-4">
                         <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-md border border-amber-200 dark:border-amber-900 flex gap-3 text-amber-800 dark:text-amber-200 text-sm">
                             <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                            <p>Asegúrate de tener un respaldo. Estos cambios afectan reportes y contabilidad.</p>
+                            <p>Asegúrate de tener un respaldo. Estos cambios afectan reportes y contabilidad de forma irreversible.</p>
                         </div>
 
-                        <div className="space-y-4 pt-2">
-                            <Input
-                                label='Confirma escribiendo "ELIMINAR DATOS"'
-                                placeholder="ELIMINAR DATOS"
-                                value={confirmText}
-                                onValueChange={setConfirmText}
-                                variant="bordered"
-                                color={confirmText === 'ELIMINAR DATOS' ? "success" : "default"}
-                                size="lg"
-                                labelPlacement="outside"
-                                classNames={{
-                                    input: "h-10",
-                                    inputWrapper: "h-14 py-2"
-                                }}
-                            />
-                        </div>
+                        <Switch
+                            isSelected={confirmText === 'CONFIRMADO'}
+                            onValueChange={(v) => setConfirmText(v ? 'CONFIRMADO' : '')}
+                            color="danger"
+                            size="sm"
+                        >
+                            <span className="text-sm font-medium">Entiendo las consecuencias y deseo proceder</span>
+                        </Switch>
 
                         <Button
                             color="danger"
-                            className="w-full mt-2"
+                            className="w-full mt-2 font-medium"
+                            size="lg"
                             onPress={handleClean}
-                            isDisabled={loading || confirmText !== 'ELIMINAR DATOS' || !selectedCompany}
-                            startContent={!loading && <Trash2 className="w-4 h-4" />}
+                            isDisabled={loading || confirmText !== 'CONFIRMADO' || !selectedCompany}
+                            startContent={!loading && <Trash2 className="w-5 h-5" />}
                             isLoading={loading}
                         >
-                            {loading ? "Limpiando..." : "Ejecutar Limpieza"}
+                            {loading ? "Ejecutando Limpieza..." : "Limpiar Todos los Datos"}
                         </Button>
                     </CardBody>
                 </Card>

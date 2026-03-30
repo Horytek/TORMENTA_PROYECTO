@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { methods as developerController } from "../controllers/developer.controller.js";
-import { methods as actionCatalogController } from "../controllers/actionCatalog.controller.js";
 import { methods as actionCatalog } from "../controllers/actionCatalog.controller.js";
 import { auth as verifyToken } from "../middlewares/auth.middleware.js";
 
