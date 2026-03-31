@@ -30,14 +30,18 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
     const loadVariants = async () => {
         setLoading(true);
         try {
-            const data = await getProductVariants(product.codigo, isIngreso, almacen, id_sucursal);
+            // Determine if stock is explicitly managed locally
+            const isStockManaged = !isIngreso && !!(almacen || id_sucursal);
+            const shouldIncludeZero = isIngreso || !isStockManaged;
+
+            const data = await getProductVariants(product.codigo, shouldIncludeZero, almacen, id_sucursal);
 
             if (data && data.length > 0) {
                 // Parse attributes_json if it's string
                 const parsedVariants = data.map(v => ({
                     ...v,
                     attributes: typeof v.attributes_json === 'string' ? JSON.parse(v.attributes_json) : v.attributes_json
-                })).filter(v => isIngreso || (v.attributes && Object.keys(v.attributes).length > 0));
+                })).filter(v => shouldIncludeZero || (v.attributes && Object.keys(v.attributes).length > 0));
 
                 setVariants(parsedVariants);
 
@@ -108,21 +112,35 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
     }, [isOpen, product]);
 
     const getLabel = (key) => {
-        return attrData.names[key] || key;
+        const name = attrData.names[key] || key;
+        return name.toUpperCase();
     };
 
-    const visibleAttributeKeys = useMemo(() => {
-        return attributeKeys.filter(key => getLabel(key).toLowerCase() !== 'temporada');
+    const visibleAttributeLabels = useMemo(() => {
+        const labels = new Set();
+        attributeKeys.forEach(key => {
+            const label = getLabel(key);
+            if (label !== 'TEMPORADA') {
+                labels.add(label);
+            }
+        });
+        // Sort Color, Talla, then alphabetical
+        return Array.from(labels).sort((a, b) => {
+            if (a === 'COLOR') return -1;
+            if (b === 'COLOR') return 1;
+            if (a === 'TALLA') return -1;
+            if (b === 'TALLA') return 1;
+            return a.localeCompare(b);
+        });
     }, [attributeKeys, attrData]);
 
-
-    const handleSelectOption = (key, val) => {
+    const handleSelectOption = (label, val) => {
         setSelections(prev => {
             const next = { ...prev };
-            if (next[key] === val) {
-                delete next[key];
+            if (next[label] === val) {
+                delete next[label];
             } else {
-                next[key] = val;
+                next[label] = val;
             }
             return next;
         });
@@ -132,39 +150,66 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
     // Check if we have 1 unique variant exactly matching all selections
     const resolvedVariant = useMemo(() => {
         const matching = variants.filter(v => {
-            return Object.entries(selections).every(([key, val]) => v.attributes && v.attributes[key] === val);
+            return Object.entries(selections).every(([label, val]) => {
+                if (!v.attributes) return false;
+                // Match if ANY key in v.attributes has this label AND matches the value
+                return Object.entries(v.attributes).some(([k, vVal]) => getLabel(k) === label && vVal === val);
+            });
         });
         
         // If matched at least 1 and all VISIBLE attribute keys have a selection
         // Multiple variants can match if they only differ by an invisible attribute like 'temporada'
-        if (matching.length >= 1 && Object.keys(selections).length === visibleAttributeKeys.length) {
+        if (matching.length >= 1 && Object.keys(selections).length === visibleAttributeLabels.length) {
             return matching[0];
         }
         return null;
-    }, [variants, selections, visibleAttributeKeys]);
+    }, [variants, selections, visibleAttributeLabels, attrData]);
 
     const handleConfirmResolved = () => {
         if (!resolvedVariant) return;
         
+        let availableStock = resolvedVariant.stock;
+        const isStockManaged = !isIngreso && !!(almacen || id_sucursal);
+        if (isStockManaged && cart.length > 0) {
+            const found = cart.find(c => c.id_sku === resolvedVariant.id_sku);
+            if (found) availableStock -= found.cantidad;
+        }
+        
+        if (isStockManaged && availableStock <= 0) return; // Prevent enter key if out of stock
+
         const resolvedAttributes = [];
-        // Use visibleAttributeKeys so the hidden attributes don't show up in the cart rendering
-        visibleAttributeKeys.forEach(k => {
-            const label = getLabel(k);
-            const val = resolvedVariant.attributes[k];
-            let hex = null;
-            if (label.toLowerCase() === 'color') hex = attrData.colors[val];
-            resolvedAttributes.push({ label, value: val, hex });
+        // Map over the normalized labels
+        visibleAttributeLabels.forEach(label => {
+            // Find the original key in this variant that matches the label
+            const matchedKey = Object.keys(resolvedVariant.attributes || {}).find(k => getLabel(k) === label);
+            if (matchedKey) {
+                const val = resolvedVariant.attributes[matchedKey];
+                let hex = attrData.colors[val] || null;
+                resolvedAttributes.push({ label, value: val, hex });
+            }
         });
 
         const itemToAdd = {
             ...resolvedVariant,
-            quantity: selectedQty,
+            quantity: parseInt(selectedQty, 10) || 1,
             resolvedAttributes
         };
 
         onConfirm([itemToAdd]);
         onClose();
     };
+
+    // Listen for Enter key to quick-add when resolved
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter' && isOpen && resolvedVariant) {
+                e.preventDefault();
+                handleConfirmResolved();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, resolvedVariant, selectedQty, cart, isIngreso, almacen, id_sucursal]);
 
     const handleFallbackAdd = (variant) => {
         const itemToAdd = {
@@ -177,31 +222,40 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
     };
 
     const renderConfigurator = () => {
-        return visibleAttributeKeys.map(key => {
-            const label = getLabel(key);
-            
-            // Find all possible values across the entire catalog for this key
+        return visibleAttributeLabels.map(label => {
+            // Find all possible values across the entire catalog for this label
             const allValues = new Set();
             variants.forEach(v => {
-                if (v.attributes && v.attributes[key]) allValues.add(v.attributes[key]);
+                if (v.attributes) {
+                    Object.entries(v.attributes).forEach(([k, vVal]) => {
+                        if (getLabel(k) === label) allValues.add(vVal);
+                    });
+                }
             });
             const options = Array.from(allValues).sort();
 
             return (
-                <div key={key} className="flex flex-col gap-2 bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-slate-100 dark:border-zinc-800/50">
+                <div key={label} className="flex flex-col gap-2 bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-slate-100 dark:border-zinc-800/50">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</span>
                     <div className="flex flex-wrap gap-2.5">
                         {options.map(val => {
                             // Determine if valid based on OTHER selections
                             const otherSelections = { ...selections };
-                            delete otherSelections[key];
+                            delete otherSelections[label];
                             
                             let isValid = false;
                             let maxStock = 0;
                             
                             for (const v of variants) {
-                                const matchesOthers = Object.entries(otherSelections).every(([k, otherVal]) => v.attributes && v.attributes[k] === otherVal);
-                                if (matchesOthers && v.attributes && v.attributes[key] === val) {
+                                // Match other selections
+                                const matchesOthers = Object.entries(otherSelections).every(([otherLabel, otherVal]) => {
+                                    return v.attributes && Object.entries(v.attributes).some(([k, vVal]) => getLabel(k) === otherLabel && vVal === otherVal);
+                                });
+
+                                // Check if this variant has our specific option
+                                const hasOurOption = v.attributes && Object.entries(v.attributes).some(([k, vVal]) => getLabel(k) === label && vVal === val);
+
+                                if (matchesOthers && hasOurOption) {
                                     isValid = true;
                                     let available = v.stock;
                                     if (!isIngreso && cart.length > 0) {
@@ -212,10 +266,13 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
                                 }
                             }
 
-                            const isSelected = selections[key] === val;
-                            const isColor = label.toLowerCase() === 'color';
-                            const hex = isColor ? attrData.colors[val] : null;
-                            const isDisabled = !isValid || (!isIngreso && maxStock <= 0);
+                            const isSelected = selections[label] === val;
+                            const hex = attrData.colors[val] || null;
+                            const hasColorIndicator = !!hex;
+                            
+                            // Only enforce stock if it's explicitly linked to a warehouse/sucursal and not an entry
+                            const isStockManaged = !isIngreso && !!(almacen || id_sucursal);
+                            const isDisabled = !isValid || (isStockManaged && maxStock <= 0);
 
                             return (
                                 <Button
@@ -225,8 +282,8 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
                                     variant={isSelected ? "solid" : "flat"}
                                     className={`font-semibold transition-all px-5 ${isSelected ? 'shadow-md shadow-blue-500/30' : 'bg-white border-slate-200 dark:bg-zinc-800 dark:border-zinc-700'}`}
                                     isDisabled={isDisabled}
-                                    onPress={() => handleSelectOption(key, val)}
-                                    startContent={isColor && hex ? (
+                                    onPress={() => handleSelectOption(label, val)}
+                                    startContent={hasColorIndicator ? (
                                         <div className={`w-3.5 h-3.5 rounded-full shadow-sm border border-black/10 ${isDisabled ? 'opacity-50' : ''}`} style={{ backgroundColor: hex }} />
                                     ) : undefined}
                                 >
@@ -277,7 +334,9 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
 
                                             {resolvedVariant ? (() => {
                                                 let availableStock = resolvedVariant.stock;
-                                                if (!isIngreso && cart.length > 0) {
+                                                const isStockManaged = !isIngreso && !!(almacen || id_sucursal);
+                                                
+                                                if (isStockManaged && cart.length > 0) {
                                                     const found = cart.find(c => c.id_sku === resolvedVariant.id_sku);
                                                     if (found) availableStock -= found.cantidad;
                                                 }
@@ -294,21 +353,42 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
                                                         <div className="flex items-center gap-3">
                                                             <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl p-1 shadow-sm">
                                                                 <Button isIconOnly size="sm" variant="light" color="danger" 
-                                                                    onPress={() => setSelectedQty(Math.max(1, selectedQty - 1))}
-                                                                    isDisabled={selectedQty <= 1}>
+                                                                    onPress={() => setSelectedQty(Math.max(1, (parseInt(selectedQty) || 0) - 1))}
+                                                                    isDisabled={selectedQty === '' || selectedQty <= 1}>
                                                                     <Minus size={18} />
                                                                 </Button>
-                                                                <span className="w-8 text-center font-bold text-lg">{selectedQty}</span>
+                                                                <input
+                                                                    type="text"
+                                                                    inputMode="numeric"
+                                                                    value={selectedQty}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                        if (val === '') {
+                                                                            setSelectedQty('');
+                                                                            return;
+                                                                        }
+                                                                        let n = parseInt(val, 10);
+                                                                        if (isStockManaged && availableStock > 0 && n > availableStock) n = availableStock;
+                                                                        setSelectedQty(n);
+                                                                    }}
+                                                                    onBlur={() => {
+                                                                        if (selectedQty === '' || parseInt(selectedQty, 10) < 1) {
+                                                                            setSelectedQty(1);
+                                                                        }
+                                                                    }}
+                                                                    onFocus={(e) => e.target.select()}
+                                                                    className="w-12 text-center font-bold text-lg bg-transparent border-none outline-none focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-blue-500/50 rounded transition-all"
+                                                                />
                                                                 <Button isIconOnly size="sm" variant="light" color="primary" 
-                                                                    onPress={() => setSelectedQty(Math.min(availableStock, selectedQty + 1))} 
-                                                                    isDisabled={!isIngreso && selectedQty >= availableStock}>
+                                                                    onPress={() => setSelectedQty(isStockManaged ? Math.min(availableStock, (parseInt(selectedQty) || 0) + 1) : (parseInt(selectedQty) || 0) + 1)} 
+                                                                    isDisabled={isStockManaged && selectedQty >= availableStock}>
                                                                     <Plus size={18} />
                                                                 </Button>
                                                             </div>
                                                             
                                                             <Button size="lg" color="primary" className="font-bold shadow-lg shadow-blue-500/30 px-6"
                                                                 onPress={handleConfirmResolved}
-                                                                isDisabled={!isIngreso && availableStock <= 0}
+                                                                isDisabled={isStockManaged && availableStock <= 0}
                                                                 startContent={<ShoppingCart size={20}/>}
                                                             >
                                                                 Añadir
@@ -327,11 +407,13 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
                                             <div className="flex flex-col gap-2">
                                                 {variants.map(v => {
                                                     let availableStock = v.stock;
-                                                    if (!isIngreso && cart.length > 0) {
+                                                    const isStockManaged = !isIngreso && !!(almacen || id_sucursal);
+                                                    
+                                                    if (isStockManaged && cart.length > 0) {
                                                         const found = cart.find(c => c.id_sku === v.id_sku);
                                                         if (found) availableStock -= found.cantidad;
                                                     }
-                                                    const isOutOfStock = !isIngreso && availableStock <= 0;
+                                                    const isOutOfStock = isStockManaged && availableStock <= 0;
 
                                                     return (
                                                         <Button 

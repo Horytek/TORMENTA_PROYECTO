@@ -6,6 +6,42 @@ import PaymentModal from './PaymentModal';
 import AddClientModal from '@/pages/Clientes/ComponentsClientes/AddClient';
 import { toast } from 'react-hot-toast';
 
+const CartQuantityInput = ({ item, updateQuantity }) => {
+    const [localVal, setLocalVal] = React.useState(item.cantidad.toString());
+
+    React.useEffect(() => {
+        setLocalVal(item.cantidad.toString());
+    }, [item.cantidad]);
+
+    const handleChange = (e) => {
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        setLocalVal(val);
+        if (val !== '') {
+            const n = parseInt(val, 10);
+            if (n > 0) updateQuantity(item.uniqueKey, n, item.codigo);
+        }
+    };
+
+    const handleBlur = () => {
+        if (localVal === '' || parseInt(localVal, 10) < 1) {
+            setLocalVal('1');
+            updateQuantity(item.uniqueKey, 1, item.codigo);
+        }
+    };
+
+    return (
+        <input
+            type="text"
+            inputMode="numeric"
+            value={localVal}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={(e) => e.target.select()}
+            className="flex-1 w-full min-w-[2rem] text-center font-bold text-sm text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-blue-500/50 rounded transition-all px-0 py-0.5"
+        />
+    );
+};
+
 const POSCart = ({ pos }) => {
     const {
         cart,
@@ -138,14 +174,14 @@ const POSCart = ({ pos }) => {
                             {cart.map((item) => (
                                 <div key={item.uniqueKey} className="group flex items-center p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-zinc-800">
                                     {/* Quantity Controls */}
-                                    <div className="w-16 flex items-center justify-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-lg p-1 h-8">
+                                    <div className="w-[4.5rem] flex items-center justify-between gap-0.5 bg-slate-100 dark:bg-zinc-800 rounded-lg p-1 h-8">
                                         <button
                                             className="w-5 h-full flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors text-slate-600"
                                             onClick={() => updateQuantity(item.uniqueKey, item.cantidad - 1, item.codigo)}
                                         >
                                             <Minus size={12} strokeWidth={3} />
                                         </button>
-                                        <span className="flex-1 text-center font-bold text-sm text-slate-800 dark:text-slate-200">{item.cantidad}</span>
+                                        <CartQuantityInput item={item} updateQuantity={updateQuantity} />
                                         <button
                                             className="w-5 h-full flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors text-blue-600"
                                             onClick={() => updateQuantity(item.uniqueKey, item.cantidad + 1, item.codigo)}
