@@ -707,13 +707,13 @@ const getProductoStockDetails = async (req, res) => {
         let almacenCondition = '';
         let params = [];
 
-        // Param order must match query placeholders: JOIN (almacen) -> WHERE (tenant, product)
+        // Param order must match query placeholders: JOIN (almacen) -> WHERE (product, tenant)
         if (idAlmacen && idAlmacen !== '%') {
             almacenCondition = 'AND i.id_almacen = ?';
             params.push(idAlmacen);
         }
 
-        params.push(id_tenant, idProducto);
+        params.push(idProducto, id_tenant);
 
         const [result] = await connection.query(
             `SELECT 
@@ -725,8 +725,8 @@ const getProductoStockDetails = async (req, res) => {
             FROM producto_sku sku
             LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku ${almacenCondition}
             LEFT JOIN almacen a ON i.id_almacen = a.id_almacen
-            WHERE sku.id_tenant = ?
-              AND sku.id_producto = ?
+                        WHERE sku.id_producto = ?
+                            AND (sku.id_tenant = ? OR sku.id_tenant IS NULL)
             GROUP BY sku.id_sku, sku.sku, sku.attributes_json ${idAlmacen && idAlmacen !== '%' ? '' : ', a.id_almacen'}
             ORDER BY sku.sku`,
             params

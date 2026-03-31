@@ -20,66 +20,101 @@ export default function StockDetailModal({ isOpen, onClose, product, almacenId, 
         }
     }, [isOpen, product, almacenId]);
 
+    const parseAttributes = (attrs) => {
+        if (!attrs) return null;
+        if (typeof attrs === 'string') {
+            try { return JSON.parse(attrs); } catch { return null; }
+        }
+        return attrs;
+    };
+
+    const normalizeAttrLabel = (key, metaNames = {}) => {
+        const rawKey = String(key);
+        const keyLower = rawKey.toLowerCase();
+        const metaLabel = metaNames[rawKey];
+
+        if (metaLabel) return String(metaLabel).toLowerCase();
+        if (keyLower === '1') return 'color';
+        if (keyLower === '2') return 'talla';
+        return keyLower;
+    };
+
+    const extractMatrixAxes = (attrs, metaNames = {}) => {
+        let colorVal = null;
+        let sizeVal = null;
+
+        Object.entries(attrs || {}).forEach(([key, value]) => {
+            const label = normalizeAttrLabel(key, metaNames);
+            if (colorVal == null && label.includes('color')) colorVal = value;
+            if (sizeVal == null && (label.includes('talla') || label.includes('size'))) sizeVal = value;
+        });
+
+        return { colorVal, sizeVal };
+    };
+
     // --- LOGIC FOR MATRIX VIEW ---
     const getMatrixData = () => {
         if (!details.length) return null;
 
-        // 1. Detect Standard Attributes (Color, Talla/Size) using Metadata or Fallback (Case insensitive)
-        const getColorKey = (attrs) => Object.keys(attrs).find(k => k.toLowerCase().includes('color') || k === '1');
-        const getSizeKey = (attrs) => Object.keys(attrs).find(k => k.toLowerCase().includes('talla') || k.toLowerCase().includes('size') || k === '2');
+        const prodCode = product?.codigo;
+        const meta = (attrMetadataMap && attrMetadataMap[prodCode]) || { names: {} };
 
-        // Check if ALL items have Color and/or Size (to decide if Matrix is viable)
-        // Ideally we need at least one of them to pivot. If only one, it's a list. If both, Matrix.
+        const normalizedDetails = details
+            .map((item) => {
+                const parsedAttrs = parseAttributes(item.attributes);
+                if (!parsedAttrs || Object.keys(parsedAttrs).length === 0) return null;
 
-        let colorKey = null;
-        let sizeKey = null;
+                const axes = extractMatrixAxes(parsedAttrs, meta.names);
+                return {
+                    ...item,
+                    attributes: parsedAttrs,
+                    _axes: axes,
+                };
+            })
+            .filter(Boolean);
 
-        // Verify first item to guess keys
-        if (details.length > 0) {
-            let sampleAttrs = details[0].attributes;
-            try {
-                if (typeof sampleAttrs === 'string') sampleAttrs = JSON.parse(sampleAttrs);
-            } catch { }
+        const hasMatrixAxes = normalizedDetails.some((item) => item._axes.colorVal || item._axes.sizeVal);
+        if (!hasMatrixAxes) return null;
 
-            if (sampleAttrs) {
-                colorKey = getColorKey(sampleAttrs);
-                sizeKey = getSizeKey(sampleAttrs);
-            }
-        }
-
-        if (colorKey && sizeKey) {
-            // Matrix Viable
-            return processMatrix(colorKey, sizeKey, details);
-        }
-
-        return null; // Fallback to list
+        return processMatrix(normalizedDetails);
     };
 
-    const processMatrix = (colorKey, sizeKey, data) => {
+    const processMatrix = (data) => {
         const sizes = new Set();
         const colors = new Set();
         const matrix = {}; // { [size]: { [color]: { stock, sku } } }
 
         data.forEach(item => {
-            let attrs = item.attributes;
-            try { if (typeof attrs === 'string') attrs = JSON.parse(item.attributes); } catch { }
-
-            if (!attrs) return;
-
-            const colorVal = attrs[colorKey];
-            const sizeVal = attrs[sizeKey];
+            const colorVal = item?._axes?.colorVal ?? 'Sin color';
+            const sizeVal = item?._axes?.sizeVal ?? 'Sin talla';
 
             if (colorVal) colors.add(colorVal);
             if (sizeVal) sizes.add(sizeVal);
 
             if (!matrix[sizeVal]) matrix[sizeVal] = {};
-            matrix[sizeVal][colorVal] = item;
+            
+            if (matrix[sizeVal][colorVal]) {
+                const currentStock = Number(matrix[sizeVal][colorVal].stock || 0);
+                const newStock = Number(item.stock || 0);
+                matrix[sizeVal][colorVal] = {
+                    ...matrix[sizeVal][colorVal],
+                    stock: currentStock + newStock
+                };
+            } else {
+                matrix[sizeVal][colorVal] = { ...item, stock: Number(item.stock || 0) };
+            }
         });
 
         // Sort Colors/Sizes safely
-        const sortedColors = Array.from(colors).sort();
+        const sortedColors = Array.from(colors).sort((a, b) => {
+            if (a === 'Sin color') return 1;
+            if (b === 'Sin color') return -1;
+            return String(a).localeCompare(String(b));
+        });
         // Try strict numerical sort for sizes if possible (S, M, L mapping could be added later)
         const sortedSizes = Array.from(sizes).sort((a, b) => {
+            if (a === 'Sin talla') return 1;
+            if (b === 'Sin talla') return -1;
             // Basic numeric sort attempt
             const numA = parseInt(a);
             const numB = parseInt(b);
