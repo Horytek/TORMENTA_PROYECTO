@@ -11,9 +11,11 @@ import {
     AccordionItem,
     Chip
 } from "@heroui/react";
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { FaBoxOpen, FaCalendarAlt, FaTag } from "react-icons/fa";
 
-const DayDetailDrawer = ({ isOpen, onClose, day, products }) => {
+const DayDetailDrawer = ({ isOpen, onClose, day, month, year, products }) => {
 
     const groupedProducts = useMemo(() => {
         if (!products) return [];
@@ -54,6 +56,12 @@ const DayDetailDrawer = ({ isOpen, onClose, day, products }) => {
         return acc + (isNaN(subVal) ? 0 : subVal);
     }, 0) : 0;
 
+    const dayOfWeekStr = useMemo(() => {
+        if (day == null || month == null || year == null) return '';
+        const curDate = new Date(year, month, parseInt(day));
+        return format(curDate, 'EEEE', { locale: es }).toUpperCase();
+    }, [day, month, year]);
+
     return (
         <Drawer isOpen={isOpen} onOpenChange={onClose} placement="right" size="lg" backdrop="blur">
             <DrawerContent>
@@ -62,7 +70,7 @@ const DayDetailDrawer = ({ isOpen, onClose, day, products }) => {
                         <DrawerHeader className="flex flex-col gap-1 border-b border-default-200">
                             <div className="flex items-center gap-2 text-xl font-bold text-default-800">
                                 <FaCalendarAlt className="text-primary-500" />
-                                Día {day}
+                                Día {day} {dayOfWeekStr ? `(${dayOfWeekStr})` : ''}
                             </div>
                             <p className="text-sm text-default-500">
                                 Resumen de productos vendidos y movimiento de inventario.

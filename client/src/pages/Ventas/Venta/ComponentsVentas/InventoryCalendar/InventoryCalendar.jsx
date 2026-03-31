@@ -227,6 +227,8 @@ const InventoryCalendar = ({ ventas }) => {
                 isOpen={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 day={selectedDay}
+                month={selectedMonth}
+                year={selectedYear}
                 products={selectedDayData?.products}
             />
         </div>

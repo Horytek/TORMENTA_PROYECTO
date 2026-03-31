@@ -2,9 +2,10 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spinner, Chip, Input, ScrollShadow } from "@heroui/react";
 import { getProductVariants, getProductAttributes } from "@/services/productos.services";
 import { toast } from 'react-hot-toast';
+import { Plus, Minus, ShoppingCart, Search } from "lucide-react";
 
 const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [], mode = 'venta', almacen, id_sucursal }) => {
-    const [variants, setVariants] = useState([]); // List of SKUs
+    const [variants, setVariants] = useState([]); 
     const [loading, setLoading] = useState(false);
 
     // Configured Attributes (e.g., ["Color", "Talla", "Material"])
@@ -12,37 +13,31 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
 
     // Selection State: { "Color": "Rojo", "Talla": "M" }
     const [selections, setSelections] = useState({});
+    
+    // Single quantity selector for the matched variant
+    const [selectedQty, setSelectedQty] = useState(1);
 
-    // Quantities map: { skuId: quantity }
-    const [quantities, setQuantities] = useState({});
+    const isIngreso = mode === 'ingreso';
 
     useEffect(() => {
         if (isOpen && product) {
             loadVariants();
             setSelections({});
-            setQuantities({});
+            setSelectedQty(1);
         }
     }, [isOpen, product]);
 
     const loadVariants = async () => {
         setLoading(true);
         try {
-            // Fetch SKUs (SPU/SKU Architecture)
-            // Even for 'ingreso', we might want to see existing SKUs or generate new ones?
-            // For now, let's assume 'ingreso' might need different logic if creating BRAND NEW variants.
-            // But if we stick to the plan, we select existing or configured variants.
-            // The getProductVariants endpoint returns existing SKUs. 
-            // If we need to create new SKUs (legacy flow generated them on the fly), that's a different beast.
-            // For Migration Phase 4, we focus on LISTING existing SKUs derived from migration.
-
-            const data = await getProductVariants(product.codigo, mode === 'ingreso', almacen, id_sucursal);
+            const data = await getProductVariants(product.codigo, isIngreso, almacen, id_sucursal);
 
             if (data && data.length > 0) {
                 // Parse attributes_json if it's string
                 const parsedVariants = data.map(v => ({
                     ...v,
                     attributes: typeof v.attributes_json === 'string' ? JSON.parse(v.attributes_json) : v.attributes_json
-                })).filter(v => mode !== 'venta' || (v.attributes && Object.keys(v.attributes).length > 0));
+                })).filter(v => isIngreso || (v.attributes && Object.keys(v.attributes).length > 0));
 
                 setVariants(parsedVariants);
 
@@ -50,9 +45,15 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
                 const keys = new Set();
                 parsedVariants.forEach(v => {
                     if (v.attributes) {
-                        Object.keys(v.attributes).forEach(k => keys.add(k));
+                        Object.keys(v.attributes).forEach(k => {
+                            // Ignorar 'temporada' para evitar que cause fricción en el selector
+                            if (k.toLowerCase() !== 'temporada') {
+                                keys.add(k);
+                            }
+                        });
                     }
                 });
+                
                 // Sort keys preference: Color, Talla, others
                 const sortedKeys = Array.from(keys).sort((a, b) => {
                     if (a === 'Color') return -1;
@@ -62,8 +63,6 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
                     return a.localeCompare(b);
                 });
                 setAttributeKeys(sortedKeys);
-
-                // Pre-select first options if simple? No, force user selection for clarity.
             } else {
                 setVariants([]);
                 setAttributeKeys([]);
@@ -93,7 +92,6 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
                                 names[a.id_atributo] = a.nombre;
                             });
                         }
-                        // Map legacy tonalidades to colors
                         if (data.tonalidades) {
                             data.tonalidades.forEach(t => {
                                 colors[t.nombre] = t.hex;
@@ -113,99 +111,130 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
         return attrData.names[key] || key;
     };
 
-    // --- Filtering Logic ---
-    // ... (Filtering logic remains identical, omitted here for brevity if replace_file_content allows partial updates, but I will include it to be safe or just skip if not modifying. Actually I need to modify renderAttributes which uses this state)
+    const visibleAttributeKeys = useMemo(() => {
+        return attributeKeys.filter(key => getLabel(key).toLowerCase() !== 'temporada');
+    }, [attributeKeys, attrData]);
 
-    // ... (Helper functions handleQuantityChange, handleConfirm remain same)
 
-    const handleQuantityChange = (skuId, val, variantStock) => {
-        let newQty = parseInt(val);
-        if (isNaN(newQty)) newQty = 0;
-
-        // Clamping logic
-        if (!isIngreso && typeof variantStock !== 'undefined') {
-            if (newQty > variantStock) {
-                toast.error(`Solo quedan ${variantStock} unidades disponibles`);
-                newQty = variantStock;
+    const handleSelectOption = (key, val) => {
+        setSelections(prev => {
+            const next = { ...prev };
+            if (next[key] === val) {
+                delete next[key];
+            } else {
+                next[key] = val;
             }
-        }
-
-        if (newQty < 0) newQty = 0;
-
-        setQuantities(prev => ({ ...prev, [skuId]: newQty }));
+            return next;
+        });
+        setSelectedQty(1);
     };
 
-    const handleConfirm = () => {
-        const itemsToAdd = [];
-        variants.forEach(v => {
-            const qty = quantities[v.id_sku];
-            if (qty > 0) {
-                // Resolve attributes to human readable format with Hex and Sort
-                const resolved = [];
-                if (v.attributes) {
-                    const keys = Object.keys(v.attributes);
-                    // Sort keys same as main sort (Color, Talla, others)
-                    keys.sort((a, b) => {
-                        const la = getLabel(a);
-                        const lb = getLabel(b);
-                        if (la === 'Color') return -1;
-                        if (lb === 'Color') return 1;
-                        if (la === 'Talla') return -1;
-                        if (lb === 'Talla') return 1;
-                        return la.localeCompare(lb);
-                    });
+    // Check if we have 1 unique variant exactly matching all selections
+    const resolvedVariant = useMemo(() => {
+        const matching = variants.filter(v => {
+            return Object.entries(selections).every(([key, val]) => v.attributes && v.attributes[key] === val);
+        });
+        
+        // If matched at least 1 and all VISIBLE attribute keys have a selection
+        // Multiple variants can match if they only differ by an invisible attribute like 'temporada'
+        if (matching.length >= 1 && Object.keys(selections).length === visibleAttributeKeys.length) {
+            return matching[0];
+        }
+        return null;
+    }, [variants, selections, visibleAttributeKeys]);
 
-                    keys.forEach(k => {
-                        const label = getLabel(k);
-                        const val = v.attributes[k];
-                        let hex = null;
-                        if (label.toLowerCase() === 'color') {
-                            hex = attrData.colors[val];
-                        }
-                        resolved.push({ label, value: val, hex });
-                    });
-                }
-
-                itemsToAdd.push({
-                    ...v,
-                    quantity: qty,
-                    resolvedAttributes: resolved
-                });
-            }
+    const handleConfirmResolved = () => {
+        if (!resolvedVariant) return;
+        
+        const resolvedAttributes = [];
+        // Use visibleAttributeKeys so the hidden attributes don't show up in the cart rendering
+        visibleAttributeKeys.forEach(k => {
+            const label = getLabel(k);
+            const val = resolvedVariant.attributes[k];
+            let hex = null;
+            if (label.toLowerCase() === 'color') hex = attrData.colors[val];
+            resolvedAttributes.push({ label, value: val, hex });
         });
 
-        if (itemsToAdd.length === 0) return;
-        onConfirm(itemsToAdd);
+        const itemToAdd = {
+            ...resolvedVariant,
+            quantity: selectedQty,
+            resolvedAttributes
+        };
+
+        onConfirm([itemToAdd]);
         onClose();
     };
 
-    const isIngreso = mode === 'ingreso';
-    const totalSelected = Object.values(quantities).reduce((a, b) => a + (b || 0), 0);
+    const handleFallbackAdd = (variant) => {
+        const itemToAdd = {
+            ...variant,
+            quantity: 1,
+            resolvedAttributes: []
+        };
+        onConfirm([itemToAdd]);
+        onClose();
+    };
 
-    // Helpers to render attribute badges
-    const renderAttributes = (attributes) => {
-        if (!attributes) return null;
-        return attributeKeys.map(key => {
+    const renderConfigurator = () => {
+        return visibleAttributeKeys.map(key => {
             const label = getLabel(key);
-            const value = attributes[key];
-            const isColor = label.toLowerCase() === 'color';
-            const hex = isColor ? attrData.colors[value] : null;
+            
+            // Find all possible values across the entire catalog for this key
+            const allValues = new Set();
+            variants.forEach(v => {
+                if (v.attributes && v.attributes[key]) allValues.add(v.attributes[key]);
+            });
+            const options = Array.from(allValues).sort();
 
             return (
-                <div key={key} className="flex flex-col min-w-[60px]">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold mb-1">{label}</span>
-                    {isColor && hex ? (
-                        <div className="flex items-center gap-2">
-                            <div
-                                className="w-5 h-5 rounded-full border border-slate-200 shadow-sm"
-                                style={{ backgroundColor: hex }}
-                                title={value}
-                            />
-                            <span className="font-medium text-sm truncate max-w-[80px]">{value}</span>
-                        </div>
-                    ) : (
-                        <span className="font-medium text-sm truncate max-w-[100px]" title={value}>{value}</span>
-                    )}
+                <div key={key} className="flex flex-col gap-2 bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-slate-100 dark:border-zinc-800/50">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</span>
+                    <div className="flex flex-wrap gap-2.5">
+                        {options.map(val => {
+                            // Determine if valid based on OTHER selections
+                            const otherSelections = { ...selections };
+                            delete otherSelections[key];
+                            
+                            let isValid = false;
+                            let maxStock = 0;
+                            
+                            for (const v of variants) {
+                                const matchesOthers = Object.entries(otherSelections).every(([k, otherVal]) => v.attributes && v.attributes[k] === otherVal);
+                                if (matchesOthers && v.attributes && v.attributes[key] === val) {
+                                    isValid = true;
+                                    let available = v.stock;
+                                    if (!isIngreso && cart.length > 0) {
+                                        const found = cart.find(c => c.id_sku === v.id_sku);
+                                        if (found) available -= found.cantidad;
+                                    }
+                                    maxStock += available;
+                                }
+                            }
+
+                            const isSelected = selections[key] === val;
+                            const isColor = label.toLowerCase() === 'color';
+                            const hex = isColor ? attrData.colors[val] : null;
+                            const isDisabled = !isValid || (!isIngreso && maxStock <= 0);
+
+                            return (
+                                <Button
+                                    key={val}
+                                    size="md"
+                                    color={isSelected ? "primary" : "default"}
+                                    variant={isSelected ? "solid" : "flat"}
+                                    className={`font-semibold transition-all px-5 ${isSelected ? 'shadow-md shadow-blue-500/30' : 'bg-white border-slate-200 dark:bg-zinc-800 dark:border-zinc-700'}`}
+                                    isDisabled={isDisabled}
+                                    onPress={() => handleSelectOption(key, val)}
+                                    startContent={isColor && hex ? (
+                                        <div className={`w-3.5 h-3.5 rounded-full shadow-sm border border-black/10 ${isDisabled ? 'opacity-50' : ''}`} style={{ backgroundColor: hex }} />
+                                    ) : undefined}
+                                >
+                                    {val}
+                                </Button>
+                            );
+                        })}
+                    </div>
                 </div>
             );
         });
@@ -215,7 +244,7 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            size="3xl"
+            size="xl"
             classNames={{
                 wrapper: "z-[10000]",
                 backdrop: "z-[10000]"
@@ -224,116 +253,108 @@ const VariantSelectionModal = ({ isOpen, onClose, product, onConfirm, cart = [],
             <ModalContent>
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1">
-                            Seleccionar Variantes
+                        <ModalHeader className="flex flex-col gap-1 pb-2">
+                            <h2 className="text-xl">Seleccionar Variante</h2>
                             <span className="text-sm font-normal text-slate-500">{product?.nombre || product?.descripcion}</span>
                         </ModalHeader>
-                        <ModalBody className="p-6">
+                        
+                        <ModalBody className="p-6 pt-2">
                             {loading ? (
-                                <div className="flex justify-center p-8">
-                                    <Spinner label="Cargando variantes..." />
+                                <div className="flex justify-center p-12">
+                                    <Spinner label="Cargando configuración..." />
                                 </div>
                             ) : variants.length === 0 ? (
-                                <div className="text-center p-4 text-slate-500">
+                                <div className="text-center p-8 text-slate-500 border border-dashed rounded-xl border-slate-200 dark:border-zinc-800">
                                     No hay variantes disponibles.
                                 </div>
                             ) : (
-                                <ScrollShadow className="max-h-[500px]">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
-                                        {variants.map((variant) => {
-                                            const skuId = variant.id_sku;
-                                            let availableStock = variant.stock;
-                                            let qtyInCart = 0;
-                                            const qtySelected = quantities[skuId] || '';
+                                <div className="flex flex-col gap-5">
+                                    {attributeKeys.length > 0 ? (
+                                        <>
+                                            <div className="flex flex-col gap-3">
+                                                {renderConfigurator()}
+                                            </div>
 
-                                            if (!isIngreso && cart.length > 0) {
-                                                const inCartItem = cart.find(item => item.id_sku === skuId);
-                                                qtyInCart = inCartItem ? inCartItem.cantidad : 0;
-                                                availableStock = variant.stock - qtyInCart;
-                                            }
+                                            {resolvedVariant ? (() => {
+                                                let availableStock = resolvedVariant.stock;
+                                                if (!isIngreso && cart.length > 0) {
+                                                    const found = cart.find(c => c.id_sku === resolvedVariant.id_sku);
+                                                    if (found) availableStock -= found.cantidad;
+                                                }
 
-                                            const isOutOfStock = !isIngreso && availableStock <= 0;
-
-                                            return (
-                                                <div
-                                                    key={skuId}
-                                                    className={`
-                                                    border rounded-xl p-4 transition-all relative
-                                                    ${qtySelected > 0
-                                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10 ring-1 ring-blue-500/20'
-                                                            : isOutOfStock
-                                                                ? 'border-slate-100 bg-slate-50 opacity-60'
-                                                                : 'border-slate-200 dark:border-zinc-800'
-                                                        }
-                                                    `}
-                                                >
-                                                    <div className="flex flex-col gap-3">
-                                                        {/* Header: Attributes and Stock */}
-                                                        <div className="flex flex-wrap items-start justify-between gap-2">
-                                                            <div className="flex flex-wrap gap-x-4 gap-y-2 max-w-[70%]">
-                                                                {renderAttributes(variant.attributes)}
-                                                            </div>
-                                                            <div className="flex flex-col items-end shrink-0">
-                                                                <Chip size="sm" color={isIngreso ? "primary" : availableStock > 0 ? "success" : "danger"} variant="flat" className="h-5 text-[10px]">
-                                                                    Stock: {variant.stock}
-                                                                </Chip>
-                                                            </div>
+                                                return (
+                                                    <div className="mt-2 flex flex-col md:flex-row items-center justify-between p-4 bg-blue-50/50 dark:bg-blue-900/10 border-2 border-blue-500/20 rounded-2xl gap-4 shadow-sm animate-appearance-in">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-blue-800 dark:text-blue-300 font-bold text-lg">Variante Lista</span>
+                                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                                Disponibles: <span className="font-bold">{availableStock}</span>
+                                                            </span>
                                                         </div>
-
-                                                        {/* Redundant SKU Code Removed */}
-                                                        {/* 
-                                                        {variant.nombre_sku && (
-                                                            <div className="text-[10px] text-slate-400 truncate">
-                                                                {variant.nombre_sku}
+                                                        
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl p-1 shadow-sm">
+                                                                <Button isIconOnly size="sm" variant="light" color="danger" 
+                                                                    onPress={() => setSelectedQty(Math.max(1, selectedQty - 1))}
+                                                                    isDisabled={selectedQty <= 1}>
+                                                                    <Minus size={18} />
+                                                                </Button>
+                                                                <span className="w-8 text-center font-bold text-lg">{selectedQty}</span>
+                                                                <Button isIconOnly size="sm" variant="light" color="primary" 
+                                                                    onPress={() => setSelectedQty(Math.min(availableStock, selectedQty + 1))} 
+                                                                    isDisabled={!isIngreso && selectedQty >= availableStock}>
+                                                                    <Plus size={18} />
+                                                                </Button>
                                                             </div>
-                                                        )}
-                                                        */}
-
-                                                        <div className="flex items-center gap-2 mt-1">
-
-                                                            <Input
-                                                                type="number"
-                                                                size="sm"
-                                                                label="Cant."
-                                                                labelPlacement="outside-left"
-                                                                placeholder="0"
-                                                                min={0}
-                                                                max={!isIngreso ? availableStock : 9999}
-                                                                value={qtySelected}
-                                                                onValueChange={(val) => handleQuantityChange(skuId, val, availableStock)}
-                                                                isDisabled={isOutOfStock}
-                                                                classNames={{
-                                                                    input: "text-center font-bold",
-                                                                    inputWrapper: "h-8"
-                                                                }}
-                                                            />
+                                                            
+                                                            <Button size="lg" color="primary" className="font-bold shadow-lg shadow-blue-500/30 px-6"
+                                                                onPress={handleConfirmResolved}
+                                                                isDisabled={!isIngreso && availableStock <= 0}
+                                                                startContent={<ShoppingCart size={20}/>}
+                                                            >
+                                                                Añadir
+                                                            </Button>
                                                         </div>
                                                     </div>
+                                                );
+                                            })() : (
+                                                <div className="mt-2 text-center text-slate-400 p-6 border-2 border-dashed rounded-2xl border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/10">
+                                                    Selecciona una opción de cada categoría<br/>para continuar
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                </ScrollShadow>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <ScrollShadow className="max-h-[400px]">
+                                            <div className="flex flex-col gap-2">
+                                                {variants.map(v => {
+                                                    let availableStock = v.stock;
+                                                    if (!isIngreso && cart.length > 0) {
+                                                        const found = cart.find(c => c.id_sku === v.id_sku);
+                                                        if (found) availableStock -= found.cantidad;
+                                                    }
+                                                    const isOutOfStock = !isIngreso && availableStock <= 0;
+
+                                                    return (
+                                                        <Button 
+                                                            key={v.id_sku}
+                                                            variant="flat"
+                                                            color={isOutOfStock ? "default" : "primary"}
+                                                            className={`justify-between h-auto py-3 px-4 font-medium ${isOutOfStock ? 'opacity-50' : 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100'}`}
+                                                            isDisabled={isOutOfStock}
+                                                            onPress={() => handleFallbackAdd(v)}
+                                                        >
+                                                            <span className="text-left font-bold truncate max-w-[70%]">{v.nombre_sku || v.codigo_sku}</span>
+                                                            <Chip size="sm" variant="flat" color={isOutOfStock ? "danger" : "success"}>
+                                                                Stock: {availableStock}
+                                                            </Chip>
+                                                        </Button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </ScrollShadow>
+                                    )}
+                                </div>
                             )}
                         </ModalBody>
-                        <ModalFooter className="justify-between">
-                            <div className="text-sm text-slate-500 font-medium">
-                                Total unidades: <span className="text-slate-900 dark:text-white font-bold">{totalSelected}</span>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button color="danger" variant="light" onPress={onClose}>
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    color="primary"
-                                    onPress={handleConfirm}
-                                    isDisabled={totalSelected === 0}
-                                    className="font-bold shadow-lg shadow-blue-500/20"
-                                >
-                                    Confirmar Selección
-                                </Button>
-                            </div>
-                        </ModalFooter>
                     </>
                 )}
             </ModalContent>

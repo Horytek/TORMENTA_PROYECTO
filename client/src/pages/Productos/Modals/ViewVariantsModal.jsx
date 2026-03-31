@@ -42,7 +42,6 @@ export const ViewVariantsModal = ({ productId, productName, onClose, isOpen }) =
         }
     };
 
-    const { tonalidades, tallas } = attributes;
 
     return (
         <Modal
@@ -77,7 +76,7 @@ export const ViewVariantsModal = ({ productId, productName, onClose, isOpen }) =
                                     <FaBoxOpen size={40} className="opacity-50" />
                                     <p>{error}</p>
                                 </div>
-                            ) : (tonalidades.length === 0 && tallas.length === 0) ? (
+                            ) : (!attributes.attributes || attributes.attributes.length === 0) ? (
                                 <div className="flex flex-col items-center justify-center h-full gap-3 py-10 text-slate-400">
                                     <FaBoxOpen size={40} className="opacity-30" />
                                     <p>Este producto no tiene variantes registradas.</p>
@@ -87,38 +86,48 @@ export const ViewVariantsModal = ({ productId, productName, onClose, isOpen }) =
 
                                     {/* Summary Cards */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Tonalidades */}
-                                        <div className="bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
-                                            <div className="flex items-center gap-2 mb-3 text-slate-600 dark:text-slate-300 font-semibold text-sm">
-                                                <FaPalette className="text-pink-500" />
-                                                Tonalidades ({tonalidades.length})
+                                        {attributes.attributes && attributes.attributes.length > 0 ? (
+                                            attributes.attributes.map(attr => (
+                                                <div key={attr.id_atributo} className="bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
+                                                    <div className="flex items-center gap-2 mb-3 text-slate-600 dark:text-slate-300 font-semibold text-sm">
+                                                        {attr.nombre.toLowerCase() === 'color' || attr.nombre.toLowerCase() === 'tonalidades' ? (
+                                                            <FaPalette className="text-pink-500" />
+                                                        ) : attr.nombre.toLowerCase() === 'talla' || attr.nombre.toLowerCase() === 'tallas' ? (
+                                                            <FaRuler className="text-blue-500" />
+                                                        ) : (
+                                                            <FaBoxOpen className="text-indigo-500" />
+                                                        )}
+                                                        {attr.nombre} ({attr.values ? attr.values.length : 0})
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {attr.values && attr.values.length > 0 ? attr.values.map(v => (
+                                                            attr.nombre.toLowerCase() === 'color' || attr.nombre.toLowerCase() === 'tonalidades' ? (
+                                                                <Tooltip key={v.id || v.id_valor || v.valor} content={v.valor} closeDelay={0}>
+                                                                    <div
+                                                                        className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm cursor-help hover:scale-110 transition-transform flex items-center justify-center text-[10px] font-bold overflow-hidden"
+                                                                        style={{ 
+                                                                            backgroundColor: v.hex || '#e2e8f0',
+                                                                            color: v.hex ? '#fff' : '#475569'
+                                                                        }}
+                                                                    >
+                                                                        {!v.hex && v.valor ? v.valor.substring(0, 2).toUpperCase() : ''}
+                                                                    </div>
+                                                                </Tooltip>
+                                                            ) : (
+                                                                <Chip key={v.id || v.id_valor || v.valor} size="sm" variant="flat" className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700">
+                                                                    {v.valor}
+                                                                </Chip>
+                                                            )
+                                                        )) : <span className="text-xs text-slate-400">Sin valores</span>}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center h-full gap-3 py-10 text-slate-400">
+                                                <FaBoxOpen size={40} className="opacity-30" />
+                                                <p>Este producto no tiene atributos configurados.</p>
                                             </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {tonalidades.length > 0 ? tonalidades.map(t => (
-                                                    <Tooltip key={t.id} content={t.nombre} closeDelay={0}>
-                                                        <div
-                                                            className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm cursor-help hover:scale-110 transition-transform"
-                                                            style={{ backgroundColor: t.hex || '#000' }}
-                                                        />
-                                                    </Tooltip>
-                                                )) : <span className="text-xs text-slate-400">Sin tonalidades</span>}
-                                            </div>
-                                        </div>
-
-                                        {/* Tallas */}
-                                        <div className="bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
-                                            <div className="flex items-center gap-2 mb-3 text-slate-600 dark:text-slate-300 font-semibold text-sm">
-                                                <FaRuler className="text-blue-500" />
-                                                Tallas ({tallas.length})
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {tallas.length > 0 ? tallas.map(t => (
-                                                    <Chip key={t.id} size="sm" variant="flat" className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700">
-                                                        {t.nombre}
-                                                    </Chip>
-                                                )) : <span className="text-xs text-slate-400">Sin tallas</span>}
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

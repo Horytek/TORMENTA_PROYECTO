@@ -23,8 +23,12 @@ export const generateInventoryPDF = (month, year, daysData) => {
     sortedDays.forEach(day => {
         const dayData = daysData[day];
         if (dayData && dayData.products.length > 0) {
+            // Generate full date to get the weekday
+            const curDate = new Date(year, month, parseInt(day));
+            const dayOfWeek = format(curDate, 'EEEE', { locale: es }).toUpperCase();
+
             // Add a header row for the day
-            tableRows.push([{ content: `DÍA ${day}`, colSpan: 3, styles: { fillColor: [220, 220, 220], fontStyle: 'bold' } }]);
+            tableRows.push([{ content: `DÍA ${day} - ${dayOfWeek}`, colSpan: 3, styles: { fillColor: [220, 220, 220], fontStyle: 'bold' } }]);
 
             // Group products by name
             const groupedProducts = {};
