@@ -56,7 +56,10 @@ const DatabaseCleaner = () => {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Error de conexión o servidor.");
+            const backendMessage = error?.response?.data?.message;
+            const backendStep = error?.response?.data?.step;
+            const detail = backendStep ? `${backendMessage} (paso: ${backendStep})` : backendMessage;
+            toast.error(detail || "Error de conexión o servidor.");
         } finally {
             setLoading(false);
         }
