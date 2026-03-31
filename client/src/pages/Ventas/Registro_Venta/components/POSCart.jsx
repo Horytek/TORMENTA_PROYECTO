@@ -15,9 +15,19 @@ const CartQuantityInput = ({ item, updateQuantity }) => {
 
     const handleChange = (e) => {
         const val = e.target.value.replace(/[^0-9]/g, '');
-        setLocalVal(val);
-        if (val !== '') {
-            const n = parseInt(val, 10);
+        
+        let displayVal = val;
+        let n = parseInt(val, 10);
+        
+        if (item.stock !== undefined && item.stock !== null && n > item.stock) {
+            displayVal = item.stock.toString();
+            n = item.stock;
+            // toast.error(`Stock máximo: ${item.stock}`); // Optional warning, UI snappy re-limit is enough
+        }
+
+        setLocalVal(displayVal);
+        
+        if (displayVal !== '') {
             if (n > 0) updateQuantity(item.uniqueKey, n, item.codigo);
         }
     };
@@ -183,8 +193,12 @@ const POSCart = ({ pos }) => {
                                         </button>
                                         <CartQuantityInput item={item} updateQuantity={updateQuantity} />
                                         <button
-                                            className="w-5 h-full flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors text-blue-600"
-                                            onClick={() => updateQuantity(item.uniqueKey, item.cantidad + 1, item.codigo)}
+                                            className="w-5 h-full flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={() => {
+                                                const limit = item.stock !== undefined && item.stock !== null ? item.stock : Infinity;
+                                                updateQuantity(item.uniqueKey, Math.min(limit, item.cantidad + 1), item.codigo);
+                                            }}
+                                            disabled={item.stock !== undefined && item.stock !== null && item.cantidad >= item.stock}
                                         >
                                             <Plus size={12} strokeWidth={3} />
                                         </button>
